@@ -9,7 +9,8 @@ Be assured efforts are under way to make the software available here.
 In the meantime, enjoy using Ghidra on your SRE efforts, developing your
 own scripts and plugins, and perusing the over a million lines of Java and
 Sleigh code released within the initial public release.
-Please consider taking a look at our[contributor guide][contrib] to see how
+The release can be downloaded from our [project homepage][project] at www.ghidra-sre.org.
+Please consider taking a look at our [contributor guide][contrib] to see how
 you can participate in this open source project when it becomes available.
 
 If you are interested in projects like this and would like to develop this, and
@@ -19,4 +20,4 @@ consider applying for a [career with us][career].
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [career]: https://www.intelligencecareers.gov/nsa
-
+[project]: https://www.ghidra-sre.org/
