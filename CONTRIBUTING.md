@@ -17,7 +17,7 @@ there are many ways you can contribute. For example, you can:
 
 ## Legal
 
-The project maintainer for this Project will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
+The project maintainer for this project will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
 The DCO is a legally binding statement asserting that the contributor is the creator of the contribution, or otherwise has the authority to distribute the contribution, and that they are intentionally making the contribution available under the license(s) associated with the Project ("License").
 
 This is an open source project.
