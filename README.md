@@ -7,7 +7,7 @@ In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and
 This repository is a placeholder for the full open source release.
 Be assured efforts are under way to make the software available here.
 In the meantime, enjoy using Ghidra on your SRE efforts, developing your
-own scripts and plugins, and perusing the over a million lines of Java and
+own scripts and plugins, and perusing the over-one-million-lines of Java and
 Sleigh code released within the initial public release.
 The release can be downloaded from our [project homepage][project].
 Please consider taking a look at our [contributor guide][contrib] to see how
