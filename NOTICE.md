@@ -8,5 +8,5 @@ U.S. copyright protections under 17 U.S.C.
 
 The remaining portions are copyright their respective authors and have been
 contributed under the terms of one or more open source licenses, and made
-available to you under the terms of those licenses. (See LICENSE)
+available to you under the terms of those licenses. (See [LICENSE](ghidra/LICENSE]))
 
