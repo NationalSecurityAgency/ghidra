@@ -9,7 +9,7 @@ Be assured efforts are under way to make the software available here.
 In the meantime, enjoy using Ghidra on your SRE efforts, developing your
 own scripts and plugins, and perusing the over a million lines of Java and
 Sleigh code released within the initial public release.
-The release can be downloaded from our [project homepage][project] at www.ghidra-sre.org.
+The release can be downloaded from our [project homepage][project].
 Please consider taking a look at our [contributor guide][contrib] to see how
 you can participate in this open source project when it becomes available.
 
