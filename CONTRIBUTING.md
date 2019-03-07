@@ -17,8 +17,8 @@ there are many ways you can contribute. For example, you can:
 
 ## Legal
 
-The project maintainer for this project will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
-The DCO is a legally binding statement asserting that the contributor is the creator of the contribution, or otherwise has the authority to distribute the contribution, and that they are intentionally making the contribution available under the license(s) associated with the project ("License").
+The project maintainer for this software, code, documentation, etc., ("Project") will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
+The DCO is a legally binding statement asserting that the contributor is the creator of the contribution, or otherwise has the authority to distribute the contribution, and that they are intentionally making the contribution available under the license(s) associated with the Project ("License").
 
 This is an open source project.
 Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
@@ -37,11 +37,11 @@ To indicate you have read and agree to the DCO, you need to add the following in
 
 This essentially affirms that you have the right to submit the work you are contributing in your pull requests and that you consent to us treating the contribution in a way consistent with the License.
 Please see the [licensing intent][intent] for details.
-The primary License for this project is the Apache License, Version 2.0 ("Apache 2.0").
+The primary License for this Project is the Apache License, Version 2.0 ("Apache 2.0").
 The project composes a number of software modules with documentation ("Modules").
 Each module may have additional licensing restrictions imposed by its dependencies, or because some portion of it was derived from software requiring the application of these restrictions.
 In most cases, these licenses do not introduce any restrictions beyond those already required by Apache 2.0, e.g., BSD-style licenses.
-In general, we intend to indicate within each Module the applicable license(s), whether or not they are more restrictive than the project's License.
+In general, we indicate within each Module the applicable license(s), whether or not they are more restrictive than the License for this Project.
 When you sign the DCO and submit a pull request containing contributions to such a module, please keep in mind you are asserting you have the authority to submit the work, and that the work will be made available under those license(s).
 
 ### Important Points
