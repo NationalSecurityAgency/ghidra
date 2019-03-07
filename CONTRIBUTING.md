@@ -22,7 +22,7 @@ The DCO is a legally binding statement asserting that the contributor is the cre
 
 This is an open source project.
 Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
-When you submit a pull request, you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
+When you submit an issue, bug report, question, enhancment, pull request, etc., you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
 Furthermore, your contributing to this project does not create an employer-employee relationship between the United States ("U.S.") Government and the contributor.
 
 ### Developer Certificate of Origin (DCO) Process
