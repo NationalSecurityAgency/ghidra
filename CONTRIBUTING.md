@@ -15,42 +15,6 @@ there are many ways you can contribute. For example, you can:
 - Package and distribute the software in a downstream community (such as your
   preferred Linux distribution)
 
-## Legal
-
-The project maintainer for this software, code, documentation, etc., ("Project") will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
-The DCO is a legally binding statement asserting that the contributor is the creator of the contribution, or otherwise has the authority to distribute the contribution, and that they are intentionally making the contribution available under the license(s) associated with the Project ("License").
-
-This is an open source project.
-Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
-When you submit an issue, bug report, question, enhancment, pull request, etc., you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
-Furthermore, your contributing to this project does not create an employer-employee relationship between the United States ("U.S.") Government and the contributor.
-
-### Developer Certificate of Origin (DCO) Process
-
-This project implements a Lite version of the DCO process.
-When you submit a pull request to this repository for the first time, you need to sign the DCO.
-To indicate you have read and agree to the DCO, you need to add the following information to the [contributors] file:
-
-- Name
-- Email address or other contact (required)
-- Copyright year(s) (required)
-
-This essentially affirms that you have the right to submit the work you are contributing in your pull requests and that you consent to us treating the contribution in a way consistent with the License.
-Please see the [licensing intent][intent] for details.
-The primary License for this Project is the Apache License, Version 2.0 ("Apache 2.0").
-The project composes a number of software modules with documentation ("Modules").
-Each module may have additional licensing restrictions imposed by its dependencies, or because some portion of it was derived from software requiring the application of these restrictions.
-In most cases, these licenses do not introduce any restrictions beyond those already required by Apache 2.0, e.g., BSD-style licenses.
-In general, we indicate within each Module the applicable license(s), whether or not they are more restrictive than the License for this Project.
-When you sign the DCO and submit a pull request containing contributions to such a module, please keep in mind you are asserting you have the authority to submit the work, and that the work will be made available under those license(s).
-
-### Important Points
-
-You are not required to provide your name, but you must provide a valid and functional means to contact you.
-If you are a U.S. Federal Government employee and use a .mil or .gov email address to agree to the DCO, or you otherwise indicate that you are a U.S. Federal Government employee, we interpret your signed DCO to mean that the contribution was created in whole or in part by you in your official capacity as a U.S. Federal Government Employee.
-This implies your contribution is not subject to copyright protections within the United States.
-If you wish to contribute in your own capacity, that is, on your own personal time, you must sign the DCO in that capacity, using an appropriate email address or other means of contact.
-
 ## Bugs and Feature Requests
 
 If you believe that you have found a bug or wish to propose a new feature,
@@ -103,9 +67,17 @@ smooth process when submitting a patch:
 
 Once available, please see the [developer's guide][devguide] for instructions to set up a suitable development environment.
 
+## Legal
+
+Consistent with Section D.6. of the GitHub Terms of Service as of 2019, and Section 5. of the Apache License, Version 2.0, the project maintainer for this project accepts contributions using the inbound=outbound model.
+When you submit a pull request to this repository (inbound), you are agreeing to license your contribution under the same terms as specified in [LICENSE] (outbound).
+
+This is an open source project.
+Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
+When you submit an issue, bug report, question, enhancment, pull request, etc., you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
+Furthermore, your contributing to this project does not create an employer-employee relationship between the United States ("U.S.") Government and the contributor.
+
 [issues]: https://github.com/NationalSecurityAgency/ghidra/issues
 [repository]: https://github.com/NationalSecurityAgency/ghidra/
-[dco]: https://developercertificate.org
-[intent]: INTENT.md
-[contributors]: Contributors.md
 [devguide]: DevGuide.md
+[LICENSE]: LICENSE
