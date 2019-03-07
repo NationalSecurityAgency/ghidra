@@ -18,4 +18,4 @@ Common Vulnerabilities and Exposures
 
 
 [BUG-2019-0001]: https://twitter.com/hackerfantastic/status/1103087869063704576
-[BUG-2019-0001 Exploit 1]: https://static.hacker.house/releasez/expl0itz/jdwp-exploit.txt
+[BUG-2019-0001 Exploit 1]: http://web.archive.org/web/20190306220416/https://static.hacker.house/releasez/expl0itz/jdwp-exploit.txt
