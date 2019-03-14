@@ -1,0 +1,362 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.plugin.core.clear;
+
+import java.awt.event.KeyEvent;
+
+import docking.ActionContext;
+import docking.action.*;
+import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
+import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.framework.cmd.Command;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.util.*;
+
+/**
+ * Plugin that manages the 'clear' and 'clear with options' operations on a program.
+ */
+//@formatter:off
+@PluginInfo(
+	status = PluginStatus.RELEASED,
+	packageName = CorePluginPackage.NAME,
+	category = PluginCategoryNames.CODE_VIEWER,
+	shortDescription = "Clear Code and Program Annotations",
+	description = "This plugin clears instructions and provides options to clear other program annotations, such as comments, labels, etc."
+)
+//@formatter:on
+public class ClearPlugin extends Plugin {
+	private static final String CLEAR_CODE_BYTES_NAME = "Clear Code Bytes";
+	private static final String CLEAR_FLOW_AND_REPAIR = "Clear Flow and Repair";
+
+	private DockingAction clearAllAction;
+	private DockingAction clearAction;
+	private DockingAction clearAndRepairAction;
+	private ClearDialog clearDialog;
+	private ClearFlowDialog clearFlowDialog;
+
+	/**
+	 * Constructor
+	 */
+	public ClearPlugin(PluginTool tool) {
+		super(tool);
+		createActions();
+	}
+
+	// /////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Clear the flow and repair disassembly at the current location
+	 */
+	void clearFlowAndRepair(ListingActionContext context, boolean clearSymbols, boolean clearData,
+			boolean repair) {
+		ClearFlowAndRepairCmd cmd;
+		ProgramSelection selection = context.getSelection();
+		ProgramLocation location = context.getLocation();
+		if (selection == null || selection.isEmpty()) {
+			cmd = new ClearFlowAndRepairCmd(location.getAddress(), clearData, clearSymbols, repair);
+		}
+		else {
+			cmd = new ClearFlowAndRepairCmd(selection, clearData, clearSymbols, repair);
+		}
+		tool.executeBackgroundCommand(cmd, context.getProgram());
+	}
+
+	/**
+	 * Use the options to determine what must be cleared. Starts a new thread if
+	 * necessary to do the work. Called by the actions and by the dialog.
+	 */
+	void clear(ClearOptions options, ListingActionContext context) {
+		if (!options.clearAny()) {
+			return;
+		}
+
+		if (!scheduleClear(options, context)) {
+			return;
+		}
+
+		AddressSet set = new AddressSet(context.getSelection());
+		ClearCmd cmd = new ClearCmd(set, options);
+		tool.executeBackgroundCommand(cmd, context.getProgram());
+	}
+
+	private boolean scheduleClear(ClearOptions options, ListingActionContext context) {
+		ProgramSelection selection = context.getSelection();
+		ProgramLocation location = context.getLocation();
+		Program program = context.getProgram();
+
+		if (selection == null || selection.isEmpty()) {
+			clearWhenNoSelection(options, location, program);
+			return false; // don't need a task to run...
+		}
+
+		InteriorSelection interSel = selection.getInteriorSelection();
+		if (interSel != null) {
+			clearStructure(program, interSel.getFrom(), interSel.getTo());
+			return false;
+		}
+		return true;
+	}
+
+	private void clearWhenNoSelection(ClearOptions options, ProgramLocation location,
+			Program program) {
+		if (location == null) {
+			return;
+		}
+
+		int[] compPath = location.getComponentPath();
+		if (compPath != null && compPath.length > 0) {
+			clearStructure(program, location, null);
+			return;
+		}
+
+		CodeUnit cu = program.getListing().getCodeUnitContaining(location.getAddress());
+		Command cmd = new ClearCmd(cu, options);
+		tool.execute(cmd, program);
+	}
+
+	/**
+	 * Clear the internal parts of a structure
+	 */
+	private boolean clearStructure(Program program, ProgramLocation start, ProgramLocation end) {
+		// get data at start
+		boolean commit = false;
+		int id = program.startTransaction("Clear Structure");
+		try {
+			Address dataAddr = start.getByteAddress();
+			Data data = program.getListing().getDefinedDataContaining(dataAddr);
+			if (data == null) {
+				return false;
+			}
+
+			// get the structure to clear, make sure it is a structure
+			Data compData = data.getComponent(start.getComponentPath());
+			if (compData == null) {
+				return false;
+			}
+
+			DataType dataType = compData.getParent().getBaseDataType();
+			if (!(dataType instanceof Composite)) {
+				return false;
+			}
+
+			// don't allow clearing the last component from a union
+			if (dataType instanceof Union && ((Composite) dataType).getNumComponents() <= 1) {
+				return false;
+			}
+
+			// get the start offset into the data structure
+			int index = compData.getComponentIndex();
+			if (dataType instanceof Union) {
+				((Union) dataType).delete(index);
+			}
+			else {
+				// now clear it
+				Address startAddress = start.getByteAddress();
+				Address endAddress = (end != null) ? end.getByteAddress() : startAddress;
+				Data parent = compData.getParent();
+				Address parentAddress = parent.getAddress();
+				int startOffset = (int) startAddress.subtract(parentAddress);
+				int endOffset = (int) endAddress.subtract(parentAddress);
+				Structure structure = (Structure) dataType;
+				int startOrdinal = getOrdinalAtOrBefore(structure, startOffset);
+				int endOrdinal = getOrdinalAtOrBefore(structure, endOffset);
+				for (int ordinal = endOrdinal; ordinal >= 0 && ordinal >= startOrdinal; ordinal--) {
+					structure.clearComponent(ordinal);
+				}
+			}
+			commit = true;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			program.endTransaction(id, commit);
+		}
+		return commit;
+	}
+
+	private int getOrdinalAtOrBefore(Structure structure, int offset) {
+		DataTypeComponent component = structure.getComponentAt(offset);
+		for (int adjustedOffset = offset; component == null &&
+			adjustedOffset >= 0; adjustedOffset--) {
+			component = structure.getComponentAt(offset);
+		}
+		if (component == null) {
+			return -1;
+		}
+		return component.getOrdinal();
+	}
+
+	// /////////////////////////////////////////////////////////////////////
+	// ** private methods
+	// /////////////////////////////////////////////////////////////////////
+	/**
+	 * Create the actions.
+	 */
+	private void createActions() {
+
+		// new context aware version
+		clearAction = new ListingContextAction(CLEAR_CODE_BYTES_NAME, getName()) {
+
+			@Override
+			public void actionPerformed(ListingActionContext context) {
+				ClearOptions opts = new ClearOptions();
+
+				opts.setClearCode(true);
+				opts.setClearSymbols(false);
+				opts.setClearComments(false);
+				opts.setClearProperties(false);
+				opts.setClearFunctions(false);
+				opts.setClearRegisters(false);
+				opts.setClearEquates(false);
+				opts.setClearUserReferences(true);
+				opts.setClearAnalysisReferences(true);
+				opts.setClearImportReferences(true);
+				opts.setClearDefaultReferences(false);
+				opts.setClearBookmarks(false);
+
+				if (clearWithContext(context, opts)) {
+					return;
+				}
+			}
+
+			private boolean clearWithContext(ListingActionContext context, ClearOptions opts) {
+				clear(opts, context);
+				return true;
+			}
+
+			@Override
+			public boolean isAddToPopup(ListingActionContext context) {
+				return true;
+			}
+
+			@Override
+			public boolean isEnabledForContext(ListingActionContext context) {
+				ProgramLocation loc = context.getLocation();
+				ProgramSelection currentSelection = context.getSelection();
+				if (currentSelection != null && !currentSelection.isEmpty()) {
+					return true;
+				}
+				else if ((loc != null) && (loc.getAddress() != null) &&
+					(loc instanceof CodeUnitLocation)) {
+					return true;
+				}
+				return false;
+			}
+
+			@Override
+			public boolean isValidGlobalContext(ActionContext context) {
+				// it's too dangerous to let the clear action work globally
+				return false;
+			}
+		};
+
+		int menuOrdinal = 1;
+		MenuData menuData =
+			new MenuData(new String[] { ToolConstants.MENU_EDIT, CLEAR_CODE_BYTES_NAME }, null,
+				"Clear Code Bytes");
+
+		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAction.setMenuBarData(menuData);
+		MenuData popupMenuData =
+			new MenuData(new String[] { CLEAR_CODE_BYTES_NAME }, null, "Clear Code Bytes");
+		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAction.setPopupMenuData(popupMenuData);
+		clearAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, 0));
+
+		String clearWithOptionsName = "Clear With Options";
+		clearAllAction = new DockingAction(clearWithOptionsName, getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				showClearAllDialog((ListingActionContext) context.getContextObject());
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return context.getContextObject() instanceof ListingActionContext;
+			}
+		};
+
+		menuOrdinal++;
+		menuData =
+			new MenuData(new String[] { ToolConstants.MENU_EDIT, clearWithOptionsName + "..." },
+				null, "Clear Code Bytes");
+		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAllAction.setMenuBarData(menuData);
+		popupMenuData =
+			new MenuData(new String[] { clearWithOptionsName + "..." }, null, "Clear Code Bytes");
+		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAllAction.setPopupMenuData(popupMenuData);
+
+		clearAndRepairAction = new DockingAction(CLEAR_FLOW_AND_REPAIR, getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				showClearFlowDialog((ListingActionContext) context.getContextObject());
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return context.getContextObject() instanceof ListingActionContext;
+			}
+		};
+
+		menuOrdinal++;
+		menuData = new MenuData(new String[] { ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR },
+			null, "Clear Code Bytes");
+		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAndRepairAction.setMenuBarData(menuData);
+		popupMenuData =
+			new MenuData(new String[] { CLEAR_FLOW_AND_REPAIR + "..." }, null, "Clear Code Bytes");
+		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearAndRepairAction.setPopupMenuData(popupMenuData);
+
+		//clearAndRepairAction.setAcceleratorKey(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
+
+		tool.addAction(clearAction);
+		tool.addAction(clearAllAction);
+		tool.addAction(clearAndRepairAction);
+	}
+
+	/**
+	 * Pop up the clear with options dialog.
+	 */
+	private void showClearAllDialog(ListingActionContext programActionContext) {
+		if (clearDialog == null) {
+			clearDialog = new ClearDialog(this);
+		}
+		clearDialog.setProgramActionContext(programActionContext);
+		tool.showDialog(clearDialog);
+	}
+
+	/**
+	 * Pop up the clear flows dialog
+	 */
+	private void showClearFlowDialog(ListingActionContext context) {
+		if (clearFlowDialog == null) {
+			clearFlowDialog = new ClearFlowDialog(this);
+		}
+		clearFlowDialog.setProgramActionContext(context);
+		tool.showDialog(clearFlowDialog);
+	}
+
+}
