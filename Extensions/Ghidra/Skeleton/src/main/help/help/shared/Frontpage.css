@@ -1,0 +1,58 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+									WARNING!
+    This file is copied to all help directories.  If you change this file, you must copy it 
+    to each src/main/help/help/shared directory.									
+									
+	
+	Java Help Note:  JavaHelp does not accept sizes (like in 'margin-top') in anything but 
+	px (pixel) or with no type marking. 
+
+*/ 
+
+body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 10px; } /* some padding to improve readability */ 
+li { font-family:times new roman; font-size:14pt; }
+h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold;  }
+h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
+ 
+/*
+	 P tag code.  Most of the help files nest P tags inside of blockquote tags (the was the 
+	 way it had been done in the beginning).  The net effect is that the text is indented.  In 
+	 modern HTML we would use CSS to do this.  We need to support the Ghidra P tags, nested in
+	 blockquote tags, as well as naked P tags.  The following two lines accomplish this.  Note
+	 that the 'blockquote p' definition will inherit from the first 'p' definition.
+*/
+p { margin-left: 40px; font-family:times new roman; font-size:14pt; }
+blockquote p { margin-left: 10px; }
+
+p.providedbyplugin { color:#7f7f7f; margin-left: 10px; font-size:14pt; margin-top:100px  }
+p.ProvidedByPlugin { color:#7f7f7f; margin-left: 10px; font-size:14pt; margin-top:100px }
+p.relatedtopic { color:#800080; margin-left: 10px; font-size:14pt; }
+p.RelatedTopic { color:#800080; margin-left: 10px; font-size:14pt; }
+
+/* 
+	We wish for a tables to have space between it and the preceding element, so that text
+	is not too close to the top of the table.  Also, nest the table a bit so that it is clear
+	the table relates to the preceding text.
+*/
+table { margin-left: 20px; margin-top: 10px; width: 80%;}
+td { font-family:times new roman; font-size:14pt; vertical-align: top; }
+th { font-family:times new roman; font-size:14pt; font-weight:bold; background-color: #EDF3FE; }
+
+code { color: black; font-family: courier new; font-size: 14pt; }

@@ -1,0 +1,220 @@
+# sleigh include file for Skeleton language instructions
+
+define token opbyte (8)
+   op0_8     = (0,7)
+   op6_2     = (6,7)
+   
+   dRegPair4_2    = (4,5)
+   pRegPair4_2    = (4,5)
+   sRegPair4_2    = (4,5)
+   qRegPair4_2    = (4,5)
+   qRegPair4_2a   = (4,5)
+   qRegPair4_2b   = (4,5)
+   rRegPair4_2    = (4,5)
+
+   reg3_3 = (3,5)
+   bits3_3   = (3,5)
+   
+   bits0_4   = (0,3)
+   
+   reg0_3 = (0,2)
+   bits0_3   = (0,2)
+;
+
+define token data8 (8)
+   imm8		= (0,7)
+   sign8	= (7,7)
+   simm8	= (0,7) signed
+;
+
+define token data16 (16)
+   timm4        = (12,15)
+   imm16        = (0,15)
+   sign16		= (15,15)
+   simm16		= (0,15) signed
+;
+
+attach variables [ reg0_3 reg3_3 ] [ B C D E H L _ A ];
+
+attach variables [ sRegPair4_2 dRegPair4_2 ] [ BC DE HL SP ];
+
+attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
+attach variables [ qRegPair4_2a ] [ B D H A ];
+attach variables [ qRegPair4_2b ] [ C E L F ];
+
+attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
+attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
+
+################################################################
+# Macros
+################################################################
+
+macro setResultFlags(result) {
+	$(Z_flag) = (result == 0);
+	$(S_flag) = (result s< 0);
+}
+
+macro setAddCarryFlags(op1,op2) {
+	$(C_flag) = (carry(op1,zext($(C_flag))) || carry(op2,op1 + zext($(C_flag))));
+}
+
+macro setAddFlags(op1,op2) {
+	$(C_flag) = carry(op1,op2);
+}
+
+macro setSubtractCarryFlags(op1,op2) {
+	notC = ~$(C_flag);
+	$(C_flag) = ((op1 < sext(notC)) || (op2 < (op1 - sext(notC))));
+}
+
+macro setSubtractFlags(op1,op2) {
+	$(C_flag) = (op1 < op2);
+}
+
+macro push16(val16) {
+	SP = SP - 2;
+	*:2 SP = val16; 
+}
+
+macro pop16(ret16) {
+	ret16 = *:2 SP;
+	SP = SP + 2; 
+}
+
+macro push8(val8) {
+	SP = SP - 1;
+	ptr:2 = SP;
+	*:1 ptr = val8; 
+}
+
+macro pop8(ret8) {
+    ptr:2 = SP;
+	ret8 = *:1 ptr;
+	SP = SP + 1; 
+}
+
+################################################################
+
+ixMem8: (IX+simm8)  is IX & simm8								{ ptr:2 = IX + simm8; export *:1 ptr; }
+ixMem8: (IX-val)    is IX & simm8 & sign8=1	[ val = -simm8; ]	{ ptr:2 = IX + simm8; export *:1 ptr; }
+
+iyMem8: (IY+simm8)  is IY & simm8								{ ptr:2 = IY + simm8; export *:1 ptr; }
+iyMem8: (IY-val)    is IY & simm8 & sign8=1	[ val = -simm8; ]	{ ptr:2 = IY + simm8; export *:1 ptr; }
+
+Addr16: imm16		is imm16									{ export *:1 imm16; }
+
+Mem16: (imm16)		is imm16									{ export *:2 imm16; }
+
+RelAddr8: loc		is simm8  [ loc = inst_next + simm8; ]		{ export *:1 loc; }
+
+cc: "NZ"            is bits3_3=0x0                              { c:1 = ($(Z_flag) == 0); export c; }
+cc: "Z"             is bits3_3=0x1                              { c:1 = $(Z_flag); export c; }
+cc: "NC"            is bits3_3=0x2                              { c:1 = ($(C_flag) == 0); export c; }
+cc: "C"             is bits3_3=0x3                              { c:1 = $(C_flag); export c; }
+cc: "PO"            is bits3_3=0x4                              { c:1 = ($(PV_flag) == 0); export c; }
+cc: "PE"            is bits3_3=0x5                              { c:1 = $(PV_flag); export c; }
+cc: "P"             is bits3_3=0x6                              { c:1 = ($(S_flag) == 0); export c; }
+cc: "M"             is bits3_3=0x7                              { c:1 = $(S_flag); export c; }
+
+cc2: "NZ"            is bits3_3=0x4                              { c:1 = ($(Z_flag) == 0); export c; }
+cc2: "Z"             is bits3_3=0x5                              { c:1 = $(Z_flag); export c; }
+cc2: "NC"            is bits3_3=0x6                              { c:1 = ($(C_flag) == 0); export c; }
+cc2: "C"             is bits3_3=0x7                              { c:1 = $(C_flag); export c; }
+
+################################################################
+
+
+:LD IX,Mem16  is op0_8=0xdd & IX; op0_8=0x2a; Mem16 {
+	IX = Mem16;
+}
+
+:LD IY,Mem16  is op0_8=0xfd & IY; op0_8=0x2a; Mem16 {
+	IY = Mem16;
+}
+
+:LD Mem16,HL  is op0_8=0x22 & HL; Mem16 {
+	Mem16 = HL;
+}
+
+:LD Mem16,dRegPair4_2  is op0_8=0xed; op6_2=0x1 & dRegPair4_2 & bits0_4=0x3; Mem16 {
+	Mem16 = dRegPair4_2;
+}
+
+:LD Mem16,IX  is op0_8=0xdd & IX; op0_8=0x22; Mem16 {
+	Mem16 = IX;
+}
+
+:LD Mem16,IY  is op0_8=0xfd & IY; op0_8=0x22; Mem16 {
+	Mem16 = IY;
+}
+
+:NEG  is op0_8=0xed; op0_8=0x44 {
+	$(PV_flag) = (A == 0x80);
+	$(C_flag) = (A != 0);
+	A = -A;
+	setResultFlags(A);
+}
+
+:SET bits3_3,ixMem8  is op0_8=0xdd; op0_8=0xcb; ixMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = ixMem8;
+	ixMem8 = val | mask;
+}
+
+:SET bits3_3,iyMem8  is op0_8=0xfd; op0_8=0xcb; iyMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = iyMem8;
+	iyMem8 = val | mask;
+}
+
+:JP Addr16  is op0_8=0xc3; Addr16 {
+	goto Addr16;	
+}
+
+:JP cc,Addr16  is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
+	if (!cc) goto Addr16;
+}
+
+:JR RelAddr8  is op0_8=0x18; RelAddr8 {
+	goto RelAddr8;
+}
+
+:JR cc2,RelAddr8  is op6_2=0x0 & cc2 & bits0_3=0x0; RelAddr8 {
+	if (cc2) goto RelAddr8;
+}
+
+:JP (HL)  is op0_8=0xe9 & HL {
+	goto [HL];
+}
+
+:JP (IX)  is op0_8=0xdd & IX; op0_8=0xe9 {
+	goto [IX];
+}
+
+:JP (IY)  is op0_8=0xfd & IY; op0_8=0xe9 {
+	goto [IY];
+}
+
+:CALL Addr16  is op0_8=0xcd; Addr16 {
+    push16(&:2 inst_next);
+	call Addr16;
+}
+
+:CALL cc,Addr16  is op6_2=0x3 & cc & bits0_3=0x4; Addr16 {
+	if (!cc) goto inst_next;
+    push16(&:2 inst_next);
+	call Addr16;
+}
+
+:RET  is op0_8=0xc9 {
+	pop16(PC);
+	ptr:2 = zext(PC);
+	return [ptr];
+}
+
+:RET cc  is op6_2=0x3 & cc & bits0_3=0x0 {
+	if (!cc) goto inst_next;
+	pop16(PC);
+	ptr:2 = zext(PC);
+	return [ptr];
+}	
