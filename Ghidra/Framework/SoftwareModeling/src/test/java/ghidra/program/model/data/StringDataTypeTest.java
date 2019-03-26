@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
@@ -30,7 +30,7 @@ import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 
-public class StringDataTypeTest extends AbstractGenericTest {
+public class StringDataTypeTest extends AbstractGTest {
 
 	private StringDataType fixedlenString = new StringDataType();
 	private StringUTF8DataType fixedUtf8String = new StringUTF8DataType();

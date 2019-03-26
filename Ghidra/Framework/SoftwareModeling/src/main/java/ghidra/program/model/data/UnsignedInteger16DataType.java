@@ -33,20 +33,23 @@ public class UnsignedInteger16DataType extends AbstractIntegerDataType {
 		super("uint16", false, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Unsigned 16-Byte Integer";
 	}
 
+	@Override
 	public int getLength() {
 		return 16;
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return Integer16DataType.dataType;
+	public Integer16DataType getOppositeSignednessDataType() {
+		return Integer16DataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public UnsignedInteger16DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

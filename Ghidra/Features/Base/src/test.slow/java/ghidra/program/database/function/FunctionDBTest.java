@@ -629,7 +629,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest implemen
 		int initialParamCnt = f.getParameterCount();
 
 		Structure bar = new StructureDataType("bar", 20);
-		Pointer barPtr = program.getDataManager().getPointer(bar);
+		Pointer barPtr = program.getDataTypeManager().getPointer(bar);
 
 		Parameter returnVar = f.getReturn();
 		Parameter p1 = f.getParameter(0);
@@ -697,7 +697,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest implemen
 		int initialParamCnt = f.getParameterCount();
 
 		Structure bar = new StructureDataType("bar", 20);
-		Pointer barPtr = program.getDataManager().getPointer(bar);
+		Pointer barPtr = program.getDataTypeManager().getPointer(bar);
 
 		Parameter returnVar = f.getReturn();
 		Parameter p1 = f.getParameter(0);

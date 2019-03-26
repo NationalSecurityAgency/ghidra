@@ -227,7 +227,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		contextMgr = program.getProgramContext();
 		refManager = program.getReferenceManager();
 		propertyMapMgr = program.getUsrPropertyManager();
-		dataManager = program.getDataManager();
+		dataManager = program.getDataTypeManager();
 		protoMgr.setProgram(program);
 	}
 
@@ -1975,6 +1975,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		DataDB data = null;
 		try {
+
+			if (dataType instanceof BitFieldDataType) {
+				throw new CodeUnitInsertionException("Bitfields not supported for Data");
+			}
 
 			DataType originalDataType = dataType;
 			if (dataType instanceof FactoryDataType) {

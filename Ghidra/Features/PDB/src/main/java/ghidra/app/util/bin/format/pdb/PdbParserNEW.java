@@ -30,7 +30,6 @@ import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
-import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -38,9 +37,9 @@ import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import ghidra.util.xml.XmlUtilities;
 import ghidra.xml.*;
 
 /**
@@ -54,8 +53,6 @@ public class PdbParserNEW {
 
 	public final static File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
 	public final static String PDB_STORAGE_PROPERTY = "PDB Storage Directory";
-
-	private final static String NO_TYPE = "NoType";
 
 	static final String STRUCTURE_KIND = "Structure";
 	static final String UNION_KIND = "Union";
@@ -72,13 +69,15 @@ public class PdbParserNEW {
 		}
 	}
 
+	private TaskMonitor monitor;
+
 	private final boolean forceAnalysis;
 	private final File pdbFile;
 	private final boolean isXML;
 	private final Program program;
+	private DataTypeManager dataMgr;
 	private final DataTypeManagerService service;
 	private final PdbProgramAttributes programAttributes;
-
 	private Process process;
 	private XmlPullParser parser;
 	private PdbErrorHandler errHandler;
@@ -93,23 +92,24 @@ public class PdbParserNEW {
 	 * by the PDB to be available within the dataTypeCache using namespace-based type
 	 * names.
 	 */
-	private Map<String, DataType> dataTypeCache = new HashMap<>();
+	private PdbDataTypeParser dataTypeParser;
 	private Map<SymbolPath, Boolean> namespaceMap = new TreeMap<>(); // false: simple namespace, true: class namespace
 
 	public PdbParserNEW(File pdbFile, Program program, DataTypeManagerService service,
-			boolean forceAnalysis) {
-		this(pdbFile, program, service, getPdbAttributes(program), forceAnalysis);
+			boolean forceAnalysis, TaskMonitor monitor) {
+		this(pdbFile, program, service, getPdbAttributes(program), forceAnalysis, monitor);
 	}
 
 	public PdbParserNEW(File pdbFile, Program program, DataTypeManagerService service,
-			PdbProgramAttributes programAttributes, boolean forceAnalysis) {
+			PdbProgramAttributes programAttributes, boolean forceAnalysis, TaskMonitor monitor) {
 		this.pdbFile = pdbFile;
 		this.categoryPrefix = "/" + pdbFile.getName();
 		this.pdbCategory = new CategoryPath(categoryPrefix);
 		this.program = program;
+		this.dataMgr = program.getDataTypeManager();
 		this.service = service;
 		this.forceAnalysis = forceAnalysis;
-
+		this.monitor = monitor != null ? monitor : TaskMonitor.DUMMY;
 		this.isXML = pdbFile.getAbsolutePath().endsWith(PdbFileType.XML.toString());
 		this.programAttributes = programAttributes;
 	}
@@ -119,7 +119,7 @@ public class PdbParserNEW {
 	 * @return data type manager
 	 */
 	DataTypeManager getProgramDataTypeManager() {
-		return program.getDataTypeManager();
+		return dataMgr;
 	}
 
 	/**
@@ -273,36 +273,33 @@ public class PdbParserNEW {
 	}
 
 	private void completeDefferedTypeParsing(ApplyDataTypes applyDataTypes,
-			ApplyDataTypes applyClasses, ApplyTypeDefs applyTypeDefs, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+			ApplyTypeDefs applyTypeDefs, MessageLog log) throws CancelledException {
 
 		defineClasses(monitor, log);
 
 		if (applyDataTypes != null) {
 			applyDataTypes.buildDataTypes(monitor);
 		}
-		if (applyClasses != null) {
-			applyClasses.buildDataTypes(monitor);
-		}
+
 		if (applyTypeDefs != null) {
-			applyTypeDefs.buildTypeDefs(monitor);
+			applyTypeDefs.buildTypeDefs(monitor); // TODO: no dependencies exit on TypeDefs (use single pass)
 		}
 
 		// Ensure that all data types are resolved
-		flushDataTypeCache();
+		if (dataTypeParser != null) {
+			dataTypeParser.flushDataTypeCache();
+		}
 	}
 
 	/**
 	 * Apply PDB debug information to the current program
 	 *
-	 * @param monitor  Monitor used to cancel processing
 	 * @param log  MessageLog used to record errors
 	 * @throws IOException  if an error occurs during parsing
 	 * @throws PdbException  if PDB file has already been loaded
 	 * @throws CancelledException  if user cancels the current action
 	 */
-	public void applyTo(TaskMonitor monitor, MessageLog log)
-			throws IOException, PdbException, CancelledException {
+	public void applyTo(MessageLog log) throws IOException, PdbException, CancelledException {
 		if (!parsed) {
 			throw new IOException("PDB: parse() must be called before applyTo()");
 		}
@@ -316,10 +313,7 @@ public class PdbParserNEW {
 		Msg.debug(this, "Found PDB for " + program.getName());
 		try {
 
-			PdbUtil.createMandatoryDataTypes(this, monitor);
-
 			ApplyDataTypes applyDataTypes = null;
-			ApplyDataTypes applyClasses = null;
 			ApplyTypeDefs applyTypeDefs = null;
 
 			boolean typesFlushed = false;
@@ -351,10 +345,16 @@ public class PdbParserNEW {
 					ApplyEnums.applyTo(parser, this, monitor, log);
 				}
 				else if (element.getName().equals("datatypes")) {
-					applyDataTypes = new ApplyDataTypes(this, parser, false, monitor, log);
+					if (applyDataTypes == null) {
+						applyDataTypes = new ApplyDataTypes(this, log);
+					}
+					applyDataTypes.preProcessDataTypeList(parser, false, monitor);
 				}
 				else if (element.getName().equals("classes")) {
-					applyClasses = new ApplyDataTypes(this, parser, true, monitor, log);
+					if (applyDataTypes == null) {
+						applyDataTypes = new ApplyDataTypes(this, log);
+					}
+					applyDataTypes.preProcessDataTypeList(parser, true, monitor);
 				}
 				else if (element.getName().equals("typedefs")) {
 					applyTypeDefs = new ApplyTypeDefs(this, parser, monitor, log);
@@ -362,8 +362,7 @@ public class PdbParserNEW {
 				else if (element.getName().equals("functions")) {
 					// apply functions (must occur within XML after all type sections)
 					if (!typesFlushed) {
-						completeDefferedTypeParsing(applyDataTypes, applyClasses, applyTypeDefs,
-							monitor, log);
+						completeDefferedTypeParsing(applyDataTypes, applyTypeDefs, log);
 						typesFlushed = true;
 					}
 					ApplyFunctions.applyTo(this, parser, monitor, log);
@@ -371,8 +370,7 @@ public class PdbParserNEW {
 				else if (element.getName().equals("tables")) {
 					// apply tables (must occur within XML after all other sections)
 					if (!typesFlushed) {
-						completeDefferedTypeParsing(applyDataTypes, applyClasses, applyTypeDefs,
-							monitor, log);
+						completeDefferedTypeParsing(applyDataTypes, applyTypeDefs, log);
 						typesFlushed = true;
 					}
 					ApplyTables.applyTo(this, parser, monitor, log);
@@ -383,8 +381,7 @@ public class PdbParserNEW {
 			}
 
 			if (!typesFlushed) {
-				completeDefferedTypeParsing(applyDataTypes, applyClasses, applyTypeDefs, monitor,
-					log);
+				completeDefferedTypeParsing(applyDataTypes, applyTypeDefs, log);
 			}
 
 			Options options = program.getOptions(Program.PROGRAM_INFO);
@@ -411,15 +408,6 @@ public class PdbParserNEW {
 		if (hasErrors()) {
 			throw new IOException(getErrorAndWarningMessages());
 		}
-	}
-
-	private void flushDataTypeCache() {
-		DataTypeManager dtm = program.getDataTypeManager();
-		for (DataType dt : dataTypeCache.values()) {
-			dtm.resolve(dt,
-				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		}
-		dataTypeCache.clear();
 	}
 
 	void predefineClass(String classname) {
@@ -701,47 +689,47 @@ public class PdbParserNEW {
 		}
 		//errHandler = null;
 		//thread = null;
-		dataTypeCache.clear();
+		if (dataTypeParser != null) {
+			dataTypeParser.clear();
+		}
 	}
 
-	boolean isCorrectKind(DataType dt, String kind) {
-		if (STRUCTURE_KIND.equals(kind)) {
+	boolean isCorrectKind(DataType dt, PdbXmlKind kind) {
+		if (kind == PdbXmlKind.STRUCTURE) {
 			return (dt instanceof Structure);
 		}
-		else if (UNION_KIND.equals(kind)) {
+		else if (kind == PdbXmlKind.UNION) {
 			return (dt instanceof Union);
 		}
 		return false;
 	}
 
-	Composite createComposite(String kind, String name) {
-		if (STRUCTURE_KIND.equals(kind)) {
+	Composite createComposite(PdbXmlKind kind, String name) {
+		if (kind == PdbXmlKind.STRUCTURE) {
 			return createStructure(name, 0);
 		}
-		else if (UNION_KIND.equals(kind)) {
+		else if (kind == PdbXmlKind.UNION) {
 			return createUnion(name);
 		}
-		return null;
+		throw new IllegalArgumentException("unsupported kind: " + kind);
 	}
 
 	Structure createStructure(String name, int length) {
 		return new StructureDataType(getCategory(name, true), stripNamespace(name), length,
-			program.getDataTypeManager());
+			dataMgr);
 	}
 
 	Union createUnion(String name) {
-		return new UnionDataType(getCategory(name, true), stripNamespace(name),
-			program.getDataTypeManager());
+		return new UnionDataType(getCategory(name, true), stripNamespace(name), dataMgr);
 	}
 
 	TypedefDataType createTypeDef(String name, DataType baseDataType) {
 		return new TypedefDataType(getCategory(name, true), stripNamespace(name), baseDataType,
-			program.getDataTypeManager());
+			dataMgr);
 	}
 
 	EnumDataType createEnum(String name, int length) {
-		return new EnumDataType(getCategory(name, true), stripNamespace(name), length,
-			program.getDataTypeManager());
+		return new EnumDataType(getCategory(name, true), stripNamespace(name), length, dataMgr);
 	}
 
 	void createString(boolean isUnicode, Address address, MessageLog log, TaskMonitor monitor) {
@@ -751,15 +739,15 @@ public class PdbParserNEW {
 
 	void createData(Address address, String datatype, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
-		WrappedDataType wrappedDt = findDataType(datatype, monitor);
+		WrappedDataType wrappedDt = getDataTypeParser().findDataType(datatype);
 		if (wrappedDt == null) {
 			log.appendMsg("Error: Failed to resolve datatype " + datatype + " at " + address);
 		}
-		else if (wrappedDt.isZeroLengthArray) {
+		else if (wrappedDt.isZeroLengthArray()) {
 			Msg.debug(this, "Did not apply zero length array data " + datatype + " at " + address);
 		}
 		else {
-			createData(address, wrappedDt.dataType, log, monitor);
+			createData(address, wrappedDt.getDataType(), log, monitor);
 		}
 	}
 
@@ -818,15 +806,15 @@ public class PdbParserNEW {
 				return;
 			}
 		}
+		Listing listing = program.getListing();
 		if (existingData == null) {
 			try {
-				program.getListing().clearCodeUnits(address, address.add(dataTypeLength - 1),
-					false);
+				listing.clearCodeUnits(address, address.add(dataTypeLength - 1), false);
 				if (dataType.getLength() == -1) {
-					program.getListing().createData(address, dataType, dataTypeLength);
+					listing.createData(address, dataType, dataTypeLength);
 				}
 				else {
-					program.getListing().createData(address, dataType);
+					listing.createData(address, dataType);
 				}
 			}
 			catch (Exception e) {
@@ -836,9 +824,8 @@ public class PdbParserNEW {
 		}
 		else if (isDataReplaceable(existingData)) {
 			try {
-				program.getListing().clearCodeUnits(address, address.add(dataTypeLength - 1),
-					false);
-				program.getListing().createData(address, dataType, dataTypeLength);
+				listing.clearCodeUnits(address, address.add(dataTypeLength - 1), false);
+				listing.createData(address, dataType, dataTypeLength);
 			}
 			catch (Exception e) {
 				log.appendMsg("Unable to replace " + dataType.getDisplayName() + " at 0x" +
@@ -960,245 +947,17 @@ public class PdbParserNEW {
 		return false;
 	}
 
-	DataType createPointer(DataType dt) {
-		return PointerDataType.getPointer(dt, program.getDataTypeManager());
-	}
+//	DataType createPointer(DataType dt) {
+//		return PointerDataType.getPointer(dt, program.getDataTypeManager());
+//	}
 
-	/**
-	 * Find a data-type by name in a case-sensitive manner.
-	 * @param monitor task monitor
-	 * @param dataTypeName data-type name (may be qualified by its namespace)
-	 * @return wrapped data-type or null if not found.
-	 * @throws CancelledException if operation is cancelled
-	 */
-	WrappedDataType findDataType(String datatype, TaskMonitor monitor) throws CancelledException {
-
-		// NOTE: previous case-insensitive search was removed since type names
-		// should be case-sensitive
-		datatype = datatype.trim();
-
-		if (datatype == null || datatype.length() == 0) {
-			return null;
-		}
-
-		if (NO_TYPE.equals(datatype)) {
-			return new WrappedDataType(VoidDataType.dataType, false); //TODO make it void?
-		}
-
-		String dataTypeName = datatype;
-
-		// Example type representations:
-		// char *[2][3]     pointer(array(array(char,3),2))
-		// char *[2][3] *   pointer(array(array(pointer(char),3),2))
-		// char  [0][2][3] *  array(array(array(pointer(char),3),2),0)
-		// char  [2][3] *    array(array(pointer(char),3),2)
-
-		int basePointerDepth = 0;
-		while (dataTypeName.endsWith("*")) {
-			++basePointerDepth;
-			dataTypeName = dataTypeName.substring(0, dataTypeName.length() - 1).trim();
-		}
-
-		boolean isZeroLengthArray = false;
-		List<Integer> arrayDimensions = null;
-		if (dataTypeName.endsWith("]")) {
-			arrayDimensions = new ArrayList<>();
-			dataTypeName = parseArrayDimensions(dataTypeName, arrayDimensions);
-			if (dataTypeName == null) {
-				Msg.error(this, "Failed to parse array dimensions: " + datatype);
-				return null;
-			}
-			isZeroLengthArray = (arrayDimensions.get(arrayDimensions.size() - 1) == 0);
-		}
-
-		int pointerDepth = 0;
-		if (arrayDimensions != null) {
-			while (dataTypeName.endsWith("*")) {
-				++pointerDepth;
-				dataTypeName = dataTypeName.substring(0, dataTypeName.length() - 1).trim();
-			}
-			if (pointerDepth != 0 && isZeroLengthArray) {
-				Msg.error(this, "Unsupported pointer to zero-length array: " + datatype);
-				return null;
-			}
-		}
-
-		// Find base data-type (name may include namespace, e.g., Foo::MyType)
-		// Primary cache (dataTypeCache) may contain namespace qualified data type
-
-		DataType dt = findBaseDataType(dataTypeName, monitor);
-		if (dt == null) {
-			return null; // base type not found
-		}
-
-		while (basePointerDepth-- != 0) {
-			dt = createPointer(dt);
-		}
-
-		if (arrayDimensions != null) {
-			dt = createArray(dt, arrayDimensions);
-		}
-
-		while (pointerDepth-- != 0) {
-			dt = createPointer(dt);
-		}
-
-		return new WrappedDataType(dt, isZeroLengthArray);
-	}
-
-	private DataType findBaseDataType(String dataTypeName, TaskMonitor monitor)
-			throws CancelledException {
-		DataType dt = getCachedDataType(dataTypeName);
-		if (dt != null) {
-			return dt;
-		}
-
-		// PDP category does not apply to built-ins which always live at the root
-
-		BuiltInDataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
-		dt = builtInDTM.getDataType(new DataTypePath(CategoryPath.ROOT, dataTypeName));
-		if (dt == null) {
-			dt = findDataTypeInArchives(dataTypeName, monitor);
-		}
-		return dt;
-	}
-
-	static class WrappedDataType {
-		final boolean isZeroLengthArray;
-		final DataType dataType;
-
-		WrappedDataType(DataType dataType, boolean isZeroLengthArray) {
-			this.dataType = dataType;
-			this.isZeroLengthArray = isZeroLengthArray;
-		}
-	}
-
-	private DataType createArray(DataType dt, List<Integer> arrayDimensions) {
-		int dimensionCount = arrayDimensions.size();
-		boolean zeroLengthArray = arrayDimensions.get(arrayDimensions.size() - 1) == 0;
-		if (zeroLengthArray) {
-			--dimensionCount;
-		}
-		for (int i = 0; i < dimensionCount; i++) {
-			int dimension = arrayDimensions.get(i);
-			dt = new ArrayDataType(dt, dimension, dt.getLength(), program.getDataTypeManager());
-		}
-		if (zeroLengthArray) {
-			// TODO: improve support for representing zero-length arrays
-			dt = new ArrayDataType(dt, 1, dt.getLength(), program.getDataTypeManager());
-		}
-		return dt;
-	}
-
-	private String parseArrayDimensions(String datatype, List<Integer> arrayDimensions) {
-		String dataTypeName = datatype;
-		boolean zeroLengthArray = false;
-		while (dataTypeName.endsWith("]")) {
-			if (zeroLengthArray) {
-				return null; // only last dimension may be 0
-			}
-			int rBracketPos = dataTypeName.lastIndexOf(']');
-			int lBracketPos = dataTypeName.lastIndexOf('[');
-			if (lBracketPos < 0) {
-				return null;
-			}
-			int dimension;
-			try {
-				dimension = Integer.parseInt(dataTypeName.substring(lBracketPos + 1, rBracketPos));
-				if (dimension < 0) {
-					return null; // invalid dimension
-				}
-			}
-			catch (NumberFormatException e) {
-				return null;
-			}
-			dataTypeName = dataTypeName.substring(0, lBracketPos).trim();
-			arrayDimensions.add(dimension);
-		}
-		return dataTypeName;
-	}
-
-	private DataType findDataTypeInArchives(String datatype, TaskMonitor monitor)
-			throws CancelledException {
-
-		DataTypeManager[] managers = service.getDataTypeManagers();
-		Arrays.sort(managers, new PdbDataTypeManagerComparator());
-		for (DataTypeManager manager : managers) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
-			DataType dt = DataTypeUtilities.findNamespaceQualifiedDataType(manager, datatype, null);
-			if (dt != null) {
-				cacheDataType(datatype, dt);
-				return dt;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Ensures that the data type managers are used in a particular order.
-	 * The order is as follows:
-	 *    1) the program's data type manager
-	 *    2) the built-in data type manager
-	 *    3) the open data type archives
-	 */
-	private class PdbDataTypeManagerComparator implements Comparator<DataTypeManager> {
-		@Override
-		public int compare(DataTypeManager dtm1, DataTypeManager dtm2) {
-			if (dtm1 == program.getDataTypeManager()) {
-				return -1;
-			}
-			if (dtm2 == program.getDataTypeManager()) {
-				return 1;
-			}
-			if (dtm1 instanceof BuiltInDataTypeManager) {
-				return -1;
-			}
-			if (dtm2 instanceof BuiltInDataTypeManager) {
-				return 1;
-			}
-			return 0;
-		}
-	}
-
-	DataType getCachedDataType(String key) {
-		return dataTypeCache.get(key);
-	}
-
-	void cacheDataType(String key, DataType dataType) {
-		dataTypeCache.put(key, dataType);
-	}
-
-	void addDataType(DataType dataType) {
-
-		if (dataType instanceof Composite) {
-			DataTypeComponent[] components = ((Composite) dataType).getComponents();
-			for (DataTypeComponent component : components) {
-				addDataType(component.getDataType());
-			}
-		}
-
-		DataTypeManager dataTypeMgr = program.getDataTypeManager();
-		ArrayList<DataType> oldDataTypeList = new ArrayList<>();
-		dataTypeMgr.findDataTypes(dataType.getName(), oldDataTypeList);
-		dataType = dataTypeMgr.addDataType(dataType,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-
-		cacheDataType(dataType.getName(), dataType);
-
-		for (DataType oldDataType : oldDataTypeList) {
-			if (oldDataType.getLength() == 0 &&
-				oldDataType.getClass().equals(dataType.getClass())) {
-				try {
-					dataTypeMgr.replaceDataType(oldDataType, dataType, false);
-				}
-				catch (DataTypeDependencyException e) {
-					// ignore
-				}
-			}
-		}
-	}
+//	DataType getCachedDataType(String key) {
+//		return dataTypeCache.get(key);
+//	}
+//
+//	void cacheDataType(String key, DataType dataType) {
+//		dataTypeCache.put(key, dataType);
+//	}
 
 	/**
 	 * Get the PDB root category path
@@ -1538,6 +1297,66 @@ public class PdbParserNEW {
 		}
 
 		return null;
+	}
+
+	PdbDataTypeParser getDataTypeParser() {
+		if (program == null) {
+			throw new AssertException("Parser was not constructed with program");
+		}
+		if (dataTypeParser == null) {
+			dataTypeParser = new PdbDataTypeParser(program.getDataTypeManager(), service, monitor);
+		}
+		return dataTypeParser;
+	}
+
+	void cacheDataType(String name, DataType dataType) {
+		getDataTypeParser().cacheDataType(name, dataType);
+	}
+
+	DataType getCachedDataType(String name) {
+		return getDataTypeParser().getCachedDataType(name);
+	}
+
+	void addDataType(DataType dataType) {
+		getDataTypeParser().addDataType(dataType);
+	}
+
+	WrappedDataType findDataType(String dataTypeName) throws CancelledException {
+		return getDataTypeParser().findDataType(dataTypeName);
+	}
+
+	public PdbMember getPdbXmlMember(XmlTreeNode node) {
+		return new PdbXmlMember(node);
+	}
+
+	public PdbXmlMember getPdbXmlMember(XmlElement element) {
+		return new PdbXmlMember(element);
+	}
+
+	class PdbXmlMember extends DefaultPdbMember {
+
+		final PdbXmlKind kind;
+
+		PdbXmlMember(XmlTreeNode node) {
+			this(node.getStartElement());
+		}
+
+		PdbXmlMember(XmlElement element) {
+			super(SymbolUtilities.replaceInvalidChars(element.getAttribute("name"), false),
+				element.getAttribute("datatype"),
+				XmlUtilities.parseInt(element.getAttribute("offset")), dataTypeParser);
+			kind = PdbXmlKind.parse(element.getAttribute("kind"));
+		}
+
+		/**
+		 * Kind of member record.  Only those records with a Member kind
+		 * are currently considered for inclusion within a composite.
+		 * @return PDB kind
+		 */
+		public PdbXmlKind getKind() {
+			return kind;
+		}
+
 	}
 
 }

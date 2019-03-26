@@ -23,9 +23,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 
-public class EnumValuePartitionerTest extends AbstractGenericTest {
+public class EnumValuePartitionerTest extends AbstractGTest {
 
 	@Test
 	public void testDisjointValues() {

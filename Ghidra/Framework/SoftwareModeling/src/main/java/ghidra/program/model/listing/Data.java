@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.listing;
 
+import java.util.List;
+
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -23,7 +25,7 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 
 /**
- * Interface for interacting with data at an address in a program. 
+ * Interface for interacting with data at an address in a program.
  */
 public interface Data extends CodeUnit, Settings {
 
@@ -35,7 +37,7 @@ public interface Data extends CodeUnit, Settings {
 
 	/**
 	 * Get the class used to express the value of this data.
-	 * NOTE: This determination is made based upon data type 
+	 * NOTE: This determination is made based upon data type
 	 * and settings only and does not examine memory bytes
 	 * which are used to construct the data value object.
 	 * @return value class or null if a consistent class is not
@@ -74,7 +76,7 @@ public interface Data extends CodeUnit, Settings {
 	public DataType getDataType();
 
 	/**
-	 * If the dataType is a typeDef, then the typeDef's base type is returned, 
+	 * If the dataType is a typeDef, then the typeDef's base type is returned,
 	 * otherwise, the datatType is returned.
 	 */
 	public DataType getBaseDataType();
@@ -201,8 +203,21 @@ public interface Data extends CodeUnit, Settings {
 	Data getComponentAt(int offset);
 
 	/**
+	 * Returns a list of all the immediate child components that contain the byte at the
+	 * given offset.
+	 * <P>
+	 * For a union, this will return all the components (if the offset is 0).  For a structure,
+	 * this will be either a single non bit field element or a list of bit field elements.
+	 * @param offset the amount to add to this data items address to get the
+	 * address of the requested data item.
+	 * @return a list of all the immediate child components that contain the byte at the
+	 * given offset.
+	 */
+	List<Data> getComponentsContaining(int offset);
+
+	/**
 	 * Returns the primitive component that is at this offset.  This is useful
-	 * for data items are made up of multiple layers of other data items. This 
+	 * for data items are made up of multiple layers of other data items. This
 	 * method immediately goes to the lowest level data item.
 	 */
 	Data getPrimitiveAt(int offset);

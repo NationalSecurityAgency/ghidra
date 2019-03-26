@@ -390,7 +390,7 @@ public class DBHandle {
 	/**
 	 * Returns true if transaction is currently active
 	 */
-	protected boolean isTransactionActive() {
+	public boolean isTransactionActive() {
 		return txStarted;
 	}
 

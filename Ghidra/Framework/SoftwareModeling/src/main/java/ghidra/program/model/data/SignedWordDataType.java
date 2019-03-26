@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +33,12 @@ public class SignedWordDataType extends AbstractIntegerDataType {
 		super("sword", true, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Signed Word (sdw, 2-bytes)";
 	}
 
+	@Override
 	public int getLength() {
 		return 2;
 	}
@@ -48,11 +49,12 @@ public class SignedWordDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return WordDataType.dataType;
+	public WordDataType getOppositeSignednessDataType() {
+		return WordDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public SignedWordDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

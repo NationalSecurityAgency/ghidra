@@ -997,13 +997,14 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	protected void insert(int rowIndex, DataType dataType, int length, String name, String comment,
-			int numCopies) throws InvalidDataTypeException {
+	protected void insert(int rowIndex, DataType dataType, int length, int numCopies)
+			throws InvalidDataTypeException {
 		checkIsAllowableDataType(dataType, true);
 		int componentOrdinal = convertRowToOrdinal(rowIndex);
 		try {
-			((Structure) viewComposite).insert(componentOrdinal, dataType, length, name, comment,
-				numCopies);
+			for (int i = 0; i < numCopies; i++) {
+				viewComposite.insert(componentOrdinal, dataType, length);
+			}
 			if (rowIndex <= row) {
 				row += numCopies;
 			}
@@ -1026,9 +1027,6 @@ class StructureEditorModel extends CompEditorModel {
 		return struct.setFlexibleArrayComponent(dt, dtc.getFieldName(), dtc.getComment());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModel#replace(int, ghidra.program.model.data.DataType, int, java.lang.String, java.lang.String)
-	 */
 	@Override
 	protected DataTypeComponent replace(int rowIndex, DataType dataType, int length, String name,
 			String comment) throws InvalidDataTypeException {

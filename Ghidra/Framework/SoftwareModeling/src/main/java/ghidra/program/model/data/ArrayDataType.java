@@ -169,7 +169,7 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String name) throws InvalidNameException {
 		// unsupported - ignore
 	}
 

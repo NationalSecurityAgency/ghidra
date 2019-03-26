@@ -418,4 +418,9 @@ public interface DataType {
 	 */
 	public void setLastChangeTimeInSourceArchive(long lastChangeTimeInSourceArchive);
 
+	/**
+	 * Returns the DataOrganization associated with this data-type
+	 */
+	public DataOrganization getDataOrganization();
+
 }

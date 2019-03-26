@@ -457,8 +457,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract DataTypeComponent insert(int rowIndex, DataType dataType, int length,
 			String name, String comment) throws InvalidDataTypeException;
 
-	protected abstract void insert(int rowIndex, DataType dataType, int length, String name,
-			String comment, int numCopies) throws InvalidDataTypeException;
+	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies) throws InvalidDataTypeException;
 
 	/**
 	 * Add a DataType component into to an editable structure
@@ -479,7 +478,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return;
 		}
 
-		insert(rowIndex, dataType, dtLen, null, null, multiple);
+		insert(rowIndex, dataType, dtLen, multiple);
 	}
 
 	/* (non-Javadoc)

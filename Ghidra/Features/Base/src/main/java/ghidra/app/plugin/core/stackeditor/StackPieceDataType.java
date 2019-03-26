@@ -24,8 +24,6 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.lang.UnsupportedOperationException;
-
 public class StackPieceDataType extends DataTypeImpl {
 
 	private final Variable variable;
@@ -66,13 +64,13 @@ public class StackPieceDataType extends DataTypeImpl {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String name) throws InvalidNameException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void setNameAndCategory(CategoryPath path, String name) throws InvalidNameException,
-			DuplicateNameException {
+	public void setNameAndCategory(CategoryPath path, String name)
+			throws InvalidNameException, DuplicateNameException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -163,6 +163,8 @@
       be specified.<BR>
       </P>
     </BLOCKQUOTE>
+    
+    <BLOCKQUOTE>
 
     <H3>Unaligned Structures</H3>
 
@@ -301,7 +303,9 @@
         <IMG alt="" src="images/UnionEditorAligned.png">
       </DIV>
     </BLOCKQUOTE>
-
+    
+    </BLOCKQUOTE>
+    
 	<H2><A name="Structure_Editor_Flex_Array"></A>Flexible Array Component</H2>
 
     <P>A structure may be defined with a trailing flexible array component which corresponds to
@@ -321,7 +325,17 @@
     be reflected in decompilation results.  Its primary purpose if to reflect the C source definition
     of a structure with correct alignment and structure sizing.</P>
     
-    <DIV style="text-align: center;">
+    <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <SPAN style=
+      "font-style: italic;">no C #pragma pack attribute</SPAN> on the structure or union is to
+      choose <SPAN style="font-weight: bold;">none</SPAN>. The equivalent for a C code attribute of
+      <SPAN style="font-style: italic;">#pragma pack()</SPAN> without a value is to specify a <SPAN
+      style="font-weight: bold;">pack value</SPAN> of <SPAN style="font-weight: bold;">1</SPAN>.
+      The equivalent of <SPAN style="font-style: italic;"># pragma</SPAN> <SPAN style=
+      "font-style: italic;">pack(4)</SPAN> is to specify a <SPAN style="font-weight: bold;">pack
+      value</SPAN> of 4.<BR>
+      </P>
+      
+      <DIV style="text-align: center;">
         <IMG alt="" src="images/StructureEditorWithFlexArray.png"><BR>
         <BR>
       </DIV>
@@ -333,6 +347,8 @@
       menu for the component table. To display the popup menu, right mouse click on the component
       table. There are also short-cut keys associated with each of the edit actions.</P>
     </BLOCKQUOTE>
+
+	<BLOCKQUOTE>
 
     <H3><A name="Structure_Editor_Insert_Undefined_Byte"></A> <IMG src="images/Plus.png" alt="">
     Insert Undefined Byte</H3>
@@ -557,6 +573,7 @@
       is created and a component containing it replaces the selected components.</P>
     </BLOCKQUOTE><BR>
      
+    </BLOCKQUOTE> 
 
     <H2><A name="Structure_Editor_Component_Fields"></A>Component Fields</H2>
 

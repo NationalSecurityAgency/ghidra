@@ -15,7 +15,8 @@
  */
 package ghidra.util.data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
@@ -45,7 +46,12 @@ public class DataTypeParser {
 		/**
 		 * Only Fixed-length data types and string data types
 		 */
-		STRINGS_AND_FIXED_LENGTH
+		STRINGS_AND_FIXED_LENGTH,
+		/**
+		 * Only Enums, Integer types and those Typedefs based on them
+		 * for use as a bitfield base datatype
+		 */
+		BITFIELD_USE
 	}
 
 	private DataTypeManager sourceDataTypeManager;			// may be null
@@ -57,7 +63,7 @@ public class DataTypeParser {
 	 * A constructor that does not use the source or destination data type managers.  In terms of
 	 * the source data type manager, this means that all data type managers will be used when
 	 * resolving data types.
-	 * 
+	 *
 	 * @param dataTypeManagerService
 	 * @param allowedTypes
 	 */
@@ -73,7 +79,7 @@ public class DataTypeParser {
 	 * @param destinationDataTypeManager target data-type manager, or null
 	 * @param dataTypeManagerService data-type manager tool service, or null
 	 * @param allowedTypes constrains which data-types may be parsed
-	 * 
+	 *
 	 * @see #DataTypeParser(DataTypeManagerService, AllowedDataTypes)
 	 */
 	public DataTypeParser(DataTypeManager sourceDataTypeManager,
@@ -118,7 +124,7 @@ public class DataTypeParser {
 	 * Parse a data-type string specification using the specified baseDatatype.
 	 * @param suggestedBaseDataType base data-type (may be null), this will be used as the base data-type if
 	 * its name matches the base name in the specified dataTypeString.
-	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array decorations to be applied.  
+	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array decorations to be applied.
 	 * The string may start with the baseDataType's name.
 	 * @return parsed data-type or null if not found
 	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified maxSize
@@ -178,6 +184,12 @@ public class DataTypeParser {
 			case STRINGS_AND_FIXED_LENGTH:
 				if (dt.getLength() < 0 && !(dt instanceof AbstractStringDataType)) {
 					throw new InvalidDataTypeException("fixed-length or string data-type required");
+				}
+				break;
+			case BITFIELD_USE:
+				if (!BitFieldDataType.isValidBaseDataType(dt)) {
+					throw new InvalidDataTypeException(
+						"enum or integer derived data-type required");
 				}
 				break;
 			case ALL:
@@ -334,8 +346,7 @@ public class DataTypeParser {
 
 		// see if one of the data types belongs to the program or the built in types, where the
 		// program is more important than the builtin
-		for (Iterator<DataType> iter = dtList.iterator(); iter.hasNext();) {
-			DataType dataType = iter.next();
+		for (DataType dataType : dtList) {
 			DataTypeManager manager = dataType.getDataTypeManager();
 			if (manager instanceof BuiltInDataTypeManager) {
 				programDataType = dataType;
@@ -350,8 +361,7 @@ public class DataTypeParser {
 			return null;
 		}
 
-		for (Iterator<DataType> iter = dtList.iterator(); iter.hasNext();) {
-			DataType dataType = iter.next();
+		for (DataType dataType : dtList) {
 			// just one non-matching case means that we can't use the program's data type
 			if (!programDataType.isEquivalent(dataType)) {
 				return null;

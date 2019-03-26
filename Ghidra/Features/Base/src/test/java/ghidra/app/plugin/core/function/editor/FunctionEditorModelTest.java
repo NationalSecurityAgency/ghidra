@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -39,6 +40,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 	private volatile boolean dataChangeCalled;
 	private Structure bigStruct;
 	private ProgramDB program;
+	private DataTypeManagerService service;
 	private volatile boolean tableRowsChanged;
 
 	class MyModelChangeListener implements ModelChangeListener {
@@ -61,7 +63,6 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		program = builder.getProgram();
 		bigStruct = new StructureDataType("bigStruct", 20);
 		resolveBigStruct();
-
 		model = new FunctionEditorModel(null /* use default parser*/, fun);
 		model.setModelChangeListener(new MyModelChangeListener());
 	}
@@ -73,7 +74,6 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		Function fun = builder.createEmptyFunction("bob", "1000", 20, new VoidDataType());
 		program = builder.getProgram();
 		resolveBigStruct();
-
 		model = new FunctionEditorModel(null /* use default parser*/, fun);
 		model.setModelChangeListener(new MyModelChangeListener());
 	}
@@ -81,7 +81,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 	private void resolveBigStruct() {
 		int txId = program.startTransaction("Resolve bigStruct");
 		try {
-			program.getDataManager().resolve(bigStruct, null);
+			program.getDataTypeManager().resolve(bigStruct, null);
 		}
 		finally {
 			program.endTransaction(txId, true);
@@ -972,9 +972,9 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertEquals("Stack[0x4]:1", param.getStorage().toString());
 
 		DataType struct = new StructureDataType("bigStruct", 100);
-		DataType structPtr = PointerDataType.getPointer(struct, program.getDataManager());
+		DataType structPtr = PointerDataType.getPointer(struct, program.getDataTypeManager());
 		DataType voidPtr =
-			PointerDataType.getPointer(VoidDataType.dataType, program.getDataManager());
+			PointerDataType.getPointer(VoidDataType.dataType, program.getDataTypeManager());
 
 		model.setCallingConventionName(CompilerSpec.CALLING_CONVENTION_thiscall);
 
@@ -1081,9 +1081,10 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertEquals("CL:1", param.getStorage().toString());
 
 		DataType struct = new StructureDataType("bigStruct", 100);
-		DataType structPtr = PointerDataType.getPointer(struct, program.getDataManager());
+		DataType structPtr = PointerDataType.getPointer(struct, program.getDataTypeManager());
+
 		DataType voidPtr =
-			PointerDataType.getPointer(VoidDataType.dataType, program.getDataManager());
+			PointerDataType.getPointer(VoidDataType.dataType, program.getDataTypeManager());
 
 		model.setCallingConventionName(CompilerSpec.CALLING_CONVENTION_thiscall);
 
@@ -1722,7 +1723,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		int txId = program.startTransaction("Add TypeDef jjjjjj");
 		try {
 			DataType dt = new TypedefDataType("jjjjjj", ByteDataType.dataType);
-			program.getDataManager().resolve(dt, null);
+			program.getDataTypeManager().resolve(dt, null);
 		}
 		finally {
 			program.endTransaction(txId, true);
@@ -1919,4 +1920,5 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 	private String getSignatureText() {
 		return model.getFunctionSignatureTextFromModel();
 	}
+
 }

@@ -19,46 +19,76 @@ import java.util.*;
 
 import org.xml.sax.SAXParseException;
 
+import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.data.*;
+import ghidra.graph.*;
+import ghidra.graph.algo.GraphNavigator;
+import ghidra.graph.jung.JungDirectedGraph;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
-import ghidra.xml.*;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 public class ApplyDataTypes {
 
 	private PdbParserNEW pdbParser;
-	private boolean isClasses;
 	private MessageLog log;
-	private List<XmlTreeNode> todo = new ArrayList<>();
+	private HashMap<String, CompositeDefinition> compositeQueue = new HashMap<>();
 
 	/**
-	 * Construct a PDB XML datatype or class parser.  This will pre-process each datatype element and cache
-	 * a properly sized composite for subsequent type reference.  The full parse will not be completed
-	 * until the {@link #applyTo(TaskMonitor)} method is invoked after all types and classes have been
-	 * pre-processed or applied.
+	 * Construct a PDB XML datatype or class parser.  The {@link #preProcessDataTypeList(XmlPullParser, boolean, TaskMonitor)}
+	 * method must be used to injest member elements from the pull parser to populate the set of type to be parsed. 
+	 * The full parse will not be completed until the {@link #applyTo(TaskMonitor)} method is invoked after all types 
+	 * and classes have been pre-processed or applied.
 	 * @param pdbParser PDB parser object
 	 * @param xmlParser XML parser positioned immediately after datatypes or classes element
 	 * @param isClasses true if processing classes, false if composite datatypes
-	 * @param monitor task progress monitor
 	 * @param log message log used during construction and subsequent method invocations
 	 * @throws CancelledException if monitor is cancelled
 	 * @throws SAXParseException PDB XML parse failure
 	 */
-	ApplyDataTypes(PdbParserNEW pdbParser, XmlPullParser xmlParser, boolean isClasses,
-			TaskMonitor monitor, MessageLog log) throws CancelledException, SAXParseException {
+	ApplyDataTypes(PdbParserNEW pdbParser, MessageLog log)
+			throws CancelledException, SAXParseException {
 		this.pdbParser = pdbParser;
-		this.isClasses = isClasses;
 		this.log = log;
-
-		// Build todo list and cache preliminary composite definitions
-		preProcessDataTypeList(xmlParser, monitor);
 	}
 
 	void dispose() {
-		todo.clear();
+		compositeQueue.clear();
+	}
+
+	private List<CompositeDefinition> getCompositeDefinitionsInpostDependencyOrder(
+			TaskMonitor monitor) {
+
+		JungDirectedGraph<CompositeDefinition, GEdge<CompositeDefinition>> graph =
+			new JungDirectedGraph<>();
+		for (CompositeDefinition compositeDefinition : compositeQueue.values()) {
+			graph.addVertex(compositeDefinition);
+			for (PdbMember m : compositeDefinition.memberList) {
+				String name = m.memberDataTypeName;
+				int index = name.indexOf('[');
+				if (index > 0) {
+					name = name.substring(0, index).trim();
+				}
+				CompositeDefinition child = compositeQueue.get(name);
+				if (child != null) {
+					graph.addEdge(new DefaultGEdge<>(compositeDefinition, child));
+				}
+			}
+		}
+
+// FIXME:		GraphAlgorithms.findCircuits(graph, monitor);
+
+		List<CompositeDefinition> verticesInPostOrder =
+			GraphAlgorithms.getVerticesInPostOrder(graph, GraphNavigator.topDownNavigator());
+
+		return verticesInPostOrder;
 	}
 
 	/**
@@ -68,75 +98,67 @@ public class ApplyDataTypes {
 	 */
 	void buildDataTypes(TaskMonitor monitor) throws CancelledException {
 
+		monitor.setMessage("Order PDB datatypes... ");
+
+		List<CompositeDefinition> verticesInPostOrder =
+			getCompositeDefinitionsInpostDependencyOrder(monitor);
+
 		monitor.setMessage("Building PDB datatypes... ");
 
-		for (XmlTreeNode node : todo) {
+		for (CompositeDefinition compositeDefinition : verticesInPostOrder) {
 			monitor.checkCanceled();
 
-			XmlElement elem = node.getStartElement();
-			String name = SymbolUtilities.replaceInvalidChars(elem.getAttribute("name"), false);
-
-			String kind = isClasses ? PdbParserNEW.STRUCTURE_KIND : elem.getAttribute("kind");
-			int length = XmlUtilities.parseInt(elem.getAttribute("length"));
-
 			// namespace qualified name used for cache lookups
-			DataType cachedDataType = pdbParser.getCachedDataType(name);
+			DataType cachedDataType = pdbParser.getCachedDataType(compositeDefinition.name);
 			if (!(cachedDataType instanceof Composite) ||
-				!cachedDataType.getCategoryPath().equals(pdbParser.getCategory(name, true)) ||
-				!pdbParser.isCorrectKind(cachedDataType, kind)) {
-				log.appendMsg("Error: Conflicting data type name: " + name);
+				!cachedDataType.getCategoryPath().equals(
+					pdbParser.getCategory(compositeDefinition.name, true)) ||
+				!pdbParser.isCorrectKind(cachedDataType, compositeDefinition.kind)) {
+				log.appendMsg("Error: Conflicting data type name: " + compositeDefinition.name);
 				continue;
 			}
 			Composite composite = (Composite) cachedDataType;
 			PdbUtil.clearComponents(composite);
 
-			if (!CompositeMember.applyDataTypeMembers(pdbParser, composite, length, node,
-				monitor)) {
+			if (!DefaultCompositeMember.applyDataTypeMembers(composite, compositeDefinition.isClass,
+				compositeDefinition.length, getNormalMembersOnly(compositeDefinition),
+				msg -> Msg.warn(this, msg), monitor)) {
 				PdbUtil.clearComponents(composite);
 			}
 
-			// Do not adjust size of defined structure contains flex array at specified offset
-			boolean hasFlexibleArray = false;
-			if (composite instanceof Structure) {
-				hasFlexibleArray = ((Structure) composite).hasFlexibleArrayComponent();
-			}
+//			// Do not adjust size of defined structure contains flex array at specified offset
+//			boolean hasFlexibleArray = false;
+//			if (composite instanceof Structure) {
+//				hasFlexibleArray = ((Structure) composite).hasFlexibleArrayComponent();
+//			}
 
-			if (!isClasses && !hasFlexibleArray) {
-				PdbUtil.ensureSize(length, composite, log);
-			}
+// FIXME: This should be handled during finalization of composite layout 
+//			if (!isClass && !hasFlexibleArray) {
+//				PdbUtil.ensureSize(length, composite, log);
+//			}
 		}
 	}
 
-	/**
-	 * check to see if this data type is actually a class
-	 */
-	private boolean isDataTypeClass(XmlTreeNode node, TaskMonitor monitor)
-			throws CancelledException {
-		if (!node.getStartElement().getName().equals("datatype")) {
-			return false;
+	private List<PdbXmlMember> getNormalMembersOnly(CompositeDefinition compositeDefinition) {
+		if (compositeDefinition.hasNormalMembersOnly) {
+			return compositeDefinition.memberList;
 		}
-		for (int i = 0; i < node.getChildCount(); ++i) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
-			XmlTreeNode childNode = node.getChildAt(i);
-			XmlElement child = childNode.getStartElement();
-			String datatype = child.getAttribute("datatype");
-			if ("Function".equals(datatype)) {
-				return true;
+		ArrayList<PdbXmlMember> list = new ArrayList<>();
+		for (PdbXmlMember m : compositeDefinition.memberList) {
+			if (m.kind == PdbXmlKind.MEMBER) {
+				list.add(m);
 			}
 		}
-		return false;
+		return list;
 	}
 
-	private void preProcessDataTypeList(XmlPullParser xmlParser, TaskMonitor monitor)
+	void preProcessDataTypeList(XmlPullParser xmlParser, boolean isClasses, TaskMonitor monitor)
 			throws SAXParseException, CancelledException {
 
 		monitor.setMessage("Pre-processing PDB datatypes...");
 
 		String elementType = isClasses ? "classes" : "datatypes";
 
-		Map<String, XmlTreeNode> todoNames = new HashMap<>();
 		while (xmlParser.hasNext()) {
 			monitor.checkCanceled();
 			XmlElement elem = xmlParser.peek();
@@ -144,50 +166,106 @@ public class ApplyDataTypes {
 				xmlParser.next();
 				break;
 			}
-			String name = SymbolUtilities.replaceInvalidChars(elem.getAttribute("name"), false);
-			XmlTreeNode node = new XmlTreeNode(xmlParser);
-			if (todoNames.containsKey(name)) {
-				XmlTreeNode todoNode = todoNames.get(name);
-				if (elem.toString().equals(todoNode.getStartElement().toString())) {
-					//TODO log.appendMsg("Duplicate data type defined in PDB: "+name);
-				}
-				else {
-					//TODO log.appendMsg("Data type re-definition ignored: "+name);
-				}
-			}
-			else {
-				if (isClasses || isDataTypeClass(node, monitor)) {
-					pdbParser.predefineClass(name);
-				}
-				todoNames.put(name, node);
 
-				String kind = isClasses ? PdbParserNEW.STRUCTURE_KIND : elem.getAttribute("kind");
+			CompositeDefinition compositeDefinition = new CompositeDefinition(xmlParser);
 
-				if (pdbParser.getCachedDataType(name) != null) {
-					log.appendMsg(
-						"Error: Data type name collision - unable to define " + kind + ": " + name);
+			if (!compositeQueue.containsKey(compositeDefinition.name)) {
+				// could be problematic if duplicate names represent two different composites
+				if (compositeDefinition.isClass) {
+					pdbParser.predefineClass(compositeDefinition.name);
+				}
+				compositeQueue.put(compositeDefinition.name, compositeDefinition);
+
+				if (pdbParser.getCachedDataType(compositeDefinition.name) != null) {
+					log.appendMsg("Error: Data type name collision - unable to define " +
+						compositeDefinition.kind.getCamelName() + ": " + compositeDefinition.name);
 					continue;
 				}
 
-				todo.add(node);
-
+//				/** Can this be avoided if using dependency ordering ??
 				// NOTE: currently composite may grow if zero-length array used
 				// since we must currently allocate one element since 0-length array 
 				// not yet supported.
-				Composite composite = pdbParser.createComposite(kind, name);
+				Composite composite =
+					pdbParser.createComposite(compositeDefinition.kind, compositeDefinition.name);
 				if (composite == null) {
-					log.appendMsg("Unsupported datatype kind (" + kind + "): " + name);
+					log.appendMsg("Unsupported datatype kind (" + compositeDefinition.kind + "): " +
+						compositeDefinition.name);
 					continue;
 				}
-				if (!isClasses) {
-					int length = XmlUtilities.parseInt(elem.getAttribute("length"));
-					PdbUtil.ensureSize(length, composite, log);
-				}
-				pdbParser.cacheDataType(name, composite);
+//								if (!isClasses) {
+//									int length = XmlUtilities.parseInt(elem.getAttribute("length"));
+//									PdbUtil.ensureSize(length, composite, log);
+//								}
+				pdbParser.cacheDataType(compositeDefinition.name, composite);
+//				**/
 			}
 		}
-		todoNames.clear();//release memory...
-		todoNames = null;
+	}
+
+	private class CompositeDefinition {
+		final boolean isClass;
+		final PdbXmlKind kind;
+		final String name;
+		final int length;
+		final List<PdbXmlMember> memberList = new ArrayList<>();
+		final boolean hasNormalMembersOnly;
+
+		CompositeDefinition(XmlPullParser parser) {
+			XmlElement startElement = parser.start();
+			name = SymbolUtilities.replaceInvalidChars(startElement.getAttribute("name"), false);
+			length = XmlUtilities.parseInt(startElement.getAttribute("length"));
+			String kindStr = startElement.getAttribute("kind");
+			boolean membersOnly = true;
+			XmlElement element = parser.peek();
+			while (element != null && element.isStart()) {
+				element = parser.start("member");
+				PdbXmlMember pdbXmlMember = pdbParser.getPdbXmlMember(element);
+				memberList.add(pdbXmlMember);
+				membersOnly &= (pdbXmlMember.kind == PdbXmlKind.MEMBER);
+				parser.end(element);
+				element = parser.peek();
+			}
+			parser.end(startElement);
+			this.hasNormalMembersOnly = membersOnly;
+			this.isClass = "class".equals(startElement.getName()) || isInferredClass(kindStr);
+			this.kind = isClass ? PdbXmlKind.STRUCTURE : PdbXmlKind.parse(kindStr);
+		}
+
+		private boolean isInferredClass(String kindStr) {
+
+			for (PdbXmlMember m : memberList) {
+				if (m.kind == PdbXmlKind.MEMBER) {
+					continue;
+				}
+				if ("void *".equals(m.memberDataTypeName)) {
+					return true;
+				}
+				if ("Function".equals(m.memberDataTypeName)) { // ??
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return name.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CompositeDefinition other = (CompositeDefinition) obj;
+			return isClass == other.isClass && kind == other.kind && length == other.length &&
+				SystemUtilities.isEqual(name, other.name);
+		}
+
 	}
 
 }

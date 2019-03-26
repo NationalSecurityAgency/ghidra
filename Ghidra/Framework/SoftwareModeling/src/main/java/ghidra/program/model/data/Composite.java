@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.util.exception.InvalidInputException;
-
 /**
  * Interface for common methods in Structure and Union
  */
@@ -95,7 +93,8 @@ public interface Composite extends DataType {
 	public abstract DataTypeComponent[] getComponents();
 
 	/**
-	 * Adds a new datatype to the end of this composite.
+	 * Adds a new datatype to the end of this composite.  This is the preferred method
+	 * to use for adding components to an aligned structure for fixed-length dataTypes.
 	 * @param dataType the datatype to add.
 	 * @return the DataTypeComponent created.
 	 * @throws IllegalArgumentException if the specified data type is not 
@@ -106,21 +105,24 @@ public interface Composite extends DataType {
 	public DataTypeComponent add(DataType dataType);
 
 	/**
-	 * Adds a new datatype to the end of this composite.
+	 * Adds a new datatype to the end of this composite. This is the preferred method
+	 * to use for adding components to an aligned structure for dynamic dataTypes such as 
+	 * strings whose length must be specified.
 	 * @param dataType the datatype to add.
 	 * @param length the length to associate with the datatype.
+	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
 	 * @return the componentDataType created.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
 	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to be added to this composite data type.
+	 * allowed to be added to this composite data type or an invalid length
+	 * is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to add dt1 to dt2 since this would cause a cyclic dependency.
 	 */
 	public DataTypeComponent add(DataType dataType, int length);
 
 	/**
-	 * Adds a new datatype to the end of this composite.
+	 * Adds a new datatype to the end of this composite.  This is the preferred method
+	 * to use for adding components to an aligned structure for fixed-length dataTypes.
 	 * @param dataType the datatype to add.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
@@ -133,16 +135,34 @@ public interface Composite extends DataType {
 	public DataTypeComponent add(DataType dataType, String name, String comment);
 
 	/**
-	 * Adds a new datatype to the end of this composite.
+	 * Adds a new bitfield to the end of this composite.  This method is intended 
+	 * to be used with aligned structures/unions only where the bitfield will be 
+	 * appropriately packed.  The minimum storage storage byte size will be applied.
+	 * It will not provide useful results within unaligned composites.
+	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
+	 * @param bitSize the bitfield size in bits
+	 * @param componentName the field name to associate with this component.
+	 * @param comment the comment to associate with this component.
+	 * @return the componentDataType created whose associated data type will
+	 * be BitFieldDataType.
+	 * @throws InvalidDataTypeException if the specified data type is
+	 * not a valid base type for bitfields.
+	 */
+	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
+			String comment) throws InvalidDataTypeException;
+
+	/**
+	 * Adds a new datatype to the end of this composite.  This is the preferred method
+	 * to use for adding components to an aligned structure for dynamic dataTypes such as 
+	 * strings whose length must be specified.
 	 * @param dataType the datatype to add.
 	 * @param length the length to associate with the datatype.
+	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
 	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to be added to this composite data type.
+	 * allowed to be added to this composite data type or an invalid length is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to add dt1 to dt2 since this would cause a cyclic dependency.
 	 */
@@ -159,6 +179,7 @@ public interface Composite extends DataType {
 	 * allowed to be inserted into this composite data type.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
+	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent insert(int ordinal, DataType dataType);
 
@@ -169,15 +190,54 @@ public interface Composite extends DataType {
 	 * @param ordinal the ordinal where the new datatype is to be inserted.	
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
+	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
 	 * @return the componentDataType created.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
 	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to be inserted into this composite data type.
+	 * allowed to be inserted into this composite data type or an invalid 
+	 * length is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
+	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length);
+
+	/**
+	 * Inserts a new bitfield at the specified ordinal position in this composite. 
+	 * Within an aligned composites the specified byteWidth and bitOffset will be ignored 
+	 * while bitOffset is always ignored for unions.
+	 * The component length will be computed based upon the specified parameters and will 
+	 * be reduced from byteWidth to its minimal size for the new component.
+	 * <p>
+	 * For unaligned structures, a component shift will only occur if the bitfield placement 
+	 * conflicts with another component.  If no conflict occurs, the bitfield will be placed 
+	 * at the specified location consuming any DEFAULT components as needed.  When a conflict 
+	 * does occur a shift will be performed at the ordinal position based upon the specified 
+	 * byteWidth.  When located onto existing bitfields they will be packed together 
+	 * provided they do not conflict, otherwise the conflict rule above applies.
+	 * <p>
+	 * Supported packing for little-endian fills lsb first, whereas big-endian fills msb first.
+	 * Insertion behavior may not work as expected if packing rules differ from this.
+	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param byteWidth the storage unit width which contains the bitfield.  Must be large
+	 * enough to contain the specified bitSize and corresponding bitOffset.  The actual 
+	 * component size used will be recomputed during insertion.
+	 * @param bitOffset corresponds to the bitfield left-shift amount with the storage 
+	 * unit when viewed as big-endian.  The final offset may be reduced based upon
+	 * the minimal storage size determined during insertion.  
+	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
+	 * @param bitSize the bitfield size in bits
+	 * @param componentName the field name to associate with this component.
+	 * @param comment the comment to associate with this component.
+	 * @return the componentDataType created whose associated data type will
+	 * be BitFieldDataType.
+	 * @throws InvalidDataTypeException if the specified data type is
+	 * not a valid base type for bitfields.
+	 * @throws ArrayIndexOutOfBoundsException if ordinal is less than 0 or greater than the 
+	 * current number of components.
+	 */
+	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
+			DataType baseDataType, int bitSize, String componentName, String comment)
+			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException;
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
@@ -186,15 +246,16 @@ public interface Composite extends DataType {
 	 * @param ordinal the ordinal where the new datatype is to be inserted.	
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
+	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
 	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to be inserted into this composite data type.
+	 * allowed to be inserted into this composite data type or an invalid length
+	 * is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
+	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
 			String comment);
@@ -204,14 +265,18 @@ public interface Composite extends DataType {
 	 * <BR>Note: For an aligned structure the delete will have no effect if the
 	 * ordinal position is a component that provides alignment padding.
 	 * @param ordinal the ordinal of the component to be deleted.
+	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public void delete(int ordinal);
 
 	/**
 	 * Deletes the components at the given ordinal positions.
-	 * <BR>Note: For an aligned structure the delete will have no effect if the
+	 * <BR>Note 1: For an aligned structure the delete will have no effect if the
 	 * ordinal position is a component that provides alignment padding.
+	 * <BR>Note 2: Removal of bitfields from an unaligned structure will 
+	 * not shift other components with vacated bytes reverting to undefined.
 	 * @param ordinals the ordinals of the component to be deleted.
+	 * @throws ArrayIndexOutOfBoundsException if any specified component ordinal is out of bounds
 	 */
 	public void delete(int[] ordinals);
 
@@ -271,10 +336,10 @@ public interface Composite extends DataType {
 	 * become an internally aligned data type.
 	 * <br>Note: If a component's data type has a specific external alignment, it will 
 	 * override this value if necessary.
-	 * @param packingValue the new packing value or 0NOT_PACKING.
-	 * @throws InvalidInputException if the packingValue isn't valid.
+	 * @param packingValue the new packing value or 0 for NOT_PACKING.
+	 * A negative value will be treated the same as 0.
 	 */
-	public void setPackingValue(int packingValue) throws InvalidInputException;
+	public void setPackingValue(int packingValue);
 
 	/**
 	 * Get the external alignment (a minimum alignment) for this DataType.
@@ -292,9 +357,9 @@ public interface Composite extends DataType {
 	 * of the alignment. Calling this method will cause the data type to
 	 * become an internally aligned data type.
 	 * @param minimumAlignment the external (minimum) alignment for this DataType.
-	 * @throws InvalidInputException if the external alignment isn't valid.
+	 * Any value less than 1 will revert to default alignment.
 	 */
-	public void setMinimumAlignment(int minimumAlignment) throws InvalidInputException;
+	public void setMinimumAlignment(int minimumAlignment);
 
 	/**
 	 * Sets this data type's external (minimum) alignment to the default alignment. This data type's
@@ -325,5 +390,14 @@ public interface Composite extends DataType {
 	 * @return true if this data type is using the machine alignment as the minimum alignment.
 	 */
 	public boolean isMachineAligned();
+
+	/**
+	 * Get the bitfield packing information associated with the underlying
+	 * data organization.
+	 * @return bitfield packing information
+	 */
+	public default BitFieldPacking getBitFieldPacking() {
+		return getDataOrganization().getBitFieldPacking();
+	}
 
 }

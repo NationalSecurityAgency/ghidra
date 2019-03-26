@@ -28,16 +28,12 @@ import java.util.List;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 
 /**
  * {@link CategoryPath} tests.
  */
-public class CategoryPathTest extends AbstractGenericTest {
-
-	public CategoryPathTest() {
-		super();
-	}
+public class CategoryPathTest extends AbstractGTest {
 
 	@Test
 	public void testEscapeStringEmpty() {

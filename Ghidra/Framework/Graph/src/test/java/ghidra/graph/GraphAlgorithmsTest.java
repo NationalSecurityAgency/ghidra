@@ -1273,7 +1273,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		edge(v5, v6);
 		edge(v7, v3);
 
-		List<List<TestV>> circuits = GraphAlgorithms.findCircuits(g, TaskMonitor.DUMMY);
+		List<List<TestV>> circuits = GraphAlgorithms.findCircuits(g, false, TaskMonitor.DUMMY);
 		assertEquals(3, circuits.size());
 	}
 

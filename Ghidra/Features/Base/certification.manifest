@@ -921,11 +921,13 @@ src/main/resources/images/L.gif||GHIDRA||||END|
 src/main/resources/images/LocalVariable.gif||GHIDRA||||END|
 src/main/resources/images/M.gif||GHIDRA||||END|
 src/main/resources/images/Merge.png||GHIDRA||||END|
+src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/MultiDuplicateData.png||GHIDRA||||END|
 src/main/resources/images/Namespace.gif||GHIDRA||||END|
 src/main/resources/images/NextHighlightBlock16.gif||GHIDRA||||END|
 src/main/resources/images/NextSelectionBlock16.gif||GHIDRA||||END|
 src/main/resources/images/Parameter.gif||GHIDRA||||END|
+src/main/resources/images/Plus.png||GHIDRA||||END|
 src/main/resources/images/PreviousHighlightBlock16.gif||GHIDRA||||END|
 src/main/resources/images/PreviousSelectionBlock16.gif||GHIDRA||||END|
 src/main/resources/images/Program.gif||GHIDRA||||END|

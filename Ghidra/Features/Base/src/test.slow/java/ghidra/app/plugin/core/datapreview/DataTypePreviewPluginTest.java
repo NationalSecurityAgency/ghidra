@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.*;
 
+import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datapreview.DataTypePreviewPlugin.DTPPTableModel;
@@ -209,12 +210,19 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("61004D00200065h", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 8-byte long at offset 4
 		assertEquals("72h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 2-byte short at offset 12
 
+		// deactivate program
+		plugin.getTool().firePluginEvent(new ProgramActivatedPluginEvent("Test", null));
+		waitForPostedSwingRunnables();
+
+		// NOTE: Altering data organization on-the-fly is not supported
 		dataOrganization.setDefaultAlignment(2);
 		dataOrganization.setShortSize(3);
 		dataOrganization.setIntegerSize(3);
 		dataOrganization.setLongSize(6);
 
-		plugin.updateModel();
+		// activate program
+		plugin.getTool().firePluginEvent(new ProgramActivatedPluginEvent("Test", program));
+		waitForPostedSwingRunnables();
 
 		gotoService.goTo(addr(program, 0x100df26));
 

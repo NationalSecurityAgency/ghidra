@@ -30,7 +30,7 @@
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />
           <entry size="4" alignment="4" />
-          <entry size="8" alignment="4" />
+          <entry size="8" alignment="8" />
      </size_alignment_map>
   </data_organization>
   <stackpointer register="sp" space="ram"/>

@@ -308,7 +308,7 @@ public class BytesFieldFactory extends FieldFactory {
 			}
 			alignSize = (int) (nextComponent.getMinAddress().subtract(data.getMaxAddress())) - 1;
 		}
-		if (alignSize == 0) {
+		if (alignSize <= 0) {
 			return null;
 		}
 		int alignmentOffset = data.getParentOffset() + data.getLength();

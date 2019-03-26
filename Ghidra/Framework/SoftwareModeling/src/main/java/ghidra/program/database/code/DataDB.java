@@ -16,6 +16,7 @@
 package ghidra.program.database.code;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import db.Record;
 import ghidra.docking.settings.Settings;
@@ -66,7 +67,7 @@ class DataDB extends CodeUnitDB implements Data {
 			dataType = DataType.DEFAULT;
 		}
 		this.dataType = dataType;
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 
 		baseDataType = getBaseDataType(dataType);
 
@@ -554,9 +555,6 @@ class DataDB extends CodeUnitDB implements Data {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentAt(int)
-	 */
 	@Override
 	public Data getComponentAt(int offset) {
 		lock.acquire();
@@ -587,6 +585,56 @@ class DataDB extends CodeUnitDB implements Data {
 				//return getComponent(0);
 			}
 			return null;
+		}
+		finally {
+			lock.release();
+		}
+
+	}
+
+	@Override
+	public List<Data> getComponentsContaining(int offset) {
+		List<Data> list = new ArrayList<>();
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (offset < 0 || offset >= length) {
+				return null;
+			}
+
+			if (baseDataType instanceof Array) {
+				Array array = (Array) baseDataType;
+				int elementLength = array.getElementLength();
+				int index = offset / elementLength;
+				list.add(getComponent(index));
+			}
+			else if (baseDataType instanceof Structure) {
+				Structure struct = (Structure) baseDataType;
+				DataTypeComponent dtc = struct.getComponentAt(offset);
+				// Logic handles overlapping bit-fields
+				// Include if offset is contains within bounds of component
+				while (dtc != null && (offset >= dtc.getOffset()) &&
+					(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
+					int ordinal = dtc.getOrdinal();
+					list.add(getComponent(ordinal++));
+					dtc = ordinal < struct.getNumComponents() ? struct.getComponent(ordinal) : null;
+				}
+			}
+			else if (baseDataType instanceof DynamicDataType) {
+				DynamicDataType ddt = (DynamicDataType) baseDataType;
+				DataTypeComponent dtc = ddt.getComponentAt(offset, this);
+				if (dtc != null) {
+					list.add(getComponent(dtc.getOrdinal()));
+				}
+			}
+			else if (baseDataType instanceof Union) {
+				if (offset == 0) {
+					for (int i = 0; i < getNumComponents(); i++) {
+						list.add(getComponent(i));
+					}
+				}
+			}
+			return list;
 		}
 		finally {
 			lock.release();
