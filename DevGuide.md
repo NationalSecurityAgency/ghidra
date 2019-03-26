@@ -2,11 +2,12 @@
 
 Install OpenJDK 11 and make sure it's the default java.
 
-Install Eclipse, at least version 2018-12, and ensure it is launched using OpenJDK 11.
+Install a version of Eclipse with good support for Java 11.
+Eclipse 2018-12 or later should work.
 Technically, you can launch with any JRE/JDK, but it's up to you ensure OpenJDK 11 is properly configured in Eclipse.
 
-Optionally install Gradle 5.0, and ensure it is launched using OpenJDK 11.
-These instructions assume you are using the gradle wrapper, so adjust the commands accordingly if you choose to use your own Gradle installation.
+Install Gradle 5.0, add it to your `PATH`, and ensure it is launched using OpenJDK 11.
+Other versions of Gradle may work, but they have not been tested.
 
 ## Setup Repositories
 
@@ -83,31 +84,30 @@ cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/flatRepo/
 
 ## Import Gradle Project
 
-At this point, you may import Ghidra into Eclipse using the integrated BuildShip plugin.
-If you prefer another IDE, there's no reason it shouldn't work, but you're on your own.
-Note that the GhidraDevPlugin requires Eclipse PDE.
-Close this project to clean up the errors, unless you are developing the GhidraDevPlugin.
+If you want just to build Ghidra, you may skip ahead to Building Ghidra.
+Import Ghidra into Eclipse using the integrated BuildShip plugin.
+Be sure to select Gradle 5.0, or point it at your local installation.
+Other IDEs should work, but we have not tested with them.
 You may see build path errors until the environment is properly prepared, as described below.
+
+*Alternatively*, you may have Gradle generate the Eclipse projects (`gradle eclipse`) and import those instead.
+This is the way to go if you'd prefer not to activate Gradle's BuildShip plugin.
 
 ## Prepare the Environment
 
-There are a few preparatory tasks you should execute before, or immediately after, importing the project.
-These tasks will build and index the online help, and place it somewhere accessible to Ghidra when launched from Eclipse, among other things.
-This task also attempts to unpack some SDKs and/or larger dependencies required by Ghidra.
-We do not provide these packages out-of-the-box because of technical and legal constraints on our distributing them.
-These include the Eclipse CDT, PyDev for Eclipse, and "Yet another Java service wrapper."
-If you would like to build the dependent modules, please see the relevant sections below.
-For now, we will exclude the affected unpack tasks.
 From the project root, execute:
 
 ```bash
-./gradlew prepDev -x yajswDevUnpack
+gradle prepDev -x yajswDevUnpack
 ```
+The `prepDev` tasks primarily include generating some source, indexing our online help, and unpacking some dependencies.
+Regarding `yajswDevUnpack`, please see the relevant sections on GhidraServer below.
+For now, we exclude the unpack task.
 
 Optionally, to pre-compile all the language modules, you may also execute:
 
 ```bash
-./gradlew sleighCompile
+gradle sleighCompile
 ```
 
 Refresh the Gradle project in Eclipse.
@@ -128,12 +128,12 @@ Now build using Gradle:
 On Linux:
 
 ```bash
-./gradlew decompileLinux64Executable
+gradle decompileLinux64Executable
 ```
 On macOS:
 
 ```bash
-./gradlew decompileOsx64Executable
+gradle decompileOsx64Executable
 ```
 
 On Windows:
@@ -149,12 +149,12 @@ Build using Gradle:
 On Linux:
 
 ```bash
-./gradlew demangler_gnuLinux64Executable
+gradle demangler_gnuLinux64Executable
 ```
 On macOS:
 
 ```bash
-./gradlew demangler_gnuOsx64Executable
+gradle demangler_gnuOsx64Executable
 ```
 
 On Windows:
@@ -165,19 +165,20 @@ gradlew demangler_gnuWin64Executable
 
 #### sleigh
 
-The sleigh compiler has been ported to Java, and Ghidra will automatically compile slaspec files that it finds are out of date.
-The native sleigh compiler may still be useful for those who'd like quicker feedback by compiling from the command line. To build the native sleigh compiler, install bison and flex.
+The sleigh compiler has been ported to Java and integrated with Ghidra.
+The native sleigh compiler may still be useful for those who'd like quicker feedback by compiling from the command line.
+To build the native sleigh compiler, install bison and flex.
 Now, use Gradle:
 
 On Linux:
 
 ```bash
-./gradlew sleighLinux64Executable
+gradle sleighLinux64Executable
 ```
 On macOS:
 
 ```bash
-./gradlew sleighOsx64Executable
+gradle sleighOsx64Executable
 ```
 
 On Windows:
@@ -186,38 +187,15 @@ On Windows:
 gradlew sleighWin64Executable
 ```
 
-### Get Dependencies for GhidraDev
+## Run Ghidra from Eclipse
 
-Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
-Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in a directory named:
-`ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/`.
-`ghidra.bin` must be a sibling of `ghidra`.
-To respect the CDT project's resources, you will need to download the file using a browser, or at the very least, locate a suitable mirror on your own:
+To run or debug Ghidra from Eclipse, use the provided launcher.
 
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL http://$CHOOSE_YOUR_MIRROR/pub/eclipse/tools/cdt/releases/8.6/cdt-8.6.0.zip
-mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
-cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
-```
+# Building Ghidra
 
-Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
+To build the full Ghidra distribution, you must also build the GhidraServer.
 
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
-```
-
-Use Gradle to unpack the dependencies for development and building.
-First, you will need to uncomment the GhidraDev project in the ```settings.gradle``` file.
-Then, from your clone:
-
-```bash
-./gradlew cdtUnpack pyDevUnpack
-```
-
-### Get Dependencies for GhidraServer
+## Get Dependencies for GhidraServer
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Note that building the full Ghidra package requires building the GhidraServer.
@@ -235,23 +213,23 @@ Use Gradle to unpack the wrapper for development.
 From your clone:
 
 ```bash
-./gradlew yajswDevUnpack
+gradle yajswDevUnpack
 ```
 
-# Build the full Ghidra package
+## Building the Package
 
-If you've followed all of the steps above, except perhaps importing to Eclipse, you should be able to produce a build.
 Before building, you may want to update the version and release name.
 These properties are kept in `Ghidra/application.properties`.
 
 If you want it included, you must also build the GhidraDevPlugin module first.
-We do not yet have instructions for building the GhidraDevPlugin.
-It should be relatively straightforward for anyone familiar with Eclipse PDE.
+Some supporting data will also be missing.
+See the sections below for instructions to produce these components.
+You may also be able to copy some of this data from a previous official distribution.
 
 To build the full package, use Gradle:
 
 ```bash
-./gradlew buildGhidra
+gradle buildGhidra
 ```
 
 The output will be placed in `build/dist/`.
@@ -273,3 +251,46 @@ TODO
 ## Building FID Databases
 
 TODO
+
+# Developing / Building the GhidraDev Plugin
+
+First, install the Eclipse Plugin Development Environment (PDE).
+By default, the GhidraDev project is excluded from the build.
+To enable it, uncomment it in `settings.gradle`.
+You will need some additional runtime dependencies:
+
+## Get Dependencies for GhidraDev
+
+Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
+Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in a directory named:
+`ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/`.
+`ghidra.bin` must be a sibling of `ghidra`.
+To respect the CDT project's resources, you will need to download the file using a browser, or at the very least, locate a suitable mirror on your own:
+
+```bash
+cd ~/Downloads   # Or wherever
+curl -OL https://$CHOOSE_YOUR_MIRROR/pub/eclipse/tools/cdt/releases/8.6/cdt-8.6.0.zip
+mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
+cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
+```
+
+Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
+
+```bash
+cd ~/Downloads   # Or wherever
+curl -OL https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
+cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
+```
+
+Use Gradle to unpack the dependencies.
+Note that these tasks will not work until you enable the GhidraDev project in `settings.gradle`.
+From your clone:
+
+```bash
+gradle cdtUnpack pyDevUnpack
+```
+
+## Import the GhidraDev Project
+
+If you're using BuildShip, simply refresh the Gradle project in Eclipse.
+If you're not using BuildShip, re-run `gradle eclipse` and import the new project.
