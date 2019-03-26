@@ -40,8 +40,7 @@ import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
@@ -418,6 +417,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				return;
 			}
 
+		}
+		HighVariable highVar = vn.getHigh();
+		if (highVar instanceof HighGlobal) {
+			vn = highVar.getRepresentative();
 		}
 		if (vn.isAddress()) {
 			Address addr = vn.getAddress();
