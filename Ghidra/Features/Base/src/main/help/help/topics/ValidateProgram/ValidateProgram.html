@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Validate Program</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <A name="top_of_page"></A>
+
+    <H1 align="center">Validate Program</H1>
+
+    <H2>Post-Analysis Problem Detection</H2>
+
+    <BLOCKQUOTE>
+      <P>After running <A href="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A>,
+      there may be problems with your program due to aggressive analyzers or strange executable
+      patterns (functions that do not return, calling stack canary checks, etc.). Running program
+      validators helps to show potential problem areas after analysis has run.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="validate"></A>Program Validator</H2>
+
+    <BLOCKQUOTE>
+      <P>You can launch the Validate Program window by using the <B>Analysis<IMG src=
+      "../../shared/arrow.gif" alt="-&gt;"> Validate {Current Program}</B> menu item.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>This command option will open the <B>Validate Program</B> window providing a list of
+      program validators to run.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="1" src="images/ValidateProgram.png" alt=""><BR>
+     <I>"Validate Program" Dialog</I></P>
+
+    <BLOCKQUOTE>
+      <P>Note that each validator can be turned on or off individually (they are all on by
+      default).</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>Once you press the <B>Run Validators</B> button, each selected validator will run in the
+      order presented in the window. As they run, each will display its progress and then an icon
+      which represents the results of the validator. This progress is displayed using a normal
+      Ghidra task monitor and each validator can be aborted individually by pressing its stop <IMG
+      src="Icons.STOP_ICON" alt="Stop"> button.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>At completion, each validator will be followed by an icon showing its results: a green
+      check <IMG src="images/checkmark_green.gif" alt="OK"> (OK), a yellow caution <IMG src=
+      "images/dialog-warning.png" alt="Warning"> (warnings), or a red stop <IMG src=
+      "images/edit-delete.png" alt="Error"> (errors). By selecting each completed validator, you
+      can see the warnings or errors encountered in the text area below the validator list. For
+      example, this test program had one warning:</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="1" src="images/ValidateProgramDone.png" alt=""><BR>
+     <I>Results after running validators</I></P>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A></LI>
+    </UL>
+  </BODY>
+</HTML>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <register_data>
+    <register name="CY_flag" group="Flags"/>
+    <register name="P_flag" group="Flags"/>
+    <register name="AC_flag" group="Flags"/>
+    <register name="Z_flag" group="Flags"/>
+    <register name="S_flag" group="Flags"/>
+    <register name="AF_" group="Alt"/>
+    <register name="BC_" group="Alt"/>
+    <register name="DE_" group="Alt"/>
+    <register name="HL_" group="Alt"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="RST0" address="ram:0000" entry="true"/>
+    <symbol name="RST1" address="ram:0008" entry="false"/>
+    <symbol name="RST2" address="ram:0010" entry="false"/>
+    <symbol name="RST3" address="ram:0018" entry="false"/>
+    <symbol name="RST4" address="ram:0020" entry="false"/>
+    <symbol name="RST5" address="ram:0028" entry="false"/>
+    <symbol name="RST6" address="ram:0030" entry="false"/>
+    <symbol name="RST7" address="ram:0038" entry="false"/>
+    <symbol name="RST5.5" address="ram:002c" entry="false"/>
+    <symbol name="RST6.5" address="ram:0034" entry="false"/>
+    <symbol name="RST7.5" address="ram:003c" entry="false"/>
+    <symbol name="TRAP" address="ram:0024" entry="false"/>
+  </default_symbols>
+</processor_spec>

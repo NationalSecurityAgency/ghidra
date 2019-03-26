@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:avr8:LE:16:extended" value="PLATINUM"/>
+  </properties>
+
+  <programcounter register="PC"/> 
+
+  <data_space space="mem"/>
+  
+  <!-- 
+     - NOTE: The settings within this file may be specific to a particular 
+     - processor variant and will likely need to be changed to reflect 
+     - the specific target processor.
+    --> 
+    
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="mem" first="0x20" last="0x5b"/>
+    <range space="mem" first="0x5f" last="0xff"/>
+  </volatile>
+  
+  <default_symbols>
+  
+    <symbol name="Reset" address="code:0x0" entry="true"/>
+    <symbol name="INT0" address="code:0x1" entry="true"/>
+    <symbol name="INT1" address="code:0x2" entry="true"/>
+    <symbol name="TIMER2_COMP" address="code:0x3" entry="true"/>
+    <symbol name="TIMER2_OVF" address="code:0x4" entry="true"/>
+    <symbol name="TIMER1_CAPT" address="code:0x5" entry="true"/>
+    <symbol name="TIMER1_COMPA" address="code:0x6" entry="true"/>
+    <symbol name="TIMER2_COMPB" address="code:0x7" entry="true"/>
+    <symbol name="TIMER1_OVF" address="code:0x8" entry="true"/>
+    <symbol name="TIMER0_OVF" address="code:0x9" entry="true"/>
+    <symbol name="SPI_STC" address="code:0xa" entry="true"/>
+    <symbol name="USART_RXC" address="code:0xb" entry="true"/>
+    <symbol name="USART_UDRE" address="code:0xc" entry="true"/>
+    <symbol name="USART_TXC" address="code:0xd" entry="true"/>
+    <symbol name="ADC" address="code:0xe" entry="true"/>
+    <symbol name="EE_RDY" address="code:0xf" entry="true"/>
+    <symbol name="ANA_COMP" address="code:0x10" entry="true"/>
+    <symbol name="TWI" address="code:0x11" entry="true"/>
+    <symbol name="SPM_RDY" address="code:0x12" entry="true"/>
+ 
+   <symbol name="SREG" address="mem:0x5f"/>
+    
+    <!-- See /usr/lib/avr/include/avr/iom64.h -->
+    <symbol name="PINF" address="mem:0x20"/>
+    <symbol name="PINE" address="mem:0x21"/>
+    <symbol name="DDRE" address="mem:0x22"/>
+    <symbol name="PORTE" address="mem:0x23"/>
+    <symbol name="ADCW" address="mem:0x24"/>
+    <symbol name="ADCSR" address="mem:0x26"/>
+    <symbol name="ADMUX" address="mem:0x27"/>
+    <symbol name="ACSR" address="mem:0x28"/>
+    <symbol name="UBRR0L" address="mem:0x29"/>
+    <symbol name="UCSR0B" address="mem:0x2a"/>
+    <symbol name="UCSR0A" address="mem:0x2b"/>
+    <symbol name="UDR0" address="mem:0x2c"/>
+    <symbol name="SPCR" address="mem:0x2d"/>
+    <symbol name="SPSR" address="mem:0x2e"/>
+    <symbol name="SPDR" address="mem:0x2f"/>
+    <symbol name="PIND" address="mem:0x30"/>
+    <symbol name="DDRD" address="mem:0x31"/>
+    <symbol name="PORTD" address="mem:0x32"/>
+    <symbol name="PINC" address="mem:0x33"/>
+    <symbol name="DDRC" address="mem:0x34"/>
+    <symbol name="PORTC" address="mem:0x35"/>
+    <symbol name="PINB" address="mem:0x36"/>
+    <symbol name="DDRB" address="mem:0x37"/>
+    <symbol name="PORTB" address="mem:0x38"/>
+    <symbol name="PINA" address="mem:0x39"/>
+    <symbol name="DDRA" address="mem:0x3a"/>
+    <symbol name="PORTA" address="mem:0x3b"/>
+    <symbol name="EECR" address="mem:0x3c"/>
+    <symbol name="EEDR" address="mem:0x3d"/>
+    <symbol name="EEARL" address="mem:0x3e"/>
+    <symbol name="EEARH" address="mem:0x3f"/>
+    <symbol name="SFIOR" address="mem:0x40"/>
+    <symbol name="WDTCR" address="mem:0x41"/>
+    <symbol name="OCDR" address="mem:0x42"/>
+    <symbol name="OCR2" address="mem:0x43"/>
+    <symbol name="TCNT2" address="mem:0x44"/>
+    <symbol name="TCCR2" address="mem:0x45"/>
+    <symbol name="ICR1L" address="mem:0x46"/>
+    <symbol name="ICR1H" address="mem:0x47"/>
+    <symbol name="OCR1BL" address="mem:0x48"/>
+    <symbol name="OCR1BH" address="mem:0x49"/>
+    <symbol name="OCR1AL" address="mem:0x4a"/>
+    <symbol name="OCR1AH" address="mem:0x4B"/>
+    <symbol name="TCNT1L" address="mem:0x4C"/>
+    <symbol name="TCNT1H" address="mem:0x4D"/>
+    <symbol name="TCCR1B" address="mem:0x4E"/>
+    <symbol name="TCCR1A" address="mem:0x4F"/>
+    <symbol name="ASSR" address="mem:0x50"/>
+    <symbol name="OCR0" address="mem:0x51"/>
+    <symbol name="TCNT0" address="mem:0x52"/>
+    <symbol name="TCCR0" address="mem:0x53"/>
+    <symbol name="MCUSR" address="mem:0x54"/>
+    <symbol name="MCUCSR" address="mem:0x54"/>
+    <symbol name="MCUCR" address="mem:0x55"/>
+    <symbol name="TIFR" address="mem:0x56"/>
+    <symbol name="TIMSK" address="mem:0x57"/>
+    <symbol name="EIFR" address="mem:0x58"/>
+    <symbol name="EIMSK" address="mem:0x59"/>
+    <symbol name="EICRB" address="mem:0x5A"/>
+    <symbol name="XDIV" address="mem:0x5C"/>
+    <!-- SP defined by slaspec
+    	<symbol name="SPL" address="mem:0x5D"/>
+    	<symbol name="SPH" address="mem:0x5E"/>
+    -->
+    <symbol name="DDRF" address="mem:0x61"/>
+    <symbol name="PORTF" address="mem:0x62"/>
+    <symbol name="PING" address="mem:0x63"/>
+    <symbol name="DDRG" address="mem:0x64"/>
+    <symbol name="PORTG" address="mem:0x65"/>
+    <symbol name="SPMCR" address="mem:0x68"/>
+    <symbol name="SPMCSR" address="mem:0x68"/>
+    <symbol name="EICRA" address="mem:0x6A"/>
+    <symbol name="XMCRB" address="mem:0x6C"/>
+    <symbol name="XMCRA" address="mem:0x6D"/>
+    <symbol name="OSCCAL" address="mem:0x6F"/>
+    <symbol name="TWBR" address="mem:0x70"/>
+    <symbol name="TWSR" address="mem:0x71"/>
+    <symbol name="TWAR" address="mem:0x72"/>
+    <symbol name="TWDR" address="mem:0x73"/>
+    <symbol name="TWCR" address="mem:0x74"/>
+    <symbol name="OCR1CL" address="mem:0x78"/>
+    <symbol name="OCR1CH" address="mem:0x79"/>
+    <symbol name="TCCR1C" address="mem:0x7A"/>
+    <symbol name="ETIFR" address="mem:0x7C"/>
+    <symbol name="ETIMSK" address="mem:0x7D"/>
+    <symbol name="ICR3L" address="mem:0x80"/>
+    <symbol name="ICR3H" address="mem:0x81"/>
+    <symbol name="OCR3CL" address="mem:0x82"/>
+    <symbol name="OCR3CH" address="mem:0x83"/>
+    <symbol name="OCR3BL" address="mem:0x84"/>
+    <symbol name="OCR3BH" address="mem:0x85"/>
+    <symbol name="OCR3AL" address="mem:0x86"/>
+    <symbol name="OCR3AH" address="mem:0x87"/>
+    <symbol name="TCNT3L" address="mem:0x88"/>
+    <symbol name="TCNT3H" address="mem:0x89"/>
+    <symbol name="TCCR3B" address="mem:0x8A"/>
+    <symbol name="TCCR3A" address="mem:0x8B"/>
+    <symbol name="TCCR3C" address="mem:0x8C"/>
+    <symbol name="ADCSRB" address="mem:0x8E"/>
+    <symbol name="UBRR0H" address="mem:0x90"/>
+    <symbol name="UCSR0C" address="mem:0x95"/>
+    <symbol name="UBRR1H" address="mem:0x98"/>
+    <symbol name="UBRR1L" address="mem:0x99"/>
+    <symbol name="UCSR1B" address="mem:0x9A"/>
+    <symbol name="UCSR1A" address="mem:0x9B"/>
+    <symbol name="UDR1" address="mem:0x9C"/>
+    <symbol name="UCSR1C" address="mem:0x9D"/>
+
+  </default_symbols>
+
+  <default_memory_blocks>
+    <memory_block name="regalias" start_address="mem:0x00" length="0x20" initialized="false"/>
+    <memory_block name="iospace" start_address="mem:0x20" length="0xd0" initialized="false"/>
+    <memory_block name="mem" start_address="mem:0x100" length="0xf00" initialized="false"/>
+  </default_memory_blocks>
+
+
+</processor_spec>

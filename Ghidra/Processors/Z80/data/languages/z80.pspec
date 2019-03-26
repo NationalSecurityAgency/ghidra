@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <context_data>
+    <tracked_set space="ram">
+      <set name="DECOMPILE_MODE" val="1"/>
+    </tracked_set>
+  </context_data>
+  
+  <register_data>
+    <register name="AF_" group="Alt"/>
+    <register name="BC_" group="Alt"/>
+    <register name="DE_" group="Alt"/>
+    <register name="HL_" group="Alt"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="RST0" address="ram:0000" entry="true"/>
+    <symbol name="RST1" address="ram:0008" entry="true"/>
+    <symbol name="RST2" address="ram:0010" entry="true"/>
+    <symbol name="RST3" address="ram:0018" entry="true"/>
+    <symbol name="RST4" address="ram:0020" entry="true"/>
+    <symbol name="RST5" address="ram:0028" entry="true"/>
+    <symbol name="RST6" address="ram:0030" entry="true"/>
+    <symbol name="RST7" address="ram:0038" entry="true"/>
+
+    <symbol name="NMI_ISR" address="ram:0066" entry="true"/>
+  </default_symbols>
+</processor_spec>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  + Compile sleigh languages within this module.
+  + Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
+  + From command line (requires ant install)
+  +    - cd to data directory containing this file
+  +    - run ant
+  -->
+                                     
+<project name="privateBuildDeveloper" default="sleigh-compile">
+	
+	<property name="sleigh.compile.class" value="ghidra.pcodeCPort.slgh_compile.SleighCompile"/>
+
+	<property name="repo.dir" value="../../../.." />
+	<property name="repo.marker.dir" value="${repo.dir}/.git" />
+
+	<condition property="devmode">
+		<available file="${repo.marker.dir}" type="dir" />
+	</condition>
+
+	<target name="build-sleigh-classpath-dev" if="devmode">
+		
+		<property name="framework.path" value="${repo.dir}/../ghidra.git/Ghidra/Framework"/>
+		<property name="libs.path" value="${repo.dir}/../ghidra.bin.git/ExternalLibraries/libsForRuntime"/>
+		
+		<path id="sleigh.class.path">
+			<pathelement location="${framework.path}/SoftwareModeling/bin"/>
+			<pathelement location="${framework.path}/Generic/bin"/>
+			<pathelement location="${framework.path}/Utility/bin"/>
+			<fileset dir="${libs.path}">
+				<include name="*.jar"/>
+			</fileset>
+		</path>
+			
+		<available classname="${sleigh.compile.class}" classpathref="sleigh.class.path" property="sleigh.compile.exists"/>
+			
+	</target>
+	
+	<target name="build-sleigh-classpath-dist" unless="devmode">
+		<property name="framework.path" value="../../../Framework"/>
+		
+		<path id="sleigh.class.path">
+			<fileset dir="${framework.path}/SoftwareModeling/lib">
+				<include name="*.jar"/>
+			</fileset>
+			<fileset dir="${framework.path}/Generic/lib">
+				<include name="*.jar"/>
+			</fileset>
+			<fileset dir="${framework.path}/Utility/lib">
+				<include name="*.jar"/>
+			</fileset>
+		</path>
+		<available classname="${sleigh.compile.class}" classpathref="sleigh.class.path" property="sleigh.compile.exists"/>
+			
+	</target>	
+		
+	<target name="sleigh-compile" depends="build-sleigh-classpath-dist, build-sleigh-classpath-dev">
+	    
+		<fail unless="sleigh.compile.exists" />
+		
+		<java classname="${sleigh.compile.class}"
+			classpathref="sleigh.class.path"
+			fork="true"
+			failonerror="true">
+			<jvmarg value="-Xmx2048M"/>
+			<arg value="-a"/>
+			<arg value="-l"/>
+			<arg value="./languages"/>
+		</java>
+		
+ 	</target>
+
+</project>

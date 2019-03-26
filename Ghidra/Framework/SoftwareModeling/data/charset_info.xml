@@ -1,0 +1,19 @@
+<charsetinfo>
+	<!-- <charset name="java_charset_name" charSize="numBytesPerChar_ie_1_2_4" /> -->
+	<!-- name is the exact name of the java.nio.charset.Charset. -->
+	<!-- charSize is the number of bytes that are used to produce a character.
+	     For charsets like UTF-8 or Big5, etc that consume a variable (1-2) number of bytes per
+	     character, specify a charSize="1", as this value is mainly used by Ghidra to find the
+	     null-terminator at the end of a string.
+	 -->
+	
+	<!-- This file contains extra information Ghidra needs about java Charsets before they can be used.  -->
+	<!-- These Charset implementions need to be present in the java JVM before Ghidra can use them. -->
+	<!-- Charsets defined in this file will be shown to the user in a UI list in the order listed below. -->
+	
+
+	<!-- User added charsets should listed below.  Only Charsets that have a charSize -->
+	<!-- other than 1 byte need to be defined here. -->
+	<!-- <charset name="FROBLE24" charSize="3" comment="3 byte fictional charset"/> -->
+	
+</charsetinfo>

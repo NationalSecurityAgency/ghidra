@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+  <define name="constraint_type">
+    <element name="constraint">
+      <optional> <attribute name="loader" /> </optional>
+      <optional> <attribute name="primary" /> </optional>
+      <optional> <attribute name="secondary" /> </optional>
+      <optional> <attribute name="processor" /> </optional>
+      <optional> <attribute name="endian" /> </optional>
+      <optional> <attribute name="size" /> </optional>
+      <optional> <attribute name="variant" /> </optional>
+      <optional> <attribute name="compilerSpecID" /> </optional>
+      <zeroOrMore>
+        <ref name="constraint_type" />
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <start>
+    <element name="opinions">
+      <zeroOrMore>
+        <ref name="constraint_type" />
+      </zeroOrMore>
+    </element>
+  </start>
+</grammar>

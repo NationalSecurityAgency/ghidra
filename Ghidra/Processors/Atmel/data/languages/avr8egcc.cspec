@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+     <absolute_max_alignment value="1" />
+     <machine_alignment value="1" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="1" />
+     
+     <pointer_size value="2" />
+     <char_size value="1" />
+     <wchar_size value="2" />
+     
+     <!-- smaller size may be used with gcc -mint8 enabled -->
+     <!-- sizes do not consider use of fixed-point types -->
+     <short_size value="2" />
+     <integer_size value="2" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="4" />
+     <long_double_size value="4" />
+     
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="8" />
+     </size_alignment_map>
+  </data_organization>
+  
+  <global>
+    <range space="code"/>
+    <range space="mem"/>
+  </global>
+  
+  <stackpointer register="SP" space="mem" growth="negative"/>
+  
+  <default_proto>
+    <prototype name="__stdcall" extrapop="3" stackshift="3" strategy="register">
+      <input>
+        <!-- Stack used for vararg parameters only -->
+        <pentry minsize="1" maxsize="2">
+          <register name="W"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R23R22"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R21R20"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R19R18"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R17R16"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R15R14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R13R12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R11R10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R9R8"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="W"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="R1"/>
+        <register name="R2"/>
+        <register name="R3"/>
+        <register name="R4"/>
+        <register name="R5"/>
+        <register name="R6"/>
+        <register name="R7"/>
+        <register name="R8"/>
+        <register name="R9"/>
+        <register name="R10"/>
+        <register name="R11"/>
+        <register name="R12"/>
+        <register name="R13"/>
+        <register name="R14"/>
+        <register name="R15"/>
+        <register name="R16"/>
+        <register name="R17"/>
+        <register name="Y"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  
+  <prototype name="__stackcall" extrapop="3" stackshift="3" strategy="register">
+      <input>
+      <pentry minsize="1" maxsize="500" align="1">
+        <addr offset="1" space="stack"/>
+      </pentry>
+    </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="W"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="R1"/>
+        <register name="R2"/>
+        <register name="R3"/>
+        <register name="R4"/>
+        <register name="R5"/>
+        <register name="R6"/>
+        <register name="R7"/>
+        <register name="R8"/>
+        <register name="R9"/>
+        <register name="R10"/>
+        <register name="R11"/>
+        <register name="R12"/>
+        <register name="R13"/>
+        <register name="R14"/>
+        <register name="R15"/>
+        <register name="R16"/>
+        <register name="R17"/>
+        <register name="Y"/> 
+      </unaffected>
+    </prototype>
+    
+</compiler_spec>

@@ -1,0 +1,505 @@
+#---------------------------------------------------------------------
+# 8.3.6 Bit Operations
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# BFEXTS - Bitfield extract and sign-extend
+# I.       {d,s} -> {0, 1, ..., 15}
+#          {bp5, w5} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# BFEXTS Format I
+# Operation: Rd <- SE(Rs[bp5+w5-1:bp5])
+# Syntax:    bfexts Rd, Rs, bp5, w5
+# 111d ddd1 1101 ssss   1011 00ff fffw wwww
+
+:BFEXTS rd9, RS0A, eoff5_5, elen0_5 is op13_3=0x7 & rd9 & op4_5=0x1d & RS0A ;
+        eop10_6=0x2c & eoff5_5 & elen0_5
+{
+        shifted:4 = (RS0A >> eoff5_5);
+        mask:4 = (0xffffffff >> (32 - elen0_5));
+        isolated:4 = shifted & mask;
+        
+        # Technically, elen0_5 can be 0, but result is undefined
+        # if that's the case so we're ok here.
+        signmask:4 = (0xffffffff << (elen0_5 - 1));
+        test:4 = zext((signmask & isolated) != 0);
+        rd9 = (test * signmask) | isolated;
+        NZSTATUS(rd9);
+        C = rd9 s< 0;
+        CZNVTOSR();
+}
+
+#---------------------------------------------------------------------
+# BFEXTU - Bitfield extract and zero-extend
+# I.       {d,s} -> {0, 1, ..., 15}
+#          {bp5, w5} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# BFEXTU Format I
+# Operation: Rd <- SE(Rs[bp5+w5-1:bp5])
+# Syntax:    bfextu Rd, Rs, bp5, w5
+# 111d ddd1 1101 ssss   1011 00ff fffw wwww
+
+:BFEXTU rd9, RS0A, eoff5_5, elen0_5 is op13_3=0x7 & rd9 & op4_5=0x1d & RS0A ;
+        eop10_6=0x30 & eoff5_5 & elen0_5
+{
+        shifted:4 = (RS0A >> eoff5_5);
+        mask:4 = (0xffffffff >> (32 - elen0_5));
+        rd9 = shifted & mask;
+        NZSTATUS(rd9);
+        C = rd9 s< 0;
+        CZNVTOSR();
+}
+
+#---------------------------------------------------------------------
+# BFINS - Bitfield insert
+# I.       {d,s} -> {0, 1, ..., 15}
+#          {bp5, w5} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# BFINS Format I
+# Operation: Rd[bp5+w5-1:bp5] <- Rs[w5-1:0]
+# Syntax:    bfins Rd, Rs, bp5, w5
+# 111d ddd1 1101 ssss   1101 00ff fffw wwww
+
+:BFINS rd9, RS0A, eoff5_5, elen0_5 is op13_3=0x7 & rd9 & op4_5=0x1d & RS0A ;
+       eop10_6=0x34 & eoff5_5 & elen0_5
+{
+        lowmask:4 = (0xffffffff >> (32 - elen0_5));
+        destmask:4 = ~(lowmask << eoff5_5);
+        rd9 = (rd9 & destmask) | ((RS0A & lowmask) << elen0_5);   
+        NZSTATUS(rd9);
+        C = rd9 s< 0;
+        CZNVTOSR();
+}
+
+#---------------------------------------------------------------------
+# BLD - Bit load from register to C and Z
+# I.       d -> {0, 1, ..., 15}
+#          bp5 -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# BLD Format I
+# Operation: C <- Rd[bp5]
+#            Z <- Rd[bp5]
+# Syntax:    bld Rd, bp5
+# 1110 1101 1011 dddd   0000 0000 000f ffff
+
+:BLD rd0, eoff0_5 is op4_12=0xedb & rd0 ;
+     eop5_11=0x0 & eoff0_5
+{
+        tmp:4 = (rd0 & (1 << eoff0_5));
+        test:1 = (tmp != 0);
+        C = test;
+        Z = test;
+        CZNVTOSR();
+}
+
+#---------------------------------------------------------------------
+# BREV - Bit Reverse
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# BREV Format I
+# Operation: Rd[31:0] <- Rd[0:31]
+# Syntax:    brev Rd
+# 0101 1100 1001 dddd
+
+# taken from http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+# under the 32 bit word reverse
+
+:BREV rd0 is op4_12=0x5c9 & rd0
+{
+        v:4 = rd0;
+        v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
+        v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
+        v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
+        v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
+        v = (v >> 16)               | (v << 16);
+        rd0 = v;
+        ZSTATUS(rd0);
+}
+
+#---------------------------------------------------------------------
+# BST - Copy C to register bit
+# I.       d -> {0, 1, ..., 15}
+#          bp5 -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# BST Format I
+# Operation: Rd[bp5] <- C
+# Syntax:    bst Rd, bp5
+# 1110 1111 1011 dddd   0000 0000 000f ffff
+
+:BST rd0, eoff0_5 is op4_12=0xefb & rd0 ; eop5_11=0x0 & eoff0_5
+{
+        destbit:4 = (1 << eoff0_5);
+        cbool:4 = zext(C != 0);
+        rd0 = (rd0 & ~destbit) | (cbool * destbit);   
+}
+
+#---------------------------------------------------------------------
+# CASTS.{H,B} - Typecast to Signed Word
+# I, II.  d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# CASTS.H Format I
+# Operation: Rd[31:16] <- Rd[15]
+# Syntax:    casts.h Rd
+# 0101 1100 1000 dddd
+
+:CASTS.H rd0 is op4_12=0x5c8 & rd0
+{
+        rd0 = sext(rd0:2);
+}
+
+# CASTS.B Format II
+# Operation: Rd[31:8] <- Rd[7]
+# Syntax:    casts.b Rd
+# 0101 1100 0110 dddd
+
+:CASTS.B rd0 is op4_12=0x5c6 & rd0
+{
+        rd0 = sext(rd0:1);    
+}
+
+#---------------------------------------------------------------------
+# CASTU.{H,B} - Typecast to Unsigned Word
+# I, II.  d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# CASTU.H Format I
+# Operation: Rd[31:16] <- 0
+# Syntax:    castu.h Rd
+# 0101 1100 1000 dddd
+
+:CASTU.H rd0 is op4_12=0x5c7 & rd0
+{
+        rd0 = zext(rd0:2);
+}
+
+# CASTU.B Format II
+# Operation: Rd[31:8] <- 0
+# Syntax:    castu.b Rd
+# 0101 1100 0110 dddd
+
+:CASTU.B rd0 is op4_12=0x5c5 & rd0
+{
+        rd0 = zext(rd0:1);
+}
+
+#---------------------------------------------------------------------
+# CBR - Clear Bit in Register
+# I.       d -> {0, 1, ..., 15}
+#          bp5 -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# CBR Format I
+# Operation: Rd[bp5] <- 0
+# Syntax:    cbr Rd, bp5
+# 101f fff1 110f dddd
+
+CSBRH: off is bp9_4 & bp4_1
+[ off = (bp9_4 << 1) | bp4_1; ]
+{
+        tmp:4 = off;
+        export tmp;
+}
+
+:CBR rd0, CSBRH is op13_3=0x5 & op5_4=0xe & CSBRH & rd0
+{
+        destbit:4 = (1 << CSBRH);
+        rd0 = (rd0 & ~destbit);
+        ZSTATUS(rd0);   
+}
+
+#---------------------------------------------------------------------
+# CLZ - Count Leading Zeros
+# I.       {d,s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# CLZ Format I
+# Operation: temp <- 32
+#            for (i = 31; i >= 0; i--)
+#                if (Rs[i] == 1) then
+#                    temp <- 31 - i;
+#                    break;
+#            Rd <- temp;
+# Syntax:    clz Rd, Rs
+# 111s sss0 0000 dddd   0001 0010 0000 0000
+
+:CLZ rd0, RS9A is op13_3=0x7 & op4_5=0x0 & rd0 & RS9A ; eop0_16=0x1200
+{
+        continueloop:4 = 1;
+        count:4 = 0;
+        mask:4 = 0x80000000;
+
+        test:4 = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        count = count + test * continueloop;
+        continueloop = continueloop * test;
+        mask = mask >> 1;
+
+        test = zext((mask & RS9A) == 0);
+        rd0 = count + test * continueloop;
+
+        Z = (rd0 == 0);
+        C = (rd0 == 32);
+        CZNVTOSR();
+}
+
+MEMSH: val				  is simm0_15 [ val = simm0_15 << 2; ] {export *[const]:4 val; }
+:MEMC MEMSH, ctx_shift    is op4_12=0xf61 & imm0_4 & ctx_shift; eb15 & MEMSH [ctx_shigh = imm0_4; ctx_slow = eb15;] {
+	tmp:4 = 0x00000001 << ctx_shift;
+	tmp = ~tmp;
+	tmpa:4 = *[RAM]:4 MEMSH;
+	*[RAM]:4 MEMSH = tmpa & tmp;
+}
+
+:MEMS MEMSH, ctx_shift	  is op4_12=0xf81 & imm0_4 & ctx_shift; eb15 & MEMSH [ctx_shigh = imm0_4; ctx_slow = eb15;] {
+	tmp:4 = 0x00000001 << ctx_shift;
+	tmpa:4 = *[RAM]:4 MEMSH;
+	*[RAM]:4 MEMSH = tmpa & tmp;
+}
+
+:MEMT MEMSH, ctx_shift	  is op4_12=0xfa1 & imm0_4 & ctx_shift; eb15 & MEMSH [ctx_shigh = imm0_4; ctx_slow = eb15;] {
+	tmp:4 = 0x00000001 << ctx_shift;
+	tmpa:4 = *[RAM]:4 MEMSH;
+	*[RAM]:4 MEMSH = tmpa ^ tmp;
+}
+
+#---------------------------------------------------------------------
+# SBR - Clear Bit in Register
+# I.       d -> {0, 1, ..., 15}
+#          bp5 -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# SBR Format I
+# Operation: Rd[bp5] <- 1
+# Syntax:    sbr Rd, bp5
+# 101f fff1 101f dddd
+
+:SBR rd0, CSBRH is op13_3=0x5 & op5_4=0xd & CSBRH & rd0
+{
+        destbit:4 = (1 << CSBRH);
+        rd0 = (rd0 | destbit);
+        Z = 0; 
+        CZNVTOSR();  
+}
+
+#---------------------------------------------------------------------
+# SWAP.B - Swap Bytes
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SWAP.B Format I
+# Operation: temp <- Rd
+#            Rd[31:24] <- temp[7:0]
+#            Rd[23:16] <- temp[15:8]
+#            Rd[15:8] <- temp[23:16]
+#            Rd[7:0] <- temp[31:24]
+# Syntax:    swap.b Rd
+# 0101 1100 1011 dddd
+
+:SWAP.B rd0 is op4_12=0x5cb & rd0
+{
+        temp:4 = rd0;
+        rd0[24,8] = temp[0,8];
+        rd0[16,8] = temp[8,8];
+        rd0[8,8] = temp[16,8];
+        rd0[0,8] = temp[24,8];
+}
+
+#---------------------------------------------------------------------
+# SWAP.BH - Swap Bytes in Halfword
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SWAP.BH Format I
+# Operation: temp <- Rd
+#            Rd[31:24] <- temp[23:16]
+#            Rd[23:16] <- temp[31:24]
+#            Rd[15:8] <- temp[7:0]
+#            Rd[7:0] <- temp[15:8]
+# Syntax:    swap.bh Rd
+# 0101 1100 1100 dddd
+
+:SWAP.BH rd0 is op4_12=0x5cc & rd0
+{
+        temp:4 = rd0;
+        rd0[24,8] = temp[16,8];
+        rd0[16,8] = temp[24,8];
+        rd0[8,8] = temp[0,8];
+        rd0[0,8] = temp[8,8];
+}
+
+#---------------------------------------------------------------------
+# SWAP.H - Swap Halfwords
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SWAP.H Format I
+# Operation: temp <- Rd
+#            Rd[31:24] <- temp[23:16]
+#            Rd[23:16] <- temp[31:24]
+#            Rd[15:8] <- temp[7:0]
+#            Rd[7:0] <- temp[15:8]
+# Syntax:    swap.h Rd
+# 0101 1100 1010 dddd
+
+:SWAP.H rd0 is op4_12=0x5ca & rd0
+{
+        temp:4 = rd0;
+        rd0[16,16] = temp[0,16];
+        rd0[0,16] = temp[16,16];
+}

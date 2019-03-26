@@ -1,0 +1,884 @@
+#---------------------------------------------------------------------
+# 8.3.4 DSP Operations
+#---------------------------------------------------------------------
+operand1: ":b" is  rx9 ; selectorxy4_2=0x0 {b:4 = sext(rx9[0,16]); export b;}
+operand1: ":b" is  rx9 ; selectorxy4_2=0x1 {b:4 = sext(rx9[0,16]); export b;}
+operand1: ":t" is  rx9 ; selectorxy4_2=0x2 {t:4 = sext(rx9[16,16]); export t;}
+operand1: ":t" is  rx9 ; selectorxy4_2=0x3 {t:4 = sext(rx9[16,16]); export t;}
+
+operand2: ":b" is  ry0 ; selectorxy4_2=0x0 {b:4 = sext(ry0[0,16]); export b;}
+operand2: ":t" is  ry0 ; selectorxy4_2=0x1 {t:4 = sext(ry0[16,16]); export t;}
+operand2: ":b" is  ry0 ; selectorxy4_2=0x2 {b:4 = sext(ry0[0,16]); export b;}
+operand2: ":t" is  ry0 ; selectorxy4_2=0x3 {t:4 = sext(ry0[16,16]); export t;}
+
+rdPlus1: is erd0=0x0 {export R1;}
+rdPlus1: is erd0=0x2 {export R3;}
+rdPlus1: is erd0=0x4 {export R5;}
+rdPlus1: is erd0=0x6 {export R7;}
+rdPlus1: is erd0=0x8 {export R9;}
+rdPlus1: is erd0=0xa {export R11;}
+rdPlus1: is erd0=0xc {export SP;}
+rdPlus1: is erd0=0xe {export inst_start;}#PC register
+
+#---------------------------------------------------------------------
+# ADDHH.W - Add Halfwords into Word
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#           part -> {t,b}
+#---------------------------------------------------------------------
+# ADDHH.W Format I
+# Operation:    If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				Rd <- operand1 + operand2;
+# Syntax:       addhh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 1110 00XY dddd
+# Assumption: t = 1, b = 0 using XY
+:ADDHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0xe & eop6_2=0x0 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	erd0 = operand1 + operand2;
+	addflags(operand1, operand2, erd0);
+ }
+ 
+#---------------------------------------------------------------------
+# MACHH.D - Multiply Halfwords and Accumulate in Doubleword
+# I.   d 		-> {0, 2, 4, ..., 14}
+#	   {x, y} 	-> {0, 1, ..., 15}
+#      part 	-> {t,b}
+#---------------------------------------------------------------------
+# MACHH.D Format I
+# Operation:    If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				(Rd+1:Rd)[63:16] <- (operand1*operand2)[31:0] + (Rd+1:Rd)[63:16];
+#				Rd[15:0] <- 0;
+# Syntax:       machh.d Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 0101 10XY dddd
+# Assumption: t = 1, b = 0 using XY
+:MACHH.D erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x5 &  eop6_2=0x2 & selectorxy4_2 & erd0 & rdPlus1)) & operand1 & operand2 {
+	multAccumulate:8 = (zext(operand1 * operand2) + ((zext(rdPlus1) << 32) | (zext(erd0[16,16]) << 16)));
+	rdPlus1 = multAccumulate[32,32];
+	erd0 = ((zext(multAccumulate[16,16]) << 16) & 0xffff0000);
+}
+
+#---------------------------------------------------------------------
+# MACHH.W - Multiply Halfwords and Accumulate in Word
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#      part 	 -> {t,b}
+#---------------------------------------------------------------------
+# MACHH.W Format I
+# Operation:    If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				Rd <- (operand1*operand2) + Rd;
+# Syntax:       machh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 0100 10XY dddd
+# Assumption: t = 1, b = 0 using XY
+:MACHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x4 &  eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	multAccumulate:4 = ((operand1 * operand2) + erd0);
+	erd0 = multAccumulate;
+}
+
+#---------------------------------------------------------------------
+# MACWH.D - Multiply Word with Halfword and Accumulate in Doubleword
+# I.   d 		-> {0, 2, 4, ..., 14}
+#	   {x, y} 	-> {0, 1, ..., 15}
+#      part 	-> {t,b}
+#---------------------------------------------------------------------
+# MACWH.D Format I
+# Operation:	Operand1 = Rx;    
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				(Rd+1:Rd)[63:16] <- (operand1*operand2)[47:0] + (Rd+1:Rd)[63:16];
+#				Rd[15:0] <- 0;
+# Syntax:       macwh.d Rd, Rx, Ry<part>
+# 111x xxx0 0000 yyyy 0000 1100 100Y dddd
+# Assumption: t = 1, b = 0 using Y
+:MACWH.D erd0, rx9, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0xc & eop5_3=0x4 & selectorxy4_2 & erd0 & rdPlus1)) & operand2 {
+	mult:6 = sext(rx9 * operand2);
+	multAccumulate:8 = (zext(mult) + ((zext(rdPlus1) << 32) | (zext(erd0[16,16]) << 16)));
+	rdPlus1 = multAccumulate[32,32];
+	erd0 = ((zext(multAccumulate[16,16]) << 16) & 0xffff0000);
+}
+
+#---------------------------------------------------------------------
+# MULHH.W - Multiply Halfwords with Halfword
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#      part -> {t,b}
+#---------------------------------------------------------------------
+# MULHH.W Format I
+# Operation:    If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				Rd <- operand1 * operand2;
+# Syntax:       mulhh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 0111 10XY dddd
+# Assumption: t = 1, b = 0 using XY
+:MULHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x7 & eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	erd0 = operand1 * operand2;
+ }
+ 
+#---------------------------------------------------------------------
+# MULWH.D - Multiply Word with Halfword
+# I.   d 		-> {0, 2, 4, ..., 14}
+#	   {x, y} 	-> {0, 1, ..., 15}
+#      part 	-> {t,b}
+#---------------------------------------------------------------------
+# MULWH.D Format I
+# Operation:	Operand1 = Rx;    
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				(Rd+1:Rd)[63:16] <- (operand1*operand2);
+#				Rd[15:0] <- 0;
+# Syntax:       mulwh.d Rd, Rx, Ry<part>
+# 111x xxx0 0000 yyyy 0000 1101 100Y dddd
+# Assumption: t = 1, b = 0 using Y
+:MULWH.D erd0, rx9, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0xd & eop5_3=0x4 & selectorxy4_2 & erd0 & rdPlus1)) & operand2 {
+	multiply:8 = (sext(rx9 * operand2));
+	rdPlus1 = multiply[32,32];
+	erd0 = ((zext(multiply[16,16]) << 16) & 0xffff0000);
+}
+
+#---------------------------------------------------------------------
+# MULNHH.W - Multiply Halfwords with Negated Halfword
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#      part -> {t,b}
+#---------------------------------------------------------------------
+# MULNHH.W Format I
+# Operation:    If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				Rd <- -(operand1 * operand2);
+# Syntax:       mulnhh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 0001 10XY dddd
+# Assumption: t = 1, b = 0 using XY
+:MULNHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x1 & eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	neg1:4 = 0xffffffff;  
+	erd0 = (neg1 * (operand1 * operand2));
+ }
+ 
+#---------------------------------------------------------------------
+# MULNWH.D - Multiply Word with Negated Halfword
+# I.   d 		-> {0, 2, 4, ..., 14}
+#	   {x, y} 	-> {0, 1, ..., 15}
+#      part 	-> {t,b}
+#---------------------------------------------------------------------
+# MULNWH.D Format I
+# Operation:	Operand1 = Rx;    
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				(Rd+1:Rd)[63:16] <- -(operand1*operand2);
+#				Rd[15:0] <- 0;
+# Syntax:       mulnwh.d Rd, Rx, Ry<part>
+# 111x xxx0 0000 yyyy 0000 0010 100Y dddd
+# Assumption: t = 1, b = 0 using Y
+:MULNWH.D erd0, rx9, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x2 & eop5_3=0x4 & selectorxy4_2 & erd0 & rdPlus1)) & operand2 {
+	neg1:8 = 0xffffffffffffffff;
+	multiply:8 = (neg1 * (sext(rx9 * operand2)));
+	rdPlus1 = multiply[32,32];
+	erd0 = ((zext(multiply[16,16]) << 16) & 0xffff0000);
+}
+
+
+#---------------------------------------------------------------------
+# SATADD.W - Saturated Add of Words
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+macro addSatWflags(RX, RY, TEMP, RD){
+	#Q = (RX[31,1] && RY[31,1] && !TEMP[31,1]) ||
+	#    (!RX[31,1] && !RY[31,1] && TEMP[31,1]) || Q
+	Q = sborrow(RX, RY);
+	
+	#V = (RX[31,1] && RY[31,1] && !TEMP[31,1]) ||
+	#    (!RX[31,1] && !RY[31,1] && TEMP[31,1])
+	V = sborrow(RX, RY);
+	
+	NZSTATUS(RD);
+	
+	C = 0x0;
+}
+
+# SATADD.W Format I
+# Operation:    temp <- Rx + Ry;
+#				If(Rx[31] && Ry[31] && ~temp[31]) || (~Rx[31] && ~Ry[31] && temp[31]) then
+#					If Rx[31] == 0 then
+#						Rd <- 0x7fffffff;
+#					else
+#						Rd <- 0x80000000;
+#                else
+#					 Rd <- temp;
+# Syntax:       satadd.w Rd, Rx, Ry
+# 111x xxx0 0000 yyyy 0000 0000 1100 dddd
+:SATADD.W erd0, rx9, ry0 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop4_8=0xc & erd0)) {
+	temp:4 = rx9 + ry0;
+	local if_state_1 = ((rx9[31,1] && ry0[31,1] && ~temp[31,1]) || (~rx9[31,1] && ~ry0[31,1] && temp[31,1]));
+	local if_state_2 = (rx9[31,1] == 0x0);
+	local else_state_1 = !if_state_1;
+	local else_state_2 = !if_state_2;
+	erd0 = ((zext(if_state_1 * if_state_2) * (0x7fffffff)) + (zext(if_state_1 * else_state_2) * (0x80000000)) + (zext(else_state_1) * temp));
+	addSatWflags(rx9, ry0, temp, erd0);
+}
+
+
+#---------------------------------------------------------------------
+# SATADD.H - Saturated Add of HalfWords
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+macro addSatHflags(RX, RY, TEMP, RD){
+	#Q = (RX[15,1] && RY[15,1] && !TEMP[15,1]) ||
+	#    (!RX[15,1] && !RY[15,1] && TEMP[15,1]) || Q
+	Q = sborrow(RX[0,15], RY[0,15]);
+	
+	#V = (RX[15,1] && RY[15,1] && !TEMP[15,1]) ||
+	#    (!RX[15,1] && !RY[15,1] && TEMP[15,1])
+	V = sborrow(RX[0,15], RY[0,15]);
+	
+	NZSTATUS(RD[0,15]);
+	
+	C = 0x0;
+}
+
+# SATADD.H Format I
+# Operation:    temp <- Rx + Ry;
+#				If(Rx[31] && Ry[31] && ~temp[31]) || (~Rx[31] && ~Ry[31] && temp[31]) then
+#					If Rx[31] == 0 then
+#						Rd <- 0x00007fff;
+#					else
+#						Rd <- 0xffff8000;
+#                else
+#					 Rd <- temp;
+# Syntax:       satadd.h Rd, Rx, Ry
+# 111x xxx0 0000 yyyy 0000 0010 1100 dddd
+:SATADD.H erd0, rx9, ry0 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop4_8=0x2c & erd0)) {
+	temp:4 = zext(rx9[0,15]) + zext(ry0[0,15]);
+	local if_state_1 = ((rx9[15,1] && ry0[15,1] && ~temp[15,1]) || (~rx9[15,1] && ~ry0[15,1] && temp[15,1]));
+	local if_state_2 = (rx9[15,1] == 0x0);
+	local else_state_1 = !if_state_1;
+	local else_state_2 = !if_state_2;
+	erd0 = ((zext(if_state_1 * if_state_2) * (0x00007fff)) + (zext(if_state_1 * else_state_2) * (0xffff8000)) + (zext(else_state_1) * zext(temp[0,15])));
+	addSatHflags(rx9, ry0, temp, erd0);
+}
+
+
+#---------------------------------------------------------------------
+# SATSUB.W - Saturated Subtract of Words
+# I.   {d, x, y} -> {0, 1, ..., 15}
+# II.  {d, s} -> {0, 1, ..., 15}
+#       imm -> {-32768, -32767, ..., 32767}
+#---------------------------------------------------------------------
+macro subSatWflags(OP1, OP2, TEMP, RD){
+	#Q = (OP1[31,1] && !OP2[31,1] && !TEMP[31,1]) ||
+	#    (!OP1[31,1] && OP2[31,1] && TEMP[31,1]) || Q
+	Q = sborrow(OP1, OP2);
+	
+	#V = (OP1[31,1] && !OP2[31,1] && !TEMP[31,1]) ||
+	#    (!OP1[31,1] && OP2[31,1] && TEMP[31,1])
+	V = sborrow(OP1, OP2);
+	
+	NZSTATUS(RD);
+	
+	C = 0x0;
+}
+# SATSUB.W Format I
+# Operation:    OP1 = Rx, OP2 = Ry
+#				temp <- Rx - Ry;
+#				If(OP1[31] && ~OP2[31] && ~temp[31]) || (~OP1[31] && OP2[31] && temp[31]) then
+#					If OP1[31] == 0 then
+#						Rd <- 0x7fffffff;
+#					else
+#						Rd <- 0x80000000;
+#                else
+#					 Rd <- temp;
+# Syntax:       satsub.w Rd, Rx, Ry
+# 111x xxx0 0000 yyyy 0000 0001 1100 dddd
+:SATSUB.W erd0, rx9, ry0 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop4_8=0x1c & erd0)) {
+	temp:4 = rx9 - ry0;
+	local if_state_1 = ((rx9[31,1] && ~ry0[31,1] && ~temp[31,1]) || (~rx9[31,1] && ry0[31,1] && temp[31,1]));
+	local if_state_2 = (rx9[31,1] == 0x0);
+	local else_state_1 = !if_state_1;
+	local else_state_2 = !if_state_2;
+	erd0 = ((zext(if_state_1 * if_state_2) * (0x7fffffff)) + (zext(if_state_1 * else_state_2) * (0x80000000)) + (zext(else_state_1) * temp));
+	subSatWflags(rx9, ry0, temp, erd0);
+}
+# SATSUB.W Format II
+# Operation:    OP1 = Rx, OP2 = sext(imm16)
+#				temp <- Rx - Ry;
+#				If(OP1[31] && ~OP2[31] && ~temp[31]) || (~OP1[31] && OP2[31] && temp[31]) then
+#					If OP1[31] == 0 then
+#						Rd <- 0x7fffffff;
+#					else
+#						Rd <- 0x80000000;
+#                else
+#					 Rd <- temp;
+# Syntax:       satsub.w Rd, Rx, Ry
+# 111x xxx0 1101 dddd iiii iiii iiii iiii
+:SATSUB.W rd0, rx9, simm16 is ((op13_3=0x7 & rx9 & op4_5=0xd & rd0) ; (simm16)) 
+{
+	temp:4 = rx9 - simm16;
+	simm16Masked:4 = (simm16 & 0x80000000);
+	local if_state_1 = ((rx9[31,1] && ~simm16Masked[31,1] && ~temp[31,1]) || (~rx9[31,1] && simm16Masked[31,1] && temp[31,1]));
+	local if_state_2 = (rx9[31,1] == 0x0);
+	local else_state_1 = !if_state_1;
+	local else_state_2 = !if_state_2;
+	rd0 = ((zext(if_state_1 * if_state_2) * (0x7fffffff)) + (zext(if_state_1 * else_state_2) * (0x80000000)) + (zext(else_state_1) * temp));
+	subSatWflags(rx9, simm16, temp, rd0);
+}
+
+#---------------------------------------------------------------------
+# SATSUB.H - Saturated Subtract of Halfwords
+# I.  {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+macro subSatHflags(RX, RY, TEMP, RD){
+	#Q = (RX[15,1] && !RY[15,1] && !TEMP[15,1]) ||
+	#    (!RX[15,1] && RY[15,1] && TEMP[15,1]) || Q
+	Q = sborrow(RX[0,15], RY[0,15]);
+	
+	#V = (RX[15,1] && !RY[15,1] && !TEMP[15,1]) ||
+	#    (!RX[15,1] && RY[15,1] && TEMP[15,1])
+	V = sborrow(RX[0,15], RY[0,15]);
+	
+	NZSTATUS(RD[0,15]);
+	
+	C = 0x0;
+}
+# SATSUB.H Format I
+# Operation:    temp <- Rx - Ry;
+#				If(Rx[15] && ~Ry[15] && ~temp[15]) || (~Rx[15] && Ry[15] && temp[15]) then
+#					If Rx[15] == 0 then
+#						Rd <- 0x00007fff;
+#					else
+#						Rd <- 0xffff8000;
+#                else
+#					 Rd <- temp;
+# Syntax:       satsub.h Rd, Rx, Ry
+# 111x xxx0 0000 yyyy 0000 0011 1100 dddd
+:SATSUB.H erd0, rx9, ry0 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop4_8=0x3c & erd0)) {
+	temp:4 = zext(rx9[0,15]) - zext(ry0[0,15]);
+	local if_state_1 = ((rx9[15,1] && ~ry0[15,1] && ~temp[15,1]) || (~rx9[15,1] && ry0[15,1] && temp[15,1]));
+	local if_state_2 = (rx9[15,1] == 0x0);
+	local else_state_1 = !if_state_1;
+	local else_state_2 = !if_state_2;
+	erd0 = ((zext(if_state_1 * if_state_2) * (0x00007fff)) + (zext(if_state_1 * else_state_2) * (0xffff8000)) + (zext(else_state_1) * sext(temp[0,15])));
+	subSatHflags(rx9, ry0, temp, erd0);
+}
+
+#---------------------------------------------------------------------
+# SATRNDS - Saturate with Rounding Signed
+# I.  {d} -> {0, 1, ..., 15}
+#     {sa, bp} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x0) {RDMask:4 = (rd0 & 0x00000000); export RDMask;}#0 //sa should never be 0 for this if case!
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1) {RDMask:4 = (rd0 & 0x00000001); export RDMask;}#1
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x2) {RDMask:4 = (rd0 & 0x00000002); export RDMask;}#2
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x3) {RDMask:4 = (rd0 & 0x00000004); export RDMask;}#3
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x4) {RDMask:4 = (rd0 & 0x00000008); export RDMask;}#4
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x5) {RDMask:4 = (rd0 & 0x00000010); export RDMask;}#5
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x6) {RDMask:4 = (rd0 & 0x00000020); export RDMask;}#6
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x7) {RDMask:4 = (rd0 & 0x00000040); export RDMask;}#7
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x8) {RDMask:4 = (rd0 & 0x00000080); export RDMask;}#8
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x9) {RDMask:4 = (rd0 & 0x00000100); export RDMask;}#9
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xa) {RDMask:4 = (rd0 & 0x00000200); export RDMask;}#10
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xb) {RDMask:4 = (rd0 & 0x00000400); export RDMask;}#11
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xc) {RDMask:4 = (rd0 & 0x00000800); export RDMask;}#12
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xd) {RDMask:4 = (rd0 & 0x00001000); export RDMask;}#13
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xe) {RDMask:4 = (rd0 & 0x00002000); export RDMask;}#14
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0xf) {RDMask:4 = (rd0 & 0x00004000); export RDMask;}#15
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x10) {RDMask:4 = (rd0 & 0x00008000); export RDMask;}#16
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x11) {RDMask:4 = (rd0 & 0x00010000); export RDMask;}#17
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x12) {RDMask:4 = (rd0 & 0x00020000); export RDMask;}#18
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x13) {RDMask:4 = (rd0 & 0x00040000); export RDMask;}#19
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x14) {RDMask:4 = (rd0 & 0x00080000); export RDMask;}#20
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x15) {RDMask:4 = (rd0 & 0x00100000); export RDMask;}#21
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x16) {RDMask:4 = (rd0 & 0x00200000); export RDMask;}#22
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x17) {RDMask:4 = (rd0 & 0x00400000); export RDMask;}#23
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x18) {RDMask:4 = (rd0 & 0x00800000); export RDMask;}#24
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x19) {RDMask:4 = (rd0 & 0x01000000); export RDMask;}#25
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1a) {RDMask:4 = (rd0 & 0x02000000); export RDMask;}#26
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1b) {RDMask:4 = (rd0 & 0x04000000); export RDMask;}#27
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1c) {RDMask:4 = (rd0 & 0x08000000); export RDMask;}#28
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1d) {RDMask:4 = (rd0 & 0x10000000); export RDMask;}#29
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1e) {RDMask:4 = (rd0 & 0x20000000); export RDMask;}#30
+SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1f) {RDMask:4 = (rd0 & 0x40000000); export RDMask;}#31
+
+GET_TEMP_FINAL_VAL: is (rd0 ; esa0_5) & SAMINUS1_CALC  
+{	
+	sa:4 = (esa0_5 & 0xffffffff);
+	local if_state_1 = (sa != 0x0);
+	tempRDShiftTempVal:4 = rd0 >> esa0_5;
+	Rnd:4 = SAMINUS1_CALC;
+	tempRDShiftFinalVal:4 = (tempRDShiftTempVal + (zext(if_state_1) * Rnd));
+	export tempRDShiftFinalVal;
+}
+
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x0 & esa0_5)){ if_state_2_calc:1 = 0x1; export if_state_2_calc;}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1 & esa0_5)) & GET_TEMP_FINAL_VAL
+{	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);  
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x19 & esa0_5)) & GET_TEMP_FINAL_VAL    #?NOT SURE WHY I"M GETTING "Unnecessary SEXT warning from here on?
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];  
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+
+
+# SATRNDS Format I
+# Operation:    temp <- Rd >> sa;
+#				if(sa != 0)
+#					Rnd = Rd[sa - 1];
+#					temp = temp + Rnd;
+#				if((temp == sext(temp[bp - 1:0])) || (bp == 0))
+#					Rd <- temp;
+#                else
+#					if(temp[31] == 1)
+#						Rd <- -2^(bp - 1);
+#					else
+#						Rd <- 2^(bp - 1);
+# Syntax:       satrnds Rd >> sa, bp
+# 1111 0011 1011 dddd 0000 00bb bbbs ssss  (where b = bp, s = sa)
+:SATRNDS rd0^"<<"^esa0_5, ebp5_5 is ((op13_3=0x7 & op9_4=0x9 & op4_5=0x1B & rd0) ; (eop12_4=0x0 & eop10_2=0x0 & ebp5_5 & esa0_5)) & GET_IF_STATE2_CALC & GET_TEMP_FINAL_VAL {
+	bp:4 = (ebp5_5 & 0xffffffff);
+	bpMinus1:4 = ((ebp5_5 - 1) & 0xffffffff);
+	local if_state_2 = GET_IF_STATE2_CALC;
+	temp:4 = GET_TEMP_FINAL_VAL;
+	local if_state_3 = (temp[31,1] == 1);
+	bpM1SecondPowerNeg:4 = ((-2)**bpMinus1);
+	bpM1SecondPowerPos:4 = (2**bpMinus1);
+	local else_state_2 = !if_state_2;
+	local else_state_3 = !if_state_3;
+	rd0 = ((zext(if_state_2) * temp) + (zext(else_state_2 * if_state_3) * bpM1SecondPowerNeg) + (zext(else_state_2 * else_state_3) * bpM1SecondPowerPos));
+}
+
+#---------------------------------------------------------------------
+# SATRNDU - Saturate with Rounding Unsigned
+# I.  {d} -> {0, 1, ..., 15}
+#     {sa, bp} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+# SATRNDU Format I
+# Operation:    temp <- Rd >> sa;
+#				if(sa != 0)
+#					Rnd = Rd[sa - 1];
+#					temp = temp + Rnd;
+#				if((temp == zext(temp[bp - 1:0])) || (bp == 0))
+#					Rd <- temp;
+#                else
+#					if(temp[31] == 1)
+#						Rd <- 0x00000000;
+#					else
+#						Rd <- 2^(bp - 1);
+# Syntax:       satrndu Rd >> sa, bp
+# 1111 0011 1011 dddd 0000 01bb bbbs ssss  (where b = bp, s = sa)
+:SATRNDU rd0^"<<"^esa0_5, ebp5_5 is ((op13_3=0x7 & op9_4=0x9 & op4_5=0x1B & rd0) ; (eop12_4=0x0 & eop10_2=0x1 & ebp5_5 & esa0_5)) & GET_IF_STATE2_CALC & GET_TEMP_FINAL_VAL {
+	bp:4 = (ebp5_5 & 0xffffffff);
+	bpMinus1:4 = ((ebp5_5 - 1) & 0xffffffff);
+	local if_state_2 = GET_IF_STATE2_CALC;
+	temp:4 = GET_TEMP_FINAL_VAL;
+	local if_state_3 = (temp[31,1] == 1);
+	zero32BitVal:4 = 0x00000000;
+	bpM1SecondPowerPos:4 = (2**bpMinus1);
+	local else_state_2 = !if_state_2;
+	local else_state_3 = !if_state_3;
+	rd0 = ((zext(if_state_2) * temp) + (zext(else_state_2 * if_state_3) * zero32BitVal) + (zext(else_state_2 * else_state_3) * bpM1SecondPowerPos));
+}
+
+#---------------------------------------------------------------------
+# SATS - Saturate Signed
+# I.  {d} -> {0, 1, ..., 15}
+#     {sa, bp} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+GET_TEMP_FINAL_VAL_NR: is (rd0 ; esa0_5) & SAMINUS1_CALC  
+{	
+	tempRDShiftFinalVal:4 = rd0 >> esa0_5;
+	export tempRDShiftFinalVal;
+}
+
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x0 & esa0_5)){ if_state_2_calc:1 = 0x1; export if_state_2_calc;}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
+{	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);  
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x19 & esa0_5)) & GET_TEMP_FINAL_VAL_NR    #?NOT SURE WHY I"M GETTING "Unnecessary SEXT warning from here on?
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]); 
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+{ 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];  
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+}
+#SATS Format I
+#Operation: 	temp <- Rd >> sa;
+#				if((temp == sext(temp[bp - 1:0])) || (bp == 0))
+#					Rd <- temp;
+#                else
+#					if(temp[31] == 1)
+#						Rd <- -2^(bp - 1);
+#					else
+#						Rd <- 2^(bp - 1);
+# Syntax:       sats Rd >> sa, bp
+# 1111 0001 1011 dddd 0000 00bb bbbs ssss  (where b = bp, s = sa)
+:SATS rd0^"<<"^esa0_5, ebp5_5 is ((op13_3=0x7 & op9_4=0x8 & op4_5=0x1B & rd0) ; (eop12_4=0x0 & eop10_2=0x0 & ebp5_5 & esa0_5)) & GET_IF_STATE2_CALC_NR & GET_TEMP_FINAL_VAL_NR {
+bp:4 = (ebp5_5 & 0xffffffff);
+	bpMinus1:4 = ((ebp5_5 - 1) & 0xffffffff);
+	local if_state_2 = GET_IF_STATE2_CALC_NR;
+	temp:4 = GET_TEMP_FINAL_VAL_NR;
+	local if_state_3 = (temp[31,1] == 1);
+	bpM1SecondPowerNeg:4 = ((-2)**bpMinus1);
+	bpM1SecondPowerPos:4 = (2**bpMinus1);
+	local else_state_2 = !if_state_2;
+	local else_state_3 = !if_state_3;
+	rd0 = ((zext(if_state_2) * temp) + (zext(else_state_2 * if_state_3) * bpM1SecondPowerNeg) + (zext(else_state_2 * else_state_3) * bpM1SecondPowerPos));
+}
+
+#---------------------------------------------------------------------
+# SATU - Saturate Unsigned
+# I.  {d} -> {0, 1, ..., 15}
+#     {sa, bp} -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+# SATU Format I
+# Operation:    temp <- Rd >> sa;
+#				if((temp == zext(temp[bp - 1:0])) || (bp == 0))
+#					Rd <- temp;
+#                else
+#					if(temp[31] == 1)
+#						Rd <- 0x00000000;
+#					else
+#						Rd <- 2^(bp - 1);
+# Syntax:       satrndu Rd >> sa, bp
+# 1111 0011 1011 dddd 0000 01bb bbbs ssss  (where b = bp, s = sa)
+:SATU rd0^"<<"^esa0_5, ebp5_5 is ((op13_3=0x7 & op9_4=0x8 & op4_5=0x1B & rd0) ; (eop12_4=0x0 & eop10_2=0x1 & ebp5_5 & esa0_5)) & GET_IF_STATE2_CALC_NR & GET_TEMP_FINAL_VAL_NR {
+	bp:4 = (ebp5_5 & 0xffffffff);
+	bpMinus1:4 = ((ebp5_5 - 1) & 0xffffffff);
+	local if_state_2 = GET_IF_STATE2_CALC_NR;
+	temp:4 = GET_TEMP_FINAL_VAL_NR;
+	local if_state_3 = (temp[31,1] == 1);
+	zero32BitVal:4 = 0x00000000;
+	bpM1SecondPowerPos:4 = (2**bpMinus1);
+	local else_state_2 = !if_state_2;
+	local else_state_3 = !if_state_3;
+	rd0 = ((zext(if_state_2) * temp) + (zext(else_state_2 * if_state_3) * zero32BitVal) + (zext(else_state_2 * else_state_3) * bpM1SecondPowerPos));
+}
+
+#---------------------------------------------------------------------
+# SUBHH.W - Subtract Halfwords into Word
+# I.  {d, x, y} -> {0, 1, ..., 15}
+#     part -> {t, b}
+#---------------------------------------------------------------------
+# SUBHH.W Format I
+# Operation:	If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				Rd <- operand1 - operand2;
+# Syntax:       subhh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 1111 00XY dddd
+# Assumption: t = 1, b = 0 using XY
+:SUBHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0xf & eop6_2=0x0 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	erd0 = operand1 - operand2;
+	subflags(operand1, operand2, erd0);
+ }
+ 
+ 
+#---------------------------------------------------------------------
+# MULSATHH.W - Multiply Halfwords with Saturation into Halfword
+# I.  {d, x, y} -> {0, 1, ..., 15}
+#     part -> {t, b}
+#---------------------------------------------------------------------
+# MULSATHH.W Format I
+# Operation:	If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
+#				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
+#				If(operand1 == operand2 == 0x8000)	
+#					Rd <- 0x7FFF;
+#				else
+#					Rd <- sext((operand1 * operand2) >> 15);
+# Syntax:       mulsahh.w Rd, Rx<part>, Ry<part>
+# 111x xxx0 0000 yyyy 0000 1000 10XY dddd
+# Assumption: t = 1, b = 0 using XY
+:MULSATHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x8 & eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
+	compareValx8000:4 =  0x8000;
+	local if_state_3_a =  (operand1 == compareValx8000);
+	local if_state_3_b =  (operand2 == compareValx8000);
+	local if_state_3 =  (if_state_3_a == if_state_3_b);
+	local else_state_3 = !if_state_3;
+	sat_clamp_val:4 = 0x7FFF;
+	nonSatMultVal:4 = ((operand1 * operand2) >> 15);
+	erd0 = ((zext(if_state_3) * sat_clamp_val) + (zext(else_state_3) * nonSatMultVal));
+	
+ }
+

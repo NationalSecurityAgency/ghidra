@@ -1,0 +1,39 @@
+
+@define ENDIAN "little"
+@define VFPv3
+
+@if defined(VFPv2) || defined(VFPv3)
+
+@if ENDIAN == "little"
+yes
+@else # ENDIAN == "big"
+no
+@endif # ENDIAN = "big"
+  
+@endif # VFPv2 || VFPv3
+
+@if defined(VFPv2)
+
+@if ENDIAN == "little"
+no
+@else # ENDIAN == "big"
+no
+@endif # ENDIAN = "big"
+
+@endif # VFPv2
+
+@if ENDIAN == "little"
+@if defined(VFPv2) || defined(VFPv3)
+yes
+@else
+no
+@endif
+@endif
+
+@if ENDIAN == "little"
+@if defined(VFPv2)
+no
+@else
+yes
+@endif
+@endif

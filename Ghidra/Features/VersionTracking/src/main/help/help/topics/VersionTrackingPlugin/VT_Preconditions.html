@@ -1,0 +1,121 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Preconditions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Version_Tracking_Preconditions"></A>Version Tracking Preconditions</H1>
+
+
+	    <BLOCKQUOTE>
+	
+			<P>
+			One of the first items you run across in the Version Tracking Wizard is the 
+			Precondition Panel. 
+			***Put picture here****
+        	It is an important initial step in the Version Tracking process. In the past, users
+        	trying to match functions and pull relevant "mark-up" such as labels and comments into a
+        	new version of a binary, would encounter problems if one or both of the binaries were not 
+        	sufficiently analyzed or had major analysis problems. Users were given no indication that 
+        	these issues were a direct result of having a poorly analyzed binary. The success or failure 
+        	of the various preconditions are indicatiors of how well your binaries have been analyzed 
+        	and how well their analyses "match" each other. If the preconditions indicates problems 
+        	*** show and describe red x, warning, green check****, it is important to fix them before 
+        	moving on or there will probably be problems with the Version Tracking process, such as 
+        	identifying incorrect matches or failing to find valid function matches. In general, 
+        	Version Tracking will work best if the same methods of cleaning up a binary are used and 
+        	if similar numbers of functions are created. 
+			</P>
+		
+		
+			<H2><A NAME="Current_Preconditions"></A>Current Preconditions</H2>
+			<BLOCKQUOTE>
+				<P>
+				
+				</P>
+				 <TABLE border="1" width="90%">
+				 <TR>
+			          <TH>Precondition Name</TH>
+			
+			          <TH>Precondition Description </TH>
+			          <TH>Potential Problems </TH>
+			          <TH>How to Fix</TH>
+			        </TR>
+			        <TR>
+			          <TD><b>Memory Blocks</b></TD>
+			
+			          <TD>This validator checks to see if both program memory maps have been split into the same memory blocks with the same permissions. </TD>
+			          <TD>Potential problems include incorrect analysis and decompilation due to incorrect execution or data permissions being set. </TD>
+			          <TD>Use the Window->Memory Map to adjust the memory blocks and permissions so that they are correct.</TD>
+			        </TR>
+			
+			        <TR>
+			          <TD nowrap><b>Number of Functions</b></TD>
+			
+			          <TD>This validator checks to see if both programs have a similar number of defined functions</TD>
+			          <TD>Potential problems include missing function matches. </TD>			          
+			          
+			          <TD>Change analysis options and rerun it, run analysis scripts, run aggressive analyzer, and/or manually disassemble and create functions. </TD>		          
+			        </TR>
+			        
+			         <TR>
+			          <TD nowrap><b>Number of "No-Return" Functions</b></TD>
+			          <TD>This validator checks to see if both programs have a similar number of "No-Return" functions</TD>
+					  <TD>Potential problems include bad analysis due to disassembly falling through past the end of a function. </TD>
+			          <TD>Run the FixupNoReturnsScript. </TD>	         
+			         
+			        </TR>
+			         <TR>
+			          <TD nowrap><b>Offcut References</b></TD>
+			
+			          <TD>This validator checks to see if either program has offcut references.</TD>		
+			          <TD>Potential problems include bad analysis due to disassembly or data creation in incorrect locations.</TD>
+			          <TD>Using the Symbol Table find offcut references. If they are incorrect, fix them and the problems that caused them to be created such
+			          as incorrect operand reference assumptions or incorrect memory map flags, etc...</TD>	          
+			        </TR>	
+			         <TR>
+			          <TD nowrap><b>Percent Analyzed</b></TD>
+			
+			          <TD>This validator checks to see if both programs have a similar percentage of analyzed code in the code segments of each binary.
+			          </TD>		
+			          <TD>Potential problems include missing potential matches due to incomplete analysis.</TD>
+			          <TD>Change analysis options and rerun it, run analysis scripts, run aggressive analyzer, and/or manually disassemble and create functions.</TD>	          
+			        </TR>	    
+			         <TR>
+			          <TD nowrap><b>Red Flags</b></TD>
+			
+			          <TD>This validator checks to see if either program has red flags indicating errors in analysis.
+			          </TD>	
+			          <TD>Potential problems include incorrect instruction definitions at the language level and incorrect analysis of code or data.</TD>
+			          <TD>Use the Bookmark Manager or Margin Markers to find red flags. Fix them and the problems that caused them to be created such
+			          as bad flow (most likely) or bad instruction definitions. </TD>		          
+			        </TR>    
+			     </TABLE>
+			</BLOCKQUOTE>	
+			
+	
+		</BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">Version
+      Tracking Markup Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version
+      Tracking Introduction</A></LI>
+      <li><a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</a></li>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>
+	

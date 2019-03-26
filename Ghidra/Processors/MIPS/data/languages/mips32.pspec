@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.MIPSEmulateInstructionStateModifier"/>
+    <property key="assemblyRating:MIPS:BE:32:default" value="PLATINUM"/>
+  </properties>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="PAIR_INSTRUCTION_FLAG" val="0" description="1 if LWL/LWR instruction is a pair"/>
+      <set name="RELP" val="1" description="1 if mips16e, 0 if micromips"/>
+    </context_set>
+  </context_data>
+  <register_data>
+    <register name="contextreg" hidden="true"/>
+    <register name="ext_isjal" hidden="true"/>
+    <register name="ext_value" hidden="true"/>
+    <register name="ext_value_select" hidden="true"/>
+    <register name="ext_value_1005" hidden="true"/>
+    <register name="ext_value_1004" hidden="true"/>
+    <register name="ext_value_sa40" hidden="true"/>
+    <register name="ext_value_xreg" hidden="true"/>
+    <register name="ext_value_frame" hidden="true"/>
+    <register name="ext_value_areg" hidden="true"/>
+    <register name="ext_value_b0" hidden="true"/>
+    <register name="ext_value_b1" hidden="true"/>
+    <register name="ext_value_b2" hidden="true"/>
+    <register name="ext_value_b3" hidden="true"/>
+    <register name="ext_value_saz" hidden="true"/>
+    <register name="ext_value_1511" hidden="true"/>
+    <register name="ext_value_1511s" hidden="true"/>
+    <register name="ext_value_1411" hidden="true"/>
+    <register name="ext_value_1411s" hidden="true"/>
+    <register name="ext_tgt_2521" hidden="true"/>
+    <register name="ext_tgt_2016" hidden="true"/>
+    <register name="ext_is_ext" hidden="true"/>
+    <register name="ext_m16r32" hidden="true"/>
+    <register name="ext_m16r32a" hidden="true"/>
+    <register name="ext_reg_high" hidden="true"/>
+    <register name="ext_reg_low" hidden="true"/>
+    <register name="ext_svrs_xs" hidden="true"/>
+    <register name="ext_svrs_s1" hidden="true"/>
+    <register name="ext_svrs_s0" hidden="true"/>
+    <register name="ext_tgt_x" hidden="true"/>
+    <register name="ext_done" hidden="true"/>
+    <register name="ext_delay" hidden="true"/>
+    <register name="REL6" hidden="true"/>
+    <register name="RELP" hidden="true"/>
+    <register name="ext_t4" hidden="true"/>
+    <register name="ext_tra" hidden="true"/>
+    <register name="ext_32_code" hidden="true"/>
+    <register name="ext_32_codes" hidden="true"/>
+    <register name="ext_32_addim" hidden="true"/>
+    <register name="ext_32_addims" hidden="true"/>
+    <register name="ext_32_imm2" hidden="true"/>
+    <register name="ext_32_imm2s" hidden="true"/>
+    <register name="ext_32_imm3" hidden="true"/>
+    <register name="ext_32_imm3s" hidden="true"/>
+    <register name="ext_32_imm5" hidden="true"/>
+    <register name="ext_32_imm5s" hidden="true"/>
+    <register name="ext_32_imm6" hidden="true"/>
+    <register name="ext_32_rlist" hidden="true"/>
+    <register name="ext_32_base" hidden="true"/>
+    <register name="ext_32_basea" hidden="true"/>
+    <register name="ext_32_rd" hidden="true"/>
+    <register name="ext_32_rdset" hidden="true"/>
+    <register name="ext_32_rs1" hidden="true"/>
+    <register name="ext_32_rs1lo" hidden="true"/>
+    <register name="ext_32_rs1set" hidden="true"/>
+    <register name="ext_16_rs" hidden="true"/>
+    <register name="ext_16_rslo" hidden="true"/>
+    <register name="ext_16_rshi" hidden="true"/>
+    <register name="ext_off16_s" hidden="true"/>
+    <register name="ext_off16_u" hidden="true"/>
+  </register_data>
+</processor_spec>

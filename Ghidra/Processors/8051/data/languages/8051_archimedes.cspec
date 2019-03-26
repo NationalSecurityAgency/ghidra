@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+	<global>
+		<range space="CODE"/>
+   		<range space="INTMEM"/>
+    	<range space="SFR"/>
+    	<range space="EXTMEM"/>
+    	<range space="BITS"/>
+	</global>
+    <stackpointer register="SP" space="INTMEM" growth="positive"/>
+    <default_proto>
+	    <prototype name="ret_in_r7" extrapop="-2" stackshift="-2" strategy="register">
+                <input>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R1"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R2"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R3"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R4"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R5"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R6"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="R7"/>
+	            </pentry>
+	            <pentry maxsize="1" minsize="1">
+		      		<register name="ACC"/>
+	            </pentry>
+		</input>
+		    <output>
+		        <pentry maxsize="1" minsize="1">
+		      		<register name="R7"/>
+		        </pentry>
+		    </output>
+			<unaffected>
+			  	<register name="SP"/>
+			</unaffected>
+		    <!-- This first range lists the permissible stack offsets
+		         that can be used as scratch and/or local variables  -->
+			<localrange>
+		          <range space="stack" first="0x0" last="0xf"/>
+			</localrange>
+	    </prototype>
+    </default_proto>
+
+    <prototype name="ret_in_a" extrapop="-2" stackshift="-2" strategy="register">
+         <input>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R1"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R2"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R3"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R4"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R5"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R6"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="R7"/>
+            </pentry>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="ACC"/>
+            </pentry>
+	</input>
+        <output>
+            <pentry maxsize="1" minsize="1">
+	      		<register name="ACC"/>
+            </pentry>
+        </output>
+		<unaffected>
+    	  	<register name="SP"/>
+		</unaffected>
+        <!-- This first range lists the permissible stack offsets
+             that can be used as scratch and/or local variables  -->
+		<localrange>
+	          <range space="stack" first="0x0" last="0xf"/>
+		</localrange>
+	</prototype>
+	
+</compiler_spec>
+

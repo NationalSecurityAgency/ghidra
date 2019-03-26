@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <data_space space="DATA"/>
+  <volatile outputop="write_sfr" inputop="read_sfr">
+    <range space="DATA" first="0x05" last="0x07"/>
+    <range space="DATA" first="0x0b" last="0x0c"/>
+    <range space="DATA" first="0x010" last="0x017"/>
+    <range space="DATA" first="0x110" last="0x117"/>
+    <range space="DATA" first="0x210" last="0x217"/>
+    <range space="DATA" first="0x310" last="0x317"/>
+    <range space="DATA" first="0x410" last="0x417"/>
+    <range space="DATA" first="0x510" last="0x517"/>
+    <range space="DATA" first="0x610" last="0x617"/>
+    <range space="DATA" first="0x710" last="0x717"/>
+    <range space="DATA" first="0x810" last="0x817"/>
+  </volatile>
+  <register_data>
+    <register name="FS32" group="STATUS"/>
+    <register name="FS10" group="STATUS"/>
+    <register name="OV" group="STATUS"/>
+    <register name="Z" group="STATUS"/>
+    <register name="DC" group="STATUS"/>
+    <register name="C" group="STATUS"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="Reset" address="CODE:0000" entry="true"/>
+    <symbol name="INTPinInterrupt" address="CODE:0008" entry="true"/>
+    <symbol name="Timer0Interrupt" address="CODE:0010" entry="true"/>
+    <symbol name="T0CKPinInterrupt" address="CODE:0018" entry="true"/>
+    <symbol name="PeripheralInterrupt" address="CODE:0020" entry="true"/>
+    <symbol name="FOSC0" address="CODE:fe00" entry="false"/>
+    <symbol name="FOSC1" address="CODE:fe01" entry="false"/>
+    <symbol name="WDTPS0" address="CODE:fe02" entry="false"/>
+    <symbol name="WDTPS1" address="CODE:fe03" entry="false"/>
+    <symbol name="PM0" address="CODE:fe04" entry="false"/>
+    <symbol name="PM1" address="CODE:fe06" entry="false"/>
+    <symbol name="BODEN" address="CODE:fe0e" entry="false"/>
+    <symbol name="PM2" address="CODE:fe0f" entry="false"/>
+    <symbol name="TestEPROM" address="CODE:fe10" entry="false"/>
+    <symbol name="BootROM" address="CODE:fe60" entry="false"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="SFR0" start_address="DATA:0000" mode="rw" length="0x20" initialized="false"/>
+    <memory_block name="SFR1" start_address="DATA:0110" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR2" start_address="DATA:0210" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR3" start_address="DATA:0310" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR4" start_address="DATA:0410" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR5" start_address="DATA:0510" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR6" start_address="DATA:0610" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR7" start_address="DATA:0710" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="SFR8" start_address="DATA:0810" mode="rw" length="0x8" initialized="false"/>
+    <memory_block name="GPR0" start_address="DATA:0020" mode="rw" length="0xe0" initialized="false"/>
+    <memory_block name="GPR1" start_address="DATA:0120" mode="rw" length="0xe0" initialized="false"/>
+    <memory_block name="GPR2" start_address="DATA:0220" mode="rw" length="0xe0" initialized="false"/>
+    <memory_block name="GPR3" start_address="DATA:0320" mode="rw" length="0xe0" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

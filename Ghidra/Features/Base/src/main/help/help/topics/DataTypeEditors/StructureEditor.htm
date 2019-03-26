@@ -1,0 +1,1179 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Data Structure Editor</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Structure_Editor"></A>Structure Data Type Editor</H1>
+
+    <P>The Structure Editor is used to define the contents of a structure data type. It can be used
+    to create a new structure or to modify existing ones. Structures are user defined data types
+    that contain components. A component is a data type of a particular size and at a specified
+    offset in the structure. The following illustrates the editor for a structure data type.<BR>
+    </P>
+    <BR>
+    <BR>
+     
+
+    <DIV align="center" style="margin-top: 10px;">
+      <IMG src="images/StructureEditor.png" alt=""><BR>
+    </DIV>
+
+    <P>The Union Editor is very similar to the Structure Editor, but is used to create or modify a
+    union data type. All the components of a Union are at an offset of 0. The following illustrates
+    the editor for a union data type.</P>
+
+    <DIV align="center" style="margin-top: 10px;">
+      <IMG src="images/UnionEditor.png" alt=""><BR>
+    </DIV>
+
+    <P>A Structure Editor or Union Editor can be launched from the <A href=
+    "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>,
+    the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>, or the <A href=
+    "#Structure_Editor_Edit_Component">Structure or Union Data Type Editors</A>.</P>
+
+    <P>The Structure and Union Editors are composed of the following:</P>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI><I>Edit Actions</I>: The icon buttons at the top of the editor are used to modify this
+        structure. Each button has a different <A href="#Structure_Editor_Edit_Actions">edit
+        action</A> associated with it. These allow the user to: apply changes, insert Undefined
+        bytes, reorganize the current components, duplicate components, clear components (changes
+        them to Undefined bytes), delete components, create array components, and unpackage a
+        structure or array component changing it into its component parts.<BR>
+        </LI>
+
+        <LI><I>Pull Down Menu</I>: The <IMG src="../../shared/menu16.gif" alt=""> icon at the top
+        of the editor provides additional editor actions. These are: show the category path of a
+        component's data type, edit a component's data type, edit the fields of a component, apply
+        a cycle group or favorite.<BR>
+        </LI>
+
+        <LI><I>Component Table</I>: The upper portion of the editor contains a table with the
+        structure's or union's components. Each component (or row) consists of its offset, length,
+        mnemonic, data type, field name, and comment. See the <A href=
+        "#Structure_Editor_Component_Fields">Component Fields</A> section for more about these
+        fields. The data type, field name and comment are editable fields. The data type's category
+        can be determined by <A href="#Structure_Editor_Show_Component_Path">showing the data type
+        category</A>. Components can be <A href="#AddDataType">added</A>, <A href=
+        "#InsertDataType">inserted</A> or <A href="#ReplaceDataType">replaced</A> in the table
+        using <A href="#DragNDrop">Drag and Drop</A> or by applying a <A href=
+        "#Structure_Editor_Favorite">Favorite</A> data type. The data type for a component can also
+        be changed by <A href="#Structure_Editor_Cycle">cycling</A> the data type.</LI>
+
+        <LI><I>Structure Information Area</I>: This is the area below the component table with the
+        name, description, category, size and alignment of the structure or union. The structure or
+        union being edited can be <A href="#Structure_Editor_Name">renamed</A> from here. Its <A
+        href="#Structure_Editor_Description">description</A> can be specified here. Also, it can be
+        changed between <A href="#Structure_Editor_InternallyAligned">unaligned and
+        aligned</A>.<BR>
+        </LI>
+
+        <LI>Immediately below the structure information area is a status line where status messages
+        will appear.</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Apply_Editor_Changes"></A>Applying Changes</H2>
+
+    <BLOCKQUOTE>
+      <P>Select the Apply Changes icon <IMG src="images/disk.png" alt=""> in the toolbar to apply
+      the changes from the editor back to the program or archive.<BR>
+      </P>
+
+      <P><IMG src="../../shared/note.png" alt=""> If editor changes to a structure or union are
+      applied and it is assigned to data in the program, all data items with the structure or union
+      as the data type now have the new data type. In other words, the size or composition of those
+      data items in the program will have changed due to the apply.</P>
+    </BLOCKQUOTE>
+
+      <H2>Closing the Editor</H2>
+
+    <BLOCKQUOTE>
+      <P>Select the Close dockable component icon <IMG src="../../shared/close16.gif" alt=""> in
+      the toolbar to exit from the editor. If you have unsaved changes to your data type, a dialog
+      will ask if you want to save the changes.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Searching_In_Editor"></A>Searching in the Editor</H2>
+
+    <BLOCKQUOTE>
+      <P>To search for text in any column on any row in the editor, enter the text into the
+      <B>Search</B> field and press return to search forward from the currently selected table row.
+      Alternatively, the down <IMG src="images/go-down.tango.16.png" alt=""> and up <IMG src=
+      "images/go-up.tango.16.png" alt=""> arrows next to the search field can be used to search
+      forwards and backwards respectively. Searches are not case sensitive.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Name"></A>Changing the Name</H2>
+
+    <BLOCKQUOTE>
+      <P>To change the name of the structure or union being edited, edit the <I>Name</I> field in
+      the bottom of the editor. If the name is valid, the structure's or union's name will change
+      when the edits are applied by pressing the editor's Apply Changes icon 
+      <IMG src="images/disk.png" alt=""> in the toolbar.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Description"></A> Entering a Description</H2>
+
+    <BLOCKQUOTE>
+      <P>To change the description of the structure or union being edited, edit the
+      <I>Description</I> field in the bottom of the editor. The structure's or union's description
+      will take effect when the edits are applied by pressing the editor's Apply Changes icon 
+      <IMG src="images/disk.png" alt=""> in the toolbar.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Size"></A>Changing the Size</H2>
+
+    <BLOCKQUOTE>
+      <P>To change the size of the structure being edited, edit the <I>Size</I> field in the bottom
+      of the editor and press the <SPAN style="font-weight: bold;">Enter</SPAN> key to apply the
+      new size to the structure. If you are reducing the size of the structure, you will be
+      prompted to determine that you really want to truncate the structure.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_ActualAlignment"></A>Alignment</H2>
+
+    <BLOCKQUOTE>
+      <P>At the bottom of the editor is an <SPAN style="font-style: italic;">Alignment</SPAN>
+      field, which indicates how the structure or union being edited will be aligned within other
+      data types. All unaligned structures and unions will have an alignment of 1 (byte aligned)
+      and will therefore not be aligned within other data types. For aligned structures and unions
+      the alignment value is determined based on the alignments of the individual components they
+      contain, whether they are <A href="#Structure_Editor_PackMaximum">packed internally</A> and
+      whether they have a <A href="#Structure_Editor_AlignMinimum">minimum alignment</A>
+      specified.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_InternallyAligned"></A>Unaligned vs. Aligned</H2>
+
+    <BLOCKQUOTE>
+      <P>In the lower right corner of the editor is an <SPAN style=
+      "font-style: italic;">Align</SPAN> check box. When the box is checked the structure or union
+      is aligned. Click the checkbox to change between aligned and unaligned. When a structure or
+      union is aligned, additional choices will appear that allow minimum alignment and packing to
+      be specified.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H3>Unaligned Structures</H3>
+
+    <BLOCKQUOTE>
+      <P>When a structure is unaligned, each component immediately follows the one before it. In
+      other words no automatic alignment or padding occurs. Unaligned structures can contain
+      Undefined bytes. Unaligned structures should be used to position components with known data
+      types at specific offsets within the structure. Therefore the structure editor tries to
+      prevent defined components (those other than Undefined bytes) from accidentally being moved
+      to a different offset when performing operations like drag and drop.<BR>
+      </P>
+
+      <DIV style="text-align: center; margin-top: 10px;">
+        <IMG alt="" src="images/StructureEditor.png"><BR>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H3>Aligned Structures</H3>
+
+    <BLOCKQUOTE>
+      <P>An aligned structure is defined similar to a structure in a C header file. The data types
+      are specified for each of the components, but their offsets will be automatically adjusted to
+      the correct alignment based on the data type and position in the structure. A default
+      Undefined byte cannot be added to an aligned structure. The overall size of the structure is
+      determined by the components it contains and whether or not it is packed. When you select the
+      Align checkbox, the GUI displays buttons to allow an align attribute, <SPAN style=
+      "font-weight: bold; font-style: italic;">align( minimum )</SPAN>, to be specified. It also
+      allows a pack value, <SPAN style="font-style: italic;"><SPAN style=
+      "font-weight: bold;">pack</SPAN></SPAN> <SPAN style=
+      "font-weight: bold; font-style: italic;">( maximum )</SPAN>, to be specified. The following
+      image shows these GUI components for aligning the data type being edited.<BR>
+      </P>
+
+      <DIV style="text-align: center; margin-top: 10px;">
+        <IMG alt="" src="images/StructureEditorAligned.png"><BR>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H4><A name="Structure_Editor_AlignMinimum"></A>align( minimum )</H4>
+
+    <BLOCKQUOTE>
+      <P>This indicates the minimum alignment to be used when aligning this data type inside
+      another data type. Setting this to a value other than <SPAN style=
+      "font-weight: bold;">none</SPAN> forces this structure to be aligned within other structures
+      at an offset that is a multiple of the specified value. Specifying a minimum alignment also
+      causes the end of the structure to be padded so its size is a multiple of the minimum
+      alignment.<BR>
+      </P>
+
+      <UL>
+        <LI><SPAN style="font-weight: bold;">none</SPAN> - Sets this data type to have <SPAN style=
+        "font-weight: bold;">no</SPAN> specified minimum alignment when aligning this data type
+        inside another data type. Align this data type based only on its components and their
+        minimum alignments and packing.<BR>
+        </LI>
+
+        <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets this data type to have a minimum
+        alignment that is a multiple of the <SPAN style="font-weight: bold;">machine</SPAN>
+        alignment when aligning this data type inside another data type. In this case <SPAN style=
+        "font-weight: bold;">machine</SPAN> alignment means the largest alignment which is ever
+        used for any data type on the program's intended machine.<BR>
+        </LI>
+
+        <LI>by value - The bottom button with a text field next to it allows you to specify a
+        minimum alignment value. This sets this data type to have a minimum alignment that is a
+        multiple of the <SPAN style="font-weight: bold;">specified value</SPAN> when aligning this
+        data type inside another data type.</LI>
+      </UL>
+
+      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C code align
+      attribute</I> on the structure or union is to choose <B>none</B>. The equivalent for a C code
+      attribute of <I>align()</I> without a value is to choose <B>machine</B> alignment. The
+      equivalent of <I>align(4)</I> is to specify a <B>value</B> of 4.</P>
+    </BLOCKQUOTE>
+
+    <H4><A name="Structure_Editor_PackMaximum"></A>pack( maximum )</H4>
+
+    <BLOCKQUOTE>
+      <P>This indicates a packing value to be used when aligning the components within this data
+      type. Setting this to a value other than <B>none</B> forces each component of this structure
+      to be packed so that its maximum alignment within the structure is no more than the pack
+      value. However, a component will not be packed if the data type or one of its subcomponents
+      data types has a minimum alignment value specified that exceeds the pack value. Packing also
+      affects the padding at the end of this structure so that the overall size of the structure is
+      the smallest possible multiple of the pack value. If the minimum alignment is greater than
+      the pack value, the end of the structure or union is padded based on the minimum alignment
+      instead.<BR>
+      </P>
+
+      <UL>
+        <LI><B>none</B> - The components within this structure should align themselves in the
+        default way for the compiler. The components are not being packed.<BR>
+        </LI>
+
+        <LI>by value - The bottom button with a text field next to it allows you to specify a pack
+        value. The <B>specified value</B> indicates the maximum alignment to use when packing any
+        component.<BR>
+        </LI>
+      </UL>
+
+      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C #pragma
+      pack attribute</I> on the structure or union is to choose <B>none</B>. The equivalent for a C
+      code attribute of <I>#pragma pack()</I> without a value is to specify a <B>pack value</B> of
+      <B>1</B>. The equivalent of <I># pragma</I> <I>pack(4)</I> is to specify a <B>pack value</B>
+      of 4.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H3>Unaligned Unions</H3>
+
+    <BLOCKQUOTE>
+      <P>When a union is unaligned, the union is the size of its largest component.&nbsp; There is
+      no alignment padding and the alignment&nbsp; is 1 when putting an unaligned union into other
+      data types.<BR>
+      </P>
+
+      <DIV style="text-align: center; margin-top: 10px;">
+        <IMG alt="" src="images/UnionEditor.png">
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H3>Aligned Unions</H3>
+
+    <BLOCKQUOTE>
+      <P>&nbsp;In an aligned union the overall size is at least the size of the largest component,
+      but will be padded based on the alignment and packing. The <A href=
+      "#Structure_Editor_AlignMinimum">minimum alignment</A> is specified just as within a
+      structure and affects the alignment in the same way. The <A href=
+      "#Structure_Editor_PackMaximum">pack value</A> is specified in the same manner as within a
+      structure, but only affects the padding in the overall size of the union. All elements in a
+      union have an offset of zero, so the pack value doesn't affect the component offsets. If both
+      a minimum alignment and pack value are specified, the minimum alignment will override the
+      pack value if it is larger.</P>
+
+      <DIV style="text-align: center; margin-top: 10px;">
+        <IMG alt="" src="images/UnionEditorAligned.png">
+      </DIV>
+    </BLOCKQUOTE>
+
+	<H2><A name="Structure_Editor_Flex_Array"></A>Flexible Array Component</H2>
+
+    <P>A structure may be defined with a trailing flexible array component which corresponds to
+    an unsized array (e.g., char[0]).  Such a component, if it exists, is always displayed as the 
+    last row within the structure editor with the open edit row for additional components located 
+    directly above it.   The <I>DataType</I> column for a flexible array always shows 
+    the base type of the unsized array which can be modified similar to other components.  A
+    flexible array is added to the end of a structure by adding a last row specified by the base 
+    <I>DataType</I> (e.g. char)
+    then invoking the array action and specifying an element count of 0. Attempting to specify
+    an element count of 0 is only permitted on the last component row when a flexible array component
+    does not already exist.  The presence of a flexible array component does not affect the size of a 
+    structure and will not appear within the structure when applied to Data within memory as it 
+    corresponds to the memory location which immediately follows the end of the structure.</P>
+    
+    <P><IMG alt="Note:" src="../../shared/note.png">The presence of a flexible array component may not 
+    be reflected in decompilation results.  Its primary purpose if to reflect the C source definition
+    of a structure with correct alignment and structure sizing.</P>
+    
+    <DIV style="text-align: center;">
+        <IMG alt="" src="images/StructureEditorWithFlexArray.png"><BR>
+        <BR>
+      </DIV>
+    
+    <H2><A name="Structure_Editor_Edit_Actions"></A>Edit Actions</H2>
+
+    <BLOCKQUOTE>
+      <P>The edit actions are available both from the icon buttons in the editor and from the popup
+      menu for the component table. To display the popup menu, right mouse click on the component
+      table. There are also short-cut keys associated with each of the edit actions.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Insert_Undefined_Byte"></A> <IMG src="images/Plus.png" alt="">
+    Insert Undefined Byte</H3>
+
+    <BLOCKQUOTE>
+      <P>Undefined Bytes can only be inserted into a structure that is not aligned. A single
+      Undefined byte is inserted before the current selection by clicking the <IMG src=
+      "images/Plus.png" alt=""> <B>Insert Undefined Byte</B> button.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Move_Components_Up"></A> <IMG src="images/up.png" alt=""> Move
+    Up</H3>
+
+    <BLOCKQUOTE>
+      <P>A contiguous group of components can be moved up or down in the structure. Select a block
+      of one or more components. Each time the <IMG src="images/up.png" alt=""> <B>Move Up</B>
+      button is pressed, the group of components is moved up one row. In other words, the component
+      that was immediately above the group is now below it. This can be done until the group of
+      selected components is at the beginning of the structure (offset 0).</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Move_Components_Down"></A> <IMG src="images/down.png" alt="">
+    Move Down</H3>
+
+    <BLOCKQUOTE>
+      <P>Select a block of one or more components. Press the <IMG src="images/down.png" alt="">
+      <B>Move Down</B> button to move the group of selected components down one row. The component
+      that immediately followed them is now before them. The selected components can be moved down
+      until they are at the end of the structure.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Duplicate_Component"></A> <IMG src="images/DuplicateData.png"
+    alt=""> <B>Duplicate Component</B></H3>
+
+    <BLOCKQUOTE>
+      <P>To duplicate a component within a structure or union:</P>
+
+      <OL>
+        <LI>Select the component.</LI>
+
+        <LI>Press the <IMG src="images/DuplicateData.png" alt=""> <B>Duplicate Component</B>
+        button.</LI>
+
+        <LI>A single copy of the component is created immediately following the selected one.</LI>
+      </OL>
+
+      <P>If the structure is not aligned, then there must be enough Undefined bytes following the
+      component to accommodate the duplicate. In an unaligned structure, Undefined bytes get
+      replaced by the new copy of the component.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Duplicate_Multiple_of_Component"></A> <IMG src=
+    "images/MultiDuplicateData.png" alt=""> <B>Duplicate Multiple of Component...</B></H3>
+
+    <BLOCKQUOTE>
+      <P>To create multiple copies of a component:</P>
+
+      <OL>
+        <LI>Select the component.</LI>
+
+        <LI>Press the <IMG src="images/MultiDuplicateData.png" alt=""> <B>Duplicate Multiple of
+        Component...</B> button.</LI>
+
+        <LI><A name="Structure_Editor_Duplicates_NumberInputDialog"></A> The number of duplicates
+        dialog appears. In an unaligned structure, you can only indicate as many duplicates as will
+        fit in place of Undefined bytes.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/NumDuplicates.png" alt="" border="0"></P>
+
+    <BLOCKQUOTE>
+      <OL start="4">
+        <LI>Enter a valid number of duplicates and press the <B>Enter</B> key or the <B>OK</B>
+        button.</LI>
+
+        <LI>The specified number of copies of the component are created immediately after the
+        selected one.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Delete_Components"></A> <IMG src="images/edit-delete.png" alt="">
+    Delete Component(s)</H3>
+
+    <BLOCKQUOTE>
+      <P>One or more components can be deleted from a structure or union. Deleting components in a
+      structure will cause the components that come after those being deleted to shift to new
+      offsets.<BR>
+      </P>
+
+      <P>To delete components:</P>
+
+      <OL>
+        <LI>Select one or more components to delete.</LI>
+
+        <LI>Press the <IMG src="images/edit-delete.png" alt=""> <B>Delete Component(s)</B>
+        button.</LI>
+
+        <LI>The components are removed from the structure or union.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Clear_Components"></A> <IMG src="images/erase16.png" alt="">
+    Clear Component(s)</H3>
+
+    <BLOCKQUOTE>
+      <P>Clearing a component changes it into Undefined byte components that take up the same
+      amount of space as the component being cleared. Components can be cleared in unaligned
+      structures, but not in unions or aligned structures. This is because the resulting Undefined
+      bytes are not valid components in a union or aligned structure.</P>
+
+      <P>To clear components in a structure:</P>
+
+      <OL>
+        <LI>Select one or more components in the table.</LI>
+
+        <LI>Press the <IMG src="images/erase16.png" alt=""> <B>Clear Component(s)</B> button.</LI>
+
+        <LI>Each selected component is replaced by Undefined Bytes. The number of Undefined Bytes
+        will be equal to the length of the component being cleared.</LI>
+      </OL>
+
+      <P><IMG src="../../shared/note.png" alt=""> Clearing a component will also erase its Field
+      Name and Comment.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Structure_Editor_Create_Array"></A> <IMG src="images/Array.png" alt="">Create
+    Array</H3>
+
+    <BLOCKQUOTE>
+      <P>To create an array from a single selected component:</P>
+
+      <OL>
+        <LI>Select a component in the table.</LI>
+
+        <LI>Press the <IMG src="images/Array.png" alt=""> <B>Create Array</B> button.</LI>
+
+        <LI><A name="Structure_Editor_Elements_NumberInputDialog"></A> A dialog pops up to request
+        the number of elements in the array.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/NumElementsPrompt.png" alt="" border="0"></P>
+
+    <BLOCKQUOTE>
+      <OL start="4">
+        <LI>Specify the number of elements. For an unaligned structure, the maximum size of the
+        array is limited by the number of Undefined bytes following the selected component.</LI>
+
+        <LI>Press the <B>OK</B> button.</LI>
+
+        <LI>The selected component becomes an array of that same data type with the specified
+        dimensions.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png" alt=""> In a structure, an array can be created from a
+      selection of multiple components. The data type of the first component in the selection will
+      be used for the data type in the array.</P>
+
+      <P>To create an array from a selection of multiple components in a structure:</P>
+
+      <OL>
+        <LI>Select multiple contiguous components.</LI>
+
+        <LI>Press the <IMG src="images/Array.png" alt=""> <B>Create Array</B> button.</LI>
+
+        <LI>An array is created. The data type of the first component in the selection is used as
+        the data type of the array. The array's dimension is determined by how many of that data
+        type will fit in the space that was occupied by the selection. The size of the array will
+        be the array that can fit in the selected number of bytes. Any left over (unused) bytes at
+        the end of the selection will become Undefined bytes.</LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <H3><A name="Structure_Editor_Create_FlexArray"></A> <IMG src="images/Array.png" alt="">Create
+    Flexible Array</H3>
+
+    <BLOCKQUOTE>
+      <P>To create an unsized flexible array as the last structure component (assuming one 
+      is not already defined):</P>
+
+      <OL>
+        <LI>Add a component whose <I>DataType</I> corresponds to the base type of the unsized array.</LI>
+      
+        <LI>Select this last structure component in the table.</LI>
+
+        <LI>Press the <IMG src="images/Array.png" alt=""> <B>Create Array</B> button or the '[' 
+        action key binding.</LI>
+
+        <LI>A dialog pops up to request
+        the number of elements in the array.  Specify 0 as the number of elements in the popup 
+        dialog and click OK.</LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <H3><A name="Structure_Editor_Unpackage_Component"></A> <IMG src="images/Unpackage.gif" alt="">
+    Unpackage Component</H3>
+
+    <BLOCKQUOTE>
+      <P>Unpackaging takes a single component and replaces it with its own component parts. When
+      editing a structure, array and structure components can be unpackaged by selecting that
+      component and clicking the <IMG src="images/Unpackage.gif" alt=""> <B>Unpackage Component</B>
+      button. For example, the array component Word[4] would become four Word components. If the
+      structure struct_1 was composed of a Float and a DWord, then unpackaging it would replace the
+      struct_1 component with a Float component and a DWord component.</P>
+    </BLOCKQUOTE><BR>
+     
+
+    <H3><A name="Structure_Editor_Create_Structure_From_Selection"></A> <IMG src=
+    "images/cstruct.png" alt=""> Create Structure From Selection</H3>
+
+    <BLOCKQUOTE>
+      <P>Creating a structure from a selection takes a contiguous selection of components in the
+      structure editor and creates a new structure from those components. It then replaces the
+      selection with a single component whose data type is the new structure. The components that
+      were in the selection will become the components that make up the new structure. The user
+      does this by selecting the components in the editor and clicking the <IMG src=
+      "images/cstruct.png" alt=""> <B>Create Structure From Selection</B> button. The user is then
+      prompted for the name of the new structure. Once a unique name is specified the new structure
+      is created and a component containing it replaces the selected components.</P>
+    </BLOCKQUOTE><BR>
+     
+
+    <H2><A name="Structure_Editor_Component_Fields"></A>Component Fields</H2>
+
+    <P>Each row displays information about a component in this structure or union. The DataType,
+    Name, and Comment fields are editable.</P>
+
+    <P>The following summarizes the information about each field for a component.</P>
+
+    <BLOCKQUOTE>
+      <P><B><I>Offset</I></B> - The byte offset of this component from the beginning of the
+      structure. For unions the byte offset of all components is zero, and therefore this field
+      isn't shown.</P>
+
+      <P><B><I>Length</I></B> - The length of this component in bytes.</P>
+
+      <P><B><I>Mnemonic</I></B> - The mnemonic (brief identifier) for this component's data
+      type.</P>
+
+      <P><B><I>DataType</I></B> - The data type of this component. This field is editable.</P>
+
+      <P><B><I>Name</I></B> - The field name associated with this component in the structure or
+      union. When specified, the field names must be unique for the components in a structure or
+      union. This field is editable, except on components that are Undefined bytes.</P>
+
+      <P><B><I>Comment</I></B> - A comment associated with this component. This field is editable,
+      except on components that are Undefined bytes.</P>
+    </BLOCKQUOTE>
+
+    <P><IMG src="../../shared/tip.png" alt="" border="0"> To rearrange the order of the component
+    fields position the cursor over the header for the table column. Left mouse click and drag the
+    column left or right to its new position.</P>
+    <BR>
+     
+
+    <BLOCKQUOTE>
+      <H3><A name="Structure_Editor_Edit_Component_Field"></A> Editing Component Fields</H3>
+
+      <P>The <I>DataType</I>, <I>Name</I> and <I>Comment</I> fields are editable. However, the
+      <I>Name</I> and <I>Comment</I> are not editable when the component's <I>DataType</I> is an
+      Undefined byte.</P>
+
+      <P>To place an editable field into edit mode:</P>
+
+      <UL>
+        <LI><B>Double click</B> on an editable field.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <P>or</P>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>Select a single component row and press <B>F2</B> to begin edit mode. This puts the
+        first editable field in that component row into edit mode. <B>Tab</B> will then move to the
+        next editable field.</LI>
+      </UL>
+
+      <H3><B>Applying an Edit</B></H3>
+
+      <P>In the editable field, pressing <B>Enter</B> applies the value to the field if it is valid
+      and ends the edit session. If the field's value is invalid, a message is written to the
+      editor's status line and the field remains in edit mode.</P>
+
+      <H3>Canceling an Edit</H3>
+
+      <P>In the editable field, pressing <B>Escape</B> cancels the edit session without applying
+      the changes to that field.</P>
+
+      <H3>Editing More Than One Component Field</H3>
+
+      <P>You can move directly from editing the component 's name or comment field to editing
+      another by pressing <B>Tab</B>, <B>Shift-Tab</B>, <B>UpArrow</B> or <B>DownArrow</B>. The key
+      press only moves the edit session if the current field edit can be applied. Otherwise, an
+      error is displayed in the status line.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Tab</B></P>
+
+        <P>Pressing <B>Tab</B> applies the current edit and moves to the next editable field in the
+        table. If the current field is the last editable one in this component then it moves to the
+        first editable field in the next component. This key moves the edit session left to right
+        and top to bottom in the table.</P>
+
+        <P><B>Shift-Tab</B></P>
+
+        <P>Pressing <B>Shift-Tab</B> applies the current edit and moves to the previous editable
+        field in the table. If the current field is the first editable one in this component then
+        it moves to the last editable field in the previous component. This key moves the edit
+        session right to left and bottom to top in the table.</P>
+
+        <P><B>Up-Arrow</B></P>
+
+        <P>Pressing the <B>UpArrow</B> key applies the current edit and moves to the same field of
+        the previous component in the table if that field is editable. This key moves the edit
+        session bottom to top in the table.</P>
+
+        <P><B>Down-Arrow</B></P>
+
+        <P>Pressing the <B>DownArrow</B> key applies the current edit and moves to the same field
+        of the next component in the table if that field is editable. This key moves the edit
+        session top to bottom in the table.</P>
+      </BLOCKQUOTE>
+
+      <H3>Editing the <I>DataType</I> Field</H3>
+
+      <P>This can be any data type that is available in the data type manager. To edit the data
+      type double-click the data type cell. This will show the <A href=
+      "help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection Dialog</A>,
+      which allows you to easily enter a data type. It can also be Undefined, a pointer to a data
+      type, or an array.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Basic Data Type</B></P>
+
+        <P>This can be a built-in data type (Byte, Word, etc.), a structure, a union, or a
+        typedef.</P>
+
+        <P>For example, Word.</P>
+
+        <P><B>Pointer Data Type</B></P>
+
+        <P>This can be the basic Pointer data type or a pointer to a data type. A pointer to a data
+        type is indicated by following the data type with an *.</P>
+
+        <P>For example, Word * is a pointer to a Word.</P>
+
+        <P><B>Array</B></P>
+
+        <P>This can be a multidimensional array of any data type.</P>
+
+        <P>For example, DWord[2][4] is an array with 2 elements, where each element is an array
+        with 4 elements that are DWords.</P>
+
+        <P><B>Array of Pointers</B></P>
+
+        <P>Arrays of pointers can also be specified.</P>
+
+        <P>For example, Float*[5] is an array with five elements where each element is a pointer to
+        a Float.</P>
+
+        <H4><A name="EffectOfChangingDataTypeSize"></A> <U>Effect of Changing a Component's
+        Size</U></H4>
+
+        <P>An unaligned union's size will always be the size of its largest component. If you
+        change a data type for a component and the component size changes, the union size will
+        change if necessary. An aligned union is padded to make its size a multiple of the union's
+        alignment.<BR>
+        </P>
+
+        <P>How a structure is affected by changing a component's data type depends on whether the
+        structure size is aligned or unaligned.</P>
+
+        <BLOCKQUOTE>
+          <P><B>Unaligned</B> - If the structure is <I>unaligned</I>, then the new component must
+          be less than or equal to the original component's size plus any Undefined byte components
+          that immediately follow it in the structure. In an unaligned structure, decreasing the
+          component size will create Undefined byte components following it to maintain the
+          structure size. Increasing the component size replaces Undefined bytes immediately
+          following the component. The last component of a structure can be always be changed which
+          can cause the structure to grow larger.<BR>
+          </P>
+
+          <P><B>Aligned</B> - If the structure is <I>aligned</I>, the component can change size,
+          which affects the structure's overall size and the alignment of individual components
+          that follow it.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Editing the <I>Name</I> Field</H3>
+
+      <P>When specified, a field name must be unique for the components in a structure or union. It
+      cannot contain blanks.</P>
+
+      <H3>Editing the <I>Comment</I> Field</H3>
+
+      <P>The comment can be any Ascii text.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Create_Pointer"></A>Pointers</H2>
+
+    <BLOCKQUOTE>
+      <P>Pressing the '<B>p</B>' key invokes the pointer action on a component. This will generally
+      create a default pointer unless the existing data is already a pointer in which case that
+      pointer will be wrapped with an additional pointer (e.g., int * would become int **). This
+      action will always apply a default sized pointer. Otherwise you can drag one of the other
+      pointer types from the <I>Data Type Manager</I> window. With existing pointer data, the base
+      type of that pointer may be changed simply by applying another type onto the pointer (e.g.,
+      applying byte to default pointer becomes db *). If you do not want this pointer stacking
+      behavior to happen, it is best to clear the code unit(s) before applying a data type via
+      drag-n-drop or key-binding actions.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Cycle"></A>Cycling a Component Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>Some data types are part of a cycle group. A cycle group is a collection of data types
+      that are similar and are commonly associated with one another. Cycling a data type
+      facilitates changing a component from one data type to the next data type in the same group.
+      Each cycle group has a short-cut key associated with the group. Pressing the short-cut key
+      cycles from the current data type to the next one in the group. For example, the <B>b</B> key
+      is associated with the Byte cycle group. This group is Byte, Word, DWord, and QWord.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png" alt=""> A single row of the component table must be
+        selected to cycle a data type.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <H3>Union or Aligned Structure<BR>
+        </H3>
+
+        <P>The first data type in a cycle group can be added to the end of a structure as a new
+        component.</P>
+
+        <P>To add a data type using a cycle group key:</P>
+
+        <OL>
+          <LI>Select the last row (the blank row) of the component table.</LI>
+
+          <LI>Press the short-cut key for the desired cycle group. For example, the <B>b</B> key
+          will add a Byte; the <B>f</B> key will add a Float; the <B>apostrophe</B> key will add an
+          Ascii.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="" border="0"> Cycle groups can also be applied
+          from the component table's popup menu under <B>Cycle</B>.</P>
+        </BLOCKQUOTE>
+
+        <P>To cycle a component's data type to another one in the same group:</P>
+
+        <OL>
+          <LI>Select the component in the table.</LI>
+
+          <LI>Press the cycle group key until the data type has cycled to the desired data type.
+          For example, if the current data type is a Byte, pressing the <B>b</B> key twice would
+          change it to DWord.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="" border="0"> When the current component data
+          type is not in the cycle group of the desired data type, pressing the cycle group key of
+          the desired data type will change the component to the first data type in the desired
+          cycle group. The data type can then be cycled to any other data type in the group.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>Unaligned Structure</B></H3>
+
+        <P>Cycling is implemented similar to how it is implemented in an aligned structure. The
+        only exception is that the user can only cycle to data types that will fit within the data
+        boundary of the current component. If Undefined bytes follow the selected component, the
+        Undefined bytes can be replaced by cycling the data type to a larger sized data type.
+        Likewise, cycling to a smaller data type will add Undefined bytes after the component being
+        cycled. However, the last component is not restricted to a particular size.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="DragNDrop"></A>Drag and Drop Basics</H2>
+
+    <BLOCKQUOTE>
+      <P>Data types can be dragged from the <A href=
+      "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>
+      to the component table in the Structure Editor. A regular drag and drop results in the
+      component in the editor being replaced by the one being dragged. Holding the Ctrl key during
+      the drag and drop causes the dragged data type to be inserted instead of being replaced.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Known Problem:</B> Holding the Ctrl key to perform an insert of a data type does not
+        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key. 
+        The "+" should then appear at the drop site.</P>
+
+        <P><IMG src="../../shared/note.png" alt="">When a data type is dropped on a pointer
+        component, the component becomes a pointer of that data type instead of simply being
+        replaced by that data type. For example, dropping a Byte on a Pointer results in a Byte*,
+        which is a pointer to a Byte. Drag and Drop is discussed further in <A href=
+        "#AddDataType">Adding a Data Type</A>, <A href="#InsertDataType">Inserting a Data Type</A>,
+        and <A href="#ReplaceDataType">Replacing a Data Type</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Favorite"></A>Favorites Basics</H2>
+
+    <BLOCKQUOTE>
+      <P>Favorite data types are defined from the Data Type Manager dialog. In the Data Editor,
+      favorites are available through the popup menu in the component table. Applying a favorite
+      data type is similar to dropping a data type. Favorites can be used to insert a component of
+      that data type or to replace a component's data type. Favorites can only be applied to a
+      contiguous selection. Therefore, individual favorites are only enabled when they can be
+      applied (i.e. they fit at the selection and the selection is contiguous).</P>
+
+      <P><IMG src="../../shared/note.png" alt=""> When a favorite data type is applied to a pointer
+      component, the component becomes a pointer of that data type instead of simply being replaced
+      by that data type.</P>
+
+      <P><IMG src="../../shared/tip.png" alt="" border="0"> If you right mouse click on a component
+      where there is no selection, the selection becomes a single component selection containing
+      that component and the popup menu will appear.</P>
+
+      <P>Favorites are discussed further in <A href="#AddDataType">Adding a Data Type</A>, and <A
+      href="#ReplaceDataType">Replacing a Data Type</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="AddDataType"></A>Adding a Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>A data type can be added as a component by replacing Undefined bytes. When editing an
+      unaligned structure, there must be enough Undefined bytes for the data type to replace. A
+      data type can also be added to the end of a structure or union.</P>
+
+      <BLOCKQUOTE>
+        <H3>Drag and Drop</H3>
+
+        <P>Drag a data type from the data type manager to the empty row at the end of the component
+        table and drop it. The data type is added to the end of the structure in the editor.<BR>
+        </P>
+
+        <P><A name="Structure_Editor_Bytes_NumberInputDialog"></A>If the data type can be various
+        sizes, the user is prompted for the desired size. The following illustrates the dialog due
+        to the drag and drop of a string.<BR>
+        </P>
+
+        <DIV style="text-align: center; margin-top: 10px;">
+          <IMG src="images/BytesNumberInputDialog.png" alt=""><BR>
+        </DIV>
+
+        <P>Simply enter the number of bytes desired for the data type and press the Enter key or
+        click the OK button.<BR>
+        </P>
+
+        <P><IMG src="../../shared/tip.png" alt=""> For information about drag and drop with
+        pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
+
+        <H3>Favorites</H3>
+
+        <P>Right mouse click on the empty row at the end of the table and pull right to see the
+        Favorites. Select the favorite from the popup and it is added as the last component.</P>
+
+        <P><IMG src="../../shared/tip.png" alt=""> For information about Pointers as a Favorite,
+        see <A href="#Structure_Editor_Favorite">Favorites Basics</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="InsertDataType"></A>Inserting a Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>In an aligned structure or a union, a data type can be inserted as a new component.</P>
+
+      <BLOCKQUOTE>
+        <H3>Drag and Drop</H3>
+
+        <OL>
+          <LI>While holding down the Ctrl key, drag the data type you want to insert from the data
+          type manager. As you drag it over the components in the structure editor, the drag icon
+          will have a "+" on it indicating insert mode.</LI>
+
+          <LI>Release the mouse button when you are on the desired component and the dragged data
+          type is inserted before it.</LI>
+
+          <LI style="list-style: none">
+            <P><B>Known Problem:</B> Holding the Ctrl key to perform an insert of a data type does not
+        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key. 
+        The "+" should then appear at the drop site.</P>
+          </LI>
+        </OL>
+
+        <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+        pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="ReplaceDataType"></A>Replacing a Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>A component can have its data type replaced with a different data type. If an unaligned
+      structure is being edited then Undefined bytes are created or consumed as necessary to
+      maintain the position of other components within the structure. For unions and aligned
+      structures, the data type simply changes for the component and the overall size is adjusted
+      accordingly.</P>
+
+      <BLOCKQUOTE>
+        <H3>Drag and Drop</H3>
+
+        <BLOCKQUOTE>
+          <H4>Single Component Selected</H4>
+
+          <P>Drag a data type to a single selected component in the editor or to a non-selected
+          component in the editor. 
+          If the mouse pointer is a 'circle with a slash' then the data type cannot be
+          dropped to replace the component. This is probably because the data type being dropped
+          won't fit in the structure in place of the original component. If editing a union or an
+          aligned structure the data type should always fit and the drop is allowed. If editing an
+          unaligned structure, the component is replaced only if the new component will fit. (see
+          <A href="#EffectOfChangingDataTypeSize">Effect of Changing a Component's Size</A>)</P>
+
+          <H4>Contiguous Selection of Multiple Components</H4>
+
+          <P>Drag a data type to a block of selected components. 
+          Whether the structure is aligned or unaligned doesn't matter when dropping a data type on
+          a block of selected components. This is because the new component (s) will occupy the
+          same space as the currently selected components.<BR>
+           <B>In a union</B>, all selected components will be replaced with a single component
+          containing the data type dropped.<BR>
+           <B>In a structure</B>, as many components of the dropped data type as will fit in the
+          selection are created to replace the selection. In an unaligned structure any left over
+          bytes in the selection will become Undefined bytes.</P>
+
+          <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+          pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
+        </BLOCKQUOTE>
+
+        <H3>Favorites</H3>
+
+        <BLOCKQUOTE>
+          <H4>Single Component Selected</H4>
+
+          <P><IMG src="../../shared/tip.png" alt="" border="0"> If you right mouse click on a
+          component where there is no selection, the selection becomes a single component selection
+          containing that component and the popup menu will appear.</P>
+
+          <P>To replace a component's data type with a favorite data type, select it in the table,
+          right mouse click and pick the favorite. Only favorites that will fit in place of the
+          component will be enabled. (see <A href="#EffectOfChangingDataTypeSize">Effect of
+          Changing a Component's Size</A>)</P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H4>Contiguous Selection of Multiple Components</H4>
+
+          <P>To replace a contiguous selection with a favorite data type, select it in the table,
+          right mouse click and pick the favorite.<BR>
+           <B>In a union</B>, all selected components will be replaced with a single component
+          containing the favorite data type.<B><BR>
+           In a structure</B>, only favorites that will fit in place of the selection will be
+          enabled. Just like with drag and drop, whether the structure is aligned or unaligned
+          doesn't matter. The selection becomes as many of the data type as will fit and left over
+          bytes become Undefined bytes for an unaligned structure.</P>
+
+          <P><IMG src="../../shared/note.png" alt=""> For information about Pointers as a Favorite,
+          see <A href="#Structure_Editor_Favorite">Favorites Basics</A>.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Show_Component_Path"></A> Showing a Component's Data Type
+    Category</H2>
+
+    <BLOCKQUOTE>
+      <P>Every component has a data type: Byte, Word, Float, etc.. The category is where that data
+      type is located. Since you can have two data types with the same name in different locations
+      (categories), the editor provides a way to see the category for any component's data
+      type.</P>
+
+      <P>To see the category for a component:</P>
+
+      <OL>
+        <LI>Select a single component.</LI>
+
+        <LI>Right mouse click on the component in the table.</LI>
+
+        <LI>From the popup menu, select <B>Show Component Path</B>.</LI>
+
+        <LI>The category information appears in the editor's status line at the bottom of the
+        dialog.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Edit_Component"></A> Editing a Component's Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>Another Data Type Editor can be brought up from within the Structure Data Type Editor for
+      any component that is an editable data type, such as Structure, Union, or Enum. In addition,
+      another Data Type Editor can be brought up for any component whose base data type is an
+      editable data type. For example, a Typedef on a Structure would allow you to edit the
+      Structure. Likewise, you can edit a Structure wherever the component is a Pointer to the
+      Structure.<BR>
+      </P>
+
+      <P>To display another editor for a component that has an editable data type:</P>
+
+      <OL>
+        <LI>Select the component with a data type that is a structure, union or enum or that has
+        one of them as its base data type.</LI>
+
+        <LI>Right mouse click on the component in the table. Select <B>Edit Component...</B> from
+        the popup.</LI>
+
+        <LI>The editable data type for the selected component is displayed in a new data type
+        editor.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Structure_Editor_Show_Numbers_In_Hex"></A> Showing Numbers in Hexadecimal</H2>
+
+    <BLOCKQUOTE>
+      <P>The Component Table contains numeric fields such as the component's offset and length. The
+      structure information area also shows the overall size and alignment of the structure. By
+      default numbers are initially shown in decimal in the Structure Editor. There is a <A href=
+      "#StructureEditorToolOptions">tool option</A>, <B>Show Numbers In Hex</B>, that lets you
+      override the default and set whether these numbers should be displayed in hexadecimal when an
+      editor is initially displayed.</P>
+
+      <P>There is also a toolbar menu item in the editor that allows you to immediately change
+      whether the numbers are displayed in hexadecimal or decimal. Changing this only affects the
+      current editor where it is changed.</P>
+
+      <P><IMG src="../../shared/note.png" alt=""> The Union Editor does not display offsets since
+      they are always zero.</P>
+
+      <P>To switch between decimal and hexadecimal display of numeric values in the current
+      editor:</P>
+
+      <OL>
+        <LI>Right mouse click on the table.</LI>
+
+        <LI>A check mark next to <B>Show Numbers in Hexadecimal</B> indicates that numbers are
+        currently displayed in hex. If there is no checkmark, the numbers are currently shown in
+        decimal.<BR>
+        </LI>
+
+        <LI>From the popup menu, select <B>Show Numbers in Hexadecimal</B>.</LI>
+
+        <LI>The numbers being displayed will change from decimal to hexadecimal or vice versa. The
+        check mark next to <B>Show Numbers in Hexadecimal</B> indicates whether the numbers are
+        currently displayed in hexadecimal.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="StructureEditorToolOptions"></A> Structure and Union Editor Tool Options</H2>
+
+    <BLOCKQUOTE>
+      <P>The Structure and Union Editors add options to the tool. To view or edit the option
+      settings:</P>
+
+      <UL>
+        <LI>From the tool's menu select <B>Edit</B> <IMG src="../../shared/arrow.gif" alt="-&gt;"
+        border="0"> <B>Tool Options...</B> which displays the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog.</A><BR>
+        </LI>
+
+        <LI>Open the <I>Editors</I> tree node.<BR>
+        </LI>
+
+        <LI>Click on either the <I>Structure Editor</I> or <I>Union Editor</I> tree node to view
+        its options.</LI>
+      </UL>
+
+      <P>The <I>StructureEditor</I> and <I>Union Editor</I> tabs contains the following
+      options:</P>
+      <BR>
+       
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE width="600" border="1" cellpadding="2">
+            <TBODY>
+              <TR>
+                <TH align="left" bgcolor="#c0c0c0" valign="top" width="100">Editor</TH>
+
+                <TH align="left" bgcolor="#c0c0c0" valign="top" width="264">Option</TH>
+
+                <TH align="left" bgcolor="#c0c0c0" valign="top" width="100">Functionality<BR>
+                </TH>
+              </TR>
+
+              <TR>
+                <TD rowspan="1" colspan="1" valign="top">Structure Editor</TD>
+
+                <TD align="left" valign="top" width="264">Show Numbers In Hex</TD>
+
+                <TD align="left" valign="top" width="350">If selected, the component offsets and
+                lengths as well as the overall size and alignment of the structure will be
+                displayed in hexadecimal when a new Structure Editor is initially displayed.<BR>
+                 Otherwise, the lengths are initially in decimal.<BR>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">Union Editor<BR>
+                </TD>
+
+                <TD align="left" valign="top" width="264">Show Numbers In Hex</TD>
+
+                <TD align="left" valign="top" width="100">If selected, the component lengths as
+                well as the overall size and alignment of the union will be displayed in
+                hexadecimal when a new Union Editor is initially displayed.<BR>
+                 Otherwise, the lengths are initially in decimal.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+
+      <P>To select an option simply click on the check box. <U><BR>
+      </U></P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Data Type Manager</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+      Manager</A></LI>
+
+      <LI><A href="EnumEditor.htm">Enum Editor</A></LI>
+
+      <LI><A href="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection
+      Dialog</A></LI>
+    </UL><BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

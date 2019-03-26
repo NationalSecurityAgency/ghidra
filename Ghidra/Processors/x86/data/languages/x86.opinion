@@ -1,0 +1,72 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)">
+      <constraint compilerSpecID="windows">
+        <constraint primary="332"   processor="x86"     endian="little" size="32" />
+        <constraint primary="333"   processor="x86"     endian="little" size="32" />
+        <constraint primary="334"   processor="x86"     endian="little" size="32" />
+        <constraint primary="34404" processor="x86"     endian="little" size="64" />
+      </constraint>
+      <constraint compilerSpecID="borlandcpp">
+        <constraint primary="332"  secondary="borlandcpp" processor="x86" endian="little" size="32" />
+        <constraint primary="333"  secondary="borlandcpp" processor="x86" endian="little" size="32" />
+        <constraint primary="334"  secondary="borlandcpp" processor="x86" endian="little" size="32" />
+      </constraint>
+      <constraint compilerSpecID="borlanddelphi">
+        <constraint primary="332"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
+        <constraint primary="333"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
+        <constraint primary="334"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
+      </constraint>
+    </constraint>
+    <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
+        <constraint primary="332"   processor="x86"     endian="little" size="32" />
+        <constraint primary="333"   processor="x86"     endian="little" size="32" />
+        <constraint primary="334"   processor="x86"     endian="little" size="32" />
+        <constraint primary="34404" processor="x86"     endian="little" size="64" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">
+        <constraint primary="3"    processor="x86"      endian="little" size="32" />
+        <constraint primary="62"   processor="x86"      endian="little" size="64" />
+    </constraint>
+    <constraint loader="Module Definition (DEF)" compilerSpecID="windows">
+        <constraint primary="0" processor="x86" endian="little" size="32" />
+    </constraint>
+    <constraint loader="Program Mapfile (MAP)" compilerSpecID="windows">
+        <constraint primary="0" processor="x86" endian="little" size="32" />
+    </constraint>
+    <constraint loader="Old-style DOS Executable (MZ)" compilerSpecID="default">
+        <constraint primary="23117" processor="x86" endian="little" size="16" variant="Real Mode"/>
+    </constraint>
+    <constraint loader="New Executable (NE)" compilerSpecID="default">
+        <constraint primary="17742" processor="x86" endian="little" size="16" variant="Real Mode"/>
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="gcc">
+        <constraint primary="7"        processor="x86"     endian="little" size="32" />
+        <constraint primary="16777223" processor="x86"     endian="little" size="64" />
+    </constraint>
+    <constraint loader="Common Object File Format (COFF)" compilerSpecID="gcc">
+        <constraint primary="332"     processor="x86"          endian="little" size="32" />
+        <constraint primary="-31132"  processor="x86"          endian="little" size="64" />
+    </constraint>
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
+        <constraint primary="332"    processor="x86"          endian="little" size="32" />
+        <constraint primary="-31132" processor="x86"          endian="little" size="64" />
+    </constraint>
+    <constraint loader="Assembler Output (AOUT)" compilerSpecID="gcc">
+        <constraint primary="134"  processor="x86"          endian="little" size="32" />
+    </constraint>
+    <constraint loader="Relocatable Object Module Format (OMF)">
+      <constraint compilerSpecID="windows">
+        <constraint primary="i386" processor="x86"          endian="little" size="32" />
+      </constraint>
+      <constraint compilerSpecID="default">
+        <constraint primary="i386" processor="x86"          endian="little" size="16" />
+      </constraint>
+      <constraint compilerSpecID="borlandcpp">
+        <constraint primary="i386" secondary="borlandcpp" processor="x86"        endian="little" size="32" />
+        <constraint primary="i386" secondary="codegearcpp" processor="x86"       endian="little" size="32" />
+      </constraint>
+      <constraint compilerSpecID="borlanddelphi">
+        <constraint primary="i386" secondary="borlanddelphi" processor="x86"     endian="little" size="32" />
+      </constraint>
+    </constraint>
+</opinions>

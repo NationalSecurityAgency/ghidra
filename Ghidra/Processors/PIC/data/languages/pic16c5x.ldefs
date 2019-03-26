@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-16"
+            endian="little"
+            size="16"
+            variant="PIC-16C5x"
+            version="1.1"
+            slafile="pic16c5x.sla"
+            processorspec="pic16c5x.pspec"
+            manualindexfile="../manuals/PIC-16.idx"
+            id="PIC-16:LE:16:PIC-16C5x">
+    <description>PIC-16C5x</description>
+    <compiler name="default" spec="pic16c5x.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="pic16cxx"/>
+  </language>
+</language_definitions>

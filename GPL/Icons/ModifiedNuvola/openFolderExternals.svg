@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="25"
+   height="17"
+   id="svg2">
+  <defs
+     id="defs4">
+    <linearGradient
+       x1="1.3965347"
+       y1="2.8009901"
+       x2="7.6133666"
+       y2="6.9455447"
+       id="linearGradient4260"
+       xlink:href="#linearGradient4254"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="2.6579208"
+       y1="2.260396"
+       x2="6.6222773"
+       y2="3.2934308"
+       id="linearGradient4239"
+       xlink:href="#linearGradient4233"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="9.6405945"
+       y1="1.4495049"
+       x2="5.4509902"
+       y2="9.19802"
+       id="linearGradient4228"
+       xlink:href="#linearGradient4222"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       id="linearGradient4222">
+      <stop
+         id="stop4224"
+         style="stop-color:#a38300;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4226"
+         style="stop-color:#6c5600;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4233">
+      <stop
+         id="stop4235"
+         style="stop-color:#32ac00;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4237"
+         style="stop-color:#116200;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4254">
+      <stop
+         id="stop4256"
+         style="stop-color:#166500;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4258"
+         style="stop-color:#3a3000;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       x1="13"
+       y1="13"
+       x2="0"
+       y2="0"
+       id="linearGradient3598"
+       xlink:href="#linearGradient3592"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       id="linearGradient3592">
+      <stop
+         id="stop3594"
+         style="stop-color:#008000;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3596"
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       x1="3.2851486"
+       y1="11.444585"
+       x2="7.125"
+       y2="15"
+       id="linearGradient5517"
+       xlink:href="#linearGradient5442"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="-1.8334223"
+       y1="6.6957436"
+       x2="7.8287196"
+       y2="16.000019"
+       id="linearGradient5509"
+       xlink:href="#linearGradient5450"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="1.6893564"
+       y1="5.3683167"
+       x2="14.504462"
+       y2="21.180693"
+       id="linearGradient5456"
+       xlink:href="#linearGradient5450"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(0.57338659,-17.647565)" />
+    <linearGradient
+       x1="2.7254951"
+       y1="6.4945545"
+       x2="13.09375"
+       y2="16.765842"
+       id="linearGradient5448"
+       xlink:href="#linearGradient5442"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(0.57338659,-17.647565)" />
+    <linearGradient
+       id="linearGradient5442">
+      <stop
+         id="stop5444"
+         style="stop-color:#3bb265;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop5446"
+         style="stop-color:#246c32;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5450">
+      <stop
+         id="stop5452"
+         style="stop-color:#62dd90;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop5454"
+         style="stop-color:#041308;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       x1="-1.8334223"
+       y1="6.6957436"
+       x2="7.8287196"
+       y2="16.000019"
+       id="linearGradient3368"
+       xlink:href="#linearGradient5450"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="3.2851486"
+       y1="11.444585"
+       x2="7.125"
+       y2="15"
+       id="linearGradient3370"
+       xlink:href="#linearGradient5442"
+       gradientUnits="userSpaceOnUse" />
+    <clipPath
+       id="clipPath4146">
+      <rect
+         width="8"
+         height="7"
+         x="-0.0004619"
+         y="9"
+         id="rect4148"
+         style="opacity:0.55979644;fill:#0060c0;fill-opacity:1;stroke:none" />
+    </clipPath>
+  </defs>
+  <g
+     transform="translate(0,-1035.3622)"
+     id="layer1">
+    <image
+       xlink:href="../nuvola/16x16/folder_yellow_open.png"
+       x="1"
+       y="1036.3622"
+       width="16"
+       height="16"
+       id="image2998" />
+    <g
+       transform="translate(22.426613,1043.041)"
+       id="layer1-7">
+      <g
+         transform="translate(-6.4261511,-8.6788)"
+         clip-path="url(#clipPath4146)"
+         id="g3364">
+        <path
+           d="m 3.90625,8.28125 a 0.50005,0.50005 0 0 0 -0.34375,0.25 l -4,6.71875 A 0.50005,0.50005 0 0 0 0,16 l 8,0 a 0.50005,0.50005 0 0 0 0.4375,-0.75 l -4,-6.71875 a 0.50005,0.50005 0 0 0 -0.53125,-0.25 z"
+           id="path5501"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:url(#linearGradient3368);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           d="M 4,9.78125 7.125,15 0.875,15 4,9.78125 z"
+           id="path5432"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:url(#linearGradient3370);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+      </g>
+    </g>
+  </g>
+</svg>

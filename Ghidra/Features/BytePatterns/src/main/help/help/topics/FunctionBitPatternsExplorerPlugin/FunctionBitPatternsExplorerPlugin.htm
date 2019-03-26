@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Function Bit Patterns Explorer Plugin</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Function_Bit_Patterns_Explorer Plugin"></A>Function Bit Patterns Explorer
+    Plugin</H1>
+
+      <P>The <B>Function Bit Patterns Explorer Plugin</B> is used to discover patterns in the bytes
+      around function starts and returns. When analyzing a single program, such patterns can be
+      used to discover new functions based on the functions that have already been found.</P>
+
+      <P>The explorer can also be used to analyze a collection of XML files containing the function
+      start/return information for a <A href="#xml_directory">collection of binaries</A>. Such
+      patterns can be used to guide the <B>Function Start Analyzer</B> during auto-analysis.</P>
+
+    <BLOCKQUOTE>
+      <P>To bring up the explorer, select <I>Window -&gt; Function Bit Patterns Explorer</I> from
+      the Code Browser.</P>
+
+      <H2><A name="Data_Sources"></A>Data Sources</H2>
+
+      <BLOCKQUOTE>
+        <H3>Current Program</H3>
+
+        <BLOCKQUOTE>
+          <P>Use the "Gather Data from Current Program" button to gather data to analyze from the
+          current program. You can also select <I>Tools -&gt; Explore Function Bit Patterns</I> in
+          the Code Browser.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="xml_directory"></A>Directory of XML Files</H3>
+
+        <BLOCKQUOTE>
+          <P>Use the "Read XML Files" button to select a directory of XML files containing data
+          from windows around function start/returns (one XML file per program). To generate these
+          XML files, run the script <I>DumpFunctionPatternInfoScript.java</I></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A name="Data_Gathering_Parameters"></A>Data Gathering Parameters</H2>
+
+      <CENTER style="margin-top:25px; margin-bottom:25px">
+        <P><IMG alt="" src="images/DataGatheringParams.png" border="0"></P>
+      </CENTER>
+
+      <BLOCKQUOTE>
+        <P>Several parameters control how much data is gathered around each function. When
+        analyzing a single program, a dialog will pop up which allows you to enter values for these
+        parameters. When running the script <I>DumpFunctionPatternInfoScript.java</I> you can set
+        these parameters by editing the file <I>DumpFunctionPatternInfoScript.properties</I>. The
+        parameters are:</P>
+
+        <H3>Number of First Bytes</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of bytes to gather starting at the entry point of the function.</P>
+        </BLOCKQUOTE>
+
+        <H3>Number of Pre-Bytes</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of bytes to gather immediately before (but not including) the entry point
+          of a function.</P>
+        </BLOCKQUOTE>
+
+        <H3>Number of Return Bytes</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of bytes to gather immediately before (and including) a <I>return</I>
+          statement in a function.</P>
+        </BLOCKQUOTE>
+
+        <H3>Number of First Instructions</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of instructions to gather starting at the entry point of a function.</P>
+        </BLOCKQUOTE>
+
+        <H3>Number of Pre-Instructions</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of instruction to gather immediately before (and not including) a function
+          start.</P>
+        </BLOCKQUOTE>
+
+        <H3>Number of Return Instructions</H3>
+
+        <BLOCKQUOTE>
+          <P>The number of instructions to gather immediately before (and including) a function
+          start.</P>
+        </BLOCKQUOTE>
+
+        <H3>Context Registers</H3>
+
+        <BLOCKQUOTE>
+          <P>The context registers whose values you wish to record. Enter a comma-separated list of
+          registers into this field. For example: <I>TMode,LMode</I></P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png" alt="Note" border="0">Recommended Parameters:</P>
+          Reasonable starting values for the parameters controlling the number of instructions to
+          be gathered are 3, 4, and 5. When setting the number of bytes to gather, it's reasonable
+          to choose a value that can hold most of the corresponding instruction sequences. For
+          example, suppose you're examining x64 programs and set the number of first instructions
+          to gather to 4. A reasonable number of first bytes to gather is 20, which should be
+          enough to hold most 4-instruction sequences (even though the maximum length of an
+          instruction on x64 is 15 bytes).
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Data Views</H2>
+
+      <BLOCKQUOTE>
+        <P>The main interface of this plugin is a panel with multiple tabs. All tabs, except for
+        the Pattern Clipboard tab, are auto-populated, either after reading a directory of XML
+        files or clicking "OK" on the Data Gathering Parameters dialog.</P>
+
+        <CENTER style="margin-top:25px; margin-bottom:25px">
+          <P><IMG alt="" src="images/TabbedView.png" border="0"></P>
+        </CENTER>Each tab displays a different view of the gathered data: 
+
+        <BLOCKQUOTE>
+          <P><A href="#Byte_Sequence_Tabs">Byte Sequence Tabs</A></P>
+
+          <P><A href="#Instruction_Sequence_Tabs">Instruction Sequence Tabs</A></P>
+
+          <P><A href="#Function_Start_Alignment_Tab">Function Start Alignment Tab</A></P>
+
+          <P><A href="#Context_Register_Information_Tab">Context Register Information Tab</A></P>
+
+          <P><A href="#Pattern_Clipboard_Tab">Pattern Clipboard</A></P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Byte_Sequence_Tabs"></A>Byte Sequence Tabs</H3>
+
+          <BLOCKQUOTE>
+            <P>There are three byte sequence tabs: one for first bytes, one for pre-bytes, and one
+            for return bytes. Two types of filters can be applied to byte sequences: <I>length
+            filters</I> and <I>context register filters</I>. Length filters are required, but
+            context register filters are optional.</P>
+
+            <BLOCKQUOTE>
+              <H4><A name="Length_Filters"></A>Length Filters</H4>
+
+              <BLOCKQUOTE>
+                <P>A length filter requires two pieces of data: a minimum sequence length and a
+                prefix/suffix length. The filter filters out all sequences which do not meet the
+                minimum length constraint. For each sequence that does meet the constraint, it
+                takes either a prefix or a suffix of a appropriate length (suffixes are specified
+                as a negative number in the input dialog for the filter data).</P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+
+            <BLOCKQUOTE>
+              <H4><A name="Context_Register_Filters"></A>Context Register Filters</H4>
+
+              <BLOCKQUOTE>
+                <P>These allow you to filter sequences by specifying values for some or all of the
+                tracked context registers.</P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+
+            <BLOCKQUOTE>
+              <P><B>Note</B>: Filters for byte sequences are not shared between tabs.</P>
+
+              <P>After applying such a filter, there will be a table containing bytes sequences,
+              all of which have the same size. Select some rows in the table, right click, and
+              select <A href="#Analyzing_Byte_Sequences">Analyze Sequences</A> to look for
+              patterns.</P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+            <H3><A name="Instruction_Sequence_Tabs"></A>Instruction Sequence Tabs</H3>
+
+            <BLOCKQUOTE>
+              <P>Similar to byte sequences, there are three instructions sequence tabs, containing
+              first instructions, pre instructions, and return instructions, respective. These
+              sequences are sorted into a tree. Note that the length of an instruction is taken
+              into account. For example, sequences which begin with a one-byte <I>PUSH</I>
+              instruction will go through a different path in the tree than sequences with begin
+              with a two-byte <I>PUSH</I> instruction. There are two optional filters which you can
+              apply to instruction sequences:</P>
+
+              <BLOCKQUOTE>
+                <H4><A name="Percentage_Filters"></A>Percentage Filters</H4>
+
+                <BLOCKQUOTE>
+                  <P>Filtering by <I>X</I>% will remove a node from the tree if the percentage of
+                  paths going through the node is less than <I>X</I>%.</P>
+                </BLOCKQUOTE>
+
+                <H4>Context Register Filters</H4>
+
+                <BLOCKQUOTE>
+                  <P>These allow you to filter sequences by specifying values for some or all of
+                  the tracked context registers.</P>
+                </BLOCKQUOTE>
+              </BLOCKQUOTE>
+
+              <BLOCKQUOTE>
+                <P><B>Note</B>: Filters for instruction sequences are not shared between tabs.</P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+
+            <BLOCKQUOTE>
+              <P>If you hover over a node, you can see the percentage of all paths in the tree
+              which go through that node. To search for patterns in the byte sequences
+              corresponding to a given node, right click on the node and select <A href=
+              "#Analyzing_Byte_Sequences">Analyze Sequences</A>.</P>
+            </BLOCKQUOTE>
+
+            <H3><A name="Function_Start_Alignment_Tab"></A>Function Start Alignment Tab</H3>
+
+            <BLOCKQUOTE>
+              <P>This tab displays with <I>n</I> rows, where <I>n</I> is the specified alignment
+              modulus. The number in row <I>i</I> is the number of functions whose addresses modulo
+              the alignment modulus is equal to <I>i</I>. This allows you to determine whether
+              function starts are aligned within the program (for example, on x64, compilers will
+              frequently 16-byte align function starts at higher optimization levels). If you know
+              that functions are aligned along a certain boundary, you don't have to search for
+              function starts in the non-aligned bytes.</P>
+            </BLOCKQUOTE>
+
+            <H3><A name="Context_Register_Information_Tab"></A>Context Register Information
+            Tab</H3>
+
+            <BLOCKQUOTE>
+              <P>This tab displays all values recorded for the context registers you specified.</P>
+            </BLOCKQUOTE>
+
+            <H3><A name="Pattern_Clipboard_Tab"></A>Pattern Clipboard</H3>
+
+            <BLOCKQUOTE>
+              <P>You can send patterns you find to the pattern clipboard for evaluation. In the
+              clipboard, there are two types of patterns: <B>PRE</B> and <B>POST</B>. PRE patterns
+              correspond to patterns that occur before the start of a function. Patterns from
+              pre-byte and pre-instructions sequences are considered PRE patterns, as are patterns
+              from return byte and return instruction sequences (the idea being that the return is
+              followed by the start of another function). Patterns from first byte and first
+              instruction sequences are considered POST patterns.</P>
+            </BLOCKQUOTE>
+
+            <BLOCKQUOTE>
+              <P>You can edit the "Alignment" column in the pattern clipboard. The context register
+              column is populated from context register filters applied while exploring the
+              data.</P>
+            </BLOCKQUOTE>
+
+            <BLOCKQUOTE>
+              <H4><A name="Evaluating_Patterns"></A>Evaluating Patterns</H4>
+
+              <BLOCKQUOTE>
+                <P>You can evaluate a selection of patterns in the clipboard by selecting them,
+                right-clicking, and performing the "Evaluate Selected Patterns" action. This will
+                search for the patterns in the current program (if there are both PRE and POST
+                patterns, they will be combined). A table will pop up which displays all of the
+                matches, information about each match, and aggregated information about all of the
+                matches.</P>
+              </BLOCKQUOTE>
+
+              <H4><A name="Clipboard_Buttons"></A>Clipboard Buttons</H4>
+
+              <BLOCKQUOTE>
+                <P>The Pattern Clipboard tab has several buttons, which allow you to:</P>
+
+                <UL>
+                  <LI>Create Functions from the selected patterns.</LI>
+
+                  <LI>Export selected patterns to a pattern file. Such files can be used by the
+                  <B>Function Start Analyzer</B> during Auto Analysis. A dialog will appear asking
+                  for two values: <B>Total Bits</B> and <B>Post Bits</B>. When the <B>Function
+                  Start Analyzer</B> reads in a pattern file, it makes a set patterns. This set
+                  consists of each PRE pattern concatenated with each POST pattern for which the
+                  concatenation has at least <B>Total Bits</B> fixed bits, at least <B>Post
+                  Bits</B> of which much be after the PRE bits.</LI>
+
+                  <LI>Import patterns from a pattern file. <B>Note:</B> You should only do this
+                  with files generated by this plugin. Arbitrary XML files from the
+                  <I>Processors</I> directory may contain attributes not supported by this
+                  plugin.</LI>
+                </UL>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+                    </BLOCKQUOTE>
+
+          <H2><A name="Analyzing_Byte_Sequences"></A>Analyzing Byte Sequences</H2>
+
+          <BLOCKQUOTE>
+            <P>Byte sequences to analyze are displayed in a table along with information about each
+            sequence, such as the number of occurrences the sequence or (possibly) the disassembly
+            of the sequence. You can make a selection of rows in this table, right-click, and
+            perform the following actions:</P>
+
+            <BLOCKQUOTE>
+              <H3>Send Selected to Clipboard</H3>
+
+              <BLOCKQUOTE>
+                <P>This will send the selected sequences to the Pattern Clipboard.</P>
+              </BLOCKQUOTE>
+
+              <H3>Merge Selected Rows</H3>
+
+              <BLOCKQUOTE>
+                <P>This will merge the selected sequences into one sequence. For a given bit
+                position in the merged sequence, if all selected sequences agree on that position
+                the the merge will contain that value, otherwise it will contain a dit in that
+                position.</P>
+              </BLOCKQUOTE>
+
+              <H3>Send Merged to Clipboard</H3>
+
+              <BLOCKQUOTE>
+                <P>If you've merged a select of sequences, there will be an action to send the
+                merged sequence to the pattern clipboard.</P>
+              </BLOCKQUOTE>
+
+              <H3>Mine Sequential Patterns</H3>
+
+              <BLOCKQUOTE>
+                <P>If the sequences you're analyzing came from a byte sequence tab, there will be
+                an action to <A href="#Mining_Closed_Sequential_Patterns">Mine Sequential
+                Patterns</A>.</P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+          <H2><A name="Mining_Closed_Sequential_Patterns"></A> Mining Closed Sequential
+          Patterns</H2>
+
+          <BLOCKQUOTE>
+            <P>A <B>Closed Sequential Pattern</B> is a pattern such that no proper super-pattern
+            occurs more frequently in the sequences that you're analyzing. For example, suppose the
+            sequence "111" occurs ten times. Then the sequences "11.", "1.1", and ".11" also occur
+            (at least) ten times. We'd like to avoid a combinatorial explosion of patterns;
+            restricting to closed patterns ensures that any sub-patterns which are listed are
+            strictly more common than the main pattern.</P>
+          </BLOCKQUOTE>
+
+          <BLOCKQUOTE>
+            <P>Before actually running the mining algorithm, a dialog will appear which asks you to
+            set some parameters:</P>
+
+            <BLOCKQUOTE>
+              <H3>Minimum Support Percentage</H3>
+
+              <BLOCKQUOTE>
+                <P>The algorithm will only return patterns which occur in at least this percentage
+                of the data being analyzed.</P>
+              </BLOCKQUOTE>
+
+              <H3>Minimum Number of Fixed Bits</H3>
+
+              <BLOCKQUOTE>
+                <P>Any pattern returned by the algorithm will contain at least this many non-ditted
+                bits.</P>
+              </BLOCKQUOTE>
+
+              <H3>Binary Sequences vs. Character Sequences</H3>
+
+              <BLOCKQUOTE>
+                <P>This allows you to treat sequences as either sequences of characters (nibble) or
+                sequences of bits. If bit sequences take too long to mine, you can try the
+                character sequences option, which will find fewer patterns but will run much
+                faster.</P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+          <BLOCKQUOTE>
+            <P><B>Note:</B> The longer the algorithm runs, the faster the progress bar will
+            advance, so don't be too dismayed if it initially seems to be taking a lot of time.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+    
+    <P class="providedbyplugin">Provided by: <I>Function Bit Patterns Explorer Plugin</I></P>
+    
+    
+  </BODY>
+</HTML>

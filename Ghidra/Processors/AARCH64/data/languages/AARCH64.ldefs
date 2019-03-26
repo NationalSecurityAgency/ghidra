@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<language_definitions>
+   <language processor="AARCH64"
+            endian="little"
+            size="64"
+            variant="v8A"
+            version="1.4"
+            slafile="AARCH64.sla"
+            processorspec="AARCH64.pspec"
+            id="AARCH64:LE:64:v8A">
+    <description>Generic ARM v8.3-A, Little endian instructions, Little endian data</description>
+    <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <external_name tool="gnu" name="aarch64"/>
+    <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+  </language>
+  <language processor="AARCH64"
+            endian="big"
+            instructionEndian="little"
+            size="64"
+            variant="v8A"
+            version="1.4"
+            slafile="AARCH64BE.sla"
+            processorspec="AARCH64.pspec"
+            id="AARCH64:BE:64:v8A">
+    <description>Generic ARM v8.3-A, Little endian instruction, Big endian data</description>
+    <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+  </language>
+</language_definitions>

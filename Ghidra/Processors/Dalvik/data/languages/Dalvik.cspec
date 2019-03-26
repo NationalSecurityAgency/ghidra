@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+    <data_organization>
+       <absolute_max_alignment value="0" />
+       <machine_alignment value="2" />
+       <default_alignment value="1" />
+       <default_pointer_alignment value="4" />
+       <pointer_size value="4" />
+       <char_type signed="false" />
+       <char_size value="2" />
+       <wchar_size value="2" />
+       <short_size value="2" />
+       <integer_size value="4" />
+       <long_size value="8" />
+       <long_long_size value="8" />
+       <float_size value="4" />
+       <double_size value="8" />
+       <long_double_size value="16" />
+       <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="4" />
+       </size_alignment_map>
+    </data_organization>
+  
+	<global>
+		<range space="ram"/>
+	</global>
+
+	<stackpointer register="sp" space="ram"  growth="negative"/>
+
+	<default_proto>
+  		<prototype name="__stdcall" extrapop="0" stackshift="0">
+  			<input>
+                <pentry minsize="1" maxsize="500" align="4" extension="inttype">
+                    <addr offset="0x100" space="register"/>
+                </pentry>
+  			</input>
+	   		<output>
+		        <pentry maxsize="8" minsize="1" extension="inttype">
+		            <register name="resultregw"/>
+		        </pentry>
+	   		</output>
+			<unaffected>
+				<register name="fp"/>
+				<varnode space="register" offset="0x1000" size="0x400"/>
+			</unaffected>
+            <pcode inject="uponentry" dynamic="true"/>  <!-- Dynamically generate p-code to map input to registers -->
+		</prototype>
+	</default_proto>
+
+   <callotherfixup targetop="moveRangeToIV">
+    <pcode dynamic="true"/>
+   </callotherfixup>
+   
+</compiler_spec>
+

@@ -1,0 +1,429 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Data Type Archives</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+  
+	<H1>Data Type Archives</H1>  
+
+
+	<P>Data type archives are described in the 
+	<A HREF="data_type_manager_description.htm#Data_Type_Archives_Definition">Data Type Manager</A>.
+	</P>
+
+
+	<BLOCKQUOTE>
+
+    <H2><A name="Update_Data_Types"></A>Updating Archives</H2>
+
+    <BLOCKQUOTE>
+      <P>You can arrive at the <I>Update Data Types</I> dialog
+      from the <B>Update Datatypes From</B> action on an archive.
+      The following dialog illustrates updating datatypes from a source archive named 
+      <B>MyArchive</B> to the program <B>WinHello.CPP.exe</B>.</P>
+
+      <P style="text-align: center;"><IMG alt="" src="images/UpdateDialog.png"><BR>
+      </P>
+
+      <P>The <I>Update</I><I>DataTypes</I> dialog displays a
+      table that lists all the data types that have been changed in the source archive. The table
+      consists of the following columns:<BR>
+      </P>
+
+      <H4>Apply</H4>
+
+      <BLOCKQUOTE>
+        <P>The apply checkbox. Selecting the checkbox will mark the data type to be updated to the
+        version of the data type in the source archive.</P>
+      </BLOCKQUOTE>
+
+      <H4>Status</H4>
+
+      <BLOCKQUOTE>
+        <P>Indicates the status of the data type.</P>
+
+        <TABLE style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="0">
+          <TBODY>
+            <TR valign="top">
+              <TD style="font-weight: bold; width: 60px; text-align: left;">UPDATE</TD>
+
+              <TD style="">Data type was changed in the source archive, but not in the client
+              program/archive.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="font-weight: bold; width: 60px; text-align: left;">CONFLICT<BR>
+              </TD>
+
+              <TD style="">Data type was changed both in the client program/archive and the source
+              archive. Currently there is no merge, so if you select this data type to update, then
+              all local changes will be discarded.</TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </BLOCKQUOTE>
+
+      <H4>Data Type</H4>
+
+      <BLOCKQUOTE>
+        <P>Displays the name of the data type as it is know in the local program/archive.</P>
+      </BLOCKQUOTE>
+
+      <H4>Category Path</H4>
+
+      <BLOCKQUOTE>
+        <P>Displays the full path and name of the data type in the local program/archive.</P>
+      </BLOCKQUOTE>
+
+      <H4>Change Time<BR>
+      </H4>
+
+      <BLOCKQUOTE>
+        <P>Displays the time the data type was last changed in the source archive.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>Below the table, a data type view panel shows the selected data type as it exists in the
+    client program/archive and source archive. Differences are highlighted in red. Once all data
+    types to be updated have been selected, press the <I>Update</I> button to do the update.</P>
+
+    <H2><A name="Commit_Data_Types"></A>Committing to Archives</H2>
+
+    <BLOCKQUOTE>
+      <P>You can arrive at the <I>Commit Data Types</I> dialog
+      from the <B>Commit Datatypes To</B> action on an archive.
+      The following dialog illustrates committing datatypes from a program named 
+      <B>WinHelloCPP.exe</B> to a source archive named <B>MyArchive</B>.</P>
+
+      <P style="text-align: center;"><IMG alt="" src="images/CommitDialog.png"><BR>
+      </P>
+
+      <P style="text-align: left;"><BR>
+      </P>
+
+      <P>The <I>Commit</I><I>DataTypes</I> dialog displays a
+      table that lists all the data types that have been changed in the local archive. The table
+      consists of the following columns:<BR>
+      </P>
+
+      <H4>Apply<BR>
+      </H4>
+
+      <BLOCKQUOTE>
+        <P>The apply checkbox. Selecting the checkbox will mark the data type to have its changes
+        committed to the source archive.</P>
+      </BLOCKQUOTE>
+
+      <H4>Status</H4>
+
+      <BLOCKQUOTE>
+        <P>Indicates the status of the data type.</P>
+
+        <TABLE style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="0">
+          <TBODY>
+            <TR valign="top">
+              <TD style="font-weight: bold; width: 60px; text-align: left;">COMMIT</TD>
+
+              <TD style="">Data type was changed in the local program/archive, but not in the
+              source program.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="font-weight: bold; width: 60px; text-align: left;">CONFLICT</TD>
+
+              <TD style="">Data type was changed both in the client program/archive and the source
+              archive. Currently there is no merge, so if you select this data type to commit, the
+              changes in the source archive will be overwritten.</TD>
+            </TR>
+
+            <TR>
+              <TD style="vertical-align: top;"><B>ORPHAN</B>
+              </TD>
+
+              <TD style="vertical-align: top;">The data type originally came from a source archive,
+              but it has been deleted in the source archive. Committing it will "put it back" into
+              the source archive.</TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </BLOCKQUOTE>
+
+      <H4>Data Type</H4>
+
+      <BLOCKQUOTE>
+        <P>Displays the name of the data type as it is know in the local program/archive.</P>
+	      </BLOCKQUOTE>
+
+        <H4>Category Path</H4>
+
+        <BLOCKQUOTE>
+          <P>Displays the full path and name of the data type in the local program/archive.</P>
+        </BLOCKQUOTE>
+
+        <H4>Change Time</H4>
+
+        <BLOCKQUOTE>
+          <P>Displays the time the data type was last changed in the local program/archive.</P>
+
+          <P>Below the table, a data type view panel shows the selected data type as it exists in
+          the client program/archive and source archive. Differences are highlighted in red. Once
+          all data types to be committed have been selected, press the <I>Commit</I> 
+          button to do the <I>commit</I>.</P>
+        </BLOCKQUOTE>
+        
+             </BLOCKQUOTE>
+
+        <H2><A name="Revert_Data_Types"></A>Reverting Data Types</H2>
+
+        <BLOCKQUOTE>
+          <P>You can arrive at the <I>Revert Data Types</I>
+          dialog from the <B>Revert Datatypes From</B> action on
+          an archive. The following dialog illustrates reverting datatypes from a program named
+          <B>WinHelloCPP.exe</B> from a source archive named <B>MyArchive</B>.</P>
+
+          <P style="text-align: center;"><IMG alt="" src="images/RevertDialog.png"><BR>
+          </P>
+
+          <P>The <I>Revert DataTypes</I> dialog displays a
+          table that lists all the data types that have been changed in the local archive. The
+          table consists of the following columns:<BR>
+          </P>
+
+          <H4>Apply<BR>
+          </H4>
+
+          <BLOCKQUOTE>
+            <P>The apply checkbox. Selecting the checkbox will mark the data type to have its
+            changes reverted back the its state in the source archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Status</H4>
+
+          <BLOCKQUOTE>
+            <P>Indicates the status of the data type.</P>
+
+            <TABLE style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing=
+            "0">
+              <TBODY>
+                <TR valign="top">
+                  <TD style="font-weight: bold; width: 60px; text-align: left;">COMMIT</TD>
+
+                  <TD style="">Data type was changed in the local program/archive, but not in the
+                  source program.</TD>
+                </TR>
+
+                <TR valign="top">
+                  <TD style="font-weight: bold; width: 60px; text-align: left;">CONFLICT</TD>
+
+                  <TD style="">Data type was changed both in the client program/archive and the
+                  source archive. Reverting a conflict is essentially the same as an update.<BR>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </BLOCKQUOTE>
+
+          <H4>Data Type</H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the name of the data type as it is know in the local program/archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Category Path</H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the full path and name of the data type in the local program/archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Change Time</H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the time the data type was last changed in the local program/archive.</P>
+
+            <P>Below the table, a data type view panel shows the selected data type as it exists in
+            the client program/archive and source archive. Differences are highlighted in red. Once
+            all data types to be reverted have been selected, press the <I>Revert</I> 
+            button to do the revert.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H2><A name="Disassociate_Data_Types"></A>Disassociating Data Types</H2>
+
+        <BLOCKQUOTE>
+          <P>You can arrive at the <I>Disassociate Data Types</I>
+          dialog from the <B>Disassociate Datatypes From</B>
+          action on an archive. The following dialog illustrates disassociating datatypes in a
+          program named <B>WinHelloCPP.exe</B> that originated
+          from a source archive named <B>MyArchive</B>.</P>
+
+          <P style="text-align: center;"><IMG alt="" src="images/DisassociateDialog.png"><BR>
+          </P>
+
+          <P>The <I>Disassociate DataTypes</I> dialog
+          displays a table that lists all the data types that are associated with a pariticular
+          source archive. The table consists of the following columns:<BR>
+          </P>
+
+          <H4>Apply</H4>
+
+          <BLOCKQUOTE>
+            <P>The apply checkbox. Selecting the checkbox will mark the data type to be
+            disassociated from the source archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Status</H4>
+
+          <BLOCKQUOTE>
+            <P>Indicates the status of the data type.</P>
+
+            <TABLE style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing=
+            "0">
+              <TBODY>
+                <TR>
+                  <TD style="vertical-align: top;"><B>UPDATE</B><BR>
+                  </TD>
+
+                  <TD style="vertical-align: top;">Data type was changed in the source archive, but
+                  not in the client program/archive.</TD>
+                </TR>
+
+                <TR valign="top">
+                  <TD style="font-weight: bold; width: 60px; text-align: left;">COMMIT</TD>
+
+                  <TD style="">Data type was changed in the local program/archive, but not in the
+                  source program.</TD>
+                </TR>
+
+                <TR valign="top">
+                  <TD style="font-weight: bold; width: 60px; text-align: left;">CONFLICT</TD>
+
+                  <TD style="">Data type was changed both in the client program/archive and the
+                  source archive. Reverting a conflict is essentially the same as an update.<BR>
+                  </TD>
+                </TR>
+
+                <TR>
+                  <TD style="vertical-align: top;"><B>ORPHAN</B><BR>
+                  </TD>
+
+                  <TD style="vertical-align: top;">The data type originally came from a source
+                  archive, but it has been deleted in the source archive. Committing it will "put
+                  it back" into the source archive.</TD>
+                </TR>
+
+                <TR>
+                  <TD style="vertical-align: top;"><B>IN_SYNC</B><BR>
+                  </TD>
+
+                  <TD style="vertical-align: top;">The data type is identical to the version in the
+                  source archive.</TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </BLOCKQUOTE>
+
+          <H4>Data Type<BR>
+          </H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the name of the data type as it is know in the local program/archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Category Path</H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the full path and name of the data type in the local program/archive.</P>
+          </BLOCKQUOTE>
+
+          <H4>Change Time</H4>
+
+          <BLOCKQUOTE>
+            <P>Displays the time the data type was last changed in the local program/archive.</P>
+
+            <P>Below the table, a data type view panel shows the selected data type as it exists in
+            the client program/archive and source archive. Differences are highlighted in red. Once
+            all data types to be disassociated have been selected, press the Disassociate button to
+            disassociate the selected data types.</P>
+
+            <P><BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H2><A name="Refresh_Sync_Indicators"></A>Refreshing Sync Indicators For Data Types</H2>
+
+        <BLOCKQUOTE>
+          <P>Datatypes that are associated with a source archive may have a commit, update, or
+          conflict icon indicating they are out of sync with the data type in the source archive,
+          when the data type actually matches the source datatype. This can happen if a data type
+          is changed, but changed to match its source. Invoke the <B>Refresh</B> 
+          action to refresh all the sync indicators for that
+          source archive.</P>
+
+          <P>To refresh sync indicators for datatypes associated with a particular source archive,
+          right-click on the node that contains the datatypes and select 
+          <B>Refresh Sync Indicators For</B> <I><IMG src="../../shared/arrow.gif" alt="">
+           <B>&lt;Source Archive Name&gt;.</B></I><BR>
+          </P>
+
+          <P><BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H2><A name="Edit_Data_Type_Archive_Paths"></A> <A name="Edit_Archive_Paths_Dialog"></A>
+        Edit Data Type Archive Paths</H2>
+
+        <BLOCKQUOTE>
+          <P>The <I>Edit Data Type Archive Paths</I> dialog is
+          displayed when the <B>Edit Archive Paths</B> action is
+          invoked from the drop down menu in the <I>Manage Data
+          Types</I> window.</P>
+
+          <CENTER>
+            <IMG alt="" src="images/EditPaths.png"><BR>
+                   </CENTER>
+             
+            <P>From this dialog, users can add,
+            remove, and reorder the path search order. The checkboxes can be used to temporarily
+            remove a path from being searched. Only those paths that are checked are searched. To
+            add a path use the <I>add</I> button. To delete a
+            path, select it, then press the x button. To reorder the paths, select a path and use
+            either the up or down arrows to move the path up or down in the list respectively.</P>
+
+			<BLOCKQUOTE>
+            <P><IMG src="../../shared/note.png" alt=""> 
+            Ghidra currently accepts two special strings in the 
+            <I>Edit Data Type Archive Paths</I> dialog:</P>
+
+
+            <UL>
+              <LI><B>$GHIDRA_HOME</B> - The installation directory of Ghidra.</LI>
+              <LI><B>$USER_HOME</B> - The user's home directory.</LI>
+            </UL>
+          			</BLOCKQUOTE>
+        </BLOCKQUOTE>
+  	</BLOCKQUOTE>
+  
+        <P class="providedbyplugin">Provided by: <I>DataTypeManagerPlugin</I></P>
+
+        <P class="relatedtopic">Related Topics:</P>
+
+        <UL>
+        		<LI><A href="data_type_manager_description.htm">Data Type Manager</A></LI>
+          <LI><A href="../DataPlugin/Data.htm#DataTypes">Data Types</A></LI>
+          <LI><A href="../DataPlugin/Data.htm#ApplyDataType">Apply Data Types</A></LI>
+          <LI><A href="../DataTypeEditors/StructureEditor.htm">Edit Structure</A></LI>
+        </UL><BR>
+  
+  </BODY>
+  
+</HTML>

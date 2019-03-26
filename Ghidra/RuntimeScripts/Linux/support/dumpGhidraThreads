@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#----------------------------------------
+# Ghidra Debug Thread Dumper launch
+#----------------------------------------
+# This script will only work if Ghidra is running in debug mode (i.e., launched from
+# ghidraDebug shell script).
+
+# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
+# the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
+MAXMEM=64M
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="${SCRIPT_FILE%/*}"
+
+# Assumes application is utilizing debug port 18001 (change if needed)
+# NOTE: By default, ghidraDebug uses debug port 18001 and analyzeHeadless uses 13002
+
+# Launch Thread Dumper
+"${SCRIPT_DIR}"/launch.sh fg ThreadDump "${MAXMEM}" "" util.DebugThreadDumper 18001
+
+read -p "Press Enter to continue..."

@@ -1,0 +1,353 @@
+apply plugin: 'eclipse'
+apply from: 'gradleScripts/eclipseFilters.gradle'
+apply from: "gradleScripts/eclipseLauncher.gradle"
+
+
+/***************************************************************************************
+ * Make sure the correct version of gradle is being used
+ ***************************************************************************************/
+if (gradle.gradleVersion != "5.0") {
+	throw new GradleException("Requires Gradle 5.0, but was run with $gradle.gradleVersion")
+}
+
+/***************************************************************************************
+ * Define the location of JAVA_HOME
+ ***************************************************************************************/
+if (System.env.JAVA_HOME) {
+	// Allow Gradle's default JAVA_HOME to be overridden by an environment variable we set
+	project.ext.JAVA_HOME = System.env.JAVA_HOME;
+}
+else {
+	project.ext.JAVA_HOME = "${System.properties.'java.home'}/../"
+}
+/*********************************************************************************
+ *  Define the location of bin repo
+ *********************************************************************************/
+project.ext.GHIDRA_GROUP = "Z Ghidra"
+project.ext.BIN_REPO = file("${projectDir}/../ghidra.bin").absolutePath
+project.ext.ROOT_PROJECT_DIR = projectDir.absolutePath
+project.ext.BIN_REPO_PATH = BIN_REPO // TODO make path names consistent
+
+/*********************************************************************************
+ *  Prevent forked Java processes from stealing focus
+ *********************************************************************************/
+allprojects {
+	tasks.withType(JavaForkOptions) {
+		jvmArgs '-Djava.awt.headless=true'
+	}
+}
+
+/*********************************************************************************
+ *  load properties from Ghidra/application.properties file
+ *********************************************************************************/
+
+apply from: "gradleScripts/loadApplicationProperties.gradle"
+
+/*********************************************************************************
+ *  Set up the configurations and source sets for java projects
+ *********************************************************************************/
+
+apply from: "gradleScripts/setupJava.gradle"
+apply from: "gradleScripts/setupJacoco.gradle" // Has a dependecy on ext vars in setupJava.gradle
+
+/****************************************************************************
+ * Create a set containing all the platforms we need when building native
+ * artifacts.  This is here for convenience and can be used in a build file
+ * with the following syntax:
+ *
+ *		project.OS_NAMES.each {...}
+ ****************************************************************************/
+
+project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+
+/*********************************************************************************
+ * Imports
+ *  For these tasks to be available on all subprojects, this MUST be placed 
+ *	after the "setupJava" configuration.
+ *
+ * Note: Distribution.gradle and distributionNew.gradle must not be applied at the
+ * 		same time; they have tasks with the same name. The former is the 'old' way
+ * 		of building (produces several zips) while the former produces only one. 
+ * 		Eventually distribution.gradle will be removed entirely, but it is included
+ *		here for the time being for those who need it.
+ *********************************************************************************/
+
+apply from: "gradleScripts/ip.gradle"						// adds tasks for building ip notices
+apply from: 'gradleScripts/distribution.gradle'				// adds zip tasks
+//apply from: 'gradleScripts/diagnostics/findbugs.gradle'		// adds findbugs tasks
+apply from: 'gradleScripts/usage.gradle'						// adds task documentation
+apply from: "gradleScripts/prepDev.gradle"					// adds prepDev task for each subproject
+apply from: "gradleScripts/svg.gradle"						// adds task to process svg files
+apply from: "gradleScripts/test.gradle"                     // adds tasks for running tests
+apply from: "gradleScripts/jacoco.gradle"                   // adds tasks for java code coverage
+
+
+apply plugin: 'base'
+clean {
+	delete "$buildDir"
+}
+
+/******************************************************************************************
+ *
+ * Utility methods used by multiple build.gradle files
+ *
+ *****************************************************************************************/	
+	
+/*********************************************************************************
+ * Returns true if the platform is a linux machine.
+ *********************************************************************************/
+def isLinux(String platformName) {
+
+	if (platformName.startsWith("linux")) {
+		return true
+	}
+	else {
+		return false
+	}
+}
+
+
+/*********************************************************************************
+ * Returns true if the platform is a mac
+ *********************************************************************************/
+def isMac(String platformName) {
+
+	if (platformName.startsWith("osx")) {
+		return true
+	}
+	else {
+		return false
+	}
+}
+
+
+/*********************************************************************************
+ * Returns true if the platform is a Windows machine.
+ *********************************************************************************/
+def isWindows(String platformName) {
+
+	if (platformName.startsWith("win")) {
+		return true
+	}
+	else {
+		return false
+	}
+}
+
+/******************************************************************************************
+ *	Helper method that returns a file that is the same relative location in the bin repo
+ *  as the given project is in its repo.
+ ******************************************************************************************/
+File getProjectLocationInBinRepo(Project p) {
+	String relativePath = getGhidraRelativePath(p)
+	
+	File binRepoRootProject = new File("${BIN_REPO}")
+	return new File(binRepoRootProject, relativePath)
+}
+
+/****************************************************************************************
+ * Returns the "effective" relative path (Path starting with Ghidra)
+ * Normally, for files in the ghidra repo this is just the relative path from 
+ * the root project (ghidra) to the given project.  
+ *
+ *  For example <...>/ghidra/Ghidra/Features/Base will return Ghidra/Features/Base
+ *
+ *  If the project is in a sibling repo (ghidra.<other> that lives in the same directory
+ *  as ghidra), then this method returns a relative path as though the project lived
+ *  in ghidra.  
+ *
+ *	for example <...>/ghidra.foo/Ghidra/Features/OtherProject will return Ghidra/Features/OtherProject
+ ****************************************************************************************/
+String getGhidraRelativePath(Project p) {
+	String path = rootProject.relativePath(p.projectDir)
+
+	// If the project lives outside the ghidra repo, then its relative path will
+	// start with "../".  In this case, we want to remove the "../" and the next path element
+	// so that the path will appear as though the project lived under the ghidra repo.
+	// example:   "../ghidra/Ghidra/Features/Foo"  will get changed to "Ghidra/Features/Foo"
+	String prefix = ".."+File.separator
+	if (path.startsWith(prefix)) {
+		int index = path.indexOf(File.separator,3)
+		path = path.substring(index+1)
+	}
+
+	return path
+}
+
+/*********************************************************************************
+ * Returns a relative path from the root (ghidra) to the project's directory.
+ * This is used to determine where inside a zip file to place a particular artifact
+ *  (we want them to all start at "Ghidra/...."
+ *
+ * ie: If we have the following:
+ * 			project dir = /Users/<blah>/git/ghidra.master/ghidra/Ghidra/Features/Base
+ *	 		root project = /Users/<blah>/git/ghidra.master/ghidra/Ghidra
+ *
+ *	 	Then the returned value will be:
+ *	 		Ghidra/Features/Base 
+ * 
+ *  There are two special cases - Projects that live outside ghidra and projects
+ *  that are extension projects.  Projects that live outside ghidra will
+ *  have zip paths that make the project appear as if it did live in ghidra.
+ *  Projects that extend other projects will appear as though they live in the project
+ *  that they extend.  See the note at the top of the distribution.gradle file for more details.
+ *********************************************************************************/
+def getZipPath(Project p) {
+	
+	String path = getGhidraRelativePath(p)
+		
+	// if the project has been defined as an "extension" to another project, change its
+	// zip path to the path of its "base" project.  A project is an extension if it has
+	// defined an "extendsFromProject" property.
+	
+	if (p.hasProperty('extendsFromProject')) {
+		Project baseProject = p.extendsFromProject
+		path = getGhidraRelativePath(baseProject);
+	}
+	
+	if (p.hasProperty("pathExtension")) {
+		path = path + "/" + p.pathExtension
+	}
+
+	return path
+}
+
+def getBaseProjectName(Project p) {
+	if (p.hasProperty('extendsFromProject')) {
+		Project baseProject = p.extendsFromProject
+		return baseProject.name
+	}
+	
+	return p.name
+}
+
+/*********************************************************************************
+ * Returns the current date formatted as yyyyMMdd.
+ *********************************************************************************/
+def getCurrentDate() {
+
+	def date = new Date()
+	def formattedDate = date.format('yyyyMMdd')
+	return formattedDate
+}
+
+/*********************************************************************************
+ * Returns the current date/time formatted as yyyyMMdd-HHmm.
+ *********************************************************************************/
+def getCurrentDateTime() {
+
+	def date = new Date()
+	def formattedDate = date.format('yyyyMMdd-HHmm')
+	return formattedDate
+}
+
+/*********************************************************************************
+ * Returns the current date/time formatted as yyyy-MMM-dd HHmm z.
+ *********************************************************************************/
+def getCurrentDateTimeLong() {
+
+	def date = new Date()
+	def formattedDate = date.format('yyyy-MMM-dd HHmm z')
+	return formattedDate
+}
+
+/*********************************************************************************
+ * Returns the local platform name.
+ *********************************************************************************/
+String getCurrentPlatformName() {
+
+	String osName = System.getProperty("os.name")
+	String archName = System.getProperty("os.arch")
+		
+	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
+	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+
+	if (osName.startsWith("Windows")) {
+		if (isX86_32) {
+			return 'win32'
+		}
+		else if (isX86_64) {
+			return 'win64'
+		}
+	}
+	else if (osName.startsWith("Linux")) {
+		if (isX86_64) {
+			return 'linux64'
+		}
+	}
+	else if (osName.startsWith("Mac OS X")) {
+		if (isX86_64) {
+			return 'osx64'
+		}
+	}
+	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")
+}
+
+/*********************************************************************************
+ * Returns a list of all the external library paths declared as dependencies for the 
+ *         given project  
+ *
+ *********************************************************************************/
+List<String> getExternalDependencies(Project project) {
+
+	List<String> list = new ArrayList<String>()
+
+	// for each dependency in the compile configuration
+	Configuration runtimeConfig = project.configurations.runtime
+	runtimeConfig.allDependencies.each { dep ->
+		
+		// if the dependency is an external jar
+		if (dep.class.toString().contains("DefaultExternalModuleDependency")) {
+	
+			// loop back through all the dependency files, looking for one that contains the dependency name.
+			String depPath = runtimeConfig.find {
+				it.name.contains(dep.name)
+			}
+			
+			// if we found the path, then add it to the list
+			if (depPath && !depPath.contains("libsForBuild")) {
+				list.add(depPath)
+			}
+		}	
+	}
+	return list
+}
+
+/******************************************************************************************
+ * 
+ * Creates a file that lists the libraries used by each module.
+ *
+ ******************************************************************************************/
+String generateLibraryDependencyMapping() {
+	File libsFile = file("$buildDir/libraryDependencies.txt")
+	
+	// Check to make sure the build folder exists - if it doesn't, the 'libsFile.withWriter'
+	// call (below) will fail miserably.
+	def buildFolder = file ("$buildDir")
+	if (!buildFolder.exists()) {
+		buildFolder.mkdirs()
+	}
+	
+	libsFile.withWriter { out ->
+		subprojects { p ->
+			List<String> libs = getExternalDependencies(p);
+			if (libs != null) {
+				out.println "Module: $p.name"
+				libs.each { path ->
+					out.println "\t$path"
+				}
+			}
+		}
+	}
+	return libsFile.absolutePath
+}
+
+task allEclipse {
+	dependsOn ':eclipse'
+}
+
+allprojects { proj ->
+	if (proj != rootProject) {
+		allEclipse.dependsOn ":$proj.name:eclipse"
+	}
+}

@@ -1,0 +1,573 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Navigation</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1>Navigation</H1>
+
+    <P>Often, users need to navigate to specific locations in a program.&nbsp; Ghidra provides
+    several different ways to do this:&nbsp;</P>
+
+    <UL>
+      <LI>&nbsp;&nbsp;&nbsp;Enter a particular address or label (<A href="#Go_To_Address_Label">Go
+      To</A>)</LI>
+
+      <LI>&nbsp;&nbsp;&nbsp;Double-click on any displayed label or address in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">Code Browser</A> tool</LI>
+
+      <LI>&nbsp;&nbsp;&nbsp;Jump directly to the <A href="#Next_Code_Unit">Next/Previous Code
+      Unit</A></LI>
+
+      <LI>&nbsp;&nbsp; Use the <A href="#Navigation_History">Navigation History</A> to return to a
+      previously visited location</LI>
+    </UL>
+
+    <H2><A name="Go_To_Address_Label"></A>Go To Address, Label, or Expression</H2>
+
+    <BLOCKQUOTE>
+      <H3>To perform a Go To:&nbsp;</H3>
+
+      <OL>
+        <LI>In the menu-bar of a tool, select <B>Navigation <IMG src="../../shared/arrow.gif"
+        border="0"> Go To...</B></LI>
+
+        <LI>The <I>Go To</I> dialog will be displayed, as shown below:</LI>
+
+        <LI>Enter either an <A href="#gotoaddress">address</A>, <A href="#gotolabel">label</A>, or
+        <A href="#gotoexpression">expression</A> as specified below and press "OK"</LI>
+
+        <LI>If the address, lable, or expression is valid, the Code Browser will be repositioned to
+        that location and the dialog will be dismissed</LI>
+
+        <LI>If the address, label, or expression is not valid, the dialog will display an error
+        message</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <TABLE border="0" cellspacing="1" width="100%">
+      <TBODY>
+        <TR>
+          <TD width="100%">
+            <P align="center"><IMG alt="" src="images/GoToDialog.png"></P>
+
+            <P align="center"><I><FONT size="3">Go To Address, Label, or Expression
+            Dialag</FONT></I></P>
+          </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <BR>
+       
+
+      <H3><A name="gotoaddress"></A>Go To Address</H3>
+
+      <BLOCKQUOTE>
+        <P>Enter an address into the text area of the dialog. The value entered will be assumed to
+        be in hexadecimal. That is, "0x1000" and "1000" are the same value.</P>
+
+        <P><I><IMG src="../../shared/note.png" border="0">When the program has multiple address
+        spaces and the destination address is ambiguous (based on the current location), a query
+        results dialog will be displayed.</I></P>
+
+        <P><B>Consider the following examples:</B></P>
+
+        <BLOCKQUOTE>
+          <P>Given:</P>
+
+          <BLOCKQUOTE>
+            <P>A program with the following memory blocks <b>which reside in different address spaces</b>:</P>
+
+            <TABLE border="1" bordercolor="#808080" cellspacing="0" width="41%">
+              <TBODY>
+                <TR>
+                  <TD align="center" bgcolor="#c0c0c0" width="33%"><B>Name</B></TD>
+
+                  <TD align="center" bgcolor="#c0c0c0" width="33%"><B>Start Address</B></TD>
+
+                  <TD align="center" bgcolor="#c0c0c0" width="34%"><B>End Address</B></TD>
+                </TR>
+
+                <TR>
+                  <TD width="33%">BLOCK1</TD>
+
+                  <TD width="33%">BLOCK1:00000000</TD>
+
+                  <TD width="34%">BLOCK1:0000ffff</TD>
+                </TR>
+
+                <TR>
+                  <TD width="33%">BLOCK2</TD>
+
+                  <TD width="33%">BLOCK2:00000000</TD>
+
+                  <TD width="34%">BLOCK2:0000ffff</TD>
+                </TR>
+
+                <TR>
+                  <TD width="33%">BLOCK3</TD>
+
+                  <TD width="33%">BLOCK3:00000080</TD>
+
+                  <TD width="34%">BLOCK3:0000ffff</TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </BLOCKQUOTE>
+
+          <P>Example #1 - Unambiguous address</P>
+
+          <OL>
+            <LI>Set the current location to BLOCK1:00001000</LI>
+
+            <LI>Goto address "5"</LI>
+
+            <LI>
+              The destination is not ambiguous: 
+
+              <UL>
+                <LI>The BLOCK1 block has an address "5" so the listing will move to address 5.</LI>
+              </UL>
+            </LI>
+          </OL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+  
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>Example #2 - Ambiguous Address</P>
+
+          <OL>
+            <LI>Set the current location to BLOCK3:00000080</LI>
+
+            <LI>Goto address "5"</LI>
+
+            <LI>
+              The destination is ambiguous because: 
+
+              <UL>
+                <LI>The BLOCK3 block does not have an address "5"</LI>
+
+                <LI>Both the BLOCK1 and BLOCK2 blocks have an address "5"&nbsp;</LI>
+              </UL>
+            </LI>
+
+            <LI>A <I><A href="help/topics/Search/Query_Results_Dialog.htm">Query Results</A></I>
+            dialog will be displayed as shown in the image below.</LI>
+          </OL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+  <TABLE border="0" cellspacing="1" width="100%">
+      <TBODY>
+        <TR>
+          <TD width="100%">
+            <P align="center"><IMG src="images/Goto_Ambiguous.png" border="0"></P>
+
+            <P align="center"><FONT size="3"><I>Ambiguous Destination Address</I></FONT></P>
+          </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+      <H3><A name="gotolabel"></A>Go To Label</H3>
+
+      <BLOCKQUOTE>
+        <P>Enter the name of an existing label into the text area of the dialog.&nbsp;</P>
+
+        <H4>Case Sensitive</H4>
+
+        <BLOCKQUOTE>
+          <P>By default, the values entered are case sensitive.&nbsp; That is, "LAB1000" is not the
+          same as "lab1000."&nbsp; If you want to find both of these labels, turn off the case
+          sensitive option.&nbsp; If more than one match is found, they are displayed in a Query
+          Results dialog.</P>
+
+          <P><IMG src="../../shared/note.png" border="0">Even if the case sensitive option is off,
+          if a label has an exact match, no other labels will be found.<BR>
+          </P>
+        </BLOCKQUOTE>
+        
+        <H4>Dynamic Labels</H4>
+        <BLOCKQUOTE>
+          <P>This option only affects queries that could potentially result in multiple results, i.e
+          when a search must be performed versus a lookup.  This occurs when either the case sensitive 
+          is turned off or a wildcard is used. Specifically, this option tells Ghidra, when doing
+          a search versus a direct lookup, to consider all the <I>Dynamic</I> symbols (symbols that are not 
+          stored, but are generated on the fly because of a reference to that location.) If
+          this option is off, only defined labels are searched. 
+
+          <P><IMG src="../../shared/note.png" border="0"> Turning off this option can result in
+           significantly faster results in larger programs.</P><BR>
+          </P>
+          
+        </BLOCKQUOTE>
+        
+      </BLOCKQUOTE>
+
+      <H3><A name="gotoexpression"></A>Go To Expression<BR>
+      </H3>
+
+      <BLOCKQUOTE>
+        <P>Enter an arithmetic expression that can include addresses, symbols, or can be relative
+        to the current location. All numbers are assumed to be hexadecimal. Supported operator are
+        "+ - * / &lt;&lt; &gt;&gt;".&nbsp; Also, parentheses are supported to control order of
+        expresion evaluation.<BR>
+         For example:<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 4em">
+      <UL>
+        <LI>ENTRY+10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Positions
+        the cursor at the address 0x10 addresses past the symbol ENTRY.</LI>
+
+        <LI>0x100000+30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Positions the cursor
+        at address 0x100030.</LI>
+
+        <LI>0x100000+(2*10)&nbsp;&nbsp;&nbsp; Posiitons the cursor at address 0x100020.</LI>
+
+        <LI>
+        +20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Positions the cursor at an address that is 0x20 past the current location.<BR>
+        </LI>
+      </UL>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H3>Executing a Query</H3>
+
+      <BLOCKQUOTE>
+        <P>A Query performs a case-insensitive search for all labels that match the criteria. A
+        Query is specified using wildcards.</P>
+
+        <H4>Using Wildcards</H4>
+
+        <BLOCKQUOTE>
+          <P>Wildcard characters ("?" or "*") can be used when searching for labels.&nbsp;
+          Wildcards are useful if you don't know the full label name or don't want to type the
+          entire name.</P>
+        </BLOCKQUOTE>
+
+        <H4>Asterisk (*)</H4>
+
+        <BLOCKQUOTE>
+          <P>You can use the asterisk as a substitute for zero or more characters.&nbsp;</P>
+
+          <H4>Example&nbsp;&nbsp;</H4>
+
+          <P>If you're looking for a label that you know starts with "gloss", type the
+          following:</P>
+
+          <BLOCKQUOTE>
+            <P><B>gloss*</B></P>
+          </BLOCKQUOTE>
+
+          <P>The <I>Go To Address or Label</I> dialog will locate all labels that begin with
+          "gloss" including <B>Glossary.txt</B>, <B>Glossary.doc</B>, and <B>Glossy.doc</B>. To
+          narrow the search to a specific extension, type:</P>
+
+          <BLOCKQUOTE>
+            <P><B>gloss*.doc</B></P>
+          </BLOCKQUOTE>
+
+          <P>In this case, the <I>Go To Address or Label</I> dialog will find all labels that begin
+          with <B>gloss</B> but have the extension <B>.doc</B>, such as <B>Glossary.doc</B> and
+          <B>Glossy.doc</B>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Question Mark (?)</H4>
+
+        <BLOCKQUOTE>
+          <P>Use the question mark as a substitute for a single character in a name.&nbsp;</P>
+
+          <H4>Example 1</H4>
+
+          <P>If you typed <B>gloss?.doc</B>, the <I>Go To Address or Label</I> dialog would locate
+          the label <B>Glossy.doc</B> or <B>Gloss1.doc</B>, but not <B>Glossary.doc</B>.</P>
+
+          <H4>Example 2</H4>
+
+          <P>Suppose that two of the labels in a program were <B>FUN_0040816d</B> and
+          <B>FUN_004081bd</B>. A possible query string to match these two labels would be
+          <B>FUN_004081?d</B>. The results of the query are displayed in a <I>Query Results</I>
+          dialog, as shown below.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/Goto_Wildcard.png" border="0"></P>
+
+    <P align="center"><I><FONT size="3">Query Results Dialog</FONT></I></P>
+
+    <BLOCKQUOTE>
+      <H3>Repeating a Previous Go To</H3>
+
+      <BLOCKQUOTE>
+        <P>Each time a Go To Label or a Query is performed, it is stored in the drop-down box as
+        shown in the image below.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <TABLE border="0" cellspacing="1" width="100%">
+      <TBODY>
+        <TR>
+          <TD width="100%">
+            <P align="center"><IMG src="images/Goto_PreviousList.png" border="0"></P>
+
+            <P align="center"><I><FONT size="3">Previous Go to List</FONT></I></P>
+          </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To repeat a previous Go To or Query:</P>
+
+        <OL>
+          <LI>Select the item from the <I>Enter an address or label:</I> drop-down box</LI>
+
+          <LI>Click the <B>OK</B> button</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3>Error Messages</H3>
+
+      <BLOCKQUOTE>
+        <P>When a Go To or Query fails, an error message will be displayed in the status area of
+        the dialog.</P>
+
+        <OL>
+          <LI>
+            Entering an invalid address or non-existing label 
+
+            <UL>
+              <LI>The dialog displays <I>"This is not a query, label, or address."</I></LI>
+            </UL>
+          </LI>
+
+          <LI>
+            Specifying a query that has no results 
+
+            <UL>
+              <LI>The dialog displays <I>"No results for ..."</I>, where "..." is the query
+              string.</LI>
+            </UL>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">Provided by: <I>Go To Address or Label</I> plugin</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Next_Code_Unit"></A>Next/Previous Code Unit</H2>
+
+    <BLOCKQUOTE>
+      <P>The Next/Previous Code Unit feature allows the user to jump directly to the next or
+      previous Instruction, Data, Undefined, Function or Non Function. The search starts at the
+      current cursor location and proceeds either forward (next) or backwards (previous).</P>
+
+      <P><IMG src="../../shared/note.png" border="0">When searching for Instructions, Data or
+      Undefined items, Ghidra will skip all contiguous items of the same type. For example, if the
+      cursor is on an address with an Instruction, and you go to the next Instruction, then all
+      Instructions immediately following the current one will be skipped until a non-Instruction is
+      found. Once that non-instruction is found, then Ghidra will take you to the next Instruction
+      after the address of that non-Instruction.</P>
+
+      <H3><A name="Toggle_Code_Unit_Search_Direction"></A>Search Direction</H3>
+
+      <BLOCKQUOTE>
+        <P>The <IMG src="images/down.png" alt="down_arrow" border="0"> icon indicates the search
+        will performed in the forward (next) direction, and the <IMG src="images/up.png" alt=
+        "up_arrow" border="0"> icon indicates the search will be performed in the backward
+        (previous) direction. To change the direction of the code unit search, toggle the arrow
+        icon on the toolbar.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Next_Instruction"></A>Navigate to Instruction</H3>
+
+      <BLOCKQUOTE>
+        <P>To move the cursor to the next instruction click on the Navigate by Instruction icon,
+        <IMG src="images/I.gif" alt="I" border="0">. This icon is disabled when no more
+        instructions exist in the current search direction.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Next_Data"></A>Navigate to Data</H3>
+
+      <BLOCKQUOTE>
+        <P>To move the cursor to the next data code unit, click on the Navigate by Data icon, <IMG
+        src="images/D.gif" alt="D" border="0">. This icon is disabled when no more data code units
+        exist in the current search direction.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Next_Undefined"></A>Navigate to Undefined</H3>
+
+      <BLOCKQUOTE>
+        <P>To move the cursor to the next undefined code unit, click on the Navigate by Data icon,
+        <IMG src="images/U.gif" alt="U" border="0">. This icon is disabled when no more undefined
+        code units exist in the current search direction.</P>
+      </BLOCKQUOTE>
+
+	  <H3><A name="Next_Label"></A>Navigate to Label</H3>
+
+      <BLOCKQUOTE>
+        <P>To move the cursor to the next Label, click on the Navigate by Label icon,
+        <IMG src="images/L.gif" alt="L" border="0">. This icon is disabled when no more labels
+         exist in the current search direction.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Next_Function"></A>Navigate to Function</H3>
+
+      <BLOCKQUOTE>
+        <P>This (<IMG src="images/F.gif" alt="F" border="0">) action will move the cursor to the 
+        next function in the current direction.  If inside a function and the direction is towards 
+        lower addresses, then this action will go to the current function's entry point.</P>
+
+      </BLOCKQUOTE>
+
+      <H3><A name="Next_Non_Function"></A>Navigate to Non-Function</H3>
+
+
+      <P style="margin-left: 40px;">This task (<IMG src="images/notF.gif" alt="F">) will attempt to
+      the navigate to the next instruction block not contained in a function.&nbsp; 
+      This can be useful when manually creating functions and
+      stepping over them to identify potential function candidates.&nbsp;</P>
+
+     <H3><A name="Next_Different_Byte_Value"></A>Navigate to Different Byte Value</H3>
+
+
+      <P style="margin-left: 40px;">This task (<IMG src="images/V_slash.png" alt="V">) will attempt to
+      the navigate to the first code-unit where the byte value is different from the byte value
+      of the first byte of the current code unit.&nbsp; This can be useful when trying to navigate 
+      past a series of 0s or FFs;</P>
+      
+      <H3><A name="Next_Bookmark"></A>Navigate to Bookmark</H3>
+
+      <BLOCKQUOTE>
+        <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon, 
+        <IMG src="images/B.gif" alt="B" border="0">. This icon is disabled when no more bookmarks 
+        exist in the current search direction. You may use the pull-down menu to choose a specific 
+        type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,  
+        <IMG src="images/edit-delete.png" alt="B" border="0">, 
+        <IMG src="images/information.png" alt="B" border="0">,
+        <IMG src="images/notes.gif" alt="B" border="0">,
+        <IMG src="images/warning.png" alt="B" border="0">,
+        <IMG src="images/unknown.gif" alt="B" border="0">)
+        to navigate to as opposed to all types. </P>
+      </BLOCKQUOTE>
+      
+
+      <P class="providedbyplugin">&nbsp;</P>
+
+      <P class="providedbyplugin">Provided by: <I>Go To Next-Previous Code Unit</I> plugin</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Next_Previous_Function"></A>Next/Previous Function</H2>
+
+    <BLOCKQUOTE>
+    	  <P>Navigating to the next or previous function is a commonly used feature.  As such, separate
+    	  actions have been created so that keybindings can be assigned for each direction.
+	 </P>
+
+      <H3>Next Function</H3>
+
+      <BLOCKQUOTE>
+      <P> This action navigates the cursor to the closest function entry point that is at an
+      address greater than the current address. The default keybinding is <TT><B>Control-Down&nbsp;Arrow</B></TT>.</P>
+      </BLOCKQUOTE>
+
+      <H3>Previous Function</H3>
+
+      <BLOCKQUOTE>
+     <P> This action navigates the cursor to the closest function entry point that is at an
+      address less than the current address. The default keybinding is <TT><B>Control-Up&nbsp;Arrow</B></TT>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+   <P class="providedbyplugin">Provided by: <I>CodeBrowser</I> plugin</P>
+
+    <H2><A name="Navigation_History"></A>Navigation History</H2>
+
+    <BLOCKQUOTE>
+      <P>As the user performs various types of navigations, the current location is pushed onto the
+      navigation history stack.&nbsp; The navigation history feature allows the user to revisit
+      previous locations.</P>
+
+      <H3><A name="History_Buffer"></A> <A name="Next_in_History_Buffer"></A> <A name=
+      "Previous_in_History_Buffer"></A> Go To Next/Previous Location</H3>
+
+      <BLOCKQUOTE>
+        <P>To traverse the history stack:</P>
+
+        <OL>
+          <LI>In the tool-bar, click either the <B>Go to previous location</B> (<IMG src=
+          "images/left.png" border="0"> ) button or the <B>Go to next location</B> (<IMG src=
+          "images/right.png" border="0">) button</LI>
+
+          <LI>The Code Browser will be repositioned to the saved location</LI>
+        </OL>
+
+        <H4>Some Operations that add to the navigation history:</H4>
+
+        <UL>
+          <LI>Go To Address or Label</LI>
+
+          <LI>Double-clicking on operands containing addresses or labels</LI>
+
+          <LI>Double-clicking on XREFs (<A href=
+          "help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">field</A> in the <A href=
+          "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>)</LI>
+
+          <LI>Clicking on the start or end address of a memory block using the memory map
+          dialog</LI>
+
+          <LI>Clicking on the address of an equate reference using the equates table</LI>
+
+          <LI>Performing a search (<A href="help/topics/Search/Search_Memory.htm">Memory</A>, <A
+          href="help/topics/Search/Search_Program_Text.htm">Program Text</A>, etc)</LI>
+        </UL>
+
+        <P><IMG src="../../shared/note.png" border="0">The <IMG src="images/left.png" border="0">
+        button is only enabled after performing a <IMG src="images/right.png" border="0"></P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Clear_History_Buffer"></A>Clear History</H3>
+
+      <BLOCKQUOTE>
+        <P>To clear the navigation history stack, select <B>Navigation <IMG src=
+        "../../shared/arrow.gif" border="0"> Clear History</B></P>
+
+        <P>After clearing the history, the <IMG src="images/left.png" border="0">&nbsp;and <IMG
+        src="images/right.png" border="0"> buttons are disabled</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Next/Previous</I> plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Search/Query_Results_Dialog.htm">Query Results</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+
+      <LI><A href="help/topics/Search/Search_Memory.htm">Search Memory</A></LI>
+
+      <LI><A href="help/topics/Search/Search_Program_Text.htm">Search Program Text</A></LI>
+    </UL>
+  </BODY>
+</HTML>

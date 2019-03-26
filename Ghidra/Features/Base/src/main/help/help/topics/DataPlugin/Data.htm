@@ -1,0 +1,1368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Data</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="DataPlugin"></A>Data</H1>
+
+    <P>A newly imported program consists of bytes that have not yet been identified.&nbsp; These
+    bytes are known as undefined data and are displayed using "<B>??</B>".&nbsp; Disassembly,
+    analysis, and other user actions convert these bytes into <I>instructions</I> or <I>defined
+    data</I>.&nbsp; In general, the term "data" refers to defined data.</P>
+
+    <H2><A name="DataTypes"></A>Data Types</H2>
+
+    <BLOCKQUOTE>
+      <P><FONT color="#000000">Data is created by applying <I>Data Types</I> to bytes in
+      memory.&nbsp; Data Types interpret bytes as values and provide a visual interpretation of
+      those bytes based on the Data Type used, e.g., a four byte IEEE floating point number or a
+      two byte <A href="../Glossary/glossary.htm#LittleEndian">little endian</A>
+      word.&nbsp; Ghidra comes packaged with a set of "Built-in" Data types (e.g., byte, word, float,
+      etc).&nbsp; Ghidra also provides the capability of creating "User-defined" Data types
+      (structure, array, typedef, etc) and supports dynamic data types whose structure depends on the
+      underlying data.</FONT></P>
+      
+      <P><IMG src="../../shared/note.yellow.png"> It is important to note that the size of many of the primitive built-in types is 
+      determined by the language and compiler specification (e.g., the size of an integer
+      can vary).</P>
+
+      <H3><A name="Built-In_Data_Types"></A> Built-In Data Types</H3>
+    </BLOCKQUOTE>
+
+        <DIV align="center">
+        <TABLE border="1" height="336" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <B>Undefined - Fixed Size Types</B>
+              </TD>
+            </TR>
+            <TR>
+              <TD  align="center"bgcolor="#00ffff" width="50%">Name</TD>
+              <TD  align="center"bgcolor="#00ffff" width="50%">Size</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined (<i>default</i>)</TD>
+              <TD align="center">1</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined1</TD>
+              <TD align="center">1</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined2</TD>
+              <TD align="center">2</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined3</TD>
+              <TD align="center">3</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined4</TD>
+              <TD align="center">4</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined5</TD>
+              <TD align="center">5</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined6</TD>
+              <TD align="center">6</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined7</TD>
+              <TD align="center">7</TD>
+            </TR>
+            <TR>
+              <TD align="center">undefined8</TD>
+              <TD align="center">8</TD>
+            </TR>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <U>Settings</U><BR>
+                Mutability (normal, volatile, constant)
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+    <BR>
+    
+    <DIV align="center">
+        <TABLE border="1" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="center">
+                <B>Numeric - Fixed Size Types</B>
+              </TD>
+            </TR>
+            <TR>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Name</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Mnemonic</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Size</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Signed/Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">byte</TD>
+              <TD align="center">db</TD>
+              <TD align="center">1</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">sbyte</TD>
+              <TD align="center">sdb</TD>
+              <TD align="center">1</TD>
+              <TD align="center">Signed</TD>
+            </TR>           
+            <TR>
+              <TD align="center">word</TD>
+              <TD align="center">dw</TD>
+              <TD align="center">2</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">sword</TD>
+              <TD align="center">sdw</TD>
+              <TD align="center">2</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">uint3</TD>
+              <TD align="center">uint3</TD>
+              <TD align="center">3</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">int3</TD>
+              <TD align="center">int3</TD>
+              <TD align="center">3</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">dword</TD>
+              <TD align="center">ddw</TD>
+              <TD align="center">4</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">sdword</TD>
+              <TD align="center">sddw</TD>
+              <TD align="center">4</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">uint5</TD>
+              <TD align="center">uint5</TD>
+              <TD align="center">5</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">int5</TD>
+              <TD align="center">int5</TD>
+              <TD align="center">5</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">uint6</TD>
+              <TD align="center">uint6</TD>
+              <TD align="center">6</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">int6</TD>
+              <TD align="center">int6</TD>
+              <TD align="center">6</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">uint7</TD>
+              <TD align="center">uint7</TD>
+              <TD align="center">7</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">int7</TD>
+              <TD align="center">int7</TD>
+              <TD align="center">7</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">qword</TD>
+              <TD align="center">dqw</TD>
+              <TD align="center">8</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">sqword</TD>
+              <TD align="center">sdqw</TD>
+              <TD align="center">8</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="center">
+                <U>Settings</U><BR>
+     	Endian (*default, big, little)<BR>
+        Format (*hex, decimal, octal, binary, ascii)<BR>
+        Mnemonic-style (default, *assembly, C)<BR>
+        Mutability (normal, volatile, constant)<BR>
+        Padding (*unpadded, padded)
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+        <BR>
+    
+    <DIV align="center">
+        <TABLE border="1" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="center">
+                <B>Miscellaneous - Fixed Size Types</B>
+              </TD>
+            </TR>
+            <TR>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Name</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Mnemonic</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Size</TD>
+              <TD  align="center" bgcolor="#00ffff" width="25%">Signed/Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">void</TD>
+              <TD align="center">void</TD>
+              <TD align="center">0</TD>
+              <TD align="center">n/a</TD>
+            </TR>
+            <TR>
+              <TD align="center">wchar16</TD>
+              <TD align="center">wchar16</TD>
+              <TD align="center">2</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">wchar32</TD>
+              <TD align="center">wchar32</TD>
+              <TD align="center">4</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="center">
+                <U>Settings</U><BR>
+     	Mutability (normal, volatile, constant)
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+    <BR>
+    
+        <DIV align="center">
+        <TABLE border="1" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <B>Numeric - Dynamic Size Types</B><BR>
+                <I>size determined by data organization within compiler specification - order is based upon relative sizes</I>
+              </TD>
+            </TR>
+            <TR>
+              <TD align="center" bgcolor="#00ffff" width="50%">Name</TD>
+              <TD align="center" bgcolor="#00ffff" width="50%">Signed/Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">short</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">ushort</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">int</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">uint</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">long</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">ulong</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD align="center">longlong</TD>
+              <TD align="center">Signed</TD>
+            </TR>
+            <TR>
+              <TD align="center">ulonglong</TD>
+              <TD align="center">Unsigned</TD>
+            </TR>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <U>Settings <i>(may vary)</i></U><BR>
+     	Endian (*default, big, little)<BR>
+        Format (*hex, decimal, octal, binary, ascii)<BR>
+        Mnemonic-style (default, *assembly, C)<BR>
+        Mutability (normal, volatile, constant)<BR>
+        Padding (*unpadded, padded)
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+        <BR>
+    
+        <DIV align="center">
+        <TABLE border="1" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <B>Miscellaneous - Dynamic Size Types</B><BR>
+                <I>size determined by data organization within compiler specification</I>
+              </TD>
+            </TR>
+            <TR>
+              <TD align="center" bgcolor="#00ffff" width="25%">Name</TD>
+              <TD bgcolor="#00ffff" width="75%">Description</TD>
+            </TR>
+            <TR>
+              <TD align="center">char</TD>
+              <TD>Signed ASCII character</TD>
+            </TR>
+            <TR>
+              <TD align="center">uchar</TD>
+              <TD>Unsigned ASCII character</TD>
+            </TR>
+            <TR>
+              <TD align="center">wchar_t</TD>
+              <TD>Signed Wide Character</TD>
+            </TR>
+            <TR>
+              <TD align="center">pointer</TD>
+              <TD>Pointer to memory address (may refer to another data type)</TD>
+            </TR>
+            <TR>
+              <TD align="center">float</TD>
+              <TD>Floating point data</TD>
+            </TR>
+            <TR>
+              <TD align="center">double</TD>
+              <TD>Double-precision floating point data</TD>
+            </TR>
+            <TR>
+              <TD align="center">longdouble</TD>
+              <TD>Long double-precision floating point data</TD>
+            </TR>
+            <TR>
+              <TD colspan="2" bgcolor="#c0c0c0" height="21" align="center">
+                <U>Settings</U><BR>
+     	Mutability (normal, volatile, constant)
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+           <BR>
+    
+        <DIV align="center">
+        <TABLE border="1" width="50%">
+          <TBODY>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="center">
+                <B>String Types</B><BR>
+              </TD>
+            </TR>
+            <TR>
+              <TD align="center" bgcolor="#00ffff">Name</TD>
+              <TD align="center" bgcolor="#00ffff"><A href="#StringCharsets">Charset</A></TD>
+              <TD align="center" bgcolor="#00ffff">Charsize</TD>
+              <TD align="center" bgcolor="#00ffff"><A href="#StringLayouts">Layout</A></TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">string</A></TD>
+              <TD align="center">settable</TD>
+              <TD align="center">from charset</TD>
+              <TD align="center">fixed length</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">string-utf8</A></TD>
+              <TD align="center">UTF-8</TD>
+              <TD align="center">1-3</TD>
+              <TD align="center">fixed length</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">TerminatedCString</A></TD>
+              <TD align="center">settable</TD>
+              <TD align="center">from charset</TD>
+              <TD align="center">null-terminated</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">unicode</A></TD>
+              <TD align="center">UTF-16</TD>
+              <TD align="center">2 bytes</TD>
+              <TD align="center">fixed length</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">TerminatedUnicode</A></TD>
+              <TD align="center">UTF-16</TD>
+              <TD align="center">2 bytes</TD>
+              <TD align="center">null-terminated</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">unicode32</A></TD>
+              <TD align="center">UTF-32</TD>
+              <TD align="center">4 bytes</TD>
+              <TD align="center">fixed length</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">TerminatedUnicode32</A></TD>
+              <TD align="center">UTF-32</TD>
+              <TD align="center">4 bytes</TD>
+              <TD align="center">null-terminated</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">PascalString255</A></TD>
+              <TD align="center">settable</TD>
+              <TD align="center">from charset</TD>
+              <TD align="center">pascal 255 max characters</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">PascalString</A></TD>
+              <TD align="center">settable</TD>
+              <TD align="center">from charset</TD>
+              <TD align="center">pascal 64k max characters</TD>
+            </TR>
+            <TR>
+              <TD align="center"><A href="#StringDataTypes">PascalUnicode</A></TD>
+              <TD align="center">UTF-16</TD>
+              <TD align="center">2 bytes</TD>
+              <TD align="center">pascal 64k max characters</TD>
+            </TR>
+            <TR>
+              <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
+                <A href="#StringSettings">Settings</A>
+                <ul>
+                		<li>Charset (defaults to US-ASCII if user settable)
+                		<li>Render Unicode (all, byte sequence, escape sequence)
+                		<li>Translation
+                		<li>Mutability (normal, volatile, constant)
+                </ul>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    </DIV>
+    
+
+    
+
+    <BLOCKQUOTE>
+      <H3>User-Defined Data Types</H3>
+
+    </BLOCKQUOTE>
+
+      <DIV align="center">
+        <TABLE border="1" height="336" width="93%">
+            <TBODY>
+              <TR>
+                <TD colspan="2" align="center" bgcolor="#c0c0c0" height="21" width="80%">
+                <B>User-Defined Data Types</B></TD>
+              </TR>
+
+              <TR>
+                <TD bgcolor="#00ffff" height="21" width="10%">Name</TD>
+
+                <TD bgcolor="#00ffff" height="21" width="62%">Description</TD>
+              </TR>
+
+              <TR>
+                <TD height="38" width="10%">structure</TD>
+
+                <TD height="38" width="62%">Grouping of data types that are located consecutively
+                in memory</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" width="10%">union</TD>
+
+                <TD height="21" width="62%">Grouping of data types that share the same memory
+                location(s)</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" width="10%">typedef</TD>
+
+                <TD height="21" width="62%">An alias for an existing data type</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" width="10%">enum</TD>
+
+                <TD height="21" width="62%">A list of named integer constants</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" width="10%">pointer</TD>
+
+                <TD height="21" width="62%">A reference to an address (type information
+                optional)</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" width="10%">array</TD>
+
+                <TD height="21" width="62%">A specified number of consecutive data objects of the
+                same type</TD>
+              </TR>
+              
+              <TR>
+                <TD height="21" width="10%">function definition</TD>
+
+                <TD height="21" width="62%">A function signature tagged with a generic calling convention</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+      </DIV>
+
+    <H2><A name="ApplyDataType"></A>Applying Data Type</H2>
+
+    <BLOCKQUOTE>
+      <P>Data is created by <I>applying</I> a data type to undefined bytes in memory.&nbsp; There
+      are numerous ways to apply data types.&nbsp; A status message indicating whether or not data
+      was created is displayed in the tool's <A href=
+      "../Tool/Ghidra_Tool_Administration.htm#ToolStatus">status area</A>.</P>
+
+      <P><IMG src="../../shared/note.yellow.png">&nbsp;Regardless of how a data type is applied, data is
+      only created if the data type will fit within the available undefined bytes.&nbsp;&nbsp;</P>
+
+      <H3><FONT color="#0000ff">Drag from Data Type Manager</FONT></H3>
+
+      <BLOCKQUOTE>
+        <P>Use the <A href=
+        "../DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>
+        to choose a data type from the set of available data types.&nbsp; To apply a data type from
+        the data type Manager:</P>
+
+        <OL>
+          <LI>
+            <P style="margin-top: 6px; margin-bottom: 6px;">Open the Data Type Manager (select
+            <B>Window</B><IMG src="../../shared/arrow.gif"> <B>Data Type Manager</B>)</P>
+          </LI>
+
+          <LI>
+            <P style="margin-top: 6px; margin-bottom: 6px;">Select a data type from the Data Type
+            Manager</P>
+          </LI>
+
+          <LI>
+            <P style="margin-top: 6px; margin-bottom: 6px;">Drag the data type onto a single
+            address or selection in the Listing window</P>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="DataCycleGroups"></A><A name="Cycle__byte_word_dword_qword"></A><A name=
+      "Cycle__float_double"></A> <A name="Cycle__char_string_unicode"></A><FONT color=
+      "#0000ff">Cycle Groups</FONT></H3>
+
+      <BLOCKQUOTE>
+        <P>Cycle Groups are an easy way to apply <I>basic</I> data types (byte, word, float,
+        etc).&nbsp; A Cycle Group is a collection of similar data types that are commonly
+        associated together. Cycling a data type facilitates changing from one data type to the
+        next data type in the same group.&nbsp; When the last data type is reached, the cycle
+        restarts.</P>
+
+        <P>Each Cycle Group has an associated "hot key". Pressing the "hot key" cycles from the
+        current data type to the next one within the group.&nbsp; Ghidra provides the following
+        Cycle Groups:</P>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <TABLE border="0" width="100%">
+              <TBODY>
+                <TR>
+                  <TD width="19%"><B>b</B>&nbsp;</TD>
+
+                  <TD width="81%">Byte <IMG src="../../shared/arrow.gif"> Word <IMG src=
+                  "../../shared/arrow.gif"> DoubleWord <IMG src="../../shared/arrow.gif"> QuadWord
+                  <IMG src="../../shared/arrow.gif"> Byte</TD>
+                </TR>
+
+                <TR>
+                  <TD width="19%"><B>'</B> (single quote)&nbsp;</TD>
+
+                  <TD width="81%">Ascii <IMG src="../../shared/arrow.gif"> String <IMG src=
+                  "../../shared/arrow.gif"> Unicode <IMG src="../../shared/arrow.gif"> Ascii</TD>
+                </TR>
+
+                <TR>
+                  <TD width="19%"><B>f</B>&nbsp;</TD>
+
+                  <TD width="81%">Float <IMG src="../../shared/arrow.gif"> Double <IMG src=
+                  "../../shared/arrow.gif"> Float</TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <P>To apply a data type from a cycle group:</P>
+
+        <OL>
+          <LI>
+            <P style="margin: 6px;">Pick a basic data type to apply (for example double-word)</P>
+          </LI>
+
+          <LI>
+            <P style="margin: 6px;">Place the cursor on the desired address or make a selection</P>
+          </LI>
+
+          <LI>
+            <P style="margin: 6px;">Using the keyboard, press the associated "hot key" until the
+            data type appears ("b" in this case, 3 times) .&nbsp; In this example, the first time
+            "b" is pressed, a byte (db) will appear in the mnemonic field.&nbsp; The second time a
+            word (dw) will appear, and the last time a double-word (ddw) will appear.</P>
+          </LI>
+
+          <LI>
+            <P style="margin: 6px;">If you pressed the "hot key" too many times and passed the data
+            type, continue pressing the "hot key" until you reach the data type again.</P>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Favorites"></A><FONT color="#0000ff">Favorites</FONT></H3>
+
+      <BLOCKQUOTE>
+        <P>A <I>Favorite</I> data type is a data type that you use frequently and want to apply
+        from the Data popup menu.&nbsp; By default Ghidra sets most commonly-used data types as
+        Favorites.&nbsp; However, any data type can be <A href=
+        "../DataTypeManagerPlugin/data_type_manager_description.htm#Favorites">configured</A>
+        to be a favorite.</P>
+
+        <P>To apply a favorite:</P>
+
+        <OL>
+          <LI>Right click on cursor location or selection</LI>
+
+          <LI>Select the <B>Data</B> popup submenu</LI>
+
+          <LI>In the Data popup, select the favorite data type to be applied</LI>
+        </OL>
+
+        <P><IMG src="../../shared/tip.png">&nbsp; To quickly assign a key binding to a favorite,
+        use the <A href="../Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings
+        Shortcut</A>.&nbsp; Key Bindings allow you to assign "hot keys" to any menu item.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Recently_Used"></A><FONT color="#0000ff">Recently Used Data Type</FONT></H3>
+
+      <BLOCKQUOTE>
+        <P>The last applied data type is always available at the bottom of the data menu.&nbsp; By
+        default, the "hot key" assigned to this option is 'Y'.&nbsp; This feature is a useful
+        shortcut for applying the same data type multiple times.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Clearing Data</H2>
+
+    <BLOCKQUOTE>
+      <P>Data and instructions can be <A href="../ClearPlugin/Clear.htm">cleared</A>,
+      reverting them back to their undefined state.</P>
+
+      <P>To clear defined data back to an undefined state:</P>
+
+      <OL>
+        <LI>Place the cursor on the defined data to be cleared</LI>
+
+        <LI>Press mouse-right, and choose <A href="../ClearPlugin/Clear.htm">Clear code
+        bytes</A> from the popup menu</LI>
+      </OL>
+
+      <P><IMG src="../../shared/note.png"> <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#DeleteDataType">Deleting
+      data types</A> from the <I>Data Type Manager</I> window is a quick way to clear every
+      instance of a data type in a program.</P>
+    </BLOCKQUOTE>
+
+    <H2>Changing Data Settings</H2>
+
+    <BLOCKQUOTE>
+      <P>Depending on the data type, data may have settings available which affect the way it is
+      displayed.&nbsp; For built-in data-types, the available settings are indicated in the <A
+      href="#Built-In_Data_Types">table above</A>.&nbsp; For example, the byte data type has a
+      format option which allows the user to have the data displayed as hex, octal, etc.&nbsp; The
+      available settings are defined in the <A href="#DataTypes">Data Type Table</A> above. Data
+      settings can be changed for an individual data item or for all data of the same data
+      type.</P>
+
+      <P><A name="Data_Settings"></A>To change the settings of a single data item:</P>
+
+      <OL>
+        <LI>Place the cursor on the data item</LI>
+
+        <LI>Press mouse-right to bring up the popup menu</LI>
+
+        <LI>Select <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Settings...</B> to bring up the
+        settings dialog</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/InstanceSettings.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <P>In the screenshot above, the settings dialog is shown for a byte data type applied at
+      address 0x01007192.&nbsp; The dialog shows all the available settings for that data
+      type.&nbsp; For each setting, the dialog shows the setting name, value, and a checkbox
+      indicating whether or not the setting matches the default setting.</P>
+
+      <P>To change a setting, click on its value in the Setting column.&nbsp; This will display a
+      list of valid choices for that setting.&nbsp; Choose a value from this list of choices and
+      press <B>OK</B>.&nbsp; To reset a setting to its default value, set the <B>Use Default</B>
+      checkbox.</P>
+
+      <P><A name="Default_Data_Settings"></A>The <I>default</I> settings for a given data type can
+      be changed.&nbsp; When a default setting has been changed, every data item <I>currently</I>
+      using the default setting for that data type will use the new default value.&nbsp; Data items
+      that have a modified value for that setting will not be affected.</P>
+
+      <P>To change the default settings for a given data type:</P>
+
+      <OL>
+        <LI>Place the cursor on a data item of that type</LI>
+
+        <LI>Press mouse-right to bring up the popup menu</LI>
+
+        <LI>Select <B>Data<IMG src="../../shared/arrow.gif"> Default Settings...</B> to bring up
+        the default settings dialog</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/DefaultSettings.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <P>In the screenshot above, the default setting dialog is shown for the word data type.&nbsp;
+      The dialog shows all the available settings for that data type.&nbsp; For each setting, the
+      dialog shows the setting name and value.</P>
+
+      <P>To change a setting, click on its value in the Settings column.&nbsp; This will display a
+      list of valid choices for that setting.&nbsp; Choose a value from this list of choices and
+      press <B>OK</B>.</P>
+
+      <P><A name="SettingsOnStructureComponents"></A> <IMG src="../../shared/note.png">
+      <I>Default</I> settings on components within a structure apply to that structure only. For
+      example, if Struct_1 has a byte component with its format set as Octal, then only other
+      instances of Struct_1 will be affected. Settings on other occurrences of byte are <I>not</I>
+      affected.</P>
+
+      <P><IMG src="../../shared/note.png">A typedef has the same set of settings as its underlying
+      data type.&nbsp; For example, when you create a typedef on a byte, the default settings on
+      the typedef will be the same as the original default settings of the byte. Changing the
+      default settings for either the typedef or its underlying data type doesn't affect the
+      default settings of the underlying data type or typedef respectively.<BR>
+      </P>
+
+      <P><A name="Data_Settings_OnSelection"></A>To change the data settings for multiple data
+      items:</P>
+
+      <OL>
+        <LI>Select data items of interest (does not work for interior array elements)<BR>
+        </LI>
+
+        <LI>Press mouse-right to bring up the popup menu</LI>
+
+        <LI>Select <B>Data<IMG src="../../shared/arrow.gif"> Settings...</B> to bring up the
+        settings dialog</LI>
+      </OL>
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="0" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG alt="" src=
+                "images/DataSelectionSettings.png"><BR>
+                </TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+
+      <P>In the screenshot above, the common data settings dialog is shown for the current
+      selection.&nbsp; The dialog shows all the settings common to all defined data within the
+      current selection.&nbsp; For each setting, the dialog shows the setting name and value, where
+      the initial value is blank.&nbsp; Settings left blank will not be affected, allowing specific
+      settings to be changed without affecting others.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2>Creating Other Data Types</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="StructureDefinition"></A> <A name="Create_Structure"></A>Structure</H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra provides two mechanisms to create and modify Structures.&nbsp; The <A href=
+        "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">Data
+        Type Manager</A> can be used to create structures without applying them immediately.&nbsp;
+        It can also be used to edit them.&nbsp; Alternatively, structures can be created and
+        modified <I>directly</I> in the browser.&nbsp;&nbsp;&nbsp;</P>
+
+        <P>This document describes how to directly create, edit and apply Structures in the
+        browser.</P>
+
+        <H4><A name="Create_Structure_Dialog"></A>Creating a new Structure</H4>
+
+		 <BLOCKQUOTE>
+        <P>Creating a new structure in the browser uses previously defined data to define the
+        structure.&nbsp; The structure is created and applied at the same time.&nbsp; To create a
+        structure <I>directly</I> in the browser:</P>
+
+        <OL>
+          <LI>Select a set of contiguous defined or undefined Data</LI>
+
+          <LI>Use the right-mouse popup <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Create
+          Structure</B></LI>
+
+          <LI>The Data items within the selection are used to define the structure</LI>
+
+          <LI>The <B>Create Structure</B> dialog is displayed.&nbsp; This dialog can be used to
+          either create a new structure or apply an existing structure that has a matching
+          format.&nbsp; If a new structure is created, it will be added to the Data Type
+          Manager.</LI>
+        </OL>
+
+        <DIV align="center">
+          <CENTER>
+            <TABLE border="0" width="80%">
+              <TBODY>
+                <TR>
+                  <TD align="center" width="100%"><IMG src="images/CreateStructureDialog.png"></TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </CENTER>
+        </DIV>
+
+
+          <P>The <B>Create Structure</B> dialog is divided into two parts.&nbsp; In the top part is
+          used to provide a name if you are creating a new structure.&nbsp; It is initialized with
+          a default name.&nbsp; The bottom part shows a list of matching structures.&nbsp; You can
+          select from this list to use that structure instead of creating a new one.</P>
+
+          <P><IMG src="../../shared/note.png"> The method for finding matching structures is either
+          by an exact match or by a match on structure size. You can change the type of matching
+          used by clicking the <I>Exact</I> or <I>Size</I> radio buttons under the <I>Matching:</I>
+          heading.</P>
+
+          <P>To create a new structure, enter a unique name in the <B>Create Structure By Name</B>
+          text field and press OK.</P>
+        </BLOCKQUOTE>
+
+        <DIV align="center">
+          <CENTER>
+            <TABLE border="0" width="80%">
+              <TBODY>
+                <TR>
+                  <TD align="center" width="100%"><IMG src=
+                  "images/CreateStructureDialogWithTableSelection.png"></TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </CENTER>
+        </DIV>
+
+        <BLOCKQUOTE>
+          <P>To use an existing, matching structure, find and select the structure in the <B>Use
+          Exising Structure</B> table and press OK.</P>
+
+          <P><IMG src="../../shared/note.png">You can create nested structures by following the
+          instructions above.&nbsp; The only difference is in Step (1), select contiguous bytes
+          <I>within</I> an existing structure.</P>
+        </BLOCKQUOTE>
+
+      <H4>Changing a Structure Name</H4>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Place the cursor on the first line of the structure</LI>
+
+          <LI>Press mouse-right over the structure and choose <B>Data</B><IMG src=
+          "../../shared/arrow.gif"> <B>Edit Data Type...</B></LI>
+
+          <LI>Change the name in the <A href=
+          "../DataTypeEditors/StructureEditor.htm">Structure Editor</A></LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H4><A name="Rename_Data_Field"></A>Changing the name of a Structure member</H4>
+
+      <BLOCKQUOTE>
+        <P>There are two ways to rename a structure member.&nbsp; The first way is useful for
+        quickly changing the name of a single member:</P>
+
+        <OL>
+          <LI>Right mouse click on the field name of a structure member in the Code Browser</LI>
+
+          <LI>Choose the <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Rename Field</B>
+          option</LI>
+
+          <LI>Enter a new name in the <B>Rename Data Field</B> dialog</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png">The&nbsp; "Field Name" field must be added to the
+          "Open Data" tab in the Code Browser <A href=
+          "../CodeBrowserPlugin/Browser_Field_Formatter.htm">header</A> in order for the
+          data structure field names to show up in the Code Browser.</P>
+        </BLOCKQUOTE>
+
+        <P>The second way is more useful for changing the names of multiple members:</P>
+
+        <OL>
+          <LI>Place the cursor on the first line of the structure</LI>
+
+          <LI>Press mouse-right over the structure and choose <B>Data</B><IMG src=
+          "../../shared/arrow.gif"> <B>Edit Data Type...</B></LI>
+
+          <LI>Edit the field name for the structure member</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png"> You cannot set the field name of undefined
+          member</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="UnionDefinition"></A> <A name="Union"></A> Union</H3>
+
+    <BLOCKQUOTE>
+      <P>Unlike structures, unions can only be created using the <A href=
+      "../DataTypeEditors/StructureEditor.htm">Union Editor</A> in the <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">Data
+      Type Manager</A>.&nbsp; Once a union has been created, it can be applied like any other data
+      type.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="EnumDataType"></A>Enum</H3>
+
+    <BLOCKQUOTE>
+      <P>An Enum (<I>Enumeration</I>) data type is a C-style data type that allows the substitution
+      of a value for a more meaningful name.&nbsp; Enums are created from the <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">Data
+      Type Manager</A> using the <A href="../DataTypeEditors/EnumEditor.htm">Enum
+      Editor</A>.&nbsp;&nbsp;&nbsp; When you apply the enum to a program, the name of the enum
+      appears in the mnemonic field and the named value corresponding to the byte at that location
+      appears in the operand field.&nbsp;&nbsp;</P>
+
+      <P>Example: Define an enum <I>color</I> with values <I>red, green,</I> and <I>blue</I>
+      assigned to 0x00, 0x01, 0x02 respectively.&nbsp; When you apply <I>color</I> to:</P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <BLOCKQUOTE>
+              <BLOCKQUOTE>
+                <P><FONT face="Courier">010062ab&nbsp;&nbsp;&nbsp; 01&nbsp;&nbsp;&nbsp;
+                ??&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 01h</FONT></P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P>the result is:</P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <BLOCKQUOTE>
+              <BLOCKQUOTE>
+                <P align="left"><FONT face="Courier">010062ab&nbsp;&nbsp;&nbsp;
+                01&nbsp;&nbsp;&nbsp; color&nbsp;&nbsp;&nbsp;&nbsp; green</FONT></P>
+              </BLOCKQUOTE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P>If the byte value is not one of the values defined in the enum, "Unknown value:
+      &lt;value&gt;" is displayed as the operand.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Pointer"></A> <A name="Define_Pointer"></A> Pointer</H3>
+
+    <BLOCKQUOTE>
+      <P>A pointer data type points to another data type, including other pointers. Pointers can be
+      <I>typed</I> or <I>untyped</I>.&nbsp; Typed pointers specify the data type of the referred-to
+      location.&nbsp; By default, pointers have the same size as the size of an address for a
+      particular processor.&nbsp; For example, the pointers on a 32-bit processor will be 4 bytes
+      long.</P>
+
+      <P>To apply an untyped pointer:</P>
+
+      <OL>
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">Place the cursor over an undefined
+          data</P>
+        </LI>
+
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">Press the '<B>p</B>' Quick-Key<BR>
+          &nbsp;- or -<BR>
+          Drag a Pointer data type from the <I>Data Type Manager</I> window</P>
+        </LI>
+
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">A default-sized pointer is created</P>
+        </LI>
+
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">If a valid address can be formed at the
+          location where you created the pointer, a reference is created to that address.</P>
+        </LI>
+      </OL>
+
+      <P>To create a typed pointer:</P>
+
+      <OL>
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">First create an untyped pointer
+          (described above)</P>
+        </LI>
+
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">Apply a data type to the untyped
+          pointer</P>
+        </LI>
+
+        <LI>
+          <P style="margin-top: 6px; margin-bottom: 6px;">The mnemonic will change from 'addr' to
+          the referenced data type's mnemonic (ie: for a byte "db *", for a pointer "addr *")</P>
+        </LI>
+      </OL>
+  
+    <P>Pressing the '<B>p</B>' key invokes the pointer action. This will generally create
+    a default pointer unless the existing data is already a pointer in which case that 
+    pointer will be wrapped with an additional pointer (e.g., int * would become int **).
+    This action will always apply a default sized pointer.
+    Otherwise you can drag one of the other pointer types from the 
+    <I>Data Type Manager</I> window.
+    With existing pointer data, the base type of that pointer may be changed simply by applying
+    another type onto the pointer (e.g., applying byte to default pointer becomes db *).
+    If you do not want this pointer stacking behavior to happen, 
+    it is best to clear the code unit(s) before applying a data type via drag-n-drop or
+    key-binding actions.  
+    </P>
+
+	<P><IMG src="../../shared/note.png">To create a pointer of a specific size apply either
+      pointer8, pointer16, pointer32, or pointer64 to create a pointer sizes of 1, 2, 4, 8,
+      respectively.</P>
+      
+    </BLOCKQUOTE>
+
+    <H3>Array</H3>
+
+    <BLOCKQUOTE>
+      <P>An array is a collection of data items of a single data type. The number of elements in
+      the array is specified when the array is created.&nbsp; Arrays can also be
+      multi-dimensional.&nbsp; In this case, the innermost dimension is created first.</P>
+
+      <P><A name="Create_Array"></A><A name="Define_Array"></A>To create an array,</P>
+
+      <OL>
+        <LI>Place the cursor at the address where you want to create an array</LI>
+
+        <LI>Create one data item of the base data type for the array.&nbsp; Any data type is valid,
+        including structures</LI>
+
+        <LI>Press the '[' Quick-Key,<BR>
+        &nbsp;- or -<BR>
+        Press mouse-right on the data item and choose <B>Data</B><IMG src="../../shared/arrow.gif">
+        <B>Create Array</B></LI>
+
+        <LI>A dialog will prompt you for the number of elements in the array.&nbsp; It will be
+        initialized with the maximum number of elements that will fit into the available undefined
+        bytes. It will also let you know the largest array you can make if you allow it to clear existing
+        data.</LI>
+
+        <LI>Enter the number of elements in the array, and press <B>OK</B></LI>
+      </OL>
+
+      <P>To create a multi-dimensional array:</P>
+
+      <OL>
+        <LI>Create an array using the inner dimension for the number of elements</LI>
+
+        <LI>Place the cursor over the new array</LI>
+
+        <LI>Press the '[' Quick-Key,<BR>
+        &nbsp;- or -<BR>
+        Press mouse-right on the array and choose <B>Data</B><IMG src="../../shared/arrow.gif">
+        <B>Create Array</B></LI>
+
+        <LI>Enter the number of elements for the next dimension, and press <B>OK</B></LI>
+
+        <LI>Repeat steps (3) and (4) until all dimensions have been created</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Typedef"></A>Typedef</H3>
+
+    <BLOCKQUOTE>
+      <P>A typedef is an alias for another data type. It is useful for giving a more meaningful
+      name to a data type.&nbsp; For example, you might typedef <I>dword</I> to be
+      <I>int</I>.&nbsp; Typedefs are <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">created</A>
+      using the Data Type Manager and applied like any other data type.</P>
+    </BLOCKQUOTE>
+
+    <H3>Void</H3>
+
+    <BLOCKQUOTE>
+      <P>A <i>void</i> data type can only be used as the return type (i.e., &lt;RETURN&gt; variable) 
+      of a function and can be specified from
+      the <A href="../FunctionPlugin/Variables.htm#Edit_Function">Function Editor</A>, 
+      <A href="../FunctionPlugin/Variables.htm#DataType">Set Data Type</A> popup action menu,
+      as well as from the Data Type Manager using <i>drag-and-drop</i>.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="StringDataTypes"></A>String Data Types</H3>
+
+    <BLOCKQUOTE>
+      <P>A String consists of a sequence of characters and is generally terminated by a
+      null character ('\0') or has a length value prefixed before the string. 
+      
+      <P><B>Characters in a string</B></P>
+      <BLOCKQUOTE>
+	      <P>The characters that make up a string can be encoded from bytes in a multitude of ways:</P>
+	      <ul>
+	      	<li>Single bytes from the ASCII or other character set.
+	      	<li>16 bit or 32 bit int values from the respective Unicode character sets.
+	      	<li>Variable length byte/int sequences that encode a single character, such as UTF-8
+	      	or UTF-16.
+	      </ul>
+      </BLOCKQUOTE>
+      
+      <P><B><A name="StringLayouts">Size of a string</A></B></P>
+      <BLOCKQUOTE>
+	      <P>The extent of the string is determined by:</P>
+	      
+	      <ul>
+	      	<li>Null terminating character ('\0').
+	      	<li>Containing field length (ie. fixed length strings, or length of an array of characters).
+	      	<li>Prefixed length value for Pascal strings.
+	      </ul>
+	      
+	      <P>Each Ghidra string data type will document if its null-terminated or fixed length or
+	      pascal in its description or its type name.</P>
+	      
+	      <P>The difference between null-terminated and fixed length strings is subtle.  A null-
+	      terminated string will extend until a null character is found (with a sanity check max of 16k),
+	      regardless of the size of the field/structure that contains the string, 
+	      whereas a fixed length string's length is determined by its containing field, with trailing
+	      null characters trimmed, but interior null characters preserved.</P>
+	      
+	      <P>In practice, the user will be unable to create a null-terminated string in Ghidra
+	      that exceeds its containing field/structure as the UI will size the containing field
+	      to match the detected length of the null-terminated string.  However, if the bytes that
+	      make up the contents of the null-terminated string are changed, and the null-terminating
+	      characters are overwritten, the string instance could use bytes from outside of its footprint
+	      to construct itself.  In this case the string will be displayed in red to indicate that
+	      there is an issue.</P>
+	  </BLOCKQUOTE>
+
+      <P><B><A name="StringCharsets">Character sets</A></B></P>
+      <BLOCKQUOTE>
+      	<P>Character sets define how characters are represented as byte values, and how byte
+      	values are converted into characters.</P>
+      	
+      	<P>Not all byte values are valid character encodings, and may result in undecode-able
+      	values - for example, byte values from 128..255 are not valid when using a US-ASCII
+      	character set, but are valid when using IBM437.</P>
+      	
+      	<P>When a invalid mapping is encountered, it will be represented as the Unicode
+      	character '&#xFFFD;', which will render on your screen with an OS and font specific 
+      	shape (it is called the "REPLACEMENT CHARACTER" and is typically encoded as [\uFFFD]).
+      	
+      	<P>The following character sets are always available:</P>
+      	
+      	<ul>
+      		<li>US-ASCII
+      			<ul><li>limited to values between 0-127.</ul>
+      		<li>ISO-8859-1 (Latin 1)
+      			<ul><li>see also windows-1252.</ul>
+      		<li>UTF-8
+      			<ul>
+      				<li>variable length 1-3 byte Unicode encoding.
+      				<li>only Unicode values greater than 007F cause multi-byte sequences,
+      				otherwise indistinguishable from US-ASCII.
+      			</ul>
+      		<li>UTF-16, UTF-16BE, UTF-16LE
+      			<ul>
+      				<li>2 byte Unicode encoding.
+      				<li>variable length, 2 or 4 bytes
+      			</ul>
+      		<li>UTF-32, UTF-32BE, UTF-32LE
+      			<ul>
+      				<li>4 byte Unicode encoding.
+      			</ul>
+      	</ul>
+      	
+      	<P>Other character sets that are typically implemented in the Java JVM:</P>
+      	
+      	<ul>
+      		<li>IBM437
+      			<ul><li>old school extended ASCII.</ul>
+      		<li>Windows-1252
+      		<li>GB2312
+      			<ul>
+      				<li>Chinese
+      				<li>variable length 1-2 bytes
+      			</ul>
+      		<li>Many many more...
+      	</ul>
+      	
+      	<P><B>Unicode Byte Order Marks (BOM)</B></P>
+      	<BLOCKQUOTE>
+      		<P>Unicode strings can start with a special character that signals the endian-ness
+      		of the string.  The BOM character bytes will be FE FF (16 bit) or 
+      		00 00 FE FF (32 bit) if the string is big endian, otherwise it will be
+      		FF FE (16 bit) or FF FE 00 00 (32 bit) if the string is little endian.</P>
+      		<P>If the BOM is present, it will override the endian-ness of the binary that
+      		contains the string.</P>
+      	</BLOCKQUOTE>
+      	
+      </BLOCKQUOTE>
+      
+      <P><B>Arrays of character elements</B></P>
+      <BLOCKQUOTE>
+      	<P>Arrays of character elements (ie. char[16]) are treated as fixed-length string data types.</P>
+      	<P>Arrays of wide char data types (wchar, wchar16, wchar32) are treated as Unicode strings.</P>
+      </BLOCKQUOTE>
+      
+      <P><B>Creating string instances</B></P>
+      <BLOCKQUOTE>
+	      <P>When creating a String at a location, consecutive characters will be included 
+	      in the String until a null character ('\0') is encountered.</p>
+	      <P>When applied to a selection, String data types absorb all bytes in the 
+	      selection into a single string ignoring terminators.</P>
+	      <P>TerminatedCStrings, on the other hand, create multiple strings for the selected bytes,
+	      beginning a new string at each terminator.</P>	      
+      </BLOCKQUOTE>
+      
+      <P><B><A name="StringSettings">Settings for string instances</A></B></P>
+      <BLOCKQUOTE>
+      	<P>Each string instance has settings that can be customized to change the way the
+      	string is decoded and how it is rendered when displayed.</P>
+      	<ul>
+      		<li>Charset
+      			<ul>
+     				<li>Any of the currently available java.nio.charsets.
+     				<li>Defaults to US-ASCII
+     				<li>See charset_info.xml to customize display order or character size.
+     				<li>Not available on string types that have "UTF*" or "Unicode" in the
+     				name.   
+     			</ul>
+      		<li>Render non-ASCII Unicode
+      			<ul>
+     				<li>all - attempt to render the character (display font may or may not provide it)
+     				<li>byte sequence - show the bytes that make up the problematic character
+     				<li>escape sequence - show as an escape sequence - "\u1234"
+     			</ul>
+      		<li>Translation
+      			<ul>
+      				<li>Toggles display of translated string value on and off.
+      				<li>Same as popup menu action <b>Data | Translate | Toggle show translated value</b>.
+      			</ul>
+      	</ul>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="DynamicDataType"></A>Dynamic Data Type</H3>
+
+    <BLOCKQUOTE>
+      <P>Dynamic data types adapt to the underlying bytes to which they are applied.&nbsp; These
+      data types can only be created by <A href="../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">writing</A>
+      a new Java class. For example, an IP header packet that has a header, body, and terminator
+      might be a good candidate for writing a Dynamic data type. The header might specify the
+      length of the body. The Dynamic data type can change its size and structure based on the
+      information stored in the IP header.</P>
+
+      <P><A name="PE"></A>The PE (Windows Portable Executable) data type is another example of a
+      dynamic data type that manufactures new data types. When you apply the PE data type, it
+      creates (1) a new <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#Category">category</A>
+      (using the address as the name) in the program data type manager, (2) a structure for the DOS
+      header, and (3) a structure, PE, that contains the DOS header.&nbsp; In order for the PE data
+      type to be successfully applied, you must import a DOS program as binary file.</A>. The size of the structure varies
+      according to the information in the program.</P>
+    </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>Data</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI>
+          <P class="relatedtopic"><A href=
+          "../DataTypeManagerPlugin/data_type_manager_description.htm">Manage Data
+          Types</A></P>
+        </LI>
+
+        <LI>
+          <P class="relatedtopic"><A href=
+          "../DataTypeEditors/StructureEditor.htm">Structure Editor</A></P>
+        </LI>
+
+        <LI>
+          <P class="relatedtopic"><A href="../DataTypeEditors/EnumEditor.htm">Enum
+          Editor</A></P>
+        </LI>
+      </UL>
+    </BLOCKQUOTE><BR>
+  </BODY>
+</HTML>

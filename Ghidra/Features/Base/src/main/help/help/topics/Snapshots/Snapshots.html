@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Language" content="en-us">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <title>Snapshot Views</title>
+  <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  <meta name="generator" content="Microsoft FrontPage 4.0">
+</head>
+<body>
+<h1><a name="Snapshots_Start"></a>Snapshot Views</h1>
+<p>In previous versions of Ghidra, there were basically two types of
+component views: <span style="font-style: italic;"><span
+ style="font-weight: bold;">main</span> </span>views
+and <span style="font-style: italic; font-weight: bold;">subordinate</span>
+views.&nbsp; <span style="font-weight: bold; font-style: italic;">Main</span><span
+ style="font-style: italic;"> </span>views are the primary working
+views such as the <span style="font-style: italic;">Listing</span>
+view and the <span style="font-style: italic;">Bytes</span>
+view.&nbsp; <span style="font-style: italic; font-weight: bold;">Subordinate</span><span
+ style="font-weight: bold;"> </span>views,
+such as the <span style="font-style: italic;">Symbol Table</span> and <span
+ style="font-style: italic;">Data Type Mangager</span>, show more
+specific information and are complimentary to the information displayed
+in the main views.&nbsp; The main views are <span
+ style="font-style: italic;">connected</span> to each other - cursor
+location
+changes in one view cause the other views to follow along. <br>
+</p>
+<p>Ghidra main views now have corresponding <span
+ style="font-style: italic; font-weight: bold;">Snapshot</span><span
+ style="font-weight: bold;"> </span>views&nbsp; A snapshot
+view is similar to its related <span style="font-style: italic;">main </span>view,
+but it is disconnected.&nbsp; It does not respond to movements in
+other views and navigating within a snapshot view does not cause other
+views to move.&nbsp; The main view
+can then navigate to other programs and locations, but the snapshot
+view will remain at its same location unless the user navigates within
+the
+snapshot view. Most actions that work on a connected view also
+work in its corresponding snapshot view.&nbsp; Each snapshot view has
+its own <a href="help/topics/Navigation/Navigation.htm#Navigation_History">navigation
+history</a>, while the connected views all share a single navigation
+history.<br>
+</p>
+<p align="center"></p>
+<h2><a name="Creating_a_Snapshot"></a>Creating a Snapshot View</h2>
+<p style="margin-left: 40px;">Snapshot views are created by first
+viewing the desired information in the connected view.&nbsp; Views that
+support snapshots will have the <span style="font-weight: bold;">Create
+Snapshot</span> action (<img alt="" src="images/camera-photo.png">) on the local toolbar.&nbsp;
+Pressing this icon will create a snapshot view of the same type (<span
+ style="font-style: italic;">a Code Viewer</span> will create a <span
+ style="font-style: italic;">Code Viewer</span> snapshot, a <span
+ style="font-style: italic;">Decompiler</span> will create a <span
+ style="font-style: italic;">Decompiler </span>snapshot, etc.)
+configured exactly the same as the creating view.&nbsp; The main view
+can then navigate to other programs and locations, but the snapshot
+will remain at its same location unless the user navigates within the
+snapshot view.<br>
+</p>
+<h2>Snapshot Views, Windows, and Actions<br>
+</h2>
+<blockquote>
+  <p>Snapshot views can be docked with normal views or they can live in
+their own windows.&nbsp; Global menu and toolbar actions have been
+changed to accomodate snapshot views.&nbsp; Global actions now operate
+on whatever component has focus (the component whose header bar is
+colored blue).&nbsp; For example, if you have the connected <span
+ style="font-style: italic;">Listing View</span> and a snapshot <span
+ style="font-style: italic;">Listing View</span>, both docked in the
+same window, global actions such as <span style="font-weight: bold;">Go
+to Next Instruction</span> will navigate the normal view if it has
+focus or the snapshot view if it has focus.&nbsp; If neither has focus,
+the action will be disabled.<br>
+Note this is different from previous versions of Ghidra.&nbsp;
+Previously, the <span style="font-weight: bold;">Go to Next Instruction</span>
+action would always navigate the (one and only)<br>
+  <span style="font-style: italic;">Listing View</span>, even if, for
+example, the <span style="font-style: italic;">Symbol Tree</span> has
+focus.&nbsp; Now, if the <span style="font-style: italic;">Symbol Tree</span>
+has focus, the <span style="font-weight: bold;">Go to Next Instruction</span>
+action is disabled.<br>
+  </p>
+  <p>Since global actions now work on the <span
+ style="font-style: italic;">active</span> component (the
+component that has focus) within its window, many global actions can
+appear in multiple windows.&nbsp; For example, the <span
+ style="font-weight: bold;">undo/redo</span> actions will appear in any
+window containing a <span style="font-style: italic;">Listing View</span>,
+a <span style="font-style: italic;">Decompiler View</span>, or a <span
+ style="font-style: italic;">Bytes View</span>.<br>
+  <br>
+  </p>
+</blockquote>
+</body>
+</html>

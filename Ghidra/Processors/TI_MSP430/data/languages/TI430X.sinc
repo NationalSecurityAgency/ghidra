@@ -1,0 +1,3470 @@
+###################################################################################
+#
+#	20bit Address Instructions
+#
+# The original way of using sub-tables to breakout the addressing modes does not
+# work for these instructions
+
+:^instruction							is opext_11_5=0x3 & ctx_haveext=0 & dest_0_4 & src_ext & al & zc; instruction [ ctx_haveext=1; ctx_ctregdest=dest_0_4; ctx_regsrc=src_ext; ctx_al=al;] {$(CARRY)=$(CARRY) * (zc:1 == 0);  build instruction;}
+
+
+#:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=2;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=7;] {build instruction;} #replacment substituting second of haveext=2. NOTE: as=1 precludes first 
+:^instruction							is ctx_haveext=1 & instruction & as=1 [ctx_haveext=7;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & as=3 & src_8_4=0 [ctx_haveext=7;] {build instruction;}
+#:^instruction							is ctx_haveext=1 & instruction [ctx_haveext=2;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & as=0 & ad=0 [ctx_haveext=3;] {build instruction;} #replacement substituting first of haveext=2
+:^instruction							is ctx_haveext=1 & instruction [ctx_haveext=7;] {build instruction;} #replacement substituting second of haveext=2
+
+:^instruction							is ctx_haveext=1 & instruction & op16_7_9=0x23 & as=0 [ctx_haveext=3;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & op16_7_9=0x21 & as=0 [ctx_haveext=3;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & op16_12_4=0x1 & as=1 & reg16_0_4=3 [ctx_haveext=3;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & op16_12_4=0x1 & as=1 [ctx_haveext=7;] {build instruction;}
+:^instruction							is ctx_haveext=1 & instruction & op16_12_4=0x1 & as=3 & reg16_0_4=0 [ctx_haveext=7;] {build instruction;}
+
+# removed haveext=2
+#:^instruction							is ctx_haveext=2 & instruction & as=0 & ad=0 [ctx_haveext=3;] {build instruction;}
+#:^instruction							is ctx_haveext=2 & instruction [ctx_haveext=7;] {build instruction;}
+
+
+
+:^instruction							is ctx_haveext=3 & instruction & ctx_num=0 & ctx_ctregdest=0 [ctx_haveext=4;] { CNT = 0;build instruction; }
+:"RPT #"^val^" { "^instruction			is ctx_haveext=3 & instruction & ctx_num=0 & ctx_ctregdest [ctx_haveext=4; val = ctx_ctregdest+1;] { CNT = ctx_ctregdest;build instruction;}
+:"RPT "^ctx_repreg^" { "^instruction	is ctx_haveext=3 & instruction & ctx_num=1 & ctx_repreg [ctx_haveext=4;] { CNT = zext(ctx_repreg[0,4]); build instruction;}
+
+
+# 20bit address mode sub tables
+Abs20: val						is ctx_ctregdest & imm_0_16 [ val=(ctx_ctregdest << 16) | imm_0_16;] {export *[const]:3 val;}
+Abs20s: val						is ctx_ctregdests & imm_0_16 [ val=(ctx_ctregdests << 16) | imm_0_16;] {export *[const]:3 val;}
+Abs20add: val					is ctx_ctregdest & imm_0_16 [ val=(ctx_ctregdest << 16) | imm_0_16;] {export *:4 val;}
+
+IMM4: val					is imm_4_4 [val = imm_4_4+1;] {export *[const]:1 val;}
+NUM2: val					is rrn [ val = rrn+1;] {export *[const]:1 val;}
+
+XREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
+XREG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:1 tmp;}
+XREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
+XREG_B_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {tmp:1 = indexExtWord16_0_16[0,8]; export *[const]:1 tmp; } # Immediate
+XREG_B_AS: "&"^indexExtWord16_0_16 		 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
+XREG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
+XREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Constant
+XREG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
+XREG_B_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:1;}		# Constant
+XREG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Constant
+XREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
+
+XRREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
+XRREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
+XRREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Constant
+XRREG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
+XRREG_B_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:1;}		# Constant
+XRREG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Constant
+XRREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
+
+XREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
+XREG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:2 tmp;}
+XREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_W_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
+XREG_W_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
+XREG_W_AS: "&"^indexExtWord16_0_16 		 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+XREG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
+XREG_W_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x0  { export 8:2;}		# Constant
+XREG_W_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x0  { export 0:2;}		# Constant
+XREG_W_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x0  { export 1:2;}		# Constant
+XREG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# Constant
+XREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
+
+XRREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
+XRREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
+XRREG_W_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x0  { export 8:2;}		# Constant
+XRREG_W_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x0  { export 0:2;}		# Constant
+XRREG_W_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x0  { export 1:2;}		# Constant
+XRREG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# Constant
+XRREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
+
+XREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XREG_A_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
+XREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XREG_A_AS: "#"^val 						 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdests << 16) | indexExtWord16_0_16; ] {export *[const]:$(REG_SIZE) val; } # Immediate
+XREG_A_AS: "&"^val 						 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
+XREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
+XREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE);}		# Constant
+XREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
+XREG_A_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE);}		# Constant
+XREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE);}		# Constant
+XREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
+
+XRREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XRREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
+XRREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE);}		# Constant
+XRREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
+XRREG_A_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE);}		# Constant
+XRREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE);}		# Constant
+XRREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
+
+XREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
+XREG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:1 tmp;}
+XREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
+XREG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
+
+XRREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x1  { ztmp:1 = DST8_0_4; reg_Direct16_0_4=0; DST8_0_4 = ztmp; export DST8_0_4;} # Word/Register Direct (Rn):
+XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+
+XREG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:2 tmp;}
+XREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_W_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
+XREG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+
+XRREG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x0  {ztmp:2 = DST16_0_4; reg_Direct16_0_4=0; DST16_0_4 = ztmp;export DST16_0_4;} # Word/Register Direct (Rn):
+XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+
+XREG_A_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
+XREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XREG_A_AS_DEST: "&"^val 					 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
+
+XRREG_A_AS_DEST: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+
+XREG_A_AS_DEST2: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
+XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST2: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16);  ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XREG_A_AS_DEST2: "&"^val 					 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
+
+XRREG_A_AS_DEST2: dest_0_4						 is dest_0_4 & as=0 & bow=0x0 {export dest_0_4;}
+XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
+XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+
+XSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
+XSRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = src_Indexed16_8_4 + indexExtWord16_0_16s; export *:1 tmp;}
+XSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
+XSRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {tmp:1 = indexExtWord16_0_16[0,8]; export *[const]:1 tmp;} # Immediate
+XSRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
+XSRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
+XSRC_B_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:1; }		# Constant
+XSRC_B_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:1; }		# Constant
+XSRC_B_AS: "#1" 						 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:1; }		# Constant
+XSRC_B_AS: "#2" 						 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:1; }		# Constant
+XSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 	# Constant
+
+XRSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
+XRSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XRSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
+XRSRC_B_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:1; }		# Constant
+XRSRC_B_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:1; }		# Constant
+XRSRC_B_AS: "#1" 						 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:1; }		# Constant
+XRSRC_B_AS: "#2" 						 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:1; }		# Constant
+XRSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 	# Constant
+
+
+XSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
+XSRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = src_Indexed16_8_4 + indexExtWord16_0_16s; export *:2 tmp;}
+XSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
+XSRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
+XSRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+XSRC_W_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
+XSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
+XSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
+XSRC_W_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# Constant
+XSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
+XSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
+
+XRSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
+XRSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XRSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_W_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
+XRSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
+XRSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
+XRSRC_W_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# Constant
+XRSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
+XRSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
+
+XSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
+XSRC_A_AS: val^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrcs << 16) | indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = src_Indexed16_8_4 + val; export *:$(REG_SIZE) tmp;}
+XSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_A_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_regsrcs << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XSRC_A_AS: "#"^val 	 				 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrcs << 16) | indexExtWord16_0_16; ] {export *[const]:$(REG_SIZE) val; } # Immediate
+XSRC_A_AS: "&"^val 	 				 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrc << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
+XSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
+XSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE); }		# Constant
+XSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
+XSRC_A_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE); }		# Constant
+XSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE); }		# Constant
+XSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
+
+XRSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
+XRSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
+XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
+XRSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE); }		# Constant
+XRSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
+XRSRC_A_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE); }		# Constant
+XRSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE); }		# Constant
+XRSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
+
+XDEST_B_AD: DST8_0_4 		  		 is DST8_0_4 & ad=0x0 & bow=0x1
+     { export DST8_0_4; }        # Word/Register Direct (Rn):
+XDEST_B_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16s
+     { tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExtWord16_0_16s; export *:1 tmp;}
+XDEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
+     { tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExt2Word16_0_16s; export *:1 tmp;}
+XDEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
+     { tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExt2Word16_0_16s; export *:1 tmp;}
+XDEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ]
+     { export *:1 labelCalc; } # Symbolic
+XDEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 6 + indexExt2Word16_0_16s; ]
+     {export *:1 labelCalc; } # Symbolic
+XDEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 6 + indexExt2Word16_0_16s; ]
+     {export *:1 labelCalc; } # Symbolic
+XDEST_B_AD: "&"^indexExtWord16_0_16 	  is dest=0x2 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16
+     {export *:1 indexExtWord16_0_16; } # Absolute
+XDEST_B_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {export *:1 indexExt2Word16_0_16; } # Absolute
+XDEST_B_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {export *:1 indexExt2Word16_0_16; } # Absolute
+
+
+XDEST_W_AD: DST16_0_4 		  		 is DST16_0_4 & ad=0x0 & bow=0x0
+     {export DST16_0_4;} # Word/Register Direct (Rn):
+XDEST_W_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 ; indexExtWord16_0_16s
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExtWord16_0_16s; export *:2 tmp;}
+XDEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExt2Word16_0_16s; export *:2 tmp;}
+XDEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + indexExt2Word16_0_16s; export *:2 tmp;}
+XDEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ]
+     {export *:2 labelCalc; } # Symbolic
+XDEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 6 + indexExt2Word16_0_16s; ]
+     {export *:2 labelCalc; } # Symbolic
+XDEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 6 + indexExt2Word16_0_16s; ]
+     {export *:2 labelCalc; } # Symbolic
+XDEST_W_AD: "&"^indexExtWord16_0_16 	  is dest=0x2 & ad=0x1 & bow=0x0 ; indexExtWord16_0_16
+     {export *:2 indexExtWord16_0_16; } # Absolute
+XDEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {export *:2 indexExt2Word16_0_16; } # Absolute
+XDEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {export *:2 indexExt2Word16_0_16; } # Absolute
+
+XDEST_A_AD: dest_0_4 		  		 is dest_0_4 & ad=0x0 & bow=0x1
+     { export dest_0_4; }        # Word/Register Direct (Rn):
+XDEST_A_AD: val^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdests << 16) | indexExtWord16_0_16; ]
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + val; export *:$(REG_SIZE) tmp;}
+XDEST_A_AD: val^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [val=(ctx_ctregdests << 16) | indexExt2Word16_0_16; ]
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + val; export *:$(REG_SIZE) tmp;}
+XDEST_A_AD: val^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [val=(ctx_ctregdests << 16) | indexExt2Word16_0_16; ]
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + val; export *:$(REG_SIZE) tmp;}
+XDEST_A_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16);  ]
+     {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XDEST_A_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExt2Word16_0_16);  ]
+     {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XDEST_A_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExt2Word16_0_16);  ]
+     {export *:$(REG_SIZE) labelCalc; } # Symbolic
+XDEST_A_AD: "&"^val 	  			  is dest=0x2 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ]
+     {export *:$(REG_SIZE) val; } # Absolute
+XDEST_A_AD: "&"^val   				  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [val=(ctx_ctregdest << 16) | indexExt2Word16_0_16; ]
+     {export *:$(REG_SIZE) val; } # Absolute
+XDEST_A_AD: "&"^val   				  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [val=(ctx_ctregdest << 16) | indexExt2Word16_0_16; ]
+     {export *:$(REG_SIZE) val; } # Absolute
+
+macro setaddflags(ans, in1, in2)
+{
+	tmp1:$(REG_SIZE) = zext(in1[0,20]);
+	tmp2:$(REG_SIZE) = zext(in2[0,20]);
+	tmp1 = tmp1 + tmp2;
+	$(CARRY) = tmp1 > 0xFFFFF;
+	$(OVERFLOW) = ((in1 s>= 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s< 0) & (in2 s< 0) & (ans s>= 0));
+	$(SIGN) = (ans s< 0);
+	$(ZERO) = (ans == 0);
+}
+
+macro setsubflags(ans, in1, in2)
+{
+	tmp1:$(REG_SIZE) = zext(in1[0,20]);
+	tmp2:$(REG_SIZE) = zext(in2[0,20]);
+	$(CARRY) = tmp1 > tmp2;
+	$(OVERFLOW) = ((in1 s< 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s>= 0) & (in2 s< 0) & (ans s>= 0));
+	$(SIGN) = (ans s< 0);
+	$(ZERO) = (ans == 0);
+	
+}
+
+#################
+#
+# Subtables for the pushm/popm variants.
+# In memory, the 20 bit regs take up 4 bytes with all the uppers being 0.
+# However, to get some of the math to work, the 20bit regs are sign extended when reading from mem.
+
+PUSHAR0:					is ctx_count=0 {}
+PUSHAR0:					is ctx_mreg=0x0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = inst_start & 0xFFFFF;
+}
+
+PUSHAR1:					is ctx_count=0 {}
+PUSHAR1:					is PUSHAR0 {build PUSHAR0;}
+PUSHAR1:					is ctx_mreg=0x1 & PUSHAR0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = SP & 0xFFFF;
+	build PUSHAR0;
+}
+
+PUSHAR2:					is ctx_count=0 {}
+PUSHAR2:					is PUSHAR1 {build PUSHAR1;}
+PUSHAR2:					is ctx_mreg=0x2 & PUSHAR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = SR & 0xFFFF;
+	build PUSHAR1;
+}
+
+PUSHAR3:					is ctx_count=0 {}
+PUSHAR3:					is PUSHAR2 {build PUSHAR2;}
+PUSHAR3:					is ctx_mreg=0x3 & PUSHAR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R3 & 0xFFFFF;
+	build PUSHAR2;
+}
+
+PUSHAR4:					is ctx_count=0 {}
+PUSHAR4:					is PUSHAR3 {build PUSHAR3;}
+PUSHAR4:					is ctx_mreg=0x4 & PUSHAR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R4 & 0xFFFFF;
+	build PUSHAR3;
+}
+
+PUSHAR5:					is ctx_count=0 {}
+PUSHAR5:					is PUSHAR4 {build PUSHAR4;}
+PUSHAR5:					is ctx_mreg=0x5 & PUSHAR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R5 & 0xFFFFF;
+	build PUSHAR4;
+}
+
+PUSHAR6:					is ctx_count=0 {}
+PUSHAR6:					is PUSHAR5 {build PUSHAR5;}
+PUSHAR6:					is ctx_mreg=0x6 & PUSHAR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R6 & 0xFFFFF;
+	build PUSHAR5;
+}
+
+PUSHAR7:					is ctx_count=0 {}
+PUSHAR7:					is PUSHAR6 {build PUSHAR6;}
+PUSHAR7:					is ctx_mreg=0x7 & PUSHAR6 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R7 & 0xFFFFF;
+	build PUSHAR6;
+}
+
+PUSHAR8:					is ctx_count=0 {}
+PUSHAR8:					is PUSHAR7 {build PUSHAR7;}
+PUSHAR8:					is ctx_mreg=0x8 & PUSHAR7 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R8 & 0xFFFFF;
+	build PUSHAR7;
+}
+
+PUSHAR9:					is ctx_count=0 {}
+PUSHAR9:					is PUSHAR8 {build PUSHAR8;}
+PUSHAR9:					is ctx_mreg=0x9 & PUSHAR8 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R9 & 0xFFFFF;
+	build PUSHAR8;
+}
+
+PUSHAR10:					is ctx_count=0 {}
+PUSHAR10:					is PUSHAR9 {build PUSHAR9;}
+PUSHAR10:					is ctx_mreg=0xA & PUSHAR9 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R10 & 0xFFFFF;
+	build PUSHAR9;
+}
+
+PUSHAR11:					is ctx_count=0 {}
+PUSHAR11:					is PUSHAR10 {build PUSHAR10;}
+PUSHAR11:					is ctx_mreg=0xB & PUSHAR10 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R11 & 0xFFFFF;
+	build PUSHAR10;
+}
+
+PUSHAR12:					is ctx_count=0 {}
+PUSHAR12:					is PUSHAR11 {build PUSHAR11;}
+PUSHAR12:					is ctx_mreg=0xC & PUSHAR11 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R12 & 0xFFFFF;
+	build PUSHAR11;
+}
+
+PUSHAR13:					is ctx_count=0 {}
+PUSHAR13:					is PUSHAR12 {build PUSHAR12;}
+PUSHAR13:					is ctx_mreg=0xD & PUSHAR12 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R13 & 0xFFFFF;
+	build PUSHAR12;
+}
+
+PUSHAR14:					is ctx_count=0 {}
+PUSHAR14:					is PUSHAR13 {build PUSHAR13;}
+PUSHAR14:					is ctx_mreg=0xE & PUSHAR13 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R14 & 0xFFFFF;
+	build PUSHAR13;
+}
+
+PUSHAR15:					is PUSHAR14 {build PUSHAR14;}
+PUSHAR15:					is ctx_mreg=0xF & PUSHAR14 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 4;
+	*[RAM]:4 SP = R15 & 0xFFFFF;
+	build PUSHAR14;
+}
+
+PUSHWR0:					is ctx_count=0 {}
+PUSHWR0:					is ctx_mreg=0x0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = inst_start & 0xFFFF;
+}
+
+PUSHWR1:					is ctx_count=0 {}
+PUSHWR1:					is PUSHWR0 {build PUSHWR0;}
+PUSHWR1:					is ctx_mreg=0x1 & PUSHWR0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = SP:2;
+	build PUSHWR0;
+}
+
+PUSHWR2:					is ctx_count=0 {}
+PUSHWR2:					is PUSHWR1 {build PUSHWR1;}
+PUSHWR2:					is ctx_mreg=0x2 & PUSHWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = SR:2;
+	build PUSHWR1;
+}
+
+PUSHWR3:					is ctx_count=0 {}
+PUSHWR3:					is PUSHWR2 {build PUSHWR2;}
+PUSHWR3:					is ctx_mreg=0x3 & PUSHWR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R3:2;
+	build PUSHWR2;
+}
+
+PUSHWR4:					is ctx_count=0 {}
+PUSHWR4:					is PUSHWR3 {build PUSHWR3;}
+PUSHWR4:					is ctx_mreg=0x4 & PUSHWR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R4:2;
+	build PUSHWR3;
+}
+
+PUSHWR5:					is ctx_count=0 {}
+PUSHWR5:					is PUSHWR4 {build PUSHWR4;}
+PUSHWR5:					is ctx_mreg=0x5 & PUSHWR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R5:2;
+	build PUSHWR4;
+}
+
+PUSHWR6:					is ctx_count=0 {}
+PUSHWR6:					is PUSHWR5 {build PUSHWR5;}
+PUSHWR6:					is ctx_mreg=0x6 & PUSHWR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R6:2;
+	build PUSHWR5;
+}
+
+PUSHWR7:					is ctx_count=0 {}
+PUSHWR7:					is PUSHWR6 {build PUSHWR6;}
+PUSHWR7:					is ctx_mreg=0x7 & PUSHWR6 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R7:2;
+	build PUSHWR6;
+}
+
+PUSHWR8:					is ctx_count=0 {}
+PUSHWR8:					is PUSHWR7 {build PUSHWR7;}
+PUSHWR8:					is ctx_mreg=0x8 & PUSHWR7 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R8:2;
+	build PUSHWR7;
+}
+
+PUSHWR9:					is ctx_count=0 {}
+PUSHWR9:					is PUSHWR8 {build PUSHWR8;}
+PUSHWR9:					is ctx_mreg=0x9 & PUSHWR8 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R9:2;
+	build PUSHWR8;
+}
+
+PUSHWR10:					is ctx_count=0 {}
+PUSHWR10:					is PUSHWR9 {build PUSHWR9;}
+PUSHWR10:					is ctx_mreg=0xA & PUSHWR9 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R10:2;
+	build PUSHWR9;
+}
+
+PUSHWR11:					is ctx_count=0 {}
+PUSHWR11:					is PUSHWR10 {build PUSHWR10;}
+PUSHWR11:					is ctx_mreg=0xB & PUSHWR10 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R11:2;
+	build PUSHWR10;
+}
+
+PUSHWR12:					is ctx_count=0 {}
+PUSHWR12:					is PUSHWR11 {build PUSHWR11;}
+PUSHWR12:					is ctx_mreg=0xC & PUSHWR11 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R12:2;
+	build PUSHWR11;
+}
+
+PUSHWR13:					is ctx_count=0 {}
+PUSHWR13:					is PUSHWR12 {build PUSHWR12;}
+PUSHWR13:					is ctx_mreg=0xD & PUSHWR12 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R13:2;
+	build PUSHWR12;
+}
+
+PUSHWR14:					is ctx_count=0 {}
+PUSHWR14:					is PUSHWR13 {build PUSHWR13;}
+PUSHWR14:					is ctx_mreg=0xE & PUSHWR13 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R14:2;
+	build PUSHWR13;
+}
+
+PUSHWR15:					is PUSHWR14 {build PUSHWR14;}
+PUSHWR15:					is ctx_mreg=0xF & PUSHWR14 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	SP = SP - 2;
+	*[RAM]:2 SP = R15:2;
+	build PUSHWR14;
+}
+
+POPAR15:					is ctx_count=0 {}
+POPAR15:					is ctx_mreg=0xF {
+	R15 = *[RAM]:4 SP;
+	R15 = sext(R15[0,20]);
+	SP = SP + 4;	
+}
+
+POPAR14:					is ctx_count=0 {}
+POPAR14:					is  POPAR15 {build POPAR15;}
+POPAR14:					is ctx_mreg=0xE & POPAR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {	
+	R14 = *[RAM]:4 SP;
+	R14 = sext(R14[0,20]);
+	SP = SP + 4;
+	build POPAR15;
+}
+
+POPAR13:					is ctx_count=0 {}
+POPAR13:					is  POPAR14 {build POPAR14;}
+POPAR13:					is ctx_mreg=0xD & POPAR14 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R13 = *[RAM]:4 SP;
+	R13 = sext(R13[0,20]);
+	SP = SP + 4;
+	build POPAR14;
+}
+
+POPAR12:					is ctx_count=0 {}
+POPAR12:					is  POPAR13 {build POPAR13;}
+POPAR12:					is ctx_mreg=0xC & POPAR13 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R12 = *[RAM]:4 SP;
+	R12 = sext(R12[0,20]);
+	SP = SP + 4;
+	build POPAR13;
+}
+
+POPAR11:					is ctx_count=0 {}
+POPAR11:					is  POPAR12 {build POPAR12;}
+POPAR11:					is ctx_mreg=0xB & POPAR12 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R11 = *[RAM]:4 SP;
+	R11 = sext(R11[0,20]);
+	SP = SP + 4;
+	build POPAR12;
+}
+
+POPAR10:					is ctx_count=0 {}
+POPAR10:					is  POPAR11 {build POPAR11;}
+POPAR10:					is ctx_mreg=0xA & POPAR11 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R10 = *[RAM]:4 SP;
+	R10 = sext(R10[0,20]);
+	SP = SP + 4;
+	build POPAR11;
+}
+
+POPAR9:						is ctx_count=0 {}
+POPAR9:						is  POPAR10 {build POPAR10;}
+POPAR9:						is ctx_mreg=0x9 & POPAR10 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R9 = *[RAM]:4 SP;
+	R9 = sext(R9[0,20]);
+	SP = SP + 4;
+	build POPAR10;
+}
+
+POPAR8:						is ctx_count=0 {}
+POPAR8:						is  POPAR9 {build POPAR9;}
+POPAR8:						is ctx_mreg=0x8 & POPAR9 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R8 = *[RAM]:4 SP;
+	R8 = sext(R8[0,20]);
+	SP = SP + 4;
+	build POPAR9;
+}
+
+POPAR7:						is ctx_count=0 {}
+POPAR7:						is  POPAR8 {build POPAR8;}
+POPAR7:						is ctx_mreg=0x7 & POPAR8 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R7 = *[RAM]:4 SP;
+	R7 = sext(R7[0,20]);
+	SP = SP + 4;
+	build POPAR8;
+}
+
+POPAR6:						is ctx_count=0 {}
+POPAR6:						is  POPAR7 {build POPAR7;}
+POPAR6:						is ctx_mreg=0x6 & POPAR7 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R6 = *[RAM]:4 SP;
+	R6 = sext(R6[0,20]);
+	SP = SP + 4;
+	build POPAR7;
+}
+
+POPAR5:						is ctx_count=0 {}
+POPAR5:						is  POPAR6 {build POPAR6;}
+POPAR5:						is ctx_mreg=0x5 & POPAR6 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R5 = *[RAM]:4 SP;
+	R5 = sext(R5[0,20]);
+	SP = SP + 4;
+	build POPAR6;
+}
+
+POPAR4:						is ctx_count=0 {}
+POPAR4:						is  POPAR5 {build POPAR5;}
+POPAR4:						is ctx_mreg=0x4 & POPAR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R4 = *[RAM]:4 SP;
+	R4 = sext(R4[0,20]);
+	SP = SP + 4;
+	build POPAR5;
+}
+
+POPAR3:						is ctx_count=0 {}
+POPAR3:						is  POPAR4 {build POPAR4;}
+POPAR3:						is ctx_mreg=0x3 & POPAR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R3 = *[RAM]:4 SP;
+	R3 = sext(R3[0,20]);
+	SP = SP + 4;
+	build POPAR4;
+}
+
+POPAR2:						is ctx_count=0 {}
+POPAR2:						is  POPAR3 {build POPAR3;}
+POPAR2:						is ctx_mreg=0x2 & POPAR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	SR = *[RAM]:4 SP;
+	SP = SP + 4;
+	build POPAR3;
+}
+
+POPAR1:						is ctx_count=0 {}
+POPAR1:						is  POPAR2 {build POPAR2;}
+POPAR1:						is ctx_mreg=0x1 & POPAR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	SP = *[RAM]:4 SP;
+	SP = sext(SP[0,20]);
+	SP = SP + 4;
+	build POPAR2;
+}
+
+POPAR0:						is  POPAR1 {build POPAR1;}
+POPAR0:						is ctx_mreg=0x0 & POPAR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	PC = *[RAM]:4 SP;
+	PC = sext(PC[0,20]);
+	SP = SP + 4;
+	build POPAR1;
+	goto [PC];
+}
+
+POPWR15:					is ctx_count=0 {}
+POPWR15:					is ctx_mreg=0xF {
+	R15 = zext(*[RAM]:2 SP);
+	SP = SP + 2;	
+}
+
+POPWR14:					is ctx_count=0 {}
+POPWR14:					is  POPWR15 {build POPWR15;}
+POPWR14:					is ctx_mreg=0xE & POPWR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {	
+	R14 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR15;
+}
+
+POPWR13:					is ctx_count=0 {}
+POPWR13:					is  POPWR14 {build POPWR14;}
+POPWR13:					is ctx_mreg=0xD & POPWR14 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R13 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR14;
+}
+
+POPWR12:					is ctx_count=0 {}
+POPWR12:					is  POPWR13 {build POPWR13;}
+POPWR12:					is ctx_mreg=0xC & POPWR13 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R12 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR13;
+}
+
+POPWR11:					is ctx_count=0 {}
+POPWR11:					is  POPWR12 {build POPWR12;}
+POPWR11:					is ctx_mreg=0xB & POPWR12 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R11 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR12;
+}
+
+POPWR10:					is ctx_count=0 {}
+POPWR10:					is  POPWR11 {build POPWR11;}
+POPWR10:					is ctx_mreg=0xA & POPWR11 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R10 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR11;
+}
+
+POPWR9:						is ctx_count=0 {}
+POPWR9:						is  POPWR10 {build POPWR10;}
+POPWR9:						is ctx_mreg=0x9 & POPWR10 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R9 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR10;
+}
+
+POPWR8:						is ctx_count=0 {}
+POPWR8:						is  POPWR9 {build POPWR9;}
+POPWR8:						is ctx_mreg=0x8 & POPWR9 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R8 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR9;
+}
+
+POPWR7:						is ctx_count=0 {}
+POPWR7:						is  POPWR8 {build POPWR8;}
+POPWR7:						is ctx_mreg=0x7 & POPWR8 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R7 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR8;
+}
+
+POPWR6:						is ctx_count=0 {}
+POPWR6:						is  POPWR7 {build POPWR7;}
+POPWR6:						is ctx_mreg=0x6 & POPWR7 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R6 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR7;
+}
+
+POPWR5:						is ctx_count=0 {}
+POPWR5:						is  POPWR6 {build POPWR6;}
+POPWR5:						is ctx_mreg=0x5 & POPWR6 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R5 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR6;
+}
+
+POPWR4:						is ctx_count=0 {}
+POPWR4:						is  POPWR5 {build POPWR5;}
+POPWR4:						is ctx_mreg=0x4 & POPWR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R4 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR5;
+}
+
+POPWR3:						is ctx_count=0 {}
+POPWR3:						is  POPWR4 {build POPWR4;}
+POPWR3:						is ctx_mreg=0x3 & POPWR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	R3 = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR4;
+}
+
+POPWR2:						is ctx_count=0 {}
+POPWR2:						is  POPWR3 {build POPWR3;}
+POPWR2:						is ctx_mreg=0x2 & POPWR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	SR = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR3;
+}
+
+POPWR1:						is ctx_count=0 {}
+POPWR1:						is  POPWR2 {build POPWR2;}
+POPWR1:						is ctx_mreg=0x1 & POPWR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	SP = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR2;
+}
+
+POPWR0:						is  POPWR1 {build POPWR1;}
+POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
+	PC = zext(*[RAM]:2 SP);
+	SP = SP + 2;
+	build POPWR1;
+	goto [PC];
+}
+
+:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = src_8_4 + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,src_8_4,tmpd);
+}
+
+:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 & dest_0_4=0x0 {
+	tmpd:$(REG_SIZE) = inst_start + 2;
+	tmp:$(REG_SIZE) = src_8_4 + tmpd;
+	PC = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,src_8_4,tmpd);
+	goto [PC];
+}
+
+:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & src_8_4=0x0 & dest_0_4 {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = inst_start + 2;
+	tmp:$(REG_SIZE) = tmps + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmps,tmpd);
+}
+
+:ADDA "#"^Abs20s, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = sext(Abs20s);
+	tmp:$(REG_SIZE) = tmpd + tmps;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmps,tmpd);
+}
+
+:ADDA "#"^Abs20s, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & dest_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = inst_start + 2;
+	tmps:$(REG_SIZE) = sext(Abs20s);
+	tmp:$(REG_SIZE) = tmpd + tmps;
+	PC = sext(tmp[0,20]);
+	
+	setaddflags(PC,tmps,tmpd);
+	goto [PC];
+}
+
+:CMPA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4 & dest_0_4 {
+	tmp:$(REG_SIZE) = dest_0_4 - src_8_4;
+	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
+	setsubflags(tmpd,src_8_4,dest_0_4);
+}
+
+:CMPA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmps:$(REG_SIZE) = sext(Abs20s);
+	tmp:$(REG_SIZE) = dest_0_4 - tmps;
+	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
+	setsubflags(tmpd,tmps,dest_0_4);
+}
+
+:MOVA "@"^src_8_4, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4 {
+	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4;
+	dest_0_4 = sext(dest_0_4[0,20]);
+}
+
+:MOVA "@"^src_8_4^"+", dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4 {
+	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	src_8_4 = src_8_4 + 4;
+}
+
+:MOVA "&"^Abs20, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4 ; Abs20 [ctx_ctregdest=imm_8_4;] {
+	tmp:$(REG_SIZE) = zext(Abs20);
+	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
+	dest_0_4 = sext(dest_0_4[0,20]);
+}
+
+:MOVA imms_0_16^"("^src_8_4^")", dest_0_4		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2);
+	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
+	dest_0_4 = sext(dest_0_4[0,20]);
+}
+
+:MOVA src_8_4, "&"^Abs20				is ctx_haveext=0 & op16_12_4=0 & insid=0x6 & imm_0_4 & src_8_4 ; Abs20 [ctx_ctregdest=imm_0_4;] {
+	tmp:$(REG_SIZE) = zext(Abs20);
+	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
+}
+
+:MOVA src_8_4, imms_0_16^"("^dest_0_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x7 & src_8_4 & dest_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2);
+	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
+}
+
+:MOVA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	dest_0_4 = sext(Abs20s);
+}
+
+:MOVA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4 & dest_0_4 {
+	dest_0_4 = src_8_4;
+}
+
+:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 - src_8_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,src_8_4,tmpd);
+}
+
+:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 & dest_0_4=0x0 {
+	tmpd:$(REG_SIZE) = inst_start + 2;
+	tmp:$(REG_SIZE) = tmpd - src_8_4;
+	PC = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,src_8_4,tmpd);
+	goto [PC];
+}
+
+:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & src_8_4=0x0 & dest_0_4 {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = inst_start + 2;
+	tmp:$(REG_SIZE) = dest_0_4 - tmps;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,tmps,tmpd);
+}
+
+:SUBA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = sext(Abs20s);
+	tmp:$(REG_SIZE) = dest_0_4 - tmps;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,tmps,tmpd);
+}
+
+:SUBA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & dest_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = inst_start + 2;
+	tmps:$(REG_SIZE) = sext(Abs20s);
+	tmp:$(REG_SIZE) = tmpd - tmps;
+	PC = sext(tmp[0,20]);
+	
+	setsubflags(PC,tmps,tmpd);
+	goto [PC];
+}
+
+##################
+#
+# Special cases of renamed MOVA where PC is involved
+
+# This first case doesn't make any sense, but I saw it in the cunits.  The instruction word is all 0.
+# The toolchain comes back with a 'beq', but that doesn't make sense either as there is no beq instruction
+# anywhere in the manual. One toolchain allows BRA @PC, another one doesn't. I did find reference to gvv
+# assembler extension regarding @rN being treated as 0(rN) and vice versa. That would effectively turn
+# this into a branch to following instruction. What I think may be happening is a compiler bug where in
+# some cases an immediate gets output even though the constant generator is used.
+:BRA "@"^src_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & src_8_4=0 & dest_0_4=0x0 {
+}
+
+:BRA "@"^src_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) src_8_4;
+	PC = sext(PC[0,20]);
+	goto [PC];
+}
+
+:BRA "@"^src_8_4^"+" 				is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) src_8_4;
+	PC = sext(PC[0,20]);
+	src_8_4 = src_8_4 + 4;
+	goto [PC];
+}
+
+:BRA "&"^Abs20						is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4=0x0; Abs20 [ctx_ctregdest=imm_8_4;] {
+	tmp:$(REG_SIZE) = zext(Abs20);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = sext(PC[0,20]);
+	goto [PC];
+}
+
+:BRA imms_0_16^"("^src_8_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4=0x0; imms_0_16 {
+	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = sext(PC[0,20]);
+	goto [PC];
+}
+
+:BRA "#"^Abs20add					is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & dest_0_4=0x0; Abs20add [ctx_ctregdest=imm_8_4;] {
+#	PC = Abs20add;
+	goto Abs20add;
+}
+
+:BRA src_8_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4 & dest_0_4=0x0 {
+	PC = src_8_4;
+	goto [PC];
+}
+
+:RETA "@"^src_8_4^"+"			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & src_8_4=0x1 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) src_8_4;
+	PC = sext(PC[0,20]);
+	SP = SP + 4;
+	return [PC];
+}
+#
+################
+#
+# Special cases of SUBA/ADDA/CMPA/MOVA
+:DECDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = 2;
+	dest_0_4 = dest_0_4 - 2;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	
+	setsubflags(dest_0_4,tmps,tmpd);
+}
+
+:INCDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = 2;
+	dest_0_4 = dest_0_4 + 2;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	
+	setaddflags(dest_0_4,tmps,tmpd);
+}
+
+:TSTA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0000 {
+	$(CARRY) = 1;
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4 s< 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:CLRA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4=0 & dest_0_4 ; imm_0_16=0  {
+	dest_0_4 = 0;
+}
+
+#
+################
+#
+# Other 20 bit address instructions
+:CALLA dest_0_4							is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x4 & dest_0_4 {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	PC = dest_0_4;
+	call [PC];
+}
+
+:CALLA imms_0_16^"("^dest_0_4^")"		is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x5 & dest_0_4 ; imms_0_16 {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = sext(PC[0,20]);
+	call [PC];
+}
+
+:CALLA "@"^dest_0_4						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x6 & dest_0_4 {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	PC = *[RAM]:$(REG_SIZE) dest_0_4;
+	PC = sext(PC[0,20]);
+	call [PC];
+}
+
+:CALLA "@"^dest_0_4^"+"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x7 & dest_0_4 {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	PC = *[RAM]:$(REG_SIZE) dest_0_4;
+	PC = sext(PC[0,20]);
+	dest_0_4 = dest_0_4 + 4;
+	call [PC];
+}
+
+:CALLA "&"^Abs20						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x8 & imm_0_4; Abs20 [ctx_ctregdest=imm_0_4;] {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	tmp:$(REG_SIZE) = zext(Abs20);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = sext(PC[0,20]);
+	call [PC];
+}
+
+:CALLA imms_0_16^"(PC)"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x9 & imms_0_16 {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	tmp:$(REG_SIZE) = inst_start + sext(imms_0_16:2);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = sext(PC[0,20]);
+	call [PC];
+}
+
+:CALLA "#"^Abs20add						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0xB & imm_0_4; Abs20add [ctx_ctregdest = imm_0_4;] {
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	PC = &Abs20add;
+	call Abs20add;
+}
+
+
+:PUSHM.A IMM4,dest_0_4					is ctx_haveext=0 & op16_8_8=0x14 & IMM4 & dest_0_4 & imm_4_4 & PUSHAR15 [ctx_count=imm_4_4+1; ctx_mreg=dest_0_4;] {
+	build IMM4;
+	build PUSHAR15;
+}
+
+:PUSHM.W IMM4,dest_0_4					is ctx_haveext=0 & op16_8_8=0x15 & IMM4 & dest_0_4 & imm_4_4 & PUSHWR15 [ctx_count=imm_4_4+1; ctx_mreg=dest_0_4;] {
+	build IMM4;
+	build PUSHWR15;
+}
+
+:POPM.A IMM4,ctx_popreg					is ctx_haveext=0 & op16_8_8=0x16 & IMM4 & ctx_popreg & imm_0_4 & imm_4_4 & POPAR0 [ctx_popreg_set=imm_0_4+imm_4_4; ctx_count=imm_4_4+1; ctx_mreg=imm_0_4;] {
+	build IMM4;
+	build POPAR0;
+}
+
+:POPM.W IMM4,ctx_popreg					is ctx_haveext=0 & op16_8_8=0x17 & IMM4 & ctx_popreg & imm_0_4 & imm_4_4 & POPWR0 [ctx_popreg_set=imm_0_4+imm_4_4; ctx_count=imm_4_4+1; ctx_mreg=imm_0_4;] {
+	build IMM4;
+	build POPWR0;
+}
+
+:RRCM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x04 & NUM2 & dest_0_4 & rrn {
+	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
+	tmpc:$(REG_SIZE) = zext($(CARRY));
+	tmpc = tmpc << (20-NUM2);
+	dest_0_4 = (dest_0_4 >> NUM2) | (dest_0_4 << (20-rrn));
+	dest_0_4 = ((dest_0_4 & (~tmpc)) | tmpc) & 0xFFFFF;
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4[19,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RRAM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x14 & NUM2 & dest_0_4 & rrn {
+	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
+	dest_0_4 = (dest_0_4 s>> NUM2);
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4[19,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RLAM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x24 & NUM2 & dest_0_4 {
+	tmph:$(REG_SIZE) = (dest_0_4 >> (20 - NUM2)) & 0x1;
+	dest_0_4 = (dest_0_4 << NUM2);
+	dest_0_4 = sext(dest_0_4[0,20]);
+	$(CARRY) = (tmph != 0);
+	$(SIGN) = (dest_0_4[19,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RRUM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x34 & NUM2 & dest_0_4 & rrn {
+	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
+	dest_0_4 = (dest_0_4 >> NUM2) & 0xFFFFF;
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = 0;
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RRCM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x05 & NUM2 & dest_0_4 & rrn {
+	tmpr:2 = dest_0_4:2;
+	tmph:2 = (tmpr >> rrn) & 0x1;
+	tmpc:2 = zext($(CARRY));
+	tmpc = tmpc << (16-NUM2);
+	tmpr = (tmpr >> NUM2) | (tmpr << (16-rrn));
+	dest_0_4 = zext((tmpr & (~tmpc)) | tmpc);
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4[15,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RRAM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x15 & NUM2 & dest_0_4 & rrn {
+	tmpr:2 = dest_0_4:2;
+	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
+	dest_0_4 = zext(tmpr s>> NUM2);
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4[19,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RLAM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x25 & NUM2 & dest_0_4 {
+	tmph:$(REG_SIZE) = (dest_0_4 >> (16 - NUM2)) & 0x1;
+	dest_0_4 = (dest_0_4 << NUM2);
+	dest_0_4 = zext(dest_0_4:2);
+	$(CARRY) = (tmph != 0);
+	$(SIGN) = (dest_0_4[19,1] != 0);
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+:RRUM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x35 & NUM2 & dest_0_4 & rrn {
+	tmpr:2 = dest_0_4:2;
+	tmph:2 = (tmpr >> rrn) & 0x1;
+	dest_0_4 = zext(tmpr >> NUM2);
+	$(CARRY) = (tmph != 0);
+	$(OVERFLOW) = 0;
+	$(SIGN) = 0;
+	$(ZERO) = (dest_0_4 == 0);
+}
+
+macro bzero(full, byte)
+{
+	ztmp:1 = byte;
+	full = 0;
+	byte = ztmp;
+}
+
+macro wzero(full, word)
+{
+	ztmp:2 = word;
+	full = 0;
+	word = ztmp;
+}
+
+##############################
+#
+# Extention word instructions
+#
+# The base msp430 handles all the addressing modes in subtables.
+# The reg/reg mode for the 'X' instruction has repetition so we
+# break that mode out separately. Because of that, we need to use
+# separate subtables for the address modes since the base ones
+# will hit on the reg/reg mode.
+#
+# There are also two groups for the extended instructions:
+# double and single operand. The double operand ones come
+# first. A lot of the singles are covered under the address
+# extensions as they don't have the extension word.
+#
+# The manual talks about RRUX extended instructions.  However,
+# I've determined they don't really exist. First off, the base
+# RRU is not mentioned in the manual and is not in the toolchain.
+# The toolchain does take rrux instructions, but what I've figured
+# out is that for the W and A versions, it substitutes RRUM with 
+# the 'n' argument being 1. For the B version, it uses rra.b
+# followed by a bic.b instruction.
+#############################
+#
+# Double Operand
+#
+#############################
+# Repeat enabled
+:ADCX.B DST8_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = carry(DST8_0_4,$(CARRY));		 #C Flag
+ 	$(OVERFLOW) = scarry(DST8_0_4,$(CARRY)); #V Flag
+ 	# Operation...
+	DST8_0_4 = DST8_0_4 + $(CARRY);
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADCX.W DST16_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = carry(DST16_0_4,zext($(CARRY)));		 #C Flag
+ 	$(OVERFLOW) = scarry(DST16_0_4,zext($(CARRY))); #V Flag
+ 	# Operation...
+	DST16_0_4 = DST16_0_4 + zext($(CARRY));
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADCX.A dest_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmpc:$(REG_SIZE) = zext($(CARRY));
+	tmp:$(REG_SIZE) = tmpc + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmpc,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(XRSRC_B_AS, DST8_0_4); 	 	# C Flag
+	$(OVERFLOW) = scarry(XRSRC_B_AS, DST8_0_4); 	# V Flag
+	# Operation...
+	DST8_0_4 = XRSRC_B_AS + DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x5 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(XRSRC_W_AS, DST16_0_4); 	 	# C Flag
+	$(OVERFLOW) = scarry(XRSRC_W_AS, DST16_0_4); 	# V Flag
+	# Operation...
+	DST16_0_4 = XRSRC_W_AS + DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = XRSRC_A_AS + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,XRSRC_A_AS,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = (carry(XRSRC_B_AS, $(CARRY)) || carry(DST8_0_4,XRSRC_B_AS + $(CARRY)));		 #C Flag
+ 	$(OVERFLOW) = (scarry(XRSRC_B_AS, $(CARRY)) || scarry(DST8_0_4,XRSRC_B_AS + $(CARRY))); #V Flag
+ 	# Operation...
+	DST8_0_4 = XRSRC_B_AS + DST8_0_4 + $(CARRY);
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDCX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = (carry(XRSRC_W_AS,zext($(CARRY))) || carry(DST16_0_4,XRSRC_W_AS + zext($(CARRY))));		 #C Flag
+ 	$(OVERFLOW) = (scarry(XRSRC_W_AS,zext($(CARRY))) || scarry(DST16_0_4,XRSRC_W_AS + zext($(CARRY)))); #V Flag
+ 	# Operation...
+	DST16_0_4 = XRSRC_W_AS + DST16_0_4 + zext($(CARRY));
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ADDCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = XRSRC_A_AS + zext($(CARRY));
+	tmp:$(REG_SIZE) = tmps + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmps,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ANDX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xF & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 & XRSRC_B_AS;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST8_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ANDX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xF & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 & XRSRC_W_AS;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST16_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:ANDX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xF & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	dest_0_4 = dest_0_4 & XRSRC_A_AS;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	# Result Flags...
+	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BICX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xC & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST8_0_4 = (~XRSRC_B_AS) & DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BICX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xC & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST16_0_4 = (~XRSRC_W_AS) & DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BICX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xC & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	dest_0_4 = (~XRSRC_A_AS) & dest_0_4;
+	dest_0_4 = zext(dest_0_4[0,20]);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BISX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xD & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST8_0_4 = XRSRC_B_AS | DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BISX.W	XRSRC_W_AS, DST16_0_4				is ctx_haveext=4 & op16_12_4=0xD & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST16_0_4 = XRSRC_W_AS | DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	#Status bits are not affected
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BISX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xD & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	dest_0_4 = XRSRC_A_AS | dest_0_4;
+	#Status bits are not affected
+	dest_0_4 = sext(dest_0_4[0,20]);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BITX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xB & bow=1 & ctx_al=1 & postIncrement & XRSRC_B_AS & DST8_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:1 = DST8_0_4 & XRSRC_B_AS;
+	# Result Flags...
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BITX.W	XRSRC_W_AS, DST16_0_4				is ctx_haveext=4 & op16_12_4=0xB & bow=0 & ctx_al=1 & postIncrement & XRSRC_W_AS & DST16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:2 = DST16_0_4 & XRSRC_W_AS;
+	# Result Flags...
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:BITX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xB & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:$(REG_SIZE) = dest_0_4 & XRSRC_A_AS;
+	# Result Flags...
+	result = sext(result[0,20]);
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CLRX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST8_0_4 = 0;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CLRX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST16_0_4 = 0;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CLRX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	dest_0_4 = 0;
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CMPX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=1 & postIncrement & XRSRC_B_AS & DST8_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (XRSRC_B_AS <= DST8_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS);	# V Flag
+	# Operation...
+	result:1 = (DST8_0_4 - XRSRC_B_AS);
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CMPX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x9 & bow=0 & ctx_al=1 & postIncrement & XRSRC_W_AS & DST16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (XRSRC_W_AS <= DST16_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS);	# V Flag
+	# Operation...
+	result:2 = (DST16_0_4 - XRSRC_W_AS);
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:CMPX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & dest_0_4 {
+	<top>
+	tmp:$(REG_SIZE) = dest_0_4 - XRSRC_A_AS;
+	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
+	setsubflags(tmpd,XRSRC_A_AS,dest_0_4);
+	build postIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;				# This should be overflow
+	# Operation...
+	DST8_0_4 = bcd_add(DST8_0_4);
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);		# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);		# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	DST16_0_4 = bcd_add(DST16_0_4);
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	dest_0_4 = bcd_add(dest_0_4);
+	dest_0_4 = sext(dest_0_4[0,20]);
+	# Result Flags...
+	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADDX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;				# This should be overflow
+	# Operation...
+	DST8_0_4 = bcd_add(XRSRC_B_AS,DST8_0_4);
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);		# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);		# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADDX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xA & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	DST16_0_4 = bcd_add(XRSRC_W_AS ,DST16_0_4);
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DADDX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	dest_0_4 = bcd_add(XRSRC_A_AS ,dest_0_4);
+	dest_0_4 = sext(dest_0_4[0,20]);
+	# Result Flags...
+	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECX.B	DST8_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (1 <= DST8_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, 1:1);									# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 - 1;		
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECX.W	DST16_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (1 <= DST16_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, 1:2);								# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 - 1;		
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECX.A	dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 - 1;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,1:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECDX.B DST8_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (2 <= DST8_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, 2:1);									# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 - 2;		
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECDX.W DST16_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (2 <= DST16_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, 2:2);								# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 - 2;		
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:DECDX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 - 2;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,2:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST8_0_4,1); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST8_0_4,1); 	# V Flag
+	# Operation...
+	DST8_0_4 = 1 + DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST16_0_4,1); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST16_0_4,1); 	# V Flag
+	# Operation...
+	DST16_0_4 = 1:2 + DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = 1 + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,1:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCDX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST8_0_4,2); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST8_0_4,2); 	# V Flag
+	# Operation...
+	DST8_0_4 = 2 + DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCDX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST16_0_4,2); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST16_0_4,2); 	# V Flag
+	# Operation...
+	DST16_0_4 = 2:2 + DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INCDX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = 2 + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,2:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INVX.B	DST8_0_4				is ctx_haveext=4 & op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = DST8_0_4 s< 0x0;	# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 ^ -1;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST8_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INVX.W	DST16_0_4			is ctx_haveext=4 & op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = DST16_0_4 s< 0x0 ;	# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 ^ -1;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST16_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:INVX.A	dest_0_4				is ctx_haveext=4 & op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & ctx_al=0 & postIncrementStore &  dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = dest_0_4 s< 0x0;	# V Flag
+	# Operation...
+	dest_0_4 = dest_0_4 ^ -1;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	# Result Flags...
+	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:MOVX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x4 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST8_0_4 = XRSRC_B_AS;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:MOVX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x4 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST16_0_4 = XRSRC_W_AS;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	#Status bits are not affected
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:MOVX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x4 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	dest_0_4 = XRSRC_A_AS;
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:POPX.B	DST8_0_4							is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & ctx_al=1 & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST8_0_4 = *:1 SP;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	SP = SP + 0x2;
+	#Status bits are not affected
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:POPX.W	DST16_0_4							is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=0 & ctx_al=1 & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	DST16_0_4 = *:2 SP;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	SP = SP + 0x2;
+	#Status bits are not affected
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:POPX.A	dest_0_4							is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & ctx_al=0 & XRSRC_A_AS & dest_0_4 {
+	<top>
+	dest_0_4 = *:4 SP;
+	SP = SP + 0x4;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLAX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST8_0_4, DST8_0_4); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST8_0_4, DST8_0_4); 	# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 + DST8_0_4;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLAX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = carry(DST16_0_4, DST16_0_4); 	 	# C Flag
+	$(OVERFLOW) = scarry(DST16_0_4, DST16_0_4); 	# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 + DST16_0_4;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLAX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & src_Direct16_8_4=dest_Direct16_0_4 & ctx_al=0 & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmpd,tmpd);
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = (carry(DST8_0_4, $(CARRY)) || carry(DST8_0_4,DST8_0_4 + $(CARRY)));		 #C Flag
+ 	$(OVERFLOW) = (scarry(DST8_0_4, $(CARRY)) || scarry(DST8_0_4,DST8_0_4 + $(CARRY))); #V Flag
+ 	# Operation...
+	DST8_0_4 = DST8_0_4 + DST8_0_4 + $(CARRY);
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	tmp_carry:1 = (carry(DST16_0_4,zext($(CARRY))) || carry(DST16_0_4,DST16_0_4 + zext($(CARRY))));		 #C Flag
+ 	$(OVERFLOW) = (scarry(DST16_0_4,zext($(CARRY))) || scarry(DST16_0_4,DST16_0_4 + zext($(CARRY)))); #V Flag
+ 	# Operation...
+	DST16_0_4 = DST16_0_4 + DST16_0_4 + zext($(CARRY));
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RLCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = dest_0_4 + zext($(CARRY));
+	tmp:$(REG_SIZE) = tmps + dest_0_4;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setaddflags(dest_0_4,tmps,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SBCX.B DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	brw:1 = 1 - $(CARRY);
+    $(CARRY) = (brw <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, brw);	
+	# Operation...
+	DST8_0_4 = DST8_0_4 - brw;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SBCX.W DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	brw:2 = 1 - zext( $(CARRY) );
+	$(CARRY) = (brw  <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, brw);	
+	# Operation...
+	DST16_0_4 = DST16_0_4 - brw;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SBCX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & postIncrementStore & dest_0_4 {
+	<top>
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 - brw;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,brw,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	brw:1 = 1 - $(CARRY);
+    $(CARRY) = ((brw + XRSRC_B_AS) <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS + brw);	
+	# Operation...
+	DST8_0_4 = DST8_0_4 - XRSRC_B_AS - brw;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBCX.W XRSRC_W_AS, DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	brw:2 = 1 - zext( $(CARRY) );
+	$(CARRY) = ((brw + XRSRC_W_AS) <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS + brw);	
+	# Operation...
+	DST16_0_4 = DST16_0_4 - XRSRC_W_AS - brw;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmps:$(REG_SIZE) = XRSRC_A_AS + brw;
+	tmp:$(REG_SIZE) = dest_0_4 - tmps;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,tmps,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x8 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (XRSRC_B_AS <= DST8_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS);									# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 - XRSRC_B_AS;		
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x8 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = (XRSRC_W_AS <= DST16_0_4);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS);								# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 - XRSRC_W_AS;		
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SUBX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	tmpd:$(REG_SIZE) = dest_0_4;
+	tmp:$(REG_SIZE) = dest_0_4 - XRSRC_A_AS;
+	dest_0_4 = sext(tmp[0,20]);
+	
+	setsubflags(dest_0_4,XRSRC_A_AS,tmpd);
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:TSTX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & DST8_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:TSTX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x9 & bow=0 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & DST16_0_4 {
+	<top>
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:TSTX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & dest_0_4 {
+	<top>
+	setsubflags(dest_0_4,0:$(REG_SIZE),dest_0_4);
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:XORX.B	XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xE & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((DST8_0_4 s< 0x0) && (XRSRC_B_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	DST8_0_4 = DST8_0_4 ^ XRSRC_B_AS;
+	bzero(reg_Direct16_0_4,DST8_0_4);
+	# Result Flags...
+	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST8_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:XORX.W	XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xE & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((DST16_0_4 s< 0x0) && (XRSRC_W_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	DST16_0_4 = DST16_0_4 ^ XRSRC_W_AS;
+	wzero(reg_Direct16_0_4,DST16_0_4);
+	# Result Flags...
+	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST16_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:XORX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xE & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((dest_0_4 s< 0x0) && (XRSRC_A_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	dest_0_4 = dest_0_4 ^ XRSRC_A_AS;
+	dest_0_4 = sext(dest_0_4[0,20]);
+	# Result Flags...
+	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	build postIncrementStore;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+#############################
+# No Repeat
+:ADCX.B XDEST_B_AD				is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	tmp_carry:1 = carry(XDEST_B_AD,$(CARRY));		 #C Flag
+ 	$(OVERFLOW) = scarry(XDEST_B_AD,$(CARRY)); #V Flag
+ 	# Operation...
+	XDEST_B_AD = XDEST_B_AD + $(CARRY);
+	build tbl_bzero;
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADCX.W XDEST_W_AD				is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	tmp_carry:1 = carry(XDEST_W_AD,zext($(CARRY)));		 #C Flag
+ 	$(OVERFLOW) = scarry(XDEST_W_AD,zext($(CARRY))); #V Flag
+ 	# Operation...
+	XDEST_W_AD = XDEST_W_AD + zext($(CARRY));
+	build tbl_wzero;
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADCX.A XDEST_A_AD				is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmpc:$(REG_SIZE) = zext($(CARRY));
+	tmp:$(REG_SIZE) = tmpc + XDEST_A_AD;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setaddflags(XDEST_A_AD,tmpc,tmpd);
+	build postIncrementStore;
+}
+
+:ADDX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = carry(XSRC_B_AS, XDEST_B_AD); 	 	# C Flag
+	$(OVERFLOW) = scarry(XSRC_B_AS, XDEST_B_AD); 	# V Flag
+	# Operation...
+	XDEST_B_AD = XSRC_B_AS + XDEST_B_AD;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADDX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = carry(XSRC_W_AS, XDEST_W_AD); 	 	# C Flag
+	$(OVERFLOW) = scarry(XSRC_W_AS, XDEST_W_AD); 	# V Flag
+	# Operation...
+	XDEST_W_AD = XSRC_W_AS + XDEST_W_AD;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADDX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x5 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = XSRC_A_AS + XDEST_A_AD;
+	
+	XDEST_A_AD = sext(tmp[0,20]);
+	setaddflags(XDEST_A_AD,XSRC_A_AS,tmpd);
+	build postIncrementStore;
+}
+
+:ADDCX.B XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x6 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	tmp_carry:1 = (carry(XSRC_B_AS, $(CARRY)) || carry(XDEST_B_AD,XSRC_B_AS + $(CARRY)));		 #C Flag
+ 	$(OVERFLOW) = (scarry(XSRC_B_AS, $(CARRY)) || scarry(XDEST_B_AD,XSRC_B_AS + $(CARRY))); #V Flag
+ 	# Operation...
+	XDEST_B_AD = XSRC_B_AS + XDEST_B_AD + $(CARRY);
+	build tbl_bzero;
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADDCX.W XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x6 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	tmp_carry:1 = (carry(XSRC_W_AS,zext($(CARRY))) || carry(XDEST_W_AD,XSRC_W_AS + zext($(CARRY))));		 #C Flag
+ 	$(OVERFLOW) = (scarry(XSRC_W_AS,zext($(CARRY))) || scarry(XDEST_W_AD,XSRC_W_AS + zext($(CARRY)))); #V Flag
+ 	# Operation...
+	XDEST_W_AD = XSRC_W_AS + XDEST_W_AD + zext($(CARRY));
+	build tbl_wzero;
+	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:ADDCX.A XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x6 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmps:$(REG_SIZE) = XSRC_A_AS + zext($(CARRY));
+	tmp:$(REG_SIZE) = tmps + XDEST_A_AD;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setaddflags(XDEST_A_AD,tmps,tmpd);
+	build postIncrementStore;
+}
+
+:ANDX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xF & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	result:1 = XDEST_B_AD & XSRC_B_AS;
+	XDEST_B_AD = result;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	$(CARRY) = (result != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:ANDX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xF & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	result:2 = XDEST_W_AD & XSRC_W_AS;
+	XDEST_W_AD = result;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	$(CARRY) = (result != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:ANDX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xF & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	XDEST_A_AD = XDEST_A_AD & XSRC_A_AS;
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	# Result Flags...
+	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:BICX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xC & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	XDEST_B_AD = (~XSRC_B_AS) & XDEST_B_AD;
+	build tbl_bzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:BICX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xC & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	XDEST_W_AD = (~XSRC_W_AS) & XDEST_W_AD;
+	build tbl_wzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:BICX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xC & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	XDEST_A_AD = (~XSRC_A_AS) & XDEST_A_AD;
+	#Status bits are not affected
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	build postIncrementStore;
+}
+
+:BISX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xD & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	XDEST_B_AD = XSRC_B_AS | XDEST_B_AD;
+	build tbl_bzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:BISX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xD & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	XDEST_W_AD = XSRC_W_AS | XDEST_W_AD;
+	build tbl_wzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:BISX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xD & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	XDEST_A_AD = XSRC_A_AS | XDEST_A_AD;
+	#Status bits are not affected
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	build postIncrementStore;
+}
+
+:BITX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xB & bow=1 & postIncrement) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:1 = XDEST_B_AD & XSRC_B_AS;
+	# Result Flags...
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:BITX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xB & bow=0 & postIncrement) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:2 = XDEST_W_AD & XSRC_W_AS;
+	# Result Flags...
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:BITX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xB & bow=1 & postIncrement) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	result:$(REG_SIZE) = XDEST_A_AD & XSRC_A_AS;
+	# Result Flags...
+	result = sext(result[0,20]);
+	$(CARRY) = (result != 0x0);			# C Flag
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:CLRX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	XDEST_B_AD = 0;
+	build tbl_bzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:CLRX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	XDEST_W_AD = 0;
+	build tbl_wzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:CLRX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	XDEST_A_AD = 0;
+	build postIncrementStore;
+}
+
+:CMPX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x9 & bow=1 & postIncrement) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = (XSRC_B_AS <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS);	# V Flag
+	# Operation...
+	result:1 = (XDEST_B_AD - XSRC_B_AS);
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:CMPX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x9 & bow=0 & postIncrement) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = (XSRC_W_AS <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS);	# V Flag
+	# Operation...
+	result:2 = (XDEST_W_AD - XSRC_W_AS);
+	# Result Flags...
+	$(SIGN) = (result s< 0x0);			# S Flag
+	$(ZERO) = (result == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:CMPX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x9 & bow=1 & postIncrement) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	tmp:$(REG_SIZE) = XDEST_A_AD - XSRC_A_AS;
+	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
+	setsubflags(tmpd,XSRC_A_AS,XDEST_A_AD);
+	build postIncrement;
+}
+
+:DADCX.B XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = 0;				# This should be overflow
+	# Operation...
+	XDEST_B_AD = bcd_add(XDEST_B_AD);
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);		# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);		# Z Flag
+	build postIncrementStore;
+}
+
+:DADCX.W XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	XDEST_W_AD = bcd_add(XDEST_W_AD);
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DADCX.A XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	XDEST_A_AD = bcd_add(XDEST_A_AD);
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	# Result Flags...
+	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DADDX.B XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xA & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = 0;				# This should be overflow
+	# Operation...
+	XDEST_B_AD = bcd_add(XSRC_B_AS,XDEST_B_AD);
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);		# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);		# Z Flag
+	build postIncrementStore;
+}
+
+:DADDX.W XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xA & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	XDEST_W_AD = bcd_add(XSRC_W_AS ,XDEST_W_AD);
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DADDX.A XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xA & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	# Operation...
+	XDEST_A_AD = bcd_add(XSRC_A_AS ,XDEST_A_AD);
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	# Result Flags...
+	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DECX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = (1 <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, 1:1);									# V Flag
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD - 1;		
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DECX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = (1 <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, 1:2);								# V Flag
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD - 1:2;		
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DECX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = XDEST_A_AD - 1:$(REG_SIZE);
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setsubflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+}
+
+:DECDX.B XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = (1 <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, 2:1);									# V Flag
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD - 2;		
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DECDX.W XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = (1 <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, 2:2);								# V Flag
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD - 2:2;		
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:DECDX.A XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = XDEST_A_AD - 2:$(REG_SIZE);
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setsubflags(XDEST_A_AD,2:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+}
+
+:INCX.B	XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = carry(XDEST_B_AD,1); 	 	# C Flag
+	$(OVERFLOW) = scarry(XDEST_B_AD,1); 	# V Flag
+	# Operation...
+	XDEST_B_AD = 1 + XDEST_B_AD;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:INCX.W	XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = carry(XDEST_W_AD,1); 	 	# C Flag
+	$(OVERFLOW) = scarry(XDEST_W_AD,1); 	# V Flag
+	# Operation...
+	XDEST_W_AD = 1 + XDEST_W_AD;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:INCX.A	XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = 1 + XDEST_A_AD;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setaddflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+}
+
+:INCDX.B XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = carry(XDEST_B_AD,2); 	 	# C Flag
+	$(OVERFLOW) = scarry(XDEST_B_AD,2); 	# V Flag
+	# Operation...
+	XDEST_B_AD = 2 + XDEST_B_AD;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:INCDX.W XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = carry(XDEST_W_AD,2); 	 	# C Flag
+	$(OVERFLOW) = scarry(XDEST_W_AD,2); 	# V Flag
+	# Operation...
+	XDEST_W_AD = 2 + XDEST_W_AD;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:INCDX.A XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = 2 + XDEST_A_AD;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setaddflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
+	build postIncrementStore;
+}
+
+:INVX.B	XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(OVERFLOW) = XDEST_B_AD s< 0x0;	# V Flag
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD ^ -1;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_B_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:INVX.W	XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = XDEST_W_AD s< 0x0;	# V Flag
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD ^ -1;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_W_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:INVX.A	XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & postIncrementStore) ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = XDEST_A_AD s< 0x0;	# V Flag
+	# Operation...
+	XDEST_A_AD = XDEST_A_AD ^ -1;
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	# Result Flags...
+	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:MOVX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	XDEST_B_AD = XSRC_B_AS;
+	build tbl_bzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:MOVX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	XDEST_W_AD = XSRC_W_AS;
+	build tbl_wzero;
+	#Status bits are not affected
+	build postIncrementStore;
+}
+
+:MOVX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	XDEST_A_AD = XSRC_A_AS;
+	build postIncrementStore;
+}
+
+:POPX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & tbl_bzero) ... & XDEST_B_AD ...  {
+	XDEST_B_AD = *:1 SP;
+	build tbl_bzero;
+	SP = SP + 0x2;
+	#Status bits are not affected
+}
+
+:POPX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=0 & tbl_wzero) ... & XDEST_W_AD ... {
+	XDEST_W_AD = *:2 SP;
+	build tbl_wzero;
+	SP = SP + 0x2;
+	#Status bits are not affected
+}
+
+:POPX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1) ... & XDEST_A_AD ... {
+	XDEST_A_AD = *:4 SP;
+	SP = SP + 0x4;
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+}
+
+:SBCX.B XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x7 & bow=1 & src16_8_4=0x3 & as=0x0 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	brw:1 = 1 - $(CARRY);
+    $(CARRY) = (brw <= XDEST_B_AD);             # Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, brw);	
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD - brw;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SBCX.W XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x7 & bow=0 & src16_8_4=0x3 & as=0x0 & tbl_wzero & postIncrementStore) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	brw:2 = 1 - zext( $(CARRY) );
+	$(CARRY) = (brw <= XDEST_W_AD);		# Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, brw);	
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD - brw;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SBCX.A XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x7 & bow=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore) ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) ); 
+	tmp:$(REG_SIZE) = XDEST_A_AD - brw;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setsubflags(XDEST_A_AD,brw,tmpd);
+	build postIncrementStore;
+}
+
+:SUBCX.B XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x7 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	brw:1 = 1 - $(CARRY);
+    $(CARRY) = ((brw + XSRC_B_AS) <= XDEST_B_AD);             # Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS + brw);	
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD - XSRC_B_AS - brw;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SUBCX.W XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x7 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	brw:2 = 1 - zext( $(CARRY) );
+	$(CARRY) = ((brw + XSRC_W_AS) <= XDEST_W_AD);		# Carry flag is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS + brw);	
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD - XSRC_W_AS - brw;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SUBCX.A XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x7 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) ); 
+	tmps:$(REG_SIZE) = XSRC_A_AS + brw;
+	tmp:$(REG_SIZE) = XDEST_A_AD - tmps;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setsubflags(XDEST_A_AD,tmps,tmpd);
+	build postIncrementStore;
+}
+
+:SUBX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = (XSRC_B_AS <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS);									# V Flag
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD - XSRC_B_AS;		
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SUBX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x8 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = (XSRC_W_AS <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS);								# V Flag
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD - XSRC_W_AS;		
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrementStore;
+}
+
+:SUBX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x8 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	tmpd:$(REG_SIZE) = XDEST_A_AD;
+	tmp:$(REG_SIZE) = XDEST_A_AD - XSRC_A_AS;
+	XDEST_A_AD = sext(tmp[0,20]);
+	
+	setsubflags(XDEST_A_AD,XSRC_A_AS,tmpd);
+	build postIncrementStore;
+}
+
+:TSTX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x9 & bow=1 & src16_8_4=0x3 & as=0x0 & postIncrement) ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:TSTX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x9 & bow=0 & src16_8_4=0x3 & as=0x0 & postIncrement) ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	build postIncrement;
+}
+
+:TSTX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x9 & bow=1 & src16_8_4=0x3 & as=0x0 & postIncrement) ... & XDEST_A_AD ... {
+	setsubflags(XDEST_A_AD,0:$(REG_SIZE),XDEST_A_AD);
+	build postIncrement;
+}
+
+:XORX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xE & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	# Operation Flags...
+	$(OVERFLOW) = ((XDEST_B_AD s< 0x0) && (XSRC_B_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	XDEST_B_AD = XDEST_B_AD ^ XSRC_B_AS;
+	build tbl_bzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_B_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_B_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:XORX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0xE & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = ((XDEST_W_AD s< 0x0) && (XSRC_W_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	XDEST_W_AD = XDEST_W_AD ^ XSRC_W_AS;
+	build tbl_wzero;
+	# Result Flags...
+	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_W_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_W_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+:XORX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0xE & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	# Operation Flags...
+	$(OVERFLOW) = ((XDEST_A_AD s< 0x0) && (XSRC_A_AS s< 0x0)) ;	# V Flag
+	# Operation...
+	XDEST_A_AD = XDEST_A_AD ^ XSRC_A_AS;
+	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	# Result Flags...
+	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
+	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
+	build postIncrementStore;
+}
+
+
+#############################
+#
+# Single Operand
+#
+#############################
+# Repeat enabled
+
+# Note: The manual says PUSHX doesn't use extension word. The manual is *WRONG*
+:PUSHX.B XRREG_B_AS 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x1 & postRegIncrement & XRREG_B_AS {
+	<top>
+	SP = SP - 0x2;
+	*:1 SP = XRREG_B_AS;
+	#Status bits are not affected
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}	
+
+:PUSHX.W XRREG_W_AS 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x0 & postRegIncrement & XRREG_W_AS {
+	<top>
+	SP = SP - 0x2;
+	*:2 SP = XRREG_W_AS;
+	#Status bits are not affected
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:PUSHX.A XRREG_A_AS 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x1 & postRegIncrement & XRREG_A_AS {
+	<top>
+	SP = SP - 0x4;
+	*:$(REG_SIZE) SP = XRREG_A_AS;
+	#Status bits are not affected
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}	
+
+:RRAX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	$(CARRY) = (XRREG_B_AS_DEST & 0x1);
+	XRREG_B_AS_DEST = XRREG_B_AS_DEST s>> 1;
+	# Result Flags...
+	$(SIGN) = (XRREG_B_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_B_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRAX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	$(CARRY) = XRREG_W_AS_DEST[0,1];
+	XRREG_W_AS_DEST = XRREG_W_AS_DEST s>> 1; 
+	# Result Flags...
+	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRAX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
+	<top>
+	$(CARRY) = XRREG_A_AS_DEST[0,1];
+	XRREG_A_AS_DEST = (XRREG_A_AS_DEST s>> 1);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (XRREG_A_AS_DEST[19,1] != 0);
+	$(ZERO) = (XRREG_A_AS_DEST == 0);
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRCX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((XRREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = (XRREG_B_AS_DEST & 0x1);
+	XRREG_B_AS_DEST = ((tmp << 0x7) | (XRREG_B_AS_DEST >> 0x1));
+	# Result Flags...
+	$(SIGN) = (XRREG_B_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_B_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((XRREG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = XRREG_W_AS_DEST[0,1];
+	XRREG_W_AS_DEST = ((zext(tmp) << 0xF) | (XRREG_W_AS_DEST >> 0x1));
+	# Result Flags...
+	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRCX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = ((XRREG_A_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = XRREG_A_AS_DEST[0,1];
+	XRREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XRREG_A_AS_DEST >> 0x1) & 0xEFFFF));
+	XRREG_A_AS_DEST = sext(XRREG_A_AS_DEST[0,20]);
+	# Result Flags...
+	$(SIGN) = (XRREG_A_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_A_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SWPBX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & as=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+	<top>
+	lowByte:1 = XRREG_W_AS_DEST[0,8];
+	highByte:1 = XRREG_W_AS_DEST[8,8];
+	XRREG_W_AS_DEST = (((zext(lowByte)) << 0x8) | zext(highByte));
+	#Status bits are not affected
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SWPBX.A XRREG_A_AS_DEST2 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & as=0x0 & bow=0x0 & postRegIncrement & XRREG_A_AS_DEST2 {
+	<top>
+	lowByte:1 = XRREG_A_AS_DEST2[0,8];
+	highByte:1 = XRREG_A_AS_DEST2[8,8];
+	XRREG_A_AS_DEST2[8,8] = lowByte;
+	XRREG_A_AS_DEST2[0,8] = highByte;
+	XRREG_A_AS_DEST2 = zext(XRREG_A_AS_DEST2[0,20]);
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SXTX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & as=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;						# V Flag
+	# Operation...	
+	XRREG_W_AS_DEST = sext(XRREG_W_AS_DEST:1);
+	# Result Flags...
+	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
+	$(CARRY) = (XRREG_W_AS_DEST != 0x0);			# C Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:SXTX.A XRREG_A_AS_DEST2		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & as=0x0 & bow=0x0 & postRegIncrement & XRREG_A_AS_DEST2 {
+	<top>
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;						# V Flag
+	# Operation...	
+	XRREG_A_AS_DEST2 = sext(XRREG_A_AS_DEST2:1);
+	# Result Flags...
+	$(SIGN) = (XRREG_A_AS_DEST2 s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_A_AS_DEST2 == 0x0);			# Z Flag
+	$(CARRY) = (XRREG_A_AS_DEST2 != 0x0);			# C Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+#############################
+# No Repeat
+:PUSHX.B XREG_B_AS 		is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS {
+	SP = SP - 0x2;
+	*:1 SP = XREG_B_AS;
+	#Status bits are not affected
+	build postRegIncrement;
+}	
+
+:PUSHX.W XREG_W_AS 		is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS {
+	SP = SP - 0x2;
+	*:2 SP = XREG_W_AS;
+	#Status bits are not affected
+	build postRegIncrement;
+}
+
+:PUSHX.A XREG_A_AS 		is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS {
+	SP = SP - 0x4;
+	*:$(REG_SIZE) SP = XREG_A_AS;
+	build postRegIncrement;
+}	
+
+:RRAX.B XREG_B_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	$(CARRY) = (XREG_B_AS_DEST & 0x1);
+	XREG_B_AS_DEST = XREG_B_AS_DEST s>> 1;
+	# Result Flags...
+	$(SIGN) = (XREG_B_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_B_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+}
+
+:RRAX.W XREG_W_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
+	# Operation...
+	$(CARRY) = XREG_W_AS_DEST[0,1];
+	XREG_W_AS_DEST = XREG_W_AS_DEST s>> 1;
+	# Result Flags...
+	$(SIGN) = (XREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_W_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+}
+
+:RRAX.A XREG_A_AS_DEST 	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS_DEST {
+	$(CARRY) = XREG_A_AS_DEST[0,1];
+	XREG_A_AS_DEST = (XREG_A_AS_DEST s>> 1);
+	$(OVERFLOW) = 0;
+	$(SIGN) = (XREG_A_AS_DEST[19,1] != 0);
+	$(ZERO) = (XREG_A_AS_DEST == 0);
+	build postRegIncrement;
+}
+
+:RRCX.B XREG_B_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = ((XREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = (XREG_B_AS_DEST & 0x1);
+	XREG_B_AS_DEST = ((tmp << 0x7) | (XREG_B_AS_DEST >> 0x1));
+	# Result Flags...
+	$(SIGN) = (XREG_B_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_B_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+}
+
+:RRCX.W XREG_W_AS_DEST	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = ((XREG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = XREG_W_AS_DEST[0,1];
+	XREG_W_AS_DEST = ((zext(tmp) << 0xF) | (XREG_W_AS_DEST >> 0x1));
+	# Result Flags...
+	$(SIGN) = (XREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_W_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+}
+
+:RRCX.A XREG_A_AS_DEST 	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = ((XREG_A_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	# Operation...
+	tmp:1 = $(CARRY);
+	$(CARRY) = XREG_A_AS_DEST[0,1];
+	XREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XREG_A_AS_DEST >> 0x1) & 0xEFFFF));
+	XREG_A_AS_DEST = sext(XREG_A_AS_DEST[0,20]);
+	# Result Flags...
+	$(SIGN) = (XREG_A_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_A_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+}
+
+:SWPBX.W XREG_W_AS_DEST is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
+	lowByte:1 = XREG_W_AS_DEST[0,8];
+	highByte:1 = XREG_W_AS_DEST[8,8];
+	XREG_W_AS_DEST = (((zext(lowByte)) << 0x8) | zext(highByte));
+	#Status bits are not affected
+	build postRegIncrement;
+}
+
+# Yes, for SXTX and SWPB, the normal width selectors are different.  Hence, for the A versions, we have a different dest reg subtable.
+:SWPBX.A XREG_A_AS_DEST2 is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_A_AS_DEST2 {
+	lowByte:1 = XREG_A_AS_DEST2[0,8];
+	highByte:1 = XREG_A_AS_DEST2[8,8];
+	XREG_A_AS_DEST2[8,8] = lowByte;
+	XREG_A_AS_DEST2[0,8] = highByte;
+	XREG_A_AS_DEST2 = zext(XREG_A_AS_DEST2[0,20]);
+	build postRegIncrement;
+}
+
+:SXTX.W XREG_W_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;						# V Flag
+	# Operation...	
+	XREG_W_AS_DEST = sext(XREG_W_AS_DEST:1);
+	# Result Flags...
+	$(SIGN) = (XREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XREG_W_AS_DEST == 0x0);			# Z Flag
+	$(CARRY) = (XREG_W_AS_DEST != 0x0);			# C Flag
+	build postRegIncrement;
+}
+
+# Yes, for SXTX and SWPB, the normal width selectors are different.  Hence, for the A versions, we have a different dest reg subtable.
+:SXTX.A XREG_A_AS_DEST2	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_A_AS_DEST2 {
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;						# V Flag
+	# Operation...	
+	XREG_A_AS_DEST2 = sext(XREG_A_AS_DEST2:1);
+	# Result Flags...
+	$(SIGN) = (XREG_A_AS_DEST2 s< 0x0);			# S Flag
+	$(ZERO) = (XREG_A_AS_DEST2 == 0x0);			# Z Flag
+	$(CARRY) = (XREG_A_AS_DEST2 != 0x0);			# C Flag
+	build postRegIncrement;
+}

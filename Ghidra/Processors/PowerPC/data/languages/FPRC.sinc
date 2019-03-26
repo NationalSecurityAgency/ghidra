@@ -1,0 +1,210 @@
+
+period: "" is Rc=0 { setSummaryFPSCR(); }
+period: "." is Rc=1 { setSummaryFPSCR(); cr1flags(); }
+
+# Floating Convert To Integer Doubleword Unsigned
+
+:fctidu^period fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=942 & period
+{
+	# src is rounded to integer
+
+	fT = trunc(round(fB));
+
+	# if src is Nan, result is 0 and VXSNAN is set to 1
+
+	fT = fT * zext(nan(fB) == 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+
+	# if src > 2^64 - 1, result is 0xffff_ffff_ffff_ffff and VXCVI is set to 1
+
+	bigi:16 = 0xffffffffffffffff;
+	bigf:8 = int2float(bigi);
+	fT = fT - (0xffffffffffffffff + fT) * zext(fB f> bigf);
+	fp_vxcvi = fp_vxcvi | (fB f> bigf);
+
+	# if rounded value < 0, result is 0 and VXCVI is set to 1
+
+	fp_vxcvi = fp_vxcvi | (fT s< 0);
+	fT = fT * zext(fT s> 0);
+
+	build period;
+}
+
+# Floating Convert To Integer Doubleword Unsigned with round toward Zero
+
+:fctiduz^period fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=943 & period
+{
+	# src is rounded to integer
+
+	fT = trunc(fB);
+
+	# if src is Nan, result is 0 and VXSNAN is set to 1
+
+	fT = fT * zext(nan(fB) == 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+
+	# if src > 2^64 - 1, result is 0xffff_ffff_ffff_ffff and VXCVI is set to 1
+
+	bigi:16 = 0xffffffffffffffff;
+	bigf:8 = int2float(bigi);
+	fT = fT - (0xffffffffffffffff + fT) * zext(fB f> bigf);
+	fp_vxcvi = fp_vxcvi | (fB f> bigf);
+
+	# if rounded value < 0, result is 0 and VXCVI is set to 1
+
+	fp_vxcvi = fp_vxcvi | (fT s< 0);
+	fT = fT * zext(fT s> 0);
+
+	build period;
+}
+
+# Floating Convert To Integer Word Unsigned
+
+:fctiwu^period fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=142 & period
+{
+	# src is rounded to integer
+
+	fT = trunc(round(fB));
+
+	# if src is NaN then result is 0 and VXSNAN is set to 1
+
+	fT = fT * zext(nan(fB) == 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+
+	# if src > 2^32 - 1, result is 0xffff_ffff and VXCVI is set to 1
+
+	bigi:16 = 0xffffffff;
+	bigf:8 = int2float(bigi);
+	fT = fT - (0xffffffff + fT) * zext(fB f> bigf);
+	fp_vxcvi = fp_vxcvi | (fB f> bigf);
+
+	# if rounded value < 0, result is 0 and VXCVI is set to 1
+
+	fp_vxcvi = fp_vxcvi | (fT s< 0);
+	fT = fT * zext(fT s> 0);
+
+	build period;
+}
+
+# Floating Convert To Integer Word Unsigned with round toward Zero
+
+:fctiwuz^period fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=143 & period
+{
+	# src is rounded to integer
+
+	fT = trunc(fB);
+
+	# if src is NaN then result is 0 and VXNAN is set to 1
+
+	fT = fT * zext(nan(fB) == 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+
+	# if src > 2^32 - 1, result is 0xffff_ffff and VXCVI is set to 1
+
+	bigi:16 = 0xffffffff;
+	bigf:8 = int2float(bigi);
+	fT = fT - (0xffffffff + fT) * zext(fB f> bigf);
+	fp_vxcvi = fp_vxcvi | (fB f> bigf);
+
+	# if rounded value < 0, result is 0 and VXCVI is set to 1
+
+	fp_vxcvi = fp_vxcvi | (fT s< 0);
+	fT = fT * zext(fT s> 0);
+
+	build period;
+}
+
+# Floating Convert From Integer Doubleword Unsigned X-form
+
+:fcfidu^period fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=974 & period
+{
+	# convert source to unsigned int by extension
+
+	local tmpI:8 = zext(fB);
+
+	# src is converted to floating point
+
+	fT = int2float(tmpI);
+
+	# FPSCR is class and sign of result
+
+	setFPRF(fT);
+
+	build period;
+}
+
+# Floating Convert From Integer Doubleword Single X-form
+
+:fcfids^period fT,fB is $(NOTVLE) & OP=59 & fT & BITS_16_20=0 & fB & XOP_1_10=846 & period
+{
+	# src is converted to single-precision floating point
+
+	local tmpF:4 = int2float(fB);
+
+	# convert the result to double-precision
+
+	fT = float2float(tmpF);
+
+	# FPSCR is class and sign of result
+
+	setFPRF(fT);
+
+	build period;
+}
+
+# fcfidus fT,fB
+# Floating Convert From Integer Doubleword Unsigned Single
+
+:fcfidus^period fT,fB is $(NOTVLE) & OP=59 & fT & BITS_16_20=0 & fB & XOP_1_10=974 & period
+{
+	# convert source to unsigned int by extension
+
+	local tmpI:8 = zext(fB);
+
+	# src is converted to single-precision floating point
+
+	local tmpF:4 = int2float(tmpI);
+
+	# src is converted to double-precision
+
+	fT = float2float(tmpF);
+
+	# FPSCR is class and sign of result
+
+	setFPRF(fT);
+
+	build period;
+}
+
+# Floating Test for software Divide
+
+:ftdiv CRFD,fA,fB is $(NOTVLE) & OP=63 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=128 & BIT_0=0
+{
+	zero:8 = int2float(0:1);
+
+	# fe if fA or fB is Nan or infinity, or if fB is 0
+	# and other conditions on the exponents
+
+	fe_flag:1 = nan(fA) | nan(fB) | (fB f== zero);
+
+	# fg if fA or fB are infinite, or fB is NaN or denomrmalized or zero
+
+	fg_flag:1 = nan(fB) | (fB f== zero);
+	CRFD = (fg_flag << 2) | (fe_flag << 1);
+}
+
+# Floating Test for software Square Root
+
+:ftsqrt CRFD,fB is $(NOTVLE) & OP=63 & CRFD & BITS_21_22=0 & BITS_16_20=0 & fB & XOP_1_10=160 & BIT_0=0
+{
+	zero:8 = int2float(0:1);
+
+	# fe if fB is zero, NAN, infinity, or negative
+
+	fe_flag:1 = nan(fB) | (fB f< zero);
+
+	# fg if fB is zero, infinity, or denormalized
+
+	fg_flag:1 = nan(fB) | (fB f== zero);
+	CRFD = (fg_flag << 2) | (fe_flag << 1);
+}

@@ -1,0 +1,3 @@
+@define MCS80390 ""
+
+@include "8051_main.sinc"

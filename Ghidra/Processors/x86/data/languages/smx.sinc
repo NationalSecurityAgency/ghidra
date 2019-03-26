@@ -1,0 +1,67 @@
+define pcodeop getsec_capabilities;
+define pcodeop getsec_enteraccs;
+define pcodeop getsec_exitac;
+define pcodeop getsec_senter;
+define pcodeop getsec_sexit;
+define pcodeop getsec_parameters_EAX;
+define pcodeop getsec_parameters_EBX;
+define pcodeop getsec_parameters_ECX;
+define pcodeop getsec_smctrl;
+define pcodeop getsec_wakeup;
+define pcodeop getsec_unknown;
+
+
+:GETSEC          is vexMode=0 & byte=0x0f; byte=0x37  {
+
+	if ( EAX != 0x0 ) goto <leaf_1>;
+	    EAX = 0;
+	    if ( EBX != 0x0 ) goto <done>;
+		EAX = getsec_capabilities( EBX );
+		goto <done>;
+		
+	<leaf_1>
+	if ( EAX != 0x2 ) goto <leaf_2>;
+		getsec_enteraccs( EBX, ECX );
+		goto <done>;
+
+	<leaf_2>
+	if ( EAX != 0x3 ) goto <leaf_3>;
+@ifdef IA64
+	    getsec_exitac( RBX, EDX );
+@else
+	    getsec_exitac( EBX, EDX );
+@endif
+		goto <done>;
+
+	<leaf_3>
+	if ( EAX != 0x4 ) goto <leaf_4>;
+	    getsec_senter( EBX, ECX, EDX);
+		goto <done>;
+
+	<leaf_4>
+	if ( EAX != 0x5 ) goto <leaf_5>;
+	    getsec_sexit();
+		goto <done>;
+
+	<leaf_5>
+	if ( EAX != 0x6 ) goto <leaf_6>;
+	    EAX = getsec_parameters_EAX( EBX );
+	    ECX = getsec_parameters_ECX( EBX );
+	    EBX = getsec_parameters_EBX( EBX );
+		goto <done>;
+
+	<leaf_6>
+	if ( EAX != 0x7 ) goto <leaf_7>;
+	    getsec_smctrl(EBX);
+		goto <done>;
+
+	<leaf_7>
+	if ( EAX != 0x8 ) goto <unknown>;
+	    getsec_wakeup();
+		goto <done>;
+
+	<unknown>
+		getsec_unknown();
+
+	<done>		
+}

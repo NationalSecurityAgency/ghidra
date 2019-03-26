@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This cspec describes the MIPS64 ABI called "n32"
+     This is the default when using gcc to compile for 64-bit MIPS (i.e. with the -mips64 or -mips64r2 compiler flags)
+     This ABI can be requested explicitly in gcc with the -mabi=n32 flag.
+      
+     n32 specifies 64-bit registers but 32-bit pointers.
+     The other major MIPS64 ABI with 32-bit pointers is call "o64"
+     The primary parameter passing difference n32 and o64 is that
+     n32 can use up to 8 general purpose registers for parameters before going to the stack, while
+     o64 can use only up to 4.
+     
+     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005
+     -->
+<compiler_spec>
+  <data_organization>
+     <absolute_max_alignment value="0" />
+     <machine_alignment value="2" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="4" />
+     <pointer_size value="4" />
+     <wchar_size value="2" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="16" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="4" />
+     </size_alignment_map>
+  </data_organization>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <spacebase name="gp" register="gp" space="ram"/>
+  <global>
+    <range space="gp"/>
+    <range space="ram"/>
+    <range space="register" first="0x2000" last="0x2fff"/>
+  </global>
+  <aggressivetrim signext="true"/>  <!-- Aggressively try to eliminate sign extensions -->
+  <!--
+  n32 specifies that ra does not have to be used as the return address register 
+  <returnaddress>
+    <register name="ra"/>
+  </returnaddress>
+  -->
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input killedbycall="true">  <!-- assume parameter passing register locations are killedbycall -->
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f15"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f16"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f17"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f18"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f19"/>
+        </pentry>
+         <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="t0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="t1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="t2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="t3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="f0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="v0"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="v0" piece2="v1"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="sp"/>
+        <register name="gp"/>
+        <register name="f20"/>   <!-- Only 6 "even" floating pointer registers are saved by callee -->
+        <register name="f22"/>
+        <register name="f24"/>
+        <register name="f26"/>
+        <register name="f28"/>
+        <register name="f30"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

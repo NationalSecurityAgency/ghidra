@@ -1,0 +1,4 @@
+apply plugin: 'eclipse'
+eclipse.project.name = '_Runtime Scripts'
+
+ext.isPureEclipseProject = true

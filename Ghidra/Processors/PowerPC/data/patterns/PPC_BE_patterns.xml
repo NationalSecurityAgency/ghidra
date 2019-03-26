@@ -1,0 +1,34 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x4e800020 </data> <!-- BLR -->
+      <data>010010.. 0x.. 0x.. ......00 </data> <!-- B xxxxx -->
+    </prepatterns>
+    <postpatterns>
+      <data>10010100 00100001 11...... .....000 </data>             <!-- STWU r1,xx(r1) -->
+      <data>0x7c2c0b78 0x38 0x21 ........ ........ 0x91810000 </data> <!--  or r12,r1,r1; stw r12,0x0(r1) -->
+      <codeboundary />              <!-- it is at least code -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>010010.. 0x.. 0x.. ......00 </data> <!-- B xxxxx -->
+    </prepatterns>
+    <postpatterns>
+     <data>10010100 00100001 11...... .....000             011111.. ...01000 00000010 10100110 </data> <!-- STWU r1,xx(r1); MFSPR rx,lr -->
+     <data>10010100 00100001 11...... .....000  0x........ 011111.. ...01000 00000010 10100110 </data> <!-- STWU r1,xx(r1); xxx_instr; MFSPR rx,lr -->
+     <data>10010100 00100001 11...... .....000  0x........ 0x........ 011111.. ...01000 00000010 10100110 </data> <!-- STWU r1,xx(r1); xxx_instr; xxx_instr; MFSPR rx,lr -->
+     <data>0x7c2c0b78 0x38 0x21 ........ ........ 0x91810000 </data> <!--  or r12,r1,r1; stw r12,0x0(r1) -->
+     <codeboundary />              <!-- it is at least code -->
+     <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  <pattern> 
+      <data>10010100 00100001 11...... .....000             011111.. ...01000 00000010 10100110 </data> <!-- STWU r1,xx(r1); MFSPR rx,lr -->
+      <codeboundary />
+      <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
+  </pattern>
+  
+</patternlist>

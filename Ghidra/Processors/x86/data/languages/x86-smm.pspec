@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
+  </properties>
+  <context_data>
+    <context_set space="ram">
+      <set name="addrsize" val="0"/>
+      <set name="opsize" val="0"/>
+    </context_set>
+  </context_data>
+</processor_spec>

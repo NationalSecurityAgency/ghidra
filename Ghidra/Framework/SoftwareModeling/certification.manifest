@@ -1,0 +1,65 @@
+##VERSION: 2.0
+##MODULE IP: BSD
+##MODULE IP: Creative Commons Attribution 2.5
+##MODULE IP: Tango Icons - Public Domain
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+Sleigh.launch||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
+data/charset_info.xml||GHIDRA||||END|
+data/languages/Steps to creation of Format Opinion.txt||GHIDRA||||END|
+data/languages/compiler_spec.rxg||GHIDRA||||END|
+data/languages/format_opinions.rxg||GHIDRA||||END|
+data/languages/language_common.rxg||GHIDRA||||END|
+data/languages/language_definitions.rxg||GHIDRA||||END|
+data/languages/processor_spec.rxg||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/BaseLexer.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/BooleanExpression.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/DisplayLexer.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/DisplayParser.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/README.txt||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SemanticLexer.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SemanticParser.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SleighCompiler.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SleighEcho.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SleighLexer.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SleighParser.g||GHIDRA||||END|
+src/main/java/ghidra/program/database/databaseTables.txt||GHIDRA||||END|
+src/main/java/ghidra/program/database/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/address/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/block/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/data/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/graph/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/lang/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/listing/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/mem/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/pcode/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/reloc/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/scalar/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/symbol/package.html||GHIDRA||||END|
+src/main/java/ghidra/program/model/util/package.html||GHIDRA||||END|
+src/main/resources/images/audio-volume-medium.png||Tango Icons - Public Domain|||tango icon set|END|
+src/test.slow/java/log4j.xml||GHIDRA||reviewed||END|
+src/test/resources/a_nestedif2.input||GHIDRA||reviewed||END|
+src/test/resources/a_nestedif2.output||GHIDRA||reviewed||END|
+src/test/resources/a_simpledefine.input||GHIDRA||reviewed||END|
+src/test/resources/a_simpledefine.output||GHIDRA||reviewed||END|
+src/test/resources/crazy.inc||GHIDRA||reviewed||END|
+src/test/resources/empty.input||GHIDRA||reviewed||END|
+src/test/resources/empty.output||GHIDRA||reviewed||END|
+src/test/resources/expression.input||GHIDRA||reviewed||END|
+src/test/resources/expression.output||GHIDRA||reviewed||END|
+src/test/resources/include.input||GHIDRA||reviewed||END|
+src/test/resources/include.output||GHIDRA||reviewed||END|
+src/test/resources/includes/actual.inc||GHIDRA||||END|
+src/test/resources/log4j.xml||GHIDRA||reviewed||END|
+src/test/resources/longertest.input||GHIDRA||reviewed||END|
+src/test/resources/longertest.output||GHIDRA||reviewed||END|
+src/test/resources/nestedif.input||GHIDRA||reviewed||END|
+src/test/resources/nestedif.output||GHIDRA||reviewed||END|
+src/test/resources/simple.input||GHIDRA||reviewed||END|
+src/test/resources/simple.output||GHIDRA||reviewed||END|
+src/test/resources/z_complex.input||GHIDRA||reviewed||END|
+src/test/resources/z_complex.output||GHIDRA||reviewed||END|

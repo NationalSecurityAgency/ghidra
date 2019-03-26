@@ -1,0 +1,30 @@
+apply plugin: 'eclipse'
+eclipse.project {
+  name '_Decompiler'
+  buildCommand 'org.eclipse.cdt.managedbuilder.core.genmakebuilder'
+  buildCommand 'org.eclipse.cdt.managedbuilder.core.ScannerConfigBuilder'
+  natures 'org.eclipse.cdt.core.cnature'
+  natures 'org.eclipse.cdt.core.ccnature'
+  natures 'org.eclipse.cdt.managedbuilder.core.managedBuildNature'
+  natures 'org.eclipse.cdt.managedbuilder.core.ScannerConfigNature'
+  
+  file {
+  	withXml {
+  		def projectNode = it.asNode()
+  		projectNode.iterator().each { subNode ->
+  			String subNodeText = '' + subNode
+  			if (subNodeText.startsWith('buildSpec')) {
+  				subNode.iterator().each { buildCmd ->
+  					String nameNode = buildCmd?.name
+  					if (nameNode.contains('genmakebuilder')) {
+  						buildCmd.appendNode('triggers', 'clean,full,incremental')
+  					}
+  					if (nameNode.contains('ScannerConfigBuilder')) {
+  						buildCmd.appendNode('triggers', 'full,incremental')
+  					}
+  				}
+  			}
+  		}
+  	}
+  }
+}

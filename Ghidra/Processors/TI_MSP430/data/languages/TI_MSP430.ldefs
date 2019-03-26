@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="TI_MSP430"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.4"
+            slafile="TI_MSP430.sla"
+            processorspec="TI_MSP430.pspec"
+            manualindexfile="../manuals/MSP430.idx"
+            id="TI_MSP430:LE:16:default">
+    <description>TI MSP430 16-Bit MicroController</description>
+    <compiler name="default" spec="TI_MSP430.cspec" id="default"/>
+    <external_name tool="gnu" name="msp:430X"/>
+    <external_name tool="IDA-PRO" name="msp430"/>
+  </language>
+  <language processor="TI_MSP430X"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.4"
+            slafile="TI_MSP430X.sla"
+            processorspec="TI_MSP430.pspec"
+            manualindexfile="../manuals/MSP430.idx"
+            id="TI_MSP430X:LE:32:default">
+    <description>TI MSP430X 20-Bit MicroController</description>
+    <compiler name="default" spec="TI_MSP430X.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="msp430"/>
+  </language>
+</language_definitions>

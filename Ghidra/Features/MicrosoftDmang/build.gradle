@@ -1,0 +1,37 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features MicrosoftDemang'
+
+project.ext.excludeFromParallelTests = true
+project.ext.excludeFromParallelIntegrationTests = true
+
+dependencies {
+	compile project(':Base')
+}
+
+/*
+ * The following test ensures that I can have all sorts of developer tests as well as the
+ *  MDMangBaseTest within the src/test folder and not have them found by gradle for
+ *  nightly or continuous testing.  Earlier, I only had this test suite in src/test and
+ *  all other files in src/test.local, but that had a host of other problems including:
+ *   * needing a way to allow the dependency on src/test.local
+ *   * needing a way to tell gradle to not include the files of src/test.local in the
+ *      deliverable build
+ */
+test {
+	scanForTestClasses = false
+	
+	// The root project has a task, 'parallelCombinedTestReport' that inherits the exclude property 
+	// of this test task.  If the root project is in parallelMode ('parallelCombinedTestReport' 
+	// was invoked in the command line) don't include any tests from this subproject.
+	// These 'includes' are configured 'lazily', so evaluation is done after 
+	// 'parallelCombinedTestReport' is configured in the root project.
+	if (rootProject.ext.parallelMode) {
+		exclude "*"
+	} else {
+		includes = ['**/MDMangBaseTestSuite.class', '**/MDMangExtraTests.class']
+	}
+}
+integrationTest {
+	scanForTestClasses = false
+	excludes = ['**/*']
+}

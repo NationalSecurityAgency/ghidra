@@ -1,0 +1,50 @@
+apply from: "gradleScripts/settingsUtil.gradle"
+
+/*******************************************************************************************
+ * Include all the standard Ghidra modules.  See documentation below for more information
+ * about includeProjects and includeProcessProjects.
+ *******************************************************************************************/
+
+includeProjects('Ghidra/Dev')
+includeProjects('Ghidra/Extensions')
+includeProjects('Ghidra/Framework')
+includeProjects('Ghidra/Features')
+includeProjects('Ghidra/Configurations')
+includeProjects('Ghidra/Processors')
+includeProjects('Ghidra/Test')
+includeProjects('GPL')
+
+/*******************************************************************************************
+ * Include miscellaneous support modules
+ *******************************************************************************************/
+includeProject('JsonDoclet', 'GhidraBuild/BuildFiles', true)
+includeProject('LaunchSupport', 'GhidraBuild', true)
+includeProject('Skeleton', 'GhidraBuild', true)
+includeProject('BuildFiles', 'GhidraBuild', true)
+includeProject('GhidraTest', '.', true)
+includeProject('decompile', 'Ghidra/Features/Decompiler/src', true)
+includeProject('RuntimeScripts', 'Ghidra', true)
+includeProject('GhidraBuild', '.', true)
+includeProject('GhidraDocs', '.', true)
+
+/*******************************************************************************************
+ * Include modules that are deactivated by default
+ *******************************************************************************************/
+//includeProjects('GhidraBuild/EclipsePlugins/GhidraDev') // requires Eclipse PDE
+
+/*******************************************************************************************
+ * Apply additional Ghidra respositories
+ *******************************************************************************************/
+File extensionsList = file("ghidra.repos.config")
+if (extensionsList.isFile()) {
+	extensionsList.eachLine { line ->
+		line = line.trim()
+		if (line == "" || line.startsWith("#")) {
+			return // Skip just this one
+		}
+		File extraSettings = file("../$line/extraSettings.gradle")
+		assert extraSettings.exists() : "Missing extraSettings.gradle in extension repo: $line"
+		assert extraSettings.parentFile.parentFile == rootProject.projectDir.parentFile : "Extension must be sibling of ghidra repository"	
+		apply from: extraSettings.absolutePath
+	}
+}

@@ -1,0 +1,353 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>4. Basic Definitions</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_preprocessing.html" title="3. Preprocessing">
+<link rel="next" href="sleigh_symbols.html" title="5. Introduction to Symbols">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">4. Basic Definitions</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_preprocessing.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_symbols.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_definitions"></a>4. Basic Definitions</h2></div></div></div>
+<p>
+SLEIGH files must start with all the definitions needed by the rest of
+the specification. All definition statements start with the keyword
+<span class="bold"><strong>define</strong></span> and end with a semicolon &#8216;;&#8217;.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_endianess_definition"></a>4.1. Endianess Definition</h3></div></div></div>
+<p>
+The first definition in any SLEIGH specification must be for endianess. Either
+</p>
+<div class="informalexample"><pre class="programlisting">
+define endian=big;            <span class="emphasis"><em>OR</em></span>
+define endian=little;
+</pre></div>
+<p>
+This defines how the processor interprets contiguous sequences of
+bytes as integers. It effects how integer fields within an instruction
+are interpreted (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, &#8220;Defining Tokens and Fields&#8221;</a>), and
+it also effects the details of how the processor is supposed to
+implement atomic operations like integer addition and integer
+compare. The specification designer should only need to worry about
+these details when labeling instruction fields, otherwise the
+specification language will hide endianess issues.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875502768"></a>4.2. Alignment Definition</h3></div></div></div>
+<p>
+An alignment definition looks like
+</p>
+<div class="informalexample"><pre class="programlisting">
+define alignment=<span class="bold"><strong>integer</strong></span>;
+</pre></div>
+<p>
+This specifies the byte alignment of instructions within their address
+space. It defaults to 1 or no alignment. When disassembling an
+instruction at a particular, the disassembler checks the alignment of
+the address against this value and can opt to flag an unaligned
+instruction as an error.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875499872"></a>4.3. Space Definitions</h3></div></div></div>
+<p>
+The definition of an address space looks like
+</p>
+<div class="informalexample"><pre class="programlisting">
+define space <span class="bold"><strong>spacename attributes</strong></span> ;
+</pre></div>
+<p>
+The <span class="emphasis"><em>spacename</em></span> is the name of the new space,
+and <span class="emphasis"><em>attributes</em></span> looks like zero or more of the
+following lines:
+</p>
+<div class="informalexample"><pre class="programlisting">
+type=(ram_space|rom_space|register_space)
+size=<span class="bold"><strong>integer</strong></span>
+default
+wordsize=<span class="bold"><strong>integer</strong></span>
+</pre></div>
+<p>
+The only required attribute is <span class="bold"><strong>size</strong></span>
+which specifies the number of bytes needed to address any byte within
+the space, for example a 32-bit address space has size 4.
+</p>
+<p>
+A space of type <span class="bold"><strong>ram_space</strong></span> is defined as follows:
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+    It is read/write.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    It is part of the standard memory map of the processor.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    It is addressable in the sense that the processor may load
+and store from dynamic pointers into the space.
+  </li>
+</ul></div></div>
+<p>
+</p>
+<p>
+A space of type <span class="bold"><strong>register_space</strong></span> is
+intended to model the processor&#8217;s general-purpose registers. In terms
+of accessing and manipulating data within the space, SLEIGH and p-code
+make no distinction between the
+type <span class="bold"><strong>ram_space</strong></span> or the
+type <span class="bold"><strong>register_space</strong></span>. But there are
+still some distinguishing properties of a space labeled
+with <span class="bold"><strong>register_space</strong></span>.
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+    It is read/write.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    It is <span class="emphasis"><em>not</em></span> part of the standard memory map of the processor.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    In terms of GHIDRA, there will not be separate windows for
+    the space and references into the space will not be stored.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    Named symbols within the space will have Register objects
+    associated with them in GHIDRA.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    It is <span class="emphasis"><em>not</em></span> addressable. Data-flow
+    analysis will assume that data within the space cannot be
+    manipulated indirectly via pointer, so there is no pointer
+    aliasing. Make sure this is true!
+  </li>
+</ul></div></div>
+<p>
+</p>
+<p>
+A space of type <span class="bold"><strong>rom_space</strong></span> has seen
+little use so far but is intended to be the same as
+a <span class="bold"><strong>ram_space</strong></span> that is not writable.
+</p>
+<p>
+At least one space needs to be labeled with
+the <span class="bold"><strong>default</strong></span> attribute. This should be
+the space that the processor accesses with its main address bus. In
+terms of the rest of the specification file, this sets the default
+space referred to by the &#8216;*&#8217; operator (see
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, &#8220;The '*' Operator&#8221;</a>). It also has meaning to
+GHIDRA.
+</p>
+<p>
+The average 32-bit processor requires only the following two space definitions.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+</pre></div>
+<p>
+The <span class="bold"><strong>wordsize</strong></span> attribute can be used to
+specify the size of the memory location referred to with a single
+address. If a space has <span class="bold"><strong>wordsize</strong></span> two,
+then each address of the space refers to 16 bits of data, rather than
+8 bits. If the space has <span class="bold"><strong>size</strong></span> two,
+then there are still 2<sup>16</sup> different
+addresses, but since each address accesses two bytes, there are twice
+as many bytes, 2<sup>17</sup>, in the space. If
+the <span class="bold"><strong>wordsize</strong></span> attribute is not
+specified, the size of a memory location defaults to one byte (8
+bits).
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_naming_registers"></a>4.4. Naming Registers</h3></div></div></div>
+<p>
+The general purpose registers of the processors can be named with the
+following define syntax:
+</p>
+<div class="informalexample"><pre class="programlisting">
+define <span class="bold"><strong>spacename</strong></span> offset=<span class="bold"><strong>integer</strong></span> size=<span class="bold"><strong>integer stringlist</strong></span> ;
+</pre></div>
+<p>
+A <span class="emphasis"><em>stringlist</em></span> is either a single string or a white
+space separated list of strings in square brackets &#8216;[&#8217; and &#8216;]&#8217;. A
+string of just &#8220;_&#8221; indicates a skip in the sequence for that
+definition. The offset corresponding to that position in the list of
+names will not have a varnode defined at it.
+</p>
+<p>
+This defines specific varnodes within the indicated address
+space. Each name in the list is assigned to a varnode in turn starting
+at the indicated offset within the space. Each varnode occupies the
+indicated number of bytes in size. There is no restriction on size,
+and by reusing the same offset in
+different <span class="bold"><strong>define</strong></span> statements,
+overlapping varnodes are allowed. This is most often used to give
+registers their standard names but could be used to label any semantic
+variable that might need to be accessed globally by the
+processor. Overlapping register sequences like the x86 EAX/AX/AL can
+be easily modeled with overlapping varnode definitions.
+</p>
+<p>
+Here is a typical example of register definition:
+</p>
+<div class="informalexample"><pre class="programlisting">
+define register offset=0 size=4
+    [EAX ECX EDX EBX ESP EBP ESI EDI ];
+define register offset=0 size=2
+    [AX _ CX _ DX _ BX _ SP _ BP _ SI _ DI];
+define register offset=0 size=1
+    [AL AH _ _ CL CH _ _ DL DH _ _ BL BH ];
+</pre></div>
+<p>
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875464736"></a>4.5. Bit Range Registers</h3></div></div></div>
+<p>
+Many processors define registers that either consist of a single bit
+or otherwise don't use an integral number of bytes. A recurring
+example in many processors is the status register which is further
+subdivided into the overflow and result flags for the arithmetic
+instructions. These flags are typically have labels like ZF for the
+zero flag or CF for the carry flag and can be considered logical
+registers contained within the status register. SLEIGH allows
+registers to be defined like this using
+the <span class="bold"><strong>define bitrange</strong></span> statement, but
+there are some important caveats with its use. A bit register like
+this is problematic for the underlying p-code instructions that SLEIGH
+models because the smallest object they can manipulate directly is a
+byte. In order to manipulate single bits, p-code must use a
+combination of bitwise logical, extension, and truncation
+operations. So a register defined as a bit range is not really a
+varnode as described in <a class="xref" href="sleigh.html#sleigh_varnodes" title="1.2. Varnodes">Section 1.2, &#8220;Varnodes&#8221;</a>, but is
+really just a signal to the SLEIGH compiler to fill in the proper
+operators to simulate the bit manipulation. Using this feature may
+greatly increase the complexity of the compiled specification with
+little indication within the specification file itself.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define register offset=0x180 size=4 [ statusreg ];
+define bitrange zf=statusreg[10,1]
+                cf=statusreg[11,1]
+                sf=statusreg[12,1];
+</pre></div>
+<p>
+</p>
+<p>
+A bit range register must be defined on top of another normal
+register. In this example, <span class="emphasis"><em>statusreg</em></span> is defined
+first as a 4 byte register, and the bit registers themselves are built
+by the following <span class="bold"><strong>define bitrange</strong></span>
+statement. A single bit register definition consists of an identifier
+for the register, followed by &#8216;=&#8217;, then the name of the register
+containing the bits, and finally a pair of numbers in square
+brackets. The first number indicates the lowest significant bit in the
+containing register of the bit range, where bit 0 is the least
+significant bit. The second number indicates the number of bits in the
+new register. Multiple definitions can be included in a
+single <span class="bold"><strong>define bitrange</strong></span> statement, and
+the command is finally terminated with a semicolon. In the example,
+three new registers are defined on top
+of <span class="emphasis"><em>statusreg</em></span>, each made up of 1 bit. The new
+registers <span class="emphasis"><em>zf</em></span>, <span class="emphasis"><em>cf</em></span>,
+and <span class="emphasis"><em>sf</em></span> represent the tenth, eleventh, and twelfth
+bit of <span class="emphasis"><em>statusreg</em></span> respectively.
+</p>
+<p>
+The syntax for defining a new bit register is consistent with the
+pseudo bit range operator, described in
+<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, &#8220;Bit Range Operator&#8221;</a>, and the resulting symbol
+is really just a placeholder for this operator. Whenever SLEIGH sees
+this symbol it generates p-code precisely as if the designer had used
+the bit range operator
+instead. <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, &#8220;Bit Range Operator&#8221;</a>, provides some
+additional details about how p-code is generated, which apply to the
+use of bit range registers.
+</p>
+<p>
+If a defined bit range happens to fall on byte boundaries, the new
+symbol will in fact be a normal varnode, so
+the <span class="bold"><strong>define bitrange</strong></span> statement can be
+used as an alternate syntax for defining overlapping registers.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875451744"></a>4.6. User-Defined Operations</h3></div></div></div>
+<p>
+The specification designer can define new p-code operations using
+a <span class="bold"><strong>define pcodeop</strong></span> statement.  This
+statement automatically reserves an internal form for the new p-code
+operation and associates an identifier with it. This identifier can
+then be used in semantic expressions (see
+<a class="xref" href="sleigh_constructors.html#sleigh_userdef_op" title="7.7.1.8. User-Defined Operations">Section 7.7.1.8, &#8220;User-Defined Operations&#8221;</a>).  The following example defines a
+new p-code operation <span class="emphasis"><em>arctan</em></span>.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define pcodeop arctan;
+</pre></div>
+<p>
+</p>
+<p>
+This construction should be used sparingly. The definition does not
+specify how the new operation is supposed to actually manipulate data,
+and any analysis routines cannot know what the specification designer
+intended. The operation will be treated as a black box. It will hold
+its place in syntax trees, and the routines will understand how data
+flows into and out of it. But, no other analysis will be possible.
+</p>
+<p>
+New operations should be defined only after considering the above
+points and the general philosophy of p-code. The designer should have
+a detailed description of the new operation in mind, even though this
+cannot be put in the specification. If it all possible, the operation
+should be atomic, with specific inputs and outputs, and with no
+side-effects. The most common use of a new operation is to encapsulate
+actions that are too esoteric or too complicated to implement.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_preprocessing.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_symbols.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">3. Preprocessing </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 5. Introduction to Symbols</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

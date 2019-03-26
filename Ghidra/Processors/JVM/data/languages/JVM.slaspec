@@ -1,0 +1,2161 @@
+# Stack Convention:
+# 1) Stack grows to smaller addresses (Subtract to push)
+# 2) Stack pointer points to a valid item on the stack
+
+# A Java "word" can hold a boolean, byte, short, float, int, reference, or returnAddress.
+# Two "words" hold a long or a double
+@define SIZE "4"		# Number of bytes in the Java Word
+@define DOUBLE_SIZE "8"
+@define INT_SUPPORT "1"
+
+
+
+###############################################################################
+# Basic Definitions
+###############################################################################
+define endian=big;
+define alignment=1;
+
+define space ram                 type=ram_space      size=$(SIZE) default;
+define space register            type=register_space size=$(SIZE);
+define space constantPool		 type=ram_space      size=$(SIZE);
+define space localVariableArray  type=ram_space      size=$(SIZE);
+define space parameterSpace      type=ram_space      size=$(SIZE);
+
+define register offset = 0x0 size=$(DOUBLE_SIZE) [cat2_return_value];
+define register offset = 0x0 size=$(SIZE) [_ return_value SP PC switch_target return_address call_target LVA]; 
+
+#define register offset = 0x0 size=$(DOUBLE_SIZE) [cat2_return_value];
+#define register offset = 0x8 size=$(SIZE) [return_value SP PC switch_target return_address call_target LVA]; 
+
+define register offset=0x100 size=16 [ switch_ctrl ];
+
+@define CPOOL_ANEWARRAY       "0:4"
+@define CPOOL_CHECKCAST       "1:4"
+@define CPOOL_GETFIELD        "2:4"
+@define CPOOL_GETSTATIC       "3:4"
+
+#also used for ldc_w
+@define CPOOL_LDC             "4:4" 
+
+@define CPOOL_LDC2_W          "5:4"
+@define CPOOL_INSTANCEOF      "6:4"
+@define CPOOL_INVOKEDYNAMIC   "7:4"
+@define CPOOL_INVOKEINTERFACE "8:4"
+@define CPOOL_INVOKESPECIAL   "9:4"
+@define CPOOL_INVOKESTATIC    "10:4"
+@define CPOOL_INVOKEVIRTUAL   "11:4"
+@define CPOOL_MULTIANEWARRAY  "12:4"
+@define CPOOL_NEW             "13:4"
+@define CPOOL_NEWARRAY        "14:4"
+@define CPOOL_PUTSTATIC       "15:4"
+@define CPOOL_PUTFIELD        "16:4"
+@define CPOOL_ARRAYLENGTH     "17:4"
+
+#
+#defined ops ending in "CallOther" are used for pcode injection
+#
+
+define pcodeop getFieldCallOther;
+define pcodeop getStaticCallOther;
+define pcodeop ldcCallOther;
+define pcodeop ldc_wCallOther;
+define pcodeop ldc2_wCallOther;
+define pcodeop invokedynamicCallOther;
+define pcodeop invokeinterfaceCallOther;
+define pcodeop invokespecialCallOther;
+define pcodeop invokestaticCallOther;
+define pcodeop invokevirtualCallOther;
+define pcodeop lookupswitchCallOther;
+define pcodeop multianewarrayCallOther;
+define pcodeop putStaticCallOther;
+define pcodeop putFieldCallOther;
+
+#
+# defined ops ending in "Op" are black-box instructions
+#
+
+define pcodeop athrowOp;
+define pcodeop checkcastOp;
+define pcodeop dremOp;
+define pcodeop fremOp;
+define pcodeop monitorenterOp;
+define pcodeop monitorexitOp;
+define pcodeop multianewarrayOp;
+define pcodeop multianewarrayProcessAdditionalDimensionsOp;
+define pcodeop throwExceptionOp;
+
+###############################################################################
+# Context
+###############################################################################
+
+define context switch_ctrl
+	switch_low  	  = (0,31)  noflow
+	switch_high 	  = (32,63) noflow
+	switch_num  	  = (64,95) noflow
+	in_table_switch   = (96,97) noflow
+	in_lookup_switch  = (98,99) noflow
+	alignmentPad      = (100,101) noflow
+	padVal = (100,101) noflow
+;
+
+
+###############################################################################
+# TOKENS
+###############################################################################
+define token opcode (8)
+	op    = (0,7)
+;
+
+define token w_opcode (16)
+   w_op = (0,15)
+;
+
+define token data8 (8)
+	n            = (0,3)
+	m            = (4,7)
+	atype        = (0,7)
+	byte         = (0,7)
+	byte1        = (0,7)
+	byte2        = (0,7)
+	byte3        = (0,7)
+	byte4        = (0,7)
+	sbyte        = (0,7) signed
+	branch       = (0,7) signed
+	branchbyte1  = (0,7) signed
+	branchbyte2  = (0,7)
+	branchbyte3	 = (0,7)
+	branchbyte4  = (0,7)
+	index        = (0,7)
+	indexbyte1   = (0,7)
+	indexbyte2   = (0,7)
+	constant     = (0,7)
+	constantbyte1= (0,7)
+	constantbyte2= (0,7)
+	nargs        = (0,7)
+	method       = (0,7)
+	defaultbyte1 = (0,7)
+	defaultbyte2 = (0,7)
+	defaultbyte3 = (0,7)
+	defaultbyte4 = (0,7)
+	highbyte1    = (0,7)
+	highbyte2    = (0,7)
+	highbyte3    = (0,7)
+	highbyte4    = (0,7)
+	lowbyte1     = (0,7)
+	lowbyte2     = (0,7)
+	lowbyte3     = (0,7)
+	lowbyte4     = (0,7)
+	npairsbyte1  = (0,7)
+	npairsbyte2	 = (0,7)
+	npairsbyte3	 = (0,7)
+	npairsbyte4  = (0,7)
+	dimensions	 = (0,7)
+	blank1		 = (0,7)
+	blank2		 = (0,7)
+	count		 = (0,7)
+	pad			 = (0,7)
+	pad1		 = (0,7)
+	pad2		 = (0,7)
+	pad3		 = (0,7)
+	wide_op      = (0,7)
+;
+
+define token switch (8)
+	matchbyte1  = (0,7)
+	matchbyte2  = (0,7)
+	matchbyte3  = (0,7)
+	matchbyte4  = (0,7)
+	offsetbyte1 = (0,7)
+	offsetbyte2 = (0,7)
+	offsetbyte3 = (0,7)
+	offsetbyte4 = (0,7)
+;
+
+###############################################################################
+# Macros
+###############################################################################
+macro push(x)
+{
+	SP = SP - $(SIZE);
+	*:$(SIZE) SP = x;
+}
+
+macro pop(x)
+{
+	x = *:$(SIZE) SP;
+	SP = SP + $(SIZE);
+}
+
+macro push2(x)
+{
+    SP = SP - $(DOUBLE_SIZE);
+    *:$(DOUBLE_SIZE) SP = x:$(DOUBLE_SIZE);
+}
+
+macro pop2(x)
+{
+    x = *:$(DOUBLE_SIZE) SP;
+   SP = SP + $(DOUBLE_SIZE);
+}
+
+###############################################################################
+# Pseudo Instructions
+###############################################################################
+Branch:addr	is branchbyte1; branchbyte2 [ addr = inst_start + (branchbyte1<<8 | branchbyte2); ]
+{
+	export *:$(SIZE) addr;
+}
+
+Branch_w:addr	is branchbyte1; branchbyte2; branchbyte3; branchbyte4 [ addr = inst_start + ((branchbyte1 << 24) | (branchbyte2 << 16) | (branchbyte3 << 8) | branchbyte4); ]
+{
+	export *:$(SIZE) addr;
+}
+
+Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4  [ addr = inst_start + ((defaultbyte1<<24) | (defaultbyte2<<16) | (defaultbyte3 << 8) | defaultbyte4); ]
+{
+	export *:$(SIZE) addr;
+}
+
+###############################################################################
+# Constructors
+###############################################################################
+:aaload 	is (in_table_switch=0 & in_lookup_switch=0 & op=0x32)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	pop(_index);
+	pop(_arrayref);
+	_offset:$(SIZE) = _arrayref + $(SIZE) * _index;
+	_value:$(SIZE) = *[ram] _offset;
+	push(_value);
+}
+
+:aastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x53) 
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value :$(SIZE) = 0;
+
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	_offset:$(SIZE) = _arrayref + $(SIZE) * _index;
+	*[ram]:$(SIZE) _offset = _value;
+}
+
+:aconst_null	is (in_table_switch=0 & in_lookup_switch=0 & op=0x01) 
+{
+	push(0:4);
+}
+
+:aload index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x19); index 
+{
+	LVA = $(SIZE) * index;
+	_objectref :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_objectref);
+}
+
+:aload_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x2a)
+{
+	LVA = 0;
+	_objectref :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_objectref);
+}
+
+:aload_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x2b)
+{
+	LVA = 1 * $(SIZE);
+	_objectref :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_objectref);
+}
+
+:aload_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x2c)
+{
+	LVA = 2 * $(SIZE);
+	_objectref :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_objectref);
+}
+
+:aload_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x2d)
+{
+	LVA = 3 * $(SIZE);
+	_objectref :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_objectref);
+}
+
+:anewarray index is (in_table_switch=0 & in_lookup_switch=0 & op=0xbd); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ] 
+{
+     _count :$(SIZE) = 0;
+     _arrayref :$(SIZE) = 0;
+     pop(_count);
+    _ref: $(SIZE) = cpool(0:4,index,$(CPOOL_ANEWARRAY));
+    _arrayref = newobject(_ref,_count);
+    push(_arrayref);
+}
+
+:areturn	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb0)
+{
+	pop(return_value);
+	return [return_address];
+}
+
+:arraylength	is (in_table_switch=0 & in_lookup_switch=0 & op=0xbe)
+{
+	_arrayref :$(SIZE) = 0;
+	_length :$(SIZE) = 0;
+	pop(_arrayref);
+	_length =  cpool(_arrayref, 0:4, $(CPOOL_ARRAYLENGTH));
+	push(_length);
+}
+
+:astore index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3a); index
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = index*$(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:astore_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4b)
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 0;
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:astore_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4c)
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 1 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:astore_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4d)
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 2 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+	
+}
+
+:astore_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4e)
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 3 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:athrow		is (in_table_switch=0 & in_lookup_switch=0 & op=0xbf)
+{
+	_objectref :$(SIZE) = 0;
+	pop(_objectref);
+	athrowOp(_objectref);
+	<loop>
+	  SP = SP;
+	  goto <loop>;
+}
+
+:baload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x33)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value:1 = 0;
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + _index;
+	_value = *[ram]:1 _offset;
+	_valueSignExtended:$(SIZE) = sext(_value);
+	push(_valueSignExtended);
+}
+
+:bastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x54)
+{
+	_value :$(SIZE) = 0;
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + _index;
+	*[ram]:1 _offset = _value:1;
+}
+
+:bipush sbyte	is (in_table_switch=0 & in_lookup_switch=0 & op=0x10); sbyte
+{
+	_value:$(SIZE) = sext(sbyte:1);
+	push(_value);
+}
+
+:caload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x34)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value:2 = 0;
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + 2 * _index;
+	_value = *[ram]:2 _offset;
+	_valueZeroExtended:$(SIZE) = zext(_value);
+	push(_valueZeroExtended);
+}
+
+:castore	is (in_table_switch=0 & in_lookup_switch=0 & op = 0x55)
+{
+	_value :$(SIZE) = 0;
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + 2 * _index;
+	*[ram]:2 _offset = _value:2;
+}
+
+:checkcast index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc0); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+    _object: $(SIZE) = *:$(SIZE) SP;
+    throwExceptionOp(_object);
+    
+    #_res:1 = cpool(_object,index,$(CPOOL_CHECKCAST));
+    #throwExceptionOp(_res);
+    
+    
+    #_ref: $(SIZE) = cpool(0:4,index,$(CPOOL_CHECKCAST));
+    #checkcastOp(_object,_ref);
+    
+    #_object:$(SIZE) = 0;
+	#pop(_object);
+    #_res:1 = cpool(_object,index,$(CPOOL_INSTANCEOF));
+    #_result:$(SIZE) = zext(_res);
+    #push(_result);
+}
+
+:d2f		is (in_table_switch=0 & in_lookup_switch=0 & op=0x90)
+{
+	_double :$(DOUBLE_SIZE) = 0;
+	_float :$(SIZE) = 0;
+	pop2(_double);
+	_float = float2float(_double);
+	push(_float);
+}
+
+#this is not exactly the algorithm that the JVM uses to convert doubles to ints
+#should be good enough 
+:d2i		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8e)
+{
+	_double :$(DOUBLE_SIZE) = 0;
+	_int :$(DOUBLE_SIZE) = 0;
+	pop2(_double);
+	_int = round(_double);
+	push(_int:$(SIZE));
+}
+
+#this is not exactly the algorithm that the JVM uses to convert doubles to longs
+:d2l 		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8f)
+{
+	_double :$(DOUBLE_SIZE) = 0;
+	_long :$(DOUBLE_SIZE) = 0;
+	pop2(_double);
+	_long = round(_double);
+	push2(_long);
+}
+
+:dadd		is (in_table_switch=0 & in_lookup_switch=0 & op=0x63)
+{
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 f+ _value2;
+	push2(_result);
+}
+
+:daload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x31)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value :$(DOUBLE_SIZE) = 0;
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + $(DOUBLE_SIZE) * _index;
+	_value = *[ram]:$(DOUBLE_SIZE) _offset;
+	push2(_value);
+}
+
+:dastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x52)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_index:$(SIZE) = 0;
+	_arrayref:$(SIZE) = 0;
+	pop2(_value);
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + $(DOUBLE_SIZE) * _index;
+	*[ram]:$(DOUBLE_SIZE) _offset = _value;
+}
+
+:dcmpg		is (in_table_switch=0 & in_lookup_switch=0 & op=0x98)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = zext(_value1 f> _value2) + zext(_value1 f>= _value2) - 1;
+	push(_result);
+}
+
+:dcmpl		is (in_table_switch=0 & in_lookup_switch=0 & op=0x97)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = zext(_value1 f> _value2) + zext(_value1 f>= _value2) - 1;
+	push(_result);
+}
+
+:dconst_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0e)
+{
+	_int :$(DOUBLE_SIZE) = 0;
+	_double :$(DOUBLE_SIZE) = int2float(_int);
+	push2(_double);
+}
+
+:dconst_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0f)
+{
+	_int :$(DOUBLE_SIZE) = 1;
+	_double :$(DOUBLE_SIZE) = int2float(_int);
+	push2(_double);
+}
+
+:ddiv		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6f)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 f/ _value2;
+	push2(_result);
+}
+
+:dload	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x18); index
+{
+	LVA = index*$(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:dload_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x26)
+{
+    LVA = 0;
+    _value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);	
+}
+
+:dload_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x27)
+{
+	LVA = 1 * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);	
+}
+
+:dload_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x28)
+{
+	LVA = 2 * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);	
+}
+
+:dload_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x29)
+{
+    LVA = 3 * $(SIZE);
+    _value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);	
+}
+
+:dmul		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6b)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 f* _value2;
+	push2(_result);
+}
+
+:dneg		is (in_table_switch=0 & in_lookup_switch=0 & op=0x77)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	_result = f- _value;
+	push2(_result);
+}
+
+:drem		is (in_table_switch=0 & in_lookup_switch=0 & op=0x73)
+{
+	_value2 :$(DOUBLE_SIZE) = 0; 
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = dremOp(_value1, _value2);
+	push2(_result);
+}
+
+:dreturn	is (in_table_switch=0 & in_lookup_switch=0 & op=0xaf)
+{
+    pop2(cat2_return_value);
+    return [return_address];
+}
+
+:dstore	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x39); index
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = index*$(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:dstore_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x47)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 0;
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:dstore_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x48)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 1 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:dstore_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x49)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 2 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:dstore_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4a)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 3 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:dsub		is (in_table_switch=0 & in_lookup_switch=0 & op=0x67)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 f- _value2;
+	push2(_result);
+}
+
+:dup		is (in_table_switch=0 & in_lookup_switch=0 & op=0x59)
+{
+	local word = *:$(SIZE) SP;
+	push(word);
+}
+
+:dup_x1 	is (in_table_switch=0 & in_lookup_switch=0 & op=0x5a)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	push(_value1);
+	push(_value2);
+	push(_value1);
+}
+
+:dup_x2		is (in_table_switch=0 & in_lookup_switch=0 & op=0x5b)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	_value3 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	pop(_value3);
+	push(_value1);
+	push(_value3);
+	push(_value2);
+	push(_value1);
+}
+
+:dup2		is (in_table_switch=0 & in_lookup_switch=0 & op=0x5c)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	push(_value2);
+	push(_value1);
+	push(_value2);
+	push(_value1);
+}
+
+:dup2_x1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x5d)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	_value3 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	pop(_value3);
+	push(_value2);
+	push(_value1);
+	push(_value3);
+	push(_value2);
+	push(_value1);
+}
+
+:dup2_x2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x5e)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	_value3 :$(SIZE) = 0;
+	_value4 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	pop(_value3);
+	pop(_value4);
+	push(_value2);
+	push(_value1);
+	push(_value4);
+	push(_value3);
+	push(_value2);
+	push(_value1);
+}
+
+:f2d		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8d)
+{
+	_value :$(SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value);
+	_result = float2float(_value);
+	push2(_result);
+}
+
+#not exactly how the JVM converts floats to ints but close enough
+:f2i		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8b)
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	_result = round(_value);
+	push(_result);
+}
+
+#not exactly how the JVM converts floats to longs
+:f2l		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8c)
+{
+	_value :$(SIZE) = 0;
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value);
+	_value2 = float2float(_value);
+	_result = round(_value2);
+	push2(_result);
+}
+
+:fadd		is (in_table_switch=0 & in_lookup_switch=0 & op=0x62)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 f+ _value2;
+	push(_result);
+}
+
+:faload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x30)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value :$(SIZE) = 0;
+	pop(_index);
+	pop(_arrayref);	
+	local _offset = _arrayref + ($(SIZE) * _index);
+	_value = *[ram] (_offset);
+	push(_value);
+}
+
+:fastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x51)
+{
+	_value :$(SIZE) = 0;
+	_index:$(SIZE) = 0;
+	_arrayref:$(SIZE) = 0;
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + ($(SIZE) * _index);
+	*[ram] _offset = _value;
+}
+
+:fcmpg		is (in_table_switch=0 & in_lookup_switch=0 & op=0x96)
+{
+    _value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = zext(_value1 f> _value2) + zext(_value1 f>= _value2) - 1;
+	push(_result);
+}
+
+:fcmpl		is (in_table_switch=0 & in_lookup_switch=0 & op=0x95)
+{
+    _value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = zext(_value1 f> _value2) + zext(_value1 f>= _value2) - 1;
+	push(_result);
+}
+
+:fconst_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0b)
+{
+	f :$(SIZE) = 0;
+	fAsFloat:$(SIZE) = int2float(f);
+	push(fAsFloat);
+}
+
+:fconst_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0c)
+{
+	f :$(SIZE) = 1;
+	fAsFloat:$(SIZE) = int2float(f);
+	push(fAsFloat);
+}
+
+:fconst_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0d)
+{
+	f :$(SIZE) = 2;
+	fAsFloat:$(SIZE) = int2float(f);
+	push(fAsFloat);
+}
+
+:fdiv		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6e)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 f/ _value2;
+	push(_result);
+}
+
+:fload	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x17); index
+{
+	LVA = $(SIZE) * index;
+	 _value :$(SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push(_value);	
+}
+
+:fload_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x22)
+{
+	LVA = 0;
+	 _value :$(SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push(_value);	
+}
+
+:fload_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x23)
+{
+	LVA = 1 * $(SIZE);
+	 _value :$(SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push(_value);	
+}
+
+:fload_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x24)
+{
+	LVA = 2 * $(SIZE);
+	 _value :$(SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push(_value);	
+}
+
+:fload_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x25)
+{
+	LVA = 3 * $(SIZE);
+	 _value :$(SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push(_value);	
+}
+
+:fmul		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6a)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 f* _value2;
+	push(_result);
+}
+
+:fneg		is (in_table_switch=0 & in_lookup_switch=0 & op=0x76)
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	_result = f- _value;
+	push(_result);
+}
+
+:frem		is (in_table_switch=0 & in_lookup_switch=0 & op=0x72)
+{
+	_value2 :$(SIZE) = 0; 
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = fremOp(_value1, _value2);
+	push(_result);
+}
+
+:freturn	is (in_table_switch=0 & in_lookup_switch=0 & op=0xae)
+{
+   pop(return_value);
+   return [return_address];
+}
+
+:fstore	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x38); index
+{
+	  _value :$(SIZE) = 0;
+    pop(_value);
+    LVA = index*$(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:fstore_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x43)
+{
+	_value :$(SIZE) = 0;
+    pop(_value);
+    LVA = 0;
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:fstore_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x44)
+{
+	_value :$(SIZE) = 0;
+    pop(_value);
+    LVA = 1 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+:fstore_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x45)
+{
+	_value :$(SIZE) = 0;
+    pop(_value);
+    LVA = 2 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+:fstore_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x46)
+{
+	_value :$(SIZE) = 0;
+    pop(_value);
+    LVA = 3 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:fsub		is (in_table_switch=0 & in_lookup_switch=0 & op=0x66)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 f- _value2;
+	push(_result);
+}
+
+:getfield	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb4 ); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ] 
+{ 
+    getFieldCallOther(index:2);
+}
+
+
+:getstatic 	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb2); indexbyte1; indexbyte2 [index = indexbyte1 << 8 | indexbyte2;]
+{
+	getStaticCallOther(index:2);
+}
+
+:goto Branch		is (in_table_switch=0 & in_lookup_switch=0 & op=0xa7); Branch 
+{
+	goto Branch;
+}
+
+:goto_w Branch_w	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc8); Branch_w 
+{ 
+	goto Branch_w;
+}
+
+:i2b	is (in_table_switch=0 & in_lookup_switch=0 & op=0x91) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	local _byte = _value:1;
+	_result = sext(_byte);
+	push(_result); 
+}
+
+:i2c	is (in_table_switch=0 & in_lookup_switch=0 & op=0x92) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	local _char = _value:2;
+	_result = zext(_char);
+	push(_result); 
+}
+
+:i2d	is (in_table_switch=0 & in_lookup_switch=0 & op=0x87) 
+{
+	_value :$(SIZE) = 0;
+	_resultAsLong :$(DOUBLE_SIZE) = 0;
+	_resultAsDouble :$(DOUBLE_SIZE) = 0;
+	pop(_value);
+	_resultAsLong = sext(_value);
+	_resultAsDouble = int2float(_resultAsLong);
+	push(_resultAsDouble); 
+}
+
+:i2f	is (in_table_switch=0 & in_lookup_switch=0 & op=0x86) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	_result = int2float(_value);
+	push(_result); 
+}
+
+:i2l	is (in_table_switch=0 & in_lookup_switch=0 & op=0x85) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value);
+	_result = sext(_value);
+	push2(_result); 
+}
+
+:i2s	is (in_table_switch=0 & in_lookup_switch=0 & op=0x93) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	local _short = _value:2;
+	_result = sext(_short);
+	push(_result); 
+}
+
+:iadd	is (in_table_switch=0 & in_lookup_switch=0 & op=0x60)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 + _value2;
+	push(_result);
+}
+
+:iaload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x2e) 
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value :$(SIZE) = 0;
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + ($(SIZE) * _index);
+	_value = *[ram] (_offset);
+	push(_value);
+}
+
+:iand		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7e)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 & _value2;
+	push(_result);
+}
+
+:iastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x4f)
+{
+	_value :$(SIZE) = 0;
+	_index:$(SIZE) = 0;
+	_arrayref:$(SIZE) = 0;
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + ($(SIZE) * _index);
+	*[ram] _offset = _value;
+}
+
+:iconst_m1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x02) 
+{ 
+	_i :$(SIZE) = -1;
+	push(_i); 
+}
+
+:iconst_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x03) 
+{ 
+	_i :$(SIZE) = 0;
+	push(_i); 
+}
+
+:iconst_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x04)
+{ 
+	_i :$(SIZE) = 1;
+	push(_i); 
+}
+
+:iconst_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x05)
+{ 
+	_i :$(SIZE) = 2;
+	push(_i); 
+}
+
+:iconst_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x06)
+{ 
+	_i :$(SIZE) = 3;
+	push(_i); 
+}
+
+:iconst_4	is (in_table_switch=0 & in_lookup_switch=0 & op=0x07)
+{ 
+	_i :$(SIZE) = 4;
+	push(_i); 
+}
+
+:iconst_5	is (in_table_switch=0 & in_lookup_switch=0 & op=0x08)
+{ 
+	_i :$(SIZE) = 5;
+	push(_i); 
+}
+
+:idiv		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6c)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 s/ _value2;
+	push(_result);
+}
+
+:if_acmpeq   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa5); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 == _value2 ) goto Branch;
+}
+
+:if_acmpne   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa6); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 != _value2 ) goto Branch;
+}
+
+:if_icmpeq   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9f); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 == _value2 ) goto Branch;
+}
+
+:if_icmpne   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa0); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 != _value2 ) goto Branch;
+}
+
+:if_icmplt   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa1); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 s< _value2 ) goto Branch;
+}
+
+:if_icmpge   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa2); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 s>= _value2 ) goto Branch;
+}
+
+:if_icmpgt   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa3); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 s> _value2 ) goto Branch;
+}
+
+:if_icmple   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa4); Branch
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	pop(_value2); 
+	pop(_value1);
+	if( _value1 s<= _value2 ) goto Branch;
+}
+
+:ifeq   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x99); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value == 0 ) goto Branch;
+}
+
+:ifne   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9a); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value != 0 ) goto Branch;
+}
+
+:iflt   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9b); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value s< 0 ) goto Branch;
+}
+
+:ifge   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9c); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value s>= 0 ) goto Branch;
+}
+
+:ifgt   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9d); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value s> 0 ) goto Branch;
+}
+
+:ifle   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0x9e); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if( _value s<= 0 ) goto Branch;
+}
+
+:ifnonnull   Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc7); Branch
+{
+    _value :$(SIZE) = 0;
+	pop(_value);
+	if ( _value != 0) goto Branch;
+}
+
+:ifnull   Branch is (in_table_switch=0 & in_lookup_switch=0 & op=0xc6); Branch
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	if ( _value == 0) goto Branch;
+}
+
+:iinc index, constant	is (in_table_switch=0 & in_lookup_switch=0 & op=0x84); index; constant 
+{
+	_const :$(SIZE) = 0;
+	LVA = index*$(SIZE);
+	_const = sext(constant:1);
+	*[localVariableArray]:$(SIZE) (LVA) = (*[localVariableArray]:$(SIZE) (LVA)) + _const;
+}
+
+:iload index		is (in_table_switch=0 & in_lookup_switch=0 & op=0x15); index 
+{
+	LVA = index*$(SIZE);
+	_value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_value);
+}
+
+:iload_0		is (in_table_switch=0 & in_lookup_switch=0 & op=0x1a) 
+{
+    LVA = 0;
+	_value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_value);
+}
+
+:iload_1		is (in_table_switch=0 & in_lookup_switch=0 & op=0x1b) 
+{
+    LVA = 1 * $(SIZE);
+	_value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_value);
+}
+
+:iload_2		is (in_table_switch=0 & in_lookup_switch=0 & op=0x1c) 
+{	LVA = 2 * $(SIZE);
+    _value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_value);
+}
+
+:iload_3		is (in_table_switch=0 & in_lookup_switch=0 & op=0x1d) 
+{
+	LVA = 3 * $(SIZE);
+	_value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+	push(_value);
+}
+
+:imul			is (in_table_switch=0 & in_lookup_switch=0 & op=0x68) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 * _value2;
+	push(_result);
+}
+
+:ineg			is (in_table_switch=0 & in_lookup_switch=0 & op=0x74) 
+{
+	_value :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop(_value);
+	_result = -_value;
+	push(_result); 
+}
+
+:instanceof index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc1); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ] 
+{
+	_object:$(SIZE) = 0;
+	pop(_object);
+    _res:1 = cpool(_object,index,$(CPOOL_INSTANCEOF));
+    _result:$(SIZE) = zext(_res);
+    push(_result);
+}
+
+
+:invokedynamic index, blank1, blank2	is (in_table_switch=0 & in_lookup_switch=0 & op=0xba); indexbyte1; indexbyte2; blank1; blank2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+    invokedynamicCallOther(index:2);	
+}
+
+:invokeinterface index, count, blank1	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb9); indexbyte1; indexbyte2; count; blank1 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+    invokeinterfaceCallOther(index:2);
+}
+
+:invokespecial index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb7); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+	invokespecialCallOther(index:2);
+}
+
+:invokestatic index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb8); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+	invokestaticCallOther(index:2);	
+}
+
+:invokevirtual index is (in_table_switch=0 & in_lookup_switch=0 & op=0xb6); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+   invokevirtualCallOther(index:2);
+
+}
+
+:ior		is (in_table_switch=0 & in_lookup_switch=0 & op=0x80) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 | _value2;
+	push(_result); 
+}
+
+:irem		is (in_table_switch=0 & in_lookup_switch=0 & op=0x70) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 s% _value2;
+	push(_result);
+}
+
+:ireturn	is (in_table_switch=0 & in_lookup_switch=0 & op=0xac) 
+{
+    pop(return_value);
+    return [return_address];
+}
+
+:ishl		is (in_table_switch=0 & in_lookup_switch=0 & op=0x78) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 << (_value2 & 0x1f);
+	push(_result);
+}
+
+:ishr		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7a) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 s>> (_value2 & 0x1f);
+	push(_result);
+}
+
+:istore index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x36); index 
+{
+    _value :$(SIZE) = 0;
+    pop(_value);
+    LVA = index*$(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:istore_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3b) 
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 0;
+	*[localVariableArray]:$(SIZE) (LVA) =_value;
+}
+
+:istore_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3c) 
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 1 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) =_value;
+}
+
+:istore_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3d) 
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 2 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) =_value;
+}
+
+:istore_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3e) 
+{
+	_value :$(SIZE) = 0;
+	pop(_value);
+	LVA = 3 * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) =_value;
+}
+
+:isub		is (in_table_switch=0 & in_lookup_switch=0 & op=0x64) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 - _value2;
+	push(_result);
+}
+
+:iushr		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7c) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 >> (_value2 & 0x1f);
+	push(_result);
+}
+
+:ixor		is (in_table_switch=0 & in_lookup_switch=0 & op=0x82) 
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(SIZE) = 0;
+	_result :$(SIZE) = 0;
+	
+	pop(_value2);
+	pop(_value1);
+	_result = _value1 ^ _value2;
+	push(_result); 
+}
+
+:jsr Branch	is (in_table_switch=0 & in_lookup_switch=0 & op=0xa8); Branch
+{
+	retAddr :$(SIZE) = inst_next;
+	push(retAddr);
+	goto Branch;
+}
+
+:jsr_w Branch_w is (in_table_switch=0 & in_lookup_switch=0 & op=0xc9); Branch_w
+{
+	retAddr :$(SIZE) = inst_next;
+	push(retAddr);
+	goto Branch_w;
+}
+
+:l2d		is (in_table_switch=0 & in_lookup_switch=0 & op=0x8a)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	_result = int2float(_value);
+	push2(_result);
+}
+
+:l2f		is (in_table_switch=0 & in_lookup_switch=0 & op=0x89)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop2(_value);
+	_result = int2float(_value);
+	push(_result);
+}
+
+:l2i 		is (in_table_switch=0 & in_lookup_switch=0 & op=0x88)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop2(_value);
+	_result = _value:$(SIZE);
+	push(_result);
+}
+
+:ladd		is (in_table_switch=0 & in_lookup_switch=0 & op=0x61)
+{
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 + _value2;
+	push2(_result);
+}
+
+:laload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x2f)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value :$(DOUBLE_SIZE) = 0;
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + ($(DOUBLE_SIZE) * _index);
+	_value = *[ram]:$(DOUBLE_SIZE) (_offset);
+	push2(_value);
+	
+}
+
+:land		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7f)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 & _value2;
+	push2(_result);
+}
+
+:lastore	is (in_table_switch=0 & in_lookup_switch=0 & op=0x50)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_index:$(SIZE) = 0;
+	_arrayref:$(SIZE) = 0;
+	pop2(_value);
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + ($(DOUBLE_SIZE) * _index);
+	*[ram]:$(DOUBLE_SIZE) _offset = _value;
+	
+}
+
+:lcmp		is (in_table_switch=0 & in_lookup_switch=0 & op=0x94)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = zext(_value1 s> _value2) + zext(_value1 s>= _value2) - 1;
+	push(_result);
+}
+
+:lconst_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x09)
+{
+	_l :$(DOUBLE_SIZE) = 0;
+	push2(_l);
+}
+
+:lconst_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x0a)
+{
+	_l :$(DOUBLE_SIZE) = 1;
+	push2(_l);
+}
+
+:ldc	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x12); index
+{
+	ldcCallOther(index:1);
+}
+
+:ldc_w	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x13); indexbyte1; indexbyte2 [ index = indexbyte1 << 8 | indexbyte2; ]
+{
+	ldc_wCallOther(index:2);
+}
+
+:ldc2_w	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x14); indexbyte1; indexbyte2 [ index = indexbyte1 << 8 | indexbyte2; ]
+{
+	ldc2_wCallOther(index:2);
+}
+
+:ldiv		is (in_table_switch=0 & in_lookup_switch=0 & op=0x6d)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 s/ _value2;
+	push2(_result);
+}
+
+:lload	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x16); index
+{
+	LVA = index * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:lload_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x1e)
+{
+	LVA = 0;
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:lload_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x1f)
+{
+	LVA = 1 * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:lload_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x20)
+{
+	LVA = 2 * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:lload_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x21)
+{
+	LVA = 3 * $(SIZE);
+	_value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+	push2(_value);
+}
+
+:lmul		is (in_table_switch=0 & in_lookup_switch=0 & op=0x69)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 * _value2; 
+	push2(_result);
+}
+
+:lneg		is (in_table_switch=0 & in_lookup_switch=0 & op=0x75)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	_result= -_value;
+	push2(_result);
+}
+
+##################################################################################################
+# lookupswitch
+##################################################################################################
+
+LookupSwitch_match:match _offset is matchbyte1; matchbyte2; matchbyte3; matchbyte4; offsetbyte1; offsetbyte2; offsetbyte3; offsetbyte4 [match = (matchbyte1 << 24) | (matchbyte2 << 16) | (matchbyte3 << 8) | (matchbyte4); _offset = (offsetbyte1 << 24) | (offsetbyte2 << 16) | (offsetbyte3 << 8) | (offsetbyte4); ]
+{
+}
+
+LookupSwitch_case:"lscase" lscase is (in_lookup_switch=1 & in_table_switch=0) [ lscase = switch_num; switch_num = switch_num - 1;]
+{
+}
+
+:^LookupSwitch_case LookupSwitch_match, instruction is (in_lookup_switch=1 & in_table_switch=0); LookupSwitch_case; LookupSwitch_match; instruction
+{
+}
+
+:"lscase" lscase LookupSwitch_match is (in_lookup_switch=1 & switch_num=1 & in_table_switch=0); LookupSwitch_match [in_lookup_switch=0; lscase=switch_num; ]
+{
+}
+
+define pcodeop switchAssist;
+
+padSwitch: "" is alignmentPad = 3 & padVal & op ; pad1; pad2; pad3	{ export *[const]:1 padVal; }
+padSwitch: "" is alignmentPad = 2 & padVal & op ; pad1; pad2		{ export *[const]:1 padVal; }
+padSwitch: "" is alignmentPad = 1 & padVal & op ; pad1				{ export *[const]:1 padVal; }
+padSwitch: "" is alignmentPad = 0 & padVal & op					    { export *[const]:1 padVal; }
+
+dolookupswitch: _default, npairs is alignmentPad & defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4; npairsbyte1; npairsbyte2; npairsbyte3; npairsbyte4 [ npairs = (npairsbyte1 << 24) | (npairsbyte2 << 16) | (npairsbyte3 << 8) | npairsbyte4; _default = (defaultbyte1 << 24) | (defaultbyte2 << 16) | (defaultbyte3 << 8) | (defaultbyte4); switch_num = npairs; in_lookup_switch = 1;]
+{
+    _padding:1 = alignmentPad;
+    _opcodeAddr:$(SIZE) = inst_start;
+    _defaultAddr:$(SIZE) = inst_start + _default;
+    _key:$(SIZE) = 0;
+    pop(_key);
+    _address:$(SIZE) = switchAssist(_key,_opcodeAddr,_padding,_defaultAddr,npairs:$(SIZE));
+    goto [ _address ];
+}
+
+:lookupswitch dolookupswitch, instruction is in_lookup_switch=0 & in_table_switch=0 & op=0xab & alignmentPad = 0 ; dolookupswitch; instruction 
+{
+	build dolookupswitch;
+}
+:lookupswitch dolookupswitch, instruction is in_lookup_switch=0 & in_table_switch=0 & op=0xab & alignmentPad = 1 ; pad1; dolookupswitch; instruction 
+{
+	build dolookupswitch;
+}
+:lookupswitch dolookupswitch, instruction is in_lookup_switch=0 & in_table_switch=0 & op=0xab & alignmentPad = 2 ; pad1; pad2; dolookupswitch; instruction 
+{
+	build dolookupswitch;
+}
+:lookupswitch dolookupswitch, instruction is in_lookup_switch=0 & in_table_switch=0 & op=0xab & alignmentPad = 3 ; pad1; pad2; pad3; dolookupswitch; instruction 
+{
+	build dolookupswitch;
+}
+
+
+:lor		is (in_table_switch=0 & in_lookup_switch=0 & op=0x81)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 | _value2;
+	push2(_result);
+}
+
+:lrem		is (in_table_switch=0 & in_lookup_switch=0 & op=0x71)
+{
+	_value2 :$(DOUBLE_SIZE) = 0; 
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 s% _value2;
+	push2(_result);
+}
+
+:lreturn	is (in_table_switch=0 & in_lookup_switch=0 & op=0xad)
+{
+	pop2(cat2_return_value);
+    return [return_address];
+}
+
+:lshl		is (in_table_switch=0 & in_lookup_switch=0 & op=0x79)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value2);
+	pop2(_value1);
+	_result = _value1 << (_value2 & 0x3f);
+	push2(_result);
+}
+
+:lshr		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7b)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value2);
+	pop2(_value1);
+	_result = _value1 s>> (_value2 & 0x3f);
+	push2(_result);
+}
+
+:lstore	index	is (in_table_switch=0 & in_lookup_switch=0 & op=0x37); index
+{
+	 _value :$(DOUBLE_SIZE) = 0;
+    pop2(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:lstore_0	is (in_table_switch=0 & in_lookup_switch=0 & op=0x3f)
+{
+	_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 0;
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) =_value;
+}
+
+:lstore_1	is (in_table_switch=0 & in_lookup_switch=0 & op=0x40)
+{
+_value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 1 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) =_value;	
+}
+
+:lstore_2	is (in_table_switch=0 & in_lookup_switch=0 & op=0x41)
+{
+    _value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 2 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) =_value;
+}
+
+:lstore_3	is (in_table_switch=0 & in_lookup_switch=0 & op=0x42)
+{
+    _value :$(DOUBLE_SIZE) = 0;
+	pop2(_value);
+	LVA = 3 * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) =_value;
+}
+
+:lsub		is (in_table_switch=0 & in_lookup_switch=0 & op=0x65)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 - _value2;
+	push2(_result);
+}
+
+:lushr		is (in_table_switch=0 & in_lookup_switch=0 & op=0x7d)
+{
+	_value2 :$(SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop(_value2);
+	pop2(_value1);
+	_result = _value1 >> (_value2 & 0x3f);
+	push2(_result);
+}
+
+:lxor		is (in_table_switch=0 & in_lookup_switch=0 & op=0x83)
+{
+	_value2 :$(DOUBLE_SIZE) = 0;
+	_value1 :$(DOUBLE_SIZE) = 0;
+	_result :$(DOUBLE_SIZE) = 0;
+	pop2(_value2);
+	pop2(_value1);
+	_result = _value1 ^ _value2;
+	push2(_result);
+}
+
+:monitorenter	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc2)
+{
+	_objectref :$(SIZE) = 0;
+	pop(_objectref);
+	monitorenterOp(_objectref);
+}
+
+:monitorexit	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc3)
+{
+	_objectref :$(SIZE) = 0;
+	pop(_objectref);
+	monitorexitOp(_objectref);
+}
+
+:multianewarray index is (in_table_switch=0 & in_lookup_switch=0 & op=0xc5); indexbyte1; indexbyte2; dimensions [index = indexbyte1<<8 | indexbyte2;]
+{
+    multianewarrayCallOther(index:2,dimensions:1);
+}
+
+:new index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xbb); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
+{
+    local _className = cpool(0:4,index,$(CPOOL_NEW));
+    _ref: $(SIZE) = newobject(_className);
+    push(_ref);	
+}
+
+:newarray atype	is (in_table_switch=0 & in_lookup_switch=0 & op=0xbc); atype 
+{
+	_count:$(SIZE)=0;
+	_arrayref:$(SIZE)=0;
+	pop(_count);
+	_ref:$(SIZE) = cpool(0:4,atype:1,$(CPOOL_NEWARRAY));
+	_arrayref = newobject(_ref, _count);
+	push(_arrayref);
+}
+
+:nop		is (in_table_switch=0 & in_lookup_switch=0 & in_lookup_switch=0 & op=0x00) 
+{
+}
+
+:pop		is (in_table_switch=0 & in_lookup_switch=0 & op=0x57) 
+{ 
+	SP = SP + $(SIZE);
+}
+
+:pop2		is (in_table_switch=0 & in_lookup_switch=0 & op=0x58) 
+{
+	SP = SP + $(DOUBLE_SIZE);
+}
+
+:putfield index 	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb5); indexbyte1; indexbyte2 [ index = indexbyte1 << 8 | indexbyte2; ] 
+{ 
+    putFieldCallOther(index:2);
+}
+
+:putstatic index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xb3); indexbyte1; indexbyte2 [index = indexbyte1 << 8 | indexbyte2; ]
+{
+	putStaticCallOther(index:2);
+}
+
+:ret index		is (in_table_switch=0 & in_lookup_switch=0 & op=0xa9); index 
+{
+    LVA = index * $(SIZE);
+    _value:$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+    goto [_value];
+}
+
+:return			is (in_table_switch=0 & in_lookup_switch=0 & op=0xb1)
+{
+	return [return_address];
+}
+
+:saload		is (in_table_switch=0 & in_lookup_switch=0 & op=0x35)
+{
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	_value:2 = 0;
+	pop(_index);
+	pop(_arrayref);
+	_offset: $(SIZE) = _arrayref + _index * 2;
+	_value = *[ram]:2 _offset;
+	_valueSignExtended:$(SIZE) = sext(_value);
+	push(_valueSignExtended);
+}
+
+:sastore		is (in_table_switch=0 & in_lookup_switch=0 & op=0x56) 
+{ 
+    _value :$(SIZE) = 0;
+	_index :$(SIZE) = 0;
+	_arrayref :$(SIZE) = 0;
+	pop(_value);
+	pop(_index);
+	pop(_arrayref);
+	local _offset = _arrayref + _index * 2;
+	*[ram]:$(SIZE) _offset = _value:2;
+}
+
+:sipush short		is (in_table_switch=0 & in_lookup_switch=0 & op=0x11); byte1; byte2 [ short = byte1<<8 | byte2; ] 
+{
+	_result:$(SIZE) = sext(short:2);
+	push(_result);
+}
+
+:swap			is (in_table_switch=0 & in_lookup_switch=0 & op=0x5f)
+{
+	_value1 :$(SIZE) = 0;
+	_value2 :$(SIZE) = 0;
+	pop(_value1);
+	pop(_value2);
+	push(_value1);
+	push(_value2);
+}
+
+########################################################################################################################
+# tableswitch
+########################################################################################################################
+
+Switch_offset:_offset is offsetbyte1; offsetbyte2; offsetbyte3; offsetbyte4 [ _offset = inst_start + ((offsetbyte1<<24) | (offsetbyte2<<16) | (offsetbyte3<<8) | offsetbyte4); ]
+{
+}
+
+Switch_case:"case" case is (in_table_switch=1) [ case = switch_high-switch_num; switch_num=switch_num-1; ]
+{
+}
+
+dotableswitch: Default, low, high is alignmentPad & Default;lowbyte1; lowbyte2; lowbyte3; lowbyte4; highbyte1; highbyte2; highbyte3; highbyte4 [ low = (lowbyte1 << 24) | (lowbyte2 << 16) | (lowbyte3 << 8) | lowbyte4; high = (highbyte1 << 24) | (highbyte2 << 16) | (highbyte3 << 8) | highbyte4; switch_low = low; switch_num = high - low; switch_high = high; in_table_switch = 1; ]
+
+{
+	_offset :$(SIZE) = 0;
+    idx :$(SIZE) = 0;
+    padding:$(SIZE) = alignmentPad;
+    
+    pop(idx);
+    if (idx s< low) goto Default;
+    if (idx s> high) goto Default;
+    #opcode_address + byte_for_opcode + padding + default + low + high = start of table
+    _offset = inst_start + 1 + padding + 4 + 4 + 4 + 4*(idx-low);
+    switch_target = inst_start + *:$(SIZE)(_offset);
+    goto [switch_target];
+}
+
+
+:tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=0; dotableswitch; instruction 
+{
+	build dotableswitch;
+}
+:tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=1; pad1; dotableswitch; instruction 
+{
+	build dotableswitch;
+}
+:tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=2; pad1; pad2; dotableswitch; instruction 
+{
+	build dotableswitch;
+}
+:tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=3; pad1; pad2; pad3; dotableswitch; instruction 
+{
+	build dotableswitch;
+}
+
+# Switch entry that's not the last one.
+# no pcode def - this construction is just for consuming all of the bytes of a tableswitch instructions
+# decrements the switch number
+:^Switch_case Switch_offset, instruction is (in_table_switch=1 & in_lookup_switch=0); Switch_case; Switch_offset; instruction 
+{
+}
+
+#Last switch entry. Get out of switch context.
+:"case" case Switch_offset is (in_table_switch=1 & in_lookup_switch=0 &switch_num=0); Switch_offset [ in_table_switch=0; case=switch_high-switch_num; ]
+{
+}
+
+#wide loads 
+:wide_iload index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc415); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2; ]
+{
+   LVA = index * $(SIZE);
+   _value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+   push(_value);
+}
+
+:wide_fload index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc417); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2; ]
+{
+   LVA = index * $(SIZE);
+   _value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+   push(_value);
+}
+
+:wide_aload index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc419); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2; ]
+{
+   LVA = index * $(SIZE);
+   _value :$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+   push(_value);
+}
+
+:wide_lload index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc416); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2; ]
+{
+   LVA = index * $(SIZE);
+   _value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+   push2(_value);
+}
+
+:wide_dload index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc418); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2; ]
+{
+   LVA = index * $(SIZE);
+   _value :$(DOUBLE_SIZE) = *[localVariableArray]:$(DOUBLE_SIZE) (LVA);
+   push2(_value);
+}
+
+
+#wide stores
+:wide_istore index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc436); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    _value :$(SIZE) = 0;
+    pop(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:wide_fstore index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc438); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    _value :$(SIZE) = 0;
+    pop(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:wide_astore index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc43a); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    _value :$(SIZE) = 0;
+    pop(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(SIZE) (LVA) = _value;
+}
+
+:wide_lstore index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc437); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    _value :$(DOUBLE_SIZE) = 0;
+    pop2(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+:wide_dstore index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc439); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    _value :$(DOUBLE_SIZE) = 0;
+    pop2(_value);
+    LVA = index * $(SIZE);
+	*[localVariableArray]:$(DOUBLE_SIZE) (LVA) = _value;
+}
+
+#wide ret
+:wide_ret index is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc4a9); indexbyte1; indexbyte2 [index = (indexbyte1 << 8) | indexbyte2;]
+{
+    LVA = index * $(SIZE);
+    _value:$(SIZE) = *[localVariableArray]:$(SIZE) (LVA);
+    goto [_value];
+}
+
+#wide inc - instruction is called wide format 2 by JVM specification but iinc_w by javap
+:iinc_w index, constant is (in_table_switch=0 & in_lookup_switch=0 & w_op=0xc484); indexbyte1; indexbyte2; constantbyte1; constantbyte2 [ index = (indexbyte1 << 8) | indexbyte2; constant = (constantbyte1 << 8) | constantbyte2;]
+{
+    fullIndex: $(SIZE) = 4*zext(index:2);
+    fullConstant: $(SIZE) = sext(constant:2);
+    intVal:$(SIZE) = *[localVariableArray]:$(SIZE) (fullIndex);
+    *[localVariableArray]:$(SIZE) (fullIndex) = (intVal + fullConstant);   
+}

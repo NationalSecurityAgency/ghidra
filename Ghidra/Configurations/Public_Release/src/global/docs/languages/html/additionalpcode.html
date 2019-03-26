@@ -1,0 +1,323 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Additional P-CODE Operations</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="prev" href="pseudo-ops.html" title="Pseudo P-CODE Operations">
+<link rel="next" href="reference.html" title="Syntax Reference">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Additional P-CODE Operations</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="pseudo-ops.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="reference.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="additionalpcode"></a>Additional P-CODE Operations</h2></div></div></div>
+<p>
+The following opcodes are not generated as part of the raw translation
+of a machine instruction into p-code operations, so none of them can be used
+in a processor specification. But, they may be
+introduced at a later stage by various analysis algorithms.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_multiequal"></a>MULTIEQUAL</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="multiequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode to merge from first basic block.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td></td>
+  <td>Varnode to merge from second basic block.</td>
+</tr>
+<tr>
+  <td align="right">[...]</td>
+  <td></td>
+  <td>Varnodes to merge from additional basic blocks.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Merged varnode for basic block containing op.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This operation represents a copy from one or more possible
+locations. From the compiler theory concept of Static Single Assignment form, this is
+a <span class="bold"><strong>phi-node</strong></span>.  Each input corresponds to a control-flow path
+flowing into the basic block containing the <span class="bold"><strong>MULTIEQUAL</strong></span>.
+The operator copies a particular input into the output varnode depending on what path
+was last executed. All inputs and outputs must be the same size.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_indirect"></a>INDIRECT</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="indirect.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode on which output may depend.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td>(<span class="bold"><strong>special</strong></span>)</td>
+  <td>Code iop of instruction causing effect.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode containing result of effect.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+An <span class="bold"><strong>INDIRECT</strong></span> operator copies input0 into output,
+but the value may be altered in an indirect way
+by the operation referred to by input1. The varnode input1 is not part of the
+machine state but is really an internal reference to a specific p-code operator that
+may be affecting the value of the output varnode. A special address space indicates
+input1's use as an internal reference encoding.
+An <span class="bold"><strong>INDIRECT</strong></span> op is a placeholder for possible
+indirect effects (such as pointer aliasing or missing code) when data-flow
+algorithms do not have enough information to follow the data-flow directly. Like
+the <span class="bold"><strong>MULTIEQUAL</strong></span>, this op is used
+for generating Static Single Assignment form.
+</p>
+<p>
+A constant varnode (zero) for input0 is used by analysis to indicate that the output
+of the <span class="bold"><strong>INDIRECT</strong></span> is produced solely by the p-code operation
+producing the indirect effect, and there is no possibility that the value existing prior
+to the operation was used or preserved.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_ptradd"></a>PTRADD</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="ptradd.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode containing pointer to an array.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td></td>
+  <td>Varnode containing integer index.</td>
+</tr>
+<tr>
+  <td align="right">input2</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant varnode indicating element size.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode result containing pointer to indexed array entry.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This operator serves as a more compact representation of the pointer calculation,
+input0 + input1 * input2, but also indicates explicitly that
+input0 is a reference to
+an array data-type. Input0 is a pointer to the beginning of the array, input1 is an
+index into the array, and input2 is a constant indicating the size of
+an element in the array. As an
+operation, <span class="bold"><strong>PTRADD</strong></span> produces the
+pointer value of the element at the indicated index in the array
+and stores it in output.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_ptrsub"></a>PTRSUB</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="ptrsub.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode containing pointer to structure.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td></td>
+  <td>Varnode containing integer offset to a subcomponent.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode result containing pointer to the subcomponent.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+A <span class="bold"><strong>PTRSUB</strong></span> performs the simple pointer calculation,
+input0 + input1, but also indicates explicitly that input0 is a
+reference to a structured data-type
+and one of its subcomponents is being accessed. Input0 is a pointer
+to the beginning of the structure, and input1 is a byte offset to the subcomponent.
+As an operation, <span class="bold"><strong>PTRSUB</strong></span> produces a
+pointer to the subcomponent and stores it in output.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_cast"></a>CAST</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="cast.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode containing value to be copied.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode result of copy.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+A <span class="bold"><strong>CAST</strong></span> performs identically to the <span class="bold"><strong>COPY</strong></span>
+operator but also indicates that there is a forced change in the data-types associated with the varnodes
+at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast. 
+This operator is intended specifically for when the value doesn't change but its
+interpretation as a data-type changes at this point.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="pseudo-ops.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="reference.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Pseudo P-CODE Operations </td>
+<td width="20%" align="center"><a accesskey="h" href="pcoderef.html">Home</a></td>
+<td width="40%" align="right" valign="top"> Syntax Reference</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

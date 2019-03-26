@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+    <range space="SFR"/>
+    <range space="BITS"/>
+  </global>
+  <stackpointer register="SPX" space="RAM" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="R0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="ACC"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="ACC"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SPX"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xfffc"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

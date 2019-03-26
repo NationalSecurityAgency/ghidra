@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+  <!--
+      These are all the possible values for endianness.
+      (Shouldn't ever change unless something complicated comes
+      up)
+    -->
+  <define name="endian_type">
+    <choice>
+      <value>big</value>
+      <value>little</value>
+    </choice>
+  </define>
+
+  <!--
+      duplicate definition of xs:boolean so we don't need to use
+      that datatype library
+    -->
+  <define name="boolean_type">
+    <choice>
+      <value type="string">true</value>
+      <value type="string">false</value>
+      <value type="string">1</value>
+      <value type="string">0</value>
+    </choice>
+  </define>
+
+  <!--
+       a key-value properties type for use by processor and compiler specs
+    -->
+  <define name="properties_type">
+    <element name="properties">
+      <zeroOrMore>
+        <element name="property">
+          <attribute name="key"/>
+          <attribute name="value"/>
+        </element>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <!--
+      memory_tags_type is a helper choice for memory-tagging elements
+      such as global, nohighptr, etc.
+      -->
+  <define name="memory_tags_type">
+    <choice>
+      <ref name="register_type"/>
+      <ref name="range_type"/>
+    </choice>
+  </define>
+
+  <!--
+      varnode_tags_type is a helper choice for varnode-tagging elements
+      such as unaffected, constresolve, etc.
+      -->
+  <define name="varnode_tags_type">
+    <choice>
+      <ref name="register_type"/>
+      <ref name="varnode_type"/>
+    </choice>
+  </define>
+
+  <!--
+      addr_tags_type is a helper choice for pentry
+      -->
+  <define name="addr_tags_type">
+    <choice>
+      <ref name="register_type"/>
+      <ref name="addr_type"/>
+    </choice>
+  </define>
+
+  <!--
+      Specify a register to tag with a "memory" property
+      such as global, nohighptr, volatile, etc.
+
+      Maybe this should be named differently from the register
+      in processor_spec.rxg.
+      -->
+  <define name="register_type">
+    <element name="register">
+      <attribute name="name"/>
+    </element>
+  </define>
+
+  <!--
+      Unified strong range type where attributes space, first and last are
+      required.
+
+      NOTE: all range types are now strong; i.e. there is no weak range
+      type any more.  Documentation here has been merged.
+
+      NOTE AGAIN: all range types are semi-weak,
+      in that if first and last are omitted, the entire space is selected.
+      If you provide first or last, the other is also required, and
+      constrains the space to just that range of addresses.  This type is
+      actually a named element now.
+    -->
+  <define name="range_type">
+    <element name="range">
+      <attribute name="space"/>
+      <optional>
+        <group>
+          <attribute name="first"/>
+          <attribute name="last"/>
+        </group>
+      </optional>
+    </element>
+  </define>
+
+  <!--
+      This replaces some uses of the old addr_type.  Old
+      documentation inserted here just for reference.  (Not)
+      Used in unaffected and probably constresolve too,
+      maybe elsewhere.
+      -->
+  <define name="varnode_type">
+    <element name="varnode">
+      <attribute name="space"/>
+      <attribute name="offset"/>
+      <attribute name="size"/>
+    </element>
+  </define>
+
+  <!--
+      What pentry uses for calls where parameters don't go
+      in registers.
+      -->
+  <define name="addr_type">
+    <element name="addr">
+      <attribute name="space"/>
+      <optional>
+        <attribute name="offset"/>
+      </optional>
+      <optional>
+        <attribute name="piece1"/>
+      </optional>
+      <optional>
+        <attribute name="piece2"/>
+      </optional>
+      <optional>
+        <attribute name="piece3"/>
+      </optional>
+      <optional>
+        <attribute name="piece4"/>
+      </optional>
+    </element>
+  </define>
+
+  <!--
+      NOTE: because RELAX NG does not support type inheritence, this type
+      does NOT inherit from range_type (although that is indeed what it
+      is).
+    -->
+
+  <define name="context_tracked_set_type">
+    <attribute name="space"/>
+    <optional>
+      <group>
+        <attribute name="first"/>
+        <attribute name="last"/>
+      </group>
+    </optional>
+    <oneOrMore>
+      <!--
+          NOTE: leave currently unused description
+          attribute in.
+        -->
+      <element name="set">
+        <attribute name="name"/>
+        <attribute name="val"/>
+        <optional> <attribute name="description"/> </optional>
+      </element>
+    </oneOrMore>
+  </define>
+
+  <define name="context_data_type">
+    <interleave>
+      <zeroOrMore>
+        <element name="context_set">
+          <ref name="context_tracked_set_type"/>
+        </element>
+      </zeroOrMore>
+      <zeroOrMore>
+        <element name="tracked_set">
+          <ref name="context_tracked_set_type"/>
+        </element>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  
+  <define name="symbol_type">
+	<choice>
+      <value type="string">code</value>
+      <value type="string">code_ptr</value>
+    </choice>
+  </define>
+
+  <define name="inject_parameter_type">
+    <attribute name="name"/>
+    <optional>
+      <attribute name="size"/>
+    </optional>
+  </define>
+  
+  <define name="pcode_type">
+    <optional>
+      <attribute name="paramshift"/>
+    </optional>
+    <optional>
+      <attribute name="dynamic"/>
+    </optional>
+    <interleave>
+      <zeroOrMore>
+        <element name="input"><ref name="inject_parameter_type"/></element>
+      </zeroOrMore>
+      <zeroOrMore>
+        <element name="output"><ref name="inject_parameter_type"/></element>
+      </zeroOrMore>
+    </interleave>
+    <optional>
+      <element name="body">
+        <text/>
+      </element>
+    </optional>
+  </define>
+  
+  <define name="jumpassist_type">
+    <attribute name="name"/>
+    <interleave>
+      <optional>
+        <element name="case_pcode"><ref name="pcode_type"/></element>
+      </optional>
+      <optional>
+        <element name="addr_pcode"><ref name="pcode_type"/></element>
+      </optional>
+      <optional>
+        <element name="default_pcode"><ref name="pcode_type"/></element>
+      </optional>
+      <optional>
+        <element name="size_pcode"><ref name="pcode_type"/></element>
+      </optional>
+    </interleave>
+  </define>
+</grammar>

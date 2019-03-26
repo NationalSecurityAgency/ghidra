@@ -1,0 +1,574 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Browser Field Formatter</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Field_Formatter"></A>Browser Field Formatter</H1>
+
+    <P>The <I>Browser Field Formatter</I> is used to control how the fields in a listing are
+    displayed by the Listing. The format specifies which fields are displayed, the order of fields,
+    and the width of each field. The formatter is not normally displayed by default, but can be
+    accessed at anytime by clicking on the
+    <IMG src="images/field.header.down.png" alt="" border="0"><A name=
+    "Toggle_Header"></A> icon located in the Listing's toolbar.&nbsp; When the formatter is
+    visible, the button becomes depressed, and can be clicked to hide the formatter.</P>
+
+    <CENTER>
+      <IMG src="images/OpenHeader.png" alt="" border="0">
+    </CENTER>
+
+    <P>The listing displays information at each address of a program.&nbsp; This information is
+    broken down into the following categories:</P>
+
+    <CENTER>
+      <TABLE border="1" width="74%">
+        <TR>
+          <TD width="20%">Address Break</TD>
+
+          <TD width="80%">Separates non-consecutive addresses</TD>
+        </TR>
+
+        <TR>
+          <TD width="20%">Plate</TD>
+
+          <TD width="80%">Displays plate comments.&nbsp; Other comment types are included in the
+          Instruction/Data element.</TD>
+        </TR>
+
+        <TR>
+          <TD width="20%">Function</TD>
+
+          <TD width="80%">Displays function signatures and function related attributes.</TD>
+        </TR>
+
+        <TR>
+          <TD width="20%">Variable</TD>
+
+          <TD width="80%">Displays information for the return, parameters and local variables associated with a function.</TD>
+        </TR>
+
+        <TR>
+          <TD width="20%">Instruction/Data</TD>
+
+          <TD width="80%">Displays information about instructions or data.</TD>
+        </TR>
+
+        <TR>
+          <TD width="20%">Open Data</TD>
+
+          <TD width="80%">Displays internals of a structure or array.</TD>
+        </TR>
+      </TABLE>
+    </CENTER>
+
+    <P>Each address has one or more of the above categories of information.&nbsp; Each category has
+    a display format which can be configured.&nbsp; The format consists of multiple lines, each
+    with some number of <I>field controllers.</I> A field controller manages the display of the
+    corresponding field of information in the program. The listing displays fields in the same
+    relative order, size and positioning as determined by the field controller. It is important to
+    understand that the formats, regardless of how they appear, represent the layout of information
+    for a single address.</P>
+
+    <P>Whenever the cursor is moved, the Browser Field Formatter automatically switches to the tab
+    associated with the current cursor location.&nbsp; In addition, the field controller for the
+    current cursor location is highlighted.</P>
+
+    <H2>Configuring the Format</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Add_Field"></A><B>Adding Fields</B></H3>
+
+      <BLOCKQUOTE>
+        <P>New fields can be added to the format by right-clicking on the Browser Field Formatter
+        component and selecting <B>Add Field<IMG src="../../shared/arrow.gif" alt="" border="0">
+        &lt;</B>name of field&gt; from the popup menu. The new field will be inserted at the
+        right-click point.&nbsp; Only the fields that have already been added to the format show up
+        in the popup menu.&nbsp; If more than one field appears in the popup, an additional menu
+        item, <B>Add Field<IMG src="../../shared/arrow.gif" alt="" border="0">All</B>, is
+        available.</P>
+
+        <H4><A name="Add_Spacer_Field"></A><IMG src="../../shared/note.png" border="0"> <B>The
+        Spacer Field</B></H4>
+
+        <BLOCKQUOTE>
+          <P>A <I>spacer</I> field is used to take up space in the listing. Optionally,
+          <I>spacer</I> fields can display some text (See <A href="#Add_Spacer_Field">Set
+          Text</A>). To add a <I>spacer</I> field, right click where a space is desired and select
+          the <B>Add Field<IMG src="../../shared/arrow.gif" alt="" border="0">Spacer</B> option
+          from the popup menu. After adding the <I>spacer</I> field, adjust its size to take up
+          more or less space.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Set_Spacer_Text"></A><B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set
+        Text</B></H4>
+
+        <BLOCKQUOTE>
+          <P><I>Spacer</I> fields can optionally have an associated text value.&nbsp; Each spacer's
+          text will be displayed at corresponding locations in the listing. To set text on a
+          <I>spacer</I> field, right click on the field and choose the <B>Set Text</B> option from
+          the popup menu. Entering empty text into the Set Text dialog box will remove any text
+          from the field thus returning the field to a blank spacer.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="Remove_Field"></A><B>Removing Fields</B></H3>
+
+      <BLOCKQUOTE>
+        <P>Fields can be removed by right clicking on them and selecting <B>Remove Field</B> from
+        the popup menu. All Fields can be removed by right clicking on the header and selecting the
+        <B>Remove All Fields</B> option from the popup menu.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="CBFieldFormatterMoveField"></A><B>Moving Fields</B></H3>
+
+      <BLOCKQUOTE>
+        <P>Fields can be moved by dragging and dropping the corresponding field controller in the
+        Browser Field Formatter. Field controllers can be dropped onto any line in the formatter.
+        Since fields cannot overlap, dropping a field controller onto another field controller will
+        cause the dropped field to appear either entirely before or directly after the other field,
+        depending on which is closer to the drop point.</P>
+
+        <P>Once a field controller has been moved, the remaining field controllers always move as
+        far to the left as possible to fill up any empty space. So if a field is moved off of a
+        row, all the fields to its right, move left to fill in the empty space. If a field is
+        dropped before another field, that field and all the fields to its right are moved to the
+        right to make room for the new field. <I>Spacer</I> fields can be inserted before a field
+        to move it further to the right. <A name="CodeBrowser_Label"></A></P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Disable_Field"></A><B>Disabling Fields</B></H3>
+
+      <BLOCKQUOTE>
+        <P>Fields can be disabled by right clicking on them and selecting <B>Disable Field</B> from
+        the popup menu. Disabled fields still take up space in the overall layout, but they don't
+        display any information in the listing.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Enable_Field"></A><B>Enable Field</B></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Disabled fields can be enabled by right clicking on them and selecting
+        <B>Enable Field</B> from the popup menu. The field will then display information in the
+        listing.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Insert_Row"></A><B>Insert Row</B></H3>
+
+      <BLOCKQUOTE>
+        <P>A new row for placing fields can be inserted by right clicking and selecting <B>Insert
+        Row</B> from the popup menu. A new empty row will then be inserted at point where the mouse
+        was clicked. Empty rows do not affect the listing because any rows (even rows that have
+        fields) that don't have displayable information are suppressed from the listing.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Remove_Row"></A><B>Remove Row</B></H3>
+
+      <BLOCKQUOTE>
+        <P>Empty rows can be deleted by right clicking on the row and selecting the <B>Remove
+        Row</B> option from the popup menu. The <B>Remove Row</B> option is not available if the
+        row is not empty.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Reset_Format"></A>Reset Format</H3>
+
+      <BLOCKQUOTE>
+        <P>Reset the format of the currently displayed category to the default settings by right
+        clicking on the Browser Field Formatter and select <B>Reset Format</B> on the popup.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Reset_All_Formats"></A>Reset All Formats</H3>
+
+      <BLOCKQUOTE>
+        <P>Reset the formats for all categories to their default settings by right clicking on the
+        Browser Field Formatter and select <B>Reset All Formats</B> on the popup.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Custom Formats</H2>
+
+    <BLOCKQUOTE>
+      <P>A structure is normally displayed using the Instruction/Data category format. However, it
+      is possible to create a custom format to display the structure.&nbsp; This custom format
+      allow you to include members of the structure in its display.</P>
+
+      <H3><A name="Custom_Header"></A>Create Custom Format</H3>
+
+      <BLOCKQUOTE>
+        <P>To create a custom format, right click on the formatter when the cursor is over a
+        structure and choose the <B>Create Custom Format</B> option. A new format will be created
+        with the same format as the Instruction/Data format. In addition to all the standard
+        fields, a displayable field is created for each member and is available in the <B>Add
+        Field</B> submenu.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Delete_Custom_Header"></A>Delete Custom Format</H3>
+
+      <BLOCKQUOTE>
+        <P>To delete a custom format, select its tab, right click in the Browser Field Formatter
+        and select the <B>Delete Custom Format</B> option.&nbsp; The format will revert to the
+        general instruction format.&nbsp;&nbsp;&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Save_Custom_Format"></A>Save Custom Format</H3>
+
+      <BLOCKQUOTE>
+        <P>Newly created Custom Formats are temporary and must be saved to the program in order to
+        be reused the next time the program is opened. To save a custom format, select its tab,
+        right click in the Browser Field Formatter and select the <B>Save Custom Format</B>
+        option.&nbsp;</P>
+
+        <P><B><IMG src="../../shared/note.png" border="0"></B> The program must be saved after
+        saving a custom format.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Available_Fields"></A>Available Fields</H2>
+
+    <BLOCKQUOTE>
+      <P>The table below shows a listing of all fields along with a brief description of the type
+      of information they display.&nbsp; The category from which the field can be accessed is also
+      provided.&nbsp; In some instances a field can be accessed from more than one category.</P>
+
+      <BLOCKQUOTE>
+        <CENTER>
+          <TABLE border="1" height="777" width="94%">
+            <TR>
+              <TH align="left" height="21" width="22%">Field Name</TH>
+
+              <TH align="left" height="21" width="22%">Category</TH>
+
+              <TH align="left" height="21" width="56%">Description</TH>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Address</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays addresses in the program</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Bytes</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the bytes that make up an
+              instruction or data&nbsp;</TD>
+            </TR>
+
+           <TR>
+              <TD align="left" height="21" width="22%">EOL Comment</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the end of line comment</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Field Name</TD>
+
+              <TD align="left" height="21" width="22%">Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the name of the data fields in a
+              structure</TD>
+            </TR>
+
+			<TR>
+              <TD align="left" height="21" width="22%">Function Call-Fixup</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays the name of the Call-Fixup associated with the function.</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Function Purge</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays the number of bytes purged from the
+              stack for a function</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Function Repeatable Comment</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays the function's comment that will
+              appear at all calls to that function</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Function Signature</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays the full function prototype, 
+                including calling convention, function name, return data type and parameters.  In addition 
+                the presence of the following function attributes will be indicated: inline, no-return,
+                and thunk.  If the function has varargs, the last parameter position will include "...".</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Function Tags</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays all tags associated with this function</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Label</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays all labels for an address</TD>
+            </TR>
+
+			<TR>
+              <TD align="left" height="21" width="22%">Memory Block Start</TD>
+
+              <TD align="left" height="21" width="22%">Plate</TD>
+
+              <TD align="left" height="21" width="56%">Displays information about the memory block</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Mnemonic</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the name of the instruction or
+              data</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Operands</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the input to the instruction or the
+              data value<BR>
+              </TD>
+            </TR>
+
+			<TR>
+              <TD align="left" height="21" width="22%">Parallel ||</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays a parallel indicator (e.g., || ) to
+              indicate that the current instruction executes in parallel with the previous 
+              instruction.</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Plate Comment</TD>
+
+              <TD align="left" height="21" width="22%">Plate</TD>
+
+              <TD align="left" height="21" width="56%">Displays the block header comment</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">PCode</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the micro-code for an
+              instruction</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Post-Comment</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the comment following an
+              instruction or data</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Pre-Comment</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the comment preceding an
+              instruction or data</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Register</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Displays the values of registers at the
+              entry point of a function</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Register Transition</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the values of registers at the
+              points where the value transitions to a new value.</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Separator</TD>
+
+              <TD align="left" height="21" width="22%">Address Break</TD>
+
+              <TD align="left" height="21" width="56%">Displays a "......." when there is a gap
+              between addresses</TD>
+            </TR>
+
+			<TR>
+              <TD align="left" height="21" width="22%">Signature Source</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Indicates the source-type associated with the 
+              function signature (i.e., DEFAULT, ANALYSIS, IMPORTED, USER_DEFINED).</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="18" width="22%">Space</TD>
+
+              <TD align="left" height="18" width="22%">Instruction/Data</TD>
+
+              <TD align="left" height="18" width="56%">Displays one or more blank lines as
+              established by a plugin</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Spacer</TD>
+
+              <TD align="left" height="21" width="22%">All</TD>
+
+              <TD align="left" height="21" width="56%">Used to separate other fields.&nbsp; Can
+              optionally display static text</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Stack Depth</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data</TD>
+
+              <TD align="left" height="21" width="56%">Indicates the current stack-pointer
+               offset relative to its state at the start of the associated function.  The field is 
+               only displayed for instructions contained within a function.  A bogus value
+               indicates that the calculation failed to determine the stack depth (i.e., -7fffffff or 7fffffff).  </TD>
+            </TR>
+
+			<TR>
+              <TD align="left" height="21" width="22%">Thunked-Function</TD>
+
+              <TD align="left" height="21" width="22%">Function</TD>
+
+              <TD align="left" height="21" width="56%">Shows the name of the thunked-function
+              to for those functions designated as a "thunk" function (see Function Signature field).</TD>
+            </TR>
+            
+            <TR>
+              <TD align="left" height="21" width="22%">Variable Comment</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Displays the comment for a variable</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Variable Name</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Display the name of a variable</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Variable Location</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Displays the storage location associated
+              with a the variable (e.g., register, stack, memory, unique-hash, etc.)</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Variable Type</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Displays the data type for variable</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Variable XRef</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Displays a list of addresses whose
+              instructions reference a variable</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">Variable XRef Header</TD>
+
+              <TD align="left" height="21" width="22%">Variable</TD>
+
+              <TD align="left" height="21" width="56%">Displays the number of references and offcut
+              references to a variable</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">XREF</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays a list of addresses whose
+              instruction refers to this address.</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">XREF Header</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Displays the number of references and offcut
+              references to this address.</TD>
+            </TR>
+
+            <TR>
+              <TD align="left" height="21" width="22%">+</TD>
+
+              <TD align="left" height="21" width="22%">Instruction/Data; Open Data</TD>
+
+              <TD align="left" height="21" width="56%">Opens and Closes structures and arrays.</TD>
+            </TR>
+          </TABLE>
+        </CENTER>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Code Browser</I> plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="CodeBrowser.htm">Code Browser</A></LI>
+    </UL>
+  </BODY>
+</HTML>

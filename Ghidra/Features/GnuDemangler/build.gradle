@@ -1,0 +1,7 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features GnuDemangler'
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
+dependencies {
+	compile project(":Base")
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE"/>
+    <range space="DATA" first="0x07" last="0x3f"/>
+  </global>
+  <nohighptr>
+    <range space="DATA" first="0x0" last="0x6"/>
+  </nohighptr>
+  <stackpointer register="STKPTR" space="HWSTACK" growth="positive"/>
+  <spacebase name="FramePointer" register="FSR" space="DATA"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="STATUS"/>
+        <register name="Z"/>
+        <register name="DC"/>
+        <register name="C"/>
+        <register name="PA"/>
+        <register name="PC"/>
+        <register name="PCL"/>
+        <register name="STKPTR"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

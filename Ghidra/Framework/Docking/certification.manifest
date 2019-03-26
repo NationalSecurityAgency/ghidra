@@ -1,0 +1,121 @@
+##VERSION: 2.0
+##MODULE IP: BSD
+##MODULE IP: GPL 2 With Classpath Exception
+##MODULE IP: Nuvola Icons - LGPL 2.1
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Tango Icons - Public Domain
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
+##MODULE IP: LGPL 2.1
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
+src/main/java/docking/dnd/package.html||GHIDRA||reviewed||END|
+src/main/java/docking/options/editor/package.html||GHIDRA||reviewed||END|
+src/main/java/docking/widgets/fieldpanel/package.html||GHIDRA||reviewed||END|
+src/main/java/docking/widgets/filechooser/package.html||GHIDRA||reviewed||END|
+src/main/java/docking/wizard/package.html||GHIDRA||reviewed||END|
+src/main/resources/images/EmptyIcon.gif||GHIDRA||reviewed||END|
+src/main/resources/images/EmptyIcon16.gif||GHIDRA||reviewed||END|
+src/main/resources/images/Plus.png||GHIDRA||reviewed||END|
+src/main/resources/images/StackFrameElement.png||GHIDRA||reviewed||END|
+src/main/resources/images/StackFrame_Red.png||GHIDRA||reviewed||END|
+src/main/resources/images/accessories-text-editor.png||Tango Icons - Public Domain||||END|
+src/main/resources/images/application-vnd.oasis.opendocument.spreadsheet-template.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
+src/main/resources/images/application_xp.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
+src/main/resources/images/arrow.gif||GHIDRA||||END|
+src/main/resources/images/bullet_delete.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/checkmark_green.gif||GHIDRA||reviewed||END|
+src/main/resources/images/close16.gif||GHIDRA||reviewed||END|
+src/main/resources/images/closedFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
+src/main/resources/images/computer.png||Tango Icons - Public Domain|||tango|END|
+src/main/resources/images/desktop.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/dialog-cancel.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/dialog-warning.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/resources/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/document-properties.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/down.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits.gif||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits1.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits2.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits3.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits4.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits5.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits6.png||GHIDRA||reviewed||END|
+src/main/resources/images/eatbits7.png||GHIDRA||reviewed||END|
+src/main/resources/images/edit-clear-reverse.png||Oxygen Icons - LGPL 3.0|||mirror image of edit-clear.png|END|
+src/main/resources/images/edit-clear.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/edit-cut22.png||Tango Icons - Public Domain|||original name edit-cut.png in tango 22x22|END|
+src/main/resources/images/edit-delete.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/edit-undo.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/filter_off.png||GHIDRA||||END|
+src/main/resources/images/filter_on.png||GHIDRA||||END|
+src/main/resources/images/folder-open.png||Tango Icons - Public Domain||||END|
+src/main/resources/images/folder_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/hourglass.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/hourglass24_01.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_02.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_03.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_04.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_05.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_06.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_07.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_08.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_09.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_10.png||GHIDRA||reviewed||END|
+src/main/resources/images/hourglass24_11.png||GHIDRA||reviewed||END|
+src/main/resources/images/image-missing.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/resources/images/info_small.png||GHIDRA||||END|
+src/main/resources/images/info_small_hover.png||GHIDRA||||END|
+src/main/resources/images/information.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/inode-directory.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/left.alternate.png||GHIDRA||||END|
+src/main/resources/images/left.png||GHIDRA||reviewed||END|
+src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/media-playback-start.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/menu16.gif||GHIDRA||reviewed||END|
+src/main/resources/images/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/page.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/page_code.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/page_excel.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/page_go.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/page_green.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/preferences-system-windows.png||Tango Icons - Public Domain||||END|
+src/main/resources/images/redo.png||GHIDRA||||END|
+src/main/resources/images/reload.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/right.alternate.png||GHIDRA||||END|
+src/main/resources/images/right.png||GHIDRA||reviewed||END|
+src/main/resources/images/software-update-available.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/sortascending.png||GHIDRA||reviewed||END|
+src/main/resources/images/sortdescending.png||GHIDRA||reviewed||END|
+src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/textfield_rename.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/trash-empty.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/undo.png||GHIDRA||||END|
+src/main/resources/images/up.png||GHIDRA||reviewed||END|
+src/main/resources/images/user-home.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/warning.help.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/warning.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/weather-clear.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/weather-few-clouds-reverse.png||Tango Icons - Public Domain||||END|
+src/main/resources/images/weather-few-clouds.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/weather-overcast.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/weather-showers.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/window-close.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/www_128.png||Nuvola Icons - LGPL 2.1|||nuvola www.png|END|
+src/main/resources/images/www_16.png||Nuvola Icons - LGPL 2.1|||nuvola www 16x16|END|
+src/main/resources/images/www_32.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/www_64.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/svg/images/StackFrameElement.svg||GHIDRA||reviewed||END|
+src/main/svg/images/StackFrame_Red.svg||GHIDRA||reviewed||END|
+src/main/svg/images/cause.svg||GHIDRA||reviewed||END|
+src/main/svg/images/exception.svg||GHIDRA||reviewed||END|
+src/main/svg/images/report.svg||GHIDRA||reviewed||END|
+src/test.slow/resources/docking/widgets/table/threaded/threaded.table.test.csv.txt||GHIDRA||||END|

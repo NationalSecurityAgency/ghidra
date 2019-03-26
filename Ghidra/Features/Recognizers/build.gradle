@@ -1,0 +1,13 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features Recognizers'
+
+dependencies {
+	compile project(':Base')
+}
+
+test {
+	// temporary to prevent test from running when building
+	// specify a pattern that doesn't match any test files. 
+	include "dontruntests"
+}
+

@@ -1,0 +1,418 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Selecting</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Selecting</H1>
+
+    <P>Selecting is the process of <A href=
+    "help/topics/SetHighlightPlugin/Highlighting.htm">highlighting</A> all or portions of a program
+    in order to perform a task (for example, modular analysis) on the selection. Selecting can be
+    done manually in providers that support selection, like the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>. Selecting can be done based
+    on subroutines, functions, or by following certain types of control flows in the program.</P>
+
+    <P>Selections can be created manually within the Code Browser. There are also some predefined
+    types of selections that are available from the tool <B>Select</B> menu. Each predefined type
+    of selection exposes different characteristics of the program.</P>
+
+    <P>To create a selection using one of the predefined methods:</P>
+
+    <UL type="disc">
+      <LI>From the Code Browser, select the menu option <B>Select</B><I><B><IMG src=
+      "../../shared/arrow.gif">SelectionType</B>.</I></LI>
+    </UL>
+
+    <P>The <I><B>SelectionTypes</B></I> and their descriptions are as follows:</P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD width="100%" align="center">
+                <TABLE border="1" width="607">
+                  <TBODY>
+                    <TR>
+                      <TH colspan="2" valign="middle" align="center" bgcolor="#c0c0c0" width="597">
+                        <P align="center">Predefined Selection Methods</P>
+                      </TH>
+                    </TR>
+
+                    <TR>
+                      <TH valign="top" align="center" bgcolor="#DDDDDD" width="131">
+                        <P><B>Selection Type</B></P>
+                      </TH>
+
+                      <TH valign="top" align="left" bgcolor="#DDDDDD" width="460">
+                        <P><B>Description</B></P>
+                      </TH>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name=
+                      "Select_Program_Changes"></A> Program Changes</TD>
+
+                      <TD width="460" valign="top" align="left">Select all program changes.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_All_Flows_From"></A>All Flows From</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>This follows all program flows from the cursor location if no selection
+                        or from the selected code units if there is a selection. Select All Flows
+                        will traverse all branches conditional and unconditional. All the code
+                        units that are traversed are selected.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_All_Flows_To"></A>All Flows To</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>This selects all program flows to the cursor location if no selection
+                        or to the selected code units if there is a selection. Select All Flows To
+                        will traverse all branches conditional and unconditional. All the code
+                        units that are traversed are selected.</P>
+                        <P>In other words, this follows all program flows backwards from the 
+                        location or selection.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_Limited_Flows_From"></A>Limited Flows From</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>The types of program flows to be followed in this case are based on
+                        options configured on the <A href="#SelectByFlowOptions">Selection by Flow
+                        Options tab</A>. Limited Flows only follows the indicated types of program
+                        flows from the cursor location if no selection or from the selected code
+                        units if there is a selection. All the code units that are traversed are
+                        selected.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_Limited_Flows_To"></A>Limited Flows To</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>The types of program flows to be followed in this case are based on
+                        options configured on the <A href="#SelectByFlowOptions">Selection by Flow
+                        Options tab</A>. Limited Flows To only follows the indicated types of program
+                        flows to the cursor location if no selection or to the selected code
+                        units if there is a selection. All the code units that are traversed are
+                        selected.</P>
+                         <P>In other words, this follows the types of program flows, as indicated 
+                         by the options, backwards from the location or selection.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_Subroutine"></A>Subroutine</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>If there is no selection, this selects the code units of the subroutine
+                        that contains the current cursor location. If there is a selection, this
+                        selects all the subroutines that contain the selected code units.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name=
+                      "Select_Dead_Subroutine"></A> Dead Subroutines</TD>
+
+                      <TD width="460" valign="top" align="left">Selects the code units of all
+                      subroutines that not directly referenced, also known as "dead" code.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_Function"></A>Function</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>If there is no selection, this selects the code units of the function
+                        that contains the current cursor location. If there is a selection, this
+                        selects all the functions that contain the selected code units.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Select_All"></A>All in View</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>Selects all code units being displayed in the browser view.</P>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center">
+                        <P><A name="Clear_Selection"></A>Clear Selection</P>
+                      </TD>
+
+                      <TD width="460" valign="top" align="left">
+                        <P>Clears the current selection in the browser view.</P>
+                      </TD>
+                    </TR>
+                    
+                    <TR>
+                      <TD valign="top" align="center"><A name=
+                      "Select_Complement"></A>Complement</TD>
+
+                      <TD valign="top">Changes the selection to everything in the current view that
+                      is not in the current selection.<BR>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name="Data"></A>Data</TD>
+
+                      <TD width="460" valign="top" align="left">Selects all the defined data in the
+                      current program if there isn't a selection. Otherwise, it selects the defined
+                      data within the current selection.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name=
+                      "Instructions"></A>Instructions</TD>
+
+                      <TD width="460" valign="top" align="left">Selects all the instructions in the
+                      current program if there isn't a selection. Otherwise, it selects the
+                      instructions within the current selection.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name="Undefined"></A>Undefined
+                      Data</TD>
+
+                      <TD width="460" valign="top" align="left">Selects all the undefined data in
+                      the current program if there isn't a selection. Otherwise, it selects the
+                      undefined data within the current selection.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name="Forward"></A>Forward
+                      Refs</TD>
+
+                      <TD width="460" valign="top" align="left">Selects all addresses that the
+                      current address is referring to.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD width="131" valign="top" align="center"><A name="Backward"></A>Back
+                      Refs</TD>
+
+                      <TD width="460" valign="top" align="left">Selects all addresses that refer to
+                      the current address.</TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <P>Selections are meant to be temporary. For example, a left mouse click outside a selection in
+    the Code Browser will make the selection go away. Also, creating a new selection replaces any
+    previous selection rather than adding to it. To retain a selection in a manner that isn't so
+    transient, change it to a <A href=
+    "help/topics/SetHighlightPlugin/Highlighting.htm">highlight</A>.</P>
+
+    <P><A name="Restore_Selection"></A><IMG src="../../shared/note.png"> At any time you can
+    restore the previous selection for the current program by pressing the <B>Select</B><IMG src=
+    "../../shared/arrow.gif">Restore Selection.</P>
+
+    <BLOCKQUOTE>
+      <H3><A name="SelectByFlowOptions"></A>Selection by Flow Tool Options</H3>
+
+      <P>The <I>Select By Flow</I> plugin adds options to the tool. To view or edit the option
+      settings:</P>
+
+      <UL>
+        <LI>From the tool's menu select <B>Edit</B><I><B><IMG src=
+        "../../shared/arrow.gif"></B></I><B>Tool Options...</B></LI>
+
+        <LI>Click on the <I>Selection by Flow</I> tree node</LI>
+      </UL>
+
+      <P>The <I>Selection by Flow</I> tab contains options for indicating the types of flows that
+      will be followed when selecting <I>Limited Flows</I>. The table below lists the Selection by
+      Flow options and their default settings. To follow a particular flow type simply click on the
+      box to check it.</P>
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="1" width="380">
+            <TBODY>
+              <TR>
+                <TH valign="top" align="left" width="264" bgcolor="#c0c0c0">Flow Type to
+                Follow</TH>
+
+                <TH valign="top" align="left" width="100" bgcolor="#c0c0c0">Default</TH>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow computed call</TD>
+
+                <TD valign="top" align="left" width="100">false</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow computed jump</TD>
+
+                <TD valign="top" align="left" width="100">false</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow conditional call</TD>
+
+                <TD valign="top" align="left" width="100">false</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow conditional jump</TD>
+
+                <TD valign="top" align="left" width="100">true</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow pointers</TD>
+
+                <TD valign="top" align="left" width="100">false</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow unconditional call</TD>
+
+                <TD valign="top" align="left" width="100">false</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" align="left" width="264">Follow unconditional jump</TD>
+
+                <TD valign="top" align="left" width="100">true</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+
+      <P><U>Example</U>: Given <I>Follow conditional jump</I> and <I>Follow unconditional jump</I>
+      are the only types checked. As the program flow is followed the instructions that are
+      encountered are added to the selection, wherever the program jumps will also get added to the
+      selection and the program flow is also followed from there. If a conditional call is
+      encountered, then this instruction gets added to the selection. But the conditional call is
+      not followed and the code at the call's destination is not added since this type isn't being
+      followed. <I>The code for the subroutine at the call's destination could still end up in the
+      selection, if it is flowed to by a different flow path using the flow types being
+      followed.</I></P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Select By Flow</I> Plugin</P>
+
+	<BR>
+	<BR>
+	<HR WIDTH="80%">
+
+    <H2><A name="NavigateOverSelection"></A>Navigating Over a Selection</H2>
+
+    <P>A selection will often consist of one or more address ranges. The address ranges do not have
+    to be contiguous. The navigation margin can be used to directly move the location to a
+    particular selected range. To move to the next or previous selection range relative to the
+    current cursor location use the Next Selected Range and Previous Selected Range buttons.</P>
+
+    <BLOCKQUOTE>
+      <H3>Using the Navigation Margin</H3>
+
+      <BLOCKQUOTE>
+        <P>One or more green markers will appear in the <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers">Navigation Margin</A>,
+        where each green marker corresponds to an address range included in the selection. Clicking
+        on a green marker will cause the Code Browser to navigate to the beginning of the
+        corresponding address range.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Next_Selected_Range"></A>Next Selected Range</H3>
+
+      <P>To move the program's cursor location to the beginning of the next selected range of
+      addresses:</P>
+
+      <BLOCKQUOTE>
+        <P>From the menu-bar of the Code Browser, select <B>Navigation</B><I><B><IMG src=
+        "../../shared/arrow.gif"></B></I> <B>Next Selected Range</B></P>
+
+        <BLOCKQUOTE>
+          <P>OR</P>
+        </BLOCKQUOTE>
+
+        <P>From the tool-bar of the Code Browser, click the <B>Go to next selected range</B> (<IMG
+        src="images/NextSelectionBlock16.gif">) button</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P><I><IMG border="0" src="../../shared/tip.png"> When the Code Browser is on or after the
+      last address range in the selection, the "Next Selected Range" menu-bar and tool-bar options
+      will be disabled.</I></P>
+
+      <H3><A name="Previous_Selected_Range"></A>Previous Selected Range</H3>
+
+      <P>To move the program's cursor location to the beginning of the next selected range of
+      addresses:</P>
+
+      <BLOCKQUOTE>
+        <P>From the menu-bar of the Code Browser, select <B>Navigation</B><I><B><IMG src=
+        "../../shared/arrow.gif"></B></I><B>Previous Selected Range</B></P>
+
+        <BLOCKQUOTE>
+          <P>OR</P>
+        </BLOCKQUOTE>
+
+        <P>From the tool-bar of the Code Browser, click the <B>Go to previous selected range</B>
+        (<IMG src="images/PreviousSelectionBlock16.gif">) button</P>
+      </BLOCKQUOTE>
+
+      <P><I><IMG src="../../shared/tip.png"> When the Code Browser is on or before the first
+      address range in the selection, the "Previous Selected Range" menu-bar and tool-bar options
+      will be disabled.</I></P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Go To Next-Previous Selected Range</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers">Margin &amp;
+      Navigation Markers</A></LI>
+
+      <LI><A href="help/topics/Navigation/Navigation.htm">Navigation</A></LI>
+
+      <LI><A href="help/topics/SetHighlightPlugin/Highlighting.htm">Highlighting</A></LI>
+    </UL>
+  </BODY>
+</HTML>

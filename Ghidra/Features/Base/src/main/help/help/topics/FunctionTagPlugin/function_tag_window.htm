@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Function Tag Window</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="FunctionTagPlugin"></A> Function Tag Window</H1>
+
+    <P>The Function Tag window provides a list of function tags defined in the currently open
+    program. It will also show which tags are assigned to the currently-selected function. Tags may
+    be created by the user, or loaded from a predefined set (see section on <a href="#loading_tags">loading tags</a> below).</P>
+    <p>To display the Function Tag window, select the <B>Window</B><IMG alt="" border="0"
+    src="../../shared/arrow.gif"><B>Function Tags</B> option on the tool menu. Optionally, the
+    dialog may be activated by right-clicking on a function header in the listing and selecting the
+    <B>Edit Function Tags</B> option.</P>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TR>
+          <TD width="100%" align="center"><IMG alt="" border="0" src=
+          "images/FunctionTagPlugin.png"></TD>
+        </TR>
+      </TABLE>
+    </CENTER>     
+
+    <H2>Window Components</H2>
+
+    <BLOCKQUOTE>
+      <P>This window has five distinct sections:</P>
+
+      <UL>
+        <LI><B>Available Tags List</B>: Displays all tags that are available to assign to the
+        current function.</LI>
+
+        <LI><B>Assigned Tags List</B>: Displays all tags that have been assigned to the current
+        function.</LI>
+
+        <LI>
+          <B>Tag Input Field</B>: Allows users to create new tags. Multiple tags may be created at one time.
+
+          <P style="margin: 20px;"><IMG alt="" border="0" src="images/InputField.png"></P>
+        </LI>
+
+        <LI>
+          <B>Filter Field</B>: Allows users to filter what is shown in the Available and Assigned tag lists. 
+
+          <P style="margin: 20px;"><IMG alt="" border="0" src="images/FilterField.png"></P>
+        </LI>
+      </UL>
+
+      <UL class="noindent">
+        <LI><B>Action Buttons</B></LI>
+          <UL>
+            <LI><IMG alt="" border="0" src="images/2rightarrow.png"> &nbsp;
+            Assigns the selected tag(s) to the current function</LI>
+
+            <LI><IMG alt="" border="0" src="images/2leftarrow.png"> &nbsp;
+            Removes the selected tag(s) from the current function</LI>
+
+            <LI><IMG alt="" border="0" src="Icons.DELETE_ICON"> &nbsp;
+            Deletes the selected tag(s) from the program and removes them from all functions</LI>
+          </UL>
+        </LI>
+      </UL>
+
+    </BLOCKQUOTE>     
+
+    <H2>Tag Operations</H2>
+
+	<BLOCKQUOTE>
+	    <H3><A name="Create_Tag"></A>Create</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>Tags can be created by using the <I>Tag Input Field</I> described above. Users may enter
+	      multiple tag names delimited by a comma. All newly-created tags will be displayed in the
+	      Available Tags List and are NOT assigned to any function.</P>
+	
+	      <P><IMG alt="" border="0" src="../../shared/tip.png">Each tag may have an associated comment that
+	      is visible as a tooltip. This can be assigned after the tag has been created (see <code>edit</code> section below).</P>
+
+	    </BLOCKQUOTE>
+
+	    <H3><A name="Delete_Tag"></A>Delete</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>Tags may deleted by selecting a set of tags and pressing the <IMG alt="" border="0" src=
+	      "Icons.DELETE_ICON" width="16" height="16"> icon. Users will be prompted with the
+	      following:</P>
+	
+		
+	      <P align="center"><IMG alt="" border="0" src="images/DeleteWarning.png"></P>
+	      <P>
+	      If confirmed, the tag will be removed from the system and from all functions to which it had been assigned.
+	      </P>
+	    </BLOCKQUOTE>
+
+	    <H3><A name="Edit_Tag"></A>Edit</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>Tag names and comments may be edited by double-clicking the item in the list. If the
+	      tag is not editable the user will be presented with the following warning:</P>
+	
+	      <P align="center"><IMG alt="" border="0" src="images/EditNotAllowedWarning.png">.</P>
+	
+	      <P>If editing is allowed, the following dialog will be shown:</P>
+	
+	      <P align="center"><IMG alt="" border="0" src="images/EditTag.png"></P>
+	    </BLOCKQUOTE>
+
+	    <H3><A name="Add_Tag_To_Function"></A>Add to Function</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>Tags may be added to a function by selecting a set of tags and pressing the <IMG alt=""
+	      border="0" src="images/2rightarrow.png" width="16" height="16"> button. The tags will be
+	      removed from the Available Tags List and added to the Assigned Tags List.</P>
+	    </BLOCKQUOTE>
+
+	    <H3><A name="Remove_Tag_From_Function"></A>Remove from Function</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>Tags may be removed from a function by selecting a set of tags and pressing the <IMG alt=
+	      "" border="0" src="images/2leftarrow.png" width="16" height="16"> button. The tags will be
+	      removed from the Assigned Tags List and added to the Available Tags List.</P>
+	    </BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+    <H2><a name="loading_tags">Loading External Tags</a></H2>
+
+    <BLOCKQUOTE>
+      <P>Tags may be loaded on startup from an external source if desired. These will be shown in
+      <FONT color="blue">blue</FONT> and cannot be edited or deleted, with one caveat: once a tag has
+      been assigned to a function it ceases to have any special protections and can be edited/deleted
+      just as any other.</P>
+      
+      <P>To make these available there must be a file named <I>functionTags.xml</I> available on
+      the classpath. Edit (or create) this file and add tags as needed. The format is
+      as-follows:</P>
+<PRE>
+   &lt;tags&gt;
+      &lt;tag&gt;
+         &lt;name&gt;TAG1&lt;/name&gt;
+         &lt;comment&gt;tag comment&lt;/comment&gt;
+      &lt;/tag&gt;
+      &lt;tag&gt;
+         &lt;name&gt;TAG2&lt;/name&gt;
+         &lt;comment&gt;tag comment&lt;/comment&gt;
+      &lt;/tag&gt;
+   &lt;/tags&gt;
+</PRE>
+
+	<P><IMG alt="" border="0" src="../../shared/tip.png">Be aware that any external tags that have
+      removed/edited will reappear with Ghidra is restarted, as these are always loaded from this file.</P>
+    </BLOCKQUOTE>
+
+
+    <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionTagPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+    <UL>
+      <LI><A href="help/topics/FunctionPlugin/Functions.htm">Functions</A></LI>
+    </UL>
+    <BR>
+    <BR>
+  </BODY>
+</HTML>

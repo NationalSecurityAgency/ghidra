@@ -1,0 +1,78 @@
+#
+# PIC-18 Main Section
+#   includes constants, memory space and common register space definitions
+#
+
+@define SFR_BASE 0x0F80
+@define BANK15_BASE 0x0F00
+
+# STATUS bit definitions
+@define STATUS_N_BIT	4
+@define STATUS_OV_BIT	3
+@define STATUS_Z_BIT	2
+@define STATUS_DC_BIT	1
+@define STATUS_C_BIT	0
+
+# STATUS bit masks used for clearing
+@define STATUS_N_CLEARMASK	0xEF
+@define STATUS_OV_CLEARMASK	0xF7
+@define STATUS_Z_CLEARMASK	0xFB
+@define STATUS_DC_CLEARMASK	0xFD
+@define STATUS_C_CLEARMASK	0xFE
+
+@define STATUS_N_Z_MASK  0x14
+
+# STACK bit defintions
+@define STKPTR_STKFUL_BIT	7
+@define STKPTR_STKUNF_BIT	6
+
+# STACK bit masks
+@define STKPTR_SP_MASK		0x1F
+@define STKPTR_NOT_SP_MASK	0xE0
+@define STKPTR_STKFUL_MASK	0x80
+@define STKPTR_STKUNF_MASK	0x40
+
+define endian=little;
+define alignment=2;
+
+# Instruction Memory (ROM-based)
+define space CODE type=ram_space size=3 default;
+
+# General Purpose Register Memory consists of 16-banks of 255-bytes each
+define space DATA type=ram_space size=2; 
+
+# The HWSTACK consists of a 31_word by 21_bit RAM and a corresponding 8_bit STKPTR register.
+# The real STKPTR register format is:
+#   bit 7: Stack Full Flag (STKFUL) - See Note below
+#   bit 6: Stack Underflow Flag (STKUNF) - See Note below
+#   bit 5: <unused>
+#   bit 4_0: stack pointer location within the 31_word by 21_bit 
+# Each stack entry generally contains a 21_bit Program Counter value.  
+# The top_of_stack entry (last push) may be accessed via the SFR registers TOSU, TOSH, and TOSL:
+#   bit 20_16: TOSU
+#   bit 15_8:  TOSH
+#   bit 7_0:   TOSL
+# When accessing these top_of_stack registers, the global interrupts should/must be disabled. 
+#
+# NOTE: This PIC-18 pcode implementation does not implement the STKFUL and STKUNF bits.
+# The entire STKPTR register is treated as an address offset into the stack space for simplification.
+# STKPTR value must be multiplied.
+#
+define space HWSTACK type=ram_space size=1;  # implemented as independently addressable bytes (each location is 4-bytes wide)
+ 
+define space register type=register_space size=2; 
+
+# Program Counter
+define register offset=0x0000 size=3 [ PC ];
+
+# Bad Register (needed only for attach usage)
+define register offset=0x0003 size=1 [ BAD ];
+
+# Stack Pointer
+define register offset=0x0004 size=1 [ STKPTR ];
+
+# Status bit registers (these do not really exist and must get reflected into the STATUS byte register)
+define register offset=0x0005 size=1 [ N OV Z DC C ];
+
+# Shadow registers (not visible)
+define register offset=0x000a size=1 [ WS STATUSS BSRS ];

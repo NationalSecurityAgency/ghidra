@@ -1,0 +1,8 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/languages/Dalvik.cspec||GHIDRA||||END|
+data/languages/Dalvik.ldefs||GHIDRA||||END|
+data/languages/Dalvik.opinion||GHIDRA||||END|
+data/languages/Dalvik.pspec||GHIDRA||||END|
+data/languages/Dalvik.slaspec||GHIDRA||||END|

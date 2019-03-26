@@ -1,0 +1,15 @@
+<patternlist>
+  <!-- 
+  	This file contains AARCH64 ELF PLT Thunk patterns.
+  	All patterns must end with "br x17" instruction
+  	All patterns are specified as little-endian.
+  -->
+  <pattern>
+     <data> <!--  AARCH64 ELF64 PLT -->
+     	...10000 0x.. 0x.. 1..10000 # adrp x16, PLTGOT + n * 8
+     	0x11 ......10 01...... 0xf9 # ldr x17, [x16, PLTGOT + n * 8]
+     	0x10 ......10 00...... 0x91 # add x16, x16, :lo12:PLTGOT + n * 8
+     	0x20 0x02 0x1f 0xd6         # br x17
+     </data>
+  </pattern>
+</patternlist>

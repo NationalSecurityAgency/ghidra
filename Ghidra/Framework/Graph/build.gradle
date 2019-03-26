@@ -1,0 +1,17 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework Graph'
+
+dependencies {
+	compile project(':Docking')
+	
+	// these are not used by the project, but indirectly by the jars listed below
+	compile "net.sf.jung:jung-api:2.1.1"        // used by jung-graph-impl
+	compile "net.sf.jung:jung-algorithms:2.1.1" // used by jung-visualization
+	
+	// this project uses these directly
+	compile "net.sf.jung:jung-graph-impl:2.1.1"
+	compile "net.sf.jung:jung-visualization:2.1.1"
+	
+	// These have abstract test classes and stubs needed by this module	
+	testCompile project(':Docking').sourceSets.test.output
+}

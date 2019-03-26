@@ -1,0 +1,13 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors PIC'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
+dependencies {
+	compile project(':Base')
+}
+

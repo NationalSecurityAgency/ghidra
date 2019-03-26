@@ -1,0 +1,8 @@
+<patternconstraints>
+  <language id="MIPS:BE:*:*">
+    <patternfile>MIPS_BE_patterns.xml</patternfile>
+  </language>
+  <language id="MIPS:LE:*:*">
+    <patternfile>MIPS_LE_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

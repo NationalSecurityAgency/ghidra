@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+
+  <data_organization>
+	<absolute_max_alignment value="0" /> <!-- no maximum alignment -->
+	<machine_alignment value="2" />
+	<default_alignment value="1" />
+	<default_pointer_alignment value="2" />
+	<pointer_size value="2" /> <!-- near pointer, TODO: how do we define far 4-byte pointer? -->
+	<wchar_size value="2" />
+	<short_size value="2" />
+	<integer_size value="2" />
+	<long_size value="4" />
+	<long_long_size value="4" />
+	<float_size value="4" />
+	<double_size value="8" />
+	<long_double_size value="10" />
+	<!-- alignment varies between MIcrosoft and Borland -->
+	<!--
+	<size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="2" />
+		<entry size="8" alignment="2" />
+	</size_alignment_map>
+	-->
+  </data_organization>
+  
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="SP" space="ram"/>
+  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
+    <baseop code="INT_ZEXT"/>
+    <baseop code="INT_LEFT" value="4"/>
+    <innerop code="INT_ZEXT"/>
+    <constresolve>
+      <register name="DS"/>
+    </constresolve>
+  </segmentop>
+  <default_proto>
+    <prototype name="__stdcall16near" extrapop="unknown" stackshift="2">
+      <input>
+        <pentry minsize="1" maxsize="500" align="2">
+          <addr offset="2" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="BP"/>
+        <register name="SI"/>
+        <register name="DI"/>
+        <register name="DS"/>
+        <register name="CS"/>
+        <register name="ES"/>
+        <register name="SS"/>
+        <register name="DF"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <prototype name="__cdecl16near" extrapop="2" stackshift="2">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="2" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+  <prototype name="__stdcall16far" extrapop="unknown" stackshift="2">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+  <prototype name="__cdecl16far" extrapop="4" stackshift="2">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+  <prototype name="__regcall" extrapop="2" stackshift="2">
+    <input>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="BX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="CX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="DX"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="CX"/>
+      <register name="DX"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+</compiler_spec>

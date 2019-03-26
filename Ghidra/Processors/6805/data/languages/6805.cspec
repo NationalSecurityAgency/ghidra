@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM" growth="negative"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

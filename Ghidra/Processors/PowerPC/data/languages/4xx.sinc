@@ -1,0 +1,7 @@
+#dcread r0,0,r0        0x7c 00 03 cc
+:dcread S,RA_OR_ZERO,B  is OP=31 & S & B & (XOP_1_10=486 | XOP_1_10=326) & BIT_0=0 & RA_OR_ZERO
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+    S = dataCacheRead(RA_OR_ZERO,B);
+}
+

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-18"
+            endian="little"
+            size="24"
+            variant="PIC-18"
+            version="1.0"
+            slafile="pic18.sla"
+            processorspec="pic18.pspec"
+            manualindexfile="../manuals/PIC-18.idx"
+            id="PIC-18:LE:24:PIC-18">
+    <description>PIC-18</description>
+    <compiler name="default" spec="pic18.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="pic18cxx"/>
+  </language>
+</language_definitions>

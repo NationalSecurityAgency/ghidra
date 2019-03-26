@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink">
+<info>
+  <title>Ghidra Language Specification</title>
+</info>
+<para>
+<link xlink:href="html/sleigh.html">Sleigh Manual</link>: This document describes SLEIGH, Ghidra's
+processor specification language. A SLEIGH specification formally describes the translation from the
+bit encoding of machine instructions, for a particular processor, to human-readable assembly language
+and into p-code, Ghidra's internal representation (IR) of code.
+</para>
+<para>
+<link xlink:href="html/pcoderef.html">P-code Reference</link>: This reference document describes the core
+elements of p-code and gives a brief overview of each formal p-code operator.
+</para>
+<para>
+<link xlink:href="versioning.html">Versioning</link>: A short note on the use of SLEIGH version numbers.
+</para>
+</article>

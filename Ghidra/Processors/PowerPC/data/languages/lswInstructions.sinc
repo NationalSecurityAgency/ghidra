@@ -1,0 +1,185 @@
+#lswi	r0,0,7		0x7c 00 3c aa
+#lswi	r0,r2,7		0x7c 02 3c aa
+
+DYN_D1: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 1)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D2: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 2)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D3: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 3)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D4: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 4)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D5: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 5)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D6: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 6)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_D7: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 7)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=0 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5 & DYN_D6 & DYN_D7
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  loadRegister(DYN_D5,ea);
+  loadRegister(DYN_D6,ea);
+  loadRegister(DYN_D7,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=0 & BH & XOP_1_10=597 & BIT_0=0
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  sa:1 = BH;
+  loadRegisterPartial(D,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=1 & BH=0 & XOP_1_10=597 & BIT_0=0
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=1 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D1,ea,sa);
+}
+
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=2 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=2 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D2,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=3 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=3 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D3,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=4 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=4 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D4,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=5 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=5 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D5,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=6 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  loadRegister(DYN_D5,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=6 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5 & DYN_D6
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  loadRegister(DYN_D5,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D6,ea,sa);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=7 & BH=0 & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5 & DYN_D6
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  loadRegister(DYN_D5,ea);
+  loadRegister(DYN_D6,ea);
+}
+
+:lswi  D,RA_OR_ZERO,NB  is OP=31 & D & RA_OR_ZERO & NB & BITS_13_15=7 & BH & XOP_1_10=597 & BIT_0=0
+                             & DYN_D1 & DYN_D2 & DYN_D3 & DYN_D4 & DYN_D5 & DYN_D6 & DYN_D7
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  loadRegister(D,ea);
+  loadRegister(DYN_D1,ea);
+  loadRegister(DYN_D2,ea);
+  loadRegister(DYN_D3,ea);
+  loadRegister(DYN_D4,ea);
+  loadRegister(DYN_D5,ea);
+  loadRegister(DYN_D6,ea);
+  sa:1 = BH;
+  loadRegisterPartial(DYN_D7,ea,sa);
+}

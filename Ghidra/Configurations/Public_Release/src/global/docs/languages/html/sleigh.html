@@ -1,0 +1,438 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>SLEIGH</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="next" href="sleigh_layout.html" title="2. Basic Specification Layout">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">SLEIGH</th></tr>
+<tr>
+<td width="20%" align="left"> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_layout.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="article">
+<div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="idm140310883308288"></a>SLEIGH</h1></div>
+<div><h3 class="subtitle"><i>A Language for Rapid Processor Specification</i></h3></div>
+<div><p class="releaseinfo">Last updated September 1, 2017</p></div>
+<div><p class="pubdate">Originally published December 16, 2005</p></div>
+</div>
+<hr>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl class="toc">
+<dt><span class="sect1"><a href="sleigh.html#idm140310875627168">1. Introduction to P-Code</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh.html#idm140310875617744">1.1. Address Spaces</a></span></dt>
+<dt><span class="sect2"><a href="sleigh.html#sleigh_varnodes">1.2. Varnodes</a></span></dt>
+<dt><span class="sect2"><a href="sleigh.html#idm140310875600592">1.3. Operations</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_layout.html">2. Basic Specification Layout</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_layout.html#idm140310875562464">2.1. Comments</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_layout.html#idm140310875560064">2.2. Identifiers</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_layout.html#idm140310875558464">2.3. Strings</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_layout.html#idm140310875556736">2.4. Integers</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_layout.html#idm140310875552544">2.5. White Space</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_preprocessing.html">3. Preprocessing</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_preprocessing.html#sleigh_including_files">3.1. Including Files</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_preprocessing.html#idm140310875545072">3.2. Preprocessor Macros</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_preprocessing.html#idm140310875538656">3.3. Conditional Compilation</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_definitions.html">4. Basic Definitions</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_definitions.html#sleigh_endianess_definition">4.1. Endianess Definition</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_definitions.html#idm140310875502768">4.2. Alignment Definition</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_definitions.html#idm140310875499872">4.3. Space Definitions</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_definitions.html#sleigh_naming_registers">4.4. Naming Registers</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_definitions.html#idm140310875464736">4.5. Bit Range Registers</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_definitions.html#idm140310875451744">4.6. User-Defined Operations</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_symbols.html">5. Introduction to Symbols</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_symbols.html#idm140310875423632">5.1. Notes on Namespaces</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_symbols.html#sleigh_predefined_symbols">5.2. Predefined Symbols</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_tokens.html">6. Tokens and Fields</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_tokens.html#sleigh_defining_tokens">6.1. Defining Tokens and Fields</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_tokens.html#idm140310875384864">6.2. Fields as Family Symbols</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_tokens.html#idm140310875379232">6.3. Attaching Alternate Meanings to Fields</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_tokens.html#sleigh_context_variables">6.4. Context Variables</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_constructors.html">7. Constructors</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_constructors.html#idm140310875336416">7.1. The Five Sections of a Constructor</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#idm140310875331696">7.2. The Table Header</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_display_section">7.3. The Display Section</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_bit_pattern">7.4. The Bit Pattern Section</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_disassembly_actions">7.5. Disassembly Actions Section</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_with_block">7.6. The With Block</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_semantic_section">7.7. The Semantic Section</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_tables">7.8. Tables</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#sleigh_macros">7.9. P-code Macros</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#idm140310874869072">7.10. Build Directives</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_constructors.html#idm140310874860096">7.11. Delay Slot Directives</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_context.html">8. Using Context</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="sleigh_context.html#idm140310874839872">8.1. Basic Use of Context Variables</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_context.html#sleigh_local_change">8.2. Local Context Change</a></span></dt>
+<dt><span class="sect2"><a href="sleigh_context.html#sleigh_global_change">8.3. Global Context Change</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="sleigh_ref.html">9. P-code Tables</a></span></dt>
+</dl>
+</div>
+<div class="simplesect">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="idm140310875635936"></a>History</h2></div></div></div>
+<p>
+  This document describes the syntax for the SLEIGH processor
+  specification language, which was developed for the GHIDRA
+  project. The language that is now called SLEIGH has undergone
+  several redesign iterations, but it can still trace its heritage
+  from the language SLED, from whom its name is derived. SLED, the
+  &#8220;Specification Language for Encoding and Decoding&#8221;, was defined by
+  Norman Ramsey and Mary F. Fernandez as a concise way to define the
+  translation, in both directions, between machine instructions and
+  their corresponding assembly statements. This facilitated the
+  development of architecture independent disassemblers and
+  assemblers, such as the New Jersey Machine-code Toolkit.
+</p>
+<p>
+  The direct predecessor of SLEIGH was an implementation of SLED for
+  GHIDRA, which concentrated on its reverse-engineering
+  capabilities. The main addition of SLEIGH is the ability to provide
+  semantic descriptions of instructions for data-flow and
+  decompilation analysis. This piece of SLEIGH was originally a
+  separate language, the Semantic Syntax Language (SSL), very loosely
+  based on concepts and a language of the same name developed by
+  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey, for the
+  University of Queensland Binary Translator (UQBT) project.
+</p>
+</div>
+<div class="simplesect">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="idm140310875632160"></a>Overview</h2></div></div></div>
+<p>
+SLEIGH is a language for describing the instruction sets of general
+purpose microprocessors, in order to facilitate the reverse
+engineering of software written for them. SLEIGH was designed for the
+GHIDRA reverse engineering platform and is used to describe
+microprocessors with enough detail to facilitate two major components
+of GHIDRA, the disassembly and decompilation engines. For disassembly,
+SLEIGH allows a concise description of the translation from the bit
+encoding of machine instructions to human-readable assembly language
+statements. Moreover, it does this with enough detail to allow the
+disassembly engine to break apart the statement into the mnemonic,
+operands, sub-operands, and associated syntax. For decompilation,
+SLEIGH describes the translation from machine instructions into
+<span class="emphasis"><em>p-code</em></span>. P-code is a Register Transfer Language
+(RTL), distinct from SLEIGH, designed to specify
+the <span class="emphasis"><em>semantics</em></span> of machine instructions. By
+<span class="emphasis"><em>semantics</em></span>, we mean the detailed description of
+how an instruction actually manipulates data, in registers and in
+RAM. This provides the foundation for the data-flow analysis performed
+by the decompiler.
+</p>
+<p>
+A SLEIGH specification typically describes a single microprocessor and
+is contained in a single file. The term <span class="emphasis"><em>processor</em></span>
+will always refer to this target of the specification.
+</p>
+<p>
+Italics are used when defining terms and for named entities. Bold is used for SLEIGH keywords.
+</p>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="idm140310875627168"></a>1. Introduction to P-Code</h2></div></div></div>
+<p>
+Although p-code is a distinct language from SLEIGH, because a major
+purpose of SLEIGH is to specify the translation from machine code to
+p-code, this document serves as a primer for p-code. The key concepts
+and terminology are presented in this section, and more detail is
+given in <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7. The Semantic Section">Section 7.7, &#8220;The Semantic Section&#8221;</a>. There is also a complete set
+of tables which list syntax and descriptions for p-code operations in
+the Appendix.
+</p>
+<p>
+The design criteria for p-code was to have a language that looks much
+like modern assembly instruction sets but capable of modeling any
+general purpose processor. Code for different processors can be
+translated in a straightforward manner into p-code, and then a single
+suite of analysis software can be used to do data-flow analysis and
+decompilation. In this way, the analysis software
+becomes <span class="emphasis"><em>retargetable</em></span>, and it isn&#8217;t necessary to
+redesign it for each new processor being analyzed. It is only
+necessary to specify the translation of the processor&#8217;s instruction
+set into p-code.
+</p>
+<p>
+So the key properties of p-code are
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+  The language is machine independent.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  The language is designed to model general purpose processors.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Instructions operate on user defined registers and address spaces.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  All data is manipulated explicitly. Instructions have no indirect effects.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Individual p-code operations mirror typical processor tasks and concepts.
+  </li>
+</ul></div></div>
+<p>
+</p>
+<p>
+SLEIGH is the language which specifies the translation from a machine
+instruction to p-code. It specifies both this translation and how to
+display the instruction as an assembly statement.
+</p>
+<p>
+A model for a particular processor is built out of three concepts:
+the <span class="emphasis"><em>address space</em></span>,
+the <span class="emphasis"><em>varnode</em></span>, and
+the <span class="emphasis"><em>operation</em></span>. These are generalizations of the
+computing concepts of RAM, registers, and machine instructions
+respectively.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875617744"></a>1.1. Address Spaces</h3></div></div></div>
+<p>
+An <span class="emphasis"><em>address</em></span> space for p-code is a generalization of
+the indexed memory (RAM) that a typical processor has access to, and
+it is defined simply as an indexed sequence of
+memory <span class="emphasis"><em>words</em></span> that can be read and written by
+p-code. In almost all cases, a <span class="emphasis"><em>word</em></span> of the space
+is a <span class="emphasis"><em>byte</em></span> (8 bits), and we will usually use the
+term <span class="emphasis"><em>byte</em></span> instead
+of <span class="emphasis"><em>word</em></span>. However, see the discussion of
+the <span class="bold"><strong>wordsize</strong></span> attribute of address
+spaces below.
+</p>
+<p>
+The defining characteristics of a space are its name and its size. The
+size of a space indicates the number of distinct indices into the
+space and is usually given as the number of bytes required to encode
+an arbitrary index into the space. A space of size 4 requires a 32 bit
+integer to specify all indices and contains
+2<sup>32</sup> bytes. The index of a byte is usually
+referred to as the <span class="emphasis"><em>offset</em></span>, and the offset
+together with the name of the space is called
+the <span class="emphasis"><em>address</em></span> of the byte.
+</p>
+<p>
+Any manipulation of data that p-code operations perform happens in
+some address space. This includes the modeling of data stored in RAM
+but also includes the modeling of processor registers. Registers must
+be modeled as contiguous sequences of bytes at a specific offset (see
+the definition of varnodes below), typically in their own distinct
+address space. In order to facilitate the modeling of many different
+processors, a SLEIGH specification provides complete control over what
+address spaces are defined and where registers are located within
+them.
+</p>
+<p>
+Typically, a processor can be modeled with only two spaces,
+a <span class="emphasis"><em>ram</em></span> address space that represents the main
+memory accessible to the processor via its data-bus, and
+a <span class="emphasis"><em>register</em></span> address space that is used to
+implement the processor&#8217;s registers. However, the specification
+designer can define as many address spaces as needed.
+</p>
+<p>
+There is one address space that is automatically defined for a SLEIGH
+specification. This space is used to allocate temporary storage when
+the SLEIGH compiler breaks down the expressions describing processor
+semantics into individual p-code operations. It is called
+the <span class="emphasis"><em>unique</em></span> space. There is also a special address
+space, called the <span class="emphasis"><em>const</em></span> space, used as a
+placeholder for constant operands of p-code instructions. For the most
+part, a SLEIGH specification doesn&#8217;t need to be aware of this space,
+but it can be used in certain situations to force values to be
+interpreted as constants.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_varnodes"></a>1.2. Varnodes</h3></div></div></div>
+<p>
+A <span class="emphasis"><em>varnode</em></span> is the unit of data manipulated by
+p-code. It is simply a contiguous sequence of bytes in some address
+space. The two defining characteristics of a varnode are
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+  The address of the first byte.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  The number of bytes (size).
+  </li>
+</ul></div></div>
+<p>
+With the possible exception of constants treated as varnodes, there is
+never any distinction made between one varnode and another. They can
+have any size, they can overlap, and any number of them can be
+defined.
+</p>
+<p>
+Varnodes by themselves are typeless. An individual p-code operation
+forces an interpretation on each varnode that it uses, as either an
+integer, a floating-point number, or a boolean value. In the case of
+an integer, the varnode is interpreted as having a big endian or
+little endian encoding, depending on the specification (see
+<a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1. Endianess Definition">Section 4.1, &#8220;Endianess Definition&#8221;</a>). Certain instructions
+also distinguish between signed and unsigned interpretations. For a
+signed integer, the varnode is considered to have a standard twos
+complement encoding. For a boolean interpretation, the varnode must be
+a single byte in size. In this special case, the zero encoding of the
+byte is considered a <span class="emphasis"><em>false</em></span> value and an encoding
+of 1 is a <span class="emphasis"><em>true</em></span> value.
+</p>
+<p>
+These interpretations only apply to the varnode for a particular
+operation. A different operation can interpret the same varnode in a
+different way. Any consistent meaning assigned to a particular varnode
+must be provided and enforced by the specification designer.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875600592"></a>1.3. Operations</h3></div></div></div>
+<p>
+P-code is intended to emulate a target processor by substituting a
+sequence of p-code operations for each machine instruction. Thus every
+p-code operation is naturally associated with the address of a
+specific machine instruction, but there is usually more than one
+p-code operation associated with a single machine instruction. Except
+in the case of branching, p-code operations have fall-through control
+flow, both within and across machine instructions. For a single
+machine instruction, the associated p-code operations execute from
+first to last. And if there is no branching, execution picks up with
+the first operation corresponding to the next machine instruction.
+</p>
+<p>
+Every p-code operation can take one or more varnodes as input and can
+optionally have one varnode as output. The operation can only make a
+change to this <span class="emphasis"><em>output varnode</em></span>, which is always indicated
+explicitly. Because of this rule, all manipulation of data is
+explicit. The operations have no indirect effects. In general, there
+is absolutely no restriction on what varnodes can be used as inputs
+and outputs to p-code operations. The only exceptions to this are that
+constants cannot be used as output varnodes and certain operations
+impose restrictions on the <span class="emphasis"><em>size</em></span> of their varnode operands.
+</p>
+<p>
+The actual operations should be familiar to anyone who has studied
+general purpose processor instruction sets. They break up into groups.
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="ops.htmltable"></a><p class="title"><b>Table 1. P-code Operations</b></p>
+<div class="table-contents"><table width="70%" frame="box" rules="all">
+<col width="40%">
+<col width="60%">
+<thead><tr>
+  <td><span class="bold"><strong>Operation Category</strong></span></td>
+  <td><span class="bold"><strong>List of Operations</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Data Moving</td>
+  <td><code class="code">COPY, LOAD, STORE</code></td>
+</tr>
+<tr>
+  <td>Arithmetic</td>
+  <td><code class="code">INT_ADD, INT_SUB, INT_CARRY, INT_SCARRY, INT_SBORROW,
+  INT_2COMP, INT_MULT, INT_DIV, INT_SDIV, INT_REM, INT_SREM</code></td>
+</tr>
+<tr>
+  <td>Logical</td>
+  <td><code class="code">INT_NEGATE, INT_XOR, INT_AND, INT_OR, INT_LEFT, INT_RIGHT, INT_SRIGHT</code></td>
+</tr>
+<tr>
+  <td>Integer Comparison</td>
+  <td><code class="code">INT_EQUAL, INT_NOTEQUAL, INT_SLESS, INT_SLESSEQUAL, INT_LESS, INT_LESSEQUAL</code></td>
+</tr>
+<tr>
+  <td>Boolean</td>
+  <td><code class="code">BOOL_NEGATE, BOOL_XOR, BOOL_AND, BOOL_OR</code></td>
+</tr>
+<tr>
+  <td>Floating Point</td>
+  <td><code class="code">FLOAT_ADD, FLOAT_SUB, FLOAT_MULT, FLOAT_DIV, FLOAT_NEG,
+  FLOAT_ABS, FLOAT_SQRT, FLOAT_NAN</code></td>
+</tr>
+<tr>
+  <td>Floating Point Compare</td>
+  <td><code class="code">FLOAT_EQUAL, FLOAT_NOTEQUAL, FLOAT_LESS, FLOAT_LESSEQUAL</code></td>
+</tr>
+<tr>
+  <td>Floating Point Conversion</td>
+  <td><code class="code">INT2FLOAT, FLOAT2FLOAT, TRUNC, CEIL, FLOOR, ROUND</code></td>
+</tr>
+<tr>
+  <td>Branching</td>
+  <td><code class="code">BRANCH, CBRANCH, BRANCHIND, CALL, CALLIND, RETURN</code></td>
+</tr>
+<tr>
+  <td>Extension/Truncation</td>
+  <td><code class="code">INT_ZEXT, INT_SEXT, PIECE, SUBPIECE</code></td>
+</tr>
+<tr>
+  <td>Managed Code</td>
+  <td><code class="code">CPOOLREF, NEW</code></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+We postpone a full discussion of the individual operations until <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7. The Semantic Section">Section 7.7, &#8220;The Semantic Section&#8221;</a>.
+</p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_layout.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right" valign="top"> 2. Basic Specification Layout</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,1325 @@
+#---------------------------------------------------------------------
+# 8.3.9 Data Transfer
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# 8.3.9.1 Move/Load Immediate Operations
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# MOV - Move Data Into Register
+#---------------------------------------------------------------------
+
+# MOV Format I
+# 0011 iiii iiii dddd
+
+:MOV rd0, imm4_8 is op13_3=0x1 & op12_1=1 & rd0 & imm4_8 {
+        rd0 = imm4_8;
+}
+
+# MOV Format II
+# 111i iii0 011i dddd   iiii iiii iiii iiii
+
+:MOV rd0, imm is op13_3=0x7 & op5_4=0x3 & imm9_4 & imm4_1 & rd0; imm16
+        [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
+{
+       rd0 = imm;
+}       
+
+# MOV Format III
+# 000s sss0 1001 dddd
+
+:MOV rd0, rs9 is op13_3=0x0 & op4_5=0x09 & rd0 & rs9 {
+        rd0 = rs9;
+}
+
+#---------------------------------------------------------------------
+# MOV{cond4} - Conditional Move Register
+# I.  {d, s} -> {0, 1, ..., 15}
+#     cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
+# II. d -> {0, 1, ..., 15}
+#     cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
+#     imm -> {-128, -127, ..., 127}
+#---------------------------------------------------------------------
+
+# MOV{cond4} Format I
+# Operation:  if (cond4)
+#                 Rd <- Rs
+# Syntax:     mov{cond4} Rd, Rs
+# 111s sss0 0000 dddd   0001 0111 cccc 0000
+
+:MOV^{ECOND_4_4} rd0, rs9 is op13_3=0x7 & op4_5=0 & rd0 & rs9;
+        eop8_8=0x17 & eop0_4=0 & ECOND_4_4
+{
+        build ECOND_4_4;
+        rd0 = rs9;
+}
+
+# MOV{cond4} Format II
+# Operation:  if (cond4)
+#                 Rd <- SE(imm8)
+# Syntax:     mov{cond4} Rd, imm
+# 1111 1001 1011 dddd   0000 cccc iiii iiii
+
+:MOV^{ECOND_8_4} rd0, simm0_8 is op4_12=0xf9b & rd0 ;
+                                 eop12_4=0 & simm0_8 & ECOND_8_4
+{
+        build ECOND_8_4;
+        rd0 = simm0_8;
+}
+
+:MOVH	rd0, imm16		is op4_12=0xfc1 & rd0 ; imm16 {
+	rd0 = imm16 << 16;
+}
+
+#---------------------------------------------------------------------
+# 8.3.9.2 Load/Store Operations
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# LD.D - Load Doubleword
+# I-V.   d -> {0, 2, ..., 14}
+#  IV.   disp -> {-32768, -32767, ..., 32767}
+#   V.   sa -=> {0, 1, 2, 3}
+#---------------------------------------------------------------------
+
+# LD.D Format I
+# Operation: Rd+1:Rd <- *(Rp)
+#            Rp <- Rp + 8;
+# Syntax:    ld.d Rd, Rp++
+# 101p ppp1 0000 ddd1
+
+:LD.D rd0_low, RPdInc is op13_3=0x5 & op4_5=0x10 & b0=1 & RPdInc & rd0 & rd0_hi & rd0_low
+{
+        rd0_hi = *:4 RPdInc;
+        rd0_low = *:4 (RPdInc + 4);
+}
+
+# LD.D Format II
+# Operation: Rp <- Rp - 8;
+#            Rd+1:Rd <- *(Rp)
+# Syntax:    ld.d Rd, --Rp
+# 101p ppp1 0001 ddd0
+
+:LD.D rd0_low, RPdDec is op13_3=0x5 & op4_5=0x11 & b0=0 & RPdDec & rd0 & rd0_hi & rd0_low
+{
+        rd0_hi = *:4 RPdDec;
+        rd0_low = *:4 (RPdDec + 4);
+}
+
+# LD.D Format III
+# Operation: Rd+1:Rd <- *(Rp)
+# Syntax:    ld.d Rd, Rp
+# 101p ppp1 0000 ddd0
+
+:LD.D rd0_low, rp9 is op13_3=0x5 & op4_5=0x10 & b0=0 & rp9 & rd0 & rd0_hi & rd0_low
+{
+        rd0_hi = *:4 rp9;
+        rd0_low = *:4 (rp9 + 4);
+}
+
+# LD.D Format IV
+# Operation: Rd+1:Rd <- *(Rp + SE(disp16))
+# Syntax:    ld.d Rd, Rp[disp16]
+# 111p ppp0 1110 ddd0   nnnn nnnn nnnn nnnn
+
+:LD.D rd0_low, RPDisp16 is (op13_3=0x7 & op4_5=0xe
+         & b0=0 & rd0 & rd0_hi & rd0_low) ... & RPDisp16
+{
+        rd0_hi = *:4 RPDisp16;
+        rd0_low = *:4 (RPDisp16 + 4);
+}
+
+# LD.D Format V
+# Operation: Rd+1:Rd <- *(Rb + (Ri << sa2))
+# Syntax:    ld.d Rd, Rb[Ri<<sa]
+# 111b bbb0 0000 iiii   0000 0010 00tt dddd
+
+:LD.D erd0, RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x2 & eop6_2=0
+                             & erd0 & erd0_hi & erd0_low) & RB9Shift
+{
+        erd0_hi = *:4 RB9Shift;
+        erd0_low = *:4 (RB9Shift + 4);
+}
+
+#---------------------------------------------------------------------
+# LD.UB - Load Zero-extended Byte
+#---------------------------------------------------------------------
+
+# LD.UB Format I
+# 000p ppp1 0011 dddd
+
+:LD.UB rd0, RP9bInc is op13_3=0x0 & op4_5=0x13 & RP9bInc & rd0 {
+        rd0 = zext(*:1 RP9bInc);
+}
+
+# LD.UB Format II
+# 000p ppp1 0111 dddd
+
+:LD.UB rd0, RP9bDec is op13_3=0x0 & op4_5=0x17 & RP9bDec & rd0 {
+        rd0 = zext(*:1 RP9bDec);
+}
+
+# LD.UB Format III
+# 000p ppp1 1nnn dddd
+
+:LD.UB rd0, RPbDisp3 is op13_3=0x0 & op7_2=0x3 & RPbDisp3 & rd0 {
+        rd0 = zext(*:1 RPbDisp3);
+}
+
+# LD.UB Format IV
+# 111p ppp1 0011 dddd   nnnn nnnn nnnn nnnn
+
+:LD.UB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x13 & rd0) ... & RPDisp16 { 
+        rd0 = zext(*:1 RPDisp16);
+}
+
+# LD.UB Format V
+# 111b bbb0 0000 iiii   0000 0111 00tt dddd
+
+:LD.UB erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                              eop12_4=0 & eop8_4=0x7 & eop6_2=0 & erd0)
+                              & RB9Shift { 
+        erd0 = zext(*:1 RB9Shift);
+}
+
+#---------------------------------------------------------------------
+# LD.UB{cond4} - Conditionally Load Zero-extended Byte
+#---------------------------------------------------------------------
+
+# LD.UB{cond4} Format I
+# 111p ppp1 1111 dddd cccc 100n nnnn nnnn
+
+:LD.UB^{COND_e12} rd0,RPbDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
+                                       eop9_3=0x4 & COND_e12) & RPbDisp9 { 
+        build COND_e12;
+        rd0 = zext(*:1 RPbDisp9);
+}
+
+#---------------------------------------------------------------------
+# LD.SB - Load Sign-extended Byte
+#---------------------------------------------------------------------
+
+# LD.SB Format I
+# 111p ppp1 0010 dddd   nnnn nnnn nnnn nnnn
+
+:LD.SB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x12 & rd0) ... & RPDisp16 { 
+        rd0 = sext(*:1 RPDisp16);
+}
+
+# LD.SB Format II
+# 111b bbb0 0000 iiii   0000 0110 00tt dddd
+
+:LD.SB erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                               eop12_4=0 & eop8_4=0x6 & eop6_2=0 & erd0) & RB9Shift { 
+        erd0 = sext(*:1 RB9Shift);
+}
+
+#---------------------------------------------------------------------
+# LD.SB{cond4} - Conditionally Load Sign-extended Byte
+#---------------------------------------------------------------------
+
+# LD.SB{cond4} Format I
+# 111p ppp1 1111 dddd   cccc 011n nnnn nnnn
+
+:LD.SB^{COND_e12} rd0,RPbDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
+                                       eop9_3=0x3 & COND_e12) & RPbDisp9 { 
+        build COND_e12;
+        rd0 = sext(*:1 RPbDisp9);
+}
+
+#---------------------------------------------------------------------
+# LD.UH - Load Zero-extended Halfword
+#---------------------------------------------------------------------
+
+# LD.UH Format I
+# 000p ppp1 0010 dddd
+
+:LD.UH rd0, RPhInc is op13_3=0x0 & op4_5=0x12 & RPhInc & rd0 {
+        rd0 = zext(*:2 RPhInc);
+}
+
+# LD.UH Format II
+# 000p ppp1 0110 dddd
+
+:LD.UH rd0, RPhDec is op13_3=0x0 & op4_5=0x16 & RPhDec & rd0 {
+        rd0 = zext(*:2 RPhDec);
+}
+
+# LD.UH Format III
+# 100p ppp0 1nnn dddd
+
+:LD.UH rd0, RPhDisp3 is op13_3=0x4 & op7_2=0x1 & RPhDisp3 & rd0 {
+        rd0 = zext(*:2 RPhDisp3);
+}
+
+# LD.UH Format IV
+# 111p ppp1 0001 dddd   nnnn nnnn nnnn nnnn
+
+:LD.UH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x11 & rd0) ... & RPDisp16 { 
+        rd0 = zext(*:2 RPDisp16);
+}
+
+# LD.UH Format V
+# 111b bbb0 0000 iiii   0000 0101 00tt dddd
+
+:LD.UH erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x5 & eop6_2=0 & erd0)
+                             & RB9Shift { 
+        erd0 = zext(*:2 RB9Shift);
+}
+
+#---------------------------------------------------------------------
+# LD.UH{cond4} - Conditionally Load Zero-extended Halfword
+#---------------------------------------------------------------------
+
+# LD.UH{cond4} Format I
+# 111p ppp1 1111 dddd   cccc 010n nnnn nnnn
+
+:LD.UH^{COND_e12} rd0,RPhDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
+                                       eop9_3=0x2 & COND_e12) & RPhDisp9 { 
+        build COND_e12;
+        rd0 = zext(*:2 RPhDisp9);
+}
+
+#---------------------------------------------------------------------
+# LD.SH - Load Sign-extended Halfword
+#---------------------------------------------------------------------
+
+# LD.SH Format I
+# 000p ppp1 0001 dddd
+
+:LD.SH rd0, RPhInc is op13_3=0x0 & op4_5=0x11 & RPhInc & rd0 {
+        rd0 = sext(*:2 RPhInc);
+}
+
+# LD.SH Format II
+# 000p ppp1 0101 dddd
+
+:LD.SH rd0, RPhDec is op13_3=0x0 & op4_5=0x15 & RPhDec & rd0 {
+        rd0 = sext(*:2 RPhDec);
+}
+
+# LD.SH Format III
+# 100p ppp0 0nnn dddd
+
+:LD.SH rd0, RPhDisp3 is op13_3=0x4 & op7_2=0x0 & RPhDisp3 & rd0 {
+        rd0 = sext(*:2 RPhDisp3);
+}
+
+# LD.SH Format IV
+# 111p ppp1 0000 dddd   nnnn nnnn nnnn nnnn
+
+:LD.SH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x10 & rd0) ... & RPDisp16 { 
+        rd0 = sext(*:2 RPDisp16);
+}
+
+# LD.SH Format V
+# 111b bbb0 0000 iiii   0000 0100 00tt dddd
+
+:LD.SH erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                              eop12_4=0 & eop8_4=0x4 & eop6_2=0 & erd0)
+                             & RB9Shift { 
+        erd0 = sext(*:2 RB9Shift);
+}
+
+#---------------------------------------------------------------------
+# LD.SH{cond4} - Conditionally Load Sign-extended Halfword
+#---------------------------------------------------------------------
+
+# LD.SH{cond4} Format I
+# 111p ppp1 1111 dddd   cccc 001n nnnn nnnn
+
+:LD.SH^{COND_e12} rd0,RPhDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
+                                       eop9_3=0x1 & COND_e12) & RPhDisp9 { 
+        build COND_e12;
+        rd0 = sext(*:2 RPhDisp9);
+}
+
+#---------------------------------------------------------------------
+# LD.W - Load Word
+#---------------------------------------------------------------------
+
+# LD.W Format I
+# 000p ppp1 0000 dddd
+
+:LD.W rd0, RPwInc is op13_3=0x0 & op4_5=0x10 & RPwInc & rd0 {
+        rd0 = *:4 RPwInc;
+}
+
+:LD.W rd0, RPwInc is op13_3=0x0 & op4_5=0x10 & RPwInc & rd0 & rs0=0xf {
+		PC = *:4 RPwInc;
+        goto [PC];
+}
+
+# LD.W Format II
+# 000p ppp1 0100 dddd
+
+:LD.W rd0, RPwDec is op13_3=0x0 & op4_5=0x14 & RPwDec & rd0 {
+        rd0 = *:4 RPwDec;
+}
+
+:LD.W rd0, RPwDec is op13_3=0x0 & op4_5=0x14 & RPwDec & rd0 & rs0=0xf {
+		PC = *:4 RPwDec;
+        goto [PC];
+}
+
+# LD.W Format III
+# 011p pppn nnnn dddd
+
+:LD.W rd0, RPwDisp5 is op13_3=0x3 & RPwDisp5 & rd0 {
+        rd0 = *:4 RPwDisp5;
+}
+
+:LD.W rd0, RPwDisp5 is op13_3=0x3 & RPwDisp5 & rd0 & rs0=0xf {
+		PC = *:4 RPwDisp5;
+        goto [PC];
+}
+
+# LD.W Format IV
+# 111p ppp0 1111 dddd   nnnn nnnn nnnn nnnn
+
+:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0) ... & RPDisp16 { 
+        rd0 = *:4 RPDisp16;
+}
+
+:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0 & rs0=0xf) ... & RPDisp16 { 
+		PC = *:4 RPDisp16;
+        goto [PC];
+}
+
+# LD.W Format V
+# 111b bbb0 0000 iiii   0000 0011 00tt dddd
+
+:LD.W erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x3 & eop6_2=0 & erd0)
+                            & RB9Shift { 
+        erd0 = *:4 RB9Shift;
+}
+
+:LD.W erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x3 & eop6_2=0 & erd0 & erd0=0xf)
+                            & RB9Shift
+{ 
+		PC = *:4 RB9Shift;
+        goto [PC];
+}
+
+# LD.W Format VI
+# 111b bbb0 0000 iiii   0000 1111 10xy dddd
+
+:LD.W erd0,RBSelector is (op13_3=0x7 & op4_5=0 & ri0;
+                                eop12_4=0 & eop8_4=0xf & eop6_2=2 & erd0)
+                                & RBSelector { 
+        erd0 = *:4 RBSelector;
+}
+
+:LD.W erd0,RBSelector is (op13_3=0x7 & op4_5=0 & ri0;
+                                eop12_4=0 & eop8_4=0xf & eop6_2=2 & erd0 & erd0=0xf)
+                                & RBSelector { 
+		PC = *:4 RBSelector;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# LD.W{cond4} - Conditionally Load Word
+#---------------------------------------------------------------------
+
+# LD.W{cond4} Format I
+# 111p ppp1 1111 dddd   cccc 000n nnnn nnnn
+
+:LD.W^{COND_e12} rd0,RPwDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
+                                      eop9_3=0x0 & COND_e12) & RPwDisp9 { 
+        build COND_e12;
+        rd0 = *:4 RPwDisp9;
+        
+}
+
+#---------------------------------------------------------------------
+# LDDPC - Load PC-relative with Displacement
+# I.  d -> {0, 1, ..., 15}
+#     disp -> {0, 4, ..., 508}
+#---------------------------------------------------------------------
+
+# LDDPC Format I
+# Operation: Rd <- *((PC && 0xfffffffc) + (ZE(disp7) << 2))
+# Syntax:    lddpc Rd, PC[disp]
+# 0100 1nnn nnnn dddd
+
+LDDPCdisp: disp is disp4_7
+[ disp = (inst_start & 0xfffffffc) + (disp4_7 << 2); ]
+{
+        export *:4 disp;
+}
+
+:LDDPC rd0, LDDPCdisp is op11_5=0x9 & LDDPCdisp & rd0
+{
+        rd0 = LDDPCdisp;
+}
+
+:LDDPC rd0, LDDPCdisp is op11_5=0x9 & LDDPCdisp & rd0 & rd0=0xf
+{
+        PC = LDDPCdisp;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# LDDSP - Load SP-relative with Displacement
+# I.  d -> {0, 1, ..., 15}
+#     disp -> {0, 4, ..., 508}
+#---------------------------------------------------------------------
+
+# LDDSP Format I
+# Operation: Rd <- *((SP && 0xfffffffc) + (ZE(disp7) << 2))
+# Syntax:    lddsp Rd, SP[disp]
+# 0100 0nnn nnnn dddd
+
+:LDDSP rd0^", SP["^disp^"]" is op11_5=0x8 & disp4_7 & rd0
+[ disp = (disp4_7 << 2); ]
+{
+        ptr:4 = (SP & 0xfffffffc) + disp;
+        # assuming SP was pointing into RAM...
+        rd0 = * ptr;
+}
+
+:LDDSP rd0^", SP["^disp^"]" is op11_5=0x8 & disp4_7 & rd0 & rd0=0xf
+[ disp = (disp4_7 << 2); ]
+{
+        ptr:4 = (SP & 0xfffffffc) + disp;
+        # assuming SP was pointing into RAM...
+        goto [ ptr ];
+}
+
+LDBP: "B"			is imm12_2=0 {}
+LDBP: "L"			is imm12_2=1 {}
+LDBP: "U"			is imm12_2=2 {}
+LDBP: "T"			is imm12_2=3 {}
+:LDINS.B rd0:LDBP, rp9"["disp0_11"]"		is op13_3=0x7 & op4_5=0x1d & rd0 & rp9 ; eop14_2=0x1 & LDBP & disp0_11 & imm12_2 {
+	tmp:4 = disp0_11;
+	tmpa:4 = rp9 + tmp;
+	tmpb:1 = *[RAM]:1 tmpa;
+	tmpc:4 = zext(tmpb);
+	tmpd:4 = tmpc << (8 * imm12_2);
+	tmpe:4 = 0xff;
+	tmpe = tmpe << (8 * imm12_2);
+	tmpf:4 = rp9 & ~tmpe;
+	rp9 = tmpf | tmpd;
+}
+
+LDSHIFT12: val		is disp0_11 [ val = disp0_11 << 1; ] { export *[const]:2 val; }
+LDHP: "B"			is eb12=0 {}
+LDHP: "T"			is eb12=1 {}
+:LDINS.H rd0:LDHP, rp9[LDSHIFT12]		is op13_3=0x7 & op4_5=0x1d & rd0 & rp9 ; cp13_3=0x0 & eb12 & LDHP & LDSHIFT12 {
+	tmp:4 = sext(LDSHIFT12);
+	tmpa:4 = rp9 + tmp;
+	tmpb:2 = *[RAM]:2 tmpa;
+	tmpc:4 = zext(tmpb);
+	tmpd:4 = tmpc << (16 * eb12);
+	tmpe:4 = 0xffff;
+	tmpe = tmpe << (16 * eb12);
+	tmpf:4 = rp9 & ~tmpe;
+	rp9 = tmpf | tmpd;
+}
+
+
+LDSTSWPH: val		is disp0_12 [ val = disp0_12 << 1; ] { export *[const]:2 val; }
+LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
+
+:LDSWP.SH rd0, rp9[LDSTSWPH] is op13_3=0x7 & op4_5=0x1d & rp9 & rd0 ; eop12_4=0x2 & LDSTSWPH {
+	tmp:4 = sext(LDSTSWPH);
+	tmpa:4 = rp9 + tmp;
+	tmpb:2 = *[RAM]:2 tmpa; 
+	tmpc:2 = (tmpb << 8) | (tmpb >> 8);
+	rd0 = sext(tmpc);
+}
+
+:LDSWP.UH rd0, rp9[LDSTSWPH] is op13_3=0x7 & op4_5=0x1d & rp9 & rd0 ; eop12_4=0x3 & LDSTSWPH {
+	tmp:4 = sext(LDSTSWPH);
+	tmpa:4 = rp9 + tmp;
+	tmpb:2 = *[RAM]:2 tmpa; 
+	tmpc:2 = (tmpb << 8) | (tmpb >> 8);
+	rd0 = zext(tmpc);
+}
+
+:LDSWP.W rd0, rp9[LDSTSWPW] is op13_3=0x7 & op4_5=0x1d & rp9 & rd0 ; eop12_4=0x8 & LDSTSWPW {
+	tmp:4 = sext(LDSTSWPW);
+	tmpa:4 = rp9 + tmp;
+	tmpb:4 = *[RAM]:4 tmpa;
+	rd0 = (tmpb << 24) | (tmpb >> 24) | ((tmpb & 0x0000FF00) << 8) | ((tmpb & 0x00FF0000) >> 8);  
+}
+
+:STSWP.H rp9[LDSTSWPH], rs0 is op13_3=0x7 & op4_5=0x1d & rp9 & rs0 ; eop12_4=0x9 & LDSTSWPH {
+	tmp:4 = sext(LDSTSWPH);
+	tmpa:4 = rp9 + tmp;
+	tmpb:2 = rs0:2;
+	*[RAM]:2 tmpa = (tmpb >> 8) | (tmpb << 8);
+}
+
+:STSWP.W rp9[LDSTSWPW], rs0 is op13_3=0x7 & op4_5=0x1d & rp9 & rs0 ; eop12_4=0xa & LDSTSWPW {
+	tmp:4 = sext(LDSTSWPW);
+	tmpa:4 = rp9 + tmp;
+	*[RAM]:4 tmpa = (rs0 << 24) | (rs0 >> 24) | ((rs0 & 0x0000FF00) << 8) | ((rs0 & 0x00FF0000) >> 8);
+}
+
+#---------------------------------------------------------------------
+# ST.B - Store Byte
+#---------------------------------------------------------------------
+
+# ST.B Format I
+# 000p ppp0 1100 ssss
+
+:ST.B RP9bInc, rs0 is op13_3=0x0 & op4_5=0x0c & RP9bInc & rs0 {
+        *:1 RP9bInc = rs0:1; 
+}
+
+# ST.B Format II
+# 000p ppp0 1111 ssss
+
+:ST.B RP9bDec, rs0 is op13_3=0x0 & op4_5=0x0f & RP9bDec & rs0 {
+        *:1 RP9bDec = rs0:1;
+}
+
+# ST.B Format III
+# 101p ppp0 1nnn ssss
+
+:ST.B RPbDisp3, rs0 is op13_3=0x5 & op7_2=0x1 & rs0 & RPbDisp3 {
+        *:1 RPbDisp3 = rs0:1; 
+}
+
+# ST.B Format IV
+# 111p ppp1 0110 ssss   nnnn nnnn nnnn nnnn
+
+:ST.B RPDisp16, rs0 is (op13_3=0x7 & op4_5=0x16 & rs0) ... & RPDisp16 {
+        *:1 RPDisp16 = rs0:1; 
+}
+
+# ST.B Format V
+# 111b bbb0 0000 iiii   0000 1011 00tt ssss
+
+:ST.B RB9Shift, ers0 is (op13_3=0x7 & op4_5=0 & ri0;
+                         eop12_4=0 & eop8_4=0xb & eop6_2=0 & ers0) & RB9Shift {
+        *:1 RB9Shift = ers0:1;
+}
+
+#---------------------------------------------------------------------
+# ST.B{cond4} - Conditionally Store Byte
+#---------------------------------------------------------------------
+
+# ST.B{cond4} Format I
+# 111p ppp1 1111 ssss   cccc 111n nnnn nnnn
+
+:ST.B^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
+                                      eop9_3=0x7 & COND_e12) & RPwDisp9 { 
+        build COND_e12;
+        *:4 RPwDisp9 = rs0:1;
+}
+
+#---------------------------------------------------------------------
+# ST.D - Store Doubleword
+#---------------------------------------------------------------------
+
+# ST.D Format I
+# 101p ppp1 0010 sss0
+
+:ST.D RPdInc, rs0_low is op13_3=0x5 & op4_5=0x12 & b0=0
+                     & RPdInc & rs0 & rs0_hi & rs0_low {
+        low:8 = zext(rs0_low);
+        hi:8 = zext(rs0_hi) << 32;
+        *:8 RPdInc = hi | low;
+}
+
+# ST.D Format II
+# 101p ppp1 0010 sss1
+
+:ST.D RPdDec, rs0_low is op13_3=0x5 & op4_5=0x12 & b0=1
+                     & RPdDec & rs0 & rs0_hi & rs0_low {
+        low:8 = zext(rs0_low);
+        hi:8 = zext(rs0_hi) << 32;
+        *:8 RPdDec = hi | low;
+}
+
+# ST.D Format III
+# 101p ppp1 0001 sss1
+
+:ST.D rp9, rs0_low is op13_3=0x5 & op4_5=0x11 & b0=1
+                     & rp9 & rs0 & rs0_hi & rs0_low {
+        low:8 = zext(rs0_low);
+        hi:8 = zext(rs0_hi) << 32;
+        *:8 rp9 = hi | low;
+}
+
+# ST.D Format IV
+# 111p ppp0 1110 sss1   nnnn nnnn nnnn nnnn
+
+:ST.D RPDisp16, rs0_low is (op13_3=0x7 & op4_5=0xe
+         & b0=1 & rs0 & rs0_hi & rs0_low) ... & RPDisp16
+{
+        low:8 = zext(rs0_low);
+        hi:8 = zext(rs0_hi) << 32;
+        *:8 RPDisp16 = hi | low;
+}
+
+# ST.D Format V
+# 111b bbb0 0000 iiii   0000 1000 00tt ssss
+
+:ST.D RB9Shift, ers0_low is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x8 & eop6_2=0
+                             & ers0 & ers0_hi & ers0_low) & RB9Shift
+{ 
+        low:8 = zext(ers0_low);
+        hi:8 = zext(ers0_hi) << 32;
+        *:8 RB9Shift = hi | low;
+}
+
+#---------------------------------------------------------------------
+# ST.H - Store Halfword
+#---------------------------------------------------------------------
+
+# ST.H Format I
+# 000p ppp0 1011 ssss
+
+:ST.H RPhInc, rs0 is op13_3=0x0 & op4_5=0x0b & RPhInc & rs0 {
+        *:2 RPhInc = rs0:2; 
+}
+
+# ST.H Format II
+# 000p ppp0 1110 ssss
+
+:ST.H RPhDec, rs0 is op13_3=0x0 & op4_5=0x0e & RPhDec & rs0 {
+        *:2 RPhDec = rs0:2;
+}
+
+# ST.H Format III
+# 101p ppp0 0nnn ssss
+
+:ST.H RPhDisp3, rs0 is op13_3=0x5 & op7_2=0x0 & rs0 & RPhDisp3 {
+        *:2 RPhDisp3 = rs0:2; 
+}
+
+# ST.H Format IV
+# 111p ppp1 0101 ssss   nnnn nnnn nnnn nnnn
+
+:ST.H RPDisp16, rs0 is (op13_3=0x7 & op4_5=0x15 & rs0) ... & RPDisp16 {
+        *:2 RPDisp16 = rs0:2; 
+}
+
+# ST.H Format V
+# 111b bbb0 0000 iiii   0000 1010 00tt ssss
+
+:ST.H RB9Shift, ers0 is (op13_3=0x7 & op4_5=0 & ri0;
+                         eop12_4=0 & eop8_4=0xa & eop6_2=0 & ers0) & RB9Shift {
+        *:2 RB9Shift = ers0:2;
+}
+
+#---------------------------------------------------------------------
+# ST.H{cond4} - Conditionally Store Halfword
+#---------------------------------------------------------------------
+
+# ST.H{cond4} Format I
+# 111p ppp1 1111 ssss   cccc 110n nnnn nnnn
+
+:ST.H^{COND_e12} RPhDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
+                                      eop9_3=0x6 & COND_e12) & RPhDisp9 { 
+        build COND_e12;
+        *:4 RPhDisp9 = rs0:2;
+}
+
+STXP: "T"	is eb13=1 & ctx_savex {
+	tmp:4 = ctx_savex;
+	tmp = tmp >> 16;
+	export *[const]:4 tmp;
+}
+STXP: "B"	is eb13=0 & ctx_savex {
+	tmp:4 = ctx_savex;
+	tmp = tmp & 0xFFFF;
+	export *[const]:4 tmp;
+}
+STYP: "T"	is eb12=1 & ctx_savey {
+	tmp:4 = ctx_savey;
+	tmp = tmp >> 16;
+	export *[const]:4 tmp;
+}
+STYP: "B"	is eb12=0 & ctx_savey {
+	tmp:4 = ctx_savey;
+	tmp = tmp & 0xFFFF;
+	export *[const]:4 tmp;
+}
+STHHD: val	is edisp4_8 [ val = edisp4_8 << 2; ] { export *[const]:2 val; }
+:STHH.W erp0[STHHD],rx9:STXP,ry0:STYP is op13_3=0x7 & op4_5=0x1e & rx9 & ry0 ; eop14_2=0x3 & STXP & STYP & STHHD & erp0 [ctx_savex=rx9; ctx_savey=ry0;] {
+	tmp:4 = zext(STHHD);
+	tmp = erp0 + tmp;
+	*[RAM]:4 tmp = (STXP << 16) | STYP;
+}
+
+:STHH.W erb0[eri8" << "shift4_2],rx9:STXP,ry0:STYP is op13_3=0x7 & op4_5=0x1e & rx9 & ry0 ; eop14_2=0x2 & STXP & STYP & eri8 & eop6_2=0x0 & shift4_2 & erb0 [ctx_savex=rx9; ctx_savey=ry0;] {
+	tmp:4 = eri8 << shift4_2;
+	*[RAM]:4 tmp = (STXP << 16) | STYP;
+}
+
+#---------------------------------------------------------------------
+# ST.W - Store Word
+#---------------------------------------------------------------------
+
+# ST.W Format I
+# 000p ppp0 1010 ssss
+
+:ST.W RPwInc,rs0 is op13_3=0x0 & op4_5=0x0a & RPwInc & rs0 {
+        *:4 RPwInc = rs0;
+}
+
+# ST.W Format II
+# 000p ppp0 1101 ssss
+
+:ST.W RPwDec,rs0 is op13_3=0x0 & op4_5=0x0d & RPwDec & rs0 {
+        *:4 RPwDec = rs0;
+}
+
+# ST.W Format III
+# 100p ppp1 nnnn ssss
+
+:ST.W RPwDisp4,rs0 is op13_3=0x4 & op8_1=1 & RPwDisp4 & rs0 {
+        *:4 RPwDisp4 = rs0;
+}
+
+# ST.W Format IV
+# 111p ppp1 0100 ssss   nnnn nnnn nnnn nnnn
+
+:ST.W RPDisp16,rs0 is (op13_3=7 & op4_5=0x14 & rs0) ... & RPDisp16 {
+        *:4 RPDisp16 = rs0;
+}
+
+# ST.W Format V
+# 111b bbb0 0000 iiii   0000 1001 00tt ssss
+
+:ST.W RB9Shift,ers0 is (op13_3=0x7 & op4_5=0 & ri0;
+                             eop12_4=0 & eop8_4=0x9 & eop6_2=0 & ers0)
+                            & RB9Shift { 
+        *:4 RB9Shift = ers0;
+}
+
+#---------------------------------------------------------------------
+# ST.W - Conditionally Store Word
+#---------------------------------------------------------------------
+
+# ST.W{cond4} Format I
+# 111p ppp1 1111 ssss   cccc 101n nnnn nnnn
+
+:ST.W^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
+                                      eop9_3=0x5 & COND_e12) & RPwDisp9 { 
+        build COND_e12;
+        *:4 RPwDisp9 = rs0;
+}
+
+:STCOND rp9[disp_16],rs0  	is op13_3=0x7 & rp9 & op4_5=0x17 & rs0 ; disp_16 {
+	Z = L;
+	CZTOSR();
+	
+	if (!L) goto inst_next;
+	
+	tmp:2 = disp_16;
+	tmpa:4 = sext(tmp);
+	tmpa = tmpa + rp9;
+	*[RAM]:4 tmpa = rs0;
+}
+
+#---------------------------------------------------------------------
+# STDSP - Store Stack-Pointer Relative
+# I.    disp -> {0, 4, ..., 508}
+#       s -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# STDSP Format I
+# Operation: *((SP & 0xfffffffc) + (ZE(disp7) << 2)) <- Rs
+# Syntax:    stdsp SP[disp], Rs
+# 0101 0nnn nnnn ssss
+
+:STDSP "SP["^disp4_7^"], "^rs0 is op11_5=0xa & disp4_7 & rs0
+{
+        ptr:4 = (SP & 0xfffffffc) + (disp4_7 << 2);
+        #ptr:4 = (((SP >> 2) + disp4_7) << 2);
+        # assuming SP was pointing into RAM...
+        *:4 ptr = rs0;        
+}
+
+#---------------------------------------------------------------------
+# 8.3.9.3 Multiple Data
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# LDM - Load Multiple Registers
+#---------------------------------------------------------------------
+
+# LDM Format I
+# 1110 00M1 1100 pppp   LLLL LLLL LLLL LLLL
+
+macro status_r12() {
+        V = 0;
+        N = R12 s< 0;
+        Z = R12 == 0;
+        C = 0;
+        CZNVTOSR();
+}
+
+LoadAddress: is rp0=0xf ; eb15=1 { ldadd = SP;         } # Rp=PC and Reglist16[PC]=1
+LoadAddress: is rp0=0xf ; eb15   { ldadd = inst_start; } # Rp=PC and Reglist16[PC]=0
+LoadAddress: is rp0     ; eb15   { ldadd = rp0;        } # Rp!=PC
+LoadAddressTS: is rp0   ; eb15   { ldadd = rp0;        } 
+
+LDMinc15:   ", PC"     is eb15=1  { PC = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc14ab: ", LR"     is eb14=1  { LR = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc13ab: ", SP"     is eb13=1  { SP = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc12c:  ", R12=0"  is eb14=0 & eb12=0 { R12 = 0; }
+LDMinc12c:  ", R12=1"  is eb14=0 & eb12=1 { R12 = 1; }
+LDMinc12c:  ", R12=-1" is eb14=1          { R12 = -1; }
+LDMinc12ab: ", R12"    is eb12=1  { R12 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc12s:             is eb15=1  { status_r12(); }
+LDMinc11:   ", R11"    is eb11=1  { R11 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc10:   ", R10"    is eb10=1  { R10 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc9:    ", R9"     is eb9=1   { R9 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc8:    ", R8"     is eb8=1   { R8 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc7:    ", R7"     is eb7=1   { R7 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc6:    ", R6"     is eb6=1   { R6 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc5:    ", R5"     is eb5=1   { R5 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc4:    ", R4"     is eb4=1   { R4 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc3:    ", R3"     is eb3=1   { R3 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc2:    ", R2"     is eb2=1   { R2 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc1:    ", R1"     is eb1=1   { R1 = *:4 ldadd; ldadd = ldadd + 4; }
+LDMinc0:    ", R0"     is eb0=1   { R0 = *:4 ldadd; ldadd = ldadd + 4; }
+
+LDMinc15:   is eb15=0  { }
+LDMinc14ab: is eb14=0  { }
+LDMinc13ab: is eb13=0  { }
+LDMinc12ab: is eb12=0  { }
+LDMinc12s:  is eb15=0  { }
+LDMinc11:   is eb11=0  { }
+LDMinc10:   is eb10=0  { }
+LDMinc9:    is eb9=0  { }
+LDMinc8:    is eb8=0  { }
+LDMinc7:    is eb7=0  { }
+LDMinc6:    is eb6=0  { }
+LDMinc5:    is eb5=0  { }
+LDMinc4:    is eb4=0  { }
+LDMinc3:    is eb3=0  { }
+LDMinc2:    is eb2=0  { }
+LDMinc1:    is eb1=0  { }
+LDMinc0:    is eb0=0  { }
+
+LDMpp:      is op9_1=0           { }
+LDMpp: "++" is op9_1=1 & rp0=0xf { SP = ldadd; }
+LDMpp: "++" is op9_1=1 & rp0     { rp0 = ldadd; }
+
+LDMTSpp:      is op9_1=0           { }
+LDMTSpp: "++" is op9_1=1 & rp0     { rp0 = ldadd; }
+
+LDMret: is eb15=1 { return [ PC ]; }
+LDMret: is eb15=0 { }
+
+LDMcommon: LDMinc0^LDMinc1^LDMinc2^LDMinc3^LDMinc4^LDMinc5^LDMinc6^LDMinc7^LDMinc8^LDMinc9^LDMinc10^LDMinc11 is LDMinc0 & LDMinc1 & LDMinc2 & LDMinc3 & LDMinc4 & LDMinc5
+   & LDMinc6 & LDMinc7 & LDMinc8 & LDMinc9 & LDMinc10 & LDMinc11
+{
+        build LDMinc11;
+        build LDMinc10;
+        build LDMinc9;
+        build LDMinc8;
+        build LDMinc7;
+        build LDMinc6;
+        build LDMinc5;
+        build LDMinc4;
+        build LDMinc3;
+        build LDMinc2;
+        build LDMinc1;
+        build LDMinc0;
+}
+
+LDMlistd: LDMpp^LDMcommon^LDMinc12ab^LDMinc13ab^LDMinc14ab^LDMinc15 is (LDMpp ; LDMcommon & LDMinc12ab & LDMinc13ab & LDMinc14ab
+    & LDMinc12s & LDMinc15 & LDMret) & LoadAddressTS
+{
+        build LoadAddressTS;
+        build LDMinc15;
+        build LDMinc14ab;
+        build LDMinc13ab;
+        build LDMinc12ab;
+        build LDMcommon;
+        build LDMpp;
+        build LDMret;
+}
+
+LDMlistc: LDMpp^LDMcommon^LDMinc12c^LDMinc15 is (LDMpp ; LDMcommon & LDMinc12c & LDMinc12s & LDMinc15 & LDMret) & LoadAddress
+{
+        build LoadAddress;
+        build LDMinc15;
+        build LDMinc12c;
+        build LDMinc12s;
+        build LDMcommon;
+        build LDMpp;
+        build LDMret;
+}
+
+LDMlistb: LDMpp^LDMcommon^LDMinc12ab^LDMinc13ab^LDMinc14ab^LDMinc15 is (LDMpp ; LDMcommon & LDMinc12ab & LDMinc13ab & LDMinc14ab
+    & LDMinc12s & LDMinc15 & LDMret) & LoadAddress
+{
+        build LoadAddress;
+        build LDMinc15;
+        build LDMinc14ab;
+        build LDMinc13ab;
+        build LDMinc12ab;
+        build LDMinc12s;
+        build LDMcommon;
+        build LDMpp;
+        build LDMret;
+}
+
+LDMlista: LDMpp^LDMcommon^LDMinc12ab^LDMinc13ab^LDMinc14ab is (LDMpp ; LDMcommon & LDMinc12ab & LDMinc13ab & LDMinc14ab) & LoadAddress
+{
+        build LoadAddress;
+        build LDMinc14ab;
+        build LDMinc13ab;
+        build LDMinc12ab;
+        build LDMcommon;
+        build LDMpp;
+}
+
+:LDM rp0^LDMlistc is (rp0 & rp0=0xf & op10_6=0x38 & op4_5=0x1c ; eb15=1) & LDMlistc
+{
+        build LDMlistc;
+}
+
+:LDM rp0^LDMlistb is (rp0 & op10_6=0x38 & op4_5=0x1c ; eb15=1) & LDMlistb
+{
+        build LDMlistb;
+}
+
+:LDM rp0^LDMlista is (rp0 & op10_6=0x38 & op4_5=0x1c) ... & LDMlista
+{
+        build LDMlista;
+}
+
+:LDMTS rp0^LDMlistd is (rp0 & op10_6=0x39 & op4_5=0x1c) ... & LDMlistd {
+	build LDMlistd;
+}
+
+#---------------------------------------------------------------------
+# POPM - Load Multiple Registers
+#---------------------------------------------------------------------
+
+# POPM Format I
+# 1101 RRRR RRRR k010
+COM5:				 is bp4_1=0 {}
+COM5: ","			 is bp4_1   {}
+COM6:				 is bp4_2=0 {}
+COM6: ","			 is bp4_2   {}
+COM7:				 is bp4_3=0 {}
+COM7: ","			 is bp4_3   {}
+COM8:				 is bp4_4=0 {}
+COM8: ","			 is bp4_4   {}
+COM9:				 is bp4_5=0 {}
+COM9: ","			 is bp4_5   {}
+COM10:				 is bp4_6=0 {}
+COM10: ","			 is bp4_6   {}
+COM11:				 is bp4_7=0 {}
+COM11:				 is bp4_7=0x20 & b03=1 {}
+COM11: ","			 is bp4_7   {}
+
+POPMinc11: COM11^"PC"     is b11=1 & COM11               { build COM11; PC = *:4 SP; SP = SP + 4; }
+POPMinc10b:           is b10                   { }
+POPMinc10a: COM10^"LR"    is b10=1 & COM10               { build COM10; LR = *:4 SP; SP = SP + 4; }
+POPMinc9b: ",R12=0"  is b11=1 & b10=0 & b09=0 { R12 = 0; }
+POPMinc9b: ",R12=1"  is b11=1 & b10=0 & b09=1 { R12 = 1; }
+POPMinc9b: ",R12=-1" is b11=1 & b10=1         { R12 = -1; }
+POPMinc9a: COM9^"R12"    is b09=1                 & COM9 { build COM9; R12 = *:4 SP; SP = SP + 4; }
+POPMinc9s:            is b11=1                 { status_r12(); }
+POPMinc8: COM8^"R11"     is b08=1 & COM8 { build COM8; 
+								 R11 = *:4 SP; SP = SP + 4; }
+POPMinc7: COM7^"R10"     is b07=1 & COM7 { build COM7;
+								 R10 = *:4 SP; SP = SP + 4; }
+POPMinc6: COM6^"R8-R9"   is b06=1 & COM6 { build COM6; 
+								 R9 = *:4 SP; SP = SP + 4;
+                                 R8 = *:4 SP; SP = SP + 4; }
+POPMinc5: COM5^"R4-R7"   is b05=1 & COM5 { build COM5;
+								 R7 = *:4 SP; SP = SP + 4;
+                                 R6 = *:4 SP; SP = SP + 4;
+                                 R5 = *:4 SP; SP = SP + 4;
+                                 R4 = *:4 SP; SP = SP + 4; }
+POPMinc4: "R0-R3"   is b04=1 { R3 = *:4 SP; SP = SP + 4;
+                                 R2 = *:4 SP; SP = SP + 4;
+                                 R1 = *:4 SP; SP = SP + 4;
+                                 R0 = *:4 SP; SP = SP + 4; }
+POPMinc11:  is b11=0 { }
+POPMinc10a: is b10=0 { }
+POPMinc9a:  is b09=0 { }
+POPMinc9b:  is b11=0 { }
+POPMinc9s:  is b11=0 { }
+POPMinc8:   is b08=0 { }
+POPMinc7:   is b07=0 { }
+POPMinc6:   is b06=0 { }
+POPMinc5:   is b05=0 { }
+POPMinc4:   is b04=0 { }
+
+POPMjump: is b11=1 { return [ PC ]; }
+POPMjump: is b11=0 { }
+
+POPMchunk: POPMinc4^POPMinc5^POPMinc6^POPMinc7^POPMinc8 is POPMinc4 & POPMinc5 & POPMinc6 & POPMinc7 & POPMinc8 & POPMinc9s & POPMjump
+{
+        build POPMinc9s;
+        build POPMinc8;
+        build POPMinc7;
+        build POPMinc6;
+        build POPMinc5;
+        build POPMinc4;
+        build POPMjump;
+}
+
+POPMdispa: POPMchunk^POPMinc9a^POPMinc10a^POPMinc11 is POPMchunk & POPMinc9a & POPMinc10a & POPMinc11
+{
+        build POPMinc11;
+        build POPMinc10a;
+        build POPMinc9a;
+        build POPMchunk;
+}
+
+POPMdispb: POPMchunk^POPMinc10b^POPMinc11^POPMinc9b is POPMchunk & POPMinc9b & POPMinc10b & POPMinc11
+{
+        build POPMinc11;
+        build POPMinc10b;
+        build POPMinc9b;
+        build POPMchunk;
+}
+
+:POPM POPMdispa is op12_4=0xd & op0_4=0x2 & POPMdispa
+{
+        build POPMdispa;
+}
+
+:POPM POPMdispb is op12_4=0xd & op0_4=0xa & POPMdispb
+{
+        build POPMdispb;
+}
+
+#---------------------------------------------------------------------
+# PUSHM - Push Multiple Registers to Stack
+# I. Reglist8 -> {R0-R3, R4-R7, R8-R9, R10, R11, R12, LR, PC}
+#---------------------------------------------------------------------
+
+# PUSHM Format I:
+# Operation:  if Reglist8[0] == 1 then
+#                  *(--SP) <- R0;
+#                  *(--SP) <- R1;
+#                  *(--SP) <- R2;
+#                  *(--SP) <- R3;
+#              if Reglist8[1] == 1 then
+#                  *(--SP) <- R4;
+#                  *(--SP) <- R5;
+#                  *(--SP) <- R6;
+#                  *(--SP) <- R7;
+#              if Reglist8[2] == 1 then
+#                  *(--SP) <- R8;
+#                  *(--SP) <- R9;
+#              if Reglist8[3] == 1 then
+#                  *(--SP) <- R10;
+#              if Reglist8[4] == 1 then
+#                  *(--SP) <- R11;
+#              if Reglist8[5] == 1 then
+#                  *(--SP) <- R12;
+#              if Reglist8[6] == 1 then
+#                  *(--SP) <- LR;
+#              if Reglist8[7] == 1 then
+#                  *(--SP) <- PC;
+# Syntax:     pushm Reglist8
+# 1101 RRRR RRRR 0001
+
+PUSHMdec4: "R0-R3" is b04=1 { SP = SP - 4; *:4 SP = R0;
+                                SP = SP - 4; *:4 SP = R1;
+                                SP = SP - 4; *:4 SP = R2;
+                                SP = SP - 4; *:4 SP = R3; }
+PUSHMdec5: COM5^"R4-R7" is b05=1 & COM5 { build COM5; 
+								SP = SP - 4; *:4 SP = R4;
+                                SP = SP - 4; *:4 SP = R5;
+                                SP = SP - 4; *:4 SP = R6;
+                                SP = SP - 4; *:4 SP = R7; }
+PUSHMdec6: COM6^"R8-R9" is b06=1 & COM6{ build COM6; 
+								SP = SP - 4; *:4 SP = R8;
+                                SP = SP - 4; *:4 SP = R9; }
+PUSHMdec7: COM7^"R10"   is b07=1 & COM7 { build COM7; SP = SP - 4; *:4 SP = R10; }
+PUSHMdec8: COM8^"R11"   is b08=1 & COM8 { build COM8; SP = SP - 4; *:4 SP = R11; }
+PUSHMdec9: COM9^"R12"   is b09=1 & COM9 { build COM9; SP = SP - 4; *:4 SP = R12; }
+PUSHMdec10: COM10^"LR"   is b10=1 & COM10 { build COM10; SP = SP - 4; *:4 SP = LR; }
+PUSHMdec11: COM11^"PC"   is b11=1 & COM11 { build COM11; SP = SP - 4; *:4 SP = inst_start; }
+PUSHMdec4: is b04=0 { }
+PUSHMdec5: is b05=0 { }
+PUSHMdec6: is b06=0 { }
+PUSHMdec7: is b07=0 { }
+PUSHMdec8: is b08=0 { }
+PUSHMdec9: is b09=0 { }
+PUSHMdec10: is b10=0 { }
+PUSHMdec11: is b11=0 { }
+
+PUSHMdisp: PUSHMdec4^PUSHMdec5^PUSHMdec6^PUSHMdec7^PUSHMdec8^PUSHMdec9^PUSHMdec10^PUSHMdec11 is      PUSHMdec4 & PUSHMdec5 & PUSHMdec6 & PUSHMdec7 
+        & PUSHMdec8 & PUSHMdec9 & PUSHMdec10 & PUSHMdec11
+{
+        build PUSHMdec4;
+        build PUSHMdec5;
+        build PUSHMdec6;
+        build PUSHMdec7;
+        build PUSHMdec8;
+        build PUSHMdec9;
+        build PUSHMdec10;
+        build PUSHMdec11;
+}
+
+:PUSHM PUSHMdisp is 
+        op12_4=0xd & op0_4=0x1 & PUSHMdisp
+{
+        build PUSHMdisp;
+}
+
+#---------------------------------------------------------------------
+# STM - Store Multiple Registers
+#---------------------------------------------------------------------
+
+# STM Format I
+# 1110 10M1 1100 pppp   LLLL LLLL LLLL LLLL
+
+StoreAddress: is rp0     ; eb15   { stadd = rp0;        } # Rp!=PC
+
+STMinc0: ,deb0 is rp0 ; deb0 & eb0=1 { *:4 stadd = R0; stadd = stadd + 4; }
+STMinc1: ,deb1 is rp0 ; deb1 & eb1=1 { *:4 stadd = R1; stadd = stadd + 4; }
+STMinc2: ,deb2 is rp0 ; deb2 & eb2=1 { *:4 stadd = R2; stadd = stadd + 4; }
+STMinc3: ,deb3 is rp0 ; deb3 & eb3=1 { *:4 stadd = R3; stadd = stadd + 4; }
+STMinc4: ,deb4 is rp0 ; deb4 & eb4=1 { *:4 stadd = R4; stadd = stadd + 4; }
+STMinc5: ,deb5 is rp0 ; deb5 & eb5=1 { *:4 stadd = R5; stadd = stadd + 4; }
+STMinc6: ,deb6 is rp0 ; deb6 & eb6=1 { *:4 stadd = R6; stadd = stadd + 4; }
+STMinc7: ,deb7 is rp0 ; deb7 & eb7=1 { *:4 stadd = R7; stadd = stadd + 4; }
+STMinc8: ,deb8 is rp0 ; deb8 & eb8=1 { *:4 stadd = R8; stadd = stadd + 4; }
+STMinc9: ,deb9 is rp0 ; deb9 & eb9=1 { *:4 stadd = R9; stadd = stadd + 4; }
+STMinc10: ,deb10 is rp0 ; deb10 & eb10=1 { *:4 stadd = R10; stadd = stadd + 4; }
+STMinc11: ,deb11 is rp0 ; deb11 & eb11=1 { *:4 stadd = R11; stadd = stadd + 4; }
+STMinc12: ,deb12 is rp0 ; deb12 & eb12=1 { *:4 stadd = R12; stadd = stadd + 4; }
+STMinc13: ,deb13 is rp0 ; deb13 & eb13=1 { *:4 stadd = SP; stadd = stadd + 4; }
+STMinc14: ,deb14 is rp0 ; deb14 & eb14=1 { *:4 stadd = LR; stadd = stadd + 4; }
+STMinc15: ,deb15 is rp0 ; deb15 & eb15=1 { *:4 stadd = inst_start; stadd = stadd + 4; }
+STMinc0: is rp0 ; eb0=0 { }
+STMinc1: is rp0 ; eb1=0 { }
+STMinc2: is rp0 ; eb2=0 { }
+STMinc3: is rp0 ; eb3=0 { }
+STMinc4: is rp0 ; eb4=0 { }
+STMinc5: is rp0 ; eb5=0 { }
+STMinc6: is rp0 ; eb6=0 { }
+STMinc7: is rp0 ; eb7=0 { }
+STMinc8: is rp0 ; eb8=0 { }
+STMinc9: is rp0 ; eb9=0 { }
+STMinc10: is rp0 ; eb10=0 { }
+STMinc11: is rp0 ; eb11=0 { }
+STMinc12: is rp0 ; eb12=0 { }
+STMinc13: is rp0 ; eb13=0 { }
+STMinc14: is rp0 ; eb14=0 { }
+STMinc15: is rp0 ; eb15=0 { }
+
+STMdec0: ,deb0 is rp0 ; deb0 & eb0=1 { rp0 = rp0 - 4; *:4 rp0 = R0; }
+STMdec1: ,deb1 is rp0 ; deb1 & eb1=1 { rp0 = rp0 - 4; *:4 rp0 = R1; }
+STMdec2: ,deb2 is rp0 ; deb2 & eb2=1 { rp0 = rp0 - 4; *:4 rp0 = R2; }
+STMdec3: ,deb3 is rp0 ; deb3 & eb3=1 { rp0 = rp0 - 4; *:4 rp0 = R3; }
+STMdec4: ,deb4 is rp0 ; deb4 & eb4=1 { rp0 = rp0 - 4; *:4 rp0 = R4; }
+STMdec5: ,deb5 is rp0 ; deb5 & eb5=1 { rp0 = rp0 - 4; *:4 rp0 = R5; }
+STMdec6: ,deb6 is rp0 ; deb6 & eb6=1 { rp0 = rp0 - 4; *:4 rp0 = R6; }
+STMdec7: ,deb7 is rp0 ; deb7 & eb7=1 { rp0 = rp0 - 4; *:4 rp0 = R7; }
+STMdec8: ,deb8 is rp0 ; deb8 & eb8=1 { rp0 = rp0 - 4; *:4 rp0 = R8; }
+STMdec9: ,deb9 is rp0 ; deb9 & eb9=1 { rp0 = rp0 - 4; *:4 rp0 = R9; }
+STMdec10: ,deb10 is rp0 ; deb10 & eb10=1 { rp0 = rp0 - 4; *:4 rp0 = R10; }
+STMdec11: ,deb11 is rp0 ; deb11 & eb11=1 { rp0 = rp0 - 4; *:4 rp0 = R11; }
+STMdec12: ,deb12 is rp0 ; deb12 & eb12=1 { rp0 = rp0 - 4; *:4 rp0 = R12; }
+STMdec13: ,deb13 is rp0 ; deb13 & eb13=1 { rp0 = rp0 - 4; *:4 rp0 = SP; }
+STMdec14: ,deb14 is rp0 ; deb14 & eb14=1 { rp0 = rp0 - 4; *:4 rp0 = LR; }
+STMdec15: ,deb15 is rp0 ; deb15 & eb15=1 { rp0 = rp0 - 4; *:4 rp0 = inst_start; }
+STMdec0: is rp0 ; eb0=0 { }
+STMdec1: is rp0 ; eb1=0 { }
+STMdec2: is rp0 ; eb2=0 { }
+STMdec3: is rp0 ; eb3=0 { }
+STMdec4: is rp0 ; eb4=0 { }
+STMdec5: is rp0 ; eb5=0 { }
+STMdec6: is rp0 ; eb6=0 { }
+STMdec7: is rp0 ; eb7=0 { }
+STMdec8: is rp0 ; eb8=0 { }
+STMdec9: is rp0 ; eb9=0 { }
+STMdec10: is rp0 ; eb10=0 { }
+STMdec11: is rp0 ; eb11=0 { }
+STMdec12: is rp0 ; eb12=0 { }
+STMdec13: is rp0 ; eb13=0 { }
+STMdec14: is rp0 ; eb14=0 { }
+STMdec15: is rp0 ; eb15=0 { }
+
+STMdecdisp: STMdec0^STMdec1^STMdec2^STMdec3^STMdec4^STMdec5^STMdec6^STMdec7^STMdec8^STMdec9^STMdec10^STMdec11^STMdec12^STMdec13^STMdec14^STMdec15 is      STMdec0 & STMdec1 & STMdec2 & STMdec3 & 
+        STMdec4 & STMdec5 & STMdec6 & STMdec7 & 
+        STMdec8 & STMdec9 & STMdec10 & STMdec11 & 
+        STMdec12 & STMdec13 & STMdec14 & STMdec15
+{
+        build STMdec0;
+        build STMdec1;
+        build STMdec2;
+        build STMdec3;
+        build STMdec4;
+        build STMdec5;
+        build STMdec6;
+        build STMdec7;
+        build STMdec8;
+        build STMdec9;
+        build STMdec10;
+        build STMdec11;
+        build STMdec12;
+        build STMdec13;
+        build STMdec14;
+        build STMdec15;
+}
+
+STMincdisp: STMinc0^STMinc1^STMinc2^STMinc3^STMinc4^STMinc5^STMinc6^STMinc7^STMinc8^STMinc9^STMinc10^STMinc11^STMinc12^STMinc13^STMinc14^STMinc15 is      STMinc0 & STMinc1 & STMinc2 & STMinc3 & 
+        STMinc4 & STMinc5 & STMinc6 & STMinc7 & 
+        STMinc8 & STMinc9 & STMinc10 & STMinc11 & 
+        STMinc12 & STMinc13 & STMinc14 & STMinc15 & StoreAddress
+{
+        build StoreAddress;
+        build STMinc15;
+        build STMinc14;
+        build STMinc13;
+        build STMinc12;
+        build STMinc11;
+        build STMinc10;
+        build STMinc9;
+        build STMinc8;
+        build STMinc7;
+        build STMinc6;
+        build STMinc5;
+        build STMinc4;
+        build STMinc3;
+        build STMinc2;
+        build STMinc1;
+        build STMinc0;
+}
+ 
+:STM "--"^rp0^STMdecdisp
+is
+        (op10_6=0x3a & op4_5=0x1c & op9_1=1 & rp0) ... & STMdecdisp
+{
+}
+
+:STM rp0^STMincdisp
+is
+        (op10_6=0x3a & op4_5=0x1c & op9_1=0 & rp0) ... & STMincdisp
+{
+}
+
+:STMTS "--"^rp0^STMdecdisp
+is 
+		(op10_6=0x3b & op4_5=0x1c & op9_1=1 & rp0) ... & STMdecdisp 
+{
+}
+
+:STMTS rp0^STMincdisp  
+is 
+		(op10_6=0x3b & op4_5=0x1c & op9_1=0 & rp0) ... & STMincdisp 
+{
+}
+
+:XCHG rx9, ry0, erd0 is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0xb4 & erd0 {
+	erd0 = *[RAM]:4 rx9;
+	*[RAM]:4 rx9 = ry0;
+}

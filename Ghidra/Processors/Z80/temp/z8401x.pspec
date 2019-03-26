@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <context_data>
+    <tracked_set space="ram">
+      <set name="DECOMPILE_MODE" val="1"/>
+    </tracked_set>
+  </context_data>
+  
+  <register_data>
+    <register name="AF_" group="Alt"/>
+    <register name="BC_" group="Alt"/>
+    <register name="DE_" group="Alt"/>
+    <register name="HL_" group="Alt"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="RST0" address="ram:0000" entry="true"/>
+    <symbol name="RST1" address="ram:0008" entry="true"/>
+    <symbol name="RST2" address="ram:0010" entry="true"/>
+    <symbol name="RST3" address="ram:0018" entry="true"/>
+    <symbol name="RST4" address="ram:0020" entry="true"/>
+    <symbol name="RST5" address="ram:0028" entry="true"/>
+    <symbol name="RST6" address="ram:0030" entry="true"/>
+    <symbol name="RST7" address="ram:0038" entry="true"/>
+
+    <symbol name="NMI_ISR" address="ram:0066" entry="true"/>
+
+    <symbol name="CTC0" address="io:10" entry="false"/>
+    <symbol name="CTC1" address="io:11" entry="false"/>
+    <symbol name="CTC2" address="io:12" entry="false"/>
+    <symbol name="CTC3" address="io:13" entry="false"/>
+    <symbol name="SIOAd" address="io:18" entry="false"/>
+    <symbol name="SIOAc" address="io:19" entry="false"/>
+    <symbol name="SIOBd" address="io:1a" entry="false"/>
+    <symbol name="SIOBc" address="io:1b" entry="false"/>
+    <symbol name="PIOAd" address="io:1c" entry="false"/>
+    <symbol name="PIOAc" address="io:1d" entry="false"/>
+    <symbol name="PIOBd" address="io:1e" entry="false"/>
+    <symbol name="PIOBc" address="io:1f" entry="false"/>
+    <symbol name="SCRP" address="io:ee" entry="false"/>
+    <symbol name="SCDP" address="io:ef" entry="false"/>
+    <symbol name="WDTMR" address="io:f0" entry="false"/>
+    <symbol name="WDTCR" address="io:f1" entry="false"/>
+    <symbol name="INTPR" address="io:f4" entry="false"/>
+  </default_symbols>
+</processor_spec>
+    

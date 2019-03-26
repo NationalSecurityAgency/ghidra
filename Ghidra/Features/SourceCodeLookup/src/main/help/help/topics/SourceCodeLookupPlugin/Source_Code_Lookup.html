@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Source Code Lookup Plugin</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Source_Code_Lookup_Plugin"></A>Source Code Lookup Plugin</H1>
+
+    <BLOCKQUOTE>
+      <P><I>Source Code Lookup</I> attempts to look up a symbol contained within a Ghidra program,
+      in the source of a C/C++ Eclipse project.</P>
+
+      <P><IMG src="../../shared/note.png" alt="" border="0"> <B>This plugin requires that Eclipse,
+      the Eclipse GhidraDev plugin, and the Eclipse CDT plugin are installed on your system.</B></P>
+
+      <H2>Setting up Eclipse</H2>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Install Eclipse.  The <I>Minimum Requirements</I> section of 
+          <B><I>Extensions/Eclipse/GhidraDev/GhidraDev_README.html</I></B> describes what versions
+          of Eclipse are supported.  Note that Eclipse is not provided by Ghidra...it must obtained
+          independently.</LI>
+          
+          <LI>Install the Eclipse GhidraDev plugin into Eclipse. See 
+          <B><I>Extensions/Eclipse/GhidraDev/GhidraDev_README.html</I></B> 
+          for information on how to install the GhidraDev plugin into Eclipse.  Your Ghidra
+          distribution provides the most up-to-date version of the GhidraDev plugin at the time of
+          that distribution's release.</LI>
+          
+          <LI>Install the Eclipse CDT plugin into Eclipse.  The <I>Minimum Requirements</I> section 
+          of <B><I>Extensions/Eclipse/GhidraDev/GhidraDev_README.html</I></B> describes what 
+          versions of the CDT are supported.  Note that the CDT is not provided by Ghidra...it must
+          be obtained independently.</LI>
+          
+          <LI>Create a new C/C++ project (<B>File &rarr; New &rarr; Project...</B>) and give it a
+          name<FONT size="3"></FONT>. The other options do not matter for this plugin.</LI>
+
+          <LI>Drag any source code for the binary into the Eclipse project</LI>
+
+          <LI>Change the Eclipse indexer settings if necessary (Right click on your project and
+          select <B>Properties &rarr; C/C++ General &rarr; Indexer</B>). Options such as "Index
+          source files not included in the build" and "Index unused headers" will make sure that
+          all of the files in the project get indexed if you have partial source code</LI>
+
+          <LI>Edit the GhidraDev Eclipse preferences to point to the project you want to search
+          (<B>Eclipse</B> or <B>Window &rarr; Preferences... &rarr; GhidraDev &rarr; Symbol
+          Lookup &rarr; Project Name</B>). The name used here must match the name of the C++ project
+          created in above.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H2>Using Source Code Lookup</H2>
+
+      <BLOCKQUOTE>
+        <P>To use the source code lookup feature, place the <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> cursor on the symbol you want
+        to lookup and choose from the menu <B>Navigation &rarr; Go To Symbol Source</B>.</P>
+        <P>You can also execute this action when your cursor is in the <A href=
+        "help/topics/DecompilePlugin/Decompiler.htm">Decompiler</A>.<P>
+      </BLOCKQUOTE>
+
+      <H2>Troubleshooting</H2>
+
+      <BLOCKQUOTE>
+        <UL>
+          <LI>
+            The port numbers may not match between Ghidra and Eclipse 
+
+            <UL>
+              <LI>Check that the Ghidra port (Ghidra Front End GUI: <B>Edit &rarr; Tool Options... 
+              &rarr; Eclipse Integration &rarr; Symbol Lookup Port</B>) matches the Eclipse port 
+              (<B>Preferences &rarr; GhidraDev &rarr; Symbol Lookup &rarr; Port</B>)</LI>
+            </UL>
+          </LI>
+
+          <LI>
+            The Eclipse plugin may be using the wrong project 
+
+            <UL>
+              <LI>Select the C/C++ project to be used by the Eclipse plugin (<B>Preferences &rarr;
+              GhidraDev &rarr; Symbol Lookup &rarr; Project Name</B>)</LI>
+            </UL>
+          </LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">Provided by: <I>Source Code Lookup Plugin</I></P>
+
+      <P class="relatedtopic">Related Topics:</P>
+
+      <UL>
+        <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+      </UL>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

@@ -1,0 +1,513 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features Decompiler'
+
+apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
+dependencies {
+	compile project(':Base')
+	compile project(':SoftwareModeling')
+	
+	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
+	integrationTestRuntime project(':Base').sourceSets.test.output
+	testCompile "org.jmockit:jmockit:1.44"
+	
+    helpPath project(path: ":Base", configuration: 'helpPath')
+}
+
+
+/**
+ * This task calls bison to process the xml.y and grammar.y file into cpp files that will then
+ * be compiled with the rest of the decompiler code.
+ */
+task yaccDecompiler {
+	Task t1 = createBisonTask("xml", "decompile", true);
+	Task t2 = createBisonTask("grammar", "decompile", true);
+	
+	dependsOn t1, t2
+
+	// these variables are used by the cpp sources sets as an input to the decompiler native build	
+	ext.sourceDir = file("build/generated/decompile/cpp")
+	ext.headerDir = file("build/generated/decompile/headers") 
+}
+
+/**
+ * This task calls bison to process the xml.y file (yacc) into an cpp file that will then
+ * be compiled with the rest of the decompiler code.
+ */
+task yaccSleigh {
+	Task t1 = createBisonTask("slghparse", "sleigh", false);
+	Task t2 = createBisonTask("pcodeparse", "sleigh", true);
+	Task t3 = createBisonTask("xml", "sleigh", true);
+	
+	dependsOn t1,t2,t3
+
+	ext.sourceDir = file("build/generated/sleigh/cpp")
+	ext.headerDir = file("build/generated/sleigh/headers")  
+}
+
+/**
+ * This task calls flex to process the slghscan. file (yacc) into an cpp file that will then
+ * be compiled with the rest of the decompiler code.
+ */
+ task lexSleigh {
+	Task t1 = createLexTask("slghscan", "sleighlex")
+	
+	dependsOn t1
+		
+	ext.sourceDir = file("build/generated/sleighlex")
+	ext.headerDir = file("build/generated/sleighlex")  
+}
+
+// Relative to the 'workingDir' Exec task property.
+def installPoint = "../../../../../Configurations/Public_Release/src/global/docs/languages" 
+def buildDir = "../../../build"
+
+/**
+ * Build the pdfs docs for the decompiler and place them in the '$buildDir' directory.
+ * A build (ex: 'gradle buildGhidra') will place the pdfs in the distribution zip file.
+ * This task will fail gracefully and allow any distribution task (like buildGhidra) to continue,
+ * without pdfs in the distribution zip.
+ * There is an associated, auto-generated clean task.
+ */
+task buildDecompilerDocumentationPdfs(type: Exec) {
+
+	// Check the OS before enabling task.
+	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+			println "The '$it.name' task only works on Linux or Mac Os X and is therefore disabled."
+			it.enabled = false
+	}
+
+	workingDir 'src/main/doc'
+
+	// Gradle will provide a cleanBuildDecompilerDocumentationPdfs task that will remove these
+	// declared outputs.
+	outputs.file "$workingDir/$buildDir/pcoderef.fo"
+	outputs.file "$workingDir/$buildDir/pcoderef.pdf"
+	outputs.file "$workingDir/$buildDir/sleigh.fo"
+	outputs.file "$workingDir/$buildDir/sleigh.pdf"
+
+	// 'which' returns the number of failed arguments
+	// Using 'which' first will allow the entire command to fail if the required 
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which fop 2>&1
+		which xsltproc 2>&1
+		mkdir -p $buildDir 2>&1
+		cp $installPoint/html/Diagram*.png $buildDir 2>&1
+
+		echo '** Building sleigh.fo **'
+		xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
+
+		echo '** Building sleigh.pdf **'
+		fop $buildDir/sleigh.fo $buildDir/sleigh.pdf 2>&1
+
+		echo '** Building pcoderef.fo **'
+		xsltproc --output $buildDir/pcoderef.fo pcoderef_pdf.xsl pcoderef.xml 2>&1
+
+		echo '** Building pcoderef.pdf **'
+		fop $buildDir/pcoderef.fo $buildDir/pcoderef.pdf  2>&1
+
+		echo '** Done. **'
+		"""
+
+	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			println "$it.name: An error occurred with this task. Here is the output:\n" + output()
+			println "Skipping task $it.name\n"
+		}
+	}
+}
+
+/**
+ * Build the html docs for the decompiler and place them in the '$installPoint' directory.
+ * This gradle task will overwrite the html docs currently in the git repo.
+ * A build (ex: 'gradle buildGhidra') will place the html files in the distribution, but buildGhidra
+ * does not depend on buildDecompilerDocumentationHtml.
+ * There is an associated, auto-generated clean task.
+ **/
+task buildDecompilerDocumentationHtml(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	// Gradle will provide a cleanBuildDecompilerDocumentationHtml task that will remove these
+	// declared outputs.
+	outputs.file "$workingDir/$buildDir/index.html"
+	outputs.dir  "$workingDir/$buildDir/html"
+	
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required 
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which sed 2>&1
+		which xsltproc 2>&1
+
+		echo -e '** Building index.html **'
+		xsltproc --output $buildDir/index.html main_html.xsl main.xml 2>&1
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/index.html
+
+		echo '** Building html/sleigh.html **'
+		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/sleigh*.html
+		cp $installPoint/html/Frontpage.css $buildDir/html 2>&1
+		cp $installPoint/html/languages.css $buildDir/html
+		cp $installPoint/html/Diagram1.png $buildDir/html
+		cp $installPoint/html/Diagram2.png $buildDir/html
+		cp $installPoint/html/Diagram3.png $buildDir/html
+
+		echo '** Building html/pcoderef.html **'
+		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcoderef.html
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcodedescription.html
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pseudo-ops.html
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
+		cp $installPoint/html/Frontpage.css $buildDir/html
+		cp $installPoint/html/languages.css $buildDir/html
+
+		echo '** Installing html documentation. **'
+		cp $buildDir/index.html $installPoint/index.html
+		rm $installPoint/html/*.html $installPoint/html/*.png
+		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/html
+		echo '** Done. **'
+		"""
+
+		// Allows doLast block regardless of exit value.
+		ignoreExitValue true
+
+		// Store the output instead of printing to the console.
+		standardOutput = new ByteArrayOutputStream()
+		ext.output = { standardOutput.toString() }
+		ext.errorOutput = { standardOutput.toString() }
+
+		// Check the OS before executing command.
+		doFirst {
+			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+				|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+				throw new TaskExecutionException( it,
+					new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
+			}
+		}
+
+		// Print the output of the commands and check the return value.
+		doLast {
+			println output()
+			if (execResult.exitValue) {
+				logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+				throw new TaskExecutionException( it,
+					new Exception( "$it.name: The command: '${commandLine.join(' ')}'" +
+						"\nfailed with exit code $execResult.exitValue; see task output for details." )
+			)
+		}
+	}
+}
+
+/**
+ * Define the "native build model" for building the decompiler executables.
+ */
+model {
+	
+	// Define the source files that are compiled and linked to become the decompiler.
+	// The decompiler source is a bit weird in that all the cpp and headers all live in
+	// the same directory with other files that are not used by the decompiler.
+	// That is why we have to list every cpp file that makes up the decomplier.
+	components {
+			
+		decompile(NativeExecutableSpec) {
+		
+			baseName "decompile"
+									
+			// these tell gradle for which platforms to build a decompiler executable.
+			targetPlatform "win64"
+			targetPlatform "linux64"
+			targetPlatform "osx64"
+			sources {
+				cpp {
+		            source {
+		                srcDir "src/decompile/cpp"
+		               // include "xml.cc"				// generated by yacc task
+		                include "space.cc"
+		                include "float.cc"
+		                include "address.cc"
+		                include "pcoderaw.cc"
+		                include "translate.cc"
+		                include "opcodes.cc"
+		                include "globalcontext.cc"
+		                include "capability.cc"
+		                include "architecture.cc"
+		                include "options.cc"
+		                include "graph.cc"
+		                include "cover.cc"
+		                include "block.cc"
+		                include "cast.cc"
+		                include "typeop.cc"
+		                include "database.cc"
+		                include "cpool.cc"
+		                include "comment.cc"
+		                include "fspec.cc"
+		                include "action.cc"
+		                include "loadimage.cc"
+		                //include "grammar.cc"	 // doesn't seem to be used
+		                include "varnode.cc"
+		                include "op.cc"
+		                include "type.cc"
+		                include "variable.cc"
+		                include "varmap.cc"
+		                include "jumptable.cc"
+		                include "emulate.cc"
+		                include "emulateutil.cc"
+		                include "flow.cc"
+		                include "userop.cc"
+		                include "funcdata.cc"
+		                include "funcdata_block.cc"
+		                include "funcdata_varnode.cc"
+		                include "funcdata_op.cc"
+		                include "pcodeinject.cc"
+		                include "heritage.cc"
+		                include "prefersplit.cc"
+		                include "rangeutil.cc"
+		                include "ruleaction.cc"
+		                include "subflow.cc"
+		                include "blockaction.cc"
+		                include "merge.cc"
+		                include "double.cc"
+		                include "coreaction.cc"
+		                include "condexe.cc"
+		                include "override.cc"
+		                include "dynamic.cc"
+		                include "crc32.cc"
+		                include "prettyprint.cc"
+		                include "printlanguage.cc"
+		                include "printc.cc"
+		                include "printjava.cc"
+		                include "memstate.cc"
+		                include "opbehavior.cc"
+		                include "paramid.cc"
+		                include "ghidra_arch.cc"
+		                include "inject_ghidra.cc"
+		                include "ghidra_translate.cc"
+		                include "loadimage_ghidra.cc"
+		                include "typegrp_ghidra.cc"
+		                include "database_ghidra.cc"
+		                include "ghidra_context.cc"
+		                include "cpool_ghidra.cc"
+		                include "ghidra_process.cc"
+		                include "comment_ghidra.cc"
+		         //       include "callgraph.cc"			// uncomment for debug
+		         //       include "ifacedecomp.cc"		// uncomment for debug
+		         //       include "ifaceterm.cc"			// uncomment for debug
+		         //       include "interface.cc"			// uncomment for debug
+		            }
+					exportedHeaders {
+						srcDir "src/decompile/cpp"
+					}
+				} // end cpp
+				
+				// this creates a source set that is basically the output of bison yacc task
+				// defined above that compiles the xml.y file to a cpp file.
+				yacc(CppSourceSet) {
+	 				generatedBy yaccDecompiler
+					exportedHeaders {
+						srcDir "src/decompile/cpp"
+					}
+				}				
+			} // end sources
+		}// end decompile
+		
+		sleigh(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "linux64"
+			targetPlatform "osx64"
+			sources {
+				cpp {
+					source {
+						srcDir "src/decompile/cpp"
+						//include "xml.cc"
+						include "space.cc"
+						include "float.cc"
+						include "address.cc"
+						include "pcoderaw.cc"
+						include "translate.cc"
+						include "opcodes.cc"
+						include "globalcontext.cc"
+						include "sleigh.cc"
+						//include "pcodeparse.cc"
+						include "pcodecompile.cc"
+						include "sleighbase.cc"
+						include "slghsymbol.cc"
+						include "slghpatexpress.cc"
+						include "slghpattern.cc"
+						include "semantics.cc"
+						include "context.cc"
+						include "filemanage.cc"
+						include "slgh_compile.cc"
+						//include "slghparse.cc"
+						//include "slghscan.cc"
+					}
+					exportedHeaders {
+						srcDir "src/decompile/cpp"
+					}
+				}
+				yacc(CppSourceSet) {
+					generatedBy yaccSleigh
+					exportedHeaders {
+						srcDir "src/decompile/cpp"
+					}
+				}
+				lex(CppSourceSet) {
+					generatedBy lexSleigh
+					builtBy yaccSleigh // Requires headers produced by bison
+					exportedHeaders {
+						srcDir "src/decompile/cpp"
+						srcDir yaccSleigh.headerDir
+						srcDir lexSleigh.headerDir
+					}
+				}
+				
+			} // end sources (sleigh)
+		}
+	}  // end components
+	
+	binaries {
+		all{ b ->
+			if (b.toolChain in Gcc) {
+				b.cppCompiler.args "-Wall"
+				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
+				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
+				b.cppCompiler.args "-Wno-sign-compare"
+				if (b.targetPlatform.operatingSystem.linux) {
+//					b.linker.args "-static"
+					b.cppCompiler.define "LINUX"
+					b.cppCompiler.define "_LINUX"
+				}
+			}
+		 	else if (b.toolChain in VisualCpp) {
+				b.cppCompiler.args "/EHsc"
+				b.cppCompiler.define "_SECURE_SCL=0"
+				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
+				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
+				// b.linker.args "/DEBUG"          // for DEBUG, uncomment this line
+				if (b.targetPlatform.operatingSystem.windows) {
+					b.cppCompiler.define "WINDOWS"
+					b.cppCompiler.define "_WINDOWS"
+					b.cppCompiler.define "WIN32"
+					b.cppCompiler.define "_WIN32"
+					if (b.targetPlatform.name == "win64") {
+						b.cppCompiler.define "WIN64"
+						b.cppCompiler.define "_WIN64"
+					}	
+				}	
+			}
+			else if (b.toolChain in Clang) {
+				b.cppCompiler.args "-Wall"
+				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
+				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
+				b.cppCompiler.args "-Wno-sign-compare"
+				b.cppCompiler.args "-w"
+				if (b.targetPlatform.operatingSystem.linux) {
+//					b.linker.args "-static"
+				}
+			}
+		}
+	}
+} // end model
+
+
+
+/**
+ * create a bison task to compile a yacc file for the decompiler
+ */
+Task createBisonTask(String filename, String binaryName, boolean qualifyVariables) {
+
+	return task("bison_${binaryName}_$filename", type: Exec) {
+		String inputFile = "src/decompile/cpp/${filename}.y"
+		String outputCppDir = "build/generated/$binaryName/cpp"
+		String outputHeadersDir = "build/generated/$binaryName/headers"
+
+		inputs.file inputFile
+		outputs.dir outputCppDir
+
+		// make sure output directories exist. Must be done in execution phase. Otherwise,
+		// if a clean task is executed it will wipe them out
+		doFirst {
+			file(outputCppDir).mkdirs()
+			file(outputHeadersDir)mkdirs()
+		}		
+		
+		executable 'bison'			// use bison program to process yacc files
+		
+		// specify the bison's output file
+		args "-o", "$outputCppDir/${filename}.tab.cc"
+		
+		// most of the yacc files should be compiled with a variable qualifyer to avoid dupes.
+		// Unfortunately there is one (slghparse) that can't use a qualifyer because it 
+		// declares a variable used by other files.
+		
+		if (qualifyVariables) {
+			args "-p", filename
+		}
+		
+		// tell bison where to put the hh file.
+		args "--defines=${outputHeadersDir}/${filename}.tab.hh"
+		
+		// tell bison the file to compile
+		args inputFile
+	}
+}
+
+/**
+ * create a lex task to compile a yacc file for the decompiler
+ */
+Task createLexTask(String filename, String binaryName) {
+	return task("lex_${binaryName}_$filename", type: Exec) {
+		String outputDir = "build/generated/${binaryName}/cpp"
+		String inputFile = "src/decompile/cpp/${filename}.l"
+
+		executable 'flex'			// the program to execute
+
+		// set up inputs and outputs so that gradle knows when this needs to be rebuilt
+	
+		inputs.file inputFile
+		outputs.dir outputDir	
+	
+		// 	make sure the output dirs are created, but do it in the execution phase.
+		// 	Can't do it in the configure phase, otherwise
+		// 	a clean will remove it during the execution phase
+	
+		doFirst {
+			file(outputDir).mkdirs();
+		}	
+
+		// tell flex where to put the output
+		args "-o", "$outputDir/${filename}.yy.cc"
+		
+		// tell flex the input file
+		args inputFile
+	}
+}
+
+

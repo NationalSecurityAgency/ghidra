@@ -1,0 +1,28 @@
+define endian = $(ENDIAN);
+
+define alignment = 1;
+
+define space ram       type=ram_space       size=8  default;
+
+define space register  type=register_space  size=4;
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# AT LEAST ONE REGISTER, AND STACK POINTER ARE REQUIRED
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+define register offset=0x0 size=8 [  sp r0 ];
+
+# Define context bits
+define register offset=0x100 size=4   contextreg;
+
+define context contextreg
+  test=(0,0)  
+;
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# AT LEAST ONE INSTRUCTION IS REQUIRED
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+:nop is test=1 unimpl
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #

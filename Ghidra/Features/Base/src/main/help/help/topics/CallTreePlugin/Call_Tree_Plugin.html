@@ -1,0 +1,267 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Call Tree Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Call_Tree_Plugin"></A>Call Tree Plugin</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG border="1" src="images/CallTreeWindow.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>The Call Tree Plugin shows all <B>caller functions</B> and all <B>functions called</B> for
+      the <B>current function</B> (also known as the <B>main function</B>), which is the function
+      that contains the cursor location in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. You can expand the nodes in each
+      of the trees to show more information about these referenced functions. This plugin can be
+      used to gain a quick context of a given function by seeing incoming and outgoing function
+      calls.</P>
+
+	  <P>
+	  You can launch this component by clicking the 
+	  <IMG src="Icons.ARROW_DOWN_RIGHT_ICON" border="0" /> icon in the Tool's 
+	  toolbar, or by 
+	  right-clicking in the Listing and selecting 
+	  <B>References<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">Show Call Trees</B>	  
+	  </P>
+
+      <P><A name="Incoming_Call_Tree"></A>The <B>Incoming Calls</B> tree shows all caller
+      functions. Each node in the tree has the incoming function call icon (<IMG src=
+      "Icons.ARROW_DOWN_RIGHT_ICON" border="0">). Expanding a node in this tree shows all functions that
+      are callers of the expanded node. Nodes may be expanded recursively to any depth desired.</P>
+
+      <P><A name="Outgoing_Call_Tree"></A>The <B>Outgoing Calls</B> tree shows all functions
+      called. Nodes with the outgoing function call icon 
+      (<IMG src="Icons.ARROW_UP_LEFT_ICON" border="0">) represent functions 
+      called by the current function that <B>also call other
+      functions</B>.  Expanding a node in this tree shows all functions that are called by the 
+      expanded node. Nodes may be expanded recursively to any depth desired.</P>
+      
+      <blockquote>
+      <P>
+      <IMG border="0" src="../../shared/tip.png">The default operation of the plugin display is 
+      to <b>not</b> change as the location changes in the Listing.  This allows you to trigger
+      navigation from inside of the trees without changing the function displayed by the trees.
+      In order to see a new call trees window for the location in the Listing, you can do 
+      so  by clicking the <IMG src="Icons.ARROW_DOWN_RIGHT_ICON" border=
+      "0" /> icon in the Tool's toolbar, or by 
+	  right-clicking in the Listing and selecting 
+	  <B>References<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">Show Call Trees</B>	        
+      </P>
+      <P>
+      Alternatively, you may execute the <IMG src="images/locationIn.gif" border="1">
+      <A href="#Call_Tree_Action_Incoming_Navigation">Navigate on Incoming Location Changes button</A>
+        on the call trees provider in order
+       to have that provider change as the location in the Listing changes.
+      </P>
+      </blockquote>
+      
+      <blockquote>
+        <center><h4>Alternate Outgoing Icons</h4></center>
+      	<table border=1>
+      		<tr>
+	      		<tr>
+	      			<th>
+	      				Icon
+	      			</th>
+	      			<th>
+	      				Description
+	      			</th>      			
+	      		</tr>
+      			<td align="center">
+      				<IMG src="images/stopNode.png" border="0">
+      			</td>
+      			<td>
+      				Nodes with the stop icon 
+      				indicate a call destination for which no other called functions can be
+      				determined.
+      			</td>      			
+      		</tr>
+      		<tr>
+      			<td align="center">
+      				<IMG src="images/package.png" border="0">
+      			</td>
+      			<td>
+      				This icon indicates an external function call, which has no outgoing
+      				calls.
+      			</td>       			
+      		</tr>
+      		<tr>
+      			<td align="center">
+      				<IMG src="images/arrow_rotate_clockwise.png" border="0">
+      			</td>
+      			<td>
+      				This icon indicates that the given function has already been called 
+      				somewhere in the path of calls.  For example, a function that calls itself
+      				would appear as an outgoing call of that function.  In this case, this icon
+      				would be applied to that node.
+      			</td>       			
+      		</tr>
+      	</table>
+      </blockquote>
+      
+      <H2>Filtering</H2>
+      <BLOCKQUOTE>
+      	<P>
+      		You may enter text into either of the tree's filters.  This will search for 
+      		any function name matching the given text, based up on the filter settings.
+      		
+      		<BLOCKQUOTE>      		
+      		<P>
+      		<img src="../../shared/note.png" alt="" border="0">
+    			The filter will only search down to the current 
+    			<a href="#Call_Tree_Action_Recurse_Depth">depth setting</a>.
+			</P>   
+			</BLOCKQUOTE>   		
+      	</P>      	
+      </BLOCKQUOTE>
+      
+      
+      <H2><A name="Call_Tree_Actions"></A>Actions</H2>
+
+      <BLOCKQUOTE>
+        <P>The following actions are buttons in the Call Tree Plugin header.</P>
+
+        <BLOCKQUOTE>
+          <!-- Home -->
+
+          <P align="left"><A name="Call_Tree_Action_Home"></A>The <IMG src="images/go-home.png"
+          border="1"> home button will navigate to function label of the main function.</P>
+          
+          <P align="left"><A name="Call_Tree_Action_Refresh"></A>The <IMG src="Icons.REFRESH_ICON"
+          border="1"> refresh button will reload the trees.   This is needed due to the fact that
+          as changes are made to the program, the trees will not add and remove nodes in response.
+          Thus, you can edit as much as you like without affecting the structure of the trees.
+          The action's color will change to yellow if the provider detects that changes have
+          taken place that <b>may</b> affect the structure of the tree.
+          </P>
+          
+          <!-- Filter Duplicates -->
+          <P align="left"><A name="Call_Tree_Action_Filter"></A>The 
+          <IMG src="images/application_double.png"
+          border="1"> action, when toggled on, will filter out duplicate function calls. 
+          This setting is useful to see the set of all functions called. When
+          toggled off this action will show all function calls, including duplicate calls, in
+          address order. This setting is more useful to see the overall flow of the main
+          function.</P>
+          
+          <P align="left"><A name="Call_Tree_Action_Recurse_Depth">
+          </A>The <IMG src="images/depth-input.png" border="1"> 
+          depth setting action allows you to see and change the depth of recursive operations.  
+          For example,
+          the filter operation will expand nodes as deep as it can, limited only by the depth
+          setting.  Another example is the <a href="#Call_Tree_Context_Action_Expand_Nodes"> 
+          expand action</a>, which will expand nodes recursively
+          until the current depth setting is reached.  The depth of a given node is defined as the
+          number of parents of a given node.
+          </P>
+          
+          <!-- Navigate on Selection -->
+
+		  <P align="left"><A name="Call_Tree_Action_Incoming_Navigation"></A>The <IMG src=
+          "images/locationIn.gif" border="1"> button, when toggled on, 
+          indicates that location changes in the Code Browser will trigger the Call Tree Provider 
+          to focus the display on the new location.
+
+          <P align="left"><A name="Call_Tree_Action_Navigation"></A>The <IMG src=
+          "images/locationOut.gif" border="1"> button, when toggled on, will cause
+          selections in the tree to navigate to the <B>source</B> of the selected
+          function call within the main function. To navigate to the destination of a given
+          function call, you can use the <A href="#Call_Tree_Context_Action_Goto_Destination">Go To
+          Call Destination action</A>. No navigation will happen when toggled off.</P>
+          
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A name="Call_Tree_Context_Actions"></A>Context Menu Actions</H2>
+
+      <BLOCKQUOTE>
+        <P>The following actions are available from the context menu by right-clicking.</P>
+
+        <BLOCKQUOTE>
+        
+          <P align="left"><A name="Call_Tree_Context_Action_Collapse_Nodes"></A>The 
+          <IMG src="images/collapse_all.png" border="1">          
+          <B>Collapse All Nodes</B> action will close all nodes in the tree, except for the
+          direct children of the root node.   This allows you to collapse all nodes after expanding them,
+          which can be useful when trying to get an overall view for the different flows out of
+          a function.  For example, you can expand all nodes to get an overview, pick a single 
+          path out of the node, collapse all nodes and then expand only the child node of 
+          interest.
+          </P>
+        
+          <P align="left"><A name="Call_Tree_Context_Action_Expand_Nodes"></A>The 
+          <IMG src="Icons.EXPAND_ALL_ICON" border="1">          
+          <B>Expand 
+          Nodes to Depth Limit</B> action will expand the selected node(s) as far as possible until
+          there are no more child nodes to expand of the 
+          <a href="#Call_Tree_Action_Recurse_Depth">depth limit</a> is reached.          
+          </P>
+        
+        
+        
+          <!-- Select Source -->
+
+          <P align="left"><A name="Call_Tree_Context_Action_Select_Source"></A>The <B>Select Call
+          Source</B> action will make a <A href="help/topics/Selection/Selecting.htm">program
+          selection</A> for the node(s) selected in the tree where the context menu was activated.
+          When activated from the <A href="#Incoming_Call_Tree">incoming call tree</A>, the caller
+          function's entry point will be selected. When activated from the <A href=
+          "#Outgoing_Call_Tree">outgoing call tree</A> the address of the containing the call
+          instruction will be selected.</P>
+          
+          <!-- Select Destination -->
+          <P align="left"><A name="Call_Tree_Context_Action_Select_Destination"></A>The <B>Select
+          Call Destination</B> will make a <A href="help/topics/Selection/Selecting.htm">program
+          selection</A> for the node(s) selected in the outgoing tree. The selection will be the
+          called function's entry point.</P>
+          
+          <!-- Navigate to Source -->
+          <P align="left"><A name="Call_Tree_Context_Action_Goto_Source"></A>The <B>Go To Call
+          Source</B> action will navigate the Listing to the address of the selected node in the
+          tree where the context menu was activated. When activated from the <A href=
+          "#Incoming_Call_Tree">incoming call tree</A>, the Listing will be navigated to the caller
+          function's entry point. When activated from the <A href="#Outgoing_Call_Tree">outgoing
+          call tree</A> the Listing will be navigated to the address of the containing the call
+          instruction.</P>
+          
+          <!-- Navigate to Destination -->
+          <P align="left"><A name="Call_Tree_Context_Action_Goto_Destination"></A>The <B>Go To Call
+          Destination</B> will navigate the Listing to the entry point of the called function.</P>
+          
+          <P align="left"><A name="Call_Tree_Context_Action_Show_Call_Tree_For_Function"></A>The 
+          <B>Show Call Tree For Function</B> will load function for the selected node <b>into 
+          the current Call Tree window</b>.
+
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Call Tree Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+
+      <LI><A href="help/topics/Selection/Selecting.htm">Program Selection</A></LI>
+
+      <LI><A href="help/topics/ReferencesPlugin/References.htm">References</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

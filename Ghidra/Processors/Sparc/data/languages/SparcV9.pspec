@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
+    <property key="assemblyRating:sparc:BE:32:default" value="PLATINUM"/>
+    <property key="assemblyRating:sparc:BE:64:default" value="PLATINUM"/>
+  </properties>
+  <context_data>
+    <tracked_set space="ram">
+      <set name="didrestore" val="0"/>
+    </tracked_set>
+  </context_data>
+  
+  <default_symbols>
+    <symbol name="Reset" address="ram:0x0" entry="true"/>
+  </default_symbols>
+  
+  <programcounter register="PC"/>
+</processor_spec>

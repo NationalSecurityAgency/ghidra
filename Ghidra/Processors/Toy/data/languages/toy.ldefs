@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Toy"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="toy_be.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:32:default">
+    <description>Toy (test) processor 32-bit big-endian</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="big"
+            size="32"
+            variant="posStack"
+            version="1.0"
+            slafile="toy_be_posStack.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:32:posStack">
+    <description>Toy (test) processor 32-bit big-endian</description>
+    <compiler name="posStack" spec="toyPosStack.cspec" id="posStack"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="toy_le.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:32:default">
+    <description>Toy (test) processor 32-bit little-endian</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="big"
+            size="32"
+            variant="wordSize2"
+            version="1.0"
+            slafile="toy_wsz_be.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:32:wordSize2">
+    <description>Toy (test) processor 32-bit big-endian (wordsize=2)</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="32"
+            variant="wordSize2"
+            version="1.0"
+            slafile="toy_wsz_le.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:32:wordSize2">
+    <description>Toy (test) processor 32-bit little-endian (wordsize=2)</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="big"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="toy64_be.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:64:default">
+    <description>Toy (test) processor 64-bit big-endian</description>
+    <compiler name="default" spec="toy64.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="toy64_le.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:64:default">
+    <description>Toy (test) processor 64-bit little-endian</description>
+    <compiler name="default" spec="toy64.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="big"
+            size="32"
+            variant="builder"
+            version="1.0"
+            slafile="toy_builder_be.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:32:builder">
+    <description>Toy (test-builder) processor 32-bit big-endian</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="32"
+            variant="builder"
+            version="1.0"
+            slafile="toy_builder_le.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:32:builder">
+    <description>Toy (test-builder) processor 32-bit little-endian</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="big"
+            size="32"
+            variant="builder.align2"
+            version="1.0"
+            slafile="toy_builder_be_align2.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:32:builder.align2">
+    <description>Toy (test-builder) processor 32-bit big-endian word-aligned</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="32"
+            variant="builder.align2"
+            version="1.0"
+            slafile="toy_builder_le_align2.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:32:builder.align2">
+    <description>Toy (test-builder) processor 32-bit little-endian word-aligned</description>
+    <compiler name="default" spec="toy.cspec" id="default"/>
+  </language>
+</language_definitions>

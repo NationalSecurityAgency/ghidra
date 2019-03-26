@@ -1,0 +1,2678 @@
+/* ###
+ * IP: GHIDRA
+ * NOTE: modified contribution for use with JavaCC distribution
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+
+  C grammar defintion for use with JavaCC
+  Contributed by Doug South (dsouth@squirrel.com.au) 21/3/97
+
+  This parser assumes that the C source file has been preprocessed : all
+  #includes have been included and all macros have been expanded. I accomplish
+  this with "gcc -P -E <source file> > <output file>".
+
+  There is a problem with compiler specific types, such as __signed, __const,
+  __inline__, etc. These types can be added as typedef types before the parser
+  is run on a file. See main() for an example. I have also found a strange little
+  compiler specific "type" if you can call it that. It is __attribute__, but it
+  does not seem to be used as a type. I found that just deleting the __attribute__
+  and the following "offensive" code works.
+
+  This grammar also prints out all the types defined while parsing the file. This
+  is done via a call to printTypes() when the parser is complete. If you do not want
+  this, just comment out the printTypes() method call in the production rule
+  TranslationUnit(), which BTW is the root node for parsing a C source file.
+
+  I have not in anyway extensively tested this grammar, in fact it is barely tested,
+  but I imagine it is better to have a starting point for a C grammar other than from
+  scratch. It has not been optimized in anyway, my main aim was to get a parser that
+  works. Lookahead may not be optimum at choice points and may even be insufficient at
+  times. I choose to err on the side of not optimum if I made a choice at all.
+
+  If you use this grammar, I would appreciate hearing from you. I will try to maintain
+  this grammar to the best of my ability, but at this point in time, this is only a side
+  hobby (unless someone wants to pay me for doing JavaCC work!). In that regards, I am
+  interested in hearing bugs and comments.
+
+  TODO:
+
+    Insert the appropiate code to enable C source trees from this grammar.
+
+  */
+
+options {
+	STATIC= false;
+}
+
+
+//options {
+//    MULTI=true;
+//    VISITOR=true;
+//    // NODE_DEFAULT_VOID=true;
+//}
+
+PARSER_BEGIN(CParser)
+
+package ghidra.app.util.cparser.C;
+
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
+import ghidra.util.Msg;
+import ghidra.util.InvalidNameException;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.*;
+
+@SuppressWarnings("all")  // ignore warnings from generated code
+public class CParser {
+
+    // Map for storing typedef types
+    private Map<String, DataType> types = new HashMap<String, DataType>();    
+    private Map<String, DataType> structs = new HashMap<String, DataType>();
+    private Map<String, DataType> functions = new HashMap<String, DataType>();    
+    private Map<String, DataType> enums = new HashMap<String, DataType>();
+
+    private Map<String, DataType> declarations = new HashMap<String, DataType>();
+
+    private DataType lastDataType = null;
+    private boolean storeNewDT = true;
+
+    DataTypeManager dtMgr = null;
+    private DataTypeManager[] subDTMgrs = new DataTypeManager[0];
+
+    private int cnt = 1;
+    private int func_cnt = 1;
+
+    private String headerFileName= null;     // Current header file from #line token
+    private int headerFileLine = 1;          // Current line number from #line token
+    private int headerFileLineOffset= 0;     // offset into parse stream of last #line token
+    private String currentCategoryName = ""; // Current category
+
+    private final static String ANONYMOUS_STRUCT_PREFIX = "_struct_";
+    private final static String ANONYMOUS_UNION_PREFIX = "_union_";
+    private final static String ANONYMOUS_FUNC_PREFIX = "_func_";
+        
+    // Stack for determining when the parser is parsing a typdef definition.
+    private Stack<Boolean> typedefParsingStack = new Stack<Boolean>();
+
+    // Stack for putting defined data types on
+    private Stack<DataType> dataTypeStack = new Stack<DataType>();
+    
+    // packing size for structures
+    private int packSize = 0;
+    Stack<Integer> packStack = new Stack<Integer>();
+    Stack<String> packStackID = new Stack<String>();
+
+    private CategoryPath getCurrentCategoryPath() {
+        return getCategory(currentCategoryName);
+    }
+
+    private CategoryPath getCategory(String catName) {
+        CategoryPath rootCat = CategoryPath.ROOT;
+        if (catName == null || catName.length() == 0) {
+            return rootCat;
+        }
+        
+        CategoryPath cat= new CategoryPath(rootCat, catName);
+        return cat;
+    }
+
+    private String getFileName(String path) {
+        int slashpos = path.lastIndexOf('/');
+        if (slashpos < 0) {
+            slashpos = path.lastIndexOf('\\');
+        }
+        if (slashpos < 0) {
+            return path;
+        }
+        return path.substring(slashpos + 1);
+    }
+
+    // Returns true if the given string is a typedef type.
+    private boolean isType(String type) {
+        // System.out.println("** isType " + type + " = " + (types.get(type)!=null));
+        return getType(type) != null;
+        // Object obj= types.get(type);
+        // return obj instanceof DataType;
+    }
+
+    // Add a typedef type to those already defined
+    private DataType addTypedef(String type, DataType dt) {
+
+        if (type == null || dt == null) {
+            System.err.println("Problem with type " + type + " : " + dt);
+            return dt;
+        }
+        if (type.equals(dt.getName())) {
+            if (dt instanceof Composite || dt instanceof Enum) { // || dt instanceof FunctionDefinitionDataType
+                return dt;
+            }
+        }
+
+        // if typedefing an anonymous structure, rename structure/union
+        if (dt instanceof Composite) {
+            if (dt.getName().startsWith(ANONYMOUS_STRUCT_PREFIX) ||
+                dt.getName().startsWith(ANONYMOUS_UNION_PREFIX))  {
+	            try {
+	                dt = renameDef(structs, dt, type);
+	                addDef(structs, type, dt);
+	                return dt;
+	            } catch (InvalidNameException e) {
+	            	// handled below
+	            } catch (DuplicateNameException e) {
+	            	// handled below
+	            }
+        	}
+        }
+
+        dt = new TypedefDataType(type, dt);
+        dt = addDef(types, type, dt);
+        return dt;
+    }
+
+    private DataType getType(String type) {
+        Object obj;
+        obj = structs.get(type);
+        if (obj instanceof DataType) {
+            return (DataType) obj;
+        }
+        obj = types.get(type);
+        if (obj instanceof DataType) {
+            return (DataType) obj;
+        }
+        obj = enums.get(type);
+        if (obj instanceof DataType) {
+            return (DataType) obj;
+        }
+        
+        // only return a function as a type IF we are defining a typedef
+        if (typedefParsingStack.size() > 0) {
+            obj = functions.get(type);
+            if (obj instanceof DataType) {
+                return (DataType) obj;
+            }
+        }
+        if (!storeNewDT) {
+            
+            DataType dt = findDataType(type);
+            if (dt != null) {
+                return dt;
+            }
+        }
+        
+        // check the BuiltinTypeManager
+        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        DataType dt = findDataType(builtInMgr, type);
+        if (dt != null) {
+            return dt;
+        }
+        
+        return null;
+    }
+    
+    private DataType findDataType(String dataTypeString) {
+
+        DataType dt = findDataType(dtMgr, dataTypeString);
+        if (dt != null) {
+            return dt;
+        }
+
+        for (int i = 0; i < subDTMgrs.length; i++) {
+            DataTypeManager dtm = subDTMgrs[i];
+            dt = findDataType(dtm, dataTypeString);
+            if (dt != null) {
+                return dt;
+            }
+        }
+
+        return null;
+    }
+
+    private DataType findDataType(DataTypeManager dtm, String dataTypeString) {
+        ArrayList<DataType> list = new ArrayList<DataType>();
+        dtm.findDataTypes(dataTypeString, list);
+        if (list.size() > 0) {
+            return list.get(0);
+        }
+
+        return null;
+    }
+    
+    private List<DataType> findAllDataTypes(String dataTypeString) {
+        List<DataType> list = new ArrayList<DataType>();
+        dtMgr.findDataTypes(dataTypeString, list);
+
+        for (int i = 0; i < subDTMgrs.length; i++) {
+            DataTypeManager dtm = subDTMgrs[i];
+            dtm.findDataTypes(dataTypeString, list);
+        }
+        return list;
+    }
+
+    // Add a typedef type to those already defined
+    private DataType addDef(Map<String, DataType> table, String name, DataType dt) {
+        CategoryPath cat = getCurrentCategoryPath();
+        try {
+            dt.setCategoryPath(cat);
+        } catch (DuplicateNameException e) {
+            DataType existing = this.dtMgr.getDataType(cat, name);
+            if (!dt.isEquivalent(existing)) {
+               e.printStackTrace();
+            }
+        }
+
+        dt = resolveDataType(table, name, dt);
+        lastDataType = dt;
+        
+        return dt;
+    }
+
+    private DataType resolveDataType(Map<String, DataType> table, String name, DataType dt) {
+        DataType existingDT = table.get(name);
+        if (existingDT!=null && existingDT != dt && dt.isEquivalent(existingDT)) {
+            //Msg.info(this, "TYPE " + name + " ALREADY IN THERE");
+            return existingDT;
+        }
+            
+        ArrayList<DataType> list = new ArrayList<DataType>();
+        for (int i = 0; i < subDTMgrs.length; i++) {
+            // look for the data type by name
+            //    equivalent, return it
+            // look for the data type by category
+            //    equivalent, return it
+            subDTMgrs[i].findDataTypes(name, list);
+            
+            Iterator<DataType> iter = list.iterator();
+            while (iter.hasNext()) {
+                DataType dataType = iter.next();
+                if (dataType.isEquivalent(dt)) {
+                    table.put(name, dataType);
+                    return dataType;
+                }
+            }
+        }
+        
+        if (storeNewDT) {
+            try {
+                dt = dtMgr.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
+            } catch (Exception e) {
+                System.err.println("Problem adding DataType " + dt.getDisplayName());
+                System.err.println("    " + e.getMessage());
+            }
+        }
+        
+        table.put(name, dt);
+        return dt;
+    }
+
+
+    // rename a data type in the given table
+    private DataType renameDef(Map<String, DataType> table, DataType dt, String newName) throws InvalidNameException, DuplicateNameException {
+        table.remove(dt.getName());
+        dt.setName(newName);
+        table.put(newName, dt);
+
+        return dt;
+    }
+
+
+    // Add a typedef type to those already defined
+    private DataType addDef(String subCategory, Map<String, DataType> table, String name, DataType dt) {
+        // System.out.println("** addDef " + name + " = " + (dt != null ? dt.getName() : " - no type -") );
+
+        CategoryPath subCat = getCurrentCategoryPath();
+        subCat = new CategoryPath(subCat, subCategory);
+        try {
+            dt.setCategoryPath(subCat);
+        } catch (DuplicateNameException e) {
+            DataType existing = this.dtMgr.getDataType(subCat, name);
+            if (!dt.isEquivalent(existing)) {
+                 e.printStackTrace();
+            }
+        }
+
+        dt = resolveDataType(table, name, dt);
+        lastDataType = dt;
+        
+        return dt;
+    }
+
+    private DataType getStructDef(String name) {
+        DataType dt = getDef(structs, name);
+        if (dt != null) {
+            return dt;
+        }
+        
+        if (!storeNewDT) {
+        
+            List<DataType> list = findAllDataTypes(name);
+            for (int i = 0; i < list.size(); i++) {
+                dt = list.get(i);
+                if (dt instanceof Composite) {
+                    return dt;
+                }
+            }
+        }
+        
+        // check the BuiltinTypeManager
+        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        ArrayList<DataType> list = new ArrayList<DataType>();
+        builtInMgr.findDataTypes(name, list);
+        for (int i = 0; i < list.size(); i++) {
+            dt = list.get(i);
+            if (dt instanceof Composite) {
+                return dt;
+            }
+        }
+        
+        return null;
+    }
+    
+    private DataType getEnumDef(String name) {
+        DataType dt = getDef(enums, name);
+        if (dt != null) {
+            return dt;
+        }
+        
+        if (!storeNewDT) {
+            List<DataType> list = findAllDataTypes(name);
+            for (int i = 0; i < list.size(); i++) {
+                dt = list.get(i);
+                if (dt instanceof Enum) {
+                    return dt;
+                }
+            }
+        }
+        
+        // check the BuiltinTypeManager
+        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        ArrayList<DataType> list = new ArrayList<DataType>();
+        builtInMgr.findDataTypes(name, list);
+        for (int i = 0; i < list.size(); i++) {
+            dt = list.get(i);
+            if (dt instanceof Enum) {
+                return dt;
+            }
+        }
+        return null;
+    }
+
+    private DataType getDef(Map<String, DataType> table, String name) {
+        Object obj = table.get(name);
+        if (!(obj instanceof DataType)) {
+                return null;
+        }
+        return (DataType) obj;
+    }
+
+    // Prints out all the types used in parsing the c source
+    @SuppressWarnings("unused")
+    private void printTypes() {
+        System.out.println("**************   TYPES   ********************");
+        printTable(types);
+        System.out.println("**************   FUNCTIONS  *****************");
+        printTable(functions);
+        System.out.println("**************   DECLS      *****************");
+        printTable(declarations);
+        System.out.println("**************   ENUMS      *****************");
+        printTable(enums);
+        System.out.println("**************   STRUCTS    *****************");
+        printTable(structs);
+    }
+
+    private FunctionDefinitionDataType newAnonymousFunction(FunctionDefinitionDataType currentFuncDT) {
+      if (currentFuncDT != null) {
+         return currentFuncDT;
+      }
+      return new FunctionDefinitionDataType(ANONYMOUS_FUNC_PREFIX+func_cnt++);
+    }
+    
+    private void checkReturnDataType(DataType retDT) throws ParseException {
+        if (retDT == null) {
+            return; // treat as void type
+        }
+        DataType dt = retDT;
+        int len = dt.getLength();
+        if (len == 0 && dt instanceof TypeDef) {
+            dt = ((TypeDef) dt).getBaseDataType();
+        }
+        if (len <= 0 && !dt.isEquivalent(DataType.VOID)) {
+            throw new ParseException("'"+retDT.getName()+"'" + " is not fixed length.  Function return must be fixed length data type or void.");
+        }
+    }
+    
+    private int getConstantValue (Object obj, int defaultValue) {
+    	int value = defaultValue;
+    	
+    	if (obj == null) {
+    	    return defaultValue;
+    	}
+    	
+		if (obj instanceof Integer) {
+			value = ((Integer)obj).intValue();
+		}
+		else if (obj instanceof Long) {
+		    value = (int) ((Long) obj).longValue();
+		}
+        else if (obj instanceof Character) {
+        	value = ((Character) obj).charValue();
+        }
+		return value;
+    }
+    
+    	private void pushPack(Token iD, int packingSize) {
+		packStack.push(packingSize);
+		String name = "";
+		if (iD != null) {
+			name = iD.image;
+		}
+		packStackID.push(name);
+	}
+
+	private int popPack(Token iD) {
+		if (packStack.size() == 0) {
+			return packSize;
+		}
+		String name = "";
+		if (iD != null) {
+			name = iD.image;
+		}
+		
+		// keep poping looking for ID, stop when find it
+		int popVal = packSize;
+		do {
+			String ID = packStackID.pop();
+			popVal = packStack.pop();
+			if (name.equals(ID)) {
+				break;
+			}
+		} while (packStack.size() > 0);
+		return popVal;
+	}
+
+    private void printTable(Map<String, DataType> table) {
+
+        for (String name : table.keySet()) {
+            DataType dt = table.get(name);
+            String dataTypeName = "- unknown -";
+            String mnemonic = "";
+            if (dt != null) {
+                dataTypeName = dt.getName();
+                mnemonic = dt.getMnemonic(null);
+            }
+            System.out.println(name + " = " + dataTypeName + " : " + mnemonic);
+        }
+    }
+
+    /**
+     * Get the data type manager
+     * 
+     * @return
+     */
+    public DataTypeManager getDataTypeManager() {
+        return dtMgr;
+    }
+
+    /**
+     * @return the last data type parsed
+     */
+    public DataType getLastDataType() {
+        return lastDataType;
+    }
+
+    /**
+     * Get Global variable declarations
+     * 
+     * @return
+     */
+    public Map<String, DataType> getDeclarations() {
+        return declarations;
+    }
+
+    /**
+     * Get Defined Enumerations
+     * 
+     * @return Defined enumeration names
+     */
+    public Map<String, DataType> getEnums() {
+        return enums;
+    }
+
+    /**
+     * Get Function signatures
+     * 
+     * @return Function signatures
+     */
+    public Map<String, DataType> getFunctions() {
+        return functions;
+    }
+
+    /**
+     * Get structure definitions
+     * 
+     * @return Structure definitions
+     */
+    public Map<String, DataType> getStructs() {
+        return structs;
+    }
+
+    /**
+     * Get Type definitions
+     * 
+     * @return Type definitions
+     */
+    public Map<String, DataType> getTypes() {
+        return types;
+    }
+
+    public DataType parse(String str) throws ParseException {
+        InputStream is = new ByteArrayInputStream(str.getBytes());
+
+        parse(is);
+        if (lastDataType != null && dtMgr != null) {
+            // ensure that data-type sizing is relative to dtMgr's data organization 
+            return lastDataType.clone(dtMgr);
+        }
+        return lastDataType;
+    }
+
+    public void parse(InputStream fis) throws ParseException {
+        ReInit(fis);
+        int transactionID = -1;
+        String parseMessage;
+        try {
+            transactionID = dtMgr.startTransaction("Parsing");
+            TranslationUnit();
+        } catch (ParseException e) {
+            if (headerFileName == null) {
+                throw e;
+            }
+            
+            long endLine = (e.currentToken != null ? e.currentToken.endLine : 0);
+            long subLinenum = ((endLine - headerFileLineOffset) + headerFileLine);
+
+            parseMessage = "C Parser:  Encountered errors during parse.\n";
+            if (headerFileName != null) {
+                parseMessage += "         in " + headerFileName + " near line " + subLinenum + "\n";
+            }
+            parseMessage += "         near token: " + e.currentToken + "\n";
+            parseMessage += "         Last Valid Datatype: "
+                    + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
+            parseMessage += "         Check around CParserPlugin.out around line: "
+                                    + this.jj_input_stream.getBeginLine() + "\n";
+            ParseException parseException = new ParseException(parseMessage);
+            parseException.currentToken = e.currentToken;
+            throw parseException;
+        } catch (Error e) {
+            if (headerFileName == null) {
+                throw e;
+            }
+            
+            parseMessage = "C Parser:  Problem Parsing.\n";
+            if (headerFileName != null) {
+                parseMessage += "          in " + headerFileName + " near line " + headerFileLine + "\n";
+            }
+            parseMessage += "         Last Valid Datatype: "
+                    + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
+                            parseMessage += "         Check around CParserPlugin.out around line: "
+                                    + this.jj_input_stream.getBeginLine() + "\n";
+            Msg.warn(this, e, e);
+            ParseException parseException = new ParseException(parseMessage);
+            if (token != null) {
+                parseException.currentToken = token;
+            }
+            throw parseException;
+        } catch (Exception e) {
+            parseMessage = "C Parser:  Problem Parsing.\n";
+            if (headerFileName != null) {
+                parseMessage += "          in " + headerFileName + " near line " + headerFileLine + "\n";
+            }
+            parseMessage += "         Last Valid Datatype: "
+                    + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
+            parseMessage += "         Check around CParserPlugin.out around line: "
+                                    + this.jj_input_stream.getBeginLine() + "\n";
+            Msg.warn(this, e, e);
+            throw new ParseException(parseMessage);
+        } finally {
+            dtMgr.endTransaction(transactionID, true);
+        }
+    }
+
+    public CParser() {
+        this(System.in);
+        dtMgr= new StandAloneDataTypeManager("parsed");
+    }
+
+    public CParser(DataTypeManager dtmgr) {
+        this(dtmgr, false, null);
+    }
+
+    public CParser(DataTypeManager dtmgr, boolean storeDataType, DataTypeManager subDTMgrs[]) {
+        this(System.in);
+        this.dtMgr = dtmgr;
+        if (subDTMgrs == null) {
+            subDTMgrs = new DataTypeManager[0];
+        }
+        this.subDTMgrs = subDTMgrs;
+        this.storeNewDT = storeDataType;
+    }
+
+        // Run the parser
+    public static void main(String args[]) {
+            CParser parser = new CParser();
+
+        try {
+            if (args.length == 0) {
+                System.out.println("C Parser:  Reading from standard input . . .");
+                parser.parse(System.in);
+            } else if (args.length == 1) {
+                System.out.println("C Parser:  Reading from file " + args[0] + " . . .");
+                try {
+                        parser.parse(new java.io.FileInputStream(args[0]));
+                } catch (java.io.FileNotFoundException e) {
+                        System.out.println("C Parser:  File " + args[0] + " not found.");
+                        return;
+                }
+            } else {
+                System.out.println("C Parser:  Usage is one of:");
+                System.out.println("         java CParser < inputfile");
+                System.out.println("OR");
+                System.out.println("         java CParser inputfile");
+                return;
+            }
+
+            System.out.println("C Parser:  Java program parsed successfully.");
+        } catch (ParseException e) {
+            System.out.println("C Parser:  Encountered errors during parse.");
+        }
+    }
+    
+    private static class EnumMember {
+        final String name;
+        final long value;
+        EnumMember(String name, long value) {
+            this.name = name;
+            this.value = value;
+        }
+    }
+    
+}
+
+PARSER_END(CParser)
+
+TOKEN_MGR_DECLS :
+{
+    static int parenNesting = 0;
+}
+
+SKIP :
+{
+	" " 
+	|
+	"\f" 
+	|
+	"\t" 
+	|
+	"\n" 
+	|
+	"\r"
+	|
+	"\\"
+	|
+	< 
+		"//"
+		( ~[ "\n", "\r" ] )*
+		( "\n" | "\r" | "\r\n" )
+	>
+	|
+	< 
+		"/*"
+		( ~[ "*" ] )*
+		"*"
+		(
+			"*"
+			|
+			~[ "*", "/" ] ( ~[ "*" ] )* "*"
+		)*
+		"/"
+	>
+}
+
+TOKEN :
+{
+	<INTEGER_LITERAL : 
+		<DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+		|
+		<HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+		|
+		<OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+	>
+	|
+	<#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+	|
+	<#HEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+	|
+	<#OCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+	|
+	<FLOATING_POINT_LITERAL : 
+		( [ "0"-"9" ] )+ "." ( [ "0"-"9" ] )* ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
+		|
+		"." ( [ "0"-"9" ] )+ ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
+		|
+		( [ "0"-"9" ] )+ <EXPONENT> ( [ "f", "F", "d", "D" ] )?
+		|
+		( [ "0"-"9" ] )+ ( <EXPONENT> )? [ "f", "F", "d", "D" ]
+	>
+	|
+	<#EXPONENT : [ "e", "E" ] ( [ "+", "-" ] )? ( [ "0"-"9" ] )+> 
+	|
+	<CHARACTER_LITERAL : 
+		("L")?
+		"\'"
+		(
+			~[ "\'", "\\", "\n", "\r" ]
+			|
+			"\\"
+			(
+				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+				|
+				[ "0"-"7" ] ( [ "0"-"7" ] )?
+				|
+				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+			)
+		)+
+		"\'"
+	>
+	|
+	<STRING_LITERAL : 
+		("L")?
+		"\""
+		(
+			~[ "\"", "\\", "\n", "\r" ]
+			|
+			"\\"
+			(
+				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+				|
+				[ "0"-"7" ] ( [ "0"-"7" ] )?
+				|
+				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+			)
+		)*
+		"\""
+	>
+}
+
+TOKEN :
+{
+	<CONTINUE : "continue"> 
+	|
+	<VOLATILE : ( [ "_" ] )* "volatile" ( [ "_" ] )* > 
+	|
+	<REGISTER : "register"> 
+	|
+	<UNSIGNED : "unsigned"> 
+	|
+	<TYPEDEF : "typedef"> 
+	|
+	<DFLT : "default"> 
+	|
+	<DOUBLE : "double"> 
+	|
+	<SIZEOF : "sizeof"> 
+	|
+	<SWITCH : "switch"> 
+	|
+	<RETURN : "return"> 
+	|
+	<EXTERN : "extern"> 
+	|
+	<QUOTE_C : "\"C\"">
+	|
+	<STRUCT : "struct"> 
+	|
+	<STATIC : "static"> 
+	|
+	<SIGNED : ( [ "_" ] )* "signed"> 
+	|
+	<WHILE : "while"> 
+	|
+	<BREAK : "break"> 
+	|
+	<UNION : "union"> 
+	|
+	<CONST : ( [ "_" ] )* "const">
+	|
+	<CDECL : ( [ "_" ] )+ "cdecl"> 
+	|
+	<DECLSPEC : "__declspec">
+	|
+	<PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
+	| 
+	<READABLETO : "__readableTo">
+	|
+	<STDCALL : ( [ "_" ] )+ "stdcall"> 
+	|
+	<FASTCALL : ( [ "_" ] )+ "fastcall"> 
+	|
+	<ATTRIBUTE : "__attribute" (["_"])* >
+	|
+	<EXTENSION : (["_"])+ "extension" (["_"])* >
+	|
+	<RESTRICT : (["_"])+ "restrict" >
+	|
+	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
+	|
+	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*> 
+	|
+	<FLOAT : "float"> 
+	|
+	<SHORT : "short"> 
+	|
+	<ELSE : "else"> 
+	|
+	<CASE : "case"> 
+	|
+	<LONG : "long">
+	|
+	<INT8 : "__int8">
+	|
+	<INT16 : "__int16">
+	|
+	<INT32 : "__int32">
+	|
+	<INT64 : "__int64">
+	|
+	<PTR64 : "__ptr64">
+	|
+	<PTR32 : "__ptr32">
+	|
+	<W64 : "__w64">
+	|
+	<WCHAR : "wchar_t">
+	|
+	<ENUM : "enum"> 
+	|
+	<AUTO : "auto"> 
+	|
+	<VOID : "void"> 
+	|
+	<CHAR : "char"> 
+	|
+	<GOTO : "goto"> 
+	|
+	<NEAR : "near"> 
+	|
+	<FAR : "far"> 
+	|
+	<FOR : "for"> 
+	|
+	<INT : "int"> 
+	|
+	<IF : "if"> 
+	|
+	<DO : "do">
+	|
+	<PROTOCOL : "@protocol"> : OBJC
+	|
+	<INTERFACE : "@interface"> : OBJC
+	|
+	<LINE : "#line">  : LINEBLOCK
+	|
+	<LINEALT : "#" ([" ", "\t"])+> : LINEBLOCK
+}
+
+TOKEN :
+{
+	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+	|
+	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
+	|
+	<#DIGIT : [ "0"-"9" ]> 
+}
+
+<ASMBLOCK> SKIP:
+{
+	" " 
+	|
+	"\t"
+}
+
+<ASMBLOCK> TOKEN :
+{
+	<ASMBLOCKB : 
+		(
+		    ( ~[ "{" , "}", ";" ] )+ ( ["\r","\n"] )+
+		)
+	> : ASMBLOCK
+	|
+	<ASMBLOCKP : 
+		(
+		    ( ~[ "(", ")", ";" ] )+ ( ["\r","\n"] )+
+		)
+	> : ASMBLOCK
+	|
+	<ASM_SEMI : [ ";" ]> : DEFAULT
+}
+
+<LINEBLOCK> SKIP:
+{
+	" "
+	|
+	"\f" 
+	|
+	"\t" 
+	|
+	":"
+}
+
+<LINEBLOCK> TOKEN:
+{
+	<PATH_LITERAL : 
+		"\""
+		(
+			~[ "\"", "\n", "\r" ]
+		)*
+		"\""
+	>:DEFAULT
+	|
+	<LINENUMBER_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> :LINEBLOCK
+}
+
+<PRAGMALINE> SKIP:
+{
+	" "
+	|
+	"\f" 
+	|
+	"\t"
+	|
+	"\n" : DEFAULT
+	|
+	"\r" : DEFAULT
+	|
+	";" : DEFAULT
+	|
+	< 
+		"//"
+		( ~[ "\n", "\r" ] )*
+	>
+	|
+	< 
+		"/*"
+		( ~[ "*" ] )*
+		"*"
+		(
+			"*"
+			|
+			~[ "*", "/" ] ( ~[ "*" ] )* "*"
+		)*
+		"/"
+	>
+}
+
+<PRAGMALINE> TOKEN:
+{
+	<PIDENTIFIER : <PLETTER> ( <PLETTER> | <PDIGIT> )*> 
+	|
+	<#PLETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
+	|
+	<#PDIGIT : [ "0"-"9" ]>
+	|
+	<POPEN : "("> { parenNesting++; }
+	|
+	<PCLOSE : ")"> { parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
+	|
+	<PHASH : "#">
+	|
+	<PCOLON : ":">
+	|
+	<PCOMMA : ",">
+	|
+	<PINTEGER_LITERAL : 
+		<PDECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+		|
+		<PHEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+		|
+		<POCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+	>
+	|
+	<#PDECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+	|
+	<#PHEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+	|
+	<#POCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+	|
+	<PSTRING_LITERAL : 
+		("L")?
+		"\""
+		(
+			~[ "\"", "\\", "\n", "\r" ]
+			|
+			"\\"
+			(
+				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+				|
+				[ "0"-"7" ] ( [ "0"-"7" ] )?
+				|
+				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+			)
+		)*
+		"\""
+	>
+}
+
+<OBJC> SKIP:
+{
+	" "
+	|
+	"\f" 
+	|
+	"\t"
+	|
+	"\n" : OBJC2
+	|
+	"\r" : OBJC2
+}
+
+
+<OBJC> TOKEN:
+{
+	<OBJC_IGNORE : ( ~[ "@", "$", "A"-"Z", "_", "a"-"z", "0"-"9", ";" ] ) > : OBJC
+	|
+	<OBJC_IDENTIFIER : ( <OBJC_LETTER> | <OBJC_DIGIT> )+> : OBJC
+	|
+	<#OBJC_LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]>
+	|
+	<#OBJC_DIGIT : [ "0"-"9" ]>
+	|
+	<OBJC_SEMI : [ ";" ]> :DEFAULT
+}
+
+<OBJC2> SKIP:
+{
+	" "
+	|
+	"\f" 
+	|
+	"\t"
+	|
+	"\n"
+	|
+	"\r"
+	|
+	"@private"
+	|
+	"@protected"
+	|
+	"@property"
+	|
+	"@optional"
+	|
+	"@required"
+}
+
+
+<OBJC2> TOKEN:
+{
+	<OBJC2_IGNORE : ( ~[ "@" ] ) > : OBJC2
+	|
+	<OBJC2_END : "@end"> :DEFAULT
+}
+
+//jjt SimpleNode TranslationUnit() #TranslationUnit : {}
+void TranslationUnit() : {}
+{
+	( ExternalDeclaration() )+ 
+	{
+		//jjt         return jjtThis;
+	}
+}
+
+void ExternalDeclaration() : {}
+{
+	(
+		LOOKAHEAD(FunctionDefinition() )
+		FunctionDefinition() 
+		|
+//		<INLINE> FunctionDefinition() 
+//		|
+		Declaration()
+		|
+		PragmaSpec()
+		|
+		LineDef()
+		|
+		";"
+	)
+	{
+		typedefParsingStack.clear();
+	}
+}
+
+void LineDef() : {
+	Token lineTok, fileTok;
+}
+{
+	(<LINE> | <LINEALT>)  ( lineTok= <LINENUMBER_LITERAL> )  ( fileTok= <PATH_LITERAL> ) [ (<INTEGER_LITERAL>)+ ]
+	{
+		headerFileName= fileTok.image.substring(1, fileTok.image.length() - 1);
+		headerFileLine= Integer.parseInt(lineTok.image);
+		headerFileLineOffset= lineTok.beginLine;
+		currentCategoryName = getFileName(headerFileName);
+	}
+}
+
+DataType ObjcDef() : {
+	Token nameTok;
+}
+{
+	( nameTok=<OBJC_IDENTIFIER> ) ( <OBJC_IDENTIFIER> | <OBJC_IGNORE> | <OBJC2_IGNORE> )*  ( <OBJC_SEMI> | <OBJC2_END> )
+	{
+		return addTypedef(nameTok.image, VoidDataType.dataType);
+	}
+}
+
+void FunctionDefinition() : {
+	Declaration retDT = new Declaration();
+	Declaration dec = null;
+}
+{
+	[
+		LOOKAHEAD(DeclarationSpecifiers(retDT))
+		retDT = DeclarationSpecifiers(retDT) 
+	]
+	{typedefParsingStack.push(Boolean.FALSE);}
+	dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+	{
+	    if (dec.getDataType() instanceof FunctionDefinition) {
+		    addDef("functions", functions, dec.getName(), dec.getDataType());
+		}
+	}
+}
+
+Declaration Declaration() : {
+	Declaration dec = new Declaration();
+	DataType dt = null;
+}
+{
+    (
+		dec = DeclarationSpecifiers(dec) [ InitDeclaratorList(dec) ] ";"
+		|
+		( <PROTOCOL> | <INTERFACE> ) ( dt = ObjcDef() ) {
+		    dec.setDataType(dt);
+		}
+	)
+	{
+		return dec;
+	}
+}
+
+void DeclarationList() : {}
+{
+	(
+		LOOKAHEAD(Declaration())
+		Declaration() 
+	)+
+}
+
+Declaration DeclarationSpecifiers(Declaration specDT) : {
+	Declaration typeDT= null;
+}
+{
+	(	
+		specDT = StorageClassSpecifier(specDT) 
+		[
+//			LOOKAHEAD(DeclarationSpecifiers(specDT))
+			specDT= DeclarationSpecifiers(specDT) 
+		]
+		|
+		specDT = BuiltInDeclarationSpecifier(specDT)
+		[
+			LOOKAHEAD(TypeQualifierList(specDT))
+			specDT = TypeQualifierList(specDT) 
+		]
+		|
+		specDT = TypeSpecifier(specDT)
+		[
+// I don't think this does anything useful.  Look into removing it.
+		    LOOKAHEAD(DeclarationSpecifiers(specDT) , { specDT.getDataType() == null } )
+//			LOOKAHEAD(DeclarationSpecifiers()
+//			         , { (typeDT == null ||
+//			             (!typeDT.getName().equals(getToken(1).image) && !isType(getToken(1).image))) }
+ //                     )
+			specDT = DeclarationSpecifiers(specDT)
+		]
+		|
+		specDT = TypeQualifier(specDT) 
+		[
+			LOOKAHEAD(DeclarationSpecifiers(specDT))
+			specDT = DeclarationSpecifiers(specDT) 
+		]
+	)
+	[ specDT = TypeQualifier(specDT) ]
+	{
+		if (specDT == null) {
+			specDT = new Declaration(typeDT);
+		}
+		return specDT;
+	}
+}
+
+Declaration StorageClassSpecifier(Declaration specDT) : {}
+{
+   // TODO: might want to set a storage classifier on DECL
+	(
+		<AUTO> 
+		|
+		<REGISTER> 
+		|
+		<STATIC> 
+		|
+		<EXTERN> [ <STRING_LITERAL> ]
+		|
+		<TYPEDEF> 
+		{
+			//	        System.out.println("TYPEDEF! " + typedefParsingStack.size());
+			typedefParsingStack.push(Boolean.TRUE);
+		}
+	)
+	{
+		return specDT;
+	}
+}
+
+
+Declaration BuiltInTypeSpecifier(Declaration dec) : {
+    DataType dt;
+}
+{
+	(
+		<VOID> 				{ dec.setDataType(VoidDataType.dataType); }
+		|
+		<CHAR> 				{   dt = dec.getDataType();
+								if (dt != null) {
+									if (dt == UnsignedIntegerDataType.dataType) {
+				                         dt = UnsignedCharDataType.dataType;
+				                    } else if (dt == IntegerDataType.dataType) {
+		                                 dt = CharDataType.dataType;
+		                            } else {
+		                                 throw new ParseException("Bad datatype " + dt + " char");
+		                            }
+								}
+								else {
+									dt = CharDataType.dataType;
+								}
+								dec.setDataType(dt);
+							}
+		|
+		<WCHAR> 			{ dec.setDataType(WideCharDataType.dataType); }
+		|
+		<SHORT> 			{ dt = dec.getDataType();
+		                   if (dt == null) {
+		                       dt = ShortDataType.dataType;
+		                   } else if (dt == UnsignedIntegerDataType.dataType) {
+		                       dt = UnsignedShortDataType.dataType;
+		                   } else if (dt == IntegerDataType.dataType) {
+		                       dt = ShortDataType.dataType;
+		                   } else {
+		                      throw new ParseException("Bad datatype " + dt + " short");
+		                   }
+		                   dec.setDataType(dt);
+		                 }
+			[
+				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
+				dec = BuiltInDeclarationSpecifier(dec) 
+			]
+		|
+		<INT> 				{ dt = dec.getDataType();
+		                       if (dt == null ) { 
+		                         dec.setDataType(IntegerDataType.dataType);
+		                       }
+		                     }
+		|
+		<LONG> 		        { dt = dec.getDataType();
+			                  if ( dt == null) {
+			                      dt = LongDataType.dataType;
+			                  } else if ( dt == UnsignedIntegerDataType.dataType) {
+			                      dt = UnsignedLongDataType.dataType;
+			                  } else if (dt == IntegerDataType.dataType) {
+		                         dt = LongDataType.dataType;
+		                      } else if (dt == LongDataType.dataType) {
+		                         dt = LongLongDataType.dataType;
+		                      } else if (dt == UnsignedLongDataType.dataType) {
+		                         dt = UnsignedLongLongDataType.dataType;
+		                      } else {
+		                         throw new ParseException("Bad datatype " + dt + " long");
+		                      }
+			                   dec.setDataType(dt);
+		                    }
+			[
+				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
+				dec = BuiltInDeclarationSpecifier(dec) 
+			]				
+		|
+		<FLOAT> 			{ dt = dec.getDataType();
+		                  if ( dt == null) {
+		                      dt = FloatDataType.dataType;
+		                  } else if ( dt == LongDataType.dataType) {
+		                      dt = DoubleDataType.dataType;
+		     			  } else {
+		                      throw new ParseException("Bad datatype " + dt + " long");
+		                  }
+		                  dec.setDataType(dt);
+			             }
+		|
+		<DOUBLE> 			{ dec.setDataType(new DoubleDataType()); }
+		|
+		<SIGNED>			{ dt = dec.getDataType();
+		                  if ( dt == null) {
+		                      dt = IntegerDataType.dataType;
+		                  } else {
+		                      // data type already set, don't do anything?
+							 dt = dt;
+		                  }
+		                  dec.setDataType(dt);
+		                 }
+		                   
+			[
+				LOOKAHEAD(BuiltInDeclarationSpecifier())
+				dec = BuiltInDeclarationSpecifier(dec) 
+			]
+		|
+		<UNSIGNED>		{     dt = dec.getDataType();
+			                  if ( dt == null) {
+			                      dt = UnsignedIntegerDataType.dataType;
+			                  } else if (dt == ShortDataType.dataType) {
+		                         dt = UnsignedShortDataType.dataType;
+		                      } else if (dt == LongDataType.dataType) {
+		                         dt = UnsignedLongDataType.dataType;
+		                      } else if (dt == LongLongDataType.dataType) {
+		                         dt = UnsignedLongLongDataType.dataType;
+		                      } else {
+		                         throw new ParseException("Bad datatype " + dt + " unsigned");
+		                      }
+		                      dec.setDataType(dt);
+		                 }
+			[
+				LOOKAHEAD(BuiltInDeclarationSpecifier())
+				dec = BuiltInDeclarationSpecifier(dec) 
+			]
+		|
+		<INT8>              { dec.setDataType(SignedByteDataType.dataType); }
+		|
+		<INT16>             { dec.setDataType(ShortDataType.dataType); }
+		|
+		<INT32>             { dec.setDataType(IntegerDataType.dataType); }
+		|
+		<INT64>             { dec.setDataType(LongLongDataType.dataType); }
+	)
+	{
+		return dec;
+	}
+}
+
+
+Declaration BuiltInDeclarationSpecifier(Declaration dec) : {
+	DataType dt= null;
+}
+{
+	dec = BuiltInTypeSpecifier(dec)
+	{
+		return dec;
+	}
+}
+
+Declaration TypeSpecifier(Declaration dec) : { DataType dt = null; }
+{
+	(
+		dt= StructOrUnionSpecifier() 
+		|
+		dt= EnumSpecifier() 
+		|
+		LOOKAHEAD( { isType(getToken(1).image) } )
+		dt= TypedefName() 
+	)
+	{
+	    dec.setDataType(dt);
+		return dec;
+	}
+}
+
+Declaration TypeQualifier(Declaration dec) : {}
+{
+	(
+      <CONST>  { dec.setQualifier(CONST); } |
+	  <VOLATILE> |
+	  <CDECL> { dec.setQualifier(CDECL); } |
+	  <NEAR> |
+	  <FAR> |
+	  <STDCALL> { dec.setQualifier(STDCALL); } |
+	  <FASTCALL> { dec.setQualifier(FASTCALL); } |
+	  <W64> |
+	  <PTR64> |
+	  <PTR32> |
+	  <INLINE> |
+	  <RESTRICT> |
+	  <EXTENSION> |
+	  <STATIC> |
+	  ( DeclSpec() )
+	)
+	{
+	    return dec;
+	}
+}
+
+void AttributeSpec() : {}
+{
+      ( <ATTRIBUTE> ("(") SubIdent() (")") ) |
+      AsmStatement()
+}
+
+void AttributeSpecList() : {}
+{
+	( AttributeSpec() )+
+}
+
+void SubIdent() : { Declaration dt = new Declaration(); }
+{
+    ( ( "(" [SubIdent()] ")" ) |
+      (<IDENTIFIER> | TypeQualifier(dt)) [ "(" 
+                        [SubIdent()]   
+                      ")" ]
+                   [ "," 
+                        SubIdent()   
+                       ] |            
+      Constant() [ "," 
+                        SubIdent()   
+                       ]
+    )
+}
+
+void DeclSpec() : {
+}
+{
+  ( ( <DECLSPEC> | <READABLETO> ) "(" DeclSpecifier() ")" )  |
+  AttributeSpecList()
+}
+
+void DeclSpecifier() : {
+}
+{
+  "(" DeclSpecifier() ")" |
+      <IDENTIFIER> [ "(" 
+                        DeclConstant()   
+                     ")" ]
+}
+
+void DeclConstant() : {}
+{
+    <INTEGER_LITERAL> |
+    <IDENTIFIER> [ ":" <INTEGER_LITERAL> ] |
+    <STRING_LITERAL> ( "#" <IDENTIFIER> ["(" ")"] <STRING_LITERAL> )*
+}
+
+void PragmaSpec() : {
+}
+{
+  ( ( <PRAGMA> ) PragmaSpecifier() )
+}
+
+ 
+
+void PragmaSpecifier() : {
+   Token id;
+   Token ds1=null, ds2=null, ds3 = null;
+}
+{
+  LOOKAHEAD(3)
+  <POPEN> PragmaSpecifier() <PCLOSE> |
+      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL>)*
+          [ <POPEN> [ ds1=PragmaConstant() [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ]
+  {
+	if (id.image.equals("pack") && ds1 != null) {
+		Token newPackVal = ds1;
+		Token ID = ds2;
+		if (ds1.image.equals("pop")) {
+			// pop and set current value
+			packSize = popPack(ID);
+			newPackVal = null;
+		}
+		else if (ds1.image.equals("push")) {
+			// push current and set value
+			try {
+				// check if second arg is an integer
+				int ival = Integer.parseInt(ds2.image);
+				// if it is, the ID is default
+				newPackVal = ds2;
+				ID = null;
+			}
+			catch (NumberFormatException exc) {
+				// if it is not, then second arg is an ID
+				// and third arg is potentially a pack value
+				newPackVal = ds3;
+				ID = ds2;
+			}
+			pushPack(ID, packSize);
+		}
+		// set current pack value
+		if (newPackVal != null) {
+			int ival = packSize;
+			try {
+				// second arg may be an integer
+				ival = Integer.parseInt(newPackVal.image);
+			}
+			catch (NumberFormatException exc) {
+			    // bad parse of number, just keep current pack size
+			}
+			packSize = ival;
+		}
+	} else if (id.image.equals("pack")) {
+	   packSize = 0;
+	}
+  }
+  // ignore to EOL now.         
+}
+
+Token PragmaConstant() : {
+  Token val = null;
+}
+{
+  (
+    val=<PINTEGER_LITERAL> |
+    (
+      (val=<PIDENTIFIER>) [ (<PCOLON> (<PINTEGER_LITERAL> | <PIDENTIFIER> )+ ) ]
+    ) |
+    (
+      val=<PSTRING_LITERAL> ( <PHASH> <PIDENTIFIER> [<POPEN> <PCLOSE>] <PSTRING_LITERAL> )*
+    )
+  )
+  {
+      return val;
+  }
+}
+
+
+DataType StructOrUnionSpecifier() : {
+	Token t;
+	Token sname;
+	Composite comp;
+}
+{
+	{
+		typedefParsingStack.push(Boolean.FALSE);
+		t= sname= null;
+	}
+	comp= StructOrUnion() 
+	(
+		LOOKAHEAD(3)
+		[ t= <IDENTIFIER> ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
+		|
+		sname= <IDENTIFIER> 
+	)
+	{
+		try {
+            if (t != null) {
+                    DataType dt= getStructDef(t.image);
+                    if (dt != null && dt instanceof Structure && comp instanceof Structure &&
+                        dt.getDataTypeManager()==this.getDataTypeManager()) {
+	                            Structure dtcomp= (Structure) dt;
+	                            dtcomp.replaceWith(comp);
+	                            comp= dtcomp;
+                    } else {
+                            comp.setName(t.image);
+                            comp= (Composite) addDef(structs, t.image, comp);
+                    }
+            } else if (sname != null) {
+                    DataType dt= getStructDef(sname.image);
+                    if (dt instanceof Composite) {
+                            comp= (Composite) dt;
+                    }
+                    if (dt == null) {
+                            comp.setName(sname.image);
+                            comp= (Composite) addDef(structs, sname.image, comp);
+                            // System.out.println("COULDN'T FIND STRUCT DEFN " + sname);
+                    }
+            }
+			//System.out.println("   " + comp.getName());
+			//for (int i = 0; i < comp.getNumComponents(); i++) {
+			//	DataTypeComponent c = comp.getComponent(i);
+			//	if (c == null) { 
+			//		System.out.println("  no comp " + i);
+			//	}
+			//	System.out.println("       " + c.getFieldName() + "  off " + c.getOffset() + "   len " + c.getLength());
+			//}
+		} catch (InvalidNameException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DuplicateNameException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		typedefParsingStack.pop();
+		return comp;
+	}
+}
+
+Composite StructOrUnion() : {Composite comp;}
+{
+	(
+		<STRUCT> ( DeclSpec() )* { comp =  new StructureDataType(ANONYMOUS_STRUCT_PREFIX + cnt++, 0);
+		                          try {
+		                          // always set the packing, because by default structures should be aligned
+		                          //     setting 0 turns off packing, but sets structures to be aligned
+		                          // TODO: is this correct, should this be changed and controlled by the
+		                          //  compiler spec.
+		                          comp.setPackingValue(this.packSize);
+		                           } catch (InvalidInputException e1) {
+												e1.printStackTrace(); }
+								}
+		|
+		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); }
+	)
+	{
+                try {
+			comp.setCategoryPath(getCurrentCategoryPath());
+		} catch (DuplicateNameException e) {}
+		return comp;
+	}
+}
+
+void StructDeclarationList(Composite comp) : {
+    CompositeHandler compositeHandler = new CompositeHandler(comp);
+}
+{
+	( StructDeclaration(comp, compositeHandler) )+
+}
+
+void InitDeclaratorList(Declaration dt) : {
+	Declaration initialDT = new Declaration(dt);
+}
+{
+	InitDeclarator(dt) 
+	( "," { dt = new Declaration(initialDT); } InitDeclarator(dt) )* 
+	{
+		// Finished with a typedefDeclaration??
+		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
+			typedefParsingStack.pop();
+		}
+	}
+}
+
+void InitDeclarator(Declaration dt) : { Declaration dec; }
+{
+	dec = Declarator(dt, null) [ "=" Initializer() ] 
+	{
+		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
+			addTypedef(dec.getName(), dec.getDataType());
+		} else {
+			if (dt.getDataType() instanceof FunctionDefinition) {
+				addDef("functions", functions, dec.getName(), dec.getDataType());
+			}
+		}
+	}
+}
+
+void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
+	Declaration dt = null;
+}
+{
+	(   
+		[ dt = SpecifierQualifierList() ]
+		[
+			StructDeclaratorList(dt, comp, compositeHandler) 	{ dt= null; }
+		]
+		[ AttributeSpecList() ]
+		";" 
+	)
+	{
+		if (dt != null) { // dt was not used up
+			if (dt.getDataType().getLength() > 0) {
+				comp.add(dt.getDataType(), "", null);
+			} else {
+				System.err.println("BAD data type struct size  " + dt);
+			}
+		}
+	}
+}
+
+Declaration SpecifierQualifierList() : {
+	Declaration dt = new Declaration();
+	Declaration sdt= null;
+}
+{
+	(
+	    (
+			dt = BuiltInDeclarationSpecifier(dt) 
+			[
+				LOOKAHEAD(TypeQualifierList(dt))
+				dt = TypeQualifierList(dt) 
+			]
+		)
+		|
+		(
+			dt = TypeSpecifier(dt) 
+			[
+				LOOKAHEAD(SpecifierQualifierList() , { dt == null } )
+				sdt = SpecifierQualifierList()
+			]
+		)
+		|
+		(
+			dt = TypeQualifier(dt) 
+			[
+				LOOKAHEAD(SpecifierQualifierList())
+				sdt = SpecifierQualifierList() 
+			]
+		)
+	)
+	{
+		if (sdt == null) {
+			dataTypeStack.push(dt.getDataType());
+			return dt;
+		}
+		return sdt;
+	}
+}
+
+void StructDeclaratorList(Declaration dt, Composite comp, CompositeHandler compositeHandler) : {
+}
+{
+	StructDeclarator(dt, comp, compositeHandler) ( "," StructDeclarator(dt, comp, compositeHandler) )*
+}
+
+
+void StructDeclarator(Declaration dt, Composite comp, CompositeHandler compositeHandler) : {
+	Declaration dec= null;
+	Object bitSizeObj;
+}
+{
+    LineDef() |
+	(
+		LOOKAHEAD(3)
+		dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
+			   Integer bitSize = getConstantValue(bitSizeObj,0);
+			   if (bitSize != null) {
+		          dec.setBitFieldSize(bitSize);
+		       }
+		   }] 
+		|
+		":" ConstantExpression() 
+	)
+	{
+        try {
+            compositeHandler.add(dec);
+    	} catch (IllegalArgumentException e) {
+    		System.err.println("Bad structure size " + dec.getName() + "  length=" + dec.getDataType().getLength());
+    		System.err.println("    In file " + this.headerFileName);
+    		System.err.println("    Near " + lastDataType.getName());
+    	}
+	}
+}
+
+DataType EnumSpecifier() : {
+	Token t= null;
+	DataType dt;
+	ArrayList<EnumMember> list;
+}
+{
+	<ENUM> 
+	(
+		LOOKAHEAD(3)
+		[ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+		{
+			String enumName= (t != null ? t.image : ("enum_" + cnt++));
+			EnumDataType enuum= new EnumDataType(enumName, 4);
+			for (EnumMember member : list) {
+				try {
+                	enuum.add(member.name, member.value);
+                } catch (IllegalArgumentException exc) {
+                	System.err.println("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
+                	System.err.println("    In file " + this.headerFileName);
+                	System.err.println("    Near " + lastDataType.getName());
+                }
+			}
+			dt= enuum;
+			dt= addDef(enums, enumName, enuum);
+		}
+		|
+		t= <IDENTIFIER> 			{ dt= getEnumDef(t.image); }
+	)
+	{
+		return dt;
+	}
+}
+
+ArrayList<EnumMember> EnumeratorList() : {
+	int value= 0;
+	ArrayList<EnumMember> list= new ArrayList<EnumMember>();
+}
+{
+	(
+	    LineDef() |
+		value= Enumerator(list, value) [ "," ] 	{ value++; }
+	)*
+	{
+		return list;
+	}
+}
+
+int Enumerator(ArrayList<EnumMember> list, int value) : {
+	Token t = null;
+	Object obj = null;
+	Integer evalue;
+}
+{
+	t = <IDENTIFIER> [ "=" obj = ConstantExpression() ] 
+	{
+		evalue = getConstantValue(obj,value);
+        if (evalue != null) {
+		    value = evalue;
+		}
+		list.add(new EnumMember(t.image, value));
+		return value;
+	}
+	|
+	t = <INTEGER_LITERAL> [ "=" obj = ConstantExpression() ]
+	{
+		evalue = getConstantValue(obj,value);
+        if (evalue != null) {
+		    value = evalue;
+		}
+		return value;
+	}
+}
+
+Declaration Declarator(Declaration dt, DataType container) : {
+	Declaration dec= null;
+}
+{
+	(
+		[ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ] 
+	)
+	{
+		return dec;
+	}
+}
+
+Declaration DirectDeclarator(Declaration dt, DataType container) : {
+	Token t;
+	Declaration dec= null;
+	Declaration funcDec= null;
+    FunctionDefinitionDataType funcDT= null;
+	Object obj = null;
+	ArrayList list = new ArrayList();
+}
+{
+	(
+		(
+			t= <IDENTIFIER>		{ dec= new Declaration(dt, t.image); }
+			//****** working here Looks like should define a function here.
+			//       if the data type in dec is a pointer, it should be a pointer.
+			//       The function should be set locally so the param list can be applied.
+			//       The function pointer should be returned.
+			//       Also, the pointer data type should probably have the TypeQualifier before the "*"?????
+			|
+			"(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")" 
+			{
+				// System.out.println(" ( func dec ) " + dec.getName() + "   " + dec.getDataType());
+			}
+			//		 | "(" [ decDT = DeclarationSpecifiers() ]
+			//		        {
+			//		        	if (decDT != null) {
+			//		        		dt = decDT;
+			//		        	}
+			//		        }
+			//		       dec = Declarator(dt, null) ")"
+		)
+		{ lastDataType = dec.getDataType(); }
+		(
+			"[" [ obj = ConditionalExpression() ] "]" 
+			{
+				// make a new array given value on constant expression
+                Integer size = getConstantValue(obj, 0);
+                if (size == null) {
+                    System.out.println("BAD ARRAY SIZE! " + obj);
+                    size = 0;
+                }
+                list.add(0,size);
+                dec.setDataType(dt.getDataType());
+                for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                    Integer iSize = (Integer) iterator.next();
+                    DataType decDt = dec.getDataType();
+                    if (iSize == 0 && container != null) {
+                    	    dec.setFlexArray(true);
+                    	    break;
+                    } else if (iSize == 0) {
+                        dec.setDataType(dtMgr.getPointer(decDt));
+                    } else {
+                        dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
+                    }
+                }
+                //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
+			}
+		)*
+		
+		(
+			LOOKAHEAD(3)
+			"(" funcDec= ParameterTypeList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ")" 
+			{
+				//System.out.println(
+				//	"Param list: for " + dec.getName() + " make a function " + dt.getName());
+			}
+			|
+			"(" [ IdentifierList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ] ")" 
+			{
+				//System.out.println(
+				//	"ID List: for " + dec.getName() + " make a function " + dt.getName());
+				funcDec= new Declaration(funcDT=newAnonymousFunction(funcDT), "__paramIDList__");
+			}
+		)*
+	)
+	{
+		if (funcDec != null) {
+			try {
+			  // functions in containers stay anonymous
+			  if (container == null) { 
+				funcDT.setName(dec.getName());
+		      }
+				funcDec.setName(dec.getName());
+				if (dec.getDataType() != null) {
+					funcDec.setDataType(dec.getDataType());
+				}
+			} catch (InvalidNameException e) {
+				throw new ParseException("duplicate name " + dec.getName());
+			}
+			DataType retDT = dt.getDataType();
+			checkReturnDataType(retDT);
+			funcDT.setReturnType(retDT);
+            switch (dt.getQualifier()) {
+            	case CDECL:
+            		funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
+            		break;
+            	case STDCALL:
+            		funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
+            		break;
+        		case FASTCALL:
+                funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
+                break;
+            }
+			dec= funcDec;
+			DataType newDT =  addDef("functions", functions, dec.getName(), funcDT);
+			DataType repDT= dec.getDataType();
+			// shove the data type into any pointer definition.
+			while (repDT != null) {
+				if (repDT instanceof Pointer) {
+					PointerDataType ptDT= (PointerDataType) repDT;
+					if (ptDT.getDataType() instanceof FunctionDefinition) {
+						ptDT.dataTypeReplaced(ptDT.getDataType(), newDT);
+						newDT = repDT;
+						break;
+					}
+					repDT= ptDT.getDataType();
+				} else {
+					break;
+				}
+			}
+			dec.setDataType(newDT);
+		}
+
+		return dec;
+	}
+}
+
+Declaration Pointer(Declaration dec) : {}
+{
+	("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
+	{
+	    // TODO: is this right?
+		dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+		return dec;
+	}
+}
+
+Declaration TypeQualifierList(Declaration dec) : {}
+{
+	( dec = TypeQualifier(dec) )+
+	{
+	    return dec;
+	}
+}
+
+Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT) : {
+	ArrayList<Declaration> list;
+	Token varargs= null;
+}
+{
+	list= ParameterList() [ "," varargs = "..." ] 
+	{
+		checkReturnDataType(retDT);
+		if (funcDT == null) {
+			funcDT= new FunctionDefinitionDataType(ANONYMOUS_FUNC_PREFIX);
+		}
+		funcDT.setVarArgs(varargs!=null);
+		ParameterDefinition[] variables= new ParameterDefinition[list.size()];
+		for (int i= 0; i < variables.length; i++) {
+			Declaration dec= list.get(i);
+            DataType varDT = dec.getDataType();
+
+			// if this is a single void parameter, empty the parameter variable list
+            //
+            if (variables.length == 1 && varDT instanceof VoidDataType) {
+            	variables = new ParameterDefinition[0];
+            	break;
+            }
+            variables[i] = new ParameterDefinitionImpl(dec.getName(), dec.getDataType(), null);
+		}
+		funcDT.setReturnType(retDT);
+		funcDT.setArguments(variables);
+		return new Declaration(funcDT);
+	}
+}
+
+ArrayList<Declaration> ParameterList() : {
+	ArrayList<Declaration> list= new ArrayList<Declaration>();
+}
+{
+	ParameterDeclaration(list) 
+	(
+		LOOKAHEAD(2)
+		 "," ParameterDeclaration(list) 
+	)*
+	{
+		return list;
+	}
+}
+
+void ParameterDeclaration(ArrayList<Declaration> list) : {
+	Declaration dt = new Declaration();
+	Declaration dec= new Declaration();
+}
+{
+	dt = DeclarationSpecifiers(dec) 
+	(
+		LOOKAHEAD(Declarator(dt))
+		dec= Declarator(dt, null) 
+		|
+		[ dec = AbstractDeclarator(dt) ] 
+	)  [ "=" <INTEGER_LITERAL > ]
+	{
+		if (dec == null) {
+			dec = new Declaration(dt);
+		}
+		DataType decDT = dec.getDataType();
+        if (decDT != null) {
+            if (decDT.getLength() < 0  && !((decDT instanceof FunctionDefinition) || (decDT instanceof TypeDef && (((TypeDef) decDT).getDataType() instanceof FunctionDefinition)))) {
+        	// if (decDT.getLength() < 0  && !(decDT instanceof FunctionDefinitionDataType)) {
+        	   throw new ParseException("'"+decDT.getName()+"'" + " is not fixed length.  Function parameters must use fixed length data type.");
+            } else {
+               list.add(dec);
+            }
+        }
+	}
+}
+
+void IdentifierList(FunctionDefinitionDataType funcDT, DataType retDT) : {
+	Token t;
+}
+{
+	{
+		ArrayList<String> list= new ArrayList<String>();
+	}
+	t= <IDENTIFIER> 				{ list.add(t.image); }
+	(
+		"," t= <IDENTIFIER> 			{ list.add(t.image); }
+	)*
+	{
+		checkReturnDataType(retDT);
+		ParameterDefinition[] variables= new ParameterDefinition[list.size()];
+		for (int i= 0; i < variables.length; i++) {
+		    // TODO need a data type
+		    variables[i] = new ParameterDefinitionImpl(list.get(i), null, null);
+		}
+		funcDT.setReturnType(retDT);
+		funcDT.setArguments(variables);
+	}
+}
+
+void Initializer() : {}
+{
+	( AssignmentExpression() | "{" InitializerList() [ "," ] "}" )
+}
+
+void InitializerList() : {}
+{
+	Initializer() 
+	(
+		LOOKAHEAD(2)
+		"," Initializer() 
+	)*
+}
+
+DataType TypeName() : {
+    Declaration dt = null;
+}
+{
+	dt = SpecifierQualifierList() [ AbstractDeclarator(new Declaration()) ]
+	{
+	   return dt.getDataType();
+	}
+}
+
+Declaration AbstractDeclarator(Declaration dt) : {
+	Declaration dec= null;
+}
+{
+	(
+		LOOKAHEAD(3)
+	    dec= DirectAbstractDeclarator(dt) { return new Declaration(dec, dt.getDataType()); } |
+		dt= Pointer(dt) [dec= DirectAbstractDeclarator(dt) { return new Declaration(dec, dt.getDataType()); }]
+	)
+	{ return new Declaration(dt); }
+}
+
+Declaration DirectAbstractDeclarator(Declaration dt) : {
+	Declaration dec= null;
+}
+{
+	(
+		LOOKAHEAD(2)
+		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
+		|
+		"[" [ ConstantExpression() ] "]" 
+		|
+		"(" [ dec= ParameterTypeList(null, dt.getDataType()) ] ")" 
+	)
+	
+
+
+
+
+	(
+		"[" [ ConstantExpression() ] "]" | "(" [ dec= ParameterTypeList(null, dec.getDataType()) ] ")"
+	)*
+	{
+		return dec;
+	}
+}
+
+DataType TypedefName() : {
+	Token t;
+}
+{
+	t= <IDENTIFIER> 
+	{
+		return getType(t.image);
+	}
+}
+
+void Statement() : {}
+{
+	(
+		LOOKAHEAD(2)
+		AsmStatement()
+		|
+		LOOKAHEAD(3)
+		DeclarationList()
+		|
+		LOOKAHEAD(2)
+		LabeledStatement() 
+		|
+		ExpressionStatement() 
+		|
+		CompoundStatement() 
+		|
+		SelectionStatement() 
+		|
+		IterationStatement() 
+		|
+		JumpStatement() 
+		|
+		AsmStatement()
+		|
+		PragmaSpec()
+	)
+}
+
+void LabeledStatement() : {}
+{
+	( <IDENTIFIER> ":" Statement() | <CASE> ConstantExpression() ":" Statement() | <DFLT> ":" Statement() )
+}
+
+void ExpressionStatement() : {}
+{
+	[ Expression() ] ";"
+}
+
+void CompoundStatement() : {}
+{
+	"{" 
+//	[
+//		LOOKAHEAD(DeclarationList())
+//		DeclarationList() 
+//	]
+	[ StatementList() ] "}" 
+}
+
+void StatementList() : {}
+{
+	( Statement() )+
+}
+
+
+void AsmStatement() :
+{
+   Declaration dec = new Declaration();
+}
+{
+  (
+    <ASM> [TypeQualifier(dec)]
+    (
+//      ("(" AsmLine() ")" )
+//    |
+//      ("{" AsmLine() "}" )
+//    |
+      ( AsmLine() )
+    )
+  )
+}
+
+void AsmLine() :
+{
+	Declaration dec = new Declaration();
+}
+{
+  (<IDENTIFIER> | <STRING_LITERAL> | <INTEGER_LITERAL> | <ATTRIBUTE> | BuiltInTypeSpecifier(dec) | "#" | "+" | "-" | "," | ":" | ("[" AsmLine() "]") | ( "(" AsmLine() ")" ) | ( "{" AsmLine() "}" ) )+
+}
+
+
+//void AsmStatement() : {}
+//{
+//	( <ASM> (
+//	    ( "{" SubAsm() "}" )
+//	    |
+//	    ( "(" SubAsm() ")" )
+//	    |
+//	    ( <IDENTIFIER> | "," | "[" | "]" | "(" | ")" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+ ("\r" | "\n)+
+//	  )
+//	)
+//}
+
+//void SubAsm() : {}
+//{
+//    ( "(" SubAsm() ")" ) |
+//    ( <IDENTIFIER> | "," | "[" | "]" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+
+//         ( [ "(" SubAsm() ")" ] [ SubAsm() ] ) 
+//    )
+//}
+
+
+void SelectionStatement() : {}
+{
+	(
+		<IF> "(" Expression() ")" Statement() 
+		[
+			LOOKAHEAD(2)
+			<ELSE> Statement() 
+		]
+		|
+		<SWITCH> "(" Expression() ")" Statement() 
+	)
+}
+
+void IterationStatement() : {}
+{
+	(
+		<WHILE> "(" Expression() ")" Statement() 
+		|
+		<DO> Statement() <WHILE> "(" Expression() ")" ";" 
+		|
+		<FOR> "(" [ Expression() ] ";" [ Expression() ] ";" [ Expression() ] ")" Statement() 
+	)
+}
+
+void JumpStatement() : {}
+{
+	( <GOTO> <IDENTIFIER> ";" | <CONTINUE> ";" | <BREAK> ";" | <RETURN> [ Expression() ] ";" )
+}
+
+Object Expression() : {
+   Object obj = null;
+}
+{
+	obj = AssignmentExpression() ( "," obj = AssignmentExpression() )*
+	{
+	    return obj;
+	}
+}
+
+Object AssignmentExpression() : {
+   Object obj = null;
+}
+{
+	( LOOKAHEAD(UnaryExpression() AssignmentOperator())
+	   UnaryExpression() AssignmentOperator() obj=AssignmentExpression() 
+	  |
+	  LOOKAHEAD(3)
+	  obj = ConditionalExpression()
+	)
+	{
+	    return obj;
+	}
+}
+
+void AssignmentOperator() : {}
+{
+	( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|=" )
+}
+
+Object ConditionalExpression() : {
+    Object obj = null;
+}
+{
+	obj = LogicalORExpression() [ "?" Expression() ":" ConditionalExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object ConstantExpression() : {
+    Object obj = null;
+}
+{
+	obj = ConditionalExpression()
+	{
+		return obj;
+    }
+}
+
+Object LogicalORExpression() : {
+   Object obj = null;
+}
+{
+	obj = LogicalANDExpression() [ "||" LogicalORExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object LogicalANDExpression() : {
+    Object obj = null;
+}
+{
+	obj = InclusiveORExpression() [ "&&" LogicalANDExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object InclusiveORExpression() : {
+    Object obj = null;
+}
+{
+	obj = ExclusiveORExpression() [ "|" InclusiveORExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object ExclusiveORExpression() : {
+    Object obj = null;
+}
+{
+	obj = ANDExpression() [ "^" ExclusiveORExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object ANDExpression() : {
+    Object obj = null;
+}
+{
+	obj = EqualityExpression() [ "&" ANDExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object EqualityExpression() : {
+    Object obj = null;
+}
+{
+	obj = RelationalExpression() [ ( "==" | "!=" ) EqualityExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object RelationalExpression() : {
+    Object obj = null;
+}
+{
+	obj = ShiftExpression() [ ( "<" | ">" | "<=" | ">=" ) RelationalExpression() { obj=null; } ]
+	{
+		return obj;
+    }
+}
+
+Object ShiftExpression() : {
+   Object obj1 = null, obj2 = null;
+}
+{
+	obj1 = AdditiveExpression()
+	[
+	   "<<" obj2 = AdditiveExpression()
+	   { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) << ((Long) obj2); } }
+	 | ">>" obj2 = AdditiveExpression()
+	   { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) >> ((Long) obj2); } }
+	]
+	{
+		return obj1;
+    }
+}
+
+Object AdditiveExpression() : {
+    Object obj1 = null, obj2 = null;
+}
+{
+	obj1 = MultiplicativeExpression() [
+	  "+" obj2 = AdditiveExpression()
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) + ((Long) obj2); } }
+	  | "-" obj2 = AdditiveExpression()
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) - ((Long) obj2); } }
+	]
+	{
+		return obj1;
+    }
+}
+
+Object MultiplicativeExpression() : {
+    Object obj1 = null, obj2 = null;
+}
+{
+	obj1 = CastExpression() [ 
+	  "*" obj2 = ConstantExpression()
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) * ((Long) obj2); } }
+	  | "/" obj2 = ConstantExpression()
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) / ((Long) obj2); } }
+	  | "%" obj2 = ConstantExpression()
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) % ((Long) obj2); } }	
+    ]
+	{
+		return obj1;
+    }
+}
+
+Object CastExpression() : {
+    Object obj = null;
+}
+{
+	(
+		LOOKAHEAD("(" TypeName() ")" CastExpression() )
+		"(" TypeName() ")" CastExpression() 
+		|
+		obj = UnaryExpression() 
+	)
+	{
+		return obj;
+    }
+}
+
+Object UnaryExpression() : {
+     DataType dt = null;
+     Object obj = null;
+}
+{
+	(
+		LOOKAHEAD(3)
+		obj = PostfixExpression() 
+		|
+		"++" UnaryExpression() 
+		|
+		"--" UnaryExpression() 
+		|
+		UnaryOperator() CastExpression() 
+		|
+		<SIZEOF> 
+		(
+			LOOKAHEAD(UnaryExpression() )
+			UnaryExpression() 
+			|
+			"(" dt = TypeName() ")"
+			{
+			    if (dt != null) {
+			        obj = new Integer(dt.getLength());
+			    }
+			}
+		)
+	)
+	{
+		return obj;
+    }
+}
+
+void UnaryOperator() : {}
+{
+	( "&" | "*" | "+" | "-" | "~" | "!" )
+}
+
+Object PostfixExpression() : {
+     Object obj = null;
+}
+{
+	obj = PrimaryExpression() 
+	(
+		"[" Expression() "]" 
+		|
+		"(" 
+		[
+			LOOKAHEAD(ArgumentExpressionList() )
+			ArgumentExpressionList() 
+		]
+		")" 
+		|
+		"." <IDENTIFIER> 
+		|
+		"->" <IDENTIFIER> 
+		|
+		"++" 
+		|
+		"--" 
+	)*
+	{
+		return obj;
+    }
+}
+
+Object PrimaryExpression() : {
+    Object obj = null;
+}
+{
+	( <IDENTIFIER> |
+	  obj = Constant() |
+	  "(" obj = Expression() ")" )
+	{
+		return obj;
+    }
+}
+
+void ArgumentExpressionList() : {}
+{
+	AssignmentExpression() ( "," AssignmentExpression() )*
+}
+
+Object Constant() : {
+    Token t;
+	Object obj= null;
+}
+{
+    (
+		t = <INTEGER_LITERAL>
+		{
+		    String sval = t.image;
+            if (sval.endsWith("ull") || sval.endsWith("ULL")) {
+                sval = sval.substring(0,sval.length()-3);
+            }
+            else if (sval.endsWith("ll") || sval.endsWith("LL")) {
+                sval = sval.substring(0,sval.length()-2);
+            }
+            else if (sval.endsWith("ul") || sval.endsWith("UL")) {
+                sval = sval.substring(0,sval.length()-2);
+            }
+            else if (sval.endsWith("l") || sval.endsWith("L")) {
+                sval = sval.substring(0,sval.length()-1);
+            }
+            else if (sval.endsWith("u") || sval.endsWith("U")) {
+                sval = sval.substring(0,sval.length()-1);
+            }
+            if (sval.startsWith("0x") || sval.startsWith("0X")) {
+            	BigInteger bigConst = new BigInteger(sval.substring(2), 16);       	
+                obj = new Long(bigConst.longValue());
+            }
+            else {
+            	BigInteger bigConst = new BigInteger(sval);       	
+                obj = new Long(bigConst.longValue());
+            }
+		}
+		|
+		t = <FLOATING_POINT_LITERAL>
+		{
+			obj = new Double(t.image);
+		}
+		|
+		t = <CHARACTER_LITERAL>
+		{
+            if (t.image.length() == 1) {
+              obj = new Character(t.image.charAt(0));
+            } else if (t.image.length() == 4) {
+              long cval = ((long)t.image.charAt(0) << 24) + ((long)t.image.charAt(1) << 16) + ((long)t.image.charAt(2) << 8) + ((long) t.image.charAt(3));
+              obj = new Long(cval);
+            }
+	    }
+		|
+		t = <STRING_LITERAL>
+		{
+		    obj = t.image;
+		}
+	)
+	{
+		return obj;
+    }
+}

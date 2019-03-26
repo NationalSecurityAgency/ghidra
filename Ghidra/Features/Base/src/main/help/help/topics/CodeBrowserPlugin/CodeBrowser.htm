@@ -1,0 +1,683 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Code Browser</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Code_Browser"></A>Listing View</H1>
+
+    <P>The Listing View is the main windows for displaying and working with a program's instruction
+    and data.</P>
+
+    <P align="center"><IMG border="0" src="images/CodeBrowser.png" alt=""></P>
+
+    <P align="center">Listing View</P>
+
+    <H2>Main Display</H2>
+
+    <BLOCKQUOTE>
+      <P>In the Code Browser tool displayed above, the Listing is shown to the right of the <A
+      href="help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A>. The Listing is
+      currently showing a snippet of code for "WinHelloCPP.exe". Code is made up of various
+      elements such as addresses, bytes, mnemonics, and operands. The Listing uses <I>fields</I> to
+      display these elements. The overall layout of the Listing can be changed by adjusting the
+      size and position of the fields using the <A href="Browser_Field_Formatter.htm">Browser Field
+      Formatter</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="View"></A>The View</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing can either display an entire program or a subset of a program. The <I>view</I>
+      determines the set of addresses that are displayable in the Listing. By default, the view
+      contains the entire program, but other Ghidra components can restrict the view to some subset
+      of the program. For example, the <A href=
+      "help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A> can be used to restrict the
+      view to a module or fragment. If the view is larger than the screen size, a vertical scroll
+      bar will appear that allows the display to be scrolled anywhere within the view.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Location"></A>Cursor</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing maintains a cursor location. Even though the Listing never actually changes a
+      program, it plays an important role for plugins that do. Many Ghidra plugins operate at a
+      specific address or even on a specific field on an instruction at an address. These plugins
+      use the Listing's cursor position to determine the appropriate "program location".</P>
+
+      <P>The cursor can be moved by using any of the "arrow" keys or by clicking the mouse over any
+      appropriate location.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Selection"></A>Selection</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing also maintains a selection (shown using a green shaded area). Some plugins
+      operate on a particular address. Other plugins can operate over a range of addresses. For
+      these plugins, the selection is used to determine the range of address on which to
+      operate.</P>
+
+      <P>A selection can be set by either dragging the mouse while holding down the left mouse
+      button or by pressing the &lt;shift&gt; key while moving the cursor with the "arrow"
+      keys.</P>
+
+      <P>Pressing the &lt;Ctrl&gt; key down while clicking the mouse will either add to the
+      selection if that line is not already in the selection or it will remove that line from the
+      selection.</P>
+
+      <P>Clicking the mouse anywhere (without dragging) will cause the selection to go away.</P>
+    </BLOCKQUOTE>
+
+    <H2>Highlight</H2>
+
+    <BLOCKQUOTE>
+      <P>Since the selection is transient (it goes away easily), the Listing also has the concept
+      of a highlight. The highlight is similar to the selection, but it stays around until it is
+      explicitly cleared. To create a highlight, first create a selection and then use the <A href=
+      "help/topics/SetHighlightPlugin/Highlighting.htm">Highlight</A> menu to convert the selection
+      to a highlight. Later the highlight can be converted back into a selection using the same
+      menu. At that point an action can be applied to the selection.</P>
+
+      <P><IMG border="0" src="../../shared/note.png" alt="">Highlights are not saved across program
+      sessions. To achieve a lasting color effect, you can <A href=
+      "help/topics/CodeBrowserPlugin/ListingBackground.html">color the Listing background</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2>Background Color</H2>
+
+    <BLOCKQUOTE>
+      See <A href="help/topics/CodeBrowserPlugin/ListingBackground.html">Listing Background
+      Colors</A>
+    </BLOCKQUOTE>
+
+    <H2><A name="Navigation"></A>Navigation</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing provides built-in navigation functionality for addresses and labels.
+      Double-click on any address, label or reference markup within the Listing and it will attempt
+      to reposition to that location if it exists in the program. If the address exists in the
+      program but not in the current view, the view is expanded to include the address. If the
+      location refers to an external location and it is associated with another program, that
+      program may be opened and positioned within the CodeBrowser. See the tool <A href=
+      "help/topics/Tool/ToolOptions_Dialog.htm">Edit Tool Options</A> dialog for control over
+      certain Navigation behaviors.</P>
+
+      <P>In the XRef field, sometimes there are too many addresses to display so the the field will
+      display "[more]" to indicate that one or more cross-reference addresses are not shown.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG border="0" src="../../shared/tip.png" alt=""> Double-clicking on the "<FONT color=
+        "green"><TT>[more]</TT></FONT>" text will cause a <A href=
+        "help/topics/LocationReferencesPlugin/Location_References.html#LocationReferencesPlugin">Location
+        References Dialog</A> to appear. Also, double-clicking on the XREF header text (<FONT
+        color="green"><TT>XREF[n]:</TT></FONT>) will too show this dialog.</P>
+      </BLOCKQUOTE>
+
+      <P align="left">This dialog lists all the Xref addresses, any labels that are at that address
+      and a preview of the instruction at that address. Clicking on any row in the table will cause
+      the browser to navigate to that address. Double-clicking will navigate and dismiss the
+      dialog.</P>
+    </BLOCKQUOTE>
+
+    <H2>Keyboard Controls</H2>
+
+    <BLOCKQUOTE>
+      <P>The following key mappings are used by the Listing:</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="1" width="64%">
+        <TBODY>
+          <TR>
+            <TD width="21%" valign="top">&lt;Home&gt;</TD>
+
+            <TD width="79%">Move the cursor to the beginning of the line.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;End&gt;</TD>
+
+            <TD width="79%">Move the cursor to the end of the line.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Ctrl&gt;&lt;Home&gt;</TD>
+
+            <TD width="79%">Move the cursor and the display to the top of the program.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Ctrl&gt;&lt;End&gt;</TD>
+
+            <TD width="79%">Move the cursor and the display to the bottom of the program.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Page Up&gt;</TD>
+
+            <TD width="79%">Move the display to the previous page.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Page Down&gt;</TD>
+
+            <TD width="79%">Move the display to the next page.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Up Arrow&gt;</TD>
+
+            <TD width="79%">Move the cursor up one line, scroll the display if necessary.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Down Arrow&gt;</TD>
+
+            <TD width="79%">Move the cursor down one line, scroll the display if necessary.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Left Arrow&gt;</TD>
+
+            <TD width="79%">Move the cursor to the left one position. If at the beginning of a
+            line, move the cursor to the last position of the previous line.</TD>
+          </TR>
+
+          <TR>
+            <TD width="21%" valign="top">&lt;Right Arrow&gt;</TD>
+
+            <TD width="79%">Move the cursor to the right one position. If at the end of a line,
+            move the cursor to first position of the next line.</TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <H2><A name="CBNavigationMarkers"></A> Markers</H2>
+
+    <BLOCKQUOTE>
+      <P align="left">Markers are used to indicate special locations within a program. These
+      location can either be specified by the user (Bookmarks) or by various Ghidra plugins
+      (Search, Analysis, Changes, etc). There are two types of markers: Margin Markers and
+      Navigation Markers.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/CodeBrowserWithMarkers.png" alt=""></P>
+
+    <P align="center">Markers</P>
+
+    <BLOCKQUOTE>
+      <H3><A name="CBMarkerMargin"></A>Margin Marker</H3>
+
+      <P align="left">Margin Markers appear on the left side of the Listing and are used to
+      indicate locations within the currently displayed code. There are two types of Margin Markers
+      - <I>Point Markers</I> and <I>Area Markers</I>. <U><B>Point Markers</B></U> are used to
+      indicate individual addresses (Ex: bookmarks, search results, breakpoints, etc) and are
+      displayed using icons. <U><B>Area Markers</B></U> are used to indicate a range of addresses
+      (Ex: areas in the program that have been changed) and are displayed using a colored vertical
+      line.</P>
+
+      <H3><A name="CBNavigationMargin"></A>Navigation Marker</H3>
+
+      <P align="left">Navigation Markers appear on the right side of the listing and are used to
+      indicate locations within the overall view. These markers provide an overview of all the
+      markers and an easy way to navigate to them. Navigation Markers are displayed as colored bars
+      where each color represents a different type of marker. To see the color assignments bring up
+      the <A href="#MarkerPopupMenu">Marker Popup Menu</A> as described below.</P>
+
+      <P align="left">To navigate the browser to the actual location of a marker, left-click on the
+      marker. The browser will be repositioned to display the location represented by that
+      marker.</P>
+
+      <P>The Navigation Marker area is divided into two vertical areas. The left area is used to
+      display Point Markers while the right area displays Area Markers. This prevents the Point
+      markers from being hidden by the Area markers.</P>
+
+      <P align="left"><A name="MarkerPopupMenu"></A>You can control what is displayed in the
+      Navigation Marker area by right-mouse clicking in the margin; a popup menu is displayed, as
+      shown in the image below. Turn markers on and off by clicking on the appropriate menu
+      item.</P>
+
+      <P align="center"><IMG border="0" src="images/MarkerPopup.png" alt=""></P>
+
+      <P align="center">Marker Popup Menu</P>
+
+      <P align="left"><A name="Markers"></A> The markers shown in the Marker Popup Menu are
+      described below:</P>
+
+      <TABLE border="1" width="100%">
+        <TBODY>
+          <TR>
+            <TD width="23%">Analysis Bookmarks</TD>
+
+            <TD width="77%"><A href="help/topics/BookmarkPlugin/Bookmarks.htm">Bookmarks</A>
+            inserted by the auto analysis process. Indicates information about where functions and
+            <A href="help/topics/Glossary/glossary.htm#AddressTable">address tables</A> were
+            created.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Changes: Conflicting</TD>
+
+            <TD width="77%">Areas where you and others have made conflicting changes.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Changes: Latest Version</TD>
+
+            <TD width="77%">Areas where changes exist in the latest version made by another
+            user.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Changes: Not Checked-In</TD>
+
+            <TD width="77%">Areas where you have made changes since your last check-out.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Changes: Unsaved</TD>
+
+            <TD width="77%">Areas where you have made changes to the Program.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Error Bookmarks</TD>
+
+            <TD width="77%">Areas where the disassembler created <I>Error</I> <A href=
+            "help/topics/BookmarkPlugin/Bookmarks.htm">bookmarks</A> due to encountering bad
+            instructions.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Highlight</TD>
+
+            <TD width="77%">Areas that are highlighted (non-transient selections).</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Info Bookmarks</TD>
+
+            <TD width="77%">Bookmarks inserts by a plugin to indicate a location of interest.</TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Note Bookmarks</TD>
+
+            <TD width="77%">Bookmarks inserted by the user.</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">Register Values<BR>
+            </TD>
+
+            <TD valign="top">Areas where the selected register has defined values. Appears only
+            when the Register Manager Window is visible.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD width="23%">Selection</TD>
+
+            <TD width="77%">Areas that are selected (transient).</TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <DIV style="margin-left: 2em">
+        <P><IMG border="0" src="../../shared/note.png" alt=""> The marker popup menu is updated
+        appropriately when some plugin adds/removes new marker types.</P>
+
+        <P><A name="Navigation_Markers"></A>Another way to control the display of Navigation
+        Markers is to set the options in Navigation Markers panel of the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm">Edit Options</A> dialog, as shown below. Select
+        the <I>Navigation Markers</I> node in the Options tree. Click the appropriate checkbox to
+        turn the marker on or off.</P>
+
+        <P align="center"><IMG alt="" border="0" src="images/NavigationMarkerOptions.png"></P>
+
+        <P align="center">Navigation Marker Options</P>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H2><A name="CBFlowArrows"></A>Flow Arrows</H2>
+
+    <BLOCKQUOTE>
+      <P align="left">The flow arrows graphically illustrate the flow of execution within a
+      function. They appear as arrows on the left side of the Listing display indicating source and
+      destinations for jumps. Conditional jumps are indicated by dashed lines; unconditional jumps
+      are indicated by solid lines. Flow lines are bolded when the cursor is positioned at the
+      source of the jump.</P>
+
+      <P align="center"><IMG border="0" src="images/CodeBrowserWithFlowArrows.png" alt=""></P>
+
+      <P align="center">Flow Arrows</P>
+
+      <H3>Selecting Flow Arrows</H3>
+
+      <BLOCKQUOTE>
+        <P>By default, flow arrows are only shown when either the start or end address is visible.
+        Thus, as you scroll the Listing, you will see flow arrows appear and disappear, as the
+        addresses the arrows are based upon appear and disappear in the listing.</P>
+
+        <P><IMG border="0" src="../../shared/tip.png" alt="">You can select an arrow keep it from
+        disappearing as you scroll the Listing. To select an arrow, simply click it with the mouse.
+        Selected arrows appear green in color.</P>
+      </BLOCKQUOTE>
+
+      <H3>Disabling Flow Arrows</H3>
+
+      <BLOCKQUOTE>
+        <P>The panel displaying the flow arrows can be resized by dragging the border between it
+        and the main code browser panel. To hide the flow arrows, simply drag the border until it
+        is no longer visible. The arrows automatically disable themselves when they are no longer
+        visible.</P>
+      </BLOCKQUOTE>
+
+      <H3>Navigating Flow Arrows</H3>
+
+      <BLOCKQUOTE>
+        <P>You can double-click a flow arrow to navigate to its end point. Also, if the cursor is
+        at the end point address, then you can double-click to navigate to the start point of the
+        arrow. Each double-click will go to the opposite end of the arrow, whenever the Listing
+        cursor is at an endpoint.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="MouseHover"></A> <A name="Toggle_Mouse_Hover_Popups"></A> Mouse Hover</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing includes the capability of displaying popup windows when the user hovers the
+      mouse over a particular field. This occurs whenever a plugin has additional information that
+      it wants to display about that field. The popup window disappears when the user moves the
+      mouse off of the window or field. Some example popup windows that can be displayed:
+      <I>Reference Popups</I>, <I>Truncated Text Popups</I>, and <I>Data Type Popups</I>.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Hover"></A> <A name="ReferenceHover"></A> Reference Popups</H3>
+
+      <BLOCKQUOTE>
+        <P>Reference popups are displayed whenever the mouse is hovered over a memory reference. A
+        Reference popup containing a Listing window is displayed showing the code referred to by
+        the reference. The Listing popup uses the exact same formatting and layout as the primary
+        Listing except for the background color, which is displayed in a unique color to
+        distinguish the popup. You can click and scroll within the Listing popup, however, you
+        cannot follow references within the reference popup. The reference popup can be quite
+        useful for quickly inspecting a series of calls without having to navigate within the
+        Listing or to quickly examine data located in another part of the program's memory. The
+        figure below shows an example of a reference popup.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/CodeBrowserReferencePopup.png" alt=""></P>
+
+    <P align="center">Reference Popup</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>You can change the size of the popup can be changed by editing options. Choose
+        <B>Edit</B><IMG alt="" border="0" src="../../shared/arrow.gif"> <B>Tool Options...</B>,
+        click on the <I>Listing Popups</I> node in the Options tree. Select the <I>Reference Code
+        Viewer</I> node to display the height and width values of the popup. Edit the values and
+        click on the <B>OK</B> or <B>Apply</B> button.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="TruncatedTextPopup"></A>Truncated Text Popups</H3>
+
+      <BLOCKQUOTE>
+        <P>Truncated text popups are displayed whenever the mouse is hovered over a field where the
+        size of the text exceeds the field size and is therefore truncated. A tooltip-like window
+        is displayed showing the entire contents of the truncated field (provided the contents fits
+        on the screen). This is particularly useful for long strings and data within a program that
+        cannot be fully displayed. The figure below shows an example of a truncated text popup.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- Data Type Hover Section-->
+
+    <BLOCKQUOTE>
+      <H3>Data Type Popups</H3>
+
+      <BLOCKQUOTE>
+        <P>The data type popup is shown whenever the user hovers over a the mnemonic field where a
+        data type has been set. The figure below shows an example of a data type popup.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/DataTypeHover.png" alt=""></P>
+
+    <P align="center">Data Type Popup</P>
+    <!-- Address Hover Section-->
+
+    <BLOCKQUOTE>
+      <H3>Address Popup</H3>
+
+      <BLOCKQUOTE>
+        <P>The address popup is shown whenever the user hovers over an address. It shows the
+        relationship between the hovered address and the base of memory and the containing memory
+        block. For addresses in functions, the function offset is also shown; for addresses within
+        a complex data (structure, array, etc.), the offset from the base of that data is
+        shown.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- Function Name Hover Section-->
+
+    <BLOCKQUOTE>
+      <H3>Function Name Popup</H3>
+
+      <BLOCKQUOTE>
+        <P>Displays the hovered symbol's parent namespace for symbols that are inside of
+        functions.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- Scalar Hover Section-->
+
+    <BLOCKQUOTE>
+      <H3>Scalar Popup</H3>
+
+      <BLOCKQUOTE>
+        <P>Displays the hovered scalars as 1-, 2-, 4-, and 8-byte values, each in decimal,
+        hexadecimal, and as ASCII character sequences.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3>Disabling Mouse Hover</H3>
+
+      <BLOCKQUOTE>
+        <P>Because the mouse hover popup windows can sometimes get in the way, a mechanism for
+        quickly disabling them is included. Simply click the icon illustrated above to toggle mouse
+        hover mode. This icon appears in the top right corner of the Listing's toolbar whenever a
+        mouse hover plugin is loaded. When clicked, the icon will change to indicate the new
+        state.</P>
+        <!-- Caution about the button and options -->
+
+        <P><IMG border="0" src="../../shared/note.png" alt=""> Clicking the icon has no effect when
+        all of the hover services are disable in Ghidra's options. A reminder message will be shown
+        in the event that you attempt to enable popups from this icon <B>and</B> all hover services
+        are disabled.</P>
+
+        <P align="center"><IMG alt="" border="0" src="images/MouseHoverButton.png"></P>
+
+        <BLOCKQUOTE>
+          <H4><IMG src="images/hoverOn.gif" alt=""> Mouse Hover Enabled</H4>
+
+          <H4><IMG src="images/hoverOff.gif" alt=""> Mouse Hover Disabled</H4>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Opening/Closing Structures and Arrays</H2>
+
+    <BLOCKQUOTE>
+      <P>Structures and arrays consist of smaller component data types. By default, the contents of
+      structures and arrays are not displayed. There is a Open/Close control (+/-) that can be used
+      to display or hide the contents of structures and arrays.</P>
+
+      <P>To see the contents of a Structure or Array, select on the + icon.</P>
+
+      <P><IMG alt="" border="0" src="images/ClosedStructure.png"></P>
+
+      <P>To hide the contents of a Structure or Array, select on the - icon.</P>
+
+      <P><IMG alt="" border="0" src="images/OpenStructure.png"></P>
+
+      <P>Structures within Structures, Unions and Arrays can be opened in the same manner.</P>
+
+      <H3><A name="ExpandCollapseActions"></A>Actions for Expanding/Collapsing Data</H3>
+
+      <BLOCKQUOTE>
+        <P>You may also expand and collapse data structures from the right-click popup menu via the
+        <B>Expand All Data</B>, <B>Collapse All Data</B>, <B>Expand All Data In Selection</B>,
+        <B>Collapse All Data in Selection</B>, and <B>Toggle Expand/Collapse Data</B> actions
+        respectively. These actions are only available when the popup menu is activated under
+        certain conditions. The actions are described in detail below:</P>
+
+        <UL>
+          <LI><B>Expand All Data</B> - This action will expand a data element and all its children
+          recursively starting with the data at the cursor location. This action will only appear
+          when the cursor is on a data that is expandable.</LI>
+
+          <LI><B>Collapse All Data</B> - This action will recursively collapse the outer most
+          expandable data element containing the data at the cursor location. This action will only
+          appear when the cursor is on an expandable data element or any of its child elements at
+          any level.</LI>
+
+          <LI><B>Expand All Data In Selection</B> - This action will search the current selection
+          and find all expandable data elements and then recursively expand each such data element
+          and all its children. This action is available whenever there is a selection.</LI>
+
+          <LI><B>Collapse All Data In Selection</B> - This action will search the current selection
+          and find all expandable data elements and then recursively collapse each such data
+          element and all its children. This action is available whenever there is a
+          selection.</LI>
+
+          <LI><B>Toggle Expand/Collapse Data</B> - This action will toggle the expanded/collapsed
+          state of an expandable data element. If it is expanded, it will collapse it and if it is
+          collapsed, it will expand it. Additionally, if the cursor is on a non-expandable data
+          element that is contained in a parent expandable data element, then the parent element
+          will be collapsed. This action is available whenever the cursor is on an expandable data
+          element at anly level or when the cursor is on a data element inside another data
+          element.</LI>
+        </UL>
+
+        <P><IMG border="0" src="../../shared/note.png" alt="">The <B>Expand All Data</B> and
+        <B>Collapse All Data</B> actions behave differently. The <B>Expand All Data</B> recursively
+        opens the data starting at the location of the popup menu. The <B>Collapse All Data</B>
+        action, on the other hand, always works on the <B>outermost</B> data structure, regardless
+        of where in the containing structure the popup menu was activated.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="cursorTextHighlight"></A> Cursor Text Highlight</H2>
+
+    <BLOCKQUOTE>
+      <P>The Listing is comprised of many fields which are used to display the individual elements
+      of a program (address, bytes, operand, etc). Clicking the middle mouse button on a field
+      places the cursor in that field and causes the text under the cursor to become highlighted
+      along with all other occurrences of that text. For example, in the figure below, the cursor
+      is on the "PUSH" mnemonic at address 0x01004072. Notice that every "PUSH" on the screen (not
+      just the mnemonics) is also highlighted. Specifically, the "PUSH" in the comment is
+      highlighted. The Cursor Text Highlight makes no distinction as to what type of information is
+      being highlighted. To determine matches that should be highlighted, a case-sensitive
+      whole-word string compare is used.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/Highlight_Example.png" alt=""></P>
+
+    <P align="center">Cursor Text Highlight</P>
+
+    <DIV align="left">
+      <BLOCKQUOTE>
+        <P>This feature has additional functionality when used on registers. In this case, the
+        highlight can be restricted to show the "Scope" of a register. The "Scope"<A name=
+        "Scope"></A> of a register starts where the register is assigned a value and ends at the
+        last use of the register before it is written with another value (when a register is both
+        read and written, then it will be shown as a read).</P>
+
+        <P>When the middle mouse is clicked on a register, the scope of the register is computed.
+        The register is highlighted from the point it is initially assigned a value (written) to
+        the point it is last uses that value. With "Scoping", three different colors are used. The
+        read highlight color is used at locations where the register value is read (light green in
+        the image below). A slightly darker color is used at the location where the register is
+        written (dark yellow in the image below). All other matching registers outside of the
+        current scope will be highlighted with the default highlight color (yellow in the image
+        below).</P>
+
+        <P>This feature can be turned off by adjusting highlight settings (see below).</P>
+
+        <DIV align="center">
+          <IMG border="0" src="images/CodeBrowser_OperandHighlight.png" alt="">
+        </DIV>
+
+        <DIV align="center">
+          <P align="center">Scoped Register Highlight</P>
+        </DIV>
+      </BLOCKQUOTE>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H3>Default Settings</H3>
+
+      <BLOCKQUOTE>
+        <P>By default, the cursor text highlight is:</P>
+
+        <UL>
+          <LI>Enabled</LI>
+
+          <LI>Painted in yellow</LI>
+
+          <LI>Only activated by using the middle mouse button</LI>
+
+          <LI>Scoping turned on</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3>Configuring</H3>
+
+      <BLOCKQUOTE>
+        <P>Use the <A href="CodeBrowserOptions.htm">Tool Options</A> dialog to turn off the <A
+        href="CodeBrowserOptions.htm#Cursor_Text_Highlight">Cursor Text Highlighting</A>, as well
+        as to configure the color and activating mouse button.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Configuring</H2>
+
+    <BLOCKQUOTE>
+      <P>There are many options for changing the appearance of the Listing. To change the
+      arrangement of fields, use the <A href="Browser_Field_Formatter.htm">Code Browser
+      Formatter</A>. All other options are tool options. See <A href="CodeBrowserOptions.htm">Tool
+      Options</A> for a complete description of the options and how to change them.</P>
+    </BLOCKQUOTE>
+
+    <H2>Errors in Fields</H2>
+
+    <BLOCKQUOTE>
+      <P>If an error ever occurs while the code browser is attempting to display information in a
+      field, it will show an "*Error*" field instead. Double-click on the error field to display
+      the <B>Log Details dialog</B>.</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Code Browser Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Browser_Field_Formatter.htm">Code Browser Formatter</A></LI>
+
+      <LI><A href="CodeBrowserOptions.htm">Tool Options</A></LI>
+
+      <LI><A href="help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A></LI>
+
+      <LI><A href="help/topics/Selection/Selecting.htm">Selection &amp; Highlighting</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

@@ -1,0 +1,101 @@
+LDMR0:		is lsmul=1 {}
+LDMR0:		is epsilon { loadReg(r0); }
+
+LDMR1:		is lsmul=2 {}
+LDMR1:		is LDMR0 { build LDMR0; loadReg(r1); }
+
+LDMR2:		is lsmul=3 {}
+LDMR2:		is LDMR1 { build LDMR1; loadReg(r2); }
+
+LDMR3:		is lsmul=4 {}
+LDMR3:		is LDMR2 { build LDMR2; loadReg(r3); }
+
+LDMR4:		is lsmul=5 {}
+LDMR4:		is LDMR3 { build LDMR3; loadReg(r4); }
+
+LDMR5:		is lsmul=6 {}
+LDMR5:		is LDMR4 { build LDMR4; loadReg(r5); }
+
+LDMR6:		is lsmul=7 {}
+LDMR6:		is LDMR5 { build LDMR5; loadReg(r6); }
+
+LDMR7:		is lsmul=8 {}
+LDMR7:		is LDMR6 { build LDMR6; loadReg(r7); }
+
+LDMR8:		is lsmul=9 {}
+LDMR8:		is LDMR7 { build LDMR7; loadReg(r8); }
+
+LDMR9:		is lsmul=10 {}
+LDMR9:		is LDMR8 { build LDMR8; loadReg(r9); }
+
+LDMR10:		is lsmul=11 {}
+LDMR10:		is LDMR9 { build LDMR9; loadReg(r10); }
+
+LDMR11:		is lsmul=12 {}
+LDMR11:		is LDMR10 { build LDMR10; loadReg(r11); }
+
+LDMR12:		is lsmul=13 {}
+LDMR12:		is LDMR11 { build LDMR11; loadReg(r12); }
+
+LDMR13:		is lsmul=14 {}
+LDMR13:		is LDMR12 { build LDMR12; loadReg(r13); }
+
+LDMR14:		is lsmul=15 {}
+LDMR14:		is LDMR13 { build LDMR13; loadReg(r14); }
+
+LDMR15:		is lsmul=16 {}
+LDMR15:		is LDMR14 { build LDMR14; loadReg(r15); }
+
+LDMR16:		is lsmul=17 {}
+LDMR16:		is LDMR15 { build LDMR15; loadReg(r16); }
+
+LDMR17:		is lsmul=18 {}
+LDMR17:		is LDMR16 { build LDMR16; loadReg(r17); }
+
+LDMR18:		is lsmul=19 {}
+LDMR18:		is LDMR17 { build LDMR17; loadReg(r18); }
+
+LDMR19:		is lsmul=20 {}
+LDMR19:		is LDMR18 { build LDMR18; loadReg(r19); }
+
+LDMR20:		is lsmul=21 {}
+LDMR20:		is LDMR19 { build LDMR19; loadReg(r20); }
+
+LDMR21:		is lsmul=22 {}
+LDMR21:		is LDMR20 { build LDMR20; loadReg(r21); }
+
+LDMR22:		is lsmul=23 {}
+LDMR22:		is LDMR21 { build LDMR21; loadReg(r22); }
+
+LDMR23:		is lsmul=24 {}
+LDMR23:		is LDMR22 { build LDMR22; loadReg(r23); }
+
+LDMR24:		is lsmul=25 {}
+LDMR24:		is LDMR23 { build LDMR23; loadReg(r24); }
+
+LDMR25:		is lsmul=26 {}
+LDMR25:		is LDMR24 { build LDMR24; loadReg(r25); }
+
+LDMR26:		is lsmul=27 {}
+LDMR26:		is LDMR25 { build LDMR25; loadReg(r26); }
+
+LDMR27:		is lsmul=28 {}
+LDMR27:		is LDMR26 { build LDMR26; loadReg(r27); }
+
+LDMR28:		is lsmul=29 {}
+LDMR28:		is LDMR27 { build LDMR27; loadReg(r28); }
+
+LDMR29:		is lsmul=30 {}
+LDMR29:		is LDMR28 { build LDMR28; loadReg(r29); }
+
+LDMR30:		is lsmul=31 {}
+LDMR30:		is LDMR29 { build LDMR29; loadReg(r30); }
+
+LDMR31:		is LDMR30 { build LDMR30; loadReg(r31); }
+
+:lmw	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=46 & D & BITS_21_25 & dPlusRaOrZeroAddress & LDMR31 [ lsmul = BITS_21_25; ]
+{	
+	tea = dPlusRaOrZeroAddress;
+	build LDMR31;
+}
+

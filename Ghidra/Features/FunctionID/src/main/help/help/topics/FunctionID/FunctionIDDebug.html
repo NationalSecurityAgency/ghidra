@@ -1,0 +1,235 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Function ID Debug Plug-in</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="prev" href="FunctionIDPlugin.html" title="Function ID Plug-in">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Function ID Debug Plug-in</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="FunctionIDPlugin.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> </td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="FunctionIDDebug"></a>Function ID Debug Plug-in</h1></div></div></div>
+<p>
+The Function ID Debug Plug-in allows users to inspect the individual records in a Function ID database.
+This functionality is generally only useful to users building their own databases.  Users can look up
+individual records based on name or hash, but currently the
+plug-in is not capable of modifying records.  The only exceptions are the <a class="xref" href="FunctionIDPlugin.html#specialmitigate" title="Specialized Mitigation">&#8220;Specialized Mitigation&#8221;</a>
+strategies, which can be modified using the <a class="xref" href="FunctionIDDebug.html#debugsearch" title="Debug Search Window">&#8220;Debug Search Window&#8221;</a>. 
+</p>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="enabledebug"></a>Enabling the Plug-in</h2></div></div></div>
+<p>
+The Debug Plug-in adds options to the <span class="bold"><strong>Function ID</strong></span> menu,
+under the Code Browser's main <span class="bold"><strong>Tools</strong></span> menu. These options are in
+addition to those introduced by the <a class="xref" href="FunctionIDPlugin.html" title="Function ID Plug-in"><i>Function ID Plug-in</i></a>, which uses the same menu.
+In order to access the Debug options, the plug-in must be enabled. To do this, from the Code Browser select
+  </p>
+<div class="informalexample"><span class="bold"><strong>File -&gt; Configure</strong></span></div>
+<p>
+Then click on <span class="emphasis"><em>Configure</em></span> link under the <span class="bold"><strong>Experimental</strong></span>
+section and check the box next to "FidDebugPlugin".
+</p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="debugfunctionality"></a>Plug-in Functionality</h2></div></div></div>
+<p>
+The Function ID Debug Plug-in introduces the following actions to the
+<span class="bold"><strong>Tools -&gt; Function ID</strong></span> menu.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472459600"></a>Create Read-only Database</h3></div></div></div>
+<p>
+Users can convert the read/write (.fidb) database into the a read-only (.fidbf) form. This is
+the more efficient final form used directly by the Function ID analyzer. The .fidbf form is
+uncompressed on disk and the analyzer can use it directly, where the .fidb form must be converted
+before use.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="debugsearch"></a>Debug Search Window</h3></div></div></div>
+<p>
+This action brings up a Search dialog for the currently active Function ID databases. The text entry
+fields correspond to the individual fields in a <span class="emphasis"><em>function record</em></span> that can
+be searched. If the variant <span class="bold"><strong>Debug Search Window (Current Function)</strong></span>
+is invoked, the same dialog is brought up, but the <span class="emphasis"><em>Full Hash</em></span> and the
+<span class="emphasis"><em>Specific Hash</em></span> fields are pre-populated with hashes corresponding to the
+function at the current address.
+</p>
+<p>
+A search is initiated for a specific search field by entering a value and then hitting
+the <span class="command"><strong>RETURN</strong></span> key, with the cursor and focus still in the desired field.
+</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/FIDSearch.png" align="middle" width="315" height="263"></td></tr></table></div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140323472451184"></a>Search Fields</h4></div></div></div>
+<p>
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Function ID</strong></span></span></dt>
+<dd><p>
+      This is the internal row ID for function records in the database.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Name</strong></span></span></dt>
+<dd><p>
+      This searches through function names. Searches here will match any record
+      whose name contains the search string.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Domain Path</strong></span></span></dt>
+<dd><p>
+      This searches through domain paths. A <span class="bold"><strong>domain path</strong></span>
+      is the file path, relative to the project root, of a program containing the
+      function described by a particular record. Searches here will match any
+      record whose domain path contains the search string.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>FH</strong></span></span></dt>
+<dd><p>
+      This searches for records matching the <span class="emphasis"><em>full hash</em></span>. The
+      text field expects a 64-bit value. The hash can be entered as a hexadecimal string
+      by prepending with "0x".
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>XH</strong></span></span></dt>
+<dd><p>
+      This searches for records matching the <span class="emphasis"><em>specific hash</em></span>. The
+      text field expects a 64-bit value. The hash can be entered as a hexadecimal string
+      by prepending with "0x".
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140323472437088"></a>Result Window</h4></div></div></div>
+<p>
+Invoking a search will bring up the <span class="emphasis"><em>Result Window</em></span>, presenting a row for
+each matching function record. Columns list properties of the function and correspond
+to the search fields described above. In addition to these, each record/row lists a few
+other columns:
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Library</strong></span></span></dt>
+<dd><p>
+      This is the library containing the function
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Code Unit Size</strong></span></span></dt>
+<dd><p>
+      This is the number of (scoring) instructions in the function's body.
+      See <a class="xref" href="FunctionID.html#scoring" title="Scoring and Disambiguation">&#8220;Scoring and Disambiguation&#8221;</a>.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Spec. + Size</strong></span></span></dt>
+<dd><p>
+      This is the number of distinct constant operands fed into
+      the specific hash.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Warn</strong></span></span></dt>
+<dd>
+<p>
+      This lists any special properties that have been toggled for the particular record.  The
+      column is presented as a string of single character codes, corresponding to each possible property.
+      Properties include the mitigation strategies described in <a class="xref" href="FunctionIDPlugin.html#specialmitigate" title="Specialized Mitigation">&#8220;Specialized Mitigation&#8221;</a>.
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">F - Auto Pass: The record automatically fails.</li>
+<li class="listitem">P - Auto Fail: The record automatically passes.</li>
+<li class="listitem">S - Force Specific: Specific hash must match for record to be considered.</li>
+<li class="listitem">R - Force Relation: A parent or child must match for record to be considered.</li>
+<li class="listitem">U - The function body was unterminated (analysis error).</li>
+</ul></div>
+<p>
+      </p>
+</dd>
+</dl></div></div>
+<p>
+</p>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140323472422400"></a>Edit Menu</h5></div></div></div>
+<p>
+The <span class="emphasis"><em>Result Window</em></span> supports a small number of actions under the
+<span class="bold"><strong>Edit</strong></span> menu that allow the user to change the
+mitigation strategies for a read/write database.  Strategies are described in
+<a class="xref" href="FunctionIDPlugin.html#specialmitigate" title="Specialized Mitigation">&#8220;Specialized Mitigation&#8221;</a>.  When a menu action is invoked, all records
+displayed in the current Result Window are affected.  Currently there is no way
+to select a subset of records to effect.  The actions all set or clear a specific
+strategy.
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Set/Clear auto-fail</strong></span></span></dt>
+<dd><p>
+      Toggle the <span class="emphasis"><em>Auto Fail</em></span> strategy.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Set/Clear auto-pass</strong></span></span></dt>
+<dd><p>
+      Toggle the <span class="emphasis"><em>Auto Pass</em></span> strategy.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Set/Clear force-specific</strong></span></span></dt>
+<dd><p>
+      Toggle the <span class="emphasis"><em>Force Specific</em></span> strategy.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Set/Clear force-relation</strong></span></span></dt>
+<dd><p>
+      Toggle the <span class="emphasis"><em>Force Relation</em></span> strategy.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Save changes</strong></span></span></dt>
+<dd><p>
+      Changes made using the <span class="bold"><strong>Edit</strong></span> menu are
+      not immediately saved back to the underlying database until this
+      action is invoked.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472406032"></a>Table Viewer</h3></div></div></div>
+<p>
+This invokes an extremely low-level view into the underlying tables that back a
+Function ID database.  It can be invoked on any attached database. A window is brought up
+that lists individual records in one table. A drop-down menu allows the user to switch
+between the different underlying tables.  Most of the columns contain row keys and don't
+present readable values. The only meaningful table is likely to be the
+<span class="emphasis"><em>Libraries Table</em></span> which will list each library making up the database.
+</p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="FunctionIDPlugin.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> </td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Function ID Plug-in </td>
+<td width="20%" align="center"></td>
+<td width="40%" align="right" valign="top"> </td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# Motorola's Coldfire processor
+
+@define COLDFIRE
+@define MC68040
+
+@include "68000.sinc"

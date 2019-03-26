@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization> 
+     <default_pointer_alignment value="2" />
+     <pointer_size value="2" />
+     <absolute_max_alignment value="0" /> 
+     <machine_alignment value="2" /> 
+     <default_alignment value="1" /> 
+     <char_size value="1" /> 
+     <wchar_size value="4" /> 
+     <short_size value="2" /> 
+     <integer_size value="2" /> 
+     <long_size value="4" /> 
+     <size_alignment_map> 
+          <entry size="1" alignment="1" /> 
+          <entry size="2" alignment="2" /> 
+          <entry size="4" alignment="4" /> 
+          <entry size="8" alignment="4" /> 
+     </size_alignment_map> 
+  </data_organization>
+  <global>
+    <range space="rom"/>
+    <range space="ram" first="0x24" last="0xffff"/>  <!-- Don't consider memory mapped registers global -->
+  </global>
+  <nohighptr>
+    <range space="ram" first="0x0" last="0x23"/>     <!-- Assume there is no aliasing into memory mapped registers -->
+  </nohighptr>
+  <stackpointer register="W15" space="ram" growth="positive"/>
+   <default_proto>
+    <prototype name="__fastcall" extrapop="-4" stackshift="-4">
+	<input>
+      <pentry minsize="1" maxsize="2">
+        <register name="W0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W1"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W3"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="W7"/>
+      </pentry>
+      <pentry maxsize="500" minsize="1" align="2">    
+         <addr space="stack" offset="0xfe0a"/>
+      </pentry>
+	</input>
+	<output>
+      <pentry maxsize="4" minsize="1">
+         <register name="W1W0"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+         <addr space="join" piece1="W1W0" piece2="W3W2"/>
+      </pentry>
+	</output>
+      <unaffected>
+        <register name="W8"/>
+        <register name="W9"/>
+        <register name="W10"/>
+        <register name="W11"/>
+        <register name="W12"/>
+        <register name="W13"/>
+		<register name="W14"/>
+		<register name="W15"/>
+      </unaffected> 
+      <killedbycall>
+         <register name="W0"/>
+      </killedbycall>
+    </prototype>
+  </default_proto>
+  <prototype name="__stdcall" extrapop="-4" stackshift="-4">
+	<input>
+      <pentry maxsize="500" minsize="1" align="2">    
+         <addr space="stack" offset="0xfe0a"/>
+      </pentry>
+	</input>
+	<output>
+      <pentry maxsize="4" minsize="1">
+         <register name="W1W0"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+         <addr space="join" piece1="W1W0" piece2="W3W2"/>
+      </pentry>
+	</output>
+      <unaffected>
+        <register name="W8"/>
+        <register name="W9"/>
+        <register name="W10"/>
+        <register name="W11"/>
+        <register name="W12"/>
+        <register name="W13"/>
+		<register name="W14"/>
+		<register name="W15"/>
+      </unaffected> 
+      <killedbycall>
+         <register name="W0"/>
+      </killedbycall>
+    </prototype>
+</compiler_spec>

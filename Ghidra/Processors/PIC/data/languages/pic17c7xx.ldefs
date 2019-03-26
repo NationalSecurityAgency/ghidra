@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-17"
+            endian="little"
+            size="16"
+            variant="PIC-17C7xx"
+            version="1.0"
+            slafile="pic17c7xx.sla"
+            processorspec="pic17c7xx.pspec"
+            manualindexfile="../manuals/PIC-17.idx"
+            id="PIC-17:LE:16:PIC-17C7xx">
+    <description>PIC-17C7xx</description>
+    <compiler name="default" spec="pic17c7xx.cspec" id="default"/>
+  </language>
+</language_definitions>

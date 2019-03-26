@@ -1,0 +1,133 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Navigating Program Files</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Navigate_File"></A>Navigating Programs</H1>
+
+    <P>Open programs are represented in Ghidra by tabs at the top of the Listing. You may click on
+    these tabs to change the active program. Also, as described below, there are various actions
+    that allow you to change the active program.</P>
+
+    <P align="center"><IMG border="1" src="images/ProgramTabs_No_Hidden.png" alt=""></P>
+
+    <P align="center"><I>Program Tabs</I></P>
+
+    <P><A name="hidden_tabs"></A> When there are more open programs than room to display their
+    respective tabs, then a button is displayed to access those programs. This button displays the
+    number of hidden programs.</P>
+
+    <P align="center"><IMG border="1" src="images/ProgramTabs_With_Hidden_More_Button.png" alt=
+    ""></P>
+
+    <P align="center"><I>Program Tabs 'More Button'</I></P>
+
+    <P><A name="more_tabs_button"></A> To access these hidden programs, click the button to display
+    a menu for selecting programs.</P>
+
+    <P align="center"><IMG border="1" src="images/ProgramTabs_With_Hidden_Popup_Window.png" alt=
+    ""></P>
+
+    <P align="center"><I>Program Tabs With Popup Window</I></P>
+
+    <P><A name="hidden_tab_popup_window"></A> The popup window displayed allows you to select a tab
+    by clicking a program name, or by using the <B>up</B> and <B>down arrow</B> keys to select a
+    program name and then pressing the <B>Enter</B> key to choose the selected program. Also,
+    typing text data will filter the displayed program list. You can close the popup window without
+    making a selection by pressing the <B>Escape</B> key or by clicking a component outside of the
+    window.</P>
+
+    <P>Those programs listed in bold are those that are hidden.</P>
+
+    <H2>Navigation Actions</H2>
+    <!-- Next and Previous -->
+
+    <BLOCKQUOTE>
+      <H3><A name="Go_To_Next_And_Previous_Program"></A>Go To Next Program and Go To Previous
+      Program Actions</H3>
+
+      <BLOCKQUOTE>
+        <P>The next and previous actions are only available via keybindings, which by default are
+        <B>Control-F8</B> and <B>Control-F9</B> for previous and next, respectively. You may change
+        these bindings from the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings Options</A>.</P>
+
+        <P>The next and previous actions allow you to move between open tabs. For example, when the
+        <B>Go To Next Program</B> action is executed, the tab to the right of the current tab is
+        highlighted.</P>
+
+        <P align="center"><IMG border="1" src="images/ProgramTabs_With_Highlighted_Tab.png"
+        alt=""></P>
+
+        <P align="center"><I>Next Tab Highlighted</I></P>
+
+        <P>After a brief pause, the highlighted tab will become the active program. Quick, repeated
+        executions of the action will continue to move the highlighted tab to the right.</P>
+
+        <P>The <B>Go To Previous Program</B> action works in the same way as the <B>Go To Next
+        Program</B> action, except that it moves the highlight to the left instead of the
+        right.</P>
+
+        <P>The operation of tab highlighting varies slightly depending upon the existence of <A
+        href="#hidden_tabs">hidden tabs</A>. Without hidden tabs, the highlighting, when starting
+        from the first or last available tab, will wrap around to the other side of the tab list.
+        In this mode, you may highlight tabs with no limits with no program being activated until
+        you stop.</P>
+
+        <P>Contrastingly, if there are <A href="#hidden_tabs">hidden tabs</A>, then when the first
+        or last tab is highlighted, then the next successive highlight action will trigger the <A
+        href="#more_tabs_button">more tabs button</A> to be executed.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- Go to Program... -->
+
+    <BLOCKQUOTE>
+      <H3><A name="Go_To_Program"></A>Go To Program... Action</H3>
+
+      <BLOCKQUOTE>
+        <P>The <B>Go To Program...</B> action will show the <A name=
+        "#hidden_tab_popup_window">program selection popup window</A> when executed. This menu
+        allows you to pick a program to go to.</P>
+
+        <P align="center"><IMG border="1" src="images/ProgramTabs_With_Hidden_Go_to_Program.png"
+        alt=""></P>
+
+        <P align="center"><I>Go To Program Popup Window</I></P>
+
+        <P>To execute this action, from the Tool menu, select <B>Navigation<IMG src=
+        "../../shared/arrow.gif" border="0">Go To Program...</B>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- Go to Last Active Program -->
+
+    <BLOCKQUOTE>
+      <H3><A name="Go_To_Last_Active_Program"></A>Go To Last Active Program Action</H3>
+
+      <BLOCKQUOTE>
+        <P>The <B>Go To Last Active Program Action</B> will activate the last program that was
+        active before the currently active program. Thus, this action is disabled when you do not
+        have a previously active program.</P>
+
+        <P>To execute this action, from the Tool menu, select <B>Navigation<IMG src=
+        "../../shared/arrow.gif" border="0">Go To Last Active Program</B>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="left" class="providedbyplugin">Provided by: <I>Program Manager</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Opening_Program_Files.htm">Opening Program Files</A></LI>
+
+      <LI><A href="Closing_Program_Files.htm">Closing Program Files</A></LI>
+    </UL>
+  </BODY>
+</HTML>

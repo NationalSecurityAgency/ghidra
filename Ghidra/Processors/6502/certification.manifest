@@ -1,0 +1,11 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/6502.cspec||GHIDRA||||END|
+data/languages/6502.ldefs||GHIDRA||||END|
+data/languages/6502.pspec||GHIDRA||||END|
+data/languages/6502.slaspec||GHIDRA||||END|
+data/manuals/6502.idx||GHIDRA||||END|

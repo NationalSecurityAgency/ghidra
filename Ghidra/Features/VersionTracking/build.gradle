@@ -1,0 +1,16 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features VersionTracking'
+
+project.ext.excludeFromParallelIntegrationTests = true
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/developerScripts.gradle"
+
+dependencies {
+	compile project(":Base")
+	
+	helpPath project(path: ":Base", configuration: "helpPath")
+	
+	testCompile "org.jmockit:jmockit:1.44"
+}

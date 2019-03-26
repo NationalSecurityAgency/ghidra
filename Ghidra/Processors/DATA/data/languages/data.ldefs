@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  
+   <language processor="DATA"
+             endian="little"
+             size="64"
+             variant="default"
+             version="1.0"
+             slafile="data-le-64.sla"
+             processorspec="data.pspec"
+             id="DATA:LE:64:default">
+		<description>Raw Data File (Little Endian)</description>
+		<compiler name="pointer64" spec="data-ptr64.cspec" id="pointer64"/>
+		<compiler name="pointer32" spec="data-ptr32.cspec" id="pointer32"/>
+		<compiler name="pointer16" spec="data-ptr16.cspec" id="pointer16"/>
+	</language>
+	
+	<language processor="DATA"
+             endian="big"
+             size="64"
+             variant="default"
+             version="1.0"
+             slafile="data-be-64.sla"
+             processorspec="data.pspec"
+             id="DATA:BE:64:default">
+		<description>Raw Data File (Little Endian)</description>
+		<compiler name="pointer64" spec="data-ptr64.cspec" id="pointer64"/>
+		<compiler name="pointer32" spec="data-ptr32.cspec" id="pointer32"/>
+		<compiler name="pointer16" spec="data-ptr16.cspec" id="pointer16"/>
+	</language>
+	
+</language_definitions>

@@ -1,0 +1,10 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features DecompilerDependent'
+
+
+dependencies {
+	compile project(':Base')
+	compile project(':Decompiler')
+}
+
+

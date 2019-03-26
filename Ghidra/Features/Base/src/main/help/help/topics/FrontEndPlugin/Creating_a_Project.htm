@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Creating a Project</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="New_Project"></A>Creating a Project</H1>
+
+    <P>The <B>New Project</B> option creates a new project. When you create a new project, Ghidra
+    will close your current project, create the new project, and update the Ghidra Project Window
+    with the newly created project. The <I>New Project</I> wizard takes you through the steps to
+    create either a non-shared project or a shared project. The <A href=
+    "help/topics/VersionControl/project_repository.htm#SharedProject">shared project</A> can be
+    <I>shared</I> with others, meaning that the project will be associated with a repository on a
+    server that other users can access.</P>
+
+    <P>&nbsp;</P>
+
+    <P><A name="CreateNonSharedProject"></A>To create a new non-shared project:</P>
+
+    <OL>
+      <LI>Select the <B>File<IMG src="../../shared/arrow.gif" border="0">New
+      Project...</B> menu option from the Ghidra Project Window.</LI>
+
+      <LI>The <A name="SelectProjectType"></A> first panel of the <I>New Project</I> wizard is
+      displayed, where you choose the project type.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/SelectProjectType.png" border="0"></P>
+
+    <OL start="3">
+      <LI>Leave the <I>Non-Shared Project</I> radio button selected to create a project that will
+      not be shared with others.</LI>
+
+      <LI>Activate the <B>Next&gt;&gt;</B> button.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/SelectProjectLocation.png" border="0"></P>
+
+    <OL start="3">
+      <LI>Click on the browse button (<B>...</B>) to display a file chooser; select the directory
+      of where you want your new project to reside.&nbsp;The <I>Project Directory</I> field
+      defaults to the last directory that you specified to create a new project.</LI>
+
+      <LI>Enter the name of your new project; the <B>Finish</B> button is enabled.</LI>
+
+      <LI>Activate the <B>Finish</B> button.&nbsp; If you have a project opened, Ghidra closes the
+      project and opens the new project.&nbsp;</LI>
+
+      <LI>If there is an active project and it has been modified, Ghidra will prompt to save the
+      active project before closing it. From the <I>Save Modified Files</I> dialog, click the
+      <B>OK</B> button to save changes to the project that is being closed as the new one is
+      opened.</LI>
+    </OL>
+
+    <P align="center">&nbsp;</P>
+
+    <H3><A name="CreateSharedProject"></A>Creating a Shared Project</H3>
+
+    <P><IMG src="../../shared/note.png" border="0">The discussion for this
+    section assumes the following:</P>
+
+    <UL>
+      <LI>You have a Ghidra Server that is set up to manage the project repository that you are
+      going to access.</LI>
+
+      <LI>You have been added to the server's list of known users.</LI>
+
+      <LI>If you are associating your project with an <I>existing</I> project repository, the <A
+      href="#Admin">Administrator</A> of the project has added you as a user to the project
+      repository.&nbsp;</LI>
+
+      <LI>You know the name and port number of the Ghidra Server.</LI>
+
+      <LI>If the Ghidra Server is using PKI Authentication, you have a PKI Certificate.</LI>
+    </UL>
+
+    <P>To create a shared project,&nbsp;</P>
+
+    <OL>
+      <LI>Select the <B>File<IMG src="../../shared/arrow.gif" border="0">New
+      Project...</B> menu option from the Ghidra Project Window; the first panel of the <I>New
+      Project</I> wizard is displayed.</LI>
+
+      <LI>Select the <I>Shared Project</I> radio button on the <I>Select Project Type</I>
+      panel.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/SelectSharedProjectType.png" border="0"></P>
+
+    <OL start="3">
+      <LI><A name="ServerInfo"></A>Activate the <B>Next &gt;&gt;</B> button.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/ServerInfo.png" border="0"></P>
+
+    <OL start="4">
+      <LI>Enter the name of the server or the IP address of the server of where the repository
+      resides. (If you had specified server information for accessing another shared project, then
+      the server and port number from that project are used as default values.)</LI>
+
+      <LI>Enter the port number.&nbsp; The default port number is 13100.</LI>
+
+      <LI>
+        Activate the <B>Next &gt;&gt;</B> button.&nbsp;
+      </LI>
+    </OL>
+    
+    <P><IMG src="../../shared/note.png" border="0">Refer to the <A href=
+        "help/topics/VersionControl/project_repository.htm#Troubleshooting">Troubleshooting</A> page if
+        you fail to connect to the Ghidra Server.</P>
+
+    <P><A name="SelectRepository"></A>&nbsp;</P>
+
+    <P align="center"><IMG src="images/RepositoryNamePanel.png" border="0"></P>
+
+    <OL start="7">
+      <LI>
+        In this example, three repositories are listed in the <I>Repository Names</I> list which
+        reflect all the repositories the user has access to on the currently connected server.
+        This list may differ based upon your login credentials.
+        By default, the <I>Existing Repository</I> radio button is
+        selected because of the existing repositories found on the server.  Only those repositories 
+        you have been granted access to will be included in this list. 
+
+        <UL>
+          <LI>To use an existing repository, leave the radio button selected, and select a
+          repository name from the list of <I>Repository Names</I>.</LI>
+
+          <LI>To create a <I>new</I> repository, select the <I>Create Repository</I> radio button;
+          the <I>Repository Name</I> field becomes enabled. Enter the name of the new
+          repository.  This option will be disabled if you have logged into the Ghidra Server
+          in anonymous mode.</LI>
+        </UL>
+      </LI>
+
+      <LI>
+        Activate the <B>Next&gt;&gt;</B> button. If you selected the <I>Create Repository</I> radio
+        button, then the following sample <I>Project Access</I> panel to specify user access is
+        displayed. If you are creating a new shared repository, you are by default the <A href=
+        "#Admin">Administrator</A> in the project. You are not allowed to change your own access.
+        If the server has been configured with anonymous mode enabled, an additional checkbox
+        control will appear allowing you to grant anonymous access to this new repository.
+        
+        <P><A name="UserAccessList"></A>&nbsp;</P>
+      </LI>
+    </OL>
+
+    <P align="center"><IMG src="images/UsersPanel.png" border="0"></P>
+
+    <OL start="9">
+      <LI>
+        Users that are known to the server are listed in the <I>Known Users</I> area. Users that
+        are part of the project are marked with the <IMG src="images/user.png" border="0">
+        icon. To add users, select users from <I>Known Users</I>, select the
+        <B>Add&gt;&gt;</B> button. Add all users by selecting the <B>Add All</B> button. To remove
+        users, select users in the project, and select the <B>&lt;&lt;Remove</B> button. To remove
+        all users (except yourself), select the <B>Remove All</B> button.&nbsp; 
+
+        <P><A name="UserPrivileges"></A>The <I>Project Users</I> table on the right side of the
+        dialog indicates user privileges:</P>
+
+        <UL>
+          <LI><I>Read Only</I> - the user can open programs in read only mode, cannot <A href=
+          "help/topics/VersionControl/project_repository.htm#CheckOut">check out</A> files from the
+          repository, and cannot <A href=
+          "help/topics/VersionControl/project_repository.htm#CheckIn">check in</A> files, and cannot <A
+          href="help/topics/VersionControl/project_repository.htm#Add_to_Version_Control">add files</A>
+          to the repository. The read only user may create a local copy of the program; the project
+          repository is not affected.&nbsp;</LI>
+
+          <LI><I>Read/Write</I> - the user can check out files from the repository and check in
+          files into the repository, and add new files to the repository.</LI>
+
+          <LI><I>Admin<A name="Admin"></A></I> - the user has read/write privileges as well as the
+          ability to add users to and remove users from the project; the Admin can assign
+          administrative privileges to other users. The project must have at least one
+          administrative user. The administrator also can <A href=
+          "help/topics/VersionControl/project_repository.htm#TerminateCheckout">terminate a check
+          out</A>.&nbsp;</LI>
+        </UL>
+
+        <P><IMG src="../../shared/note.png" border="0">If you are creating a
+        project against an <I>existing</I> repository, then you will not see the <I>Project
+        Access</I> panel as part of the <I>New Project</I> wizard.&nbsp; After you have opened the
+        shared project, <I>and</I> if you are an administrator in the existing repository, then you
+        can display and modify user privileges by choosing the <B>Project</B><IMG src=
+        "../../shared/arrow.gif" border="0"><B><A href=
+        "Ghidra_Front_end.htm#Edit_Project_Access_List">Edit Project Access List...</A></B> <A
+        href="Ghidra_Front_end.htm">option</A>.&nbsp;</P>
+
+        <P>&nbsp;</P>
+      </LI>
+
+      <LI>Active the <B>Next&gt;&gt;</B> button; <A name="SelectProjectLocation"></A> you must next
+      specify where to create your project that will be associated with the project repository.
+      Typically, you would specify a directory on your local file system.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/SelectSharedProjectLocation.png" border="0"></P>
+
+    <OL start="11">
+      <LI>Select the project directory. The <I>Project Directory</I> field defaults to the
+      directory that you last specified for a new project.&nbsp; Click on the browse (<B>...</B>)
+      button to bring up a file chooser.</LI>
+
+      <LI>The <I>Project Name</I> field defaults to the name of the repository that you selected in
+      Step 7. The <B>Finish</B> button is enabled when the&nbsp; <I>Project Directory</I> and
+      <I>Project Name</I> fields have valid entries.&nbsp;</LI>
+
+      <LI>Select the <B>Finish</B> button to complete the <I>New Project</I> process.&nbsp;</LI>
+    </OL>
+
+    <P>Before the new project is opened, if you made changes, you are asked whether to save the old
+    project. If you choose to open the new project, the default tool <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A> is in the Tool Chest and no
+    files are associated with the project that you have just created. Your current <A href=
+    "Ghidra_Front_end.htm#Workspace">workspace</A> is named "Workspace."</P>
+
+    <P>&nbsp;</P>
+
+    <P class="relatedtopic" align="left">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Project/Ghidra_Projects.htm">Ghidra Projects</A></LI>
+
+      <LI><A href="Close_Project.htm">Close Project</A></LI>
+
+      <LI><A href="Saving_a_Ghidra_Project.htm">Save Project</A></LI>
+
+      <LI><A href="Opening_a_Ghidra_Project.htm">Open Project</A></LI>
+
+      <LI><A href="Archive_Project.htm">Archive Current Project</A></LI>
+
+      <LI><A href="help/topics/VersionControl/project_repository.htm">Project Repository</A></LI>
+
+      <LI><A href="Ghidra_Front_end.htm#Edit_Project_Access_List">Edit Project Access List</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

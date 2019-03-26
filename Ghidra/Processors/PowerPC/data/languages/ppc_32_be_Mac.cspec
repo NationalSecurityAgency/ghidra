@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="r1" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="56" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r14"/>
+        <register name="r15"/>
+        <register name="r16"/>
+        <register name="r17"/>
+        <register name="r18"/>
+        <register name="r19"/>
+        <register name="r20"/>
+        <register name="r21"/>
+        <register name="r22"/>
+        <register name="r23"/>
+        <register name="r24"/>
+        <register name="r25"/>
+        <register name="r26"/>
+        <register name="r27"/>
+        <register name="r28"/>
+        <register name="r29"/>
+        <register name="r30"/>
+        <register name="r31"/>
+        <register name="r1"/>
+        <register name="r2"/>
+      </unaffected>
+      <pcode inject="uponreturn">
+        <!-- Move r2 to where compiler expects it after a call, so reloading gets the right value -->
+        <body>
+          * (r1 + 0x14) = r2;
+        </body>
+      </pcode>
+    </prototype>
+  </default_proto>
+</compiler_spec>

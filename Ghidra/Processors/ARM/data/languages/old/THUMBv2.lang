@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="1" endian="little">
+    <description>
+        <id>ARM:LE:32:DEPRECATED THUMB V2</id>
+        <processor>ARM</processor>
+    </description>
+    <spaces>
+        <space name="ram" type="ram" size="4" default="yes" />
+        <space name="register" type="register" size="4" />
+    </spaces>
+    <registers>
+        <register name="r0" offset="0x0" bitsize="32" />
+        <register name="r1" offset="0x4" bitsize="32" />
+        <register name="r2" offset="0x8" bitsize="32" />
+        <register name="r3" offset="0xc" bitsize="32" />
+        <register name="r4" offset="0x10" bitsize="32" />
+        <register name="r5" offset="0x14" bitsize="32" />
+        <register name="r6" offset="0x18" bitsize="32" />
+        <register name="r7" offset="0x1c" bitsize="32" />
+        <register name="r8" offset="0x20" bitsize="32" />
+        <register name="r9" offset="0x24" bitsize="32" />
+        <register name="sl" offset="0x28" bitsize="32" />
+        <register name="fp" offset="0x2c" bitsize="32" />
+        <register name="ip" offset="0x30" bitsize="32" />
+        <register name="sp" offset="0x34" bitsize="32" />
+        <register name="lr" offset="0x38" bitsize="32" />
+        <register name="pc" offset="0x3c" bitsize="32" />
+        <register name="NG" offset="0x40" bitsize="8" />
+        <register name="ZR" offset="0x41" bitsize="8" />
+        <register name="CY" offset="0x42" bitsize="8" />
+        <register name="OV" offset="0x43" bitsize="8" />
+        <register name="tmpNG" offset="0x44" bitsize="8" />
+        <register name="tmpZR" offset="0x45" bitsize="8" />
+        <register name="tmpCY" offset="0x46" bitsize="8" />
+        <register name="tmpOV" offset="0x47" bitsize="8" />
+        <register name="shift_carry" offset="0x48" bitsize="8" />
+        <register name="TB" offset="0x49" bitsize="8" />
+        <register name="cpsr" offset="0x50" bitsize="32" />
+        <register name="spsr" offset="0x54" bitsize="32" />
+        <register name="mult_addr" offset="0x60" bitsize="32" />
+        <register name="r14_svc" offset="0x64" bitsize="32" />
+        <register name="r13_svc" offset="0x68" bitsize="32" />
+        <register name="spsr_svc" offset="0x6c" bitsize="32" />
+        <register name="fpsr" offset="0x80" bitsize="32" />
+        <register name="fp0" offset="0x100" bitsize="80" />
+        <register name="fp1" offset="0x10a" bitsize="80" />
+        <register name="fp2" offset="0x114" bitsize="80" />
+        <register name="fp3" offset="0x11e" bitsize="80" />
+        <register name="fp4" offset="0x128" bitsize="80" />
+        <register name="fp5" offset="0x132" bitsize="80" />
+        <register name="fp6" offset="0x13c" bitsize="80" />
+        <register name="fp7" offset="0x146" bitsize="80" />
+    </registers>
+</language>
+

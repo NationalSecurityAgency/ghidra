@@ -1,0 +1,200 @@
+####
+#### BMI2 instructions
+####
+
+
+:BZHI Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+{
+  indexTmp:1 = vexVVVV_r32:1;
+
+  # saturate index amount to 32; operand size or higher does not clear any bits
+  shift:1 = (indexTmp <= 32) * (32 - indexTmp);
+
+  # clear the upper bits
+  Reg32 = (rm32 << shift) >> shift;
+
+  ZF = (Reg32 == 0);
+  SF = (Reg32 s< 0);
+  CF = indexTmp > 31;
+  OF = 0;
+  # AF and PF are undefined
+}
+
+@ifdef IA64
+:BZHI Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf5; Reg64 ... & rm64
+{
+  indexTmp:1 = vexVVVV_r64:1;
+
+  # saturate index amount to 64; operand size or higher does not clear any bits
+  shift:1 = (indexTmp <= 64) * (64 - indexTmp);
+
+  # clear the upper bits
+  Reg64 = (rm64 << shift) >> shift;
+
+  ZF = (Reg64 == 0);
+  SF = (Reg64 s< 0);
+  CF = indexTmp > 63;
+  OF = 0;
+  # AF and PF are undefined
+}
+@endif
+
+
+:MULX Reg32, vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf6; Reg32 ... & rm32
+{
+  temp:8 = zext(EDX) * zext(rm32);
+
+  vexVVVV_r32 = temp:4;
+  Reg32 = temp(4);
+}
+
+@ifdef IA64
+:MULX Reg64, vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf6; Reg64 ... & rm64
+{
+  temp:16 = zext(RDX) * zext(rm64);
+
+  vexVVVV_r64 = temp:8;
+  Reg64 = temp(8);
+}
+@endif
+
+
+:PDEP Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+{
+  sourceTmp:4 = vexVVVV_r32;
+
+  indexTmp:4 = 1;
+  resultTmp:4 = 0;
+
+ <loop>
+  maskBit:4 = rm32 & indexTmp;
+
+  if (maskBit == 0) goto <nextMaskBit>;
+  resultTmp = resultTmp | (maskBit * (sourceTmp & 1));
+  sourceTmp = sourceTmp >> 1;
+
+ <nextMaskBit>
+  indexTmp = indexTmp << 1;
+  if (indexTmp != 0) goto <loop>;
+
+  Reg32 = resultTmp;
+}
+
+@ifdef IA64
+:PDEP Reg64, vexVVVV_r64, rm64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf5; Reg64 ... & rm64
+{
+  sourceTmp:8 = vexVVVV_r64;
+
+  indexTmp:8 = 1;
+  resultTmp:8 = 0;
+
+ <loop>
+  maskBit:8 = rm64 & indexTmp;
+
+  if (maskBit == 0) goto <nextMaskBit>;
+  resultTmp = resultTmp | (maskBit * (sourceTmp & 1));
+  sourceTmp = sourceTmp >> 1;
+
+ <nextMaskBit>
+  indexTmp = indexTmp << 1;
+  if (indexTmp != 0) goto <loop>;
+
+  Reg64 = resultTmp;
+}
+@endif
+
+
+:PEXT Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+{
+  indexTmp:4 = 0x80000000;
+  resultTmp:4 = 0;
+
+ <loop>
+  maskBit:4 = rm32 & indexTmp;
+
+  if (maskBit == 0) goto <nextMaskBit>;
+  resultTmp = (resultTmp << 1) | zext((maskBit & vexVVVV_r32) != 0);
+
+ <nextMaskBit>
+  indexTmp = indexTmp >> 1;
+  if (indexTmp != 0) goto <loop>;
+
+  Reg32 = resultTmp;
+}
+
+@ifdef IA64
+:PEXT Reg64, vexVVVV_r64, rm64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf5; Reg64 ... & rm64
+{
+  indexTmp:8 = 0x8000000000000000;
+  resultTmp:8 = 0;
+
+ <loop>
+  maskBit:8 = rm64 & indexTmp;
+
+  if (maskBit == 0) goto <nextMaskBit>;
+  resultTmp = (resultTmp << 1) | zext((maskBit & vexVVVV_r64) != 0);
+
+ <nextMaskBit>
+  indexTmp = indexTmp >> 1;
+  if (indexTmp != 0) goto <loop>;
+
+  Reg64 = resultTmp;
+}
+@endif
+
+
+:RORX Reg32, rm32, imm8 is $(VEX_NONE) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0); byte=0xf0; Reg32 ... & rm32; imm8
+{
+  shiftTmp:1 = (imm8:1 & 0x1F);
+
+  Reg32 = (rm32 >> shiftTmp) | ( rm32 << (32 - shiftTmp));
+}
+
+@ifdef IA64
+:RORX Reg64, rm64, imm8 is $(VEX_NONE) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W1); byte=0xf0; Reg64 ... & rm64; imm8
+{
+  shiftTmp:1 = (imm8:1 & 0x3F);
+
+  Reg64 = (rm64 >> shiftTmp) | ( rm64 << (64 - shiftTmp));
+}
+@endif
+
+
+:SARX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+{
+  Reg32 = rm32 s>> (vexVVVV_r32 & 0x0000001F);
+}
+
+@ifdef IA64
+:SARX Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
+{
+  Reg64 = rm64 s>> (vexVVVV_r64 & 0x000000000000003F);
+}
+@endif
+
+
+:SHLX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+{
+  Reg32 = rm32 << (vexVVVV_r32 & 0x0000001F);
+}
+
+@ifdef IA64
+:SHLX Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
+{
+  Reg64 = rm64 << (vexVVVV_r64 & 0x000000000000003F);
+}
+@endif
+
+
+:SHRX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+{
+  Reg32 = rm32 >> (vexVVVV_r32 & 0x0000001F);
+}
+
+@ifdef IA64
+:SHRX Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
+{
+  Reg64 = rm64 >> (vexVVVV_r64 & 0x000000000000003F);
+}
+@endif
+

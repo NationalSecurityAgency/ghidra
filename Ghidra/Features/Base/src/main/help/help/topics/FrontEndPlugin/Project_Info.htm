@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Project Info</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="View_Project_Info"></A>Project Information</H1>
+
+    <P><I>Project Information</I> provides project-level information and
+    functionality:&nbsp;&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="1" width="50%">
+          <TR>
+            <TD width="10%" align="center" bgcolor="#CCCCFF">
+              <P align="center">&nbsp;</P>
+            </TD>
+
+            <TD width="5%" align="center" bgcolor="#CCCCFF">
+              <P align="center"><B><I>Project Location</I></B></P>
+            </TD>
+
+            <TD width="15%" align="center" bgcolor="#CCCCFF">
+              <P align="center"><B><I>Repository Information</I></B></P>
+            </TD>
+
+            <TD width="30%" align="center" bgcolor="#CCCCFF"><B><I>Functionality</I></B></TD>
+          </TR>
+
+          <TR>
+            <TD width="10%" align="center">
+              <P align="center">Non-Shared Project</P>
+            </TD>
+
+            <TD width="5%" align="center">
+              <P align="center">x</P>
+            </TD>
+
+            <TD width="15%" align="center">
+              <P align="center">&nbsp;</P>
+            </TD>
+
+            <TD width="30%" align="center">Convert to Shared Project</TD>
+          </TR>
+
+          <TR>
+            <TD width="10%" align="center">
+              <P align="center"><A href=
+              "help/topics/VersionControl/project_repository.htm#SharedProject">Shared</A> Project</P>
+            </TD>
+
+            <TD width="5%" align="center">
+              <P align="center">x</P>
+            </TD>
+
+            <TD width="15%" align="center">
+              <P align="center">x</P>
+            </TD>
+
+            <TD width="30%" align="center">Change the server or <A href=
+            "help/topics/VersionControl/project_repository.htm">repository</A> associated with the
+            project</TD>
+          </TR>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <P>To access <I>Project Information</I>, select <B>Project</B><IMG border="0" src=
+    "../../shared/arrow.gif"><B>View Project Info...</B> from the <A href=
+    "Ghidra_Front_end.htm">Ghidra Project Window</A>. The image below shows information and
+    functionality for a shared project:</P>
+
+    <P align="center"><IMG border="0" src="images/SharedProjectInfo.png"></P>
+
+    <P>The <I>Project Location</I> shows the directory where your project resides, the type of project storage 
+    (the legacy Mangled Filesystem or the newer Indexed Filesystem), and the name of your project.</P>
+    
+    <P>The <I>Repository Info</I> shows the name and port number of the Ghidra Server and the name
+    of the repository associated with your project.</P> 
+    
+    <A name="ConnectToServer"></A>
+    <P>The connection button indicates whether you are
+    connected to the server. (If you were connected, the button would show as <IMG border="0"
+    src="images/connected.gif">    You can click on the button to attempt to 
+    connect to the server.)</P>
+    
+    <P>
+ 	The <A href="Creating_a_Project.htm#UserPrivileges">User
+    Access Level</A> indicates your privileges in the project (Administrator, Read Only, or Read/Write).
+    The User Access Level is only displayed while in a connected state.</P>
+    
+    <A name="Indexed_Filesystem"></A><P align="left"><IMG border="0" src="../../shared/note.png">As 
+    of version 5.5 Ghidra utilizes
+    an <i>Indexed Filesystem</i> for storage of project files, however, projects created prior to version 5.5
+    utilize a <i>Mangled Filesystem</i>.  The <i>Mangled Filesystem</i> uses a name mangling scheme for files
+    and folders while preserving the folder hierarchy within the actual storage.  Unfortunately, this 
+    can result in IO errors due to native filesystem limits on filename and absolute file path length 
+    which can easily be exceeded under MS Windows.  The <i>Indexed Filesystem</i> 
+    implementation attempts to avoid these length limitations by utilizing an index file to record
+    the folder hierarchy while a shallow non-hierarchical storage is used for project files.  When attempting to
+    locate the a file database, the folder path and item name can be found within an items associated 
+    property file (*.prp) as separate property values.</P>
+
+	<H2><A name="Convert_Project_Storage"></A>Convert Project Storage to an Indexed Filesystem</H2>
+	
+	<BLOCKQUOTE>
+	<P>If your project currently uses the older <i>Mangled Filesystem</i> for data storage, a one-way conversion 
+	to an <i>Indexed Filesystem</i> may be done by clicking the <B>Convert Project Storage to Indexed...</B> 
+	button which should appear near the bottom of the <i>Project Information</i> window.</P> 
+	
+	</BLOCKQUOTE>
+
+    <H2><A name="Change_Shared_Project_Info"></A>Changing Shared Project Information</H2>
+
+    <BLOCKQUOTE>
+      <P>To update repository information:</P>
+
+      <OL>
+        <LI>Close all open files and make sure that all files are checked in.</LI>
+
+        <LI>In <I>Project Information</I>, click on the <B>Change Shared Project Info...</B> button
+        to start the&nbsp;<I>Change Shared Project Information</I> wizard.&nbsp;</LI>
+
+        <LI><A name="SetupServerInfo"></A>The <I>Change Shared Project Information</I> wizard
+        displays the project's current server name and port number.&nbsp; If desired, use this
+        panel to change the server name and/or port number.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/ChangeServerInfoPanel.png"></P>
+
+    <BLOCKQUOTE>
+      <OL start="3">
+        <LI>
+          <P align="left"><A name="ChangeRepository"></A>Press the <B>Next &gt;&gt;</B> button to
+          connect to the specified server and port.</P>
+
+          <P align="left"><IMG border="0" src="../../shared/note.png">If you
+          are changing the Ghidra Server name or port number and you fail to connect, refer to the
+          <A href=
+          "help/topics/VersionControl/project_repository.htm#Troubleshooting">Troubleshooting</A>
+          page.&nbsp;&nbsp;&nbsp;</P>
+        </LI>
+
+        <LI>
+          <P align="left">Once connected to the specified server and port, the <I>Change Shared
+          Project Information</I> wizard displays repository information.&nbsp; By default, the
+          <I>Existing Repository</I> radio button is selected because of the existing repositories
+          found on the server.&nbsp;</P>
+
+          <UL>
+            <LI>To use an existing repository, leave the radio button selected, and select a
+            repository name from the list of <I>Repository Names</I>.&nbsp;</LI>
+
+            <LI>To create a <I>new</I> repository, select the <I>Create Repository</I> radio
+            button; the <I>Repository Name</I> field becomes enabled. Enter the name of the new
+            repository.&nbsp;</LI>
+          </UL>
+        </LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P align="center"><IMG border="0" src="images/ChangeRepositoryPanel.png"></P>
+      </BLOCKQUOTE>
+
+      <OL start="5">
+        <LI><A name="SetupUsers"></A>Press the <B>Next&gt;&gt;</B> button.&nbsp; If you selected
+        the <I>Create Repository</I> radio button, then the following sample <I>Project Access</I>
+        panel, which specifies user access, is displayed. If you are creating a new shared
+        repository, you are by default the <A href="Creating_a_Project.htm#Admin">Administrator</A>
+        in the project. You are not allowed to change your access.&nbsp;</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/ChangeAccessList.png"></P>
+
+    <BLOCKQUOTE>
+      <OL start="7">
+        <LI>Users that are known to the server are listed in the <I>Known Users</I> area. Users
+        that are part of the project are marked with the <IMG border="0" src="images/user.png">
+        icon. To add users, select users from <I>Known Users</I>, select the
+        <B>Add&gt;&gt;</B> button. Add all users by selecting the <B>Add All</B> button. To remove
+        users, select users in the project, and select the <B>&lt;&lt;Remove</B> button. To remove
+        all users (except yourself), select the <B>Remove All</B> button.&nbsp;The <I>Project
+        Users</I> table on the right side of the dialog indicates <A href=
+        "Creating_a_Project.htm#UserPrivileges">user privileges</A>.</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P><IMG border="0" src="../../shared/note.png">If you are
+        associating your project with an <I>existing</I> repository, then you will not see the
+        <I>Project Access</I> panel as part of the <I>Change Shared Project Information</I>
+        wizard.&nbsp; If you are an administrator in the existing repository, then you can display
+        and modify user privileges by choosing the <B>Project</B><IMG border="0" src=
+        "../../shared/arrow.gif"><B><A href=
+        "Ghidra_Front_end.htm#Edit_Project_Access_List">Edit Project Access List...</A></B> <A
+        href="Ghidra_Front_end.htm">option</A>.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <OL start="8">
+        <LI>Select the <B>Finish</B> button.&nbsp; &nbsp;</LI>
+
+        <LI><A name="Step9"></A>A confirmation dialog is displayed; select the <B>Update</B> button
+        to complete the <I>Change Shared Project Information</I>  process.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P><IMG border="0" src="../../shared/note.png"> After you have updated
+      your project information, you may end up with <A href=
+      "Ghidra_Front_end.htm#HijackedFile">hijacked files</A> if a file of the same name exists in
+      the repository.&nbsp;&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <H2>&nbsp;</H2>
+
+    <H2><A name="Convert_to_Shared"></A>Converting a Non-Shared Project to a Shared Project</H2>
+
+    <BLOCKQUOTE>
+      <P>The image below shows project information for a project that is not shared. Note that the
+      repository information is disabled. Before you can convert your project, you must first close
+      any files that you have opened, and check in any files that you have checked out.</P>
+
+      <P><IMG border="0" src="../../shared/warning.png"> You will lose all
+      version history for files under local <A href=
+      "help/topics/VersionControl/project_repository.htm#Versioning">version control</A> after you
+      convert your project.</P>
+
+      <P>You can convert your non-shared project to a shared project by clicking on the <B>Convert
+      to Shared...</B> button.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/NonSharedProjectInfo.png"></P>
+
+    <BLOCKQUOTE>
+      <P>The steps to converting your project are the same as those described for <A href=
+      "#Change_Shared_Project_Info">changing your repository information</A>. However, at <A href=
+      "#Step9">Step 9</A> above you will get a dialog that warns you about losing version history
+      on versioned files. From the warning dialog, click on the <B>Convert</B> button to complete
+      the conversion process.&nbsp;</P>
+
+      <P><IMG border="0" src="../../shared/warning.png"> The conversion
+      process cannot be undone.</P>
+
+      <P><IMG border="0" src="../../shared/note.png"> After you have
+      converted your project, all of your files (including the ones that were under version
+      control) become <A href="Ghidra_Front_end.htm#PrivateFile">private files</A>. You may end up
+      with <A href="Ghidra_Front_end.htm#HijackedFile">hijacked files</A> if files of the same
+      names already existed in the repository.&nbsp;</P>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

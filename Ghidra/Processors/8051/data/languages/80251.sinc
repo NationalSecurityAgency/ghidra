@@ -1,0 +1,662 @@
+# 80251 Instructions
+
+# NOTE! 80251 implementation is preliminary and has not tested !!
+
+define token srcDestByte (8)
+   rm47 =   (4,7)
+   rm47_d1 =   (4,7)
+   rm47_d2 =   (4,7)
+   rm03 =   (0,3)
+   wrj47 =  (4,7)
+   wrj47_d1 =  (4,7)
+   wrj47_d2 =  (4,7)
+   wrj03 =  (0,3)
+   drk47 =  (4,7)
+   drk03 =  (0,3)
+   # constraint bits
+   d7   =   (7,7)
+   d57  =   (5,7)
+   d47  =   (4,7)
+   s3   =   (3,3)
+   s23  =   (2,3)
+   s13  =   (1,3)
+   s03  =   (0,3)
+   s1   =   (1,1)
+   s0   =   (0,0)
+   short01 = (0,1)
+   bit02 =  (0,2)
+;
+
+define token srcDestByte2 (8)
+   rm47_ =   (4,7)
+   rm03_ =   (0,3)
+   wrj47_ =  (4,7)
+   wrj03_ =  (0,3)
+   drk47_ =  (4,7)
+   drk03_ =  (0,3)
+   # constraint bits
+   d7_   =   (7,7)
+   d57_  =   (5,7)
+   s3_   =   (3,3)
+   s13_  =   (1,3)
+   s03_  =   (0,3)
+;
+
+define token AddrThree (24)
+   addr24 = (0,23)
+;
+
+define token ImmedThree (24)
+	data24  = (0,23)
+;
+
+attach values short01 [ 1 2 4 _ ];
+
+attach variables  [ rm47 rm03 rm47_ rm03_ ] [ 
+	R0  R1  R2  R3  R4  R5  R6  R7 
+	R8  R9  B   ACC R12 R13 R14 R15 
+];
+
+attach variables  [ rm47_d1 ] [ 
+	R0  R0  R2  R2  R4  R3  R6  R6 
+	R8  R8  B   B R12 R12 R14 R14 
+];
+
+attach variables  [ rm47_d2 ] [ 
+	R1  R1  R3  R3  R5  R5  R7  R7 
+	R9  R9  ACC ACC R13 R13 R15 R15 
+];
+
+attach variables  [ wrj47 wrj03 wrj47_ wrj03_ ] [ 
+	WR0  WR2  WR4  WR6  WR8  AB   WR12 WR14
+    WR16 WR18 WR20 WR22 WR24 WR26 WR28 WR30
+];
+
+attach variables  [ wrj47_d1 ] [ 
+	WR0  WR0  WR4  WR4  WR8  WR8  WR12 WR12
+    WR16 WR16 WR20 WR20 WR24 WR24 WR28 WR28
+];
+
+attach variables  [ wrj47_d2 ] [ 
+	WR2  WR2  WR6  WR6  AB   AB   WR14 WR14
+    WR18 WR18 WR22 WR22 WR26 WR26 WR30 WR30
+];
+
+# NOTE: must use constraints DRK, DRKD and DRKS
+attach variables  [ drk47 drk03 drk47_ drk03_ ] [
+	DR0  DR4  DR8  DR12 DR16 DR20 DR24 DR28
+	DPX  SPX  _    _    _    _    _    _
+];
+
+@define DRK47 "drk47 & (d7=0 | d57=4)" # constraint for using drk47
+@define DRK03 "drk03 & (s3=0 | s13=4)" # constraint for using drk03
+@define DRK47_ "drk47_ & (d7_=0 | d57_=4)" # constraint for using drk47_
+  
+AtWRjb: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:1 ptr; }
+AtWRjw: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:2 ptr; }
+
+# NOTE: be sure to use the ATDRK constraint on the constructor
+AtDRkb: "@"^drk47	is drk47   { ptr:3 = drk47:3; export *:1 ptr; }
+AtDRkw: "@"^drk47	is drk47   { ptr:3 = drk47:3; export *:2 ptr; }
+AtDRkt: "@"^drk47	is drk47   { ptr:3 = drk47:3; export *:3 ptr; }
+
+@define ATDRK  "(d7=0 | d57=4)"
+
+AtWRj47Dis16b: "@"^wrj47^"+"^data16  is wrj47; data16  { ptr:3 = zext(wrj47) + data16; export *:1 ptr; }
+AtWRj47Dis16w: "@"^wrj47^"+"^data16  is wrj47; data16  { ptr:3 = zext(wrj47) + data16; export *:2 ptr; }
+
+AtWRj03Dis16b: "@"^wrj03^"+"^data16  is wrj03; data16  { ptr:3 = zext(wrj03) + data16; export *:1 ptr; }
+AtWRj03Dis16w: "@"^wrj03^"+"^data16  is wrj03; data16  { ptr:3 = zext(wrj03) + data16; export *:2 ptr; }
+
+AtDRk47Dis24b: "@"^drk47^"+"^data24  is drk47; data24  { ptr:3 = drk47:3 + data24; export *:1 ptr; }
+AtDRk47Dis24w: "@"^drk47^"+"^data24  is drk47; data24  { ptr:3 = drk47:3 + data24; export *:2 ptr; }
+
+AtDRk03Dis24b: "@"^drk03^"+"^data24  is drk03; data24  { ptr:3 = drk03:3 + data24; export *:1 ptr; }
+AtDRk03Dis24w: "@"^drk03^"+"^data24  is drk03; data24  { ptr:3 = drk03:3 + data24; export *:2 ptr; }
+
+# TODO: Verify dir8 access restriction for word/dword accesses !!
+Direct8w:  mainreg   is bank=0 & mainreg	{ export *:2 mainreg; }
+Direct8w:  Direct    is bank=1 & Direct 	{ tmp:2 = zext(Direct); export tmp; }
+
+# TODO: The dir16 mode does not map into the SFR's - is this correct ??
+Direct16b: addr16 is addr16 { export *:1 addr16; }
+Direct16w: addr16 is addr16 { export *:2 addr16; }
+Direct16d: addr16 is addr16 { export *:4 addr16; }
+
+Data16x0:  "#"data16 is data16  { export *[const]:4 data16; }
+Data16x1:  "#"val is data16 [ val = 0xffff0000 + data16; ] { export *[const]:4 val; }
+
+Addr24: addr24 is addr24 { export *:1 addr24; }
+
+# NOTE: use SHORT constraint
+Short: "#"^short01  is short01		{ export *[const]:1 short01; }
+@define SHORT "Short & (s0=0 | s1=0)"
+
+#TODO: Figure out new bit addressing for 251 ...
+
+xBitByteAddr:	is bitaddr8  { export *:1 bitaddr8; }
+
+xBitAddr: bitaddr^"."^bit02 		is bit02; bitaddr8  [ bitaddr = (bitaddr8 << 3) + bit02; ] { export *[BITS]:1 bitaddr; }
+xBitAddr2: "/"^bitaddr^"."^bit02 	is bit02; bitaddr8  [ bitaddr = (bitaddr8 << 3) + bit02; ] { export *[BITS]:1 bitaddr; }
+
+
+macro push24(val) {  
+  al:1 = val:1;
+  ah:1 = val(1);
+  ax:1 = val(2);
+  
+  ptr:3 = SPX:3;
+  
+  ptr = ptr + 1; 
+  *[RAM]:1 ptr = al;
+  ptr = ptr + 1; 
+  *[RAM]:1 ptr = ah;
+  ptr = ptr + 1;  
+  *[RAM]:1 ptr = ax;
+  
+  SPX = SPX + 3;
+}
+
+macro pop24(val) {
+  
+  SPX = SPX - 2;
+  
+  ptr:3 = SPX:3;
+  al:1 = *[RAM]:1 ptr;
+  ah:1 = *[RAM]:1 (ptr+1);
+  ax:1 = *[RAM]:1 (ptr+2);
+  
+  SPX = SPX - 1;
+  
+  val = (zext(ax) << 16) | (zext(ah) << 8) | zext(al);
+}
+
+
+# s s s s Binary representation of m or md
+# S S S S Binary representation of ms
+# t t t t Binary representation of j or jd
+# T T T T Binary representation of js
+# u u u u Binary representation of k or kd
+# U U U U Binary representation of ks
+
+# NOTE: >>>> Find MCS251 instructions by searching for "Binary Mode = [A5][Encoding]" in PDF manual  <<<<
+# NOTE: All instructions should include the $(GROUP3) pattern prefix
+
+# ADD Rmd,Rms
+:ADD rm47,rm03	is $(GROUP3) & ophi=2 & oplo=12; rm47 & rm03  { addflags(rm47,rm03); rm47 = rm47 + rm03; resultflags(rm47); }
+
+# ADD WRjd,WRjs
+:ADD wrj47,wrj03	is $(GROUP3) & ophi=2 & oplo=13; wrj47 & wrj03  { addflags(wrj47,wrj03); wrj47 = wrj47 + wrj03; resultflags(wrj47); }
+
+# ADD DRkd,DRks
+:ADD drk47,drk03  is $(GROUP3) & ophi=2 & oplo=15; $(DRK47) & $(DRK03)   { addflags(drk47,drk03); drk47 = drk47 + drk03; resultflags(drk47); }
+
+# ADD Rm,#data
+:ADD rm47,Data	is $(GROUP3) & ophi=2 & oplo=14; rm47 & s03=0; Data    { addflags(rm47,Data); rm47 = rm47 + Data; resultflags(rm47);  }
+
+# ADD WRj,#data16
+:ADD wrj47,Data16	is $(GROUP3) & ophi=2 & oplo=14; wrj47 & s03=4; Data16  { addflags(wrj47,Data16); wrj47 = wrj47 + Data16; resultflags(wrj47); }
+
+# ADD DRk,#0data16
+:ADD drk47,Data16x0	is $(GROUP3) & ophi=2 & oplo=14; $(DRK47) & s03=8; Data16x0  { addflags(drk47,Data16x0); drk47 = drk47 + Data16x0; resultflags(drk47); }
+
+# ADD Rm,dir8
+:ADD rm47,Direct	is $(GROUP3) & ophi=2 & oplo=14; rm47 & s03=1; Direct  { addflags(rm47,Direct); rm47 = rm47 + Direct; resultflags(rm47); }
+
+# ADD WRj,dir8
+:ADD wrj47,Direct8w	is $(GROUP3) & ophi=2 & oplo=14; wrj47 & s03=5; Direct8w  { addflags(wrj47,Direct8w); wrj47 = wrj47 + Direct8w; resultflags(wrj47); }
+
+# ADD Rm,dir16
+:ADD rm47,Direct16b	is $(GROUP3) & ophi=2 & oplo=14; rm47 & s03=3; Direct16b  { addflags(rm47,Direct16b); rm47 = rm47 + Direct16b; resultflags(rm47); }
+
+# ADD WRj,dir16
+:ADD wrj47,Direct16w	is $(GROUP3) & ophi=2 & oplo=14; wrj47 & s03=7; Direct16w  { addflags(wrj47,Direct16w); wrj47 = wrj47 + Direct16w; resultflags(wrj47); }
+
+# ADD Rm,@WRj
+:ADD rm47_,AtWRjb	is $(GROUP3) & ophi=2 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { addflags(rm47_,AtWRjb); rm47_ = rm47_ + AtWRjb; resultflags(rm47_); }
+
+# ADD Rm,@DRk
+:ADD rm47_,AtDRkb	is $(GROUP3) & ophi=2 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0   { addflags(rm47_,AtDRkb); rm47_ = rm47_ + AtDRkb; resultflags(rm47_); }
+
+# ANL Rmd,Rms
+:ANL rm47,rm03	is $(GROUP3) & ophi=5 & oplo=12; rm47 & rm03  { rm47 = rm47 & rm03; resultflags(rm47); }
+
+# ANL WRjd,WRjs
+:ANL wrj47,wrj03	is $(GROUP3) & ophi=5 & oplo=13; wrj47 & wrj03  { wrj47 = wrj47 & wrj03; resultflags(wrj47); }
+
+# ANL Rm,#data
+:ADD rm47,Data	is $(GROUP3) & ophi=5 & oplo=14; rm47 & s03=0; Data    { rm47 = rm47 & Data; resultflags(rm47); }
+
+# ANL WRj,#data16
+:ANL wrj47,Data16	is $(GROUP3) & ophi=5 & oplo=14; wrj47 & s03=4; Data16  { wrj47 = wrj47 & Data16; resultflags(wrj47); }
+
+# ANL Rm,dir8
+:ANL rm47,Direct	is $(GROUP3) & ophi=5 & oplo=14; rm47 & s03=1; Direct  { rm47 = rm47 & Direct; resultflags(rm47); }
+
+# ANL WRj,dir8
+:ANL wrj47,Direct8w	is $(GROUP3) & ophi=5 & oplo=14; wrj47 & s03=5; Direct8w  { wrj47 = wrj47 & Direct8w; resultflags(wrj47); }
+
+# ANL Rm,dir16
+:ANL rm47,Direct16b	is $(GROUP3) & ophi=5 & oplo=14; rm47 & s03=3; Direct16b  { rm47 = rm47 & Direct16b; resultflags(rm47); }
+
+# ANL WRj,dir16
+:ANL wrj47,Direct16w	is $(GROUP3) & ophi=5 & oplo=14; wrj47 & s03=7; Direct16w  { wrj47 = wrj47 & Direct16w; resultflags(wrj47); }
+
+# ANL Rm,@WRj
+:ANL rm47_,AtWRjb	is $(GROUP3) & ophi=5 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { rm47_ = rm47_ & AtWRjb; resultflags(rm47_); }
+
+# ANL Rm,@DRk
+:ANL rm47_,AtDRkb	is $(GROUP3) & ophi=5 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0   { rm47_ = rm47_ & AtDRkb; resultflags(rm47_); }
+
+# ANL C,bit
+:ANL "CY",xBitAddr	is $(GROUP3) & ophi=10 & oplo=9; (d47=8 & s3=0 & bit02; xBitByteAddr) & xBitAddr { $(CY)=$(CY)& ((xBitByteAddr>>bit02)&1); resultflags(xBitByteAddr); }
+
+# ANL C,/bit
+:ANL "CY",xBitAddr2	is $(GROUP3) & ophi=10 & oplo=9; (d47=15 & s3=0 & bit02; xBitByteAddr) & xBitAddr2 { $(CY)=$(CY)& (~((xBitByteAddr>>bit02)&1)); resultflags(xBitByteAddr); }
+
+# CLR bit
+:CLR xBitAddr  is $(GROUP3) & ophi=10 & oplo=9; (d47=12 & s3=0 & bit02; xBitByteAddr) & xBitAddr  { tmp:1 = ~(1<<bit02); xBitByteAddr = xBitByteAddr & tmp; resultflags(xBitByteAddr); }
+
+# CMP Rmd,Rms
+:CMP rm47,rm03	is $(GROUP3) & ophi=11 & oplo=12; rm47 & rm03  { subflags(rm47,rm03); tmp:1 = rm47 - rm03; resultflags(tmp); }
+
+# CMP WRjd,WRjs
+# NOTE: Encoding in manual conflicts with CMP WRj,#data (ophi=14), modified for consistency with similar insrtuctions (e.g., ADD, SUB)
+:CMP wrj47,wrj03	is $(GROUP3) & ophi=11 & oplo=13; wrj47 & wrj03  { subflags(wrj47,wrj03); tmp:2 = wrj47 - wrj03; resultflags(tmp); }
+
+# CMP DRkd,DRks
+:CMP drk47,drk03	is $(GROUP3) & ophi=11 & oplo=15; $(DRK47) & $(DRK03)  { subflags(drk47,drk03); tmp:4 = drk47 - drk03; resultflags(tmp); }
+
+# CMP Rm,#data
+:CMP rm47,Data	is $(GROUP3) & ophi=11 & oplo=14; rm47 & s03=0; Data  { subflags(rm47,Data); tmp:1 = rm47 - Data; resultflags(tmp); }
+
+# CMP WRj,#data16
+:CMP wrj47,Data16	is $(GROUP3) & ophi=11 & oplo=14; wrj47 & s03=4; Data16  { subflags(wrj47,Data16); tmp:2 = wrj47 - Data16; resultflags(tmp); }
+
+# CMP DRk,#0data16
+:CMP drk47,Data16x0	is $(GROUP3) & ophi=11 & oplo=14; $(DRK47) & s03=8; Data16x0  { subflags(drk47,Data16x0); tmp:4 = drk47 - Data16x0; resultflags(tmp); }
+
+# CMP DRk,#1data16
+:CMP drk47,Data16x1	is $(GROUP3) & ophi=11 & oplo=14; $(DRK47) & s03=12; Data16x1  { subflags(drk47,Data16x1); tmp:4 = drk47 - Data16x1; resultflags(tmp); }
+
+# CMP Rm,dir8
+:CMP rm47,Direct	is $(GROUP3) & ophi=11 & oplo=14; rm47 & s03=1; Direct  { subflags(rm47,Direct); tmp:1 = rm47 - Direct; resultflags(tmp); }
+
+# CMP WRj,dir8
+:CMP wrj47,Direct8w	is $(GROUP3) & ophi=11 & oplo=14; wrj47 & s03=5; Direct8w  { subflags(wrj47,Direct8w); tmp:2 = wrj47 - Direct8w; resultflags(tmp); }
+
+# CMP Rm,dir16
+:CMP rm47,Direct16b	is $(GROUP3) & ophi=11 & oplo=14; rm47 & s03=3; Direct16b  { subflags(rm47,Direct16b); tmp:1 = rm47 - Direct16b; resultflags(tmp); }
+
+# CMP WRj,dir16
+:CMP wrj47,Direct16w	is $(GROUP3) & ophi=11 & oplo=14; wrj47 & s03=7; Direct16w  { subflags(wrj47,Direct16w); tmp:2 = wrj47 - Direct16w; resultflags(tmp); }
+
+# CMP Rm,@WRj
+:CMP rm47_,AtWRjb	is $(GROUP3) & ophi=11 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { subflags(rm47_,AtWRjb); tmp:1 = rm47_ - AtWRjb; resultflags(tmp); }
+
+# CMP Rm,@DRk
+:CMP rm47_,AtDRkb	is $(GROUP3) & ophi=11 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0   { subflags(rm47_,AtDRkb); tmp:1 = rm47_ - AtDRkb; resultflags(tmp); }
+
+# CPL bit
+:CPL xBitAddr  is $(GROUP3) & ophi=10 & oplo=9; (d47=11 & s3=0 & bit02; xBitByteAddr) & xBitAddr  { tmp:1 = ~(1<<bit02); xBitByteAddr = xBitByteAddr ^ tmp; resultflags(xBitByteAddr); }
+
+# DEC Rm,#short
+# NOTE: Encoding in manual conflicts with DEC WRj,#short (s23=1), modified for consistency with similar insrtuctions (e.g., DEC)
+:DEC rm47,Short		is $(GROUP3) & ophi=1 & oplo=11; rm47 & s23=0 & $(SHORT)  { subflags(rm47,Short); rm47 = rm47 - Short; resultflags(rm47); }
+
+# DEC WRj,#short
+:DEC wrj47,Short	is $(GROUP3) & ophi=1 & oplo=11; wrj47 & s23=1 & $(SHORT)  { val:2 = zext(Short); subflags(wrj47,val); wrj47 = wrj47 - val; resultflags(wrj47); }
+
+# DEC DRk,#short
+:DEC drk47,Short	is $(GROUP3) & ophi=1 & oplo=11; $(DRK47) & s23=3 & $(SHORT)  { val:4 = zext(Short); subflags(drk47,val); drk47 = drk47 - val; resultflags(drk47); }
+
+# DIV Rmd,Rms
+:DIV rm47,rm03		is $(GROUP3) & ophi=8 & oplo=12; rm47 & rm47_d1 & rm47_d2 & rm03  { rm47_d2 = rm47 / rm03; rm47_d1 = rm47 % rm03; resultflags(rm47_d2); }
+
+# DIV WRjd,WRjs
+:DIV wrj47,wrj03	is $(GROUP3) & ophi=8 & oplo=13; wrj47 & wrj47_d1 & wrj47_d2 & wrj03  { wrj47_d2 = wrj47 / wrj03; wrj47_d1 = wrj47 % wrj03; resultflags(wrj47_d2); }
+
+# ECALL addr24
+:ECALL Addr24		is $(GROUP3) & ophi=9 & oplo=10; Addr24	{ ptr:3 = inst_next; push24(ptr); call Addr24; }
+
+# ECALL @DRk
+:ECALL AtDRkt		is $(GROUP3) & ophi=9 & oplo=9; $(ATDRK) & AtDRkt & s03=8	{ ptr:3 = inst_next; push24(ptr); call [AtDRkt]; }
+
+# EJMP addr24
+:EJMP Addr24		is $(GROUP3) & ophi=8 & oplo=10; Addr24	{ goto Addr24; }
+
+# EJMP @DRk
+:EJMP AtDRkt		is $(GROUP3) & ophi=8 & oplo=9; $(ATDRK) & AtDRkt & s03=8	{ goto [AtDRkt]; }
+
+# ERET
+:ERET 	is $(GROUP3) & ophi=10 & oplo=10  { pc:3 = 0; pop24(pc); return [pc]; }
+
+# INC Rm,#short
+:INC rm47,Short	is $(GROUP3) & ophi=0 & oplo=11; rm47 & s23=0 & $(SHORT)  { addflags(rm47,Short); rm47 = rm47 + Short; resultflags(rm47); }
+
+# INC WRj,#short
+:INC wrj47,Short	is $(GROUP3) & ophi=0 & oplo=11; wrj47 & s23=1 & $(SHORT)  { val:2 = zext(Short); addflags(wrj47,val); wrj47 = wrj47 + val; resultflags(wrj47); }
+
+# INC DRk,#short
+:INC drk47,Short	is $(GROUP3) & ophi=0 & oplo=11; $(DRK47) & s23=3 & $(SHORT)  { val:4 = zext(Short); addflags(drk47,val); drk47 = drk47 + val; resultflags(drk47); }
+
+# JB bit,rel
+:JB xBitAddr,Rel8	is $(GROUP3) & ophi=10 & oplo=9; (d47=2 & s3=0 & bit02; xBitByteAddr) & xBitAddr; Rel8	{ if (((xBitByteAddr>>bit02)&1) == 1:1) goto Rel8; }
+
+# JBC bit,rel
+:JBC xBitAddr,Rel8	is $(GROUP3) & ophi=10 & oplo=9; (d47=1 & s3=0 & bit02; xBitByteAddr) & xBitAddr; Rel8	{ tmp:1 = 1<<bit02; if ((xBitByteAddr & tmp)==0) goto inst_next; xBitByteAddr = xBitByteAddr & ~tmp; goto Rel8; }
+
+# JE rel
+:JE Rel8	is $(GROUP3) & ophi=6 & oplo=8; Rel8		{ if ($(Z)==1) goto Rel8; }
+
+# JG rel
+:JG Rel8	is $(GROUP3) & ophi=3 & oplo=8; Rel8		{ if ($(Z)==0 && $(CY)==0) goto Rel8; }
+
+# JLE rel
+:JLE Rel8	is $(GROUP3) & ophi=2 & oplo=8; Rel8		{ if ($(Z)==1 || $(CY)==1) goto Rel8; }
+
+# JNB bit,rel
+:JNB xBitAddr,Rel8	is $(GROUP3) & ophi=10 & oplo=9; (d47=3 & s3=0 & bit02; xBitByteAddr) & xBitAddr; Rel8	{ if (((xBitByteAddr>>bit02)&1)==0:1) goto Rel8; }
+
+# JNE rel
+:JNE Rel8	is $(GROUP3) & ophi=7 & oplo=8; Rel8		{ if ($(Z)==0) goto Rel8; }
+
+# JSG rel
+:JSG Rel8	is $(GROUP3) & ophi=1 & oplo=8; Rel8		{ if ($(Z)==0 && $(N)==$(OV)) goto Rel8; }
+
+# JSGE rel
+:JSGE Rel8	is $(GROUP3) & ophi=5 & oplo=8; Rel8		{ if ($(N)==$(OV)) goto Rel8; }
+
+# JSL rel
+:JSL Rel8	is $(GROUP3) & ophi=4 & oplo=8; Rel8		{ if ($(N)!=$(OV)) goto Rel8; }
+
+# JSLE rel
+:JSLE Rel8	is $(GROUP3) & ophi=0 & oplo=8; Rel8		{ if ($(Z)==1 || $(N)!=$(OV)) goto Rel8; }
+
+# LCALL @WRj
+:LCALL AtWRjw		is $(GROUP3) & ophi=9 & oplo=9; AtWRjw & s03=4	{ ptr:3 = inst_next; push16(ptr:2); pc:3 = (ptr & 0xff0000) + zext(AtWRjw); call [pc]; }
+
+# LJMP @WRj
+:LJMP AtWRjw		is $(GROUP3) & ophi=8 & oplo=9; AtWRjw & s03=4	{ ptr:3 = inst_next; pc:3 = (ptr & 0xff0000) + zext(AtWRjw); goto [pc]; }
+
+# MOV Rmd,Rms
+:MOV rm47,rm03		is $(GROUP3) & ophi=7 & oplo=12; rm47 & rm03   { rm47 = rm03; }
+
+# MOV WRjd,WRjs
+:MOV wrj47,wrj03	is $(GROUP3) & ophi=7 & oplo=13; wrj47 & wrj03   { wrj47 = wrj03; }
+
+# MOV DRkd,DRks
+:MOV drk47,drk03	is $(GROUP3) & ophi=7 & oplo=15; drk47 & drk03   { drk47 = drk03; }
+
+# MOV Rm,#data
+:MOV rm47,Data		is $(GROUP3) & ophi=7 & oplo=14; rm47 & s03=0; Data	{ rm47 = Data; }
+
+# MOV WRj,#data16
+:MOV wrj47,Data16	is $(GROUP3) & ophi=7 & oplo=14; wrj47 & s03=4; Data16	{ wrj47 = Data16; }
+
+# MOV DRk,#0data16
+:MOV drk47,Data16x0	is $(GROUP3) & ophi=7 & oplo=14; drk47 & s03=8; Data16x0	{ drk47 = Data16x0; }
+
+# MOV DRk,#1data16
+:MOV drk47,Data16x1	is $(GROUP3) & ophi=7 & oplo=14; drk47 & s03=12; Data16x1	{ drk47 = Data16x1; }
+
+# MOV Rm,dir8
+:MOV rm47,Direct	is $(GROUP3) & ophi=7 & oplo=14; rm47 & s03=1; Direct	{ rm47 = Direct; }
+
+# MOV WRj,dir8
+:MOV wrj47,Direct8w	is $(GROUP3) & ophi=7 & oplo=14; wrj47 & s03=5; Direct8w	{ wrj47 = Direct8w; }
+
+# MOV DRk,dir8
+:MOV drk47,Direct8w	is $(GROUP3) & ophi=7 & oplo=14; drk47 & s03=13; Direct8w	{ drk47 = zext(Direct8w); }
+
+# MOV Rm,dir16
+:MOV rm47,Direct16b		is $(GROUP3) & ophi=7 & oplo=14; rm47 & s03=3; Direct16b	{ rm47 = Direct16b; }
+
+# MOV WRj,dir16
+:MOV wrj47,Direct16w	is $(GROUP3) & ophi=7 & oplo=14; wrj47 & s03=7; Direct16w	{ wrj47 = Direct16w; }
+
+# MOV DRk,dir16
+:MOV drk47,Direct16d	is $(GROUP3) & ophi=7 & oplo=14; drk47 & s03=15; Direct16d	{ drk47 = Direct16d; }
+
+# MOV Rm,@WRj
+:MOV rm47_,AtWRjb	is $(GROUP3) & ophi=7 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { rm47_ = AtWRjb; }
+
+# MOV Rm,@DRk
+:MOV rm47_,AtDRkb	is $(GROUP3) & ophi=7 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0   { rm47_ = AtDRkb; }
+
+# MOV WRjd,@WRjs
+:MOV wrj47_,AtWRjw	is $(GROUP3) & ophi=0 & oplo=11; AtWRjw & s03=8; wrj47_ & s03_=0   { wrj47_ = AtWRjw; }
+
+# MOV WRj,@DRk
+:MOV wrj47_,AtDRkw	is $(GROUP3) & ophi=0 & oplo=11; $(ATDRK) & AtDRkw & s03=10; wrj47_ & s03_=0   { wrj47_ = AtDRkw; }
+
+# MOV dir8,Rm
+:MOV Direct,rm47	is $(GROUP3) & ophi=7 & oplo=10; rm47 & s03=1; Direct	{ Direct = rm47; }
+
+# MOV dir8,WRj
+# TODO: !! Verify direct byte write restriction to SFR registers
+:MOV Direct8w,wrj47	is $(GROUP3) & ophi=7 & oplo=10; wrj47 & s03=5; bank=0 & Direct8w	{ Direct8w = wrj47; }
+:MOV Direct,wrj47	is $(GROUP3) & ophi=7 & oplo=10; wrj47 & s03=5; bank=1 & Direct	{ Direct = wrj47:1; }
+
+# MOV dir8,DRk
+# TODO: !! Verify byte/word write restriction to internal memory (00-7f)
+# TODO: !! Verify byte write restriction to SFR registers
+:MOV Direct8w,drk47	is $(GROUP3) & ophi=7 & oplo=10; $(DRK47) & s03=13; bank=0 & Direct8w	{ Direct8w = drk47:2; }
+:MOV Direct,drk47	is $(GROUP3) & ophi=7 & oplo=10; $(DRK47) & s03=13; bank=1 & Direct	{ Direct = drk47:1; }
+
+# MOV dir16,Rm
+:MOV Direct16b,rm47	is $(GROUP3) & ophi=7 & oplo=10; rm47 & s03=3; Direct16b	{ Direct16b = rm47; }
+
+# MOV dir16,WRj
+:MOV Direct16w,wrj47	is $(GROUP3) & ophi=7 & oplo=10; wrj47 & s03=7; Direct16w	{ Direct16w = wrj47; }
+
+# MOV dir16,DRk
+:MOV Direct16d,drk47	is $(GROUP3) & ophi=7 & oplo=10; $(DRK47) & s03=15; Direct16d	{ Direct16d = drk47; }
+
+# MOV @WRj,Rm
+:MOV AtWRjb,rm47_	is $(GROUP3) & ophi=7 & oplo=10; AtWRjb & s03=9; rm47_ & s03_=0   { AtWRjb = rm47_; }
+
+# MOV @DRk,Rm
+:MOV AtDRkb,rm47_	is $(GROUP3) & ophi=7 & oplo=10; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0   { AtDRkb = rm47_; }
+
+# MOV @WRjd,WRjs
+:MOV AtWRjw,wrj47_	is $(GROUP3) & ophi=1 & oplo=11; AtWRjw & s03=8; wrj47_ & s03_=0   { AtWRjw = wrj47_; }
+
+# MOV @DRk,WRj
+:MOV AtDRkw,wrj47_	is $(GROUP3) & ophi=1 & oplo=11; $(ATDRK) & AtDRkw & s03=10; wrj47_ & s03_=0   { AtDRkw = wrj47_; }
+
+# MOV Rm,@WRj+dis16
+:MOV rm47,AtWRj03Dis16b	 is $(GROUP3) & ophi=0 & oplo=9; rm47 ... & AtWRj03Dis16b   { AtWRj03Dis16b = rm47; }
+
+# MOV WRj,@WRj+dis16
+:MOV wrj47,AtWRj03Dis16w is $(GROUP3) & ophi=4 & oplo=9; wrj47 ... & AtWRj03Dis16w   { AtWRj03Dis16w = wrj47; }
+
+# MOV Rm,@DRk+dis24
+:MOV rm47,AtDRk03Dis24b	 is $(GROUP3) & ophi=2 & oplo=9; (rm47 & $(DRK03)) ... & AtDRk03Dis24b   { AtDRk03Dis24b = rm47; }
+
+# MOV WRj,@DRk+dis24
+:MOV wrj47,AtDRk03Dis24w is $(GROUP3) & ophi=6 & oplo=9; (wrj47 & $(DRK03)) ... & AtDRk03Dis24w   { AtDRk03Dis24w = wrj47; }
+
+# MOV @WRj+dis16,Rm
+:MOV AtWRj47Dis16b,rm03	 is $(GROUP3) & ophi=1 & oplo=9; rm03 ... & AtWRj47Dis16b { AtWRj47Dis16b = rm03; }
+
+# MOV @WRj+dis16,WRj
+:MOV AtWRj47Dis16w,wrj03 is $(GROUP3) & ophi=5 & oplo=9; wrj03 ... & AtWRj47Dis16w { AtWRj47Dis16w = wrj03; }
+
+# MOV @DRk+dis24,Rm
+:MOV AtDRk47Dis24b,rm03  is $(GROUP3) & ophi=3 & oplo=9; (rm03 & $(DRK47)) ... & AtDRk47Dis24b  { AtDRk47Dis24b = rm03; }
+
+# MOV @DRk+dis24,WRj
+:MOV AtDRk47Dis24w,wrj03  is $(GROUP3) & ophi=7 & oplo=9; (wrj03 & $(DRK47)) ... & AtDRk47Dis24w  { AtDRk47Dis24w = wrj03; }
+
+# MOV bit,C
+:MOV xBitAddr,"CY"	is $(GROUP3) & ophi=10 & oplo=9; (d47=9 & s3=0 & bit02; xBitByteAddr) & xBitAddr { xBitByteAddr = (xBitByteAddr) | (1<<bit02); }
+
+# MOV C,bit
+:MOV "CY",xBitAddr	is $(GROUP3) & ophi=10 & oplo=9; (d47=10 & s3=0 & bit02; xBitByteAddr) & xBitAddr { $(CY)= ((xBitByteAddr>>bit02)&1); }
+
+
+# MOVH DRk,#data16
+:MOVH drk47,Data16x0	is $(GROUP3) & ophi=7 & oplo=14; $(DRK47) & s03=12; Data16x0  { drk47 = (drk47 & 0xffff0000) | (Data16x0 << 16); }
+
+# MOVS WRj,Rm
+:MOVZ wrj47,rm03  is $(GROUP3) & ophi=1 & oplo=10; wrj47 & rm03  { wrj47 = sext(rm03); }
+
+# MOVZ WRj,Rm
+:MOVZ wrj47,rm03  is $(GROUP3) & ophi=0 & oplo=10; wrj47 & rm03  { wrj47 = zext(rm03); }
+
+# MUL Rmd,Rms
+:MUL rm47,rm03	is $(GROUP3) & ophi=10 & oplo=12; rm47 & rm03 & rm47_d1 & rm47_d2  { result:2 = zext(rm47) * zext(rm03); tmp:2 = result>>8; rm47_d1 = tmp:1; rm47_d2 = result:1; }
+
+# MUL WRjd,WRjs
+:MUL wrj47,wrj03	is $(GROUP3) & ophi=10 & oplo=13; wrj47 & wrj03 & wrj47_d1 & wrj47_d2  { result:4 = zext(wrj47) * zext(wrj03); tmp:4 = result>>16; wrj47_d1 = tmp:2; wrj47_d2 = result:2; }
+
+# ORL Rmd,Rms
+:ORL rm47,rm03	is $(GROUP3) & ophi=4 & oplo=12; rm47 & rm03  { rm47 = rm47 | rm03; resultflags(rm47); }
+
+# ORL WRjd,WRjs
+:ORL wrj47,wrj03	is $(GROUP3) & ophi=4 & oplo=13; wrj47 & wrj03  { wrj47 = wrj47 | wrj03; resultflags(wrj47); }
+
+# ORL Rm,#data
+:ORL rm47,Data	is $(GROUP3) & ophi=4 & oplo=14; rm47 & s03=0; Data    { rm47 = rm47 | Data; resultflags(rm47); }
+
+# ORL WRj,#data16
+:ORL wrj47,Data16	is $(GROUP3) & ophi=4 & oplo=14; wrj47 & s03=4; Data16  { wrj47 = wrj47 | Data16; resultflags(wrj47); }
+
+# ORL Rm,dir8
+:ORL rm47,Direct	is $(GROUP3) & ophi=4 & oplo=14; rm47 & s03=1; Direct  { rm47 = rm47 | Direct; resultflags(rm47); }
+
+# ORL WRj,dir8
+:ORL wrj47,Direct8w	is $(GROUP3) & ophi=4 & oplo=15; wrj47 & s03=5; Direct8w  { wrj47 = wrj47 | Direct8w; resultflags(wrj47); }
+
+# ORL Rm,dir16
+:ORL rm47,Direct16b	is $(GROUP3) & ophi=4 & oplo=14; rm47 & s03=3; Direct16b  { rm47 = rm47 | Direct16b; resultflags(rm47); }
+
+# ORL WRj,dir16
+:ORL wrj47,Direct16w	is $(GROUP3) & ophi=4 & oplo=14; wrj47 & s03=7; Direct16w  { wrj47 = wrj47 | Direct16w; resultflags(wrj47); }
+
+# ORL Rm,@WRj
+:ORL rm47_,AtWRjb	is $(GROUP3) & ophi=4 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { rm47_ = rm47_ | AtWRjb; resultflags(rm47_); }
+
+# ORL Rm,@DRk
+:ORL rm47_,AtDRkb	is $(GROUP3) & ophi=4 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0  { rm47_ = rm47_ | AtDRkb; resultflags(rm47_); }
+
+# ORL C,bit
+:ORL "CY",xBitAddr	is $(GROUP3) & ophi=10 & oplo=9; (d47=7 & s3=0 & bit02; xBitByteAddr) & xBitAddr { $(CY) = ((xBitByteAddr>>bit02)&1) | $(CY); }
+
+# ORL bit,C
+:ORL "CY",xBitAddr2	is $(GROUP3) & ophi=10 & oplo=9; (d47=14 & s3=0 & bit02; xBitByteAddr) & xBitAddr2 { $(CY) = ((xBitByteAddr>>bit02)&1) | ($(CY) == 0); }
+
+# POP Rm
+:POP rm47	is $(GROUP3) & ophi=13 & oplo=10; rm47 & s03=8  { pop8(rm47); }
+
+# POP WRj
+:POP wrj47	is $(GROUP3) & ophi=13 & oplo=10; wrj47 & s03=9  { pop16(wrj47); }
+
+# POP DRk
+:POP drk47	is $(GROUP3) & ophi=13 & oplo=10; $(DRK47) & s03=11 { pop16(drk47); }
+
+# PUSH #data
+# TODO: manual did not specify A5 prefix, but would otherwise conflict with the XCH A,Rn instruction (8051)
+:PUSH Data	 is $(GROUP3) & ophi=12 & oplo=10; d47=0 & s03=2; Data  { push8(Data); }
+
+# PUSH #data16
+:PUSH Data16	is $(GROUP3) & ophi=12 & oplo=10; d47=0 & s03=6; Data16  { push16(Data16); }
+
+# PUSH Rm
+:PUSH rm47	is $(GROUP3) & ophi=12 & oplo=10; rm47 & s03=8  { push8(rm47); }
+
+# PUSH WRj
+:PUSH wrj47	is $(GROUP3) & ophi=12 & oplo=10; wrj47 & s03=9  { push16(wrj47); }
+
+# PUSH DRk
+:PUSH drk47	is $(GROUP3) & ophi=12 & oplo=10; $(DRK47) & s03=11 { push16(drk47); }
+
+# SETB bit
+:SETB xBitAddr^"."^xBitByteAddr   is $(GROUP3) & ophi=10 & oplo=9; (d47=13 & s3=0 & bit02; xBitByteAddr) & xBitAddr { xBitBtyteAddr:1 = (xBitByteAddr) | (1 << bit02); }
+
+# SLL Rm
+:SLL rm47	is $(GROUP3) & ophi=3 & oplo=14; rm47 & s03=0  { $(CY) = ((rm47>>7) & 1); rm47 = rm47 << 1; resultflags(rm47); }
+
+# SLL WRj
+:SLL wrj47	is $(GROUP3) & ophi=3 & oplo=14; wrj47 & s03=4  { $(CY) = ((wrj47>>15) & 1) == 1; wrj47 = wrj47 << 1; resultflags(wrj47); }
+
+# SRA Rm
+:SRA rm47	is $(GROUP3) & ophi=0 & oplo=14; rm47 & s03=0  { $(CY) = rm47 & 1; rm47 = rm47 s>> 1; resultflags(rm47); }
+
+# SRA WRj
+:SRA wrj47	is $(GROUP3) & ophi=0 & oplo=14; wrj47 & s03=4  { $(CY) = (wrj47 & 1) == 1; wrj47 = wrj47 s>> 1; resultflags(wrj47); }
+
+# SRL Rm
+:SRL rm47	is $(GROUP3) & ophi=1 & oplo=14; rm47 & s03=0  { $(CY) = rm47 & 1; rm47 = rm47 >> 1; resultflags(rm47); }
+
+# SRL WRj
+:SRL wrj47	is $(GROUP3) & ophi=1 & oplo=14; wrj47 & s03=4  { $(CY) = (wrj47 & 1) == 1; wrj47 = wrj47 >> 1; resultflags(wrj47); }
+
+
+# SUB Rmd,Rms
+:SUB rm47,rm03	is $(GROUP3) & ophi=9 & oplo=12; rm47 & rm03  { subflags(rm47,rm03); rm47 = rm47 - rm03; resultflags(rm47); }
+
+# SUB WRjd,WRjs
+:SUB wrj47,wrj03	is $(GROUP3) & ophi=9 & oplo=13; wrj47 & wrj03  { subflags(wrj47,wrj03); wrj47 = wrj47 - wrj03; resultflags(wrj47); }
+
+# SUB DRkd,DRks
+:SUB drk47,drk03  is $(GROUP3) & ophi=9 & oplo=15; $(DRK47) & $(DRK03)   { subflags(drk47,drk03); drk47 = drk47 - drk03; resultflags(drk47);}
+
+# SUB Rm,#data
+:SUB rm47,Data	is $(GROUP3) & ophi=9 & oplo=14; rm47 & s03=0; Data    { subflags(rm47,Data); rm47 = rm47 - Data; resultflags(rm47);}
+
+# SUB WRj,#data16
+:SUB wrj47,Data16	is $(GROUP3) & ophi=9 & oplo=14; wrj47 & s03=4; Data16  { subflags(wrj47,Data16); wrj47 = wrj47 - Data16; resultflags(wrj47);}
+
+# SUB DRk,#data16
+:SUB drk47,Data16x0	is $(GROUP3) & ophi=9 & oplo=14; $(DRK47) & s03=8; Data16x0  { subflags(drk47,Data16x0); drk47 = drk47 - Data16x0; resultflags(drk47);}
+
+# SUB Rm,dir8
+:SUB rm47,Direct	is $(GROUP3) & ophi=9 & oplo=14; rm47 & s03=1; Direct  { subflags(rm47,Direct); rm47 = rm47 - Direct; resultflags(rm47);}
+
+# SUB WRj,dir8
+:SUB wrj47,Direct8w	is $(GROUP3) & ophi=9 & oplo=14; wrj47 & s03=5; Direct8w  { subflags(wrj47,Direct8w); wrj47 = wrj47 - Direct8w; resultflags(wrj47);}
+
+# SUB Rm,dir16
+:SUB rm47,Direct16b	is $(GROUP3) & ophi=9 & oplo=14; rm47 & s03=3; Direct16b  { subflags(rm47,Direct16b); rm47 = rm47 - Direct16b; resultflags(rm47);}
+
+# SUB WRj,dir16
+:SUB wrj47,Direct16w	is $(GROUP3) & ophi=9 & oplo=14; wrj47 & s03=7; Direct16w  { subflags(wrj47,Direct16w); wrj47 = wrj47 - Direct16w; resultflags(wrj47);}
+
+# SUB Rm,@WRj
+:SUB rm47_,AtWRjb	is $(GROUP3) & ophi=9 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { subflags(rm47_,AtWRjb); rm47_ = rm47_ - AtWRjb; resultflags(rm47_);}
+
+# SUB Rm,@DRk
+:SUB rm47_,AtDRkb	is $(GROUP3) & ophi=9 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0  { subflags(rm47_,AtDRkb); rm47_ = rm47_ - AtDRkb; resultflags(rm47_);}
+
+
+# XRL Rmd,Rms
+:XRL rm47,rm03	is $(GROUP3) & ophi=6 & oplo=12; rm47 & rm03  { rm47 = rm47 ^ rm03; resultflags(rm47); }
+
+# XRL WRjd,WRjs
+:XRL wrj47,wrj03	is $(GROUP3) & ophi=6 & oplo=13; wrj47 & wrj03  { wrj47 = wrj47 ^ wrj03; resultflags(wrj47); }
+
+# XRL Rm,#data
+:XRL rm47,Data	is $(GROUP3) & ophi=6 & oplo=14; rm47 & s03=0; Data    { rm47 = rm47 ^ Data; resultflags(rm47); }
+
+# XRL WRj,#data16
+:XRL wrj47,Data16	is $(GROUP3) & ophi=6 & oplo=14; wrj47 & s03=4; Data16  { wrj47 = wrj47 ^ Data16; resultflags(wrj47); }
+
+# XRL Rm,dir8
+:XRL rm47,Direct	is $(GROUP3) & ophi=6 & oplo=14; rm47 & s03=1; Direct  { rm47 = rm47 ^ Direct; resultflags(rm47); }
+
+# XRL WRj,dir8
+:XRL wrj47,Direct8w	is $(GROUP3) & ophi=6 & oplo=14; wrj47 & s03=5; Direct8w  { wrj47 = wrj47 ^ Direct8w; resultflags(wrj47); }
+
+# XRL Rm,dir16
+:XRL rm47,Direct16b	is $(GROUP3) & ophi=6 & oplo=14; rm47 & s03=3; Direct16b  { rm47 = rm47 ^ Direct16b; resultflags(rm47); }
+
+# XRL WRj,dir16
+:XRL wrj47,Direct16w	is $(GROUP3) & ophi=6 & oplo=14; wrj47 & s03=7; Direct16w  { wrj47 = wrj47 ^ Direct16w; resultflags(wrj47); }
+
+# XRL Rm,@Wrj
+:XRL rm47_,AtWRjb	is $(GROUP3) & ophi=6 & oplo=14; AtWRjb & s03=9; rm47_ & s03_=0   { rm47_ = rm47_ ^ AtWRjb; resultflags(rm47_); }
+
+# XRL Rm,@Drk
+:XRL rm47_,AtDRkb	is $(GROUP3) & ophi=6 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0  { rm47_ = rm47_ ^ AtDRkb; resultflags(rm47_); }

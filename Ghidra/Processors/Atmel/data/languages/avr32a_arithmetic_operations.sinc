@@ -1,0 +1,728 @@
+#---------------------------------------------------------------------
+# 8.3.2 Arithmetic Operations
+#---------------------------------------------------------------------
+macro cpcflags(OP1, OP2, RES) {
+
+        ## The REAL way to do it (in the processor spec)
+        #V = (OP1[31,1] && !(OP2[31,1]) && !(RES[31,1])) ||
+        #    (!(OP1[31,1]) && OP2[31,1] && RES[31,1]);
+
+        V = sborrow(OP1, OP2);
+
+        N = RES s< 0;
+        Z = RES == 0 & Z;
+
+        ## The REAL way to do it (in the processor spec)
+        C = (!(OP1[31,1]) && (OP2[31,1])) ||
+            (OP2[31,1] && RES[31,1]) ||
+            (!(OP1[31,1]) && RES[31,1]);
+
+        #C = OP1 < OP2;
+        CZNVTOSR();
+}
+
+# DUPLICATE CPCFLAGS TO ACCOUNT FOR OP2 == 0
+macro cpcflags0(OP1, RES) {
+
+        ## The REAL way to do it (in the processor spec)
+        #V = (OP1[31,1] && !(OP2[31,1]) && !(RES[31,1])) ||
+        #    (!(OP1[31,1]) && OP2[31,1] && RES[31,1]);
+
+        V = sborrow(OP1, 0);
+
+        N = RES s< 0;
+        Z = RES == 0 & Z;
+
+        ## The REAL way to do it (in the processor spec)
+        #C = (!(OP1[31,1]) && (OP2[31,1])) ||
+        #    (OP2[31,1] && RES[31,1]) ||
+        #    (!(OP1[31,1]) && RES[31,1]);
+
+        C = 0;
+        CZNVTOSR();
+}
+
+macro acrflags(OP1, tmpC, RES) {
+	## The REAL way to do it (in the processor spec)
+	#  V = RES[31,1] && !Rd[31,1];
+	V = scarry(OP1, tmpC);
+	N = RES s< 0;
+	Z = ((RES == 0) && Z);
+	## The REAL way to do it (in the processor spec)
+	#  C = RES[31,1] && Rd[31,1];
+	C = carry(OP1, tmpC);
+	CZNVTOSR();
+}
+#---------------------------------------------------------------------
+# ABS - Absolute Value
+# I.    {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+#ABS Format I
+# Operation:	Rd <- abs(Rd);
+# Syntax: 		abs Rd
+# 010 1110 00100 dddd	(Opcode Form)
+# 0101 1100 0100 dddd	(Byte half Form)
+:ABS rd0 is rd0 & op13_3=0x2 & op9_4=0xe & op4_5=0x4 {
+	rd0 = abs(rd0);	
+	ZSTATUS(rd0); 
+}
+
+
+#---------------------------------------------------------------------
+# ACR - Add carry to register
+# I.    {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+#ACR Format I
+# Operation: 	Rd <- Rd + C;
+# Syntax: 		acr Rd
+# 010 1110 00000 dddd 	(Opcode Form)
+# 0101 1100 0000 dddd 	(Byte half Form)
+:ACR rd0 is rd0 & op13_3=0x2 & op9_4=0xe & op4_5=0x0 {
+	tmpRd0:4 = rd0;
+	tmpC:4 = zext(C);
+	rd0 = tmpRd0 + tmpC;
+	acrflags(tmpRd0, tmpC, rd0);
+}
+
+:ACR rd0 is rd0 & op13_3=0x2 & op9_4=0xe & op4_5=0x0 & rd0=0xf {
+	tmpRd0:4 = inst_start;
+	tmpC:4 = zext(C);
+	PC = tmpRd0 + tmpC;
+	acrflags(tmpRd0, tmpC, PC);
+	goto [PC];
+}
+
+#---------------------------------------------------------------------
+# ADC - Add with Carry
+# I.   {d, x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+#ADC Format I
+# Operation: 	Rd <- Rx + Ry + C;
+# Syntax:		adc Rd, Rx, Ry
+# 111 xxxx 00000 yyyy 0000 00000100 dddd	(Opcode Form)
+# 111x xxx0 0000 yyyy 0000 0000 0100 dddd	(Byte half Form)
+:ADC erd0, RX9A, RY0A is  op13_3=0x7 & RX9A & op4_5=0x0 & RY0A; eop12_4=0x0 & eop4_8=0x4 & erd0 {
+	erd0 = RX9A + RY0A + zext(C);
+}
+
+:ADC erd0, RX9A, RY0A is  op13_3=0x7 & RX9A & op4_5=0x0 & RY0A; eop12_4=0x0 & eop4_8=0x4 & erd0 & erd0=0xf{
+	PC = RX9A + RY0A + zext(C);
+	goto [PC];
+}
+
+
+#---------------------------------------------------------------------
+# ADD - Add without Carry
+# I.    {d, s} -> {0, 1, ..., 15}
+# II.   {d, x, y} -> {0, 1, ..., 15}
+#               sa -> {0, 1, 2, 3}
+#---------------------------------------------------------------------
+# ADD Format I
+# Operation:    Rd <- Rd + Rs
+# Syntax:               add Rd, Rs
+# 000s sss0 0000 dddd
+:ADD rd0, RS9A is op13_3=0x0 & op4_5=0x0 & rd0 & RS9A {
+        tmpRd0:4 = rd0;
+        rd0 = RS9A + tmpRd0;
+        addflags(tmpRd0, RS9A, rd0);
+}
+
+:ADD PC, RS9A is op13_3=0x0 & op4_5=0x0 & rd0 & RS9A & rs0=0xf & PC {
+        tmpRd0:4 = inst_start;
+        PC = RS9A + tmpRd0;
+        addflags(tmpRd0, RS9A, PC);
+        goto [PC];
+}
+
+# ADD Format II
+# Operation:    Rd <- Rx + Ry << sa2
+# Syntax:               add Rd, Rx, Ry << sa
+# 111x xxx0 0000 yyyy   0000 0000 00tt dddd
+:ADD erd0, RX9A, RY0A^" << " shift4_2 is op13_3=7 & op4_5=0 & RX9A & RY0A;
+                                             eop6_10=0 & erd0 & shift4_2 {
+        tmp:4 = RY0A << shift4_2;
+        erd0 = RX9A + tmp;
+        addflags(RX9A, tmp, erd0);
+}
+
+:ADD erd0, RX9A, RY0A^" << " shift4_2 is op13_3=7 & op4_5=0 & RX9A & RY0A;
+                                             eop6_10=0 & erd0 & shift4_2 & ers0=0xf {
+        tmp:4 = RY0A << shift4_2;
+        PC = RX9A + tmp;
+        addflags(RX9A, tmp, PC);
+        goto [PC];
+}
+
+
+#---------------------------------------------------------------------
+# ADD{cond4} - Conditional Add
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#    {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# ADD{cond4} Format I
+# Operation: if(cond4) then
+#                Rd <- Rx + Ry
+# Syntax:    add{cond4} Rd, Rx, Ry
+# 111x xxx1 1101 yyyy   1110 cccc 0000 dddd
+
+:ADD^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=0 & ECOND_8_4 & erd0)
+{
+        build ECOND_8_4;
+        erd0 = RX9A + RY0A;
+}
+
+:ADD^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=0 & ECOND_8_4 & erd0 & erd0=0xf)
+{
+        build ECOND_8_4;
+        PC = RX9A + RY0A;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# ADDABS - Add Absolute Value
+# I.  {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# ADDABS Format I
+# Operation: Rd <- Rx + |Ry|
+# Syntax:    addabs Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1110 0100 dddd
+
+:ADDABS erd0, RX9A, RY0A is (op13_3=7 & op4_5=0 & RX9A & RY0A; eop4_12=0xe4 & erd0)
+{
+        erd0 = RX9A + abs(RY0A);
+        ZSTATUS(erd0);
+}
+
+:ADDABS erd0, RX9A, RY0A is (op13_3=7 & op4_5=0 & RX9A & RY0A; eop4_12=0xe4 & erd0 & erd0=0xf)
+{
+        PC = RX9A + abs(RY0A);
+        ZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# CP.B - Compare Byte
+# I.       {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+# CP.B Format I
+# Operation: Rd[7:0] - Rs[7:0]
+# Syntax:    cp.b Rd, Rs
+# 111s sss0 0000 dddd   0001 1000 0000 0000
+
+:CP.B RD0A, RS9A is op13_3=7 & op4_5=0 & RD0A & RS9A; eop0_16=0x1800 {
+		
+        tmp:1 = RD0A:1 - RS9A:1;
+
+        subflags(RD0A:1, RS9A:1, tmp);
+}
+
+#---------------------------------------------------------------------
+# CP.H - Compare Halfword
+# I.       {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+# CP.H Format I
+# Operation: Rd[15:0] - Rs[15:0]
+# Syntax:    cp.h Rd, Rs
+# 111s sss0 0000 dddd   0001 1001 0000 0000
+
+:CP.H RD0A, RS9A is op13_3=7 & op4_5=0 & RD0A & RS9A; eop0_16=0x1900 {
+        tmp:2 = RD0A:2 - RS9A:2;
+        subflags(RD0A:2, RS9A:2, tmp);
+}
+
+#---------------------------------------------------------------------
+# CP.W - Compare Word
+# I.       {d, s} -> {0, 1, ..., 15}
+# II.      d -> {0, 1, ..., 15}
+#          imm -> {-32, -31, ..., 31}
+# III.     d -> {0, 1, ..., 15}
+#          imm -> {-1048576, -1048575, ..., 1048575}
+#---------------------------------------------------------------------
+# CP.W Format I
+# Operation: Rd - Rs
+# Syntax:    cp.w Rd, Rs
+# 000s sss0 0011 dddd
+
+:CP.W RD0A, RS9A is op13_3=0x0 & op4_5=0x3 & RD0A & RS9A {
+        tmp:4 = RD0A - RS9A;
+        subflags(RD0A, RS9A, tmp);
+}
+
+# CP.W Format II
+# Operation: Rd - SE(imm6)
+# Syntax:    cp.w Rd, imm
+# 0101 10ii iiii dddd
+
+:CP.W RD0A, imm4_6 is op10_6=0x16 & imm4_6 & RD0A {
+        tmp:4 = RD0A - imm4_6;
+        subflags(RD0A, imm4_6, tmp);
+}
+
+# CP.W Format III
+# Operation: Rd - SE(imm21)
+# Syntax:    cp.w Rd, imm
+# 111i iii0 010i dddd   iiii iiii iiii iiii
+
+:CP.W RD0A, imm is op13_3=0x7 & op5_4=0x2 & imm9_4 & imm4_1 & RD0A; imm16
+        [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
+{
+        tmp:4 = RD0A - imm;
+        subflags(RD0A, imm, tmp);
+}
+
+#---------------------------------------------------------------------
+# CPC - Compare with Carry
+# I.    {d, s} -> {0, 1, ..., 15}
+# II.   d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# CPC Format I
+# Operation:  Rd - Rs - C
+# Syntax:     cpc Rd, Rs
+# 111s sss0 0000 dddd   0001 0011 0000 0000
+
+:CPC RD0A, RS9A is op13_3=0x7 & op4_5=0x0 & RD0A & RS9A ; eop0_16=0x1300
+{
+        temp:4 = RD0A - RS9A - zext(C);
+        cpcflags(RD0A, RS9A, temp);
+}
+
+# CPC Format II
+# Operation:  Rd - C
+# Syntax:     cpc Rd
+# 0101 1100 0010 dddd
+
+:CPC RD0A is op4_12=0x5c2 & RD0A
+{
+        temp:4 = RD0A - zext(C);
+        cpcflags0(RD0A, temp);
+}
+
+#---------------------------------------------------------------------
+# MAX - Return Maximum Value
+# I.       {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MAX Format I
+# Operation: if Rx > Ry
+#                Rd <- Rx;
+#            else
+#                Rd <- Ry;
+# Syntax:    max Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1100 0100 dddd
+
+:MAX erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0xc4 & erd0
+{
+        rxgt:4 = zext(RX9A s> RY0A);
+        rxle:4 = zext(RX9A s<= RY0A);
+        erd0 = RX9A * rxgt + RY0A * rxle;
+}
+
+:MAX erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0xc4 & erd0 & erd0=0xf
+{
+        rxgt:4 = zext(RX9A s> RY0A);
+        rxle:4 = zext(RX9A s<= RY0A);
+        PC = RX9A * rxgt + RY0A * rxle;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# MIN - Return Minimum Value
+# I.       {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MIN Format I
+# Operation: if Rx < Ry
+#                Rd <- Rx;
+#            else
+#                Rd <- Ry;
+# Syntax:    min Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1101 0100 dddd
+
+:MIN erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0xd4 & erd0
+{
+        rxlt:4 = zext(RX9A s< RY0A);
+        rxge:4 = zext(RX9A s>= RY0A);
+        erd0 = RX9A * rxlt + RY0A * rxge;
+}
+
+:MIN erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0xd4 & erd0 & erd0=0xf
+{
+        rxlt:4 = zext(RX9A s< RY0A);
+        rxge:4 = zext(RX9A s>= RY0A);
+        PC = RX9A * rxlt + RY0A * rxge;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# NEG - Compare Word
+# I.       {d, s} -> {0, 1, ..., 15}
+# II.      d -> {0, 1, ..., 15}
+#          imm -> {-32, -31, ..., 31}
+# III.     d -> {0, 1, ..., 15}
+#          imm -> {-1048576, -1048575, ..., 1048575}
+#---------------------------------------------------------------------
+
+# NEG Format I
+# Operation: Rd <- 0 - Rd
+# Syntax:    neg Rd
+# 0101 1100 0011 dddd
+
+:NEG rd0 is op4_12=0x5c3 & rd0 {
+        save:4 = rd0;
+        rd0 = -rd0;
+        subflags(0, save, rd0);
+}
+
+:NEG rd0 is op4_12=0x5c3 & rd0 & rd0=0xf {
+		tmp:4 = inst_start;
+        PC = -tmp;
+        subflags(0, tmp, PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# RSUB - Reverse Subtract
+# I.       {d, s} -> {0, 1, ..., 15}
+# II.      {d, s} -> {0, 1, ..., 15}
+#          imm -> {-128, -127, ..., 127}
+#---------------------------------------------------------------------
+
+# RSUB Format I
+# Operation: Rd <- Rs - Rd
+# Syntax:    rsub Rd, Rs
+# 000s sss0 0010 dddd
+
+:RSUB rd0, RS9A is op13_3=0x0 & op4_5=2 & rd0 & RS9A {
+        save:4 = rd0;
+        rd0 = RS9A - rd0;
+        subflags(RS9A, save, rd0);
+}
+
+:RSUB rd0, RS9A is op13_3=0x0 & op4_5=2 & rd0 & RS9A & rd0=0xf {
+        PC = RS9A - inst_start;
+        subflags(RS9A, inst_start, PC);
+        goto [PC];
+}
+
+# RSUB Format II
+# Operation: Rd <- SE(imm8) - Rs
+# Syntax:    rsub Rd, Rs, imm
+# 111s sss0 0000 dddd   0001 0001 iiii iiii
+
+:RSUB rd0, RS9A, simm0_8 is op13_3=7 & op4_5=0 & rd0 & RS9A;
+                           eop12_4=1 & eop8_4=1 & simm0_8
+{
+        save:4 = simm0_8;
+        tmp:4 = RS9A;
+        rd0 = save - RS9A;
+        subflags(save, tmp, rd0);
+}
+
+:RSUB rd0, RS9A, simm0_8 is op13_3=7 & op4_5=0 & rd0 & RS9A & rd0=0xf;
+                           eop12_4=1 & eop8_4=1 & simm0_8
+{
+        save:4 = simm0_8;
+        tmp:4 = RS9A;
+        PC = save - RS9A;
+        subflags(save, tmp, PC);
+        goto [PC];
+}
+
+# RSUB Format II
+# Operation: Rd <- SE(imm8) - Rs
+# Syntax:    rsub Rd, Rs, imm
+# 111s sss0 0000 dddd   0001 0001 iiii iiii
+#Handles Special Case where Immediate = -0x1 and treat it as a ~ (negate)
+:RSUB rd0, RS9A, simm0_8 is op13_3=7 & op4_5=0 & rd0 & RS9A;
+                           eop12_4=1 & eop8_4=1 & simm0_8 & imm0_8=0xff
+{
+        rd0 = ~RS9A;
+        subflags(-1:4, RS9A, rd0);
+}
+
+:RSUB rd0, RS9A, simm0_8 is op13_3=7 & op4_5=0 & rd0 & RS9A & rd0=0xf;
+                           eop12_4=1 & eop8_4=1 & simm0_8 & imm0_8=0xff
+{
+        PC = ~RS9A;
+        subflags(-1:4, RS9A, PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# RSUB{cond4} - Conditional Move Register
+# I. d -> {0, 1, ..., 15}
+#    cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
+#    imm -> {-128, -127, ..., 127}
+#---------------------------------------------------------------------
+
+# RSUB{cond4} Format I
+# Operation:  if (cond4)
+#                 Rd <- SE(imm8) - Rd
+# Syntax:     rsub{cond4} Rd, imm
+# 1111 1011 1011 dddd   0000 cccc iiii iiii
+
+:RSUB^{ECOND_8_4} rd0, simm0_8 is op4_12=0xfbb & rd0 ; eop12_4=0 & simm0_8 & ECOND_8_4
+{
+        build ECOND_8_4;
+        rd0 = simm0_8 - rd0;
+}
+
+:RSUB^{ECOND_8_4} rd0, simm0_8 is op4_12=0xfbb & rd0 & rd0=0xf; eop12_4=0 & simm0_8 & ECOND_8_4
+{
+        build ECOND_8_4;
+        PC = simm0_8 - inst_start;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# SBC - Subtract with Carry
+# I.       {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SBC Format I
+# Operation:  Rd <- Rx - Ry - C
+# Syntax:     sbc Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0001 0100 dddd
+
+:SBC erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0x14 & erd0
+{
+		tmpx:4 = RX9A;
+		tmpy:4 = RY0A;
+        erd0 = RX9A - RY0A - zext(C);
+        cpcflags(tmpx, tmpy, erd0);
+}
+
+:SBC erd0, RX9A, RY0A is op13_3=0x7 & op4_5=0x0 & RX9A & RY0A ; eop4_12=0x14 & erd0 & erd0=0xf
+{
+		tmpx:4 = RX9A;
+		tmpy:4 = RY0A;
+        PC = RX9A - RY0A - zext(C);
+        cpcflags(tmpx, tmpy, PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# SCR - Subtract Carry from Register
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SCR Format I
+# Operation:  Rd <- Rd - C
+# Syntax:     scr Rd
+# 0101 1100 0001 dddd
+
+:SCR rd0 is op4_12=0x5c1 & rd0
+{
+        save:4 = rd0;
+        rd0 = rd0 - zext(C);
+
+        V = (save s< 0) && (rd0 s>= 0);
+        N = rd0 s< 0;
+        Z = (rd0 == 0) && Z;
+        C = (save s>= 0) && (rd0 s< 0);
+        CZNVTOSR();
+}
+
+:SCR rd0 is op4_12=0x5c1 & rd0 & rd0=0xf
+{
+		tmp:4 = inst_start;
+        PC = tmp - zext(C);
+
+        V = (tmp s< 0) && (PC s>= 0);
+        N = PC s< 0;
+        Z = (PC == 0) && Z;
+        C = (tmp s>= 0) && (PC s< 0);
+        CZNVTOSR();
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# SUB - Subtract (without Carry)
+#---------------------------------------------------------------------
+# SUB Format I
+# 000s sss0 0001 dddd
+
+:SUB rd0, RS9A is op13_3=0 & op4_5=1 & rd0 & RS9A {
+        save:4 = rd0;
+        tmp:4 = RS9A;
+        rd0 = rd0 - RS9A;
+        subflags(save, tmp, rd0);
+}
+
+:SUB rd0, RS9A is op13_3=0 & op4_5=1 & rd0 & RS9A & rd0=0xf {
+        tmp:4 = RS9A;
+        PC = inst_start - RS9A;
+        subflags(inst_start, tmp, rd0);
+        goto [PC];
+}
+
+# SUB Format II
+# 111x xxx0 0000 yyyy   0000 0001 00tt dddd
+
+:SUB erd0, RX9A, RY0A^" << " shift4_2 is op13_3=7 & op4_5=0 & RY0A & RX9A;
+                                           eop6_10=4 & shift4_2 & erd0 {
+        save:4 = RX9A;
+        val:4 = RY0A << shift4_2;
+        erd0 = RX9A - val;
+        subflags(save, val, erd0);
+}
+
+:SUB erd0, RX9A, RY0A^" << " shift4_2 is op13_3=7 & op4_5=0 & RY0A & RX9A;
+                                           eop6_10=4 & shift4_2 & erd0 & erd0=0xf {
+        save:4 = RX9A;
+        val:4 = RY0A << shift4_2;
+        PC = RX9A - val;
+        subflags(save, val, PC);
+        goto [PC];
+}
+
+# SUB Format III
+# 0010 iiii iiii dddd
+
+:SUB rd0, imm is op13_3=0x1 & op12_1=0 & imm4_8 & rd0 & b003=0xd
+        [ imm = imm4_8 << 2; ]
+{
+        save:4 = rd0;
+        rd0 = rd0 - imm;
+        subflags(save, imm, rd0);
+}
+
+:SUB rd0, imm4_8 is op13_3=0x1 & op12_1=0 & imm4_8 & rd0 {
+        save:4 = rd0;
+        rd0 = rd0 - imm4_8;
+        subflags(save, imm4_8, rd0);
+}
+
+:SUB rd0, imm4_8 is op13_3=0x1 & op12_1=0 & imm4_8 & rd0 & rd0=0xf {
+		tmp:4 = inst_start;
+        PC = tmp - imm4_8;
+        subflags(tmp, imm4_8, PC);
+        goto [PC];
+}
+
+# SUB Format IV
+# 111i iii0 001i dddd   iiii iiii iiii iiii
+
+:SUB rd0, imm is op13_3=0x7 & op5_4=0x1 & imm9_4 & imm4_1 & rd0; imm16
+        [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
+{
+        save:4 = rd0;
+        rd0 = rd0 - imm;
+        subflags(save, imm, rd0);
+}
+
+:SUB rd0, imm is op13_3=0x7 & op5_4=0x1 & imm9_4 & imm4_1 & rd0 & rd0=0xf; imm16
+        [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
+{
+		tmp:4 = inst_start;
+        PC = tmp - imm;
+        subflags(tmp, imm, PC);
+        goto [PC];
+}
+
+# SUB Format V
+# 111s sss0 1100 dddd   iiii iiii iiii iiii
+
+:SUB rd0, RS9A, simm16 is op13_3=0x7 & op4_5=0xc & RS9A & rd0; simm16
+{
+		save:4 = RS9A;
+        rd0 = RS9A - simm16;
+        subflags(save, simm16, rd0);
+}
+
+:SUB rd0, RS9A, simm16 is op13_3=0x7 & op4_5=0xc & RS9A & rd0 & rd0=0xf; simm16
+{
+		save:4 = RS9A;
+        PC = RS9A - simm16;
+        subflags(save, simm16, PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# SUB{cond4} - Conditional Subtract
+# I.  cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#     d       -> {0, 1, ..., 15}
+#     imm     -> {-128, -127, ..., 127}
+# II. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#     {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SUB{cond4} Format I
+# Operation: if(cond4) then
+#                Rd <- Rd - imm8
+#                Update flags if opcode[f] field is set
+# Syntax:    sub{f}{cond4} Rd, imm
+# 1111 01f1 1011 dddd   0000 cccc iiii iiii
+
+F: "{F}" is b09=1 & rd0; simm0_8 {
+        pre:4 = rd0 + simm0_8;
+        subflags(pre, simm0_8, rd0);
+}
+F:       is b09=0 & rd0; simm0_8 { }
+
+:SUB^F^{ECOND_8_4} rd0, simm0_8 is (op10_6=0x3d & op4_5=0x1b & rd0 ;
+                                    eop12_4=0 & simm0_8 & ECOND_8_4) & F
+{
+        build ECOND_8_4;
+        rd0 = rd0 - simm0_8;
+        build F;
+}
+
+:SUB^F^{ECOND_8_4} rd0, simm0_8 is (op10_6=0x3d & op4_5=0x1b & rd0 & rd0=0xf;
+                                    eop12_4=0 & simm0_8 & ECOND_8_4) & F
+{
+        build ECOND_8_4;
+        PC = inst_start - simm0_8;
+        build F;
+        goto [PC];
+}
+
+# SUB{cond4} Format II
+# Operation: if(cond4) then
+#                Rd <- Rx - Ry
+# Syntax:    sub{cond4} Rd, Rx, Ry
+# 111x xxx1 1101 yyyy   1110 cccc 0001 dddd
+
+:SUB^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=1 & ECOND_8_4 & erd0)
+{
+        build ECOND_8_4;
+        erd0 = RX9A - RY0A;
+}
+
+:SUB^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=1 & ECOND_8_4 & erd0 & erd0=0xf)
+{
+        build ECOND_8_4;
+        PC = RX9A - RY0A;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# TNBZ - Test if No Byte is Equal to Zero
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# TNBZ Format I
+# Operation:  if (Rd[31:24] == 0 |
+#                 Rd[23:16] == 0 |
+#                 Rd[23:16] == 0 |
+#                 Rd[23:16] == 0)
+#                 Z <- 1;
+#             else
+#                 Z <- 0;
+# Syntax:     tnbz Rd
+# 0101 1100 1110 dddd
+
+:TNBZ RD0A is op4_12=0x5ce & RD0A
+{
+        Z = ((RD0A & 0xff000000) == 0 ||
+             (RD0A & 0x00ff0000) == 0 ||
+             (RD0A & 0x0000ff00) == 0 ||
+             (RD0A & 0x000000ff) == 0);
+}

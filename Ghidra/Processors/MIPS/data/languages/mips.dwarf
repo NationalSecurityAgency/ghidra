@@ -1,0 +1,21 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="zero"/>
+		<register_mapping dwarf="1" ghidra="at"/>
+		<register_mapping dwarf="2" ghidra="v0"/>
+		<register_mapping dwarf="3" ghidra="v1"/>
+		<register_mapping dwarf="4" ghidra="a0" auto_count="4"/> <!-- a0..a3 -->
+		<register_mapping dwarf="8" ghidra="t0" auto_count="8"/> <!-- t0..t7 -->
+		<register_mapping dwarf="16" ghidra="s0" auto_count="8"/> <!-- s0..s7 -->
+		<register_mapping dwarf="24" ghidra="t8"/>
+		<register_mapping dwarf="25" ghidra="t9"/>
+		<register_mapping dwarf="26" ghidra="k0"/>
+		<register_mapping dwarf="27" ghidra="k1"/>
+		<register_mapping dwarf="28" ghidra="gp"/>
+		<register_mapping dwarf="29" ghidra="sp" stackpointer="true"/>
+		<register_mapping dwarf="30" ghidra="s8"/>
+		<register_mapping dwarf="31" ghidra="ra"/>
+		<register_mapping dwarf="32" ghidra="f0" auto_count="32"/> <!-- f0..f31 -->
+	</register_mappings>
+	<call_frame_cfa value="0"/>
+</dwarf>

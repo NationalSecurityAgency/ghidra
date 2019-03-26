@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="8051"
+            endian="big"
+            size="16"
+            variant="default"
+            version="2.0"
+            slafile="8051.sla"
+            processorspec="8051.pspec"
+		manualindexfile="../manuals/8051.idx"
+            id="8051:BE:16:default">
+    <description>8051 Microcontroller Family</description>
+    <compiler name="default" spec="8051.cspec" id="default"/>
+    <compiler name="Archimedes" spec="8051_archimedes.cspec" id="Archimedes"/>
+    <external_name tool="IDA-PRO" name="8051"/>
+  </language>
+  <language processor="80251"
+            endian="big"
+            size="16"
+            variant="default"
+            version="2.0"
+            slafile="80251.sla"
+            processorspec="80251.pspec"
+            id="80251:BE:24:default">
+    <description>80251 Microcontroller Family</description>
+    <compiler name="default" spec="80251.cspec" id="default"/>
+  </language>
+  <language processor="80390"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="80390.sla"
+            processorspec="8051.pspec"
+            id="80390:BE:24:default">
+    <description>80390 in flat mode</description>
+    <compiler name="default" spec="80390.cspec" id="default"/>
+  </language>
+  <language processor="8051"
+            endian="big"
+            size="16"
+            variant="mx51"
+            version="2.0"
+            slafile="mx51.sla"
+            processorspec="mx51.pspec"
+		manualindexfile="../manuals/8051.idx"
+            id="8051:BE:24:mx51">
+    <description>NXP/Phillips MX51</description>
+    <compiler name="default" spec="mx51.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="8051"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,263 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features FunctionID'
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
+dependencies {
+	compile project(":Base")
+	compile project(":DB")
+	compile project(":SoftwareModeling")    
+	helpPath project(path: ":Base", configuration: 'helpPath')
+	
+}
+
+// All *.fidb files located in the BIN repo under src/main/fidb will be unpacked
+def fidbSrcDir = "${getProjectLocationInBinRepo(project)}/src/main/fidb"
+
+def fidDbFiles = fileTree(fidbSrcDir) {
+	include '**/*.fidb'
+}
+
+task unpackFidDatabases {
+	doLast {
+		fidDbFiles.each { file ->
+		
+			// TODO: Preserve subdir path
+			def destName = file.name.replaceAll(/\.fidb$/, ".fidbf")
+			def destFile = new File(project.file('build/data'), destName)
+			
+			if (!destFile.exists() || destFile.length() == 0 || destFile.lastModified() < file.lastModified()) {
+				logger.info("FIDB: ${file} -> ${destFile}");
+				destFile.getParentFile().mkdirs();
+				unpackFolderItemDatabase(file, destFile)
+			}
+			else {
+				logger.info("FIDB: ${file} -> ${destFile} (UPTODATE)");
+			}
+		}
+	}
+}
+
+// Relative to the 'workingDir' Exec task property.
+def installPoint = "../help/help"
+
+task buildFidDocumentationPdf(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	def buildDir = "../../../build/FidDocumentationPdf"
+
+	// Gradle will provide a cleanBuildFidDocumentationPdf task that will remove these
+	// declared outputs.
+	outputs.dir  "$workingDir/$buildDir"
+	outputs.file "$workingDir/$installPoint/FunctionID.pdf"
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required 
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which fop
+		which xsltproc
+
+		echo '** Preparing for xsltproc **'
+		mkdir -p $buildDir/images
+		cp $installPoint/topics/FunctionID/images/*.png $buildDir/images
+
+		echo '** Building FunctionID.fo **'
+		xsltproc --output $buildDir/fid_withscaling.xml --stringparam profile.condition "withscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl fid.xml 2>&1
+		xsltproc --output $buildDir/FunctionID.fo fid_pdf.xsl $buildDir/fid_withscaling.xml 2>&1
+
+		echo '** Building FunctionID.pdf **'
+		fop $buildDir/FunctionID.fo $buildDir/FunctionID.pdf 2>&1
+
+		echo '** Installing pdf documentation. **'
+		cp $buildDir/FunctionID.pdf $installPoint
+
+		echo '** Done. **'
+		"""
+
+	// Allows doLast block regardless of exit value. 
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Check the OS before executing command.
+	doFirst {
+		if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+			|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+			throw new TaskExecutionException( it,
+				new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
+		}
+	}
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+			throw new TaskExecutionException( it,
+				new Exception( "$it.name: The command: '${commandLine.join(' ')}'" +
+					"\nfailed with exit code $execResult.exitValue; see task output for details." )
+    		)
+		}
+	}
+}
+/**
+ * Build the html docs for the FID and place them in the '$installPoint' directory.
+ * A build (ex: 'gradle buildLocal') will place the html files in the distribution.
+ * There is an associated, auto-generated clean task.
+ **/
+task buildFidDocumentationHtml(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required 
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+	echo '** Checking if required executables are installed. **'
+	which sed
+	which xsltproc
+
+	echo '** Removing older html files installed under '$installPoint' **'
+	rm -f $installPoint/topics/FunctionID/*.html
+
+	echo '** Building html files **'
+	xsltproc --output $buildDir/fid_noscaling.xml --stringparam profile.condition "noscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl fid.xml 2>&1
+	xsltproc --stringparam base.dir ${installPoint}/topics/FunctionID/ fid_html.xsl $buildDir/fid_noscaling.xml 2>&1
+	sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installPoint}/topics/FunctionID/*.html
+
+	echo '** Done. **'
+	"""
+
+	// Allows doLast block regardless of exit value.
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Check the OS before executing command.
+	doFirst {
+		if (!getCurrentPlatformName().startsWith("linux")) {
+			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux."))
+		}
+	}
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+			throw new TaskExecutionException( it,
+				new Exception( "'$it.name': The command: '${commandLine.join(' ')}'" +
+					" task \nfailed with exit code $execResult.exitValue; see task output for details." ))
+		}
+	}
+}
+
+// Ensure that unpacked Fid Db's are included in common
+rootProject.assembleCommon.dependsOn(unpackFidDatabases)
+
+// Ensure that Fidb's are unpacked in development
+prepDev.dependsOn unpackFidDatabases
+
+//********************************
+// Packed Database Unpack Methods
+//********************************
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+def unpackFolderItemDatabase(packedFile, destDbFile) {
+
+	def MAGIC_NUMBER = 0x2e30212634e92c20L; 		// see ItemSerializer.MAGIC_NUMBER;
+	def FORMAT_VERSION = 1; 						// see ItemSerializer.FORMAT_VERSION;
+
+	BufferedInputStream fin = new BufferedInputStream(new FileInputStream(packedFile))
+	FileOutputStream fout = null
+	
+	// Read header containing: original item name and content type
+	boolean success = false;
+	try {
+	
+		ObjectInputStream objIn = new ObjectInputStream(fin);
+		if (objIn.readLong() != MAGIC_NUMBER) {
+			throw new IOException("Invalid data");
+		}
+		if (objIn.readInt() != FORMAT_VERSION) {
+			throw new IOException("Unsupported data format");
+		}
+
+		String itemName = objIn.readUTF();
+		String contentType = objIn.readUTF();
+		if (contentType.length() == 0) {
+			contentType = null;
+		}
+		int fileType = objIn.readInt();
+		long length = objIn.readLong();
+		
+		fout = new FileOutputStream(destDbFile);
+		saveItem(fin, fout, length);
+		
+		success = true;
+		return contentType;
+	}
+	catch (UTFDataFormatException e) {
+		throw new IOException("Invalid item data");
+	}
+	finally {
+		try {
+			fin.close();
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		if (fout != null) {
+			fout.close();
+			if (!success) {
+				destDbFile.delete();
+			}
+		}
+	}
+}
+
+def saveItem(fin, fout, length) {
+
+	def ZIP_ENTRY_NAME = "FOLDER_ITEM"; 			// see ItemSerializer.ZIP_ENTRY_NAME;
+	def IO_BUFFER_SIZE = 32 * 1024;
+
+	ZipInputStream zipIn = new ZipInputStream(fin);
+	ZipEntry entry = zipIn.getNextEntry();
+	if (entry == null || !ZIP_ENTRY_NAME.equals(entry.getName())) {
+		throw new IOException("Data error");
+	}
+
+	InputStream itemIn = zipIn;
+	long len = length;
+	byte[] buffer = new byte[IO_BUFFER_SIZE];
+
+	// Copy file contents
+	int cnt = (int) (len < IO_BUFFER_SIZE ? len : IO_BUFFER_SIZE);
+	while ((cnt = itemIn.read(buffer, 0, cnt)) > 0) {
+		fout.write(buffer, 0, cnt);
+		len -= cnt;
+		cnt = (int) (len < IO_BUFFER_SIZE ? len : IO_BUFFER_SIZE);
+	}
+
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Restore Project</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Restore Project</H1>
+
+    <P>The Restore Project operation will create a new project from an Archived project file.
+    Restoring a project makes it the active project.</P>
+
+    <P><IMG src="../../shared/note.png" border="0"> You must close your
+    project before you can restore an archived project.</P>
+
+    <P>To restore an archived project,</P>
+
+    <OL>
+      <LI>If a project is open, close it by selecting <B>File<IMG src="../../shared/arrow.gif"
+      border="0">Close Project</B> from the <A href=
+      "Ghidra_Front_end.htm">Ghidra Project Window</A> menu.</LI>
+
+      <LI>Select <B>File<IMG src="../../shared/arrow.gif" border="0">Restore
+      Project...</B>.</LI>
+    </OL>
+
+    <P align="center"><IMG alt="" src="images/RestoreProjectFilledIn.png" border="0"></P>
+
+    <OL start="3">
+      <LI>The Restore Project Archive dialog is displayed. &nbsp;Fill in the fields to indicate the
+      project to restore and where to restore it.&nbsp;</LI>
+
+      <LI style="list-style: none">
+        <UL type="disc">
+          <LI><I>Archive File:</I> Specify the full path for the archive file to be
+          restored.&nbsp;Use the browse button ("<B>. . .</B>") to locate the archive (*.gar)
+          file.</LI>
+
+          <LI><IMG src="../../shared/tip.png" border="0"> The <I>Restore
+          Directory</I> and <I>Project Name</I> fields are automatically filled in when you use the
+          browse button ("<B>. . .</B>") to the right of the <I>Archive File</I> field to select
+          the archive file.</LI>
+
+          <LI><I>Restore Directory:</I> The project directory where the new project will be
+          created.</LI>
+
+          <LI><I>Project Name:</I> The name of the new project.</LI>
+        </UL>
+      </LI>
+    </OL>
+
+    <OL start="4">
+      <LI>Press the <B>OK</B> button.</LI>
+
+      <LI>If the project is being restored to the same name and location as an existing
+      project,&nbsp; the <I>Project Exists</I> dialog is displayed, as shown below.
+
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/ProjectExists.png" border="0"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+    
+        <UL>
+          <LI>
+            <P>Specify a different <I>Restore Directory</I> or a <I>Project Name</I> that doesn't exist
+            and try again.</P>
+          </LI>
+        </UL>
+      </OL>
+    </LI>
+    
+    <OL start="6">
+      <LI>
+        The 'In Progress' dialog is displayed indicating the archive is restoring. When the restore
+        is complete, this dialog will disappear and the newly restored project appears in the <A
+        href="Ghidra_Front_end.htm">Ghidra Project Window</A>.&nbsp;&nbsp; 
+
+        <UL>
+          <LI type="disc">To cancel the restore operation click on the <B>Cancel</B> button. Any
+          files that were created during the restore are removed as a result of the
+          cancellation.</LI>
+        </UL>
+      </LI>
+    </OL>
+
+    <H3>&nbsp;</H3>
+
+    <H3>Restoring a Version 2.x Project</H3>
+
+    <BLOCKQUOTE>
+      <P>If you restore a project from a version of Ghidra that was 2.x or before, <I>and</I> the
+      project contained multiple users, the project is restored with you as the owner of all the
+      files. You will see the folders and data files for the other users that were in the project,
+      but you are the owner.</P>
+
+      <P>&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>ArchivePlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Archive_Project.htm">Archive Project</A></LI>
+
+      <LI><A href="help/topics/Project/Ghidra_Projects.htm">Ghidra Projects</A></LI>
+    </UL>
+
+    <DIV style="margin-left: 2em" start="4">
+      <P>&nbsp;</P>
+    </DIV>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

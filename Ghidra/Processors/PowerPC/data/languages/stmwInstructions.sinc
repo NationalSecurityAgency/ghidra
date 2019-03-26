@@ -1,0 +1,101 @@
+STMR0:		is lsmul=1 {}
+STMR0:		is epsilon { storeReg(r0); }
+
+STMR1:		is lsmul=2 {}
+STMR1:		is STMR0 { build STMR0; storeReg(r1); }
+
+STMR2:		is lsmul=3 {}
+STMR2:		is STMR1 { build STMR1; storeReg(r2); }
+
+STMR3:		is lsmul=4 {}
+STMR3:		is STMR2 { build STMR2; storeReg(r3); }
+
+STMR4:		is lsmul=5 {}
+STMR4:		is STMR3 { build STMR3; storeReg(r4); }
+
+STMR5:		is lsmul=6 {}
+STMR5:		is STMR4 { build STMR4; storeReg(r5); }
+
+STMR6:		is lsmul=7 {}
+STMR6:		is STMR5 { build STMR5; storeReg(r6); }
+
+STMR7:		is lsmul=8 {}
+STMR7:		is STMR6 { build STMR6; storeReg(r7); }
+
+STMR8:		is lsmul=9 {}
+STMR8:		is STMR7 { build STMR7; storeReg(r8); }
+
+STMR9:		is lsmul=10 {}
+STMR9:		is STMR8 { build STMR8; storeReg(r9); }
+
+STMR10:		is lsmul=11 {}
+STMR10:		is STMR9 { build STMR9; storeReg(r10); }
+
+STMR11:		is lsmul=12 {}
+STMR11:		is STMR10 { build STMR10; storeReg(r11); }
+
+STMR12:		is lsmul=13 {}
+STMR12:		is STMR11 { build STMR11; storeReg(r12); }
+
+STMR13:		is lsmul=14 {}
+STMR13:		is STMR12 { build STMR12; storeReg(r13); }
+
+STMR14:		is lsmul=15 {}
+STMR14:		is STMR13 { build STMR13; storeReg(r14); }
+
+STMR15:		is lsmul=16 {}
+STMR15:		is STMR14 { build STMR14; storeReg(r15); }
+
+STMR16:		is lsmul=17 {}
+STMR16:		is STMR15 { build STMR15; storeReg(r16); }
+
+STMR17:		is lsmul=18 {}
+STMR17:		is STMR16 { build STMR16; storeReg(r17); }
+
+STMR18:		is lsmul=19 {}
+STMR18:		is STMR17 { build STMR17; storeReg(r18); }
+
+STMR19:		is lsmul=20 {}
+STMR19:		is STMR18 { build STMR18; storeReg(r19); }
+
+STMR20:		is lsmul=21 {}
+STMR20:		is STMR19 { build STMR19; storeReg(r20); }
+
+STMR21:		is lsmul=22 {}
+STMR21:		is STMR20 { build STMR20; storeReg(r21); }
+
+STMR22:		is lsmul=23 {}
+STMR22:		is STMR21 { build STMR21; storeReg(r22); }
+
+STMR23:		is lsmul=24 {}
+STMR23:		is STMR22 { build STMR22; storeReg(r23); }
+
+STMR24:		is lsmul=25 {}
+STMR24:		is STMR23 { build STMR23; storeReg(r24); }
+
+STMR25:		is lsmul=26 {}
+STMR25:		is STMR24 { build STMR24; storeReg(r25); }
+
+STMR26:		is lsmul=27 {}
+STMR26:		is STMR25 { build STMR25; storeReg(r26); }
+
+STMR27:		is lsmul=28 {}
+STMR27:		is STMR26 { build STMR26; storeReg(r27); }
+
+STMR28:		is lsmul=29 {}
+STMR28:		is STMR27 { build STMR27; storeReg(r28); }
+
+STMR29:		is lsmul=30 {}
+STMR29:		is STMR28 { build STMR28; storeReg(r29); }
+
+STMR30:		is lsmul=31 {}
+STMR30:		is STMR29 { build STMR29; storeReg(r30); }
+
+STMR31:		is STMR30 { build STMR30; storeReg(r31); }
+
+:stmw	S,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=47 & S & BITS_21_25 & dPlusRaOrZeroAddress & STMR31 [ lsmul = BITS_21_25; ]
+{
+	tea = dPlusRaOrZeroAddress;
+	build STMR31;
+}
+

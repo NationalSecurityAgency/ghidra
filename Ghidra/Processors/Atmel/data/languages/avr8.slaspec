@@ -1,0 +1,7 @@
+# AVR8 with 16-bit addressable code space
+
+@define PCBYTESIZE "2"
+@define HASEIND "0"
+ 
+@include "avr8.sinc"
+

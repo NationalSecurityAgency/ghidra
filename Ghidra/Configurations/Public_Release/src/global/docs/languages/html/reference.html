@@ -1,0 +1,510 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Syntax Reference</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="prev" href="additionalpcode.html" title="Additional P-CODE Operations">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Syntax Reference</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="additionalpcode.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> </td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="reference"></a>Syntax Reference</h2></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="ref.htmltable"></a><table width="90%" frame="box" rules="rows">
+<col width="25%">
+<col width="25%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>Name</strong></span></td>
+  <td><span class="bold"><strong>Syntax</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td>COPY</td>
+  <td><code class="code">v0 = v1;</code></td>
+  <td>Copy v1 into v0.</td>
+</tr>
+<tr>
+  <td>LOAD</td>
+  <td>
+    <div class="table">
+<a name="loadtmp.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">* v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*[spc]v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*:2 v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*[spc]:2 v1</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>Dereference v1 as pointer into default space. Optionally specify a space
+      to load from and size of data in bytes.</td>
+</tr>
+<tr>
+  <td>STORE</td>
+  <td>
+    <div class="table">
+<a name="storetmp.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">*v0 = v1;</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*[spc]v0 = v1;</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*:4 v0 = v1;</code></td>
+      </tr>
+<tr>
+        <td><code class="code">*[spc]:4 v0 = v1;</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>Store in v1 in default space using v0 as pointer. Optionally specify space to store in
+      and size of data in bytes.</td>
+</tr>
+<tr>
+  <td>BRANCH</td>
+  <td><code class="code">goto v0;</code></td>
+  <td>Branch execution to address of v0.</td>
+</tr>
+<tr>
+  <td>CBRANCH</td>
+  <td><code class="code">if (v0) goto v1;</code></td>
+  <td>Branch execution to address of v1 if v0 equals 1 (true).</td>
+</tr>
+<tr>
+  <td>BRANCHIND</td>
+  <td><code class="code">goto [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.</td>
+</tr>
+<tr>
+  <td>CALL</td>
+  <td><code class="code">call v0;</code></td>
+  <td>Branch execution to address of v0. Hint that the branch is a subroutine call.</td>
+</tr>
+<tr>
+  <td>CALLIND</td>
+  <td><code class="code">call [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.
+      Hint that the branch is a subroutine call.</td>
+</tr>
+<tr>
+  <td>RETURN</td>
+  <td><code class="code">return [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.
+      Hint that the branch is a subroutine return.</td>
+</tr>
+<tr>
+  <td>INT_EQUAL</td>
+  <td><code class="code">v0 == v1</code></td>
+  <td>True if v0 equals v1.</td>
+</tr>
+<tr>
+  <td>INT_NOTEQUAL</td>
+  <td><code class="code">v0 != v1</code></td>
+  <td>True if v0 does not equal v1.</td>
+</tr>
+<tr>
+  <td>INT_SLESS</td>
+  <td>
+    <div class="table">
+<a name="sless.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 s&lt; v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 s&gt; v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td>INT_SLESSEQUAL</td>
+  <td>
+    <div class="table">
+<a name="slessequal.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 s&lt;= v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 s&gt;= v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td>INT_LESS</td>
+  <td>
+    <div class="table">
+<a name="less.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 &lt; v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 &gt; v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td>INT_LESSEQUAL</td>
+  <td>
+    <div class="table">
+<a name="lessequal.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 &lt;= v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 &gt;= v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td>INT_ZEXT</td>
+  <td><code class="code">zext(v0)</code></td>
+  <td>Zero extension of v0.</td>
+</tr>
+<tr>
+  <td>INT_SEXT</td>
+  <td><code class="code">sext(v0)</code></td>
+  <td>Sign extension of v0.</td>
+</tr>
+<tr>
+  <td>INT_ADD</td>
+  <td><code class="code">v0 + v1</code></td>
+  <td>Addition of v0 and v1 as integers.</td>
+</tr>
+<tr>
+  <td>INT_SUB</td>
+  <td><code class="code">v0 - v1</code></td>
+  <td>Subtraction of v1 from v0 as integers.</td>
+</tr>
+<tr>
+  <td>INT_CARRY</td>
+  <td><code class="code">carry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce an unsigned carry.</td>
+</tr>
+<tr>
+  <td>INT_SCARRY</td>
+  <td><code class="code">scarry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce an signed carry.</td>
+</tr>
+<tr>
+  <td>INT_SBORROW</td>
+  <td><code class="code">sborrow(v0,v1)</code></td>
+  <td>True if subtracting v1 from v0 would produce a signed borrow.</td>
+</tr>
+<tr>
+  <td>INT_2COMP</td>
+  <td><code class="code">-v0</code></td>
+  <td>Twos complement of v0.</td>
+</tr>
+<tr>
+  <td>INT_NEGATE</td>
+  <td><code class="code">~v0</code></td>
+  <td>Bitwise negation of v0.</td>
+</tr>
+<tr>
+  <td>INT_XOR</td>
+  <td><code class="code">v0 ^ v1</code></td>
+  <td>Bitwise Exclusive Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_AND</td>
+  <td><code class="code">v0 &amp; v1</code></td>
+  <td>Bitwise Logical And of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_OR</td>
+  <td><code class="code">v0 | v1</code></td>
+  <td>Bitwise Logical Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_LEFT</td>
+  <td><code class="code">v0 &lt;&lt; v1</code></td>
+  <td>Left shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_RIGHT</td>
+  <td><code class="code">v0 &gt;&gt; v1</code></td>
+  <td>Unsigned (logical) right shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_SRIGHT</td>
+  <td><code class="code">v0 s&gt;&gt; v1</code></td>
+  <td>Signed (arithmetic) right shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_MULT</td>
+  <td><code class="code">v0 * v1</code></td>
+  <td>Integer multiplication of v0 and v1.</td>
+</tr>
+<tr>
+  <td>INT_DIV</td>
+  <td><code class="code">v0 / v1</code></td>
+  <td>Unsigned division of v0 by v1.</td>
+</tr>
+<tr>
+  <td>INT_SDIV</td>
+  <td><code class="code">v0 s/ v1</code></td>
+  <td>Signed division of v0 by v1.</td>
+</tr>
+<tr>
+  <td>INT_REM</td>
+  <td><code class="code">v0 % v1</code></td>
+  <td>Unsigned remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td>INT_SREM</td>
+  <td><code class="code">v0 s% v1</code></td>
+  <td>Signed remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td>BOOL_NEGATE</td>
+  <td><code class="code">!v0</code></td>
+  <td>Negation of boolean value v0.</td>
+</tr>
+<tr>
+  <td>BOOL_XOR</td>
+  <td><code class="code">v0 ^^ v1</code></td>
+  <td>Exclusive-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>BOOL_AND</td>
+  <td><code class="code">v0 &amp;&amp; v1</code></td>
+  <td>Logical-And of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>BOOL_OR</td>
+  <td><code class="code">v0 || v1</code></td>
+  <td>Logical-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>FLOAT_EQUAL</td>
+  <td><code class="code">v0 f== v1</code></td>
+  <td>True if v0 equals v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NOTEQUAL</td>
+  <td><code class="code">v0 f!= v1</code></td>
+  <td>True if v0 does not equal v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_LESS</td>
+  <td>
+    <div class="table">
+<a name="floatlesstmp.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 f&lt; v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 f&gt; v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_LESSEQUAL</td>
+  <td>
+    <div class="table">
+<a name="floatlessequaltmp.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">v0 f&lt;= v1</code></td>
+      </tr>
+<tr>
+        <td><code class="code">v1 f&gt;= v0</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NAN</td>
+  <td><code class="code">nan(v0)</code></td>
+  <td>True if v0 is not a valid floating-point number (NaN).</td>
+</tr>
+<tr>
+  <td>FLOAT_ADD</td>
+  <td><code class="code">v0 f+ v1</code></td>
+  <td>Addition of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_DIV</td>
+  <td><code class="code">v0 f/ v1</code></td>
+  <td>Division of v0 by v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_MULT</td>
+  <td><code class="code">v0 f* v1</code></td>
+  <td>Multiplication of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_SUB</td>
+  <td><code class="code">v0 f- v1</code></td>
+  <td>Subtraction of v1 from v0 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NEG</td>
+  <td><code class="code">f- v0</code></td>
+  <td>Additive inverse of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_ABS</td>
+  <td><code class="code">abs(v0)</code></td>
+  <td>Absolute value of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_SQRT</td>
+  <td><code class="code">sqrt(v0)</code></td>
+  <td>Square root of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>INT2FLOAT</td>
+  <td><code class="code">int2float(v0)</code></td>
+  <td>Floating-point representation of v0 viewed as an integer.</td>
+</tr>
+<tr>
+  <td>FLOAT2FLOAT</td>
+  <td><code class="code">float2float(v0)</code></td>
+  <td>Copy of floating-point number v0 with more or less precision.</td>
+</tr>
+<tr>
+  <td>TRUNC</td>
+  <td><code class="code">trunc(v0)</code></td>
+  <td>Signed integer obtained by truncating v0 viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_CEIL</td>
+  <td><code class="code">ceil(v0)</code></td>
+  <td>Nearest integral floating-point value greater than v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_FLOOR</td>
+  <td><code class="code">floor(v0)</code></td>
+  <td>Nearest integral floating-point value less than v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_ROUND</td>
+  <td><code class="code">round(v0)</code></td>
+  <td>Nearest integral floating-point to v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>SUBPIECE</td>
+  <td><code class="code">v0:2</code></td>
+  <td>The least signficant n bytes of v0.</td>
+</tr>
+<tr>
+  <td>SUBPIECE</td>
+  <td><code class="code">v0(2)</code></td>
+  <td>All but the least significant n bytes of v0.</td>
+</tr>
+<tr>
+  <td>PIECE</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Concatenate two varnodes into a single varnode.</td>
+</tr>
+<tr>
+  <td>CPOOLREF</td>
+  <td><code class="code">cpool(v0,...)</code></td>
+  <td>Obtain constant pool value.</td>
+</tr>
+<tr>
+  <td>NEW</td>
+  <td>
+    <div class="table">
+<a name="newtmp.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td><code class="code">newobject(v0)</code></td>
+      </tr>
+<tr>
+        <td><code class="code">newobject(v0,v1)</code></td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>Allocate an object or an array of objects.</td>
+</tr>
+<tr>
+  <td>MULTIEQUAL</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Compiler phi-node: values merging from multiple control-flow paths.</td>
+</tr>
+<tr>
+  <td>INDIRECT</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Indirect effect from input varnode to output varnode.</td>
+</tr>
+<tr>
+  <td>CAST</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Copy from input to output. A hint that the underlying datatype has changed.</td>
+</tr>
+<tr>
+  <td>PTRADD</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Construct a pointer to an element from a pointer to the start of an array and an index.</td>
+</tr>
+<tr>
+  <td>PTRSUB</td>
+  <td><code class="code">&lt;na&gt;</code></td>
+  <td>Construct a pointer to a field from a pointer to a structure and an offset.</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="additionalpcode.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> </td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Additional P-CODE Operations </td>
+<td width="20%" align="center"><a accesskey="h" href="pcoderef.html">Home</a></td>
+<td width="40%" align="right" valign="top"> </td>
+</tr>
+</table>
+</div>
+</body>
+</html>
