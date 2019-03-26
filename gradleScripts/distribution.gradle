@@ -223,6 +223,7 @@ task assembleCommon (type: Copy) {
 		
 				from (p.projectDir.toString() + "/data") {
 					into { getZipPath(p) + "/data" }
+					exclude 'build.xml' // associated with language modules (dev use only)
 				}
 				
 				from (BIN_REPO + '/' + getZipPath(p) + "/data") {
@@ -697,6 +698,7 @@ subprojects { p ->
 				exclude 'bin/**'
 				exclude 'src/**'
 				exclude 'test/**'
+				exclude 'data/build.xml'
 				exclude 'developer_scripts'
 				
 				// general place where extension modules can put files that won't get 
