@@ -170,8 +170,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 */
 	public boolean isFocusedProvider() {
 		DockingWindowManager dwm = DockingWindowManager.getInstance(getComponent());
+		if (dwm == null) {
+			return false; // can happen in testing
+		}
 		ComponentPlaceholder placeholder = dwm.getFocusedComponent();
-		return placeholder.getProvider() == this;
+		return placeholder != null && placeholder.getProvider() == this;
 	}
 
 	/**
