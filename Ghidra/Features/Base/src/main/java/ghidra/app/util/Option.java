@@ -96,6 +96,15 @@ public class Option {
 		this.listener = listener;
 	}
 
+	/**
+	 * Override if you want to provide a custom widget for selecting your
+	 * options. 
+	 * <p>
+	 * Important! If you override this you MUST also override the {@link #copy()}
+	 * method so it returns a new instance of your custom editor. 
+	 * 
+	 * @return the custom editor
+	 */
 	public Component getCustomEditorComponent() {
 		return null;
 	}
