@@ -17,11 +17,11 @@ package help.validator.location;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.help.HelpSet;
 import javax.help.HelpSetException;
@@ -31,6 +31,12 @@ import ghidra.util.exception.AssertException;
 import help.validator.model.GhidraTOCFile;
 
 public class JarHelpModuleLocation extends HelpModuleLocation {
+
+	/*
+	 * format of 'helpDir': 
+	 * 	jar:file:///.../ghidra-prep/Ghidra/Features/Base/build/libs/Base.jar!/help
+	 */
+	private static final Pattern JAR_FILENAME_PATTERN = Pattern.compile(".*/(\\w*)\\.jar!/.*");
 
 	private static Map<String, String> env = new HashMap<String, String>();
 	static {
@@ -69,19 +75,51 @@ public class JarHelpModuleLocation extends HelpModuleLocation {
 
 	@Override
 	public HelpSet loadHelpSet() {
-		try (DirectoryStream<Path> ds = Files.newDirectoryStream(helpDir, "*_HelpSet.hs");) {
-			for (Path path : ds) {
-				return new GHelpSet(null, path.toUri().toURL());
-			}
-		}
-		catch (IOException e) {
-			throw new AssertException("No _HelpSet.hs file found for help directory: " + helpDir);
-		}
-		catch (HelpSetException e) {
-			throw new AssertException("Error loading help set for " + helpDir);
-		}
 
-		throw new AssertException("Pre-built help jar file is missing it's help set: " + helpDir);
+		// Our convention is to name the help set after the module
+		File jarFile = getJarFile();
+		String moduleName = getModuleName(jarFile);
+		Path hsPath = helpDir.resolve(moduleName + "_HelpSet.hs");
+		try {
+			return new GHelpSet(null, hsPath.toUri().toURL());
+		}
+		catch (MalformedURLException | HelpSetException e) {
+			throw new AssertException(
+				"Pre-built help jar file is missing it's help set: " + helpDir, e);
+		}
+	}
+
+	private File getJarFile() {
+
+		// format: jar:file:///.../Ghidra/Features/<module>/build/libs/<module>.jar!/help
+		String uriString = helpDir.toUri().toString();
+		int start = uriString.indexOf("file:/");
+		String chopped = uriString.substring(start);
+		int end = chopped.indexOf("!");
+		chopped = chopped.substring(0, end);
+		return new File(chopped);
+	}
+
+	private String getModuleName(File jarFile) {
+
+		String name = jarFile.getName();
+		int dotIndex = name.indexOf('.');
+		return name.substring(0, dotIndex);
+	}
+
+	@Override
+	public Path getHelpModuleLocation() {
+		// start format: jar:file:///.../Ghidra/Features/Base/build/libs/Base.jar!/help
+
+		// format: file:///.../Ghidra/Features/<module>/build/libs/<module>.jar
+		File jarFile = getJarFile();
+		String moduleName = getModuleName(jarFile);
+		String fullPath = jarFile.getPath();
+		int moduleNameStart = fullPath.indexOf(moduleName);
+		int end = moduleNameStart + moduleName.length();
+		String moduleString = fullPath.substring(0, end);
+		Path modulePath = Paths.get(moduleString);
+		return modulePath;
 	}
 
 	@Override
