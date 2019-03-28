@@ -16,8 +16,7 @@
 package help.validator.location;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Path;
 
 import javax.help.HelpSet;
 
@@ -43,21 +42,13 @@ public class DirectoryHelpModuleLocation extends HelpModuleLocation {
 
 	@Override
 	public GhidraTOCFile loadSourceTOCFile() {
-		try (DirectoryStream<Path> ds = Files.newDirectoryStream(helpDir, "TOC_Source*.xml")) {
-			for (Path file : ds) {
-				try {
-					return GhidraTOCFile.createGhidraTOCFile(file);
-				}
-				catch (Exception e) {
-					throw new AssertException("Unexpected error loading source TOC file!: " + file,
-						e);
-				}
-			}
+		Path sourceTocPath = helpDir.resolve("TOC_Source.xml");
+		try {
+			return GhidraTOCFile.createGhidraTOCFile(sourceTocPath);
 		}
-		catch (IOException e) {
-			throw new AssertException("Error reading help path: " + helpDir);
+		catch (Exception e) {
+			throw new AssertException("Unexpected error loading source TOC file!: " + sourceTocPath,
+				e);
 		}
-
-		throw new AssertException("Help module has no TOC_Source.xml file: " + helpDir);
 	}
 }
