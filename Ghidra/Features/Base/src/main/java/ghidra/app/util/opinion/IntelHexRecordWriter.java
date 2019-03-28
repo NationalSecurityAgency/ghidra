@@ -22,7 +22,7 @@ import ghidra.program.model.address.*;
 public class IntelHexRecordWriter {
 
     private final int maxBytesPerLine;
-	private final boolean forceSize;
+	private final boolean dropExtraBytes;
 
     private Address startAddress = null;
     private Long oldSegment = null;
@@ -36,15 +36,15 @@ public class IntelHexRecordWriter {
 	 * Constructor
 	 * 
 	 * @param maxBytesPerLine the maximum number of bytes to write per line in the hex output
-	 * @param forceSize if true, only lines matching {@link #maxBytesPerLine} will be output; 
+	 * @param dropExtraBytes if true, only lines matching {@link #maxBytesPerLine} will be output; 
 	 * remaining bytes will be left out
 	 */
-	public IntelHexRecordWriter(int maxBytesPerLine, boolean forceSize) {
+	public IntelHexRecordWriter(int maxBytesPerLine, boolean dropExtraBytes) {
         if (maxBytesPerLine > IntelHexRecord.MAX_RECORD_LENGTH) {
             throw new IllegalArgumentException("maxBytesPerLine > IntelHexRecord.MAX_RECORD_LENGTH");
         }
         this.maxBytesPerLine = maxBytesPerLine;
-		this.forceSize = forceSize;
+		this.dropExtraBytes = dropExtraBytes;
     }
 
     public void addByte(Address address, byte b) {
@@ -129,8 +129,9 @@ public class IntelHexRecordWriter {
     public List<IntelHexRecord> finish(Address entryPoint) {
 
 		// Before finalizing things, write out any remaining bytes that haven't yet been written, if
-		// the user has specified to do so via the force option (false = write out everything).
-		if (bytes.size() > 0 && !forceSize) {
+		// the user has specified to do so via the drop extra bytes option (false = 
+    	// write out everything).
+		if (bytes.size() > 0 && !dropExtraBytes) {
 			emitData();
 		}
 

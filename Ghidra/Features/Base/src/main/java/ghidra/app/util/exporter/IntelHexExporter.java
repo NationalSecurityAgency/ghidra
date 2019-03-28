@@ -39,8 +39,8 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * The output defaults to lines of 16-bytes but this is configurable using the
  * {@link #recordSizeOption} attribute. This allows users to select any record size
- * up to the max of 0xFF. Users may also choose to <code>force</code> a record size for every line
- * of output, which will only print out lines that match the max record size; any other 
+ * up to the max of 0xFF. Users may also choose to <code>Drop Extra Bytes</code>, which will
+ * cause only lines that match the max record size to be printed; any other 
  * bytes will be dropped. If this option is not set, every byte will be represented in the output.
  */
 public class IntelHexExporter extends Exporter {
@@ -100,8 +100,8 @@ public class IntelHexExporter extends Exporter {
 
 	/**
 	 * Option for exporting Intel Hex records that allows users to specify a record size for the
-	 * output. Users may also optionally specify a <code>force</code> option that will only output
-	 * lines that match this maximum size.
+	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
+	 * will cause only those records that match the maximum size to be output to the file.
 	 * 
 	 * @see RecordSizeComponent
 	 */
@@ -140,8 +140,8 @@ public class IntelHexExporter extends Exporter {
 			return Integer.class;
 		}
 
-		public boolean getForce() {
-			return comp.getForce();
+		public boolean dropExtraBytes() {
+			return comp.dropExtraBytes();
 		}
 	}
 
@@ -151,28 +151,28 @@ public class IntelHexExporter extends Exporter {
 	 * <ul>
 	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these 
 	 * represent the record size for each line of output</li>
-	 * <li>forceCb: a {@link JCheckBox} for specifying the <code>force</code> setting; this
-	 * enforces that every line in the output matches the specified record size</li>
+	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in 
+	 * the output matches the specified record size</li>
 	 * </ul>
 	 * 
-	 * Note: If the <code>force</code> option is set, any bytes that are left over after outputting
-	 * all lines that match the record size will be dropped on the floor.
+	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over 
+	 * after outputting all lines that match the record size will be omitted from the output.
 	 */
 	private class RecordSizeComponent extends JPanel {
 
 		private HintTextField input;
-		private JCheckBox forceCb;
+		private JCheckBox dropCb;
 
 		public RecordSizeComponent(int recordSize) {
 			setLayout(new BorderLayout());
 			
 			input = new HintTextField(String.valueOf(recordSize), false, new BoundedIntegerVerifier());
-			forceCb = new JCheckBox("force");
+			dropCb = new JCheckBox("Drop Extra Bytes");
 			
 			input.setText(String.valueOf(recordSize));
 			
 			add(input, BorderLayout.CENTER);
-			add(forceCb, BorderLayout.EAST);
+			add(dropCb, BorderLayout.EAST);
 		}
 
 		public int getValue() {
@@ -184,8 +184,8 @@ public class IntelHexExporter extends Exporter {
 			return Integer.valueOf(val);
 		}
 
-		public boolean getForce() {
-			return forceCb.isSelected();
+		public boolean dropExtraBytes() {
+			return dropCb.isSelected();
 		}
 	}
 
@@ -276,9 +276,9 @@ public class IntelHexExporter extends Exporter {
 			AddressSetView addrSetView, TaskMonitor monitor) throws MemoryAccessException {
 
 		int size = (int) recordSizeOption.getValue();
-		boolean forceSize = recordSizeOption.getForce();
+		boolean dropBytes = recordSizeOption.dropExtraBytes();
 
-		IntelHexRecordWriter writer = new IntelHexRecordWriter(size, forceSize);
+		IntelHexRecordWriter writer = new IntelHexRecordWriter(size, dropBytes);
 
 		AddressSet set = new AddressSet(addrSetView);
 
