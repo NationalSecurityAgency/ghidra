@@ -50,14 +50,32 @@ public class IntelHexExporter extends Exporter {
 	
 	/** Option allowing the user to select the number of bytes in each line of output */
 	protected RecordSizeOption recordSizeOption;
-
+	
+	private static final int DEFAULT_RECORD_SIZE = 0x10;
+	
 	/**
-	 * Constructs a new Intel Hex exporter.
+	 * Constructs a new Intel Hex exporter. This will use a record size of 16 (the default)
+	 * and will export ALL bytes in the program or selection (even if the total length
+	 * is not a multiple of 16.
 	 */
 	public IntelHexExporter() {
 		this("Intel Hex", "hex", new HelpLocation("ExporterPlugin", "intel_hex"));
 	}
-
+	
+	/**
+	 * Constructs a new Intel Hex exporter with a custom record size. 
+	 * 
+	 * @param recordSize the record size to use when writing to the output file
+	 * @param dropBytes if true, bytes at the end of the file that don't match the specified 
+	 * record size will be dropped
+	 */
+	public IntelHexExporter(int recordSize, boolean dropBytes) {
+		this("Intel Hex", "hex", new HelpLocation("ExporterPlugin", "intel_hex"));
+		recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
+		recordSizeOption.setRecordSize(recordSize);
+		recordSizeOption.setDropBytes(dropBytes);
+	}
+	
 	/**
 	 * Constructor
 	 * 
@@ -82,7 +100,9 @@ public class IntelHexExporter extends Exporter {
 		addressSpaceOption =
 			new Option("Address Space", program.getAddressFactory().getDefaultAddressSpace());
 
-		recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
+		if (recordSizeOption == null) {
+			recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
+		}
 
 		optionsList.add(addressSpaceOption);
 		optionsList.add(recordSizeOption);
@@ -97,98 +117,7 @@ public class IntelHexExporter extends Exporter {
 			recordSizeOption = (RecordSizeOption) options.get(1); 
 		}
 	}
-
-	/**
-	 * Option for exporting Intel Hex records that allows users to specify a record size for the
-	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
-	 * will cause only those records that match the maximum size to be output to the file.
-	 * 
-	 * @see RecordSizeComponent
-	 */
-	private class RecordSizeOption extends Option {
-
-		// Initialize the record size to 16 bytes when showing the option.
-		private final RecordSizeComponent comp = new RecordSizeComponent(16);
-
-		public RecordSizeOption(String name, Class<?> valueClass) {
-			super(name, valueClass);
-		}
-
-		public RecordSizeOption(String name, Class<?> valueClass, Object value, String arg,
-				String group) {
-			super(name, valueClass, value, arg, group);
-		}
-
-		@Override
-		public Component getCustomEditorComponent() {
-			return comp;
-		}
-
-		@Override
-		public Option copy() {
-			return new RecordSizeOption(getName(), getValueClass(), getValue(), getArg(),
-				getGroup());
-		}
-
-		@Override
-		public Object getValue() {
-			return comp.getValue();
-		}
-
-		@Override
-		public Class<?> getValueClass() {
-			return Integer.class;
-		}
-
-		public boolean dropExtraBytes() {
-			return comp.dropExtraBytes();
-		}
-	}
-
-	/**
-	 * Component that displays two widgets for setting export options: 
-	 * 
-	 * <ul>
-	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these 
-	 * represent the record size for each line of output</li>
-	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in 
-	 * the output matches the specified record size</li>
-	 * </ul>
-	 * 
-	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over 
-	 * after outputting all lines that match the record size will be omitted from the output.
-	 */
-	private class RecordSizeComponent extends JPanel {
-
-		private HintTextField input;
-		private JCheckBox dropCb;
-
-		public RecordSizeComponent(int recordSize) {
-			setLayout(new BorderLayout());
-			
-			input = new HintTextField(String.valueOf(recordSize), false, new BoundedIntegerVerifier());
-			dropCb = new JCheckBox("Drop Extra Bytes");
-			
-			input.setText(String.valueOf(recordSize));
-			
-			add(input, BorderLayout.CENTER);
-			add(dropCb, BorderLayout.EAST);
-		}
-
-		public int getValue() {
-			String val = input.getText();
-			if (!input.isFieldValid()) {
-				return 0x10;
-			}
-
-			return Integer.valueOf(val);
-		}
-
-		public boolean dropExtraBytes() {
-			return dropCb.isSelected();
-		}
-	}
-
+	
 	/**
 	 * Verifier for a {@link HintTextField} that ensures input is a numeric value between
 	 * 0 and 0xFF.
@@ -202,24 +131,12 @@ public class IntelHexExporter extends Exporter {
 			HintTextField field = (HintTextField) input;
 			String text = field.getText();
 
-			// Strip off any leading "0x" chars if the user has put them there - the
-			// parseInt method can't handle them.
-			if (text.startsWith("0x")) {
-				text = text.substring(2);
-			}
-
-			// Now try and parse the input; first as hex, then as decimal. 
-			Integer val;
+			int val;
 			try {
-				val = Integer.parseInt(text, 16);
+				val = Integer.decode(text);
 			}
 			catch (NumberFormatException e) {
-				try {
-					val = Integer.parseInt(text);
-				}
-				catch (NumberFormatException e1) {
-					return false;
-				}
+				return false;
 			}
 
 			return val <= 0xFF && val >= 0;
@@ -307,5 +224,114 @@ public class IntelHexExporter extends Exporter {
 			}
 		}
 		return writer.finish(entryPoint);
+	}
+	
+	/**
+	 * Option for exporting Intel Hex records that allows users to specify a record size for the
+	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
+	 * will cause only those records that match the maximum size to be output to the file.
+	 * 
+	 * @see RecordSizeComponent
+	 */
+	private class RecordSizeOption extends Option {
+
+		private final RecordSizeComponent comp = new RecordSizeComponent(DEFAULT_RECORD_SIZE);
+
+		public RecordSizeOption(String name, Class<?> valueClass) {
+			super(name, valueClass);
+		}
+
+		public RecordSizeOption(String name, Class<?> valueClass, Object value, String arg,
+				String group) {
+			super(name, valueClass, value, arg, group);
+		}
+
+		@Override
+		public Component getCustomEditorComponent() {
+			return comp;
+		}
+
+		@Override
+		public Option copy() {
+			return new RecordSizeOption(getName(), getValueClass(), getValue(), getArg(),
+				getGroup());
+		}
+
+		@Override
+		public Object getValue() {
+			return comp.getValue();
+		}
+
+		@Override
+		public Class<?> getValueClass() {
+			return Integer.class;
+		}
+
+		public boolean dropExtraBytes() {
+			return comp.dropExtraBytes();
+		}
+		
+		public void setRecordSize(int recordSize) {
+			comp.setRecordSize(recordSize);
+		}
+		
+		public void setDropBytes(boolean dropBytes) {
+			comp.setDropBytes(dropBytes);
+		}
+	}
+
+	/**
+	 * Component that displays two widgets for setting export options: 
+	 * 
+	 * <ul>
+	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these 
+	 * represent the record size for each line of output</li>
+	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in 
+	 * the output matches the specified record size</li>
+	 * </ul>
+	 * 
+	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over 
+	 * after outputting all lines that match the record size will be omitted from the output.
+	 */
+	private class RecordSizeComponent extends JPanel {
+
+		private HintTextField input;
+		private JCheckBox dropCb;
+
+		public RecordSizeComponent(int recordSize) {
+			setLayout(new BorderLayout());
+			
+			input = new HintTextField(Integer.toString(recordSize), false, new BoundedIntegerVerifier());
+			dropCb = new JCheckBox("Drop Extra Bytes");
+			
+			input.setText(Integer.toString(recordSize));
+			
+			add(input, BorderLayout.CENTER);
+			add(dropCb, BorderLayout.EAST);
+		}
+
+		public int getValue() {
+			String val = input.getText();
+			if (!input.isFieldValid()) {
+				
+				// If the user clears the input field, revert to the default 
+				// record size (16).
+				return DEFAULT_RECORD_SIZE;
+			}
+
+			return Integer.valueOf(val);
+		}
+
+		public boolean dropExtraBytes() {
+			return dropCb.isSelected();
+		}
+		
+		public void setRecordSize(int recordSize) {
+			input.setText(Integer.toString(recordSize));
+		}
+		
+		public void setDropBytes(boolean dropBytes) {
+			dropCb.setSelected(dropBytes);
+		}
 	}
 }
