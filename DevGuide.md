@@ -243,7 +243,7 @@ To build the full Ghidra distribution, you must also build the GhidraServer.
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in a directory named:
-`ghidra.bin/Ghidra/Features/GhidraSerer/`. Note that `ghidra.bin` must be a sibling of `ghidra`:
+`ghidra.bin/Ghidra/Features/GhidraServer/`. Note that `ghidra.bin` must be a sibling of `ghidra`:
 
 ```bash
 cd ~/Downloads   # Or wherever
