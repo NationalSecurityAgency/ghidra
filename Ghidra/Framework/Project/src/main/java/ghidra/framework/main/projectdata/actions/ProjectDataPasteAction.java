@@ -44,7 +44,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 		GTreeNode node = (GTreeNode) context.getContextObject();
 		DomainFolderNode destNode = getFolderForNode(node);
 
-		paste(context.getDataTree(), destNode);
+		paste(context.getTree(), destNode);
 	}
 
 	@Override

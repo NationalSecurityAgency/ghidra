@@ -337,8 +337,11 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		return new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
-			domainFolderList, domainFileList, tree, isActiveProject);
+		ProjectDataTreeActionContext context = new ProjectDataTreeActionContext(provider,
+			projectData, selectionPaths, domainFolderList, domainFileList, tree, isActiveProject);
+		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
+		context.setTransient(isTransient);
+		return context;
 	}
 
 	public DataTree getDataTree() {
