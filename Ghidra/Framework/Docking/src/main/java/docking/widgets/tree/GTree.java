@@ -867,7 +867,7 @@ public class GTree extends JPanel implements BusyListener {
 		tree.getModel().addTreeModelListener(listener);
 	}
 
-	public void removeGTModelListner(TreeModelListener listener) {
+	public void removeGTModelListener(TreeModelListener listener) {
 		tree.getModel().removeTreeModelListener(listener);
 	}
 

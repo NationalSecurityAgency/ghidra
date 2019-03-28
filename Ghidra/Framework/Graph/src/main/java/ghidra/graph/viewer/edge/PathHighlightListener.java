@@ -15,7 +15,7 @@
  */
 package ghidra.graph.viewer.edge;
 
-public interface PathHighlightListner {
+public interface PathHighlightListener {
 
 	/**
 	 * Called when the a path is highlighted. 
