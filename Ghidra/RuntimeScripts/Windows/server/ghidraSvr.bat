@@ -11,7 +11,7 @@ rem  runtime which has been configured into the system PATH ahead of other Java 
 rem  it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
 rem  below:
 
-rem JAVA_HOME=
+rem set JAVA_HOME=
 
 setlocal enabledelayedexpansion
 
@@ -94,7 +94,7 @@ if not exist "%WRAPPER_HOME%\" (
 
 echo Using service wrapper: %WRAPPER_DIRNAME%
 
-@rem Find java.exe
+rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
 
 set JAVA=java.exe
@@ -105,28 +105,23 @@ goto reportError
 
 :findJavaFromJavaHome
 set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JAVA=%JAVA_HOME%\bin\java.exe
 
-if exist "%JAVA_EXE%" goto init
+if exist "%JAVA%" goto lab2
 set ERROR=ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
 goto reportError
 
 :lab2
 
-:: Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
-java -version >nul 2>nul
-if not %ERRORLEVEL% == 0 (
-	set ERROR=Java runtime not found.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
-	goto reportError
-)
-
 :: Get the java that will be used to launch GhidraServer
 set JAVA_HOME=
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('call "%JAVA%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	set ERROR=Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
 	goto reportError
 )
+
+rem reestablish JAVA path based upon final JAVA_HOME
 set JAVA=%JAVA_HOME%\bin\java.exe
 
 set OS_NAME=win32
