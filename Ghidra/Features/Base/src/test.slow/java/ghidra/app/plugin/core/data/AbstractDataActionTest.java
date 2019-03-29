@@ -1270,7 +1270,9 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, EDIT_DATA_TYPE,
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, !hasSelection && hasSettings, caseName);
+		checkAction(actions, DEFAULT_DATA_SETTINGS,
+			(hasSelection == false || isSelectionJustSingleDataInstance(sel, d)) && hasSettings,
+			caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection || hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, onFloatDoubleData, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, onByteWordData, caseName);
@@ -1332,7 +1334,9 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, EDIT_DATA_TYPE,
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, hasSettings && !hasSelection, caseName);
+		checkAction(actions, DEFAULT_DATA_SETTINGS,
+			hasSettings && (hasSelection == false || isSelectionJustSingleDataInstance(sel, d)),
+			caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
@@ -1472,6 +1476,14 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 				", address=" + addrStr + " [case: " + caseName + "]",
 			isValidContext, enabledForContext);
 		return;
+	}
+
+	private boolean isSelectionJustSingleDataInstance(ProgramSelection selection, Data data) {
+		if (selection != null && data != null) {
+			AddressSet dataAS = new AddressSet(data.getAddress(), data.getMaxAddress());
+			return dataAS.hasSameAddresses(selection);
+		}
+		return false;
 	}
 
 	protected ActionContext getProgramContext() {
