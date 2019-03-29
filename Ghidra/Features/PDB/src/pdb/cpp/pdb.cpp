@@ -46,9 +46,8 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 	if (hr < 0) {
 		switch (hr) {
 			case REGDB_E_CLASSNOTREG:
-				fatal("Unable to locate the DIA SDK. It is required to load PDB files.\n\n" \
-					  "* Open {Ghidra install root}/docs/README_PDB.html\n"
-					  "   and follow the instructions therein.\n");
+				fatal("Unable to locate the DIA SDK. It is required to load PDB files.\n" \
+					  "* See docs/README_PDB.html for DLL registration instructions.\n");
 				break;
 			default:
 				char msg[256];
