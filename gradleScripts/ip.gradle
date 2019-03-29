@@ -122,6 +122,8 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/*.sla"
 		exclude "**/.gradle/**"
 		exclude "**/.settings/**"
+		exclude "**/.vs/**"
+		exclude "**/*.vcxproj.user"
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)

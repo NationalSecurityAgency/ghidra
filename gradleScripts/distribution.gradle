@@ -196,6 +196,8 @@ task assembleCommon (type: Copy) {
 	exclude "**/.project"
 	exclude "**/.classpath"
 	exclude "**/delete.me"
+	exclude "**/.vs/**"
+	exclude "**/*.vcxproj.user"
 	
 	/////////////////
 	// GHIDRA PROJECTS
