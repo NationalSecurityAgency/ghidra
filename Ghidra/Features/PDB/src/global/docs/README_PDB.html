@@ -75,9 +75,9 @@ of Visual Studio and DIA SDK.</li>
 
 <p>First, check to see if you already have the <i>msdia140.dll</i> library installed on your system.  
 It is generally installed installed with Microsoft Visual Studio 2017 when C/C++ development support
-is included.
+is included (<DISTRO> may be Community, Professional, or other VS 2017 distribution package name).
 <pre>
-        C:\\Program Files (x86)\Microsoft Visual Studio\2017\DIA SDK\bin\amd64\msdia140.dll
+        C:\Program Files (x86)\Microsoft Visual Studio\2017\<DISTRO>\DIA SDK\bin\amd64\msdia140.dll
 </pre>
 <p>This file is commonly located here, although it may be installed in other locations as well.  Any 64-bit 
 copy may be registered provided it is the correct version.  There is no need to register more than
@@ -86,8 +86,8 @@ one.
 <h3>Register 'msdia140.dll' in the Windows registry</h3>
 
 <p>Please register 64-bit <i>msdia140.dll</i> even if you already had a copy of it on your computer
-since it is not registered by the Visual Studio installation process.  You will need administrative rights/privileges in order to register the DLL in the Windows 
-registry.
+since it is not registered by the Visual Studio installation process.  You will need administrative 
+rights/privileges in order to register the DLL in the Windows registry.
 <blockquote>
 <ol>
 <li>Start a command prompt as an administrator:</li>

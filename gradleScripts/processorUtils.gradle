@@ -1,4 +1,3 @@
-
 /*****************************************************************************************
  *
  *  Create a configuration so the a dependency can be declared on the the software modeling
@@ -16,23 +15,80 @@ dependencies {
 
 /*****************************************************************************************
  *
+ *  Task to write sleigh compiler args to build/data/sleighArgs.txt for use with sleigh 
+ *  external sleigh compiler.
+ *
+ *****************************************************************************************/
+task saveSleighArgs {
+	def sleighArgsFile = file("build/data/sleighArgs.txt")
+	outputs.files sleighArgsFile
+	outputs.upToDateWhen { false }
+	doLast {
+		sleighArgsFile.withWriter { out->
+			project.sleighCompile.args.each { a-> 
+				// don't save -a option
+				if (!"-a".equals(a)) {
+					out.println a 
+				}
+			}
+		}
+	}
+}
+
+prepDev.dependsOn(saveSleighArgs)
+
+/*****************************************************************************************
+ *
+ *  Task to write sleigh build.xml file for use is development mode only.
+ *
+ *****************************************************************************************/
+task writeSleighDevBuild {
+	def templateFilePath = project(':BuildFiles').projectDir.toString() + "/sleighDevBuild.template"
+	doLast {
+		// Generate build.xml with injected classpath for running sleigh compiler
+		copy {
+			into "data"
+			from (templateFilePath) {
+				rename { "build.xml" }
+				expand ( [ 'gradleSleighDevClasspath': project(':SoftwareModeling').sleighDevClasspath ] )
+			}
+		}
+	}
+}
+
+prepDev.dependsOn(writeSleighDevBuild)
+
+/*****************************************************************************************
+ *
+ *  Write sleigh build.xml file for each language module into assembleCommon
+ *
+ *****************************************************************************************/
+rootProject.assembleCommon { 
+	into (getZipPath(this.project)  + "/data") {
+		from (rootProject.projectDir.toString() + "/GhidraBuild/BuildFiles/sleighDistBuild.template") {
+	        rename { "build.xml" }
+	    }
+	}
+}
+
+/*****************************************************************************************
+ *
  *  Task to compile language files using the sleigh compiler.
  *
  *****************************************************************************************/
 task sleighCompile (type: JavaExec) {
 	group = rootProject.GHIDRA_GROUP
 	description "  Compiles all the sleigh languages.    [processorUtils.gradle]\n"
-
+	 
 	// define standard parameters for JavaExec
 	classpath configurations.sleighConfig
 	main = 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
 	
-	args '-a'
-	
 	// Delay adding the directory argument until the first part of the execution phase, so
 	// that any extra args added by a project override will be added to the arg list before
-	// this argument.
+	// these arguments.
 	doFirst {
+		args '-a'
 		args './data/languages'
 	}
 	
@@ -40,8 +96,9 @@ task sleighCompile (type: JavaExec) {
 }
 
 // The task that copies the common files to the distribution folder must depend on
-// this sleigh task before executing.
+// the sleigh tasks before executing.
 rootProject.assembleCommon.dependsOn(sleighCompile)
+rootProject.assembleCommon.dependsOn(saveSleighArgs)
 
 //     For all tasks of type:Test (i.e., integrationTest, cunitTest, etc.), add a task dependency to 
 // sleighCompile.  The sleighCompile task inputs and outputs are defined such that the *.slaspec 
@@ -52,8 +109,9 @@ rootProject.assembleCommon.dependsOn(sleighCompile)
 // modules as seen in the use of ghidra.test.ToyProgramBuilder.
 //     The tasks of type:Test do not know about sleighCompile during their configuration phase, so the 
 // dependency must be done in this gradle file.
-rootProject.subprojects.findAll { subproject ->	
-	if (!isSupportModule(subproject)) {
+rootProject.subprojects.findAll { subproject ->
+	boolean isSupporProject = subproject.findProperty("isSupportProject") ?: false;
+	if (!isSupporProject) {
 		subproject.tasks.withType(Test).all {		
 			it.dependsOn(sleighCompile)
 		}
@@ -91,25 +149,8 @@ def taskOutputs = fileTree(dir: 'data/languages', include: '**/*.sla')
 sleighCompile.inputs.files (taskInputs)
 sleighCompile.outputs.files (taskOutputs)
 
-task eclipseSleighLauncher(type: WriteEclipseLauncher) {
-	dest = forName("Sleigh $project.name")
-	isRunFave = true
-	isDbgFave = false
-
-	classpath = configurations.sleighConfig
-	main 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
-
-	args '-a'
-
-	// Delay adding the directory argument until the first part of the execution phase, so
-	// that any extra args added by a project override will be added to the arg list before
-	// this argument.
-	doFirst {
-		args './data/languages'
-	}
-
-	jvmArgs '-Xmx2048M'	
-}
+// define the sleigh compile inputs to saveSleighArgs to limit task creation to language modules
+saveSleighArgs.inputs.files (taskInputs)
 
 def isSupportModule(Project p) {
 	return p.findProperty("isSupportProject") ?: false

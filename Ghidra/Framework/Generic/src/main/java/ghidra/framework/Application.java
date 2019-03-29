@@ -460,18 +460,19 @@ public class Application {
 		if (module == null) {
 			return null;
 		}
-		
-		File file = getModuleFile(module, "build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName(),
-			exactFilename);
+
+		File file = getModuleFile(module,
+			"build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), exactFilename);
 
 		if (file == null) {
 			file = getModuleFile(module, "os/" + Platform.CURRENT_PLATFORM.getDirectoryName(),
 				exactFilename);
 		}
-		
+
 		// Allow win32 to be used for win64 as fallback
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
-			file = getModuleFile(module, "build/os/" + Platform.WIN_32.getDirectoryName(), exactFilename);
+			file = getModuleFile(module, "build/os/" + Platform.WIN_32.getDirectoryName(),
+				exactFilename);
 		}
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
 			file = getModuleFile(module, "os/" + Platform.WIN_32.getDirectoryName(), exactFilename);
@@ -492,12 +493,13 @@ public class Application {
 
 	private File getOSFileInAnyModule(String path) throws FileNotFoundException {
 
-		File file = findModuleFile("build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
-		
+		File file =
+			findModuleFile("build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
+
 		if (file == null) {
 			file = findModuleFile("os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
 		}
-		
+
 		// Allow win32 to be used for win64 as fallback
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
 			file = findModuleFile("build/os/" + Platform.WIN_32.getDirectoryName(), path);
@@ -657,7 +659,7 @@ public class Application {
 	/**
 	 * Return the module root directory for the module with the given name.
 	 * @param moduleName the name of the module.
-	 * @return the module root directory for the module with the given name.
+	 * @return the module root directory for the module with the given name or null if not found.
 	 */
 	public static ResourceFile getModuleRootDir(String moduleName) {
 		checkAppInitialized();
