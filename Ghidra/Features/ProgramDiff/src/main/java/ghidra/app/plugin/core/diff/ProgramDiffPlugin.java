@@ -441,6 +441,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 			Address primaryByteAddr = SimpleDiffUtility.getCompatibleAddress(secondaryDiffProgram,
 				byteAddr, primaryProgram);
+			if (primaryByteAddr == null) {
+				primaryByteAddr = primaryAddr; // Make sure the byte address isn't null.
+			}
 			Address primaryRefAddr = SimpleDiffUtility.getCompatibleAddress(secondaryDiffProgram,
 				refAddr, primaryProgram);
 			ProgramLocation newP1Location = new ProgramLocation(primaryProgram, primaryAddr,
@@ -463,7 +466,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			}
 			ProgramLocation previousP1LocationAsP2 = DiffUtility
 				.getCompatibleProgramLocation(primaryProgram, location, secondaryDiffProgram);
-			diffListingPanel.setCursorPosition(previousP1LocationAsP2);
+			if (previousP1LocationAsP2 != null) {
+				diffListingPanel.setCursorPosition(previousP1LocationAsP2);
+			}
 			if (diffDetailsProvider != null && diffDetails != null) {
 				diffDetailsProvider.locationChanged(previousP1Location);
 			}
@@ -749,7 +754,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		runSwing(() -> {
 			MarkerSet selectionMarkers = getSelectionMarkers();
 			selectionMarkers.clearAll();
-			selectionMarkers.add(p2SelectionAsP1);
+			selectionMarkers.add(p2Selection);
 		});
 
 		diffListingPanel.setSelection(p2SelectionAsP1);
@@ -798,9 +803,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		// Limit the apply to the selection in the view.
 		AddressSet p2SelectionAsP1 =
 			DiffUtility.getCompatibleAddressSet(p2Selection, primaryProgram);
-		AddressSet p1ApplySet =
-			p2SelectionAsP1.intersect(p1ViewAddrSet).subtract(addressesOnlyInP1).subtract(
-				compatibleOnlyInP2);
+		AddressSet p1ApplySet = p2SelectionAsP1.intersect(p1ViewAddrSet)
+			.subtract(addressesOnlyInP1)
+			.subtract(compatibleOnlyInP2);
 		if (p1ApplySet.isEmpty()) {
 			Msg.showInfo(getClass(), tool.getToolFrame(), "Apply Differences",
 				(p2Selection.isEmpty()) ? "No diff selection in the current view."
@@ -860,7 +865,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			// Right side markers need p1 addresses since they use p1 indexMap.
 			MarkerSet diffMarkers = getDiffMarkers(); // Get right side markers for program 2.
 			diffMarkers.clearAll();
-			diffMarkers.add(p2DiffSetAsP1);
+			diffMarkers.add(p2DiffSet);
 
 			MarkerSet codeViewerDiffMarkers = getCodeViewerMarkers(); // Get left side markers for program 1.
 			codeViewerDiffMarkers.clearAll();
@@ -884,7 +889,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			AddressSet p1DiffHighlightSet =
 				DiffUtility.getCompatibleAddressSet(p2Highlight, primaryProgram);
 			p2DiffHighlight = p2Highlight;
-			diffMarkers.add(p1DiffHighlightSet);
+			diffMarkers.add(p2Highlight);
 			codeViewerDiffMarkers.add(p1DiffHighlightSet);
 		}
 
@@ -1603,7 +1608,14 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		diffListingPanel.goTo(currentLocation);
 
 		MarkerSet cursorMarkers = getCursorMarkers();
-		cursorMarkers.setAddressSet(new AddressSet(currentLocation.getAddress()));
+		Address currentP2Address = currentLocation.getAddress();
+		if (currentLocation.getProgram() != secondaryDiffProgram) { // Make sure address is from P2.
+			currentP2Address = SimpleDiffUtility.getCompatibleAddress(currentLocation.getProgram(),
+				currentLocation.getAddress(), secondaryDiffProgram);
+		}
+		if (currentP2Address != null) {
+			cursorMarkers.setAddressSet(new AddressSet(currentP2Address));
+		}
 
 		updatePgm2Enablement();
 
