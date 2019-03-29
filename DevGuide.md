@@ -3,32 +3,51 @@
 ## Catalog of Dependencies
 
 The following is a list of dependencies, in no particular order.
-This guide includes instructions for obtaining each of these at the relevant step(s).
+This guide includes instructions for obtaining many of these at the relevant step(s).
 You may not need all of these, depending on which portions you are building or developing.
 
 * JDK 11 - We test and build using OpenJDK 11.0.2.
+    - https://jdk.java.net/11/
 * Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
+    - https://www.eclipse.org/downloads/
 * Gradle 5.0 - Later versions may work, but you'll need to modify our version check.
-* A C/C++ compiler - We use Visual Studio 2017 on Windows, GCC on Linux, and Xcode (Clang) on macOS.
-* Git - We use git-bash on Windows. Most Linux distros have git in their repos. Xcode provides git on macOS.
+    - https://gradle.org/next-steps/?version=5.0&format=bin
+* A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio 2017 on Windows, .
+    - https://gcc.gnu.org/
+    - https://developer.apple.com/xcode/
+    - https://visualstudio.microsoft.com/downloads/
+* Git - We use the official installer on Windows. Most Linux distros have git in their repos. Xcode provides git on macOS.
+    - https://git-scm.com/downloads
 * Bash - This is moot on Linux and macOS. On Windows, we use MinGW. This may be distributed with Git for Windows.
-* Bison and Flex - We use MinGW on Windows. Most Linux distros have these in their reposs. Xcode provides these for macOS.
-* dex2jar
+    - https://osdn.net/projects/mingw/releases/
+* Bison and Flex - We use win-flex-bison v2.5.17. These packages may also be available in MSYS (MinGW). Most Linux distros have these in their repos. Xcode provides these for macOS.
+    - https://sourceforge.net/projects/winflexbison/
+* dex2jar. We use version 2.0.
+    - https://github.com/pxb1988/dex2jar/releases
 * AXMLPrinter2
-* HFS Explorer 0.21
-* Yet Another Java Service Wrapper 12.12 - Only to build Ghidra package.
-* Eclipse PDE - Only for the GhidraDev plugin.
-* Eclipse CDT 8.6.0 - Only for the GhidraDev plugin
-* PyDev 6.3.1 - Only for the GhidraDev plugin
+    - https://code.google.com/archive/p/android4me/downloads
+* HFS Explorer. We use version 0.21.
+    - https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/
+    - https://github.com/unsound/hfsexplorer/releases (newer versions)
+* Yet Another Java Service Wrapper. We use version 12.12 - Only to build Ghidra package.
+    - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/
+* Eclipse PDE - Environment for developing the GhidraDev plugin.
+    - https://www.eclipse.org/pde/
+* Eclipse CDT. We use version 8.6.0 - Build dependency for the GhidraDev plugin.
+    - https://www.eclipse.org/cdt/
+* PyDev. We use version 6.3.1 - Build dependency for the GhidraDev plugin.
+    - https://sourceforge.net/projects/pydev/files/pydev/
 
-There are many others automatically downloaded by Gradle from Maven Central and Bintray JCenter when building and/or setting up the development environment.
+There are many, many others automatically downloaded by Gradle from Maven Central and Bintray JCenter when building and/or setting up the development environment.
+If you need these offline, a reasonable course of action is to set up a development environment online, perhaps perform a build, and then scrape Gradle's cache.
 
 ## Install Development and Build Tools
 
-If you're on Windows, install Git.
-You may also need to install MinGW.
-Many of the commands given below must be executed in Bash.
-
+If you're on Windows, install Git, MinGW, Bison, and Flex.
+Many of the commands given below must be executed in Bash (Use git-bash or MSYS from MinGW).
+**IMPORTANT**: The bison and flex executables may be named `win-bison.exe` and `win-flex.exe`.
+Our build cannot currently cope with that, so you should rename them to `bison.exe` and `flex.exe`.
+ 
 Install OpenJDK 11 and make sure it's the default java.
 
 Install Eclipse.
@@ -160,72 +179,28 @@ Some of Ghidra's components are built for the native platform.
 We currently support Linux, macOS, and Windows 64-bit x86 systems.
 Others should be possible, but we do not test on them.
 
-#### decompile
-
-Install bison and flex.
+Ensure bison and flex are installed and in your `PATH`.
 Now build using Gradle:
 
 On Linux:
 
 ```bash
-gradle decompileLinux64Executable
+gradle buildNatives_linux64
 ```
+
 On macOS:
 
 ```bash
-gradle decompileOsx64Executable
+gradle buildNatives_osx64
 ```
 
-On Windows:
-
-```cmd
-gradle decompileWin64Executable
-```
-
-#### demangler_gnu
-
-Build using Gradle:
-
-On Linux:
-
-```bash
-gradle demangler_gnuLinux64Executable
-```
 On macOS:
 
 ```bash
-gradle demangler_gnuOsx64Executable
+gradle buildNatives_win64
 ```
 
-On Windows:
-
-```cmd
-gradle demangler_gnuWin64Executable
-```
-
-#### sleigh
-
-The sleigh compiler has been ported to Java and integrated with Ghidra.
-The native sleigh compiler may still be useful for those who'd like quicker feedback by compiling from the command line.
-To build the native sleigh compiler, install bison and flex.
-Now, use Gradle:
-
-On Linux:
-
-```bash
-gradle sleighLinux64Executable
-```
-On macOS:
-
-```bash
-gradle sleighOsx64Executable
-```
-
-On Windows:
-
-```cmd
-gradle sleighWin64Executable
-```
+This will build the decompiler, the demangler for GNU toolchains, the sleigh compiler, and (on Windows only) the PDB parser.
 
 ## Run Ghidra from Eclipse
 
