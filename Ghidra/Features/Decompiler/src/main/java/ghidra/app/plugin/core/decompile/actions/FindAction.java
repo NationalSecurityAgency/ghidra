@@ -1,5 +1,6 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,13 +78,20 @@ public class FindAction extends DockingAction {
 		if (text != null) {
 			dialog.setSearchText(text);
 		}
+
 		// show over the root frame, so the user can still see the Decompiler window
 		tool.showDialog(dialog);
 	}
 
 	protected FindDialog getFindDialog() {
 		if (findDialog == null) {
-			findDialog = new FindDialog("Decompiler Find Text", new DecompilerSearcher());
+			findDialog = new FindDialog("Decompiler Find Text", new DecompilerSearcher()) {
+				@Override
+				protected void dialogClosed() {
+					// clear the search results when the dialog is closed
+					decompilerPanel.setSearchResults(null);
+				}
+			};
 			findDialog.setHelpLocation(new HelpLocation("DecompilePlugin", "Find"));
 		}
 		return findDialog;

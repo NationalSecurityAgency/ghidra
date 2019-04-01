@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,8 +141,8 @@ public class ReverseClippingTextField implements TextField {
 
 		int x = findX(col) + textStartX;
 
-		return new Rectangle(x, -textElement.getHeightAbove(), 2, textElement.getHeightAbove() +
-			textElement.getHeightBelow());
+		return new Rectangle(x, -textElement.getHeightAbove(), 2,
+			textElement.getHeightAbove() + textElement.getHeightBelow());
 	}
 
 	/**
@@ -336,8 +335,7 @@ public class ReverseClippingTextField implements TextField {
 	private void paintDots(Graphics g, int x) {
 		int pos = 1; // skip one pixel
 		for (int i = 0; i < 3; i++) {
-			if (pos < DOT_DOT_DOT_WIDTH - 2) { // don't paint too close to next
-												// field.
+			if (pos < DOT_DOT_DOT_WIDTH - 2) { // don't paint too close to next field
 				g.drawRect(x + pos, -2, 1, 1);
 				pos += 4; // add in size of dot and padding
 			}
@@ -349,14 +347,14 @@ public class ReverseClippingTextField implements TextField {
 		if (cursorLoc != null) {
 			cursorTextOffset = screenLocationToTextOffset(cursorLoc.row(), cursorLoc.col());
 		}
-		paintHighlights(g, hlFactory.getHighlights(getString(), cursorTextOffset));
+		paintHighlights(g, hlFactory.getHighlights(this, getString(), cursorTextOffset));
 	}
 
 	protected void paintHighlights(Graphics g, Highlight[] highlights) {
-		for (int i = 0; i < highlights.length; i++) {
-			int startCol = Math.max(highlights[i].getStart() - startingCharIndex, 0);
-			int endCol = Math.min(highlights[i].getEnd() - startingCharIndex, getString().length());
-			Color c = highlights[i].getColor();
+		for (Highlight highlight : highlights) {
+			int startCol = Math.max(highlight.getStart() - startingCharIndex, 0);
+			int endCol = Math.min(highlight.getEnd() - startingCharIndex, getString().length());
+			Color c = highlight.getColor();
 			if (endCol >= startCol) {
 				int start = findX(startCol);
 				int end = findX(endCol + 1);

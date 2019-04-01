@@ -1,5 +1,6 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +38,7 @@ import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -175,6 +177,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (clipboard != null) {
 			clipboard.selectionChanged(null);
 		}
+
+		// don't highlight search results across functions
+		currentSearchLocation = null;
 	}
 
 	private void setLocation(DecompileData oldData, DecompileData newData) {
@@ -696,9 +701,27 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	class SearchHighlightFactory implements HighlightFactory {
+
 		@Override
 		public Highlight[] getHighlights(String text, int cursorTextOffset) {
-			if (currentSearchLocation == null || cursorTextOffset == -1) {
+			// the search highlight needs the Field in order to work correctly
+			return new Highlight[0];
+		}
+
+		@Override
+		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
+			if (currentSearchLocation == null) {
+				return new Highlight[0];
+			}
+
+			ClangTextField cField = (ClangTextField) field;
+			int highlightLine = cField.getLineNumber();
+
+			FieldLocation searchCursorLocation =
+				((FieldBasedSearchLocation) currentSearchLocation).getFieldLocation();
+			int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
+			if (highlightLine != searchLineNumber) {
+				// only highlight the match on the actual line
 				return new Highlight[0];
 			}
 
