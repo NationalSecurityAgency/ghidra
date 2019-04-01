@@ -1271,8 +1271,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
 		checkAction(actions, DEFAULT_DATA_SETTINGS,
-			(hasSelection == false || isSelectionJustSingleDataInstance(sel, d)) && hasSettings,
-			caseName);
+			(!hasSelection || isSelectionJustSingleDataInstance(sel, d)) && hasSettings, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection || hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, onFloatDoubleData, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, onByteWordData, caseName);
@@ -1335,8 +1334,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
 		checkAction(actions, DEFAULT_DATA_SETTINGS,
-			hasSettings && (hasSelection == false || isSelectionJustSingleDataInstance(sel, d)),
-			caseName);
+			hasSettings && (!hasSelection || isSelectionJustSingleDataInstance(sel, d)), caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
