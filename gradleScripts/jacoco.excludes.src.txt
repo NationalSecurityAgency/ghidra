@@ -50,8 +50,6 @@ ghidra/GhidraThreadGroup*
 ghidra/HelpAdapter*
 ghidra/ClassSearcherStatusReportingTaskMonitor*
 ghidra/app/plugin/debug/**
-generic/platform/OSXAdapter*
-
 
 // Old/deprecated APIs
 ghidra/app/program/database/oldfunction/**
