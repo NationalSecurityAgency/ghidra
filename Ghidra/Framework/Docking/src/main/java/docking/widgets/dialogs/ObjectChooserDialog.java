@@ -63,7 +63,7 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 
 		table.addSelectionListener(t -> objectSelected(t));
 
-		table.setItemPickListner(t -> objectPicked(t));
+		table.setItemPickListener(t -> objectPicked(t));
 
 		return table;
 	}

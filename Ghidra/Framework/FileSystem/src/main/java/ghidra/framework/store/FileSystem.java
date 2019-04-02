@@ -254,7 +254,7 @@ public interface FileSystem {
 
 	/**
 	 * Adds the given listener to be notified of file system changes.
-	 * @param listener the listner to be added.
+	 * @param listener the listener to be added.
 	 */
 	public void addFileSystemListener(FileSystemListener listener);
 
