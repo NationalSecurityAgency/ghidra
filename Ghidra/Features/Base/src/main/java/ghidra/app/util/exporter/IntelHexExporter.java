@@ -302,7 +302,7 @@ public class IntelHexExporter extends Exporter {
 			setLayout(new BorderLayout());
 			
 			input = new HintTextField(Integer.toString(recordSize), false, new BoundedIntegerVerifier());
-			dropCb = new JCheckBox("Drop Extra Bytes");
+			dropCb = new JCheckBox("Align To Record Size");
 			
 			input.setText(Integer.toString(recordSize));
 			
