@@ -1,0 +1,349 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.pdb.pdbreader;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.pdb.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
+
+/**
+ * This class is the version of {@link AbstractDatabaseInterface} for newer PDB files.
+ * <P>
+ * This class uses {@link ModuleInformation600}.
+ */
+public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
+
+	//==============================================================================================
+	// Internals
+	//==============================================================================================
+	protected Hasher hasher; //Might belong in parent?  Used in parent (even older Hasher?)
+
+	// The source of these values can overlay other fields in older versions of this type.
+	protected long versionSignature = 0; // unsigned 32-bit 
+
+	protected long age = 0; // unsigned 32-bit
+	protected int universalVersion = 0; // unsigned 16-bit
+	protected int pdbDllBuildVersion = 0; // unsigned 16-bit
+	protected int pdbDllReleaseBuildVersion = 0; // unsigned 16-bit
+
+	protected int lengthTypeServerMapSubstream = 0; // signed 32-bit
+	protected long indexOfMicrosoftFoundationClassTypeServer = 0; // unsigned 32-bit
+	protected int lengthOptionalDebugHeader = 0; // signed 32-bit
+	protected int lengthEditAndContinueSubstream = 0; // signed 32-bit
+
+	protected int flags = 0; // unsigned 16-bit
+	protected int machineType = 0; // unsigned 16-bit
+	protected long padReserve = 0; // unsigned 32-bit
+
+	protected List<String> editAndContinueNameList = new ArrayList<>();
+	protected List<Integer> debugStreamList = new ArrayList<>(); // TODO: this is a guess.
+
+	//==============================================================================================
+	// API
+	//==============================================================================================
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} that owns this {@link DatabaseInterfaceNew}.
+	 * @param streamNumber The stream number that contains the {@link DatabaseInterfaceNew} data.
+	 */
+	public DatabaseInterfaceNew(AbstractPdb pdb, int streamNumber) {
+		super(pdb, streamNumber);
+	}
+
+	//==============================================================================================
+	// Abstract Methods
+	//==============================================================================================
+	@Override
+	protected void deserializeHeader(PdbByteReader reader) throws PdbException {
+		//System.out.println(reader.dump(0x200));
+		versionSignature = reader.parseUnsignedIntVal();
+		versionNumber = reader.parseUnsignedIntVal();
+		age = reader.parseUnsignedIntVal();
+
+		streamNumberGlobalStaticSymbols = reader.parseUnsignedShortVal();
+
+		// Has bit-fields that could be broken out further
+		universalVersion = reader.parseUnsignedShortVal();
+
+		streamNumberPublicStaticSymbols = reader.parseUnsignedShortVal();
+		pdbDllBuildVersion = reader.parseUnsignedShortVal();
+
+		streamNumberSymbolRecords = reader.parseUnsignedShortVal();
+		pdbDllReleaseBuildVersion = reader.parseUnsignedShortVal();
+
+		lengthModuleInformationSubstream = reader.parseInt();
+		lengthSectionContributionSubstream = reader.parseInt();
+		lengthSectionMap = reader.parseInt();
+		lengthFileInformation = reader.parseInt();
+		lengthTypeServerMapSubstream = reader.parseInt();
+		indexOfMicrosoftFoundationClassTypeServer = reader.parseUnsignedIntVal();
+		lengthOptionalDebugHeader = reader.parseInt();
+		lengthEditAndContinueSubstream = reader.parseInt();
+
+		flags = reader.parseUnsignedShortVal();
+		machineType = reader.parseUnsignedShortVal();
+
+		padReserve = reader.parseUnsignedIntVal();
+
+	}
+
+	@Override
+	protected void deserializeInternalSubstreams(PdbByteReader reader) throws PdbException {
+		processModuleInformation(reader, false);
+		processSectionContributions(reader, false);
+		processSegmentMap(reader, false);
+		processFileInformation(reader, false);
+//		super.deserializeInternalSubstreams(reader);
+		processTypeServerMap(reader, false);
+		//Note that the next two are in reverse order from their length fields in the header.
+		processEditAndContinueInformation(reader, false);
+		processDebugHeader(reader, false);
+	}
+
+	@Override
+	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
+			throws IOException, PdbException, CancelledException {
+		symbolRecords.deserialize(monitor);
+//		super.deserializeAdditionalSubstreams();
+		//TODO: Process further information that might be found from ProcessTypeServerMap,
+		// processEditAndContinueInformation, and processDebugHeader.  The last of these created
+		// a list of debug streams (also seen in each SectionContributionInformation).
+	}
+
+	@Override
+	protected void processModuleInformation(PdbByteReader reader, boolean skip)
+			throws PdbException {
+		if (lengthModuleInformationSubstream == 0) {
+			return;
+		}
+		if (skip) {
+			reader.skip(lengthModuleInformationSubstream);
+			return;
+		}
+		PdbByteReader substreamReader =
+			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
+		while (substreamReader.hasMore()) {
+			AbstractModuleInformation moduleInformation = new ModuleInformation600();
+			moduleInformation.deserialize(substreamReader);
+			moduleInformationList.add(moduleInformation);
+		}
+	}
+
+	@Override
+	protected void dumpHeader(Writer writer) throws IOException {
+		StringBuilder builder = new StringBuilder();
+		builder.append("versionSignature: ");
+		builder.append(versionSignature);
+		builder.append("\nversionNumber: ");
+		builder.append(versionNumber);
+		builder.append("\nage: ");
+		builder.append(age);
+		builder.append("\nstreamNumberGlobalStaticSymbols: ");
+		builder.append(streamNumberGlobalStaticSymbols);
+		builder.append(String.format("\nuniversalVersion: 0x%04x", universalVersion));
+		builder.append("\nstreamNumberPublicStaticSymbols: ");
+		builder.append(streamNumberPublicStaticSymbols);
+		builder.append(String.format("\npdbDllBuildVersion: 0x%04x", pdbDllBuildVersion));
+		builder.append("\nstreamNumberSymbolRecords: ");
+		builder.append(streamNumberSymbolRecords);
+		builder.append(
+			String.format("\npdbDllReleaseBuildVersion: 0x%04x", pdbDllReleaseBuildVersion));
+		builder.append("\nlengthModuleInformationSubstream: ");
+		builder.append(lengthModuleInformationSubstream);
+		builder.append("\nlengthSectionContributionSubstream: ");
+		builder.append(lengthSectionContributionSubstream);
+		builder.append("\nlengthSectionMap: ");
+		builder.append(lengthSectionMap);
+		builder.append("\nlengthFileInformation: ");
+		builder.append(lengthFileInformation);
+
+		builder.append("\nlengthTypeServerMapSubstream: ");
+		builder.append(lengthTypeServerMapSubstream);
+		builder.append("\nindexOfMicrosoftFoundationClassTypeServer: ");
+		builder.append(indexOfMicrosoftFoundationClassTypeServer);
+		builder.append("\nlengthOptionalDebugHeader: ");
+		builder.append(lengthOptionalDebugHeader);
+		builder.append("\nlengthEditAndContinueSubstream: ");
+		builder.append(lengthEditAndContinueSubstream);
+		builder.append(String.format("\nflags: 0x%04x", flags));
+		builder.append(String.format("\nmachineType: 0x%04x", machineType));
+		builder.append("\npadReserve: ");
+		builder.append(padReserve);
+		writer.write(builder.toString());
+	}
+
+	@Override
+	protected void dumpInternalSubstreams(Writer writer) throws IOException {
+		writer.write("ModuleInformationList---------------------------------------\n");
+		dumpModuleInformation(writer);
+		writer.write("\nEnd ModuleInformationList-----------------------------------\n");
+		writer.write("SectionContributionList-------------------------------------\n");
+		dumpSectionContributions(writer);
+		writer.write("\nEnd SectionContributionList---------------------------------\n");
+		writer.write("SegmentMap--------------------------------------------------\n");
+		dumpSegmentMap(writer);
+		writer.write("\nEnd SegmentMap----------------------------------------------\n");
+//		super.dumpInternalSubstreams();
+		writer.write("EditAndContinueNameList-------------------------------------\n");
+		dumpEditAndContinueNameList(writer);
+		writer.write("\nEditAndContinueNameList-------------------------------------\n");
+		writer.write("DebugStreamList---------------------------------------------\n");
+		dumpDebugStreamList(writer);
+		writer.write("\nEnd DebugStreamList-----------------------------------------\n");
+	}
+
+	//==============================================================================================
+	// Internal Data Methods
+	//==============================================================================================
+	//TODO: Find examples that exercise this.
+	/**
+	 * Deserializes/Processes the TypeServerMap.
+	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param skip Skip over the data in the {@link PdbByteReader}.
+	 * @throws PdbException Upon not enough data left to parse.
+	 */
+	@SuppressWarnings("unused") // substreamReader
+	protected void processTypeServerMap(PdbByteReader reader, boolean skip) throws PdbException {
+		// Following for developmental investigation.  Set breakpoint on 'a = 1' line.
+		if (lengthTypeServerMapSubstream != 0) {
+			// The following code is for developmental investigations;
+			//  set break point on "int a = 1;" instead of a
+			//  conditional break point.
+			int a = 1;
+			a = a + 1;
+		}
+		if (lengthTypeServerMapSubstream == 0) {
+			return;
+		}
+		if (skip) {
+			reader.skip(lengthTypeServerMapSubstream);
+			return;
+		}
+		PdbByteReader substreamReader = reader.getSubPdbByteReader(lengthTypeServerMapSubstream);
+		//System.out.println(sumbstreamReader.dump(0x1000));
+	}
+
+	/**
+	 * Deserializes/Processes the EditAndContinueInformation.
+	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param skip Skip over the data in the {@link PdbByteReader}.
+	 * @throws PdbException upon error parsing a name.
+	 */
+	@SuppressWarnings("unused") // hashVal
+	protected void processEditAndContinueInformation(PdbByteReader reader, boolean skip)
+			throws PdbException {
+		if (lengthEditAndContinueSubstream == 0) {
+			return;
+		}
+		if (skip) {
+			reader.skip(lengthEditAndContinueSubstream);
+			return;
+		}
+		PdbByteReader substreamReader = reader.getSubPdbByteReader(lengthEditAndContinueSubstream);
+		//System.out.println(substreamReader.dump(0x1000));
+		long hdr = substreamReader.parseUnsignedIntVal();
+		int ver = substreamReader.parseInt(); // spec says unsigned, but I believe small vals.
+		if (hdr != 0xeffeeffeL) {
+			return; //For now... we are not going to try to populate this with a conversion.
+		}
+		switch (ver) {
+			case 1:
+				hasher = new Hasher32();
+				break;
+			case 2:
+				hasher = new Hasher32V2();
+				break;
+			case 0: // Maybe should use Hasher()???
+			default:
+				return;
+		}
+		int length = substreamReader.parseInt();
+		PdbByteReader bufferReader = substreamReader.getSubPdbByteReader(length);
+		//System.out.println(bufferReader.dump());
+		int tableSize = substreamReader.parseInt();
+		int count = tableSize;
+		int realEntryCount = 0;
+		while (--count >= 0) {
+			int offset = substreamReader.parseInt();
+			bufferReader.setIndex(offset);
+			String name = bufferReader.parseNullTerminatedString();
+			//if (name != null) {
+			if (name.length() != 0) {
+				realEntryCount++;
+			}
+			editAndContinueNameList.add(name);
+			//long hashVal = (name == null) ? 0 : hasher.hash(name, 0xffffffffL);
+			long hashVal = (name.length() == 0) ? 0 : hasher.hash(name, 0xffffffffL);
+			hashVal %= tableSize;
+			//TODO: what to do with hashVal???
+			//System.out.println(offset + ": " + name + " " + hashVal);
+		}
+		int numRealEntries = substreamReader.parseInt();
+		if (realEntryCount != numRealEntries) {
+			assert false;
+		}
+	}
+
+	/**
+	 * Deserializes/Processes the DebugHeader.
+	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param skip Skip over the data in the {@link PdbByteReader}.
+	 * @throws PdbException Upon not enough data left to parse.
+	 */
+	protected void processDebugHeader(PdbByteReader reader, boolean skip) throws PdbException {
+		if (lengthOptionalDebugHeader == 0) {
+			return;
+		}
+		if (skip) {
+			reader.skip(lengthOptionalDebugHeader);
+			return;
+		}
+		PdbByteReader substreamReader = reader.getSubPdbByteReader(lengthOptionalDebugHeader);
+		//System.out.println(substreamReader.dump(0x1000));
+		while (substreamReader.hasMore()) {
+			int debugStreamNumber = substreamReader.parseUnsignedShortVal();
+			debugStreamList.add(debugStreamNumber);
+		}
+	}
+
+	/**
+	 * Dumps the EditAndContinueNameList.  This package-protected method is for debugging only.
+	 * @param writer {@link Writer} to which to write the debug dump.
+	 * @throws IOException On issue writing to the {@link Writer}.
+	 */
+	protected void dumpEditAndContinueNameList(Writer writer) throws IOException {
+		for (String name : editAndContinueNameList) {
+			writer.write(String.format("Name: %s\n", name));
+		}
+	}
+
+	/**
+	 * Dumps the DebugStreamList.  This package-protected method is for debugging only.
+	 * @param writer {@link Writer} to which to write the debug dump.
+	 * @throws IOException On issue writing to the {@link Writer}.
+	 */
+	protected void dumpDebugStreamList(Writer writer) throws IOException {
+		for (int strmNumber : debugStreamList) {
+			writer.write(String.format("StrmNumber: %04x\n", strmNumber));
+		}
+	}
+
+}
