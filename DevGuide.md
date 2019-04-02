@@ -259,7 +259,6 @@ To test it, unzip it where you like, and execute `./ghidraRun`.
 Some features of Ghidra require the curation of rather extensive data bases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
-Until this process is documented, those artifacts can be extracted from an official distribution and combined with your build output.
 The archives included in our official builds can be found in the [ghidra-data] repository.
 
 ## Building Data Type Archives
@@ -278,7 +277,7 @@ This is often a set of libraries from an SDK.
 We include a variety of Visual Studio platforms in the official build.
 
 From a CodeBrowser window, select File -> Configure.
-Enabled the "Function ID" plugins, and close the dialog.
+Enable the "Function ID" plugins, and close the dialog.
 Now, from the CodeBrowser window, select Tools -> Function ID -> Create new empty FidDb.
 Choose a destination file.
 Now, select Tools -> Function ID -> Populate FidDb from programs.
