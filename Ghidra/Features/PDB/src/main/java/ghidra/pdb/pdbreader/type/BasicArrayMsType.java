@@ -15,28 +15,30 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import ghidra.pdb.PdbByteReader;
+import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.TypeIndex32;
 
 /**
- * Important: This is not a real type.  This "Bad" type takes the place of a type that has
- *  encountered a parsing issue vis-a-vis a PdbException.
+ * A class for a specific PDB data type.
+ * <P>
+ * For more information about PDBs, consult the Microsoft PDB API, see
+ * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
+ * What's inside a PDB File</a>.
  */
-public class BadMsType extends AbstractMsType {
+public class BasicArrayMsType extends AbstractBasicArrayMsType {
 
-	/** This should not be a the PDB_ID value of a real AbstractMsType. */
-	public static final int PDB_ID = 0xff01;
-
-	// Type ID that had an issue;
-	int typeId;
+	public static final int PDB_ID = 0x100b;
 
 	/**
-	 * Constructor for this "Bad" type.
+	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
-	 * @param typeId The type ID for which an error occurred.
+	 * @param reader {@link PdbByteReader} from which this type is deserialized.
+	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	public BadMsType(AbstractPdb pdb, int typeId) {
-		super(pdb, null);
-		this.typeId = typeId;
+	public BasicArrayMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+		super(pdb, reader);
 	}
 
 	@Override
@@ -45,11 +47,8 @@ public class BadMsType extends AbstractMsType {
 	}
 
 	@Override
-	public void emit(StringBuilder builder, Bind bind) {
-		if (builder.length() != 0) {
-			builder.insert(0, " ");
-		}
-		builder.insert(0, String.format("BAD_TYPE: ID=0X%04X", typeId));
+	protected void create() {
+		underlyingTypeIndex = new TypeIndex32();
 	}
 
 }

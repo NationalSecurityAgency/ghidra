@@ -20,7 +20,7 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
 /**
- * This class extends {@link AbstractParsableItem} as is the base class for PDB Data Type units.
+ * This is the abstract class for PDB Data Type units.
  */
 public abstract class AbstractMsType extends AbstractParsableItem {
 	protected AbstractPdb pdb;
