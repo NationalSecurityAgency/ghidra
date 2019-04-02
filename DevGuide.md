@@ -1,4 +1,4 @@
-# Developer's Guide 
+# Developer's Guide
 
 ## Catalog of Dependencies
 
@@ -47,7 +47,7 @@ If you're on Windows, install Git, MinGW, Bison, and Flex.
 Many of the commands given below must be executed in Bash (Use git-bash or MSYS from MinGW).
 **IMPORTANT**: The bison and flex executables may be named `win-bison.exe` and `win-flex.exe`.
 Our build cannot currently cope with that, so you should rename them to `bison.exe` and `flex.exe`.
- 
+
 Install OpenJDK 11 and make sure it's the default java.
 
 Install Eclipse.
@@ -260,14 +260,31 @@ Some features of Ghidra require the curation of rather extensive data bases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
 Until this process is documented, those artifacts can be extracted from an official distribution and combined with your build output.
+The archives included in our official builds can be found in the [ghidra-data] repository.
 
 ## Building Data Type Archives
 
-TODO
+This task is often done manually from the Ghidra GUI, and the archives included in our official build require a fair bit of fine tuning.
+From a CodeBrowser window, select File -> Parse C Source.
+From here you can create and configure parsing profiles, which lists headers and pre-processor options.
+Then, click "Parse to File" to create the Data Type Archive.
+The result can be added to an installation or source tree by copying it to `Ghidra/Features/Base/data/typeinfo`.
 
 ## Building FID Databases
 
-TODO
+This task is often done manually from the Ghidra GUI, and the archives included in our official build require a fair bit of fine tuning.
+You will first need to import the relevant libraries from which you'd like to produce a FID database.
+This is often a set of libraries from an SDK.
+We include a variety of Visual Studio platforms in the official build.
+
+From a CodeBrowser window, select File -> Configure.
+Enabled the "Function ID" plugins, and close the dialog.
+Now, from the CodeBrowser window, select Tools -> Function ID -> Create new empty FidDb.
+Choose a destination file.
+Now, select Tools -> Function ID -> Populate FidDb from programs.
+Fill out the options appropriately and click OK.
+
+If you'd like some details of our fine tuning, take a look at `Ghidra/Features/FunctionID/building_fid.txt`.
 
 # Developing / Building the GhidraDev Plugin
 
@@ -316,3 +333,5 @@ gradle cdtUnpack pyDevUnpack
 
 If you're using BuildShip, simply refresh the Gradle project in Eclipse.
 If you're not using BuildShip, re-run `gradle eclipse` and import the new project.
+
+[ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
