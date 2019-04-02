@@ -7333,8 +7333,12 @@ bool RuleConditionalMove::BoolExpress::evaluatePropagation(FlowBlock *root,FlowB
   if (root == branch) return true; // Can always propagate if there is no branch
   if (op->getParent() != branch) return true; // Can propagate if value formed before branch
   mustreconstruct = true;	// Final op is performed in branch, so it must be reconstructed
+  if (in0->isFree() && !in0->isConstant()) return false;
   if (in0->isWritten() && (in0->getDef()->getParent()==branch)) return false;
-  if ((optype==2) && in1->isWritten() && (in1->getDef()->getParent()==branch)) return false;
+  if (optype == 2) {
+    if (in1->isFree() && !in1->isConstant()) return false;
+    if (in1->isWritten() && (in1->getDef()->getParent()==branch)) return false;
+  }
   return true;
 }
 
