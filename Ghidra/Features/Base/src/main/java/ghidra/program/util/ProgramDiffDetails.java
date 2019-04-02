@@ -2555,7 +2555,7 @@ public class ProgramDiffDetails {
 	}
 
 	private void addColorAddress(StyledDocument doc, Address addr) {
-		String text = addr.toString();
+		String text = (addr != null) ? addr.toString() : "no matching address";
 		color(ADDRESS_COLOR);
 		try {
 			doc.insertString(doc.getLength(), text, textAttrSet);

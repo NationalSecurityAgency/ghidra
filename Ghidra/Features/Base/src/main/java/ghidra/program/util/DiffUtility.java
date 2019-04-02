@@ -193,11 +193,11 @@ public class DiffUtility extends SimpleDiffUtility {
 			return otherProgram.getSymbolTable().createExternalLibrary(namespace.getName(), source);
 		}
 		else if (namespace instanceof GhidraClass) {
-			return otherProgram.getSymbolTable().createClass(otherParentNamespace,
-				namespace.getName(), source);
+			return otherProgram.getSymbolTable()
+				.createClass(otherParentNamespace, namespace.getName(), source);
 		}
-		return otherProgram.getSymbolTable().createNameSpace(otherParentNamespace,
-			namespace.getName(), source);
+		return otherProgram.getSymbolTable()
+			.createNameSpace(otherParentNamespace, namespace.getName(), source);
 	}
 
 //	/**
@@ -329,11 +329,11 @@ public class DiffUtility extends SimpleDiffUtility {
 			if (toAddr == null) {
 				return null;
 			}
-			return otherProgram.getReferenceManager().getReference(fromAddr, toAddr,
-				ref.getOperandIndex());
+			return otherProgram.getReferenceManager()
+				.getReference(fromAddr, toAddr, ref.getOperandIndex());
 		}
-		Reference otherRef = otherProgram.getReferenceManager().getPrimaryReferenceFrom(fromAddr,
-			ref.getOperandIndex());
+		Reference otherRef = otherProgram.getReferenceManager()
+			.getPrimaryReferenceFrom(fromAddr, ref.getOperandIndex());
 		if (otherRef != null && ref.getToAddress().hasSameAddressSpace(otherRef.getToAddress())) {
 			return otherRef;
 		}
@@ -357,11 +357,11 @@ public class DiffUtility extends SimpleDiffUtility {
 			if (toAddr1 == null) {
 				return null;
 			}
-			return program.getReferenceManager().getReference(fromAddr1, toAddr1,
-				p2Ref.getOperandIndex());
+			return program.getReferenceManager()
+				.getReference(fromAddr1, toAddr1, p2Ref.getOperandIndex());
 		}
-		Reference p1Ref = program.getReferenceManager().getPrimaryReferenceFrom(fromAddr1,
-			p2Ref.getOperandIndex());
+		Reference p1Ref = program.getReferenceManager()
+			.getPrimaryReferenceFrom(fromAddr1, p2Ref.getOperandIndex());
 		if (p1Ref != null && p1Ref.getToAddress().hasSameAddressSpace(p2Ref.getToAddress())) {
 			return p1Ref;
 		}
@@ -385,8 +385,9 @@ public class DiffUtility extends SimpleDiffUtility {
 			otherAddr = getCompatibleAddress(program, addr, otherProgram);
 		}
 		// FIXME Should this be passing the Namespace?
-		return otherProgram.getExternalManager().addExtLocation(extLoc.getLibraryName(),
-			extLoc.getLabel(), otherAddr, extLoc.getSource());
+		return otherProgram.getExternalManager()
+			.addExtLocation(extLoc.getLibraryName(), extLoc.getLabel(), otherAddr,
+				extLoc.getSource());
 	}
 
 	/**
@@ -707,6 +708,9 @@ public class DiffUtility extends SimpleDiffUtility {
 		Address refAddress = getCompatibleAddress(program, location.refAddr, otherProgram);
 
 		if (address != null) {
+			if (byteAddress == null) {
+				byteAddress = address; // Make sure the byte address isn't null.
+			}
 			ProgramLocation otherLocation = new ProgramLocation(otherProgram, address, byteAddress,
 				location.getComponentPath(), refAddress, 0, 0, 0);
 			return otherLocation;
