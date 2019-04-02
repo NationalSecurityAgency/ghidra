@@ -43,7 +43,7 @@ public class SymbolicPropogator {
 	// 1. How are "register-relative" varnodes distinguished based upon target space ?  Not sure how we handle wrapping/truncation concerns.
 	//   1) The offset is the only thing that could be used as a reference.
 
-	private static final int _POINTER_MIN_BOUNDS = 0x7fff;
+	private static final int _POINTER_MIN_BOUNDS = 0x100;
 
 	// mask for sub-piece extraction
 	private static long[] maskSize = { 0xffL, 0xffL, 0xffffL, 0xffffffL, 0xffffffffL, 0xffffffffffL,
@@ -1836,7 +1836,7 @@ public class SymbolicPropogator {
 				// see if the offset is a large constant offset from the symbolic space
 				long offset = refLocation.getOffset();
 
-				if (checkPossibleOffsetAddr(offset)) {
+				if (evaluator != null) {
 					// symbolic spaces will have the name of the symbolic space be the register space
 //					String spaceName = refLocation.getAddress().getAddressSpace().getName();
 //					Register register = vContext.getRegister(spaceName);
@@ -1850,7 +1850,7 @@ public class SymbolicPropogator {
 //						}
 //					} else
 
-					if (evaluator == null) {
+			        if (!vContext.isStackSymbolicSpace(refLocation) && evaluator != null) {
 						Address constant = program.getAddressFactory().getAddress(
 							(int) targetSpaceID.getOffset(), offset);
 						Address newTarget = evaluator.evaluateConstant(vContext, instruction,
@@ -2051,7 +2051,7 @@ public class SymbolicPropogator {
 	 */
 	private int getReferenceSpaceID(Instruction instruction, long offset) {
 		// TODO: this should be passed to the client callback to make the decision
-		if (offset <= 4096 && offset >= -1) {
+		if (offset <= 4 && offset >= -1) {
 			return -1; // don't make speculative reference to certain offset values
 		}
 
