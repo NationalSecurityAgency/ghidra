@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -701,12 +700,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	class SearchHighlightFactory implements HighlightFactory {
-
-		@Override
-		public Highlight[] getHighlights(String text, int cursorTextOffset) {
-			// the search highlight needs the Field in order to work correctly
-			return new Highlight[0];
-		}
 
 		@Override
 		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {

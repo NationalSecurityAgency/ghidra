@@ -213,7 +213,7 @@ class FieldFactory {
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, int cursorTextOffset) {
+		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
 			return provider.getHighlights(text, null, null, -1);
 		}
 	}

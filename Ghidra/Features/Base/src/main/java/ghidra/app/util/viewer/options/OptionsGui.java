@@ -51,7 +51,8 @@ public class OptionsGui extends JPanel {
 	private static final Color DARK_ORANGE = new Color(255, 128, 0);
 	private static final Color DARK_RED = new Color(130, 0, 75);
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private static final HighlightFactory hlFactory = (text, cursorTextOffset) -> NO_HIGHLIGHTS;
+	private static final HighlightFactory hlFactory =
+		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
 	public static final ScreenElement COMMENT_AUTO =
 		new ScreenElement("Comment, Automatic", Color.LIGHT_GRAY);

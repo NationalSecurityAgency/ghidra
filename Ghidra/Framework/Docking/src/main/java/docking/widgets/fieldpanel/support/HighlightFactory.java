@@ -21,16 +21,6 @@ public interface HighlightFactory {
 
 	/**
 	 * Returns the highlights for the given text
-	 * 
-	 * @param text the text to be considered for highlighting
-	 * @param cursorTextOffset the position in the given text of the cursor. A -1 indicates the
-	 * 		  cursor is not in this field.
-	 * @return an array of highlights to be rendered
-	 */
-	public Highlight[] getHighlights(String text, int cursorTextOffset);
-
-	/**
-	 * Returns the highlights for the given text
 	 *
 	 * @param field the field that is requesting the highlight
 	 * @param text the text to be considered for highlighting
@@ -38,7 +28,5 @@ public interface HighlightFactory {
 	 * 		  cursor is not in this field.
 	 * @return an array of highlights to be rendered
 	 */
-	public default Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
-		return getHighlights(text, cursorTextOffset);
-	}
+	public Highlight[] getHighlights(Field field, String text, int cursorTextOffset);
 }
