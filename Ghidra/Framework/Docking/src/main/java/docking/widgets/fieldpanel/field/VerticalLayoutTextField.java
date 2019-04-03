@@ -268,7 +268,7 @@ public class VerticalLayoutTextField implements TextField {
 			cursorRow = cursorLoc.row();
 		}
 
-		Highlight[] highlights = hlFactory.getHighlights(getText(), cursorTextOffset);
+		Highlight[] highlights = hlFactory.getHighlights(this, getText(), cursorTextOffset);
 		int columns = 0;
 		int n = subFields.size();
 		Color fieldBackgroundColor = colorManager.getBackgroundColor();
