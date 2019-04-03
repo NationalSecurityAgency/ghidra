@@ -394,7 +394,14 @@ task assembleCommon (type: Copy) {
 		into "Ghidra"
 		filter (ConcatFilter, prepend: buildDateFile)
 	}
-		
+
+	////////////////
+	// Patch Readme
+	////////////////
+	from (ROOT_PROJECT_DIR + "/Ghidra/patch") {
+		into "Ghidra/patch"
+	}		
+	
 	/////////////////
 	// GLOBALS
 	/////////////////

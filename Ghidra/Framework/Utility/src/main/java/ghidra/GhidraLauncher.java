@@ -88,13 +88,7 @@ public class GhidraLauncher {
 	private static void addPatchPaths(List<String> pathList, Collection<ResourceFile> appRootDirs) {
 
 		for (ResourceFile rootDir : appRootDirs) {
-
-			ResourceFile dir = new ResourceFile(rootDir, "bin");
-			if (dir.exists()) {
-				pathList.add(dir.getAbsolutePath());
-			}
-
-			ResourceFile debugLibDir = new ResourceFile(rootDir, "lib");
+			ResourceFile debugLibDir = new ResourceFile(rootDir, "patch");
 			if (debugLibDir.exists()) {
 				pathList.addAll(findJarsInDir(debugLibDir));
 			}
