@@ -42,7 +42,9 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	protected AddressSet destSet = new AddressSet();
     private boolean trustMemoryWrite = false;
 	private long minStoreLoadOffset = 4;
-	private long minSpeculativeOffset = 1024;
+	private long minSpeculativeOffset = 1024;   // from the beginning of memory
+	private long maxSpeculativeOffset = 256;    // from the end of memory
+
     
     public ConstantPropagationContextEvaluator() {
 	}
@@ -55,10 +57,10 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	}
     
 	public ConstantPropagationContextEvaluator(boolean trustWriteMemOption,
-			long minStoreLoadRefAddress, long minSpeculativeRefAddress) {
+			long minStoreLoadRefAddress, long minSpeculativeRefAddress, long maxSpeculativeRefAddress) {
 		this(trustWriteMemOption);
 		this.minStoreLoadOffset = minStoreLoadRefAddress;
-		this.minSpeculativeOffset = minSpeculativeRefAddress;
+		this.maxSpeculativeOffset = maxSpeculativeRefAddress;
 	}
 
 	/**
@@ -85,7 +87,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		long wordOffset = constant.getOffset();
 
 		if (((wordOffset >= 0 && wordOffset < minSpeculativeOffset) ||
-			(Math.abs(maxAddrOffset - wordOffset) < minSpeculativeOffset)) &&
+			(Math.abs(maxAddrOffset - wordOffset) < maxSpeculativeOffset)) &&
 			!space.isExternalSpace()) {
 			return null;
 		}

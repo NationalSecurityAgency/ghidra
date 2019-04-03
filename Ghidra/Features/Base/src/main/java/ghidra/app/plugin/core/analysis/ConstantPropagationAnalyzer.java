@@ -67,10 +67,16 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected static final int MINKNOWNREFADDRESS_OPTION_DEFAULT_VALUE = 4;
 
 	protected static final String MINSPECULATIVEREFADDRESS_OPTION_NAME =
-		"Min speculative reference";
+		"Speculative reference min";
 	protected static final String MINSPECULATIVEREFADDRESS_OPTION_DESCRIPTION =
 		"Minimum speculative reference address for offsets and parameters";
 	protected static final int MINSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE = 1024;
+	
+	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_NAME =
+			"Speculative reference max";
+	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_DESCRIPTION =
+			"Maxmimum speculative reference address offset from the end of memory for offsets and parameters";
+	protected static final int MAXSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE = 256;
 
 	protected final static int NOTIFICATION_INTERVAL = 100;
 
@@ -80,6 +86,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected int maxThreadCount = MAXTHREADCOUNT_OPTION_DEFAULT_VALUE;
 	protected long minStoreLoadRefAddress = MINKNOWNREFADDRESS_OPTION_DEFAULT_VALUE;
 	protected long minSpeculativeRefAddress = MINSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE;
+	protected long maxSpeculativeRefAddress = MAXSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE;
 
 	protected boolean followConditional = false;
 
@@ -391,7 +398,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption,
-			minStoreLoadRefAddress, minSpeculativeRefAddress);
+			minStoreLoadRefAddress, minSpeculativeRefAddress, maxSpeculativeRefAddress);
 
 		return symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 	}
@@ -461,9 +468,13 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			MINKNOWNREFADDRESS_OPTION_DESCRIPTION);
 
 		long size = program.getAddressFactory().getDefaultAddressSpace().getSize();
-		minSpeculativeRefAddress = size * 8;
+		minSpeculativeRefAddress = size * 16;
 		options.registerOption(MINSPECULATIVEREFADDRESS_OPTION_NAME, minSpeculativeRefAddress, null,
 			MINSPECULATIVEREFADDRESS_OPTION_DESCRIPTION);
+		
+		maxSpeculativeRefAddress = size * 8;
+		options.registerOption(MAXSPECULATIVEREFADDRESS_OPTION_NAME, maxSpeculativeRefAddress, null,
+			MAXSPECULATIVEREFADDRESS_OPTION_DESCRIPTION);
 	}
 
 	@Override
@@ -479,6 +490,8 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			options.getLong(MINKNOWNREFADDRESS_OPTION_NAME, minStoreLoadRefAddress);
 		minSpeculativeRefAddress =
 			options.getLong(MINSPECULATIVEREFADDRESS_OPTION_NAME, minSpeculativeRefAddress);
+		maxSpeculativeRefAddress =
+				options.getLong(MAXSPECULATIVEREFADDRESS_OPTION_NAME, maxSpeculativeRefAddress);
 	}
 
 }
