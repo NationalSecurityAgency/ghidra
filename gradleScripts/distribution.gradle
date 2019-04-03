@@ -134,6 +134,10 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 		it.sourceSets.test.compileClasspath 
 	})
 	
+	// Generate at package level because user may try to get help directly on an object they have 
+	// rather than its public interface.
+	options.addBooleanOption("package", true)
+	
 	// Some internal packages are not public and need to be exported. 
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
     															"java.desktop/sun.awt=ALL-UNNAMED", 
