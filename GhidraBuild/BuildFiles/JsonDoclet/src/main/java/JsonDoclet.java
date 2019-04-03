@@ -39,8 +39,6 @@ import jdk.javadoc.doclet.*;
 @SuppressWarnings("unchecked")
 public class JsonDoclet implements Doclet {
 
-	private final Set<Modifier> ACCESS_LEVEL = Set.of(Modifier.PUBLIC);
-
 	private Reporter log;
 	private File destDir;
 
@@ -122,8 +120,7 @@ public class JsonDoclet implements Doclet {
 		//@formatter:off
 		ElementFilter.typesIn(docEnv.getIncludedElements())
 			.stream()
-			.filter(el -> el.getModifiers().containsAll(ACCESS_LEVEL))
-			.filter(el -> el.getKind().equals(ElementKind.CLASS))
+			.filter(el -> el.getKind().equals(ElementKind.CLASS) || el.getKind().equals(ElementKind.INTERFACE))
 			.forEach(el -> writeJsonToFile(classToJson(el), el.getQualifiedName()));
 		//@formatter:on
 
@@ -211,9 +208,6 @@ public class JsonDoclet implements Doclet {
 		JSONArray methodArray = new JSONArray();
 
 		for (Element el : classElement.getEnclosedElements()) {
-			if (!el.getModifiers().containsAll(ACCESS_LEVEL)) {
-				continue;
-			}
 
 			JSONObject obj = new JSONObject();
 			obj.put("name", el.getSimpleName().toString());
