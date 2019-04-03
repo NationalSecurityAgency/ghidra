@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +59,10 @@ public class SearchLocation {
 
 	@Override
 	public String toString() {
-		return searchText + "[start=" + startIndexInclusive + ", end=" + endIndexInclusive + "]";
+		return searchText + "[" + fieldsToString() + "]";
+	}
+
+	protected String fieldsToString() {
+		return startIndexInclusive + ", end=" + endIndexInclusive;
 	}
 }

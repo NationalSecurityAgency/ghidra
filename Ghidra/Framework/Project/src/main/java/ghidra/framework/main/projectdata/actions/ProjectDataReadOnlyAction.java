@@ -50,6 +50,10 @@ public class ProjectDataReadOnlyAction extends ProjectDataContextToggleAction {
 		if (context.getFolderCount() != 0 || context.getFileCount() != 1) {
 			return false;
 		}
+		if (ignoreTransientProject(context)) {
+			return false;
+		}
+
 		DomainFile domainFile = context.getSelectedFiles().get(0);
 		setSelected(domainFile.isReadOnly());
 		return true;

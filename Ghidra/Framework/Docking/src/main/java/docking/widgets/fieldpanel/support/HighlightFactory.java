@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,18 @@
  */
 package docking.widgets.fieldpanel.support;
 
+import docking.widgets.fieldpanel.field.Field;
+
 public interface HighlightFactory {
+
 	/**
-	 * Returns the highlights for the given text.
-	 * @param text the text to be considered for highlighting.
+	 * Returns the highlights for the given text
+	 *
+	 * @param field the field that is requesting the highlight
+	 * @param text the text to be considered for highlighting
 	 * @param cursorTextOffset the position in the given text of the cursor. A -1 indicates the
-	 * cursor is not in this field.
-	 * @return an array of highlights to be rendered.
+	 * 		  cursor is not in this field.
+	 * @return an array of highlights to be rendered
 	 */
-	public Highlight[] getHighlights(String text, int cursorTextOffset);
+	public Highlight[] getHighlights(Field field, String text, int cursorTextOffset);
 }

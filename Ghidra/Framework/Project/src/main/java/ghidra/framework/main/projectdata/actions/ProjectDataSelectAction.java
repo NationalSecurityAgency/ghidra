@@ -36,7 +36,7 @@ public class ProjectDataSelectAction extends ProjectDataTreeContextAction {
 
 	@Override
 	protected void actionPerformed(ProjectDataTreeActionContext context) {
-		DataTree tree = context.getDataTree();
+		DataTree tree = context.getTree();
 		TreePath[] paths = context.getSelectionPaths();
 		GTreeNode node = (GTreeNode) paths[0].getLastPathComponent();
 		selectAllChildren(tree, node);

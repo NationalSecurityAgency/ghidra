@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,6 @@
 package docking.widgets.fieldpanel.internal;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
@@ -33,11 +30,8 @@ import docking.widgets.indexedscrollpane.IndexedScrollPane;
 
 public class TestBigLayoutModel implements LayoutModel {
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private static final HighlightFactory hlFactory = new HighlightFactory() {
-		public Highlight[] getHighlights(String text, int cursorTextOffset) {
-			return NO_HIGHLIGHTS;
-		}
-	};
+	private static final HighlightFactory hlFactory =
+		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 	ArrayList<LayoutModelListener> listeners = new ArrayList<LayoutModelListener>();
 
 	FontMetrics fm;
@@ -86,15 +80,13 @@ public class TestBigLayoutModel implements LayoutModel {
 		if (index.compareTo(numIndexes) >= 0) {
 			return null;
 		}
-		String text =
-			name + ": This is line " + index +
-				" More text to make line longer abcdefghijklmnopqrstuvwxyzabcdefghijk";
+		String text = name + ": This is line " + index +
+			" More text to make line longer abcdefghijklmnopqrstuvwxyzabcdefghijk";
 		FieldElement fe1 = new TextFieldElement(new AttributedString(text, Color.BLACK, fm), 0, 0);
 		FieldElement fe2 =
 			new TextFieldElement(new AttributedString("More text", Color.BLACK, fm), 0, 0);
-		SingleRowLayout layout =
-			new SingleRowLayout(new ClippingTextField(20, 300, fe1, hlFactory),
-				new ClippingTextField(330, 100, fe2, hlFactory));
+		SingleRowLayout layout = new SingleRowLayout(new ClippingTextField(20, 300, fe1, hlFactory),
+			new ClippingTextField(330, 100, fe2, hlFactory));
 
 		if (index.intValue() >= startBigSizes && index.intValue() <= endBigSizes) {
 			layout.insertSpaceAbove(30);
@@ -143,12 +135,7 @@ public class TestBigLayoutModel implements LayoutModel {
 		contentPane.setLayout(new BorderLayout());
 		contentPane.add(scrollPanel);
 		JButton button = new JButton("Hit Me");
-		button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				model.updateData(1000, 2000);
-			}
-		});
+		button.addActionListener(e -> model.updateData(1000, 2000));
 		contentPane.add(button, BorderLayout.SOUTH);
 		frame.pack();
 		frame.setVisible(true);

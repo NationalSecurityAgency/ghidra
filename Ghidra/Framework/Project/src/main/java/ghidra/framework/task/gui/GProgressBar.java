@@ -59,12 +59,12 @@ public class GProgressBar extends JPanel {
 	private Timer updateTimer;
 
 	private EmptyBorderButton cancelButton;
-	private CancelledListener cancelledListner;
+	private CancelledListener cancelledListener;
 
-	public GProgressBar(CancelledListener cancelledListner, boolean includeTextField,
+	public GProgressBar(CancelledListener cancelledListener, boolean includeTextField,
 			boolean includeCancelButton, boolean includeAnimatedIcon, float fontSize) {
 		super(new BorderLayout(5, 1));
-		this.cancelledListner = cancelledListner;
+		this.cancelledListener = cancelledListener;
 		this.fontSize = fontSize;
 
 		buildProgressPanel(includeTextField, includeCancelButton, includeAnimatedIcon);
@@ -199,13 +199,13 @@ public class GProgressBar extends JPanel {
 	}
 
 	public void cancel() {
-		if (cancelledListner != null) {
-			cancelledListner.cancelled();
+		if (cancelledListener != null) {
+			cancelledListener.cancelled();
 		}
 	}
 
 	public void setCancelledListener(CancelledListener listener) {
-		this.cancelledListner = listener;
+		this.cancelledListener = listener;
 	}
 
 	private void buildProgressPanel(boolean includeTextField, boolean includeCancelButton,

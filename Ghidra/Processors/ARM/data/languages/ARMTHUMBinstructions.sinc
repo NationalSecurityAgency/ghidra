@@ -185,6 +185,7 @@ define token instrThumb (16)
   thc0815=(8,15)
   thc0915=(9,15)
   thc1015=(10,15)
+  thc1112=(11,12)
   thc1115=(11,15)
   thc1215=(12,15)
   thc1315=(13,15)
@@ -1614,7 +1615,7 @@ define pcodeop IndexCheck;
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:cmp^ItCond^".w"    Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=13 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12
+:cmp^ItCond^".w"    Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & thc0404=1 & sop0508=13 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12
 {
   build ItCond;
   th_subflags(Rn0003,ThumbExpandImm12);
@@ -2447,9 +2448,9 @@ define pcodeop ExclusiveAccess;
   build CheckInIT_ZN;
 }
 
-:mov^ItCond	Rd0002,Rn0305		is TMode=1 & ItCond & op6=0x070 & Rn0305 & Rd0002 & CheckInIT_ZN
+:mov^ItCond	Rd0002,Rn0305		is TMode=1 & ItCond & op6=0x000 & Rn0305 & Rd0002 & CheckInIT_ZN
 {
-  build ItCond;
+ build ItCond;
   Rd0002 = Rn0305;
   resflags(Rd0002);
   build CheckInIT_ZN;
@@ -4482,7 +4483,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 :sub^ItCond	sp,Immed7_4		is TMode=1 & ItCond & op7=0x161 & sp & Immed7_4
 {
    build ItCond;
-  sp = sp - Immed7_4;
+   sp = sp - Immed7_4;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)

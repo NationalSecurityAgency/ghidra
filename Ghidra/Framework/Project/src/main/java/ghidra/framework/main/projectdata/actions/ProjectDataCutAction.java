@@ -40,7 +40,7 @@ public class ProjectDataCutAction extends ProjectDataCopyCutBaseAction {
 	protected void actionPerformed(ProjectDataTreeActionContext context) {
 		TreePath[] paths = adjustSelectionPaths(context.getSelectionPaths());
 
-		DataTreeClipboardUtils.setClipboardContents(context.getDataTree(), paths);
+		DataTreeClipboardUtils.setClipboardContents(context.getTree(), paths);
 
 		markNodesCut(paths);
 	}

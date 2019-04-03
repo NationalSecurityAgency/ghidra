@@ -22,7 +22,7 @@
 	<file_extension  extension=".java"       icon="images/famfamfam_silk_icons_v013/page_white_cup.png" />
 	<file_extension  extension=".kext"       icon="images/famfamfam_silk_icons_v013/bullet_pink.png" />
 	<file_extension  extension=".lib"        icon="images/famfamfam_silk_icons_v013/server.png" />
-	<file_extension  extension=".obj"        icon="images/oxygen/16x16/subrip.png" />
+	<file_extension  extension=".obj"        icon="images/oxygen/16x16/application-x-subrip.png" />
 	<file_extension  extension=".p"          icon="images/oxygen/16x16/text-x-pascal.png" />
 	<file_extension  extension=".pdf"        icon="images/oxygen/16x16/application-pdf.png" />
 	<file_extension  extension=".plist"      icon="images/oxygen/16x16/insert-table.png" />

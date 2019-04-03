@@ -30,6 +30,7 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 	private Component comp;
 	private boolean isActiveProject;
 	private ProjectData projectData;
+	private boolean isTransient;
 
 	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
 			Object contextObject, List<DomainFolder> selectedFolders,
@@ -111,5 +112,21 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Transient data is that which will appear in a temporary project dialog
+	 * @param isTransient true if transient
+	 */
+	public void setTransient(boolean isTransient) {
+		this.isTransient = isTransient;
+	}
+
+	/**
+	 * Transient data is that which will appear in a temporary project dialog
+	 * @return true if transient
+	 */
+	public boolean isTransient() {
+		return isTransient;
 	}
 }

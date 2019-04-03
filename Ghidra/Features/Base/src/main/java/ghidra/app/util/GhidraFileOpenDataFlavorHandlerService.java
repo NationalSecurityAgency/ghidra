@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.app.util;
 
-import ghidra.framework.main.datatree.*;
-
 import java.awt.datatransfer.DataFlavor;
 
-public class GhidraFileOpenDataFlavorHandlerService extends FileOpenDataFlavorHandlerService {
+import ghidra.framework.main.datatree.*;
 
-	@Override
-	protected void doRegisterDataFlavorHandlers() {
+public class GhidraFileOpenDataFlavorHandlerService {
+
+	public GhidraFileOpenDataFlavorHandlerService() {
 
 		try {
 			DataFlavor linuxFileUrlFlavor =
@@ -34,15 +32,15 @@ public class GhidraFileOpenDataFlavorHandlerService extends FileOpenDataFlavorHa
 			// should never happen as it is using java.lang.String
 		}
 
-		LocalTreeNodeFlavorHandler localHandler = new LocalTreeNodeFlavorHandler();
+		LocalTreeNodeHandler localHandler = new LocalTreeNodeHandler();
 		FileOpenDropHandler.addDataFlavorHandler(DataTreeDragNDropHandler.localDomainFileFlavor,
 			localHandler);
-		FileOpenDropHandler.addDataFlavorHandler(VersionInfoTransferable.localVersionInfoFlavor,
+		FileOpenDropHandler.addDataFlavorHandler(DataTreeDragNDropHandler.localDomainFileTreeFlavor,
 			localHandler);
-		FileOpenDropHandler.addDataFlavorHandler(DataFlavor.javaFileListFlavor,
-			new JavaFileListFlavorHandler());
 
-		FileOpenDropHandler.addDataFlavorHandler(
-			DataTreeDragNDropHandler.localDomainFileTreeFlavor, localHandler);
+		FileOpenDropHandler.addDataFlavorHandler(VersionInfoTransferable.localVersionInfoFlavor,
+			new LocalVersionInfoHandler());
+		FileOpenDropHandler.addDataFlavorHandler(DataFlavor.javaFileListFlavor,
+			new JavaFileListHandler());
 	}
 }

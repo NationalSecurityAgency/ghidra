@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.graph.viewer.edge;
+package ghidra.framework.main.datatree;
 
-public interface PathHighlightListner {
+import docking.widgets.tree.GTreeNode;
+import ghidra.framework.plugintool.PluginTool;
 
-	/**
-	 * Called when the a path is highlighted. 
-	 * 
-	 * @param hoverChange true if the change path is hover change; false if the changed path 
-	 *        is a selection change
-	 */
-	public void pathHighlightChanged(boolean hoverChange);
+/**
+ * Interface for classes that will handle drop actions for {@link DataTree}s.
+ */
+public interface DataTreeFlavorHandler {
+	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+			Object transferData, int dropAction);
 }

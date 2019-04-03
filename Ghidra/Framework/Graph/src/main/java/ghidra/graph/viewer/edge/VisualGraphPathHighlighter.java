@@ -99,7 +99,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	private CompletableFuture<ChkDominanceAlgorithm<V, E>> postDominanceFuture;
 	private CompletableFuture<Circuits> circuitFuture;
 
-	private PathHighlightListner listener = isHover -> {
+	private PathHighlightListener listener = isHover -> {
 		// stub
 	};
 
@@ -108,7 +108,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	private SwingUpdateManager focusedVertexUpdater =
 		new SwingUpdateManager(() -> doUpdateFocusedVertex());
 
-	public VisualGraphPathHighlighter(VisualGraph<V, E> graph, PathHighlightListner listener) {
+	public VisualGraphPathHighlighter(VisualGraph<V, E> graph, PathHighlightListener listener) {
 		this.graph = graph;
 		if (listener != null) {
 			this.listener = listener;

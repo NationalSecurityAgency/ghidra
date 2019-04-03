@@ -26,6 +26,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.*;
+import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.framework.main.datatree.ClearCutAction;
@@ -40,7 +41,7 @@ import ghidra.util.layout.PairLayout;
  * Dialog to open or save domain data items to a new location or name.
  */
 public class DataTreeDialog extends DialogComponentProvider
-implements GTreeSelectionListener, ActionListener {
+		implements GTreeSelectionListener, ActionListener {
 
 	/**
 	 * Dialog type for opening domain data files.
@@ -540,10 +541,11 @@ implements GTreeSelectionListener, ActionListener {
 
 	protected void addTreeListeners() {
 		if (type == OPEN) {
-			treePanel.addTreeMouseListener(new MouseAdapter() {
+
+			treePanel.addTreeMouseListener(new GMouseListenerAdapter() {
 				@Override
-				public void mousePressed(MouseEvent e) {
-					if (e.getClickCount() == 2 && okButton.isEnabled()) {
+				public void doubleClickTriggered(MouseEvent e) {
+					if (okButton.isEnabled()) {
 						okCallback();
 					}
 				}
@@ -671,7 +673,7 @@ implements GTreeSelectionListener, ActionListener {
 
 		// populate the combo box
 		DefaultComboBoxModel<String> model =
-				(DefaultComboBoxModel<String>) projectComboBox.getModel();
+			(DefaultComboBoxModel<String>) projectComboBox.getModel();
 		model.removeAllElements();
 
 		Set<String> map = new HashSet<>();

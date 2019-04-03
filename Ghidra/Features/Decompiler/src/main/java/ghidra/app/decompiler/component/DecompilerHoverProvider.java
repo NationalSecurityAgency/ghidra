@@ -76,8 +76,9 @@ public class DecompilerHoverProvider extends AbstractHoverProvider {
 
 				Varnode vn = token.getVarnode();
 				if (vn != null) {
-					if (vn.getHigh() instanceof HighGlobal) {
-						reference = vn.getAddress();
+					HighVariable highVar = vn.getHigh();
+					if (highVar instanceof HighGlobal) {
+						reference = highVar.getRepresentative().getAddress();
 					}
 				}
 

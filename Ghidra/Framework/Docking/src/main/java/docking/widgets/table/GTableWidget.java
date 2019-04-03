@@ -133,7 +133,7 @@ public class GTableWidget<T> extends JPanel {
 		listener.itemPicked(gFilterTable.getSelectedRowObject());
 	}
 
-	public void setItemPickListner(TableItemPickedListener<T> listener) {
+	public void setItemPickListener(TableItemPickedListener<T> listener) {
 		this.listener = listener;
 	}
 

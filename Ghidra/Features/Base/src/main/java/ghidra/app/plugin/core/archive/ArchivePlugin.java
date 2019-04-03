@@ -93,7 +93,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 	private volatile boolean isArchiving;
 	private volatile boolean isRestoring;
 	private TaskListener archivingListener;
-	private TaskListener restoringListner;
+	private TaskListener restoringListener;
 
 	//////////////////////////////////////////////////////////////////
 
@@ -282,7 +282,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 
 		isRestoring = true;
 
-		restoringListner = new TaskListener() {
+		restoringListener = new TaskListener() {
 			@Override
 			public void taskCompleted(Task task) {
 				isRestoring = false;
@@ -295,7 +295,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 		};
 
 		Task task = new RestoreTask(lastRestoreLocator, archiveJar, this);
-		task.addTaskListener(restoringListner);
+		task.addTaskListener(restoringListener);
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 

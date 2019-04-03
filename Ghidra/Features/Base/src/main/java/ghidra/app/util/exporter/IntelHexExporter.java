@@ -15,10 +15,15 @@
  */
 package ghidra.app.util.exporter;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.*;
+
+import docking.widgets.textfield.HintTextField;
 import ghidra.app.util.*;
 import ghidra.app.util.opinion.IntelHexRecord;
 import ghidra.app.util.opinion.IntelHexRecordWriter;
@@ -29,18 +34,55 @@ import ghidra.program.model.mem.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * Exports the current program (or program selection) as bytes in Intel Hex format. 
+ * <p>
+ * The output defaults to lines of 16-bytes but this is configurable using the
+ * {@link #recordSizeOption} attribute. This allows users to select any record size
+ * up to the max of 0xFF. Users may also choose to <code>Drop Extra Bytes</code>, which will
+ * cause only lines that match the max record size to be printed; any other 
+ * bytes will be dropped. If this option is not set, every byte will be represented in the output.
+ */
 public class IntelHexExporter extends Exporter {
-	protected final static int MAX_BYTES_PER_LINE = 0x00000010;
 
-	protected Option option;
-
+	/** Option allowing the user to select the address space */
+	protected Option addressSpaceOption;
+	
+	/** Option allowing the user to select the number of bytes in each line of output */
+	protected RecordSizeOption recordSizeOption;
+	
+	private static final int DEFAULT_RECORD_SIZE = 0x10;
+	
 	/**
-	 * Constructs a new Intel Hex exporter.
+	 * Constructs a new Intel Hex exporter. This will use a record size of 16 (the default)
+	 * and will export ALL bytes in the program or selection (even if the total length
+	 * is not a multiple of 16.
 	 */
 	public IntelHexExporter() {
 		this("Intel Hex", "hex", new HelpLocation("ExporterPlugin", "intel_hex"));
 	}
-
+	
+	/**
+	 * Constructs a new Intel Hex exporter with a custom record size. 
+	 * 
+	 * @param recordSize the record size to use when writing to the output file
+	 * @param dropBytes if true, bytes at the end of the file that don't match the specified 
+	 * record size will be dropped
+	 */
+	public IntelHexExporter(int recordSize, boolean dropBytes) {
+		this("Intel Hex", "hex", new HelpLocation("ExporterPlugin", "intel_hex"));
+		recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
+		recordSizeOption.setRecordSize(recordSize);
+		recordSizeOption.setDropBytes(dropBytes);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param name the name of the exporter
+	 * @param extension the extension to use for the output file
+	 * @param help location of Ghidra help
+	 */
 	protected IntelHexExporter(String name, String extension, HelpLocation help) {
 		super(name, extension, help);
 	}
@@ -55,16 +97,49 @@ public class IntelHexExporter extends Exporter {
 		}
 		Program program = (Program) domainObject;
 
-		option = new Option("Address Space", program.getAddressFactory().getDefaultAddressSpace());
+		addressSpaceOption =
+			new Option("Address Space", program.getAddressFactory().getDefaultAddressSpace());
 
-		optionsList.add(option);
+		if (recordSizeOption == null) {
+			recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
+		}
+
+		optionsList.add(addressSpaceOption);
+		optionsList.add(recordSizeOption);
+
 		return optionsList;
 	}
 
 	@Override
 	public void setOptions(List<Option> options) throws OptionException {
 		if (!options.isEmpty()) {
-			option = options.get(0);
+			addressSpaceOption = options.get(0);
+			recordSizeOption = (RecordSizeOption) options.get(1); 
+		}
+	}
+	
+	/**
+	 * Verifier for a {@link HintTextField} that ensures input is a numeric value between
+	 * 0 and 0xFF.
+	 * <p>
+	 * Input may be specified in either decimal or hex.
+	 */
+	private class BoundedIntegerVerifier extends InputVerifier {
+
+		@Override
+		public boolean verify(JComponent input) {
+			HintTextField field = (HintTextField) input;
+			String text = field.getText();
+
+			int val;
+			try {
+				val = Integer.decode(text);
+			}
+			catch (NumberFormatException e) {
+				return false;
+			}
+
+			return val <= 0xFF && val >= 0;
 		}
 	}
 
@@ -84,33 +159,31 @@ public class IntelHexExporter extends Exporter {
 			return false;
 		}
 
-		if (option == null) {
+		if (addressSpaceOption == null || recordSizeOption == null) {
 			getOptions(() -> program);
 		}
 
-		PrintWriter writer = new PrintWriter(new FileOutputStream(file));
+		try (PrintWriter writer = new PrintWriter(new FileOutputStream(file))) {
 
-		Memory memory = program.getMemory();
+			Memory memory = program.getMemory();
 
-		if (addrSet == null) {
-			addrSet = memory;
-		}
-
-		try {
-			List<IntelHexRecord> records = dumpMemory(program, memory, addrSet, monitor);
-			for (IntelHexRecord record : records) {
-				writer.println(record.format());
+			if (addrSet == null) {
+				addrSet = memory;
 			}
-		}
-		catch (MemoryAccessException e) {
-			throw new ExporterException(e);
-		}
-		finally {
-			// Close the PrintWriter
-			//
-			writer.close();
 
-			option = null;
+			try {
+				List<IntelHexRecord> records = dumpMemory(program, memory, addrSet, monitor);
+				for (IntelHexRecord record : records) {
+					writer.println(record.format());
+				}
+			}
+			catch (MemoryAccessException e) {
+				throw new ExporterException(e);
+			}
+			finally {
+				addressSpaceOption = null;
+				recordSizeOption = null;
+			}
 		}
 
 		return true;
@@ -118,15 +191,19 @@ public class IntelHexExporter extends Exporter {
 
 	protected List<IntelHexRecord> dumpMemory(Program program, Memory memory,
 			AddressSetView addrSetView, TaskMonitor monitor) throws MemoryAccessException {
-		IntelHexRecordWriter writer = new IntelHexRecordWriter(MAX_BYTES_PER_LINE);
+
+		int size = (int) recordSizeOption.getValue();
+		boolean dropBytes = recordSizeOption.dropExtraBytes();
+
+		IntelHexRecordWriter writer = new IntelHexRecordWriter(size, dropBytes);
 
 		AddressSet set = new AddressSet(addrSetView);
 
 		MemoryBlock[] blocks = memory.getBlocks();
-		for (int i = 0; i < blocks.length; ++i) {
-			if (!blocks[i].isInitialized() ||
-				blocks[i].getStart().getAddressSpace() != option.getValue()) {
-				set.delete(new AddressRangeImpl(blocks[i].getStart(), blocks[i].getEnd()));
+		for (MemoryBlock block : blocks) {
+			if (!block.isInitialized() ||
+				block.getStart().getAddressSpace() != addressSpaceOption.getValue()) {
+				set.delete(new AddressRangeImpl(block.getStart(), block.getEnd()));
 			}
 		}
 
@@ -147,5 +224,114 @@ public class IntelHexExporter extends Exporter {
 			}
 		}
 		return writer.finish(entryPoint);
+	}
+	
+	/**
+	 * Option for exporting Intel Hex records that allows users to specify a record size for the
+	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
+	 * will cause only those records that match the maximum size to be output to the file.
+	 * 
+	 * @see RecordSizeComponent
+	 */
+	private class RecordSizeOption extends Option {
+
+		private final RecordSizeComponent comp = new RecordSizeComponent(DEFAULT_RECORD_SIZE);
+
+		public RecordSizeOption(String name, Class<?> valueClass) {
+			super(name, valueClass);
+		}
+
+		public RecordSizeOption(String name, Class<?> valueClass, Object value, String arg,
+				String group) {
+			super(name, valueClass, value, arg, group);
+		}
+
+		@Override
+		public Component getCustomEditorComponent() {
+			return comp;
+		}
+
+		@Override
+		public Option copy() {
+			return new RecordSizeOption(getName(), getValueClass(), getValue(), getArg(),
+				getGroup());
+		}
+
+		@Override
+		public Object getValue() {
+			return comp.getValue();
+		}
+
+		@Override
+		public Class<?> getValueClass() {
+			return Integer.class;
+		}
+
+		public boolean dropExtraBytes() {
+			return comp.dropExtraBytes();
+		}
+		
+		public void setRecordSize(int recordSize) {
+			comp.setRecordSize(recordSize);
+		}
+		
+		public void setDropBytes(boolean dropBytes) {
+			comp.setDropBytes(dropBytes);
+		}
+	}
+
+	/**
+	 * Component that displays two widgets for setting export options: 
+	 * 
+	 * <ul>
+	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these 
+	 * represent the record size for each line of output</li>
+	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in 
+	 * the output matches the specified record size</li>
+	 * </ul>
+	 * 
+	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over 
+	 * after outputting all lines that match the record size will be omitted from the output.
+	 */
+	private class RecordSizeComponent extends JPanel {
+
+		private HintTextField input;
+		private JCheckBox dropCb;
+
+		public RecordSizeComponent(int recordSize) {
+			setLayout(new BorderLayout());
+			
+			input = new HintTextField(Integer.toString(recordSize), false, new BoundedIntegerVerifier());
+			dropCb = new JCheckBox("Align To Record Size");
+			
+			input.setText(Integer.toString(recordSize));
+			
+			add(input, BorderLayout.CENTER);
+			add(dropCb, BorderLayout.EAST);
+		}
+
+		public int getValue() {
+			String val = input.getText();
+			if (!input.isFieldValid()) {
+				
+				// If the user clears the input field, revert to the default 
+				// record size (16).
+				return DEFAULT_RECORD_SIZE;
+			}
+
+			return Integer.valueOf(val);
+		}
+
+		public boolean dropExtraBytes() {
+			return dropCb.isSelected();
+		}
+		
+		public void setRecordSize(int recordSize) {
+			input.setText(Integer.toString(recordSize));
+		}
+		
+		public void setDropBytes(boolean dropBytes) {
+			dropCb.setSelected(dropBytes);
+		}
 	}
 }

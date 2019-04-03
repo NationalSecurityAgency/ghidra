@@ -25,17 +25,17 @@ import ghidra.util.Msg;
 public class Compare {
 	public static void compare(ArrayList<String> expectedList, File actualFile) throws Exception {
 		int index = 0;
-		BufferedReader reader = new BufferedReader(new FileReader(actualFile));
-
+		
 		boolean hasFailure = false;
 
-		try {
+		try (BufferedReader reader = new BufferedReader(new FileReader(actualFile))) {
 			int excess = 0;
 			while (true) {
 				String actualLine = reader.readLine();
 				if (actualLine == null) {
 					break;
 				}
+								
 				if (index >= expectedList.size()) {
 					++excess;
 					continue;
@@ -72,9 +72,6 @@ public class Compare {
 			if (hasFailure) {
 				Assert.fail("One or more failures--see output for data");
 			}
-		}
-		finally {
-			reader.close();
 		}
 	}
 }

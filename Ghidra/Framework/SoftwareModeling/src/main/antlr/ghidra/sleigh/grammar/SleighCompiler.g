@@ -1473,8 +1473,10 @@ expr_apply returns [Object value]
 	;
 
 expr_operands returns [VectorSTL<ExprTree> value]
+	scope Return;
 	@init {
 		$value = new VectorSTL<ExprTree>();
+		$Return::noReturn = false;
 	}
 	:	(e=expr { value.push_back(e); })*
 	;

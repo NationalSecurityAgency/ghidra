@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +201,7 @@ public class SimpleTextField implements Field {
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
 		paintSelection(g, colorManager, 0);
-		paintHighlights(g, hlFactory.getHighlights(text, -1));
+		paintHighlights(g, hlFactory.getHighlights(this, text, -1));
 		g.setFont(metrics.getFont());
 		if (foregroundColor == null) {
 			foregroundColor = context.getForeground();
@@ -226,10 +225,10 @@ public class SimpleTextField implements Field {
 	}
 
 	protected void paintHighlights(Graphics g, Highlight[] highlights) {
-		for (int i = 0; i < highlights.length; i++) {
-			int startCol = Math.max(highlights[i].getStart(), 0);
-			int endCol = Math.min(highlights[i].getEnd(), text.length());
-			Color c = highlights[i].getColor();
+		for (Highlight highlight : highlights) {
+			int startCol = Math.max(highlight.getStart(), 0);
+			int endCol = Math.min(highlight.getEnd(), text.length());
+			Color c = highlight.getColor();
 			if (endCol >= startCol) {
 				int start = findX(startCol);
 				int end = findX(endCol + 1);

@@ -312,7 +312,7 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Return true if this varnode is stored in the symbolic stack space
 	 */
-	private boolean isStackSymbolicSpace(Varnode varnode) {
+	public boolean isStackSymbolicSpace(Varnode varnode) {
 		// symbolic spaces are off of a register, find the space
 		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 
@@ -785,7 +785,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * return the location that this register was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
 	 * 
-	 * @param reg
+	 * @param reg register to find last set location
+	 * @param bval value to look for to differentiate set locations, null if don't care
+	 * 
 	 * @return address that the register was set.
 	 */
 	public Address getLastSetLocation(Register reg, BigInteger bval) {
@@ -1256,6 +1258,13 @@ public class VarnodeContext implements ProcessorContext {
 				// too big anyway,already extended as far as it will go.
 				vnodeVal = createConstantVarnode(vnodeVal.getOffset(), out.getSize());
 			}
+		} else if (vnodeVal.isRegister() && vnodeVal.getSize() < out.getSize()) {
+			Register reg = getRegister(vnodeVal);
+			if (reg == null) {
+				throw notFoundExc;
+			}
+			int spaceID = getAddressSpace(reg.getName());
+			vnodeVal = createVarnode(0,spaceID,out.getSize());
 		}
 		return vnodeVal;
 	}
