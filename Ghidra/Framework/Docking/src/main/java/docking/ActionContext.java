@@ -47,7 +47,12 @@ public class ActionContext {
 	}
 
 	/**
-	 * For Testing
+	 * Constructor
+	 * 
+	 * @param provider the ComponentProvider that generated this context.
+	 * @param contextObject an optional contextObject that the ComponentProvider can provide
+	 * @param sourceObject an optional source object; this can be anything that actions wish to
+	 *        later retrieve
 	 */
 	public ActionContext(ComponentProvider provider, Object contextObject, Object sourceObject) {
 		this(provider, contextObject);
@@ -55,8 +60,8 @@ public class ActionContext {
 	}
 
 	/**
-	 * Returns the {@link #ComponentProvider} that generated this ActionContext
-	 * @return
+	 * Returns the {@link ComponentProvider} that generated this ActionContext
+	 * @return the provider
 	 */
 	public ComponentProvider getComponentProvider() {
 		return provider;

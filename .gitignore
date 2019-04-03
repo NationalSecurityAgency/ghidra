@@ -23,6 +23,7 @@ ghidra.repos.config
 **/dist
 repositories/
 *.sla
+**/data/build.xml
 
 # Misc files
 *.setting

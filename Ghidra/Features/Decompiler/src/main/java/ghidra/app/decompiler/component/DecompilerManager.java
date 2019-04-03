@@ -51,7 +51,7 @@ public class DecompilerManager {
 		this.decompilerController = decompilerController;
 
 		runManager = new RunManager("Decompiler", null);
-		decompiler = new Decompiler(options, options.getDefaultTimeout());
+		decompiler = new Decompiler(options, 0);
 
 		updateManager = new SwingUpdateManager(500, () -> doPendingDecompile());
 	}

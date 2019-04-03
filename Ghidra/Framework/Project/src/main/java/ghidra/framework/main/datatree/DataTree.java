@@ -16,8 +16,7 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.Component;
-import java.awt.event.*;
-import java.util.List;
+import java.awt.event.KeyEvent;
 
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
@@ -30,20 +29,13 @@ import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.framework.main.FrontEndTool;
 
 /**
- * Tree that shows the folders and domain files in a Project.
+ * Tree that shows the folders and domain files in a Project
  */
 public class DataTree extends GTree {
-	static {
-		DataFlavorHandlerService.registerDataFlavorHandlers();
-	}
 
 	private boolean isActive;
 	private DataTreeDragNDropHandler dragNDropHandler;
 
-	/**
-	 * Constructor
-	 * @param folder root domain folder for the project.
-	 */
 	DataTree(FrontEndTool tool, GTreeRootNode root) {
 
 		super(root);
@@ -53,30 +45,11 @@ public class DataTree extends GTree {
 
 		docking.ToolTipManager.sharedInstance().registerComponent(this);
 
-		//When the user right clicks, change selection to what the mouse was under
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent evt) {
-				if (evt.getButton() == MouseEvent.BUTTON3) {
-					//Find the would-be newly selected path
-					TreePath newPath = getPathForLocation(evt.getX(), evt.getY());
-					if (newPath == null) {
-						return;
-					}
-					//Determine if the path is already selected--If so, do not change the selection
-					TreePath[] paths = getSelectionPaths();
-					if (paths != null) {
-						for (TreePath element : paths) {
-							if (element.equals(newPath)) {
-								return;
-							}
-						}
-					}
-				}
-			}
-		});
-		dragNDropHandler = new DataTreeDragNDropHandler(tool, this, isActive);
-		setDragNDropHandler(dragNDropHandler);
+		if (tool != null) {
+			dragNDropHandler = new DataTreeDragNDropHandler(tool, this, isActive);
+			setDragNDropHandler(dragNDropHandler);
+		}
+
 		initializeKeyEvents();
 	}
 
@@ -92,74 +65,10 @@ public class DataTree extends GTree {
 			KeyStroke.getKeyStroke(KeyEvent.VK_X, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
-	void setProjectActive(boolean b) {
-		dragNDropHandler.setProjectActive(b);
-	}
-
-	/**
-	 * Return true if this path has all of its subpaths expanded.
-	 */
-	public boolean allPathsExpanded(TreePath path) {
-
-		GTreeNode node = (GTreeNode) path.getLastPathComponent();
-		if (node.isLeaf()) {
-			return true;
+	void setProjectActive(boolean isActive) {
+		if (dragNDropHandler != null) {
+			dragNDropHandler.setProjectActive(isActive);
 		}
-		if (isCollapsed(path)) {
-			return false;
-		}
-
-		boolean allLeaves = true;
-
-		List<GTreeNode> children = node.getChildren();
-		for (GTreeNode child : children) {
-			if (child.isLeaf()) {
-				continue;
-			}
-			allLeaves = false;
-			if (!isExpanded(child.getTreePath())) {
-				return false;
-			}
-
-			if (!allPathsExpanded(child.getTreePath())) {
-				return false;
-			}
-		}
-		if (allLeaves) {
-			return isExpanded(path);
-		}
-		return true;
-	}
-
-	/**
-	 * Return true if this path has all of its subpaths collapsed.
-	 */
-	public boolean allPathsCollapsed(TreePath path) {
-		GTreeNode node = (GTreeNode) path.getLastPathComponent();
-
-		if (isExpanded(path)) {
-			return false;
-		}
-		boolean allLeaves = true; // variable for knowing whether all children are leaves
-
-		node.getChildren();
-		for (GTreeNode child : node) {
-			if (child.isLeaf()) {
-				continue;
-			}
-			allLeaves = false;
-			if (!isCollapsed(child.getTreePath())) {
-				return false;
-			}
-
-			if (!allPathsCollapsed(child.getTreePath())) {
-				return false;
-			}
-		}
-		if (allLeaves) {
-			return isCollapsed(path);
-		}
-		return true;
 	}
 
 	public void clearSelection() {
@@ -183,20 +92,7 @@ public class DataTree extends GTree {
 		getJTree().stopEditing();
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	// *** private methods
-	//////////////////////////////////////////////////////////////////////
-	/**
-	 * Tree cell renderer to use the appropriate icons for the
-	 * DataTreeNodes.
-	 */
 	private class DataTreeCellRenderer extends GTreeRenderer {
-
-		/**
-		 * Configures the renderer based on the passed in components.
-		 * The icon is set according to value, expanded, and leaf
-		 * parameters.
-		 */
 		@Override
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
 				boolean expanded, boolean leaf, int row, boolean doesHaveFocus) {
@@ -209,7 +105,5 @@ public class DataTree extends GTree {
 			}
 			return this;
 		}
-
 	}
-
 }

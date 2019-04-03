@@ -6,6 +6,45 @@
   </HEAD>
 
 <BODY>
+
+<H1 align="center">Ghidra 9.0.2 Change History (April 2019)</H1>
+
+<blockquote><p><u>Bugs</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Analysis.</I> Constant reference analysis boundary controls for speculative references has been fixed. Speculative references are references created from computed constants passed as parameters, stored to a location, or from indexed offsets from a register. (Issue #228)</li>
+
+<li><I>Decompiler. </I> Fixed rendering bug in the Decompiler when the "Find" dialog is closed. (Issue #282) </li>
+<li><I>Decompiler. </I> Fixed decompiler handling of Function Definition data types. (Issue #247) </li>
+
+<li><I>Decompiler. </I> Fixed "Free Varnode" exception in RuleConditionalMove. (Issue #294) </li>
+
+<li><I>Diff. </I> Fixed exceptions that can occur in the Diff View for programs with overlays. </li>
+
+<li><I>Documentation. </I> Corrected the spelling of "listener" throughout the source code. (Issue #235) </li>
+<li><I>Exporter. </I> Exporting a selection as Intel Hex will now allow a selection of any length. Previously this was restricted to multiples of 16 bytes. (Issue #260) </li>
+<li><I>GUI. </I> Fixed exception that occurs after disabling MyProgramChangesDisplayPlugin. </li>
+
+<li><I>GUI.</I> Updated the "Open Program" dialog to disallow file drop operations. (Issue #252)
+
+<li><I>Languages. </I> The ARM Thumb CMP.W and LSL isntructions have been changed to correctly decode. There are still issues to work out with Unpredictable execution when Rd is the PC. (Issue #280) </li>
+<li><I>Multi-User:Ghidra Server. </I> Corrected bug introduced into ghidraSvr.bat which could prevent Ghidra Server startup (Issue #279) </li>
+
+<li><I>Scripting.</I> MultiInstructionMemReference script has been corrected to consider input and output registers when placing a reference on an instruction.</li>
+
+</ul>
+</blockquote>
+
+<blockquote><p><u>Security</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Basic Infrastructure. </I> Added a property to support/launch.properties to prevent log4j from using jansi.dll on Windows. (Issue #286) </li>
+
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.0.1 Change History (March 2019)</H1>
  
  <blockquote><p><u>New Features</u></p></blockquote>

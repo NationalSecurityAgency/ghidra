@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.fieldpanel.support.HighlightFactory;
 import ghidra.app.util.HighlightProvider;
@@ -30,26 +30,22 @@ public class FieldHighlightFactory implements HighlightFactory {
 	private HighlightProvider provider;
 	private Class<? extends FieldFactory> fieldFactoryClass;
 	private Object obj;
-	
+
 	/**
 	 * Constructs a new FieldHighlightFactory.
 	 * @param provider the HighlightProvider that will actually compute the highlights.
 	 * @param fieldFactoryClass the class of the field factory that generated the field to be rendered.
 	 * @param obj the object that holds the information that will be rendered (usually a code unit)
 	 */
-	public FieldHighlightFactory(HighlightProvider provider, Class<? extends FieldFactory> fieldFactoryClass, Object obj) {
+	public FieldHighlightFactory(HighlightProvider provider,
+			Class<? extends FieldFactory> fieldFactoryClass, Object obj) {
 		this.provider = provider;
 		this.fieldFactoryClass = fieldFactoryClass;
 		this.obj = obj;
 	}
-	
-	/**
-	 * Returns the highlights for the given text.
-	 * @param text the text to be considered for highlighting.
-	 * @return an array of highlights to be rendered.
-	 */
-	public Highlight[] getHighlights(String text, int cursorTextOffset) {
+
+	@Override
+	public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
 		return provider.getHighlights(text, obj, fieldFactoryClass, cursorTextOffset);
 	}
-	
 }

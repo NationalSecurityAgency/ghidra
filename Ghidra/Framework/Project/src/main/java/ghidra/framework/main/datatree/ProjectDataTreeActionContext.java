@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.framework.main.datatable.ProjectDataActionContext;
-import ghidra.framework.model.*;
-
 import java.util.List;
 
 import javax.swing.tree.TreePath;
 
 import docking.ComponentProvider;
+import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.model.*;
 
 public class ProjectDataTreeActionContext extends ProjectDataActionContext {
 
@@ -52,7 +50,7 @@ public class ProjectDataTreeActionContext extends ProjectDataActionContext {
 		return selectionPaths;
 	}
 
-	public DataTree getDataTree() {
+	public DataTree getTree() {
 		return tree;
 	}
 }

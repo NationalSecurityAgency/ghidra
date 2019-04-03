@@ -15,29 +15,55 @@
  */
 package ghidra.framework.main.datatree;
 
+import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTargetDropEvent;
 import java.io.IOException;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeState;
-import ghidra.framework.main.FrontEndTool;
+import ghidra.app.util.FileOpenDataFlavorHandler;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.exception.FileInUseException;
 import ghidra.util.task.*;
 
-final class LocalTreeNodeHandler implements DataFlavorHandler {
+public final class LocalTreeNodeHandler
+		implements DataTreeFlavorHandler, FileOpenDataFlavorHandler {
+
 	private DataTree dataTree;
 	private GTreeState treeState;
 
 	@Override
+	public void handle(PluginTool tool, Object obj, DropTargetDropEvent e, DataFlavor f) {
+
+		if (f.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
+			List<?> files = (List<?>) obj;
+			DomainFile[] domainFiles = new DomainFile[files.size()];
+			for (int i = 0; i < files.size(); i++) {
+				domainFiles[i] = (DomainFile) files.get(i);
+			}
+			tool.acceptDomainFiles(domainFiles);
+		}
+		else if (f.equals(DataTreeDragNDropHandler.localDomainFileTreeFlavor)) {
+			List<?> files = (List<?>) obj;
+			DomainFile[] domainFiles = new DomainFile[files.size()];
+			for (int i = 0; i < files.size(); i++) {
+				DomainFileNode node = (DomainFileNode) files.get(i);
+				domainFiles[i] = node.getDomainFile();
+			}
+			tool.acceptDomainFiles(domainFiles);
+		}
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
-	public void handle(FrontEndTool tool, DataTree tree, GTreeNode destinationNode,
+	public void handle(PluginTool tool, DataTree tree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 
 		this.dataTree = tree;
@@ -52,12 +78,9 @@ final class LocalTreeNodeHandler implements DataFlavorHandler {
 		new TaskLauncher(task, dataTree, 1000);
 
 		if (treeState != null) { // is set to null if drag results in a task
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					treeState.updateStateForMovedNodes();
-					dataTree.restoreTreeState(treeState);
-				}
+			SystemUtilities.runSwingLater(() -> {
+				treeState.updateStateForMovedNodes();
+				dataTree.restoreTreeState(treeState);
 			});
 		}
 	}

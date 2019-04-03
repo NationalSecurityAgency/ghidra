@@ -576,6 +576,9 @@ public class PdbParserNEW {
 		}
 		catch (Exception e) {
 			if (!isXML) {
+				if (hasErrors()) {
+					throw new PdbException(getErrorAndWarningMessages());
+				}
 				throw new PdbException("PDB Execution failure of " + PDB_EXE + ".\n" +
 					"This was likely caused by severe execution failure which can occur if executed\n" +
 					"on an unsupported platform. It may be neccessary to rebuild the PDB executable\n" +

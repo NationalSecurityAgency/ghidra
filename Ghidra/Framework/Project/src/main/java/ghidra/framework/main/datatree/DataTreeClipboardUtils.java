@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 
 import docking.dnd.GClipboard;
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.support.GTreeNodeTransferable;
 import ghidra.util.Msg;
 
 /**
@@ -35,14 +36,8 @@ public class DataTreeClipboardUtils {
 	 * Static instance of a callback handler that is notified when the clipboard is changed
 	 * and our data is discarded.
 	 */
-	private static final ClipboardOwner DATATREE_CLIPBOARD_OWNER = new ClipboardOwner() {
-		@Override
-		public void lostOwnership(Clipboard clipboard, Transferable contents) {
-			// This is called when something other than this class modifies the clipboard
-			// and our data is discarded.
-			clearCuttables(contents);
-		}
-	};
+	private static final ClipboardOwner DATATREE_CLIPBOARD_OWNER =
+		(clipboard, contents) -> clearCuttables(contents);
 
 	/**
 	 * Pushes the GTreeNodes in the specified TreePath array to the clipboard.
@@ -59,8 +54,9 @@ public class DataTreeClipboardUtils {
 			GTreeNode node = (GTreeNode) element.getLastPathComponent();
 			list.add(node);
 		}
-		DataTreeNodeTransferable contents =
-			new DataTreeNodeTransferable(tree.getDragNDropHandler(), list);
+
+		GTreeNodeTransferable contents =
+			new GTreeNodeTransferable(tree.getDragNDropHandler(), list);
 
 		try {
 			clipboard.setContents(contents, DATATREE_CLIPBOARD_OWNER);

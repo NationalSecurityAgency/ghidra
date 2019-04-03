@@ -12,6 +12,7 @@ data/languages/skel.opinion||GHIDRA||||END|
 data/languages/skel.pspec||GHIDRA||||END|
 data/languages/skel.sinc||GHIDRA||||END|
 data/languages/skel.slaspec||GHIDRA||||END|
+data/sleighArgs.txt||GHIDRA||||END|
 extension.properties||GHIDRA||||END|
 ghidra_scripts/README.txt||GHIDRA||||END|
 lib/README.txt||GHIDRA||||END|

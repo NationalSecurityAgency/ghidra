@@ -134,6 +134,10 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 		it.sourceSets.test.compileClasspath 
 	})
 	
+	// Generate at package level because user may try to get help directly on an object they have 
+	// rather than its public interface.
+	options.addBooleanOption("package", true)
+	
 	// Some internal packages are not public and need to be exported. 
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
     															"java.desktop/sun.awt=ALL-UNNAMED", 
@@ -196,6 +200,8 @@ task assembleCommon (type: Copy) {
 	exclude "**/.project"
 	exclude "**/.classpath"
 	exclude "**/delete.me"
+	exclude "**/.vs/**"
+	exclude "**/*.vcxproj.user"
 	
 	/////////////////
 	// GHIDRA PROJECTS
@@ -221,6 +227,7 @@ task assembleCommon (type: Copy) {
 		
 				from (p.projectDir.toString() + "/data") {
 					into { getZipPath(p) + "/data" }
+					exclude 'build.xml' // associated with language modules (dev use only)
 				}
 				
 				from (BIN_REPO + '/' + getZipPath(p) + "/data") {
@@ -695,6 +702,7 @@ subprojects { p ->
 				exclude 'bin/**'
 				exclude 'src/**'
 				exclude 'test/**'
+				exclude 'data/build.xml'
 				exclude 'developer_scripts'
 				
 				// general place where extension modules can put files that won't get 

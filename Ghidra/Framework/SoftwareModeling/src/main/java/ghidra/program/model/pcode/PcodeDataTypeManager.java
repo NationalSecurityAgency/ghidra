@@ -261,10 +261,7 @@ public class PcodeDataTypeManager {
 		if (type instanceof Array) {
 			return buildType(type, size);
 		}
-		if (type instanceof FunctionDefinition) {
-			return buildType(type, size);
-		}
-		if (type.getLength() <= 0) {
+		if (!(type instanceof FunctionDefinition) && type.getLength() <= 0) {
 			return buildType(type, size);
 		}
 		StringBuilder resBuf = new StringBuilder();
@@ -541,7 +538,7 @@ public class PcodeDataTypeManager {
 		}
 		resBuf.append("<type");
 		if ((type instanceof Pointer) || (type instanceof Array) ||
-			(type instanceof FunctionDefinition) || (type.getLength() <= 0)) {
+			(!(type instanceof FunctionDefinition) && type.getLength() <= 0)) {
 			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 		}
 		else {

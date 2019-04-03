@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import ghidra.app.plugin.core.format.ByteBlockInfo;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.math.BigInteger;
@@ -26,6 +23,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.field.SimpleTextField;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.fieldpanel.support.HighlightFactory;
+import ghidra.app.plugin.core.format.ByteBlockInfo;
 
 /**
  * Implementation for the index/address field.
@@ -145,7 +143,7 @@ class IndexFieldFactory {
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, int cursorTextOffset) {
+		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
 			return NO_HIGHLIGHTS;
 		}
 	}

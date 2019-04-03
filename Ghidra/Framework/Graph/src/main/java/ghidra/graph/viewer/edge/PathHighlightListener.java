@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.main.datatree;
+package ghidra.graph.viewer.edge;
 
-import java.util.List;
+public interface PathHighlightListener {
 
-import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.support.GTreeNodeTransferable;
-import docking.widgets.tree.support.GTreeTransferHandler;
-
-public class DataTreeNodeTransferable extends GTreeNodeTransferable {
-	public DataTreeNodeTransferable(GTreeTransferHandler handler, List<GTreeNode> selectedData) {
-		super(handler, selectedData);
-	}
-
+	/**
+	 * Called when the a path is highlighted. 
+	 * 
+	 * @param hoverChange true if the change path is hover change; false if the changed path 
+	 *        is a selection change
+	 */
+	public void pathHighlightChanged(boolean hoverChange);
 }

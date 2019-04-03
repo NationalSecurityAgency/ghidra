@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +17,10 @@ package ghidra.framework.main.datatree;
 
 import java.awt.datatransfer.DataFlavor;
 
-public class GhidraDataFlavorHandlerService extends DataFlavorHandlerService {
-	@Override
-	protected void doRegisterDataFlavorHandlers() {
+public class GhidraDataFlavorHandlerService {
+
+	public GhidraDataFlavorHandlerService() {
+
 		try {
 			DataFlavor linuxFileUrlFlavor =
 				new DataFlavor("application/x-java-serialized-object;class=java.lang.String");
@@ -31,15 +31,12 @@ public class GhidraDataFlavorHandlerService extends DataFlavorHandlerService {
 			// should never happen as it is using java.lang.String
 		}
 
-		final LocalTreeNodeHandler localTreeNodeHandler = new LocalTreeNodeHandler();
+		LocalTreeNodeHandler localNodeHandler = new LocalTreeNodeHandler();
 		DataTreeDragNDropHandler.addActiveDataFlavorHandler(
-			DataTreeDragNDropHandler.localDomainFileTreeFlavor, localTreeNodeHandler);
+			DataTreeDragNDropHandler.localDomainFileTreeFlavor, localNodeHandler);
 		DataTreeDragNDropHandler.addActiveDataFlavorHandler(DataFlavor.javaFileListFlavor,
 			new JavaFileListHandler());
 		DataTreeDragNDropHandler.addActiveDataFlavorHandler(
 			VersionInfoTransferable.localVersionInfoFlavor, new LocalVersionInfoHandler());
-
-		DataTreeDragNDropHandler.addInactiveDataFlavorHandler(
-			DataTreeDragNDropHandler.localDomainFileTreeFlavor, localTreeNodeHandler);
 	}
 }

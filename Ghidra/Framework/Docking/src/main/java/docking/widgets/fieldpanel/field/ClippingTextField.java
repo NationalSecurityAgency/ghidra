@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,8 +128,8 @@ public class ClippingTextField implements TextField {
 
 		int x = findX(col) + startX;
 
-		return new Rectangle(x, -textElement.getHeightAbove(), 2, textElement.getHeightAbove() +
-			textElement.getHeightBelow());
+		return new Rectangle(x, -textElement.getHeightAbove(), 2,
+			textElement.getHeightAbove() + textElement.getHeightBelow());
 	}
 
 	/**
@@ -315,7 +314,7 @@ public class ClippingTextField implements TextField {
 		if (cursorLoc != null) {
 			cursorTextOffset = screenLocationToTextOffset(cursorLoc.row(), cursorLoc.col());
 		}
-		paintHighlights(g, hlFactory.getHighlights(getString(), cursorTextOffset));
+		paintHighlights(g, hlFactory.getHighlights(this, getString(), cursorTextOffset));
 	}
 
 	protected void paintSelection(Graphics g, FieldBackgroundColorManager colorManager, int row,
@@ -344,10 +343,10 @@ public class ClippingTextField implements TextField {
 	}
 
 	protected void paintHighlights(Graphics g, Highlight[] highlights) {
-		for (int i = 0; i < highlights.length; i++) {
-			int startCol = Math.max(highlights[i].getStart(), 0);
-			int endCol = Math.min(highlights[i].getEnd(), getString().length());
-			Color c = highlights[i].getColor();
+		for (Highlight highlight : highlights) {
+			int startCol = Math.max(highlight.getStart(), 0);
+			int endCol = Math.min(highlight.getEnd(), getString().length());
+			Color c = highlight.getColor();
 			if (endCol >= startCol) {
 				int start = findX(startCol);
 				int end = findX(endCol + 1);

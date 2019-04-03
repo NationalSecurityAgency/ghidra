@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +25,7 @@ void warning( const char * msg )
 
 void fatal( const char * msg )
 {
-	fprintf( stderr, "ERROR:\n" );
-	fprintf( stderr, msg );
-	fprintf( stderr, "\n" );
+	fprintf( stderr, "ERROR: %s\n", msg );
 	exit( -1 );
 }
 

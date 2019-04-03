@@ -42,6 +42,12 @@ public class ProjectDataNewFolderAction extends ProjectDataContextAction {
 	}
 
 	@Override
+	protected boolean supportsTransientProjectData() {
+		// we allow the user to create new folders even in transient projects
+		return true;
+	}
+
+	@Override
 	protected void actionPerformed(ProjectDataActionContext context) {
 		createNewFolder(context);
 	}

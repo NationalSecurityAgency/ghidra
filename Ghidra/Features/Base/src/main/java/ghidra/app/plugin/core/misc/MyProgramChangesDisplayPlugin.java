@@ -242,6 +242,10 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	public void dispose() {
 
 		worker.dispose();
+		if (currentProgram != null) {
+			currentProgram.removeTransactionListener(transactionListener);
+			currentProgram.removeListener(this);
+		}
 
 		tool.getProject().getProjectData().removeDomainFolderChangeListener(folderListener);
 

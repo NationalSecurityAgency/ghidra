@@ -623,7 +623,7 @@ public class OptionsTest extends AbstractGenericTest {
 
 		@Override
 		public int hashCode() {
-			return 1;// set so that this listener gets called after the storingOptionsListnere
+			return 1;// set so that this listener gets called after the storingOptionsListener
 		}
 	}
 

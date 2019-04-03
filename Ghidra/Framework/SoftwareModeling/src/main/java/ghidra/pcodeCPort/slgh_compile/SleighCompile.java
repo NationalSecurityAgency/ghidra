@@ -963,10 +963,9 @@ public class SleighCompile extends SleighBase {
 				continue;
 			}
 			if (firstContextField != null && sym.getId() == firstContextField) {
-				reportError(location,
-					sym.getName() +
-						" cannot be used to attach variables because it occurs at the lowest bit position in context at " +
-						sym.getLocation());
+				reportError(location, sym.getName() +
+					" cannot be used to attach variables because it occurs at the lowest bit position in context at " +
+					sym.getLocation());
 				continue;
 			}
 			PatternValue patval = sym.getPatternValue();
@@ -1569,7 +1568,9 @@ public class SleighCompile extends SleighBase {
 	}
 
 	/**
-	 * Run the sleigh compiler.
+	 * Run the sleigh compiler.  This provides a direct means of invoking the
+	 * compiler without using the launcher.  The full SoftwareModeling classpath 
+	 * must be established including any dependencies.
 	 * @param args compiler command line arguments
 	 * @throws JDOMException
 	 * @throws IOException
@@ -1578,5 +1579,4 @@ public class SleighCompile extends SleighBase {
 	public static void main(String[] args) throws JDOMException, IOException, RecognitionException {
 		System.exit(SleighCompileLauncher.runMain(args, new HashMap<String, String>()));
 	}
-
 }

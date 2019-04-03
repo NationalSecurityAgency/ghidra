@@ -20,21 +20,31 @@ import java.util.*;
 import ghidra.program.model.address.*;
 
 public class IntelHexRecordWriter {
+
     private final int maxBytesPerLine;
+	private final boolean dropExtraBytes;
 
     private Address startAddress = null;
     private Long oldSegment = null;
-    private ArrayList<Byte> bytes = new ArrayList<Byte>();
+	private ArrayList<Byte> bytes = new ArrayList<>();
     private Boolean isSegmented = null;
 
-    private ArrayList<IntelHexRecord> results = new ArrayList<IntelHexRecord>();
+	private ArrayList<IntelHexRecord> results = new ArrayList<>();
     private boolean done = false;
 
-    public IntelHexRecordWriter(int maxBytesPerLine) {
+	/**
+	 * Constructor
+	 * 
+	 * @param maxBytesPerLine the maximum number of bytes to write per line in the hex output
+	 * @param dropExtraBytes if true, only lines matching {@link #maxBytesPerLine} will be output; 
+	 * remaining bytes will be left out
+	 */
+	public IntelHexRecordWriter(int maxBytesPerLine, boolean dropExtraBytes) {
         if (maxBytesPerLine > IntelHexRecord.MAX_RECORD_LENGTH) {
             throw new IllegalArgumentException("maxBytesPerLine > IntelHexRecord.MAX_RECORD_LENGTH");
         }
         this.maxBytesPerLine = maxBytesPerLine;
+		this.dropExtraBytes = dropExtraBytes;
     }
 
     public void addByte(Address address, byte b) {
@@ -117,6 +127,14 @@ public class IntelHexRecordWriter {
     }
 
     public List<IntelHexRecord> finish(Address entryPoint) {
+
+		// Before finalizing things, write out any remaining bytes that haven't yet been written, if
+		// the user has specified to do so via the drop extra bytes option (false = 
+    	// write out everything).
+		if (bytes.size() > 0 && !dropExtraBytes) {
+			emitData();
+		}
+
         if (entryPoint != null && isSegmented != null) {
             final long offset = entryPoint.getOffset();
             byte[] data = new byte[4];

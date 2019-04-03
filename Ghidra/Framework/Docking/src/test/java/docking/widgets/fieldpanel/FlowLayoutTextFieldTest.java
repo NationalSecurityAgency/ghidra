@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 
@@ -40,11 +40,8 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		HighlightFactory factory = new HighlightFactory() {
-			@Override
-			public Highlight[] getHighlights(String text, int cursorTextOffset) {
-				return new Highlight[] { new Highlight(4, 4, Color.YELLOW) };
-			}
+		HighlightFactory factory = (field, text, cursorTextOffset) -> {
+			return new Highlight[] { new Highlight(4, 4, Color.YELLOW) };
 		};
 
 		Font font = new Font("Times New Roman", 0, 14);
