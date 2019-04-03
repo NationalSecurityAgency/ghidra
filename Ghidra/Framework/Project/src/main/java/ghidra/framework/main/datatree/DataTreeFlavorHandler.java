@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,13 @@
  */
 package ghidra.framework.main.datatree;
 
-import java.util.List;
-
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.support.GTreeNodeTransferable;
-import docking.widgets.tree.support.GTreeTransferHandler;
+import ghidra.framework.plugintool.PluginTool;
 
-public class DataTreeNodeTransferable extends GTreeNodeTransferable {
-	public DataTreeNodeTransferable(GTreeTransferHandler handler, List<GTreeNode> selectedData) {
-		super(handler, selectedData);
-	}
-
+/**
+ * Interface for classes that will handle drop actions for {@link DataTree}s.
+ */
+public interface DataTreeFlavorHandler {
+	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+			Object transferData, int dropAction);
 }

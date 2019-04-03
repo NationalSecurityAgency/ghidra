@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,14 @@
  */
 package ghidra.app.util;
 
-import ghidra.framework.plugintool.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DropTargetDropEvent;
 
-import java.awt.datatransfer.*;
-import java.awt.dnd.*;
+import ghidra.framework.plugintool.PluginTool;
 
+/**
+ * Interface for classes that will handle drop actions for files dropped onto the tool
+ */
 public interface FileOpenDataFlavorHandler {
-    public void handle(PluginTool tool, Object obj, DropTargetDropEvent e, DataFlavor f);
+	public void handle(PluginTool tool, Object obj, DropTargetDropEvent e, DataFlavor f);
 }

@@ -19,13 +19,15 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.FileImporterService;
-import ghidra.framework.main.FrontEndTool;
+import ghidra.app.util.FileOpenDataFlavorHandler;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 
@@ -33,24 +35,43 @@ import util.CollectionUtils;
  * A drag-and-drop handler for trees that is specific to List&ltFile&gt. (see
  * {@link DataFlavor#javaFileListFlavor}).
  */
-final class JavaFileListHandler implements DataFlavorHandler {
-	@Override
-	public void handle(FrontEndTool tool, DataTree dataTree, GTreeNode destinationNode,
-			Object transferData, int dropAction) {
-		DomainFolder folder = getDomainFolder(destinationNode);
+public final class JavaFileListHandler implements DataTreeFlavorHandler, FileOpenDataFlavorHandler {
 
-		FileImporterService im = tool.getService(FileImporterService.class);
-		if (im == null) {
-			Msg.showError(this, dataTree, "Could Not Import", "Could not find importer service");
+	@Override
+	public void handle(PluginTool tool, Object transferData, DropTargetDropEvent e, DataFlavor f) {
+
+		FileImporterService importer = tool.getService(FileImporterService.class);
+		if (importer == null) {
+			Msg.showError(this, null, "Could Not Import", "Could not find Importer Service");
 			return;
 		}
 
-		List<File> fileList = CollectionUtils.asList((List<?>) transferData, File.class);
+		DomainFolder folder = tool.getProject().getProjectData().getRootFolder();
+		doImport(importer, folder, transferData);
+	}
+
+	@Override
+	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+			Object transferData, int dropAction) {
+
+		FileImporterService importer = tool.getService(FileImporterService.class);
+		if (importer == null) {
+			Msg.showError(this, dataTree, "Could Not Import", "Could not find Importer Service");
+			return;
+		}
+
+		DomainFolder folder = getDomainFolder(destinationNode);
+		doImport(importer, folder, transferData);
+	}
+
+	private void doImport(FileImporterService importer, DomainFolder folder, Object files) {
+
+		List<File> fileList = CollectionUtils.asList((List<?>) files, File.class);
 		if (fileList.size() == 1 && fileList.get(0).isFile()) {
-			im.importFile(folder, fileList.get(0));
+			importer.importFile(folder, fileList.get(0));
 		}
 		else {
-			im.importFiles(folder, fileList);
+			importer.importFiles(folder, fileList);
 		}
 	}
 

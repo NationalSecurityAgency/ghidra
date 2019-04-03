@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.framework.main.datatable;
 
-import ghidra.framework.main.datatree.ProjectDataTreeActionContext;
 import docking.ActionContext;
 import docking.action.DockingAction;
+import ghidra.framework.main.datatree.ProjectDataTreeActionContext;
 
 public abstract class ProjectDataTreeContextAction extends DockingAction {
 
@@ -31,8 +30,30 @@ public abstract class ProjectDataTreeContextAction extends DockingAction {
 		if (!(actionContext instanceof ProjectDataTreeActionContext)) {
 			return false;
 		}
+
 		ProjectDataTreeActionContext context = (ProjectDataTreeActionContext) actionContext;
+		if (ignoreTransientProject(context)) {
+			return false;
+		}
+
 		return isEnabledForContext(context);
+	}
+
+	protected boolean ignoreTransientProject(ProjectDataActionContext context) {
+		if (supportsTransientProjectData()) {
+			return false;
+		}
+		return context.isTransient();
+	}
+
+	/**
+	 * Signals that this action can work on normal project data, as well as transient data. 
+	 * Transient data is that which will appear in a temporary project dialog.
+	 * 
+	 * @return true if this action works on transient project data
+	 */
+	protected boolean supportsTransientProjectData() {
+		return false;
 	}
 
 	protected boolean isEnabledForContext(ProjectDataTreeActionContext context) {
@@ -60,7 +81,7 @@ public abstract class ProjectDataTreeContextAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof ProjectDataTreeActionContext)) {
+		if (!isEnabledForContext(context)) {
 			return false;
 		}
 		return isAddToPopup((ProjectDataTreeActionContext) context);

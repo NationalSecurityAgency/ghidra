@@ -55,33 +55,26 @@ public class ProjectDataTreePanel extends JPanel {
 	private ChangeManager changeMgr;
 	private boolean isActiveProject;
 
-	private FrontEndTool tool; // may be null if the panel is inside of the
-
+	// these may be null if the panel is inside of a dialog
+	private FrontEndTool tool;
 	private FrontEndPlugin plugin;
 
-	// data tree dialog
-
 	/**
-	 * Construct an empty panel that is going to be used as the active
-	 * panel.
-	 * @param tool front end tool
+	 * Construct an empty panel that is going to be used as the active panel
+	 * @param plugin front end plugin
 	 */
 	public ProjectDataTreePanel(FrontEndPlugin plugin) {
 		this(null, true, plugin, null);
 	}
 
 	/**
-	 * Construct a new DataTreePanel.
+	 * Constructor
+	 * 
 	 * @param projectName name of project
-	 * @param projectData object that provides access to all the user data
-	 * folders in a project
 	 * @param isActiveProject true if the project is active, and the
 	 * data tree may be modified
-	 * @param tool front end tool; will be null if the panel is used in a dialog
-	 * @param actionMgr class to handle enablement of actions; an ActionManager
-	 * is passed in when several data tree panels all need to use the
-	 * same ActionManager, e.g., the viewed projects in the front end tool;
-	 * actionMgr will be null if the panel is used in a dialog
+	 * @param plugin front end plugin; will be null if the panel is used in a dialog
+	 * @param filter optional filter that is used to hide programs from view
 	 */
 	public ProjectDataTreePanel(String projectName, boolean isActiveProject, FrontEndPlugin plugin,
 			DomainFileFilter filter) {
@@ -211,9 +204,6 @@ public class ProjectDataTreePanel extends JPanel {
 		}
 	}
 
-	/**
-	 * Set the help location for the data tree.
-	 */
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(tree, helpLocation);
@@ -228,8 +218,9 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	/**
-	 * Get the number of selected items in the tree.
-	 * These could be either DomainFile's or DomainFolder's.
+	 * Get the number of selected items in the tree.  These could be either files or folders.
+	 * 
+	 * @return the number of selected items in the tree.
 	 */
 	public int getSelectedItemCount() {
 		return tree.getSelectionCount();
@@ -279,47 +270,31 @@ public class ProjectDataTreePanel extends JPanel {
 		tree.removeGTreeSelectionListener(l);
 	}
 
-	/**
-	 * Add a mouse listener to the data tree.
-	 */
 	public void addTreeMouseListener(MouseListener l) {
 		tree.addMouseListener(l);
 	}
 
-	/**
-	 * Remove the mouse listener from the data tree.
-	 */
 	public void removeTreeMouseListener(MouseListener l) {
 		tree.removeMouseListener(l);
 	}
 
-	/**
-	 * Set the preferred size of the scroll pane that contains the
-	 * data tree.
-	 */
 	public void setPreferredTreePanelSize(Dimension d) {
 		tree.setPreferredSize(d);
 	}
 
-	/**
-	 * Get the project data that this data tree panel is operating on.
-	 */
 	public ProjectData getProjectData() {
 		return projectData;
 	}
 
 	/**
 	 * Notification that the project was renamed; update the root node name
-	 * and reload the node.
+	 * and reload the node
+	 * @param newName the new project name
 	 */
 	public void projectRenamed(String newName) {
 		updateProjectName(newName);
 	}
 
-	/**
-	 * Notification that panel is being disposed.
-	 *
-	 */
 	public void dispose() {
 		if (projectData != null) {
 			projectData.removeDomainFolderChangeListener(changeMgr);
@@ -328,10 +303,12 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	/**
-	 * Get the data tree node that is selected.
-	 * @param e mouse event for the popup; may be null if this is being
-	 * called as a result of the key binding pressed
-	 * @return null if there is no selection
+	 * Get the data tree node that is selected
+	 * 
+	 * @param provider the provider with which to construct the new context 
+	 * @param e mouse event for the popup; may be null if this is being called as a result of 
+	 *        the key binding pressed
+	 * @return the new context; null if there is no selection
 	 */
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent e) {
 		if (root instanceof NoProjectNode) {
@@ -360,13 +337,13 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		return new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
-			domainFolderList, domainFileList, tree, isActiveProject);
+		ProjectDataTreeActionContext context = new ProjectDataTreeActionContext(provider,
+			projectData, selectionPaths, domainFolderList, domainFileList, tree, isActiveProject);
+		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
+		context.setTransient(isTransient);
+		return context;
 	}
 
-	/**
-	 * get the data tree for this data tree panel.
-	 */
 	public DataTree getDataTree() {
 		return tree;
 	}
@@ -380,17 +357,10 @@ public class ProjectDataTreePanel extends JPanel {
 		tree.setFilterVisible(enabled);
 	}
 
-	/**
-	 * Return true if this data tree panel is listening to domain folder
-	 * changes.
-	 */
 	boolean domainFolderListenerAdded() {
 		return changeMgr != null;
 	}
 
-	/**
-	 * Get the folder change listener.
-	 */
 	DomainFolderChangeListener getFolderChangeListener() {
 		return changeMgr;
 	}

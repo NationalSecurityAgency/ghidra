@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +29,30 @@ public abstract class ProjectDataContextToggleAction extends ToggleDockingAction
 		if (!(actionContext instanceof ProjectDataActionContext)) {
 			return false;
 		}
+
 		ProjectDataActionContext context = (ProjectDataActionContext) actionContext;
+		if (ignoreTransientProject(context)) {
+			return false;
+		}
+
 		return isEnabledForContext(context);
+	}
+
+	protected boolean ignoreTransientProject(ProjectDataActionContext context) {
+		if (supportsTransientProjectData()) {
+			return false;
+		}
+		return context.isTransient();
+	}
+
+	/**
+	 * Signals that this action can work on normal project data, as well as transient data. 
+	 * Transient data is that which will appear in a temporary project dialog.
+	 * 
+	 * @return true if this action works on transient project data
+	 */
+	protected boolean supportsTransientProjectData() {
+		return false;
 	}
 
 	protected boolean isEnabledForContext(ProjectDataActionContext context) {

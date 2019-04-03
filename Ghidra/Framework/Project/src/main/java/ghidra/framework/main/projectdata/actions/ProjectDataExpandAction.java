@@ -33,7 +33,7 @@ public class ProjectDataExpandAction extends ProjectDataTreeContextAction {
 
 	@Override
 	protected void actionPerformed(ProjectDataTreeActionContext context) {
-		DataTree tree = context.getDataTree();
+		DataTree tree = context.getTree();
 		TreePath[] paths = context.getSelectionPaths();
 		expand(tree, paths[0]);
 	}
