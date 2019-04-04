@@ -9,7 +9,7 @@ To start developing extensions and scripts, try out the GhidraDev plugin for Ecl
 This repository contains the source for the core framework, features, and extensions.
 If you would like to contribute, please take a look at our [contributor guide][contrib] to see how you can participate in this open source project.
 
-If you are interested in projects like this and would like to develop this, and
+If you are a U.S. citizen interested in projects like this, to develop Ghidra, and
 other cybersecurity tools, for NSA to help protect our nation and its allies,
 consider applying for a [career with us][career].
 
