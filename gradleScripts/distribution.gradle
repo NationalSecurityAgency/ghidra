@@ -398,7 +398,7 @@ task assembleCommon (type: Copy) {
 	////////////////
 	// Patch Readme
 	////////////////
-	from (ROOT_PROJECT_DIR + "/Ghidra/patch") {
+	from (ROOT_PROJECT_DIR + "/GhidraBuild/patch") {
 		into "Ghidra/patch"
 	}		
 	
