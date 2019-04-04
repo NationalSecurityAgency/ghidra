@@ -105,4 +105,12 @@
       <register name="SS"/>
     </unaffected>
   </prototype>
+  <callfixup name="guard_dispatch_icall">
+    <target name="_guard_dispatch_icall"/>
+    <pcode>
+      <body><![CDATA[
+        goto [RAX];
+      ]]></body>
+    </pcode>
+  </callfixup>
 </compiler_spec>
