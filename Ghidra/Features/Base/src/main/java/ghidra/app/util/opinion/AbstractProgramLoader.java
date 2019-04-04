@@ -41,6 +41,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.InvalidNameException;
 import ghidra.util.MD5Utilities;
+import ghidra.util.HashUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -285,6 +286,8 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 			String md5 = computeBinaryMD5(provider);
 			prog.setExecutableMD5(md5);
+			String sha256 = computeBinarySHA256(provider);
+			prog.setExecutableSHA256(sha256);
 
 			if (shouldSetImageBase(prog, imageBase)) {
 				try {
@@ -462,6 +465,12 @@ public abstract class AbstractProgramLoader implements Loader {
 	private String computeBinaryMD5(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return MD5Utilities.getMD5Hash(in);
+		}
+	}
+
+	private String computeBinarySHA256(ByteProvider provider) throws IOException {
+		try (InputStream in = provider.getInputStream(0)) {
+			return HashUtilities.getHash(HashUtilities.SHA256_ALGORITHM, in);
 		}
 	}
 

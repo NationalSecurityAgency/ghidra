@@ -407,6 +407,16 @@ public class ProgramTestDouble implements Program {
 	}
 
 	@Override
+	public String getExecutableSHA256() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setExecutableSHA256(String sha256) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Date getCreationDate() {
 		throw new UnsupportedOperationException();
 	}

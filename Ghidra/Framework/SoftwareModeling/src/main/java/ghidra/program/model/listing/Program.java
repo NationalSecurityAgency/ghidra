@@ -191,6 +191,18 @@ public interface Program extends DataTypeManagerDomainObject {
 	public void setExecutableMD5(String md5);
 
 	/**
+	 * Sets the value corresponding to the original binary file SHA256 hash.
+	 * @param sha256 SHA256 binary file hash
+	 */
+	public void setExecutableSHA256(String sha256);
+
+	/**
+	 * Returns a value corresponding to the original binary file SHA256 hash.
+	 * May be null if program source did not correspond to a binary file.
+	 */
+	public String getExecutableSHA256();
+
+	/**
 	 * Returns the creation date of this program.
 	 * If the program was created before this property
 	 * existed, then Jan 1, 1970 is returned.
