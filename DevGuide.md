@@ -157,7 +157,7 @@ You may see build path errors until the environment is properly prepared, as des
 From the project root, execute:
 
 ```bash
-gradle prepDev -x yajswDevUnpack
+gradle prepDev -x yajswDevUnpack eclipse
 ```
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 Regarding `yajswDevUnpack`, please see the relevant sections on GhidraServer below.
