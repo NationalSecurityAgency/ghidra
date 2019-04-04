@@ -245,7 +245,7 @@ public class RunManager {
 	 * @param showCancel true means to show the cancel button
 	 */
 	public void showCancelButton(boolean showCancel) {
-		monitor.showCancelButton(showCancel);
+		monitor.setCancelButtonVisibility(showCancel);
 	}
 
 	/**

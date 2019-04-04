@@ -41,6 +41,30 @@ public interface StatusListener {
 	 * @param alert true to grab the user's attention
 	 */
 	void setStatusText(String text, MessageType type, boolean alert);
+	
+	/**
+	 * Sets the subtask text
+	 * 
+	 * @param text the text to set
+	 */
+	void setSubStatusText(String text);
+	
+	/**
+	 * Sets the subtask text
+	 * 
+	 * @param text the text to set
+	 * @param type the message type
+	 */
+	void setSubStatusText(String text, MessageType type);
+	
+	/**
+	 * Sets the subtask text
+	 * 
+	 * @param text the text to set
+	 * @param type the message type
+	 * @param alert if true, an alert will be generated
+	 */
+	void setSubStatusText(String text, MessageType type, boolean alert);
 
 	/**
 	 * Clear the current status - same as setStatusText("")

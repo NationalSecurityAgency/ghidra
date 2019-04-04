@@ -15,7 +15,6 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
 
 class StubTaskMonitor implements TaskMonitor {
@@ -84,12 +83,6 @@ class StubTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void reportIssue(Issue issue) {
-		// stub
-
-	}
-
-	@Override
 	public void cancel() {
 		// stub
 
@@ -103,18 +96,6 @@ class StubTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
-		// stub
-
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		// stub
-
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
 		// stub
 
 	}

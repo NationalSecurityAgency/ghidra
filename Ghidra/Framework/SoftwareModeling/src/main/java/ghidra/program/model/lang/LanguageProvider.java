@@ -28,18 +28,19 @@ public interface LanguageProvider extends ExtensionPoint {
 
 	/**
 	 * Returns the language with the given name or null if no language has that name
-	 * @param name the name of the language to be retrieved
-	 * @return the language with the given name
+	 * 
+	 * @param languageId the name of the language to be retrieved
+	 * @return the {@link Language} with the given name
 	 */
 	Language getLanguage(LanguageID languageId);
-
+		
 	/**
 	 * Returns a list of language descriptions provided by this provider
 	 */
 	LanguageDescription[] getLanguageDescriptions();
 
 	/**
-	 * @return true if one of more laguages or language description failed to load
+	 * @return true if one of more languages or language description failed to load
 	 * properly.
 	 */
 	boolean hadLoadFailure();

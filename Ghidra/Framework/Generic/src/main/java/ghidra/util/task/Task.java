@@ -112,14 +112,19 @@ public abstract class Task implements MonitoredRunnable {
 	/**
 	 * When an object implementing interface <code>Runnable</code> is used to create a thread, 
 	 * starting the thread causes the object's <code>run</code> method to be called in that 
-	 * separately executing thread
+	 * separately executing thread.
+	 * <p>
+	 * Note that the monitor is handed to the {@link TaskMonitorService} here so it will be 
+	 * available to any users request it via {@link TaskMonitorService#getMonitor() getMonitor}.
 	 * 
-	 * @param monitor The TaskMonitor
+	 * @param monitor the task monitor
 	*/
 	@Override
 	public final void monitoredRun(TaskMonitor monitor) {
 		this.taskMonitor = monitor;
 
+		int monitorId = TaskMonitorService.register(monitor);
+		
 		// this will be removed from SystemUtilities in Task.run() after the task is finished
 		TaskUtilities.addTrackedTask(this, monitor);
 
@@ -136,9 +141,14 @@ public abstract class Task implements MonitoredRunnable {
 				getTaskTitle() + " - Uncaught Exception: " + t.toString(), t);
 		}
 		finally {
-			// this is put into SystemUtilities by the TaskLauncher
+			
+			// This should not be necessary since the thread local object will be cleaned up 
+			// by the GC when the thread terminates, but it's here in case we ever use this
+			// in conjunction with thread pools and have to manually remove them.
+			TaskMonitorService.remove(monitorId);
+			
 			TaskUtilities.removeTrackedTask(this);
-			this.taskMonitor = null;
+			this.taskMonitor = null;			
 		}
 
 		notifyTaskListeners(isCancelled);

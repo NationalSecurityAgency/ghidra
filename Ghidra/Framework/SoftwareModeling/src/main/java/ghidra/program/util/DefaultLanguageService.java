@@ -27,6 +27,8 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.TaskMonitorService;
 
 /**
  * Default Language service used gather up all the languages that were found
@@ -43,6 +45,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 	/**
 	 * Returns the single instance of the DefaultLanguageService.
+	 * @return the language service
 	 */
 	public static synchronized LanguageService getLanguageService() {
 		if (languageService == null) {
@@ -94,13 +97,23 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	 */
 	@Override
 	public Language getLanguage(LanguageID languageID) throws LanguageNotFoundException {
-		LanguageInfo info = languageMap.get(languageID);
 
-		if (info == null) {
-			throw new LanguageNotFoundException(languageID);
+		TaskMonitor monitor = TaskMonitorService.getMonitor();
+		monitor.setMessage("Retrieving language: " + languageID);
+
+		try {
+			LanguageInfo info = languageMap.get(languageID);
+
+			if (info == null) {
+				throw new LanguageNotFoundException(languageID);
+			}
+
+			Language lang = info.getLanguage();
+			return lang;
 		}
-
-		return info.getLanguage();
+		finally {
+			monitor.setMessage("");
+		}
 	}
 
 	/**
@@ -161,8 +174,9 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	private static boolean languageMatchesExternalProcessor(LanguageDescription description,
 			String externalProcessorName, String externalTool) {
 		boolean result = false;
-		if (externalProcessorName == null)
+		if (externalProcessorName == null) {
 			result = true;
+		}
 		else if (externalTool != null) {
 			List<String> extNames = description.getExternalNames(externalTool);
 			if (extNames != null) {

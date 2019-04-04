@@ -281,9 +281,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
 		super(dbh, "Untitled", 500, 1000, consumer);
+
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitorAdapter.DUMMY;
 		}
+		
 		boolean success = false;
 		try {
 			int id = startTransaction("create program");
@@ -294,6 +296,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			VersionException dbVersionExc = initializeDatabase(openMode);
 
 			VersionException languageVersionExc = null;
+
 			try {
 				language = DefaultLanguageService.getLanguageService().getLanguage(languageID);
 				languageVersionExc = checkLanguageVersion(openMode);

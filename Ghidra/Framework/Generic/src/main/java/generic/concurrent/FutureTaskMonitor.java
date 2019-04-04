@@ -18,9 +18,9 @@ package generic.concurrent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.CancelledListener;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This is the FutureTask that will be used to call the {@link QCallback} to work on
@@ -132,11 +132,6 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 	}
 
 	@Override
-	public void reportIssue(Issue issue) {
-		// TODO
-	}
-
-	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		boolean result = super.cancel(mayInterruptIfRunning);
 
@@ -189,16 +184,6 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 			cancelledListener =
 				((ChainedCancelledListener) cancelledListener).removeListener(listener);
 		}
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		throw new UnsupportedOperationException();
 	}
 
 	private static class ChainedCancelledListener implements CancelledListener {
