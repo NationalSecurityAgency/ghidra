@@ -29,7 +29,7 @@ Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
 smooth process when submitting a patch:
 
-- Ensure that the patch compiles and does not break any build-time tests
+- Ensure that the patch compiles and does not break any build-time tests.
 - Be understanding, patient, and friendly; developers may need time to review
   your submissions before they can take action or respond. This does not mean
   your contribution is not valued. If your contribution has not received a
