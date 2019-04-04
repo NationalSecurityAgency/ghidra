@@ -19,13 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractPointerMsType extends AbstractMsType {
 
 	private static final int TYPE_NEAR = 0x00; // 16-bit pointer
@@ -464,11 +457,17 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #underlyingTypeIndex},
+	 * {@link #memberPointerContainingClassIndex}, {@link #baseSymbol}, and {@link #name}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the pointer body.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, call
+	 * {@link #parseAttributes(PdbByteReader)} and parse {@link #underlyingTypeIndex}.
 	 * @param reader {@link PdbByteReader} from which the data is parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
@@ -476,7 +475,12 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 
 	/**
 	 * Parses the attributes of the pointer.
-	 * @param reader {@link PdbByteReader} frmo which the attributes are parsed.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, parse
+	 * certain attributes, which at a minimum will fill in {@link #pointerTypeAttribute}, 
+	 * {@link #pointerModeAttribute}, {@link #isFlat}, {@link #isVolatile}, {@link #isConst},
+	 * and {@link #isUnaligned}.
+	 * @param reader {@link PdbByteReader} from which the attributes are parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
 	protected abstract void parseAttributes(PdbByteReader reader) throws PdbException;

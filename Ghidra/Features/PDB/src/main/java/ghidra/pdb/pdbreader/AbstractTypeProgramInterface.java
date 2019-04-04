@@ -259,23 +259,26 @@ public abstract class AbstractTypeProgramInterface {
 		TypeParser parser = pdb.getTypeParser();
 		//System.out.println(reader.dump());
 		while (reader.hasMore()) {
-			int index = reader.getIndex();
-			//System.out.println("index: " + index);
-			//System.out.println("record: " + recordNumber);
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			if (index == 18) {
-				int a = 1;
-				a = a + 1;
-			}
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			if (recordNumber == 4096) {
-				int a = 1;
-				a = a + 1;
-			}
+//			// DO NOT REMOVE
+//			int index = reader.getIndex();
+//			//System.out.println("index: " + index);
+//			//System.out.println("record: " + recordNumber);
+//			// DO NOT REMOVE
+//			// The following code is for developmental investigations;
+//			//  set break point on "int a = 1;" instead of a
+//			//  conditional break point.
+//			if (index == 18) {
+//				int a = 1;
+//				a = a + 1;
+//			}
+//			// DO NOT REMOVE
+//			// The following code is for developmental investigations;
+//			//  set break point on "int a = 1;" instead of a
+//			//  conditional break point.
+//			if (recordNumber == 4096) {
+//				int a = 1;
+//				a = a + 1;
+//			}
 			recordLength = reader.parseUnsignedShortVal();
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
 			recordReader.markAlign(2);
@@ -304,14 +307,14 @@ public abstract class AbstractTypeProgramInterface {
 			builder.append("Record: ");
 			builder.append(recordNum);
 			builder.append("\n");
-
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			if (recordNum == -2) {
-				int a = 1;
-				a = a + 1;
-			}
+//			// DO NOT REMOVE
+//			// The following code is for developmental investigations;
+//			//  set break point on "int a = 1;" instead of a
+//			//  conditional break point.
+//			if (recordNum == -2) {
+//				int a = 1;
+//				a = a + 1;
+//			}
 			if (type != null) {
 				builder.append(type.getClass().getSimpleName());
 				builder.append("\n");

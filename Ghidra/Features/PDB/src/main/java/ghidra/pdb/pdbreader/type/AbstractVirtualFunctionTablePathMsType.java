@@ -15,7 +15,6 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.pdb.PdbByteReader;
@@ -23,16 +22,9 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.AbstractTypeIndex;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractVirtualFunctionTablePathMsType extends AbstractMsType {
 
-	protected List<AbstractTypeIndex> bases = new ArrayList<>();
+	protected List<AbstractTypeIndex> bases;
 
 	/**
 	 * Constructor for this type.
@@ -43,7 +35,7 @@ public abstract class AbstractVirtualFunctionTablePathMsType extends AbstractMsT
 	public AbstractVirtualFunctionTablePathMsType(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		parseFields(reader);
+		bases = parseBases(reader);
 	}
 
 	// Note: MSFT output API not documented.
@@ -58,8 +50,9 @@ public abstract class AbstractVirtualFunctionTablePathMsType extends AbstractMsT
 	/**
 	 * Abstract internal method to parse fields in the deserialization process. 
 	 * @param reader {@link PdbByteReader} that is deserialized.
+	 * @return bases information.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	protected abstract void parseFields(PdbByteReader reader) throws PdbException;
+	protected abstract List<AbstractTypeIndex> parseBases(PdbByteReader reader) throws PdbException;
 
 }

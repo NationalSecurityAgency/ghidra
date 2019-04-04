@@ -33,7 +33,7 @@ public abstract class AbstractString extends AbstractParsableItem {
 	//==============================================================================================
 	/**
 	 * Returns the string value.
-	 * @return {@link String} value.
+	 * @return {@link String} value.  Defaults to empty String if not parsed.
 	 */
 	public String get() {
 		return string;
@@ -44,14 +44,24 @@ public abstract class AbstractString extends AbstractParsableItem {
 		builder.append(string);
 	}
 
+	/**
+	 * Parses the string from the {@link PdbByteReader}.
+	 * @param reader {@link PdbByteReader}.
+	 * @throws PdbException upon error parsing the string.
+	 */
+	public void parse(PdbByteReader reader) throws PdbException {
+		string = doParse(reader);
+	}
+
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
 	/**
 	 * Parses the string from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader}.
+	 * @return the {@link String}. 
 	 * @throws PdbException upon error parsing the string.
 	 */
-	public abstract void parse(PdbByteReader reader) throws PdbException;
+	protected abstract String doParse(PdbByteReader reader) throws PdbException;
 
 }

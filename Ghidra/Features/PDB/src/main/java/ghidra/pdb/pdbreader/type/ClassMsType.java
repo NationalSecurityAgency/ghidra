@@ -20,12 +20,6 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
 /**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- * <P>
  * Note that class, struct, and interface are very closed related and have many of the same
  *  constructs and parsing procedures.  However, they are separate.  If any of the internals
  *  of one of these is changed, it is highly suggested that the others be changed as well as
@@ -76,13 +70,14 @@ public class ClassMsType extends AbstractClassMsType {
 				//System.out.println(mangledName);
 			}
 		}
-		else {
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			int a = 1;
-			a = a + 1;
-		}
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		else {
+//			int a = 1;
+//			a = a + 1;
+//		}
 		reader.skipPadding();
 	}
 

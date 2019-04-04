@@ -18,8 +18,6 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
 /**
- * This class extends {@link AbstractMsSymbol}.
- * <P>
  * Important: This is not a real symbol.  This "Bad" symbol takes the place of a symbol that has
  *  encountered a parsing issue vis-a-vis a PdbException.
  */

@@ -15,17 +15,13 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class VirtualFunctionTablePath16MsType extends AbstractVirtualFunctionTablePathMsType {
 
 	public static final int PDB_ID = 0x0012;
@@ -47,14 +43,15 @@ public class VirtualFunctionTablePath16MsType extends AbstractVirtualFunctionTab
 	}
 
 	@Override
-	protected void parseFields(PdbByteReader reader) throws PdbException {
+	protected List<AbstractTypeIndex> parseBases(PdbByteReader reader) throws PdbException {
 		int count = reader.parseUnsignedShortVal();
+		List<AbstractTypeIndex> myBases = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			AbstractTypeIndex typeIndex = new TypeIndex16();
 			typeIndex.parse(reader);
-			bases.add(typeIndex);
+			myBases.add(typeIndex);
 		}
-
+		return myBases;
 	}
 
 }

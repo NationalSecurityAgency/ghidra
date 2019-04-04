@@ -20,9 +20,25 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
 /**
- * This class extends {@link AbstractParsableItem} as is the base class for PDB Symbol units.
+ * This is the abstract class for PDB Symbol units.
+ * <P>
+ * For more information about PDBs, consult the Microsoft PDB API, see
+ * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
+ * What's inside a PDB File</a>.
+ * <P>
+ * To track back to the documented API, search the above URL for where the documentation is
+ *  located as "code."  Use the value of the PDB_ID for any class derived from this class to
+ *  search the API code, being careful to look for symbol types instead of data types.  (Note
+ *  that "PDB_ID" is not API terminology.)  Once found, you can use the defined label to find
+ *  the structure that describes the layout of the serialized data; searching for that structure
+ *  name can sometimes lead to methods that output information about these structures (a buffer
+ *  pointer is cast to the structure pointer, leading to the ability to interpret the fields).
+ *  <P>
+ *  Enjoy!!!
  */
 public abstract class AbstractMsSymbol extends AbstractParsableItem {
+	// The following commented-out code is used when trying to discern which SYMBOL types were
+	//  not yet implemented.
 	//private static final Class[] parameterTypes = { StringBuilder.class };
 	protected AbstractPdb pdb;
 

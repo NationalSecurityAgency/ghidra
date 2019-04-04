@@ -33,10 +33,19 @@ public abstract class AbstractTypeIndex extends AbstractParsableItem {
 	//==============================================================================================
 	/**
 	 * Returns the index value.
-	 * @return The value of the index.
+	 * @return The value of the index.  Defaults to zero if not parsed.
 	 */
 	public int get() {
 		return indexVal;
+	}
+
+	/**
+	 * Parses the index value from the {@link PdbByteReader}.
+	 * @param reader {@link PdbByteReader} from which to read the value.
+	 * @throws PdbException Upon not enough data left to parse.
+	 */
+	public void parse(PdbByteReader reader) throws PdbException {
+		indexVal = doParse(reader);
 	}
 
 	//==============================================================================================
@@ -45,8 +54,9 @@ public abstract class AbstractTypeIndex extends AbstractParsableItem {
 	/**
 	 * Parses the index value from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader} from which to read the value.
+	 * @return the type index value.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	public abstract void parse(PdbByteReader reader) throws PdbException;
+	protected abstract int doParse(PdbByteReader reader) throws PdbException;
 
 }

@@ -28,8 +28,8 @@ public class StringUtf8St extends AbstractString {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		string = reader.parseByteLengthPrefixedUtf8String();
+	protected String doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseByteLengthPrefixedUtf8String();
 	}
 
 }

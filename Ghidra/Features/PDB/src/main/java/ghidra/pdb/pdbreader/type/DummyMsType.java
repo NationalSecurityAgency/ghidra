@@ -19,8 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
 /**
- * This class extends {@link AbstractMsType}.
- * <P>
  * Important: This is not a real type.  This "Dummy" type has been created to help with testing.
  */
 public class DummyMsType extends AbstractMsType {

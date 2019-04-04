@@ -20,13 +20,6 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.StringUtf8St;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class ManagedStMsType extends AbstractManagedMsType {
 
 	public static final int PDB_ID = 0x140f;

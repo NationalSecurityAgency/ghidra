@@ -43,7 +43,7 @@ public class SegmentMapDescription {
 	// API
 	//==============================================================================================
 	/**
-	 * Deserializes the SegmentMapDescription.
+	 * Deserializes the {@link SegmentMapDescription}.
 	 * @param substreamReader {@link PdbByteReader} from which to deserialize the data.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
@@ -62,7 +62,7 @@ public class SegmentMapDescription {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Dumps the SegmentMapDescription.  This method is for debugging only.
+	 * Dumps the {@link SegmentMapDescription}.  This method is for debugging only.
 	 * @return {@link String} of pretty output.
 	 */
 	protected String dump() {

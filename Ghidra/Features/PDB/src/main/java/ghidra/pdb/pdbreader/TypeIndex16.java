@@ -28,8 +28,8 @@ public class TypeIndex16 extends AbstractTypeIndex {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		indexVal = reader.parseUnsignedShortVal();
+	protected int doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseUnsignedShortVal();
 	}
 
 }

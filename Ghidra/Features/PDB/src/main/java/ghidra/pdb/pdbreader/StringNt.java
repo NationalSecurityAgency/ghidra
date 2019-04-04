@@ -27,8 +27,8 @@ public class StringNt extends AbstractString {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		string = reader.parseNullTerminatedString();
+	protected String doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseNullTerminatedString();
 	}
 
 }

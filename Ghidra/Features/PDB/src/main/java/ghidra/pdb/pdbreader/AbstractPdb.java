@@ -384,15 +384,16 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 */
 	public void pushDependencyStack(CategoryIndex dependeeCategoryIndex) {
 
-		if ((dependeeCategoryIndex.getIndex() == 4774 ||
-			dependeeCategoryIndex.getIndex() == 4775) &&
-			dependeeCategoryIndex.getCategory() == CategoryIndex.Category.DATA) {
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			int a = 1;
-			a = a + 1;
-		}
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		if ((dependeeCategoryIndex.getIndex() == 4774 ||
+//			dependeeCategoryIndex.getIndex() == 4775) &&
+//			dependeeCategoryIndex.getCategory() == CategoryIndex.Category.DATA) {
+//			int a = 1;
+//			a = a + 1;
+//		}
 		if (dependencyStack.isEmpty()) {
 			dependencyGraph.addValue(dependeeCategoryIndex);
 		}

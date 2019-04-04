@@ -22,13 +22,6 @@ import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.CategoryIndex;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class VirtualFunctionTableMsType extends AbstractMsType {
 
 	public static final int PDB_ID = 0x151d;

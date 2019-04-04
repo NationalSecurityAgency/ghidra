@@ -19,11 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 
 /**
- * Class extending {@link AbstractTypeIndex} that has has its value serialized as a 4-byte int.
+ * Class extending {@link AbstractTypeIndex} that has has its value serialized as a 4-byte signed
+ * int.
  * <P>
- * In reality, it should probably be a 4-byte unsigned int, but we would have to store this
- *  value in a java long, and java indexes by integers instead of longs, so we made this
- *  concession.
+ * In reality, according to the API, it should be a 4-byte unsigned int, but we would have to
+ *  store this value in a java long, and java indexes by integers instead of longs, so we made
+ *  this concession.
  */
 public class TypeIndex32 extends AbstractTypeIndex {
 
@@ -31,8 +32,8 @@ public class TypeIndex32 extends AbstractTypeIndex {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		indexVal = reader.parseInt();
+	protected int doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseInt();
 	}
 
 }

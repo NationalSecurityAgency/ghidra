@@ -28,8 +28,8 @@ public class StringWcharNt extends AbstractString {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		string = reader.parseNullTerminatedWcharString();
+	protected String doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseNullTerminatedWcharString();
 	}
 
 }

@@ -15,7 +15,6 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.pdb.PdbByteReader;
@@ -23,18 +22,11 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.AbstractTypeIndex;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractOemDefinableStringMsType extends AbstractMsType {
 
 	protected int msAssignedOEMIdentifier;
 	protected int oemAssignedTypeIdentifier;
-	protected List<AbstractTypeIndex> typeIndexList = new ArrayList<>();
+	protected List<AbstractTypeIndex> typeIndexList;
 	protected byte[] remainingBytes;
 
 	/**
@@ -48,7 +40,7 @@ public abstract class AbstractOemDefinableStringMsType extends AbstractMsType {
 		super(pdb, reader);
 		msAssignedOEMIdentifier = reader.parseUnsignedShortVal();
 		oemAssignedTypeIdentifier = reader.parseUnsignedShortVal();
-		parseTypeIndexList(reader);
+		typeIndexList = parseTypeIndexList(reader);
 		//TODO: We do not know what "OEM-defined" data remains.  For now, just grabbing rest.
 		remainingBytes = reader.parseBytesRemaining();
 	}
@@ -70,8 +62,10 @@ public abstract class AbstractOemDefinableStringMsType extends AbstractMsType {
 	/**
 	 * Parses the Type Index List.
 	 * @param reader {@link PdbByteReader} that is deserialized.
+	 * @return Type indices.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	protected abstract void parseTypeIndexList(PdbByteReader reader) throws PdbException;
+	protected abstract List<AbstractTypeIndex> parseTypeIndexList(PdbByteReader reader)
+			throws PdbException;
 
 }

@@ -222,14 +222,14 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	 */
 	@SuppressWarnings("unused") // substreamReader
 	protected void processTypeServerMap(PdbByteReader reader, boolean skip) throws PdbException {
-		// Following for developmental investigation.  Set breakpoint on 'a = 1' line.
-		if (lengthTypeServerMapSubstream != 0) {
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			int a = 1;
-			a = a + 1;
-		}
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		if (lengthTypeServerMapSubstream != 0) {
+//			int a = 1;
+//			a = a + 1;
+//		}
 		if (lengthTypeServerMapSubstream == 0) {
 			return;
 		}

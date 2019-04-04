@@ -19,13 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class DimensionedArrayVarBoundsUpperMsType
 		extends AbstractDimensionedArrayVarBoundsUpperMsType {
 

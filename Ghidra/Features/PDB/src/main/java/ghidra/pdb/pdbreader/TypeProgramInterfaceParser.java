@@ -47,11 +47,12 @@ public class TypeProgramInterfaceParser {
 	// API
 	//==============================================================================================
 	/**
-	 * Parses information to determine the version of TypeProgramInterface to create.
-	 * @param pdb {@link AbstractPdb} that owns this TypeProgramInterface.
+	 * Parses information to determine the version of {@link AbstractTypeProgramInterface} to
+	 *  create.
+	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return AbstractTypeProgramInterface of the appropriate TypeProgramInterface, or null
-	 *  if the stream does not have enough information to be parsed. 
+	 * @return the appropriate {@link AbstractTypeProgramInterface} or null if the stream does
+	 *  not have enough information to be parsed. 
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
 	 * @throws PdbException Upon error in processing components.
@@ -73,9 +74,9 @@ public class TypeProgramInterfaceParser {
 		int versionNumber = AbstractTypeProgramInterface.deserializeVersionNumber(reader);
 
 		// TODO: we do not know where the line should be drawn for each of these
-		//  TypeProgramInterface instantiations.  Had a TI50_ID that was not an 800 instead
-		//  of a 500.  Also believe that TI42_ID was seen to have 500.  Rest is guess until
-		//  we can validate with real data.
+		//  AbstractTypeProgramInterface instantiations.  Had a TI50_ID that was not an 800
+		//  instead of a 500.  Also believe that TI42_ID was seen to have 500.  Rest is guess
+		//  until we can validate with real data.
 		switch (versionNumber) {
 			case TI20_ID:
 			case TI40_ID:

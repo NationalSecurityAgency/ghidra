@@ -15,117 +15,48 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import ghidra.pdb.AbstractParsableItem;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * VTShape Descriptor Property used on VtShapeMsType PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
  */
-public class VtShapeDescriptorMsProperty extends AbstractParsableItem {
+public enum VtShapeDescriptorMsProperty {
 
-	private static final int NEAR = 0;
-	private static final int FAR = 1;
-	private static final int THIN = 2;
-	private static final int OUTER = 3;
-	private static final int META = 4;
-	private static final int NEAR32 = 5;
-	private static final int FAR32 = 6;
-	private static final int UNUSED = 7;
+	NEAR("near", 0),
+	FAR("far", 1),
+	THIN("thin", 2),
+	OUTER("outer", 3),
+	META("meta", 4),
+	NEAR32("near32", 5),
+	FAR32("far32", 6),
+	UNUSED("unused", 7);
 
-	private static final String[] VTS_STRING = new String[8];
+	private static final Map<Integer, VtShapeDescriptorMsProperty> BY_VALUE = new HashMap<>();
 	static {
-		VTS_STRING[0] = "near";
-		VTS_STRING[1] = "far";
-		VTS_STRING[2] = "thin";
-		VTS_STRING[3] = "outer";
-		VTS_STRING[4] = "meta";
-		VTS_STRING[5] = "near32";
-		VTS_STRING[6] = "far32";
-		VTS_STRING[7] = "";
+		for (VtShapeDescriptorMsProperty val : values()) {
+			BY_VALUE.put(val.value, val);
+		}
 	}
 
-	//==============================================================================================
-	private int value;
-
-	//==============================================================================================
-	/**
-	 * Constructor for the VtShapeDescriptorMsProperty
-	 * @param value Value of the property.
-	 */
-	public VtShapeDescriptorMsProperty(int value) {
-		this.value = value;
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isNear() {
-		return (value == NEAR);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isFar() {
-		return (value == FAR);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isThin() {
-		return (value == THIN);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isOuter() {
-		return (value == OUTER);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isMeta() {
-		return (value == META);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isNear32() {
-		return (value == NEAR32);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isFar32() {
-		return (value == FAR32);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isUnused() {
-		return (value >= UNUSED);
-	}
+	public final String label;
+	public final int value;
 
 	@Override
-	public void emit(StringBuilder builder) {
-		builder.append(VTS_STRING[value]);
+	public String toString() {
+		return label;
+	}
+
+	public static VtShapeDescriptorMsProperty fromValue(int val) {
+		if (val < 0 || val >= 7) {
+			val = 7;
+		}
+		return BY_VALUE.get(val);
+	}
+
+	private VtShapeDescriptorMsProperty(String label, int value) {
+		this.label = label;
+		this.value = value;
 	}
 
 }

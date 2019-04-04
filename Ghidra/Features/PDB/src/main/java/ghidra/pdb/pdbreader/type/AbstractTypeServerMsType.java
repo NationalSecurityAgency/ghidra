@@ -20,13 +20,6 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.AbstractString;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractTypeServerMsType extends AbstractMsType {
 
 	protected long signature;
@@ -56,6 +49,8 @@ public abstract class AbstractTypeServerMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #name}.
 	 */
 	protected abstract void create();
 

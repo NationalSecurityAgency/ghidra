@@ -21,13 +21,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractBaseClassMsType extends AbstractMsType {
 
 	protected AbstractTypeIndex baseClassIndex;
@@ -61,11 +54,16 @@ public abstract class AbstractBaseClassMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #baseClassIndex}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the fields for this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, allocate/parse
+	 * {@link #attribute}; also parse {@link #baseClassIndex} and {@link #offset}.
 	 * @param reader {@link PdbByteReader} from which data is parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

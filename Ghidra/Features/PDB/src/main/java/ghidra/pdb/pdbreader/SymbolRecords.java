@@ -50,7 +50,7 @@ public class SymbolRecords {
 	//==============================================================================================
 	/**
 	 * Constructor.
-	 * @param pdb {@link AbstractPdb} to which the SymbolRecords belong.
+	 * @param pdb {@link AbstractPdb} to which the {@link SymbolRecords} belong.
 	 */
 	public SymbolRecords(AbstractPdb pdb) {
 		this.pdb = pdb;
@@ -155,16 +155,17 @@ public class SymbolRecords {
 		SymbolParser parser = pdb.getSymbolParser();
 		List<AbstractMsSymbol> mySymbolList = new ArrayList<>();
 		while (reader.hasMore()) {
+//			//System.out.println("Symbol Record: " + recordNumber);
+//			// DO NOT REMOVE
+//			// The following code is for developmental investigations;
+//			//  set break point on "int a = 1;" instead of a
+//			//  conditional break point.
+//			if (recordNumber == 839) {
+//				int a = 1;
+//				a = a + 1;
+//				//System.out.println(reader.dump(0x200));
+//			}
 			// Including length in byte array for alignment purposes. 
-			//System.out.println("Symbol Record: " + recordNumber);
-			if (recordNumber == 839) {
-				// The following code is for developmental investigations;
-				//  set break point on "int a = 1;" instead of a
-				//  conditional break point.
-				int a = 1;
-				a = a + 1;
-				//System.out.println(reader.dump(0x200));
-			}
 			int recordLength = reader.parseUnsignedShortVal();
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
 			pdb.pushDependencyStack(

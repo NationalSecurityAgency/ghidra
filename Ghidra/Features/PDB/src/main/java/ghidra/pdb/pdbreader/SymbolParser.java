@@ -295,32 +295,35 @@ public class SymbolParser {
 	 */
 	private AbstractMsSymbol parseRecord(int symbolTypeId, PdbByteReader reader)
 			throws PdbException {
-		//System.out.println(reader.dump(0x200));
-		if (symbolTypeId == 0x204) {
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			int a = 1;
-			a = a + 1;
-		}
-		if (symbolTypeId >= 0x1000 && symbolTypeId < 0x1100) {
-			if (symbolTypeId != 0x1012) {
-				// The following code is for developmental investigations;
-				//  set break point on "int a = 1;" instead of a
-				//  conditional break point.
-				int a = 1;
-				a = a + 1;
-			}
-		}
+//		//System.out.println(reader.dump(0x200));
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		if (symbolTypeId == 0x204) {
+//			int a = 1;
+//			a = a + 1;
+//		}
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		if (symbolTypeId >= 0x1000 && symbolTypeId < 0x1100) {
+//			if (symbolTypeId != 0x1012) {
+//				int a = 1;
+//				a = a + 1;
+//			}
+//		}
 		if (!symbolTypesSeen.contains(symbolTypeId)) {
 			newSymbolTypesSeen.add(symbolTypeId);
-			//System.out.println(String.format("Symbol Type not seen before: %04x", symbolTypeId));
-			// Set break point on instruction below to trigger on any symbol types that we
-			//  have not seen in real data.  Then step through the parsing for these new
-			//  symbol types to confirm that our parsing and the real data agree.  Also, comment
-			//  in the line above to show the ID for this type whenever desired.
-			int a = 1;
-			a = a + 1;
+//			//System.out.println(String.format("Symbol Type not seen before: %04x", symbolTypeId));
+//			// DO NOT REMOVE
+//			// Set break point on instruction below to trigger on any symbol types that we
+//			//  have not seen in real data.  Then step through the parsing for these new
+//			//  symbol types to confirm that our parsing and the real data agree.  Also, comment
+//			//  in the line above to show the ID for this type whenever desired.
+//			int a = 1;
+//			a = a + 1;
 		}
 
 		AbstractMsSymbol symbol = null;
@@ -632,9 +635,9 @@ public class SymbolParser {
 //			case Label32MsSymbol.PDB_ID:
 //				symbol = new Label32MsSymbol(pdb, reader);
 //				break;
-//			case RegisterMsSymbol.PDB_ID:
-//				symbol = new RegisterMsSymbol(pdb, reader);
-//				break;
+			case RegisterMsSymbol.PDB_ID:
+				symbol = new RegisterMsSymbol(pdb, reader);
+				break;
 //			case ConstantMsSymbol.PDB_ID:
 //				symbol = new ConstantMsSymbol(pdb, reader);
 //				break;

@@ -244,13 +244,14 @@ public class TypeParser {
 
 		if (!dataTypesSeen.contains(dataTypeId)) {
 			newDataTypesSeen.add(dataTypeId);
-			//System.out.println(String.format("Data Type not seen before: %04x", dataTypeId));
-			// Set break point on instruction below to trigger on any data types that we
-			//  have not seen in real data.  Then step through the parsing for these new
-			//  data types to confirm that our parsing and the real data agree.  Also, comment
-			//  in the line above to show the ID for this type whenever desired.
-			int a = 1;
-			a = a + 1;
+//			//System.out.println(String.format("Data Type not seen before: %04x", dataTypeId));
+//			// DO NOT REMOVE
+//			// Set break point on instruction below to trigger on any data types that we
+//			//  have not seen in real data.  Then step through the parsing for these new
+//			//  data types to confirm that our parsing and the real data agree.  Also, comment
+//			//  in the line above to show the ID for this type whenever desired.
+//			int a = 1;
+//			a = a + 1;
 		}
 
 		AbstractMsType type = null;

@@ -22,15 +22,10 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractDimensionedArrayVarBoundsLowerUpperMsType extends AbstractMsType {
 
+	// Appears to be number of dimensions--independence of which cannot be guaranteed to determine
+	//  a true "rank."
 	protected int rank;
 	protected AbstractTypeIndex typeIndex;
 	// TODO: dim is unknown.  Needs analysis and implementation break-out.
@@ -83,11 +78,16 @@ public abstract class AbstractDimensionedArrayVarBoundsLowerUpperMsType extends 
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #typeIndex}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the initial fields for this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, parse
+	 * {@link #rank} and {@link #typeIndex}.
 	 * @param reader {@link PdbByteReader} from which the beginning fields are parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

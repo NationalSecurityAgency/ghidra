@@ -19,7 +19,7 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 
 /**
- * Class extending {@link AbstractOffset} that has has its value serialized as a 2-byte unsigned
+ * Class extending {@link AbstractOffset} that has has its value serialized as a 2-byte signed
  *  short.
  */
 public class Offset16 extends AbstractOffset {
@@ -28,8 +28,8 @@ public class Offset16 extends AbstractOffset {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		offsetVal = reader.parseUnsignedShortVal();
+	protected int doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseUnsignedShortVal();
 	}
 
 }

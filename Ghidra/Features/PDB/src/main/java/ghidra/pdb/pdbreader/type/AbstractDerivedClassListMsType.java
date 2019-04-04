@@ -15,22 +15,14 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractDerivedClassListMsType extends AbstractMsType {
 
-	protected List<AbstractTypeIndex> typeIndexList = new ArrayList<>();
+	protected List<AbstractTypeIndex> typeIndexList;
 
 	/**
 	 * Constructor for this type.
@@ -41,7 +33,7 @@ public abstract class AbstractDerivedClassListMsType extends AbstractMsType {
 	public AbstractDerivedClassListMsType(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		parseTypeIndexList(reader);
+		typeIndexList = parseTypeIndexList(reader);
 		for (AbstractTypeIndex typeIndex : typeIndexList) {
 			pdb.pushDependencyStack(
 				new CategoryIndex(CategoryIndex.Category.DATA, typeIndex.get()));
@@ -61,8 +53,10 @@ public abstract class AbstractDerivedClassListMsType extends AbstractMsType {
 	/**
 	 * Parses the Type Index List.
 	 * @param reader {@link PdbByteReader} that is deserialized.
+	 * @return Type indices.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	protected abstract void parseTypeIndexList(PdbByteReader reader) throws PdbException;
+	protected abstract List<AbstractTypeIndex> parseTypeIndexList(PdbByteReader reader)
+			throws PdbException;
 
 }

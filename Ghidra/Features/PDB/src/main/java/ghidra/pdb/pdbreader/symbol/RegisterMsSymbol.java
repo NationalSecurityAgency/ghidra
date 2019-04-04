@@ -19,13 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * A class for a specific PDB symbol type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>
- */
 public class RegisterMsSymbol extends AbstractRegisterMsSymbol {
 
 	public static final int PDB_ID = 0x1106;
@@ -52,8 +45,8 @@ public class RegisterMsSymbol extends AbstractRegisterMsSymbol {
 	}
 
 	@Override
-	protected void parseRegister(PdbByteReader reader) throws PdbException {
-		register = new RegisterName(pdb, reader.parseUnsignedShortVal());
+	protected RegisterName parseRegister(PdbByteReader reader) throws PdbException {
+		return new RegisterName(pdb, reader.parseUnsignedShortVal());
 	}
 
 	@Override

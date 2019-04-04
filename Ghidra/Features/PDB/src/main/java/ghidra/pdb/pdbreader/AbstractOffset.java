@@ -26,17 +26,26 @@ public abstract class AbstractOffset extends AbstractParsableItem {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	protected long offsetVal;
+	protected int offsetVal;
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
 	 * Returns the offset value.
-	 * @return Offset value.
+	 * @return Offset value.  Defaults to zero if not parsed.
 	 */
-	public long get() {
+	public int get() {
 		return offsetVal;
+	}
+
+	/**
+	 * Parses the offset value from the {@link PdbByteReader}.
+	 * @param reader {@link PdbByteReader}.
+	 * @throws PdbException Upon not enough data left to parse.
+	 */
+	public void parse(PdbByteReader reader) throws PdbException {
+		offsetVal = doParse(reader);
 	}
 
 	//==============================================================================================
@@ -45,8 +54,9 @@ public abstract class AbstractOffset extends AbstractParsableItem {
 	/**
 	 * Parses the offset value from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader}.
+	 * @return the offset value.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	public abstract void parse(PdbByteReader reader) throws PdbException;
+	protected abstract int doParse(PdbByteReader reader) throws PdbException;
 
 }

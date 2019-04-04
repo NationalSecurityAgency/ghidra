@@ -16,7 +16,7 @@
 package ghidra.pdb.pdbreader;
 
 /**
- * The CategoryIndex is used for creating dependency order of types, items, and symbols.
+ * This class is used for creating dependency order of types, items, and symbols.
  *  Dependency order is not a PDB feature.  It is something we added (and might be removed
  *  in the future) as we have investigated how to analyze and apply the PDB.
  *  <P>

@@ -21,13 +21,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractCompositeMsType extends AbstractMsType {
 
 	protected int count;
@@ -136,9 +129,6 @@ public abstract class AbstractCompositeMsType extends AbstractMsType {
 	 * @return {@link AbstractMsType} type of the field type or null if none.
 	 */
 	public AbstractMsType getFieldDescriptorListType() {
-		if (fieldDescriptorListTypeIndex.get() == 0) {
-			return null;
-		}
 		return pdb.getTypeRecord(fieldDescriptorListTypeIndex.get());
 	}
 
@@ -155,17 +145,29 @@ public abstract class AbstractCompositeMsType extends AbstractMsType {
 		myBuilder.append(property);
 		myBuilder.append(">");
 		AbstractMsType fieldType = getFieldDescriptorListType();
-		if (fieldType != null) {
-			myBuilder.append(fieldType);
-		}
+		myBuilder.append(fieldType);
 		myBuilder.append(" ");
 		builder.insert(0, myBuilder);
 	}
 
+	/**
+	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #fieldDescriptorListTypeIndex}, {@link #name},
+	 *  and {@link #mangledName}.  It can optionally initialize {@link #derivedFromListTypeIndex}
+	 *  and {@link #vShapeTableTypeIndex}, but if it does, it must also make sure they are
+	 *  parsed in {@link #parseFields(PdbByteReader)}.
+	 */
 	protected abstract void create();
 
 	/**
 	 * Parsed the fields for this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, allocate/parse
+	 * {@link #property}; also parse {@link #count}, {@link #fieldDescriptorListTypeIndex},
+	 * and {@link #size}; and optionally parse, if non-pad data present--and in the appropriate
+	 * interspersed order, {@link #derivedFromListTypeIndex}, {@link #vShapeTableTypeIndex},
+	 * {@link #name}, and {@link #mangledName}.
 	 * @param reader {@link PdbByteReader} from which the fields are parsed.
 	 * @throws PdbException upon error parsing a field.
 	 */

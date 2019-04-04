@@ -15,17 +15,13 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class DerivedClassList16MsType extends AbstractDerivedClassListMsType {
 
 	public static final int PDB_ID = 0x0205;
@@ -46,13 +42,15 @@ public class DerivedClassList16MsType extends AbstractDerivedClassListMsType {
 	}
 
 	@Override
-	protected void parseTypeIndexList(PdbByteReader reader) throws PdbException {
+	protected List<AbstractTypeIndex> parseTypeIndexList(PdbByteReader reader) throws PdbException {
 		int count = reader.parseUnsignedShortVal();
+		List<AbstractTypeIndex> classTypeIndices = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			AbstractTypeIndex typeIndex = new TypeIndex16();
 			typeIndex.parse(reader);
-			typeIndexList.add(typeIndex);
+			classTypeIndices.add(typeIndex);
 		}
+		return classTypeIndices;
 	}
 
 }

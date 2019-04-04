@@ -19,11 +19,7 @@ import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 
 /**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
+ * An abstract class for Method Record attributes used for various specific PDB data type.
  */
 public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 
@@ -63,11 +59,16 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #procedureRecordNumber}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the fields for this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, allocate/parse
+	 * {@link #attributes}; also parse {@link #procedureRecordNumber} and {@link #optionalOffset}.
 	 * @param reader {@link PdbByteReader} from which the fields are parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

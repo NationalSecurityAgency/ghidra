@@ -21,16 +21,9 @@ import java.util.List;
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractMethodListMsType extends AbstractMsType {
 
-	protected List<AbstractMethodRecordMs> list = new ArrayList<>();
+	protected List<AbstractMethodRecordMs> methodRecords = new ArrayList<>();
 
 	/**
 	 * Constructor for this type.
@@ -42,7 +35,7 @@ public abstract class AbstractMethodListMsType extends AbstractMsType {
 		super(pdb, reader);
 		while (reader.hasMore()) {
 			AbstractMethodRecordMs record = parseOneRecord(pdb, reader);
-			list.add(record);
+			methodRecords.add(record);
 		}
 	}
 
@@ -51,7 +44,7 @@ public abstract class AbstractMethodListMsType extends AbstractMsType {
 	 * @return Size of the methods.
 	 */
 	public int getListSize() {
-		return list.size();
+		return methodRecords.size();
 	}
 
 	@Override
@@ -59,7 +52,7 @@ public abstract class AbstractMethodListMsType extends AbstractMsType {
 		// Making this up; no API for output.
 		DelimiterState ds = new DelimiterState("", ",");
 		builder.append("{");
-		for (AbstractMethodRecordMs record : list) {
+		for (AbstractMethodRecordMs record : methodRecords) {
 			builder.append(ds.out(true, record.toString()));
 		}
 		builder.append("}");

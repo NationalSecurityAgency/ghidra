@@ -23,12 +23,6 @@ import ghidra.pdb.pdbreader.AbstractPdb;
 
 /**
  * Register Name component for certain PDB symbols.
- * <P>
- * Class describes the function return method.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>
  */
 public class RegisterName extends AbstractParsableItem {
 

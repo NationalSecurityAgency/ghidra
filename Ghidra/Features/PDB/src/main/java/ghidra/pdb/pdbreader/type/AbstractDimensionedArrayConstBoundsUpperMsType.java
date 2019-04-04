@@ -19,15 +19,10 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractDimensionedArrayConstBoundsUpperMsType extends AbstractMsType {
 
+	// Appears to be number of dimensions--independence of which cannot be guaranteed to determine
+	//  a true "rank."
 	protected int rank;
 	protected AbstractTypeIndex typeIndex;
 	// TODO: dimData is unknown.  Needs analysis and implementation break-out.
@@ -47,6 +42,14 @@ public abstract class AbstractDimensionedArrayConstBoundsUpperMsType extends Abs
 		pdb.pushDependencyStack(new CategoryIndex(CategoryIndex.Category.DATA, typeIndex.get()));
 		pdb.popDependencyStack();
 		// TODO: fix all of this once we know the true size of each (assuming it is fixed).
+		/**
+		 * For now, we are assuming that the amount of data left will be a multiple of 1 times
+		 * (the {@link upperBound}--see {@link AbstractDimensionedArrayConstBoundsLowerUpperMsType}
+		 * for 2 times) the size of the integral element containing the value.  We do not know the
+		 * size of the integral element, so we: assert on the assumption of "a multiple" (mod 0),
+		 * then we determine the number of bytes of the integrals type (the {@link size}), and
+		 * we switch on that size to parse the values.
+		 */
 		byte[] remainingData = reader.parseBytesRemaining();
 		PdbByteReader boundsReader = new PdbByteReader(remainingData);
 		int length = remainingData.length;
@@ -92,11 +95,16 @@ public abstract class AbstractDimensionedArrayConstBoundsUpperMsType extends Abs
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #typeIndex}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the initial fields for this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, parse
+	 * {@link #rank} and {@link #typeIndex}.
 	 * @param reader {@link PdbByteReader} from which the beginning fields are parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

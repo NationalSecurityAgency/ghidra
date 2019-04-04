@@ -20,10 +20,6 @@ import ghidra.pdb.pdbreader.AbstractPdb;
 /**
  * A class for a specific PDB data type--In this case one of many possible primitive types,
  *  specified by the record number.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
  */
 public class PrimitiveMsType extends AbstractMsType {
 
@@ -86,6 +82,14 @@ public class PrimitiveMsType extends AbstractMsType {
 	 */
 	public int getTypeSize() {
 		return typeSize;
+	}
+
+	/**
+	 * Indicates whether the type is a T_NOTYPE.
+	 * @return Indicates whether T_NOTYPE.
+	 */
+	public boolean isNoType() {
+		return recordNumber == 0;
 	}
 
 	//==============================================================================================

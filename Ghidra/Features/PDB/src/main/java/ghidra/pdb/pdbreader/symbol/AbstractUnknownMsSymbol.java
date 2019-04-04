@@ -18,16 +18,6 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
-/**
- * An abstract class for a number of specific PDB symbol types that share certain information.
- * <P>
- * This class represents all symbols that are not documented in the API; this gives us a way
- * to represent them as a class.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>
- */
 public abstract class AbstractUnknownMsSymbol extends AbstractMsSymbol {
 
 	/**

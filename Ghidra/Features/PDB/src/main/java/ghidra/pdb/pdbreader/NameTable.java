@@ -75,7 +75,7 @@ public class NameTable {
 	}
 
 	/**
-	 * Returns an index of the name argument in the NameTable.
+	 * Returns an index of the name argument in the {@link NameTable}.
 	 * @param name Name to look up.
 	 * @return Index of the name.
 	 */
@@ -87,7 +87,7 @@ public class NameTable {
 	/**
 	 * Returns a name from the Name Table pertaining to the byte-offset in the block of names for
 	 *  the table.
-	 * @param offset Byte-offset of the name in the NameTable block.
+	 * @param offset Byte-offset of the name in the {@link NameTable} block.
 	 * @return Name found at offset.
 	 */
 	public String getNameStringFromOffset(int offset) {

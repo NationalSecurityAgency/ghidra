@@ -19,16 +19,11 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractModifierMsType extends AbstractMsType {
 
 	protected AbstractTypeIndex modifiedTypeIndex;
+	protected int attributes;
+
 	protected boolean isConst;
 	protected boolean isVolatile;
 	protected boolean isUnaligned;
@@ -43,6 +38,7 @@ public abstract class AbstractModifierMsType extends AbstractMsType {
 		super(pdb, reader);
 		create();
 		parseFields(reader);
+		processAttributes(attributes);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, modifiedTypeIndex.get()));
 		pdb.popDependencyStack();
@@ -78,11 +74,15 @@ public abstract class AbstractModifierMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #modifiedTypeIndex}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the fields for this type.
+	 * <P>
+	 * Implementing class must initialize {@link #modifiedTypeIndex} and {@link #attributes}.
 	 * @param reader {@link PdbByteReader} from which the fields are parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
@@ -90,14 +90,14 @@ public abstract class AbstractModifierMsType extends AbstractMsType {
 
 	/**
 	 * Internal method to process the integer attributes value into individual components.
-	 * @param attributes Attributes field to be parsed/processed.
+	 * @param atts Attributes field to be parsed/processed.
 	 */
-	protected void processAttributes(int attributes) {
-		isConst = ((attributes & 0x0001) == 0x0001);
-		attributes >>= 1;
-		isVolatile = ((attributes & 0x0001) == 0x0001);
-		attributes >>= 1;
-		isUnaligned = ((attributes & 0x0001) == 0x0001);
+	protected void processAttributes(int atts) {
+		isConst = ((atts & 0x0001) == 0x0001);
+		atts >>= 1;
+		isVolatile = ((atts & 0x0001) == 0x0001);
+		atts >>= 1;
+		isUnaligned = ((atts & 0x0001) == 0x0001);
 	}
 
 }

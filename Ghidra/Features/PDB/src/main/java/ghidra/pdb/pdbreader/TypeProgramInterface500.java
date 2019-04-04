@@ -74,9 +74,9 @@ public class TypeProgramInterface500 extends AbstractTypeProgramInterface {
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
 	 *  Note: not all values are initialized.  This is a dummy constructor used to create a dummy
-	 *  AbstractTypeProgramInterface.
+	 *  {@link AbstractTypeProgramInterface}.
 	 *  Note: not all values are initialized.  
-	 * @param pdb {@link AbstractPdb} that owns this TypeProgramInterface.
+	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
 	 * @param typeIndexMin The IndexMin to set/use.
 	 * @param typeIndexMaxExclusive One greater than the MaxIndex to set/use.
 	 */

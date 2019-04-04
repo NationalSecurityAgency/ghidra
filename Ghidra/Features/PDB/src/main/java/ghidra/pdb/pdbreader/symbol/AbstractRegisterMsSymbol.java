@@ -19,13 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB symbol types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>
- */
 public abstract class AbstractRegisterMsSymbol extends AbstractMsSymbol {
 
 	protected AbstractTypeIndex typeIndex;
@@ -44,7 +37,7 @@ public abstract class AbstractRegisterMsSymbol extends AbstractMsSymbol {
 		typeIndex.parse(reader);
 		pdb.pushDependencyStack(new CategoryIndex(CategoryIndex.Category.DATA, typeIndex.get()));
 		pdb.popDependencyStack();
-		parseRegister(reader);
+		register = parseRegister(reader);
 		name.parse(reader);
 		reader.align4();
 	}
@@ -62,15 +55,18 @@ public abstract class AbstractRegisterMsSymbol extends AbstractMsSymbol {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #typeIndex} and {@link #name}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parses the register field for this symbol.
 	 * @param reader {@link PdbByteReader} from which the data is parsed.
+	 * @return The register field.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	protected abstract void parseRegister(PdbByteReader reader) throws PdbException;
+	protected abstract RegisterName parseRegister(PdbByteReader reader) throws PdbException;
 
 	/**
 	 * Emits the register information to the {@link StringBuilder}

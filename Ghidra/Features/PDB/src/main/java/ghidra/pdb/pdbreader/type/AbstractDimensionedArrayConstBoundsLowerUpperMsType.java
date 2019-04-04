@@ -19,15 +19,10 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * An abstract class for a number of specific PDB data types that share certain information.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public abstract class AbstractDimensionedArrayConstBoundsLowerUpperMsType extends AbstractMsType {
 
+	// Appears to be number of dimensions--independence of which cannot be guaranteed to determine
+	//  a true "rank."
 	protected int rank;
 	protected AbstractTypeIndex typeIndex;
 	// TODO: dimData is unknown.  Needs analysis and implementation break-out.
@@ -48,6 +43,15 @@ public abstract class AbstractDimensionedArrayConstBoundsLowerUpperMsType extend
 		pdb.pushDependencyStack(new CategoryIndex(CategoryIndex.Category.DATA, typeIndex.get()));
 		pdb.popDependencyStack();
 		// TODO: fix all of this once we know the true size of each (assuming it is fixed).
+		/**
+		 * For now, we are assuming that the amount of data left will be a multiple of 2 times
+		 * (one of {@link lowerBound} and one for {@link upperBound}--see
+		 * {@link AbstractDimensionedArrayConstBoundsUpperMsType} for 1 times) the size of the
+		 * integral element containing the value.  We do not know the size of the integral
+		 * element, so we: assert on the assumption of "a multiple," then we determine the number
+		 * of bytes of the integrals type (the {@link size}), and we switch on that size to parse
+		 * the values.
+		 */
 		byte[] remainingData = reader.parseBytesRemaining();
 		PdbByteReader boundsReader = new PdbByteReader(remainingData);
 		int length = remainingData.length;
@@ -100,11 +104,16 @@ public abstract class AbstractDimensionedArrayConstBoundsLowerUpperMsType extend
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
+	 * <P>
+	 * Implementing class must initialize {@link #typeIndex}.
 	 */
 	protected abstract void create();
 
 	/**
 	 * Parsed the beginning fields of this type.
+	 * <P>
+	 * Implementing class must, in the appropriate order pertinent to itself, parse
+	 * {@link #rank} and {@link #typeIndex}.
 	 * @param reader {@link PdbByteReader} from which the data is parsed.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

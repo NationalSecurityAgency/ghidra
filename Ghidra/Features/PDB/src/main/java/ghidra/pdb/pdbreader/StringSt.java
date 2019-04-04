@@ -28,8 +28,8 @@ public class StringSt extends AbstractString {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		string = reader.parseByteLengthPrefixedString();
+	protected String doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseByteLengthPrefixedString();
 	}
 
 }

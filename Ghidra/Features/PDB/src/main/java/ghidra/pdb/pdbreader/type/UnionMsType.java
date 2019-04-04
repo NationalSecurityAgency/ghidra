@@ -19,13 +19,6 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
-/**
- * A class for a specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
- */
 public class UnionMsType extends AbstractUnionMsType {
 
 	public static final int PDB_ID = 0x1506;
@@ -65,21 +58,23 @@ public class UnionMsType extends AbstractUnionMsType {
 				mangledName.parse(reader);
 				//System.out.println(mangledName);
 			}
-			else if (reader.hasMore()) {
-				// The following code is for developmental investigations;
-				//  set break point on "int a = 1;" instead of a
-				//  conditional break point.
-				int a = 1;
-				a = a + 1;
-			}
+//			// DO NOT REMOVE
+//			// The following code is for developmental investigations;
+//			//  set break point on "int a = 1;" instead of a
+//			//  conditional break point.
+//			else if (reader.hasMore()) {
+//				int a = 1;
+//				a = a + 1;
+//			}
 		}
-		else {
-			// The following code is for developmental investigations;
-			//  set break point on "int a = 1;" instead of a
-			//  conditional break point.
-			int a = 1;
-			a = a + 1;
-		}
+//		// DO NOT REMOVE
+//		// The following code is for developmental investigations;
+//		//  set break point on "int a = 1;" instead of a
+//		//  conditional break point.
+//		else {
+//			int a = 1;
+//			a = a + 1;
+//		}
 		reader.skipPadding();
 	}
 

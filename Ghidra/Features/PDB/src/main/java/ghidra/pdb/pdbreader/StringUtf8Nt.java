@@ -27,8 +27,8 @@ public class StringUtf8Nt extends AbstractString {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	public void parse(PdbByteReader reader) throws PdbException {
-		string = reader.parseNullTerminatedUtf8String();
+	protected String doParse(PdbByteReader reader) throws PdbException {
+		return reader.parseNullTerminatedUtf8String();
 	}
 
 }

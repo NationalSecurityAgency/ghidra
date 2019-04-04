@@ -19,10 +19,6 @@ import ghidra.pdb.*;
 
 /**
  * Function attributes used on functions within specific PDB data type.
- * <P>
- * For more information about PDBs, consult the Microsoft PDB API, see
- * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">
- * What's inside a PDB File</a>.
  */
 public class FunctionMsAttributes extends AbstractParsableItem {
 
