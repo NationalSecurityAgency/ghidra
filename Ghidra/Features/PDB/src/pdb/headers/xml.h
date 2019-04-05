@@ -18,9 +18,9 @@
 #define __PDB__XML__H__
 
 #include <stdio.h>
-#include "comutil.h"
+#include <comutil.h>
 
-char * indent(int nSpaces);
+char * indent(size_t nSpaces);
 BSTR escapeXmlEntities(BSTR bstr);
 
 #endif

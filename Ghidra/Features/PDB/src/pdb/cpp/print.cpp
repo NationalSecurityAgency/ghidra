@@ -34,68 +34,71 @@ wchar_t * printVariant( VARIANT & v ) {
 			return L"null";
 	}
 
-	size_t printfFormatBufferLen = 100;
-	wchar_t * variant = (wchar_t *)calloc(printfFormatBufferLen, sizeof(wchar_t));
+	size_t blen = 100;
+	wchar_t * variant = (wchar_t *)calloc(blen, sizeof(wchar_t));
+	if (variant == NULL) {
+		return L"error";
+	}
 	switch( v.vt ) {
 		case VT_ARRAY://Indicates a SAFEARRAY pointer. 
-			swprintf(variant, L"%d", v.parray);//TODO
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.parray);//TODO
 			return variant;
 		case VT_BYREF://Indicates that a value is a reference. 
-			swprintf(variant, L"%d", v.cVal);//TODO
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cVal);//TODO
 			return variant;
 		case VT_CY://Indicates a currency value. 
-			swprintf(variant, L"%f", v.cyVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cyVal.int64);
 			return variant;
 		case VT_DATE://Indicates a DATE value. 
-			swprintf(variant, L"%d", v.date);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.date);
 			return variant;
 		case VT_DISPATCH://Indicates an IDispatch pointer. 
-			swprintf(variant, L"%d", v.pdispVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pdispVal);
 			return variant;
 		case VT_ERROR://Indicates an SCODE. 
-			swprintf(variant, L"0x%x", v.scode);
+			swprintf_s(variant, blen, L"0x%x", v.scode);
 			return variant;
 		case VT_I1://CHAR
-			swprintf(variant, L"%d", v.cVal);
+			swprintf_s(variant, blen, L"%d", v.cVal);
 			return variant;
 		case VT_I2://SHORT
-			swprintf(variant, L"%d", v.iVal);
+			swprintf_s(variant, blen, L"%d", v.iVal);
 			return variant;
 		case VT_I4://LONG
-			swprintf(variant, L"%d", v.lVal );
+			swprintf_s(variant, blen, L"%d", v.lVal );
 			return variant;
 		case VT_I8: //LONGLONG
-			swprintf(variant, L"%ld", v.llVal );
+			swprintf_s(variant, blen, L"%I64d", v.llVal );
 			return variant;
 		case VT_INT://INT
-			swprintf(variant, L"%d", v.intVal);
+			swprintf_s(variant, blen, L"%d", v.intVal);
 			return variant;
 		case VT_R4://Indicates a float value. 
-			swprintf(variant, L"%f", v.fltVal);
+			swprintf_s(variant, blen, L"%f", v.fltVal);
 			return variant;
 		case VT_R8://Indicates a double value. 
-			swprintf(variant, L"%f", v.dblVal);
+			swprintf_s(variant, blen, L"%f", v.dblVal);
 			return variant;
 		case VT_UI1://BYTE
-			swprintf(variant, L"%d", v.bVal);
+			swprintf_s(variant, blen, L"%d", v.bVal);
 			return variant;
 		case VT_UI2://USHORT
-			swprintf(variant, L"%d", v.uiVal);
+			swprintf_s(variant, blen, L"%d", v.uiVal);
 			return variant;
 		case VT_UI4://ULONG
-			swprintf(variant, L"%d", v.ulVal);
+			swprintf_s(variant, blen, L"%d", v.ulVal);
 			return variant;
 		case VT_UI8://ULONGLONG
-			swprintf(variant, L"%ld", v.ullVal);
+			swprintf(variant, blen, L"%I64d", v.ullVal);
 			return variant;
 		case VT_UINT://UINT
-			swprintf(variant, L"%d", v.uintVal);
+			swprintf_s(variant, blen, L"%d", v.uintVal);
 			return variant;
 		case VT_UNKNOWN://Indicates an IUnknown pointer. 
-			swprintf(variant, L"%d", v.punkVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.punkVal);
 			return variant;
 		case VT_VARIANT://Indicates a VARIANT far pointer. 
-			swprintf(variant, L"%d", v.pvarVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pvarVal);
 			return variant;
 
 		default:
@@ -134,8 +137,10 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 		if ( pType->get_type( &pBaseType ) == S_OK ) {
 			size_t length = wcslen(suffix) + 3;	// length of: suffix + " *\0"
 			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			swprintf(str, L"%ws *", suffix );
-			return (BSTR)printType( pBaseType, (BSTR)str );
+			if (str != NULL) {
+				swprintf_s(str, length, L"%ws *", suffix);
+				return (BSTR)printType(pBaseType, (BSTR)str);
+			}
 		}
 		else {
 			return L"";
@@ -146,8 +151,10 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 		BSTR bt = getBaseTypeAsString( pType );
 		size_t length = wcslen(bt) + wcslen(suffix) + 1;	// length of: bt + suffix + "\0"
 		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		swprintf(str, L"%ws%ws", bt, suffix );
-		return str;
+		if (str != NULL) {
+			swprintf_s(str, length, L"%ws%ws", bt, suffix);
+			return str;
+		}
 	}
 
 	if ( tag == SymTagArrayType ) {
@@ -162,9 +169,10 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 		}
 		size_t strLen = wcslen(suffix) + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
 		wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
-		swprintf(str, L"%ws[%ld]", suffix, lenArray/lenElem );
-
-		return printType( pBaseType, (BSTR)str);
+		if (str != NULL) {
+			swprintf_s(str, strLen, L"%ws[%I64d]", suffix, lenArray / lenElem);
+			return printType(pBaseType, (BSTR)str);
+		}
 	} 
 
 	if ( tag == SymTagFunctionType ) {
@@ -175,17 +183,22 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 		DWORD id;
 		DWORD rec;
 		GUID guid;
-		if ( pType->get_guid( &guid ) == S_OK ) {
-			size_t maxGUIDStrLen = 64;
-			wchar_t * guidStr = (wchar_t *)calloc(maxGUIDStrLen, sizeof(wchar_t));
-			StringFromGUID2(guid, guidStr, maxGUIDStrLen);
-			return (BSTR)guidStr;
+		if (pType->get_guid(&guid) == S_OK) {
+			int maxGUIDStrLen = 64;
+			wchar_t* guidStr = (wchar_t*)calloc((size_t)maxGUIDStrLen, sizeof(wchar_t));
+			if (guidStr != NULL) {
+				if (StringFromGUID2(guid, guidStr, maxGUIDStrLen) > 0) {
+					return (BSTR)guidStr;
+				}
+			}
 		} 
 		else if ( pType->get_oemId( &id ) == S_OK && pType->get_oemSymbolId( &rec ) == S_OK ) {
 			size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
 			wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
-			swprintf(str, L"0x%x:0x%x", id, rec);
-			return (BSTR)str;
+			if (str != NULL) {
+				swprintf_s(str, strLen, L"0x%x:0x%x", id, rec);
+				return (BSTR)str;
+			}
 		}
 		return L"";
 	}
@@ -193,8 +206,10 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 	if ( name != NULL ) {
 		size_t length = wcslen(name) + wcslen(suffix) + 1;	// length of name + suffix + "\0"
 		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		swprintf(str, L"%ws%ws", name, suffix);
-		return (BSTR)str;
+		if (str != NULL) {
+			swprintf_s(str, length, L"%ws%ws", name, suffix);
+			return (BSTR)str;
+		}
 	} 
 
 	return L"Undefined";

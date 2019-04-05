@@ -168,15 +168,17 @@ static wchar_t* BASIC_TYPE_STRINGS [] = {
 };
 
 BSTR getName(IDiaSymbol * pSymbol) {
-	BSTR name, escapedName;
+	BSTR name, escapedName = NULL;
 	DWORD symIndexId, locType;
 	ULONGLONG len;
 	if (pSymbol->get_name( &name ) == 0) {
 		if (wcscmp(name, L"") == 0) {
 			size_t length = 7;	// length of: "NONAME\0"
 			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			swprintf(str, L"NONAME");
-			escapedName = escapeXmlEntities(str);
+			if (str != NULL) {
+				swprintf_s(str, length, L"NONAME");
+				escapedName = escapeXmlEntities(str);
+			}
 		} else
 		if(wcsstr(name, L"unnamed-tag") != NULL){
 			if(pSymbol->get_symIndexId(&symIndexId) != 0){
@@ -184,16 +186,20 @@ BSTR getName(IDiaSymbol * pSymbol) {
 			}
 			size_t length = 16;	// length of: "<unnamed_NNNN>\0" + 1 extra
 			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			swprintf(str, L"<unnamed_%04x>", symIndexId);
-			escapedName = escapeXmlEntities(str);
+			if (str != NULL) {
+				swprintf_s(str, length, L"<unnamed_%04x>", symIndexId);
+				escapedName = escapeXmlEntities(str);
+			}
 		} else
 		if(pSymbol->get_locationType(&locType) == 0 &&
 			locType == LocIsBitField && 
 			pSymbol->get_length(&len) == 0){
 			size_t length = wcslen(name) + 4 + 32;	// length of: name + ":0x\0" + wag_hex_numeric_str_len
 			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			swprintf(str, L"%ws:0x%x", name, len);
-			escapedName = escapeXmlEntities(str);
+			if (str != NULL) {
+				swprintf_s(str, length, L"%ws:0x%I64x", name, len);
+				escapedName = escapeXmlEntities(str);
+			}
 		} else {
 			escapedName = escapeXmlEntities(name);
 		}
