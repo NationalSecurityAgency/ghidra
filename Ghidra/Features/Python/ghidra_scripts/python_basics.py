@@ -46,7 +46,7 @@ if 4 not in my_list:
 if type(my_dictionary) == type(dict):
     print "my_dictionary is a dictionary!"
 
-if my_null is None and 2 + 2 == 4:
+if my_null is None:
     print "my_null is None and 2 + 2 == 4!"
 
 # Python loops
