@@ -69,7 +69,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 	public void testKnownSymbolServerURLsDialog() throws Exception {
 
 		List<URLChoice> urlChoices = new ArrayList<URLChoice>();
-		urlChoices.add(new URLChoice("Internet", "http://msdl.microsoft.com/download/symbols"));
+		urlChoices.add(new URLChoice("Internet", "https://msdl.microsoft.com/download/symbols"));
 		urlChoices.add(new URLChoice("My Network", "https://my_symbol_server.my.org"));
 
 		final ObjectChooserDialog<URLChoice> urlDialog =
