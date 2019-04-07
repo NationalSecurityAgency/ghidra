@@ -257,7 +257,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 		//    srv*[local cache]*[private symbol server]*https://msdl.microsoft.com/download/symbols
 		//    srv*c:\symbols*https://msdl.microsoft.com/download/symbols
 
-		if (!envString.startsWith("srv")) {
+		if (!envString.startsWith("srv") && !envString.startsWith("SRV")) {
 			return;
 		}
 
