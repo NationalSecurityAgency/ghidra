@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file is meant to define a set of tags that can be assigned
+     to functions. 
+     
+     This will be loaded by ghidra.program.database.function.FunctionTagAdapter
+     on startup during the database loading phase. -->
+<tags>
+	<tag>
+		<name>COMPRESSION</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>CONSTRUCTOR</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>CRYPTO</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>DESTRUCTOR</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>IO</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>LIBRARY</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>NETWORK</name>
+		<comment/>
+	</tag>
+	<tag>
+		<name>UNPACKER</name>
+		<comment/>
+	</tag>
+</tags>

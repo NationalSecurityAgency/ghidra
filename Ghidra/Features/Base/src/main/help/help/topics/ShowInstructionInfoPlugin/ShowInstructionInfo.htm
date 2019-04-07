@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Show Instruction Info</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Show_Instruction_Info"></A>Show Instruction Info</H1>
+
+    <P>Displays information about an instruction.</P>
+
+    <H2><A name="Raw_Instruction_Display"></A><B>Raw Instruction Display</B></H2>
+
+    <BLOCKQUOTE>
+      <P>Displays the raw instruction under the current cursor location.&nbsp; The instruction is
+      displayed as it was disassembled without any operands replaced by label references or other
+      adornments.</P>
+
+      <P>To see the raw instruction</P>
+
+      <BLOCKQUOTE>
+        <P>Set the current program location to an instruction code unit (i.e., using the mouse,
+        left click on an instruction within the code viewer).&nbsp; The raw instruction is
+        displayed in the lower right hand corner of the code browser tool.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+	<P align="center"><IMG src="images/RawInstructionDisplay.png" border="0"></P>
+
+    <H2>&nbsp;</H2>
+
+    <H2><A name="Show_Processor_Manual"></A><B>Processor Manual</B></H2>
+
+    <BLOCKQUOTE>
+      <P>Displays the micro-processor manual page for the instruction at the current cursor
+      location. If there is no instruction at the selected location then the manual will be shown
+      opened to the first page of the document.</P>
+
+      <OL start="1" type="1">
+        <LI>Position the cursor over the instruction</LI>
+
+        <LI>right-mouse-click, select <B><FONT size="4">Processor Manual</FONT></B></LI>
+      </OL>
+
+      <P><FONT size="4"><IMG src="../../shared/note.png" border="0"> Not all Ghidra language
+      modules support this functionality.</FONT></P>
+
+      <P><U>Implementation Note:</U><BR>
+      Ghidra uses a local web server in order to pass processor manual content to client web
+      browsers. Ghidra will attempt to launch the client web browser, but cannot always determine
+      the proper application to launch. If Ghidra cannot successfully launch a default application
+      to show the processor manual, then Ghidra will show a warning message that provides the file
+      URL and path that Ghidra is trying to open. From this dialog you can edit the settings Ghidra
+      uses to open manuals. You may also copy the file information from text fields, if so desired
+      by selecting the text and pressing <I>Ctrl-C</I>. Below is the warning dialog.</P>
+
+      <P align="center"><IMG src="images/UnableToLaunch.png" border="0"></P>
+
+      <P>If you choose to edit the settings you will be taken to the options dialog shown
+      below.</P>
+
+      <P align="center"><A name="Processor_Manual_Options"></A> <IMG src=
+      "images/ProcessorManualOptions.png" border="0"></P>
+
+      <TABLE border="1">
+        <TBODY>
+          <TR>
+            <TH width="20%">Options Name</TH>
+
+            <TH>Description</TH>
+          </TR>
+
+          <TR>
+            <TD valign="top">Command String</TD>
+
+            <TD>The name of a process to launch on your system. For example, if you have the
+            Firefox web browser installed on your system and it is in your system path, then you
+            can simply enter the value <TT>firefox</TT>. You may also enter the full path to an
+            application for Ghidra to launch.</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">Command Arguments</TD>
+
+            <TD>A space separated list of arguments that Ghidra will pass to the process listed
+            above. If you need to include spaces as part of one of the arguments, then enclose the
+            argument in double quotes (e.g., "arg with space").</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">File Format</TD>
+
+            <TD>Ghidra will pass, by default, a URL to the given process. You may change this value
+            to signal to Ghidra that it should pass a filename instead.</TD>
+          </TR>
+        </TBODY>
+      </TABLE><BR>
+      <BR>
+    </BLOCKQUOTE>
+
+    <H2><A name="Show_Instruction_Info_Window"></A><B>Instruction Info Window</B></H2>
+
+    <BLOCKQUOTE>
+      <P>The <I>Instruction Info</I> window displays internal information about an
+      instruction.&nbsp; It is very useful for debugging problems with instructions.</P>
+
+      <P>The left-most text display column provides general information about the instruction
+      (Mnemonic, Number of Operands, Address, Flow Type, Delay Slot Depth, Prototype Hash, Input
+      Objects, Result Objects, Constructor line numbers, Instruction Bytes, etc.).</P>
+
+      <P>The Operand columns (<I>Op1</I>, <I>Op2</I>, etc.) display information about a particular
+      operand.&nbsp; Each operand has a number of rows.&nbsp; At the end of the row is a
+      descriptive name for the information displayed on that row.</P>
+
+      <CENTER>
+        <TABLE>
+          <TBODY>
+            <TR>
+              <TD style="width: 20%;" align="left">Operand</TD>
+
+              <TD align="left" width="85%">Raw instruction operand representation</TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Labeled</TD>
+
+              <TD align="left" width="85%">Default operand markup (e.g., referenced symbol name,
+              etc.)<BR>
+              </TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Type</TD>
+
+              <TD align="left" width="85%">Type of operand (ADDR, DATA, SCAL, REG, etc.)</TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Scalar</TD>
+
+              <TD align="left" width="85%">Result of getScalar() for the operand</TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Address</TD>
+
+              <TD align="left" width="85%">Result of getAddress() for the operand</TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Register</TD>
+
+              <TD align="left" width="85%">Result of getRegister() for the operand</TD>
+            </TR>
+
+            <TR>
+              <TD style="vertical-align: top; width: 20%;">Op-Objects<BR>
+              </TD>
+
+              <TD style="vertical-align: top;">Result of getOpOpbjetecs() for the operand which
+              reflects all varnodes referenced by pcode produced by operand subconstructor.<BR>
+              </TD>
+            </TR>
+
+            <TR>
+              <TD style="vertical-align: top; width: 20%;">Operand Mask<BR>
+              </TD>
+
+              <TD style="vertical-align: top;">Identifies which bits within instructions bytes are
+              responsible for the operand value (i.e., register, scalar, etc.)<BR>
+              </TD>
+            </TR>
+
+            <TR>
+              <TD style="width: 20%;" align="left">Masked Value<BR>
+              </TD>
+
+              <TD align="left" width="85%">Identifies the specific bit values within the
+              instruction bytes which are responsible to the operand value (i.e., specific
+              register, scalar value, etc.)<BR>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+
+      <P align="center"><IMG alt="" src="images/ShowInstructionInfo.png" style=
+      "border: 0px solid ; width: 804px; height: 467px;"></P>
+
+      <P align="center">&nbsp;</P>
+
+      <BLOCKQUOTE>
+        <P>The <I>Dynamic Update</I> checkbox indicates whether the window should update when you
+        change the location in the Code Browser.&nbsp; By default, the checkbox is selected. As you
+        change your <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#Location">location</A>
+        in the Code Browser, the window will be updated to show the info for the new
+        location.&nbsp; If you turn off the checkbox, the window does not update; the next time you
+        choose <I>Instruction Info</I>, a new tab is displayed in the <I>Instruction Info</I>
+        window.</P>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">&nbsp;</P>
+
+      <P class="providedbyplugin">Provided by: <I>Show Instruction Info</I> Plugin</P>
+
+      <P class="relatedtopic">Related Topics:&nbsp;</P>
+
+      <UL>
+        <LI>
+          <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+          Browser</A> <B><BR clear="all">
+          </B></P>
+        </LI>
+      </UL>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

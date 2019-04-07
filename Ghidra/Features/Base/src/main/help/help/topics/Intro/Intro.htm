@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Introduction</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1>Introduction</H1>
+
+    <P>Ghidra is a highly extensible application for performing software reverse engineering.
+    Ghidra is built upon a completely generic application framework. Application-specific
+    capabilities are provided by small software bundles called plugins, each providing one or more
+    features. This user's guide provides detailed information on how to use both Ghidra's generic
+    and reverse engineering-specific capabilities.</P>
+
+    <H2>Intended Audience</H2>
+
+    <BLOCKQUOTE>
+      <P>This guide is intended for anyone interested in learning how to use Ghidra to reverse
+      engineer a software system.</P>
+    </BLOCKQUOTE>
+
+    <H2>Document Scope</H2>
+
+    <BLOCKQUOTE>
+      <P>The purpose of this document is to describe how to use Ghidra. It does NOT provide
+      information on the software architecture or the programming API.</P>
+    </BLOCKQUOTE>
+
+    <H2>Disclaimer</H2>
+
+    <BLOCKQUOTE>
+      <P>Ghidra is configurable. At any given time, Ghidra capabilities can be added, removed, or
+      even replaced by changing the current set of plugins. Consequently, a feature might not be
+      available as described and the images shown in this document may not exactly match your
+      display.</P>
+    </BLOCKQUOTE>
+
+    <H1><A name="GettingStarted">
+    Getting Started</H1>
+
+    <BLOCKQUOTE>
+      <H3>File System Layout</H3>
+
+      <BLOCKQUOTE>
+        <P>In the directory you choose, a ghidra installation directory named
+        <B>ghidra_&lt;version&gt;</B> is created. The following directory structure will be created
+        under the Ghidra installation directory.</P>
+      </BLOCKQUOTE>
+
+      <CENTER>
+        <TABLE border="0" width="80%">
+          <TBODY>
+            <TR>
+              <TD width="29%">docs</TD>
+
+              <TD width="71%">tutorial and on-line help</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">Extensions</TD>
+
+              <TD width="71%">installable extensions for Ghidra, Eclipse and IDA Pro</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">Ghidra</TD>
+
+              <TD width="71%">essential files for running Ghidra</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">GPL</TD>
+
+              <TD width="71%">GPL utility and support programs used by Ghidra</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">licenses</TD>
+
+              <TD width="71%">licenses for non-GPL portions of Ghidra</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">server</TD>
+
+              <TD width="71%">files required to launch and configure the Ghidra server</TD>
+            </TR>
+
+            <TR>
+              <TD width="29%">support</TD>
+
+              <TD width="71%">files useful for debugging and configuring Ghidra</TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+
+      <H3>Extensions</H3>
+
+      <BLOCKQUOTE>
+        <P>There are a number of Ghidra plugins that are not part of the base distribution. They
+        are either experimental, still under development, or contributed by others. These plugins
+        may not have been tested, and therefore may be unstable and are not included in any of the
+        default tools. However, these plugins often contain the more cutting edge features and may
+        be worth considering. They are easily accessible and can be added by <A href=
+        "help/topics/Tool/Configure_Tool.htm">configuring</A> a tool.</P>
+      </BLOCKQUOTE>
+
+      <H3>IDA Pro Export</H3>
+
+      <BLOCKQUOTE>
+        <P>The Ghidra distribution includes a plugin for use with IDA Pro (a commercially available
+        disassembler). The XML plugin is used with IDA Pro to export IDA Pro databases as XML files
+        so that they can be imported into Ghidra. This allows IDA Pro users to migrate their data
+        to Ghidra.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To add the XML exporter plugin to your IDA installation:</P>
+
+        <UL>
+          <LI>Locate the README file for your version of IDA from the version folders in the
+          &lt;ghidra installation directory&gt;/Extensions/IDAPro folder. The plugin is available
+          for IDA Pro versions 6 and 7. If you are unsure of your IDA version, start IDA and select
+          Help -&gt; About program ... from IDA's main menu to display the version.</LI>
+        </UL>
+
+        <P>To export data to Ghidra using the XML plugin, select File -&gt; Plugins -&gt; Dump
+        database as XML file... from IDA's main menu.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="StartingGhidra"></A>Starting Ghidra</H2>
+
+    <BLOCKQUOTE>
+      <P>Launching Ghidra varies depending on the operating system.</P>
+
+      <H3><A name="windows"></A>Ghidra on Windows:</H3>
+
+      <BLOCKQUOTE>
+        <P>Run the <TT>ghidraRun.bat</TT> file located in the Ghidra installation directory.</P>
+
+        <P><IMG src="../../shared/tip.png" alt="" border="0"> <I>One way to run this file is to use
+        the Windows file explorer to locate the ghidra.bat file and then simply double click on the
+        file</I>.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="linux"></A>Ghidra on Linux and macOS:</H3>
+
+      <BLOCKQUOTE>
+        <P>Run the <TT>ghidraRun</TT> shell script file located in the Ghidra installation
+        directory.</P>
+      </BLOCKQUOTE><!--    Advanced startup parameters -->
+
+      <H3>Advanced Startup</H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra provides some Java startup parameters which allow for the usage of advanced 
+        features. To use a startup parameter you must open <TT>support/launch.properties</TT>
+        and add the parameter to that file.</P>
+
+        <P>For example,</P>
+<PRE>
+               VMARGS=-Dfont.size.override=18
+
+
+</PRE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="OverView"></A>Ghidra Overview</H2>
+
+    <BLOCKQUOTE>
+      <P>When Ghidra first starts, the <I><A href=
+      "help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A></I> will
+      appear.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <IMG src="images/Empty_ghidra.png" alt="" border="0"><BR>
+       <I>Ghidra Front-End with no open project</I>
+    </CENTER>
+
+    <P><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <P>Ghidra is a project-oriented application and, consequently, all work must be performed in
+      the context of a project. Therefore, the first thing to do is to <A href=
+      "help/topics/FrontEndPlugin/Creating_a_Project.htm">create</A> a project or <A href=
+      "help/topics/FrontEndPlugin/Opening_a_Ghidra_Project.htm">open</A> an existing project. Once
+      a project is open, Ghidra will display the folders and data that make up the project along
+      with the user's current set of tools. Of course, newly created projects would not contain any
+      data. Data must be <A href="help/topics/ImporterPlugin/importer.htm">imported</A> into a
+      Ghidra project before any work can be performed. Importing data into a Ghidra project creates
+      <I><A href="help/topics/Glossary/glossary.htm#Program">programs</A></I> that Ghidra <A href=
+      "help/topics/Tool/Ghidra_Tool_Administration.htm">tools</A> can manipulate.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <IMG src="images/Open_ghidra.png" alt="" border="0"><BR>
+       <I>Ghidra Front-End with an open project</I>
+    </CENTER>
+
+    <P><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <P>A Ghidra tool is a configuration of plugins that can be used to manipulate programs. When
+      Ghidra is first installed, a default tool - the code browser tool - is created for the user
+      and its icon is displayed in the Tool Chest area of the Ghidra Project Window.</P>
+
+      <P>To <A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Run_Tool">run a tool</A>,
+      click on its icon in the <I>Tool Chest.</I> When a tool is running, a new window will appear
+      for that tool and the tool's icon will be displayed in the <I>Running Tools</I> area of the
+      Ghidra Project Window.</P>
+
+      <P>Ghidra also supports the concept of <I>workspaces</I>. A <A href=
+      "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Workspace">workspace</A> is simply a
+      collection of running tools that are visible on the desktop. Users can have multiple
+      workspaces, each with its own set of running tools. Running tools that are not in the current
+      workspace are still running and consuming system resources even though they are not
+      visible.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="ErrorDialogs"></A> Error Dialogs</H2>
+
+    <BLOCKQUOTE>
+      <P>Errors may occur in Ghidra. An error may be anticipated, or it may be unexpected in which
+      case it is a programming error. Each type of error is described below.</P>
+
+      <H3><A name="Simple_Err"></A> General Errors</H3>
+
+      <BLOCKQUOTE>
+        <P>Whenever an action or operation does not complete as desired, but is an anticipated
+        error such as a user entering a file path that doesn't exist, Ghidra will display an Error
+        dialog explaining the cause of the problem as shown below in the sample error dialog:</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/Simple_err_dialog.png" border="0"></P>
+
+      <H3><A name="Err"></A> Unexpected Programming Errors</H3>
+
+      <P>Whenever an action or operation fails in a totally unexpected way, i.e., a programming
+      error, a dialog is displayed as shown below:</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/Err_Dialog.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P align="left">The <B>Details</B> &gt;&gt;&gt; button expands the dialog to show the
+        details of the java stack trace. (The stack trace is also output to the console.)</P>
+      </BLOCKQUOTE><BR>
+        
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

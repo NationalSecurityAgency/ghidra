@@ -1,0 +1,297 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Disassembly</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Disassembly</H1>
+
+    <P>Disassembly is the process of translating bytes into assembly language instructions.&nbsp;
+    Ghidra supports three different disassembly actions:</P>
+
+    <UL>
+      <LI><A href="#Disassemble">Disassembly</A></LI>
+      
+      <LI><A href="#Disassembler_Options">Disassembler Options</A></LI>
+
+      <LI><A href="#Disassemble_Static">Static Disassembly</A></LI>
+
+      <LI><A href="#Disassemble_Restricted">Restricted Disassembly</A></LI>
+      
+    </UL>
+
+    <H2><A name="Disassemble"></A>Disassembly</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Disassembly</I> starts disassembling at the current cursor location.&nbsp; After
+      disassembling an instruction, it examines all possible execution flows from that instruction
+      and disassembles at all those locations.&nbsp;&nbsp;</P>
+
+      <P>When disassembling in a selection, the disassembly starts at the first undefined byte
+      within the selection.&nbsp; After exhausting all possible flows from the instruction,
+      disassembly begins again at the next undefined byte within the selection.</P>
+
+      <P>To perform <I>Disassembly</I>:</P>
+
+      <OL start="1" type="1">
+        <LI>Place your cursor at the target instruction</LI>
+
+        <LI>Right-mouse-click</LI>
+
+        <LI>Select Disassembly</LI>
+      </OL>
+
+      <P>The disassembly progress is displayed in the progress status area (bottom right) of the
+      tool.&nbsp; The progress status area displays the number of instructions disassembled and
+      provides a "Cancel" button.&nbsp; Press the "Cancel" button to stop the disassembly
+      process.&nbsp; Note: this will not undo any disassembly that has already occurred.</P>
+
+      <P><I><IMG src="../../shared/tip.png">Press the 'D' key to Disassemble starting at the
+      current cursor location</I>.</P>
+
+      <P><I><IMG src="../../shared/tip.png"> Selecting <A href=
+      "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instructions to
+      undefined bytes.</I></P>
+      
+      <P><I><IMG src="../../shared/note.png"> Be aware that some processors may allow for
+      disassembly in different modes (eg: ARM vs. THUMB). Specific commands may be provided for
+      these and are not discussed here.</I></P>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Disassembler_Options"></A>Disassembler Options</H2>
+
+    <BLOCKQUOTE>
+      <P>The following <I>Disassembler</I> options exist which control certain behaviors during
+      <I>Disassembly</I>:</P>
+      
+      <ul>
+      
+      <li><b><i>Mark Bad Disassembly</i></b> - places an error bookmark on any instruction or 
+      instruction flow which fails to disassemble due to parse error or instruction conflict
+      (Enabled by default). </li>
+      
+      <li><b><i>Mark Unimplemented Pcode</i></b> - places a warning bookmark on any instruction
+      which has <i>unimplemented</i> pcode/semantics at the time disassembly was performed 
+      (Enabled by default).  The <i>MarkUnimplementedPcode</i> script may be run to update
+      these warnings since processor language updates may implement previously unimplemented
+      instruction pcode.</li>
+      
+      <li><b><i>Restrict Disassembly to Executable Memory</i></b> - If enabled will restrict
+      disassembly to those memory blocks marked as executable (Not restricted by default).  </li>
+      
+      </ul>
+      
+      <P>The above <i>Options</i> may be changed via the program Options dialog which allows various 
+      program properties to be examined or modified.  This dialog may be accessed via the menu action <B>Edit<IMG
+          src="../../shared/arrow.gif">Options for ...</B> for the currently active program.  These
+          options are program specific and stored within the program database.  The above program
+          properties can be accessed by clicking the <I>Disassembler</I> node within the 
+          <i>Properties</i> tree.  Any changes to these options will be stored when the <B>OK</B> or 
+          <B>Apply</B> button is clicked within the dialog. </P>
+          
+      <P>These option settings will be utilized for both forced disassembly and during 
+      auto-analysis.</P>
+      
+    </BLOCKQUOTE>
+
+    <H2><A name="Disassemble_Static"></A>Static Disassembly</H2>
+
+    <BLOCKQUOTE>
+      <P>The difference between <I>Disassembly</I> and <I>Static Disassembly</I> is that Static
+      Disassembly does not follow flow and only disassembles one instruction.&nbsp; However, when
+      disassembling in a selection, the disassembly starts at the first undefined byte within the
+      selection and proceeds sequentially to the last byte.</P>
+
+      <P>To perform <I>Static Disassembly</I>:</P>
+
+      <OL start="1" type="1">
+        <LI>Place the cursor in the Code Browser on an undefined byte</LI>
+
+        <LI>Right-mouse-click</LI>
+
+        <LI>Select Disassemble (Static).</LI>
+      </OL>
+
+      <P>The disassembly progress is displayed in the progress status area (bottom right) of the
+      tool.&nbsp; The progress status area displays the number of instructions disassembled and
+      provides a "Cancel" button.&nbsp; Press the "Cancel" button to stop the disassembly
+      process.&nbsp; Note: this will not undo any disassembly that has already occurred.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P align="left"><I><IMG src="../../shared/tip.png"> Press the 'Ctrl-D' key to Static
+      Disassemble one instruction starting at the current cursor location</I>.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P align="left"><I><IMG src="../../shared/tip.png"> Selecting <A href=
+      "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instruction to
+      undefined bytes.</I></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Disassemble_Restricted"></A>Disassembly (Restricted)</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Restricted Disassembly</I> is similar to <I>Disassembly</I>, except that only bytes in
+      the current selection can be disassembled.&nbsp; Flows will be followed only if they are in
+      the current selection.&nbsp; If there is no selection, only one instruction will be
+      disassembled.</P>
+
+      <P>To perform <I>Restricted Disassembly</I>:</P>
+
+      <OL>
+        <LI>Place the cursor in the Code Browser on an undefined byte.</LI>
+
+        <LI>Right-mouse-click, and select Disassemble (Restricted).</LI>
+      </OL>
+
+      <P>The disassembly progress is displayed in the progress status area (bottom right) of the
+      tool.&nbsp; The progress status area displays the number of instructions disassembled and
+      provides a "Cancel" button.&nbsp; Press the "Cancel" button to stop the disassembly
+      process.&nbsp; Note: this will not undo any disassembly that has already occurred.</P>
+
+      <P align="left"><I><IMG src="../../shared/tip.png"> Press the 'Alt-D' key to Disassemble only
+      in a selected area.</I></P>
+
+      <P align="left"><I><IMG src="../../shared/tip.png"> Selecting <A href=
+      "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instruction to
+      undefined bytes.</I></P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">&nbsp;</P>
+
+    <H2><A name="Disassemble_Arm"></A>Disassemble ARM / Disassemble Thumb<A name=
+    "Disassemble_Thumb"></A></H2>
+
+    <BLOCKQUOTE>
+      <P><I>Disassemble ARM and Disassemble Thumb</I> will only be available if the program you are
+      working with is an ARM based processor.&nbsp; ARM processors have two states, ARM and Thumb
+      mode.&nbsp; The instructions available in ARM mode are 4 bytes long.&nbsp; In Thumb mode, the
+      instructions are "generally" 2 bytes long.&nbsp; ARM and Thumb mode are mutually exclusive,
+      the processor is either executing Thumb encoded instructions or ARM encoded
+      instructions.&nbsp; However, certain branching instructions can cause the processor to switch
+      modes.&nbsp; The default mode for disassembly in an ARM program is to disassemble in ARM
+      mode.&nbsp; If you come across a section of Thumb code that has not been disassembled,
+      Disassemble Thumb will set the disassembler into Thumb mode and begin disassembly.<BR>
+      </P>
+
+      <P>The actions work exactly like <I>Disassemble</I> in that they start disassembling at the
+      address under the cursor, and will follow the execution flow.</P>
+
+      <P>To perform <I>Disassemble ARM or Disassemble Thumb</I>:</P>
+
+      <OL>
+        <LI>Place the cursor in the Code Browser on an undefined byte.</LI>
+
+        <LI>Right-mouse-click, and choose the appropriate option for the mode you believe the
+        processor is using at the address.</LI>
+      </OL>
+
+      <P>The disassembly progress is displayed in the progress status area (bottom right) of the
+      tool.&nbsp; The progress status area displays the number of instructions disassembled and
+      provides a "Cancel" button.&nbsp; Press the "Cancel" button to stop the disassembly
+      process.&nbsp; Note: this will not undo any disassembly that has already occurred.</P>
+
+      <P align="left"><I><IMG src="../../shared/tip.png"> Press the 'F11' key to Disassemble in ARM
+      mode and press the "F12" key to disassemble in Thumb mode.</I></P>
+
+      <P align="left"><I><IMG src="../../shared/tip.png"> Selecting <A href=
+      "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instruction to
+      undefined bytes.</I></P>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Modify_Instruction_Flow"></A>Modify Instruction Flow</H2>
+    
+    <BLOCKQUOTE>
+    	<P>With certain processors and situations it may be desirable to modify the default 
+    	flow of an instruction to better reflect the nature of its flow.  For example a jump may 
+    	actually be performing a call type operation, a call may be performing a long-jump.  
+    	This distinction primarily affects the subroutine models and flow analysis performed 
+    	within Ghidra.</P>
+    	<P>The following basic flow types may be imposed upon the default flow of an instruction:</P>
+    	<UL>
+    		<LI>BRANCH</LI> 
+    		<LI>CALL</LI>
+    		<LI>CALL_RETURN</LI>
+    		<LI>RETURN</LI>
+    	</UL>
+    	<P>In all situations the conditional nature of the original flow is perserved.</P>
+    	<P>To Modify Instruction Flow:</P>
+    	<OL>
+    		<LI>Place the cursor on an instruction within the Code Browser.  Note that
+    		instructions which are purely fall-through can not be modified.</LI>
+    		<LI>Right-mouse-click</LI>
+    		<LI>Select <I>Modify Instruction Flow...</I> menu item.
+    		<LI>Within the <I>Modify Instruction Flow</I> dialog select the desired basic flow
+    		behavior.</LI>
+    		<LI>Click OK in the dialog</LI>
+    	</OL>
+    	<P align="left"><I><IMG src="../../shared/tip.png">An instruction whose flow has been
+    	modified will have its' mnemonic color modified.</I></P>
+    	
+    </BLOCKQUOTE>
+    
+
+    <H2><A name="ProcessorOptions"></A>Processor Options</H2>
+
+    <BLOCKQUOTE>
+      <P>Some processors have "modes" or state information that affects how they will interpret and
+      execute the bytes that make up an instruction. To support this, Ghidra creates a psuedo
+      register called the "contextRegister" that contains bits corresponding to the different modes
+      or options of the processor. &nbsp;The language specifies a default for these modes, but the
+      user can effectively change the defaults using the <B>Processor Options</B> dialog.<BR>
+      </P>
+
+      <DIV align="center">
+        <IMG src="images/ProcessorOptions.png"><BR>
+        <BR>
+         
+
+        <DIV align="left">
+          <BR>
+        </DIV>
+      </DIV>
+
+      <P>The options are
+      specific to the processor and the user should refer to the processor manual for a description
+      of a processors modes. Whenever, disassembly takes place these are the assumed values that
+      will be used to initiate disassembly, unless the user has specifically set the values at an
+      address using the &nbsp;<B><A href="help/topics/RegisterPlugin/Registers.htm">Register
+      Manager Window</A>.</B><BR>
+      </P>
+
+      <P>To changes the default processor options:</P>
+
+      <OL>
+        <LI>Place the cursor in the Code Browser.</LI>
+
+        <LI>Right-mouse-click, and select the "Processor Options" menu item.</LI>
+
+        <LI>Enter the values and press the "Ok" button.<BR>
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Disassembler</I> plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/ClearPlugin/Clear.htm">Clear</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Importing Files</A></LI>
+
+      <LI><A href="help/topics/LanguageProviderPlugin/Languages.htm">Languages</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+    <BR>
+  </BODY>
+</HTML>

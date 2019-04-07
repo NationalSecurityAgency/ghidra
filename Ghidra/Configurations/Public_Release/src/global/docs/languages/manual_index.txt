@@ -1,0 +1,54 @@
+
+How to Create a Processor Language Manual Index File
+----------------------------------------------------
+
+The processor manual index file (*.idx) contains list of instructions mnemonic and page 
+numbers into an identified PDF manual.  These files along with the corresponding PDF files
+are generally located within the data/manuals directory of a Ghidra module
+(e.g., Ghidra/Processors/x86/data/manuals/x86.idx).
+
+The first line of the .idx file must be a PDF manual selector preceeded by the @ character.
+
+Example:
+
+@68000.pdf [M68000 FAMILY Programmer's Reference Manual, 1992 (M68000PM/AD REV.1)]
+
+The manual selector specifies the PDF file name followed by the manual description within 
+brackets [ ].  The ".pdf" file extension is assumed if not specified, and the file path is 
+relative to the directory containing the index file.  If the manual is omitted from the 
+distribution due to copyright or other restrictions, the bracketed text will be helpful 
+in allowing the user to obtain the manual on there own.
+
+The PDF manual selector is immediately followed by lines containing instruction 
+mnemonic, page number pairs which are contained within the specified PDF manual.  
+Additional PDF manuals may be referenced by repeating this pattern starting with 
+the @ character on a new line.
+
+Example:
+
+@Intel64_IA32_vol2a.pdf [Intel 64 and IA-32 Vol 2A: Instruction Set Reference, A-M, Nov 2008 (253666-029US)]
+AAA, 74
+AAD, 76
+@Intel64_IA32_vol2b.pdf [Intel 64 and IA-32 Vol 2B: Instruction Set Reference, N-Z, Nov 2008 (253667-029US)]
+NEG, 4
+NOP, 7
+NOT, 9
+
+The AAA and AAD instructions will be found in Intel64_IA32_vol2a.pdf manual on  
+on page 74 and 76, respectively.  Moreover, the NEG and NOP instructions
+will be found in Intel64_IA32_vol2b.pdf on page 4 and 7 respectively. Also, the
+remainder of the instructions will be found under Intel64_IA32_vol2b.pdf unless
+another section is defined with the "@" symbol.
+
+Note: All files are expected to be stored relative to the directory
+where the index file is located.  The index file should be in the module's
+data/manuals directory.
+
+The index file contains one line per instruction mnemonic or section header.
+Each line of the index file for instruction mnemonics contains two strings: 
+the mnemonic and the corresponding instruction info page number in the PDF file in
+its respective section. The instruction mnemonic may only specify the start of a 
+mnemonic if appropriate.  For example a conditional branch instruction may include
+a condition suffix on the mnemonic, but for simplification the suffix may be omitted
+within the index file if all condition cases are handled together (e.g., index could
+a mnemonic 'B' instead of listing all the condition cases BLT, BGT, BEQ, etc.).

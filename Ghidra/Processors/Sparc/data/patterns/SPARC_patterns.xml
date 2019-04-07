@@ -1,0 +1,35 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x81f00000 </data> <!-- done -->
+      <data>0x81c7e008 0x........ </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
+      <data>0x81c3e008 0x........ </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
+      <data>0x81cfe008 0x........ </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+    </prepatterns>
+    <postpatterns>
+      <data>10011101 11100011 10111... ........</data>             <!-- save sp, xx, sp -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+ </patternlist>

@@ -1,0 +1,1404 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Glossary</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US" link="blue" vlink="purple">
+    <H1>Ghidra Glossary</H1>
+
+    <P align="center"><FONT size="5"><A href="#a">A</A>&nbsp; <A href="#b">B</A>&nbsp; <A href=
+    "#c">C</A>&nbsp; <A href="#d">D</A>&nbsp; <A href="#e">E</A>&nbsp; <A href="#f">F</A>&nbsp; <A
+    href="#g">G</A>&nbsp; <A href="#h">H</A>&nbsp; <A href="#i">I</A>&nbsp; J&nbsp; <A href=
+    "#k">K</A>&nbsp; <A href="#l">L</A>&nbsp; <A href="#m">M</A>&nbsp; <A href="#n">N</A>&nbsp; <A
+    href="#o">O</A>&nbsp; <A href="#p">P</A>&nbsp; Q&nbsp; <A href="#r">R</A>&nbsp; <A href=
+    "#s">S</A>&nbsp; <A href="#t">T</A>&nbsp; <A href="#u">U</A>&nbsp; <A href="#v">V</A>&nbsp; <A
+    href="#w">W</A>&nbsp; <A href="#x">X</A>&nbsp; Y&nbsp; Z</FONT></P>
+
+    <P align="center">&nbsp;</P>
+
+    <P><A name="a"></A><FONT color="#800080" size="7"><B>A</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Action"></A>Action</H2>
+
+      <BLOCKQUOTE>
+        <P>An operation the user can perform in Ghidra. All menu items, keybindings, and toolbar
+        buttons are actions.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Address"></A>Address</H2>
+
+      <BLOCKQUOTE>
+        <P>A number that identifies a specific location in memory.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AddressRange"></A>Address Range</H2>
+
+      <BLOCKQUOTE>
+        <P>A sequential set of addresses within a single Address Space identified by a minimum and
+        maximum address.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AddressSet"></A>Address Set</H2>
+
+      <BLOCKQUOTE>
+        <P>A collection of Addresses.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AddressSpace"></A>Address Space</H2>
+
+      <BLOCKQUOTE>
+        <P>The set of all legal addresses in memory for a given processor.&nbsp; The nature of each
+        address space is defined by the processor and language implementation.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AddressTable"></A>Address Table</H2>
+
+      <BLOCKQUOTE>
+        <P>Two or more consecutive addresses in memory.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Analyzer"></A>Analyzer</H2>
+
+      <BLOCKQUOTE>
+        <P>A software module that examines and annotates the code in a program to help reveal the
+        behavior of that program. Examples are disassembly, function generation, and stack
+        analysis.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Archive"></A>Archive</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A href="#DynamicDataType">Data Archive</A>.</P>
+
+        <P>See <A href="#ProjectArchive">Project Archive</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AssemblyLanguage"></A>Assembly Language</H2>
+
+      <BLOCKQUOTE>
+        <P>Programming language closely associated with an individual processor.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="AutoAnalysis"></A>Auto Analysis</H2>
+
+      <BLOCKQUOTE>
+        <P>Automated way to run all the analyzers in the appropriate order (Example: function
+        creation before stack analysis).</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="b"></A><FONT color="#800080" size="7"><B>B</B></FONT></H2>
+
+    <BLOCKQUOTE>
+      <H2><A name="BackReference"></A>Back Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>Another name for the <A href="#SourceAddress">Source Address</A> in a reference.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BackgroundTask"></A>Background Task</H2>
+
+      <BLOCKQUOTE>
+        <P>Any action that runs in the background allowing the user to perform other tasks.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BaseAddress"></A>Base Address</H2>
+
+      <BLOCKQUOTE>
+        <P>An address from which other addresses are derived using offsets.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BasicBlock"></A>Basic Block</H2>
+
+      <BLOCKQUOTE>
+        <P>A sequence of instructions that has no flow into or out of the sequence except for the
+        top and bottom (i.e., no branching).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BasicBlockModel"></A>Basic Block Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A <A href="help/topics/BlockModel/Block_Model.htm">Block Model</A> which partitions code
+        into small runs of instructions based on points where instruction flow changes.&nbsp; Jump,
+        Call, and Branch instructions will cause the execution flow to change.&nbsp; Arithmetic and
+        store/load instructions do not break a Basic Block because they do not change the
+        execution.&nbsp; A label will also end one block and begin another.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BinaryData"></A>Binary Data</H2>
+
+      <BLOCKQUOTE>
+        <P>Bytes that make up a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BigEndian"></A>Big Endian</H2>
+
+      <BLOCKQUOTE>
+        <P>Byte order for storage such that the high-order byte is at the starting address, as
+        shown in the figure below, where increasing memory addresses are going from left to
+        right.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/BigEndian.png" border="0" height=
+              "105" width="422"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H2><A name="BlockModel"></A>Block Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A model which partitions the code into address ranges based on some set of rules.&nbsp;
+        The most obvious model partitions the code into subroutines.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Bookmark"></A>Bookmark</H2>
+
+      <BLOCKQUOTE>
+        <P>Marker used to designate frequently-visited or important locations.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BookmarkType"></A>Bookmark Type</H2>
+
+      <BLOCKQUOTE>
+        <P>Attaches meaning to a bookmark to indicate its use. Example: Note, Info, Analysis,
+        etc.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="BrowserField"></A>Browser Field</H2>
+
+      <BLOCKQUOTE>
+        <P>Individual program elements displayed by the Code Browser's listing window.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ByteViewer"></A>Byte Viewer</H2>
+
+      <BLOCKQUOTE>
+        <P>A Ghidra component used to display and edit the bytes in a program.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="c"></A><FONT color="#800080" size="7"><B>C</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="CallBlockModel"></A>Call Block Model</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A href="#SubroutineModel">Subroutine Model</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CallGraph"></A>Call Graph</H2>
+
+      <BLOCKQUOTE>
+        <P>Graph displaying the relationships between "function calls" in a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CallingConvention"></A>Calling Convention</H2>
+
+      <BLOCKQUOTE>
+        <P>Determines how a function receives arguments and returns results. The available calling
+        conventions are currently determined by the program's language specification.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CheckIn"></A>Check-In</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of contributing and merging changes from a "checked-out" program to the
+        globally shared version of the program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CheckOut"></A>Check-Out</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of retrieving the latest version of a shared program for the purpose of
+        making changes.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Classpath"></A>Classpath</H2>
+
+      <BLOCKQUOTE>
+        <P>Path to search for Ghidra java code.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Clear"></A>Clear</H2>
+
+      <BLOCKQUOTE>
+        <P>Process of removing information from a program (Example: symbols, comments, everything,
+        etc).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CodeBrowser"></A><B>Code Browser</B></H2>
+
+      <BLOCKQUOTE>
+        <P>&nbsp;A <A href="#DefaultGhidraTool">Default
+        Ghidra tool</A> for displaying and working with program listings.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CodeBlock"></A>Code Block</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A HREF="#BasicBlock">Basic Block</A></P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CodeUnit"></A>Code Unit</H2>
+
+      <BLOCKQUOTE>
+        <P>An <A href="#Instruction">Instruction</A> or <A href="#DataItem">Data Item</A> in the
+        listing.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ComputedCall"></A>Computed Call</H2>
+
+      <BLOCKQUOTE>
+        <P>Call instruction whose destination is dynamically computed.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ConditionalCall"></A>Conditional Call</H2>
+
+      <BLOCKQUOTE>
+        <P>A call instruction that is executed conditionally.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ConditionalJump"></A>Conditional Jump</H2>
+
+      <BLOCKQUOTE>
+        <P>A jump instruction that is executed conditionally.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ConnectingTools"></A>Connecting Tools</H2>
+
+      <BLOCKQUOTE>
+        <P>Process of coordinating two or more <A href=
+        "#Tool">Tools</A> with respect to navigation and selection.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ContextSensitiveMenu"></A>Context Sensitive Menu</H2>
+
+      <BLOCKQUOTE>
+        <P>Menu that changes depending on cursor location.&nbsp; In other words, only actions which
+        are appropriate for the type of information on which the cursor resides are available from
+        the menu.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ContribPlugins"></A>Contrib Plugins</H2>
+
+      <BLOCKQUOTE>
+        <P>Term used to indicate user-contributed plugins.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CorePlugins"></A>Core Plugins</H2>
+
+      <BLOCKQUOTE>
+        <P>Term applied to plugins that are supported by the Ghidra team.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="CycleGroup"></A>Cycle Group</H2>
+
+      <BLOCKQUOTE>
+        <P>A sequence of data types applied using the same action repeatedly (i.e.
+        byte-&gt;word-&gt;dword-&gt;qword).</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="d"></A><FONT color="#800080" size="7"><B>D</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="DataItem"></A>Data (item)</H2>
+
+      <BLOCKQUOTE>
+        <P>Bytes in the program's memory that are not interpreted as instructions.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DataArchive"></A>Data Type Archive</H2>
+
+      <BLOCKQUOTE>
+        <P>File used to store user-defined data types independent of a specific program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DataComponent"></A>Data Component</H2>
+
+      <BLOCKQUOTE>
+        <P>A data item inside a structure or array.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DataType"></A>Data Type</H2>
+
+      <BLOCKQUOTE>
+        <P>A generalization of data which uniquely defines its specific attributes such as size,
+        structure and&nbsp; format. Example: byte, float, double.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DeadCode"></A>Dead Code</H2>
+
+      <BLOCKQUOTE>
+        <P>Unreachable code.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Decompiler"></A>Decompiler</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra module for translating assembly language to C.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DefaultGhidraTool"></A>Default Ghidra Tool</H2>
+
+      <BLOCKQUOTE>
+        <P>1&nbsp;&nbsp;&nbsp; A pre-configured
+        CodeBrowser <A href="#Tool">Tool</A> that is ready to use when Ghidra is installed.</P>
+
+        <P>2&nbsp;&nbsp;&nbsp; The tool that has been designated to run when you double click on a
+        program in the Project Window.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DestinationAddress"></A>Destination Address</H2>
+
+      <BLOCKQUOTE>
+        <P>The "To" address in a reference "From-To" address pair.&nbsp; An address that is
+        referred "To" by an instruction operand or pointer.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Diff"></A>Diff</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A href="#ProgramDiff">Program Diff</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DirectReferences"></A>Direct References</H2>
+
+      <BLOCKQUOTE>
+        <P>Locations in memory where the bytes make up the address of the current location in the
+        browser.&nbsp; See <A href="help/topics/Search/Search_for_DirectReferences.htm">Search for
+        Direct References</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Disassemble"></A>Disassemble</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of interpreting program bytes as assembly instructions.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DisassembleRestricted"></A>Disassemble, Restricted</H2>
+
+      <BLOCKQUOTE>
+        <P>The Ghidra disassembly mode where disassembly is restricted to the current
+        selection.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DisassembleStatic"></A>Disassemble, Static</H2>
+
+      <BLOCKQUOTE>
+        <P>The Ghidra disassembly mode where code flows are not followed and only bytes at the
+        current location or selection are disassembled.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DLL"></A>DLL</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for Dynamic Link Library.&nbsp; A shared library on a Windows platform.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DockingWindowComponent"></A>Docking Window Component</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra user interface component that can be positioned and sized by the user.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DWord"></A>DWord</H2>
+
+      <BLOCKQUOTE>
+        <P>A 4-byte integer data type.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="DynamicDataType"></A>Dynamic Data Type</H2>
+
+      <BLOCKQUOTE>
+        <P>Data types whose structure varies depending on the data bytes on which they are
+        applied.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="e"></A><FONT color="#800080" size="7"><B>E</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="ELF"></A>ELF</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for Executable Linking Format.&nbsp; File format used by Unix and Linux
+        operating systems for storing executable programs.&nbsp;&nbsp;&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="EndOfLineComment"></A>End of Line (EOL) Comment</H2>
+
+      <BLOCKQUOTE>
+        <P>Comments that are displayed to the right of the instruction.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Endian"></A>Endian</H2>
+
+      <BLOCKQUOTE>
+        <P>Byte ordering.&nbsp; See <A href="#BigEndian">Big Endian</A>, <A href=
+        "#LittleEndian">Little Endian</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="EntryPoint"></A>Entry Point</H2>
+
+      <BLOCKQUOTE>
+        <P>Location in a program where execution begins.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="EnumDataType"></A>Enum Data Type</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra data type for modeling C-type enums.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Equate"></A>Equate</H2>
+
+      <BLOCKQUOTE>
+        <P>A string substitution for numeric values appearing in instruction operands.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Exporter"></A>Exporter</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra module for storing program information in various file formats (XML, HTML, ASCII,
+        etc).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ExternalReference"></A>External Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>A reference from a location in one program to a location in another program.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="f"></A><FONT color="#800080" size="7"><B>F</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="FallThroughAddress"></A>Fall Through Address</H2>
+
+      <BLOCKQUOTE>
+        <P>The address of the next sequential instruction to be executed.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="FavoriteDataType"></A>Favorite Data Type</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra data types that can be accessed via the popup-menu.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Flow"></A>Flow</H2>
+
+      <BLOCKQUOTE>
+        <P>A.K.A. Instruction Flow or Control Flow.  This the sequence of instructions that
+        are executed as a program runs, including branching and fall-through.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="FlowGraph"></A>Flow Graph</H2>
+
+      <BLOCKQUOTE>
+        <P>Graph that shows basic instruction flow.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ForwardRefs"></A>Forward Refs</H2>
+
+      <BLOCKQUOTE>
+        <P>Another name for the <A href="#DestinationAddress">Destination Address</A> in a
+        reference.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Fragments"></A>Fragment</H2>
+
+      <BLOCKQUOTE>
+        <P>A set of addresses used by the <A href="#ProgramTree">Program Tree</A> to organize
+        code.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="FrontEnd"></A>Front End</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A href="#GhidraProjectWindow">Ghidra Project Window</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Function"></A>Function</H2>
+
+      <BLOCKQUOTE>
+        <P>A program element that is referenced via a call instruction.&nbsp; A <A href=
+        "help/topics/FunctionPlugin/Functions.htm">function</A> has an entry point, a body of
+        instructions, a return data type, and optionally parameters, local variables, and local
+        register variables.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="FunctionSignature"></A>Function Signature</H2>
+
+      <BLOCKQUOTE>
+        <P>The name, return type, and parameters of a function.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="g"></A><FONT color="#800080" size="7"><B>G</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Ghidra"></A>Ghidra</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra is a java-based framework for reverse engineering.&nbsp; It provides built-in
+        capabilities for reverse engineering along with support for user-provided
+        plugins.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="GhidraFile"></A>Ghidra File</H2>
+
+      <BLOCKQUOTE>
+        <P>Any file that is part of a <A href=
+        "#GhidraProject">Ghidra Project</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="GhidraProgramFile"></A>Ghidra Program File</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra files containing information about a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="GhidraProject"></A>Ghidra Project</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra organizes work into projects. All work is performed in the context of a
+        project.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="GhidraProjectWindow"></A>Ghidra Project Window</H2>
+
+      <BLOCKQUOTE>
+        <P>The main Ghidra interface for managing <A href="#Program">program files</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="GlobalNamespace"></A>Global Namespace&nbsp;</H2>
+
+      <BLOCKQUOTE>
+        <P>Symbols that are not in any specific namespace are said to be in the "global" namespace.
+        The global namespace is the default namespace.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="gzf"></A>gzf</H2>
+
+      <BLOCKQUOTE>
+        <P>File extension given to Ghidra program database files that have been "zipped up".</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="h"></A><FONT color="#800080" size="7"><B>H</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="HexInteger"></A>Hex Integer</H2>
+
+      <BLOCKQUOTE>
+        <P>A display format in the <A href="#ByteViewer">Byte Viewer</A> used to display integer
+        values in hex.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="HijackedFile"></A>Hijacked File</H2>
+
+      <BLOCKQUOTE>
+        <P>A local program file in a project that is "hiding" a shared program with the same name.
+        Users cannot access the shared program until the local file is removed.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Highlight"></A>Highlight</H2>
+
+      <BLOCKQUOTE>
+        <P>A more permanent type of selection.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="History"></A>History</H2>
+
+      <BLOCKQUOTE>
+        <P>List of changes made to labels or comments.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="i"></A><FONT color="#800080" size="7"><B>I</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="IDA_Pro"></A>IDA Pro</H2>
+
+      <P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A commercially available reverse engineering
+      tool.</P>
+
+      <H2><A name="Importer"></A>Importer</H2>
+
+      <BLOCKQUOTE>
+        <P>Reads a file (.xml, .dll, .so, etc), and converts its contents into a Ghidra
+        program.&nbsp; Ghidra contains multiple importers (corresponding to a specific set of
+        formats).&nbsp; Additional importers can easily be added.&nbsp;&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="InitializedBlock"></A>Initialized Block</H2>
+
+      <BLOCKQUOTE>
+        <P>Memory block whose byte values exist as opposed to uninitialized blocks whose byte
+        values are unknown.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="InstanceSetting"></A>Instance Settings, Data Type</H2>
+
+      <BLOCKQUOTE>
+        <P>Display options for <I>individual</I> data items in Ghidra. For example one byte can be
+        displayed as decimal while another is displayed as hex.&nbsp; Also see <A href=
+        "help/topics/DataPlugin/Data.htm#Default_Data_Settings">Data Type Default Settings</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Instruction"></A>Instruction</H2>
+
+      <BLOCKQUOTE>
+        <P>An assembly level command such as MOV, JMP, etc.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="IntelHex"></A>Intel Hex</H2>
+
+      <BLOCKQUOTE>
+        <P>Binary file format specified by Intel generally used for ROM images.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="IsolatedEntryModel"></A>Isolated Entry Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A block model defining subroutines.&nbsp; A subroutine block must have only one entry
+        point, but may share code with another subroutine.&nbsp; The subroutine body will stop if
+        another is called or a source entry point is encountered.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="k"></A><FONT color="#800080" size="7"><B>K</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="KeyBinding"></A>Key Binding</H2>
+
+      <BLOCKQUOTE>
+        <P>Keyboard shortcut for invoking Ghidra functionality.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="l"></A><FONT color="#800080" size="7"><B>L</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Label"></A>Label&nbsp;</H2>
+
+      <BLOCKQUOTE>
+        <P>Symbol name associated with an address in memory.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Language"></A>Language</H2>
+
+      <BLOCKQUOTE>
+        <P>The set of instructions associated with a computer processor.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="LittleEndian"></A>Little Endian</H2>
+
+      <BLOCKQUOTE>
+        <P>Byte order for storage such that the low-order byte is at the starting address, as shown
+        in the figure below, where the increasing memory addresses are going from right to
+        left.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/LittleEndian.png" border="0" height=
+              "121" width="447"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H2><A name="Listing"></A>Listing</H2>
+
+      <BLOCKQUOTE>
+        <P>The display of the assembly language along with comments and other markup
+        information.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="LocalMenu"></A>Local Menu</H2>
+
+      <BLOCKQUOTE>
+        <P>A menu that is associated with a specific Ghidra docking window.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="LocalSymbol"></A>Local Symbol</H2>
+
+      <BLOCKQUOTE>
+        <P>A symbol that is local to a particular function.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="m"></A><FONT color="#800080" size="7"><B>M</B></FONT></P>
+
+    <BLOCKQUOTE>
+
+      <H2><A name="Marker"></A>Marker</H2>
+
+      <BLOCKQUOTE>
+        <P>Used to indicate a significant location in a program (ex: bookmarks, search results,
+        analysis problems, etc).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Memory"></A>Memory</H2>
+
+      <BLOCKQUOTE>
+        <P>The component of a program that contains the raw bytes and the addresses where those
+        bytes are located in the program's address space.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MemoryBlock"></A>Memory Block</H2>
+
+      <BLOCKQUOTE>
+        <P>A contiguous set of bytes anchored at an address.&nbsp; Memory consists of one or more
+        Memory Blocks.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MemoryMap"></A>Memory Map</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra GUI that allows the user to view and
+        edit the Memory Blocks of a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MemoryReference"></A>Memory Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>A reference from a mnemonic or operand to another address in the same program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Merge"></A>Merge</H2>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>The process of resolving the differences between a checked out version with the
+          globally shared version of a program.</LI>
+
+          <LI>The process of retrieving changes made by others to the globally shared version of
+          the program and incorporating those changes into your program <B>without</B> introducing
+          your changes into the shared version (i.e. doing a check-in).</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H2><A name="Microcode"></A>Microcode</H2>
+
+      <BLOCKQUOTE>
+        <P>Low-level instructions used to implement a machine instruction.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Mnemonic"></A>Mnemonic</H2>
+
+      <BLOCKQUOTE>
+        <P>The name of an instruction as it appears in the assembly listing. (i.e. mov, add, jmp,
+        etc.)&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Modal"></A>Modal</H2>
+
+      <BLOCKQUOTE>
+        <P>Dialogs that prevent user interaction with any other Ghidra component until the dialog
+        is dismissed.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MotorolaHex"></A>Motorola Hex</H2>
+
+      <BLOCKQUOTE>
+        <P>Binary file format specified by Motorola generally used for ROM images.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MultipleEntryModel"></A>Multiple Entry Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A block model defining subroutines.&nbsp; A subroutine block may have multiple entry
+        points and may not overlap code from other subroutines.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="MultiUser"></A>Multi-User</H2>
+
+      <BLOCKQUOTE>
+        <P>Term used when multiple users are working together using shared projects and
+        programs.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="n"></A><FONT color="#800080" size="7"><B>N</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="NameSpace"></A>Name Space</H2>
+
+      <BLOCKQUOTE>
+        <P>Defines a scope such that all symbol names within that scope are unique.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="NE"></A>NE</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for New Executable.&nbsp; File format used by Windows 3.1.x&nbsp; operating
+        systems for storing executable programs.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="o"></A><FONT color="#800080" size="7"><B>O</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Offcut"></A>Offcut</H2>
+
+      <BLOCKQUOTE>
+        <P>A reference into the middle of some instruction or data item.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Offline"></A>Offline</H2>
+
+      <BLOCKQUOTE>
+        <P>A situation when a shared Ghidra project cannot connect to the server repository.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Operand"></A>Operand</H2>
+
+      <BLOCKQUOTE>
+        <P>The arguments of an assembly instruction.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="OverlappedCodeModel"></A>Overlapped Code Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A block model defining subroutines.&nbsp; A subroutine block is all code accessible from
+        a single entry point and terminates at returns.&nbsp; Code may be shared with other
+        subroutines.&nbsp; Each subroutine is defined to include the overlapping code as part of
+        its body.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Overlay"></A>Overlay</H2>
+
+      <BLOCKQUOTE>
+        <P>A memory block that occupies the same memory address range as some other block.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="p"></A><FONT color="#800080" size="7"><B>P</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="PartitionedCodeModel"></A>Partitioned Code Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A block model defining subroutines.&nbsp; There is exactly one entry point which may be
+        a call or any other flow instruction.&nbsp; Each instruction belongs to exactly one
+        subroutine (code is not shared).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PCode"></A>PCode</H2>
+
+      <BLOCKQUOTE>
+        <P>A form of microcode used by Ghidra to model the semantics of machine- or assembly-level instructions.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PE"></A>PE</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for Portable Executable.&nbsp; File format used by Microsoft for storing
+        executable programs.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PKIauthentication"></A>PKI Authentication</H2>
+
+      <BLOCKQUOTE>
+        <P>One of the ways a Ghidra client can use to identify itself to the Ghidra server.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PlateComment"></A>Plate Comment</H2>
+
+      <BLOCKQUOTE>
+        <P>Comments that are displayed as a block header above the instruction.&nbsp; Plate
+        comments are automatically surrounded by '*'s.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Plugin"></A>Plugin</H2>
+
+      <BLOCKQUOTE>
+        <P>Software bundles that can optionally be added to Ghidra to add additional
+        functionality.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PluginDependency"></A>Plugin Dependency</H2>
+
+      <BLOCKQUOTE>
+        <P>The required presence of additional plugins before a particular plugin can be
+        loaded.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PluginTable"></A>Plugin Table</H2>
+
+      <BLOCKQUOTE>
+        <P>A table view of available Plugins that can be added to a tool, as shown in the
+        <I>Configure</I> tool dialog.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PluginTree"></A>Plugin Tree</H2>
+
+      <BLOCKQUOTE>
+        <P>A graphical view of available Plugins that can be added to a tool, as shown in the
+        <I>Configure</I> tool dialog.&nbsp; The Plugins are grouped by functionality and displayed
+        in a tree-like format.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PopupMenu"></A>Popup menu</H2>
+
+      <BLOCKQUOTE>
+        <P>A <A href="#ContextSensitiveMenu">context-sensitive menu</A> that appears when you press
+        the right mouse button.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PostComment"></A>Post Comment</H2>
+
+      <BLOCKQUOTE>
+        <P>Comments that are displayed below the instruction.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PreComment"></A>Pre Comment</H2>
+
+      <BLOCKQUOTE>
+        <P>Comments that are displayed above the instruction.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProjectArchive"></A>Project Archive</H2>
+
+      <BLOCKQUOTE>
+        <P>Project compressed into a single file for archival or transfer purposes.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Program"></A>Program</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra's representation of an executable binary, its analysis and annotations.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProgramDiff"></A>Program Diff</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for <B>Program Diff</B>erence.&nbsp; It is
+        the process of comparing and contrasting programs in order to determine their similarities
+        and differences.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="PrimaryLabel"></A>Primary Label</H2>
+
+      <BLOCKQUOTE>
+        <P>The most important label at a location. It is the label that will appear by default in
+        all references to that location.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProcessorLanguage"></A>Processor Language</H2>
+
+      <BLOCKQUOTE>
+        <P>The assembly language for a processor.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProgramContext"></A>Program Context</H2>
+
+      <BLOCKQUOTE>
+        <P>The set of register values at any location in a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProgramTree"></A>Program Tree</H2>
+
+      <BLOCKQUOTE>
+        <P>The Ghidra GUI module that allows the user to organize the memory of a program
+        hierarchically.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Project"></A>Project</H2>
+
+      <BLOCKQUOTE>
+        <P>A collection of files (programs, etc) and user configuration information.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ProjectRepository"></A>Project Repository</H2>
+
+      <BLOCKQUOTE>
+        <P>A directory on a server that is used by Ghidra's Multi-User module to store shared
+        programs.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Property"></A>Property</H2>
+
+      <BLOCKQUOTE>
+        <P>A storage mechanism used by plugins to store information in a program at specific
+        addresses.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="r"></A><FONT color="#800080" size="7"><B>R</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="ReadOnlyProject"></A>Read-Only Project</H2>
+
+      <BLOCKQUOTE>
+        <P>A project that can be opened for viewing but cannot be changed (i.e. someone else owns
+        this project).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Redo"></A>Redo</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of repeating the last change that was "undone".</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Reference"></A>Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>A link from the mnemonic or operand of an instruction to a destination.&nbsp; The
+        destination is an address, stack variable, or external address in another program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Register"></A>Register</H2>
+
+      <BLOCKQUOTE>
+        <P>A special-purpose storage location in a processor.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="RegularExpression"></A>Regular Expression</H2>
+
+      <BLOCKQUOTE>
+        <P>A character sequence used to match patterns in strings.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="RelocationTable"></A>Relocation Table</H2>
+
+      <BLOCKQUOTE>
+        <P>Relocations are address locations that need to be updated to reflect where the program
+        is loaded into memory.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="RunningTools"></A>Running Tools</H2>
+
+      <BLOCKQUOTE>
+        <P>An area on the <A href="#GhidraProjectWindow">Ghidra Project Window</A> that displays a
+        list of icons which represent <A href="#Tool">Tools</A> currently in use.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="s"></A><FONT color="#800080" size="7"><B>S</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Scalar"></A>Scalar</H2>
+
+      <BLOCKQUOTE>
+        <P>A numeric value in a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Scope"></A>Scope</H2>
+
+      <BLOCKQUOTE>
+        <P>The set of addresses for which a variable is defined.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ScreenElement"></A>Screen Element</H2>
+
+      <BLOCKQUOTE>
+        <P>The individual listing items that are displayed by the code browser (i.e. address,
+        mnemonic, operand, comment, etc.)</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SelectLimitedFlow"></A>Select Limited Flow</H2>
+
+      <BLOCKQUOTE>
+        <P>A Ghidra process that involves following a <A href="#Program">program</A>&rsquo;s logic
+        but excluding all branches (conditional and unconditional).&nbsp; Select Limited Flow often
+        reveals the high-level algorithm associated with a program. Select Limited Flow is an
+        option in the <A href="#CodeBrowser">Code Browser</A>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Selection"></A>Selection</H2>
+
+      <BLOCKQUOTE>
+        <P>A set of addresses that have been chosen by the user in order to perform some
+        operation.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SharedProject"></A>Shared Project</H2>
+
+      <BLOCKQUOTE>
+        <P>A project that is associated with a Ghidra Server.&nbsp; The files in a shared project
+        are accessible by other users.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SharedProgram"></A>Shared Program&nbsp;</H2>
+
+      <BLOCKQUOTE>
+        <P>A program that can be modified by multiple users. Shared programs reside in project
+        repositories on a server rather than in local&nbsp; projects on the user's workstation.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SimpleBlockModel"></A>Simple Block Model</H2>
+
+      <BLOCKQUOTE>
+        <P>See <A href="#BasicBlockModel">Basic Block Model</A></P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SLED"></A>SLED</H2>
+
+      <BLOCKQUOTE>
+        <P>Table-based mechanism for specifying the syntax and semantics for a processor
+        language.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SLEIGH"></A>SLEIGH</H2>
+
+      <BLOCKQUOTE>
+        <P>Improved version of SLED. Allows language-writers to more accurately represent all
+        features of a language.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SourceAddress"></A>Source Address</H2>
+
+      <BLOCKQUOTE>
+        <P>The "From" address in a reference "From-To" address pair.&nbsp; An address of an
+        instruction or pointer that refers to another address.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="StackReference"></A>Stack Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>A reference from a mnemonic or operand to a stack variable.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="StackVariable"></A>Stack Variable</H2>
+
+      <BLOCKQUOTE>
+        <P>A parameter or local variable definition on the stack frame defined by a function.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="StaticDisassembly"></A>Static Disassembly</H2>
+
+      <BLOCKQUOTE>
+        <P>A version of disassembly where jump and call instructions are not followed.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="StatusWindow"></A>Status Window</H2>
+
+      <BLOCKQUOTE>
+        <P>Area at the bottom of a Ghidra tool used to display messages to the user.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SubroutineModel"></A>Subroutine Model</H2>
+
+      <BLOCKQUOTE>
+        <P>A <A href="help/topics/BlockModel/Block_Model.htm">Block Model</A> which partitions code
+        into address ranges based upon a set of rules defined by a specific model.&nbsp; Subroutine
+        models generally define blocks whose entry point(s) correspond to called locations.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Symbol"></A>Symbol</H2>
+
+      <BLOCKQUOTE>
+        <P>A label that associates a name with an address.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SymbolTable"></A>Symbol Table</H2>
+
+      <BLOCKQUOTE>
+        <P>A component of <A href="#Program">program</A> containing
+        all the label information.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="SymbolTree"></A>Symbol Tree&nbsp;</H2>
+
+      <BLOCKQUOTE>
+        <P>Ghidra GUI module used to display symbols in a tree structure.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="t"></A><FONT color="#800080" size="7"><B>T</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="TabbedWindow"></A>Tabbed Window</H2>
+
+      <BLOCKQUOTE>
+        <P>A window containing two or more sub-windows that can be selected using tabs.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Terminator"></A>Terminator</H2>
+
+      <BLOCKQUOTE>
+        <P>Any assembly instruction that has no flow (ex: Halt).</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="TextHighlighting"></A>Text Highlighting</H2>
+
+      <BLOCKQUOTE>
+        <P>The mode in the Code Browser where all the uses of a given word are highlighted in
+        yellow.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Thunk"></A>Thunk</H2>
+
+      <BLOCKQUOTE>
+        <P>Thunks are functions, called by other functions, usually to perform an indirect or
+        external function call.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ToolChest"></A>Tool Chest</H2>
+
+      <BLOCKQUOTE>
+        <P>An area on the <A href="#GhidraProjectWindow">Ghidra Project</A> window that displays
+        icons for the configured and saved <A href="#Tool">Tools</A> which are available to a
+        user.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Tool"></A>Tool</H2>
+
+      <BLOCKQUOTE>
+        <P>A collection of <A href=
+        "#Plugin">Plugins</A> that work together to produce a useful GUI for performing some user
+        level task.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ToolTip"></A>Tool Tip</H2>
+
+      <BLOCKQUOTE>
+        <P>A popup description that appears when the mouse is hovered over a GUI item.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Toolbar"></A>Toolbar (local and global)</H2>
+
+      <BLOCKQUOTE>
+        <P>An icon bar used to invoke Ghidra functionality.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="u"></A><FONT color="#800080" size="7"><B>U</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="UnconditionalCall"></A>Unconditional Call</H2>
+
+      <BLOCKQUOTE>
+        <P>A call instruction that always executes.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UnconditionalJump"></A>Unconditional Jump</H2>
+
+      <BLOCKQUOTE>
+        <P>A jump instruction that always executes.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UndefinedData"></A>Undefined Data</H2>
+
+      <BLOCKQUOTE>
+        <P>Bytes in the program that have yet to be defined as instructions or data.&nbsp; By
+        default, all bytes in a program begin as Undefined Data.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="Undo"></A>Undo</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of removing the last change made to a program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UndockedWindow"></A>Undocked Window</H2>
+
+      <BLOCKQUOTE>
+        <P>A Ghidra window that has its own frame and can be positioned and sized independently
+        from other Ghidra windows.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UnresolvedExternalReference"></A>Unresolved External Reference</H2>
+
+      <BLOCKQUOTE>
+        <P>An external reference that has not been linked to any program in the project.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UserAccessList"></A>User Access List</H2>
+
+      <BLOCKQUOTE>
+        <P>The list of users that have access to a particular shared repository on a Ghidra
+        server.&nbsp; The list contains usernames and permissions.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="UserAuthentication"></A>User Authentication</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of verifying the identity of a client user to the server.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="v"></A><FONT color="#800080" size="7"><B>V</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="VersionControl"></A>Version Control</H2>
+
+      <BLOCKQUOTE>
+        <P>The process of maintaining multiple versions of a program as changes are made.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="VersionHistory"></A>Version History</H2>
+
+      <BLOCKQUOTE>
+        <P>A dialog displaying the history of changes made to a program.&nbsp; Any previous version
+        of the program can be selected for viewing from the <B>View History</B> dialog.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="VersionedFile"></A>Versioned Program</H2>
+
+      <BLOCKQUOTE>
+        <P>A program that has been placed under version control in a Ghidra project in order to
+        maintain a history of all the changes made to that program.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="ViewedProject"></A>Viewed Project</H2>
+
+      <BLOCKQUOTE>
+        <P>A project that has been open as read-only.&nbsp; Projects that you do not own can only
+        be opened as a Viewed Project.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="w"></A><FONT color="#800080" size="7"><B>W</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="Workspace"></A>Workspace</H2>
+
+      <BLOCKQUOTE>
+        <P>A virtual Ghidra desktop for a set of <A
+        href="#RunningTools">running tools</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="x"></A><FONT color="#800080" size="7"><B>X</B></FONT></P>
+
+    <BLOCKQUOTE>
+      <H2><A name="XREF"></A>XREF</H2>
+
+      <BLOCKQUOTE>
+        <P>Abbreviation for cross reference.&nbsp; CodeBrowser's
+        display of <A href="#SourceAddress">Source Addresses</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><BR>
+  </BODY>
+</HTML>

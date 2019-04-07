@@ -1,0 +1,36 @@
+package ghidra.app.test;
+
+import ghidra.program.model.data.*;
+
+/**
+ *
+ * A Test data type used to test the "Refresh" on built in types. This data type is
+ * compiled by the JUnit test.
+ *  
+ * 
+ */
+public class TestDataType extends StructureDataType implements BuiltInDataType {
+
+    public TestDataType() {
+   		this(null);
+    }
+    public TestDataType(DataTypeManager dtm) {
+    	super("TestDataType", 0, dtm);
+    	add(new ByteDataType());
+    	add(new CharDataType());
+    	add(new WordDataType());
+    }
+
+    /**
+     * @see ghidra.program.model.data.BuiltInDataType#clone(ghidra.program.model.data.DataTypeManager)
+     */
+    public BuiltInDataType clone(DataTypeManager dataMgr) {
+    	return new TestDataType(dataMgr);
+    }
+    /**
+     * @see ghidra.program.model.data.BuiltInDataType#getCTypeDeclaration(ghidra.program.model.data.DataOrganization)
+     */
+	public String getCTypeDeclaration(DataOrganization dataOrganization) {
+		return null;
+	}
+}

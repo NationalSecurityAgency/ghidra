@@ -1,0 +1,7 @@
+simple.input###1#@define SIMPLE_THING ""
+#@ifdef SIMPLE_THING
+I'm here
+#@else
+#I'm not
+#@endif
+

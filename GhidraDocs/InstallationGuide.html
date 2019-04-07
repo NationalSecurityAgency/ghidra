@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ghidra Installation Guide</title>
+  <style name="text/css">
+    li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; margin-bottom: 12px; }
+    h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+    h2 { padding-top:30px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+    p { font-family:times new roman; font-size:14pt; }
+    td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; }
+    th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; }
+    code { color:black; font-family:courier new font-size: 14pt; }
+    span.code { font-family:courier new font-size: 14pt; color:#000000; }
+  </style>
+</head>
+
+<body>
+
+<h1>Ghidra Installation Guide</h1>
+<p>
+The installation information provided is effective as of Ghidra 9.0.1 and is subject to change with
+future releases.
+</p>
+
+<ul>
+  <li><a href="#Platforms">Platforms Supported</a></li>
+  <li><a href="#Requirements">Minimum Requirements</a></li>
+  <li><a href="#Install">Installing Ghidra</a></li>
+  <ul>
+    <li><a href="#InstallationNotes">Installation Notes</a></li>
+    <li><a href="#JavaNotes">Java Notes</a></li>
+  </ul>
+  <li><a href="#Layout">Ghidra Installation Directory Layout</a></li>
+  <li><a href="#Run">Running Ghidra</a></li>
+  <ul>
+    <li><a href="#RunGUI">GUI Mode</a></li>
+    <li><a href="#RunServer">Ghidra Server</a></li>
+    <li><a href="#RunHeadless">Headless (Batch) Mode</a></li>
+    <li><a href="#RunJar">Single Jar Mode</a></li>
+  </ul>
+  <li><a href="#Extensions">Extensions</a></li>
+  <ul>
+    <li><a href="#GhidraExtensionNotes">Ghidra Extension Notes</a></li>
+  </ul>
+  <li><a href="#Development">Ghidra Development</a></li>
+  <li><a href="#Upgrading">Upgrade Instructions</a></li>
+  <ul>
+    <li><a href="#GeneralUpgrade">General Upgrade Instructions</a></li>
+    <li><a href="#ServerUpgrade">Server Upgrade Instructions</a></li>
+  </ul>
+  <li><a href="#Troubleshooting">Troubleshooting & Help</a></li>
+  <ul>
+    <li><a href="#LaunchIssues">Launching Ghidra</a></li>
+    <li><a href="#GhidraHelp">Using Ghidra</a></li>
+  </ul>
+  <li><a href="#KnownIssues">Known Issues</a></li>
+  <ul>
+    <li><a href="#CommonIssues">All Platforms</a></li>
+    <li><a href="#WindowsIssues">Windows</a></li>
+    <li><a href="#LinuxIssues">Linux</a></li>
+    <li><a href="#MacOSIssues">macOS (OS X)</a></li>
+  </ul>
+</ul>
+
+
+<h2><a name="Platforms"></a>Platforms Supported</h2>
+<ul>
+  <li>Microsoft Windows 7 or 10 (64-bit)</li>
+  <li>Linux (64-bit, CentOS 7 is preferred)</li>
+  <li>macOS (OS X) 10.8.3+ (Mountain Lion or later)</li>
+</ul>
+<blockquote><p><b>NOTE: </b>All 32-bit OS installations are now deprecated. Please contact the
+Ghidra team if you have a specific need.</p></blockquote>
+
+<h2><a name="Requirements"></a>Minimum Requirements</h2>
+<h3>Hardware</h3>
+<ul>
+  <li>4 GB RAM</li>
+  <li>1 GB storage (for installed Ghidra binaries)</li>
+  <li>Dual monitors strongly suggested</li>
+</ul>
+<h3>Software</h3>
+<ul>
+  <li>Java 11 Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
+  <ul>
+    <li>OpenJDK distributed from <i>jdk.java.net</i> is suggested</i></li>
+  </ul>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h3>
+
+<h2><a name="Install"></a>Installing Ghidra</h2>
+<p>To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem
+destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc)</p>
+<h3><a name="InstallationNotes"></a>Installation Notes</h3>
+<ul>
+  <li>
+    Ghidra does not use a traditional installer program.  Instead, the Ghidra distribution file is
+    simply extracted in-place on the filesystem.  This approach has advantages and disadvantages.
+    On the up side, administrative privilege is not required to install Ghidra for personal use.
+    Also, because installing Ghidra does not update any OS configurations such as the registry on
+    Windows, removing Ghidra is as simple as deleting the Ghidra installation directory.  On the
+    down side, Ghidra will not automatically create a shortcut on the desktop or appear in
+    application start menus.
+  </li>
+  <li>
+    Administrative privilege may be required to extract Ghidra to certain filesystem destinations
+    (such as C:\), as well as install the Ghidra Server as a service.
+  </li>
+  <li>
+    Ghidra relies on using directories outside of its installation directory to manage both
+    temporary and longer-living cache files.  Ghidra attempts to use standard OS directories that
+    are designed for these purposes in order to avoid several issues, such as storing large amounts
+    of data to a roaming profile.  If it is suspected that the default location of these directories
+    is causing a problem, they can be changed by modifying the relevant properties in the
+    <i>support/launch.properties</i> file.
+  </li>
+</ul>
+<h3><a name="JavaNotes"></a>Java Notes</h3>
+<ul>
+  <li>
+    Ghidra requires a <a href="#Requirements">supported</a> version of a Java Runtime and 
+    Development Kit on the PATH to run.  However, if there is a version of Java on the PATH that 
+    Ghidra does not support, it will use that version of Java (if 1.7 or later) to assist in 
+    locating a supported version on your system.  If one cannot be automatically located, the user 
+    will be prompted to enter a path to the Java home directory to use (the Java home directory is 
+    the parent directory of Java's <i>bin</i> directory).  This minimizes the impact Ghidra has on 
+    pre-existing configurations of Java that other software may rely on.
+  </li>  
+  <li>
+    Ghidra is developed and tested against OpenJDK distributed from <i>jdk.java.net</i>.  Consider 
+    using this OpenJDK distribution for the most stable experience.
+  </li>
+  <li>
+    If Ghidra failed to run because <i>no versions</i> of Java were on the PATH, a 
+    <a href="#Requirements">supported</a> JDK should be manually installed and added to the 
+    PATH.  The following steps outline how to add an OpenJDK distribution to the operating system's 
+    PATH.
+    <ul>
+      <li>
+        <p><b>Windows: </b>Extract the JDK distribution (.zip file) to your desired location 
+        and add the JDK's bin directory to your PATH:</p>
+        <ol>
+          <li>
+            <p>Extract the JDK:</p>
+            <ol>
+              <li>Right-click on the zip file and click <b>Extract All...</b></li>
+              <li>Click <b>Extract</b></li>
+            </ol>
+          </li>
+          <li>
+            <p>Open Environment Variables window:</p>
+            <ol>
+              <li>
+                <p>
+                  <i>Windows 10:</i> Right-click on Windows start button, and click <b>System</b>
+                </p>
+                <p>
+                  <i>Windows 7:</i> Click Windows start button, right-click on Computer, and click 
+                  <b>Properties</b>
+                </p>
+              </li>
+              <li>Click <b>Advanced system settings</b></li>
+              <li>Click <b>Environment variables...</b></li>
+            </ol>
+          </li>
+          <li>
+            <p>Add the JDK bin directory to the PATH variable:</p>
+            <ol>
+              <li>Under System variables, highlight <i>Path</i> and click <b>Edit...</b></li>
+              <li>
+                At the end of the the <i>Variable value</i> field, add a semicolon followed by 
+                <i>&lt;path of extracted JDK dir&gt;\bin</i>  
+              </li>
+              <li>Click <b>OK</b></li>
+              <li>Click <b>OK</b></li>
+              <li>Click <b>OK</b></li>
+            </ol>          
+          </li>
+          <li>
+            Restart any open Command Prompt windows for changes to take effect
+          </li>
+        </ol>
+      </li>
+      <li>
+        <p><b>Linux and macOS (OS X): </b>Extract the JDK distribution (.tar.gz file) to your 
+        desired location, and add the JDK's bin directory to your PATH:</p>
+        <ol>
+          <li>
+            Extract the JDK:
+            <blockquote><i>tar xvf &lt;JDK distribution .tar.gz&gt;</i></blockquote>
+          </li>
+          <li>
+            Open ~/.bashrc with an editor of your choice. For example:
+            <blockquote><i>vi ~/.bashrc</i></blockquote>
+          </li>
+          <li>
+            At the very end of the file, add the JDK bin directory to the PATH variable:
+            <blockquote><i>export PATH=&lt;path of extracted JDK dir&gt;/bin:$PATH</i></blockquote>
+          </li>
+          <li>
+            Save file
+          </li>
+          <li>
+            Restart any open terminal windows for changes to take effect
+          </li>
+        </ol>
+      </li>
+    </ul>
+  </li>
+  <li>
+    In some cases, you may want Ghidra to launch with a specific version of Java instead of the
+    version that Ghidra automatically locates.  To force Ghidra to launch with a specific version of
+    Java, set the <b>JAVA_HOME_OVERRIDE</b> property in the <i>support/launch.properties</i> file.  
+    If this property is set to an incompatible version of Java, Ghidra will revert to automatically
+    locating a compatible version.  Note that <i>some</i> Java must still be on the PATH in order 
+    for Ghidra to use the <b>JAVA_HOME_OVERRIDE</b> property.  This limitation will be addressed in 
+    a future version of Ghidra. 
+  </li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Layout"></a>Ghidra Installation Directory Layout</h2>
+<p>When Ghidra is installed, the runnable software gets extracted to a new directory we will refer
+to as <i>&lt;GhidraInstallDir&gt;</i>.  Below is a description of the top-level directories and
+files that can be found in <i>&lt;GhidraInstallDir&gt;</i> once extraction of the distribution file
+is complete.</p>
+<table border="0" width="80%">
+  <col width="15%">
+  <col width="85%">
+  <tr>
+    <td valign="top"><b>Ghidra</b></td>
+    <td valign="top">
+      Base directory for Ghidra distribution.&nbsp; Contains files needed to run Ghidra.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Extensions</b></td>
+    <td valign="top">
+      Optional components that can extend Ghidra's functionality and integrate Ghidra with other
+      tools.<br>See the <a href="#Extensions">Extensions</a> section for more information.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>GPL</b></td>
+    <td valign="top">
+      Standalone GPL support programs.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>server</b></td>
+    <td valign="top">
+      Contains files related to Ghidra Server installation and administration.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>support</b></td>
+    <td valign="top">
+      Contains files useful for debugging Ghidra, running Ghidra in advanced modes, and controlling
+      how Ghidra launches.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>docs</b></td>
+    <td valign="top">
+      Contains documentation for Ghidra, such as release notes, API files, tutorials, etc.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>ghidraRun(.bat)</b></td>
+    <td valign="top">
+      Script used to launch Ghidra.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top"><b>LICENSE.txt</b></td>
+    <td valign="top">Ghidra license information.</td>
+  </tr>
+  <tr>
+    <td valign="top"><b>licenses</b></td>
+    <td valign="top">Contains licenses used by Ghidra.</td>
+  </tr>
+</table>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Run"></a>Running Ghidra</h2>
+<h3><a name="RunGUI"></a>GUI Mode</h3>
+<ol>
+  <li>
+    Navigate to <i>&lt;GhidraInstallDir&gt;</i>
+  </li>
+  <li>
+    <p>Run <i>ghidraRun.bat</i> (Windows) or <i>ghidraRun</i> (Linux or macOS)</p>
+    <p>If Ghidra failed to launch, see the <a href="#Troubleshooting">Troubleshooting</a> section.
+    </p>
+  </li>
+</ol>
+
+<h3><a name="RunServer"></a>Ghidra Server</h3>
+<p>Ghidra can support multiple users working together on a single project. Individual Ghidra users
+launch and work on their own local copies of a particular Ghidra project but check changes into a
+common repository containing all commits to that repository. For detailed information on
+installing/configuring the Ghidra Server see the
+<i>&lt;GhidraInstallDir&gt;</i>/server/svrREADME.html file.</p>
+
+<h3><a name="RunHeadless"></a>Headless (Batch) Mode</h3>
+<p>Ghidra is traditionally run in GUI mode. However, it is also capable of running in headless batch
+mode using the command line. For more information, see the
+<i>&lt;GhidraInstallDir&gt;</i>/support/analyzeHeadlessREADME.html file.</p>
+
+<h3><a name="RunJar"></a>Single Jar Mode</h3>
+<p>Normally, Ghidra is installed as an entire directory structure that allows modular inclusion or
+removal of feature sets and also provides many files that can be extended or configured. However,
+there are times when it would be useful to have	all or some subset of Ghidra compressed into a
+single jar file at the expense of	configuration options. This makes Ghidra easier to run from the
+command line for headless operation or to use as a library of reverse engineering capabilities for
+another Java application.</p>
+<p>A single ghidra.jar file can be created using the
+<i>&lt;GhidraInstallDir&gt;</i>/support/buildGhidraJar script.</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Extensions"></a>Extensions</h2>
+<p>Extensions are optional components that can:</p>
+<ul>
+  <li>
+    Extend Ghidra's functionality with experimental or user-contributed Ghidra plugins or
+    analyzers.
+  </li>
+  <li>Integrate other tools with Ghidra, such as Eclipse or IDAPro.</li>
+</ul>
+<p>Ghidra comes with the following extensions available for use (and by default uninstalled), which
+can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
+<ul>
+  <li>
+    <b>Eclipse: </b>The GhidraDev Eclipse plugin for a pre-existing Eclipse installation. For
+    information on installing and using the GhidraDev Eclipse plugin, see
+    <i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse/GhidraDev/GhidraDev_README.html.
+  </li>
+  <li>
+    <b>Ghidra: </b>Ghidra extensions (formerly known as contribs). See
+    <a href="#GhidraExtensionNotes">Ghidra Extension Notes</a> for more information.
+  </li>
+  <li>
+    <b>IDAPro: </b>IDAPro plugins/loaders for transferring items with Ghidra.
+  </li>
+</ul>
+<h3><a name="GhidraExtensionNotes"></a>Ghidra Extension Notes</h3>
+<ul>
+  <li>
+    <p>Ghidra extensions are designed to be installed and uninstalled from the Ghidra front-end GUI:
+    </p>
+    <ol>
+      <li>Click <b>File &#8594; Install Extensions...</b></li>
+      <li>Check boxes to install extensions; uncheck boxes to uninstall extensions</li>
+      <li>Restart Ghidra for the changes to take effect</li>
+    </ol>
+  </li>
+  <li>
+    Installing or uninstalling Ghidra extensions may fail if the user does not have write
+    permissions to <i>&lt;GhidraInstallDir&gt;</i>.  This may occur if the user is running Ghidra
+    from a shared installation location.  In this situation, the owner of the Ghidra installation
+    directory will be responsible for managing what Ghidra extensions are available for that
+    particular installation of Ghidra.
+  </li>
+  <li>
+    <p>It is possible to install and uninstall Ghidra extensions manually when the Ghidra front-end
+    GUI is not available.  This may be required if a system administrator is managing the Ghidra
+    extensions of a shared Ghidra installation on behalf of a user, or if a user wishes to install
+    an extension into a Ghidra installation that is only ever used headlessly.<p>
+    <p>To install an extension in these cases, simply extract the desired Ghidra extension archive
+    file(s) to the <i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Extensions directory.  For example, on
+    Linux or macOS:</p>
+    <ol>
+      <li>Set current directory to the Ghidra installed-extensions directory:</li>
+      <blockquote><i>cd &lt;GhidraInstallDir&gt;/Ghidra/Extensions</i></blockquote>
+      <li>Extract desired extension archive file(s) to the current directory:</li>
+      <blockquote><i>unzip ../../Extensions/Ghidra/&lt;extension&gt;.zip</i></blockquote>
+      <li>The extension(s) will be installed the next time Ghidra is started.</li>
+    </ol>
+    <p>To uninstall extensions, simply delete the extracted extension directories from
+    <i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Extensions.  The extension(s) will be uninstalled
+    the next time Ghidra is started.</p>
+    <p><b>NOTE: </b>It may not be possible to uninstall an extension in this manner if there is an
+    instance of Ghidra running that holds a file lock on the extension directory that is trying to
+    be deleted.</p>
+  </li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Development"></a>Ghidra Development</h2>
+<p>Users can extend the functionality of Ghidra through the development of custom Ghidra scripts,
+plugins, analyzers, etc.</p>
+<p>Ghidra supports development in Eclipse by providing a custom Eclipse plugin called
+<b>GhidraDev</b>, which can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse
+directory. For more information on installing and using the GhidraDev Eclipse plugin, see
+<i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse/GhidraDev/GhidraDev_README.html.</p>
+<p><b>NOTE: </b>Eclipse is not provided with Ghidra.  The GhidraDev Eclipse plugin is designed to
+be installed in a pre-existing Eclipse installation.</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Upgrading"></a>Upgrade Instructions</h2>
+<h3><a name="GeneralUpgrade"</a>General Upgrade Instructions</h3>
+<ol>
+  <li>
+    <b><font color="red">!!!Important!!!</font> BACKUP YOUR OLD PROJECTS FIRST!!<font color="red">
+    !!!Important!!!</font></b>
+  </li>
+  <ul>
+    <li>
+      Backup by manually copying the <i>.rep</i> directory and <i>.gpr</i> file from any Ghidra
+      project directories to a safe location on your file system.
+    </li>
+  </ul>
+  <li>
+    New installations of Ghidra will, by default, use the saved profile from a user's most recent
+    version of Ghidra. This allows any saved tool configurations to be automatically ported to new
+    projects. However, this may also prevent new tool options and features from automatically being
+    configured in some cases. To open new tools containing the latest configurations, users should,
+    from the Project Manager Window, choose <b>Tools &#8594; Default Tools...</b>
+  </li>
+  <li>
+    When you open a program that was created using a previous version of Ghidra, you will be
+    prompted to upgrade the program before it can be opened. The upgrade will not overwrite your old
+    file until you save it. If you save it (to its original file), you will no longer be able to
+    open it using an older version of Ghidra. You could, however, choose to perform a
+    &ldquo;Save As&rdquo; instead, creating a new file and leaving the old version unchanged. Be
+    very careful about upgrading shared program files since everyone accessing the file must also
+    upgrade their Ghidra installation.
+  </li>
+</ol>
+
+<h3><a name="ServerUpgrade"</a>Server Upgrade Instructions</h3>
+<ul>
+  <li>
+    Please refer to the<i>&lt;GhidraInstallDir&gt;</i>/server/svrREADME.html file for details on
+    upgrading your Ghidra Server.
+  </li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Troubleshooting"></a>Troubleshooting & Help</h2>
+<h3><a name="LaunchIssues"></a>Launching Ghidra</h3>
+<p>When launching Ghidra with the provided scripts in <i>&lt;GhidraInstallDir&gt;</i> and
+<i>&lt;GhidraInstallDir&gt;</i>/support, you may encounter the following error messages:
+<ul>
+  <li>
+    <b><font color="red">Problem: </font></b><i>Java runtime not found.</i>
+    <ul>
+      <li>
+        <p><b><font color="green">Solution: </font></b>A Java runtime (java/java.exe) is required to
+        be on the system PATH.  Please see the <a href="#Requirements"> Requirements</a> section for
+        what version of Java must be pre-installed for Ghidra to launch.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <b><font color="red">Problem: </font></b><i>Failed to find a supported JDK.</i>
+    <ul>
+      <li>
+        <p><b><font color="green">Solution: </font></b>The Ghidra launch script uses the Java
+        runtime on the system PATH to find a supported version of a Java Development Kit (JDK) that
+        Ghidra needs to complete its launch.  Please see the <a href="#Requirements">
+        Requirements</a> section for what version of JDK must be pre-installed for Ghidra to launch.
+        </p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <b><font color="red">Problem: </font></b><i>Exited with error.  Run in foreground (fg) mode for 
+    more details.</i>
+    <ul>
+      <li>
+        <p><b><font color="green">Solution: </font></b>Ghidra failed to launch in the background and
+        the error message describing the cause of the failure is being suppressed.  Rerun Ghidra in
+        the foreground by setting the LAUNCH_MODE variable in the launch script you ran to 
+        <b>fg</b>. Alternatively, you can use the 
+        <i>&lt;GhidraInstallDir&gt;</i>/support/ghidraDebug script to run Ghidra in debug mode, 
+        which will also allow you to see the error message as well as additional debug output.  
+        <b>NOTE:</b> By default, running Ghidra in debug mode listens on 127.0.0.1:18001.</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+<h3><a name="GhidraHelp"></a>Using Ghidra</h3>
+<p>There are several ways you can get help with using Ghidra:</p>
+<ul>
+  <li>
+    Tutorials and other documentation can be found in <i>&lt;GhidraInstallDir&gt;</i>/docs.
+  </li>
+  <li>
+    When Ghidra is running, extensive context sensitive help is available on many topics.&nbsp; To
+    access Help on a topic, place your mouse on a window, menu or component and press
+    &lt;F1&gt;.&nbsp; Help for that window/menu/component will be displayed.
+  </li>
+  <li>
+    When Ghidra is running, indexed help can be found under <b>Help &#8594; Topics...</b>
+  </li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="KnownIssues"></a>Known Issues for current release</h3>
+<h3><a name="CommonIssues"></a>All Platforms</h3>
+<ul>
+  <li>
+    Displaying the correct processor manual page for an instruction requires the installation of
+    Adobe Reader 8.0.x or later.&nbsp; Adobe broke the goto page in Reader version 7.x.&nbsp; If a
+    newer version of Reader is not installed, then the manual for the processor will display at the
+    top of the manual.&nbsp; Using an Adobe Reader version later than 8.0.x works for most
+    platforms, but some platforms and version of the reader still have issues.
+  </li>
+  <li>
+    Some actions may block the GUI update thread if they are long running.
+  </li>
+  <li>
+    Project archives only store private and checked out files within the archive.&nbsp; Project
+    archives do not support server-based repositories.
+  </li>
+  <li>
+    When using a Ghidra server, all clients and the server must have a valid Domain Name Server
+    (DNS) defined which has been properly configured on the network for both forward and reverse
+    lookups.
+  </li>
+  <li>
+    Image base can not be changed if overlays have been defined.
+  </li>
+  <li>
+    Language versioning and migration does not handle complex changes in the use of the context
+    register.
+  </li>
+  <li>
+    Ghidra uses Java reflection in a manner that has been deprecated in newer versions of Java.  It
+    is expected to see Java warnings the about illegal reflective access, especially when importing
+    new files.  Future versions of Ghidra will address this in order to ensure compatibility with
+    the newest versions of Java.
+  </li>
+</ul>
+<h3><a name="WindowsIssues"></a>Windows</h3>
+<ul>
+  <li>
+    Older versions of 7-Zip may not be able to unpack the Ghidra distribution file if it contains
+    any files with a 0-byte length.  Upgrade to a newer version of 7-Zip to fix this problem.
+  </li>
+</ul>
+<h3><a name="LinuxIssues"></a>Linux</h3>
+<ul>
+  <li>
+    Some users have reported Ghidra GUI rendering issues on 4k displays and multi-monitor thin 
+    client setups.  These problems are attributed to reported bugs in Java.  Upgrading to a newer
+    version of Java may fix the issue.
+  </li>
+  <li>
+    At the time of writing, installing the openjdk-11 package in Ubuntu 18.04 results in openjdk-10 
+    being installed which is incompatible with Ghidra.
+  </li>
+</ul>
+<h3><a name="MacOSIssues"></a>macOS (OS X)</h3>
+<ul>
+  <li>
+    Building new Ghidra module extensions on macOS (OS X) using a network drive (including a
+    network-mapped home directory) throws a Java exception.  This issue is known to the Java/macOS
+    community but a fix has not yet been released.  See
+    <i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse/GhidraDev/GhidraDev_README.html for more
+    information on building Ghidra module extensions from Eclipse.
+  </li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<!-- Some padding -->
+<br>
+<br>
+<br>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+/* ###
+ * IP: GHIDRA
+ * REVIEWED: YES
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.plugin.core.datamgr.actions;
+
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
+import ghidra.program.model.data.Category;
+
+public class CreateEnumAction extends CreateDataTypeAction {
+
+	public CreateEnumAction(DataTypeManagerPlugin plugin) {
+		super(plugin, "Enum");
+	}
+
+	@Override
+	protected void createNewDataType(DataTypeEditorManager editorManager, Category category) {
+		editorManager.createNewEnum(category);
+	}
+
+}

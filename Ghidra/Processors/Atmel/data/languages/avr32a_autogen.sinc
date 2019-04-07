@@ -1,0 +1,464 @@
+define token gen_instr1(16)
+    g_op13_3 = (13,15)
+    g_op12_4 = (12,15)
+    g_regsel11_1 = (11,11)
+    g_op11_5 = (11,15)
+    g_op10_6 = (10,15)
+    g_regsel10_1 = (10,10)
+    g_op9_7 = (9,15)
+    g_rx9_4 = (9,12)
+    g_opcode9_2 = (9,10)
+    g_rs9_4 = (9,12)
+    g_regsel9_1 = (9,9)
+    g_offset9_4 = (9,12)
+    g_disp9_4 = (9,12)
+    g_rp9_4 = (9,12)
+    g_update9_1 = (9,9)
+    g_rb9_4 = (9,12)
+    g_imm9_4 = (9,12)
+    g_rd9_4 = (9,12)
+    g_shift9_4 = (9,12)
+    g_op8_1 = (8,8)
+    g_op8_8 = (8,15)
+    g_regsel8_1 = (8,8)
+    g_op7_9 = (7,15)
+    g_op7_2 = (7,8)
+    g_regsel7_1 = (7,7)
+    g_regsel6_1 = (6,6)
+    g_regsel5_1 = (5,5)
+    g_op5_4 = (5,8)
+    g_imm4_1 = (4,4)
+    g_disp4_5 = (4,8)
+    g_imm4_6 = (4,9)
+    g_shift4_1 = (4,4)
+    g_imm4_8 = (4,11)
+    g_disp4_1 = (4,4)
+    g_offset4_1 = (4,4)
+    g_disp4_4 = (4,7)
+    g_op4_12 = (4,15)
+    g_disp4_8 = (4,11)
+    g_disp4_3 = (4,6)
+    g_regsel4_1 = (4,4)
+    g_imm4_3 = (4,6)
+    g_op4_5 = (4,8)
+    g_offset4_5 = (4,8)
+    g_cond4_4 = (4,7)
+    g_disp4_7 = (4,10)
+    g_op3_1 = (3,3)
+    g_op3_6 = (3,8)
+    g_returnflag3_1 = (3,3)
+    g_op2_2 = (2,3)
+    g_rd1_3 = (1,3)
+    g_rs1_3 = (1,3)
+    g_ri0_4 = (0,3)
+    g_cond0_4 = (0,3)
+    g_shift0_4 = (0,3)
+    g_op0_16 = (0,15)
+    g_op0_9 = (0,8)
+    g_op0_1 = (0,0)
+    g_offset0_4 = (0,3)
+    g_rs0_4 = (0,3)
+    g_cond0_3 = (0,2)
+    g_op0_3 = (0,2)
+    g_opcode0_4 = (0,3)
+    g_rd0_4 = (0,3)
+    g_shift0_3 = (0,2)
+    g_rp0_4 = (0,3)
+    g_ry0_4 = (0,3)
+    g_disp0_2 = (0,1)
+    g_op0_4 = (0,3)
+;
+define token gen_instr2(16)
+    eg_regsel15_1 = (15,15)
+    eg_offset15_1 = (15,15)
+    eg_regsel14_1 = (14,14)
+    eg_op14_2 = (14,15)
+    eg_op13_3 = (13,15)
+    eg_xpart13_1 = (13,13)
+    eg_cop13_3 = (13,15)
+    eg_regsel13_1 = (13,13)
+    eg_disp12_4 = (12,15)
+    eg_op12_4 = (12,15)
+    eg_regsel12_1 = (12,12)
+    eg_op12_1 = (12,12)
+    eg_update12_1 = (12,12)
+    eg_ypart12_1 = (12,12)
+    eg_cond12_4 = (12,15)
+    eg_opcode12_1 = (12,12)
+    eg_opcode11_5 = (11,15)
+    eg_regsel11_1 = (11,11)
+    eg_regsel10_1 = (10,10)
+    eg_op10_6 = (10,15)
+    eg_regsel9_1 = (9,9)
+    eg_op9_7 = (9,15)
+    eg_rd9_3 = (9,11)
+    eg_rs9_3 = (9,11)
+    eg_op9_3 = (9,11)
+    eg_op8_1 = (8,8)
+    eg_op8_4 = (8,11)
+    eg_rd8_4 = (8,11)
+    eg_op8_8 = (8,15)
+    eg_cond8_4 = (8,11)
+    eg_ri8_4 = (8,11)
+    eg_regsel8_1 = (8,8)
+    eg_rs8_4 = (8,11)
+    eg_regsel7_1 = (7,7)
+    eg_op6_3 = (6,8)
+    eg_regsel6_1 = (6,6)
+    eg_op6_2 = (6,7)
+    eg_op6_10 = (6,15)
+    eg_op5_11 = (5,15)
+    eg_regsel5_1 = (5,5)
+    eg_offset5_5 = (5,9)
+    eg_xpart5_1 = (5,5)
+    eg_regsel4_1 = (4,4)
+    eg_rx4_4 = (4,7)
+    eg_disp4_8 = (4,11)
+    eg_ypart4_1 = (4,4)
+    eg_shift4_5 = (4,8)
+    eg_cond4_4 = (4,7)
+    eg_returnflag4_1 = (4,4)
+    eg_op4_12 = (4,15)
+    eg_op4_4 = (4,7)
+    eg_shift4_2 = (4,5)
+    eg_regsel3_1 = (3,3)
+    eg_regsel2_1 = (2,2)
+    eg_regsel1_1 = (1,1)
+    eg_ri0_4 = (0,3)
+    eg_opcode0_8 = (0,7)
+    eg_rd0_4 = (0,3)
+    eg_imm0_8 = (0,7)
+    eg_shift0_5 = (0,4)
+    eg_regsel0_1 = (0,0)
+    eg_disp0_16 = (0,15)
+    eg_disp0_12 = (0,11)
+    eg_disp0_8 = (0,7)
+    eg_bits0_5 = (0,4)
+    eg_disp0_9 = (0,8)
+    eg_imm0_15 = (0,14)
+    eg_rs0_4 = (0,3)
+    eg_rb0_4 = (0,3)
+    eg_offset0_5 = (0,4)
+    eg_op0_8 = (0,7)
+    eg_imm0_16 = (0,15)
+    eg_op0_9 = (0,8)
+    eg_ry0_4 = (0,3)
+    eg_op0_16 = (0,15)
+    eg_dbgregaddr0_8 = (0,7)
+    eg_disp0_11 = (0,10)
+    eg_rp0_4 = (0,3)
+    eg_op0_4 = (0,3)
+;
+#:ABS g_rd0_4 is g_op4_12=0x5c4 & g_rd0_4 unimpl
+#:ACALL g_disp4_8 is g_op12_4=0xd & g_disp4_8 & g_op0_4=0x0 unimpl
+#:ACR g_rd0_4 is g_op4_12=0x5c0 & g_rd0_4 unimpl
+#:ADC g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x4 & eg_rd0_4 unimpl
+#:ADD g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 unimpl
+#:ADD g_rx9_4, g_ry0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x0 & eg_shift4_2 & eg_rd0_4 unimpl
+#:ADD_COND g_rx9_4, g_ry0_4, eg_cond8_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1d & g_ry0_4 ; eg_op12_4=0xe & eg_cond8_4 & eg_op4_4=0x0 & eg_rd0_4 unimpl
+#:ADDABS g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xe4 & eg_rd0_4 unimpl
+#:ADDHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x38 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:AND g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x6 & g_rd0_4 unimpl
+#:AND g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x0 & eg_shift4_5 & eg_rd0_4 unimpl
+#:AND g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x1 & eg_shift4_5 & eg_rd0_4 unimpl
+#:AND_COND g_rx9_4, g_ry0_4, eg_cond8_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1d & g_ry0_4 ; eg_op12_4=0xe & eg_cond8_4 & eg_op4_4=0x2 & eg_rd0_4 unimpl
+#:ANDH g_update9_1, g_rd0_4, eg_imm0_16 is g_op10_6=0x39 & g_update9_1 & g_op4_5=0x1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:ANDL g_update9_1, g_rd0_4, eg_imm0_16 is g_op10_6=0x38 & g_update9_1 & g_op4_5=0x1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:ANDN g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x8 & g_rd0_4 unimpl
+#:ASR g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x84 & eg_rd0_4 unimpl
+#:ASR g_shift9_4, g_shift4_1, g_rd0_4 is g_op13_3=0x5 & g_shift9_4 & g_op5_4=0xa & g_shift4_1 & g_rd0_4 unimpl
+#:ASR g_rs9_4, g_rd0_4, eg_shift0_5 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op5_11=0xa0 & eg_shift0_5 unimpl
+#:BFEXTS g_rd9_4, g_rs0_4, eg_offset5_5, eg_bits0_5 is g_op13_3=0x7 & g_rd9_4 & g_op4_5=0x1d & g_rs0_4 ; eg_op10_6=0x2c & eg_offset5_5 & eg_bits0_5 unimpl
+#:BFEXTU g_rd9_4, g_rs0_4, eg_offset5_5, eg_bits0_5 is g_op13_3=0x7 & g_rd9_4 & g_op4_5=0x1d & g_rs0_4 ; eg_op10_6=0x30 & eg_offset5_5 & eg_bits0_5 unimpl
+#:BFINS g_rd9_4, g_rs0_4, eg_offset5_5, eg_bits0_5 is g_op13_3=0x7 & g_rd9_4 & g_op4_5=0x1d & g_rs0_4 ; eg_op10_6=0x34 & eg_offset5_5 & eg_bits0_5 unimpl
+#:BLD g_rd0_4, eg_offset0_5 is g_op4_12=0xedb & g_rd0_4 ; eg_op5_11=0x0 & eg_offset0_5 unimpl
+#:BR_COND g_disp4_8, g_cond0_3 is g_op12_4=0xc & g_disp4_8 & g_op3_1=0x0 & g_cond0_3 unimpl
+#:BR_COND g_disp9_4, g_disp4_1, g_cond0_4, eg_disp0_16 is g_op13_3=0x7 & g_disp9_4 & g_op5_4=0x4 & g_disp4_1 & g_cond0_4 ; eg_disp0_16 unimpl
+#:BREAKPOINT  is g_op0_16=0xd673 unimpl
+#:BREV g_rd0_4 is g_op4_12=0x5c9 & g_rd0_4 unimpl
+#:BST g_rd0_4, eg_offset0_5 is g_op4_12=0xefb & g_rd0_4 ; eg_op5_11=0x0 & eg_offset0_5 unimpl
+#:CACHE g_rp0_4, eg_opcode11_5, eg_disp0_11 is g_op4_12=0xf41 & g_rp0_4 ; eg_opcode11_5 & eg_disp0_11 unimpl
+#:CASTS.H g_rd0_4 is g_op4_12=0x5c8 & g_rd0_4 unimpl
+#:CASTS.B g_rd0_4 is g_op4_12=0x5c6 & g_rd0_4 unimpl
+#:CASTU.H g_rd0_4 is g_op4_12=0x5c7 & g_rd0_4 unimpl
+#:CASTU.B g_rd0_4 is g_op4_12=0x5c5 & g_rd0_4 unimpl
+#:CBR g_offset9_4, g_offset4_1, g_rd0_4 is g_op13_3=0x5 & g_offset9_4 & g_op5_4=0xe & g_offset4_1 & g_rd0_4 unimpl
+#:CLZ g_rs9_4, g_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op0_16=0x1200 unimpl
+#:COM g_rd0_4 is g_op4_12=0x5cd & g_rd0_4 unimpl
+#:COP g_opcode9_2, g_opcode0_4, eg_cop13_3, eg_opcode12_1, eg_rd8_4, eg_rx4_4, eg_ry0_4 is g_op11_5=0x1c & g_opcode9_2 & g_op4_5=0x1a & g_opcode0_4 ; eg_cop13_3 & eg_opcode12_1 & eg_rd8_4 & eg_rx4_4 & eg_ry0_4 unimpl
+#:CP.B g_rs9_4, g_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op0_16=0x1800 unimpl
+#:CP.H g_rs9_4, g_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op0_16=0x1900 unimpl
+#:CP.W g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x3 & g_rd0_4 unimpl
+#:CP.W g_imm4_6, g_rd0_4 is g_op10_6=0x16 & g_imm4_6 & g_rd0_4 unimpl
+#:CP.W g_imm9_4, g_imm4_1, g_rd0_4, eg_imm0_16 is g_op13_3=0x7 & g_imm9_4 & g_op5_4=0x2 & g_imm4_1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:CPC g_rs9_4, g_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op0_16=0x1300 unimpl
+#:CPC g_rd0_4 is g_op4_12=0x5c2 & g_rd0_4 unimpl
+#:CSRF g_offset4_5 is g_op9_7=0x6a & g_offset4_5 & g_op0_4=0x3 unimpl
+#:CSRFCZ g_offset4_5 is g_op9_7=0x68 & g_offset4_5 & g_op0_4=0x3 unimpl
+#:DIVS g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xc0 & eg_rd0_4 unimpl
+#:DIVU g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xd0 & eg_rd0_4 unimpl
+#:EOR g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x5 & g_rd0_4 unimpl
+#:EOR g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x10 & eg_shift4_5 & eg_rd0_4 unimpl
+#:EOR g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x11 & eg_shift4_5 & eg_rd0_4 unimpl
+#:EOR_COND g_rx9_4, g_ry0_4, eg_cond8_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1d & g_ry0_4 ; eg_op12_4=0xe & eg_cond8_4 & eg_op4_4=0x4 & eg_rd0_4 unimpl
+#:EORH g_rd0_4, eg_imm0_16 is g_op4_12=0xee1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:EORL g_rd0_4, eg_imm0_16 is g_op4_12=0xec1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:FRS  is g_op0_16=0xd743 unimpl
+#:ICALL g_rd0_4 is g_op4_12=0x5d1 & g_rd0_4 unimpl
+#:INCJOSP g_imm4_3 is g_op7_9=0x1ad & g_imm4_3 & g_op0_4=0x3 unimpl
+#:LD.D g_rp9_4, g_rd1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x10 & g_rd1_3 & g_op0_1=0x1 unimpl
+#:LD.D g_rp9_4, g_rd1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x11 & g_rd1_3 & g_op0_1=0x0 unimpl
+#:LD.D g_rp9_4, g_rd1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x10 & g_rd1_3 & g_op0_1=0x0 unimpl
+#:LD.D g_rp9_4, g_rd1_3, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0xe & g_rd1_3 & g_op0_1=0x0 ; eg_disp0_16 unimpl
+#:LD.D g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x8 & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.SB g_rp9_4, g_rd0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x12 & g_rd0_4 ; eg_disp0_16 unimpl
+#:LD.SB g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x18 & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.SB_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x3 & eg_disp0_9 unimpl
+#:LD.UB g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x13 & g_rd0_4 unimpl
+#:LD.UB g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x17 & g_rd0_4 unimpl
+#:LD.UB g_rp9_4, g_disp4_3, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op7_2=0x3 & g_disp4_3 & g_rd0_4 unimpl
+#:LD.UB g_rp9_4, g_rd0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x13 & g_rd0_4 ; eg_disp0_16 unimpl
+#:LD.UB g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x1c & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.UB_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x4 & eg_disp0_9 unimpl
+#:LD.SH g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x11 & g_rd0_4 unimpl
+#:LD.SH g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x15 & g_rd0_4 unimpl
+#:LD.SH g_rp9_4, g_disp4_3, g_rd0_4 is g_op13_3=0x4 & g_rp9_4 & g_op7_2=0x0 & g_disp4_3 & g_rd0_4 unimpl
+#:LD.SH g_rp9_4, g_rd0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x10 & g_rd0_4 ; eg_disp0_16 unimpl
+#:LD.SH g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x10 & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.SH_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x1 & eg_disp0_9 unimpl
+#:LD.UH g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x12 & g_rd0_4 unimpl
+#:LD.UH g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x16 & g_rd0_4 unimpl
+#:LD.UH g_rp9_4, g_disp4_3, g_rd0_4 is g_op13_3=0x4 & g_rp9_4 & g_op7_2=0x1 & g_disp4_3 & g_rd0_4 unimpl
+#:LD.UH g_rp9_4, g_rd0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x11 & g_rd0_4 ; eg_disp0_16 unimpl
+#:LD.UH g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x14 & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.UH_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x2 & eg_disp0_9 unimpl
+#:LD.W g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x10 & g_rd0_4 unimpl
+#:LD.W g_rp9_4, g_rd0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0x14 & g_rd0_4 unimpl
+#:LD.W g_rp9_4, g_disp4_5, g_rd0_4 is g_op13_3=0x3 & g_rp9_4 & g_disp4_5 & g_rd0_4 unimpl
+#:LD.W g_rp9_4, g_rd0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0xf & g_rd0_4 ; eg_disp0_16 unimpl
+#:LD.W g_rb9_4, g_ri0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0xc & eg_shift4_2 & eg_rd0_4 unimpl
+#:LD.W g_rb9_4, g_ri0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x3e & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:LD.W_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x0 & eg_disp0_9 unimpl
+#:LDC.D g_rp0_4, eg_cop13_3, eg_rd9_3, eg_disp0_8 is g_op4_12=0xe9a & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rd9_3 & eg_op8_1=0x0 & eg_disp0_8 unimpl
+#:LDC.D g_rp0_4, eg_cop13_3, eg_rd9_3 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rd9_3 & eg_op0_9=0x50 unimpl
+#:LDC.D g_rp0_4, eg_cop13_3, eg_rd9_3, eg_shift4_2, eg_ri0_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rd9_3 & eg_op6_3=0x1 & eg_shift4_2 & eg_ri0_4 unimpl
+#:LDC.W g_rp0_4, eg_cop13_3, eg_rd8_4, eg_disp0_8 is g_op4_12=0xe9a & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rd8_4 & eg_disp0_8 unimpl
+#:LDC.W g_rp0_4, eg_cop13_3, eg_rd8_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rd8_4 & eg_op0_8=0x40 unimpl
+#:LDC.W g_rp0_4, eg_cop13_3, eg_rd8_4, eg_shift4_2, eg_ri0_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rd8_4 & eg_op6_2=0x0 & eg_shift4_2 & eg_ri0_4 unimpl
+#:LDC0.D g_rp0_4, eg_disp12_4, eg_rd9_3, eg_disp0_8 is g_op4_12=0xf3a & g_rp0_4 ; eg_disp12_4 & eg_rd9_3 & eg_op8_1=0x0 & eg_disp0_8 unimpl
+#:LDC0.W g_rp0_4, eg_disp12_4, eg_rd8_4, eg_disp0_8 is g_op4_12=0xf1a & g_rp0_4 ; eg_disp12_4 & eg_rd8_4 & eg_disp0_8 unimpl
+#:LDCM.D g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x4 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:LDCM.W g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x1 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:LDCM.W g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x0 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:LDDPC g_disp4_7, g_rd0_4 is g_op11_5=0x9 & g_disp4_7 & g_rd0_4 unimpl
+#:LDDSP g_disp4_7, g_rd0_4 is g_op11_5=0x8 & g_disp4_7 & g_rd0_4 unimpl
+#:LDINS.B g_rp9_4, g_rd0_4, eg_xpart13_1, eg_ypart12_1, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rd0_4 ; eg_op14_2=0x1 & eg_xpart13_1 & eg_ypart12_1 & eg_disp0_12 unimpl
+#:LDINS.H g_rp9_4, g_rd0_4, eg_ypart12_1, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rd0_4 ; eg_op13_3=0x0 & eg_ypart12_1 & eg_disp0_12 unimpl
+#:LDM g_update9_1, g_rp0_4, eg_regsel15_1, eg_regsel14_1, eg_regsel13_1, eg_regsel12_1, eg_regsel11_1, eg_regsel10_1, eg_regsel9_1, eg_regsel8_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op10_6=0x38 & g_update9_1 & g_op4_5=0x1c & g_rp0_4 ; eg_regsel15_1 & eg_regsel14_1 & eg_regsel13_1 & eg_regsel12_1 & eg_regsel11_1 & eg_regsel10_1 & eg_regsel9_1 & eg_regsel8_1 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:LDMTS g_update9_1, g_rp0_4, eg_regsel15_1, eg_regsel14_1, eg_regsel13_1, eg_regsel12_1, eg_regsel11_1, eg_regsel10_1, eg_regsel9_1, eg_regsel8_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op10_6=0x39 & g_update9_1 & g_op4_5=0x1c & g_rp0_4 ; eg_regsel15_1 & eg_regsel14_1 & eg_regsel13_1 & eg_regsel12_1 & eg_regsel11_1 & eg_regsel10_1 & eg_regsel9_1 & eg_regsel8_1 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:LDSWP.SH g_rp9_4, g_rd0_4, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rd0_4 ; eg_op12_4=0x2 & eg_disp0_12 unimpl
+#:LDSWP.UH g_rp9_4, g_rd0_4, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rd0_4 ; eg_op12_4=0x3 & eg_disp0_12 unimpl
+#:LDSWP.W g_rp9_4, g_rd0_4, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rd0_4 ; eg_op12_4=0x8 & eg_disp0_12 unimpl
+#:LSL g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x94 & eg_rd0_4 unimpl
+#:LSL g_shift9_4, g_shift4_1, g_rd0_4 is g_op13_3=0x5 & g_shift9_4 & g_op5_4=0xb & g_shift4_1 & g_rd0_4 unimpl
+#:LSL g_rs9_4, g_rd0_4, eg_shift0_5 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op5_11=0xa8 & eg_shift0_5 unimpl
+#:LSR g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xa4 & eg_rd0_4 unimpl
+#:LSR g_shift9_4, g_shift4_1, g_rd0_4 is g_op13_3=0x5 & g_shift9_4 & g_op5_4=0xc & g_shift4_1 & g_rd0_4 unimpl
+#:LSR g_rs9_4, g_rd0_4, eg_shift0_5 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op5_11=0xb0 & eg_shift0_5 unimpl
+#:MAC g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x34 & eg_rd0_4 unimpl
+#:MACHH.D g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x16 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MACHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x12 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MACS.D g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x54 & eg_rd0_4 unimpl
+#:MACSATHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x1a & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MACU.D g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x74 & eg_rd0_4 unimpl
+#:MACWH.D g_rx9_4, g_ry0_4, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op5_11=0x64 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MAX g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xc4 & eg_rd0_4 unimpl
+#:MCALL g_rp0_4, eg_disp0_16 is g_op4_12=0xf01 & g_rp0_4 ; eg_disp0_16 unimpl
+#:MEMC g_offset0_4, eg_offset15_1, eg_imm0_15 is g_op4_12=0xf61 & g_offset0_4 ; eg_offset15_1 & eg_imm0_15 unimpl
+#:MEMS g_offset0_4, eg_offset15_1, eg_imm0_15 is g_op4_12=0xf81 & g_offset0_4 ; eg_offset15_1 & eg_imm0_15 unimpl
+#:MEMT g_offset0_4, eg_offset15_1, eg_imm0_15 is g_op4_12=0xfa1 & g_offset0_4 ; eg_offset15_1 & eg_imm0_15 unimpl
+#:MFDR g_rd0_4, eg_dbgregaddr0_8 is g_op4_12=0xe5b & g_rd0_4 ; eg_op8_8=0x0 & eg_dbgregaddr0_8 unimpl
+#:MFSR g_rd0_4, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xe1b & g_rd0_4 ; eg_op8_8=0x0 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:MIN g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xd4 & eg_rd0_4 unimpl
+#:MOV g_imm4_8, g_rd0_4 is g_op12_4=0x3 & g_imm4_8 & g_rd0_4 unimpl
+#:MOV g_imm9_4, g_imm4_1, g_rd0_4, eg_imm0_16 is g_op13_3=0x7 & g_imm9_4 & g_op5_4=0x3 & g_imm4_1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:MOV g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x9 & g_rd0_4 unimpl
+#:MOV_COND g_rs9_4, g_rd0_4, eg_cond4_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op8_8=0x17 & eg_cond4_4 & eg_op0_4=0x0 unimpl
+#:MOV_COND g_rd0_4, eg_cond8_4, eg_imm0_8 is g_op4_12=0xf9b & g_rd0_4 ; eg_op12_4=0x0 & eg_cond8_4 & eg_imm0_8 unimpl
+#:MOVHI g_rd0_4, eg_imm0_16 is g_op4_12=0xfc1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:MTDR g_rs0_4, eg_dbgregaddr0_8 is g_op4_12=0xe7b & g_rs0_4 ; eg_op8_8=0x0 & eg_dbgregaddr0_8 unimpl
+#:MTSR g_rs0_4, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xe3b & g_rs0_4 ; eg_op8_8=0x0 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:MUL g_rs9_4, g_rd0_4 is g_op13_3=0x5 & g_rs9_4 & g_op4_5=0x13 & g_rd0_4 unimpl
+#:MUL g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x24 & eg_rd0_4 unimpl
+#:MUL g_rs9_4, g_rd0_4, eg_imm0_8 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op8_8=0x10 & eg_imm0_8 unimpl
+#:MULHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x1e & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULNHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x6 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULNWH.D g_rx9_4, g_ry0_4, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op5_11=0x14 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULS.D g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x44 & eg_rd0_4 unimpl
+#:MULSATHH.H g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x22 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULSATHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x26 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULSATRNDHH.H g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x2a & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULSATRNDWH.W g_rx9_4, g_ry0_4, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op5_11=0x5c & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULSATWH.W g_rx9_4, g_ry0_4, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op5_11=0x74 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MULU.D g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x64 & eg_rd0_4 unimpl
+#:MULWH.D g_rx9_4, g_ry0_4, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op5_11=0x6c & eg_ypart4_1 & eg_rd0_4 unimpl
+#:MUSFR g_rs0_4 is g_op4_12=0x5d3 & g_rs0_4 unimpl
+#:MUSTR g_rd0_4 is g_op4_12=0x5d2 & g_rd0_4 unimpl
+#:MVCR.D g_rd1_3, eg_cop13_3, eg_rs9_3 is g_op4_12=0xefa & g_rd1_3 & g_op0_1=0x0 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rs9_3 & eg_op0_9=0x10 unimpl
+#:MVCR.W g_rd0_4, eg_cop13_3, eg_rs8_4 is g_op4_12=0xefa & g_rd0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rs8_4 & eg_op0_8=0x0 unimpl
+#:MVRC.D g_rs1_3, eg_cop13_3, eg_rd9_3 is g_op4_12=0xefa & g_rs1_3 & g_op0_1=0x0 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rd9_3 & eg_op0_9=0x30 unimpl
+#:MVRC.W g_rs0_4, eg_cop13_3, eg_rd8_4 is g_op4_12=0xefa & g_rs0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rd8_4 & eg_op0_8=0x20 unimpl
+#:NEG g_rd0_4 is g_op4_12=0x5c3 & g_rd0_4 unimpl
+#:NOP  is g_op0_16=0xd703 unimpl
+#:OR g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x4 & g_rd0_4 unimpl
+#:OR g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x8 & eg_shift4_5 & eg_rd0_4 unimpl
+#:OR g_rx9_4, g_ry0_4, eg_shift4_5, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op9_7=0x9 & eg_shift4_5 & eg_rd0_4 unimpl
+#:OR_COND g_rx9_4, g_ry0_4, eg_cond8_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1d & g_ry0_4 ; eg_op12_4=0xe & eg_cond8_4 & eg_op4_4=0x3 & eg_rd0_4 unimpl
+#:ORH g_rd0_4, eg_imm0_16 is g_op4_12=0xea1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:ORL g_rd0_4, eg_imm0_16 is g_op4_12=0xe81 & g_rd0_4 ; eg_imm0_16 unimpl
+#:PABS.SB g_rs0_4, eg_rd0_4 is g_op4_12=0xe00 & g_rs0_4 ; eg_op4_12=0x23e & eg_rd0_4 unimpl
+#:PABS.SH g_rs0_4, eg_rd0_4 is g_op4_12=0xe00 & g_rs0_4 ; eg_op4_12=0x23f & eg_rd0_4 unimpl
+#:PACKSH.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x24c & eg_rd0_4 unimpl
+#:PACKSH.SB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x24d & eg_rd0_4 unimpl
+#:PACKW.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x247 & eg_rd0_4 unimpl
+#:PADD.B g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x230 & eg_rd0_4 unimpl
+#:PADD.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x200 & eg_rd0_4 unimpl
+#:PADDH.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x236 & eg_rd0_4 unimpl
+#:PADDH.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20c & eg_rd0_4 unimpl
+#:PADDS.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x234 & eg_rd0_4 unimpl
+#:PADDS.SB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x232 & eg_rd0_4 unimpl
+#:PADDS.UH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x208 & eg_rd0_4 unimpl
+#:PADDS.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x204 & eg_rd0_4 unimpl
+#:PADDSUB.H g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x84 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PADDSUBH.SH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x8a & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PADDSUBS.UH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x88 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PADDSUBS.SH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x86 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PADDX.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x202 & eg_rd0_4 unimpl
+#:PADDXH.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20e & eg_rd0_4 unimpl
+#:PADDXS.UH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20a & eg_rd0_4 unimpl
+#:PADDXS.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x206 & eg_rd0_4 unimpl
+#:PASR.B g_rs9_4, g_shift0_3, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op3_6=0x0 & g_shift0_3 ; eg_op4_12=0x241 & eg_rd0_4 unimpl
+#:PASR.H g_rs9_4, g_shift0_4, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_shift0_4 ; eg_op4_12=0x244 & eg_rd0_4 unimpl
+#:PAVG.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x23c & eg_rd0_4 unimpl
+#:PAVG.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x23d & eg_rd0_4 unimpl
+#:PLSL.B g_rs9_4, g_shift0_3, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op3_6=0x0 & g_shift0_3 ; eg_op4_12=0x242 & eg_rd0_4 unimpl
+#:PLSL.H g_rs9_4, g_shift0_4, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_shift0_4 ; eg_op4_12=0x245 & eg_rd0_4 unimpl
+#:PLSR.B g_rs9_4, g_shift0_3, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op3_6=0x0 & g_shift0_3 ; eg_op4_12=0x243 & eg_rd0_4 unimpl
+#:PLSR.H g_rs9_4, g_shift0_4, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_shift0_4 ; eg_op4_12=0x246 & eg_rd0_4 unimpl
+#:PMAX.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x238 & eg_rd0_4 unimpl
+#:PMAX.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x239 & eg_rd0_4 unimpl
+#:PMIN.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x23a & eg_rd0_4 unimpl
+#:PMIN.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x23b & eg_rd0_4 unimpl
+#:POPJC  is g_op0_16=0xd713 unimpl
+#:POPM g_regsel11_1, g_regsel10_1, g_regsel9_1, g_regsel8_1, g_regsel7_1, g_regsel6_1, g_regsel5_1, g_regsel4_1, g_returnflag3_1 is g_op12_4=0xd & g_regsel11_1 & g_regsel10_1 & g_regsel9_1 & g_regsel8_1 & g_regsel7_1 & g_regsel6_1 & g_regsel5_1 & g_regsel4_1 & g_returnflag3_1 & g_op0_3=0x2 unimpl
+#:PREF g_rp0_4, eg_disp0_16 is g_op4_12=0xf21 & g_rp0_4 ; eg_disp0_16 unimpl
+#:PSAD g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x240 & eg_rd0_4 unimpl
+#:PSUB.B g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x231 & eg_rd0_4 unimpl
+#:PSUB.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x201 & eg_rd0_4 unimpl
+#:PSUBADD.H g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x85 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PSUBADDH.SH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x8b & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PSUBADDS.UH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x89 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PSUBADDS.SH g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x87 & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:PSUBH.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x237 & eg_rd0_4 unimpl
+#:PSUBH.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20d & eg_rd0_4 unimpl
+#:PSUBS.UB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x235 & eg_rd0_4 unimpl
+#:PSUBS.SB g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x233 & eg_rd0_4 unimpl
+#:PSUBS.UH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x209 & eg_rd0_4 unimpl
+#:PSUBS.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x205 & eg_rd0_4 unimpl
+#:PSUBX.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x203 & eg_rd0_4 unimpl
+#:PSUBXH.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20f & eg_rd0_4 unimpl
+#:PSUBXS.UH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x20b & eg_rd0_4 unimpl
+#:PSUBXS.SH g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x207 & eg_rd0_4 unimpl
+#:PUNPCKUB.H g_rs9_4, eg_returnflag4_1, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op0_9=0x0 ; eg_op5_11=0x124 & eg_returnflag4_1 & eg_rd0_4 unimpl
+#:PUNPCKSB.H g_rs9_4, eg_returnflag4_1, eg_rd0_4 is g_op13_3=0x7 & g_rs9_4 & g_op0_9=0x0 ; eg_op5_11=0x125 & eg_returnflag4_1 & eg_rd0_4 unimpl
+#:PUSHJC  is g_op0_16=0xd723 unimpl
+#:PUSHM g_regsel11_1, g_regsel10_1, g_regsel9_1, g_regsel8_1, g_regsel7_1, g_regsel6_1, g_regsel5_1, g_regsel4_1 is g_op12_4=0xd & g_regsel11_1 & g_regsel10_1 & g_regsel9_1 & g_regsel8_1 & g_regsel7_1 & g_regsel6_1 & g_regsel5_1 & g_regsel4_1 & g_op0_4=0x1 unimpl
+#:RCALL g_disp4_8, g_disp0_2 is g_op12_4=0xc & g_disp4_8 & g_op2_2=0x3 & g_disp0_2 unimpl
+#:RCALL g_disp9_4, g_disp4_1, eg_disp0_16 is g_op13_3=0x7 & g_disp9_4 & g_op5_4=0x5 & g_disp4_1 & g_op0_4=0x0 ; eg_disp0_16 unimpl
+#:RET_COND g_cond4_4, g_rs0_4 is g_op8_8=0x5e & g_cond4_4 & g_rs0_4 unimpl
+#:RETD  is g_op0_16=0xd623 unimpl
+#:RETE  is g_op0_16=0xd603 unimpl
+#:RETJ  is g_op0_16=0xd633 unimpl
+#:RETS  is g_op0_16=0xd613 unimpl
+#:RJMP g_disp4_8, g_disp0_2 is g_op12_4=0xc & g_disp4_8 & g_op2_2=0x2 & g_disp0_2 unimpl
+#:ROL g_rd0_4 is g_op4_12=0x5cf & g_rd0_4 unimpl
+#:ROR g_rd0_4 is g_op4_12=0x5d0 & g_rd0_4 unimpl
+#:RSUB g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x2 & g_rd0_4 unimpl
+#:RSUB g_rs9_4, g_rd0_4, eg_imm0_8 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0x0 & g_rd0_4 ; eg_op8_8=0x11 & eg_imm0_8 unimpl
+#:RSUB_COND g_rd0_4, eg_cond8_4, eg_imm0_8 is g_op4_12=0xfbb & g_rd0_4 ; eg_op12_4=0x0 & eg_cond8_4 & eg_imm0_8 unimpl
+#:SATADD.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x2c & eg_rd0_4 unimpl
+#:SATADD.W g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xc & eg_rd0_4 unimpl
+#:SATRNDS g_rd0_4, eg_offset5_5, eg_shift0_5 is g_op4_12=0xf3b & g_rd0_4 ; eg_op10_6=0x0 & eg_offset5_5 & eg_shift0_5 unimpl
+#:SATRNDU g_rd0_4, eg_offset5_5, eg_shift0_5 is g_op4_12=0xf3b & g_rd0_4 ; eg_op10_6=0x1 & eg_offset5_5 & eg_shift0_5 unimpl
+#:SATS g_rd0_4, eg_offset5_5, eg_shift0_5 is g_op4_12=0xf1b & g_rd0_4 ; eg_op10_6=0x0 & eg_offset5_5 & eg_shift0_5 unimpl
+#:SATSUB.H g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x3c & eg_rd0_4 unimpl
+#:SATSUB.W g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x1c & eg_rd0_4 unimpl
+#:SATSUB.W g_rs9_4, g_rd0_4, eg_imm0_16 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0xd & g_rd0_4 ; eg_imm0_16 unimpl
+#:SATU g_rd0_4, eg_offset5_5, eg_shift0_5 is g_op4_12=0xf1b & g_rd0_4 ; eg_op10_6=0x1 & eg_offset5_5 & eg_shift0_5 unimpl
+#:SBC g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0x14 & eg_rd0_4 unimpl
+#:SBR g_offset9_4, g_offset4_1, g_rd0_4 is g_op13_3=0x5 & g_offset9_4 & g_op5_4=0xd & g_offset4_1 & g_rd0_4 unimpl
+#:SCALL  is g_op0_16=0xd733 unimpl
+#:SCR g_rd0_4 is g_op4_12=0x5c1 & g_rd0_4 unimpl
+#:SLEEP eg_opcode0_8 is g_op0_16=0xe9b0 ; eg_op8_8=0x0 & eg_opcode0_8 unimpl
+#:SR_COND g_cond4_4, g_rd0_4 is g_op8_8=0x5f & g_cond4_4 & g_rd0_4 unimpl
+#:SSRF g_offset4_5 is g_op9_7=0x69 & g_offset4_5 & g_op0_4=0x3 unimpl
+#:ST.B g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xc & g_rs0_4 unimpl
+#:ST.B g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xf & g_rs0_4 unimpl
+#:ST.B g_rp9_4, g_disp4_3, g_rs0_4 is g_op13_3=0x5 & g_rp9_4 & g_op7_2=0x1 & g_disp4_3 & g_rs0_4 unimpl
+#:ST.B g_rp9_4, g_rs0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x16 & g_rs0_4 ; eg_disp0_16 unimpl
+#:ST.B g_rb9_4, g_ri0_4, eg_shift4_2, eg_rs0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x2c & eg_shift4_2 & eg_rs0_4 unimpl
+#:ST.B_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x7 & eg_disp0_9 unimpl
+#:ST.D g_rp9_4, g_rs1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x12 & g_rs1_3 & g_op0_1=0x0 unimpl
+#:ST.D g_rp9_4, g_rs1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x12 & g_rs1_3 & g_op0_1=0x1 unimpl
+#:ST.D g_rp9_4, g_rs1_3 is g_op13_3=0x5 & g_rp9_4 & g_op4_5=0x11 & g_rs1_3 & g_op0_1=0x1 unimpl
+#:ST.D g_rp9_4, g_rs1_3, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0xe & g_rs1_3 & g_op0_1=0x1 ; eg_disp0_16 unimpl
+#:ST.D g_rb9_4, g_ri0_4, eg_shift4_2, eg_rs0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x20 & eg_shift4_2 & eg_rs0_4 unimpl
+#:ST.H g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xb & g_rs0_4 unimpl
+#:ST.H g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xe & g_rs0_4 unimpl
+#:ST.H g_rp9_4, g_disp4_3, g_rs0_4 is g_op13_3=0x5 & g_rp9_4 & g_op7_2=0x0 & g_disp4_3 & g_rs0_4 unimpl
+#:ST.H g_rp9_4, g_rs0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x15 & g_rs0_4 ; eg_disp0_16 unimpl
+#:ST.H g_rb9_4, g_ri0_4, eg_shift4_2, eg_rs0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x28 & eg_shift4_2 & eg_rs0_4 unimpl
+#:ST.H_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x6 & eg_disp0_9 unimpl
+#:ST.W g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xa & g_rs0_4 unimpl
+#:ST.W g_rp9_4, g_rs0_4 is g_op13_3=0x0 & g_rp9_4 & g_op4_5=0xd & g_rs0_4 unimpl
+#:ST.W g_rp9_4, g_disp4_4, g_rs0_4 is g_op13_3=0x4 & g_rp9_4 & g_op8_1=0x1 & g_disp4_4 & g_rs0_4 unimpl
+#:ST.W g_rp9_4, g_rs0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x14 & g_rs0_4 ; eg_disp0_16 unimpl
+#:ST.W g_rb9_4, g_ri0_4, eg_shift4_2, eg_rs0_4 is g_op13_3=0x7 & g_rb9_4 & g_op4_5=0x0 & g_ri0_4 ; eg_op6_10=0x24 & eg_shift4_2 & eg_rs0_4 unimpl
+#:ST.W_COND g_rp9_4, g_rd0_4, eg_cond12_4, eg_disp0_9 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1f & g_rd0_4 ; eg_cond12_4 & eg_op9_3=0x5 & eg_disp0_9 unimpl
+#:STC.D g_rp0_4, eg_cop13_3, eg_rs9_3, eg_disp0_8 is g_op4_12=0xeba & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rs9_3 & eg_op8_1=0x0 & eg_disp0_8 unimpl
+#:STC.D g_rp0_4, eg_cop13_3, eg_rs9_3 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rs9_3 & eg_op0_9=0x70 unimpl
+#:STC.D g_rp0_4, eg_cop13_3, eg_rs9_3, eg_shift4_2, eg_ri0_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rs9_3 & eg_op6_3=0x3 & eg_shift4_2 & eg_ri0_4 unimpl
+#:STC.W g_rp0_4, eg_cop13_3, eg_rs8_4, eg_disp0_8 is g_op4_12=0xeba & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rs8_4 & eg_disp0_8 unimpl
+#:STC.W g_rp0_4, eg_cop13_3, eg_rs8_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x0 & eg_rs8_4 & eg_op0_8=0x60 unimpl
+#:STC.W g_rp0_4, eg_cop13_3, eg_rs8_4, eg_shift4_2, eg_ri0_4 is g_op4_12=0xefa & g_rp0_4 ; eg_cop13_3 & eg_op12_1=0x1 & eg_rs8_4 & eg_op6_2=0x2 & eg_shift4_2 & eg_ri0_4 unimpl
+#:STC0.D g_rp0_4, eg_disp12_4, eg_rs9_3, eg_disp0_8 is g_op4_12=0xf7a & g_rp0_4 ; eg_disp12_4 & eg_rs9_3 & eg_op8_1=0x0 & eg_disp0_8 unimpl
+#:STC0.W g_rp0_4, eg_disp12_4, eg_rs8_4, eg_disp0_8 is g_op4_12=0xf5a & g_rp0_4 ; eg_disp12_4 & eg_rs8_4 & eg_disp0_8 unimpl
+#:STCM.D g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x5 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:STCM.W g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x3 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:STCM.W g_rp0_4, eg_cop13_3, eg_update12_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op4_12=0xeda & g_rp0_4 ; eg_cop13_3 & eg_update12_1 & eg_op8_4=0x2 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:STCOND g_rp9_4, g_rs0_4, eg_disp0_16 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x17 & g_rs0_4 ; eg_disp0_16 unimpl
+#:STDSP g_disp4_7, g_rs0_4 is g_op11_5=0xa & g_disp4_7 & g_rs0_4 unimpl
+#:STHH.W g_rx9_4, g_ry0_4, eg_xpart13_1, eg_ypart12_1, eg_disp4_8, eg_rp0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op14_2=0x3 & eg_xpart13_1 & eg_ypart12_1 & eg_disp4_8 & eg_rp0_4 unimpl
+#:STHH.W g_rx9_4, g_ry0_4, eg_xpart13_1, eg_ypart12_1, eg_ri8_4, eg_shift4_2, eg_rb0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1e & g_ry0_4 ; eg_op14_2=0x2 & eg_xpart13_1 & eg_ypart12_1 & eg_ri8_4 & eg_op6_2=0x0 & eg_shift4_2 & eg_rb0_4 unimpl
+#:STM g_update9_1, g_rp0_4, eg_regsel15_1, eg_regsel14_1, eg_regsel13_1, eg_regsel12_1, eg_regsel11_1, eg_regsel10_1, eg_regsel9_1, eg_regsel8_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op10_6=0x3a & g_update9_1 & g_op4_5=0x1c & g_rp0_4 ; eg_regsel15_1 & eg_regsel14_1 & eg_regsel13_1 & eg_regsel12_1 & eg_regsel11_1 & eg_regsel10_1 & eg_regsel9_1 & eg_regsel8_1 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:STMTS g_update9_1, g_rp0_4, eg_regsel15_1, eg_regsel14_1, eg_regsel13_1, eg_regsel12_1, eg_regsel11_1, eg_regsel10_1, eg_regsel9_1, eg_regsel8_1, eg_regsel7_1, eg_regsel6_1, eg_regsel5_1, eg_regsel4_1, eg_regsel3_1, eg_regsel2_1, eg_regsel1_1, eg_regsel0_1 is g_op10_6=0x3b & g_update9_1 & g_op4_5=0x1c & g_rp0_4 ; eg_regsel15_1 & eg_regsel14_1 & eg_regsel13_1 & eg_regsel12_1 & eg_regsel11_1 & eg_regsel10_1 & eg_regsel9_1 & eg_regsel8_1 & eg_regsel7_1 & eg_regsel6_1 & eg_regsel5_1 & eg_regsel4_1 & eg_regsel3_1 & eg_regsel2_1 & eg_regsel1_1 & eg_regsel0_1 unimpl
+#:STSWP.H g_rp9_4, g_rs0_4, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rs0_4 ; eg_op12_4=0x9 & eg_disp0_12 unimpl
+#:STSWP.W g_rp9_4, g_rs0_4, eg_disp0_12 is g_op13_3=0x7 & g_rp9_4 & g_op4_5=0x1d & g_rs0_4 ; eg_op12_4=0xa & eg_disp0_12 unimpl
+#:SUB g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x1 & g_rd0_4 unimpl
+#:SUB g_rx9_4, g_ry0_4, eg_shift4_2, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x4 & eg_shift4_2 & eg_rd0_4 unimpl
+#:SUB g_imm4_8, g_rd0_4 is g_op12_4=0x2 & g_imm4_8 & g_rd0_4 unimpl
+#:SUB g_imm9_4, g_imm4_1, g_rd0_4, eg_imm0_16 is g_op13_3=0x7 & g_imm9_4 & g_op5_4=0x1 & g_imm4_1 & g_rd0_4 ; eg_imm0_16 unimpl
+#:SUB g_rs9_4, g_rd0_4, eg_imm0_16 is g_op13_3=0x7 & g_rs9_4 & g_op4_5=0xc & g_rd0_4 ; eg_imm0_16 unimpl
+#:SUB_F_COND g_update9_1, g_rd0_4, eg_cond8_4, eg_imm0_8 is g_op10_6=0x3d & g_update9_1 & g_op4_5=0x1b & g_rd0_4 ; eg_op12_4=0x0 & eg_cond8_4 & eg_imm0_8 unimpl
+#:SUB_COND g_rx9_4, g_ry0_4, eg_cond8_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x1d & g_ry0_4 ; eg_op12_4=0xe & eg_cond8_4 & eg_op4_4=0x1 & eg_rd0_4 unimpl
+#:SUBHH.W g_rx9_4, g_ry0_4, eg_xpart5_1, eg_ypart4_1, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op6_10=0x3c & eg_xpart5_1 & eg_ypart4_1 & eg_rd0_4 unimpl
+#:SWAP.B g_rd0_4 is g_op4_12=0x5cb & g_rd0_4 unimpl
+#:SWAP.BH g_rd0_4 is g_op4_12=0x5cc & g_rd0_4 unimpl
+#:SWAP.H g_rd0_4 is g_op4_12=0x5ca & g_rd0_4 unimpl
+#:SYNC eg_opcode0_8 is g_op0_16=0xebb0 ; eg_op8_8=0x0 & eg_opcode0_8 unimpl
+#:TLBR  is g_op0_16=0xd643 unimpl
+#:TLBS  is g_op0_16=0xd653 unimpl
+#:TLBW  is g_op0_16=0xd663 unimpl
+#:TNBZ g_rd0_4 is g_op4_12=0x5ce & g_rd0_4 unimpl
+#:TST g_rs9_4, g_rd0_4 is g_op13_3=0x0 & g_rs9_4 & g_op4_5=0x7 & g_rd0_4 unimpl
+#:XCHG g_rx9_4, g_ry0_4, eg_rd0_4 is g_op13_3=0x7 & g_rx9_4 & g_op4_5=0x0 & g_ry0_4 ; eg_op4_12=0xb4 & eg_rd0_4 unimpl

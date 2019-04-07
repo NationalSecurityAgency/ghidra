@@ -1,0 +1,33 @@
+# SLA specification file for Power ISA Version 2.06 Revision B (July 23, 2010) 
+# ISA (Instruction Set Architecture) a trademarked name for PowerPC specifications from IBM.
+
+@define ENDIAN "little"
+
+@define IS_ISA "1"
+@define NoLegacyIntegerMultiplyAccumulate "1"
+
+@define REGISTER_SIZE "8"
+@define BIT_64 "64"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@include "ppc_common.sinc"
+@include "ppc_isa.sinc"
+
+@include "quicciii.sinc"
+@include "FPRC.sinc"
+
+# A given processor can be compliant with the PowerISA spec by including EITHER
+# the embedded vector instructions (EVX) OR the AltiVec instructions
+# However, these instruction sets overlap in their bit patterns, so Sleigh cannot support
+# both at the same time. We have two language variants for PowerISA
+# that specify which of these two vector specs is supported.
+@include "evx.sinc"
+@include "SPEF_SCR.sinc"
+@include "SPE_EFSD.sinc"
+@include "SPE_EFV.sinc"
+# OR
+#@include "altivec.sinc"
+

@@ -1,0 +1,14 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework Project'
+
+dependencies {
+	compile project(':Generic')
+	compile project(':DB')
+	compile project(':Docking')
+	compile project(':FileSystem')
+	compile project(':Utility')
+	
+	testCompile project(':Generic').sourceSets.test.output
+	compile "org.apache.commons:commons-compress:1.18"
+}
+

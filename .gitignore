@@ -1,14 +1,64 @@
-.gradle
+*.class
+Thumbs.db
+.DS_Store
+.svn
+excludedFiles.txt
+.classpath
+.project
+ghidra.repos.config
+
+/*/*/*/*/*/bin/
+/*/*/*/*/*/build/
+/*/*/*/*/bin/
+/*/*/*/*/build/
+/*/*/*/bin/
+/*/*/*/build/
+/*/*/bin/
+/*/*/build/
+/*/bin/
+/*/build/
 /build/
+/bin/
 
-# Ignore Gradle GUI config
-gradle-app.setting
+**/dist
+repositories/
+*.sla
+**/data/build.xml
 
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
+# Misc files
+*.setting
+*.settings
+*.directory
+.gradle/
+.settings/
 
-# Cache of project
-.gradletasknamecache
+# File locks
+*.ulock
+*.lock
 
-# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
-# gradle/wrapper/gradle-wrapper.properties
+# Gradle creates these per developer
+**/vs/
+
+# Misc files produced while executing application
+Ghidra/.ghidraSvrKeys
+wrapper.log*
+
+# Ignore object files
+*.o
+*.obj
+
+# Ignore MS Visual Studio artifcats
+Release
+#Debug
+*.ncb
+*.suo
+*.aps
+*.vcproj.*
+
+# Ignore UNIX backup files
+*~
+*.swp
+
+# Ignore eclipse project files
+.project
+.classpath

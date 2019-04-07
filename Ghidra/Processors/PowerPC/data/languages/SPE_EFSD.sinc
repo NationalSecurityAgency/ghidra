@@ -1,0 +1,798 @@
+# Based on "PowerISA Version 2.06 Revision B" document dated July 23, 2010
+# Category: SPE.Embedded Float Scalar Double
+
+# version 1.0
+
+# =================================================================
+# Page 576
+
+# efdabs rT,rA
+# ISA-cmt: efdabs - Floating-Point Double-Precision Absolute Value
+# ISA-info: efdabs - Form "EVX" Page 576 Category "SP.FD"
+# binutils: e500.d:   34:	10 a4 02 e4 	efdabs  r5,r4
+:efdabs D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=740
+{
+   D = abs( A );
+}
+ 
+# =================================================================
+# Page 577
+
+# efdadd rT,rA,rB
+# ISA-cmt: efdadd - Floating-Point Double-Precision Add
+# ISA-info: efdadd - Form "EVX" Page 577 Category "SP.FD"
+# binutils: e500.d:   40:	10 a4 1a e0 	efdadd  r5,r4,r3
+:efdadd D,A,B is OP=4 & D & A & B & XOP_0_10=736
+{
+   D = A f+ B;
+   setSPEFSCRAddFlags_L( A, B, D );
+}
+
+
+# =================================================================
+# Page 582
+
+# efdcfs rT,rB
+# ISA-cmt: efdcfs - Floating-Point Double-Precision Convert from Single-Precision
+# ISA-info: efdcfs - Form "EVX" Page 582 Category "SP.FD"
+# binutils: e500.d:   a4:	10 a0 22 ef 	efdcfs  r5,r4
+:efdcfs D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=751
+{
+   D = float2float( B:4 );
+   setSPEFSCR_L( D );
+   setSummarySPEFSCR();
+}
+
+
+# =================================================================
+# Page 580
+
+# efdcfsf rT,rB
+# ISA-cmt: efdcfsf - Convert Floating-Point Double-Precision from Signed Fraction
+# ISA-info: efdcfsf - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   7c:	10 a0 22 f3 	efdcfsf r5,r4
+:efdcfsf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=755
+{
+   # load fractional divisor as a float
+   tmpA:4 = 0x80000000;
+   tmpA = int2float( tmpA );
+   setSPEFSCR_L( tmpA );
+
+   # check if negative
+   if ( ( B:4 & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the fractional portion of register B
+   tmpB:4 = int2float( B:4 );
+   setSPEFSCR_L( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_L( tmpB, tmpA, tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the fractional portion of register B, 2's complement negate
+   tmpB = int2float( -( B:4 ) );
+   setSPEFSCR_L( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_L( tmpB, tmpA, tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setSPEFSCR_L( tmpB );
+ 
+   <done>
+
+   tmpC:8 = float2float( tmpB );
+   setSPEFSCR_L( tmpC );
+
+   setSummarySPEFSCR();
+
+   D = tmpC;
+}
+
+
+# =================================================================
+# Page 579
+
+# efdcfsi rT,rB
+# ISA-cmt: efdcfsi - Convert Floating-Point Double-Precision from Signed Integer
+# ISA-info: efdcfsi - Form "EVX" Page 579 Category "SP.FD"
+# binutils: e500.d:   6c:	10 a0 22 f1 	efdcfsi r5,r4
+:efdcfsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=753 
+{
+   # check if negative
+   if ( ( B:4 & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the integer portion of register B
+   tmpB:8 = int2float( B:4 );
+   setSPEFSCR_L( tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the integer portion of register B, 2's complement negate
+   tmpB = int2float( -( B:4 ) );
+   setSPEFSCR_L( tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setSPEFSCR_L( tmpB );
+ 
+   <done>
+
+   setSummarySPEFSCR();
+
+   D = tmpB;
+}
+
+
+# =================================================================
+# Page 580
+
+# efdcfsid rT,rB
+# ISA-cmt: efdcfsid - Convert Floating-Point Double-Precision from Signed Integer Doubleword
+# ISA-info: efdcfsid - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   70:	10 a0 22 e3 	efdcfsid r5,r4
+:efdcfsid D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=739 
+{
+   # check if negative
+   if ( ( B & 0x8000000000000000 ) != 0 ) goto <negative>;
+
+   # float the integer portion of register B
+   tmpB:8 = int2float( B );
+   setSPEFSCR_L( tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the integer portion of register B, 2's complement negate
+   tmpB = int2float( -( B ) );
+   setSPEFSCR_L( tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setSPEFSCR_L( tmpB );
+ 
+   <done>
+
+   setSummarySPEFSCR();
+
+   D = tmpB;
+}
+
+
+# =================================================================
+# Page 580
+
+# efdcfuf rT,rB
+# ISA-cmt: efdcfuf - Convert Floating-Point Double-Precision from Unsigned Fraction
+# ISA-info: efdcfuf - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   80:	10 a0 22 f2 	efdcfuf r5,r4
+:efdcfuf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=754
+{
+   # load fractional divisor as a float
+   tmpA:8 = 0x0000000100000000;
+   tmpA = int2float( tmpA );
+   setSPEFSCR_L( tmpA );
+
+   # float the fractional portion of register B
+   tmpB:8 = int2float( B:4 );
+   setSPEFSCR_L( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_L( tmpB, tmpA, tmpB );
+
+   D = tmpB;
+}
+
+
+# =================================================================
+# Page 579
+
+#efdcfui  rT,rB
+# ISA-cmt: efdcfui - Convert Floating-Point Double-Precision from Unsigned Integer
+# ISA-info: efdcfui - Form "EVX" Page 579 Category "SP.FD"
+# binutils: e500.d:   74:	10 a0 22 f0 	efdcfui r5,r4
+:efdcfui D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=752
+{
+   tmp:8 = int2float( B:4 );
+   setSPEFSCR_L( tmp );
+
+   setSummarySPEFSCR();
+
+   D = tmp;
+}
+
+
+# =================================================================
+# Page 580
+
+#efdcfuid  rT,rB
+# ISA-cmt: efdcfuid - Convert Floating-Point Double-Precision from Unsigned Integer Doubleword
+# ISA-info: efdcfuid - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   78:	10 a0 22 e2 	efdcfuid r5,r4
+:efdcfuid D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=738
+{
+   tmp:8 = int2float( B );
+   setSPEFSCR_L( tmp );
+
+   setSummarySPEFSCR();
+
+   D = tmp;
+}
+
+
+# =================================================================
+# Page 578
+
+# efdcmpeq CRFD,rA,rB
+# ISA-cmt: efdcmpeq - Floating-Point Double-Precision Compare Equal
+# ISA-info: efdcmpeq - Form "EVX" Page 578 Category "SP.FD"
+# binutils: e500.d:   58:	12 84 1a ee 	efdcmpeq cr5,r4,r3
+:efdcmpeq CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=750
+{
+  CRFD = A f== B;
+}
+
+
+# =================================================================
+# Page 578
+
+# efdcmpgt CRFD,rA,rB
+# ISA-cmt: efdcmpgt - Floating-Point Double-Precision Compare Greater Than
+# ISA-info: efdcmpgt - Form "EVX" Page 578 Category "SP.FD"
+# binutils: e500.d:   50:	12 84 1a ec 	efdcmpgt cr5,r4,r3
+:efdcmpgt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=748
+{
+  CRFD = A f> B;
+}
+
+
+# =================================================================
+# Page 578
+
+# efdcmplt CRFD,rA,rB
+# ISA-cmt: efdcmplt - Floating-Point Double-Precision Compare Less Than
+# ISA-info: efdcmplt - Form "EVX" Page 578 Category "SP.FD"
+# binutils: e500.d:   54:	12 84 1a ed 	efdcmplt cr5,r4,r3
+:efdcmplt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=749
+{
+  CRFD = A f< B;
+}
+
+
+# =================================================================
+# Page 578
+
+# efdctsf rT,rB
+# ISA-cmt: efdctsf - Convert Floating-Point Double-Precision to Signed Fraction
+# ISA-info: efdctsf - Form "EVX" Page 582 Category "SP.FD"
+# binutils: e500.d:   9c:	10 a0 22 f7 	efdctsf r5,r4
+:efdctsf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=759
+{
+   # multiply by 0x8000 0000 0000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:8 = 0x8000000000000000;
+   tmpM = int2float( tmpM );
+   setSPEFSCR_L( tmpM );
+
+   # load saturation limit as a float
+   tmpL:8 = 0x8000000000000000 - 1;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # scale the saturation limit to a fractional float
+   tmpL = tmpL f/ tmpM;
+   setSPEFSCRDivFlags_L( tmpL, tmpM, tmpL );
+
+   tmpB:8 = B;
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpL ) goto <check_negative>;
+
+      # set to positive saturation
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   goto <done>;
+
+   <check_negative>
+
+   # check if greater than or equal to negative saturation limit
+   tmpL = f-( tmpL );
+   if ( tmpB f>= tmpL ) goto <done>;
+
+      # set to negative saturation
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_L( tmpB, tmpM, tmpB );
+
+   # truncate back to signed fraction format
+   tmpC:8 = trunc( tmpB );
+   setSPEFSCR_L( tmpB );
+
+   setSummarySPEFSCR();
+
+   D = tmpC;
+}
+
+
+# =================================================================
+# Page 580
+
+# efdctsi rT,rB
+# ISA-cmt: efdctsi - Convert Floating-Point Double-Precision to Signed Integer
+# ISA-info: efdctsi - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   84:	10 a0 22 f5 	efdctsi r5,r4
+:efdctsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=757
+{
+   # create zero float constant
+   tmpA:8 = 0;
+   tmpA = int2float( tmpA );
+
+   # check if negative
+   if ( B f< tmpA ) goto <negative>;
+
+   tmpB:8 = round( B );
+   setSPEFSCR_L( tmpB );
+
+   # limit to positive saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped>;
+      tmpB = 0x000000007FFFFFFF;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   goto <done>;
+
+   <negative>
+
+   # negate the float
+   tmpB = round( f-( B ) );
+   setSPEFSCR_L( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped>;
+      tmpB = 0x0000000080000000;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpB = -( tmpB );
+
+   <done>
+
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+
+# =================================================================
+# Page 581
+
+# efdctsidz rT,rB
+# ISA-cmt: efdctsidz - Convert Floating-Point Double-Precision to Signed Integer Doubleword with Round toward Zero
+# ISA-info: efdctsidz - Form "EVX" Page 581 Category "SP.FD"
+# binutils: e500.d:   88:	10 a0 22 eb 	efdctsidz r5,r4
+# Note: This may not work correctly as the number approaches saturation; too little (16 digits) precision in mantissa
+:efdctsidz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=747
+{
+   # create zero float constant
+   tmpA:8 = 0;
+   tmpA = int2float( tmpA );
+
+   tmpB:8 = B;
+
+   # check if negative
+   if ( tmpB f< tmpA ) goto <negative>;
+
+   # load saturation limit as a float
+   tmpL:8 = 0x8000000000000000 - 1;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # limit to saturation
+   if ( tmpB <= tmpL ) goto <positive_clipped>;
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpB = trunc( tmpB );
+   setSPEFSCR_L( tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # load saturation limit as a float
+   tmpL = 0x8000000000000000;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # negate float (make positive)
+   tmpB = f-( tmpB );
+
+   # limit to saturation
+   if ( tmpB <= tmpL ) goto <negative_clipped>;
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped>
+
+   tmpB = trunc( tmpB );
+   setSPEFSCR_L( tmpB );
+
+   # negate the signed int
+   tmpB = -( tmpB );
+
+   <done>
+
+   setSummarySPEFSCR();
+
+   D = tmpB;
+}
+
+
+# =================================================================
+# Page 582
+
+# efdctsiz rT,rB
+# ISA-cmt: efdctsiz - Convert Floating-Point Double-Precision to Signed Integer with Round toward Zero
+# ISA-info: efdctsiz - Form "EVX" Page 582 Category "SP.FD"
+# binutils: e500.d:   8c:	10 a0 22 fa 	efdctsiz r5,r4
+:efdctsiz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=762
+{
+   # create zero float constant
+   tmpA:8 = 0;
+   tmpA = int2float( tmpA );
+
+   # check if negative
+   if ( B f< tmpA ) goto <negative>;
+
+   tmpB:8 = trunc( B );
+   setSPEFSCR_L( tmpB );
+
+   # limit to positive saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped>;
+      tmpB = 0x000000007FFFFFFF;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   goto <done>;
+
+   <negative>
+
+   # negate the float
+   tmpB = trunc( f-( B ) );
+   setSPEFSCR_L( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped>;
+      tmpB = 0x0000000080000000;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpB = -( tmpB );
+
+   <done>
+
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+
+# =================================================================
+# Page 582
+
+# efdctuf rT,rB
+# ISA-cmt: efdctuf - Convert Floating-Point Double-Precision to Unsigned Fraction
+# ISA-info: efdctuf - Form "EVX" Page 582 Category "SP.FD"
+# binutils: e500.d:   a0:	10 a0 22 f6 	efdctuf r5,r4
+:efdctuf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=758
+{
+   # multiply by 0x0000 0001 0000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:8 = 0x0000000100000000;
+   tmpM = int2float( tmpM );
+   setSPEFSCR_L( tmpM );
+
+   # load saturation limit as a float
+   tmpL:8 = 0x0000000100000000 - 1;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # scale the saturation limit to a fractional float
+   tmpL = tmpL f/ tmpM;
+   setSPEFSCRDivFlags_L( tmpL, tmpM, tmpL );
+
+   # get B float up to 64 bit width
+   tmpB:8 = B;
+   setSPEFSCR_L( tmpB );
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpL ) goto <done>;
+
+      # set to saturation
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_L( tmpB, tmpM, tmpB );
+
+   # truncate back to integer
+   tmpC:4 = trunc( tmpB );
+   setSPEFSCR_L( tmpC );
+
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpC );
+}
+
+
+# =================================================================
+# Page 580
+
+# efdctui rT,rB
+# ISA-cmt: efdctui - Convert Floating-Point Double-Precision to Unsigned Integer
+# ISA-info: efdctui - Form "EVX" Page 580 Category "SP.FD"
+# binutils: e500.d:   90:	10 a0 22 f4 	efdctui r5,r4
+:efdctui D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=756
+{
+   tmpB:8 = B;
+
+   # load saturation limit as a float
+   tmpL:8 = 0x00000000FFFFFFFF;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # limit to saturation
+   if ( tmpB f<= tmpL ) goto <positive_clipped>;
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   # round back to integer
+   tmpC:4 = trunc(round( tmpB ));
+   setSPEFSCR_L( tmpB );
+
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpC );
+}
+
+
+# =================================================================
+# Page 581
+
+# efdctuidz rT,rB
+# ISA-cmt: efdctuidz - Convert Floating-Point Double-Precision to Unsigned Integer Doubleword with Round toward Zero
+# ISA-info: efdctuidz - Form "EVX" Page 581 Category "SP.FD"
+# binutils: e500.d:   94:	10 a0 22 ea 	efdctuidz r5,r4
+:efdctuidz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=746
+{
+   tmpB:8 = B;
+
+   # load saturation limit as a float
+   tmpL:8 = 0xFFFFFFFFFFFFFFFF;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # limit to saturation
+   if ( tmpB f<= tmpL ) goto <positive_clipped>;
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpB = trunc( tmpB );
+
+   setSummarySPEFSCR();
+
+   D = tmpB;
+}
+
+
+# =================================================================
+# Page 582
+
+# efdctuiz rT,rB
+# ISA-cmt: efdctuiz - Convert Floating-Point Double-Precision to Unsigned Integer with Round toward Zero
+# ISA-info: efdctuiz - Form "EVX" Page 582 Category "SP.FD"
+# binutils: e500.d:   98:	10 a0 22 f8 	efdctuiz r5,r4
+:efdctuiz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=760
+{
+   tmpB:8 = B;
+
+   # load saturation limit as a float
+   tmpL:8 = 0x00000000FFFFFFFF;
+   tmpL = int2float( tmpL );
+   setSPEFSCR_L( tmpL );
+
+   # limit to saturation
+   if ( tmpB f<= tmpL ) goto <positive_clipped>;
+      tmpB = tmpL;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpB = trunc( tmpB );
+
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+
+# =================================================================
+# Page 577
+
+# efddiv rT,rA,rB
+# ISA-cmt: efddiv - Floating-Point Double-Precision Divide
+# ISA-info: efddiv - Form "EVX" Page 577 Category "SP.FD"
+# binutils: e500.d:   4c:	10 a4 1a e9 	efddiv  r5,r4,r3
+:efddiv D,A,B is OP=4 & D & A & B & XOP_0_10=745
+{
+   D = A f/ B;
+   setSPEFSCRDivFlags_L( A, B, D );
+}
+
+
+# =================================================================
+# Page 577
+
+# efdmul rT,rA,rB
+# ISA-cmt: efdmul - Floating-Point Double-Precision Multiply
+# ISA-info: efdmul - Form "EVX" Page 577 Category "SP.FD"
+# binutils: e500.d:   48:	10 a4 1a e8 	efdmul  r5,r4,r3
+:efdmul D,A,B is OP=4 & D & A & B & XOP_0_10=744
+{
+   D = A f* B;
+   setSPEFSCRMulFlags_L( A, B, D );
+}
+
+
+# =================================================================
+# Page 576
+
+# efdnabs rT,rA
+# ISA-cmt: efdnabs - Floating-Point Double-Precision Negative Absolute Value
+# ISA-info: efdnabs - Form "EVX" Page 576 Category "SP.FD"
+# binutils: e500.d:   38:	10 a4 02 e5 	efdnabs r5,r4
+:efdnabs D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=741
+{
+   D = f- ( abs( A ) );
+}
+
+
+# =================================================================
+# Page 577
+
+# efdneg rT,rA
+# ISA-cmt: efdneg - Floating-Point Double-Precision Negate
+# ISA-info: efdneg - Form "EVX" Page 576 Category "SP.FD"
+# binutils: e500.d:   3c:	10 a4 02 e6 	efdneg  r5,r4
+:efdneg D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=742
+{
+   D = f-( A );
+}
+
+
+# =================================================================
+# Page 577
+
+# efdsub rT,rA,rB
+# ISA-cmt: efdsub - Floating-Point Double-Precision Subtract
+# ISA-info: efdsub - Form "EVX" Page 577 Category "SP.FD"
+# binutils: e500.d:   44:	10 a4 1a e1 	efdsub  r5,r4,r3
+:efdsub D,A,B is OP=4 & D & A & B & XOP_0_10=737
+{
+   D = A f- B;
+   setSPEFSCRSubFlags_L( A, B, D );
+}
+
+
+# =================================================================
+# Page 579
+
+# efdtsteq CRFD,rA,rB
+# ISA-cmt: efdtsteq - Floating-Point Double-Precision Test Equal
+# ISA-info: efdtsteq - Form "EVX" Page 579 Category "SP.FD"
+# binutils: e500.d:   68:	12 84 1a fe 	efdtsteq cr5,r4,r3
+:efdtsteq CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=766
+{
+  CRFD = A f== B;
+}
+
+
+# =================================================================
+# Page 578
+
+# efdtstgt CRFD,rA,rB
+# ISA-cmt: efdtstgt - Floating-Point Double-Precision Test Greater Than
+# ISA-info: efdtstgt - Form "EVX" Page 578 Category "SP.FD"
+# binutils: e500.d:   5c:	12 84 1a fc 	efdtstgt cr5,r4,r3
+# binutils: e500.d:   60:	12 84 1a fc 	efdtstgt cr5,r4,r3
+:efdtstgt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=764
+{
+  CRFD = A f> B;
+}
+
+
+# =================================================================
+# Page 579
+
+# efdtstlt CRFD,rA,rB
+# ISA-cmt: efdtstlt - Floating-Point Double-Precision Test Less Than
+# ISA-info: efdtstlt - Form "EVX" Page 579 Category "SP.FD"
+# binutils: e500.d:   64:	12 84 1a fd 	efdtstlt cr5,r4,r3
+:efdtstlt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=765
+{
+  CRFD = A f< B;
+}
+
+
+# =================================================================
+# Page 583
+
+# efscfd rT,rB
+# ISA-cmt: efscfd - Floating-Point Single-Precision Convert from Double-Precision
+# ISA-info: efscfd - Form "EVX" Page 583 Category "SP.FD"
+# binutils: e500.d:   30:	10 a0 22 cf 	efscfd  r5,r4
+:efscfd D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=719
+{
+   tmpB:4 = float2float( B );
+   setSPEFSCR_L( tmpB );
+   setSummarySPEFSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB );
+}

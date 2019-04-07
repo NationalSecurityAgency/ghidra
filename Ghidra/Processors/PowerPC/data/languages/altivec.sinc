@@ -1,0 +1,1852 @@
+# altivec pcodes are stubbed out with pseudocode calls
+define pcodeop dataStreamStop;
+define pcodeop dataStreamStopAll;
+define pcodeop dataStreamTouch;
+define pcodeop dataStreamTouchSoon;
+define pcodeop dataStreamTouchForStore;
+define pcodeop dataStreamTouchForStoreTransient;
+define pcodeop loadVectorElementByteIndexed;
+define pcodeop loadVectorElementHalfWordIndexed;
+define pcodeop loadVectorElementWordIndexed;
+define pcodeop loadVectorForShiftLeft;
+define pcodeop loadVectorForShiftRight;
+define pcodeop loadVectorIndexed;
+define pcodeop loadVectorIndexedLRU;
+define pcodeop moveFromVectorStatusAndControlRegister;
+define pcodeop moveToVectorStatusAndControlRegister;
+define pcodeop storeVectorElementByteIndexed;
+define pcodeop storeVectorElementHalfWordIndexed;
+define pcodeop storeVectorElementWordIndexed;
+define pcodeop storeVectorIndexed;
+define pcodeop storeVectorIndexedLRU;
+define pcodeop vectorAddCarryoutUnsignedWord;
+define pcodeop vectorAddFloatingPoint;
+define pcodeop vectorAddSignedByteSaturate;
+define pcodeop vectorAddSignedHalfWordSaturate;
+define pcodeop vectorAddSignedWordSaturate;
+define pcodeop vectorAddUnsignedByteSaturate;
+define pcodeop vectorAddUnsignedHalfWordModulo;
+define pcodeop vectorAddUnsignedHalfWordSaturate;
+define pcodeop vectorAddUnsignedWordSaturate;
+define pcodeop vectorLogicalAnd;
+define pcodeop vectorLogicalAndWithComplement;
+define pcodeop vectorAverageSignedByte;
+define pcodeop vectorAverageSignedHalfWord;
+define pcodeop vectorAverageSignedWord;
+define pcodeop vectorAverageUnsignedByte;
+define pcodeop vectorAverageUnsignedHalfWord;
+define pcodeop vectorAverageUnsignedWord;
+define pcodeop vectorConvertFromSignedFixedPointWord;
+define pcodeop vectorConvertFromUnsignedFixedPointWord;
+define pcodeop vectorCompareBoundsFloatingPoint;
+define pcodeop vectorCompareEqualToFloatingPoint;
+define pcodeop vectorCompareEqualToUnsignedByte;
+define pcodeop vectorCompareEqualToUnsignedHalfWord;
+define pcodeop vectorCompareEqualToUnsignedWord;
+define pcodeop vectorCompareGreaterThanOrEqualToFloatingPoint;
+define pcodeop vectorCompareGreaterThanFloatingPoint;
+define pcodeop vectorCompareGreaterThanSignedByte;
+define pcodeop vectorCompareGreaterThanConditionRegisterSignedHalfWord;
+define pcodeop vectorCompareGreaterThanSignedWord;
+define pcodeop vectorCompareGreaterThanUnsignedByte;
+define pcodeop vectorCompareGreaterThanUnsignedHalfWord;
+define pcodeop vectorCompareGreaterThanUnsignedWord;
+define pcodeop vectorConvertToSignedFixedPointWordSaturate;
+define pcodeop vectorConvertToUnsignedFixedPointWordSaturate;
+define pcodeop vector2RaisedToTheExponentEstimateFloatingPoint;
+define pcodeop vectorLog2EstimateFloatingPoint;
+define pcodeop vectorMultiplyAddFloatingPoint;
+define pcodeop vectorMaximumFloatingPoint;
+define pcodeop vectorMaximumSignedByte;
+define pcodeop vectorMaximumSignedHalfWord;
+define pcodeop vectorMaximumSignedWord;
+define pcodeop vectorMaximumUnsignedByte;
+define pcodeop vectorMaximumUnsignedHalfWord;
+define pcodeop vectorMaximumUnsignedWord;
+define pcodeop vectorMultiplyHighAndAddSignedHalfWordSaturate;
+define pcodeop vectorMultiplyHighRoundAndAddSignedHalfWordSaturate;
+define pcodeop vectorMinimumFloatingPoint;
+define pcodeop vectorMinimumSignedByte;
+define pcodeop vectorMinimumSignedHalfWord;
+define pcodeop vectorMinimumSignedWord;
+define pcodeop vectorMinimumUnsignedByte;
+define pcodeop vectorMinimumUnsignedHalfWord;
+define pcodeop vectorMinimumUnsignedWord;
+define pcodeop vectorMultiplyLowAndAddUnsignedHalfWordModulo;
+define pcodeop vectorMergeHighByte;
+define pcodeop vectorMergeHighHalfWord;
+define pcodeop vectorMergeHighWord;
+define pcodeop vectorMergeLowByte;
+define pcodeop vectorMergeLowHalfWord;
+define pcodeop vectorMergeLowWord;
+define pcodeop vectorMultiplySumMixedSignByteModulo;
+define pcodeop vectorMultiplySumSignedHalfWordModulo;
+define pcodeop vectorMultiplySumSignedHalfWordSaturate;
+define pcodeop vectorMultiplySumUnsignedByteModulo;
+define pcodeop vectorMultiplySumUnsignedHalfWordModulo;
+define pcodeop vectorMultiplySumUnsignedHalfWordSaturate;
+define pcodeop vectorMultiplyEvenSignedByte;
+define pcodeop vectorMultiplyEvenSignedHalfWord;
+define pcodeop vectorMultiplyEvenUnsignedByte;
+define pcodeop vectorMultiplyEvenUnsignedHalfWord;
+define pcodeop vectorMultiplyOddSignedByte;
+define pcodeop vectorMultiplyOddSignedHalfWord;
+define pcodeop vectorMultiplyOddUnsignedByte;
+define pcodeop vectorMultiplyOddUnsignedHalfWord;
+define pcodeop vectorNegativeMultiplySubtractFloatingPoint;
+define pcodeop vectorLogicalNOR;
+define pcodeop vectorLogicalOR;
+define pcodeop vectorPackPixel32;
+define pcodeop vectorPackSignedHalfWordSignedSaturate;
+define pcodeop vectorPackSignedHalfWordUnsignedSaturate;
+define pcodeop vectorPackSignedWordSignedSaturate;
+define pcodeop vectorPackSignedWordUnsignedSaturate;
+define pcodeop vectorPackUnsignedHalfWordUnsignedModulo;
+define pcodeop vectorPackUnsignedHalfWordUnsignedSaturate;
+define pcodeop vectorPackUnsignedWordUnsignedModulo;
+define pcodeop vectorPackUnsignedWordUnsignedSaturate;
+define pcodeop vectorReciprocalEstimateFloatingPoint;
+define pcodeop vectorRoundToFloatingPointIntegerTowardMinusInfinity;
+define pcodeop vectorRoundToFloatingPointIntegerNearest;
+define pcodeop vectorRoundToFloatingPointIntegerTowardPluInfinity;
+define pcodeop vectorRoundToFloatingPointIntegerTowardZero;
+define pcodeop vectorRotateLeftIntegerByte;
+define pcodeop vectorRotateLeftIntegerHalfWord;
+define pcodeop vectorRotateLeftIntegerWord;
+define pcodeop vectorReciprocalSquareRootEstimateFloatingPoint;
+define pcodeop vectorConditionalSelect;
+define pcodeop vectorShiftLeft;
+define pcodeop vectorShiftLeftIntegerByte;
+define pcodeop vectorShiftLeftDoubleByOctetImmediate;
+define pcodeop vectorShiftLeftIntegerHalfWord;
+define pcodeop vectorShiftLeftByOctet;
+define pcodeop vectorShiftLeftIntegerWord;
+define pcodeop vectorSplatByte;
+define pcodeop vectorSplatHalfWord;
+define pcodeop vectorSplatImmediateSignedByte;
+define pcodeop vectorSplatImmediateSignedHalfWord;
+define pcodeop vectorSplatImmediateSignedWord;
+define pcodeop vectorSplatWord;
+define pcodeop vectorShiftRight;
+define pcodeop vectorShiftRightAlgebraicByte;
+define pcodeop vectorShiftRightAlgebraicHalfWord;
+define pcodeop vectorShiftRightAlgebraicWord;
+define pcodeop vectorShiftRightByte;
+define pcodeop vectorShiftRightHalfWord;
+define pcodeop vectorShiftRightByOctet;
+define pcodeop vectorShiftRightWord;
+define pcodeop vectorSubtractCarryoutUnsignedWord;
+define pcodeop vectorSubtractFloatingPoint;
+define pcodeop vectorSubtractSignedByteSaturate;
+define pcodeop vectorSubtractSignedHalfWordSaturate;
+define pcodeop vectorSubtractSignedWordSaturate;
+define pcodeop vectorSubtractUnsignedByteModulo;
+define pcodeop vectorSubtractUnsignedByteSaturate;
+define pcodeop vectorSubtractUnsignedHalfWordSaturate;
+define pcodeop vectorSubtractUnsignedWordModulo;
+define pcodeop vectorSubtractUnsignedWordSaturate;
+define pcodeop vectorSumAcrossSignedWordSaturate;
+define pcodeop vectorSumAcrossPartialSignedWordSaturate;
+define pcodeop vectorSumAcrossPartialSignedByteSaturate;
+define pcodeop vectorSumAcrossPartialSignedHalfWordSaturate;
+define pcodeop vectorSumAcrossPartialUnsignedByteSaturate;
+define pcodeop vectorUnpackHighPixel16;
+define pcodeop vectorUnpackHighSignedByte;
+define pcodeop vectorUnpackHighSignedHalfWord;
+define pcodeop vectorUnpackLowPixel16;
+define pcodeop vectorUnpackLowSignedByte;
+define pcodeop vectorUnpackLowSignedHalfWord;
+
+# dss
+:dss STRM			is $(NOTVLE) & OP=31 & BIT_25=0 & BITS_23_24=0 & STRM & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=822 & Rc=0
+{
+	dataStreamStop(STRM:1);
+}
+
+# dssall
+:dssall	STRM		is $(NOTVLE) & OP=31 & BIT_25=1 & BITS_23_24=0 & STRM & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=822 & Rc=0
+{
+	dataStreamStopAll(STRM:1);
+}
+
+:dst A,B,STRM		is $(NOTVLE) & OP=31 & BIT_25=0 & BITS_23_24=0 & STRM & A & B & XOP_1_10=342 & Rc=0
+{
+	dataStreamTouch(A,B,STRM:1);
+}
+
+:dstt A,B,STRM		is $(NOTVLE) & OP=31 & BIT_25=1 & BITS_23_24=0 & STRM & A & B & XOP_1_10=342 & Rc=0
+{
+	dataStreamTouchSoon(A,B,STRM:1);
+}
+
+:dstst A,B,STRM		is $(NOTVLE) & OP=31 & BIT_25=0 & BITS_23_24=0 & STRM & A & B & XOP_1_10=374 & Rc=0
+{
+	dataStreamTouchForStore(A,B,STRM:1);
+}
+
+:dststt A,B,STRM	is $(NOTVLE) & OP=31 & BIT_25=1 & BITS_23_24=0 & STRM & A & B & XOP_1_10=374 & Rc=0
+{
+	dataStreamTouchForStoreTransient(A,B,STRM:1);
+}
+
+:lvebx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=7 & Rc=0
+{	
+	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B);
+	tmpb:1 = *[ram]:1 tmp;
+	eb:1 = tmp[0,4];
+# This looks backwards from what the manual says, but it's ok since byte 0 in the manual is MSB
+# where as for us byte 0 is LSB	
+@if ENDIAN == "big"
+	eb = 0xF - eb;
+@endif
+	eb = eb * 8;
+	vrD = (zext(tmpb) << eb);	
+	#vrD = loadVectorElementByteIndexed(A,B);
+}
+
+:lvehx vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=39 & Rc=0
+{	# TODO defintion
+	vrD = loadVectorElementHalfWordIndexed(A,B);
+}
+
+:lvewx vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=71 & Rc=0
+{	# TODO definition
+	vrD = loadVectorElementWordIndexed(A,B);
+}
+
+:lvsl vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=6 & Rc=0
+{   # TODO definition
+	vrD = loadVectorForShiftLeft(A,B);
+}
+
+:lvsr vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=38 & Rc=0
+{   
+	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B);
+	eb:1 = tmp[0,4];
+	eb = eb * 8;
+	srca:32=0x0001020304050607;
+	srcb:32=0x08090a0b0c0d0e0f;
+	srcc:32=0x1011121314151617;
+	srcd:32=0x18191a1b1c1d1e1f;
+	src:32 = (srca << 192) | (srcb << 128) | (srcc << 64) | srcd;
+	src = src >> eb;
+	vrD = src:16;
+}
+
+:lvx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=103 & Rc=0
+{   
+#	vrD = loadVectorIndexed(A,B);
+	build RA_OR_ZERO;
+	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
+	vrD = *[ram]:16 tmp; 
+}
+
+:lvxl vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=359 & Rc=0
+{   # TODO definition
+	vrD = loadVectorIndexedLRU(A,B);
+}
+
+:mfvscr vrD			is OP=4 & vrD & vrAR=0 & vrBR=0 & XOP_1_10=770 & Rc=0
+{   # TODO definition
+	vrD = moveFromVectorStatusAndControlRegister();
+}
+
+:mtvscr vrB			is OP=4 & vrDR=0 & vrAR=0 & vrB & XOP_1_10=802 & Rc=0
+{   # TODO definition
+	moveToVectorStatusAndControlRegister(vrB);
+}
+
+:stvebx vrS,RA_OR_ZERO,B		is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=135 & Rc=0
+{   # TODO definition
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:1 EA = storeVectorElementByteIndexed(vrS,RA_OR_ZERO,B);
+}
+
+:stvehx vrS,RA_OR_ZERO,B		is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=167 & Rc=0
+{   # TODO definition
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:2 EA = storeVectorElementHalfWordIndexed(vrS,RA_OR_ZERO,B);
+}
+
+:stvewx vrS,RA_OR_ZERO,B		is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=199 & Rc=0
+{   # TODO definition
+	EA:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffffc;
+	*[ram]:4 EA = storeVectorElementWordIndexed(vrS,RA_OR_ZERO,B);
+}
+
+:stvx vrS,RA_OR_ZERO,B		is OP=31 & vrS & B & RA_OR_ZERO & XOP_1_10=231 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
+	*[ram]:16 tmp = vrS; 
+}
+
+:stvxl vrS,RA_OR_ZERO,B		is OP=31 & vrS & B & RA_OR_ZERO & XOP_1_10=487 & Rc=0
+{   # TODO definition 
+	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
+	*[ram]:16 tmp = vrS;
+	# mark_as_not_likely_to_be_needed_again_anytime_soon(tmp);
+}
+
+:vaddcuw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=384
+{  # TODO definition
+	vrD = vectorAddCarryoutUnsignedWord(vrA,vrB);
+}
+
+:vaddfp vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=10
+{   # TODO definition
+	vrD = vectorAddFloatingPoint(vrA,vrB);
+}
+
+:vaddsbs vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=768
+{   # TODO definition
+	vrD = vectorAddSignedByteSaturate(vrA,vrB);
+}
+
+:vaddshs vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=832
+{   # TODO definition
+	vrD = vectorAddSignedHalfWordSaturate(vrA,vrB);
+}
+
+:vaddsws vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=896
+{   # TODO definition
+	vrD = vectorAddSignedWordSaturate(vrA,vrB);
+}
+
+vaddubm_part1: is  vrA_8_0 & vrA_8_1 & vrA_8_2 & vrA_8_3 & vrA_8_4 & vrA_8_5 & vrA_8_6 & vrA_8_7 
+            & vrB_8_0 & vrB_8_1 & vrB_8_2 & vrB_8_3 & vrB_8_4 & vrB_8_5 & vrB_8_6 & vrB_8_7
+            & vrD_8_0 & vrD_8_1 & vrD_8_2 & vrD_8_3 & vrD_8_4 & vrD_8_5 & vrD_8_6 & vrD_8_7
+{
+    vrD_8_0 = vrA_8_0 + vrB_8_0;
+    vrD_8_1 = vrA_8_1 + vrB_8_1;
+    vrD_8_2 = vrA_8_2 + vrB_8_2;
+    vrD_8_3 = vrA_8_3 + vrB_8_3;
+    vrD_8_4 = vrA_8_4 + vrB_8_4;
+    vrD_8_5 = vrA_8_5 + vrB_8_5;
+    vrD_8_6 = vrA_8_6 + vrB_8_6;
+    vrD_8_7 = vrA_8_7 + vrB_8_7;
+}
+
+vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13 & vrA_8_14 & vrA_8_15 
+            & vrB_8_8 & vrB_8_9 & vrB_8_10 & vrB_8_11 & vrB_8_12 & vrB_8_13 & vrB_8_14 & vrB_8_15 
+            & vrD_8_8 & vrD_8_9 & vrD_8_10 & vrD_8_11 & vrD_8_12 & vrD_8_13 & vrD_8_14 & vrD_8_15 
+{
+    vrD_8_8 = vrA_8_8 + vrB_8_8;
+    vrD_8_9 = vrA_8_9 + vrB_8_9;
+    vrD_8_10 = vrA_8_10 + vrB_8_10;
+    vrD_8_11 = vrA_8_11 + vrB_8_11;
+    vrD_8_12 = vrA_8_12 + vrB_8_12;
+    vrD_8_13 = vrA_8_13 + vrB_8_13;
+    vrD_8_14 = vrA_8_14 + vrB_8_14;
+    vrD_8_15 = vrA_8_15 + vrB_8_15;
+}
+
+# A bug in sleigh compiler forces us to keep the number of imported symbols less than 35 (it slows to a halt pass there), that is why we have vaddubm_part1 & vaddubm_part2
+:vaddubm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=0 & vaddubm_part1 & vaddubm_part2
+{   
+}
+
+:vaddubs vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=512
+{   # TODO definition
+	vrD = vectorAddUnsignedByteSaturate(vrA,vrB);
+}
+
+:vadduhm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=64 
+    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7 
+    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7 
+    & vrD_16_0 & vrD_16_1 & vrD_16_2 & vrD_16_3 & vrD_16_4 & vrD_16_5 & vrD_16_6 & vrD_16_7 
+{   
+    vrD_16_0 = vrA_16_0 + vrB_16_0;
+    vrD_16_1 = vrA_16_1 + vrB_16_0;
+    vrD_16_2 = vrA_16_2 + vrB_16_2;
+    vrD_16_3 = vrA_16_3 + vrB_16_3;
+    vrD_16_4 = vrA_16_3 + vrB_16_4;
+    vrD_16_5 = vrA_16_5 + vrB_16_5;
+    vrD_16_6 = vrA_16_6 + vrB_16_6;
+    vrD_16_7 = vrA_16_7 + vrB_16_7;
+}
+
+:vadduhs vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=576
+{   # TODO definition
+	vrD = vectorAddUnsignedHalfWordSaturate(vrA,vrB);
+}
+
+:vadduwm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=128
+    & vrA_32_0 & vrA_32_1 & vrA_32_2 & vrA_32_3 
+    & vrB_32_0 & vrB_32_1 & vrB_32_2 & vrB_32_3 
+    & vrD_32_0 & vrD_32_1 & vrD_32_2 & vrD_32_3 
+{   
+    vrD_32_0 = vrA_32_0 + vrB_32_0;
+    vrD_32_1 = vrA_32_1 + vrB_32_1;
+    vrD_32_2 = vrA_32_2 + vrB_32_2;
+    vrD_32_3 = vrA_32_3 + vrB_32_3;
+}
+
+# Collides with vadduws
+# :vadduws vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=640
+# {   # TODO definition
+# 	vrD = vectorAddUnsignedWordSaturate(vrA,vrB);
+# }
+
+:vand vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1028
+{   # TODO definition
+	vrD = vectorLogicalAnd(vrA,vrB);
+}
+
+:vandc vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1092
+{   # TODO definition
+	vrD = vectorLogicalAndWithComplement(vrA,vrB);
+}
+
+:vavgsb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1282
+{   # TODO definition
+	vrD = vectorAverageSignedByte(vrA,vrB);
+}
+
+:vavgsh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1346
+{   # TODO definition
+	vrD = vectorAverageSignedHalfWord(vrA,vrB);
+}
+
+:vavgsw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1410
+{   # TODO definition
+	vrD = vectorAverageSignedWord(vrA,vrB);
+}
+
+:vavgub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1026
+{   # TODO definition
+	vrD = vectorAverageUnsignedByte(vrA,vrB);
+}
+
+:vavguh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1090
+{   # TODO definition
+	vrD = vectorAverageUnsignedHalfWord(vrA,vrB);
+}
+
+:vavguw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1154
+{   # TODO definition
+	vrD = vectorAverageUnsignedWord(vrA,vrB);
+}
+
+:vcfsx vrD,vrB,A_BITS	is OP=4 & vrD & A_BITS & vrB & XOP_0_10=842
+{   # TODO definition
+	vrD = vectorConvertFromSignedFixedPointWord(vrB,A_BITS:1);
+}
+
+:vcfux vrD,vrB,A_BITS	is OP=4 & vrD & A_BITS & vrB & XOP_0_10=778
+{   # TODO definition
+	vrD = vectorConvertFromUnsignedFixedPointWord(vrB,A_BITS:1);
+}
+
+:vcmpbfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=966
+{   # TODO definition
+	vrD = vectorCompareBoundsFloatingPoint(vrA,vrB);
+}
+
+:vcmpbfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=966
+{   # TODO definition
+	# TODO change CR6
+	vrD = vectorCompareBoundsFloatingPoint(vrA,vrB);
+}
+
+:vcmpeqfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=198
+{   # TODO definition
+    # TODO change CR6
+	vrD = vectorCompareEqualToFloatingPoint(vrA,vrB);
+}
+
+:vcmpeqfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=198
+{   # TODO definition
+	vrD = vectorCompareEqualToFloatingPoint(vrA,vrB);
+}
+
+:vcmpequb vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=6
+{   # TODO definition
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedByte(vrA,vrB);
+}
+
+:vcmpequb. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=6
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedByte(vrA,vrB);
+}
+
+:vcmpequh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=70
+{   # TODO definition 
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedHalfWord(vrA,vrB);
+}
+
+:vcmpequh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=70
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedHalfWord(vrA,vrB);
+}
+
+:vcmpequw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=134
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedWord(vrA,vrB);
+}
+
+:vcmpequw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=134
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareEqualToUnsignedWord(vrA,vrB);
+}
+
+:vcmpgefp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=454
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanOrEqualToFloatingPoint(vrA,vrB);
+}
+
+:vcmpgefp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=454
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanOrEqualToFloatingPoint(vrA,vrB);
+}
+
+:vcmpgtfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=710
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanFloatingPoint(vrA,vrB);
+}
+
+:vcmpgtfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=710
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanFloatingPoint(vrA,vrB);
+}
+
+:vcmpgtsb vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=774
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanSignedByte(vrA,vrB);
+}
+
+:vcmpgtsb. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=774
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanSignedByte(vrA,vrB);
+}
+
+:vcmpgtsh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=838
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanConditionRegisterSignedHalfWord(vrA,vrB);
+}
+
+:vcmpgtsh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=838
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanConditionRegisterSignedHalfWord(vrA,vrB);
+}
+
+:vcmpgtsw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=902
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanSignedWord(vrA,vrB);
+}
+
+:vcmpgtsw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=902
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanSignedWord(vrA,vrB);
+}
+
+:vcmpgtub vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=518
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedByte(vrA,vrB);
+}
+
+:vcmpgtub. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=518
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedByte(vrA,vrB);
+}
+
+:vcmpgtuh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=582
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedHalfWord(vrA,vrB);
+}
+
+:vcmpgtuh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=582
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedHalfWord(vrA,vrB);
+}
+
+:vcmpgtuw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=646
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedWord(vrA,vrB);
+}
+
+:vcmpgtuw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=646
+{	# TODO definition
+	# TODO change CR6
+	vrD = vectorCompareGreaterThanUnsignedWord(vrA,vrB);
+}
+
+:vctsxs vrD,vrB,A_BITS	is OP=4 & vrD & A_BITS & vrB & XOP_0_10=970
+{	# TODO definition
+	vrD = vectorConvertToSignedFixedPointWordSaturate(vrB,A_BITS:1);
+}
+
+:vctuxs vrD,vrB,A_BITS	is OP=4 & vrD & A_BITS & vrB & XOP_0_10=906
+{	# TODO definition
+	vrD = vectorConvertToUnsignedFixedPointWordSaturate(vrB,A_BITS:1);
+}
+
+:vexptefp vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=394
+{	# TODO definition
+	vrD = vector2RaisedToTheExponentEstimateFloatingPoint(vrB);
+}
+
+:vlogefp vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=458
+{	# TODO definition
+	vrD = vectorLog2EstimateFloatingPoint(vrB);
+}
+
+:vmaddfp vrD,vrA,vrC,vrB	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=46
+{	# TODO definition
+	vrD = vectorMultiplyAddFloatingPoint(vrA,vrC,vrB);
+}
+
+:vmaxfp vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1034
+{	# TODO definition
+	vrD = vectorMaximumFloatingPoint(vrA,vrB);
+}
+
+:vmaxsb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=258
+{	# TODO definition
+	vrD = vectorMaximumSignedByte(vrA,vrB);
+}
+
+:vmaxsh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=322
+{	# TODO definition
+	vrD = vectorMaximumSignedHalfWord(vrA,vrB);
+}
+
+:vmaxsw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=386
+{	# TODO definition
+	vrD = vectorMaximumSignedWord(vrA,vrB);
+}
+
+:vmaxub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=2
+{	# TODO definition
+	vrD = vectorMaximumUnsignedByte(vrA,vrB);
+}
+
+:vmaxuh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=66
+{	# TODO definition
+	vrD = vectorMaximumUnsignedHalfWord(vrA,vrB);
+}
+
+:vmaxuw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=130
+{	# TODO definition
+	vrD = vectorMaximumUnsignedWord(vrA,vrB);
+}
+
+:vmhaddshs vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=32
+{	# TODO definition
+	vrD = vectorMultiplyHighAndAddSignedHalfWordSaturate(vrA,vrB,vrC);
+}
+
+:vmhraddshs vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=33
+{	# TODO definition
+	vrD = vectorMultiplyHighRoundAndAddSignedHalfWordSaturate(vrA,vrB,vrC);
+}
+
+:vminfp vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1098
+{	# TODO definition
+	vrD = vectorMinimumFloatingPoint(vrA,vrB);
+}
+
+:vminsb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=770
+{	# TODO definition
+	vrD = vectorMinimumSignedByte(vrA,vrB);
+}
+
+:vminsh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=834
+{	# TODO definition
+	vrD = vectorMinimumSignedHalfWord(vrA,vrB);
+}
+
+:vminsw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=898
+{	# TODO definition
+	vrD = vectorMinimumSignedWord(vrA,vrB);
+}
+
+:vminub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=514
+{	# TODO definition
+	vrD = vectorMinimumUnsignedByte(vrA,vrB);
+}
+
+:vminuh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=578
+{	# TODO definition
+	vrD = vectorMinimumUnsignedHalfWord(vrA,vrB);
+}
+
+:vminuw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=642
+{	# TODO definition
+	vrD = vectorMinimumUnsignedWord(vrA,vrB);
+}
+
+:vmladduhm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=34
+{	# TODO definition
+	vrD = vectorMultiplyLowAndAddUnsignedHalfWordModulo(vrA,vrB,vrC);
+}
+
+:vmrghb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=12
+{	# TODO definition
+	vrD = vectorMergeHighByte(vrA,vrB);
+}
+
+:vmrghh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=76
+{	# TODO definition
+	vrD = vectorMergeHighHalfWord(vrA,vrB);
+}
+
+:vmrghw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=140
+{	# TODO definition
+	vrD = vectorMergeHighWord(vrA,vrB);
+}
+
+:vmrglb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=268
+{	# TODO definition
+	vrD = vectorMergeLowByte(vrA,vrB);
+}
+
+:vmrglh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=332
+{	# TODO definition
+	vrD = vectorMergeLowHalfWord(vrA,vrB);
+}
+
+:vmrglw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=396
+{	# TODO definition
+	vrD = vectorMergeLowWord(vrA,vrB);
+}
+
+:vmsummbm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=37
+{	# TODO definition
+	vrD = vectorMultiplySumMixedSignByteModulo(vrA,vrB,vrC);
+}
+
+:vmsumshm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=40
+{	# TODO definition
+	vrD = vectorMultiplySumSignedHalfWordModulo(vrA,vrB,vrC);
+}
+
+:vmsumshs vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=41
+{	# TODO definition
+	vrD = vectorMultiplySumSignedHalfWordSaturate(vrA,vrB,vrC);
+}
+
+:vmsumubm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=36
+{	# TODO definition
+	vrD = vectorMultiplySumUnsignedByteModulo(vrA,vrB,vrC);
+}
+
+:vmsumuhm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=38
+{	# TODO definition
+	vrD = vectorMultiplySumUnsignedHalfWordModulo(vrA,vrB,vrC);
+}
+
+:vmsumuhs vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=39
+{	# TODO definition
+	vrD = vectorMultiplySumUnsignedHalfWordSaturate(vrA,vrB,vrC);
+}
+
+:vmulesb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=776
+{	# TODO definition
+	vrD = vectorMultiplyEvenSignedByte(vrA,vrB);
+}
+
+:vmulesh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=840
+{	# TODO definition
+	vrD = vectorMultiplyEvenSignedHalfWord(vrA,vrB);
+}
+
+:vmuleub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=520
+{	# TODO definition
+	vrD = vectorMultiplyEvenUnsignedByte(vrA,vrB);
+}
+
+:vmuleuh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=584
+{	# TODO definition
+	vrD = vectorMultiplyEvenUnsignedHalfWord(vrA,vrB);
+}
+
+:vmulosb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=264
+{	# TODO definition
+	vrD = vectorMultiplyOddSignedByte(vrA,vrB);	
+}
+
+:vmulosh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=328
+{	# TODO definition
+	vrD = vectorMultiplyOddSignedHalfWord(vrA,vrB);
+}
+
+:vmuloub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=8
+{	# TODO definition
+	vrD = vectorMultiplyOddUnsignedByte(vrA,vrB);
+}
+
+:vmulouh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=72
+{	# TODO definition
+	vrD = vectorMultiplyOddUnsignedHalfWord(vrA,vrB);
+}
+
+:vnmsubfp vrD,vrA,vrC,vrB	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=47
+{	# TODO definition
+	vrD = vectorNegativeMultiplySubtractFloatingPoint(vrA,vrC,vrB);
+}
+
+:vnor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1284
+{	
+	vrD = ~(vrA | vrB);
+}
+
+:vor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1156
+{	
+	vrD = vrA | vrB;
+}
+
+:vperm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=43
+{	
+#	tmp:32 = (zext(vrA) << 128) | zext(vrB);
+#	tmp2:16 = 0;
+#	tmp3:32 = 0;
+#	cnt:1 = 15;
+#	<top>
+#	tmp2 = (vrC >> (cnt * 8)) & 0x1F;
+#	tmp3 = tmp >> ((31 - tmp2) * 8);
+#	vrD = vrD << 8;
+#	vrD[0,8] = tmp3[0,8];
+#	if (cnt == 0) goto <end>;
+#	cnt = cnt - 1;
+#	goto <top>;
+#	<end>
+	vrD = vectorPermute(vrA,vrB,vrC);
+}
+
+:vpkpx vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=782
+{	# TODO definition
+	vrD = vectorPackPixel32(vrA,vrB);
+}
+
+:vpkshss vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=398
+{	# TODO definition
+	vrD = vectorPackSignedHalfWordSignedSaturate(vrA,vrB);
+}
+
+:vpkshus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=270
+{	# TODO definition
+	vrD = vectorPackSignedHalfWordUnsignedSaturate(vrA,vrB);
+}
+
+:vpkswss vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=462
+{	# TODO definition
+	vrD = vectorPackSignedWordSignedSaturate(vrA,vrB);
+}
+
+:vpkswus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=334
+{	# TODO definition
+	vrD = vectorPackSignedWordUnsignedSaturate(vrA,vrB);
+}
+
+:vpkuhum vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=14
+{	# TODO definition
+	vrD = vectorPackUnsignedHalfWordUnsignedModulo(vrA,vrB);
+}
+
+:vpkuhus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=142
+{	# TODO definitionXTF = 
+	vrD = vectorPackUnsignedHalfWordUnsignedSaturate(vrA,vrB);
+}
+
+:vpkuwum vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=78
+{	# TODO definition
+	vrD = vectorPackUnsignedWordUnsignedModulo(vrA,vrB);
+}
+
+:vpkuwus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=206
+{	# TODO definition
+	vrD = vectorPackUnsignedWordUnsignedSaturate(vrA,vrB);
+}
+
+:vrefp vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=266
+{	# TODO definition
+	vrD = vectorReciprocalEstimateFloatingPoint(vrB);
+}
+
+:vrfim vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=714
+{	# TODO definition
+	vrD = vectorRoundToFloatingPointIntegerTowardMinusInfinity(vrB);
+}
+
+:vrfin vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=522
+{	# TODO definition
+	vrD = vectorRoundToFloatingPointIntegerNearest(vrB);
+}
+
+:vrfip vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=650
+{	# TODO definition
+	vrD = vectorRoundToFloatingPointIntegerTowardPluInfinity(vrB);
+}
+
+:vrfiz vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=586
+{	# TODO definition
+	vrD = vectorRoundToFloatingPointIntegerTowardZero(vrB);
+}
+
+:vrlb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=4
+{	# TODO definition
+	vrD = vectorRotateLeftIntegerByte(vrA,vrB);
+}
+
+:vrlh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=68
+{	# TODO definition
+	vrD = vectorRotateLeftIntegerHalfWord(vrA,vrB);
+}
+
+:vrlw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=132
+{	# TODO definition
+	vrD = vectorRotateLeftIntegerWord(vrA,vrB);
+}
+
+:vrsqrtefp vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=330
+{	# TODO definition
+	vrD = vectorReciprocalSquareRootEstimateFloatingPoint(vrB);
+}
+
+:vsel vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=42
+{	# TODO definition
+	vrD = vectorConditionalSelect(vrA,vrB,vrC);
+}
+
+:vsl vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=452
+{	# TODO definition
+	vrD = vectorShiftLeft(vrA,vrB);
+}
+
+:vslb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=260
+{	# TODO definition
+	vrD = vectorShiftLeftIntegerByte(vrA,vrB);
+}
+
+:vsldoi vrD,vrA,vrB,SHB		is OP=4 & vrD & vrA & vrB & BIT_10=0 & SHB & XOP_0_5=44
+{
+	tmp:32 = (zext(vrA) << 128) | zext(vrB);
+	tmp = tmp << (SHB:1 * 8);
+	vrD = tmp[128,128];
+}
+
+:vslh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=324
+{	# TODO definition
+	vrD = vectorShiftLeftIntegerHalfWord(vrA,vrB);
+}
+
+:vslo vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1036
+{	# TODO definition
+	vrD = vectorShiftLeftByOctet(vrA,vrB);
+}
+
+:vslw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=388
+{	# TODO definition
+	vrD = vectorShiftLeftIntegerWord(vrA,vrB);
+}
+
+:vspltb vrD,vrB,UIMB	is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=524
+{
+	tmp:1 = (0xF - UIMB) * 8;
+	tmpa:16 = (vrB >> tmp) & 0xFF;
+	vrD = tmpa | (tmpa << 8) | (tmpa << 16) | (tmpa << 24) | (tmpa << 32) | (tmpa << 40) | (tmpa << 48) | (tmpa << 56);
+	vrD = vrD | (tmpa << 64) | (tmpa << 72) | (tmpa << 80) | (tmpa << 88) | (tmpa << 96) | (tmpa << 104) | (tmpa << 112) | (tmpa << 120);	
+}
+
+:vsplth vrD,vrB,UIMH	is OP=4 & vrD & BITS_19_20=0 & UIMH & vrB & XOP_0_10=588
+{	# TODO definition
+	vrD = vectorSplatHalfWord(vrB,UIMH:1);
+}
+
+:vspltisb vrD,A_BITSS	is OP=4 & vrD & A_BITSS & B_BITS=0 & XOP_0_10=780
+{	# TODO definition
+	vrD = vectorSplatImmediateSignedByte(A_BITSS:1);
+}
+
+:vspltish vrD,A_BITSS	is OP=4 & vrD & A_BITSS & B_BITS=0 & XOP_0_10=844
+{	# TODO definition
+	vrD = vectorSplatImmediateSignedHalfWord(A_BITSS:1);
+}
+
+:vspltisw vrD,A_BITSS	is OP=4 & vrD & A_BITSS & B_BITS=0 & XOP_0_10=908
+{
+	tmpw:4 = sext(A_BITSS:1);
+	tmp:16 = zext(tmpw);
+	vrD = (tmp) | (tmp << 32) | (tmp << 64) | (tmp << 96);
+}
+
+# A better way to do this would be to make a subtable to interpret
+# UIMW into the corresponding subword, then assign the subregisters of vrD
+# to that value.
+:vspltw vrD,vrB,UIMW	is OP=4 & vrD & vrB & BITS_18_20=0 & UIMW & XOP_0_10=652
+{
+	local b = (3 - UIMW) * 32;
+	local tmp:16 = (vrB >> b) & 0xffffffff;
+	vrD = (tmp) | (tmp << 32) | (tmp << 64) | (tmp << 96);
+}
+
+:vsr vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=708
+{	# TODO definition
+	vrD = vectorShiftRight(vrA,vrB);
+}
+
+:vsrab vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=772
+{	# TODO definition
+	vrD = vectorShiftRightAlgebraicByte(vrA,vrB);
+}
+
+:vsrah vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=836
+{	# TODO definition
+	vrD = vectorShiftRightAlgebraicHalfWord(vrA,vrB);
+}
+
+:vsraw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=900
+{	# TODO definition
+	vrD = vectorShiftRightAlgebraicWord(vrA,vrB);
+}
+
+:vsrb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=516
+{	# TODO definition
+	vrD = vectorShiftRightByte(vrA,vrB);
+}
+
+:vsrh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=580
+{	# TODO definition
+	vrD = vectorShiftRightHalfWord(vrA,vrB);
+}
+
+:vsro vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1100
+{	# TODO definition
+	vrD = vectorShiftRightByOctet(vrA,vrB);
+}
+
+:vsrw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=644
+{	# TODO definition
+	vrD = vectorShiftRightWord(vrA,vrB);
+}
+
+:vsubcuw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1408
+{	# TODO definition
+	vrD = vectorSubtractCarryoutUnsignedWord(vrA,vrB);
+}
+
+:vsubfp vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=74
+{	# TODO definition
+	vrD = vectorSubtractFloatingPoint(vrA,vrB);
+}
+
+:vsubsbs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1792
+{	# TODO definition
+	vrD = vectorSubtractSignedByteSaturate(vrA,vrB);
+}
+
+:vsubshs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1856
+{	# TODO definition
+	vrD = vectorSubtractSignedHalfWordSaturate(vrA,vrB);
+}
+
+:vsubsws vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1920
+{	# TODO definition
+	vrD = vectorSubtractSignedWordSaturate(vrA,vrB);
+}
+
+:vsububm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1024
+{	# TODO definition
+	vrD = vectorSubtractUnsignedByteModulo(vrA,vrB);
+}
+
+:vsububs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1536
+{	# TODO definition
+	vrD = vectorSubtractUnsignedByteSaturate(vrA,vrB);
+}
+
+:vsubuhm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1088 
+    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7 
+    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7 
+    & vrC_16_0 & vrC_16_1 & vrC_16_2 & vrC_16_3 & vrC_16_4 & vrC_16_5 & vrC_16_6 & vrC_16_7 
+{	
+    vrC_16_0 = vrA_16_0 - vrB_16_0;
+    vrC_16_1 = vrA_16_1 - vrB_16_1;
+    vrC_16_2 = vrA_16_2 - vrB_16_2;
+    vrC_16_3 = vrA_16_3 - vrB_16_3;
+    vrC_16_4 = vrA_16_4 - vrB_16_4;
+    vrC_16_5 = vrA_16_5 - vrB_16_5;
+    vrC_16_6 = vrA_16_6 - vrB_16_6;
+    vrC_16_7 = vrA_16_7 - vrB_16_7;
+}
+
+:vsubuhs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1600
+{	# TODO definition
+	vrD = vectorSubtractUnsignedHalfWordSaturate(vrA,vrB);
+}
+
+:vsubuwm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1152
+{	# TODO definition
+	vrD = vectorSubtractUnsignedWordModulo(vrA,vrB);
+}
+
+:vsubuws vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1664
+{	# TODO definition
+	vrD = vectorSubtractUnsignedWordSaturate(vrA,vrB);
+}
+
+:vsumsws vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1928
+{	# TODO definition
+	vrD = vectorSumAcrossSignedWordSaturate(vrA,vrB);
+}
+
+:vsum2sws vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1672
+{	# TODO definition
+	vrD = vectorSumAcrossPartialSignedWordSaturate(vrA,vrB);
+}
+
+:vsum4sbs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1800
+{	# TODO definition
+	vrD = vectorSumAcrossPartialSignedByteSaturate(vrA,vrB);	
+}
+
+:vsum4shs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1608
+{	# TODO definition
+	vrD = vectorSumAcrossPartialSignedHalfWordSaturate(vrA,vrB);	
+}
+
+:vsum4ubs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1544
+{	# TODO definition
+	vrD = vectorSumAcrossPartialUnsignedByteSaturate(vrA,vrB);	
+}
+
+:vupkhpx vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=846
+{	# TODO definition
+	vrD = vectorUnpackHighPixel16(vrB);
+}
+
+:vupkhsb vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=526
+{	# TODO definition
+	vrD = vectorUnpackHighSignedByte(vrB);
+}
+
+:vupkhsh vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=590
+{	# TODO definition
+	vrD = vectorUnpackHighSignedHalfWord(vrB);
+}
+
+:vupklpx vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=974
+{	# TODO definition
+	vrD = vectorUnpackLowPixel16(vrB);
+}
+
+:vupklsb vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=654
+{	# TODO definition
+	vrD = vectorUnpackLowSignedByte(vrB);
+}
+
+:vupklsh vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=718
+{	# TODO definition
+	vrD = vectorUnpackLowSignedHalfWord(vrB);
+}
+
+:vxor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1220
+{	
+	vrD = vrA ^ vrB;
+}
+
+
+define pcodeop altv207_1;
+define pcodeop altv207_2;
+define pcodeop altv207_3;
+define pcodeop altv207_4;
+define pcodeop altv207_5;
+define pcodeop altv207_6;
+define pcodeop altv207_7;
+define pcodeop altv207_8;
+define pcodeop altv207_9;
+define pcodeop altv207_10;
+define pcodeop altv207_11;
+define pcodeop altv207_12;
+define pcodeop altv207_13;
+define pcodeop altv207_14;
+define pcodeop altv207_15;
+define pcodeop altv207_16;
+define pcodeop altv207_17;
+define pcodeop altv207_18;
+define pcodeop altv207_19;
+define pcodeop altv207_20;
+define pcodeop altv207_21;
+define pcodeop altv207_22;
+define pcodeop altv207_23;
+define pcodeop altv207_24;
+define pcodeop altv207_25;
+define pcodeop altv207_26;
+define pcodeop altv207_27;
+define pcodeop altv207_28;
+define pcodeop altv207_29;
+define pcodeop altv207_30;
+define pcodeop altv207_31;
+define pcodeop altv207_32;
+define pcodeop altv207_33;
+define pcodeop altv207_34;
+define pcodeop altv207_35;
+define pcodeop altv207_36;
+define pcodeop altv207_37;
+define pcodeop altv207_38;
+define pcodeop altv207_39;
+define pcodeop altv207_40;
+define pcodeop altv207_41;
+define pcodeop altv207_42;
+define pcodeop altv207_43;
+define pcodeop altv207_44;
+define pcodeop altv207_45;
+define pcodeop altv207_46;
+define pcodeop altv207_47;
+define pcodeop altv207_48;
+define pcodeop altv207_49;
+define pcodeop altv207_50;
+define pcodeop altv207_51;
+define pcodeop altv207_52;
+define pcodeop altv207_53;
+define pcodeop altv207_54;
+define pcodeop altv207_55;
+define pcodeop altv207_56;
+define pcodeop altv207_57;
+define pcodeop altv207_58;
+define pcodeop altv207_59;
+define pcodeop altv207_60;
+define pcodeop altv207_61;
+define pcodeop altv207_62;
+define pcodeop altv207_63;
+define pcodeop altv207_64;
+define pcodeop altv207_65;
+
+define pcodeop altv300_1;
+define pcodeop altv300_2;
+define pcodeop altv300_3;
+define pcodeop altv300_4;
+define pcodeop altv300_5;
+define pcodeop altv300_6;
+define pcodeop altv300_7;
+define pcodeop altv300_8;
+define pcodeop altv300_9;
+define pcodeop altv300_10;
+define pcodeop altv300_11;
+define pcodeop altv300_12;
+define pcodeop altv300_13;
+define pcodeop altv300_14;
+define pcodeop altv300_15;
+define pcodeop altv300_16;
+define pcodeop altv300_17;
+define pcodeop altv300_18;
+define pcodeop altv300_19;
+define pcodeop altv300_20;
+define pcodeop altv300_21;
+define pcodeop altv300_22;
+define pcodeop altv300_23;
+define pcodeop altv300_24;
+define pcodeop altv300_25;
+define pcodeop altv300_26;
+define pcodeop altv300_27;
+define pcodeop altv300_28;
+define pcodeop altv300_29;
+define pcodeop altv300_30;
+define pcodeop altv300_31;
+define pcodeop altv300_32;
+define pcodeop altv300_33;
+define pcodeop altv300_34;
+define pcodeop altv300_35;
+define pcodeop altv300_36;
+define pcodeop altv300_41;
+define pcodeop altv300_42;
+define pcodeop altv300_43;
+define pcodeop altv300_44;
+define pcodeop altv300_45;
+define pcodeop altv300_46;
+define pcodeop altv300_47;
+define pcodeop altv300_48;
+define pcodeop altv300_49;
+define pcodeop altv300_50;
+define pcodeop altv300_51;
+define pcodeop altv300_52;
+define pcodeop altv300_53;
+define pcodeop altv300_54;
+define pcodeop altv300_55;
+define pcodeop altv300_56;
+define pcodeop altv300_57;
+define pcodeop altv300_58;
+define pcodeop altv300_59;
+define pcodeop altv300_60;
+define pcodeop altv300_61;
+define pcodeop altv300_62;
+define pcodeop altv300_63;
+define pcodeop altv300_64;
+define pcodeop altv300_65;
+define pcodeop altv300_66;
+define pcodeop altv300_67;
+define pcodeop altv300_68;
+define pcodeop altv300_69;
+define pcodeop altv300_70;
+define pcodeop altv300_71;
+
+#################
+# 2.07 additions
+:bcdadd. vrD,vrA,vrB,PS		is OP=4 & BIT_10=1 & XOP_0_8=1 & vrA & vrB & vrD & PS {
+	vrD = altv207_64(vrA,vrB,PS:1);
+}
+
+:bcdsub. vrD,vrA,vrB,PS		is OP=4 & BIT_10=1 & XOP_0_8=65 & vrA & vrB & vrD & PS {
+	vrD = altv207_65(vrA,vrB,PS:1);	
+}
+
+
+:vaddcuq vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=320 {
+	vrD = altv207_1(vrA,vrB);
+}
+
+:vaddecuq vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=61 {
+	vrD = altv207_2(vrA,vrB,vrC);
+}
+
+:vaddeuqm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=60 {
+	vrD = altv207_3(vrA,vrB,vrC);
+}
+
+:vaddudm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=192 {
+	vrD = altv207_4(vrA,vrB);
+}
+
+:vadduqm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=256 {
+	vrD = altv207_5(vrA,vrB);
+}
+
+:vbpermq vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1356 {
+	vrD = altv207_6(vrA,vrB);
+}
+
+:vcipher vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1288 {
+	vrD = altv207_7(vrA,vrB);
+}
+
+:vcipherlast vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=1289 {
+	vrD = altv207_8(vrA,vrB);
+}
+
+:vclzb vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1794 {
+	vrD = altv207_9(vrB);
+}
+
+:vclzd vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1986 {
+	vrD = altv207_10(vrB);
+}
+
+:vclzh vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1858 {
+	vrD = altv207_11(vrB);
+}
+
+:vclzw vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1922 {
+	vrD = altv207_12(vrB);
+}
+
+:vcmpequd vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=199 {
+	vrD = altv207_13(vrA,vrB);
+}
+
+:vcmpequd. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=199 {
+	vrD = altv207_14(vrA,vrB);
+}
+
+:vcmpgtsd vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=967 {
+	vrD = altv207_15(vrA,vrB);
+}
+
+:vcmpgtsd. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=967 {
+	vrD = altv207_16(vrA,vrB);
+}
+
+:vcmpgtud vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=711 {
+	vrD = altv207_17(vrA,vrB);
+}
+
+:vcmpgtud. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=711 {
+	vrD = altv207_18(vrA,vrB);
+}
+
+:veqv vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1668 {
+	vrD = altv207_19(vrA,vrB);
+}
+
+:vgbbd vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1292 {
+	vrD = altv207_20(vrB);
+}
+
+:vmaxsd vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=450 {
+	vrD = altv207_21(vrA,vrB);
+}
+
+:vmaxud vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=194 {
+	vrD = altv207_22(vrA,vrB);
+}
+
+:vminsd vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=962 {
+	vrD = altv207_23(vrA,vrB);
+}
+
+:vminud vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=706 {
+	altv207_24(vrA,vrB);
+}
+
+:vmrgew vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1932 {
+	vrD = altv207_25(vrA,vrB);
+}
+
+:vmrgow vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1676 {
+	vrD = altv207_26(vrA,vrB);
+}
+
+:vmulesw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=904 {
+	vrD = altv207_27(vrA,vrB);
+}
+
+:vmuleuw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=648 {
+	vrD = altv207_28(vrA,vrB);
+}
+
+:vmulosw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=392 {
+	vrD = altv207_29(vrA,vrB);
+}
+
+:vmulouw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=136 {
+	vrD = altv207_30(vrA,vrB);
+}
+
+:vmuluwm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=137 {
+	vrD = altv207_31(vrA,vrB);
+}
+
+:vnand vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1412 {
+	vrD = altv207_32(vrA,vrB);
+}
+
+:vncipher vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1352 {
+	vrD = altv207_33(vrA,vrB);
+}
+
+:vncipherlast vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=1353 {
+	vrD = altv207_34(vrA,vrB);
+}
+
+:vorc vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1348 {
+	vrD = altv207_35(vrA,vrB);
+}
+
+:vpermxor vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=45 {
+	vrD = altv207_36(vrA,vrB,vrC);
+}
+
+:vpksdss vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1486 {
+	vrD = altv207_37(vrA,vrB);
+}
+
+:vpksdus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1358 {
+	vrD = altv207_38(vrA,vrB);
+}
+
+:vpkudum vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1102 {
+	vrD = altv207_39(vrA,vrB);
+}
+
+:vpkudus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1230 {
+	vrD = altv207_41(vrA,vrB);
+}
+
+:vpmsumb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1032 {
+	vrD = altv207_42(vrA,vrB);
+}
+
+:vpmsumd vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1224 {
+	vrD = altv207_43(vrA,vrB);
+}
+
+:vpmsumh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1096 {
+	vrD = altv207_44(vrA,vrB);
+}
+
+:vpmsumw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1160 {
+	vrD = altv207_45(vrA,vrB);
+}
+
+:vpopcntb vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1795 {
+	vrD = altv207_46(vrB);
+}
+
+:vpopcntd vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1987 {
+	vrD = altv207_47(vrB);
+}
+
+:vpopcnth vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1859 {
+	vrD = altv207_48(vrB);
+}
+
+:vpopcntw vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1923 {
+	vrD = altv207_49(vrB);
+}
+
+:vrld vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=196 {
+	vrD = altv207_50(vrA,vrB);
+}
+
+:vsbox vrD,vrA				is OP=4 & vrD & vrA & BITS_11_15=0 & XOP_0_10=1480 {
+	vrD = altv207_51(vrA);
+}
+
+:vshasigmad vrD,vrA,ST,SIX	is OP=4 & vrD & vrA & ST & SIX & XOP_0_10=1730 {
+	vrD = altv207_52(vrA,ST:1,SIX:1);
+}
+
+:vshasigmaw vrD,vrA,ST,SIX	is OP=4 & vrD & vrA & ST & SIX & XOP_0_10=1666 {
+	vrD = altv207_53(vrA,ST:1,SIX:1);
+}
+
+:vsld vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1476 {
+	vrD = altv207_54(vrA,vrB);
+}
+
+:vsrad vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=964 {
+	vrD = altv207_55(vrA,vrB);
+}
+
+:vsrd vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1732 {
+	vrD = altv207_56(vrA,vrB);
+}
+
+:vsubcuq vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1344 {
+	vrD = altv207_57(vrA,vrB);
+}
+
+:vsubecuq vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=63 {
+	vrD = altv207_58(vrA,vrB,vrC);
+}
+
+:vsubeuqm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=62 {
+	vrD = altv207_59(vrA,vrB,vrC);
+}
+
+:vsubudm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1216 {
+	vrD = altv207_60(vrA,vrB);
+}
+
+:vsubuqm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1280 {
+	vrD = altv207_61(vrA,vrB);
+}
+
+:vupkhsw vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1614 {
+	vrD = altv207_62(vrB);
+}
+
+:vupklsw vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1742 {
+	vrD = altv207_63(vrB);
+}
+
+###################
+# v3.0
+
+:bcdcfn. vrD,vrB,PS			is OP=4 & vrD & vrB & BITS_16_20=7 & XOP_0_8=385 & BIT_10=1 & PS {
+	vrD = altv300_1(vrB,PS:1);
+}
+
+:bcdcfsq. vrD,vrB,PS		is OP=4 & vrD & vrB & BITS_16_20=2 & XOP_0_8=385 & BIT_10=1 & PS {
+	vrD = altv300_2(vrB,PS:1);
+}
+
+:bcdcfz. vrD,vrB,PS			is OP=4 & vrD & vrB & BITS_16_20=6 & XOP_0_8=385 & BIT_10=1 & PS {
+	vrD = altv300_3(vrB,PS:1);
+}
+
+:bcdcpsgn. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=833 {
+	vrD = altv300_4(vrA,vrB);
+}
+
+:bcdctn. vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=5 & XOP_0_8=385 & BIT_10=1 & BIT_9=0 {
+	vrD = altv300_5(vrB);
+}
+
+:bcdctsq. vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_8=385 & BIT_10=1 & BIT_9=0 {
+	vrD = altv300_6(vrB);
+}
+
+:bcdctz. vrD,vrB,PS			is OP=4 & vrD & vrB & BITS_16_20=4 & XOP_0_8=385 & BIT_10=1 & PS {
+	vrD = altv300_7(vrB,PS:1);
+}
+
+:bcds. vrD,vrA,vrB,PS		is OP=4 & vrD & vrA & vrB & XOP_0_8=193 & BIT_10=1 & PS {
+	vrD = altv300_8(vrA,vrB,PS:1);
+}
+
+:bcdsetsgn. vrD,vrB,PS		is OP=4 & vrD & vrB & BITS_16_20=31 & XOP_0_8=385 & BIT_10=1 & PS {
+	vrD = altv300_9(vrB,PS:1);
+}
+
+:bcdsr. vrD,vrA,vrB,PS		is OP=4 & vrD & vrA & vrB & XOP_0_8=449 & BIT_10=1 & PS {
+	vrD = altv300_10(vrA,vrB,PS:1);
+}
+
+:bcdtrunc. vrD,vrA,vrB,PS	is OP=4 & vrD & vrA & vrB & XOP_0_8=257 & BIT_10=1 & PS {
+	vrD = altv300_12(vrA,vrB,PS:1);
+}
+
+:bcdus. vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_8=129 & BIT_10=1 {
+	vrD = altv300_13(vrA,vrB);
+}
+
+:bcdutrunc. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_8=321 & BIT_10=1 {
+	vrD = altv300_14(vrA,vrB);
+}
+
+:vabsdub vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1027 {
+	vrD = altv300_15(vrA,vrB);
+}
+
+:vabsduh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1091 {
+	vrD = altv300_16(vrA,vrB);
+}
+
+:vabsduw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1155 {
+	vrD = altv300_17(vrA,vrB);
+}
+
+:vbpermd vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1484 {
+	vrD = altv300_18(vrA,vrB);
+}
+
+:vclzlsbb vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=0 & XOP_0_10=1538 {
+	vrD = altv300_19(vrB);
+}
+
+:vcmpneb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=7 {
+	vrD = altv300_20(vrA,vrB);
+}
+
+:vcmpneb. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=7 {
+	vrD = altv300_21(vrA,vrB);
+}
+
+:vcmpneh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=71 {
+	vrD = altv300_22(vrA,vrB);
+}
+
+:vcmpneh. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=71 {
+	vrD = altv300_23(vrA,vrB);
+}
+
+:vcmpnew vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=135 {
+	vrD = altv300_24(vrA,vrB);
+}
+
+:vcmpnew. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=135 {
+	vrD = altv300_25(vrA,vrB);
+}
+
+:vcmpnezb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=263 {
+	vrD = altv300_26(vrA,vrB);
+}
+
+:vcmpnezb. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=263 {
+	vrD = altv300_27(vrA,vrB);
+}
+
+:vcmpnezh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=327 {
+	vrD = altv300_28(vrA,vrB);
+}
+
+:vcmpnezh. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=327 {
+	vrD = altv300_29(vrA,vrB);
+}
+
+:vcmpnezw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=391 {
+	vrD = altv300_30(vrA,vrB);
+}
+
+:vcmpnezw. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=391 {
+	vrD = altv300_31(vrA,vrB);
+}
+
+:vctzb vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=28 & XOP_0_10=1538 {
+	vrD = altv300_32(vrB);
+}
+
+:vctzh vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=29 & XOP_0_10=1538 {
+	vrD = altv300_33(vrB);
+}
+
+:vctzd vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=31 & XOP_0_10=1538 {
+	vrD = altv300_34(vrB);
+}
+
+:vctzlsbb vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=1 & XOP_0_10=1538 {
+	vrD = altv300_35(vrB);
+}
+
+:vctzw vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=30 & XOP_0_10=1538 {
+	vrD = altv300_36(vrB);
+}
+
+:vextractd vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=717 {
+	# if UIMB > 8 the result is undefined
+	vrD = (vrB >> (16 * (8 - UIMB))) & 0xffffffffffffffff;
+}
+
+:vextractub vrD,vrB,UIMB	is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=525 {
+	# if UIMB > 15 the result is undefined
+	vrD = (vrB >> (16 * (15 - UIMB))) & 0xff;
+}
+
+:vextractuh vrD,vrB,UIMB	is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=589 {
+	# if UIMB > 14 the result is undefined
+	vrD = (vrB >> (16 * (14 - UIMB))) & 0xffff;
+}
+
+:vextractuw vrD,vrB,UIMB	is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=653 {
+	# if UIMB > 12 the result is undefined
+	vrD = (vrB >> (16 * (12 - UIMB))) & 0xffffffff;
+}
+
+:vextsb2d vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=24 & XOP_0_10=1538 {
+	vrD = altv300_41(vrB);
+}
+
+:vextsb2w vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=16 & XOP_0_10=1538 {
+	vrD = altv300_42(vrB);
+}
+
+:vextsh2d vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=25 & XOP_0_10=1538 {
+	vrD = altv300_43(vrB);
+}
+
+:vextsh2w vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=17 & XOP_0_10=1538 {
+	vrD = altv300_44(vrB);
+}
+
+:vextsw2d vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=26 & XOP_0_10=1538 {
+	vrD = altv300_45(vrB);
+}
+
+:vextublx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1549 {
+	D = altv300_46(A,vrB);
+}
+
+:vextubrx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1805 {
+	D = altv300_47(A,vrB);
+}
+
+:vextuhlx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1613 {
+	D = altv300_48(A,vrB);
+}
+
+:vextuhrx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1869 {
+	D = altv300_49(A,vrB);
+}
+
+# beware the backwards bit/byte ordering in the manual
+:vextuwlx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1677
+{
+	local offs:2 = (12 - zext(A[0,4])) * 8;
+	local out:16 = (vrB >> offs) & 0xffffffff;
+	D = out:4;
+}
+
+:vextuwrx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1933 {
+	D = altv300_51(A,vrB);
+}
+
+:vinsertb vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=781 {
+	vrD = altv300_52(vrB,UIMB:1);
+}
+
+:vinsertd vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=973 {
+	vrD = altv300_53(vrB,UIMB:1);
+}
+
+:vinserth vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=845 {
+	vrD = altv300_54(vrB,UIMB:1);
+}
+
+:vinsertw vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=909 {
+	vrD = altv300_55(vrB,UIMB:1);
+}
+
+:vmul10cuq vrD,vrA			is OP=4 & vrD & vrA & BITS_11_15=0 & XOP_0_10=1 {
+	vrD = altv300_56(vrA);
+}
+
+:vmul10ecuq vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=65 {
+	vrD = altv300_57(vrA,vrB);
+}
+
+:vmul10euq vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=577 {
+	vrD = altv300_58(vrA,vrB);
+}
+
+:vmul10uq vrD,vrA			is OP=4 & vrD & vrA & BITS_11_15=0 & XOP_0_10=513 {
+	vrD = altv300_59(vrA);
+}
+
+:vnegd vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=7 & XOP_0_10=1538 {
+	vrD = altv300_60(vrB);
+}
+
+:vnegw vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=6 & XOP_0_10=1538 {
+	vrD = altv300_61(vrB);
+}
+
+:vpermr vrD,vrA,vrB,vrC		is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=59 {
+	vrD = altv300_62(vrA,vrB,vrC);
+}
+
+:vprtybd vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=9 & XOP_0_10=1538 {
+	vrD = altv300_63(vrB);
+}
+
+:vprtybq vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=10 & XOP_0_10=1538 {
+	vrD = altv300_64(vrB);
+}
+
+:vprtybw vrD,vrB			is OP=4 & vrD & vrB & BITS_16_20=8 & XOP_0_10=1538 {
+	vrD = altv300_65(vrB);
+}
+
+:vrldmi vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=197 {
+	vrD = altv300_66(vrA,vrB);
+}
+
+:vrldnm vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=453 {
+	vrD = altv300_67(vrA,vrB);
+}
+
+:vrlwmi vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=133 {
+	vrD = altv300_68(vrA,vrB);
+}
+
+:vrlwnm vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=389 {
+	vrD = altv300_69(vrA,vrB);
+}
+
+:vslv vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1860 {
+	vrD = altv300_70(vrA,vrB);
+}
+
+:vsrv vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1796 {
+	vrD = altv300_71(vrA,vrB);
+}

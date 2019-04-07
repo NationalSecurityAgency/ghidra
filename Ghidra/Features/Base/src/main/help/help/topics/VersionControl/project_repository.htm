@@ -1,0 +1,461 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Project Repository</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Project Repository</H1>
+
+    <P>Ghidra supports the concept of a <I>project repository</I> such that files in the repository
+    can be <I>versioned</I>.&nbsp; <A name="Versioning"></A>Versioning allows you to track file
+    changes over the life of the project.&nbsp; The repository supports check out, check in,
+    version history, and viewing what is checked out. When you check in your file, a new version is
+    created. The project repository can be used with or without a <A href=
+    "help/topics/GhidraServer/GhidraServer.htm">Ghidra Server</A>. If the project is associated
+    with a Ghidra Server, the project is <I><A name="SharedProject"></A>shared</I>, meaning that
+    the <I>files in the project</I> are accessible by multiple users concurrently. The <A href=
+    "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Edit_Project_Access_List">Project Access
+    List</A> defines which users are allowed to access the shared repository.&nbsp; When you <A
+    href="help/topics/FrontEndPlugin/Creating_a_Project.htm">create a new project</A>, you can
+    specify whether it should be associated with a Ghidra Server.&nbsp;&nbsp;</P>
+
+    <P>For projects that are not shared, all files and versions are managed locally in your project
+    directory. For the shared project repository, files are maintained on the Ghidra Server. When
+    you check out a file, a file is created locally in your project directory. When you check in a
+    file, it is <A href="help/topics/Repository/Merge_Program_Files.htm">merged</A> (if necessary)
+    with the latest version to create a new version. Merging is necessary only for shared project
+    repositories, as with a non-shared project, the version you checked out is always the latest
+    version.</P>
+
+    <H2><A name="ConnectToServer"></A>Connect to the Server</H2>
+
+    <BLOCKQUOTE>
+      <P>When you open a shared project, Ghidra attempts to connect to the server that is
+      associated with the shared project. Depending on what user authentication mode the server is
+      using, you may have to enter a password. If the server is not running, you are still able to
+      work with your checked out files while you are offline. Other versioned files not checked out
+      are not accessible. When the server comes up, Ghidra will reconnect as necessary. You can
+      also attempt to connect "manually" by selecting the connection status button <IMG alt="" src=
+      "images/disconnected.gif" border="0"> on the Ghidra Project Window or on the <I><A href=
+      "help/topics/FrontEndPlugin/Project_Info.htm">Project Info</A></I> dialog. When the
+      connection is successful, the connection status button changes to <IMG alt="" src=
+      "images/connected.gif" border="0">.&nbsp;</P>
+
+      <P>If you lose the connection to the server after having started Ghidra, shared files not
+      checked out "disappear" from the Ghidra Project Window, as they are unavailable. Private
+      files remain intact and are not affected by the server connection.</P>
+
+      <P><IMG alt="" src="../../shared/tip.png" border="0">You are authenticated only once per
+      Ghidra session; so if you open other project repositories managed by the same Ghidra Server,
+      you will be prompted only once for a password, as required.&nbsp;</P>
+
+      <H3><A name="Troubleshooting"></A>Troubleshooting a Failed Connection</H3>
+
+      <BLOCKQUOTE>
+        <P>If you fail to connect to the Ghidra Server, check the following:</P>
+
+        <UL>
+          <LI>Verify that the client machine can "ping" the server machine.</LI>
+
+          <LI>Verify that you are attempting to login using the correct authentication mode.</LI>
+
+          <LI>Verify that the Ghidra Server administrator has added you as a user on the
+          server.</LI>
+
+          <LI>If the server is using Ghidra Password authentication, you may need to have your
+          password reset to "<SPAN style=
+          "font-family: monospace; font-style: italic;">changeme</SPAN>" by the Ghidra Server
+          administrator.</LI>
+
+          <LI>Verify the host name and port of the Ghidra Server.</LI>
+
+          <LI>Verify that the Ghidra Server is running: from a command window,
+          type&nbsp;&nbsp;</LI>
+        </UL>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <BLOCKQUOTE>
+              <P><FONT face="Courier New" size="3">telnet [host] [port]&nbsp;</FONT></P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+          <P>If the server is not listening on that port, you will get a failed connection message
+          from <FONT face="Courier New" size="3">telnet.</FONT></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="VersionControl"></A> Version Control &nbsp;</H2>
+
+    <BLOCKQUOTE>
+      <P>Except for <A href="help/topics/Repository/Merge_Program_Files.htm">merging</A>, accessing
+      version control features is the same regardless of whether your project repository is
+      shared.</P>
+
+      <H3><A name="Add_to_Version_Control"></A>Add to Version Control <IMG alt="" src=
+      "images/vcAdd.png" border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P>Add a file (or multiple files at once) to version control by selecting the file in the
+        Ghidra Project Window. You can either click on the tool bar icon, <IMG alt="" src=
+        "images/vcAdd.png" border="0">, or right mouse click and choose the <B>Add to Version
+        Control...</B> option. A dialog is displayed so that you can add comments about the
+        file.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/AddToVersionControlDialog.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <P>Leave the checkbox selected for <I>Keep File Checked Out</I> so that you do not have
+        check out the file after you have added it to version control. This checkbox will be
+        selected and disabled automatically if you have the file open. The <B>Apply to All</B>
+        button allows you to associate the same comment for multiple files that you are adding to
+        version control. After you add the file, the Ghidra Project Window indicates the file's
+        check out state and version.</P>
+
+        <P align="center"><IMG alt="" src="images/CheckedOut.png" border="0"></P>
+
+        <P align="left"><A name="SampleCheckOutIcon"></A>This image shows that the file
+        "Program_A" is associated with a shared project (note the blue border on the <A
+        href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#FileIcons">file icon</A>), and you
+        are now working with version 1 of 1. <A name="PrivateFile"></A> The file "Program_B"
+        has not been added to version control (note the plain icon and no version information). It
+        is considered to be a "private" file. Private files are never visible to other users.</P>
+
+        <P><IMG alt="" src="../../shared/note.png" border="0"> A normal checkout is indicated by a
+        checkmark with a green background<IMG alt="" src="images/check.png" border="0">, while an
+        exclusive checkout is is indicated by checkmark with a blue background<IMG alt="" src=
+        "images/checkex.png" border="0">. A checkmark with a red background<IMG alt="" src=
+        "images/checkNotLatest.gif" border="0"> indicates that a newer version has been checked-in
+        by another user.</P>
+
+        <P align="left">A tool tip on the file (let the mouse pointer hover over it) shows the date
+        the file was checked out, and the date that is was last modified. An asterisk will appear
+        on the file icon to indicate that changes have been made but not checked in.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Check Out<A name="CheckOut"></A> <IMG alt="" src="images/vcCheckOut.png" border=
+      "0">&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>To check out a file, select the file in the Ghidra Project Window. You can either either
+        click on the check out icon <IMG alt="" src="images/vcCheckOut.png" border="0"> on the tool
+        bar, or right mouse click on the file and choose the <B>Check Out...</B>
+        option.&nbsp;&nbsp;&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <P><A name="CheckoutDialog"></A>&nbsp;</P>
+
+      <P align="center"><IMG alt="" src="images/CheckOutFile.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <P>If your project repository is shared, a dialog is displayed to allow you to request an
+        <A name="ExclusiveLock"></A> <I><B>exclusive lock</B></I> on the file.&nbsp; An exclusive
+        lock is necessary if you plan to <A href=
+        "help/topics/MemoryMapPlugin/Memory_Map.htm">manipulate the memory map</A> in any way,
+        e.g., move or delete memory blocks, <A href=
+        "help/topics/LanguageProviderPlugin/Languages.htm#set_language">change the program's
+        language</A>, etc. An exclusive lock can be granted if no other user has the file checked
+        out. While the exclusive lock exists, no other user can check out the file.<BR>
+        </P>
+
+        <P><IMG alt="" src="../../shared/note.png" border="0"> The exclusive lock is implied for a
+        non-shared project repository.</P>
+      </BLOCKQUOTE>
+
+      <H3>Check In<A name="CheckIn"></A> <IMG alt="" src="images/vcCheckIn.png" border=
+      "0">&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>After you have made your changes and saved them, you are ready to check in your file.
+        (You cannot check in a file that was not changed.) The check in creates a new version for
+        this file. To check in the file, select the file in the Ghidra Project Window. You can
+        either click on the check in icon <IMG alt="" src="images/vcCheckIn.png" border="0"> on the
+        tool bar, or right mouse click and select the <B>Check In...</B> option.&nbsp;</P>
+
+        <P><IMG alt="" src="../../shared/tip.png" border="0">The <IMG alt="" src=
+        "images/vcCheckIn.png" border="0"> icon is also available from the tool where you have the
+        file opened.&nbsp;</P>
+
+        <P>A dialog is displayed so that you can enter comments that describe your changes.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/CheckInFile.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <P>The checkbox for <I>Keep File Checked Out</I> is selected and disabled automatically if
+        you still have the file open. If the file is closed and you plan to create more versions,
+        leave the checkbox selected for <I>Keep File Checked Out</I>. The checkbox for <I>Create
+        ".keep" file</I> is selected by default; this option causes a copy of the file that you are
+        checking in to be created on your local file system.&nbsp;</P>
+
+        <P>In a shared project repository, when you check in your file, the changes in your file
+        may have to be <A href="help/topics/Repository/Merge_Program_Files.htm">merged</A> into the
+        latest version on the server.&nbsp; This will be the case if another user checks in a file
+        since you did a checkout on the file. Under most conditions, the merge will be automatic
+        without any intervention required on your part. However, if you made changes such that a
+        conflict arises, you will have to <A href=
+        "help/topics/Repository/Merge_Program_Files.htm#ResolveConflicts">resolve the conflict</A>
+        at the time of check in. When another user checks in his file, you will see <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers">navigation markers</A>
+        for changes made since you checked out your file.&nbsp; Potential conflicts are indicated
+        in red. Refer to the <A href="help/topics/Repository/Merge_Program_Files.htm">Merge</A>
+        page for more information about merging.</P>
+      </BLOCKQUOTE>
+
+      <H3>Undo Checkout <A name="UndoCheckOut"></A> <IMG alt="" src="images/vcUndoCheckOut.png"
+      border="0">&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>You may want to undo your checkout such that you lose all your changes, and your file
+        reverts to the latest version on the server.&nbsp;</P>
+
+        <P>To undo a checkout:&nbsp;</P>
+
+        <OL>
+          <LI>Close the checked out file.</LI>
+
+          <LI>Select the checked out file in the Ghidra Project Window.&nbsp;</LI>
+
+          <LI>You can either click on the undo checkout icon <IMG alt="" src=
+          "images/vcUndoCheckOut.png" border="0"> in the tool bar, or right mouse click on the
+          selected file and choose the <B>Undo Checkout</B> option. If you had made changes to the
+          file, a dialog is displayed confirm the undo check out.</LI>
+        </OL>
+
+        <P align="center"><IMG alt="" src="images/UndoCheckoutDialog.png" border="0"></P>
+
+        <P align="left">If the checkbox on the dialog is selected, then a private file is created
+        with a ".keep" extension on the filename. The checkbox is selected by default.&nbsp;</P>
+
+        <P align="left"><IMG alt="" src="../../shared/note.png" border="0">If you have the file
+        open in the Code Browser when you attempt to undo the check out, you will get an error
+        dialog indicating that the file is in use. You must close the file first, then undo check
+        out.</P>
+      </BLOCKQUOTE>
+
+      <H3>Update<A name="Update"></A> <IMG alt="" src="images/vcMerge.png" border="0">&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>While you are working on a program in a shared project repository, you may want to
+        periodically update your program to receive any changes made by others who are working in
+        the same shared project repository.&nbsp; Use the <B>Update...</B> option to bring your
+        copy into sync with the latest version of the program in the repository.&nbsp; If your
+        changes conflict with those made in the latest version, you will be prompted to <A href=
+        "help/topics/Repository/Merge_Program_Files.htm">merge</A> changes from the latest version
+        into your program.&nbsp;&nbsp;</P>
+
+        <P>Consider this scenario:&nbsp; Suppose you are working on version 4 of 5 of a
+        program.&nbsp; The "5" indicates that there are 5 versions of the program in the
+        repository.&nbsp; The "4" indicates that your working copy of the program is based on the
+        version "4" version that you checked out from the repository.&nbsp; (To see the version
+        numbers for your programs, check the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#VersionStatus">file's status</A> in the
+        Ghidra Project Window <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#DataTree">data tree</A>).&nbsp;&nbsp; When
+        you update, you will update to the latest version in the repository (5).&nbsp; After the
+        update is complete, your file status will show "Version 5 of 5" just as though you had
+        <I>checked out</I> version 5. The <B>Update...</B> option allows you to have the latest
+        changes applied to your program without your having to check in your file.</P>
+
+        <P>To update your current program either select the program in the Ghidra Project Window
+        and click on the update icon <IMG alt="" src="images/vcMerge.png" border="0"> in the tool
+        bar, or right mouse click and choose the <B>Update...</B> option.&nbsp;&nbsp; The Update
+        option is only enabled when the latest version number on the server is <B>greater</B> than
+        the version that you checked out.&nbsp;&nbsp;</P>
+
+        <P><IMG alt="" src="../../shared/tip.png" border="0">&nbsp; The <IMG alt="" src=
+        "images/vcMerge.png" border="0"> icon is also available from the tool where you have the
+        file opened.</P>
+
+        <P><IMG alt="" src="../../shared/note.png" border="0"> The update action is not applicable
+        in a non-shared project repository.</P>
+      </BLOCKQUOTE>
+
+      <H3>&nbsp;</H3>
+
+      <H3>Undo Hijack<A name="Undo_Hijack"></A> <IMG alt="" src="images/undo_hijack.png" border=
+      "0">&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>A file becomes "hijacked" when it exists locally as a private file in your project
+        <I>and</I> a file of the same name exists in the repository.&nbsp; This will happen when
+        user another adds a file to version control while you have a private file of the same name
+        in your shared project. It can also happen if your checkout of the file is <A href=
+        "#TerminateCheckout">terminated</A>.&nbsp; The <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#HijackedFile">file icon</A> in the Ghidra
+        Project Window changes to indicate that it is hijacked. To undo the hijack:&nbsp;</P>
+
+        <OL>
+          <LI>Close the file if you have it open.</LI>
+
+          <LI>Right mouse click on the hijacked file(s) in the Ghidra Project Window .</LI>
+
+          <LI>Select <B>Undo Hijack...</B>. The following dialog is displayed to confirm the undo
+          hijack.&nbsp;</LI>
+        </OL>
+
+        <P align="center"><IMG alt="" src="images/UndoHijack.png" border="0"></P>
+
+        <P align="left">Deselect the checkbox next to the name if you do not want to undo the
+        hijack for that file. The checkbox, <I>Save copy of the file with a .keep extension</I>, is
+        selected by default; if the checkbox is selected, a .keep file will be created. In this
+        example, you would see <B>SharedProgram.exe.keep</B> in your project data tree after you
+        select the <B>OK</B> button.&nbsp; The checkbox selection applies to all the files that you
+        have selected for the undo hijack.</P>
+
+        <P align="left">&nbsp;</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Show_History"></A>Show Version History</H2>
+
+    <BLOCKQUOTE>
+      <P>To show the history on any versioned file, right mouse click on the file in the Ghidra
+      Project Window, and select the <B>Show History...</B> option. The table shows the date on
+      which the version was created, the user that created it, and the comments describing the
+      version.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/VersionHistory.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <H3>View Version</H3>
+
+      <BLOCKQUOTE>
+        <P>To view any version in the history, select the version, right mouse click and choose the
+        <B>Open With</B><IMG alt="" src="../../shared/arrow.gif" border="0">&lt;tool&gt; where
+        &lt;tool&gt; denotes a menu item for each tool in your tool chest. The version is read only
+        and is opened in the selected tool. The filename shown in the title of the tool indicates
+        the version number, e.g., "SharedProgram.exe@10 [Read Only]" indicates you are viewing
+        version 10 of SharedProgram.exe.&nbsp; You can make changes to the file, but you must save
+        it to a new name.</P>
+
+        <P><IMG alt="" src="../../shared/tip.png" border="0">&nbsp; Other ways to open a specific
+        version in a tool are:</P>
+
+        <UL>
+          <LI>Drag a version from the <I>Version History</I> dialog to a running tool, the running
+          tool's icon, or to a tool icon in the tool chest.</LI>
+
+          <LI>If you have a <A href=
+          "help/topics/Tool/Ghidra_Tool_Administration.htm#Set_Tool_Associations">default tool</A>
+          specified, double click on the version that you want to open.</LI>
+
+          <LI>Choose the <B>File</B><IMG alt="" src="../../shared/arrow.gif" border=
+          "0"><B>Open...</B> option; the <A href=
+          "help/topics/ProgramManagerPlugin/Opening_Program_Files.htm#VersionHistory">Open Program
+          dialog</A> is displayed; from this dialog you can select a version to
+          open.&nbsp;&nbsp;</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3>Delete</H3>
+
+      <BLOCKQUOTE>
+        <P>You can delete the first and last version if you are the owner, or if you are an <A
+        href="help/topics/FrontEndPlugin/Creating_a_Project.htm#Admin">administrator</A> in the
+        project, <I>and</I> if the file is not checked out.&nbsp; If the user who has the file
+        checked out is not available to either undo his checkout or check in his file, the
+        administrator may <A href="#TerminateCheckout">terminate the checkout</A> in order to
+        delete the version.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="View_Check_Outs"></A>View Checkouts</H2>
+
+    <BLOCKQUOTE>
+      <P>To view a list of who has a file checked out, right mouse click on the file in the Ghidra
+      Project Window, and select the <B>View Checkouts...</B> option.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/ViewCheckouts.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <P>&nbsp;</P>
+
+      <P>The <I>Checkout Date</I> is when you checked out the file; the <I>Version</I> is the
+      version number of the file that you have checked out.&nbsp;</P>
+
+      <P>If you have administrative privileges in the project repository, you can terminate the
+      checkout. Right mouse click on the version and choose the <B><A name=
+      "TerminateCheckout"></A>Terminate Checkout</B> option. A dialog is displayed to confirm the
+      terminate checkout action. The administrator may need to do this if users who have files
+      checked out are no longer working on the project. If your checkout is terminated, the file
+      becomes <A href=
+      "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#HijackedFile">hijacked</A>.&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Find_Checkouts"></A>Find Checkouts &nbsp;</H2>
+
+    <BLOCKQUOTE>
+      <P>To view a list of all the files that you have checked out in a folder and all of its
+      subfolders, select a folder, right mouse click and choose <B>Find Checkouts...</B>. In the
+      sample image below, all checkouts from the root project directory (pathname of "/") are
+      displayed; one file from the "TestFiles" folder is checked out.</P>
+
+      <P align="center"><IMG alt="" src="images/FindMyCheckouts.png" border="0"></P>
+
+      <P align="left"><I>Name</I> is the name of the file;. <I>Pathname</I> is the complete path to
+      the file. <I>Checkout Date</I> is when you checked out the file.&nbsp; <I>Version</I> is the
+      version number of the file that you have checked out.&nbsp;</P>
+
+      <P align="left"><A name="Undo_Checkout"></A> <A name="Check_In"></A>From this dialog, you can
+      <A href="#Check_In">check in</A> your files or <A href="#UndoCheckOut">undo your
+      checkout</A>. Make a selection in the table, right mouse click and choose <B>Check In...</B>
+      or <B>Undo Checkout</B>. You can also click on the toolbar icon <IMG alt="" src=
+      "images/vcCheckIn.png" border="0">&nbsp; to check in, or click on the icon <IMG alt="" src=
+      "images/vcUndoCheckOut.png" border="0">&nbsp; to undo the check out.</P>
+
+      <P align="left">&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/GhidraServer/GhidraServer.htm">Ghidra
+        Server</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/FrontEndPlugin/Creating_a_Project.htm#CreateSharedProject">Creating a Shared
+        Project</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Repository/Merge_Program_Files.htm">Merging
+        Program Files</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/ProgramManagerPlugin/Opening_Program_Files.htm#VersionHistory">Open a
+        Version</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#FileIcons">Ghidra File Status</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/FrontEndPlugin/Project_Info.htm">Project
+        Information</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

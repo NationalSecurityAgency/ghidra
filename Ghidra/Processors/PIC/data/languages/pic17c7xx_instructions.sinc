@@ -1,0 +1,916 @@
+#
+# PIC-17C7xx Instruction Section
+#   includes token definitions, macros, sub-constructors and instruction definitions
+#
+
+# 16-bit instruction token uses big-endian bit numbering which agrees with
+# instruction bit numbering with PIC documentation.
+# 	15-14-13-12-11-10-9-8-7-6-5-4-3-2-1-0 
+define token instr16(16)
+	op16 =	(0,15)
+	op8 =	(8,15)
+	op7 =	(9,15)
+	op6 =	(10,15)
+	op5 =	(11,15)
+	op3 =	(13,15)
+	t =		(9,9)
+	d =		(8,8)
+	s =		(8,8)
+	i =		(8,8)
+	b3 =	(8,10)
+	p5_4 =	(12,12)
+	p5_3 =	(11,11)
+	p5 =	(8,12)
+	p5reg =	(8,12)
+	u4hi =	(4,7)
+	u4lo =	(0,3)
+	f8 =	(0,7)
+	f8hi =	(5,7)
+	f8_4 =	(4,4)
+	f8_3 =	(3,3)
+	f8reg = (0,4) 
+	k8 =	(0,7)
+	k8_h =	(4,7)
+	k8_l =	(0,3)
+	k13 =	(0,12)
+;
+
+attach variables [ f8reg p5reg ] [ 
+    INDF0	FSR0	PCL		PCLATH	ALUSTA	T0STA	CPUSTA	INTSTA
+   	INDF1	FSR1	WREG	TMR0L	TMR0H	TBLPTRL	TBLPTRH	BSR
+   	_		_		_		_		_		_		_		_
+   	PRODL	PRODH	_		_		_		_		_		_
+];
+
+attach variables [ t ] [ TBLATL TBLATH ];
+
+#
+# Special PIC-17 Operations
+#
+
+# Return a decimal adjusted value for the value provided (see DAW instruction)
+define pcodeop decimalAdjust;
+
+# Perform a Master Clear Reset
+define pcodeop reset;
+
+define pcodeop clearWatchDogTimer;
+
+define pcodeop sleep;
+
+#
+# MACROS
+#
+
+macro setResultFlags(result) {
+	Z = (result == 0);
+}
+
+macro setAddCOverflowFlag(op1,op2) {
+	local tmpC = C & 1;
+	OV = scarry(op1,tmpC) || scarry(op2,op1 + tmpC);
+}
+
+macro setAddCCarryFlag(op1,op2) {
+	local tmpC = C & 1;
+	C = carry(op1,tmpC) || carry(op2,op1 + tmpC);
+}
+
+macro setAddCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tmpDC = DC & 1;
+	DC = carry(tmp1,tmpDC) || carry(tmp2,tmp1 + tmpDC);
+}
+
+macro setAddCFlags(op1,op2) {
+	setAddCCarryFlag(op1,op2);
+	setAddCDigitCarryFlag(op1,op2);
+	setAddCOverflowFlag(op1,op2);
+}
+
+macro setAddFlags(op1,op2) {
+	C = carry(op1,op2);
+	DC = carry(op1<<4,op2<<4);
+	OV = scarry(op1,op2);
+}
+
+macro setSubtractCOverflowFlag(op1,op2) {
+	local notC = ~(C & 1);
+	OV = sborrow(op1,notC) || sborrow(op2,op1 - notC);
+}
+
+macro setSubtractCCarryFlag(op1,op2) {
+	local notC = ~(C & 1);
+	C = (op1 < notC) || (op2 < (op1 - notC));
+}
+
+macro setSubtractCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local notDC = ~(DC & 1);
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tmp3 = (tmp1 - notDC) << 4;
+	DC = (tmp1 < notDC) || (tmp2 < tmp3);
+}
+
+macro setSubtractCFlags(op1,op2) {
+	setSubtractCCarryFlag(op1,op2);
+	setSubtractCDigitCarryFlag(op1,op2);
+	setSubtractCOverflowFlag(op1,op2);
+}
+
+macro setSubtractFlags(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	# NOTE:  carry flag is SET if there is NO borrow
+	C = (op1 >= op2);
+	DC = ((op1<<4) < (op2<<4));
+	OV = sborrow(op1,op2);
+}
+
+macro push(val) {	# TODO: Uncertain about this !!
+#	CheckStackFull();
+	*[HWSTACK]:2 STKPTR = val;
+	STKPTR = STKPTR + 2;
+}
+
+macro pop(rval) {	# TODO: Uncertain about this !!
+#	CheckStackUnderflow();
+	STKPTR = STKPTR - 2;
+	rval = *[HWSTACK]:2 STKPTR;
+}
+
+#
+# SUB-CONSTRUCTORS
+#
+
+# PC register write - instruction must set PCLATH/PCL and perform branch operation
+fPC: "PC" 			is f8=0x02				{ export PCL; }
+pPC: "PC" 			is p5=0x02				{ export PCL; }
+
+# ALUSTA register
+fALUSTA: f8reg 		is f8=0x04 & f8reg		{ export f8reg; }
+#pALUSTA: p5reg 		is p5=0x04 & p5reg		{ export p5reg; }
+
+#
+# f Register  subconstructors
+#
+
+# 0x00-0x0f Unbanked registers
+fREGLoc: f8reg		is f8hi=0 & f8_4=0 & f8reg			{ export f8reg; }
+
+# 0x10-0x1f Banked registers
+fREGLoc: f8			is f8hi=0 & f8_4=1 & f8_3=0 & f8	{ ptr:2 = (zext(BSR & 0x0f) << 8) + f8; export *[DATA]:1 ptr; }
+
+# 0x18-0x19 Unbanked registers (PRODL,PRODH)
+fREGLoc: f8reg		is f8=0x18 & f8reg					{ export f8reg; }
+fREGLoc: f8reg		is f8=0x19 & f8reg					{ export f8reg; }
+
+# Unbanked general purpose RAM
+fREGLoc: f8			is f8hi=0 & f8_4=1 & f8_3=1 & f8	{ export *[DATA]:1 f8; }
+
+# Banked general purpose RAM
+fREGLoc: f8			is f8								{ ptr:2 = (zext(BSR & 0xf0) << 4) + f8; export *[DATA]:1 ptr; }
+
+
+# Indirect File Register access - INDF0
+fREGLoc: f8reg		is f8=0x00 & f8reg		{
+	addr:1 = FSR0;
+	val:1 = ((FS10 == 0x1) * 1) + ((FS10 == 0x0) * -1);
+	FSR0 = addr + val;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF1
+fREGLoc: f8reg		is f8=0x08 & f8reg		{
+	addr:1 = FSR1;
+	val:1 = ((FS32 == 0x1) * 1) + ((FS32 == 0x0) * -1);
+	FSR1 = addr + val;
+	export *[DATA]:1 addr; 
+}
+
+
+#
+# p Register subconstructors
+#
+
+# 0x00-0x0f Unbanked registers
+pREGLoc: p5reg		is p5_4=0 & p5reg			{ export p5reg; }
+
+# 0x10-0x17 Banked registers
+pREGLoc: p5			is p5_4=1 & p5_3=0 & p5		{ ptr:2 = (zext(BSR & 0x0f) << 8) + p5; export *[DATA]:1 ptr; }
+
+# 0x18-0x19 Unbanked registers (PRODL,PRODH)
+pREGLoc: p5reg		is p5=0x18 & p5reg			{ export p5reg; }
+pREGLoc: p5reg		is p5=0x19 & p5reg			{ export p5reg; }
+
+# Unbanked general purpose RAM
+pREGLoc: p5			is p5_4=1 & p5_3=1 & p5	{ export *[DATA]:1 p5; }
+
+# Indirect File Register access - INDF0
+pREGLoc: p5reg		is p5=0x00 & p5reg		{
+	addr:1 = FSR0;
+	val:1 = ((FS10 == 0x1) * 1) + ((FS10 == 0x0) * -1);
+	FSR0 = addr + val;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF1
+pREGLoc: p5reg		is p5=0x08 & p5reg		{
+	addr:1 = FSR1;
+	val:1 = ((FS32 == 0x1) * 1) + ((FS32 == 0x0) * -1);
+	FSR1 = addr + val;
+	export *[DATA]:1 addr; 
+}
+
+
+# Direct File register data
+srcFREG: fREGLoc		is fREGLoc									{ export fREGLoc; }
+
+# PCL read - latch PC into PCL and PCLATH
+srcFREG: "PC"		is f8=0x02						{
+	PCLAT = inst_start;
+	export PCL; 
+}
+
+# Destination register (always fREGLoc)
+destFREG: fREGLoc		is fREGLoc									{ export fREGLoc; }
+
+# Destination register (either fREGLoc or WREG)
+destREG: "0"	is d=0												{ export WREG; }
+destREG: "1"	is d=1 & fREGLoc									{ export fREGLoc; }
+
+# Direct File register data
+srcPREG: pREGLoc		is pREGLoc									{ export pREGLoc; }
+
+# PCL read - latch PC into PCL and PCLATH
+srcPREG: "PC"		is p5=0x02						{
+	PCLAT = inst_start;
+	export PCL; 
+}
+
+# Destination register (always pREGLoc)
+destPREG: pREGLoc		is pREGLoc									{ export pREGLoc; }
+
+# Destination operand representation (w: W register is destination; f: specified fREG is destination)
+D: "w"		is d=0										{ }
+D: "f"		is d=1										{ }
+
+# s-flag used by those instructions which can optionally store result in both srcFREG and WREG
+S: "0"		is s=0										{ }
+S: "1"		is s=1										{ }
+
+# Table read/write i-flag
+I: "0"		is i=0										{ }
+I: "1"		is i=1										{ }
+
+# Table read/write t-flag identifies table latch register (high or low byte)
+T: t		is t										{ export t; }
+
+# Relative instruction location with an 8K page
+shortAddr: nLoc is k13				[ nLoc = (inst_next & 0xe000) + k13; ]	{ 
+	tmp:2 = nLoc:2 >> 8;
+	PCLATH = tmp:1;
+	export *[CODE]:2 nLoc;
+}
+
+# Absolute instruction location within 64K space (PCLATH contain upper 8-bits)
+longAddr: k8	is k8														{
+	addr:2 = (zext(PCLATH) << 8) + k8;
+	export addr;
+}
+
+# Skip instruction address
+skipInst: inst_skip	is op16	[ inst_skip = inst_next + 1; ]		{export *[CODE]:2 inst_skip; }
+
+# Immediate Data (Literal operation)
+imm8: "#"k8		is k8											{ export *[const]:1 k8; }
+imm8h: "#"k8_h	is k8_h											{ export *[const]:1 k8_h; }
+imm8l: "#"k8_l	is k8_l											{ export *[const]:1 k8_l; }
+
+# Bit identifier
+bit: "#"b3		is b3											{ export *[const]:1 b3; }
+
+
+#
+# Instructions
+#
+
+:ADDLW imm8		is op8=0xb1 & imm8		{
+	# 1011 0001 kkkk kkkk
+	tmp1:1 = WREG;
+	tmp2:1 = imm8;
+	setAddFlags(tmp1, tmp2); 
+	local tmp = tmp1 + tmp2;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ADDWF srcFREG, D	is op7=0x07 & D & srcFREG & destREG {
+	# 0000 111d ffff ffff
+	tmp1:1 = srcFREG; # read only once!
+	tmp2:1 = WREG;
+	setAddFlags(tmp1, tmp2); 
+	local tmp = tmp1 + tmp2;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ADDWF fPC, D		is op7=0x07 & D & d=1 & fPC	{
+	# 0000 111d ffff ffff
+	# 0000 1110 ffff ffff  ->  ADDWF PCL, w
+	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
+	addrHi:1 = addr(1);
+	PCLATH = addrHi;
+	addrLo:1 = addr:1;
+	tmpW:1 = WREG;
+	setAddFlags(addrLo, tmpW);
+	addrLo = addrLo + tmpW;
+	addr = (zext(addrHi) << 8) + zext(addrLo);
+	setResultFlags(addrLo);
+	goto [addr];
+}
+
+:ADDWFC srcFREG, D	is op7=0x08 & D & srcFREG & destREG {
+	# 0001 000d ffff ffff
+	local tmpC = C & 1;
+	tmp1:1 = srcFREG; # read only once!
+	tmp2:1 = WREG;
+	setAddCFlags(tmp1, tmp2); 
+	local tmp = tmp1 + tmp2 + tmpC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ANDLW imm8	is op8=0xb5 & imm8	{
+	# 1011 0101 kkkk kkkk
+	tmp:1 = WREG & imm8;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ANDWF srcFREG, D	is op7=0x05 & D & srcFREG & destREG {
+	# 0000 101d ffff ffff
+	tmp:1 = srcFREG & WREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:BCF srcFREG, bit			is op5=0x11 & bit & srcFREG							{
+	#  1000 1bbb ffff ffff
+	local bitmask = ~(1 << bit);
+	srcFREG = srcFREG & bitmask;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=0 & fALUSTA & bit							{
+	#  1000 1000 0000 0100	->	BCF ALUSTA, #C
+	C = 0;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=1 & fALUSTA & bit							{
+	#  1000 1001 0000 0100	->	BCF ALUSTA, #DC
+	DC = 0;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=2 & fALUSTA & bit							{
+	#  1000 1010 0000 0100	->	BCF ALUSTA, #Z
+	Z = 0;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=3 & fALUSTA & bit							{
+	#  1000 1011 0000 0100	->	BCF ALUSTA, #OV
+	OV = 0;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=4 & fALUSTA & bit							{
+	#  1000 1100 0000 0100	->	BCF ALUSTA, #FS0
+	FS10 = FS10 & 0x2;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=5 & fALUSTA & bit							{
+	#  1000 1101 0000 0100	->	BCF ALUSTA, #FS1
+	FS10 = FS10 & 0x1;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=6 & fALUSTA & bit							{
+	#  1000 1110 0000 0100	->	BCF ALUSTA, #FS2
+	FS32 = FS32 & 0x2;
+}
+
+:BCF fALUSTA, bit			is op5=0x11 & b3=7 & fALUSTA & bit							{
+	#  1000 1111 0000 0100	->	BCF ALUSTA, #FS3
+	FS32 = FS32 & 0x1;
+}
+
+:BSF srcFREG, bit			is op5=0x10 & bit & srcFREG				{
+	# 1000 0bbb ffff ffff
+	local bitmask = 1 << bit;
+	srcFREG = srcFREG | bitmask;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=0 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #C
+	C = 1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=1 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #DC
+	DC = 1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=2 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #Z
+	Z = 1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=3 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #OV
+	OV = 1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=4 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #FS0
+	FS10 = FS10 | 0x1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=5 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #FS1
+	FS10 = FS10 | 0x2;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=6 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #FS2
+	FS32 = FS32 | 0x1;
+}
+
+:BSF fALUSTA, bit			is op5=0x10 & b3=7 & bit & fALUSTA		{
+	# 1000 0000 0000 0100	->	BSF ALUSTA, #FS3
+	FS32 = FS32 | 0x2;
+}
+
+:BTFSC srcFREG, bit		is op5=0x13 & bit & srcFREG	& skipInst				{
+	#  1001 1bbb ffff ffff
+	local bitmask = 1 << bit;
+	local tmp = srcFREG & bitmask;
+	if (tmp == 0) goto skipInst;
+}
+
+:BTFSC fALUSTA, bit		is op5=0x13 & b3=0 & bit & fALUSTA & skipInst				{
+	#  1001 1000 0000 0100	->	BTFSC STATUS, #C
+	if (C == 0) goto skipInst;
+}
+
+:BTFSC fALUSTA, bit		is op5=0x13 & b3=1 & bit & fALUSTA & skipInst				{
+	#  1001 1001 0000 0100	->	BTFSC STATUS, #DC
+	if (DC == 0) goto skipInst;
+}
+
+:BTFSC fALUSTA, bit		is op5=0x13 & b3=2 & bit & fALUSTA & skipInst				{
+	#  1001 1010 0000 0100	->	BTFSC STATUS, #Z
+	if (Z == 0) goto skipInst;
+}
+
+:BTFSC fALUSTA, bit		is op5=0x13 & b3=3 & bit & fALUSTA & skipInst				{
+	#  1001 1011 0000 0100	->	BTFSC STATUS, #OV
+	if (OV == 0) goto skipInst;
+}
+
+:BTFSS srcFREG, bit		is op5=0x12 & bit & srcFREG	& skipInst				{
+	#  1001 0bbb ffff ffff
+	local bitmask = 1 << bit;
+	local tmp = srcFREG & bitmask;
+	if (tmp != 0) goto skipInst;
+}
+
+:BTFSS fALUSTA, bit		is op5=0x12 & b3=0 & bit & fALUSTA & skipInst				{
+	#  1001 1000 0000 0100	->	BTFSS STATUS, #C
+	if (C != 0) goto skipInst;
+}
+
+:BTFSS fALUSTA, bit		is op5=0x12 & b3=1 & bit & fALUSTA & skipInst				{
+	#  1001 1001 0000 0100	->	BTFSS STATUS, #DC
+	if (DC != 0) goto skipInst;
+}
+
+:BTFSS fALUSTA, bit		is op5=0x12 & b3=2 & bit & fALUSTA & skipInst				{
+	#  1001 1010 0000 0100	->	BTFSS STATUS, #Z
+	if (Z != 0) goto skipInst;
+}
+
+:BTFSS fALUSTA, bit		is op5=0x12 & b3=3 & bit & fALUSTA & skipInst				{
+	#  1001 1011 0000 0100	->	BTFSS STATUS, #OV
+	if (OV != 0) goto skipInst;
+}
+
+:BTG srcFREG, bit		is op5=0x7 & bit & srcFREG & skipInst 		{
+	# 0011 1bbb ffff ffff
+	local bitmask = 1 << bit;
+	tmp:1 = srcFREG;
+	srcFREG = ~(tmp & bitmask) | (tmp & ~bitmask);
+}
+
+:CALL shortAddr			is op3=0x7 & shortAddr						{
+	# 111k kkkk kkkk kkkk
+	push(&:2 inst_next);
+	call shortAddr;
+}
+
+# Special case for Call which appears to correspond to uninitialized
+:BADCALL shortAddr			is op16=0xffff & shortAddr		{ addr:2 = shortAddr; return [addr]; }
+
+:CLRF destFREG, S		is op7=0x14 & s=0 & S & destFREG					{
+	# 0010 1000 ffff ffff
+	destFREG = 0;
+	WREG = 0;
+}
+
+:CLRF destFREG, S		is op7=0x14 & s=1 & S & destFREG					{
+	# 0010 1001 ffff ffff
+	destFREG = 0;
+}
+
+:CLRF fALUSTA, S		is op7=0x14 & s=0 & S & fALUSTA					{
+	# 0010 1000 0000 0100
+	C = 0;
+	DC = 0;
+	Z = 0;
+	OV = 0;
+	FS10 = 0;
+	FS32 = 0;
+	WREG = 0;
+}
+
+:CLRF fALUSTA, S		is op7=0x14 & s=1 & S & fALUSTA					{
+	# 0010 1001 0000 0100
+	C = 0;
+	DC = 0;
+	Z = 0;
+	OV = 0;
+	FS10 = 0;
+	FS32 = 0;
+}
+
+:CLRWDT				is op16=0x0004 			{
+	# 0000 0000 0000 0100
+	clearWatchDogTimer();
+}
+
+:COMF srcFREG, D	is op7=0x09 & D & srcFREG & destREG			{
+	# 0001 001d ffff ffff
+	tmp:1 = ~srcFREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:CPFSEQ srcFREG		is op8=0x31 & srcFREG & skipInst		{
+	# 0011 0001 ffff ffff
+	if (srcFREG == WREG) goto skipInst;
+}
+
+:CPFSGT srcFREG		is op8=0x32 & srcFREG & skipInst		{
+	# 0011 0010 ffff ffff
+	if (srcFREG > WREG) goto skipInst;
+}
+
+:CPFSLT srcFREG		is op8=0x30 & srcFREG & skipInst		{
+	# 0011 0000 ffff ffff
+	if (srcFREG < WREG) goto skipInst;
+}
+
+:DAW destFREG, S	is op7=0x17 & s=0 & S & destFREG			{ 
+	#  0010 1110 ffff ffff
+	tmp:1 = decimalAdjust(WREG);
+	destFREG = tmp;
+	WREG = tmp;
+}
+
+:DAW destFREG, S	is op7=0x17 & s=1 & S & destFREG			{ 
+	# 0010 1111 ffff ffff
+	tmp:1 = decimalAdjust(WREG);
+	destFREG = tmp;
+	setResultFlags(tmp);
+}
+
+:DECF srcFREG, D	is op7=0x03 & D & srcFREG & destREG		{
+	# 0000 011d ffff ffff
+	tmp:1 = srcFREG;
+	setSubtractFlags(tmp, 1); 
+	tmp = tmp - 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:DECFSZ srcFREG, D	is op7=0x0b & D & srcFREG & destREG	& skipInst	{
+	# 0001 011d ffff ffff
+	val:1 = srcFREG - 1;
+	destREG = val;
+	if (val == 0) goto skipInst;
+}
+
+:DCFSNZ srcFREG, D	is op7=0x13 & D & srcFREG & destREG & skipInst	{
+	# 0010 011d ffff ffff
+	val:1 = srcFREG - 1;
+	destREG = val;
+	if (val != 0) goto skipInst;
+}
+
+:GOTO shortAddr		is op3=0x6 & shortAddr {
+	# 110k kkkk kkkk kkkk
+	goto shortAddr;
+}
+
+:INCF srcFREG, D	is op7=0x0a & D & srcFREG & destREG			{
+	# 0001 010d ffff ffff
+	tmp:1 = srcFREG; # read once only!
+	setAddFlags(tmp, 1); 
+	tmp = tmp + 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:INCFSZ srcFREG, D	is op7=0x0f & D & srcFREG & destREG	& skipInst		{
+	# 0001 111d ffff ffff
+	val:1 = srcFREG + 1;
+	destREG = val;
+	if (val == 0) goto skipInst;	
+}
+
+:INFSNZ srcFREG, D	is op7=0x12 & D & srcFREG & destREG	& skipInst		{
+	# 0010 010d ffff ffff
+	val:1 = srcFREG + 1;
+	destREG = val;
+	if (val != 0) goto skipInst;	
+}
+
+:IORLW imm8			is op8=0xb3 & imm8		{
+	# 1011 0011 kkkk kkkk
+	tmp:1 = WREG | imm8;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:IORWF srcFREG, D	is op7=0x04 & D & srcFREG & destREG		{
+	# 0000 100d ffff ffff
+	tmp:1 = WREG | srcFREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:LCALL longAddr		is op8=0xb7 & longAddr					{
+	# 1011 0111 kkkk kkkk
+	push(&:2 inst_next);
+	call [longAddr];
+}
+
+:MOVFP srcFREG, destPREG	is op3=0x3 & srcFREG & destPREG		{
+	# 011p pppp ffff ffff
+	destPREG = srcFREG;
+}
+
+:MOVFP srcFREG, pPC			is op3=0x3 & srcFREG & pPC		{
+	# 0110 0010 ffff ffff
+	addr:2 = (zext(PCLATH) << 8) + zext(srcFREG);
+	goto [addr];
+}
+
+:MOVLB imm8l			is op8=0xb8 & u4hi=0 & imm8l 		{
+	# 1011 1000 0000 kkkk
+	BSR = (BSR & 0xf0) | imm8l;
+}
+
+:MOVLR imm8h			is op7=0x5d & u4lo=0 & imm8h			{
+	# 1011 101x kkkk 0000
+	BSR = (BSR & 0x0f) | (imm8h << 4);
+}
+
+:MOVLW imm8			is op8=0xb0 & imm8				{
+	# 1011 0000 kkkk kkkk
+	WREG = imm8;
+}
+
+:MOVPF srcPREG, destFREG	is op3=0x2 & srcPREG & destFREG		{
+	# 010p pppp ffff ffff
+	tmp:1 = srcPREG;
+	destFREG = tmp;
+	setResultFlags(tmp);
+}
+
+:MOVPF srcPREG, fPC	is op3=0x2 & srcPREG & fPC		{
+	tmp:1 = srcPREG;
+	addr:2 = (zext(PCLATH) << 8) + zext(tmp);
+	setResultFlags(tmp);
+	goto [addr];
+}
+
+:MOVWF destFREG				is op8=0x01 & destFREG		{
+	# 0000 0001 ffff ffff
+	destFREG = WREG;
+}
+
+:MOVWF fPC					is op8=0x01 & fPC		{
+	addr:2 = (zext(PCLATH) << 8) + zext(WREG);
+	goto [addr];
+}
+
+:MULLW imm8					is op8=0xbc & imm8		{
+	# 1011 1100 kkkk kkkk
+	PROD = zext(WREG) * zext(imm8);
+}
+
+:MULLWF srcFREG				is op8=0x34	& srcFREG			{
+	# 0011 0100 ffff ffff
+	PROD = zext(WREG) * zext(srcFREG);
+}
+
+:NEGW destFREG, S			is op7=0x16 & s=0 & S & destFREG	{
+	# 0010 110s ffff ffff
+	tmp:1 = -WREG;
+	destFREG = tmp;
+	WREG = tmp;
+	C = (tmp s< 0);
+	OV = sborrow(0,tmp);
+	setResultFlags(tmp);
+}
+
+:NEGW destFREG, S			is op7=0x16 & s=1 & S & destFREG	{
+	# 0010 110s ffff ffff
+	tmp:1 = -WREG;
+	destFREG = tmp;
+	C = (tmp s< 0);
+	OV = sborrow(0,tmp);
+	setResultFlags(tmp);
+}
+
+:NOP						is op16=0x0		{ }
+
+:RETFIE						is op16=0x0005		{
+	# 0000 0000 0000 0101
+	retAddr:2 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETLW imm8					is op8=0xb6 & imm8		{
+	# 1011 0110 kkkk kkkk
+	WREG = imm8;
+	retAddr:2 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETURN 					is op16=0x0002			{
+	# 0000 0000 0000 0010
+	retAddr:2 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RLCF srcFREG, D			is op7=0x0d & D & srcFREG & destREG		{
+	# 0001 101d ffff ffff
+	local tmpC = C;
+	val:1 = srcFREG;
+	C = (val s< 0);
+	val = (val << 1) | tmpC;
+	destREG = val;
+}
+
+:RLNCF srcFREG, D			is op7=0x11 & D & srcFREG & destREG		{
+	# 0010 001d ffff ffff
+	tmp:1 = srcFREG << 1;
+	destREG = tmp;
+}
+
+:RRCF srcFREG, D			is op7=0x0c & D & srcFREG & destREG		{
+	# 0001 100d ffff ffff
+	local tmpC = C << 7;
+	tmp:1 = srcFREG;
+	C = (tmp & 1) != 0;
+	tmp = (tmp >> 1) | tmpC;
+	destREG = tmp;
+}
+
+:RRNCF srcFREG, D			is op7=0x10 & D & srcFREG & destREG		{
+	# 0010 000d ffff ffff
+	tmp:1 = srcFREG >> 1;
+	destREG = tmp;
+}
+
+:SETF destFREG, S			is op7=0x15 & s=0 & S & destFREG		{
+	# 0010 1010 ffff ffff
+	destFREG = 0xff;
+	WREG = 0xff;
+}
+
+:SETF destFREG, S			is op7=0x15 & s=1 & S & destFREG		{
+	# 0010 1011 ffff ffff
+	destFREG = 0xff;
+}
+
+:SETF fALUSTA, S		is op7=0x15 & s=0 & S & fALUSTA					{
+	# 0010 1010 0000 0100
+	C = 1;
+	DC = 1;
+	Z = 1;
+	OV = 1;
+	FS10 = 0x3;
+	FS32 = 0x3;
+	WREG = 0xff;
+}
+
+:SETF fALUSTA, S		is op7=0x15 & s=1 & S & fALUSTA					{
+	# 0010 1011 0000 0100
+	C = 1;
+	DC = 1;
+	Z = 1;
+	OV = 1;
+	FS10 = 0x3;
+	FS32 = 0x3;
+}
+
+:SLEEP						is op16=0x0003		{
+	# 0000 0000 0000 0011
+	sleep();
+}
+
+:SUBLW imm8					is op8=0xb2 & imm8		{
+	# 1011 0010 kkkk kkkk
+	tmp:1 = imm8;
+	tmpW:1 = WREG;
+	setSubtractFlags(tmp, tmpW); 
+	tmp = tmp - tmpW;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SUBWF srcFREG, D		is op7=0x02 & D & srcFREG & destREG		{
+	# 0000 010d ffff ffff
+	tmp:1 = srcFREG;
+	tmpW:1 = WREG;
+	setSubtractFlags(tmp, tmpW); 
+	tmp = tmp - tmpW;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SUBWFB srcFREG, D		is op7=0x01 & D & srcFREG & destREG		{
+	# 0000 001d ffff ffff
+	local notC = ~(C & 1);
+	tmp:1 = srcFREG;
+	tmpW:1 = WREG;
+	setSubtractCFlags(tmp, tmpW); 
+	tmp = tmp - tmpW - notC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SWAPF srcFREG, D		is op7=0x0e & D & srcFREG & destREG		{
+	# 0001 110d ffff ffff
+	tmp:1 = srcFREG;
+	destREG = (tmp << 4) | (tmp >> 4);
+}
+
+:TABLRD T, I, destFREG		is op6=0x2a & T & I & i & destFREG			{
+	# 1010 10ti ffff ffff
+	destFREG = T;
+	ptr:2 = TBLPTR;
+	TBLAT = *[CODE]:2 ptr;
+	TBLPTR = ptr + i;
+}
+
+:TABLWT T, I, srcFREG		is op6=0x2b & T & I & i & srcFREG			{
+	# 1010 11ti ffff ffff
+	T = srcFREG;
+	ptr:2 = TBLPTR;
+	*[CODE]:2 ptr = TBLAT;
+	TBLPTR = ptr + i;
+}
+
+:TLRD T, destFREG			is op6=0x28 & T & destFREG			{
+	# 1010 00tx ffff ffff
+	destFREG = T;
+}
+
+:TLWT T, srcFREG			is op6=0x29 & T & srcFREG			{
+	# 1010 01tx ffff ffff
+	T = srcFREG;
+}
+
+:TSTFSZ srcFREG				is op8=0x33 & srcFREG & skipInst	{
+	# 0011 0011 ffff ffff
+	if (srcFREG == 0) goto skipInst;
+} 
+
+:XORLW imm8					is op8=0xb4 & imm8			{
+	# 1011 0100 kkkk kkkk
+	tmp:1 = WREG ^ imm8;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:XORWF srcFREG, D			is op7=0x06 & D & srcFREG & destREG		{
+	# 0000 110d ffff ffff
+	tmp:1 = WREG ^ srcFREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}

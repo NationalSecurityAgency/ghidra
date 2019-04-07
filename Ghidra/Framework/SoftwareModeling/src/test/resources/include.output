@@ -1,0 +1,22 @@
+include.input###1ORIGINAL TEXT
+empty.input###1abc
+def
+ghi
+include.input###3ORIGINAL TEXT 2
+#@define FOO foo
+crazy.inc###1print $(FOO)foo
+#@define FOO bar
+empty.input###1abc
+def
+ghi
+crazy.inc###4print $(FOO)bar again
+#@undef FOO
+include.input###6#@ifndef FOO
+ORIGINAL TEXT 3
+#@endif
+empty.input###1abc
+def
+ghi
+include.input###10ORIGINAL TEXT 4
+actual.inc###1Hey, you found me!
+include.input###12

@@ -1,0 +1,4 @@
+@define ENDIAN "little"
+@define REG_SIZE "2"
+
+@include "TI430Common.sinc"

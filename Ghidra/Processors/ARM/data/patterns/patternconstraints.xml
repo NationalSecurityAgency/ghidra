@@ -1,0 +1,13 @@
+<patternconstraints>
+  <language id="ARM:LE:32:*">
+    <patternfile>ARM_LE_patterns.xml</patternfile>
+  </language>
+  
+  <language id="ARM:BE:32:*">
+    <patternfile>ARM_BE_patterns.xml</patternfile>
+  </language>
+  
+  <language id="ARM:LEBE:32:*">
+    <patternfile>ARM_LE_patterns.xml</patternfile>
+  </language> 
+</patternconstraints>

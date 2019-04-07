@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="unknown" stackshift="4">
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="R12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="R11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="R10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="R9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="R8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="R12"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="RAM" offset="0" size="4"/>
+        <register name="SP"/>
+        <register name="LR"/>
+        <register name="R0"/>
+        <register name="R1"/>
+        <register name="R2"/>
+        <register name="R3"/>
+        <register name="R4"/>
+        <register name="R5"/>
+        <register name="R6"/>
+        <register name="R7"/>
+      </unaffected>
+      <killedbycall>
+          <register name="Z"/>
+      </killedbycall>
+    </prototype>
+  </default_proto>
+</compiler_spec>

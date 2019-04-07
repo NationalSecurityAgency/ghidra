@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Annotations</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1>Annotations</H1>
+
+    <P>Annotations are a method for embedding display markup in Ghidra fields, such as <A href=
+    "help/topics/CommentsPlugin/Comments.htm">comments</A>. An annotation is written with a strict
+    syntax, which when rendered will have a display value as defined by the particular annotation
+    used. Furthermore, some annotations add functionality, such as making the display text a
+    hyperlink.</P>
+    <!-- Annotation Example -->
+
+    <P>The following text shows the syntax of the URL annotation:</P>
+	<pre><font size="4"><br>
+	<b>{@<i>url</i></b> "http://www.google.com"<b>}</b><br>
+	</font><br></pre>
+
+    <P>The bold text is required for all annotations. The italicized text is required but is
+    specific to the annotation being used (see the table below).</P>
+
+    <H2>Examples</H2>
+
+    <BLOCKQUOTE>
+      <!-- image -->
+
+      <P align="center"><IMG border="0" src="images/CommentDialogURLExample.png" alt=""><BR>
+       <I>URL Annotation Example</I></P>
+
+      <P>The image above shows a URL annotation in its text form as entered into the EOL Comment
+      tab of the Comments dialog.<BR>
+      <BR>
+       The image below shows how the annotation is rendered in Ghidra.</P>
+
+      <P align="center"><IMG border="2" src="images/RenderedURLExample.png" alt=""><BR>
+       <I>Rendered URL Annotation Example</I></P>
+
+      <P>When the URL text (e.g., "http://www.google.com") in the above image is clicked from within
+      Ghidra, a web browser is launched and attempts to load the corresponding web page.  If the URL text
+      is of the form <i>ghidra://&lt;host&gt;[:&lt;port&gt;]/&lt;repository-name&gt;/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i>
+      an attempt will be made to open the corresponding program from the referenced Ghidra Server (e.g., 
+      <i>ghidra://myserver/Repo/notepad.exe#entry</i>).</P>
+    </BLOCKQUOTE>
+
+    <H2>Valid Annotations</H2>
+
+    <BLOCKQUOTE>
+      <!-- List of Valid Annotations -->
+
+      <P>The following is a table of supported annotations:<BR>
+      <BR>
+      </P>
+
+      <TABLE width="2000" border="1" cellspacing="2" cellpadding="2">
+        <TBODY>
+          <TR>
+            <TH valign="top" width="5%">Name<BR>
+            </TH>
+
+            <TH valign="top" width="15%">Description<BR>
+            </TH>
+
+            <TH valign="top" width="12%">Parameter List<BR>
+            </TH>
+
+            <TH valign="top" width="10%">Accepted Keywords</TH>
+
+            <TH valign="top" width="25%">Examples<BR>
+            </TH>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">Symbol<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays the text of the given symbol or the current name
+            of the primary symbol for a given address as a hyperlink.<BR>
+            <BR>
+            <BR>
+             Notes:
+             
+             <ul>
+	             <li>
+		              If you provide a symbol name and not an address, then you will need to
+		            fully-qualify the symbol name if it is not in the global namespace (e.g.,
+		            FunctionFoo::param1 to link to a specific function parameter).
+	            </li>
+	            <li>
+		            If you specify a symbol name instead of an address, then the text of the comment
+		            will be changed to use the address of that symbol.
+	            </li>
+            </ul>
+            
+            </TD>
+            
+
+            <TD valign="top" width="12%">
+              <OL>
+                <LI>address or symbol name<BR>
+                </LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL type="disc" compact="compact">
+                <LI>@symbol</LI>
+
+                <LI>@sym</LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL>
+                <LI>{@symbol "0x1001004a"}</LI>
+
+                <LI>{@symbol "fred"}</LI>
+
+                <LI>{@sym "100100fe"}<BR>
+                </LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">Address<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays the given address value as a hyperlink.<BR>
+            </TD>
+
+            <TD valign="top" width="12%">
+              <OL>
+                <LI>address</LI>
+
+                <LI>[display text]</LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL compact="compact" type="disc">
+                <LI>@address</LI>
+
+                <LI>@addr<BR>
+                </LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL>
+                <LI>{@address "1001004a"}</LI>
+
+                <LI>{@addr "0x0100100c"}</LI>
+
+                <LI>{@address "01001004a" "my special address"}</LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">URL<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays the given URL has a hyperlink. This annotation
+            optionally takes display text so that the hyperlink may be displayed with text other
+            than that of the URL.<BR><BR>
+            References to <i>ghidra://</i>, which refer to a program within a Ghidra Server repository,
+            will be opened within the Listing display, while all other URL protocols (e.g., <i>http://, https://,
+            file://,</i> etc.) will be launched via an external web browser (see 
+            <a href="help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm#Show_Processor_Manual">command configuration 
+            for Processor Manuals</a>). 
+            </TD>
+
+            <TD valign="top" width="12%">
+              <OL>
+                <LI>URL</LI>
+
+                <LI>[display text]<BR>
+                </LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL>
+                <LI>@url</LI>
+
+                <LI>@hyperlink</LI>
+
+                <LI>@href</LI>
+
+                <LI>@link<BR>
+                </LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL>
+                <LI>{@url "http://www.google.com"}</LI>
+
+                <LI>{@url "http://www.google.com" "google"}</LI>
+
+                <LI>{@url "http://www.google.com" "click here for google"}</LI>
+                
+                <LI>{@url "ghidra://myserver/Repo/notepad.exe"}</LI>
+                
+                <LI>{@url "ghidra://myserver/Repo/notepad.exe#entry"}</LI>
+                
+                <LI>{@url "ghidra://myserver/Repo/notepad.exe" "see notepad.exe"}</LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">Program<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays a hyperlink to the given Ghidra program name that
+            will open that program in a new Listing tab when clicked.<BR>
+             You may optionally provide an address or symbol to be displayed when the program is
+            opened by appending to the program name an '@' character, followed by an address or
+            symbol name.</TD>
+
+            <TD valign="top" width="12%">
+              <OL>
+                <LI>program name (with optional address or symbol)</LI>
+
+                <LI>[display text]<BR>
+                </LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL>
+                <LI>@program<BR>
+                </LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL>
+                <LI>{@program "WinHelloCPP.exe"}</LI>
+
+                <LI>{@program "WinHelloCPP.exe@01001234"}</LI>
+
+                <LI>{@program "WinHelloCPP.exe@some_label"}</LI>
+
+                <LI>{@program "WinHelloCPP.exe@SomeFunction::some_label"}</LI>
+
+                <LI>{@program "WinHelloCPP.exe" "Click here to open WinHelloCPP"}</LI>
+                <LI>{@program "subfolder/WinHelloCPP.exe"}</LI>
+                 <LI>{@program "subfolder1/subfolder2/WinHelloCPP.exe"}<BR>
+                </LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">Execute<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Launches the specified executable with given optional
+            parameters.<BR>
+            </TD>
+
+            <TD valign="top" width="12%">
+              <OL>              	
+                <LI>"executable path"</LI>
+			  </OL>                
+					
+				<b>OR</b>
+			  <OL>
+				<LI>"executable path"</LI>
+                <LI>"parameter list" (may be empty quotes)</LI>
+                <LI>"display text" (may be empty quotes)</LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL compact="compact" type="disc">
+                <LI>@execute</LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="15%">
+              <UL>
+                <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe"}</LI>
+
+                <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe"
+                "http://my.website.com" "Opens a web browser to Website"}</LI>
+                
+                <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe" "" "My display text"}</LI>
+                
+                <LI>{@execute "C:\Path\To\Some\executable.exe" "arg1 arg2" ""}</LI>
+                
+              </UL><FONT size="2">Note: quotes are required for this annotation</FONT>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%"><I>Discovered Annotations</I><BR>
+            </TD>
+
+            <TD valign="top" colspan="4">Ghidra may discover new annotations that are provided by
+            Ghidra plugins. Consult the documentation of the respective plugins for more
+            information regarding the discovered annotations.<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <P><BR>
+      <BR>
+      </P>
+
+      <P><IMG border="0" src="images/warning.help.png" alt="Note"> All annotations support double
+      quotes (") around content inside of the annotation tag, excluding the <B>@<I>name</I></B>
+      part of the tag. Further, some annotations require quotes, as listed in the table above
+      (e.g., the <B>Execute</B> annotation requires quotes). It is considered good practice to
+      quote all annotation parameter values.</P>
+    </BLOCKQUOTE><!-- Invalid Annotation Example --><!-- image --><!-- Related Topics -->
+
+    <H2>Errors</H2>
+
+    <BLOCKQUOTE>
+      <P>If there is a problem parsing an annotation then an error message will be printed in place
+      of the annotations.</P>
+      <!-- image -->
+
+      <P align="center"><IMG border="0" src="images/InvalidAnnotationsDialogExample.png" alt=
+      ""><BR>
+       <I>Invalid Annotation Text Entry</I></P>
+      <!-- image -->
+
+      <P align="center"><IMG border="2" src="images/RenderedInvalidAnnotation.png"><BR>
+       <I>Rendered Invalid Annotation Example</I></P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic"><BR>
+    </P>
+
+    <P class="relatedtopic"><BR>
+    </P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/CommentsPlugin/Comments.htm">Comments Plugin</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

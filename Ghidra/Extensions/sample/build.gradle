@@ -1,0 +1,10 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Xtra sample'
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+
+project.ext.includeExtensionInInstallation = true
+
+dependencies {
+	compile project(':Base')
+}

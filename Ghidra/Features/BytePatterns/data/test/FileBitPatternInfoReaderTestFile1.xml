@@ -1,0 +1,3276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.8.0_192" class="java.beans.XMLDecoder">
+ <object class="ghidra.bitpatterns.info.FileBitPatternInfo" id="FileBitPatternInfo0">
+  <void property="funcBitPatternInfo">
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo0">
+     <void property="address">
+      <string>0000</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3"/>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3"/>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3"/>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>720300008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo1">
+     <void property="address">
+      <string>0001</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>720300008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>4a0300008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo2">
+     <void property="address">
+      <string>0002</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897decc745f80000</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>4a0300008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>000300008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo3">
+     <void property="address">
+      <string>0003</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>000300008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>01837df8097edc8b45f4c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0xc]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo4">
+     <void property="address">
+      <string>0004</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>4</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>01837df8097edc8b45f4c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0xc]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>910200008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo5">
+     <void property="address">
+      <string>0005</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>5</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>910200008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>360200008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo6">
+     <void property="address">
+      <string>0006</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>6</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec20897dec8b45ec89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x20</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x14],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>360200008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>370200008945fc8b45fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo7">
+     <void property="address">
+      <string>0007</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>7</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e5534883ec38897dcc8b45cc89</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RBX</string>
+         </void>
+         <void index="3">
+          <string>RSP,0x38</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>PUSH</string>
+         </void>
+         <void index="3">
+          <string>SUB</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>1</int>
+         </void>
+         <void index="3">
+          <int>4</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>370200008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>e8ad0200004883c4385bc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>RBX</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>POP</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>1</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo8">
+     <void property="address">
+      <string>0008</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec30897ddc8b45dc89c7</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x30</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x24],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>e8ad0200004883c4385bc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>RBX</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>POP</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>1</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>f88b55f48d04020345fcc9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RBP + -0x4]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo9">
+     <void property="address">
+      <string>0009</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec40897dcc8975c88955</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x40</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x34],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>f88b55f48d04020345fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>ADD</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>488945f8488b45f88b00c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RAX]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>2</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo10">
+     <void property="address">
+      <string>000a</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e54883ec40897dcc8975c88955</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RSP,0x40</string>
+         </void>
+         <void index="3">
+          <string>[RBP + -0x34],EDI</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>SUB</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>488945f8488b45f88b00c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RAX]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>2</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>7affffff488b45f88b00c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,[RAX]</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>MOV</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>2</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo11">
+     <void property="address">
+      <string>000b</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e5897dfc8b45fc83c001c9c3</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>[RBP + -0x4],EDI</string>
+         </void>
+         <void index="3">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>7affffff488b45f88b00c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RAX]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>2</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>e5897dfc8b45fc83c001c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,0x1</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo12">
+     <void property="address">
+      <string>000c</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>4</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e5897dfc8b45fc83c002c9c3</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>[RBP + -0x4],EDI</string>
+         </void>
+         <void index="3">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>e5897dfc8b45fc83c001c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,0x1</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>ADD</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>e5897dfc8b45fc83c002c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,0x2</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo13">
+     <void property="address">
+      <string>000d</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>5</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e5897dfc8b45fc83c003c9c3</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>[RBP + -0x4],EDI</string>
+         </void>
+         <void index="3">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+         <void index="3">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>e5897dfc8b45fc83c002c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,0x2</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>ADD</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>e5897dfc8b45fc83c003c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,0x3</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo14">
+     <void property="address">
+      <string>000e</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>2</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>6</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e548897df8488b45f88b0083c0</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>[RBP + -0x8],RDI</string>
+         </void>
+         <void index="3">
+          <string>RAX,[RBP + -0x8]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+         <void index="3">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>4</int>
+         </void>
+         <void index="3">
+          <int>4</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>e5897dfc8b45fc83c003c9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,0x3</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>ADD</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>f8488b45f88b0083c001c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,0x1</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ghidra.bitpatterns.info.FunctionBitPatternInfo" id="FunctionBitPatternInfo15">
+     <void property="address">
+      <string>000f</string>
+     </void>
+     <void property="contextRegisters">
+      <object class="java.util.ArrayList">
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg1</string>
+         </void>
+         <void property="value">
+          <string>0</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg2</string>
+         </void>
+         <void property="value">
+          <string>1</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg3</string>
+         </void>
+         <void property="value">
+          <string>3</string>
+         </void>
+        </object>
+       </void>
+       <void method="add">
+        <object class="ghidra.bitpatterns.info.ContextRegisterInfo">
+         <void property="contextRegister">
+          <string>cReg4</string>
+         </void>
+         <void property="value">
+          <string>7</string>
+         </void>
+        </object>
+       </void>
+      </object>
+     </void>
+     <void property="firstBytes">
+      <string>554889e5534883ec38897dcc8b45cc89</string>
+     </void>
+     <void property="firstInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>RBP</string>
+         </void>
+         <void index="1">
+          <string>RBP,RSP</string>
+         </void>
+         <void index="2">
+          <string>RBX</string>
+         </void>
+         <void index="3">
+          <string>RSP,0x38</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="4">
+         <void index="0">
+          <string>PUSH</string>
+         </void>
+         <void index="1">
+          <string>MOV</string>
+         </void>
+         <void index="2">
+          <string>PUSH</string>
+         </void>
+         <void index="3">
+          <string>SUB</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="4">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>3</int>
+         </void>
+         <void index="2">
+          <int>1</int>
+         </void>
+         <void index="3">
+          <int>4</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="preBytes">
+      <string>370200008945fc8b45fcc9c3</string>
+     </void>
+     <void property="preInst">
+      <object class="ghidra.bitpatterns.info.InstructionSequence">
+       <void property="commaSeparatedOperands">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string></string>
+         </void>
+         <void index="1">
+          <string></string>
+         </void>
+         <void index="2">
+          <string>EAX,[RBP + -0x4]</string>
+         </void>
+        </array>
+       </void>
+       <void property="instructions">
+        <array class="java.lang.String" length="3">
+         <void index="0">
+          <string>RET</string>
+         </void>
+         <void index="1">
+          <string>LEAVE</string>
+         </void>
+         <void index="2">
+          <string>MOV</string>
+         </void>
+        </array>
+       </void>
+       <void property="sizes">
+        <array class="java.lang.Integer" length="3">
+         <void index="0">
+          <int>1</int>
+         </void>
+         <void index="1">
+          <int>1</int>
+         </void>
+         <void index="2">
+          <int>3</int>
+         </void>
+        </array>
+       </void>
+      </object>
+     </void>
+     <void property="returnBytes">
+      <void method="add">
+       <string>e8ad0200004883c4385bc9c3</string>
+      </void>
+      <void method="add">
+       <string>f8488b45f88b0083c001c9c3</string>
+      </void>
+     </void>
+     <void property="returnInst">
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>RBX</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>POP</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>1</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ghidra.bitpatterns.info.InstructionSequence">
+        <void property="commaSeparatedOperands">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string></string>
+          </void>
+          <void index="1">
+           <string></string>
+          </void>
+          <void index="2">
+           <string>EAX,0x1</string>
+          </void>
+         </array>
+        </void>
+        <void property="instructions">
+         <array class="java.lang.String" length="3">
+          <void index="0">
+           <string>RET</string>
+          </void>
+          <void index="1">
+           <string>LEAVE</string>
+          </void>
+          <void index="2">
+           <string>ADD</string>
+          </void>
+         </array>
+        </void>
+        <void property="sizes">
+         <array class="java.lang.Integer" length="3">
+          <void index="0">
+           <int>1</int>
+          </void>
+          <void index="1">
+           <int>1</int>
+          </void>
+          <void index="2">
+           <int>3</int>
+          </void>
+         </array>
+        </void>
+       </object>
+      </void>
+     </void>
+    </object>
+   </void>
+  </void>
+  <void property="ghidraURL">
+   <string>TODO: url</string>
+  </void>
+  <void property="languageID">
+   <string>x86:LE:64:default</string>
+  </void>
+  <void property="numFirstBytes">
+   <int>16</int>
+  </void>
+  <void property="numFirstInstructions">
+   <int>4</int>
+  </void>
+  <void property="numPreBytes">
+   <int>12</int>
+  </void>
+  <void property="numPreInstructions">
+   <int>3</int>
+  </void>
+  <void property="numReturnBytes">
+   <int>12</int>
+  </void>
+  <void property="numReturnInstructions">
+   <int>3</int>
+  </void>
+ </object>
+</java>

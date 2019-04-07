@@ -1,0 +1,840 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Importer Plugin</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Importer</H1>
+
+    <H2>Introduction</H2>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Ghidra can import a variety of different types of files into a Ghidra project as Ghidra
+        "programs." There are separate actions for importing single files, importing multiple
+        files, and importing a file into an existing program. The actions for importing single or
+        multiple files into a new program are available in both the front-end project window or the
+        CodeBrowser tool. The action for adding to an existing program is only available from the
+        Code Browser tool and only if there is a currently open program in the tool.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Supported_Formats">Supported Formats</A></H2>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI>Common Object File Format (COFF)</LI>
+
+        <LI>Debug Symbols (DBG)</LI>
+
+        <LI>Executable and Linking Format (ELF)</LI>
+
+        <LI>Ghidra Data Type Archive Format</LI>
+
+        <LI>GZF Input Format</LI>
+
+        <LI>Intel Hex</LI>
+
+        <LI>Mac OS X Mach-O</LI>
+
+        <LI>Module Definition (DEF)</LI>
+
+        <LI>Motorola Hex</LI>
+
+        <LI>New Executable (NE)</LI>
+
+        <LI>Old-style DOS Executable (MZ)</LI>
+
+        <LI>Portable Executable (PE)</LI>
+
+        <LI>Preferred Executable Format (PEF)</LI>
+
+        <LI>Program Mapfile (MAP)</LI>
+
+        <LI>Raw Binary</LI>
+
+        <LI>XML Input Format</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2>File Import Actions</H2>
+
+    <BLOCKQUOTE>
+      <P>These actions can be used to import one or more files into a Ghidra project. They can be
+      accessed via the File menu in either the Front-end Project Window or the CodeBrowser Tool
+      unless otherwise specified.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Import_File">Import File</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to import a single file into Ghidra. If the file is an archive
+        consisting of multiple programs, then this action will bring up the <A href=
+        "#Batch_Import_Dialog">Batch Importer Dialog</A>, otherwise it will use the standard single
+        file <A href="#Importer_Dialog">Importer Dialog</A> to complete the import.</P> 
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Import
+          File...</B> menu item.</LI>
+
+          <LI>Select the file to import using the filechooser that appears.</LI>
+
+          <LI>Use the <A href="#Importer_Dialog">Importer Dialog</A> (or the <A href=
+          "#Batch_Import_Dialog">Batch Importer Dialog</A> if it is an archive) that pops up to
+          configure the import.</LI>
+
+          <LI>Press OK to initiate the import.</LI>
+
+          <LI>A results summary dialog will appear and, if successful, the new program will appear
+          in the project window and if initiated from a CodeBrowser tool, it will be opened in the
+          tool.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Batch_Import"></A>Batch Import</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to import multiple files by selecting a root directory and letting it
+        recursively find programs to import.</P> 
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Batch
+          Import...</B> menu item.</LI>
+
+          <LI>Use the filechooser dialog that appears to select a root directory for searching for
+          files to import.</LI>
+
+          <LI>Use the <A href="#Batch_Import_Dialog">Batch Importer Dialog</A> that appears to
+          select and configure files for importing.</LI>
+
+          <LI>Press OK on the dialog to initiate importing the selected files.</LI>
+
+          <LI>A results summary dialog will appear and, if successful, the new program(s) will
+          appear in the project window. If the action was initiated from the CodeBrowser tool and
+          only a few files were imported, they will be opened in the CodeBrowser tool.</LI>
+        </UL>
+      </BLOCKQUOTE>
+      
+      <H3>Open File System</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to open the <B>File System Browser</B> which can be used to view the
+        contents of container files (tar, zip, etc.) and import files from within those containers.</P> 
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Open File System...</B> menu item.</LI>
+
+          <LI>Use the dialog that appears to browse the contents of the container file and import
+          files as desired. 
+ 
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Add_To_Program"></A>Add to Program</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to import data from a file into an existing program. The program must
+        be open in the tool to perform this action. </P>
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Add to
+          Program...</B> menu item.</LI>
+
+          <LI>Use the filechooser dialog that appears to select a root directory for searching for
+          files to import.</LI>
+
+          <LI>Use the <A href="#Importer_Dialog">Importer Dialog</A> to configure the import.</LI>
+
+          <LI>Press OK on the dialog to initiate importing the selected files.</LI>
+
+          <LI>When the import is complete, the currently open program should have additional data
+          in it.</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Other Import Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3>Import Selection<A name="Extract_and_Import"/></H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to import a selection from an open program in the CodeBrowser
+        tool.</P>
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Make a selection in the Listing window in the CodeBrowser tool.</LI>
+
+          <LI>Invoke the action by right-clicking and from the popup menu, select the <B>Extract
+          and Import...</B> menu item.</LI>
+
+          <LI>Use the <A href="#Importer_Dialog">Importer Dialog</A> to configure the import.</LI>
+
+          <LI>Press OK on the dialog to initiate importing the selected files.</LI>
+
+          <LI>When the import is complete, a new program will appear in the project window and also
+          be opened in a new tab in the Listing Window.</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Importer_Dialog">Importer Dialog</A></H2>
+
+    <BLOCKQUOTE>
+      <P>When the user initiates a single file import, the <B>Importer Dialog</B> is used to configure
+      the import for that file.</P>
+      <BR>
+       
+
+      <P align="center"><IMG src="images/ImporterDialog.png" alt=""></P>
+      <BR>
+       
+
+      <H3>Dialog Fields</H3>
+
+      <BLOCKQUOTE>
+        <UL>
+          <LI><B>Format</B> - This field is a drop-down list containing all the valid <A href=
+          "#Supported_Formats">file formats</A> that could be used to to import the file.
+          Typically, there are two options available. One for the actual format of the file (if
+          Ghidra could detect it) and other is the <B>Raw Binary</B> format, which is always an
+          option regardless of the actual file format and it will simply import the bytes in the
+          file without any interpretation.</LI><BR>
+
+          <LI><B>Language</B> - This field specifies the language/compiler specification that will
+          be used in the resulting program. Often, this will be automatically detected from the
+          file format. The <A href="#language_picker_dialog">Language/Compiler Spec Chooser
+          Dialog</A> can be used to enter or change the language/compiler spec that will be
+          used.</LI><BR>
+
+          <LI><B>Destination Folder</B> - This field is used to specify the destination folder
+          within the current project for where the newly imported program will be saved. If a
+          folder is selected in the front-end project window, then this field will default to that
+          folder, otherwise the root folder will be the default. The <B>...</B> will bring up a
+          dialog for changing the destination folder.</LI><BR>
+
+          <LI><B>Program Name</B> - This field specifies the name for the newly imported program.
+          By default, it will be the name of the imported file with any format specific extenstion
+          removed (e.g., .xml, .gzf).  Path information at the beginning of the this field
+          will be used to create a destination folder in the current project under the root folder
+          specified by the <B>Destination Folder</B> field.</LI><BR>
+
+          <LI><B>Options...</B> - This button will pop up format specific options for the
+          import.</LI><BR>
+
+        </UL>
+        
+        <P>
+        <IMG src="../../shared/note.yellow.png" alt="">If this dialog appears as a result of the
+        <B>Add To Program</B> action, then the Language, Destination Folder, and Filename fields
+        will be disabled since these values are already determined by the existing program.
+        </P>
+        <BR>
+        <BR>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Options</H2>
+
+    <BLOCKQUOTE>
+      <P>The import options differ depending on the selected format. </P>
+
+      <H3>Common Options <A name="Common_Options"></A></H3>
+
+      <BLOCKQUOTE>
+        <P>These options appear many of the standard executable program formats such as ELF, PE,
+        etc.</P>
+
+        <H4>Apply Processor Defined Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>If this option is on, the importer will create processor labels at specific addresses
+          as defined by the processor specification. This is usually used to label things like the
+          reset vector or interrupt vector.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H4>Anchor Processor Defined Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>If this option is on, labels created from the processor specification are
+          <B><I>anchored</I></B>. This means that if the image base is changed or a memory block is moved,
+          those symbols will remain at the address they were originally placed. If the option is
+          off, the symbols will move with the image base or the memory block.</P>
+        </BLOCKQUOTE>
+
+        <H4>Create Export Symbol Files</H4>
+
+        <BLOCKQUOTE>
+          <P>Creates symbol files for each library used by an executable. The symbol file will
+          contain stack purge information for each exported symbol in the library. The symbol files
+          will be stored in <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
+
+          <P><IMG alt="" src="../../shared/note.yellow.png"> When running Ghidra with .symbols files
+          created from an older operating system, you may receive the following warning
+          message:</P>
+
+          <BLOCKQUOTE>
+            <P><I>Unable to locate [<CODE>symbol_name</CODE>] in
+            [<CODE>&lt;filepath&gt;.exports</CODE>].
+            Please verify the version is correct.</I></P>
+          </BLOCKQUOTE>
+
+          <P>This warning message indicates which symbols do not exist in the corresponding
+          <I>.exports</I> file. The only information lost by not including these symbols is
+          function purge and comments. If you require this information, manually delete the
+          <I>.exports</I> file and Ghidra will regenerate it.</P>
+        </BLOCKQUOTE>
+
+        <H4>Load External Libraries</H4>
+
+        <BLOCKQUOTE>
+          <P>Recursively resolves the external libraries used by the executable. The entire library
+          dependency tree will be traversed in a depth-first manner and a program will be created
+          for each library. The <A href=
+          "help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A> in
+          these program will be resolved.<BR>
+           The "..." button will bring up the <A href="#Library_Paths">Library Paths Dialog</A></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>COFF Options<A name="Options_Common Object_File_Format__COFF_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>COFF format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+
+        <H4>Attempt to link sections located at 0x0</H4>
+         <BLOCKQUOTE>
+          <P>If selected, sections located at 0x0 will be relocated sequentially in memory. This
+          will avoid conflicts and keeps sections from being ignored. </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>ELF Options<A name="Options_Executable_and_Linking_Format__ELF_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>ELF format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+
+        <H4>Perform Symbol Relocations</H4>
+
+        <BLOCKQUOTE>
+          <P>If selected, Ghidra will attempt to apply the relocations specified in the ELF
+          header.</P>
+        </BLOCKQUOTE>
+
+        <H4>Image Base</H4>
+
+        <BLOCKQUOTE>
+          <P>Specifies the image base to use for importing the memory sections.</P>
+        </BLOCKQUOTE>
+
+        <H4>Import Non-loaded Data</H4>
+
+        <BLOCKQUOTE>
+          <P>If selected, Ghidra will import ELF sections that don't get loaded into memory when
+          the program is run. These sections will not be stored in a special address space called
+          "other".</P>
+        </BLOCKQUOTE>
+
+        <H4>Fixup Unresolved External Symbols</H4>
+
+        <BLOCKQUOTE>
+          <P>If selected, Ghidra will attemp to resolve external references against other programs
+          already imported into Ghidra that are in the destination folder for this import.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Intel Hex Options<A name="Options_Intel_Hex"/></H3>
+
+      <BLOCKQUOTE>
+        <H4>Bass Address</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is used to specify the start address in memory for where to load the
+          bytes.</P>
+        </BLOCKQUOTE>
+
+        <H4>Overlay</H4>
+
+        <BLOCKQUOTE>
+          <P>If selected, the bytes will be loaded as an overlay. A new overlay space will be
+          created with the same name as the Block Name.</P>
+        </BLOCKQUOTE>
+
+        <H4>Block Name</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is used to specify the name of the memory block that will contain the newly
+          imported bytes.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Mach-O Options<A name="Options_Mac_OS_X_Mach_O"/></H3>
+
+      <BLOCKQUOTE>
+        <P>The Mac OSX Mach-O format has only the <A href="#Common_Options">Common Options</A>.</P>
+      </BLOCKQUOTE>
+
+      <H3>Motorola Hex Options<A name="Options_Motorola_Hex"/></H3>
+
+      <BLOCKQUOTE>
+        <H4>Bass Address</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is used to specify the start address in memory for where to load the
+          bytes.</P>
+        </BLOCKQUOTE>
+
+        <H4>Overlay</H4>
+
+        <BLOCKQUOTE>
+          <P>If selected, the bytes will be loaded as an overlay. A new overlay space will be
+          created with the same name as the Block Name.</P>
+        </BLOCKQUOTE>
+
+        <H4>Block Name</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is used to specify the name of the memory block that will contain the newly
+          imported bytes.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>MZ Options<A name="Options_Old-style DOS Executable__MZ_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>The MZ format has only the <A href="#Common_Options">Common Options</A>.</P>
+      </BLOCKQUOTE>
+
+      <H3>PE Options<A name="Options_Portable_Executable__PE_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>The PE format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+
+        <H4>Parse CLI headers (if present)</H4>
+
+        <P>If selected, any CLI headers present will be processed.</P>
+      </BLOCKQUOTE>
+
+      <H3>Raw Binary Options<A name="Options_Raw_Binary"/></H3>
+
+      <BLOCKQUOTE>
+        <H4>Block Name</H4>
+
+        <BLOCKQUOTE>
+          <P>The name of the memory block that will contain the raw bytes from the file. By
+          default, it will be the name of the default address space (usually "ram")</P>
+        </BLOCKQUOTE>
+
+        <H4>Base Address</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is the address offset for the block of bytes to be imported. By default,
+          this will be 0.</P>
+        </BLOCKQUOTE>
+
+        <H4>File Offset</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is the byte offset into the imported file from which to start importing raw
+          bytes. By default, this will be 0.</P>
+        </BLOCKQUOTE>
+
+        <H4>Length</H4>
+
+        <BLOCKQUOTE>
+          <P>This field is the number of bytes to import. By default, this will be set to the total
+          number of bytes in the imported file.</P>
+        </BLOCKQUOTE>
+
+        <H4>Apply Processor Defined Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>If this option is on, the importer will create processor labels at specific addresses
+          as defined by the processor specification. This is usually used to label things like the
+          reset vector or interrupt vector.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H4>Anchor Processor Defined Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>If this option is on, labels created from the processor specification are
+          <B><I>anchored</I></B>. This means that if the image base is changed or a memory block is moved,
+          those symbols will remain at the address they were originally placed. If the option is
+          off, the symbols will move with the image base or the memory block.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>XML Options <A name="xml_options"><A name="Options_XML_Input_Format"/></A></H3>
+
+      <BLOCKQUOTE>
+        <P>The XML format is used to load from a Ghidra XML formatted file. The options are simply
+        switches for which types of program information to import.</P>
+
+        <H4>Memory Blocks</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports memory block definitions (name, start address, length, etc). See <A href=
+          "help/topics/MemoryMapPlugin/Memory_Map.htm">Memory Map</A></P>
+        </BLOCKQUOTE>
+
+        <H4>Memory Contents</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports bytes for the memory blocks.</P>
+        </BLOCKQUOTE>
+
+        <H4>Instructions</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports disassembled instructions. See <A href=
+          "help/topics/DisassemblerPlugin/Disassembly.htm">Disassembly</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Data</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports data types and defined data. See <A href=
+          "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+          Manager</A> and <A href="help/topics/DataPlugin/Data.htm">Data</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Symbols</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports user-defined symbols. See <A href=
+          "help/topics/SymbolTablePlugin/symbol_table.htm">Symbol Table</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Equates</H4>
+
+        <BLOCKQUOTE>
+          <P>Import equate definitions and references. See <A href=
+          "help/topics/EquatePlugin/Equates.htm">Equate Table</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Comments</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports comments (pre, post, eol, plate, repeatable). See <A href=
+          "help/topics/CommentsPlugin/Comments.htm">Comments</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Properties</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports user-defined properties.</P>
+        </BLOCKQUOTE>
+
+        <H4>Bookmarks</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports <A href="help/topics/BookmarkPlugin/Bookmarks.htm">Bookmarks.</A></P>
+        </BLOCKQUOTE>
+
+        <H4>Trees</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports program organizations (program trees, modules, fragments). See <A href=
+          "help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>References</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports user-defined memory, stack, and external references. See <A href=
+          "help/topics/ReferencesPlugin/References_from.htm">References</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Functions</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports functions, stack frames and variables. See <A href=
+          "help/topics/FunctionPlugin/Functions.htm">Functions</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Registers</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports program context and registers. See <A href=
+          "help/topics/RegisterPlugin/Registers.htm">Register Values</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Relocation Table</H4>
+
+        <BLOCKQUOTE>
+          <P>See <A href="help/topics/RelocationTablePlugin/relocation_table.htm">Relocation
+          Table</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>Entry Points</H4>
+
+        <BLOCKQUOTE>
+          <P>Imports program entry points.</P>
+        </BLOCKQUOTE>
+
+        <H4>External Libraries</H4>
+
+        <BLOCKQUOTE>
+          <P>See <A href="help/topics/ReferencesPlugin/external_program_names.htm">External Program
+          Names</A>.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A name="Library_Paths"></A>Library Search Path</H2>
+
+      <BLOCKQUOTE>
+        <P>The Library Search Path dialog is used to specify the directories that Ghidra should use
+        to resolve external libraries (e.g.; *.dll, *.so) while importing.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/SearchPathsDialog.png"></P>
+
+      <P align="center">&nbsp;</P>
+
+      <BLOCKQUOTE>
+        <H3>Change the Library Path Search Order</H3>
+
+        <BLOCKQUOTE>
+          <P>To change the search order of the paths within the list:</P>
+
+          <OL>
+            <LI>Select a path from the list</LI>
+
+            <LI>Select the <IMG alt="" src="images/up.png"> button to move the path <B>up</B> in
+            the list</LI>
+
+            <LI>Select the <IMG alt="" src="images/down.png"> button to move the path <B>down</B>
+            in the list</LI>
+          </OL>
+
+          <BLOCKQUOTE>
+            <P><I><IMG alt="" src="../../shared/note.yellow.png"> The search order is important when you
+            have different versions of a libraries in different directories. The first directory in
+            the search path that contains a required library is the one that Ghidra will
+            use.</I></P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H3>Add Library Search Path</H3>
+
+        <BLOCKQUOTE>
+          <OL>
+            <LI>Click the <IMG alt="" src="images/Plus.png"> button</LI>
+
+            <LI>Select a directory from the file chooser</LI>
+
+            <LI>Click the "Select Directory" button</LI>
+          </OL>
+
+          <BLOCKQUOTE>
+            <P><I><IMG alt="" src="../../shared/note.png"> The newly added path will be placed at
+            the top of the list.</I></P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H3>Remove Library Search Path</H3>
+
+        <BLOCKQUOTE>
+          <OL>
+            <LI>Select one or more paths from the list</LI>
+
+            <LI>Click the <IMG alt="" src="images/edit-delete.png"> button</LI>
+          </OL>
+        </BLOCKQUOTE>
+        
+		<H3>Reset Library Search Paths</H3>
+
+        <BLOCKQUOTE>
+		  <P>To reset the paths to the default list:</P>
+        
+          <OL>
+            <LI>Click the <IMG alt="" src="images/trash-empty.png"> button</LI>
+
+            <LI>Click "Yes" on the pop-up dialog to confirm path reset</LI>
+          </OL>
+
+          <BLOCKQUOTE>
+           <P><I><IMG alt="" src="../../shared/warning.png"> 
+           This option will remove any paths added manually.</I></P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+	
+      <H2>Language and Compiler Specification Dialog <A name="language_picker_dialog"></A></H2>
+
+      <BLOCKQUOTE>
+        <P>This dialog is used specify of the Ghidra language (Processor/Compiler Spec) of the
+        program being imported. Certain formats, like "PE", "ELF", or "XML", will usually choose
+        the appropriate language/compiler spec. If not, this dialog can be used to select one or
+        override the default selection.</P>
+        <BR>
+         
+
+        <P align="center"><IMG src="images/LanguagePickerDialog.png" alt=""></P>
+        <BR>
+         
+
+        <P>Each row in the table represents a unique processor language/compiler spec pair. To
+        select one, simple click on the row and press the <B>OK</B> button.</P>
+
+        <H3>Table Columns</H3>
+
+        <UL>
+          <LI><B>Processor</B> - The processor for this selection</LI>
+
+          <LI><B>Variant</B> - Some processors have different versions of the processor. The
+          primary variant is called "default". Any other variants should have a meaningful
+          name</LI>
+
+          <LI><B>Size</B> - the size in bits of the processor address space</LI>
+
+          <LI><B>Endian</B> - the endianess of the processor</LI>
+
+          <LI><B>Compile</B> - the compiler specification used to build the program</LI>
+        </UL>
+
+        <H3>Filter</H3>
+
+        <BLOCKQUOTE>
+          <P>The filter can be used to reduce the number of entries in the table. Only the entries
+          that contain the text in this field will be displayed.</P>
+        </BLOCKQUOTE>
+
+        <H3>Description</H3>
+
+        <BLOCKQUOTE>
+          <P>This field shows the currently selected language/compiler spec.</P>
+        </BLOCKQUOTE>
+
+        <H3>Show Only Recommended Language/Compiler Specs</H3>
+
+        <BLOCKQUOTE>
+          <P>If selected, only the languages suggested by the selected importer format will be
+          shown. Otherwise, all known languages will be shown. Not all importer formats can
+          determine an appropriate language, in which case all the languages will be displayed.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+
+      <H2>Batch Import Dialog <A name="Batch_Import_Dialog"></A></H2>
+
+      <BLOCKQUOTE>
+        <P>The Batch Import Dialog is used to import multiple files at the same time. The files may be
+        individual files in a directory tree, and/or files from an archive file of some sort such
+        as a zip or tar file.</P> 
+
+        <P align="center"><IMG alt="" src="images/BatchImportDialog.png"></P>
+
+        <H3>Import Sources</H3>
+
+        <BLOCKQUOTE>
+          <P>This section manages a list of folder trees or container files (e.g., zips) to scan for files to import. Initially,
+          this contains the folder or file that was initially selected from the file chooser.</P>
+
+          <H4>Adding an additional import source folder.</H4>
+
+          <BLOCKQUOTE>
+            <P>Pressing the <B>Add</B> button will bring up a file chooser for picking an
+            additional folder or file (import source) to search for import files</P>
+          </BLOCKQUOTE>
+
+          <H4>Removing an import source folder</H4>
+
+          <BLOCKQUOTE>
+            <P>Select a folder in the import sources window and press the <B>Remove</B> button.</P>
+          </BLOCKQUOTE>
+
+          <H4>Depth limit</H4>
+ 
+          <BLOCKQUOTE>
+            <P>This field specifies the depth or level of nested containers to search for each of the
+            specified import sources. Note that this is not the level of subfolders to search, but
+            rather the nesting levels of archive type files. (i.e. zips in zips)</P>
+          </BLOCKQUOTE>
+
+          <H4>Rescan</H4>
+
+          <BLOCKQUOTE>
+            <P>This button will rescan the import sources to the current depth for files to
+            import.</P>
+          </BLOCKQUOTE>
+		</BLOCKQUOTE>       
+
+        <H3>Files to Import</H3>
+
+        <BLOCKQUOTE>
+          <P>This section displays a table showing the files that were found. Each row represents a
+          set of similar files that can be imported. The table columns are as follows:</P>
+
+          <UL>
+            <LI><B>&lt;checkbox&gt;</B> - if checked, this set of files will be imported.</LI>
+
+            <LI><B>File Type</B> - displays the file extension</LI>
+
+            <LI><B>Loader</B> - displays the format (Loader) that will be used to import the
+            file.</LI>
+
+            <LI><B>Language</B> - displays the language that will be used (if applicable). Clicking
+            on this field will pop up a list of acceptable languages to choose from.</LI>
+
+            <LI><B>Files</B> - displays the number of files in the group. Clicking on this field
+            will pop up a list of the files in the group.</LI>
+          </UL>
+        </BLOCKQUOTE>
+        
+        <H3>Import Options</H3>
+
+        <BLOCKQUOTE>
+
+          <H4>Strip leading path</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the newly imported files will not use the relative path of the file when
+            storing the result in the project. Otherwise, the file will be in a corresponding
+            relative path in the project.</P>
+          </BLOCKQUOTE>
+
+          <H4>Strip container paths</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the newly imported files will not use the interior archive path when storing
+            the result in the project. Otherwise, the file will be in a corresponding relative path
+            to the path the file was in its archive.</P>
+          </BLOCKQUOTE>
+
+        	  <H4>Project Destination</H4>
+        		<BLOCKQUOTE>
+	          <P>This shows the destination folder in the project that will be the root folder for storing
+	          the imported files. Each imported file will be stored in a relative path to that root
+	          folder. The relative path is usually the relative path of the file to its import source
+	          folder, but can be adjusted with some of the path options described earlier.</P>
+	        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+    </BLOCKQUOTE>
+    
+    <P class="providedbyplugin">Provided By: <I>Importer</I> Plugin</P>
+    
+  </BODY>
+</HTML>

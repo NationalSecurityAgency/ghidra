@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This cspec describes the MIPS64 ABI called "o64"
+     This ABI must be requested explicitly in gcc with the -mabi=o64 flag.
+      
+     o64 specifies 64-bit registers but 32-bit pointers, but otherwise is a copy of the original MIPS32 ABI 
+     o64 is different from the default ABI "n32"
+     The primary parameter passing difference between o64 and n32 is that
+     o64 can use only up to 4 general purpose registers for parameters before going to the stack, while
+     n32 can use up to 8 registers
+     
+     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005     
+-->
+<compiler_spec>
+  <data_organization>
+	<pointer_size value="4"/>
+    <float_size value="4" />
+    <double_size value="8" />
+    <long_double_size value="8" />
+  </data_organization>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <spacebase name="gp" register="gp" space="ram"/>
+  <global>
+    <range space="gp"/>
+    <range space="ram"/>
+    <range space="register" first="0x2000" last="0x2fff"/>
+  </global>
+  <returnaddress>
+    <register name="ra"/>
+  </returnaddress>
+  <aggressivetrim signext="true"/>  <!-- Aggressively try to eliminate sign extensions -->
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input killedbycall="true">
+        <!--
+        		If the first and second arguments floating-point arguments to a function are 
+        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value 
+        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are 
+        		both 64-bit values, they are passed in f12 and f13.
+        -->
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f12"/>
+        </pentry>
+<!--
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="f13"/>
+        </pentry>
+-->
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="32" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="v0"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="v0" piece2="v1"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="sp"/>
+        <register name="gp"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

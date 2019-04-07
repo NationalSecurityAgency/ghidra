@@ -1,0 +1,153 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features Base'
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+apply from: "$rootProject.projectDir/gradleScripts/developerScripts.gradle"
+
+/*
+	This build file is a bit different than most project build files, as it initializes
+	tools needed for the system to compile some of the code.  Also, this module has
+	a bit of custom help file generation.
+*/
+
+configurations {
+	javacc
+}
+
+dependencies {
+	compile project(':Utility')
+	compile project(':Generic')
+	compile project(':Docking')
+	compile project(':Graph')
+	compile project(':SoftwareModeling')
+	compile project(':DB')
+	compile project(':Demangler')
+	compile project(':Help')
+	
+   	compileOnly "junit:junit:4.12"
+	
+	// These have abstract test classes and stubs needed by this module	
+	testCompile project(':Docking').sourceSets.test.output
+	testCompile project(':Generic').sourceSets.test.output
+	testCompile project(':Project').sourceSets.test.output
+	testCompile project(':SoftwareModeling').sourceSets.test.output
+	
+	javacc 'net.java.dev.javacc:javacc:5.0'
+}
+
+
+// add in the output of the javacc tasks to the java source
+sourceSets {
+	main {
+		java {	
+			srcDirs 'build/generated-src/javacc'
+		}
+	}
+}
+
+task buildCParser(type: JavaExec) {
+	group 'private'
+	description "  Compiles the JavaCC files for the C parser\n"
+	
+	def inputFile = "C.jj"
+	def packagePath = 'ghidra/app/util/cparser/C'
+	def srcDir = "src/main/javacc/${packagePath}"
+	inputs.files files("${srcDir}/${inputFile}")
+	
+	def outputDir = "${projectDir}/build/generated-src/javacc/${packagePath}"
+	outputs.dir file("${outputDir}")
+
+	classpath = configurations.javacc
+	main = 'javacc'
+	workingDir = "${srcDir}"
+	args "-OUTPUT_DIRECTORY=${outputDir}"
+	// args "-DEBUG_PARSER=true"
+	args "${inputFile}"
+}				
+	
+task buildCPPParser(type: JavaExec) {
+	group 'private'
+	description "  Compiles the JavaCC files for the CPP parser\n"
+	
+	def inputFile = "CPP.jj"
+	def packagePath = 'ghidra/app/util/cparser/CPP'
+	def srcDir = "src/main/javacc/${packagePath}"
+	inputs.files files("${srcDir}/${inputFile}")
+	
+	def outputDir = "${projectDir}/build/generated-src/javacc/${packagePath}"
+	outputs.dir file("${outputDir}")
+	
+	classpath = configurations.javacc	
+	main = 'javacc'
+	workingDir = "${srcDir}"
+	args "-OUTPUT_DIRECTORY=${outputDir}"
+	// args "-DEBUG_PARSER=true"
+	args "${inputFile}"
+}	
+
+
+// A public task to tie together private sub-tasks
+task buildJavacc {
+	dependsOn buildCParser, buildCPPParser
+	group rootProject.GHIDRA_GROUP
+	description "  Compiles the JavaCC files\n"
+}
+
+// Note: this must happen before the standard buildHelp for Base
+task generateExtraHelpFiles {
+	
+	group = 'private'
+	description "  Creates any extra help files for Base not covered by the standard build help system"
+
+	def rawTipsFile = file('src/main/resources/ghidra/app/plugin/core/totd/tips.txt')
+	inputs.file(rawTipsFile)
+	
+	def htmlTipsFile = file('src/main/help/help/topics/Misc/Tips.htm')
+	outputs.file(htmlTipsFile)
+
+	doLast {	
+		createTipsHelpFile(rawTipsFile, htmlTipsFile)
+	}
+}
+
+def createTipsHelpFile(input, output) {
+	// transform original contents - wrap each line in <li> tags
+	def buffy = new StringBuilder()
+	def rawLines = input.eachLine { line -> 
+		
+		def htmlized = line.replaceAll(/^(.*\w+.*)$/) { fullMatch, text -> "<li>$text</li><br>\n" }
+		buffy.append(htmlized)
+	}
+	
+	
+	// final output - wrap the updated content in the following HTML
+	def htmlContent = """\
+		<html>
+		<head>
+			<title>Ghidra Tips</title>
+			<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css" />
+		</head>
+		<body>
+			<h1><a name="Tips"></a>Ghidra Tips of the Day</h1>
+			<ul>
+				${buffy.toString()}
+			</ul>
+		</body>		
+		</html>
+    """
+    
+    output.text = htmlContent
+    
+    println '\n\n\nwrote file ' + output + '\n\n\n'
+}
+
+
+/*
+	Dependency Setup
+*/
+compileJava.dependsOn buildJavacc
+prepDev.dependsOn buildJavacc
+
+// 'indexHelp' is defined in the buildHelp.gradle 'script plugin'
+indexHelp.dependsOn generateExtraHelpFiles

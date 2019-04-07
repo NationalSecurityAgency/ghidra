@@ -1,0 +1,651 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Stack Frame Editor</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Stack_Editor"></A> Stack Frame Editor</H1>
+
+    <P>The Stack Frame Editor is used to modify a function's stack frame. Each component indicates
+    either a stack variable or an undefined byte on the stack frame. The variables and undefined
+    bytes are in ascending order by offset. The following illustrates the editor for a stack
+    frame.<BR>
+    </P>
+
+    <DIV align="center">
+      <IMG src="images/StackEditor.png" alt=""><BR>
+    </DIV>
+
+    <P>A Stack Frame Editor can be launched from the right mouse popup on a function or stack
+    variable in the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>.</P>
+
+    <P>The Stack Frame Editor is composed of the following:</P>
+
+    <UL>
+      <LI><I>Edit Actions</I>: The icon buttons at the top of the editor are used to modify this
+      stack frame. Each button has a different <A href="#Stack_Editor_Edit_Actions">edit action</A>
+      associated with it. These allow the user to: apply changes, clear defined stack variables
+      (changes them to undefined bytes), delete stack bytes, and change a stack variable data type
+      to an array.<BR>
+      </LI>
+
+      <LI><I>Pull Down Menu</I>: The <IMG src="../../shared/menu16.gif" alt=""> icon at the top of
+      the editor provides additional editor actions. These are: show the category path of a
+      component's data type, edit a component's data type, edit the fields of a component, and
+      apply a cycle group or favorite.<BR>
+      </LI>
+
+      <LI><I>Component Table</I>: The upper portion of the editor contains a table with the stack
+      frame's stack variables and undefined bytes. Each component (or row) consists of its offset,
+      length, data type, variable name, and comment. See the <A href=
+      "#Stack_Editor_Component_Fields">Component Fields</A> section for more about these fields.
+      The offset, data type, name and comment are editable fields. The data type's category can be
+      determined by <A href="#Stack_Editor_Show_Component_Path">showing the data type category</A>.
+      Stack variables can be <A href="#AddDataType">defined</A> or <A href=
+      "#ReplaceDataType">modified</A> in the table using <A href="#DragNDrop">Drag and Drop</A> or
+      by applying a <A href="#Stack_Editor_Favorite">Favorite</A> data type. The data type for a
+      stack variable can also be changed by <A href="#Stack_Editor_Cycle">cycling</A> the data
+      type.</LI>
+
+      <LI><A name="Stack_Editor_Frame_Size"></A> <A name="Stack_Editor_Return_Address_Offset"></A>
+      <I>Stack Frame Information Area</I>: This is the area below the table with the stack frame
+      size, return address offset, local size, parameter offset and parameter size for the stack
+      frame. The <A href="#Stack_Editor_Local_Size">local size</A>, <A href=
+      "#Stack_Editor_Parameter_Offset">parameter offset</A> and <A href=
+      "#Stack_Editor_Parameter_Size">parameter size</A> can be modified here.</LI>
+
+      <LI>Immediately below the stack frame information area is a status line where status messages
+      will appear.</LI>
+    </UL>
+
+    <H2><A name="Stack_Editor_Apply_Editor_Changes"></A>Applying Changes</H2>
+
+    <P>Select the Apply Changes icon <IMG src="images/pencil16.png" alt=""> in the toolbar to apply
+    the changes from the editor back to the function's stack frame in the program.<BR>
+    </P>
+
+    <H2>Closing the Editor</H2>
+
+    <P>Select the Close dockable component icon <IMG src="../../shared/close16.gif" alt=""> in the
+    toolbar to exit from the editor. If you have unsaved changes to your stack frame, a dialog will
+    ask if you want to save the changes.</P>
+
+    <H2><A name="Stack_Editor_Local_Size"></A>Changing the Local Size</H2>
+
+    <P>To change the local size of the stack frame, edit the <I>Local Size</I> field in the bottom
+    of the editor. If the stack grows negative, changing this value changes the size of the
+    negative side of the stack frame. Otherwise, it affects the positive side. Increasing the size
+    will add undefined bytes to the stack frame. Decreasing the size will shrink the local variable
+    side of the stack by removing bytes from the stack frame. If a local stack variable was defined
+    where bytes are removed, it will also be removed.</P>
+
+    <H2><A name="Stack_Editor_Parameter_Offset"></A>Changing the Parameter Offset</H2>
+
+    <P>To change the parameter offset of the stack frame, edit the <I>Parameter Offset</I> field in
+    the bottom of the editor. Changing the parameter offset will change the overall stack frame
+    size. All parameters' offsets will be shifted so that they are the same relative distance from
+    the parameter offset.</P>
+
+    <H2><A name="Stack_Editor_Parameter_Size"></A>Changing the Parameter Size</H2>
+
+    <P>To change the parameter size of the stack frame, edit the <I>Parameter Size</I> field in the
+    bottom of the editor. If the stack grows negative, changing this value changes the size of the
+    positive side of the stack frame. Otherwise, it affects the negative side. Increasing the size
+    will add undefined bytes to the stack frame. Decreasing the size will shrink the parameter side
+    of the stack by removing bytes from the stack frame. If a stack parameter was defined where
+    bytes are removed, it will also be removed.</P>
+
+    <H2><A name="Stack_Editor_Edit_Actions"></A>Edit Actions</H2>
+
+    <P>The edit actions are available both from the icon buttons in the editor and from the popup
+    menu for the component table. To display the popup menu, right mouse click on the component
+    table. There are also short-cut keys associated with each of the edit actions.</P>
+
+    <H3><A name="Stack_Editor_Delete_Components"></A> <IMG src="images/edit-delete.png" alt="">
+    Delete Stack Frame Byte(s)</H3>
+
+    <BLOCKQUOTE>
+      <P>A contiguous selection of components can be deleted to reduce the local size or parameter
+      size. Only the most negative or most positive bytes can be deleted from the stack frame. This
+      reduces the size of the stack.</P>
+
+      <P>To delete components:</P>
+
+      <OL>
+        <LI>Make a contiguous selection of one or more components (stack variables and undefined
+        bytes) to delete.</LI>
+
+        <LI>Press the <IMG src="images/edit-delete.png" alt=""> <B>Delete Component(s)</B>
+        button.</LI>
+
+        <LI>The components are removed from the stack frame.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Stack_Editor_Clear_Components"></A><IMG src="images/erase16.png" alt=""> Clear
+    Stack Variable(s)</H3>
+
+    <BLOCKQUOTE>
+      <P>Clearing a component removes the current stack variable defined at that offset in the
+      editor. The editor changes it into undefined byte components that take up the same amount of
+      space as the component being cleared.</P>
+
+      <P>To clear stack variables in the stack frame:</P>
+
+      <OL>
+        <LI>Select one or more stack variable components in the table.</LI>
+
+        <LI>Press the <IMG src="images/erase16.png" alt=""> <B>Clear Component(s)</B> button.</LI>
+
+        <LI>Each selected component is replaced by undefined bytes. The number of undefined bytes
+        will be equal to the length of the component being cleared.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Stack_Editor_Create_Array"></A><IMG src="images/Array.png" alt=""> Change Stack
+    Variable's Data Type To Array</H3>
+
+    <BLOCKQUOTE>
+      <P>To create an array data type for a single selected component:</P>
+
+      <OL>
+        <LI>Select a component in the table.</LI>
+
+        <LI>Press the <IMG src="images/Array.png" alt=""> <B>Create Array</B> button.</LI>
+
+        <LI><A name="Stack_Editor_Elements_NumberInputDialog"></A> A dialog pops up to request the
+        number of elements in the array.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/NumElementsPrompt.png" alt=""></P>
+
+    <BLOCKQUOTE>
+      <OL start="4">
+        <LI>Specify the number of elements. The maximum size of the array is limited by the number
+        of undefined bytes following the selected component.</LI>
+
+        <LI>Press the <B>OK</B> button.</LI>
+
+        <LI>The selected component becomes an array of that same data type with the specified
+        dimensions.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Stack_Editor_Component_Fields"></A>Component Fields</H2>
+
+    <P>Each row displays information about a byte offset in the stack frame. The Offset, DataType,
+    Name, and Comment fields are editable.</P>
+
+    <P>The following summarizes the information about each field for a component.</P>
+
+    <BLOCKQUOTE>
+      <P><B><I>Offset</I></B> - The byte offset on the stack frame. This field is editable for
+      defined stack variables.</P>
+
+      <P><B><I>Length</I></B> - The length of this stack variable in bytes.</P>
+
+      <P><B><I>DataType</I></B> - The data type of this stack variable or undefined if no stack
+      variable defined at this offset. This field is editable.</P>
+
+      <P><B><I>Name</I></B> - The name associated with this stack variable. This field is
+      editable.</P>
+
+      <P><B><I>Comment</I></B> - A comment associated with this stack variable. This field is
+      editable.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Stack_Editor_Edit_Component_Field"></A>Editing Component Fields</H3>
+
+      <P>The <I>Offset, DataType</I>, <I>Name</I> and <I>Comment</I> fields are editable. However,
+      the <I>Offset</I> is not editable unless a stack variable is currently defined in the editor
+      for that stack offset.</P>
+
+      <P>To place an editable field into edit mode:</P>
+
+      <UL>
+        <LI><B>Double click</B> on an editable field.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <P>or</P>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>Select a single component row and press <B>F2</B> to begin edit mode. This puts the
+        first editable field in that component row into edit mode. <B>Tab</B> will then move to the
+        next editable field.</LI>
+      </UL>
+
+      <H3><B>Applying an Edit</B></H3>
+
+      <P>In the editable field, pressing <B>Enter</B> applies the value to the field if it is valid
+      and ends the edit session. If the field's value is invalid, a message is written to the
+      editor's status line and the field remains in edit mode.</P>
+
+      <H3>Canceling an Edit</H3>
+
+      <P>In the editable field, pressing <B>Escape</B> cancels the edit session without applying
+      the changes to that field.</P>
+
+      <H3>Editing More Than One Component Field</H3>
+
+      <P>You can move directly from editing one component field to editing another by pressing
+      <B>Tab</B>, <B>Shift-Tab</B>, <B>UpArrow</B> or <B>DownArrow</B>. The key press only moves
+      the edit session if the current field edit can be applied. Otherwise, an error is displayed
+      in the status line.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Tab</B></P>
+
+        <P>Pressing <B>Tab</B> applies the current edit and moves to the next editable field in the
+        table. If the current field is the last editable one in this component then it moves to the
+        first editable field in the next component. This key moves the edit session left to right
+        and top to bottom in the table.</P>
+
+        <P><B>Shift-Tab</B></P>
+
+        <P>Pressing <B>Shift-Tab</B> applies the current edit and moves to the previous editable
+        field in the table. If the current field is the first editable one in this component then
+        it moves to the last editable field in the previous component. This key moves the edit
+        session right to left and bottom to top in the table.</P>
+
+        <P><B>Up-Arrow</B></P>
+
+        <P>Pressing the <B>UpArrow</B> key applies the current edit and moves to the same field of
+        the previous component in the table if that field is editable. This key moves the edit
+        session bottom to top in the table.</P>
+
+        <P><B>Down-Arrow</B></P>
+
+        <P>Pressing the <B>DownArrow</B> key applies the current edit and moves to the same field
+        of the next component in the table if that field is editable. This key moves the edit
+        session top to bottom in the table.</P>
+      </BLOCKQUOTE>
+
+      <H3>Editing the <I>Offset</I> Field</H3>
+
+      <P>The offset field can be used to move a defined stack variable to a different offset. The
+      variable will only be moved if it fits at the new offset and is allowable. Moving a variable
+      from positive to negative stack space or vice versa is not allowed.</P>
+
+      <H3>Editing the <I>DataType</I> Field</H3>
+
+      <P>This can be any data type that is available in the data type manager. To edit the data
+      type double-click the data type cell. This will show the <A href=
+      "help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection Dialog</A>,
+      which allows you to easily enter a data type. It can also be Undefined, a pointer to a data
+      type, or an array.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Basic Data Type</B></P>
+
+        <P>This can be a built-in data type (Byte, Word, etc.), a structure, a union, or a
+        typedef.</P>
+
+        <P>For example, Word.</P>
+
+        <P><B>Pointer Data Type</B></P>
+
+        <P>This can be the basic Pointer data type or a pointer to a data type. A pointer to a data
+        type is indicated by following the data type with an *.</P>
+
+        <P>For example, Word * is a pointer to a Word.</P>
+
+        <P><B>Array</B></P>
+
+        <P>This can be a multidimensional array of any data type.</P>
+
+        <P>For example, DWord[2][4] is an array with 2 elements, where each element is an array
+        with 4 elements that are DWords.</P>
+
+        <P><B>Array of Pointers</B></P>
+
+        <P>Arrays of pointers can also be specified.</P>
+
+        <P>For example, Float*[5] is an array with five elements where each element is a pointer to
+        a Float.</P>
+
+        <P><IMG src="../../shared/note.png" alt=""> Pointers to arrays are not allowed. In other
+        words it is not legal for the * to be to the right of the array dimensions.</P>
+
+        <P>If the data type can be various sizes, like a Pointer or CString, then the user is
+        prompted for the appropriate size.</P>
+
+        <H4><A name="AffectOfChangingDataTypeSize"></A><U>Affect of Changing a Component's
+        Size</U></H4>
+
+        <P>The new component must be less than or equal to the original component's size plus any
+        Undefined byte components that immediately follow it in the stack frame. Decreasing the
+        component size will create Undefined byte components following it to maintain the stack
+        frame size. Increasing the component size consumes Undefined bytes immediately following
+        the component.</P>
+      </BLOCKQUOTE>
+
+      <H3>Editing the <I>Name</I> Field</H3>
+
+      <P>When specified, a stack variable name must be unique in this stack frame. It cannot
+      contain blanks.</P>
+
+      <H3>Editing the <I>Comment</I> Field</H3>
+
+      <P>The comment can be any Ascii text.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Stack_Editor_Create_Pointer"></A>Pointers</H2>
+
+    <P>Pressing the <B>p</B> key invokes the pointer action. This changes the selected component's
+    data type into a pointer based on its previous type. If an Undefined is selected, it becomes a
+    simple Pointer. If a Byte is selected, it becomes a Byte*, which is a pointer to a byte. If
+    MyStructure[5] is selected, it becomes MyStructure[5]*, which is a pointer to an array of five
+    structures. If the editor is unlocked and the empty last component is selected, a simple
+    Pointer is added.<BR>
+     If a default pointer size can't be determined, you are prompted for the size of pointer to be
+    created. A pointer can be 1, 2, 4, or 8 bytes. The maximum size of the pointer is restricted by
+    the size of the current data type plus the number of Undefined bytes that follow it.<BR>
+    </P>
+
+    <H2><A name="Stack_Editor_Cycle"></A>Cycling a Component Data Type</H2>
+
+    <P>Some data types are part of a cycle group. A cycle group is a collection of data types that
+    are similar and are commonly associated with one another. Cycling a data type facilitates
+    changing a component from one data type to the next data type in the same group. Each cycle
+    group has a short-cut key associated with the group. Pressing the short-cut key cycles from the
+    current data type to the next one in the group. For example, the <B>b</B> key is associated
+    with the Byte cycle group. This group is Byte, Word, DWord, and QWord.</P>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png" alt=""> A single row of the component table must be
+      selected to cycle a data type.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>To cycle a component's data type:</P>
+
+      <OL>
+        <LI>Select the component in the table.</LI>
+
+        <LI>Press the cycle group key for the desired data type.</LI>
+
+        <LI style="list-style: none">
+          <UL>
+            <LI>If the component's current data type is not in that cycle group, the first data
+            type in the cycle group that fits will be applied. For example, the <B>b</B> key will
+            add a Byte; the <B>f</B> key will add a Float; the <B>apostrophe</B> key will add an
+            Ascii.</LI>
+
+            <LI>If the current data type is already in that cycle group, then the next data type in
+            the cycle group that fits will be applied. For example, if the current data type is a
+            Byte, pressing the <B>b</B> key twice would change it to DWord.</LI>
+          </UL>
+        </LI>
+      </OL>
+
+      <P>If Undefined bytes follow the selected component, the Undefined bytes can be replaced by
+      cycling the data type to a larger sized data type. Likewise, cycling to a smaller data type
+      will add Undefined bytes after the component being cycled.</P>
+
+      <P><IMG border="0" src="../../shared/tip.png" alt=""> Cycle groups can also be applied from
+      the component table's popup menu under <B>Cycle</B>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="DragNDrop"></A>Drag and Drop Basics</H2>
+
+    <P>Data types can be dragged from the <A href=
+    "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A> to
+    the component table in the Stack Frame Editor. A regular drag and drop results in the component
+    in the editor being replaced by the one being dragged. The background color of the Structure
+    Frame component (s) changes to light purple as the mouse moves over them. This indicates where
+    the drop is occurring.</P>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png" alt=""> When a data type is dropped on a pointer
+      component, the component becomes a pointer of that data type instead of simply being replaced
+      by that data type. For example, dropping a Byte on a Pointer results in a Byte*, which is a
+      pointer to a Byte. Drag and Drop is discussed further in <A href="#AddDataType">Creating a
+      Stack Variable</A> and <A href="#ReplaceDataType">Replacing a Stack Variable's Data
+      Type</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Stack_Editor_Favorite"></A>Favorites Basics</H2>
+
+    <P>Favorite data types are defined from the Data Type Manager dialog. In the Stack Frame
+    Editor, favorites are available through the popup menu in the component table. Applying a
+    favorite data type is similar to dropping a data type. Favorites can be used to replace a
+    component's data type. Favorites can only be applied to a single row selection in the table.
+    Therefore, individual favorites are only enabled when they can be applied (i.e. they fit at the
+    selection and the selection is a single table row).</P>
+
+    <P><IMG src="../../shared/note.png" alt=""> When a favorite data type is applied to a pointer
+    component, the component becomes a pointer of that data type instead of simply being replaced
+    by that data type.</P>
+
+    <P><IMG border="0" src="../../shared/tip.png" alt=""> If you right mouse click on a component
+    where there is no selection, the selection becomes a single component selection containing that
+    component and the popup menu will appear.</P>
+
+    <P>Favorites are discussed further in <A href="#AddDataType">Creating a Stack Variable</A>, and
+    <A href="#ReplaceDataType">Replacing a Stack Variable's Data Type</A>.</P>
+
+    <H2><A name="AddDataType"></A>Creating a Stack Variable</H2>
+
+    <P>A stack variable can be created by replacing Undefined bytes with a data type. There must be
+    enough Undefined bytes at the stack offset for the data type to fit.</P>
+
+    <BLOCKQUOTE>
+      <H3>Drag and Drop</H3>
+
+      <P>Drag a pointer or fixed length data type to a row in the editor where there is an
+      undefined byte. The row becomes light purple indicating where the data type will get dropped.
+      If the mouse pointer is a 'circle with a slash' then the data type cannot be dropped to
+      replace the component. This happens because the data type being dropped won't fit at that
+      offset in the stack frame or the data type is variable length (for example, "string"). When
+      you drop a datatype it will consume the number of undefined bytes that is equal to its
+      length. If you get a small rectangular box, then the data type can be dropped. Dropping the
+      data type will create a new variable with the dropped data type and a default label at that
+      offset on the stack.<BR>
+      </P>
+
+      <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+      pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
+
+      <H3>Favorites</H3>
+
+      <P>Right mouse click on the empty row at the end of the table and pull right to see the
+      Favorites. Select the favorite from the popup and it is added as the last component.</P>
+
+      <P><IMG src="../../shared/note.png" alt=""> For information about Pointers as a Favorite, see
+      <A href="#Stack_Editor_Favorite">Favorites Basics</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="ReplaceDataType"></A>Replacing a Stack Variable's Data Type</H2>
+
+    <P>A component can have its data type replaced with a different data type. Undefined bytes are
+    created or consumed as necessary to maintain the overall size of the stack frame.</P>
+
+    <BLOCKQUOTE>
+      <H3>Drag and Drop</H3>
+
+      <BLOCKQUOTE>
+        <P>Drag a pointer or fixed length data type to a row in the editor. The row becomes light
+        purple indicating that component will be replaced. If the mouse pointer is a 'circle with a
+        slash' then the data type cannot be dropped to replace the component. This happens because
+        the data type being dropped won't fit at that offset in the stack frame or the data type is
+        variable length (for example, "string"). If you get a small rectangular box, then the data
+        type can be dropped. Dropping the data type will replace the variable's data type that is
+        currently at that offset on the stack. (see <A href="#AffectOfChangingDataTypeSize">Affect
+        of Changing a Component's Size</A>)<BR>
+        </P>
+
+        <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+        pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
+      </BLOCKQUOTE>
+
+      <H3>Favorites</H3>
+
+      <BLOCKQUOTE>
+        <H4>Single Component Selected</H4>
+
+        <P><IMG border="0" src="../../shared/tip.png" alt=""> If you right mouse click on a
+        component where there is no selection, the selection becomes a single component selection
+        containing that component and the popup menu will appear.</P>
+
+        <P>To replace a component's data type with a favorite data type, select it in the table,
+        right mouse click and pick the favorite. Only favorites that will fit in place of the
+        component will be enabled. (see <A href="#AffectOfChangingDataTypeSize">Affect of Changing
+        a Component's Size</A>)</P>
+
+        <P><IMG src="../../shared/note.png" alt=""> For information about Pointers as a Favorite,
+        see <A href="#Stack_Editor_Favorite">Favorites Basics</A>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Stack_Editor_Show_Component_Path"></A>Showing a Stack Variable's Data Type
+    Category</H2>
+
+    <P>Every component has a data type: Byte, Word, Float, etc.. The category is where that data
+    type is located. Since you can have two data types with the same name in different locations
+    (categories), the editor provides a way to see the category for any component's data type.</P>
+
+    <P>To see the category for a stack variable's data type:</P>
+
+    <OL>
+      <LI>Right mouse click on the stack variable in the table.</LI>
+
+      <LI>From the popup menu, select <B>Show Component Path</B>.</LI>
+
+      <LI>The category information appears in the editor's status line at the bottom of the
+      dialog.</LI>
+    </OL>
+
+    <H2><A name="Stack_Editor_Edit_Component"></A>Editing a Stack Variable's Data Type</H2>
+
+    <P>A Data Type Editor can be brought up from within the Stack Frame Editor for any component
+    that is an editable data type, such as Structure, Union, or Enum.</P>
+
+    <P>To display the editor for a stack variable that has an editable data type:</P>
+
+    <OL>
+      <LI>Select the component with a data type that is a structure, union or enum.</LI>
+
+      <LI>Right mouse click on the component in the table. Select <B>Edit...</B> from the
+      popup.</LI>
+
+      <LI>The editable data type for the selected component is displayed in a new data type
+      editor.</LI>
+    </OL>
+
+    <H2><A name="Stack_Editor_Show_Numbers_In_Hex"></A>Showing Numbers in Hexadecimal</H2>
+
+    <P>The Component Table contains numeric fields which display that component's stack offset and
+    length in the Stack Frame Editor. By default stack offsets and lengths are initially shown in
+    hexadecimal. Numbers in the stack information area (such as Frame Size, Return Address Offset,
+    Local Size, Parameter Offset, and Parameter Size) are also shown in hexadecimal by default.
+    There is a <A href="#StackEditorToolOptions">tool option</A>, <B>Show Numbers In Hex</B>, that
+    lets you override the default and set whether numbers should be displayed in hexadecimal when
+    an editor is intially displayed.</P>
+
+    <P>There is also a toolbar menu item in the Stack Frame Editor that allows you to immediately
+    change whether the numbers are displayed in hexadecimal or decimal. Changing this only affects
+    the current editor where it is changed.</P>
+
+    <P>To switch between hexadecimal and decimal display of numeric values in the current
+    editor:</P>
+
+    <OL>
+      <LI>Right mouse click on the table.</LI>
+
+      <LI>A check mark next to <B>Show Numbers in Hexadecimal</B> indicates that numbers are
+      currently displayed in hex. If there is no checkmark, the numbers are currently shown in
+      decimal.<BR>
+      </LI>
+
+      <LI>From the popup menu, select <B>Show Numbers in Hexadecimal</B>.</LI>
+
+      <LI>The numbers being displayed will change from hexadecimal to decimal or vice versa. The
+      check mark next to <B>Show Numbers in Hexadecimal</B> indicates whether the numbers are
+      currently displayed in hexadecimal.</LI>
+    </OL>
+
+    <H2><A name="StackEditorToolOptions"></A>Stack Editor Tool Options</H2>
+
+    <BLOCKQUOTE>
+      <P>The Structure and Union Editors add options to the tool. To view or edit the option
+      settings:</P>
+
+      <UL>
+        <LI>From the tool's menu select <B>Edit</B><IMG border="0" src="../../shared/arrow.gif"
+        alt="-&gt;"> <B>Tool Options...</B> which displays the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog.</A><BR>
+        </LI>
+
+        <LI>Open the <I>Editors</I> tree node.<BR>
+        </LI>
+
+        <LI>Click on either the <I>Stack Editor</I> tree node to view its options.</LI>
+      </UL>
+
+      <P>The <I>StackEditor</I> tab contains the following options:</P>
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE width="600" border="1" cellpadding="2">
+            <TBODY>
+              <TR>
+                <TH valign="top" align="left" width="100" bgcolor="#c0c0c0">Editor</TH>
+
+                <TH valign="top" align="left" width="264" bgcolor="#c0c0c0">Option</TH>
+
+                <TH valign="top" align="left" width="100" bgcolor="#c0c0c0">Functionality<BR>
+                </TH>
+              </TR>
+
+              <TR>
+                <TD valign="top" rowspan="1" colspan="1">Stack Editor</TD>
+
+                <TD valign="top" align="left" width="264">Show Numbers In Hex</TD>
+
+                <TD valign="top" align="left" width="350">If selected, all numbers will initially
+                be displayed in hexadecimal when a new Stack Editor is displayed.<BR>
+                 Otherwise, the numbers are initially in decimal.<BR>
+                </TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+
+      <P>To select an option simply click on the check box.<U><BR>
+      </U></P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Data Type Manager</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+      Manager</A></LI>
+
+      <LI><A href="help/topics/FunctionPlugin/Functions.htm">Functions</A></LI>
+
+      <LI><A href="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection
+      Dialog</A></LI>
+    </UL><BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

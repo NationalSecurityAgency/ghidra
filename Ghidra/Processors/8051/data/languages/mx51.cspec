@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+    <range space="SFR"/>
+    <range space="ESFR"/>
+    <range space="BITS"/>
+    <range space="EBITS"/>
+  </global>
+  <stackpointer register="SP" space="RAM" growth="positive"/>
+  <default_proto>
+    <!-- Removed push / pop around calls to clear up decompilation -->
+    <prototype name="__keilmxs3" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="2">
+          <register name="R6R7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R4R5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+	  <!-- Expect to see R3R2R1 as an endian swapped pointer a lot -->
+          <register name="R2R3"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="R6R7"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x1" last="0x0fc"/>
+      </localrange>
+      <!-- <localrange> -->
+      <!--   <range space="stack" first="0x0" last="0xf"/> -->
+      <!-- </localrange> -->
+    </prototype>
+  </default_proto>
+
+  <!-- Add in additional Keil prototypes -->
+  <prototype name="__keilmxs2p1" extrapop="0" stackshift="0" strategy="register">
+    <input>
+      <pentry minsize="1" maxsize="2">
+        <register name="R6R7"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="R4R5"/>
+      </pentry>
+      <pentry minsize="3" maxsize="3">
+	<!-- Technically will be endian swapped -->
+        <register name="R1R2R3"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="2">
+        <register name="R6R7"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+    </unaffected>
+      <localrange>
+        <range space="stack" first="0x1" last="0x0fc"/>
+      </localrange>
+    <!-- <localrange> -->
+    <!--   <range space="stack" first="0x0" last="0xf"/> -->
+    <!-- </localrange> -->
+  </prototype>
+</compiler_spec>

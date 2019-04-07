@@ -1,0 +1,68 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework SoftwareModeling'
+
+apply plugin: 'antlr'
+
+dependencies {
+	compile project(':Generic')
+	compile project(':FileSystem')
+	compile project(':Project')
+	compile project(':Graph')
+	
+	compile "msv:msv:20050913"
+	compile "msv:xsdlib:20050913"
+	compile "org.antlr:antlr-runtime:3.5.2"
+	
+	runtime "msv:relaxngDatatype:20050913"
+	compile "msv:isorelax:20050913"	
+	
+	testCompile "org.jmockit:jmockit:1.44"	
+	
+	// Must specify the specific antlr implementation to use or it will default to trying to find
+	// version 2.7.7 (which we don't have)
+	antlr "org.antlr:antlr:3.5.2"
+}
+
+// Define classpath needed to execute sleigh compiler during development
+// (see gradleScripts/processorUtils.gradle)
+ext.sleighDevClasspath = project.sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
+
+def genSrcDir = 'generated-src/antlr/main'
+generateGrammarSource {
+
+	// This one stands alone, it looks like
+	include "ghidra/sleigh/grammar/BooleanExpression.g"
+	
+	include "ghidra/sleigh/grammar/SleighLexer.g" // Dummy, and must compile first
+	include "ghidra/sleigh/grammar/BaseLexer.g"
+	include "ghidra/sleigh/grammar/DisplayLexer.g"
+	include "ghidra/sleigh/grammar/SemanticLexer.g"
+	
+	// This is the root parser, it will import its children without building them individually.
+	include "ghidra/sleigh/grammar/SleighParser.g"
+
+	// This is a debug tree parser
+	include "ghidra/sleigh/grammar/SleighEcho.g"
+	// This is the real compiler tree parser
+	include "ghidra/sleigh/grammar/SleighCompiler.g"
+
+	// README: See src/main/antlr/ghidra/sleigh/grammar/README.txt for an explanation of this.
+	doLast {
+		delete fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar") {
+			include "SleighLexer*.java"
+		}
+		fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar") {
+			include "*.java"
+		}.each { File src ->
+			def lines = src.readLines()
+			if (lines.get(0) != 'package ghidra.sleigh.grammar;') {
+				src.withWriter { wr ->
+					wr.println('package ghidra.sleigh.grammar;');
+					lines.each { line ->
+						wr.println line
+					}
+				}
+			}
+		}
+	}
+}

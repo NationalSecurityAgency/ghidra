@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Enum Editor</title>
+    <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </head>
+  <body>
+    <h1>
+      <a name="EditEnum"></a>
+      Enum Data Type Editor
+    </h1>
+    <p>An <i>Enumeration</i> data type ("Enum") is a C-style data type that allows
+       the substitution of a value for a more meaningful name. Ghidra provides a
+       special editor for Enum data types.
+    </p>
+    <p><a href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">
+       Create an Enum data type</a> 
+       using the 
+       <a href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#EditEnum">
+       Data Type Manager</a> display. The editor for an Enum is shown below.
+    </p>
+    <p align="center"><img border="0" src="images/EnumEditor.png"> </p>
+    <blockquote>
+      <h3>Enum Editor Fields</h3>
+      <ul>
+        <li>The <i>Name</i> column in the table is the name of the enum entry.</li>
+        <li>The <i>Value</i> column in the table is the value of the enum entry.</li>
+        <li>The <i>Name</i> field below the table shows the name of the enum.
+            Edit this field to change the name.
+        </li>
+        <li>The <i>Description</i> field shows a short description for the enum; 
+            edit this field to update the description.
+        </li>
+        <li>The <i>Category</i> field shows where the enum resides which corresponds to the folder you were selecting when creating the enum;
+            the field is not editable, however, you can move it using the Data Type Manager after you have created it if you want to move it. 
+        </li>
+        <li>The <i>Size</i> field shows the number of bytes required when you apply
+            the enum. To edit this field, use the dropdown menu to choose a new size. Note: If you are applying an enum to a data definition and do not see expected results in the decompiler it is probably because the size is incorrect.
+        </li>
+      </ul>
+      <p>When you make any change to the enum, the 
+         <img border="0" src="images/disk.png">
+         (<b>Apply</b>) button is enabled.
+      </p>
+    </blockquote>
+    <h2>Edit an Enum Entry</h2>
+    <blockquote>
+      <p><a name="Enum_Entry"></a>To edit an entry in the enum table, 
+         select an entry; double click in the field that you want to change, 
+         OR press <b>F2</b>. 
+         A cell editor is displayed; enter the value   (press the &lt;Enter&gt; key).
+      </p>
+      
+      <blockquote>
+      <p><img border="0" src="../../shared/note.png">
+      	While editing, you can use the <B>Tab</B> key to navigate the editing to the next cell, 
+      	the <B>Shift-Tab</B> key to navigate backwards, the <B>Up</B> key to move editing to the cell
+      	above, and the <B>Down</B> to move editing to the cell below the currently edited cell.
+      </p>
+      </blockquote>
+      
+      <blockquote>
+      <p><img border="0" src="../../shared/note.png">
+         Names and values must be unique.
+      </p>
+      </blockquote>
+    </blockquote>
+    <h2><a name="Add_Enum_Value"></a>Add an Enum Entry</h2>
+    <blockquote>
+      <p>Create an new enum entry by selecting the 
+         <img border="0" src="images/Plus.png">
+         (<b>Add</b>) button on the editor's tool bar. 
+         An entry with default values is added to the table; the default name is 
+         "New Name;" the default value is the next highest value. 
+         Double click on the fields to change the entries.
+      </p>
+    </blockquote>
+    <h2><a name="Delete_Enum_Value"></a>Delete an Enum Entry</h2>
+    <blockquote>
+      <p>To delete enum entries, select the entries that you want to remove. 
+         Right mouse-click and choose the <b>Delete</b> option, OR select the 
+         <img border="0" src="images/edit-delete.png"> 
+         button on the editor's tool bar.
+      </p>
+    </blockquote>
+    <h2><a name="Apply_Enum_Changes"></a>Apply Changes</h2>
+    <blockquote>
+      <p>When you have completed making changes, select the 
+         <img border="0" src="images/disk.png">
+         button on the editor's tool bar. If you have changed the name of the enum, 
+         the <i>Data Type Manager</i> display is updated to reflect the new name in the tree.
+      </p>
+    </blockquote>
+    <h2>Change the Sort Order</h2>
+    <blockquote>
+      <p>As with most tables in Ghidra, you can change the sort order of a column by 
+         clicking on the column header. The icons on the header indicates the sort order, 
+         ascending (<img border="0" src="Icons.SORT_ASCENDING_ICON"> ), 
+         or descending (<img border="0" src="Icons.SORT_DESCENDING_ICON"> ). 
+         You can also rearrange the columns in the table by clicking on the column 
+         header and dragging it to the new position. Changing the sort order has no 
+         effect on the enum.
+      </p>
+    </blockquote>
+    <p class="providedbyplugin">
+      Provided By: <i>Data Type Manager</i> Plugin
+    </p>
+    <p class="relatedtopic">Related Topics:</p>
+      <ul>
+        <li>
+          <p class="relatedtopic">
+            <a href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">
+              Create Enum using the Data Manager
+            </a>
+          </p>
+        </li>
+      </ul>
+    </p>
+  </body>
+</html>

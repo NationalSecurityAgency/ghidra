@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec> 
+  <global>
+    <range space="ROM"/>
+  </global>
+  <stackpointer register="sp" space="ROM" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="unknown" stackshift="4">
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="r12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0xfffffe0c" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="r12"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="ROM" offset="0" size="4"/>
+        <register name="sp"/>
+        <register name="lr"/>
+        <register name="r0"/>
+        <register name="r1"/>
+        <register name="r2"/>
+        <register name="r3"/>
+        <register name="r4"/>
+        <register name="r5"/>
+        <register name="r6"/>
+        <register name="r7"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  
+    <prototype name="__stackcall" extrapop="unknown" stackshift="-4">
+	  <input>
+	    <pentry minsize="1" maxsize="500" align="4">
+	      <addr offset="0xfffffe08" space="stack"/>
+	    </pentry>
+	  </input>
+	  <output>
+	    <pentry minsize="1" maxsize="4">
+	      <register name="r12"/>
+	    </pentry>
+	  </output>
+	  <unaffected>
+	    <varnode space="ROM" offset="0" size="4"/>
+	    <register name="sp"/>
+	    <register name="lr"/>
+	  </unaffected>
+	</prototype>
+	
+</compiler_spec>

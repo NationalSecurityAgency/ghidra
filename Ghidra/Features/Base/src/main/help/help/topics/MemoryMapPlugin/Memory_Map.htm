@@ -1,0 +1,563 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Memory Map</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="View_Memory_Map"></A>Memory Map</H1>
+
+    <P>&nbsp;</P>
+
+    <P>The <I>Memory Map</I> window displays a list of memory blocks that make up the memory
+    structure of the current program.&nbsp; The component provides actions for adding, renaming,
+    moving, splitting, extending, joining, and deleting memory blocks.</P>
+
+    <P>Ghidra supports four different block types through the Memory Map window:</P>
+
+    <OL>
+      <LI>
+        <A name="DefaultType"></A><I><B>Default</B> -</I> The normal block type that can be
+        <I>initialized</I> or <I>uninitialized</I>. 
+
+        <UL>
+          <LI><A name="InitializeBlockType"></A><I>Initialized</I> - The block has an initial value
+          specified for the bytes</LI>
+
+          <LI><A name="UninitializedBlockType"></A><I>Uninitialized</I> - The block has no initial
+          value specified for the bytes</LI>
+        </UL>
+      </LI>
+
+      <LI><A name="BitMappedType"></A><I><B>Bit Mapped</B></I> - The block provides a
+      bit-addressable map onto other blocks. This is useful when a processor can access some or all
+      of the bits in memory directly using an alternative addressing space.</LI>
+
+      <LI><A name="ByteMappedType"></A><I><B>Byte Mapped</B></I> - The block provides a
+      byte-addressable map onto other blocks.&nbsp; This can be useful when the same bytes can be
+      accessed via two or more addresses.</LI>
+
+      <LI><A name="OverlayType"></A><I><B>Overlay</B></I> - The block is created in a new
+      <I>overlay</I> address space. Overlay blocks can be <I>initialized</I> or
+      <I>unitialized</I>.&nbsp;Using Overlays is a way to get around the problem where the program
+      is too large to fit completely in the target system's memory.&nbsp; Overlay blocks contain
+      code that would get swapped in when the program needs to execute it.&nbsp;&nbsp; Note that
+      Overlay blocks are fixed and may not be moved, split or expanded.&nbsp; In addition, Overlays
+      do not relocate with image base changes.<BR>
+      </LI>
+    </OL>
+
+    <P>To view the <I>Memory Map</I>, select <B>Window<IMG src="../../shared/arrow.gif" border="0">
+    Memory Map</B> from the main tool menu, or click on the&nbsp; <IMG src="images/memory16.gif"
+    border="0">&nbsp; icon in the tool bar.&nbsp; Note that the current Image Base Address is
+    specified within the title bar.<BR>
+    </P>
+
+    <P>&nbsp;</P>
+
+    <CENTER>
+      <IMG alt="" src="images/MemoryMap.png">
+    </CENTER><BR>
+     
+
+    <P>&nbsp;</P>
+
+    <P>Each row displays information about one of the memory blocks.&nbsp; The following summarizes
+    the information about each block.</P>
+
+    <BLOCKQUOTE>
+      <P><B><I>Name</I></B> - Name of the memory block.&nbsp;</P>
+
+      <P><I><B>Start -</B></I> The starting address (in hex) of the memory block.</P>
+
+      <P><B><I>End -</I></B> The Ending address (in hex) of the memory block.</P>
+
+      <P><I><B>Length -</B></I> The length (in hex) of the memory block.</P>
+
+      <P><I><B>R -</B></I> Indicates read permission.</P>
+
+      <P><I><B>W -</B></I> Indicates write permission.</P>
+
+      <P><I><B>X -</B></I> Indicates execute permission.<BR>
+      </P>
+
+      <P><SPAN style="font-weight: bold;">Volatile</SPAN> - Indicates a region of volatile I/O
+      Memory.<BR>
+      </P>
+
+      <P><I><B>Type -</B></I> Indicates whether the block is a <A href="#DefaultType">Default</A>,
+      <A href="#BitMappedType">Bit Mapped</A>, <A href="#ByteMappedType">Byte Mapped</A> or <A
+      href="#OverlayType">Overlay</A> type of block.</P>
+
+      <P><I><B>Initialized -</B></I> Indicates whether the block has been initialized with values;
+      this property applies to Default and Overlay blocks.</P>
+
+      <P><I><B>Source -</B></I> The name of the file that produced the bytes that make up this
+      block as set by the file importer; for <A href="#BitMappedType">Bit Mapped</A> or <A href=
+      "#ByteMappedType">Byte Mapped</A> blocks, the <I>Source</I> shows the mapped source
+      address.</P>
+
+      <P><I><B>Comment -</B></I> User added comment about this memory block.</P>
+
+      <P>&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="MemoryBlockEdits"></A>Memory Block Edits</H2>
+
+    <BLOCKQUOTE>
+      <H3>Rename</H3>
+
+      <BLOCKQUOTE>
+        <P>Memory Blocks can be renamed by double-clicking on the name field and entering a new
+        name.</P>
+      </BLOCKQUOTE>
+
+      <H3>Change Read Permission</H3>
+
+      <BLOCKQUOTE>
+        <P>The read permission of a memory block can be changed by left-clicking on the
+        checkbox.</P>
+      </BLOCKQUOTE>
+
+      <H3>Change Write Permission</H3>
+
+      <BLOCKQUOTE>
+        <P>The write permission of a memory block can be changed by left-clicking on the
+        checkbox.</P>
+      </BLOCKQUOTE>
+
+      <H3>Change Execute Permission</H3>
+
+      <BLOCKQUOTE>
+        <P>The execute permission of a memory block can be changed by left-clicking on the
+        checkbox.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Change Volatile Setting</H3>
+
+      <BLOCKQUOTE>
+        <P>The volatile setting of a memory block can be changed by left-clicking on the
+        checkbox.</P>
+      </BLOCKQUOTE>
+
+      <H3>Initialize Memory Block</H3>
+
+      <BLOCKQUOTE>
+        <P>A memory block that is currently Uninitialized can be Initialized by clicking on the
+        <I>Initialized</I> checkbox. A dialog will appear allowing you to enter a byte value
+        to be used to fill the block.  Deselecting the checkbox will cause the block be revert
+        to uninitialized memory.  This will have the additional side effect of removing all
+        functions, instructions, data, and outgoing references in that block.</P>
+      </BLOCKQUOTE>
+
+      <H3>Edit Comment</H3>
+
+      <BLOCKQUOTE>
+        <P>Memory Block comments can be changed by double-clicking on the comment field and
+        entering the new comment. The comment can be a maximum of 256 characters.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="MemoryBlockOperations"></A>Memory Block Operations&nbsp;</H2>
+
+    <P>The memory block operations are available through the icons on the header of the Memory Map
+    window, or select a block in the table, right mouse click, and choose an option.</P>
+
+    <H3><A name="Add_Block"></A><B><IMG src="images/Plus.png" border="0">&nbsp; Add</B></H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select <B>Add</B> to bring up the <I>Add Memory Block</I> dialog.&nbsp; Fill in the
+        requested information and select the <B>OK</B> button.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src="images/AddMemoryBlock.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE><BR>
+     <BR>
+     
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>&nbsp;</P>
+
+        <P><B><I>Block Name</I></B> - Enter the name of the new memory block.</P>
+
+        <P><B><I>Start Addr</I></B> - Enter the start address of the new memory block.&nbsp; If the
+        program language defines multiple address spaces, the address space must also be
+        specified.&nbsp; The address space selection will not appear if only one is defined.
+        Overlay spaces are not included in the list of spaces.&nbsp; Within the defaul address
+        space, a block may not span across the current Image Base Address.<BR>
+        </P>
+
+        <P><B><I>Length -</I></B> Enter the length of the new memory block.</P>
+
+        <P><I><B>Comment -</B></I> Enter a comment for the block if desired.</P>
+
+        <P><B><I>Read</I></B> - Sets the read permission.</P>
+
+        <P><I><B>Write</B></I> - Sets the write permission.</P>
+
+        <P><B><I>Execute</I></B> - Sets the execute permission.<BR>
+        </P>
+
+        <P><SPAN style="font-weight: bold;">Volatile</SPAN> - Marks this block as volatile I/O
+        memory.<BR>
+        </P>
+
+        <P><B><I>Block Types</I></B> - Select the block type from the combo box: <I><B>Default, Bit
+        Mapped, Byte Mapped, or Overlay</B></I>.</P>
+
+        <BLOCKQUOTE>
+          <UL>
+            <LI><I><B>Default&nbsp;</B></I> - A normal memory block within the processor's address
+            space.&nbsp; These blocks cannot overlap any other default block.&nbsp; Default blocks
+            can be either initialized or uninitialized. If you select <I>Initialized</I> you can
+            enter a byte value that will be used to fill all the bytes in the new memory
+            block.</LI>
+
+            <LI><B><I>Overlay -</I></B> An overlay block is used to give an alternative set of
+            bytes (and related information) for a range in memory.&nbsp; This is achieved by
+            creating a new address space related to the actual processor address space and placing
+            the block in the new space at the same offsets as the start address in the processor
+            space.&nbsp; Overlay blocks can be either initialized or uninitialized. If you select
+            <I>Initialized</I> you can enter a byte value that will be used to fill all the bytes
+            in the new memory block.</LI>
+
+            <LI><B><I>Bit Mapped -</I></B> This is a block that allow bit addressing of a section
+            of bytes in memory.&nbsp; For example, the first bit of the byte at memory location
+            0x1000 might also be addressed as BIT:0. The second bit at the same byte would then be
+            addressed as BIT:1 and so on.</LI>
+
+            <LI style="list-style: none">
+              <P>The illustration below depicts a Bit Mapped block of <I>Length</I> 16 with a
+              <I>Start Addr</I> of (BIT:) 0000, and a <I>Source Address</I> of 00008100.&nbsp; Note
+              that Bit Overlay addresses are assigned from least significant bit to most
+              significant bit.</P>
+            </LI>
+          </UL>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border=1 src="images/BitOverlayAddresses.png" border=
+                "0"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <UL>
+            <LI>This is used to model certain processors that allow this sort of addressing such as
+            the INTEL 8051. When a Bit Mapped block is created you must specify the byte address on
+            which the bit addressing will be based.</LI>
+
+            <LI>&nbsp;<B><I>Byte Mapped</I></B> - This is a block that allows access to a range of
+            bytes in memory using an alternative address.&nbsp; In other words, it allows the same
+            set of bytes to be accessed by two different logical addresses. A source address must
+            be specified that contains the actual bytes for this block.</LI>
+          </UL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG alt="" src="images/AddMappedBlock.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <H3><A name="Move_Block"></A><IMG src="images/move.png" border="0"> Move</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select <B>Move</B> to bring up the <I>Move Memory Block</I> dialog. The <I>Move</I>
+        action is enabled when exactly one memory block is selected.&nbsp; Enter either a new start
+        or end address to cause the block to be moved.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/MoveMemory.png" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE><BR>
+     <BR>
+     
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>&nbsp;</P>
+
+        <P><B><I>Name -</I></B> Name of the memory block to be moved (not editable).</P>
+
+        <P><B><I>Start Address -</I></B> Current starting address of the block to be moved (not
+        editable).</P>
+
+        <P><B><I>End Address -</I></B> Current ending address of the block to be moved (not
+        editable).</P>
+
+        <P><B><I>Length -</I></B> Length of the memory block to be moved (not editable).</P>
+
+        <P><B><I>New Start Address -</I></B> Enter the NEW starting address for the block.&nbsp;
+        The NEW ending address will be computed.</P>
+
+        <P><B><I>New End Address -&nbsp;</I></B> Enter the NEW ending address for the block. The
+        NEW starting address will be computed.</P>
+
+        <P><I><IMG src="../../shared/note.png" border="0"> You cannot move a block under the
+        following conditions:</I></P>
+
+        <UL>
+          <LI><I>The changes specified would result in an overlap with the original block or any
+          other existing block.&nbsp;</I></LI>
+
+          <LI><I>The block is an <A href="#OverlayType">Overlay</A> block.</I></LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Split_Block"></A><IMG src="images/verticalSplit.png" border="0">&nbsp; Split</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select <B>Split</B> to bring up the <I>Split Block</I> Dialog. The <I>Split</I> action
+        is enabled when exactly one memory block is selected.&nbsp; Use the <I>Split Block</I>
+        Dialog to split a memory block into two smaller memory blocks.&nbsp;There are four ways to
+        enter the split point:</P>
+
+        <UL>
+          <LI>Enter an end address for the first block (block to split), or</LI>
+
+          <LI>Enter a length for the first block (block to split), or</LI>
+
+          <LI>Enter a start address for the second block (new block), or</LI>
+
+          <LI>Enter a length for the second block (new block).</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/SplitMemoryBlock.png" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE><BR>
+     <BR>
+     
+
+    <H3>&nbsp;</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><B><FONT color="#000080">Block to Split</FONT></B></P>
+
+        <BLOCKQUOTE>
+          <P><I><B>Block Name -</B></I> Name of block being split (not editable)</P>
+
+          <P><I><B>Start Address -</B></I> Start address of block being split (not editable)</P>
+
+          <P><I><B>End Address -</B></I> New end address of the original block</P>
+
+          <P><I><B>Block Length -</B></I> New length of original block</P>
+        </BLOCKQUOTE>
+
+        <P><B><FONT color="#000080">New Block</FONT></B></P>
+
+        <BLOCKQUOTE>
+          <P><B><I>Block Name -</I></B> Name of new block.&nbsp; Default name will be provided, but
+          it can be changed by editing this field</P>
+
+          <P><B><I>Start Address -</I></B> Start address for the new split block</P>
+
+          <P><I><B>End Address -</B></I> End address of the original block (not editable)</P>
+
+          <P><B><I>Block Length -</I></B> Length of new split block</P>
+        </BLOCKQUOTE>
+
+        <P><I><IMG src="../../shared/note.png" border="0&gt;&lt;a href=">Overlay type blocks cannot
+        be split.&nbsp;</I></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Expand_Block_Up"></A><IMG src="images/collapse.gif" border="0">&nbsp; Expand
+    Up</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select <B>Expand Up</B> to bring up the <I>Expand Block Up</I> Dialog. The <I>Expand
+        Up</I> action is enabled when exactly one memory block is selected.&nbsp; Use the <I>Expand
+        Block Up</I> Dialog to cause a memory block to grow by adding additional bytes BEFORE the
+        memory block.&nbsp; The block can be expanded by either entering a new start address or a
+        new length.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/MemoryExpandUp.png" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE><BR>
+     <BR>
+     
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><B><I>New Start Address -</I></B> A new start address can be entered here.&nbsp; It must
+        be before the current start address.</P>
+
+        <P><I><B>End Address -</B></I> Displays the end address of the block (not editable).</P>
+
+        <P><I><B>Block Length -</B></I> Displays the length of the block.&nbsp; A new value can be
+        entered here which will cause a corresponding change in the start address.</P>
+
+        <P><I><IMG src="../../shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
+        blocks cannot be expanded.&nbsp;</I></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Expand_Block_Down"></A><IMG src="images/expand.gif" border="0">&nbsp; Expand
+    Down</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select <B>Expand Down</B> to bring up the <I>Expand Block Down</I> Dialog. The <I>Expand
+        Down</I> action is enabled when exactly one memory block is selected.&nbsp; Use the
+        <I>Expand Block Down</I> Dialog to cause a memory block to grow by adding additional bytes
+        AFTER the memory block. The block can be expanded by either entering a new end address or a
+        new length.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/MemoryExpandDown.png" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE><BR>
+     <BR>
+     
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><I><B>Start Address -</B></I> Displays the start address of the block (not
+        editable).</P>
+
+        <P><B><I>New End Address -</I></B> A new end address can be entered here. It must be after
+        the current end address.</P>
+
+        <P><I><B>Block Length -</B></I> Displays the length of the block.&nbsp; A new value can be
+        entered here which will cause a corresponding change in the end address.</P>
+
+        <P><I><IMG src="../../shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
+        blocks cannot be expanded.&nbsp;</I></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Merge_Blocks"></A><IMG src="images/Merge.png" border="0">&nbsp; Merge</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The <I>Merge</I> action is enabled when two or more memory blocks are selected.&nbsp; It
+        attempts to merge all selected blocks into one block.&nbsp; Any "gaps" will be "filled in"
+        with 0s.&nbsp;</P>
+
+        <P><I><IMG src="../../shared/warning.png" border="0"> Caution should be used because a VERY
+        large memory block can be created if the memory blocks being merged are far apart in the
+        address space.</I>&nbsp; Ghidra will display a warning if a really large block is about to
+        be created.&nbsp; Disregarding the warning may cause Ghidra to fail with an "out of memory"
+        error.</P>
+
+        <P><I><IMG src="../../shared/note.png" border="0"></I> Only blocks of the same type can be
+        merged. For example, <A href="#DefaultType">default</A> blocks can only be merged with
+        another default block.&nbsp;</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Delete_Block"></A><IMG src="images/edit-delete.png" border="0">&nbsp; Delete</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The <I>Delete</I> action is enabled when one or more memory blocks are selected.&nbsp;
+        All selected blocks will be deleted. If the blocks contained defined data or instructions,
+        a confirmation dialog is displayed; select "yes" on the dialog to delete the block. A
+        progress dialog is displayed while the block is being deleted.&nbsp;</P>
+
+        <P><IMG src="../../shared/tip.png" border="0">For large blocks that may contain many
+        symbols, references, instructions, etc., the delete operation may take a while to complete.
+        You can cancel the delete operation at any time.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Set_Image_Base"></A><IMG src="images/house.png" border="0">&nbsp; Set Image
+    Base</H3>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The <I>Set Image Base</I> action allows you to change the base address of a
+        program.&nbsp; This action is useful when working with relocatable code such as DLLs or
+        shared objects.&nbsp; All addresses, code units, references, etc. will immediately be
+        re-based relative to the new base address.</P>
+
+        <P>For example, given a program base at 0x01000000 with a memory block starting at address
+        0x01001000. If the base address was changed to 0xeeee0000, then the new start address of
+        the memory block would become 0xeeee1000.</P>
+
+        <P>To change the image base, enter a new image base in the text field and click on the
+        <I>OK</I> button.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV align="left">
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD width="100%">
+              <P align="center"><IMG src="images/SetImageBaseDialog.png" border="0"></P>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </DIV>
+
+    <P class="providedbyplugin">Provided by: <I>Memory Map</I> Plugin<BR>
+     &nbsp;</P>
+  </BODY>
+</HTML>

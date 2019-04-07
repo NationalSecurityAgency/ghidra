@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Symbol References</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Symbol_References"></A><B>Symbol References</B></H1>
+
+    <P>Displays a table of reference-related information. When a symbol is selected in the
+    <I>Symbol Table</I>, the <I>Symbol References</I> table updates to display the reference
+    information for that symbol.&nbsp; The type of references displayed is controlled by the three
+    toggle buttons in the toolbar: <B><I>References To</I></B>,<B><I>Instructions From</I></B>, and
+    <B><I>Data From</I></B>.</P>
+
+    <H2><B><A name="View_Symbol_References"></A>Displaying the Symbol References component</B></H2>
+
+    <BLOCKQUOTE>
+      <UL type="disc">
+        <LI>From the menu-bar of a tool, select <SPAN style=
+        "font-weight: bold;">Window</SPAN><B><IMG src="../../shared/arrow.gif"> Symbol
+        References&hellip;</B></LI>
+
+        <LI>From the tool-bar of a tool, click on the <IMG src="images/table_go.png">
+        button</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2><A name="References_To"></A>References To <IMG src="images/references_to.gif"></H2>
+
+    <BLOCKQUOTE>
+      <P align="center"><IMG src="images/Refs_To.png"><BR>
+      </P>
+
+      <P>Displays all references to the selected symbol.&nbsp;&nbsp; If the number of references to
+      the symbol is less than the total number of references to the address, then the "References
+      To" label above the References table would show "<B><I>&lt;symbol reference count&gt;</I></B>
+      of <I><B>&lt;total reference count&gt;</B></I>".&nbsp; The following data columns are
+      displayed in the <I>Symbol References</I> table:</P>
+
+      <BLOCKQUOTE>
+        <P><B><I>Address-</I></B> the address which corresponds to the code unit which references
+        the selected symbol.&nbsp; Clicking on this address will generate a location event and
+        cause the tool (e.g., Code Browser) to re-position to this address.</P>
+
+        <P><B><I>Label -</I></B> displays the name of the primary symbol at the <I>from</I> address
+        of the reference to the selected symbol. Clicking on this name will generate a location
+        event and cause the tool (e.g., Code Browser) to re-position to the corresponding
+        label.</P>
+
+        <P><B><I>Subroutine</I></B> - displays the name of the subroutine/function containing the
+        <I>from</I> address of the reference to the selected symbol. Clicking on this name will
+        generate a location event and cause the tool (e.g., Code Browser) to re-position to the
+        corresponding subroutine/function.</P>
+
+        <P><B><I>Access -</I></B> indicates the type of reference.&nbsp; This column will display
+        one of the following:</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P><I>RW</I> - read/write data access<BR>
+           <I>Read</I> - read-only data access<BR>
+           <I>Write</I> - write-only data access<BR>
+           <I>Data</I> - general data access<BR>
+           <I>Branch</I> - conditional jump<BR>
+           <I>Jump</I> - unconditional jump<BR>
+           <I>Call</I> - subroutine/function call<BR>
+           <I>Unknown</I> - all other reference types</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P><B><I>Preview -</I></B>&nbsp;preview of the instruction or data located at
+        <I>Address</I> which is the source of the reference.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Instruction_References_From"></A>Instructions From <IMG src="images/I.gif"></H2>
+
+    <P align="center"><IMG src="images/Instr_From.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <P>If the selected symbol corresponds to an entry point of a subroutine or function, all
+      instruction references from the corresponding subroutine/function will be displayed.&nbsp; If
+      the selected symbol is not a subroutine/function entry point, the list will be empty.&nbsp;
+      The following data columns are displayed in the References table:</P>
+
+      <BLOCKQUOTE>
+        <P><B><I>Address -</I></B> the address which corresponds to the instruction within the
+        subroutine/function which is the source of the reference.&nbsp; Clicking on this address
+        will generate a location event and cause the tool (e.g., Code Browser) to re-position to
+        this address.</P>
+
+        <P><B><I>Label -</I></B> displays the name of the primary symbol at the <I>from</I> address
+        of the reference to the selected symbol. Clicking on this name will generate a location
+        event and cause the tool (e.g., Code Browser) to re-position to the corresponding
+        label.</P>
+
+        <P><B><I>Subroutine</I></B> - displays the name of the subroutine/function containing the
+        <I>from</I> address of the reference to the selected symbol. Clicking on this name will
+        generate a location event and cause the tool (e.g., Code Browser) to re-position to the
+        corresponding subroutine/function.</P>
+
+        <P><B><I>Access -</I></B> indicates the type of code access associated with the
+        reference.&nbsp; Code access will generally be limited to a flow* type reference unless it
+        is the target of self-modifying code.&nbsp;&nbsp; This column will display one of the
+        following:</P>
+
+        <BLOCKQUOTE>
+          <P><I>RW</I> - read/write data access<BR>
+           <I>Read</I> - read-only data access<BR>
+           <I>Write</I> - write-only data access<BR>
+           <I>Data</I> - general data access<BR>
+           <I>Branch</I> - conditional jump*<BR>
+           <I>Jump</I> - unconditional jump*<BR>
+           <I>Call</I> - subroutine/function call*<BR>
+           <I>Unknown</I> - all other reference types</P>
+        </BLOCKQUOTE>
+
+        <P><B><I>Preview -</I></B>&nbsp;preview of the instruction or data located at
+        <I>Address</I> which is the source of the reference.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Data_References_From"></A>Data From <IMG src="images/D.gif"></H2>
+
+    <P align="center"><IMG src="images/Data_From.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <P>If the selected symbol corresponds to an entry point of a subroutine or function, all data
+      references from the corresponding subroutine/function will be displayed.&nbsp; If the
+      selected symbol is not a subroutine/function entry point, the list will be empty.&nbsp; The
+      following data columns are displayed in the References table:</P>
+
+      <BLOCKQUOTE>
+        <P><B><I>Address -</I></B> the address which corresponds to the instruction within the
+        subroutine/function which is the source of the reference.&nbsp; Clicking on this address
+        will generate a location event and cause the tool (e.g., Code Browser) to re-position to
+        this address.</P>
+
+        <P><B><I>Label -</I></B> displays the name of the primary symbol at the <I>from</I> address
+        of the reference to the selected symbol. Clicking on this name will generate a location
+        event and cause the tool (e.g., Code Browser) to re-position to the corresponding
+        label.</P>
+
+        <P><B><I>Subroutine</I></B> - displays the name of the subroutine/function containing the
+        <I>from</I> address of the reference to the selected symbol. Clicking on this name will
+        generate a location event and cause the tool (e.g., Code Browser) to re-position to the
+        corresponding subroutine/function.</P>
+
+        <P><B><I>Access -</I></B> indicates the data type.</P>
+
+        <P><B><I>Preview -</I></B> preview of the instruction or data located at <I>Address</I>
+        which is the source of the reference.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H4><B>Provided by:</B> <I>Symbol Table</I> plugin</H4>
+
+    <P><BR>
+    </P>
+    <BR>
+  </BODY>
+</HTML>

@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Assembler</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+    <STYLE>
+ol.ratings li {
+	margin: 0 0 10px 0;
+}
+    </STYLE>
+  </HEAD>
+
+  <BODY>
+    <H1><A name="AssembleAction"></A>Assembler</H1>
+
+    <P>The <B>Patch Instruction</B> action will allow you to edit
+    the current assembly instruction in the listing. The first time you use the action, it may take
+    a moment to prepare the assembler for your processor. You can then edit the text of the
+    instruction, optionally replacing it altogether. As you edit, a content assists will provide
+    completion suggestions. It will present a list of byte sequences when the text comprises a
+    complete instruction. Activating a completion suggestion will input that text at your cursor.
+    Activating a byte sequence will complete the action, replacing the instruction at your cursor.
+    Pressing ESC or clicking outside of the assembly editor will cancel the action.</P>
+    
+    <P align="center"><IMG border="1" src="images/Assembler.png"></P>
+
+    <P align="center">Assembly Editor</P>
+
+    <BLOCKQUOTE>
+      <P>To edit assembly, select <B>Patch Instruction</B> from the
+      <A href="../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing View</A> context menu or
+      press CTRL-SHIFT-G on the instruction to modify. Click the plus button below the content
+      assist to exhaust the undefined bits.</P>
+    </BLOCKQUOTE>
+
+    <P>Ghidra's assembler is based on the same SLEIGH modeling that powers the disassembler. This
+    offers some nice benefits:</P>
+    
+    <UL>
+      <LI>There is no need for an external tool chain.
+      <LI>The assembler and disassembler share the same mnemonic syntax.
+      <LI>Most Ghidra-supported processors are also supported by the assembler.
+      <LI>Processors added to Ghidra automatically get an assembler.
+    </UL>
+    
+    <P>Keep in mind, the above list is in an ideal world. We are in the process of improving the
+    assembly engine and processor modules to eventually support assembly for all of Ghidra's
+    processors. In the meantime, we test several popular processors and assign a performance rating
+    to each. The possible ratings are:</P>
+    
+    <OL class="ratings">
+      <LI><B>Platinum:</B> Our automated tests did not find any errors. This offers the best
+      possible user experience.</LI>
+      <LI><B>Gold:</B> You will rarely encounter an error. You will find it very useful.</LI>
+      <LI><B>Silver:</B> You may occasionally encounter an error, but the assembler is still
+      usable. You will likely find it useful with occasional frustration.</LI>
+      <LI><B>Bronze:</B> You are likely to encounter errors, but there are enough working
+      instructions that the assembler is useful. You may find it useful, but it will probably be
+      frustrating.</LI>
+      <LI><B>Poor:</B> You are likely to encounter severe errors, and there are few instructions
+      that assemble. You may or may not find it useful, but we consider it unusable.</LI>
+      <LI><B>Unrated:</B> The processor is not tested, or the test failed before a rating could be
+      assigned. You might get lucky, but don't count on it.</LI>
+    </OL>
+    
+    <P>As of this release, our tested processors fall under Platinum, Gold, or Poor.</P>
+    
+    <UL>
+      <LI>Platinum</LI>
+      <UL>
+        <LI>68000:BE:32:default</LI>
+        <LI>AARCH64:BE:64:v8A</LI>
+        <LI>AARCH64:LE:64:v8A</LI>
+        <LI>ARM:BE:32:v7</LI>
+        <LI>ARM:LE:32:v7</LI>
+        <LI>avr8:LE:16:extended</LI>
+        <LI>MIPS:BE:32:default</LI>
+        <LI>MIPS:BE:32:micro</LI>
+        <LI>MIPS:BE:32:R6</LI>
+        <LI>MIPS:BE:64:64-32addr</LI>
+        <LI>MIPS:BE:64:R6</LI>
+        <LI>MIPS:BE:64:default</LI>
+        <LI>pa-risc:BE:32:default</LI>
+        <LI>PowerPC:BE:32:default</LI>
+        <LI>PowerPC:BE:64:A2-32addr</LI>
+        <LI>PowerPC:BE:64:A2ALT-32addr</LI>
+        <LI>PowerPC:BE:64:default</LI>
+        <LI>sparc:BE:32:default</LI>
+        <LI>sparc:BE:64:default</LI>
+        <LI>SuperH4:BE:32:default</LI>
+        <LI>SuperH4:LE:32:default</LI>
+        <LI>TI_MSP430X:LE:32:default</LI>
+        <LI>x86:LE:32:default</LI>
+      </UL>
+      <LI>Gold</LI>
+      <UL>
+        <LI>x86:LE:64:default</LI>
+      </UL>
+      <LI>Bronze</LI>
+      <UL>
+        <LI>avr32:BE:32:default</LI>
+      </UL>
+      <LI>Poor</LI>
+      <UL>
+        <LI>dsPIC30F:LE:24:default</LI>
+      </UL>
+    </UL>
+
+    <P class="providedbyplugin">Provided by: <I>Assembler</I> plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing View</A></LI>
+    </UL>
+  </BODY>
+</HTML>

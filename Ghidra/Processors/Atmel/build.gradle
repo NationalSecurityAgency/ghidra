@@ -1,0 +1,15 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors Atmel'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
+dependencies {
+	compile project(':Base')
+}
+
+sleighCompile {
+	// args '-l'
+}

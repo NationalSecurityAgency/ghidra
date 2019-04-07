@@ -1,0 +1,82 @@
+#!/bin/bash
+# ***********************************************************
+# ** Arguments (each -argument option may be repeated):
+# **   [-add <sid>] [-remove <sid>] [-reset <sid>] [-dn <sid> "<x500_distinguished_name>"] 
+# **   [-admin <sid> "<repository-name>"] [-list] [-migrate "<repository-name>"] [-migrate-all]
+# **
+# **   add - add a new user to the server with the default password 'changeme'
+# **   remove - remove an existing user from the server
+# **   reset - reset an existing user's password to 'changeme'
+# **   dn - set a user's distinguished name for PKI authentication
+# **   admin - set the specified existing user as an admin of the specified repository
+# **   list - list all existing named repositories
+# **   migrate - migrate the specified named repository to an indexed data storage
+# **   migrate-all - migrate all named repositories to index data storage
+# ***********************************************************  
+
+UMASK=027
+
+# Preserve quoted arguments
+ARGS=()
+WHITESPACE="[[:space:]]"
+for AA in "$@"; do
+	if [[ $AA =~ $WHITESPACE ]]; then
+		AA="\"$AA\""
+    fi
+	ARGS[${#ARGS[@]}]=$AA
+done
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="${SCRIPT_FILE%/*}"
+
+if [ -d "${SCRIPT_DIR}/../Ghidra" ]; then
+
+	# Production Environment
+	CONFIG="${SCRIPT_DIR}/server.conf"
+	GHIDRA_DIR="${SCRIPT_DIR}/../Ghidra"
+	CPATH="${GHIDRA_DIR}/Features/GhidraServer/lib/GhidraServer.jar:${GHIDRA_DIR}/Framework/FileSystem/lib/FileSystem.jar:${GHIDRA_DIR}/Framework/DB/lib/DB.jar:${GHIDRA_DIR}/Framework/Generic/lib/Generic.jar:${GHIDRA_DIR}/Framework/Utility/lib/Utility.jar:${GHIDRA_DIR}/Framework/Generic/lib/log4j-core-2.8.1.jar:${GHIDRA_DIR}/Framework/Generic/lib/log4j-api-2.8.1.jar"
+	LS_CPATH="${GHIDRA_DIR}/../support/LaunchSupport.jar"
+else
+
+	# Development Environment
+	CONFIG="${SCRIPT_DIR}/../../Common/server/server.conf"
+	GHIDRA_DIR="${SCRIPT_DIR}/../../.."
+	GHIDRA_BIN_REPO="${GHIDRA_DIR}/../../ghidra.bin"
+	CPATH="${GHIDRA_DIR}/Features/GhidraServer/bin/main:${GHIDRA_DIR}/Framework/FileSystem/bin/main:${GHIDRA_DIR}/Framework/DB/bin/main:${GHIDRA_DIR}/Framework/Generic/bin/main:${GHIDRA_DIR}/Framework/Utility/bin/main:${GHIDRA_BIN_REPO}/ExternalLibraries/libsForRuntime/log4j-core-2.8.1.jar:${GHIDRA_BIN_REPO}/ExternalLibraries/libsForRuntime/log4j-api-2.8.1.jar"
+	LS_CPATH="${GHIDRA_DIR}/../GhidraBuild/LaunchSupport/bin/main"
+fi
+
+# Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
+if ! [ -x "$(command -v java)" ] ; then
+	echo "Java runtime not found.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+	exit 1
+fi
+
+# Get the java that will be used to launch GhidraServer
+JAVA_HOME=$(java -cp "${LS_CPATH}" LaunchSupport "${GHIDRA_DIR}/.." -java_home)
+if [ ! $? -eq 0 ]; then
+	echo "Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+	exit 1
+fi
+JAVA_CMD="${JAVA_HOME}/bin/java"
+
+VMARGS="-DUserAdmin.invocation=$(basename "${SCRIPT_FILE}") -DUserAdmin.config=\"${CONFIG}\""
+
+OLD_UMASK=$(umask)
+umask $UMASK
+
+# Identify server process owner if set within server.conf
+OWNER="$(grep '^wrapper.app.account=' "${CONFIG}" | sed -e 's/^.*=\(.*\)\s*.*$/\1/')"
+
+if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
+	eval "\"${JAVA_CMD}\" ${VMARGS} -cp \"${CPATH}\"  ghidra.server.UserAdmin ${ARGS[@]}"
+else
+ 	echo "Running svrAdmin with sudo as ${OWNER} ..."
+ 	eval "sudo -u "${OWNER}" \"${JAVA_CMD}\" ${VMARGS} -cp \"${CPATH}\" ghidra.server.UserAdmin ${ARGS[@]}"
+fi
+
+umask $OLD_UMASK

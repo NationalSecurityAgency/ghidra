@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Opening a Ghidra Project</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Open_Project"></A>Open Project</H1>
+
+    <P>When you open a Project, your active project is <A href="Close_Project.htm">closed</A>; the
+    project identified in the <I>Open a Ghidra Project</I> dialog will be opened.&nbsp; If the
+    active project has been modified since it was last saved, Ghidra will prompt you to save the
+    active project before closing it. The project window is restored with any <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">plugins</A> it had when you last
+    saved the project. Tools that were running when you last saved the project are launched;
+    programs that the tools had open are opened. The last active <A href=
+    "Ghidra_Front_end.htm#Workspace">workspace</A> from this project now shows up as the active
+    workspace. Other <A href="Ghidra_Front_end.htm#ReadOnlyProjectDataPanel">viewed projects</A>
+    are restored.</P>
+
+    <P><IMG src="../../shared/note.png" border="0">Projects that were
+    created using a release of Ghidra prior to 3.0 can be viewed only. You can drag the data from
+    the old project to your current project.</P>
+
+    <P>To open a project, choose it from a list of projects in the default project directory.
+    &nbsp;If the project has been opened before, then the project will appear in the <A href=
+    "Re-opening_a_Project.htm">Reopen</A> list. &nbsp;If the project is being shared by others, it
+    may not reside in the default project directory. &nbsp;Use the browse button, on the <I>Open a
+    Ghidra Project</I> dialog, to locate the target project.</P>
+
+    <P>To open a project:</P>
+
+    <OL type="1">
+      <LI>From the Ghidra Project Window, select <B>File<IMG src="../../shared/arrow.gif" border=
+      "0">Open Project...</B>. The <I>Open a Ghidra Project</I> dialog
+      appears.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/OpenProject.png" border="0"></P>
+
+    <OL start="2">
+      <LI>The dialog box filter defaults to *.gpr (project file extension).&nbsp;Select the project
+      from the <I>Open a Ghidra Project</I> dialog.&nbsp;</LI>
+    </OL>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png" border="0">The project name can be
+      of any length.&nbsp; The name of the project has the same restrictions that the operating
+      system imposes on file names.&nbsp; A Ghidra Project name must have the
+      <B>.gpr</B> extension.</P>
+    </BLOCKQUOTE>
+
+    <OL start="3">
+      <LI>Click the <B>Open Project</B> button. The selected project appears in the Ghidra Project
+      Window. If you are opening a <A href=
+      "help/topics/VersionControl/project_repository.htm#SharedProject">shared project</A>, Ghidra
+      attempts to <A href="help/topics/VersionControl/project_repository.htm#ConnectToServer">connect
+      to the Ghidra Server</A>.&nbsp;You may have to enter a password, depending on the type of
+      user authentication the Ghidra Server is using.</LI>
+    </OL>
+
+    <P align="center"><IMG src="images/ProjectWindow.png" border="0"></P>
+
+    <P>&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <P>If this were a shared project, the connection status button (<IMG src=
+      "images/connected.gif" border="0">) would be displayed, indicating that the project was
+      successfully connected to the server. If the project failed to connect to the server, the
+      status button would appear as <IMG src="images/disconnected.gif" border="0">. 
+      If the server comes up after you have opened the shared project, you can click
+      on status button to attempt to connect to the server. You can still work offline in a shared
+      project, however, you will not be able to do any check outs or check ins.&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">&nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Project/Ghidra_Projects.htm">Ghidra Projects</A></LI>
+
+      <LI><A href="Close_Project.htm">Close Project</A></LI>
+
+      <LI><A href="Saving_a_Ghidra_Project.htm">Save Project</A></LI>
+
+      <LI><A href="Re-opening_a_Project.htm">Reopen Project</A></LI>
+
+      <LI><A href="Archive_Project.htm">Archive Current Project</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

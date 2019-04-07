@@ -1,0 +1,12 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors Toy'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
+dependencies {
+	compile project(':Base')
+}
+

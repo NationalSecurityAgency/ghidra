@@ -1,0 +1,987 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Listing Options</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1>Listing Options</H1>
+
+    <P>Attributes of the Listing can be customized using the <A href=
+    "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog</A>. These are the types of
+    attributes that can be customized:</P>
+
+    <UL>
+      <LI><A href="#Listing_Popups">Colors and Fonts</A></LI>
+
+      <LI><A href="#Listing_Fields">Fields, Highlights, and Selections</A></LI>
+
+      <LI><A href="#Listing_Popups">Popups</A></LI>
+    </UL>
+
+    <H2><A name="Listing_Display"></A>Color and Fonts</H2>
+
+    <BLOCKQUOTE>
+      <P>To view or change colors and fonts for fields of the Listing, open the <A href=
+      "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog</A> and select the <I>Listing
+      Display</I> node in the Options tree. The Listing Display panel will be displayed as shown
+      below.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/CodeBrowserColors.png" alt="" border="0">
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <P>This panel is divided into the following sections:</P>
+
+      <H3><A name="Font"></A>Font</H3>
+
+      <BLOCKQUOTE>
+        <P>Sets the default font, size and style for all text fields in the listing. The font and
+        size apply to all screen elements. The styles (bold/italic) will be used as the default for
+        each screen element unless individually customized using the <A href="#StyleSetting">Style
+        Settings</A>.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Screen_Elements"></A>Screen Element</H3>
+
+      <BLOCKQUOTE>
+        <P>The <I>Screen Element</I> lists all the customizable items that can be displayed by the
+        Listing. Some of the elements are fields such as the <I>Address</I> field. Others represent
+        the <I>type</I> of information in a field. For example, the operand field may contain a
+        label, scalar, address, or constant. Still others are <I>attributes</I> on the data in the
+        fields. An example of this is label field. A label can be primary or local. Screen elements
+        can be selected in order to change their associated color and font style.</P>
+
+        <P>The table below describes all the Screen Elements and indicates the fields in which they
+        appear.</P>
+
+        <BLOCKQUOTE>
+          <TABLE border="1" height="901" width="918">
+            <TBODY>
+              <TR>
+                <TD align="center" height="22" valign="top" width="183"><B>Screen Element</B></TD>
+
+                <TD align="center" height="22" valign="top" width="324"><B>Description</B></TD>
+
+                <TD align="center" height="22" valign="top" width="260"><B>Field</B></TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Address</TD>
+
+                <TD height="21" valign="top" width="324">Addresses</TD>
+
+                <TD height="21" valign="top" width="260">Address field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Background*</TD>
+
+                <TD height="21" valign="top" width="324">N/A</TD>
+
+                <TD height="21" valign="top" width="260">N/A</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Bad Reference Address</TD>
+
+                <TD height="21" valign="top" width="324">Addresses or labels that are not in
+                memory</TD>
+
+                <TD height="21" valign="top" width="260">Operand field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Bytes</TD>
+
+                <TD height="21" valign="top" width="324">Bytes</TD>
+
+                <TD height="21" valign="top" width="260">Bytes field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, Automatic</TD>
+
+                <TD height="21" valign="top" width="324">System-generated comments</TD>
+
+                <TD height="21" valign="top" width="260">EOL comment field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, EOL</TD>
+
+                <TD height="21" valign="top" width="324">End-of-line comments</TD>
+
+                <TD height="21" valign="top" width="260">EOL comment field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, Plate</TD>
+
+                <TD height="21" valign="top" width="324">Block comments</TD>
+
+                <TD height="21" valign="top" width="260">Plate comment field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, Post</TD>
+
+                <TD height="21" valign="top" width="324">Below-line comments</TD>
+
+                <TD height="21" valign="top" width="260">Post comment field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, Pre</TD>
+
+                <TD height="21" valign="top" width="324">Above-line comments</TD>
+
+                <TD height="21" valign="top" width="260">Pre comment field</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">Comment, Repeatable<BR>
+                </TD>
+
+                <TD valign="top">Repeatable comment at this code-unit that is displayed where there
+                are references to this code unit<BR>
+                </TD>
+
+                <TD valign="top">EOL comment field<BR>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Comment, Referenced Repeatable</TD>
+
+                <TD height="21" valign="top" width="324">Displays repeatable comment defined at
+                code-unit referred to by this code unit</TD>
+
+                <TD height="21" valign="top" width="260">EOL comment field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Constant</TD>
+
+                <TD height="21" valign="top" width="324">Numbers</TD>
+
+                <TD height="21" valign="top" width="260">Operand field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Entry Point</TD>
+
+                <TD height="21" valign="top" width="324">Labels that are at Entry Points in a
+                program</TD>
+
+                <TD height="21" valign="top" width="260">Label field</TD>
+              </TR>
+
+              <TR>
+                <TD height="42" valign="top" width="183">External Reference, Resolved</TD>
+
+                <TD height="42" valign="top" width="324">External addresses or labels</TD>
+
+                <TD height="42" valign="top" width="260">Operand field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Field Name</TD>
+
+                <TD height="21" valign="top" width="324">Name of elements in a structure or
+                union</TD>
+
+                <TD height="21" valign="top" width="260">"Field Name" field</TD>
+              </TR>
+
+              <TR>
+                <TD height="22" valign="top" width="183">Flow Arrow, Active</TD>
+
+                <TD height="22" valign="top" width="324">Flow arrow when cursor <B>is</B> at the
+                source</TD>
+
+                <TD height="22" valign="top" width="260">N/A</TD>
+              </TR>
+
+              <TR>
+                <TD height="22" valign="top" width="183">Flow Arrow, Not Active</TD>
+
+                <TD height="22" valign="top" width="324">Flow arrow when cursor is <B>not</B> at
+                source</TD>
+
+                <TD height="22" valign="top" width="260">N/A</TD>
+              </TR>
+
+              <TR>
+                <TD height="42" valign="top" width="183">Function Name</TD>
+
+                <TD height="42" valign="top" width="324">Function name</TD>
+
+                <TD height="42" valign="top" width="260">Function Signature, Operands</TD>
+              </TR>
+
+              <TR>
+                <TD height="42" valign="top" width="183">Function Parameters</TD>
+
+                <TD height="42" valign="top" width="324">Parameter data types and names</TD>
+
+                <TD height="42" valign="top" width="260">Function Signature field</TD>
+              </TR>
+
+              <TR>
+                <TD height="19" valign="top" width="183">Function Return type</TD>
+
+                <TD height="19" valign="top" width="324">Data Type returned by the function</TD>
+
+                <TD height="19" valign="top" width="260">Function Signature field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Labels, Local</TD>
+
+                <TD height="21" valign="top" width="324">Labels that are local to a function</TD>
+
+                <TD height="21" valign="top" width="260">Label field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Labels, Non-primary</TD>
+
+                <TD height="21" valign="top" width="324">Additional labels at an address</TD>
+
+                <TD height="21" valign="top" width="260">Label field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Labels, Primary</TD>
+
+                <TD height="21" valign="top" width="324">Primary label at an address</TD>
+
+                <TD height="21" valign="top" width="260">Label field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Labels, Unreferenced</TD>
+
+                <TD height="21" valign="top" width="324">Labels at addresses that are not
+                referenced</TD>
+
+                <TD height="21" valign="top" width="260">Label field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Mnemonic</TD>
+
+                <TD height="21" valign="top" width="324">Instruction or Data (Mnemonic)</TD>
+
+                <TD height="21" valign="top" width="260">Mnemonic field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Operands</TD>
+
+                <TD height="21" valign="top" width="324">defaults for items in operand field</TD>
+
+                <TD height="21" valign="top" width="260">Operand field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Registers</TD>
+
+                <TD height="21" valign="top" width="324">Registers</TD>
+
+                <TD height="21" valign="top" width="260">Operand field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Separator</TD>
+
+                <TD height="21" valign="top" width="324">Separator line (...) between address
+                gaps</TD>
+
+                <TD height="21" valign="top" width="260">Separator field</TD>
+              </TR>
+
+              <TR>
+                <TD height="42" valign="top" width="183">Variable</TD>
+
+                <TD height="42" valign="top" width="324">Function variables</TD>
+
+                <TD height="42" valign="top" width="260">Variable Type, Variable Location, Variable
+                Name, Variable Comment</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Version Track</TD>
+
+                <TD height="21" valign="top" width="324">Version tracking information</TD>
+
+                <TD height="21" valign="top" width="260">Version tracker field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Xref</TD>
+
+                <TD height="21" valign="top" width="324">Cross reference addresses</TD>
+
+                <TD height="21" valign="top" width="260">Xref field</TD>
+              </TR>
+
+              <TR>
+                <TD height="21" valign="top" width="183">Xref, Offcut</TD>
+
+                <TD height="21" valign="top" width="324">Offcut cross reference addresses</TD>
+
+                <TD height="21" valign="top" width="260">Offcut references Xref field</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <P>*The Background is a special case. Select this element to set the background color for
+        the Listing.</P>
+      </BLOCKQUOTE>
+
+      <H3>Color</H3>
+
+      <BLOCKQUOTE>
+        <P>The color for the selected screen element is displayed in this section.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="StyleSetting"></A>Style Settings</H3>
+
+      <BLOCKQUOTE>
+        <P>By default, all screen elements use the style settings set in the <A href=
+        "#Font">Font</A> section. To customize individual screen elements, select the screen
+        element from the Screen Elements section and select the <I>custom</I> checkbox in the Style
+        Settings section. This will enable the <I>bold</I> and <I>italics</I> checkboxes which can
+        be used to customize the style of the selected screen element.</P>
+      </BLOCKQUOTE>
+
+      <H3>Swatches/HSB/RGB</H3>
+
+      <BLOCKQUOTE>
+        <P>These tabbed components provide a variety of ways to choose a color for the selected
+        screen element.</P>
+
+        <H4>Swatches</H4>
+
+        <BLOCKQUOTE>
+          <P>Click on the desired color-square to set the color of the currently selected screen
+          element.</P>
+        </BLOCKQUOTE>
+
+        <H4>HSB</H4>
+
+        <BLOCKQUOTE>
+          <P>This tab allows colors to be chosen using the hue, saturation, and brightness scale.
+          The radio button selects which scale will be controlled by the slider bar. Use the slider
+          bar to choose a value for the selected scale. This causes the large color box to display
+          all possible colors with that selected value. Click in the box to choose a color.</P>
+        </BLOCKQUOTE>
+
+        <H4>RGB</H4>
+
+        <BLOCKQUOTE>
+          <P>This tab allows colors to be chosen by entering a red, green, and blue value.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Preview</H3>
+
+      <BLOCKQUOTE>
+        <P>The preview tab displays some sample code using the current set of screen element colors
+        and styles.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Listing_Fields"></A> Fields, Highlights, &amp; Selections</H2>
+
+    <BLOCKQUOTE>
+      <P>There are other customizable options in addition to color and font. To view or change
+      these options, open the <A href="help/topics/Tool/ToolOptions_Dialog.htm">Tool Options
+      Dialog</A> and then open the <I>Listing Fields</I> node in the Options tree. Next, select the
+      appropriate field within the <I>Listing Fields</I> node to view or change the options for
+      that field. The available <I>Listing Field</I> options are:</P>
+
+      <H3><A name="Address_Field"></A>Address Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Show Block Name -</B>This option prepends the memory block name to the address in the
+        address field. For example, 0x10008000 might become .text:0x10008000.<BR>
+        </P>
+
+        <P><B>Fully Pad With Leading Zeros -</B> This option causes all addresses to be displayed
+        with leading zeros to make the address string length the same as the length of the largest
+        address in that address space.&nbsp; For example, in a 32 bit address space program the
+        address 0x100 will be displayed as 00000100.<BR>
+        </P>
+
+        <P><B>Minimum Number of Address Digits -</B>This option is used to specify the minimum
+        number of digits that should be used to display the address.&nbsp; The address string will
+        be displayed with leading zeros to make the length contain at least this number of
+        digits.&nbsp; If the largest address in the address space has fewer significant digits than
+        this minimum, then the address will only be padded to the size of the largest
+        address.&nbsp; If the address has more significant (non-zero) digits than the minimum, it
+        will be displayed with more digits than the minimum, but will contain no leading
+        zeros.&nbsp; This field is disabled and has no effect if the previous "Fully Pad With
+        Leading Zeros" option&nbsp; is selected.<BR>
+        </P>
+
+        <P><B>Justification -</B>This option is used to align the address text to either the left
+        or right side of the field.&nbsp; If the text is longer than the space allocated for it in
+        the field, the text is clipped to the opposite side of the justification.&nbsp;<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Array_Options"></A>Array Options</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Group Array Elements</B> - Determines whether or not multiple array elements should
+        be shown on the same line in the browser. If checked, this option will use the <B>Array</B>
+        format, which typically only shows the address, the array index, and the array values.
+        Note: this only affects arrays with primitive elements. Complex arrays will still only show
+        one element per line.</P>
+
+        <P><B>Elements Per Line -</B> The number of array elements to show on a line. This option
+        in only enabled if the <B>Group Array Elements</B> option is selected.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Bytes_Field"></A>Bytes Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Byte Group Size</B> - Bytes in the byte field can be displayed in groups. By default
+        each bytes are displayed in groups of 1. Groups are separated by delimiters. Use this
+        setting to change the number of bytes displayed in a group.</P>
+
+        <P><B>Delimiter -</B> The string to use to separate groups. Normally, this is set to " " (a
+        single space).</P>
+
+        <P><B>Display in Upper Case -</B> Select this check box if the hex digits of the bytes
+        should be displayed as ABCDEF instead of abcdef.</P>
+
+        <P><B>Maximum Lines to Display -</B> Specifies the maximum number of lines to use to
+        display the bytes. Any bytes that do not fit into this number of lines will not be
+        displayed.</P>
+
+        <P><B>Reverse Instruction Byte Ordering</B> - The bytes will be displayed in reverse order
+        for Instruction Code Units. Note: this applies to instructions only. All other code units
+        are unaffected.</P>
+        
+        <P><B>Display Structure Alignment Bytes</B> - Internal structure alignment bytes will
+        be displayed with the bytes of the preceding component.  These bytes will be colored 
+        differently than the bytes directly associated with the component.
+        Note: this applies to structure data only. All other code units are unaffected.</P>
+        
+      </BLOCKQUOTE>
+
+      <H3><A name="Cursor_Text_Highlight"></A><B>Cursor Text Highlight</B></H3>
+
+      <BLOCKQUOTE>
+        <P>Use the following options to customize <A href=
+        "CodeBrowser.htm#cursorTextHighlight">Cursor Text Highlighting</A>:</P>
+
+        <P><B>Alternate Highlight Color -</B> Sets the alternate color used for cursor text
+        highlighting. Double click on the color bar to bring up a color chooser dialog.</P>
+
+        <P><B>Enabled -</B> Select this checkbox to enable cursor text highlighting.</P>
+
+        <P><B>Highlight Color -</B> Sets the color used for cursor text highlighting. Double click
+        on the color bar to bring up a color chooser dialog.<BR>
+         <B><BR>
+         Mouse Button To Activate</B> - Use the combo box to select which mouse button will be used
+        to highlight text (Left, Right, Middle).</P>
+
+        <P><B>Scope Register Operand<A name="ScopeRegisterOperand"></A></B> - Check this box to
+        enable <A href="CodeBrowser.htm#Scope">Scoped highlighting</A> of registers within the
+        operand field. If turned off, cursor highlighted text within an operand field is treated
+        the same as text in other fields.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="EOL_Comments_Field"></A>EOL Comments Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The EOL Comments field displays the end-of-line comment at this address. If there is no
+        EOL comment, it displays the repeatable comment. If there is no repeatable comment, it
+        displays the repeatable comments from all referenced addresses. If there aren't any
+        referenced repeatable comments, it displays an automatic comment if it can.</P>
+
+        <P><B>Always Show the Automatic Comment -</B> Normally automatic comments are not shown if
+        there is an EOL comment, repeatable comment, or referenced repeatable comment. By selecting
+        this option, the automatic comment will be shown even if there is an EOL comment,
+        repeatable comment, or referenced repeatable comment.</P>
+
+        <P><B>Always Show the Referenced Repeatable Comment -</B> Normally referenced repeatable
+        comments are not shown if there is an EOL comment or repeatable comment. By selecting this
+        option, the referenced repeatable comment will be shown even if there is an EOL comment or
+        repeatable comment.</P>
+
+        <P><B>Always Show the Repeatable Comment -</B> Normally repeatable comments are not shown
+        if there is an EOL comment. By selecting this option, the repeatable comment will be shown
+        even if there is an EOL comment.</P>
+
+        <P><B>Enable Word Wrapping -</B> If this option is not set, each comment line is displayed
+        on a line by itself. By turning on word-wrapping, comment lines are displayed in paragraph
+        form.</P>
+
+        <P><B>Maximum Lines To Display -</B> The maximum number of lines to display for a single
+        comment. Comments that cannot be displayed within this number of lines will be
+        truncated.</P>
+
+        <P><B>Prepend the Address to Each Referenced Comment -</B> Each referenced repeatable
+        comment will display an annotated address before the comment. This address can be double
+        clicked to go to the address where that referenced repeatable comment is defined.</P>
+
+        <P><B>Show Semicolon at Start of Each Line -</B> Begins each line of an end-of-line comment
+        with a semi-colon.</P>
+        
+        <P><B>Use Abbreviated Automatic Comments -</B> When possible, the auto comment will 
+        be made as small as possible.  For example, when showing an offcut string reference, 
+        only the portion of the string that is used will be displayed.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Format_Code"></A>Format Code</H3>
+
+      <BLOCKQUOTE>
+        <P>Specific formatting of the listing is controlled via the <I>Format Code</I> options
+        panel. The following table describes the effect of each format option. The options for
+        displaying comments are listed in the order in which the options are processed when
+        determining what formatting comments are to be displayed. (The order below is based on the
+        assumption that the order of the comment fields in the Code Browser are
+        <B><I>Plate</I></B>, <B><I>Pre</I></B>, and <I><B>Post</B></I>.)</P>
+
+        <TABLE border="1" cellpadding="0" cellspacing="0" width="90%">
+          <TBODY>
+            <TR>
+              <TH bgcolor="#c0c0c0" valign="top" width="24%"><B>Option</B></TH>
+
+              <TH align="center" bgcolor="#c0c0c0" valign="top" width="17%">Field Type</TH>
+
+              <TH bgcolor="#c0c0c0" valign="top" width="50%">Description</TH>
+            </TR>
+            <TR>
+              <TD valign="top" width="24%"><B>Show External Entry Plates</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display an "EXTERNAL" plate comment at each label which
+              is marked as an Entry Point.</TD>
+            </TR>
+            
+
+            <TR>
+              <TD valign="top" width="24%"><B>Show Function Plates</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display a "FUNCTION" plate comment at the entry point of
+              each Function.</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" width="24%"><B>Show Subroutine Plates</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display a "SUBROUTINE" plate comment at each label which
+              has a call reference to it.</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" width="24%"><B>Show Transition Plates</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display an empty plate comment when transitioning from
+              between Instructions and Data.</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" width="24%"><B>Flag Function Entry</B></TD>
+
+              <TD align="center" valign="top" width="17%">Pre Comment</TD>
+
+              <TD valign="top" width="50%">
+                Display the pre comment: 
+<PRE>
+||||||||| FUNCTION |||||||||
+</PRE>
+                at the entry point of each Function.
+              </TD>
+            </TR>
+
+           <TR>
+              <TD valign="top" width="24%"><B>Flag Function Exits</B></TD>
+
+              <TD align="center" valign="top" width="17%">Post Comment</TD>
+
+              <TD valign="top" width="50%">
+                Display the post comment: 
+<PRE>
+********** <I>MyFunction</I> Exit **********
+</PRE>
+                at the end of each Function, where <I>MyFunction</I> is the name of the Function.
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD valign="top" width="24%"><B>Flag Jumps and Returns</B></TD>
+
+              <TD align="center" valign="top" width="17%">Post Comment</TD>
+
+              <TD valign="top" width="50%">Display a post comment "- - -" line separator following
+              all unconditional jumps and returns.</TD>
+            </TR>
+            
+            <TR>
+              <TD valign="top" width="24%"><B>Flag Subroutine Entry</B></TD>
+
+              <TD align="center" valign="top" width="17%">Pre Comment</TD>
+
+              <TD valign="top" width="50%">
+                Display the pre comment: 
+<PRE>
+|||||||| SUBROUTINE ||||||||
+</PRE>
+                at each label which has a call reference to it.
+              </TD>
+            </TR>
+
+            <TR>
+              <TD bgcolor="#CC99FF" valign="top" width="24%"><BR>
+              </TD>
+
+              <TD align="center" bgcolor="#CC99FF" valign="top" width="17%"><BR>
+              </TD>
+
+              <TD bgcolor="#CC99FF" valign="top" width="50%"><BR>
+              </TD>
+            </TR>
+
+		    <TR>
+              <TD valign="top" width="24%"><B>Lines After Basic Blocks</B></TD>
+
+              <TD align="center" valign="top" width="17%">Post Comment</TD>
+
+              <TD valign="top" width="50%">Display the specified number of blank lines following
+              all Basic Blocks of instructions.</TD>
+            </TR>
+            
+            <TR>
+              <TD valign="top" width="24%"><B>Lines Before Functions</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display the specified number of blank lines before each
+              Function entry point. (Has precedence over <B>Lines Before Plates</B>.)</TD>
+            </TR>
+
+		    <TR>
+              <TD valign="top" width="24%"><B>Lines Before Labels</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display the specified number of blank lines before each
+              labeled code unit (instruction or data).</TD>
+            </TR>
+            
+            <TR>
+              <TD valign="top" width="24%"><B>Lines Before Plates</B></TD>
+
+              <TD align="center" valign="top" width="17%">Plate Comment</TD>
+
+              <TD valign="top" width="50%">Display the specified number of blank lines before each
+              plate comment inserted during formatting. (Has precedence over <B>Lines Before
+              Labels</B>.)</TD>
+            </TR>
+
+          </TBODY>
+        </TABLE>
+
+        <P><IMG src="../../shared/note.png" border="0">If comments already exist in the listing,
+        then the options to show the comments fields for formatting are ignored. The options that
+        specify a number of blank lines are used regardless of whether comments exist.</P>
+
+        <P><IMG src="../../shared/note.png" border="0">Applying the format options does not alter
+        the program.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Function_Pointers"></A>Function Pointers</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Display Function Header for External Function Pointers -</B> Select this option to show 
+        the function prototype header within the listing for any pointer which has an
+        External Function reference (enabled by default). </P>
+        <P><B>Display Function Header for Non-External Function Pointers -</B> Select this option to show 
+        the function prototype header within the listing for any pointer which has a
+        memory reference to a Function (disabled by default). </P>
+      </BLOCKQUOTE>
+      
+      <H3>Function Signature Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Display Namespace -</B> Select this option to include 
+        the function namespace as a prefix to the name of the function 
+        within the displayed function prototype (disabled by default). </P>
+      </BLOCKQUOTE>
+      
+      <H3><A name="Labels_Field"></A>Labels Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Display Function Label -</B> Select this option to show function labels. If you turn
+        this off, the function name will only appear in the function signature. If it's on, the
+        function name will also appear as a label below the function header.</P>
+
+        <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
+        labels that are not in the current Function's namespace.&nbsp; Currently, this would only
+        affect a label that is not global, but is in a namespace other than the function that
+        contains the label's address.<BR>
+        </P>
+
+        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
+        labels that are in the Function's namespace.&nbsp;<BR>
+        </P>
+
+        <P><SPAN style="font-weight: bold;">Use Local Namespace Override</SPAN> - Select this
+        option to show a fixed prefix for local labels instead of the function's name.&nbsp; This
+        option is only available if the "Display Local Namespace" option is on.&nbsp; The text box
+        contains the prefix to use for local labels.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Mnemonic_Field"></A>Mnemonic Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Show Data Mutability -</B> Option to display the mutability data setting associated
+        with each data code unit (e.g., constant, volatile).</P>
+        <P><B>Underline Fields With Non-primary References -</B> Option to underline mnemonic
+        fields that have hidden (non-primary) references. This provides a quick visual indication
+        that the field has references and that you can double-click the field to go to the
+        references.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Operands_Field"></A>Operands Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Add Space After Separator -</B> Option to add an additional space after the operand
+        separator ","<BR>
+        </P>
+
+        <P><B>Always Show Primary Reference -</B> Option to force the display of the primary
+        reference on all operands.&nbsp; If a suitable sub-operand replacement can not be
+        identified the primary reference will be appended to the operand preceded by a "=&gt;"
+        prefix.<BR>
+        </P>
+        
+    	<P><B>Display Abbreviated Deafult Label Names -</B> Uses a shortened form of the 
+			label name for dynamic String data types in the display of 
+			operand references (e.g., STR_01234567).
+    	</P>
+
+        <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
+        references that are not in the current Function's body.&nbsp; Currently, this would only
+        affect a label that is not global, but is in a function other than the function that
+        contains the current instruction.<BR>
+        </P>
+
+        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
+        labels that are in the Function's body.&nbsp;<BR>
+        </P>
+
+        <P><SPAN style="font-weight: bold;">Use Local Namespace Override</SPAN> - Select this
+        option to show a fixed prefix for local labels instead of the function's name.&nbsp; This
+        option is only available if the "Display Local Namespace" option is on.&nbsp; The text box
+        contains the prefix to use for local labels.</P>
+
+        <P><B>Enable Word Wrapping -</B> Option to wrap strings in operand lines that are too long
+        to fit in the operand field. Note that that word wrapping can only occur where spaces exist
+        in the string.<BR>
+        </P>
+        
+        <P><B>Follow Read or Indirect Pointer References -</B> Option to follow referenced pointers, 
+        for read or indirect reference types, to show pointer's referenced symbol instead of 
+        symbol at pointer.  When applied the resulting operand label will be preceded by a 
+        "<IMG src="../../shared/arrow.gif">".<BR>
+        </P>
+
+        <P><B>Include Scalar Reference Adjustment -</B> Option to include a scalar expression which
+        will indicate the relationship between a replaced scalar and the associated reference
+        offset when the offset does not match the scalar value.<BR>
+        </P>
+
+        <P><B>Markup Inferred Variable References -</B> Option to markup instruction operands where
+        references to stack and register variables can be inferred. &nbsp;This corresponding
+        stack/register markup option must also be enabled for this option to have an effect.</P>
+
+        <P><B>Markup Register Variable References -</B> Option to markup instruction operands where
+        explicit register references exist. &nbsp; When this option is enabled, elements may be
+        replaced&nbsp;within instruction operands to reflect an association with a register
+        parameter/variable if one can be determined. &nbsp; Inferred register references will be
+        included if the <I>Markup Inferred Variable References</I> is also enabled.</P>
+
+        <P><B>Markup Stack Variable References -&nbsp;</B> Option to markup instruction operands
+        where explicit stack references exist. &nbsp; When this option is enabled, elements may be
+        replaced within instruction operands to reflect an association with a stack
+        parameter/variable if one can be determined. &nbsp; Inferred stack references will be
+        included if the <I>Markup Inferred Variable References</I> is also enabled.</P>
+
+		<P><B>Maximum Length of String in Default Labels -</B>
+				Sets the maximumn number of 
+			characters from a String to include in dynamic String labels in operand references
+		</p>
+
+
+        <P><B>Maximum Lines To Display -</B> The maximum number of lines used to display a string
+        in an operand. Strings that cannot be displayed within this number of lines will be
+        truncated.</P>
+
+        <P><B>Show Block Names</B> - This option prepends the memory block name to labels in the
+        operand field. For example, the instruction "<FONT face="Courier">call printf</FONT>"
+        becomes "<FONT face="Courier">call .text:printf</FONT>".</P>
+
+		<P><B>Show Offcut Information -</B> Shows additional information for 
+		<A HREF="help/topics/ReferencesPlugin/References_from.htm#Offcut_References">offcut references</A>, 
+		such as the original address, followed by the offset.  For example, the 
+		string "foo_bar", with an offcut reference to "bar" would look like:<br>
+			<BLOCKQUOTE>
+				<TT>
+					s_bar_12345678+4
+				</TT>
+			</BLOCKQUOTE>
+		<P>
+		with this option on, and with it off would look like:
+			<BLOCKQUOTE>
+				<TT>
+					s_bar
+				</TT>
+			</BLOCKQUOTE>
+		</P>
+
+        <P><B>Underline References -</B> Option to underline operand references so that you can
+        quickly identify those operands that have references and double-click to go the reference.
+        Select one of the following choices:</P>
+
+        <UL>
+          <LI><I>Hidden</I> - Underline the operand if it has a non-primary reference (i.e. there
+          is no visible evidence that the operand has a reference.)</LI>
+
+          <LI><I>All</I> - Underline the operand if it has any references.</LI>
+
+          <LI><I>None</I> - Do not display any underlines.</LI>
+        </UL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png" border="0"> You can change the color of the underline
+          from the <I><A href="#Listing_Display">Listing Display</A></I> options panel; select
+          <I>Underline</I> from the <I>Screen Element</I> list.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="Pcode_Field"></A>PCode Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Display Raw <A href=
+        "help/topics/LanguageProviderPlugin/Languages.htm#CodeBrowserPlugin_PCode">PCode</A></B> -
+        Option to display the raw PCode directly in the Code Browser (i.e., detailed varnode 
+        specifications are provided).</P>
+
+        <P><B>Maximum Lines to Display -</B> The maximum number of lines used to display PCode. Any
+        additional lines of PCode will not be shown.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Selection_Colors"></A>Selection Colors</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Difference Color</B> - Sets the color used to highlight differences between two
+        programs.</P>
+
+        <P><B>Highlight Color</B> - Sets the Browser <A href=
+        "help/topics/SetHighlightPlugin/Highlighting.htm">Highlight</A> color.</P>
+
+        <P><B>Selection Color</B> - Set the Browser <A href=
+        "CodeBrowser.htm#Selection">Selection</A> color.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="XREFs_Field"></A>XREFs Field</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Delimiter -</B> Delimiter string to use for separating multiple xrefs.</P>
+
+        <P><B>Display Local Block -</B> Prepends the name of the memory block containing the XREF
+        source address to each XREF.</P>
+
+        <P><B>Maximum Number of XREFs To Display -</B> The maximum number of lines used to display
+        XREFs. Additional XREFs will not be displayed.</P>
+
+        <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
+        XREFs that are not from an instruction within the current Function's body.&nbsp; Currently,
+        this would only affect XREFs that originate in some other function.<BR>
+        </P>
+
+        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
+        XREFs that are from the current Function.<BR>
+        </P>
+
+        <P><SPAN style="font-weight: bold;">Use Local Namespace Override</SPAN> - Select this
+        option to show a fixed prefix for local XREFs instead of the function's name.&nbsp; This
+        option is only available if the "Display Local Namespace" option is on.&nbsp; The text box
+        contains the prefix to use for local XREFs.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Listing_Popups"></A>Popups</H2>
+
+    <BLOCKQUOTE>
+      <P>Popups are transient windows used to display additional information about the item over
+      which the mouse is hovering. There are options for enabling various types of popups and for
+      resizing the popup window.</P>
+
+      <H3><B>Listing Popups</B></H3>
+
+      <BLOCKQUOTE>
+        <P>To view or change the available popups, open the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog</A> and then select the
+        <I>Listing Popups</I> node in the Options tree.</P>
+
+        <P><B>Reference Code Viewer -</B> Shows the listing at the referenced location as a
+        popup.</P>
+
+        <P><B>Truncated Text Display -</B> Displays truncated text as a popup.</P>
+      </BLOCKQUOTE>
+
+      <H3><B>Reference Code Viewer</B></H3>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To view or change the size of popup windows, open the <A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog</A> and then open the
+        <I>Listing Popups</I> node in the Options tree. Next select the <I>Reference Code
+        Viewer</I> node.</P>
+
+        <P><B>Dialog Height -</B> The height of the popups in pixels.</P>
+
+        <P><B>Dialog Width -</B> The width of the popups in pixels.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

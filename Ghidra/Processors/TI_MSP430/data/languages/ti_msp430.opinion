@@ -1,0 +1,11 @@
+<opinions>
+	<constraint loader="MS Common Object File Format (COFF)" compilerSpecID="default">
+        <constraint primary="160"  processor="TI_MSP430" endian="little" size="16" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="105"  processor="TI_MSP430" endian="little" size="16" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="105"  processor="TI_MSP430X" endian="little" size="32" />
+    </constraint>
+</opinions>

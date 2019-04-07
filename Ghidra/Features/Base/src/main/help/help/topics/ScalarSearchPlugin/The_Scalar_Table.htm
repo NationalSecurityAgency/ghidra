@@ -1,0 +1,167 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search for Scalars</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="ScalarSearchPlugin"></A><A name="Scalar_Search"></A>Search for Scalars</H1>
+
+    <P>Search for Scalars locates scalar operands and values in the current program. &nbsp;The search is
+    based on a value entered as hex or decimal numbers. The scalar can be in
+    instructions, data, or structures.</P>
+
+    <H2>To Search for Scalars:</H2>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>From the Tool, select <B>Search</B><IMG border="0" src="../../shared/arrow.gif"> <B>For
+        Scalars...</B></LI>
+
+        <LI>Select "Scalars in Range:" or "Specific Scalar:".</LI>
+
+        <LI>Once the search type is selected, enter scalars into the value fields in either decimal
+        or hexadecimal (0x...) notation.	</LI>
+
+        <LI>Choose "Search" to begin the search.</LI>
+      </OL>
+      
+      	<BLOCKQUOTE>
+      		<P><IMG src="../../shared/tip.png" border="0"> Once a value is entered in a 
+      			text field, <TT><B>Ctrl+M</B></TT> toggles the value display between the 
+      			decimal and hex 	representation of the value in that field.</P>
+        </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/SearchAllScalarsDialog.png"></P>
+    </BLOCKQUOTE>
+
+    <H2>Search Options</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Search_For"></A>Search Type</H3>
+
+      <BLOCKQUOTE>
+        <H4>Scalars in Range</H4>
+
+              <BLOCKQUOTE>
+          		<P>Search the program for all scalars within the given range.</P>
+              </BLOCKQUOTE>
+
+        <H4>Specific Scalar</H4>
+
+              <BLOCKQUOTE>
+          		<P>Search the program for all instances of one scalar value.</P>
+              </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+        <H3><A name="Scalar_Selection_Scope"></A>Selection Scope</H3>
+
+      <BLOCKQUOTE>
+      
+        <H4>Search All</H4>
+              <BLOCKQUOTE>
+        				<P>The search will search all memory in the program.</P>
+              </BLOCKQUOTE>
+
+        <H4>Search Selection</H4>        
+              <BLOCKQUOTE>
+        			<P>The search will be restricted to the current selection in the tool. This 
+        			option is only enabled if there is a selection in the tool.</P>
+              </BLOCKQUOTE>
+
+      </BLOCKQUOTE>
+
+      <H2><A name="Scalar_Table"></A>Scalar Table</H2>
+
+      <BLOCKQUOTE>
+        <P>After the user begins a scalar search, the plugin will display a results table to the
+        user. The table shows the address of the scalar, a preview of the item at that address, the
+        scalar in Hex, and the scalar in signed decimal as shown in the image below: </P>
+
+        <P align="center"><IMG alt="" src="images/ScalarWindow.png"></P>
+
+        <P>Each element of the table is a scalar found in either data or an instruction in the
+        program.  Any new code units containing scalars added to the program will
+        automatically appear in the table.</P>
+
+        <P>To bring the <B>Scalar Table</B>, choose <B>Window</B><IMG src="../../shared/arrow.gif" border=
+        "0"><B>Scalar Table</B> from the tool's menu. This table can be docked in the tool 
+        if desired.</P>
+
+       <P>The Scalar Table contains the following default columns:</P>
+       
+       		<UL>
+       			<LI><B>Location</B> - displays the address of the code unit containing the scalar.</LI>
+       			<LI><B>Preview</B> - displays the code unit containing the scalar.</LI>
+       			<LI><B>Hex</B> - displays the scalar as a hex number.</LI>
+       			<LI><B>Decimal (Signed)</B> - displays the scalar as a decimal number.</LI>
+       			<LI><B>Function Name</B> - displays the name of the function containing the scalar.</LI>
+       			<LI><B>Decimal (Unsigned)</B> - displays the scalar as a decimal number (this 
+       				column is hidden by default).</LI>
+       		</UL>
+
+      </BLOCKQUOTE>
+
+      <H2><A name="Filter_Scalars"></A>Scalar Table Filters</H2>
+
+      <BLOCKQUOTE>
+        <P align="left">The scalar table has the following 
+        <A HREF="help/topics/Trees/GhidraTreeFilter.html">filters</A> at the bottom of the table:</P>
+
+        <OL>
+          <LI><B>Text Filter</B> - allows you to filter based on any text in the table.</LI>
+          <LI><B>Range Filter</B> - allows you to filter on a range of scalars <B>based 
+                 upon their signed value</B>.</LI>
+          <LI><B>Column Filter</B> - allows you to filter on specific column values.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+
+	
+	<H2>Actions</H2>
+
+	
+      <BLOCKQUOTE>
+		<H3><A NAME="Make_Selection"></A>Make Selection 
+		<IMG border="0" src="images/text_align_justify.png"></H3>
+		
+			<BLOCKQUOTE>
+				<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Make_Selection">
+	    				Make Selection</A></I>
+	    			</P>
+	    		</BLOCKQUOTE>
+	
+	    <H3>Selection Navigation <IMG border="0" src="images/locationIn.gif" alt=""></H3>
+	    
+	    		<BLOCKQUOTE>
+	    			<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Selection_Navigation">
+	    				Selection Navigation</A></I>
+	    			</P>
+	    		</BLOCKQUOTE>
+	    		
+	    	<H3>Remove Items <IMG border="0" src="images/table_delete.png" alt=""></H3>
+	    
+	    		<BLOCKQUOTE>
+	    			<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Remove_Items">
+	    				Remove Items</A></I>
+	    			</P>
+	    		</BLOCKQUOTE>
+    
+     </BLOCKQUOTE>
+    
+    
+
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>ScalarTablePlugin</I></P>
+  </BODY>
+</HTML>

@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="Java Class File" compilerSpecID="default">
+        <constraint	processor="JVM"     endian="big" size="32" />
+    </constraint>
+</opinions>

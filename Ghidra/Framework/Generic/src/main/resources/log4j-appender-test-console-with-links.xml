@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	
+<!-- 
+	This produces a format for log messages that, when interpreted in the 
+	Eclipse console, causes Eclipse to display hyperlinks for each message.
+ 	
+ 	Note: You MUST include "packages='log'" as an attribute to the 
+ 	top-level 'Configuration' tag in the log4j configuration for this to work. This
+ 	is because the conversion key "%hl" is defined in Log4jDevelopmentPatternConverter.
+ -->
+<Console 	
+	name="console" 
+	target="SYSTEM_OUT"> 
+	<PatternLayout pattern="%d{HH:mm:ss} %-5p %m %ex %hl %n"/> 
+</Console>
+

@@ -1,0 +1,13 @@
+expression.input###1#@define FOO foo
+#@define BAR bar
+#@define BAZ baz
+#@if FOO == "foo"
+true
+#@endif
+#@if FOO == "foo" && BAR == "bar"
+true
+#@endif
+#@if !(FOO == "bar" || BAR != "bar")
+true
+#@endif
+

@@ -1,0 +1,8 @@
+# SLA specification file for PA-RISC 32 bit big endian
+
+@define ENDIAN "big"
+@define BITS "32"
+
+@include "pa-risc.sinc"
+@include "pa-riscInstructions.sinc"
+

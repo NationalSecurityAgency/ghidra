@@ -1,0 +1,7 @@
+
+@define ENDIAN "big"
+@define VERSION_5 ""
+@define VERSION_5E ""
+
+@include "ARM.sinc"
+

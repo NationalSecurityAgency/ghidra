@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:TI_MSP430X:LE:32:default" value="PLATINUM"/>
+  </properties>
+
+  <programcounter register="PC"/>
+
+  <context_data>
+    <context_set space="RAM" first="0x0000" last="0xFFFF">
+      <set name="ctx_isHi" val="1" description="1 instruction starts > 64K"/>
+    </context_set>
+  </context_data>
+  <volatile outputop="ioWrite" inputop="ioRead">
+    <range space="RAM" first="0x18" last="0x3F"/>         <!-- Digital I/O -->
+    <range space="RAM" first="0x50" last="0x5f"/>
+    <range space="RAM" first="0x70" last="0x7F"/>         <!-- USART -->
+    <range space="RAM" first="0x118" last="0x13f"/>
+    <range space="RAM" first="0x160" last="0x19f"/>       <!-- timers -->
+    <range space="RAM" first="0x1e0" last="0x1ff"/>       <!-- DMA -->
+  </volatile>
+
+
+  <default_symbols>
+		<!-- SFR Registers -->
+			<symbol name="IE1"  address="RAM:0000" entry="false"/>
+			<symbol name="IFG1" address="RAM:0002" entry="false"/>
+			<symbol name="ME1"  address="RAM:0004" entry="false"/>
+			<symbol name="IE2"  address="RAM:0001" entry="false"/>
+			<symbol name="IFG2" address="RAM:0003" entry="false"/>
+			<symbol name="ME2"  address="RAM:0005" entry="false"/>
+		<!-- Basic Clock Module Registers -->
+			<symbol name="DCOCTL" address="RAM:0056" entry="false"/>
+			<symbol name="BCSCTL1" address="RAM:0057" entry="false"/>
+			<symbol name="BCSCTL2" address="RAM:0058" entry="false"/>
+		<!-- Flash Memory Registers -->
+			<symbol name="FCTL1" address="RAM:0128" entry="false"/>
+			<symbol name="FCTL2" address="RAM:012A" entry="false"/>
+			<symbol name="FCTL3" address="RAM:012C" entry="false"/>
+		<!-- SVS Registers -->			
+			<symbol name="SVSCTL" address="RAM:0050" entry="false"/>
+		<!-- Hardware Multiply Registers -->
+			<symbol name="MPY"    address="RAM:0130" entry="false"/>
+			<symbol name="MPYS"   address="RAM:0132" entry="false"/>
+			<symbol name="MAC"    address="RAM:0134" entry="false"/>
+			<symbol name="MACS"   address="RAM:0136" entry="false"/>
+			<symbol name="OP2"    address="RAM:0138" entry="false"/>
+			<symbol name="RESLO"  address="RAM:013A" entry="false"/>
+			<symbol name="RESHI"  address="RAM:013C" entry="false"/>
+			<symbol name="SUMEXT" address="RAM:013E" entry="false"/>
+		<!-- DMA Registers -->			
+			<symbol name="DMACTL0" address="RAM:0122" entry="false"/>
+			<symbol name="DMACTL1" address="RAM:0124" entry="false"/>
+			<symbol name="DMA0CTL" address="RAM:01E0" entry="false"/>
+			<symbol name="DMA0SA"  address="RAM:01E2" entry="false"/>
+			<symbol name="DMA0DA"  address="RAM:01E4" entry="false"/>
+			<symbol name="DMA0SZ"  address="RAM:01E6" entry="false"/>
+			<symbol name="DMA1CTL" address="RAM:01E8" entry="false"/>
+			<symbol name="DMA1SA"  address="RAM:01EA" entry="false"/>
+			<symbol name="DMA1DA"  address="RAM:01EC" entry="false"/>
+			<symbol name="DMA1SZ"  address="RAM:01EE" entry="false"/>
+			<symbol name="DMA2CTL" address="RAM:01F0" entry="false"/>
+			<symbol name="DMA2SA"  address="RAM:01F2" entry="false"/>
+			<symbol name="DMA2DA"  address="RAM:01F4" entry="false"/>
+			<symbol name="DMA2SZ"  address="RAM:01F6" entry="false"/>
+		<!-- Digital I/O Registers -->
+			<!-- P1 -->
+			<symbol name="P1IN"   address="RAM:0020" entry="false"/>
+			<symbol name="P1OUT"  address="RAM:0021" entry="false"/>
+			<symbol name="P1DIR"  address="RAM:0022" entry="false"/>
+			<symbol name="P1IFG"  address="RAM:0023" entry="false"/>
+			<symbol name="P1IES"  address="RAM:0024" entry="false"/>
+			<symbol name="P1IE"   address="RAM:0025" entry="false"/>
+			<symbol name="P1SEL"  address="RAM:0026" entry="false"/>
+			<!-- P2 -->
+			<symbol name="P2IN"   address="RAM:0028" entry="false"/>
+			<symbol name="P2OUT"  address="RAM:0029" entry="false"/>
+			<symbol name="P2DIR"  address="RAM:002A" entry="false"/>
+			<symbol name="P2IFG"  address="RAM:002B" entry="false"/>
+			<symbol name="P2IES"  address="RAM:002C" entry="false"/>
+			<symbol name="P2IE"   address="RAM:002D" entry="false"/>
+			<symbol name="P2SEL"  address="RAM:002E" entry="false"/>
+			<!-- P3 -->
+			<symbol name="P3IN"   address="RAM:0018" entry="false"/>
+			<symbol name="P3OUT"  address="RAM:0019" entry="false"/>
+			<symbol name="P3DIR"  address="RAM:001A" entry="false"/>
+			<symbol name="P3SEL"  address="RAM:001B" entry="false"/>
+			<!-- P4 -->
+			<symbol name="P4IN"   address="RAM:001C" entry="false"/>
+			<symbol name="P4OUT"  address="RAM:001D" entry="false"/>
+			<symbol name="P4DIR"  address="RAM:001E" entry="false"/>
+			<symbol name="P4SEL"  address="RAM:001F" entry="false"/>
+			<!-- P5 -->
+			<symbol name="P5IN"   address="RAM:0030" entry="false"/>
+			<symbol name="P5OUT"  address="RAM:0031" entry="false"/>
+			<symbol name="P5DIR"  address="RAM:0032" entry="false"/>
+			<symbol name="P5SEL"  address="RAM:0033" entry="false"/>
+			<!-- P6 -->
+			<symbol name="P6IN"   address="RAM:0034" entry="false"/>
+			<symbol name="P6OUT"  address="RAM:0035" entry="false"/>
+			<symbol name="P6DIR"  address="RAM:0036" entry="false"/>
+			<symbol name="P6SEL"  address="RAM:0037" entry="false"/>
+		<!-- Watchdog Timer Registers -->
+			<symbol name="WDTCTL"  address="RAM:0120" entry="false"/>
+		<!-- Timer_A Registers -->
+			<symbol name="TACTL"  	address="RAM:0160" entry="false"/>
+			<symbol name="TAR"  	address="RAM:0170" entry="false"/>
+			<symbol name="TACCTL0"  address="RAM:0162" entry="false"/>
+			<symbol name="TACCR0"  	address="RAM:0172" entry="false"/>
+			<symbol name="TACCTL1"  address="RAM:0164" entry="false"/>
+			<symbol name="TACCR1"  	address="RAM:0174" entry="false"/>
+			<symbol name="TACCTL2"  address="RAM:0166" entry="false"/>
+			<symbol name="TACCR2"  	address="RAM:0176" entry="false"/>
+			<symbol name="TAIV"  	address="RAM:012E" entry="false"/>
+		<!-- Timer_B Registers -->
+			<symbol name="TBCTL"  	address="RAM:0180" entry="false"/>
+			<symbol name="TBR"  	address="RAM:0190" entry="false"/>
+			<symbol name="TBCCTL0"  address="RAM:0182" entry="false"/>
+			<symbol name="TBCCR0"  	address="RAM:0192" entry="false"/>
+			<symbol name="TBCCTL1"  address="RAM:0184" entry="false"/>
+			<symbol name="TBCCR1"  	address="RAM:0194" entry="false"/>
+			<symbol name="TBCCTL2"  address="RAM:0186" entry="false"/>
+			<symbol name="TBCCR2"  	address="RAM:0196" entry="false"/>
+			<symbol name="TBCCTL3"  address="RAM:0188" entry="false"/>
+			<symbol name="TBCCR3"  	address="RAM:0198" entry="false"/>
+			<symbol name="TBCCTL4"  address="RAM:018A" entry="false"/>
+			<symbol name="TBCCR4"  	address="RAM:019A" entry="false"/>
+			<symbol name="TBCCTL5"  address="RAM:018C" entry="false"/>
+			<symbol name="TBCCR5"  	address="RAM:019C" entry="false"/>
+			<symbol name="TBCCTL6"  address="RAM:018E" entry="false"/>
+			<symbol name="TBCCR6"  	address="RAM:019E" entry="false"/>
+			<symbol name="TBIV"  	address="RAM:011E" entry="false"/>
+		<!-- USART Registers -->
+			<symbol name="U0CTL"  	address="RAM:0070" entry="false"/>
+			<symbol name="U0TCTL"  	address="RAM:0071" entry="false"/>
+			<symbol name="U0RCTL"  	address="RAM:0072" entry="false"/>
+			<symbol name="U0MCTL"  	address="RAM:0073" entry="false"/>
+			<symbol name="U0BR0"  	address="RAM:0074" entry="false"/>
+			<symbol name="U0BR1"  	address="RAM:0075" entry="false"/>
+			<symbol name="U0RXBUF"  address="RAM:0076" entry="false"/>
+			<symbol name="U0TXBUF"  address="RAM:0077" entry="false"/>
+			<symbol name="U1CTL"  	address="RAM:0078" entry="false"/>
+			<symbol name="U1TCTL"  	address="RAM:0079" entry="false"/>
+			<symbol name="U1RCTL"  	address="RAM:007A" entry="false"/>
+			<symbol name="U1MCTL"  	address="RAM:007B" entry="false"/>
+			<symbol name="U1BR0"  	address="RAM:007C" entry="false"/>
+			<symbol name="U1BR1"  	address="RAM:007D" entry="false"/>
+			<symbol name="U1RXBUF"  address="RAM:007E" entry="false"/>
+			<symbol name="U1TXBUF"  address="RAM:007F" entry="false"/>
+		<!-- I2C Registers -->
+			<symbol name="I2CIFG"  	address="RAM:0051" entry="false"/>
+			<symbol name="I2CNDAT" 	address="RAM:0052" entry="false"/>
+			<symbol name="I2COA"  	address="RAM:0118" entry="false"/>
+			<symbol name="I2CSA"  	address="RAM:011A" entry="false"/>
+			<symbol name="I2CIV"  	address="RAM:011C" entry="false"/>
+		<!-- Comparator_A Registers -->
+			<symbol name="CACTL1"  	address="RAM:0059" entry="false"/>
+			<symbol name="CACTL2"  	address="RAM:005A" entry="false"/>
+			<symbol name="CAPD" 	address="RAM:005B" entry="false"/>
+		<!-- Vectors (For general TI MSP430) -->
+			<symbol name="RESET"			address="RAM:FFFE" entry="true" type="code_ptr"/>
+			<symbol name="SYSTEM_NMI"		address="RAM:FFFC" entry="true" type="code_ptr"/>
+			<symbol name="USER_NMI"			address="RAM:FFFA" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFF8"			address="RAM:FFF8" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFF6"			address="RAM:FFF6" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFF4"			address="RAM:FFF4" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFF2"			address="RAM:FFF2" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFF0"			address="RAM:FFF0" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFEE"			address="RAM:FFEE" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFEC"			address="RAM:FFEC" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFEA"			address="RAM:FFEA" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFE8"			address="RAM:FFE8" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFE6"			address="RAM:FFE6" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFE4"			address="RAM:FFE4" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFE2"			address="RAM:FFE2" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFE0"			address="RAM:FFE0" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFDE"			address="RAM:FFDE" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFDC"			address="RAM:FFDC" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFDA"			address="RAM:FFDA" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFD8"			address="RAM:FFD8" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFD6"			address="RAM:FFD6" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFD4"			address="RAM:FFD4" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFD2"			address="RAM:FFD2" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFD0"			address="RAM:FFD0" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFCE"			address="RAM:FFCE" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFCC"			address="RAM:FFCC" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFCA"			address="RAM:FFCA" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFC8"			address="RAM:FFC8" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFC6"			address="RAM:FFC6" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFC4"			address="RAM:FFC4" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFC2"			address="RAM:FFC2" entry="true" type="code_ptr"/>
+			<symbol name="INT_FFC0"			address="RAM:FFC0" entry="true" type="code_ptr"/>
+  	</default_symbols>
+</processor_spec>

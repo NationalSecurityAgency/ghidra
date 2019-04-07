@@ -1,0 +1,7 @@
+apply plugin: 'eclipse'
+eclipse.project.name = '_LaunchSupport'
+
+// This should run in the oldest version of Java possible to maximize the odds of it running on a 
+// user's system.
+sourceCompatibility = 1.7
+targetCompatibility = 1.7

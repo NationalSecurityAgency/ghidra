@@ -1,0 +1,10 @@
+@define SIMPLE_THING ""
+@ifdef SIMPLE_THING
+@ifdef SIMPLE_THING2
+I'm not here
+@else
+I'm here
+@endif
+@else
+I'm not here either
+@endif

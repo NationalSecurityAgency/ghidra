@@ -1,0 +1,36 @@
+Cocoa\Cocoa.h
+
+-I<PathToSDK>\MacOSX10.5.sdk\usr\include
+-I<PathToSDK>\MacOSX10.5.sdk\usr\X11\include
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\Accelerate\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\ApplicationServices\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\CoreServices\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\Carbon\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\InstantMessage\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\Quartz\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\System\Library\Frameworks\WebKit\Frameworks
+-I<PathToSDK>\MacOSX10.5.sdk\usr\lib\gcc\i686-apple-darwin9\4.0.1\include
+-D__STRICT_ANSI__
+-D__STDC_VERSION__=199900
+-DBSD=199103
+-D__builtin_va_list="void *"
+-D__const=""
+-D_INTEGRAL_MAX_BITS=32
+-D__m128="long long"
+-D__m128i="long long"
+-D__m128d="long long"
+-D__i386__
+-D__GNUC__
+-D__APPLE_CPP__
+-DBYTE_ORDER=LITTLE_ENDIAN
+-D__MACH__
+-D_MAC_
+-DTARGET_API_MAC_OSX=1
+-DHANDLE="unsigned long"
+-D_Bool="BOOL"
+-D_WCHAR_T
+-D_Complex
+-Drestrict
+-D__restrict
+-D@class="typedef struct objc_object"

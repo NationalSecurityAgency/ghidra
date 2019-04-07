@@ -1,0 +1,16 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors Dalvik'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
+sleighCompile {
+	args '-l'
+}
+
+dependencies {
+	compile project(':Base')
+	compile project(':FileFormats')
+}

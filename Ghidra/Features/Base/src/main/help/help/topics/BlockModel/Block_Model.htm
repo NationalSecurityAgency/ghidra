@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Block Model</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Block Model</H1>
+
+    <P><A name="BlockModelDefinition"></A>A <I>Block Model</I> partitions the code into address
+    ranges based on some set of rules.&nbsp; The most obvious partitioning is by subroutine.&nbsp;
+    There are four Subroutine Models (i.e., Call Block Models).&nbsp; Each subroutine model defines
+    a subroutine slightly differently.&nbsp; The primary differences are based on number of entry
+    points and whether overlapping code between subroutines is allowed.&nbsp; It is important to
+    note that all of these subroutine models will all produce the same result for an M-Model
+    subroutine which contains a single entry point.</P>
+
+    <P align="center"><B>Subroutine Block Models:</B></P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="1" cellpadding="0" cellspacing="0" width="86%">
+          <TR>
+            <TD width="20%">
+              <P align="left"><B>Model Name</B></P>
+            </TD>
+
+            <TD width="9%">
+              <P align="left"><B>Model</B></P>
+            </TD>
+
+            <TD width="15%">
+              <P align="left"><B>Entry Point</B></P>
+            </TD>
+
+            <TD width="26%" align="left">
+              <P align="left"><B>Overlapping Code?</B></P>
+            </TD>
+
+            <TD width="30%">
+              <P align="left"><B>Entry Point Type</B></P>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD width="20%">
+              <P align="left"><A name="Isolated_Entry"></A>Isolated Entry*</P>
+            </TD>
+
+            <TD width="9%">
+              <P align="left">S</P>
+            </TD>
+
+            <TD width="15%">
+              <P align="left">1</P>
+            </TD>
+
+            <TD width="26%" align="left">
+              <P align="left">Yes</P>
+            </TD>
+
+            <TD width="30%">
+              <P align="left">only call</P>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD width="20%">
+              <P align="left"><A name="MultipleEntry"></A>Multiple Entry</P>
+            </TD>
+
+            <TD width="9%">
+              <P align="left">M</P>
+            </TD>
+
+            <TD width="15%">
+              <P align="left">1 or more</P>
+            </TD>
+
+            <TD width="26%" align="left">
+              <P align="left">---</P>
+            </TD>
+
+            <TD width="30%">
+              <P align="left">only call</P>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD width="20%">
+              <P align="left"><A name="OverlappedCode"></A>Overlapped Code*</P>
+            </TD>
+
+            <TD width="9%">
+              <P align="left">O</P>
+            </TD>
+
+            <TD width="15%">
+              <P align="left">1 or more</P>
+            </TD>
+
+            <TD width="26%" align="left">
+              <P align="left">Yes</P>
+            </TD>
+
+            <TD width="30%">
+              <P align="left">only call</P>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD width="20%">
+              <P align="left"><A name="PartitionedCode"></A>Partitioned Code*</P>
+            </TD>
+
+            <TD width="9%">
+              <P align="left">P</P>
+            </TD>
+
+            <TD width="15%">
+              <P align="left">1</P>
+            </TD>
+
+            <TD width="26%" align="left">
+              <P align="left">No</P>
+            </TD>
+
+            <TD width="30%">
+              <P align="left">any</P>
+            </TD>
+          </TR>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <UL>
+      <LI><A name="Isolated_Entry_Model"></A> <I><B>Isolated Entry Model</B></I>* - A subroutine
+      must have only one entry point but may share code with another subroutine.&nbsp; The
+      subroutine body will stop if another called or source entry point is encountered.</LI>
+
+      <LI><A name="Multiple_Entry_Model"></A> <I><B>Multiple Entry Model</B></I> - A subroutine may
+      have multiple entry points and may not overlap code from other subroutines.</LI>
+
+      <LI><A name="Overlapped_Code_Model"></A> <I><B>Overlapped Code Model</B></I>* - A subroutine
+      is all code accessible from a single entry point and terminates at returns.&nbsp; Code may be
+      shared with other subroutines.&nbsp; Each subroutine is defined to include the overlapping
+      code as part of its body.</LI>
+
+      <LI><A name="Partitioned_Code_Model"></A> <I><B>Partitioned Code Model</B></I>* - There is
+      exactly one entry point which may have any type of source flow.&nbsp; Each instruction
+      belongs to exactly one subroutine (code is not shared).&nbsp;</LI>
+    </UL>
+
+    <P><I><IMG border="0" src="images/note.png"> The default
+    subroutine model for the tool can be specified from <B>Edit</B></I><B><IMG src=
+    "images/arrow.gif" border="0"></B><I><B>Tool Options</B> dialog on
+    <B><A href="help/topics/Tool/ToolOptions_Dialog.htm">Tool</A></B> panel.&nbsp; The default
+    subroutine model is generally used by those plugins and actions which do not provide a
+    subroutine model choice (e.g., subroutine selection, call graph, symbol table, etc.).</I></P>
+
+    <P><A name="BasicBlockDefinition"></A>There is a more primitive <I>Block Model</I> called a
+    <U>Basic</U> (or Simple) Block Model.&nbsp; Such blocks generally consist of small runs of
+    instructions partitioned based on change in instruction flow.&nbsp; Jump and Branch
+    instructions will cause the execution flow to change, creating a new block. 
+    Arithmetic and store/load instructions do not break a Basic Block because they do not change
+    the execution flow.&nbsp; A label will also end one block and begin another.  </P>
+
+    <P>In the 
+    example below each color change represents a different basic block.</P>
+
+    <P align="center"><IMG border="0" src="images/BasicBlockCode.png"></P>
+
+    <P>&nbsp;</P>
+
+    <P>Provided By:&nbsp; <I>Block Model Service</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/FunctionPlugin/Functions.htm">Create
+        Function</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Selection/Selecting.htm">Select
+        Subroutines</A></P>
+      </LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

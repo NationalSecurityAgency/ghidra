@@ -1,0 +1,130 @@
+# Based on "PowerISA Version 2.06 Revision B" document dated July 23, 2010
+# Category: SPE.Embedded Float Vector Instructions
+
+# version 1.0
+
+define register offset=0x600 size=1 [
+	spef_sovh spef_ovh spef_fgh spef_fxh spef_finvh spef_fdbzh spef_funfh spef_fovfh 
+	spef_reserved1 spef_reserved2
+	spef_finxs spef_finvs spef_fdbzs spef_funfs spef_fovfs
+	spef_reserved3
+	spef_sov spef_ov spef_fg spef_fx spef_finv spef_fdbz spef_funf spef_fovf
+	spef_reserved4
+	spef_finxe spef_finve spef_fdbze spef_funfe spef_fovfe spef_frmc0 spef_frmc1 
+];
+
+
+macro setSPEFSCR_L(result) {
+	spef_finv = nan(result);
+	spef_finvs = spef_finvs | spef_finv;
+}
+
+
+macro setSPEFSCR_H(result) {
+	spef_finvh = nan(result);
+	spef_finvs = spef_finvs | spef_finvh;
+}
+
+
+macro setSummarySPEFSCR() {
+        spef_sov = spef_sov | spef_ov;
+
+        spef_sovh = spef_sovh | spef_ovh;
+
+	spef_finxs = spef_finxs | spef_fx | spef_fxh;
+	spef_finvs = spef_finvs | spef_finv | spef_finvh;
+	spef_fdbzs = spef_fdbzs | spef_fdbz | spef_fdbzh;
+	spef_funfs = spef_funfs | spef_funf | spef_funfh;
+	spef_fovfs = spef_fovfs | spef_fovf | spef_fovfh;
+}
+
+
+macro setSPEFSCRAddFlags_L(op1, op2, result) {
+	setSPEFSCR_L(result);
+	spef_fx = spef_fx | nan(op1) | nan(op2);
+	spef_finv = spef_fx;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRAddFlags_H(op1, op2, result) {
+	setSPEFSCR_H(result);
+	spef_fxh = spef_fxh | nan(op1) | nan(op2);
+	spef_finvh = spef_fxh;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRDivFlags_L(op1, op2, result) {
+	setSPEFSCR_L(result);
+	spef_fdbz = spef_fdbz | (op2 f== 0);
+	spef_fx = spef_fx | nan(op1) | nan(op2);
+	spef_finv = spef_fx;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRDivFlags_H(op1, op2, result) {
+	setSPEFSCR_H(result);
+	spef_fdbzh = spef_fdbzh | (op2 f== 0);
+	spef_fxh = spef_fxh | nan(op1) | nan(op2);
+	spef_finvh = spef_fxh;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRMulFlags_L(op1, op2, result) {
+	setSPEFSCR_L(result);
+	spef_fx = spef_fx | nan(op1) | nan(op2);
+	spef_finv = spef_fx;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRMulFlags_H(op1, op2, result) {
+	setSPEFSCR_H(result);
+	spef_fxh = spef_fxh | nan(op1) | nan(op2);
+	spef_finvh = spef_fxh;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRSubFlags_L(op1, op2, result) {
+	setSPEFSCR_L(result);
+	spef_fx = spef_fx | nan(op1) | nan(op2);
+	spef_finv = spef_fx;
+	setSummarySPEFSCR();
+}
+
+
+macro setSPEFSCRSubFlags_H(op1, op2, result) {
+	setSPEFSCR_H(result);
+	spef_fxh = spef_fxh | nan(op1) | nan(op2);
+	spef_finvh = spef_fxh;
+	setSummarySPEFSCR();
+}
+
+
+macro packSPEFSCR(tmp) {
+	packbits(tmp,
+		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh, 
+		spef_reserved1, spef_reserved2,
+		spef_finxs, spef_finvs, spef_fdbzs, spef_funfs, spef_fovfs,
+		spef_reserved3,
+		spef_sov, spef_ov, spef_fg, spef_fx, spef_finv, spef_fdbz, spef_funf, spef_fovf,
+		spef_reserved4,
+		spef_finxe, spef_finve, spef_fdbze, spef_funfe, spef_fovfe, spef_frmc0, spef_frmc1 );
+}
+
+
+macro unpackSPEFSCR(tmp) {
+	unpackbits(tmp,
+		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh, 
+		spef_reserved1, spef_reserved2,
+		spef_finxs, spef_finvs, spef_fdbzs, spef_funfs, spef_fovfs,
+		spef_reserved3,
+		spef_sov, spef_ov, spef_fg, spef_fx, spef_finv, spef_fdbz, spef_funf, spef_fovf,
+		spef_reserved4,
+		spef_finxe, spef_finve, spef_fdbze, spef_funfe, spef_fovfe, spef_frmc0, spef_frmc1 );
+}
+

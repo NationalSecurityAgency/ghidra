@@ -1,0 +1,248 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Function Call Graph Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="FunctionCallGraphPlugin"></A> <A name="Display_Function_Call_Graph">
+    </A>Function Call Graph Plugin</H1>
+
+
+    <TABLE border="0" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center">
+          	<IMG src="images/FunctionCallGraphProvider.png" alt="" border="1"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+    
+      	<P>The Function Call Graph Plugin is a simple graph display that shows incoming and 
+      	   outgoing calls (as edges) for the function containing the current address, also known as
+      	   the <I>Source Function</I>, in the 
+      	   Listing.  This display provides some context for how a function is used within the
+      	   program.   The functions are organized by <A HREF="#Level">Level</A>.
+      	</P>
+
+		<P>
+			To show the Function Call Graph provider window, 
+			select the <b>Window</b><img border="0" src="../../shared/arrow.gif">
+			<b>Function Call Graph</b> option on the tool menu.
+		</P>	
+
+		<P>
+			The graph of function calls related to the source function being displayed can be
+			explored by <A HREF="#Expand_Collapse">adding existing function calls</A>
+			 to the initial graph display.
+		</P>
+					
+		<BLOCKQUOTE>		
+		<P>
+			<IMG src="images/tip.png" border="0">The graph updates itself as you navigate within
+			the tool.  To prevent losing graph state (e.g., expanded functions, node locations,
+			etc), a small number of graphs will be cached.   For example, if you navigate 
+			away from a function and then immediately return, the graph will be restored to 
+			its previous state. 
+		</P>
+		</BLOCKQUOTE>
+		
+		
+		
+		<H2>Terms</H2>
+	
+	    <BLOCKQUOTE>
+	    
+	    	<UL>
+	    		<LI><B>Source Function</B>: the function that contains the current address in 
+	    		the Listing.   This function is considered the center of the graph, with all
+	    		other callers/callees added to the graph at a new level.
+	    		<BR>
+				<BR>
+	    		</LI>
+	    		<LI><A NAME="Level"></A><B>Level</B>: Each function node in the graph belongs to a 
+	    		level.   The source function is at level 1; the source function's incoming
+	    		calls are at level 2; the source function's outgoing calls are also at level 2.
+	    		Organizing functions by level allows the user to quickly see how many hops, or
+	    		calls, a given function is from the source function.
+	    		<BR>
+				<BR>
+				New levels of calls can be added to the graph by the user.
+				<BR>
+				<BR>
+	    		</LI>
+	    		
+	    		<LI><B>Direction</B>: Each function node, other than the source function, is
+	    		considered to be in one of two directions: In or Out.  All function nodes in 
+	    		a given level share the same direction.  So, all nodes that directly call the
+	    		source function node are considered to be the <I>In</I> direction; all nodes
+	    		directly called by the source function are considered to be the <I>Out</I> 
+	    		direction.
+	    		<BR>
+				<BR>
+				When a given node's level is expanded in the graph, the nodes added are based
+				upon the selected node's direction:  for <I>In</I> nodes, the newly added nodes
+				will be those nodes that <B>call</B> the selected node; for <I>Out</I> nodes, the 
+				newly added nodes will be those nodes <B>called by</B> the selected node.
+				<BR>
+				<BR>  
+	    		</LI>
+	    		<LI><B>Direct Edges</B>: An edge (a call) between two adjacent levels.
+	    		<BR>
+				<BR>
+	    		</LI>
+	    		<LI><A NAME="Indirect_Edges"></A><B>Indirect Edges</B>: An edge (a call) 
+	    		between two	non-adjacent levels or an edge within the same level.   These 
+	    		edges are rendered with less emphasis than <I>direct edges</I>.
+	    		<BR>
+				<BR>
+	    		</LI>
+	    	</UL>
+	    
+	    </BLOCKQUOTE>
+	    
+	    		
+		
+		<H2>Actions</H2>
+
+		<BLOCKQUOTE>
+		
+			<H3><A NAME="Expand_Collapse"></A>Show/Hide Edges Action</H3>
+			
+				<P>
+					Within the <I>Function Call Graph</I> you can show and hide function calls
+					as desired.  
+					Showing additional function calls can be accomplished multiple ways.  From
+					any function node, you can select the <I>Expand</I> icon (
+					<IMG SRC="Icons.EXPAND_ALL_ICON" />), which appears
+					on a node when hovered.   When clicked, this button will toggle related
+					function calls: showing them if not already in the graph; hiding them 
+					if they are in the graph. 
+				</P>
+				
+				<P>
+					Additionally, these same functionality is provided from the popup menu
+					actions (i.e., <B>Show/Hide Incoming Edges</B> and </B>Show/Hide Outgoing
+					Edges</B>).
+				</P>
+				
+				<BLOCKQUOTE>		
+				<P>
+					<IMG src="images/note.png" border="0">As new vertices are added to the 
+					graph, any <A HREF="#Indirect_Edges">indirect edges</A> will be added to the
+					graph.
+				</P>
+				</BLOCKQUOTE>
+				
+				<P>Note here how new vertices may appear in odd places when expanding (such as
+				 when they are already in the graph at a previous level).
+				
+				<BLOCKQUOTE>		
+					<P>
+						<IMG src="../../shared/warning.png" border="0">It is important to understand
+						that the graph is only a subset of the entire program graph.  This 
+						graph does not represent all functions and function calls in the
+						program.
+					</P>
+				</BLOCKQUOTE>
+				<BLOCKQUOTE>		
+					<P>
+						<IMG src="../../shared/warning.png" border="0">Sometimes a function 
+						may have too many references to display in the graph.   When this 
+						happens, the function node will be a gray color, with the expand icon
+						replaced with a warning icon, as so:<BR>
+						
+						<CENTER>
+							<IMG src="images/TooManyReferences.png" border="1">
+						</CENTER>
+						
+					</P>
+				</BLOCKQUOTE>
+				
+		</BLOCKQUOTE>
+		
+		<BLOCKQUOTE>
+		
+			<H3>Show/Hide Level Edges Action</H3>
+			
+				<P>
+					All functions that relate to the <A HREF="#Level">Level</A> of 
+					the selected function will be shown, <b>not just calls to the selected 
+					function.</b>
+				</P>
+			
+		</BLOCKQUOTE>
+		
+		<BLOCKQUOTE>
+		
+			<H3><A NAME="Navigation_Incoming"></A>Navigate on Incoming Location Changes</H3>
+			
+		        <P>
+		        This action (<IMG SRC="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON" />), when 
+		        toggled on, upon receiving Program Location changes from the tool, will graph
+		        the function containing that location.   When toggled off, location changes will
+		        not affect the graph. 
+		        </P>
+		        <P>
+		        Having this action on is useful if you wish to quickly see the graph of 
+		        different functions as you navigate the program.   Alternatively, having this
+		        action off is useful when you wish to explore the program by navigating from 
+		        within the graph, say by double-clicking function nodes in the graph.
+		        </P>
+
+	        
+		</BLOCKQUOTE>
+		
+		<BLOCKQUOTE>
+		
+			<H3><A NAME="Relayout_Graph"></A>Layout Action</H3>
+			
+		        <P>This action (<IMG SRC="Icons.REFRESH_ICON" />) will relayout the current graph and 
+		        	reset the graph to show only the initial nodes. 
+		        </P>
+
+	        
+		</BLOCKQUOTE>
+
+
+		<BLOCKQUOTE>
+		
+			<H3><A NAME="Graph_Node_Function_Calls"></A>Graph '<I>Function Name</I>'</H3>
+				
+				<P>This action is available from the popup menu of any node that is not the 
+				currently graphed node.  When pressed, this action will graph the clicked
+				function.
+				</P>
+			
+			
+		</BLOCKQUOTE>
+
+	
+		<H2><A name="Satellite_View"></A>Satellite View</H2>
+	
+	    <BLOCKQUOTE>
+	        <P>The Satellite View works exactly as the 
+	        	<A href="help/topics/FunctionGraphPlugin/Function_Graph.html#Satellite_View">
+	        		Function Graph's Satellite View</A>.
+	        </P>
+		</BLOCKQUOTE>
+	
+		
+	</BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Function Call Graph Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <!-- TODO update this when we introduce the generic graphing help -->
+      <LI>Graphs</LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

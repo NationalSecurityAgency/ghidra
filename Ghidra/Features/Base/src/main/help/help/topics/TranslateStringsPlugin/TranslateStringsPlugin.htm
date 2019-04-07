@@ -1,0 +1,120 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Translate Strings</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><a name="TranslateStringsPlugin"></a>Translate Strings</H1>
+
+    <P>The Translate Strings Plugin provides a framework to allow strings found in a program to be
+    decorated with an alternate value that is more meaningful to the Ghidra user.</P>
+
+    <P>This plugin doesn't perform any natural language translation by itself.  The
+    user must install <b>string translation service</b>s that do the actual translation.
+    Extensions to Ghidra are installed via the <b>File
+    <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> <a href="../FrontEndPlugin/Extensions.htm">Install Extensions...</a></b>
+    menu.</P>
+
+    <P>When a string has been translated, the translated value will be shown in place of
+    the original value, bracketed with <b>&#x00BB;chevrons&#x00AB;</b></P>
+    
+    <P align="center">&nbsp;</P>
+    
+	<h2><a name="Translate_Menu"></a>Translate Menu</h2>
+	<blockquote>
+	    <P>The <b>Data <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+	    Translate</b> menu will appear in the popup menu of the <b>Listing</b>
+	    window when a string or string-like datatype is selected, and in the <b>Defined Strings</b>
+	    table (found under <b>Window 
+	    <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Defined Strings</b>).
+	    </P>
+	</blockquote>
+	
+	<blockquote>
+		<h3><a name="Manual_String_Translation_Service"></a>Manual string translation</h3>
+		<blockquote>
+			<p>Allows the user to specify a translated string value manually, by typing a value
+			in a pop-up dialog.</p>
+			<p>Select an existing string instance in the <b>Listing</b> window and right click
+			and select <b>Data <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+			Translate <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+			Manual</b> to enter a manual translation.</p>
+			<p>In the <b>Defined Strings</b> table select a row or a range of rows and right 
+			click and select <b>Translate 
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Manual</b>.</p>
+		</blockquote>
+	  
+		<h3><a name="Clear_Translation_Value_Menuitem"></a>Clear translated values</h3>
+		<blockquote>
+			<p>Removes the stored translated value for the selected string data instances.</p>
+			<p>The selected string instances will default back to their true value.</p>
+			<p>Select an existing string instance in the <b>Listing</b> window and right click
+			and select <b>Data 
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Translate
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Clear translated values</b>
+			to clear the translated value.</p>
+			<p>In the <b>Defined Strings</b> table select a row or a range of rows and right 
+			click and select <b>Translate 
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Clear translated values</b>.</p>
+		</blockquote>
+		
+		<h3><a name="Toggle_Show_Translated_Value_Menuitem"></a>Toggle show translated values</h3>
+		<blockquote>
+			<p>Toggles the display of the translated string with the original value.</p>
+			<p>Select an existing string instance in the <b>Listing</b> window and right click
+			and select <b>Data
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Translate
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Toggle show translated values</b>
+			to toggle the display of the translated value of each of the strings.</p>
+			<p>In the <b>Defined Strings</b> table select a row or a range of rows and right 
+			click and select <b>Translate 
+			<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Toggle show translated values</b>.</p>
+		</blockquote>
+	</blockquote>
+	
+	<h2><a name="String_Translation_Services"></a>String translation services</h2>
+	<blockquote>
+	    <P>String translation services, which are separate from this Translate Strings Plugin, 
+	    can be installed that will allow the user to translate strings.</P>
+	    
+	    <P>Once installed, the translation service plugins, like all plugins, can be 
+	    found in the <b>File <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+	    Configure...</b> window and must be enabled before they will 
+	    appear in the <b>Data <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+	    Translate</b> menu.</P>
+	    
+	    <P>Each string translation services will operate in a different way, please consult
+	    the documentation from the service for specifics.</P>
+	    
+	    <P>The <b>Manual</b> string translation service is always available.</P>
+	</blockquote>
+    
+	<h2>Creating a String translation service</h2>
+	<blockquote>
+		<p>Please see the SampleStringTranslationPlugin.java source file for an example of
+		how to create your own translation service.</p>
+		<p>Alternatively, you could customize the TranslateStringsScript.java file and
+		operate directly on the string instances without using this plugin.</p>
+	</blockquote>
+	
+	<P class="providedbyplugin">Provided by: <I>Translate Strings Plugin</I></P>
+	
+    <P class="relatedtopic">Related Topics:</P>
+    <UL>
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+      <LI><A href="help/topics/ViewStringsPlugin/ViewStringsPlugin.htm">View Defined Strings</A></LI>
+    </UL>	
+	
+	<br>
+	<br>
+	<br>
+	
+  </BODY>
+</HTML>

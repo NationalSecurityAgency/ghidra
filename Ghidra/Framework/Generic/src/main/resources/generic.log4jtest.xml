@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+	Log4j configuration for development mode. 
+
+	Note the 'packages' attribute; this is required if an appender needs to reference
+	a class in the codebase. This currently happens in two cases: 
+	
+		1.	The 'console-with-links' appender requires Log4jDevelopmentPatternConverter.java
+			(which is under the "log" package). See the 
+			log4j-appender-console-with-links.xml appender, which uses the "%hl" converter code.	
+	
+		2.	The 'logPanel' appender requires access to LogPanelAppender.java.
+-->
+<Configuration monitorInterval="30" xmlns:xi="http://www.w3.org/2001/XInclude" packages="log"> 
+	<Appenders>
+		<xi:include href="log4j-appender-test-console-with-links.xml"/>
+		<xi:include href="log4j-appender-rolling-file.xml"/>
+		<xi:include href="log4j-appender-rolling-file-scripts.xml"/>	
+		<xi:include href="log4j-appender-logpanel.xml"/>	
+	</Appenders>
+	
+	
+	<!--  
+				Note: if you add an entry to this list, the be sure to also update 
+				      generic.log4jdev.xml
+	 -->
+	<Loggers>	
+		<logger name="org.apache" level="WARN"/>
+		<logger name="org.jdom" level="WARN"/>
+		
+	    <logger name="generic.help" level="DEBUG"/>	  	
+		<logger name="generic.watchdog" level="DEBUG" />     	
+		
+		<logger name="docking.help" level="DEBUG"/>
+		<logger name="docking.event.mouse" level="DEBUG" />		
+		<logger name="docking.framework" level="DEBUG" />
+		<logger name="docking.framework.SplashScreen" level="TRACE" />
+		<logger name="docking.widgets.table" level="DEBUG" />
+		<logger name="docking.widgets.filechooser" level="DEBUG" />
+		
+		<logger name="ghidra.feature.fid" level="INFO" />
+		<logger name="ghidra.framework" level="DEBUG"/>
+		<logger name="ghidra.graph" level="DEBUG" />
+		
+		
+		<!-- 
+			Turn off debug for specific project classes.
+			Leave ghidra.framework.project at DEBUG for tests; specific classes are higher to
+			avoid noise.
+		 -->
+		<logger name="ghidra.framework.project" level="DEBUG"/>
+		<logger name="ghidra.framework.project.DefaultProject" level="WARN"/>
+		<logger name="ghidra.framework.project.DefaultProjectManager" level="INFO"/>
+		
+		<logger name="functioncalls" level="DEBUG" />		
+		<logger name="generic.random" level="WARN"/>
+		<logger name="ghidra.app.plugin.core.progmgr.ProgramManagerPlugin" level="WARN"/>
+		<logger name="ghidra.net" level="WARN"/>		
+		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		 
+		<logger name="ghidra.framework.store.local" level="INFO"/>				
+		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>
+		<logger name="ghidra.plugins" level="INFO"/>		
+		<logger name="ghidra.program.database" level="DEBUG" />
+		<logger name="ghidra.program.model.lang.xml" level="DEBUG"/>
+		<logger name="ghidra.app.plugin.assembler" level="DEBUG" />		
+		<logger name="ghidra.app.plugin.core.functiongraph" level="DEBUG" />	
+		<logger name="ghidra.app.plugin.core.string" level="DEBUG" />
+		<logger name="ghidra.app.plugin.core.libraryidentification" level="INFO"/>
+		<logger name="ghidra.app.plugin.core.analysis" level="DEBUG" />
+		<logger name="ghidra.app.plugin.prototype" level="INFO" />	
+		<logger name="ghidra.app.script" level="INFO" />
+		<logger name="ghidra.app.util.importer" level="INFO" />
+		<logger name="ghidra.app.util.opinion" level="DEBUG" />
+		<logger name="ghidra.util.classfinder" level="DEBUG" />			
+		<logger name="ghidra.util.task" level="DEBUG" />		
+		
+		<Root level="ALL">
+			<AppenderRef ref="console" level="TRACE"/>      
+			<AppenderRef ref="detail" level="DEBUG"/> 
+			<AppenderRef ref="script" level="DEBUG"/> 
+			<AppenderRef ref="logPanel" level="INFO"/> 
+		</Root>    	 
+	</Loggers>
+</Configuration>

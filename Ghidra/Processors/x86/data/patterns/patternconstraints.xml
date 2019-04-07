@@ -1,0 +1,32 @@
+<patternconstraints>
+  <language id="x86:LE:32:default">
+  	<compiler id="windows">
+  	  <patternfile>x86win_patterns.xml</patternfile>
+  	</compiler>
+  	<compiler id="borlandcpp">
+  	  <patternfile>x86win_patterns.xml</patternfile>
+  	</compiler>
+  	<compiler id="borlanddelphi">
+  	  <patternfile>x86delphi_patterns.xml</patternfile>
+  	</compiler>
+        <compiler id="gcc">
+          <patternfile>x86gcc_patterns.xml</patternfile>
+        </compiler>
+  </language>
+  
+  <language id="x86:LE:64:default">
+    <compiler id="windows">"data/patternconstraints.xml"
+      <patternfile>x86-64win_patterns.xml</patternfile>
+    </compiler>
+    <compiler id="gcc">
+      <patternfile>x86-64gcc_patterns.xml</patternfile>
+    </compiler>
+  </language>
+  
+  <language id="x86:LE:16:Real Mode">
+  	<compiler id="default">
+  		<patternfile>x86-16_default_patterns.xml</patternfile>
+  	</compiler>
+  </language>
+  
+</patternconstraints>

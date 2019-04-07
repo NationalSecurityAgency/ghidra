@@ -1,0 +1,57 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x03e00008 0x........</data> <!-- RETN : delayslot -->
+      <data>0x03e00008 0x........ 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x03e00008 0x........ 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x03e00008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x08...... 0x27 0xbd 0....... ......00</data> <!-- J xyz : _ADDIU   This is probably a shared return-->
+      <data>0x1000.... 0x27 0xbd 0....... ......00</data> <!-- B xyz : _ADDIU   This is probably a shared return-->
+      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0x27 </data>  <!-- JR t9   : _ADDIU --> 
+    </prepatterns>
+    <postpatterns>
+      <data>00100111 10111101 1....... ......00</data>             <!-- ADDIU SP,SP,-xxxx -->
+      <data>0x3c......                   0x27 0xbd  1....... ......00</data>  <!-- LUI - ADDIU SP,SP,-xxxx -->
+      <data>100011.. 0x......            0x27 0xbd  1....... ......00</data>  <!-- LW - ADDIU SP,SP,-xxxx -->
+      <data>0x3c...... 100011.. 0x...... 0x27 0xbd  1....... ......00</data>  <!-- LUI - LW - ADDIU SP,SP,-xxxx -->
+      <data>0x3c1c.... 0x279c.... </data>                   <!-- LUI gp,xxxx  ADDIU GP,GP,xxxx -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x03e00008 0x........</data> <!-- RETN : delayslot -->
+      <data>0x03e00008 0x........ 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x03e00008 0x........ 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x03e00008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x08...... 0x27 0xbd 0....... ......00</data> <!-- J xyz : _ADDIU   This is probably a shared return-->
+    </prepatterns>
+    <postpatterns>
+      <data>0x3c06.... </data>                                     <!-- lui a2,xxx -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+
+
+  <pattern> <!-- MIPS32 Thunk -->
+      <data> 0x3c 0x0f 0x.. 0x..   0x8d 0xf9 0x.. 0x..  0x03 0x20 00000... 0x08  0x25 0xf8 0x.. 0x.. </data>
+      <!-- lui        t7,0x..
+           lw         t9,offset 0x....(t7)
+           jr         t9
+           _addiu     t8,t7,0x....
+       -->
+      <funcstart validcode="function" thunk="true"/>
+  </pattern>
+
+  <pattern> <!-- MIPS16e Thunk -->
+      <data> 0xb2 0x03 0x9a 0x60  0x65 .....010  0xeb 0x00  0x65 .....011  </data>
+      <!-- lw         v0,0xc(pc)
+           lw         v1,0x0(v0)
+           move       t8,v0
+           jr         v1
+           move      t9,v1
+       -->
+      <setcontext name="ISA_MODE" value="1"/>
+      <funcstart validcode="function" thunk="true"/>
+  </pattern>
+ </patternlist>

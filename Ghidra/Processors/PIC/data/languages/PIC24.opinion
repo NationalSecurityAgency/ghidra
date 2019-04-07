@@ -1,0 +1,12 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)" compilerSpecID="default">
+        <constraint primary="422"  processor="PIC24"    endian="little"    size="16" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <!-- Elf treats as 32-bit while our definition indicates 24-bit -->
+        <constraint primary="118" processor="dsPIC30F"  endian="little" />     
+    </constraint>
+        <constraint loader="Common Object File Format (COFF)" compilerSpecID="default">
+        <constraint primary="4662" processor="dsPIC30F"  endian="little" />     
+    </constraint>
+</opinions>

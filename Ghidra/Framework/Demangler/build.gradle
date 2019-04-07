@@ -1,0 +1,7 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework Demangler'
+
+dependencies {
+	compile project(':Utility')
+}
+

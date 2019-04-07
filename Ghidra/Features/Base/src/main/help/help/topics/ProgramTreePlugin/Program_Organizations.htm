@@ -1,0 +1,120 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Program Organizations</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Program Organizations</H1>
+
+    <P>You can automatically organize the structure of a Program by applying subroutine algorithms
+    to folders and fragments. The new organization is reflected in the <A href=
+    "program_tree.htm">Program Tree</A>.</P>
+
+    <H2><A name="Modularize_By_Subroutine"></A>Subroutine Modularization</H2>
+
+    <BLOCKQUOTE>
+      <P>This partitions the Program into subroutines that are all based on a specific <A href=
+      "help/topics/BlockModel/Block_Model.htm">Block Model</A>; the algorithm is summarized as
+      follows:</P>
+
+      <OL>
+        <LI>Use the selected block model to gather the code blocks that overlap the address set of
+        the selected folder or fragment.</LI>
+
+        <LI>
+          For each code block create a new folder; use the code block name as the name of the
+          folder. 
+
+          <UL>
+            <LI>If you selected a folder to modularize, new folders are created under the selected
+            folder.</LI>
+
+            <LI>If you selected a fragment to modularize, a new folder is created using the
+            fragment name. Folders for the code blocks are created under this folder.</LI>
+          </UL>
+        </LI>
+
+        <LI>For each code block from Step 2, use the selected block model to gather code blocks
+        that overlap the address set of the code block.</LI>
+
+        <LI>For each of these code blocks from Step 3 create a new fragment; use the block name as
+        the name of this fragment.</LI>
+
+        <LI>Move the code units in the code block to the new fragment.</LI>
+
+        <LI>Update the names of folders to include the number of elements (folders and fragments)
+        the folder contains.</LI>
+      </OL>
+
+      <P>To organize a folder or fragment by modularization and block model, right mouse click on a
+      folder or fragment in the <A href="program_tree.htm">Program Tree</A> and choose <FONT size=
+      "4"><B>Modularize By</B></FONT><IMG border="0" src="../../shared/arrow.gif"><B><FONT size=
+      "4">Subroutine</FONT></B><IMG border="0" src="../../shared/arrow.gif"><FONT size=
+      "4"><B><I>&lt;block model name&gt;.</I></B></FONT></P>
+
+      <P>Provided By:<I>ModularizeAlgorithmPlugin</I></P>
+    </BLOCKQUOTE>
+
+	
+	<H2><A name="Create_Dominance_Tree"></A>Dominance Tree Modularization</H2>
+
+    <BLOCKQUOTE>
+      <P>
+			This action modularizes the program tree by creating a call tree of the
+			code blocks and then arranges that tree by dominance such that all blocks only 
+			reachable from a parent <tt>p</tt> are children of <tt>p</tt> in the program tree.
+      </P>
+    </BLOCKQUOTE>
+    
+    
+    <H2><A name="Complexity_Depth"></A>Complexity Depth Modularization</H2>
+
+    <BLOCKQUOTE>
+      <P>
+			This action modularizes the program tree by placing code blocks in a folder that marks the
+			longest possible call tree path that calls that block.  For example, blocks 
+			at <tt>Level 0</tt>
+			are not called by any other code; blocks at <tt>Level 30</tt> are blocks that have 
+			a call tree path to them that contains 30 nodes.  Note that the nodes at <tt>Level 
+			30</tt> may have shorter paths that reach them, but the longest of all the paths
+			is 30 nodes.
+      </P>
+    </BLOCKQUOTE>
+
+
+    <P>You can cancel the organization process at any time using the progress bar. Whatever
+    fragments or folders that were generated up to the point when you canceled the operation will
+    remain in the tree. Click on the <IMG border="0" src="../../shared/undo.png">button to undo the
+    organization changes.</P>
+
+    <H2>Default Tree Organizations</H2>
+
+    <BLOCKQUOTE>
+      <P>When you <A href="help/topics/ImporterPlugin/importer.htm">import a Program</A> or <A
+      href="help/topics/ProgramTreePlugin/view_manager.htm#Create_Default_Tree_View">create a new
+      tree</A>, a <I>default tree organization</I> is created; a fragment is created for each of
+      the memory blocks. The fragment name is the same as the memory block name.</P>
+
+      <P class="providedbyplugin">Provided by: <I>ProgramTreePlugin</I></P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/ProgramTreePlugin/view_manager.htm">Create a Default View</A></LI>
+
+      <LI><A href="help/topics/BlockModel/Block_Model.htm">Block Models</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Import a Program</A></LI>
+
+      <LI><A href="program_tree.htm">Program Tree</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

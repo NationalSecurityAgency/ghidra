@@ -1,0 +1,7 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features Graph FunctionGraphDecompilerExt'
+
+dependencies {
+	compile project(":FunctionGraph")
+	compile project(":Decompiler")
+}

@@ -1,0 +1,336 @@
+###############################################################################################
+#
+#          GNU V3 MANGLED NAMES
+#
+###############################################################################################
+_Z10enumToEnumP6MYENUM            # enumToEnum(MYENUM *)
+_Z12unionToUnion2_U               # unionToUnion(_U)
+_Z6toChari                        # toChar(int)
+_Z6toEnumv                        # toEnum(void)
+_Z6toLongi                        # toLong(int)
+_Z7toFloati                       # toFloat(int)
+_Z7toFloatidcls                   # toFloat(int,double,char,long,short)
+_Z7toFloatPiPdPcPlPs              # toFloat(int *,double *,char *,long *,short *)
+_Z7toFloatPPiPPdPPcPPlPPs         # toFloat(int * *,double * *,char * *,long * *,short * *)
+_Z8toDoublei                      # toDouble(int)
+_Z9toIntegerf                     # toInteger(float)
+_Z9intToEnum6MYENUM               # intToEnum(MYENUM)
+###############################################################################################
+_Znaj                             # operator new[](unsigned)
+###############################################################################################
+_ZN3FooC1Ei                       # Foo::Foo[in-charge](int)
+_ZN3BarC1Ei                       # Bar::Bar[in-charge](int)
+_ZN3Bar4FredC1Ei                  # Bar::Fred::Fred[in-charge](int)
+###############################################################################################
+_ZN3Bar4Fred4getXEv               # Bar::Fred::getX(void)
+_ZN3Foo4getEEl                    # Foo::getE(long)
+_ZN3Foo4getXEi                    # Foo::getX(int)
+_ZN3Foo4getXEv                    # Foo::getX(void)
+_ZN3Foo6getBarEv                  # Foo::getBar(void)
+_ZN3Foo6getFooEv                  # Foo::getFoo(void)
+_ZN3Foo7getBoolEf                 # Foo::getBool(float)
+_ZN3Foo7getBoolEv                 # Foo::getBool(void)
+###############################################################################################
+_ZN3FooaSEi                       # Foo::operator=(int)
+_ZN3FoolsEi                       # Foo::operator<<(int)
+_ZN3FoolsES_                      # Foo::operator<<(Foo)
+_ZN3FoorsEi                       # Foo::operator>>(int)
+###############################################################################################
+_GLOBAL__I__ZN6Magick21borderGeometryDefaultE                   # global constructors keyed to Magick::borderGeometryDefault
+###############################################################################################
+_ZNK6Magick8ColorYUV1yEv                                        # Magick::ColorYUV::y(void) const
+_ZNK6Magick5ColorcvSsEv                                         # Magick::Color::operator<cast>(std::string)(void) const
+_ZN6Magick12DrawablePathC1ERKS0_                                # Magick::DrawablePath::DrawablePath[in-charge](const Magick::DrawablePath &)
+_ZNK6Magick9pageImageclERNS_5ImageE                             # Magick::pageImage::operator()(Magick::Image &) const
+_ZNK6Magick9pageImageclERNS0_5ImageE                            # Magick::pageImage::operator()(Magick::pageImage::Image &) const
+_ZNK6Magick9pageImageclERNS0_5Image3abcE                        # Magick::pageImage::operator()(Magick::pageImage::Image::abc &) const
+_ZN6MagickltERKNS_10CoordinateES2_                              # Magick::operator<(const Magick::Coordinate &,const Magick::Coordinate &)
+_ZN6MagickneERKNS_10CoordinateES2_                              # Magick::operator!=(const Magick::Coordinate &,const Magick::Coordinate &)
+_ZN6MagickgtERKNS_5ColorES2_                                    # Magick::operator>(const Magick::Color &,const Magick::Color &)
+_ZN6Magick14PathCurvetoAbsC1ERKS0_                              # Magick::PathCurvetoAbs::PathCurvetoAbs[in-charge](const Magick::PathCurvetoAbs &)
+_ZN6Magick4Blob12updateNoCopyEPvjNS0_9AllocatorE                # Magick::Blob::updateNoCopy(void *,unsigned int,Magick::Blob::Allocator)
+###############################################################################################
+_ZN6Magick18magickCleanUpGuardE                                 # Magick::magickCleanUpGuard
+_ZN6Magick18magickCleanUpGuardEv                                # Magick::magickCleanUpGuard(void)
+_ZN6Magick18magickCleanUpGuardEi                                # Magick::magickCleanUpGuard(int)
+_ZN6Magick21borderGeometryDefaultE                              # Magick::borderGeometryDefault
+###############################################################################################
+_ZNK6Magick18DrawablePopPatternclEPN9MagickLib12_DrawContextE   # Magick::DrawablePopPattern::operator()(MagickLib::_DrawContext *) const
+_ZNK6Magick9CoderInfo4nameEv                                    # Magick::CoderInfo::name(void) const
+###############################################################################################
+_ZN6Magick5ImageC2EjjRKSsN9MagickLib11StorageTypeEPKv           # Magick::Image::Image[not-in-charge](unsigned, unsigned, const std::basic_string<char, std::char_traits<char>, std::allocator<char>> &, MagickLib::StorageType, const void *)
+###############################################################################################
+_ZNSsC1ERKSs                                                    # std::string::std::string[in-charge](const std::string &)
+_ZNSsC1EPKcRKSaIcE                                              # std::string::std::string[in-charge](const char *,const std::allocator<char> &)
+_ZNSsC1EPKcjRKSaIcE                                             # std::string::std::string[in-charge](const char *,unsigned int,const std::allocator<char> &)
+###############################################################################################
+_ZN6Magick14DrawableBezierC1ERKSt4listINS_10CoordinateESaIS2_EE
+_ZN6Magick12DrawablePathC2ERKSt4listINS_5VPathESaIS2_EE
+###############################################################################################
+_ZNSt10_List_baseIN6Magick11PathArcArgsESaIS1_EED2Ev                             # std::_List_base<Magick::PathArcArgs,std::allocator<Magick::PathArcArgs>>::~_List_base[not-in-charge](void)
+_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj
+_ZNSt10_List_baseIN6Magick5VPathESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick8DrawableESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick8DrawableESaIS1_EED2Ev
+_ZNSt4listIN6Magick8DrawableESaIS1_EE14_M_create_nodeERKS1_
+_ZNSt10_List_baseIN6Magick10CoordinateESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick5VPathESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick11PathArcArgsESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick15PathCurvetoArgsESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick24PathQuadraticCurvetoArgsESaIS1_EE5clearEv
+_ZNSt10_List_baseIN6Magick10CoordinateESaIS1_EED2Ev
+_ZNSt10_List_baseIN6Magick5VPathESaIS1_EED2Ev
+_ZNSt10_List_baseIN6Magick15PathCurvetoArgsESaIS1_EED2Ev
+_ZNSt10_List_baseIN6Magick24PathQuadraticCurvetoArgsESaIS1_EED2Ev
+_ZNSt4listIN6Magick10CoordinateESaIS1_EE14_M_create_nodeERKS1_
+_ZNSt4listIN6Magick11PathArcArgsESaIS1_EE14_M_create_nodeERKS1_
+_ZNSt4listIN6Magick15PathCurvetoArgsESaIS1_EE14_M_create_nodeERKS1_
+_ZNSt4listIN6Magick24PathQuadraticCurvetoArgsESaIS1_EE14_M_create_nodeERKS1_
+_ZNKSt8_Rb_treeI8LocationS0_St9_IdentityIS0_ESt4lessIS0_ESaIS0_EE4findERKS0_     # std::_Rb_tree<Location,Location,std::_Identity<Location>,std::less<Location>,std::allocator<Location>>::find(const Location &) const
+_ZNSt4listIN6Magick8DrawableESaIS1_EE14_M_create_nodeERKS1_                      # std::list<Magick::Drawable,std::allocator<Magick::Drawable>>::_M_create_node(const Magick::Drawable &)
+_ZNSt4listIN6Magick8DrawableESaIS0_EE14_M_create_nodeERKS1_                      # std::list<Magick::Drawable,std::allocator<Magick>>::_M_create_node(const Magick::Drawable &)
+_ZNSt4listIN6Magick8DrawableESaIS_EE14_M_create_nodeERKS1_                       # std::list<Magick::Drawable,std::allocator<std::list>>::_M_create_node(const Magick::Drawable &)
+
+
+
+# TEMPLATED CONSTRUCTORS
+_ZN6Magick14PathCurvetoAbsC2ERKSt4listINS_15PathCurvetoArgsESaIS2_EE
+_ZN6Magick14PathCurvetoAbsC1ERKSt4listINS_15PathCurvetoArgsESaIS2_EE
+_ZN6Magick13PathLinetoRelC2ERKSt4listINS_10CoordinateESaIS2_EE
+
+_ZNSt4listIN6Magick24PathQuadraticCurvetoArgsESaIS1_EE14_M_fill_insertESt14_List_iteratorIS1_RS1_PS1_EjRKS1_
+_ZNSt4listIN6Magick24PathQuadraticCurvetoArgsESaIS1_EE18_M_insert_dispatchISt14_List_iteratorIS1_RKS1_PS6_EEEdS5_IS1_RS1_PS1_ET_SD_12__false_type
+
+_ZNSt14__simple_allocISt10_List_nodeIN6Magick5VPathEESt24__default_alloc_templateILb1ELi0EEE10deallocateEPS3_j
+
+_ZSt10__distanceISt14_List_iteratorIN6Magick10CoordinateERKS2_PS3_EENSt15iterator_traitsIT_E15difference_typeES8_S8_St18input_iterator_tag
+
+
+#note: this mangled named contridicts.
+#the "S1_" is supposed to refer to bbnode, but ends up referring
+#to "std::less"
+#_ZNSt3setIP6bbnodeSt4lessIS1_ESaIS1_EE6insertERKS1_                             # std::set<bbnode *,std::less<bbnode *>,std::allocator<bbnode *>>::insert(const bbnode * &)
+
+###############################################################################################
+
+_ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj                             # std::__default_alloc_template<(bool)1, (int)0>::allocate(unsigned)
+
+###############################################################################################
+_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_EPKS3_RKS6_                           # 
+###############################################################################################
+_ZTch0_h40_NK8KHotKeys14Window_trigger4copyEPNS_11Action_dataE                   # covariant_return_thunk[0,40] KHotKeys::Window_trigger::copy(KHotKeys::Action_data *) const
+_ZTch0_h40_NK8KHotKeys23Active_window_condition4copyEPNS_19Condition_list_baseE  # covariant_return_thunk[0,40] KHotKeys::Active_window_condition::copy(KHotKeys::Condition_list_base *) const
+###############################################################################################
+_ZThn72_N8KHotKeys11KHotKeysAppD0Ev                                              # nonvirtual_thunk[-72] KHotKeys::KHotKeysApp::~KHotKeysApp[in-charge deleting](void)
+_ZThn40_N8KHotKeys14Window_triggerD1Ev                                           # nonvirtual_thunk[-40] KHotKeys::Window_trigger::~Window_trigger[in-charge](void)
+_ZThn204_N8KHotKeys11KHotKeysApp9functionsEv                                     # nonvirtual_thunk[-204] KHotKeys::KHotKeysApp::functions(void)
+_ZThn8_NSdD0Ev                                                                   # nonvirtual_thunk[-8] std::iostream::~std::iostream[in-charge deleting](void)
+_ZThn8_NSdD1Ev                                                                   # nonvirtual_thunk[-8] std::iostream::~std::iostream[in-charge](void)
+_ZThn8_NSdD1Ev                                                                   # nonvirtual_thunk[-8] std::iostream::~std::iostream[in-charge](void)
+###############################################################################################
+_ZThn8_NSt13basic_fstreamIcSt11char_traitsIcEED0Ev                               # nonvirtual_thunk[-8] std::basic_fstream<char,std::char_traits<char>>::~basic_fstream[in-charge deleting](void)
+_ZThn8_NSt18basic_stringstreamIwSt11char_traitsIwESaIwEED0Ev                     # nonvirtual_thunk[-8] std::basic_stringstream<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t>>::~basic_stringstream[in-charge deleting](void)
+###############################################################################################
+_ZTv0_n44_N4Arts20FileInputStream_skel14_interfaceNameEv                         # virtual_thunk[0,-44] Arts::FileInputStream_skel::_interfaceName(void)
+_ZTv0_n48_N4Arts20FileInputStream_impl9streamEndEv                               # virtual_thunk[0,-48] Arts::FileInputStream_impl::streamEnd(void)
+_ZTv0_n52_N4Arts16InputStream_baseD0Ev                                           # virtual_thunk[0,-52] Arts::InputStream_base::~InputStream_base[in-charge deleting](void)
+_ZTv0_n96_N4Arts20FileInputStream_skel17_isCompatibleWithERKSs                   # virtual_thunk[0,-96] Arts::FileInputStream_skel::_isCompatibleWith(const std::string &)
+#_ZTv0_n88_N4Arts20FileInputStream_impl15request_outdataEPNS_10DataPacketIhEE    # virtual_thunk[0,-88] Arts::FileInputStream_impl::request_outdata(Arts::DataPacket<unsigned char>*)
+###############################################################################################
+_ZTVN4Arts16InputStream_skelE               # Arts::InputStream_skel::vtable
+_ZTVN4Arts16SynthModule_skelE               # Arts::SynthModule_skel::vtable
+_ZTVN4Arts17StdoutWriter_implE              # Arts::StdoutWriter_impl::vtable
+_ZTVN4Arts25StdoutWriter_impl_FactoryE      # Arts::StdoutWriter_impl_Factory::vtable
+_ZTVN4Arts28FileInputStream_impl_FactoryE   # Arts::FileInputStream_impl_Factory::vtable
+_ZTVN10__cxxabiv121__vmi_class_type_infoE   # __cxxabiv1::__vmi_class_type_info::vtable
+###############################################################################################
+_ZTTN4Arts14StdSynthModuleE                 # Arts::StdSynthModule::VTT
+_ZTTN4Arts16SynthModule_skelE               # Arts::SynthModule_skel::VTT
+_ZTT13Observer_stub                         # Observer_stub::VTT
+_ZTT8UIServer                               # UIServer::VTT
+###############################################################################################
+_ZTIN4Arts28FileInputStream_impl_FactoryE   # Arts::FileInputStream_impl_Factory::typeinfo
+_ZTIN4Arts20FileInputStream_baseE           # Arts::FileInputStream_base::typeinfo
+_ZTIN4Arts16InputStream_skelE               # Arts::InputStream_skel::typeinfo
+_ZTI13Observer_stub                         # Observer_stub::typeinfo
+_ZTI18UIServerSystemTray                    # UIServerSystemTray::typeinfo
+_ZTI8QPtrListI15KSSLCertificateE            # QPtrList::typeinfo
+###############################################################################################
+#_ZTF
+###############################################################################################
+_ZTSN6Magick15DrawableViewboxE                           # typeinfo name for N6Magick15DrawableViewboxE
+_ZTSN6Magick22DrawableRoundRectangleE                    # typeinfo name for N6Magick22DrawableRoundRectangleE
+_ZTSN10__cxxabiv116__enum_type_infoE                     # typeinfo name for N10__cxxabiv116__enum_type_infoE
+_ZTSNSt8ios_base7failureE                                # typeinfo name for NSt8ios_base7failureE
+#_ZTSSt14unary_functionIPN9MagickLib12_DrawContextEvE    # typeinfo name for std::unary_function<MagickLib::_DrawContext*,void>
+#_ZTSSt5ctypeIcE                                         # typeinfo name for std::ctype<char>
+#_ZTSSt14basic_ifstreamIwSt11char_traitsIwEE             # typeinfo name for std::basic_ifstream<wchar_t, std::char_traits<wchar_t>>
+#_ZTSSt12out_of_range                                    # typeinfo name for std::out_of_range
+#_ZTSSd                                                  # typeinfo name for std::basic_iostream<char, std::char_traits<char>>
+#_ZTSSi                                                  # typeinfo name for std::basic_istream<char, std::char_traits<char>>
+#_ZTSSo                                                  # typeinfo name for std::basic_ostream<char, std::char_traits<char>>
+#_ZTSSt10__num_base                                      # typeinfo name for std::__num_base
+###############################################################################################
+#_ZTJ
+###############################################################################################
+_ZTCN4Arts17StdoutWriter_implE68_NS_11Object_skelE           # Arts::StdoutWriter_impl::construction_vtable[68]
+_ZTCN4Arts20FileInputStream_implE0_NS_16SynthModule_baseE    # Arts::FileInputStream_impl::construction_vtable[0]
+_ZTCN4Arts20FileInputStream_implE112_NS_16InputStream_skelE  # Arts::FileInputStream_impl::construction_vtable[112]
+_ZTCN4Arts20FileInputStream_implE132_NS_16SynthModule_skelE  # Arts::FileInputStream_impl::construction_vtable[132]
+###############################################################################################
+_ZGVZN10KDirLister11emitChangesEvE3dot                                                   # guard variable for KDirLister::emitChanges(void)::dot
+_ZGVZN11KFileDialog16pathComboChangedERK7QStringE9localRoot                              # guard variable for KFileDialog::pathComboChanged(const_QString_&)::localRoot
+_ZGVZNK17KSimpleFileFilter12passesFilterEPK9KFileItemE6dotdot                            # guard variable for KSimpleFileFilter::passesFilter(const_KFileItem_*)::dotdot
+#_ZGVZN15KDirListerCache11slotEntriesEPN3KIO3JobERK10QValueListIS3_INS0_7UDSAtomEEEE3dot # guard variable for KDirListerCache::slotEntries(KIO::Job*,const QValueList<QValueList<KIO::USDAtom>> &)::dot
+#_ZGVZN9__gnu_cxx20__common_pool_policyINS_6__poolELb1EE11_S_get_poolEvE7_S_pool         # guard variable for __gnu_cxx::__common_pool_policy<__gnu_cxx::__pool, true>::_S_get_pool()::_S_pool
+_ZGRZNK17KSimpleFileFilter12passesFilterEPK9KFileItemE6dotdot                            # reference temporary for KSimpleFileFilter::passesFilter(const_KFileItem_*)::dotdot
+#_ZGRZN15KDirListerCache11slotEntriesEPN3KIO3JobERK10QValueListIS3_INS0_7UDSAtomEEEE3dot # reference temporary for KDirListerCache::slotEntries(KIO::Job*,const QValueList<QValueList<KIO::USDAtom>> &)::dot
+###############################################################################################
+_ZZN11KFileDialog16staticMetaObjectEvE12param_slot_0        # KFileDialog::staticMetaObject(void)::param_slot_0
+_ZZN11KFileDialog16staticMetaObjectEijE12param_slot_0       # KFileDialog::staticMetaObject(int,unsigned_int)::param_slot_0
+_ZZN11KFileDialog16staticMetaObjectEvE12param_slot_1        # KFileDialog::staticMetaObject(void)::param_slot_1
+_ZZNK9KFileItem6pixmapEiiE17defaultFolderIcon               # KFileItem::pixmap(int,int)::defaultFolderIcon 
+_ZZNK10KDirLister13matchesFilterEPK9KFileItemE6dotdot       # KDirLister::matchesFilter(const_KFileItem_*)::dotdot
+_ZZN8Observer16staticMetaObjectEvE7slot_10                  # Observer::staticMetaObject(void)::slot_10
+_ZZN9KMimeType9findByURLERK4KURLjbbE9dotkdelnk              # KMimeType::findByURL(const_KURL_&,unsigned_int,bool,bool)::dotkdelnk 
+_ZZN3KIO9http_postERK4KURLRK9QMemArrayIcEbE9bad_ports       # KIO::http_post(const_KURL_&,const_QMemArray<char>_&,bool)::bad_ports
+#_ZZN9__gnu_cxx20__common_pool_policyINS_6__poolELb1EE11_S_get_poolEvE7_S_pool           # __gnu_cxx::__common_pool_policy<__gnu_cxx::__pool, true>::_S_get_pool()::_S_pool
+###############################################################################################
+_Znaj                                                  # operator<new>[](unsigned int)
+_ZeqRK7QStringPKc                                      # operator==(const QString &,const char *)
+_ZdlPv                                                 # operator<delete>(void *)
+_ZlsR11QDataStreamRK9QMemArrayIcE                      # operator<<(QDataStream &,const QMemArray<char> &)
+_ZltRK7QStringS1_                                      # operator<(const QString &,const QString &)
+#_ZlsI8QCStringER11QDataStreamS2_RK10QValueListIT_E    # QDataStream&& operator<< <QCString>(QDataStream&, QValueList<QCString> const&)
+_ZlsR16OutputCharStreamR11GroveString                  # operator<<(OutputCharStream &,GroveString &)
+_ZeqRK6StringItEPKc                                    # operator==(const String<unsigned short> &,const char *)
+###############################################################################################
+#
+#          OLD STYLE GNU GCC MANGLED NAMES
+#
+#          These can be created using /usr/bin/gcc296.
+#
+###############################################################################################
+
+###############################################################################################
+# Functions...
+###############################################################################################
+__default_terminate__Fv           # __default_terminate(void)
+__fast_compare__FPCcT0            # __fast_compare(const char *,const char *)
+pipeName__Fi                      # pipeName(int)
+cocaConnect__FPCc                 # cocaConnect(const char *)
+cocaConnectAction__FPvP6tTsTmr    # cocaConnectAction(void *,tTsTmr *)
+cocaMulticast__FP11msgGenStruc    # cocaMulticast(msgGenStruc *)
+mfgDataFill__FsP10tManufDataUiPc  # mfgDataFill(short,tManufData *,unsigned int,char *)
+printSem__FPP9semaphore           # printSem(semaphore * *)
+###############################################################################################
+# Constructors...
+###############################################################################################
+__8ofstreamicii                         # ofstream::ofstream(int,char,int,int)
+__8ofstreamiPcii                        # ofstream::ofstream(int,char *,int,int)
+__8ofstreamiPCcii                       # ofstream::ofstream(int,const char *,int,int)
+__8ofstreamiPCVcii                      # ofstream::ofstream(int,const volatile char *,int,int)
+__11_ios_fields                         # _ios_fields::_ios_fields()
+__11RtrvFsteCmdiPcT2                    # RtrvFsteCmd::RtrvFsteCmd(int,char *,char *)
+__17RtrvPmschedDsnCmdiPcT29MOD2_ENUM    # RtrvPmschedDsnCmd::RtrvPmschedDsnCmd(int,char *,char *,MOD2_ENUM)
+###############################################################################################
+# Destructors...
+###############################################################################################
+_._8Document                      # Document::~Document()
+_._8Documentfi                    # Document::~Document(float,int)
+_._C8Documentcb                   # Document::~Document(char,bool) const
+###############################################################################################
+# C++ Methods...
+###############################################################################################
+__fb_init__11istreambase                        # istreambase::__fb_init()
+flags__3iosUI                                   # ios::flags(unsigned int0_t)
+clear__8LogArrayUi                              # LogArray::clear(unsigned int)
+isValid__8LogArrayUi                            # LogArray::isValid(unsigned int)
+getDefaultValue__C12OpticsParKeyRlN21           # OpticsParKey::getDefaultValue(long &,long &,long &) const
+getDefaultValue__C12OpticsParKeyRbN10_1         # OpticsParKey::getDefaultValue(bool &,bool &,bool &,bool &,bool &,bool &,bool &,bool &,bool &,bool &,bool &) const
+getSsmRefStrip__8SyncImplRUcRScT1               # SyncImpl::getSsmRefStrip(unsigned char &,short &,char,unsigned char &)
+###############################################################################################
+__eq__C9type_infoRC9type_info                   # type_info::operator==(const type_info &) const
+__ls__7ostreamP9streambuf                       # ostream::operator<<(streambuf *)
+__opPc__C8MyString                              # MyString::operator char *() const
+__opPb__C8MyString                              # MyString::operator bool *() const
+__opl__C8MyStringi                              # MyString::operator long(int) const
+###############################################################################################
+setObjectId__14LmpGeneralImplPt9XpsUFLSeq2ZUcZUc                     # LmpGeneralImpl::setObjectId(XpsUFLSeq<unsigned char,unsigned char> *)
+setObjectId__14LmpGeneralImplPt9XpsUFLSeq3ZUcZUcZUi                  # LmpGeneralImpl::setObjectId(XpsUFLSeq<unsigned char,unsigned char,unsigned int> *)
+setObjectId__14LmpGeneralImplPt9XpsUFLSeq3ZUcZUcZUii                 # LmpGeneralImpl::setObjectId(XpsUFLSeq<unsigned char,unsigned char,unsigned int> *,int)
+setObjectId__14LmpGeneralImplbPt9XpsUFLSeq3ZUcZUcZUii                # LmpGeneralImpl::setObjectId(bool,XpsUFLSeq<unsigned char,unsigned char,unsigned int> *,int)
+setObjectId__14LmpGeneralImplbPt9XpsUFLSeq10_ZbZbZbZbZbZbZbZbZbZbi   # LmpGeneralImpl::setObjectId(bool,XpsUFLSeq<bool,bool,bool,bool,bool,bool,bool,bool,bool,bool> *,int)
+###############################################################################################
+# Function Pointers...
+###############################################################################################
+fPtr1__FPFi_fi                    # fPtr1(float (*)(int),int)
+fPtr1__FPPFi_fi                   # fPtr1(float (**)(int),int)
+fPtr1__FPFi_ci                    # fPtr1(char (*)(int),int)
+fPtr1__FPFi_fiP9_MYSTRUCT         # fPtr1(float (*)(int),int,_MYSTRUCT *)
+fPtr1__FPFi_ciP9_MYSTRUCT         # fPtr1(char (*)(int),int,_MYSTRUCT *)
+fPtr2__FPFiPfc_fPFidPb_cidc       # fPtr2(float (*)(int,float *,char),char (*)(int,double,bool *),int,double,char)
+###############################################################################################
+# Type Info...
+###############################################################################################
+__tf14ContentHandler              # ContentHandler::type_info_function()
+__tf11TreeHandler                 # TreeHandler::type_info_function()
+__ti14ContentHandler              # ContentHandler::type_info_node()
+__ti9xml_error                    # xml_error::type_info_node()
+###############################################################################################
+_repository_id__C14CORBA_INV_FLAG                               # CORBA_INV_FLAG::_repository_id() const
+_repository_id__Q210Ds123Media7General                          # Ds123Media::General::_repository_id()
+_set_stub_factory__12CORBA_ObjectPFP7IOP_IOR_P12CORBA_Object    # CORBA_Object::_set_stub_factory(CORBA_Object * (*)(IOP_IOR *))
+_set_stub_factory__Q23Lmp7GeneralPFP7IOP_IOR_PQ23Lmp7General    # Lmp::General::_set_stub_factory(Lmp::General * (*)(IOP_IOR *))
+_factory__Q27FCTrunk12General_stubP7IOP_IOR                     # FCTrunk::General_stub::_factory(IOP_IOR *)
+###############################################################################################
+_4Node.FTAM_ERR_SEND_LOC_FILE                                   # Node::FTAM_ERR_SEND_LOC_FILE
+_4Node.SysErr                                                   # Node::SysErr
+_4Rmon._tc__a_Rmon___CORBA__Char_21_32                          # Rmon::_tc__a_Rmon___CORBA__Char_21_32
+_6Optics._tc_General                                            # Optics::_tc_General
+_6XpsCDR.m_lut4                                                 # XpsCDR::m_lut4
+_7FCMedia._tc__a_FC___CORBA__Char_31_32                         # FCMedia::_tc__a_FC___CORBA__Char_31_32
+###############################################################################################
+_GLOBAL_.D.chipSet                                                              # global destructors keyed to chipSet
+_GLOBAL_.D.acHelp__Fv                                                           # global destructors keyed to acHelp(void)
+_GLOBAL_.D.__7XcVtTblss                                                         # global destructors keyed to XcVtTbl::XcVtTbl(short,short)
+_GLOBAL_.D._10ClientInfo.list                                                   # global destructors keyed to ClientInfo::list
+_GLOBAL_.D.testCreateStsMonitor__FUiUiUiUiUiUiUi                                # global destructors keyed to testCreateStsMonitor(unsigned int,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int)
+_GLOBAL_.D._._10opticalArc                                                      # global destructors keyed to opticalArc::~opticalArc()
+_GLOBAL_.D.__10RollClientiPcPFPv_v                                              # global destructors keyed to RollClient::RollClient(int,char *,void (*)(void *))
+_GLOBAL_.D.__ls__FR7ostreamQ214OpticsTopology15eConnectionType                  # global destructors keyed to operator<<(ostream &,OpticsTopology::eConnectionType)
+_GLOBAL_.D.__ls__FR7ostreamRC15CORBA_Exception                                  # global destructors keyed to operator<<(ostream &,const CORBA_Exception &)
+_GLOBAL_.D._release__4_var                                                      # global destructors keyed to _var::_release()
+_GLOBAL_.D._type_id__12CORBA_Policy                                             # global destructors keyed to CORBA_Policy::_type_id()
+_GLOBAL_.D._type_id__Q22If15xAlsConfigError                                     # global destructors keyed to If::xAlsConfigError::_type_id()
+_GLOBAL_.D.__as__25tRmonAlarmPersistenceInfoRC28tRmonAlarmPersistenceInfo_V1    # global destructors keyed to tRmonAlarmPersistenceInfo::operator=(const tRmonAlarmPersistenceInfo_V1 &)
+_GLOBAL_.D.__17RtrvRollClientStsiPcT29MOD2_ENUM                                 # global destructors keyed to RtrvRollClientSts::RtrvRollClientSts(int,char *,char *,MOD2_ENUM)
+###############################################################################################
+_GLOBAL_.I.esiTable                                                  # global constructors keyed to esiTable
+_GLOBAL_.I.corbaRmonAlarmAdminInfoGet__FUlPQ24Rmon15sAlarmAdminInfo  # global constructors keyed to corbaRmonAlarmAdminInfoGet(unsigned long,Rmon::sAlarmAdminInfo *)
+_GLOBAL_.I.convertVc4ToSts__12MetaRangeVc4i                          # global constructors keyed to MetaRangeVc4::convertVc4ToSts(int)
+_GLOBAL_.I.acHelp__Fv                                                # global constructors keyed to acHelp(void)
+_GLOBAL_.I._10ClientInfo.list                                        # global constructors keyed to ClientInfo::list
+_GLOBAL_.I.__12PvmPluggable                                          # global constructors keyed to PvmPluggable::PvmPluggable()
+_GLOBAL_.I.__11FtpIoUploadPCcN41iUiRCQ25FtpIo12FttdConnInfo          # global constructors keyed to FtpIoUpload::FtpIoUpload(const char *,const char *,const char *,const char *,const char *,int,unsigned int,const FtpIo::FttdConnInfo &)
+_GLOBAL_.I.__17SetBulkRollClientiPcN429MOD2_ENUMPFPv_v               # global constructors keyed to SetBulkRollClient::SetBulkRollClient(int,char *,char *,char *,char *,char *,MOD2_ENUM,void (*)(void *))
+###############################################################################################
+__t9allocator1ZP7Element                             # allocator<Element *>::allocator()
+__t14XpsMapIterator2ZlZP14CORBA_TypeCode             # XpsMapIterator<long,CORBA_TypeCode *>::XpsMapIterator()
+__t6XpsMap2ZlZP14CORBA_TypeCodePFRCl_UlUlUlf         # XpsMap<long,CORBA_TypeCode *>::XpsMap(unsigned long (*)(const long &),unsigned long,unsigned long,float)
+_._t6XpsMap2ZlZP14CORBA_TypeCode                     # XpsMap<long,CORBA_TypeCode *>::~XpsMap()
+_._t14XpsPolicy_impl1Zs                              # XpsPolicy_impl<short>::~XpsPolicy_impl()
+_cast__Ct14XpsPolicy_impl1Zsl                        # XpsPolicy_impl<short>::_cast(long) const
+erase__t6XpsMap2ZlZP14CORBA_TypeCode                 # XpsMap<long,CORBA_TypeCode *>::erase()
+__vc__t6XpsMap2ZlZP14CORBA_TypeCodeRCl               # XpsMap<long,CORBA_TypeCode *>::operator[](const long &)
+###############################################################################################
+_Q214LmpGeneralImpl13ProductConfig.dbVer             # LmpGeneralImpl::ProductConfig::dbVer
+###############################################################################################
+invoke_request_wrapper__42PortableInterceptor_ClientRequestInfo_implUlP15IOP_ClientCodecR12CORBA_ObjectRt9XpsUFLSeq2ZUcZUcPcUlQ25CORBA13OperationModeUcP18CORBA_ReplyHandlerP9IOP_ParamUlT10_UlRt9XpsUVLSeq1ZQ23IOP14ServiceContextT14_RUcUxR17CORBA_Environment # PortableInterceptor_ClientRequestInfo_impl::invoke_request_wrapper(unsigned long,IOP_ClientCodec *,CORBA_Object &,XpsUFLSeq<unsigned char,unsigned char> &,char *,unsigned long,CORBA::OperationMode,unsigned char,CORBA_ReplyHandler *,IOP_Param *,unsigned long,IOP_Param *,unsigned long,XpsUVLSeq<IOP::ServiceContext> &,XpsUVLSeq<IOP::ServiceContext> &,unsigned char &,unsigned long long,CORBA_Environment &)
+###############################################################################################
+#get_codec_factory__8__ssliop                                         # __ssliop::get_codec_factory()
+#get_codec_factory__16__ssliop__ssliop                                # __ssliop__ssliop::get_codec_factory()
+#get_codec_factory__8__ssliop                                         # __ssliop::get_codec_factory()
+#__get__codec__factory__16__ssliop__ssliop                            # __ssliop__ssliop::__get__codec__factory()
+#__get__codec__4__factory__16__ssliop__ssliopi                        # __ssliop__ssliop::__get__codec__4__factory(int)
+###############################################################################################

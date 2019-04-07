@@ -1,0 +1,1491 @@
+# Based on "PowerISA Version 2.06 Revision B" document dated July 23, 2010
+# Category: SPE.Embedded Float Vector Instructions
+
+
+# =================================================================
+# Page 561
+
+# evfsabs rT,rA
+# ISA-cmt: evfsabs - Vector Floating-Point Single-Precision Absolute Value
+# ISA-info: evfsabs - Form "EVX" Page 561 Category "SP.FV"
+# binutils: mytest.d:  1e0:	10 22 02 84 	evfsabs r1,r2
+:evfsabs D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=644
+{
+   #
+   # low section
+   #
+   tmpA:4 = abs( A:4 );
+
+   #
+   # high section
+   #
+   tmpB:4 = abs( A(4) );
+
+   # move results into upper and lower words
+   tmpC:8 = zext( tmpB );
+   tmpC = ( tmpC << 32 ) | zext( tmpA );
+
+   D = tmpC;
+}
+ 
+# =================================================================
+# Page 562
+
+# evfsadd rT,rA,rB
+# ISA-cmt: evfsadd - Vector Floating-Point Single-Precision Add
+# ISA-info: evfsadd - Form "EVX" Page 562 Category "SP.FV"
+# binutils: mytest.d:  1d8:	10 22 1a 80 	evfsadd r1,r2,r3
+:evfsadd D,A,B is OP=4 & D & A & B & XOP_0_10=640
+{
+   #
+   # low section
+   #
+   tmpA:4 = A:4 f+ B:4;
+   setSPEFSCRAddFlags_L( A:4, B:4, tmpA );
+
+   #
+   # high section
+   #
+   tmpB:4 = A(4) f+ B(4);
+
+   # SLEIGH had a problem with using A(4) and B(4) directly here
+   tmpD:4 = A(4);
+   tmpE:4 = B(4);
+   setSPEFSCRAddFlags_H( tmpD, tmpE, tmpB );
+
+   # move results into upper and lower words
+   tmpC:8 = zext( tmpB );
+   tmpC = ( tmpC << 32 ) | zext( tmpA );
+
+   D = tmpC;
+}
+
+
+# =================================================================
+# Page 566
+
+# evfscfsf rT,rB
+# ISA-cmt: evfscfsf - Vector Convert Floating-Point Single-Precision from Signed Fraction
+# ISA-info: evfscfsf - Form "EVX" Page 566 Category "SP.FV"
+# binutils: mytest.d:  20c:	10 20 12 93 	evfscfsf r1,r2
+:evfscfsf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=659
+{
+   # load fractional divisor as a float
+   tmpA:4 = 0x80000000;
+   tmpA = int2float( tmpA );
+   setSPEFSCR_L( tmpA );
+
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+
+   # check if negative
+   if ( ( tmpE & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the fractional portion of register B
+   tmpB:4 = int2float( tmpE );
+   setSPEFSCR_L( tmpB );
+   tmpC:4 = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_L( tmpB, tmpA, tmpC );
+
+   goto <done>;
+
+   <negative>
+
+   # float the fractional portion of register B, 2's complement negate
+   tmpB = int2float( -( tmpE ) );
+   setSPEFSCR_L( tmpB );
+   tmpC = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_L( tmpB, tmpA, tmpC );
+
+   # negate the float
+   tmpC = f-( tmpC );
+   setSPEFSCR_L( tmpC );
+ 
+   <done>
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+
+   # check if negative
+   if ( ( tmpE & 0x80000000 ) != 0 ) goto <negative1>;
+
+   # float the fractional portion of register B
+   tmpB = int2float( tmpE );
+   setSPEFSCR_H( tmpB );
+   tmpD:4 = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_H( tmpB, tmpA, tmpD );
+
+   goto <done1>;
+
+   <negative1>
+
+   # float the fractional portion of register B, 2's complement negate
+   tmpB = int2float( -( tmpE ) );
+   setSPEFSCR_H( tmpB );
+   tmpD = tmpB f/ tmpA;
+   setSPEFSCRDivFlags_H( tmpB, tmpA, tmpD );
+
+   # negate the float
+   tmpD = f-( tmpD );
+   setSPEFSCR_H( tmpD );
+ 
+   <done1>
+
+   setSummarySPEFSCR();
+
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpD );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpC );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 566
+
+# evfscfsi rT,rB
+# ISA-cmt: evfscfsi - Vector Convert Floating-Point Single-Precision from Signed Integer
+# ISA-info: evfscfsi - Form "EVX" Page 566 Category "SP.FV"
+# binutils: mytest.d:  204:	10 20 12 91 	evfscfsi r1,r2
+:evfscfsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=657 
+{
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+
+   # check if negative
+   if ( ( tmpE & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the integer portion of register B
+   tmpB:4 = int2float( tmpE );
+   setSPEFSCR_L( tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the integer portion of register B, 2's complement negate
+   tmpB = int2float( -( tmpE ) );
+   setSPEFSCR_L( tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setSPEFSCR_L( tmpB );
+ 
+   <done>
+
+   setSummarySPEFSCR();
+
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+
+   # check if negative
+   if ( ( tmpE & 0x80000000 ) != 0 ) goto <negative1>;
+
+   # float the integer portion of register B
+   tmpC:4 = int2float( tmpE );
+   setSPEFSCR_H( tmpC );
+
+   goto <done1>;
+
+   <negative1>
+
+   # float the integer portion of register B, 2's complement negate
+   tmpC = int2float( -( tmpE ) );
+   setSPEFSCR_H( tmpC );
+
+   # negate the float
+   tmpC = f-( tmpC );
+   setSPEFSCR_H( tmpC );
+ 
+   <done1>
+
+   setSummarySPEFSCR();
+
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpC );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpB );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 566
+
+# evfscfuf rT,rB
+# ISA-cmt: evfscfuf - Vector Convert Floating-Point Single-Precision from Unsigned Fraction
+# ISA-info: evfscfuf - Form "EVX" Page 566 Category "SP.FV"
+# binutils: mytest.d:  208:	10 20 12 92 	evfscfuf r1,r2
+:evfscfuf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=658
+{
+   # load fractional divisor as a float
+   tmpA:8 = 0x0000000100000000;
+   tmpF:4 = int2float( tmpA );
+   setSPEFSCR_L( tmpF );
+
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+
+   # float the fractional portion of register B
+   tmpB:4 = int2float( tmpE );
+   setSPEFSCR_L( tmpB );
+   tmpC:4 = tmpB f/ tmpF;
+   setSPEFSCRDivFlags_L( tmpB, tmpF, tmpC );
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+
+   # float the fractional portion of register B
+   tmpB = int2float( tmpE );
+   setSPEFSCR_H( tmpB );
+   tmpD:4 = tmpB f/ tmpF;
+   setSPEFSCRDivFlags_H( tmpB, tmpF, tmpD );
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpD );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpC );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 566
+
+#evfscfui  rT,rB
+# ISA-cmt: evfscfui - Vector Convert Floating-Point Single-Precision from Unsigned Integer
+# ISA-info: evfscfui - Form "EVX" Page 566 Category "SP.FV"
+# binutils: mytest.d:  200:	10 20 12 90 	evfscfui r1,r2
+:evfscfui D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=656
+{
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+
+   tmpC:4 = int2float( tmpE );
+   setSPEFSCR_L( tmpC );
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+
+   tmpD:4 = int2float( tmpE );
+   setSPEFSCR_H( tmpD );
+
+   setSummarySPEFSCR();
+
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpD );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpC );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 564
+
+# evfscmpeq CRFD,rA,rB
+# ISA-cmt: evfscmpeq - Vector Floating-Point Single-Precision Compare Equal
+# ISA-info: evfscmpeq - Form "EVX" Page 564 Category "SP.FV"
+# binutils: mytest.d:  1fc:	10 82 1a 8e 	evfscmpeq cr1,r2,r3
+:evfscmpeq CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=654
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f== tmpB;
+   tmpH:1 = tmpC f== tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 563
+
+# evfscmpgt CRFD,rA,rB
+# ISA-cmt: evfscmpgt - Vector Floating-Point Single-Precision Compare Greater Than
+# ISA-info: evfscmpgt - Form "EVX" Page 563 Category "SP.FV"
+# binutils: mytest.d:  1f4:	10 82 1a 8c 	evfscmpgt cr1,r2,r3
+:evfscmpgt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=652
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f> tmpB;
+   tmpH:1 = tmpC f> tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 563
+
+# evfscmplt CRFD,rA,rB
+# ISA-cmt: evfscmplt - Vector Floating-Point Single-Precision Compare Less Than
+# ISA-info: evfscmplt - Form "EVX" Page 563 Category "SP.FV"
+# binutils: mytest.d:  1f8:	10 82 1a 8d 	evfscmplt cr1,r2,r3
+:evfscmplt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=653
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f< tmpB;
+   tmpH:1 = tmpC f< tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 568
+
+# evfsctsf rT,rB
+# ISA-cmt: evfsctsf - Vector Convert Floating-Point Single-Precision to Signed Fraction
+# ISA-info: evfsctsf - Form "EVX" Page 568 Category "SP.FV"
+# binutils: mytest.d:  21c:	10 20 12 97 	evfsctsf r1,r2
+:evfsctsf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=663
+{
+   # multiply by 0x8000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:4 = 0x80000000;
+   tmpM = int2float( tmpM );
+   setSPEFSCR_L( tmpM );
+
+   # load saturation limit as a float
+   tmpS:4 = 0x80000000 - 1;
+   tmpS = int2float( tmpS );
+   setSPEFSCR_L( tmpS );
+
+   # scale the saturation limit to a fractional float
+   tmpS = tmpS f/ tmpM;
+   setSPEFSCRDivFlags_L( tmpS, tmpM, tmpS );
+
+   # form negative saturation limit
+   tmpN:4 = f-( tmpS );
+
+   #
+   # low section
+   #
+   tmpB:4 = B:4;
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpS ) goto <check_negative>;
+
+      # set to positive saturation
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   goto <done>;
+
+   <check_negative>
+
+   # check if greater than or equal to negative saturation limit
+   if ( tmpB f>= tmpN ) goto <done>;
+
+      # set to negative saturation
+      tmpB = tmpN;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_L( tmpB, tmpM, tmpB );
+
+   # truncate back to signed fraction format
+   tmpL:4 = trunc( tmpB );
+   setSPEFSCR_L( tmpL );
+
+   setSummarySPEFSCR();
+
+
+   #
+   # high section
+   #
+   tmpB = B(4);
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpS ) goto <check_negative1>;
+
+      # set to positive saturation
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   goto <done1>;
+
+   <check_negative1>
+
+   # check if greater than or equal to negative saturation limit
+   if ( tmpB f>= tmpN ) goto <done1>;
+
+      # set to negative saturation
+      tmpB = tmpN;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done1>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_H( tmpB, tmpM, tmpB );
+
+   # truncate back to signed fraction format
+   tmpH:4 = trunc( tmpB );
+   setSPEFSCR_H( tmpH );
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 567
+
+# evfsctsi rT,rB
+# ISA-cmt: evfsctsi - Vector Convert Floating-Point Single-Precision to Signed Integer
+# ISA-info: evfsctsi - Form "EVX" Page 567 Category "SP.FV"
+# binutils: mytest.d:  214:	10 20 12 95 	evfsctsi r1,r2
+:evfsctsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=661
+{
+   # create zero float constant
+   tmpA:4 = 0;
+   tmpA = int2float( tmpA );
+
+   #
+   # low section
+   #
+   tmpB:4 = B:4;
+
+   # check if negative
+   if ( tmpB f< tmpA ) goto <negative>;
+
+   tmpB = round( tmpB );
+   setSPEFSCR_L( tmpB );
+
+   # limit to positive saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped>;
+      tmpB = 0x000000007FFFFFFF;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpL:4 = tmpB;
+
+   goto <done>;
+
+   <negative>
+
+   # negate the float
+   tmpB = round( f-( tmpB ) );
+   setSPEFSCR_L( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped>;
+      tmpB = 0x0000000080000000;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpL = -( tmpB );
+
+   <done>
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   tmpB = B(4);
+
+   # check if negative
+   if ( tmpB f< tmpA ) goto <negative1>;
+
+   tmpB = round( tmpB );
+   setSPEFSCR_H( tmpB );
+
+   # limit to positive saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped1>;
+      tmpB = 0x000000007FFFFFFF;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped1>
+
+   tmpH:4 = tmpB;
+
+   goto <done1>;
+
+   <negative1>
+
+   # negate the float
+   tmpB = round( f-( tmpB ) );
+   setSPEFSCR_H( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped1>;
+      tmpB = 0x0000000080000000;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped1>
+
+   # negate the signed int
+   tmpH = -( tmpB );
+
+   <done1>
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 567
+
+# evfsctsiz rT,rB
+# ISA-cmt: evfsctsiz - Vector Convert Floating-Point Single-Precision to Signed Integer with Round toward Zero
+# ISA-info: evfsctsiz - Form "EVX" Page 567 Category "SP.FV"
+# binutils: mytest.d:  224:	10 20 12 9a 	evfsctsiz r1,r2
+:evfsctsiz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=666
+{
+   # create zero float constant
+   tmpA:8 = 0;
+   tmpA = int2float( tmpA );
+
+   # create positive saturation float constant
+   tmpS:8 = 0x000000007FFFFFFF;
+   tmpS = int2float( tmpS );
+
+   # create negative saturation float constant
+   tmpN:8 = 0x0000000080000000;
+   tmpN = int2float( tmpN );
+
+   #
+   # low section
+   #
+   tmpB:8 = float2float( B:4 );
+
+   # check if negative
+   if ( tmpB f< tmpA ) goto <negative>;
+
+   # limit to positive saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpL:4 = trunc( tmpB );
+   setSPEFSCR_L( tmpL );
+
+   goto <done>;
+
+
+   <negative>
+
+   # negate the float
+   tmpB = f-( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB f<= tmpN ) goto <negative_clipped>;
+      tmpB = tmpN;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpL = -( trunc( tmpB ) );
+   setSPEFSCR_L( tmpL );
+
+   <done>
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   tmpE:4 = B(4);
+   tmpB = float2float( tmpE );
+
+   # check if negative
+   if ( tmpB f< tmpA ) goto <negative1>;
+
+   # limit to positive saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped1>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped1>
+
+   tmpH:4 = trunc( tmpB );
+   setSPEFSCR_H( tmpH );
+
+   goto <done1>;
+
+
+   <negative1>
+
+   # negate the float
+   tmpB = f-( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB f<= tmpN ) goto <negative_clipped1>;
+      tmpB = tmpN;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <negative_clipped1>
+
+   # negate the signed int
+   tmpH = -( trunc( tmpB ) );
+   setSPEFSCR_H( tmpH );
+
+   <done1>
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 568
+
+# evfsctuf rT,rB
+# ISA-cmt: evfsctuf - Vector Convert Floating-Point Single-Precision to Unsigned Fraction
+# ISA-info: evfsctuf - Form "EVX" Page 568 Category "SP.FV"
+# binutils: mytest.d:  218:	10 20 12 96 	evfsctuf r1,r2
+:evfsctuf D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=662
+{
+   # multiply by 0x0000 0001 0000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:8 = 0x0000000100000000;
+   tmpM = int2float( tmpM );
+   setSPEFSCR_L( tmpM );
+
+   # load saturation limit as a float
+   tmpS:8 = 0x0000000100000000 - 1;
+   tmpS = int2float( tmpS );
+   setSPEFSCR_L( tmpS );
+
+   # scale the saturation limit to a fractional float
+   tmpS = tmpS f/ tmpM;
+   setSPEFSCRDivFlags_L( tmpS, tmpM, tmpS );
+
+   #
+   # low section
+   #
+   # get B float up to 64 bit width
+   tmpE:4 = B:4;
+   tmpB:8 = float2float( tmpE );
+   setSPEFSCR_L( tmpB );
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpS ) goto <done>;
+
+      # set to saturation
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_L( tmpB, tmpM, tmpB );
+
+   # truncate back to integer
+   tmpL:4 = trunc( tmpB );
+   setSPEFSCR_L( tmpL );
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   # get B float up to 64 bit width
+   tmpE = B(4);
+   tmpB = float2float( tmpE );
+   setSPEFSCR_H( tmpB );
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpS ) goto <done1>;
+
+      # set to saturation
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <done1>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setSPEFSCRMulFlags_H( tmpB, tmpM, tmpB );
+
+   # truncate back to integer
+   tmpH:4 = trunc( tmpB );
+   setSPEFSCR_H( tmpH );
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 567
+
+# evfsctui rT,rB
+# ISA-cmt: evfsctui - Vector Convert Floating-Point Single-Precision to Unsigned Integer
+# ISA-info: evfsctui - Form "EVX" Page 567 Category "SP.FV"
+# binutils: mytest.d:  210:	10 20 12 94 	evfsctui r1,r2
+:evfsctui D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=660
+{
+   # load saturation limit as a float
+   tmpS:8 = 0x00000000FFFFFFFF;
+   tmpS = int2float( tmpS );
+   setSPEFSCR_L( tmpS );
+
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+   tmpB:8 = float2float( tmpE );
+
+   # limit to saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   # round back to integer
+   tmpL:4 = trunc(round( tmpB ));
+   setSPEFSCR_L( tmpL );
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+   tmpB = float2float( tmpE );
+
+   # limit to saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped1>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped1>
+
+   # round back to integer
+   tmpH:4 = trunc(round( tmpB ));
+   setSPEFSCR_H( tmpH );
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 567
+
+# evfsctuiz rT,rB
+# ISA-cmt: evfsctuiz - Vector Convert Floating-Point Single-Precision to Unsigned Integer with Round toward Zero
+# ISA-info: evfsctuiz - Form "EVX" Page 567 Category "SP.FV"
+# binutils: mytest.d:  220:	10 20 12 98 	evfsctuiz r1,r2
+:evfsctuiz D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=664
+{
+   # load saturation limit as a float
+   tmpS:8 = 0x00000000FFFFFFFF;
+   tmpS = int2float( tmpS );
+   setSPEFSCR_L( tmpS );
+
+   #
+   # low section
+   #
+   tmpE:4 = B:4;
+   tmpB:8 = float2float( tmpE );
+
+   # limit to saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped>
+
+   tmpL:4 = trunc( tmpB );
+
+   setSummarySPEFSCR();
+
+   #
+   # high section
+   #
+   tmpE = B(4);
+   tmpB = float2float( tmpE );
+
+   # limit to saturation
+   if ( tmpB f<= tmpS ) goto <positive_clipped1>;
+      tmpB = tmpS;
+      spef_fx = 1;
+      spef_finxs = 1;
+      spef_fg = 1;
+
+   <positive_clipped1>
+
+   tmpH:4 = trunc( tmpB );
+
+   setSummarySPEFSCR();
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 562
+
+# evfsdiv rT,rA,rB
+# ISA-cmt: evfsdiv - Vector Floating-Point Single-Precision Divide
+# ISA-info: evfsdiv - Form "EVX" Page 562 Category "SP.FV"
+# binutils: mytest.d:  1f0:	10 22 1a 89 	evfsdiv r1,r2,r3
+:evfsdiv D,A,B is OP=4 & D & A & B & XOP_0_10=649
+{
+   tmpAL:4 = A:4;
+   tmpAH:4 = A(4);
+   tmpBL:4 = B:4;
+   tmpBH:4 = B(4);
+
+   tmpL:4 = tmpAL f/ tmpBL;
+   setSPEFSCRDivFlags_L( tmpAL, tmpBL, tmpL );
+
+   tmpH:4 = tmpAH f/ tmpBH;
+   setSPEFSCRDivFlags_H( tmpAH, tmpBH, tmpH );
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 562
+
+# evfsmul rT,rA,rB
+# ISA-cmt: evfsmul - Vector Floating-Point Single-Precision Multiply
+# ISA-info: evfsmul - Form "EVX" Page 562 Category "SP.FV"
+# binutils: mytest.d:  1ec:	10 22 1a 88 	evfsmul r1,r2,r3
+:evfsmul D,A,B is OP=4 & D & A & B & XOP_0_10=648
+{
+   tmpAL:4 = A:4;
+   tmpAH:4 = A(4);
+   tmpBL:4 = B:4;
+   tmpBH:4 = B(4);
+
+   tmpL:4 = tmpAL f* tmpBL;
+   setSPEFSCRMulFlags_L( tmpAL, tmpBL, tmpL );
+
+   tmpH:4 = tmpAH f* tmpBH;
+   setSPEFSCRMulFlags_H( tmpAH, tmpBH, tmpH );
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 561
+
+# evfsnabs rT,rA
+# ISA-cmt: evfsnabs - Vector Floating-Point Single-Precision Negative Absolute Value
+# ISA-info: evfsnabs - Form "EVX" Page 561 Category "SP.FV"
+# binutils: mytest.d:  1e4:	10 22 02 85 	evfsnabs r1,r2
+:evfsnabs D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=645
+{
+   tmpAL:4 = A:4;
+   tmpAH:4 = A(4);
+
+   tmpL:4 = f- ( abs( tmpAL ) );
+
+   tmpH:4 = f- ( abs( tmpAH ) );
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 561
+
+# evfsneg rT,rA
+# ISA-cmt: evfsneg - Vector Floating-Point Single-Precision Negate
+# ISA-info: evfsneg - Form "EVX" Page 561 Category "SP.FV"
+# binutils: mytest.d:  1e8:	10 22 02 86 	evfsneg r1,r2
+:evfsneg D,A is OP=4 & D & A & BITS_11_15=0 & XOP_0_10=646
+{
+   tmpAL:4 = A:4;
+   tmpAH:4 = A(4);
+
+   tmpL:4 = f-( tmpAL );
+
+   tmpH:4 = f-( tmpAH );
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( tmpH );
+   tmpZ = ( tmpZ << 32 ) | zext( tmpL );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 562
+
+# evfssub rT,rA,rB
+# ISA-cmt: evfssub - Vector Floating-Point Single-Precision Subtract
+# ISA-info: evfssub - Form "EVX" Page 562 Category "SP.FV"
+# binutils: mytest.d:  1dc:	10 22 1a 81 	evfssub r1,r2,r3
+:evfssub D,A,B is OP=4 & D & A & B & XOP_0_10=641
+{
+   tmpAL:4 = A:4;
+   tmpAH:4 = A(4);
+   tmpBL:4 = B:4;
+   tmpBH:4 = B(4);
+
+   tmpL:4 = tmpAL f- tmpBL;
+   setSPEFSCRSubFlags_L( tmpAL, tmpBL, tmpL );
+
+   tmpH:4 = tmpAH f- tmpBH;
+   setSPEFSCRSubFlags_H( tmpAH, tmpBH, tmpH );
+
+}
+
+
+# =================================================================
+# Page 565
+
+# evfststeq CRFD,rA,rB
+# ISA-cmt: evfststeq - Vector Floating-Point Single-Precision Test Equal
+# ISA-info: evfststeq - Form "EVX" Page 565 Category "SP.FV"
+# binutils: mytest.d:  230:	10 82 1a 9e 	evfststeq cr1,r2,r3
+:evfststeq CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=670
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f== tmpB;
+   tmpH:1 = tmpC f== tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 564
+
+# evfststgt CRFD,rA,rB
+# ISA-cmt: evfststgt - Vector Floating-Point Single-Precision Test Greater Than
+# ISA-info: evfststgt - Form "EVX" Page 564 Category "SP.FV"
+# binutils: mytest.d:  228:	10 82 1a 9c 	evfststgt cr1,r2,r3
+:evfststgt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=668
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f> tmpB;
+   tmpH:1 = tmpC f> tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 565
+
+# evfststlt CRFD,rA,rB
+# ISA-cmt: evfststlt - Vector Floating-Point Single-Precision Test Less Than
+# ISA-info: evfststlt - Form "EVX" Page 565 Category "SP.FV"
+# binutils: mytest.d:  22c:	10 82 1a 9d 	evfststlt cr1,r2,r3
+:evfststlt CRFD,A,B is OP=4 & CRFD & BITS_21_22=0 & A & B & XOP_0_10=669
+{
+   tmpA:4 = A:4;
+   tmpB:4 = B:4;
+   tmpC:4 = A(4);
+   tmpD:4 = B(4);
+
+   tmpL:1 = tmpA f< tmpB;
+   tmpH:1 = tmpC f< tmpD;
+
+   CRFD = (8 * tmpH ) + (4 * tmpL ) + (2 * (tmpH | tmpL) ) + (tmpH & tmpL);
+}
+
+
+# =================================================================
+# Page 915
+
+# evlddepx rT,rA,rB
+# Note: context is not supported
+:evlddepx D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=799 & BIT_0=0
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+   D = *:8(ea);
+}
+
+
+
+# =================================================================
+# Page 519
+
+# evlwhe RT,D(RA)
+# evlwhe rT,rA,UI
+:evlwhe D,EVUIMM_4_RAt is OP=4 & D & EVUIMM_4_RAt & RA_OR_ZERO & UI & XOP_0_10=785
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + (UI * 4);
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( *:2(ea + 2) );
+   tmpZ = ( tmpZ << 32 ) | zext( *:2(ea) );
+
+   D = tmpZ;
+}
+
+
+
+# =================================================================
+# Page 519
+
+# evlwhex rT,rA,rB
+# ISA-cmt: evlwhex - Vector Load Word into Two Halfwords Even Indexed
+# ISA-info: evlwhex - Form "EVX" Page 519 Category "SP"
+# binutils: mytest.d:  238:	10 22 1b 10 	evlwhex r1,r2,r3
+:evlwhex D,RA_OR_ZERO,B is OP=4 & D & RA_OR_ZERO & B & XOP_0_10=784
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( *:2(ea + 2) );
+   tmpZ = ( tmpZ << 32 ) | zext( *:2(ea) );
+
+   D = tmpZ;
+}
+
+
+
+# =================================================================
+# Page 521
+
+# evlwwsplat RT,D(RA)
+# evlwwsplat rT,rA,UI
+# ISA-cmt: evlwwsplat - Vector Load Word into Word and Splat
+# ISA-info: evlwwsplat - Form "EVX" Page 521 Category "SP"
+# binutils: NO-EXAMPLE - evlwwsplat
+# collides with maclhwu
+:evlwwsplat D,EVUIMM_4_RAt is OP=4 & D & RA_OR_ZERO & EVUIMM_4_RAt & UI & XOP_0_10=793
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + (UI * 4);
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( *:4(ea) );
+   tmpZ = ( tmpZ << 32 ) | zext( *:4(ea) );
+
+   D = tmpZ;
+}
+
+
+
+# =================================================================
+# Page 521
+
+# evlwwsplatx rT,rA,rB
+# ISA-cmt: evlwwsplatx - Vector Load Word into Word and Splat Indexed
+# ISA-info: evlwwsplatx - Form "EVX" Page 521 Category "SP"
+# binutils: mytest.d:  23c:	10 22 1b 18 	evlwwsplatx r1,r2,r3
+# collides with maclhwu
+:evlwwsplatx D,RA_OR_ZERO,B is OP=4 & D & RA_OR_ZERO & B & XOP_0_10=792
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+
+   # move results into upper and lower words
+   tmpZ:8 = zext( *:4(ea) );
+   tmpZ = ( tmpZ << 32 ) | zext( *:4(ea) );
+
+   D = tmpZ;
+}
+
+
+# =================================================================
+# Page 541
+
+# evmwlsmiaaw rT,rA,rB
+# ISA-cmt: evmwlsmiaaw - Vector Multiply Word Low Signed
+# ISA-info: evmwlsmiaaw - Form "EVX" Page 541 Category "SP"
+# binutils: mytest.d:  248:	10 22 1d 49 	evmwlsmiaaw r1,r2,r3
+:evmwlsmiaaw D,A,B is OP=4 & D & A & B & XOP_0_10=1353
+{
+   tmpACCL:4 = ACC:4;
+   tmpACCH:4 = ACC(4);
+
+   tmpAL:8 = zext( A:4 );
+   tmp:4 = A(4);
+   tmpAH:8 = zext( tmp );
+   tmpBL:8 = zext( B:4 );
+   tmp = B(4);
+   tmpBH:8 = zext( tmp );
+
+   temp:8 = tmpAH * tmpBH;
+   tmpD:4 = tmpACCH + temp:4;
+   D = ( zext( tmpD ) ) << 32;
+   temp = tmpAL * tmpBL;
+   tmpDL:4 = tmpACCL + temp:4;
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpDL );
+   ACC = D;
+}
+
+
+# =================================================================
+# Page 541
+
+# evmwlsmianw rT,rA,rB
+# ISA-cmt: evmwlsmianw - Vector Multiply Word Low Signed
+# ISA-info: evmwlsmianw - Form "EVX" Page 541 Category "SP"
+# binutils: mytest.d:  254:	10 22 1d c9 	evmwlsmianw r1,r2,r3
+:evmwlsmianw D,A,B is OP=4 & D & A & B & XOP_0_10=1481
+{
+   tmpACCL:4 = ACC:4;
+   tmpACCH:4 = ACC(4);
+
+   tmpAL:8 = zext( A:4 );
+   tmp:4 = A(4);
+   tmpAH:8 = zext( tmp );
+   tmpBL:8 = zext( B:4 );
+   tmp = B(4);
+   tmpBH:8 = zext( tmp );
+
+   temp:8 = tmpAH * tmpBH;
+   tmpD:4 = tmpACCH - temp:4;
+   D = ( zext( tmpD ) ) << 32;
+   temp = tmpAL * tmpBL;
+   tmpDL:4 = tmpACCL - temp:4;
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpDL );
+   ACC = D;
+}
+
+
+# =================================================================
+# Page 541
+
+# evmwlssianw rT,rA,rB
+# ISA-cmt: evmwlssianw - Vector Multiply Word Low Signed
+# ISA-info: evmwlssianw - Form "EVX" Page 541 Category "SP"
+# binutils: mytest.d:  250:	10 22 1d c1 	evmwlssianw r1,r2,r3
+:evmwlssianw D,A,B is OP=4 & D & A & B & XOP_0_10=1473
+{
+   tmpACCL:4 = ACC:4;
+   tmpACCH:4 = ACC(4);
+
+   tmpAL:8 = zext( A:4 );
+   tmp:4 = A(4);
+   tmpAH:8 = zext( tmp );
+   tmpBL:8 = zext( B:4 );
+   tmp = B(4);
+   tmpBH:8 = zext( tmp );
+
+   temp:8 = tmpAH * tmpBH;
+   temp = sext( tmpACCH ) - sext( temp:4 );
+   tmpOVH:1 = temp[32,1] ^ temp[31,1];
+
+   # check for saturation
+   if ( tmpOVH == 0 ) goto <not_saturated>;
+
+   if ( temp[32,1] == 1 ) goto <neg_saturated>;
+   D = ( D & 0x00000000FFFFFFFF ) | 0x7FFFFFFF00000000;
+   goto <done_saturated>;
+
+   <neg_saturated>
+   D = ( D & 0x00000000FFFFFFFF ) | 0x8000000000000000;
+   goto <done_saturated>;
+
+   <not_saturated>
+   D = ( D & 0x00000000FFFFFFFF ) | ( zext( temp:4 ) << 32 );
+
+   <done_saturated>
+
+
+   temp = tmpAL * tmpBL;
+   temp = sext( tmpACCL ) - sext( temp:4 );
+   tmpOVL:1 = temp[32,1] ^ temp[31,1];
+
+   # check for saturation
+   if ( tmpOVL == 0 ) goto <not_saturated1>;
+
+   if ( temp[32,1] == 1 ) goto <neg_saturated1>;
+   D = ( D & 0xFFFFFFFF00000000 ) | 0x000000007FFFFFFF;
+   goto <done_saturated1>;
+
+   <neg_saturated1>
+   D = ( D & 0xFFFFFFFF00000000 ) | 0x0000000080000000;
+   goto <done_saturated1>;
+
+   <not_saturated1>
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( temp:4 );
+
+   <done_saturated1>
+
+
+   ACC = D;
+
+   spef_ovh = tmpOVH;
+   spef_ov = tmpOVL;
+   spef_sovh = spef_sovh | tmpOVH;
+   spef_sov = spef_sov | tmpOVL;
+}
+
+
+
+# =================================================================
+# Page 544
+
+# evmwsmi rT,rA,rB
+# ISA-cmt: evmwsmi - Vector Multiply Word Signed
+# ISA-info: evmwsmi - Form "EVX" Page 544 Category "SP"
+# binutils: mytest.d:  244:	10 22 1c 59 	evmwsmi r1,r2,r3
+# collides with machhwo
+:evmwsmi D,A,B is OP=4 & D & A & B & XOP_0_10=1113
+{
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   D = tmpAL * tmpBL;
+}
+
+
+
+# =================================================================
+# Page 544
+
+# evmwsmiaa rT,rA,rB
+# ISA-cmt: evmwsmiaa - Vector Multiply Word Signed
+# ISA-info: evmwsmiaa - Form "EVX" Page 544 Category "SP"
+# binutils: mytest.d:  24c:	10 22 1d 59 	evmwsmiaa r1,r2,r3
+# collides with macchwo.
+:evmwsmiaa D,A,B is OP=4 & D & A & B & XOP_0_10=1369
+{
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   temp:8 = tmpAL * tmpBL;
+   D = ACC + temp;
+   ACC = D;
+}
+
+
+
+
+# =================================================================
+# Page 544
+
+# evmwsmian rT,rA,rB
+# ISA-cmt: evmwsmian - Vector Multiply Word Signed
+# ISA-info: evmwsmian - Form "EVX" Page 544 Category "SP"
+# binutils: mytest.d:  25c:	10 22 1d d9 	evmwsmian r1,r2,r3
+# collides with macchwso.
+:evmwsmian D,A,B is OP=4 & D & A & B & XOP_0_10=1497
+{
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   temp:8 = tmpAL * tmpBL;
+   D = ACC - temp;
+   ACC = D;
+}
+
+
+
+# =================================================================
+# Page 546
+
+# evmwumi rT,rA,rB
+# ISA-cmt: evmwumi - Vector Multiply Word Unsigned
+# ISA-info: evmwumi - Form "EVX" Page 546 Category "SP"
+# binutils: mytest.d:  240:	10 22 1c 58 	evmwumi r1,r2,r3
+# collides with machhwo
+:evmwumi D,A,B is OP=4 & D & A & B & XOP_0_10=1112
+{
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   D = tmpAL * tmpBL;
+}
+
+
+
+# =================================================================
+# Page 547
+
+# evmwumian rT,rA,rB
+# ISA-cmt: evmwumian - Vector Multiply Word Unsigned
+# ISA-info: evmwumian - Form "EVX" Page 547 Category "SP"
+# binutils: mytest.d:  258:	10 22 1d d8 	evmwumian r1,r2,r3
+# collides with macchwso
+:evmwumian D,A,B is OP=4 & D & A & B & XOP_0_10=1496
+{
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   temp:8 = tmpAL * tmpBL;
+   D = ACC - temp;
+   ACC = D;
+}
+
+
+# =================================================================
+# Page 549
+
+# evsel rT,rA,rB
+# ISA-cmt: evsel - Vector Select
+# ISA-info: evsel - Form "EVS" Page 549 Category "SP"
+# binutils: mytest.d:  1d4:	10 22 1a 7c 	evsel   r1,r2,r3,cr4
+:evsel D,A,B,BFA is OP=4 & D & A & B & XOP_3_10=79 & BFA
+{
+
+   tmpAL:8 = zext( A:4 );
+   tmp:4 = A(4);
+   tmpAH:8 = zext( tmp );
+   tmpBL:8 = zext( B:4 );
+   tmp = B(4);
+   tmpBH:8 = zext( tmp );
+
+   tmpBFA:1 = BFA;
+
+   if ( tmpBFA[3,1] == 0 ) goto <select_B>;
+      D = ( D & 0x00000000FFFFFFFF ) | ( tmpAH << 32 );
+      goto <low_select>;
+
+   <select_B>
+      D = ( D & 0x00000000FFFFFFFF ) | ( tmpBH << 32 );
+
+   <low_select>
+
+   if ( tmpBFA[2,1] == 0 ) goto <select_B1>;
+      D = ( D & 0xFFFFFFFF00000000 ) | tmpAL;
+      goto <done>;
+
+   <select_B1>
+      D = ( D & 0xFFFFFFFF00000000 ) | tmpBL;
+
+   <done>
+}
+
+
+# =================================================================
+# Page 915
+
+# evstddepx rT,rA,rB
+# Note: context is not supported
+:evstddepx D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=927 & BIT_0=0
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+   *:8(ea) = D;
+}
+
+
+

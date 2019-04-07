@@ -1,0 +1,2 @@
+These icons are modified icons from the Nuvola Icons package and are covered under the LGPL_2.1 
+license.  The svg files for these icons can be found in the GPL/icons/ModifiedNuvola folder.

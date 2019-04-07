@@ -1,0 +1,594 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Program Tree</TITLE>
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Program Tree</H1>
+
+    <P>The Program Tree&nbsp;shows a program organized into folders and fragments. Fragments
+    contain code units (instructions, defined data, or undefined data). Code Units can reside in
+    <I>one and only one fragment</I>. A folder is a container for other folders and fragments,
+    however, it is not analogous to a&nbsp; folder in a "file system." Any folder, except for the
+    root folder, and any fragment can have <I>multiple</I> parents. When you copy a folder or
+    fragment to another parent folder, you are not creating a new instance of the folder or
+    fragment, but simply adding the destination folder as another parent of the copied folder or
+    fragment.&nbsp; This means that if you make a change to Folder "A" (e.g., create a new fragment
+    or folder), the change is reflected where ever Folder "A" appears in the tree, regardless of
+    the parent. Moving code units from one fragment to another does not affect the underlying
+    memory.</P>
+
+    <P>You can manipulate the tree organization by cutting, copying, and pasting folders and
+    fragments to other folders. You can also use drag and drop to reorder the contents of a folder.
+    You can apply algorithms to produce <A href="Program_Organizations.htm">organizations</A> based
+    on a <A href="help/topics/BlockModel/Block_Model.htm">Block Model</A>. The following paragraphs
+    describe features of the Program Tree.</P>
+
+    <H2><A name="FoldersAndFragments"></A>Folders and Fragments</H2>
+
+    <BLOCKQUOTE>
+      <H3>Create Folders and Fragments</H3>
+
+      <UL>
+        <LI><A name="Create_Folder"></A>To create a new folder,</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select a folder in the Program Tree.</LI>
+
+          <LI>Right mouse-click, choose the <B><FONT size="4">Create Folder</FONT></B>
+          option.&nbsp;</LI>
+
+          <LI>A new folder is created with the default name of "New Folder." (A one-up number is
+          appended to "New Folder" if that name already exists.) The cell editor for the tree is
+          displayed immediately so that you can change the name of the folder you just created.
+          Names are unique across all folders.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI><A name="Create_Fragment"></A>To create a new fragment,</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select a folder in the Program Tree,&nbsp;</LI>
+
+          <LI>Right mouse-click, choose the <B><FONT size="4">Create Fragment</FONT></B>
+          option.&nbsp;</LI>
+
+          <LI>A new empty fragment is created with the default name of <B>New Fragment</B>. (A
+          one-up number is appended to the "New Fragment" name if that name already exists.) The
+          cell editor for the tree is displayed immediately so that you can change the name of the
+          fragment you just created.&nbsp;Names are unique across all fragments.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png"> After you are done editing the name, the icon for the
+          fragment indicates that it is empty (<IMG src="images/emptyFragment.gif">). You can drag
+          code units from the Code Browser and drop them onto the empty node. The icon changes to
+          indicate that the fragment is not empty.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P><A name="CreateNewFrag"></A>To create a new fragment via drag and drop,</P>
+
+        <OL>
+          <LI>Drag code units from the Code Browser.</LI>
+
+          <LI>Drop them onto a folder.&nbsp;</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png"> The default name of the fragment is the name of the
+          first address in the set of code units that you dragged. This operation actually
+          <I>moves</I> the code units to this fragment. If the first code unit in the set that you
+          are dragging has a label, then the name of the fragment defaults to this label
+          name.&nbsp;</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="Delete_folder_fragment"></A>Delete Folders and Fragments</H3>
+
+      <UL>
+        <LI>You can delete a folder or fragment if (1) it is empty, or (2) if it exists elsewhere
+        in the Program at some other folder. (The delete option will be disabled if this criteria
+        is not met.)&nbsp;</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>To delete a folder or fragment,</P>
+
+          <OL>
+            <LI>Select a folder or fragment to delete.&nbsp;</LI>
+
+            <LI>Right mouse-click, and choose the <B><FONT size="4">Delete</FONT></B> option.</LI>
+          </OL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>You can delete multiple folders and fragments; the option will be enabled if at least
+        one folder or fragment in the selection can be deleted; you will get an error message for
+        the other ones in the selection that could not be deleted.</LI>
+      </UL>
+
+      <H3><A name="Rename_folder_fragment"></A>Rename Folders and Fragments</H3>
+
+      <BLOCKQUOTE>
+        <P>To rename a folder or fragment,</P>
+
+        <OL>
+          <LI>Select the folder or fragment,&nbsp;</LI>
+
+          <LI>right mouse-click, and choose the <B><FONT size="4">Rename</FONT></B>
+          option.&nbsp;</LI>
+
+          <LI>The cell editor for the tree is displayed. Enter a new name.</LI>
+        </OL>
+
+        <P><IMG src="../../shared/tip.png"> Duplicate folder or fragment names are not allowed,
+        regardless of where they are in the hierarchy. If you enter a name that already exists, an
+        error message is displayed; the name reverts back to its original name. Hit the &lt;Esc&gt;
+        key to cancel editing at any time.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Expand_Folders"></A> <A name="Collapse_All_folders_fragments"></A> <A name=
+      "Expand_All_folders_fragments"></A> Expand/Collapse Folders</H3>
+
+      <UL>
+        <LI>You can recursively expand a folder. Select a folder that has subfolders; right
+        mouse-click and choose the <B>Expand All</B> option. All of the descendant folders are
+        expanded.</LI>
+
+        <LI>Similarly, you can recursively collapse a folder. Select a folder that has subfolders;
+        right mouse-click and choose the <B>Collapse All</B> option. When you open the folder, you
+        will see that all of its descendant folders are collapsed.</LI>
+      </UL>
+
+      <H3><A name="Merge_folder_fragment_with_Parent"></A>Merge a Folder with its Parent
+      Folder</H3>
+
+      <BLOCKQUOTE>
+        <P>You can "flatten" a folder such that all of its immediate children are moved to the
+        folder's parent. For example, consider folder A that contains folder B; folder B contains
+        five fragments and another folder, C. You can select folder B, right mouse-click, and
+        choose the <B><FONT size="4">Merge with Parent</FONT></B> option. This operation results in
+        the five fragments and folder C in folder B get moved to folder A. Folder B is removed.</P>
+
+        <P>You can make a multiple selection, however, if the selection does not contain at least
+        one folder, the <B><FONT size="4">Merge with Parent</FONT></B> option is
+        disabled.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H3>Move Code Units to a Fragment</H3>
+
+      <BLOCKQUOTE>
+        <P>To move code units to an existing fragment,</P>
+
+        <OL>
+          <LI>Make a selection in the Code Browser.</LI>
+
+          <LI>Drag the selection over to a fragment in the Program Tree and drop it.</LI>
+        </OL>
+
+        <P>The code units are <I>moved</I> from the source fragment to the destination
+        Fragment.</P>
+
+        <P><A href="#CreateNewFrag"></A><IMG src="../../shared/note.png">Drag and drop the
+        selection on a folder to create a new fragment.</P>
+      </BLOCKQUOTE>
+
+      <H3>Tool Tips on a Fragment</H3>
+
+      <BLOCKQUOTE>
+        <P>The tool tip on a fragment shows the address ranges that comprise this fragment. The
+        tool tip is displayed when you let the mouse pointer hover over a fragment node in the
+        Program Tree.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="SortByAddressOrName"></A>Sort by Address or Name</H3>
+
+      <BLOCKQUOTE>
+        <P>You can sort the descendants of a folder by address order or by name.&nbsp;</P>
+
+        <P>To sort by address,</P>
+
+        <OL>
+          <LI>Select a folder in the Program Tree.</LI>
+
+          <LI>Right mouse click and choose the <B><FONT size="4">Sort</FONT></B><IMG src=
+          "../../shared/arrow.gif"><B><FONT size="4">by Address</FONT></B> option.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P>All descendants of the folder are rearranged such that they appear in address order in
+          the tree. This is a recursive operation.</P>
+        </BLOCKQUOTE>
+
+        <P>To sort by name,</P>
+
+        <OL>
+          <LI>Select a folder in the Program Tree.</LI>
+
+          <LI>Right mouse click and choose the <B><FONT size="4">Sort</FONT></B><IMG src=
+          "../../shared/arrow.gif"><B><FONT size="4">by Name</FONT></B> option.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P>All descendants of the folder are rearranged such that they appear in alphabetical
+          order. This is a recursive operation.</P>
+        </BLOCKQUOTE>
+
+        <P class="providedbyplugin">&nbsp;Provided By:&nbsp; <I>ModuleSortPlugin</I></P>
+      </BLOCKQUOTE>
+
+      <H3><A name="AutoRename"></A>Auto Rename on a Fragment</H3>
+
+      <BLOCKQUOTE>
+        <P>From the Program Tree, you can automatically rename a fragment to the label at the
+        minimum address of the fragment.&nbsp; Also, you can rename a fragment to any label in that
+        fragment using the pop-up menu in the code browser.</P>
+
+        <P>To automatically rename a fragment,</P>
+
+        <OL>
+          <LI>Select a fragment (or fragments) in the Program Tree.</LI>
+
+          <LI>Right mouse click and choose <FONT size="4"><B>Auto Rename</B></FONT>.</LI>
+        </OL>
+
+        <P>To <A name="RenameFragmentToLabel"></A> automatically rename a fragment to any label in
+        the fragment from the Code Browser,&nbsp;</P>
+
+        <OL>
+          <LI>Position the cursor over a label field.</LI>
+
+          <LI>Right mouse click and choose <B>Rename Fragment to Label</B>.</LI>
+        </OL>
+
+        <P class="providedbyplugin">Provided By: <I>AutoRenamePlugin</I></P>
+      </BLOCKQUOTE>
+
+      <H3><A name="SelectAddresses"></A>Select Addresses in a Folder or Fragment</H3>
+
+      <BLOCKQUOTE>
+        <P>To select all the addresses in a folder or fragment,</P>
+
+        <OL>
+          <LI>Select a fragment or module in the Program Tree.</LI>
+
+          <LI>
+            Right mouse click and choose the <B>Select Addresses</B> option. 
+
+            <P>All addresses contained within the selected folders, fragments are shown in the Code
+            Browser's selection.</P>
+          </LI>
+        </OL>
+
+        <P><IMG src="../../shared/tip.png"> This option is available for a multiple selection of
+        fragments and/or folders.</P>
+
+        <P class="providedbyplugin">Provided By: <I>ProgramTreeSelectionPlugin</I></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>&nbsp;</H2>
+
+    <H2><A name="ViewControl"></A>Control the View in the Code Browser</H2>
+
+    <BLOCKQUOTE>
+      <P>The view in the code browser is controlled by the following:</P>
+
+      <H3><A name="Go_To_start_of_folder_fragment_in_View"></A>Show Folders/ Fragments in the Code
+      Browser</H3>
+
+      <BLOCKQUOTE>
+        <P>You control what you see in the right side of the Code Browser tool by adding folders
+        and fragments to your view.</P>
+
+        <UL>
+          <LI>
+            Select a fragment that is not in the view (indicated by <IMG src=
+            "images/codeNotInView.gif">),&nbsp; 
+
+            <OL>
+              <LI>Right mouse-click and choose the <B><FONT size="4">Go To in View</FONT></B>
+              option.&nbsp;</LI>
+
+              <LI>The code units in this fragment now appear in the Code Browser. The fragment's
+              icon in the Program Tree changes to <IMG src="images/codeInView.gif"> to indicate
+              that it is part of the view. The cursor in the Code Browser is moved to the minimum
+              address of the fragment or folder.</LI>
+            </OL>
+          </LI>
+
+          <LI>
+            Select an open folder that is not in the view (indicated by <IMG src=
+            "images/openSmallFolder.png">), 
+
+            <OL>
+              <LI>Right mouse-click and choose the <B>Go To in View</B> option.&nbsp;</LI>
+
+              <LI>
+                All of the descendant folders and fragments are added to the view.&nbsp; 
+
+                <UL>
+                  <LI>The folder's icon in the Program Tree changes to <IMG src=
+                  "images/openFolderInView.png">.&nbsp;</LI>
+
+                  <LI>If the folder is closed and is in the view, then the icon is <IMG src=
+                  "images/closedFolderInView.png">.&nbsp;</LI>
+
+                  <LI>If a closed folder not in the view has descendants that <I>are</I> in the
+                  view, the icon is <IMG src="images/closedDescendantsInView.png">.</LI>
+                </UL>
+              </LI>
+            </OL>
+          </LI>
+
+          <LI>When you add a folder to the view, the cursor in the browser moves to the first code
+          unit in the first fragment of the folder. When you add a fragment to the view, the cursor
+          in the browser moves to the first code unit in this fragment.</LI>
+
+          <LI>You can add multiple folders and fragments to the view by selecting those folders and
+          fragments that you want, and choosing the <B><FONT size="4">Show in View</FONT></B>
+          option.</LI>
+        </UL>
+
+        <P><IMG src="../../shared/note.png"> The <B>Go To in View</B> option is always enabled
+        regardless of whether the folder or fragment is in the view or not.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Remove_folder_fragment_from_View"></A>Remove Folders/Fragments from the view in
+      the Code Browser</H3>
+
+      <UL>
+        <LI>
+          To remove folders and fragments from the view in the code browser, 
+
+          <OL>
+            <LI>Select a folder or fragment that is in the view.&nbsp;</LI>
+
+            <LI>
+              Right mouse-click, and choose the <B><FONT size="4">Remove from View</FONT></B>
+              option.&nbsp; 
+
+              <UL>
+                <LI>The icon for the folder or fragment updates to indicate that it is no longer in
+                the view. The code browser updates its view accordingly.</LI>
+              </UL>
+            </LI>
+          </OL>
+        </LI>
+
+        <LI>You can remove multiple folders and fragments by selecting those folders and fragments
+        that are marked as being in the view, and choosing the <B><FONT size="4">Remove from
+        View</FONT></B> option.</LI>
+      </UL>
+
+      <H3><A name="Replace_View"></A>Replace the View in the Code Browser with other
+      Folders/Fragments</H3>
+
+      <UL>
+        <LI>
+          To replace the view in the code browser with other folders and fragments, 
+
+          <OL>
+            <LI>Select a folder or fragment (or select multiple folders and fragments),&nbsp;</LI>
+
+            <LI>Right mouse-click and choose the <B>Replace View</B> option. The code browser now
+            shows the code units for these folders and fragments.</LI>
+          </OL>
+        </LI>
+
+          <BLOCKQUOTE>
+            <P><IMG src="../../shared/note.png"> The program tree can be configured, via tool
+            options, such that a double-click performs a simple navigation, or the
+             <B>Replace View</B> action. The default
+            behavior for a double-click is to perform the <B>Replace View</B> action.</P>
+
+            <P>(Double-clicking on a folder always causes it to expand if it is collapsed and to
+            collapse if it is expanded.)</P>
+          </BLOCKQUOTE>
+      </UL>
+
+      <H3>Navigation</H3>
+
+      <BLOCKQUOTE>
+        <P>You can navigate to the first address of the code unit in a fragment by choosing the
+        <B><FONT size="4">Go To in View</FONT></B> option.&nbsp;</P>
+
+        <UL>
+          <LI>If the fragment or folder is already in the view, the code browser navigates to the
+          first code unit in the fragment.&nbsp;</LI>
+
+          <LI>If the fragment or folder is not in the view, it is added to the view; then the code
+          browser navigates to the first code unit in the fragment that was added.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H2>&nbsp;</H2>
+    </BLOCKQUOTE>
+
+    <H2><A name="CCPandDnD"></A>Cut/Copy/Paste and Drag and Drop</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Cut_Paste"></A>Cut and Paste</H3>
+
+      <UL>
+        <LI>You can move fragments and folders to other folders by cutting and pasting.&nbsp;</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select a folder.</LI>
+
+          <LI>Right mouse-click, and choose the <B><FONT size="4">Cut</FONT></B> option.&nbsp;</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P>The icon for the folder changes to indicate the cut operation. Choose another folder
+          that does not already contain this folder, right mouse-click, and choose the <B><FONT
+          size="4">Paste</FONT></B> option. The "cut" folder (and all of its descendants) should
+          now show up in the destination folder. You can select multiple folders and fragments for
+          cutting and pasting.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>You can merge fragments by cutting and pasting.&nbsp;</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select a fragment (or multiple fragments).</LI>
+
+          <LI>Right mouse-click, and choose the <B><FONT size="4">Cut</FONT></B> option.&nbsp;</LI>
+
+          <LI>The icon for the fragment changes to indicate the cut operation; choose another
+          fragment.</LI>
+
+          <LI>Right mouse-click and choose the <B><FONT size="4">Paste</FONT></B>
+          option.&nbsp;</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          <P>The code units from the "cut" fragments are moved to the destination fragment. The
+          resulting empty fragments are removed from the program.</P>
+        </BLOCKQUOTE>
+
+        <P>If you paste a folder or fragment not in the view to a folder that is in the view, then
+        the view in the code browser will be updated to show the code units for the folder or
+        fragment that was pasted at the destination folder.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Copy_folder_fragment"></A> <A name="Cut_folder_fragment"></A> <A name=
+      "Paste_folder_fragment"></A> Copy and Paste</H3>
+
+      <BLOCKQUOTE>
+        <P>You can copy fragments and folders to other folders by copying and pasting.&nbsp;</P>
+
+        <OL>
+          <LI>Select a folder</LI>
+
+          <LI>Right mouse-click, and&nbsp; choose the <B><FONT size="4">Copy</FONT></B>
+          option.&nbsp;</LI>
+
+          <LI>Choose another folder that does not already contain this folder,&nbsp;</LI>
+
+          <LI>Right mouse-click, and choose the <B><FONT size="4">Paste</FONT></B>
+          option.&nbsp;</LI>
+        </OL>
+
+        <P>The copied fragment or folder should now show up in the destination folder.</P>
+      </BLOCKQUOTE>
+
+      <H3>Drag and Drop (Move)</H3>
+
+      <BLOCKQUOTE>
+        <P>You can get the same effect of "Cut" and "Paste" by using Drag and Drop.</P>
+
+        <P>Drag a folder or&nbsp; fragment or to another folder and drop it. The folder or fragment
+        is <I>moved</I> to this folder. If the fragment or folder already exists at a folder, then
+        you will not get a valid drop target.</P>
+      </BLOCKQUOTE>
+
+      <H3>Drag and Drop (Copy)</H3>
+
+      <BLOCKQUOTE>
+        <P>You can get the same effect of "Copy" and "Paste" by holding down the Ctrl key while
+        dragging. (If you release the Ctrl key, the drag operation becomes a Move.)</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P>Drag/Copy a folder or fragment to another folder; the cursor changes to indicate the
+        copy operation. Drop the folder or fragment; a copy is made and placed in the destination
+        folder.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P>As stated earlier, you can drag code units from the Code Browser view and drop them onto
+        a folder (creates a new fragment), or onto an existing fragment (moves the code units to
+        this fragment).</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P>If you try to drag/copy a folder or fragment to a folder that already contains the
+        folder or fragment, you will not get a valid drop target.</P>
+      </BLOCKQUOTE>
+
+      <H3>Reorder Folder Contents using Drag and Drop</H3>
+
+      <UL>
+        <LI>Using Drag and Drop, you can reorder the elements within a folder. As you drag between
+        nodes in the Program Tree, the cursor will change to indicate that a reordering
+        operation&nbsp; is possible; you will see a solid bar between the nodes (<IMG src=
+        "images/dragMoveCursor.gif">). When you release the mouse, the dragged folder or fragment
+        will be repositioned at this location, i.e., <I>between</I> the two nodes where you
+        released the mouse.</LI>
+
+        <LI>&nbsp;If you are dragging to a different parent,&nbsp; in addition to the reorder, the
+        drop operation will also cause the dragged fragment or folder to be <I><B>moved</B></I> to
+        the parent of the destination drop site. To make a copy of the folder or fragment, hold
+        down the Ctrl key while you are dragging. The cursor will change to <IMG src=
+        "images/dragCopyCursor.gif"> depending on where the cursor is.&nbsp; If you release the
+        mouse when the cursor indicates a potential reorder operation, the dragged folder or
+        fragment is <B><I>copied</I></B> to the <I><B>parent</B></I> of the destination drop site,
+        and is placed between the two nodes where you released the mouse. (Note that if the dragged
+        folder or fragment already exists in the parent, then you will not get a valid drop target
+        for reordering purposes.)</LI>
+      </UL>
+
+      <H3><A name="MenuEnablement"></A>Menu Enablement</H3>
+
+      <BLOCKQUOTE>
+        <P>If you select multiple nodes in the Program Tree, some menu items in the popup menu
+        (right mouse click) may not be enabled if the multi-selection is not valid. A valid
+        multi-selection meets the following criteria:</P>
+
+        <UL>
+          <LI>If a folder is selected, then either all of its immediate descendants must be
+          selected, or none of its immediate descendants is selected.</LI>
+
+          <LI>The root folder is not part of the selection.</LI>
+        </UL>
+
+        <P>A valid multi-selection will cause the <B><FONT size="4">Copy</FONT></B>, <B><FONT size=
+        "4">Cut</FONT></B>, <B><FONT size="4">Delete</FONT></B>, and view options to be
+        enabled.</P>
+
+        <P>The <B><FONT size="4">Delete</FONT></B> option may be enabled for a multi-selection,
+        however, if the delete operation is not allowed on a particular folder or fragment, you
+        will get a notification of why the delete failed.</P>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>Program Tree Plugin</I> &nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:&nbsp;</P>
+
+    <UL>
+      <LI><A href="help/topics/ProgramTreePlugin/view_manager.htm">View Manager</A></LI>
+
+      <LI><A href="Program_Organizations.htm">Program Organizations</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

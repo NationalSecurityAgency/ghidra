@@ -1,0 +1,240 @@
+define pcodeop br_exception;
+
+
+# BNDMK needs the base address register only
+#  - if no base register, needs 0
+
+@ifdef IA64
+
+bndmk_addr64: [Rmr64]							is mod=0 & Rmr64													{ export Rmr64; }
+bndmk_addr64: [Rmr64 + simm8_64]				is mod=1 & Rmr64; simm8_64											{ export Rmr64; }
+bndmk_addr64: [simm32_64 + Rmr64]				is mod=2 & Rmr64; simm32_64											{ export Rmr64; }
+bndmk_addr64: [Rmr64]							is mod=1 & r_m!=4 & Rmr64; simm8=0									{ export Rmr64; }
+bndmk_addr64: [Rmr64]							is mod=2 & r_m!=4 & Rmr64; simm32=0									{ export Rmr64; }
+#invalid bndmk_addr64: [riprel]				  	is mod=0 & r_m=5; simm32 [ riprel=inst_next+simm32; ]				{ export *[const]:8 riprel; }
+bndmk_addr64: [Base64 + Index64*ss]				is mod=0 & r_m=4; Index64 & Base64 & ss								{ export Base64; }
+bndmk_addr64: [Base64]							is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64					{ export Base64; }
+bndmk_addr64: [simm32_64 + Index64*ss]			is mod=0 & r_m=4; Index64 & base64=5 & ss; simm32_64				{ tmp:8 = 0; export tmp; }
+bndmk_addr64: [Index64*ss]						is mod=0 & r_m=4; Index64 & base64=5 & ss; imm32=0					{ tmp:8 = 0; export tmp; }
+bndmk_addr64: [simm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; simm32_64	{ tmp:8 = 0; export tmp; }
+bndmk_addr64: [Base64 + Index64*ss + simm8_64]	is mod=1 & r_m=4; Index64 & Base64 & ss; simm8_64					{ export Base64; }
+bndmk_addr64: [Base64 + Index64*ss]				is mod=1 & r_m=4; Index64 & Base64 & ss; simm8=0					{ export Base64; }
+bndmk_addr64: [Base64 + simm8_64]				is mod=1 & r_m=4; rexXprefix=0 & index64=4 & Base64; simm8_64		{ export Base64; }
+bndmk_addr64: [simm32_64 + Base64 + Index64*ss]	is mod=2 & r_m=4; Index64 & Base64 & ss; simm32_64					{ export Base64; }
+bndmk_addr64: [simm32_64 + Base64]				is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; simm32_64		{ export Base64; }
+bndmk_addr64: [Base64 + Index64*ss]				is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0					{ export Base64; }
+bndmk_addr64: [Base64]							is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; imm32=0		{ export Base64; }
+
+@else
+bndmk_addr32: [Rmr32]							is mod=0 & Rmr32								{ export Rmr32; }
+bndmk_addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32						{ export Rmr32; }
+bndmk_addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0				{ export Rmr32; }
+bndmk_addr32: [imm32 + Rmr32]					is mod=2 & Rmr32; imm32							{ export Rmr32; }
+bndmk_addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0				{ export Rmr32; }
+bndmk_addr32: [imm32]							is mod=0 & r_m=5; imm32							{ tmp:4 = 0; export tmp; }
+bndmk_addr32: [Base + Index*ss]					is mod=0 & r_m=4; Index & Base & ss				{ export Base; }
+bndmk_addr32: [Base]							is mod=0 & r_m=4; index=4 & Base				{ export Base; }
+bndmk_addr32: [imm32 + Index*ss]				is mod=0 & r_m=4; Index & base=5 & ss; imm32	{ tmp:4 = 0; export tmp; }
+bndmk_addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32		{ tmp:4 = 0; export tmp; }
+bndmk_addr32: [Base + Index*ss + simm8_32]		is mod=1 & r_m=4; Index & Base & ss; simm8_32	{ export Base; }
+bndmk_addr32: [Base + simm8_32]					is mod=1 & r_m=4; index=4 & Base; simm8_32		{ export Base; }
+bndmk_addr32: [Base + Index*ss]					is mod=1 & r_m=4; Index & Base & ss; simm8=0	{ export Base; }
+bndmk_addr32: [Base]							is mod=1 & r_m=4; index=4 & Base; simm8=0		{ export Base; }
+bndmk_addr32: [imm32 + Base + Index*ss]			is mod=2 & r_m=4; Index & Base & ss; imm32		{ export Base; }
+bndmk_addr32: [imm32 + Base]					is mod=2 & r_m=4; index=4 & Base; imm32			{ export Base; }
+bndmk_addr32: [Base + Index*ss]					is mod=2 & r_m=4; Index & Base & ss; imm32=0	{ export Base; }
+bndmk_addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0		{ export Base; }
+@endif
+
+
+
+@ifdef IA64
+
+:BNDCL bnd1, Rmr64      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd1_lb & Rmr64 {
+#   if (reg < BND.LB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Rmr64 < bnd1_lb) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCL bnd1, Mem      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1A; (bnd1 & bnd1_lb) ... & Mem {
+#   if (LEA(mem) < BND.LB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Mem < bnd1_lb) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCU bnd1, Rmr64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd1_ub & Rmr64 {
+#   if (reg > ~(BND.UB)) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Rmr64 > ~bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCU bnd1, Mem      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1A; (bnd1 & bnd1_ub) ... & Mem {
+#   if (LEA(mem) > ~(BND.UB)) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Mem > ~bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCN bnd1, Rmr64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1B; mod=3 & bnd1 & bnd1_ub & Rmr64 {
+#   if (reg > BND.UB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Rmr64 > bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCN bnd1, Mem      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1B; (bnd1 & bnd1_ub) ... & Mem {
+#   if (LEA(mem) > BND.UB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(Mem > bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+#TODO: This probably cannot be fully modeled 
+:BNDLDX bnd1, Mem      is vexMode=0 & byte=0x0F; byte=0x1A; bnd1 ... & Mem {
+#	BNDSTATUS = bndldx_status( Mem, BNDCFGS, BNDCFGU );
+#	bnd1      = bndldx( Mem, BNDCFGS, BNDCFGU );
+	
+# core implementation
+   bnd1 = *:16 Mem;
+}
+
+:BNDMK bnd1, Mem      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1B; ( bnd1 & bnd1_lb & bnd1_ub ) ... & ( bndmk_addr64 & Mem ) {
+#   BND.LB and BND.UB set from m64
+	bnd1_lb = bndmk_addr64;
+	bnd1_ub = Mem;
+}
+
+:BNDMOV bnd1, m128      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1A; bnd1 ... & m128 {
+	bnd1 = m128;
+}
+
+:BNDMOV bnd1, bnd2      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd2 {
+	bnd1 = bnd2;
+}
+
+:BNDMOV m128, bnd1      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1B; bnd1 ... & m128 {
+	m128 = bnd1;
+}
+
+:BNDMOV bnd2, bnd1      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1B; mod=3 & bnd1 & bnd2 {
+	bnd2 = bnd1;
+}
+
+#TODO: This probably cannot be fully modeled 
+:BNDSTX Mem, bnd1      is vexMode=0 & byte=0x0F; byte=0x1B; bnd1 ... & Mem {
+#	BNDSTATUS = bndstx_status( bnd1, BNDCFGS, BNDCFGU );
+#	Mem       = bndstx( bnd1, BNDCFGS, BNDCFGU );
+
+# core implementation
+   *:16 Mem = bnd1;
+}
+
+
+
+@else
+
+:BNDCL bnd1, Rmr32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd1_lb & Rmr32 {
+#   if (reg < BND.LB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Rmr32) < bnd1_lb) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCL bnd1, Mem      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1A; (bnd1 & bnd1_lb) ... & Mem {
+#   if (LEA(mem) < BND.LB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Mem) < bnd1_lb) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCU bnd1, Rmr32      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd1_ub & Rmr32 {
+#   if (reg > ~(BND.UB)) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Rmr32) > ~bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCU bnd1, Mem      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1A; (bnd1 & bnd1_ub) ... & Mem {
+#   if (LEA(mem) > ~(BND.UB)) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Mem) > ~bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCN bnd1, Rmr32      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1B; mod=3 & bnd1 & bnd1_ub & Rmr32 {
+#   if (reg > BND.UB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Rmr32) > bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+:BNDCN bnd1, Mem      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x1B; (bnd1 & bnd1_ub) ... & Mem {
+#   if (LEA(mem) > BND.UB) then BNDSTATUS = 01H; AND BOUND EXCEPTION
+   if !(zext(Mem) > bnd1_ub) goto <done>;
+      BNDSTATUS = 0x01;
+      br_exception();
+ <done>
+}
+
+#TODO: This probably cannot be fully modeled 
+:BNDLDX bnd1, Mem      is vexMode=0 & byte=0x0F; byte=0x1A; ( bnd1 & bnd1_lb & bnd1_ub ) ... & Mem {
+#	BNDSTATUS = bndldx_status( Mem, BNDCFGS, BNDCFGU );
+#	bnd1      = bndldx( Mem, BNDCFGS, BNDCFGU );
+	
+# core implementation
+   tmp:8 = *:8 Mem;
+   bnd1_lb = zext(tmp:4);
+   tmp2:4 = tmp(4);
+   bnd1_ub = zext(tmp2);
+}
+
+:BNDMK bnd1, Mem      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x1B; ( bnd1 & bnd1_lb & bnd1_ub ) ... & ( bndmk_addr32 & Mem ) {
+#   BND.LB and BND.UB set from m32
+	bnd1_lb = zext(bndmk_addr32);
+	bnd1_ub = zext(Mem);
+}
+
+:BNDMOV bnd1, m64      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1A; ( bnd1 & bnd1_lb & bnd1_ub ) ... & m64 {
+	tmp:8 = m64;
+	bnd1_lb = zext(tmp:4);
+    tmp2:4 = tmp(4);
+    bnd1_ub = zext(tmp2);
+}
+
+:BNDMOV bnd1, bnd2      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1A; mod=3 & bnd1 & bnd2 {
+	bnd1 = bnd2;
+}
+
+:BNDMOV m64, bnd1      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1B; ( bnd1 & bnd1_lb & bnd1_ub ) ... & m64 {
+	m64 = (zext(bnd1_ub:4) << 32) | zext(bnd1_lb:4);
+}
+
+:BNDMOV bnd2, bnd1      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x1B; mod=3 & bnd1 & bnd2 {
+	bnd2 = bnd1;
+}
+
+#TODO: This probably cannot be fully modeled 
+:BNDSTX Mem, bnd1      is vexMode=0 & byte=0x0F; byte=0x1B; ( bnd1 & bnd1_lb & bnd1_ub ) ... & Mem {
+#	BNDSTATUS = bndstx_status( bnd1, BNDCFGS, BNDCFGU );
+#	Mem       = bndstx( bnd1, BNDCFGS, BNDCFGU );
+
+# core implementation
+   *:8 Mem = (zext(bnd1_ub:4) << 32) | zext(bnd1_lb:4);
+}
+
+
+@endif

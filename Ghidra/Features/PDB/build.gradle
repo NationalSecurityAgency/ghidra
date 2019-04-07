@@ -1,0 +1,64 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features PDB'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
+
+/*********************************************************************************
+ * Build dependencies
+ *********************************************************************************/
+dependencies {
+	compile project(":Base")
+    
+    testCompile "org.jmockit:jmockit:1.44"	
+}
+
+/**
+ * Include PDB native source with sample Visual Studio project to allow users to 
+ * rebuild against other versions.
+ *
+ * Note that we use 'this.project' to reference the PDB project - this is because
+ * inside the closure, 'project' refers to the root project, while 'this' refers to 
+ * PDB.
+ */
+rootProject.assembleCommon {
+	into (getZipPath(this.project) + "/src/pdb") {
+		from projectDir.toString() + "/src/pdb"
+	}
+}
+
+if ("win64".equals(getCurrentPlatformName())) {
+
+	String makeName = "win64PDBMake"
+	task(type: Exec, makeName) {
+	
+		def projectPath = projectDir.toString()
+		def solutionBatchFilePath = projectPath + "/build/buildSolution.bat"
+		
+		def projectPathWindows = projectPath.replace("/", File.separator)
+		def solutionPathWindows = "${projectPathWindows}\\src\\pdb\\pdb.sln"
+		def outputPathWindows = "${projectPathWindows}\\build\\os\\win64\\pdb.exe"
+		
+		doFirst {
+			file("build/os/win64").mkdirs()
+			new File(solutionBatchFilePath).withWriter { out ->
+				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+				out.println "devenv ${solutionPathWindows} /build Release /project pdb"
+			}
+		}
+		
+		doLast {
+			assert file("build/os/win64/pdb.exe").exists() : "Failed to build pdb.exe"
+		}
+		
+		executable "cmd"
+		
+		args	"/c"
+		args	solutionBatchFilePath.replace("/", File.separator)
+	}
+	
+	
+	
+}

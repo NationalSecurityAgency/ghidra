@@ -1,0 +1,143 @@
+# Due to limitations on variable length matching that preclude opcode matching afterwards, all memory addressing forms of PCLMULQDQ are decoded to PCLMULQDQ, not the macro names.
+# Display is non-standard, but semantics, and de-compilation should be correct.
+
+:PCLMULLQLQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x00
+{
+	XmmReg1 = zext(XmmReg2_Qa) * zext(XmmReg1_Qa);
+}
+
+:PCLMULHQLQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x01
+{
+	XmmReg1 = zext(XmmReg2_Qa) * zext(XmmReg1_Qb);
+}
+
+:PCLMULLQHQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x10
+{
+	XmmReg1 = zext(XmmReg2_Qb) * zext(XmmReg1_Qa);
+}
+
+:PCLMULHQHQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x11
+{
+	XmmReg1 = zext(XmmReg2_Qb) * zext(XmmReg1_Qb);
+}
+
+:PCLMULQDQ XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); imm8 & imm8_4 & imm8_0
+{
+	if (imm8_0:1) goto <src1_b>;
+		src1:16 = zext(XmmReg1_Qa);
+		goto <done1>;
+		
+	<src1_b>
+		src1 = zext(XmmReg1_Qb);
+	
+	<done1>
+		
+	if (imm8_4:1) goto <src2_b>;
+		src2:16 = zext(XmmReg2_Qa);
+		goto <done2>;
+		
+	<src2_b>
+		src2 = zext(XmmReg2_Qb);
+		
+	<done2>
+	
+	XmmReg1 = src2 * src1;
+}
+
+:PCLMULQDQ XmmReg, m128, imm8  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; (XmmReg & XmmReg_Qa & XmmReg_Qb) ... & (m128 & m128_Qa & m128_Qb); imm8 & imm8_4 & imm8_0
+{
+	if (imm8_0:1) goto <src1_b>;
+		src1:16 = zext(XmmReg_Qa);
+		goto <done1>;
+		
+	<src1_b>
+		src1 = zext(XmmReg_Qb);
+	
+	<done1>
+		
+	if (imm8_4:1) goto <src2_b>;
+		src2:16 = zext(m128_Qa);
+		goto <done2>;
+		
+	<src2_b>
+		build m128_Qb;
+		src2 = zext(m128_Qb);
+		
+	<done2>
+	
+	XmmReg = src2 * src1;
+}
+
+:VPCLMULLQLQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x00
+{
+	tmp:16 = zext(XmmReg2_Qa) * zext(vexVVVV_XmmReg_Qa);
+	YmmReg1 = zext(tmp);
+}
+
+:VPCLMULHQLQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x01
+{
+	tmp:16 = zext(XmmReg2_Qa) * zext(vexVVVV_XmmReg_Qb);
+	YmmReg1 = zext(tmp);
+}
+
+:VPCLMULLQHQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x10
+{
+	tmp:16 = zext(XmmReg2_Qb) * zext(vexVVVV_XmmReg_Qa);
+	YmmReg1 = zext(tmp);
+}
+
+:VPCLMULHQHQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); byte=0x11
+{
+	tmp:16 = zext(XmmReg2_Qb) * zext(vexVVVV_XmmReg_Qb);
+	YmmReg1 = zext(tmp);
+}
+
+:VPCLMULQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb); imm8 & imm8_4 & imm8_0
+{
+	if (imm8_0:1) goto <src1_b>;
+		src1:16 = zext(vexVVVV_XmmReg_Qa);
+		goto <done1>;
+		
+	<src1_b>
+		src1 = zext(vexVVVV_XmmReg_Qb);
+	
+	<done1>
+		
+	if (imm8_4:1) goto <src2_b>;
+		src2:16 = zext(XmmReg2_Qa);
+		goto <done2>;
+		
+	<src2_b>
+		src2 = zext(XmmReg2_Qb);
+		
+	<done2>
+	
+	tmp:16 = src2 * src1;
+	YmmReg1 = zext(tmp);
+}
+
+:VPCLMULQDQ XmmReg1, vexVVVV_XmmReg, m128, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & (vexVVVV_XmmReg & vexVVVV_XmmReg_Qa & vexVVVV_XmmReg_Qb); byte=0x44; (XmmReg1 & YmmReg1) ... & (m128 & m128_Qa & m128_Qb); imm8 & imm8_4 & imm8_0
+{
+	if (imm8_0:1) goto <src1_b>;
+		src1:16 = zext(vexVVVV_XmmReg_Qa);
+		goto <done1>;
+		
+	<src1_b>
+		src1 = zext(vexVVVV_XmmReg_Qb);
+	
+	<done1>
+		
+	if (imm8_4:1) goto <src2_b>;
+		src2:16 = zext(m128_Qa);
+		goto <done2>;
+		
+	<src2_b>
+		build m128_Qb;
+		src2 = zext(m128_Qb);
+		
+	<done2>
+	
+	tmp:16 = src2 * src1;
+	YmmReg1 = zext(tmp);
+}
+

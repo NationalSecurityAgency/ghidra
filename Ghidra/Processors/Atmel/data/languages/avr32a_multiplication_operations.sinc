@@ -1,0 +1,189 @@
+#---------------------------------------------------------------------
+# 8.3.3 Multiplication Operations
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# DIVS - Signed Divide
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# DIVS Format I
+# Operation: Rd   <- Rx / Ry
+#            Rd+1 <- Rx % Ry
+# Syntax:    divs Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1100 0000 dddd
+
+:DIVS erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                        eop4_12=0xc0 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+		tmpx:4 = RX9A;
+		tmpy:4 = RY0A;
+        erd0_low = tmpx s/ tmpy;
+        erd0_hi = tmpx s% tmpy;
+}
+
+#---------------------------------------------------------------------
+# DIVU - Unsigned Divide
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# DIVU Format I
+# Operation: Rd   <- Rx / Ry
+#            Rd+1 <- Rx % Ry
+# Syntax:    divu Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1101 0000 dddd
+
+:DIVU erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                        eop4_12=0xd0 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+		tmpx:4 = RX9A;
+		tmpy:4 = RY0A;
+        erd0_low = tmpx / tmpy;
+        erd0_hi = tmpx % tmpy;
+}
+
+#---------------------------------------------------------------------
+# MAC - Multiply Accumulate
+# I. {d, x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MAC Format I
+# Operation: Rd   <- Rx * Ry + Rd
+# Syntax:    mac Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0011 0100 dddd
+
+:MAC erd0, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                       eop4_12=0x34 & erd0
+{
+        erd0 = RX9A * RY0A + erd0;
+}
+
+#---------------------------------------------------------------------
+# MACS.D - Multiply Accumulate Signed
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MACS.D Format I
+# Operation: acc <- (Rd+1:Rd)
+#            prod <- Rx * Ry
+#            res <- prod + acc
+#            (Rd+1:Rd) <- res
+# Syntax:    macs.d Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0101 0100 dddd
+
+:MACS.D erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                          eop4_12=0x54 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+        acc:8 = zext(erd0_low) | zext(erd0_hi << 32);
+        prod:8 = sext(RX9A) * sext(RY0A);
+        res:8 = prod + acc;
+        erd0_low = res:4;
+        tmp:8 = (res s>> 32);
+        erd0_hi = tmp:4;
+}
+
+#---------------------------------------------------------------------
+# MACU.D - Multiply Accumulate Unsigned
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MACU.D Format I
+# Operation: acc <- (Rd+1:Rd)
+#            prod <- Rx * Ry
+#            res <- prod + acc
+#            (Rd+1:Rd) <- res
+# Syntax:    macu.d Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0111 0100 dddd
+
+:MACU.D erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                          eop4_12=0x74 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+        acc:8 = zext(erd0_low) | zext(erd0_hi << 32);
+        prod:8 = zext(RX9A) * zext(RY0A);
+        res:8 = prod + acc;
+        erd0_low = res:4;
+        tmp:8 = (res >> 32);
+        erd0_hi = tmp:4;
+}
+
+#---------------------------------------------------------------------
+# MUL - Multiply
+# I.   {d, s} -> {0, 1, ..., 15}
+# II.  {d, x, y} -> {0, 1, ..., 15}
+# III. {d, s} -> {0, 1, ..., 15}
+#      imm -> {-128, -127, ..., 127}
+#---------------------------------------------------------------------
+
+# MUL Format I
+# Operation: Rd <- Rd * Rs
+# Syntax:    mul Rd, Rs
+# 101s sss1 0011 dddd
+
+:MUL rd0, RS9A is op13_3=5 & op4_5=0x13 & rd0 & RS9A
+{
+        rd0 = rd0 * RS9A;
+}
+
+# MUL Format II
+# Operation: Rd <- Rx * Ry
+# Syntax:    mul Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0010 0100 dddd
+
+:MUL erd0, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ; eop4_12=0x24 & erd0
+{
+        erd0 = RX9A * RY0A;
+}
+
+# MUL Format III
+# Operation: Rd <- Rs * SE(imm8)
+# Syntax:    mul Rd, Rs, imm
+# 111s sss0 0000 dddd   0001 0000 iiii iiii
+
+:MUL rd0, RS9A, simm0_8 is op13_3=7 & op4_5=0 & rd0 & RS9A ; eop8_8=0x10 & simm0_8
+{
+        rd0 = RS9A * simm0_8;
+}
+
+#---------------------------------------------------------------------
+# MULS.D - Multiply Signed
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MULS.D Format I
+# Operation: (Rd+1:Rd) <- Rx * Ry
+# Syntax:    muls.d Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0100 0100 dddd
+
+:MULS.D erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                          eop4_12=0x44 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+        prod:8 = sext(RX9A) * sext(RY0A);
+        erd0_low = prod:4;
+        tmp:8 = (prod s>> 32);
+        erd0_hi = tmp:4;
+}
+
+#---------------------------------------------------------------------
+# MULU.D - Multiply Unsigned
+# I. d -> {0, 2, ..., 14)
+#    {x, y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# MULU.D Format I
+# Operation: (Rd+1:Rd) <- Rx * Ry
+# Syntax:    mulu.d Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 0110 0100 dddd
+
+:MULU.D erd0_low, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A ;
+                          eop4_12=0x64 & eb0=0 & erd0 & erd0_low & erd0_hi
+{
+        prod:8 = zext(RX9A) * zext(RY0A);
+        erd0_low = prod:4;
+        tmp:8 = (prod >> 32);
+        erd0_hi = tmp:4;
+}

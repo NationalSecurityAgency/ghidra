@@ -1,0 +1,797 @@
+
+CC16: "lt"		is BI16_VLE=0 & BO16_VLE=1 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); export tmp; }
+CC16: "le"		is BI16_VLE=1 & BO16_VLE=0 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); tmp = !tmp; export tmp; }
+CC16: "eq"		is BI16_VLE=2 & BO16_VLE=1 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); export tmp; }
+CC16: "ge"		is BI16_VLE=0 & BO16_VLE=0 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); tmp = !tmp; export tmp; }
+CC16: "gt"		is BI16_VLE=1 & BO16_VLE=1 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); export tmp; }
+CC16: "ne"		is BI16_VLE=2 & BO16_VLE=0 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); tmp = !tmp; export tmp; }
+CC16: "so"		is BI16_VLE=3 & BO16_VLE=1 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); export tmp; }
+CC16: "ns"		is BI16_VLE=3 & BO16_VLE=0 & BI16_VLE { tmp:1 = 0; getCrBit(cr0, BI16_VLE, tmp); tmp = !tmp; export tmp; }
+
+
+CC32: "lt"		is BI_CC_VLE=0 & BO_VLE=1 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); export tmp; }
+CC32: "le"		is BI_CC_VLE=1 & BO_VLE=0 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); tmp = !tmp; export tmp; }
+CC32: "eq"		is BI_CC_VLE=2 & BO_VLE=1 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); export tmp; }
+CC32: "ge"		is BI_CC_VLE=0 & BO_VLE=0 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); tmp = !tmp; export tmp; }
+CC32: "gt"		is BI_CC_VLE=1 & BO_VLE=1 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); export tmp; }
+CC32: "ne"		is BI_CC_VLE=2 & BO_VLE=0 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); tmp = !tmp; export tmp; }
+CC32: "so"		is BI_CC_VLE=3 & BO_VLE=1 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); export tmp; }
+CC32: "ns"		is BI_CC_VLE=3 & BO_VLE=0 & BI_CR_VLE & BI_CC_VLE { tmp:1 = 0; getCrBit(BI_CR_VLE, BI_CC_VLE, tmp); tmp = !tmp; export tmp; }
+CC32: "dnz"		is BO_VLE=2 {CTR = CTR-1; tmp:1 = (CTR != 0); export tmp; }
+CC32: "dz"		is BO_VLE=3 {CTR = CTR-1; tmp:1 = (CTR == 0); export tmp; }
+
+addrBD8: reloc	is BD8_VLE 		[ reloc = inst_start + (BD8_VLE << 1);] 	{ export *[ram]:4 reloc; }
+addrBD15: reloc	is BD15_VLE 	[ reloc = inst_start + (BD15_VLE << 1);] 	{ export *[ram]:4 reloc; }
+addrBD24: reloc	is BD24_VLE 	[ reloc = inst_start + (BD24_VLE << 1);] 	{ export *[ram]:4 reloc; }
+
+d8PlusRaAddress: S8IMM(A)					is S8IMM & A			{tmp:$(REGISTER_SIZE) = A+S8IMM; export tmp;  }
+d8PlusRaOrZeroAddress: S8IMM(RA_OR_ZERO)	is S8IMM & RA_OR_ZERO	{tmp:$(REGISTER_SIZE) = RA_OR_ZERO+S8IMM; export tmp; }
+
+sd4PlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+SD4_VLE; export tmp;  }
+sd4HPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 1); export tmp;  }
+sd4WPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 2); export tmp;  }
+
+OIMM: val						is UI5_VLE [ val = UI5_VLE+1; ] { export *[const]:$(REGISTER_SIZE) val; }
+
+@if REGISTER_SIZE == "4"
+SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFF << ((SCL_VLE*8) + 8)) | (0xFFFFFFFF >> (32 - (SCL_VLE*8)))) * BIT_10) | IMM8;   ] { export *[const]:4 val;}
+@else
+# Due to the way this big >> would work in java (arithmetic), we have to modify the orig way this was done.
+# (0xFFFFFFFFFFFFFFFF >> (64 - (SCL_VLE*8))  <--- Original
+# (0x7FFFFFFFFFFFFFFF >> (63 - (SCL_VLE*8))  <--- New
+# We 'pre-shift' by 1 and take 1 off the total we'd shift by. SCL_VLE*8 is at most 24 so we don't have to
+# worry about a negative shift value. 
+SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFFFFFFFFFF << ((SCL_VLE*8) + 8)) | (0x7FFFFFFFFFFFFFFF >> (63 - (SCL_VLE*8)))) * BIT_10) | (IMM8 << (SCL_VLE*8)); ] { export *[const]:8 val;}
+@endif
+
+SIMM16: val						is SIMM_0_10_VLE & SIMM_21_25_VLE [ val = (SIMM_21_25_VLE << 11) | SIMM_0_10_VLE ;] { export *[const]:2 val; }
+SIMM20: val						is IMM_0_10_VLE & IMM_16_20_VLE & SIMM_11_14_VLE [ val = (SIMM_11_14_VLE << 16 ) | (IMM_16_20_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
+IMM16: val						is IMM_0_10_VLE & IMM_21_25_VLE [ val = (IMM_21_25_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
+IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
+
+:e_b addrBD24					is $(ISVLE) & OP=30 & BIT_25=0 & LK=0 & addrBD24 {
+	goto addrBD24;
+}
+
+:e_bl addrBD24					is $(ISVLE) & OP=30 & BIT_25=0 & LK=1 & addrBD24 {
+	LR = inst_next;
+	call addrBD24;
+}
+
+:se_b addrBD8					is $(ISVLE) & OP6_VLE=58 & BIT9_VLE=0 & LK8_VLE=0 & addrBD8 {
+	goto addrBD8;
+}
+
+:se_bl addrBD8					is $(ISVLE) & OP6_VLE=58 & BIT9_VLE=0 & LK8_VLE=1 & addrBD8 {
+	LR = inst_next;
+	call addrBD8;
+}
+
+# NOTE: For the conditional branches, the "official" mnemonics have just bc and bcl.
+# We use extended mnemonics so the display is understandable without having to cross-
+# reference multiple tables.
+:e_b^CC32 addrBD15				is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=0 & addrBD15 & CC32 {
+	if (CC32 == 0) goto inst_next;
+	goto addrBD15;
+}
+
+:e_b^CC32^"l" addrBD15			is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=1 & addrBD15 & CC32 {
+	if (CC32 == 0) goto inst_next;
+	LR= inst_next;
+	call [addrBD15];
+}
+
+:se_b^CC16 addrBD8				is $(ISVLE) & OP5_VLE=28 & addrBD8 & CC16 {
+	if (CC16 == 0) goto inst_next;
+	goto addrBD8;
+}
+#######
+
+:se_bctr						is $(ISVLE) & OP15_VLE=3 & LK0_VLE=0 {
+	tmp:$(REGISTER_SIZE) = CTR & ~1;
+	goto [tmp];	
+}
+
+:se_bctrl						is $(ISVLE) & OP15_VLE=3 & LK0_VLE=1 {
+	LR = inst_next;	
+	tmp:$(REGISTER_SIZE) = CTR & ~1;
+	call [tmp];	
+}
+
+:se_blr							is $(ISVLE) & OP15_VLE=2 & LK0_VLE=0 {
+	tmp:$(REGISTER_SIZE) = LR & ~1;
+	return [tmp];			
+}
+
+:se_blrl						is $(ISVLE) & OP15_VLE=2 & LK0_VLE=1 {	
+	tmp:$(REGISTER_SIZE) = LR & ~1;
+	LR = inst_next;
+	return [tmp];			
+}
+
+:se_sc							is $(ISVLE) & OP16_VLE=2 {
+	tmp:1 = 0;
+	syscall(tmp);
+}
+
+:e_sc LEV_VLE					is $(ISVLE) & OP=31 & XOP_1_10=36 & BIT_0=0 & BITS_16_20=0 & BITS_21_25=0 & LEV_VLE {
+	tmp:1 = LEV_VLE;
+	syscall(tmp);
+}
+
+:e_sc 							is $(ISVLE) & OP=31 & XOP_1_10=36 & BIT_0=0 & BITS_16_20=0 & BITS_21_25=0 & LEV_VLE=0 {
+	tmp:1 = 0;
+	syscall(tmp);
+}
+
+:se_illegal						is $(ISVLE) & OP16_VLE=0 {
+	illegal();
+}
+
+:se_rfmci						is $(ISVLE) & OP16_VLE=11 {
+	returnFromCriticalInterrupt();
+}
+
+:se_rfci						is $(ISVLE) & OP16_VLE=9 {
+	returnFromCriticalInterrupt();
+}
+
+:se_rfi							is $(ISVLE) & OP16_VLE=8 {
+	returnFromInterrupt();
+}
+
+:se_rfdi						is $(ISVLE) & OP16_VLE=10 {
+	returnFromInterrupt();
+}
+
+:se_rfgi						is $(ISVLE) & OP16_VLE=12 {
+	returnFromInterrupt();
+}
+
+:e_crand CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=257 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,CC_OP & CC_B_OP);
+}
+
+:e_crandc CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=129 & BIT_0=0
+{
+	tmp1:1 = !CC_B_OP;
+	setCrBit(CR_D,CR_D_CC,CC_OP & tmp1);
+}
+
+:e_creqv CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=289 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,CC_B_OP == CC_OP);
+}
+
+:e_crnand CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=225 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,!(CC_B_OP & CC_OP));
+}
+
+:e_crnor CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=33 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,!(CC_B_OP | CC_OP));
+}
+
+:e_cror	CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=449 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP | CC_OP));
+}
+
+:e_crorc CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=417 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP | (!CC_OP)));
+}
+
+:e_crxor CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=193 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP ^ CC_OP));
+}
+
+:e_mcrf CRFD,CRFS				is $(ISVLE) & OP=31 & CRFD & BITS_21_22=0 & CRFS & BITS_11_17=0 & XOP_1_10=16 & BIT_0=0 
+{
+	CRFD = CRFS;
+}
+
+:e_lbz	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=12 & D & dPlusRaOrZeroAddress
+{
+	D = zext(*:1(dPlusRaOrZeroAddress));	
+}
+
+:se_lbz RZ_VLE,sd4PlusRxAddr	is $(ISVLE) & OP4_VLE=8 & RZ_VLE & sd4PlusRxAddr {
+	RZ_VLE = zext(*:1(sd4PlusRxAddr));	
+}
+
+:e_lbzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=0 & d8PlusRaAddress
+{
+	D = zext(*:1(d8PlusRaAddress));
+	A = d8PlusRaAddress;
+}
+
+:e_lha	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=14 & D & dPlusRaOrZeroAddress
+{
+	D = sext(*:2(dPlusRaOrZeroAddress));	
+}
+
+:e_lhz	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=22 & D & dPlusRaOrZeroAddress
+{
+	D = zext(*:2(dPlusRaOrZeroAddress));	
+}
+
+:se_lhz RZ_VLE,sd4HPlusRxAddr	is $(ISVLE) & OP4_VLE=10 & RZ_VLE & sd4HPlusRxAddr {	
+	RZ_VLE = zext(*:2(sd4HPlusRxAddr));	
+}
+
+:e_lhau	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=3 & d8PlusRaAddress
+{
+	D = sext(*:2(d8PlusRaAddress));
+	A = d8PlusRaAddress;
+}
+
+:e_lhzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=1 & d8PlusRaAddress
+{
+	D = zext(*:2(d8PlusRaAddress));
+	A = d8PlusRaAddress;
+}
+
+:e_lwz	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=20 & D & dPlusRaOrZeroAddress
+{
+	D = zext(*:4(dPlusRaOrZeroAddress));	
+}
+
+:se_lwz RZ_VLE,sd4WPlusRxAddr	is $(ISVLE) & OP4_VLE=12 & RZ_VLE & sd4WPlusRxAddr {	
+	RZ_VLE = zext(*:4(sd4WPlusRxAddr));	
+}
+
+:e_lwzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=2 & d8PlusRaAddress
+{
+	D = zext(*:4(d8PlusRaAddress));
+	A = d8PlusRaAddress;
+}
+
+:e_stb	S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=13 & S & dPlusRaOrZeroAddress
+{
+	*:1(dPlusRaOrZeroAddress) = S:1;
+}
+
+:se_stb RZ_VLE,sd4PlusRxAddr	is $(ISVLE) & OP4_VLE=9 & RZ_VLE & sd4PlusRxAddr {	
+	*:1(sd4PlusRxAddr) = RZ_VLE:1;	
+}
+
+:e_stbu	S,d8PlusRaAddress		is $(ISVLE) & OP=6 & XOP_8_VLE=4 & S & A & d8PlusRaAddress
+{
+	*:1(d8PlusRaAddress) = S:1;
+	A = d8PlusRaAddress;
+}
+
+:e_sth S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=23 & S & dPlusRaOrZeroAddress
+{
+	*:2(dPlusRaOrZeroAddress) = S:2;
+}
+
+:se_sth RZ_VLE,sd4HPlusRxAddr	is $(ISVLE) & OP4_VLE=11 & RZ_VLE & sd4HPlusRxAddr {	
+	*:2(sd4HPlusRxAddr) = RZ_VLE:2;	
+}
+
+:sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
+{
+	*:2(d8PlusRaAddress) = S:2;
+	A = d8PlusRaAddress;
+}
+
+:e_stw S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=21 & S & dPlusRaOrZeroAddress
+{
+@ifdef BIT_64
+	*:4(dPlusRaOrZeroAddress) = S:4;
+@else
+	*:4(dPlusRaOrZeroAddress) = S;
+@endif
+}
+
+:se_stw RZ_VLE,sd4WPlusRxAddr	is $(ISVLE) & OP4_VLE=13 & RZ_VLE & sd4WPlusRxAddr {	
+@ifdef BIT_64
+	*:4(sd4WPlusRxAddr) = RZ_VLE:4;	
+@else
+	*:4(sd4WPlusRxAddr) = RZ_VLE;	
+@endif
+}
+
+:e_stwu S,d8PlusRaAddress		is $(ISVLE) & OP=6 & XOP_8_VLE=6 & S & A & d8PlusRaAddress
+{
+@ifdef BIT_64
+	*:4(d8PlusRaAddress) = S:4;
+@else
+	*:4(d8PlusRaAddress) = S;
+@endif
+	A = d8PlusRaAddress;
+}
+
+:e_lmw	D,d8PlusRaOrZeroAddress	is $(ISVLE) & OP=6 & XOP_8_VLE=8 & D & BITS_21_25 & d8PlusRaOrZeroAddress & LDMR31 [ lsmul = BITS_21_25; ]
+{	
+	tea = d8PlusRaOrZeroAddress;
+	build LDMR31;
+}
+
+:e_stmw	S,d8PlusRaOrZeroAddress	is $(ISVLE) & OP=6 &  XOP_8_VLE=9 & S & BITS_21_25 & d8PlusRaOrZeroAddress & STMR31 [ lsmul = BITS_21_25; ]
+{
+	tea = d8PlusRaOrZeroAddress;
+	build STMR31;
+}
+
+:se_add RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=1 & BITS_8_9=0 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE + RY_VLE;
+}
+
+:e_add16i D,A,SIMM				is $(ISVLE) & OP=7 & A & D & SIMM {
+	tmp:2 = SIMM;
+	D = A + sext(tmp);
+}
+
+:e_add2i. A,SIMM16				is $(ISVLE) & OP=28 & XOP_11_VLE=17 & A & SIMM16 {
+	A = A + sext(SIMM16);
+	cr0flags(A); 
+}
+
+:e_add2is A,SIMM16				is $(ISVLE) & OP=28 & XOP_11_VLE=18 & A & SIMM16 {
+	tmp:$(REGISTER_SIZE) = sext(SIMM16);
+	tmp = tmp << 16;
+	A = A + tmp;
+}
+
+:e_addi D,A,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=8 & BIT_11=0 & D & A & SCALE {
+	D = A + SCALE;
+}
+
+:e_addi. D,A,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=8 & BIT_11=1 & D & A & SCALE {
+	D = A + SCALE;
+	cr0flags(D); 
+}
+
+:se_addi RX_VLE,OIMM			is $(ISVLE) & OP6_VLE=8 & BIT9_VLE=0 & RX_VLE & OIMM {
+	RX_VLE = RX_VLE + OIMM;
+}
+
+:e_addic D,A,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=9 & BIT_11=0 & D & A & SCALE {
+	xer_ca = carry(A,SCALE);
+	D = A + SCALE;
+}
+
+:e_addic. D,A,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=9 & BIT_11=1 & D & A & SCALE {
+	xer_ca = carry(A,SCALE);
+	D = A + SCALE;
+	cr0flags(D); 
+}
+
+:se_sub RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=1 & BITS_8_9=2 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE - RY_VLE;
+}
+
+:se_subf RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=1 & BITS_8_9=3 & RX_VLE & RY_VLE {
+	RX_VLE = RY_VLE - RX_VLE;
+}
+
+:e_subfic D,A,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=11 & BIT_11=0 & D & A & SCALE {
+	xer_ca = (A <= SCALE);
+	D = SCALE - A;	
+}
+
+:e_subfic. D,A,SCALE			is $(ISVLE) & OP=6 & XOP_12_VLE=11 & BIT_11=1 & D & A & SCALE {
+	xer_ca = (A <= SCALE);
+	D = SCALE - A;	
+	cr0flags(D); 	
+}
+
+:se_subi RX_VLE,OIMM			is $(ISVLE) & OP6_VLE=9 & BIT9_VLE=0 & RX_VLE & OIMM {
+	RX_VLE = RX_VLE - OIMM;
+}
+
+:se_subi. RX_VLE,OIMM			is $(ISVLE) & OP6_VLE=9 & BIT9_VLE=1 & RX_VLE & OIMM {
+	RX_VLE = RX_VLE - OIMM;
+	cr0flags(RX_VLE); 		
+}
+
+:e_mulli D,A,SCALE				is $(ISVLE) & OP=6 & XOP_11_VLE=20 & D & A & SCALE {
+	tmp1:16 = sext(A);
+	tmp2:16 = sext(SCALE);
+	tmpP:16 = tmp1 * tmp2;
+	D = tmpP:$(REGISTER_SIZE);
+}
+
+:e_mull2i. A,SIMM16				is $(ISVLE) & OP=28 & XOP_11_VLE=20 & A & SIMM16 {
+	tmp1:16 = sext(A);
+	tmp2:16 = sext(SIMM16);
+	tmpP:16 = tmp1 * tmp2;
+	A = tmpP:$(REGISTER_SIZE);
+}
+
+:se_mullw RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=1 & BITS_8_9=1 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE * RY_VLE;
+}
+
+:se_neg RX_VLE					is $(ISVLE) & OP6_VLE=0 & XOR_VLE=3 & RX_VLE {
+	RX_VLE = ~RX_VLE + 1;
+}
+
+:se_btsti RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=25 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	tmp:$(REGISTER_SIZE) = (RX_VLE >> OIM5_VLE) & 0x1;
+	cr0flags(tmp);
+}
+
+:e_cmp16i. A,SIMM16				is $(ISVLE) & OP=28 & XOP_11_VLE=19 & A & SIMM16 {
+	tmpA:4 = A:4;
+	tmpB:4 = sext(SIMM16);
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+}
+
+:e_cmpi BF_VLE,A,SCALE			is $(ISVLE) & OP=6 & XOP_11_VLE=21 & BITS_23_25=0 & A & BF_VLE & SCALE {
+	tmpA:4 = A:4;
+	tmpB:4 = SCALE:4;
+	tmpC:8 = zext(((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));
+	crall = crall | (tmpC << (BF_VLE*8));
+}
+
+:se_cmp RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=0 & RX_VLE & RY_VLE {
+	tmpA:4 = RX_VLE:4;
+	tmpB:4 = RY_VLE:4;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);	
+}
+
+:se_cmpi RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=10 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	tmpA:4 = RX_VLE:4;
+	tmpB:4 = OIM5_VLE;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
+}
+
+:e_cmpl16i. A,IMM16				is $(ISVLE) & OP=28 & XOP_11_VLE=21 & A & IMM16 {
+	tmpA:4 = A:4;
+	tmpB:4 = zext(IMM16);
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);	
+}
+
+:e_cmpli BF_VLE,A,SCALE			is $(ISVLE) & OP=6 & XOP_11_VLE=21 & BITS_23_25=1 & A & BF_VLE & SCALE {
+	tmpA:4 = A:4;
+	tmpB:4 = SCALE:4;
+	tmpC:8 = zext(((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));
+	crall = crall | (tmpC << (BF_VLE*8));	
+}
+
+:se_cmpl RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=1 & RX_VLE & RY_VLE {
+	tmpA:4 = RX_VLE:4;
+	tmpB:4 = RY_VLE:4;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
+}
+
+:se_cmpli RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=8 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	tmpA:4 = RX_VLE:4;
+	tmpB:4 = OIM5_VLE;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
+}
+
+:e_cmph BF2,A,B					is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=14 & A & B & BF2 {
+	tmpA:2 = A:2;
+	tmpB:2 = B:2;
+	tmpC:8 = zext(((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));		
+	crall = crall | (tmpC << (BF2*8));	
+}
+
+:se_cmph RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=2 & RX_VLE & RY_VLE {
+	tmpA:2 = RX_VLE:2;
+	tmpB:2 = RY_VLE:2;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
+}
+
+:e_cmph16i. A,SIMM16			is $(ISVLE) & OP=28 & XOP_11_VLE=22 & A & SIMM16 {
+	tmpA:2 = A:2;
+	tmpB:2 = SIMM16;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
+}
+
+:e_cmphl BF2,A,B				is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=46 & A & B & BF2 {
+	tmpA:2 = A:2;
+	tmpB:2 = B:2;
+	tmpC:8 = zext(((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));		
+	crall = crall | (tmpC << (BF2*8));		
+}
+
+:se_cmphl RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=3 & RX_VLE & RY_VLE {
+	tmpA:2 = RX_VLE:2;
+	tmpB:2 = RY_VLE:2;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
+}
+
+:e_cmphl16i. A,IMM16			is $(ISVLE) & OP=28 & XOP_11_VLE=23 & A & IMM16 {
+	tmpA:2 = A:2;
+	tmpB:2 = IMM16;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
+}
+
+:e_and2i. D,IMM16B				is $(ISVLE) & OP=28 & XOP_11_VLE=25 & D & IMM16B {
+	D = D & zext(IMM16B);
+	cr0flags(D); 		
+}
+
+:e_and2is. D,IMM16B				is $(ISVLE) & OP=28 & XOP_11_VLE=29 & D & IMM16B {
+	tmp:$(REGISTER_SIZE) = zext(IMM16B);
+	tmp = tmp << 16;
+	D = D & tmp;
+	cr0flags(D); 		
+}
+
+:e_andi A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=12 & BIT_11=0 & S & A & SCALE {
+	A = S & SCALE;
+}
+
+:e_andi. A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=12 & BIT_11=1 & S & A & SCALE {
+	A = S & SCALE;
+	cr0flags(A); 			
+}
+
+:se_andi RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=11 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	tmp:1 = OIM5_VLE;
+	RX_VLE = RX_VLE & zext(tmp);
+}
+
+:e_or2i D,IMM16B				is $(ISVLE) & OP=28 & XOP_11_VLE=24 & D & IMM16B {
+	D = D | zext(IMM16B);
+}
+
+:e_or2is D,IMM16B				is $(ISVLE) & OP=28 & XOP_11_VLE=26 & D & IMM16B {
+	tmp:$(REGISTER_SIZE) = zext(IMM16B);
+	tmp = tmp << 16;
+	D = D | tmp;	
+}
+
+:e_ori A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=13 & BIT_11=0 & S & A & SCALE {
+	A = S | SCALE;
+}
+
+:e_ori. A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=13 & BIT_11=1 & S & A & SCALE {
+	A = S | SCALE;
+	cr0flags(A); 				
+}
+
+:e_xori A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=14 & BIT_11=0 & S & A & SCALE {
+	A = S ^ SCALE;	
+}
+
+:e_xori. A,S,SCALE				is $(ISVLE) & OP=6 & XOP_12_VLE=14 & BIT_11=1 & S & A & SCALE {
+	A = S ^ SCALE;	
+	cr0flags(A); 					
+}
+
+:se_and RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=17 & BIT9_VLE=1 & BIT8_VLE=0 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE & RY_VLE;
+}
+
+:se_and. RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=17 & BIT9_VLE=1 & BIT8_VLE=1 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE & RY_VLE;	
+	cr0flags(RX_VLE); 					
+}
+
+:se_andc RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=17 & BITS_8_9=1 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE & ~RY_VLE;	
+}
+
+:se_or RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=17 & BITS_8_9=0 & RX_VLE & RY_VLE {
+	RX_VLE = RX_VLE | RY_VLE;	
+}
+
+:se_not RX_VLE					is $(ISVLE) & OP6_VLE=0 & XOR_VLE=2 & RX_VLE {
+	RX_VLE = ~RX_VLE;
+}
+
+:se_bclri RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=24 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
+	tmp:$(REGISTER_SIZE) = 1 << OIM5_VLE;
+	tmp = ~tmp;
+	RX_VLE = RX_VLE & tmp;
+}
+
+:se_bgeni RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=24 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	RX_VLE = 1 << OIM5_VLE;
+}
+
+:se_bmaski RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=11 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
+	RX_VLE = ~0;
+	tmp:1 = OIM5_VLE;
+	if (tmp == 0) goto inst_next;
+	RX_VLE = RX_VLE >> ($(REGISTER_SIZE) - tmp);
+}
+
+:se_bseti RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=25 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
+	tmp:$(REGISTER_SIZE) = 1 << OIM5_VLE;
+	RX_VLE = RX_VLE | tmp;	
+}
+
+:se_extsb RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=13 & RX_VLE {
+	RX_VLE = sext(RX_VLE:1);
+}
+
+:se_extsh RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=15 & RX_VLE {
+	RX_VLE = sext(RX_VLE:2);	
+}
+
+:se_extzb RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=12 & RX_VLE {
+	RX_VLE = zext(RX_VLE:1);	
+}
+
+:se_extzh RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=14 & RX_VLE {
+	RX_VLE = zext(RX_VLE:2);	
+}
+
+:e_li D,SIMM20					is $(ISVLE) & OP=28 & BIT_15=0 & D & SIMM20 {
+	D = sext(SIMM20);
+}
+
+:se_li RX_VLE,OIM7_VLE			is $(ISVLE) & OP5_VLE=9 & RX_VLE & OIM7_VLE {
+	RX_VLE = OIM7_VLE;
+}
+
+:e_lis D,IMM16B					is $(ISVLE) & OP=28 & XOP_11_VLE=28 & D & IMM16B {
+	tmp:$(REGISTER_SIZE) = zext(IMM16B);
+	D = tmp << 16;
+}
+
+:se_mfar RX_VLE,ARY_VLE			is $(ISVLE) & OP6_VLE=0 & BITS_8_9=3 & RX_VLE & ARY_VLE {
+	RX_VLE = ARY_VLE;
+}
+
+:se_mr RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=0 & BITS_8_9=1 & RX_VLE & RY_VLE {
+	RX_VLE = RY_VLE;
+}
+
+:se_mtar ARX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=0 & BITS_8_9=2 & ARX_VLE & RY_VLE {
+	ARX_VLE = RY_VLE;
+}
+
+:e_rlw A,S,B					is $(ISVLE) & OP=31 & BIT_0=0 & XOP_1_10=280 & A & B & S {
+	tmpB:1 = B[0,5];
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << tmpB) | (tmpS >> (32 - tmpB));
+	A = zext(tmpA);
+}
+
+:e_rlw. A,S,B					is $(ISVLE) & OP=31 & BIT_0=1 & XOP_1_10=280 & A & B & S {
+	tmpB:1 = B[0,5];
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << tmpB) | (tmpS >> (32 - tmpB));
+	A = zext(tmpA);
+	cr0flags(A); 						
+}
+
+:e_rlwi A,S,SHL					is $(ISVLE) & OP=31 & BIT_0=0 & XOP_1_10=312 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
+	A = zext(tmpA);	
+}
+
+:e_rlwi. A,S,SHL				is $(ISVLE) & OP=31 & BIT_0=1 & XOP_1_10=312 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
+	A = zext(tmpA);	
+	cr0flags(A); 							
+}
+
+# The manual uses MB instead of NB here, but because the "MB" symbol is already taken, NB it is
+:e_rlwimi A,S,SHL,NB,ME			is $(ISVLE) & OP=29 & BIT_0=0 & NB & ME & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
+	tmpM:4 = ~0:4;
+	if (ME:1 < NB:1) goto <invert>;
+	tmpM = tmpM << NB;
+	tmpM = tmpM >> ((31-ME) + NB);
+	tmpM = tmpM << (31-ME);
+	goto <finish>;
+<invert>
+	tmpM = tmpM << ME;
+	tmpM = tmpM >> ((31-NB) + ME);
+	tmpM = tmpM << (31-NB);
+	tmpM = ~tmpM;
+<finish>
+	A = zext(tmpA & tmpM) | (A & zext(~tmpM));	
+}
+
+:e_rlwinm A,S,SHL,NB,ME			is $(ISVLE) & OP=29 & BIT_0=1 & NB & ME & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
+	tmpM:4 = ~0:4;
+	if (ME:1 < NB:1) goto <invert>;
+	tmpM = tmpM << NB;
+	tmpM = tmpM >> ((31-ME) + NB);
+	tmpM = tmpM << (31-ME);
+	goto <finish>;
+<invert>
+	tmpM = tmpM << ME;
+	tmpM = tmpM >> ((31-NB) + ME);
+	tmpM = tmpM << (31-NB);
+	tmpM = ~tmpM;
+<finish>
+	A = zext(tmpA & tmpM);		
+}
+
+:e_slwi A,S,SHL					is $(ISVLE) & OP=31 & BIT_0=0 & XOP_1_10=56 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpS = tmpS << SHL;
+	A = zext(tmpS);	
+}
+
+:e_slwi. A,S,SHL				is $(ISVLE) & OP=31 & BIT_0=1 & XOP_1_10=56 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpS = tmpS << SHL;
+	A = zext(tmpS);	
+	cr0flags(A); 				
+}
+
+:se_slwi RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=27 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpX = tmpX << OIM5_VLE;
+	RX_VLE = zext(tmpX);
+}
+
+:se_slw RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=16 & BITS_8_9=2 & RX_VLE & RY_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpS:1 = RY_VLE[0,6];
+	tmpX = tmpX << tmpS;
+	RX_VLE = zext(tmpX);
+}
+
+:se_srawi RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=26 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpX = tmpX s>> OIM5_VLE;
+	RX_VLE = sext(tmpX);
+	xer_ca = (RX_VLE s< 0) & (OIM5_VLE:1 > 0);
+}
+
+:se_sraw RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=16 & BITS_8_9=1 & RX_VLE & RY_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpS:1 = RY_VLE[0,5];
+	tmpX = tmpX s>> tmpS;
+	RX_VLE = sext(tmpX);
+	xer_ca = (RX_VLE s< 0) & (tmpS > 0);
+}
+
+:e_srwi A,S,SHL					is $(ISVLE) & OP=31 & BIT_0=0 & XOP_1_10=568 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpS = tmpS >> SHL;
+	A = zext(tmpS);		
+}
+
+:e_srwi. A,S,SHL				is $(ISVLE) & OP=31 & BIT_0=1 & XOP_1_10=568 & A & SHL & S {
+	tmpS:4 = S:4;
+	tmpS = tmpS >> SHL;
+	A = zext(tmpS);			
+	cr0flags(A); 				
+}
+
+:se_srwi RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=26 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpX = tmpX >> OIM5_VLE;
+	RX_VLE = zext(tmpX);
+}
+
+:se_srw RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=16 & BITS_8_9=0 & RX_VLE & RY_VLE {
+	tmpX:4 = RX_VLE:4;
+	tmpS:1 = RY_VLE[0,5];
+	tmpX = tmpX >> tmpS;
+	RX_VLE = zext(tmpX);	
+}
+
+:se_mfctr RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=10 & RX_VLE {
+	RX_VLE = CTR;
+}
+
+:se_mtctr RX_VLE				is $(ISVLE) & OP6_VLE=0 & XOR_VLE=11 & RX_VLE {
+	CTR = RX_VLE;
+}
+
+:se_mflr RX_VLE					is $(ISVLE) & OP6_VLE=0 & XOR_VLE=8 & RX_VLE {
+	RX_VLE = LR;
+}
+
+:se_mtlr RX_VLE					is $(ISVLE) & OP6_VLE=0 & XOR_VLE=9 & RX_VLE {
+	LR = RX_VLE;
+}
+
+:se_isync						is $(ISVLE) & OP16_VLE=1 {
+	instructionSynchronize();
+}

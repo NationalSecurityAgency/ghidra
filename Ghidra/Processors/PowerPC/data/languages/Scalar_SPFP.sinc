@@ -1,0 +1,472 @@
+# Based on "EREF: A Reference for Freescale Book E and e500 Core" document version 01/2004 Rev 2.0
+# Instructions that are specific to the (PowerPC) e500 core are implemented as auxiliary processing units (APUs)
+# Embedded Vector and Scalar Single-Precision Floating-Point APUs (SPFP APU)
+
+# There are three versions of e500 core, namely e500v1, the e500v2, and the e500mc.
+# A 64-bit evolution of the e500mc core is called e5500 core.
+# All PowerQUICC 85xx devices are based on e500v1 or e500v2 cores.
+
+
+# =================================================================
+# Page 408
+
+# efsabs rT,rA         010 1100 0100
+#define pcodeop FloatingPointAbsoluteValue;
+:efsabs D,A is OP=4 & D & A & XOP_0_10=0x2C4 & BITS_11_15=0
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( abs( A:4 ) );
+}
+
+# efsadd rT,rA,rB      010 1100 0000
+#define pcodeop FloatingPointAdd;
+:efsadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C0
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( A:4 f+ B:4 );
+   setFPAddFlags( A:4, B:4, D:4 );
+}
+
+# =================================================================
+# Page 410
+
+# efscfsf rT,rB        010 1101 0011
+#define pcodeop  ConvertFloatingPointFromSignedFraction;
+:efscfsf D,B is OP=4 & D & B & XOP_0_10=0x2D3 & BITS_16_20=0
+{
+   # load fractional divisor as a float
+   tmpA:4 = 0x80000000;
+   tmpA = int2float( tmpA );
+   setFPRF( tmpA );
+
+   # check if negative
+   if ( ( B:4 & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the fractional portion of register B
+   tmpB:4 = int2float( B:4 );
+   setFPRF( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setFPDivFlags( tmpB, tmpA, tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the fractional portion of register B, 2's complement negate
+   tmpB = int2float( -( B:4 ) );
+   setFPRF( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setFPDivFlags( tmpB, tmpA, tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setFPRF( tmpB );
+ 
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB );
+}
+
+# efscfsi rT,rB        010 1101 0001
+#define pcodeop ConvertFloatingPointFromSignedInteger;
+:efscfsi D,B is OP=4 & D & B & XOP_0_10=0x2D1 & BITS_16_20=0
+{
+   # check if negative
+   if ( ( B:4 & 0x80000000 ) != 0 ) goto <negative>;
+
+   # float the integer portion of register B
+   tmpB:4 = int2float( B:4 );
+   setFPRF( tmpB );
+
+   goto <done>;
+
+   <negative>
+
+   # float the integer portion of register B, 2's complement negate
+   tmpB = int2float( -( B:4 ) );
+   setFPRF( tmpB );
+
+   # negate the float
+   tmpB = f-( tmpB );
+   setFPRF( tmpB );
+ 
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB );
+}
+
+# efscfuf rT,rB        010 1101 0010
+define pcodeop ConvertFloatingPointFromUnsignedFraction;
+:efscfuf D,B is OP=4 & D & B & XOP_0_10=0x2D2 & BITS_16_20=0
+{
+   # load fractional divisor as a float
+   tmpA:8 = 0x0000000100000000;
+   tmpA = int2float( tmpA );
+   setFPRF( tmpA );
+
+   # float the fractional portion of register B
+   tmpB:8 = int2float( B:4 );
+   setFPRF( tmpB );
+   tmpB = tmpB f/ tmpA;
+   setFPDivFlags( tmpB, tmpA, tmpB );
+
+   tmpC:4 = float2float( tmpB );
+   setFPRF( tmpC );
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpC );
+}
+
+#  rT,rB        010 1101 0000
+#define pcodeop ConvertFloatingPointFromUnsignedInteger;
+:efscfui D,B is OP=4 & D & B & XOP_0_10=0x2D0 & BITS_16_20=0
+{
+   tmp:4 = int2float( B:4 );
+   setFPRF( tmp );
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmp );
+   setSummaryFPSCR();
+}
+
+# efscmpeq CRFD,rA,rB        010 1100 1110
+#define pcodeop FloatingPointCompareEqual;
+:efscmpeq CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CE & BITS_21_22=0
+{
+  CRFD = A:4 f== B:4;
+}
+
+# =================================================================
+# Page 415
+
+# efscmpgt CRFD,rA,rB        010 1100 1100
+#define pcodeop FloatingPointCompareGreaterThan;
+:efscmpgt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CC & BITS_21_22=0
+{
+  CRFD = A:4 f> B:4;
+}
+
+# efscmplt CRFD,rA,rB        010 1100 1101
+#define pcodeop FloatingPointCompareLessThan;
+:efscmplt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CD & BITS_21_22=0
+{
+  CRFD = A:4 f< B:4;
+}
+
+# efsctsf rT,rB        010 1101 0111
+#define pcodeop ConvertFloatingPointToSignedFraction;
+:efsctsf D,B is OP=4 & D & B & XOP_0_10=0x2D7 & BITS_16_20=0
+{
+   # multiply by 0x0000 0000 8000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:8 = 0x0000000080000000;
+   tmpM = int2float( tmpM );
+   setFPRF( tmpM );
+
+   # load saturation limit as a float
+   tmpL:8 = 0x0000000080000000 - 1;
+   tmpL = int2float( tmpL );
+   setFPRF( tmpL );
+
+   # scale the saturation limit to a fractional float
+   tmpL = tmpL f/ tmpM;
+   setFPDivFlags( tmpL, tmpM, tmpL );
+
+   # get B float up to 64 bit width
+   tmpB:8 = float2float( B:4 );
+   setFPRF( tmpB );
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpL ) goto <check_negative>;
+
+      # set to positive saturation
+      tmpB = tmpL;
+
+   goto <done>;
+
+   <check_negative>
+
+   # check if greater than or equal to negative saturation limit
+   tmpL = f-( tmpL );
+   if ( tmpB f>= tmpL ) goto <done>;
+
+      # set to negative saturation
+      tmpB = tmpL;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setFPMulFlags( tmpB, tmpM, tmpB );
+
+   # truncate back to signed fraction format
+   tmpC:4 = trunc( tmpB );
+   setFPRF( tmpB );
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpC );
+}
+
+
+# efsctsi rT,rB        010 1101 0101
+#define pcodeop ConvertFloatingPointToSignedInteger;
+:efsctsi D,B is OP=4 & D & B & XOP_0_10=0x2D5 & BITS_16_20=0
+{
+   # create zero float constant
+   tmpA:4 = 0;
+   tmpA = int2float( tmpA );
+
+   # check if negative
+   if ( B:4 f< tmpA ) goto <negative>;
+
+   tmpB:8 = trunc(round( B:4 ));
+   setFPRF( tmpB );
+
+   # limit to positive saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped>;
+      tmpB = 0x000000007FFFFFFF;
+
+   <positive_clipped>
+
+   goto <done>;
+
+   <negative>
+
+   # negate the float
+   tmpB = trunc(round( f-( B:4 ) ));
+   setFPRF( tmpB );
+
+   # limit to negative saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped>;
+      tmpB = 0x0000000080000000;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpB = -( tmpB );
+
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+# efsctsiz rT,rB        010 1101 1010
+#define pcodeop ConvertFloatingPointToSignedIntegerWithRoundTowardZero;
+:efsctsiz D,B is OP=4 & D & B & XOP_0_10=0x2DA & BITS_16_20=0
+{
+   # create zero float constant
+   tmpA:4 = 0;
+   tmpA = int2float( tmpA );
+
+   # check if negative
+   if ( B:4 f< tmpA ) goto <negative>;
+
+   tmpB:8 = trunc( B:4 );
+   setFPRF( tmpB );
+
+   # limit to saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <positive_clipped>;
+      tmpB = 0x000000007FFFFFFF;
+
+   <positive_clipped>
+
+   goto <done>;
+
+   <negative>
+
+   # negate the float
+   tmpB = trunc( f-( B:4 ) );
+   setFPRF( tmpB );
+
+   # limit to saturation
+   if ( tmpB <= 0x0000000080000000 ) goto <negative_clipped>;
+      tmpB = 0x0000000080000000;
+
+   <negative_clipped>
+
+   # negate the signed int
+   tmpB = -( tmpB );
+
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+# =================================================================
+# Page 420
+
+# efsctuf rT,rB        010 1101 0110
+#define pcodeop ConvertFloatingPointToUnsignedFraction;
+:efsctuf D,B is OP=4 & D & B & XOP_0_10=0x2D6 & BITS_16_20=0
+{
+   # multiply by 0x0000 0001 0000 0000 to scale the fraction up to integer range
+
+   # load fractional multiplier as a float
+   tmpM:8 = 0x0000000100000000;
+   tmpM = int2float( tmpM );
+   setFPRF( tmpM );
+
+   # load saturation limit as a float
+   tmpL:8 = 0x0000000100000000 - 1;
+   tmpL = int2float( tmpL );
+   setFPRF( tmpL );
+
+   # scale the saturation limit to a fractional float
+   tmpL = tmpL f/ tmpM;
+   setFPDivFlags( tmpL, tmpM, tmpL );
+
+   # get B float up to 64 bit width
+   tmpB:8 = float2float( B:4 );
+   setFPRF( tmpB );
+
+   # check if less than or equal to positive saturation limit
+   if ( tmpB f<= tmpL ) goto <done>;
+
+      # set to saturation
+      tmpB = tmpL;
+
+   <done>
+
+   # scale the fractional portion up to integer side of mantissa
+   tmpB = tmpB f* tmpM;
+   setFPMulFlags( tmpB, tmpM, tmpB );
+
+   # truncate back to integer
+   tmpC:4 = trunc( tmpB );
+   setFPRF( tmpC );
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpC );
+}
+
+# efsctui rT,rB        010 1101 0100
+#define pcodeop ConvertFloatingPointToUnsignedInteger;
+:efsctui D,B is OP=4 & D & B & XOP_0_10=0x2D4 & BITS_16_20=0
+{
+   tmpB:8 = trunc(round( B:4 ));
+   setFPRF( tmpB );
+
+   # limit to saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <done>;
+      tmpB = 0x000000007FFFFFFF;
+
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+# efsctuiz rT,rB        010 1101 1000
+#define pcodeop ConvertFloatingPointToUnsignedIntegerWithRoundTowardZero;
+:efsctuiz D,B is OP=4 & D & B & XOP_0_10=0x2D8 & BITS_16_20=0
+{
+   tmpB:8 = trunc( B:4 );
+   setFPRF( tmpB );
+
+   # limit to saturation
+   if ( tmpB <= 0x000000007FFFFFFF ) goto <done>;
+      tmpB = 0x000000007FFFFFFF;
+
+   <done>
+
+   setSummaryFPSCR();
+
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmpB:4 );
+}
+
+# efsdiv rT,rA,rB      010 1100 1001
+#define pcodeop FloatingPointDivide;
+:efsdiv D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C9
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( A:4 f/ B:4 );
+   setFPDivFlags( A:4, B:4, D:4 );
+}
+
+# efsmul rT,rA,rB      010 1100 1000
+#define pcodeop FloatingPointMultiply;
+:efsmul D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C8
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( A:4 f* B:4 );
+   setFPMulFlags( A:4, B:4, D:4 );
+}
+
+# =================================================================
+# Page 425
+
+# efsnabs rT,rA         010 1100 0101
+#define pcodeop FloatingPointNegativeAbsoluteValue;
+:efsnabs D,A is OP=4 & D & A & XOP_0_10=0x2C5 & BITS_11_15=0
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( f- ( abs( A:4 ) ) );
+   setFPRF( D:4 );
+   setSummaryFPSCR();
+}
+
+# efsneg rT,rA         010 1100 0110
+#define pcodeop FloatingPointNegate;
+:efsneg D,A is OP=4 & D & A & XOP_0_10=0x2C6 & BITS_11_15=0
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( f-( A:4 ) );
+   setFPRF( D:4 );
+   setSummaryFPSCR();
+}
+
+# efssub rT,rA,rB      010 1100 0001
+#define pcodeop FloatingPointSubtract;
+:efssub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C1
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( A:4 f- B:4 );
+   setFPSubFlags( A:4, B:4, D:4 );
+   setSummaryFPSCR();
+}
+
+# efststeq CRFD,rA,rB        010 1101 1110
+#define pcodeop FloatingPointTestEqual;
+:efststeq CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DE & BITS_21_22=0
+{
+  CRFD = A:4 f== B:4;
+}
+
+# efststgt CRFD,rA,rB        010 1101 1100
+#define pcodeop FloatingPointTestGreaterThan;
+:efststgt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DC & BITS_21_22=0
+{
+  CRFD = A:4 f> B:4;
+}
+
+# =================================================================
+# Page 430
+
+# efststlt CRFD,rA,rB        010 1101 1101
+#define pcodeop FloatingPointTestLessThan;
+:efststlt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DD & BITS_21_22=0
+{
+  CRFD = A:4 f< B:4;
+}

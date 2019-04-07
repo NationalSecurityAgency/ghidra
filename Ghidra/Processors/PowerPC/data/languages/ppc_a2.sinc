@@ -1,0 +1,113 @@
+
+# binutils: a2.d  88:   00 00 02 00     attn
+# binutils: power4_32.d  28:    00 00 02 00     attn
+# binutils: power4.d +64:       00 00 02 00     attn
+# binutils: power6.d  54:       00 00 02 00     attn
+# "attn",	X(0,256),	X_MASK,   POWER4|PPCA2,	PPC476,		{0}
+define pcodeop attnOp;
+:attn  is $(NOTVLE) & OP=0 & XOP_1_10=256 & BITS_11_25=0  { attnOp(); } 
+
+# binutils: a2.d 214:   7d 4b 01 a6     eratwe  r10,r11,0
+# binutils: a2.d 218:   7d 4b 19 a6     eratwe  r10,r11,3
+# {"eratwe",      X(31,211),      X_MASK,      PPCA2,     PPCNONE,        {RS, RA, WS}},
+# WS=>  { 0x7, 11, NULL, NULL, 0 },
+define pcodeop eratweOp;
+:eratwe S,A is $(NOTVLE) & OP=31 & XOP_1_10=211 & S & A & BITS_11_13 & BITS_14_15 & BIT_0=0 { eratweOp(S,A); }
+
+# binutils: a2.d 200:   7d 4b 66 66     erativax r10,r11,r12
+# "erativax",	X(31,819),	X_MASK,	     PPCA2,	PPCNONE,	{RS, RA0, RB}
+define pcodeop erativaxOp;
+:erativax S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=819 & S & A & B  { erativaxOp(S,A,B); } 
+
+# binutils: a2.d 1f4:   7c 0a 58 66     eratilx 0,r10,r11
+# binutils: a2.d 1f8:   7c 2a 58 66     eratilx 1,r10,r11
+# binutils: a2.d 1fc:   7c ea 58 66     eratilx 7,r10,r11
+# "eratilx",	X(31,51),	X_MASK,	     PPCA2,	PPCNONE,	{ERAT_T, RA, RB}
+define pcodeop eratilxOp;
+:eratilx BITS_21_23,A,B is $(NOTVLE) & OP=31 & XOP_1_10=51 & BITS_21_23 & A & B  { eratilxOp(A,B); } 
+
+# binutils: a2.d 210:   7d 4b 61 26     eratsx  r10,r11,r12
+# "eratsx",	XRC(31,147,0),	X_MASK,	     PPCA2,	PPCNONE,	{RT, RA0, RB}
+define pcodeop eratsxOp;
+:eratsx TH,A,B is $(NOTVLE) & OP=31 & XOP_1_10=147 &  Rc=0 & TH & A & B  { eratsxOp(TH,A,B); } 
+
+# binutils: a2.d 20c:   7d 4b 61 27     eratsx\. r10,r11,r12
+# "eratsx.",	XRC(31,147,1),	X_MASK,	     PPCA2,	PPCNONE,	{RT, RA0, RB}
+define pcodeop eratsxXOp;
+:eratsx. TH,A,B is $(NOTVLE) & OP=31 & XOP_1_10=147 &  Rc=1 & TH & A & B  { eratsxXOp(TH,A,B); } 
+
+# "eratre",	X(31,179),	# binutils: a2.d 204:   7d 4b 01 66     eratre  r10,r11,0
+# binutils: a2.d 208:   7d 4b 19 66     eratre  r10,r11,3 
+define pcodeop eratreOp;
+:eratre TH,A,BITS_11_13 is $(NOTVLE) & OP=31 & XOP_1_10=179 & TH & A & BITS_11_13  { eratreOp(TH,A); } 
+
+# binutils: a2.d 3e0:   7d 4b 63 2c     icswx   r10,r11,r12
+# "icswx",	XRC(31,406,0),	X_MASK,   POWER7|PPCA2,	PPCNONE,	{RS, RA, RB}
+define pcodeop icswxOp;
+:icswx S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=406 &  Rc=0 & S & A & B  { icswxOp(S,A,B); } 
+
+# binutils: a2.d 3dc:   7d 4b 63 2d     icswx\.  r10,r11,r12
+# "icswx.",	XRC(31,406,1),	X_MASK,   POWER7|PPCA2,	PPCNONE,	{RS, RA, RB}
+define pcodeop icswxDotOp;
+:icswx. S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=406 &  Rc=1 & S & A & B  { icswxDotOp(S,A,B); } 
+
+# binutils: 476.d 49c:  7c 85 02 06     mfdcrx  r4,r5
+# binutils: a2.d 520:   7d 4b 02 06     mfdcrx  r10,r11
+# binutils: booke.d  28:        7c 85 02 06     mfdcrx  r4,r5
+# binutils: booke_xcoff.d  24:  7c 85 02 06     mfdcrx  r4,r5
+# "mfdcrx",	X(31,259),	X_MASK, BOOKE|PPCA2|PPC476, TITAN,	{S, A}
+define pcodeop mfdcrxOp;
+# :mfdcrx S,A is $(NOTVLE) & OP=31 & XOP_1_10=259 & S & A & BITS_11_15=0 { mfdcrxOp(S,A); } 
+
+# binutils: a2.d 51c:   7d 4b 02 07     mfdcrx\. r10,r11
+# "mfdcrx",	X(31,259),	X_MASK, BOOKE|PPCA2|PPC476, TITAN,	{RS, RA}
+define pcodeop mfdcrxDotOp;
+:mfdcrx. S,A is $(NOTVLE) & OP=31 & XOP_1_10=259 &  Rc=1 & S & A & BITS_11_15=0 { mfdcrxDotOp(S,A); } 
+
+# binutils: a2.d 564:   7d 6a 03 07     mtdcrx\. r10,r11
+define pcodeop mtdcrxDotOp;
+:mtdcrx. A,S is $(NOTVLE) & OP=31 & XOP_1_10=387 & A & S & Rc=1  { mtdcrxDotOp(A,S); } 
+
+# binutils: a2.d 884:   7c 00 01 6c     wchkall 
+# binutils: a2.d 888:   7c 00 01 6c     wchkall 
+# binutils: a2.d 88c:   7d 80 01 6c     wchkall cr3
+# "wchkall",	X(31,182),	X_MASK,      PPCA2,	PPCNONE,	{OBF}
+define pcodeop wchkallOp;
+:wchkall BITS_23_25 is $(NOTVLE) & OP=31 & XOP_1_10=182 & BITS_23_25  { wchkallOp(); } 
+
+# binutils: a2.d 894:   7c 20 07 4c     wclrall 1
+# "wclrall",	X(31,934),	XRARB_MASK,  PPCA2,	PPCNONE,	{L}
+define pcodeop wclrallOp;
+:wclrall L is $(NOTVLE) & OP=31 & XOP_1_10=934 & L  { wclrallOp(); } 
+
+# binutils: a2.d 890:   7c 2a 5f 4c     wclr    1,r10,r11
+# "wclr",	X(31,934),	X_MASK,	     PPCA2,	PPCNONE,	{L, RA0, RB}
+define pcodeop wclrOp;
+# :wclr L,A,B is $(NOTVLE) & OP=31 & XOP_1_10=934 & L & A & B  { wclrOp(); } 
+
+@ifdef IS_ISA
+# binutils: 476.d 474:  7c 00 06 ac     mbar    
+# binutils: 476.d 47c:  7c 20 06 ac     mbar    1
+# "mbar",	X(31,854),	X_MASK, BOOKE|PPCA2|PPC476, PPCNONE,	{MO}
+define pcodeop mbarOp;
+:mbar MO is OP=31 & XOP_1_10=854 & MO  { mbarOp(); } 
+@endif
+
+# binutils: a2.d:  514: 7d 4a 3a 87     mfdcr\.  r10,234
+:mfdcr. D, DCRN		is $(NOTVLE) & OP=31 & D & DCRN & XOP_1_10=323 & BIT_0=1
+{
+	D = DCRN;
+}
+
+# binutils: a2.d:  55c: 7d 4a 3b 87     mtdcr\.  234,r10
+:mtdcr. DCRN, D		is $(NOTVLE) & OP=31 & D & DCRN & XOP_1_10=451 & BIT_0=1
+{
+	DCRN = D;
+}
+
+# binutils: a2.d: 188:  7d 4b 61 fe     dcbtstep r10,r11,r12
+# binutils: e500mc.d:  a0:      7c 64 29 fe     dcbtstep r3,r4,r5
+define pcodeop DataCacheBlockTouchForStoreByExternalPID;
+:dcbtstep TH,A,B is OP=31 & TH & A & B & XOP_1_10=255 & BIT_0=0 {
+	DataCacheBlockTouchForStoreByExternalPID(TH,A,B);
+}

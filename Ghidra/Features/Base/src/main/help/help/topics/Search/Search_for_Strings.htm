@@ -1,0 +1,238 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search for Strings</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Search for Strings</H1>
+
+    <P><I>Search for Strings</I> searches the entire program or a specific selection for possible
+    <B><I>Ascii</I></B> or <B><I>Unicode</I></B> strings from the main menu. The results will be
+    displayed in a table that can be filtered and sorted and provides actions for creating
+    strings.</P>
+
+    <H3><A name="String_Search_Dialog"></A><B>String Search Dialog</B></H3>
+
+    <BLOCKQUOTE>
+      <P>To search for strings, select <B>Search</B><IMG alt="" border="0" src=
+      "../../shared/arrow.gif"> <B>For Strings...</B> This will bring up the String Search Dialog
+      where you can configure the search criteria before initiating the search.</P>
+
+      <P align="center"><IMG alt="" src="images/StringSearchDialog.png" border="0"></P>
+    </BLOCKQUOTE>
+
+    <H3><B>Search Options</B></H3>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI><B>Minimum Length</B> - determines the shortest length of possible strings to
+        display.<BR>
+        </LI>
+
+        <LI><B>Alignment</B> - indicates the search should only return results that start at an
+        address with the indicated byte alignment.</LI>
+
+        <LI><B>Require Null Termination</B> - if checked, the string resulting from the search must
+        be null terminated. If not checked, the strings resulting from the search may or may not be
+        null terminated.<BR>
+        </LI>
+
+        <LI><SPAN style="font-weight: bold;">Pascal Strings</SPAN> - if checked, only strings that
+        are valid pascal, pascal 255 or pascal unicode strings will be found.<BR>
+        </LI>
+
+        <LI><B>Word Model</B> - specifies the Strings Analyzer model file used to detect
+        high-confidence words. If this field is populated with a valid model file (default is
+        'StringModel.sng'), the resulting table will contain an "Is Word" column and an option to
+        filter by whether the string is a word or not.<BR>
+        This field can be left blank and the word-related options will be omitted from the results
+        table.<BR>
+        <BR>
+         User-defined models should be placed in the <B>Ghidra/Features/Base/data/stringngrams</B>
+        directory.<BR>
+        <BR>
+        </LI>
+
+        <LI><B>Memory Block Types</B> - Allows the user to specify if only loaded memory blocks
+        should be searched for the strings, or all (unloaded + loaded).</LI>
+
+        <LI><B>Selection Scope</B> - Allows the user to specify if the entire address space should
+        be searched or only the user selection.</LI>
+
+        <LI><B>Search</B> - press this button to find all strings using the current search
+        options.</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H3><A name="String_Search_Results"></A><B>String Search Results</B></H3>
+
+    <BLOCKQUOTE>
+      <P>The results are displayed in tabular format. Strings can be created by selecting one or
+      more rows from the resulting table and pressing the <B>"Make String"</B> button or ascii
+      arrays with the <B>"Make Ascii"</B> button. An offset for the string(s) start can be
+      specified to change the starting location(s) past the beginning of the string. String(s) can
+      be automatically labeled.</P>
+
+      <P align="center"><IMG alt="" src="images/StringSearchResults.png" border="0"></P>
+    </BLOCKQUOTE>
+
+    <H3>Table Fields</H3>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI>
+          <B>Defined</B> - shows an icon that indicates the status of the string. 
+
+          <UL>
+            <LI><IMG alt="" src="images/font.png" border="0"> - indicates a string that has already
+            been defined.</LI>
+
+            <LI><IMG alt="" src="images/magnifier.png" border="0"> - indicates a string that is not
+            defined.</LI>
+
+            <LI><IMG alt="" src="images/dialog-warning.png" border="0"> - indicates a string that
+            has been partially defined at some offset.</LI>
+
+            <LI><IMG alt="" src="images/dialog-warning_red.png" border="0"> - indicates a string
+            that conflicts with an instruction or some other data already defined at that
+            address.</LI>
+          </UL>
+        </LI>
+
+        <LI><B>Location</B> - The address of the found string.</LI>
+
+        <LI><SPAN style="font-weight: bold;">Label</SPAN> - If one exists, the label at the
+        location of the found string.</LI>
+
+        <LI><SPAN style="font-weight: bold;">Preview</SPAN> - If data or code already exists, the
+        representation of that code or data. If no code or data exists, the undefined byte at the
+        location of the found string.</LI>
+
+        <LI><SPAN style="font-weight: bold;">Ascii</SPAN> - What the string at the found location
+        would look like if it were created.</LI>
+
+        <LI><SPAN style="font-weight: bold;">String Type</SPAN> - What type of string has been
+        found. Currently, we support ascii strings, unicode strings, pascal strings, pascal 255
+        strings, and pascal unicode strings.<BR>
+        </LI>
+
+        <LI><SPAN style="font-weight: bold;">Length</SPAN> - The number of characters in the
+        string.<BR>
+        </LI>
+
+        <LI><SPAN style="font-weight: bold;">Is Word</SPAN> - Whether the word model has
+        determined, with high confidence, that the string is a valid word or sequence of words.
+        NOTE: this table field is only available if the String Search Dialog 'Word Model' field
+        contains a valid model file.<BR>
+        </LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H3><A name="String_Filters"></A><B>String Filters</B></H3>
+
+    <BLOCKQUOTE>
+      <P>There are four toggle buttons in the table window's title bar that are used to control
+      which strings are included in the table base on the strings "defined" state.</P>
+
+      <UL>
+        <LI><IMG alt="" src="images/font.png" border="0"> - toggles inclusion of <B>defined</B>
+        strings.</LI>
+
+        <LI><IMG alt="" src="images/magnifier.png" border="0"> - toggles inclusion of completely
+        <B>undefined</B> strings.</LI>
+
+        <LI><IMG alt="" src="images/dialog-warning.png" border="0"> - toggles inclusion of
+        <B>partially defined</B> strings.</LI>
+
+        <LI><IMG alt="" src="images/dialog-warning_red.png" border="0"> - toggles inclusion of
+        strings that <B>conflict</B> with an instruction or some other data at the start
+        address.</LI>
+
+        <LI><IMG alt="" src="images/view-filter.png" border="0"> - toggles inclusion of
+        <B>high-confidence word</B> strings. NOTE: this icon is only available if a String Search
+        Dialog 'Word Model' field contains a valid model file.</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H3><A name="Make_String_Options"></A><B>Make String Options</B></H3>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI><B>Make String</B> - press this button to create either a string of the appropriate
+        type (ascii or unicode) at the address(es) selected in the results table - if the option to
+        automatically label is checked, a label will be placed at the beginning of the
+        string(s).</LI>
+
+        <LI><B>Make Char Array -</B> press this button to create an array of chars at the
+        address(es) selected in the results table - if the option to automatically label is
+        checked, a label will be placed at the beginning of the char array.</LI>
+
+        <LI><B>Offset</B> - allows the user to specify a different starting point for the string or
+        ascii array. The automatic label will reflect the changes in address and name. NOTE: This
+        option is ignored for pascal strings because changing the offset would result in making the
+        string an invalid pascal string.<BR>
+        </LI>
+
+        <LI><B>Auto Label</B> - if checked, a label will be created when the string is created,
+        that matches the string</LI>
+
+        <LI><B>Include Alignment Nulls</B> - if checked, strings will be created including any
+        alignment nulls after the string, up to the alignment value.</LI>
+
+        <LI><B>Truncate if Needed</B> - if checked, a truncated string will be created if the
+        string conflicts with an existing instruction or data that exists internal to the string.
+        Otherwise, no string will be created if a conflict exists.</LI>
+      </UL>
+
+      <P><IMG alt="" border="0" src="../../shared/note.png"> The "Make Strings" panel can be
+      hidden/shown using the <IMG alt="" border="0" src="images/expand.gif"> / <IMG alt="" border=
+      "0" src="images/collapse.gif"> toggle button at the end of the text filter.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Refresh"></A>Refresh <IMG alt="" src="Icons.REFRESH_ICON" border="0"></H3>
+
+    <BLOCKQUOTE>
+      <P>This action will cause the table to reload. The table attempts to keep the table up to
+      date, but for efficiency reasons, not all external program changes will be accurately
+      reflected in the strings table if those changes result in a conflict or partially defined
+      string. A refresh will force the table to completely reload, resulting in accurate
+      results.</P>
+    </BLOCKQUOTE>
+
+    <H3>Make Selection <IMG alt="" border="0" src="images/text_align_justify.png"></H3>
+
+    <BLOCKQUOTE>
+      <P><I>See <A href="help/topics/Search/Query_Results_Dialog.htm#Make_Selection">Make
+      Selection</A></I>.</P>
+    </BLOCKQUOTE>
+
+    <H3>Selection Navigation <IMG border="0" src="images/locationIn.gif" alt=""></H3>
+
+    <BLOCKQUOTE>
+      <P><I>See <A href=
+      "help/topics/Search/Query_Results_Dialog.htm#Selection_Navigation">Selection
+      Navigation</A></I>.</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>StringTablePlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Search_Memory.htm">Search Memory</A></LI>
+
+      <LI><A href="Search_Memory.htm">Search Program Memory</A></LI>
+
+      <LI><A href="Search_Program_Text.htm">Search Program Text</A></LI>
+
+      <LI><A href="Searching.htm">Searching</A></LI>
+    </UL>
+  </BODY>
+</HTML>

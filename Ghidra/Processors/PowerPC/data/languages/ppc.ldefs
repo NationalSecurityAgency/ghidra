@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.5"
+            slafile="ppc_32_be.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:default">
+    <description>PowerPC 32-bit big endian w/Altivec, G2</description>
+    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <compiler name="Mac OS X" spec="ppc_32_be_Mac.cspec" id="macosx"/>
+    <external_name tool="gnu" name="powerpc:common"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.5"
+            slafile="ppc_32_le.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:32:default">
+    <description>PowerPC 32-bit little endian w/Altivec, G2</description>
+    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+    <external_name tool="gnu" name="powerpc:common"/>
+    <external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="64"
+            variant="default"
+            version="1.5"
+            slafile="ppc_64_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:64:default">
+    <description>PowerPC 64-bit big endian w/Altivec, G2</description>
+    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <compiler name="Mac OS X" spec="ppc_64_be_Mac.cspec" id="macosx"/>
+    <external_name tool="gnu" name="powerpc:common64"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="64-32addr"
+            version="1.5"
+            slafile="ppc_64_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:64:64-32addr">
+    <description>PowerPC 64-bit big endian w/Altivec and 32 bit addressing, G2</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:common64"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="64-32addr"
+            version="1.5"
+            slafile="ppc_64_le.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:64:64-32addr">
+    <description>PowerPC 64-bit little endian w/Altivec and 32 bit addressing, G2</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_64_32.cspec" id="windows"/>
+	<external_name tool="gnu" name="powerpc:common64"/>
+	<external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.5"
+            slafile="ppc_64_le.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:64:default">
+    <description>PowerPC 64-bit little endian w/Altivec, G2</description>
+    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:common64"/>
+    <external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="4xx"
+            version="1.5"
+            slafile="ppc_32_4xx_be.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:4xx">
+    <description>PowerPC 4xx 32-bit big endian embedded core</description>
+    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+	<external_name tool="gnu" name="powerpc:403"/>
+	<external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="4xx"
+            version="1.5"
+            slafile="ppc_32_4xx_le.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:32:4xx">
+    <description>PowerPC 4xx 32-bit little endian embedded core</description>
+    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+	<external_name tool="gnu" name="powerpc:403"/>
+	<external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="MPC8270"
+            version="1.5"
+            slafile="ppc_32_quicciii_be.sla"
+            processorspec="ppc_32_mpc8270.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:MPC8270">
+    <description>Freescale MPC8280 32-bit big endian family (PowerQUICC-III)</description>
+    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:MPC8XX"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+   <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerQUICC-III"
+            version="1.5"
+            slafile="ppc_32_quicciii_be.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:QUICC">
+    <description>PowerQUICC-III 32-bit big endian family</description>
+    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+	<external_name tool="gnu" name="powerpc:MPC8XX"/>
+	<external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+   <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="PowerQUICC-III"
+            version="1.5"
+            slafile="ppc_32_quicciii_le.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:32:QUICC">
+    <description>PowerQUICC-III 32-bit little endian family</description>
+    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+	<external_name tool="gnu" name="powerpc:MPC8XX"/>
+	<external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>  
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerISA-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:A2-32addr">
+    <description>Power ISA 3.0 Big Endian w/EVX and 32-bit Addressing</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500mc64"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="PowerISA-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_le.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:LE:64:A2-32addr">
+    <description>Power ISA 3.0 Little Endian w/EVX and 32-bit Addressing</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_64_32.cspec" id="windows"/>
+    <external_name tool="gnu" name="powerpc:e500mc64"/>
+    <external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerISA-Altivec-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_altivec_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:A2ALT-32addr">
+    <description>Power ISA 3.0 Big Endian w/Altivec and 32-bit Addressing</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500mc64"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="PowerISA-Altivec-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_altivec_le.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:LE:64:A2ALT-32addr">
+    <description>Power ISA 3.0 Little Endian w/Altivec and 32-bit Addressing</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_64_32.cspec" id="windows"/>
+    <external_name tool="gnu" name="powerpc:e500mc64"/>
+    <external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="64"
+            variant="PowerISA-Altivec"
+            version="1.5"
+            slafile="ppc_64_isa_altivec_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:A2ALT">
+    <description>Power ISA 3.0 Big Endian w/Altivec</description>
+    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+	<external_name tool="gnu" name="powerpc:e500mc"/>
+	<external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="64"
+            variant="PowerISA-Altivec"
+            version="1.5"
+            slafile="ppc_64_isa_altivec_le.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:LE:64:A2ALT">
+    <description>Power ISA 3.0 Little Endian w/Altivec</description>
+    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500mc"/>
+	<external_name tool="IDA-PRO" name="ppcl"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerISA-VLE-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_vle_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:VLE-32addr">
+    <description>Power ISA 3.0 Big Endian w/VLE, EVX and 32-bit Addressing </description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerISA-VLE-Altivec-64-32addr"
+            version="1.5"
+            slafile="ppc_64_isa_altivec_vle_be.sla"
+            processorspec="ppc_64.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:VLEALT-32addr">
+    <description>Power ISA 3.0 Big Endian w/VLE, Altivec and 32-bit Addressing</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+</language_definitions>

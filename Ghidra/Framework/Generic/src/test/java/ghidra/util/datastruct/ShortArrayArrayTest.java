@@ -1,0 +1,101 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * ShortArrayArrayTest.java
+ *
+ * Created on February 14, 2002, 3:30 PM
+ */
+
+package ghidra.util.datastruct;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
+
+import generic.test.AbstractGenericTest;
+
+/**
+ *
+ * 
+ * @version 
+ */
+public class ShortArrayArrayTest extends AbstractGenericTest {
+
+    /** Creates new ArrayArrayTest */
+    public ShortArrayArrayTest() {
+        super();
+    }
+@Test
+    public void testSimpleGetPut() {
+        ShortArrayArray baa = new ShortArrayArray();
+        assertNull(baa.get(0));
+        assertNull(baa.get(100));
+        baa.put(0,new short[] {0,1,2});
+        short[] b = baa.get(0);
+        assertEquals(3,b.length);
+        assertEquals(0,b[0]);
+        assertEquals(1,b[1]);
+        assertEquals(2,b[2]);
+        
+        baa.put(1,new short[]{});
+        b = baa.get(1);
+        assertEquals(0,b.length);
+        baa.put(2,new short[]{5});
+        b = baa.get(2);
+        assertEquals(1,b.length);
+        
+        baa.remove(1);
+        assertNull(baa.get(1));
+    }
+@Test
+    public void testMany() {
+        ShortArrayArray baa = new ShortArrayArray();
+
+        for(int i=0;i<1000;i++) {
+            short t = (short)i;
+            baa.put(i,new short[]{t,(short)(t+1),(short)(t+2),(short)(t+3),(short)(t+4)});
+        }
+        for(int i=0;i<1000;i++) {
+            short[] b = baa.get(i);
+            assertEquals(5, b.length);
+            for(int j=0;j<5;j++) {
+                short t = (short)(i+j);
+                assertEquals("i="+i+"j="+j,t,b[j]);
+            }
+        }
+        
+        for(int i=999;i>=0;i--) {
+            baa.remove(i);
+        }
+        assertEquals(4,baa.starts.length);
+        assertEquals(10,baa.shorts.length);
+        for(int i=0;i<1000;i++) {
+            short t = (short)i;
+            baa.put(i,new short[]{t,(short)(t+1),(short)(t+2),(short)(t+3),(short)(t+4)});
+        }
+        for(int i=0;i<1000;i++) {
+            short[] b = baa.get(i);
+            assertEquals(5, b.length);
+            for(int j=0;j<5;j++) {
+                short t = (short)(i+j);
+                assertEquals("i="+i+"j="+j,t,b[j]);
+            }
+        }
+ 
+    }
+
+}

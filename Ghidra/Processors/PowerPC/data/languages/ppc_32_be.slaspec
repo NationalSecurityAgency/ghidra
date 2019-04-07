@@ -1,0 +1,14 @@
+# SLA specification file for PowerPC 32-bit big endian
+
+@define ENDIAN "big"
+
+@define REGISTER_SIZE "4"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@include "ppc_common.sinc"
+@include "altivec.sinc"
+@include "g2.sinc"
+

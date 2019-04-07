@@ -1,0 +1,7 @@
+@define MX51 ""
+@define OMIT_RETADDR 1
+@define DUAL_DPTR ""
+@define DPS_REG_NUM 0xa2
+
+@include "8051_main.sinc"
+@include "mx51.sinc"

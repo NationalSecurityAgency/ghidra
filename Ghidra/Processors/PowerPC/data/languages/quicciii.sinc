@@ -1,0 +1,130 @@
+# These instructions show up in the Freescale PowerQUICC III instruction manual
+# (not present elsewhere)
+ 
+define pcodeop dataCacheBlockClearLock;
+define pcodeop prefetchDataCacheBlockLockSet;
+define pcodeop prefetchDataCacheBlockLockSetX;
+define pcodeop debuggerNotifyHalt;
+define pcodeop instructionCacheBlockClearLock;
+define pcodeop queryInstructionCacheBlockLock;
+define pcodeop prefetchInstructionCacheBlockLockSetX;
+define pcodeop memoryBarrier;
+define pcodeop moveFromAPIDIndirect;
+define pcodeop moveFromPerformanceMonitorRegister;
+define pcodeop moveToPerformanceMonitorRegister;
+define pcodeop returnFromDebugInterrupt;
+define pcodeop returnFromMachineCheckInterrupt;
+define pcodeop invalidateTLB;
+
+#dcblc 0,0,r0		#FIXME
+:dcblc CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=390 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockClearLock(ea);
+}
+
+#dcbtls 0,0,r0		#FIXME
+:dcbtls CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=166 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	prefetchDataCacheBlockLockSet(ea);
+}
+
+#dcbtstls 0,0,r0		#FIXME
+:dcbtstls CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=134 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	prefetchDataCacheBlockLockSetX(ea);
+}
+
+#dnh 0,0		#FIXME
+:dnh DUI,DUIS	is $(NOTVLE) & OP=19 & DUI & DUIS & XOP_1_10=198 & BIT_0=0
+{
+	debuggerNotifyHalt(DUI:1,DUIS:2);
+}
+
+#icblc 0,0,r0		#FIXME
+:icblc CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=230 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheBlockClearLock(CT:1,ea);
+}
+
+:icblq CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=198 & BIT_0=1 & RA_OR_ZERO
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	cr0 = queryInstructionCacheBlockLock(CT:1,ea);
+}
+
+#icbtls 0,0,r0		#FIXME
+:icbtls CT,RA_OR_ZERO,B	is OP=31 & CT & B & XOP_1_10=486 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	prefetchInstructionCacheBlockLockSetX(ea);
+}
+
+:isel^CC_X_OPm D,RA_OR_ZERO,B,CC_X_OP  is OP=31 & D & RA_OR_ZERO & B & CC_X_OP & CC_X_OPm & XOP_1_5=15
+{
+		D = B;
+		if (!CC_X_OP) goto inst_next;
+		D = RA_OR_ZERO;
+#        D = (zext(CC_X_OP) * RA_OR_ZERO) + (zext(!CC_X_OP) * B);
+}
+
+@ifndef IS_ISA
+#mbar 0         #FIXME
+:mbar MO        is OP=31 & MO & XOP_1_10=854
+{ 
+	memoryBarrier(MO:1);
+}
+@endif
+
+#mfapidi r0,r1  #FIXME
+:mfapidi D,A    is $(NOTVLE) & OP=31 & D & A & XOP_1_10=275
+{ 
+	D = moveFromAPIDIndirect(A);
+}
+
+pmrn: pmr       is BITS_16_20 & BITS_11_15 [ pmr = BITS_11_15 << 5 | BITS_16_20; ] { tmp:2 = pmr; export tmp; }
+
+#mfpmr r0,?     #FIXME
+:mfpmr D,pmrn   is OP=31 & D & pmrn & XOP_1_10=334 & BIT_0=0
+{ 
+	D = moveFromPerformanceMonitorRegister(pmrn);
+}
+
+#mtpmr r0,?     #FIXME
+:mtpmr pmrn,S   is OP=31 & S & pmrn & XOP_1_10=462 & BIT_0=0
+{ 
+	moveToPerformanceMonitorRegister(pmrn, S);
+}
+
+#rfdi           #FIXME
+:rfdi           is $(NOTVLE) & OP=19 & XOP_1_10=39
+{ 
+	returnFromDebugInterrupt();
+	return[SRR0]; 
+}
+
+#rfmci          #FIXME
+:rfmci          is $(NOTVLE) & OP=19 & XOP_0_10=76
+{ 
+	returnFromMachineCheckInterrupt();
+	return[SRR0]; 
+}
+
+
+# PowerISA II: 6.11.4.9 TLB Management Instructions
+# CMT: TLB Invalidate Local Indexed [Category: Embedded.Phased In]]
+# FORM: X-form
+define pcodeop TLBInvalidateLocalIndexed; # Outputs/affect TBD
+:tlbilx BITS_21_22,RA_OR_ZERO,RB_OR_ZERO is $(NOTVLE) & OP=31 & CRFD=0 & BITS_21_22 & RA_OR_ZERO & RB_OR_ZERO & XOP_1_10=18 & BIT_0=0 { 
+	TLBInvalidateLocalIndexed(BITS_21_22:1,RA_OR_ZERO,RB_OR_ZERO);
+}
+
+#tlbivax 0,r0           #FIXME
+:tlbivax RA_OR_ZERO,B	is OP=31 & RA_OR_ZERO & B & XOP_1_10=786
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	invalidateTLB(ea);
+}

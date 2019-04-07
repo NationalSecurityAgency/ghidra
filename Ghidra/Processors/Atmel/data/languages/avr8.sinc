@@ -1,0 +1,1044 @@
+# sleigh specification for the avr8
+#
+# Currently designed for ATMega64 in non-ATmel103 configuration
+#  - 0x20-0xff as IO memory, rather than 0x20-0x5f
+#
+# This is a ATMega64 with a 64k sized memory
+# Other parts avaible have a 4M sized memory so that stack 
+# pointer would be three bytes instead
+
+define endian=little;
+# Declaring space to be wordsized... alternative is to do byte sized
+define alignment=2;
+
+# Force fusion of two byte operations in a row by decoding as words
+#@define FUSION ""
+
+# mem space should really be the default, but the loading scripts will
+# prefer the code space as the default.  By being explicit for every
+# instruction, we can eliminate the ambiguity for at least the
+# decompiler.  None-the-less, other than when loading the binary into
+# Ghidra, it's still preferable to see the name of IO locations used,
+# rather than code addresses, so leave mem space as the default.
+
+define space code type=ram_space size=3 wordsize=2 default;
+define space register type=ram_space size=1;
+define space mem type=ram_space size=2 wordsize=1;  
+
+# Using decimal rather than hex to match specs
+# TODO: These general purpose registers should reside with the 'mem' space from 0x00-0x1f
+#define register offset=0 size=1 [
+define mem offset=0 size=1 [
+ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 
+ R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 
+ R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+ Zlo Zhi 
+];
+
+#define register offset=0 size=2 [
+define mem offset=0 size=2 [
+ R1R0 R3R2 R5R4 R7R6 R9R8 
+ R11R10 R13R12 R15R14 R17R16 R19R18 
+ R21R20 R23R22 W   # Technically, manual has R25R24 instead of W.
+ X Y Z
+];
+
+#define register offset=0x10 size=4 [
+define mem offset=0x10 size=4 [
+ R19R18R17R16 R23R22R21R20
+];
+
+# Techinically, the stack pointer is in the i/o space so should be addressable with the
+# rest of the i/o registers. However, Ghidra does not react well to the stack pointer
+# being indirectly addressable so we're making an exception.
+define register offset=0x3D size=1 [ SPL SPH ];
+define register offset=0x3D size=2 [ SP ];
+
+define register offset=0x42 size=$(PCBYTESIZE) [ PC ];
+
+define register offset=0x80 size=1 [
+  Cflg Zflg Nflg Vflg Sflg Hflg Tflg Iflg SKIP
+];
+
+#####################################
+
+# I discovered different parts have different io layouts not just different io
+define mem offset=0x5B size=1 [ RAMPZ ];
+define mem offset=0x5F size=1 [ SREG ];
+
+@if HASEIND == "1"
+define mem offset=0x5C size=1 [ EIND ];
+@endif
+
+##############################
+
+# Define context bits
+define register offset=0x90 size=4   contextreg;
+
+define context contextreg
+  useSkipCond=(0,0) noflow       # =1 skip instruction if SKIP register is true
+  
+  # transient context
+  phase=(1,1)					# =0 check for useSkipCond, =1 parse instruction
+;
+
+## Following 8051 example rather than define bitrange 
+# Works better as distinct variables
+@define Cflag "Cflg"
+@define Zflag "Zflg"
+@define Nflag "Nflg"
+@define Vflag "Vflg"
+@define Sflag "Sflg"
+@define Hflag "Hflg"
+@define Tflag "Tflg"
+@define Iflag "Iflg"
+
+
+define token opword (16)
+	ophi16        = ( 0,15)
+	ophi9         = ( 7,15)
+	ophi8         = ( 8,15)
+	ophi7         = ( 9,15)
+	ophi6         = (10,15)
+	ophi5         = (11,15)
+	ophi4         = (12,15)
+	ophi2         = (14,15)
+	opbit13       = (13,13)
+	opbit12       = (12,12)
+	opbit9        = ( 9, 9)
+	opbit8        = ( 8, 8)
+	opbit7        = ( 7, 7)
+	opbit3        = ( 3, 3)
+	opbit2        = ( 2, 2)
+	opbit0        = ( 0, 0)
+	oplow12       = ( 0,11)
+	oplow12signed = ( 0,11) signed
+	oplow4        = ( 0, 3)
+	oplow3_flag   = ( 0, 2)
+	oplow3        = ( 0, 2)
+	oplow2        = ( 0, 1)
+	op1to3        = ( 1, 3)
+	op2to3        = ( 2, 3)
+	op3to7        = ( 3, 7)
+	op4to8        = ( 4, 8)
+	op4to6        = ( 4, 6)
+	op4to6_flag   = ( 4, 6)
+	op6to7        = ( 6, 7)
+	op9to10       = ( 9,10)
+	op10to11      = (10,11)
+	RdHi          = ( 4, 7)
+	RdHi3         = ( 4, 6)
+	RdFull        = ( 4, 8)
+	RrHi          = ( 0, 3)
+	RrHi3         = ( 0, 2)
+	RrLow         = ( 0, 3)
+	RrHiLowSel    = ( 9, 9)
+	Rdw2          = ( 4, 5)
+	Rdw4          = ( 4, 7)
+	Rrw4          = ( 0, 3)
+	Rstq          = ( 3, 3)
+	RstPtr        = ( 2, 3)
+	op0to3        = ( 0, 3)
+	op3to9signed  = ( 3, 9) signed
+	op4to7        = ( 4, 7)
+	op8to11       = ( 8,11)
+;
+define token immtok(16)
+	next16 = (0,15)
+;
+
+define token opfusion16(32)
+	op1hi4       = (12,15)
+	op2hi4       = (28,31)
+	op1hi6       = (10,15)
+	op2hi6       = (26,31)
+	op1low4      = ( 0, 3)
+	op2low4      = (16,19)
+	op1bits0to3  = ( 0, 3)
+	op2bits0to3  = (16,19)
+	op1bits1to3  = ( 1, 3)
+	op2bits1to3  = (17,19)
+	op1bits4to8  = ( 4, 8)
+	op2bits4to8  = (20,24)
+	op1bits5to7  = ( 5, 7)
+	op2bits5to7  = (21,23)
+	op1bits5to8  = ( 5, 8)
+	op2bits5to8  = (21,24)
+	op1bits8to11 = ( 8,11)
+	op2bits8to11 = (24,27)
+	op1bit0      = ( 0, 0)
+	op2bit0      = (16,16)
+	op1bit4      = ( 4, 4)
+	op2bit4      = (20,20)
+	op1bit9      = ( 9, 9)
+	op2bit9      = (25,25)
+	op1RdPair    = ( 5, 8)
+	op1RdPairHi  = ( 5, 7)
+	op1RrPairLow = ( 1, 3)
+	op1RrPairHi  = ( 1, 3)
+	op1RrPairSel = ( 9, 9)
+;
+
+define token opfusion24(48)
+	f3op1hi4       = (12,15)
+	f3op2hi4       = (28,31)
+	f3op3hi4       = (34,47)
+	f3op1hi6       = (10,15)
+	f3op2hi6       = (26,31)
+	f3op3hi6       = (42,47)
+	f3op1bits0to3  = ( 0, 3)
+	f3op2bits0to3  = (16,19)
+	f3op3bits0to3  = (32,35)
+	f3op2bits4to7  = (20,23)
+	f3op1bits5to7  = ( 5, 7)
+	f3op3bits5to7  = (37,39)
+	f3op1bits8to11 = ( 8,11)
+	f3op2bits8to11 = (24,27)
+	f3op1bit4      = ( 4, 4)
+	f3op3bit4      = (36,36)
+	f3op3bit8      = (40,40)
+	f3op3bit9      = (41,41)
+	f3op1RdPairHi  = ( 5, 7)
+	f3op2RdHi      = (20,23)
+;
+
+define token opfusionLdsw(64) # lds lds
+	ldswop1hi7      = ( 9,15)
+	ldswop2hi7      = (41,47)
+	ldswop1low4     = ( 0, 3)
+	ldswop2low4     = (32,35)
+	ldswop1bits5to8 = ( 5, 8)
+	ldswop2bits5to8 = (37,40)
+	ldswop1bit4     = ( 4, 4)
+	ldswop2bit4     = (36,36)
+	ldswop1bit16    = (16,16)
+	ldswop2bit16    = (48,48)
+	ldswop1imm15    = (17,31)
+	ldswop2imm15    = (49,63)
+	ldswop1imm6     = (17,22)
+	ldswop2imm6     = (49,54)
+	ldswop1imm16    = (16,31)
+	ldswop2imm16    = (48,63)
+	ldswop1RdPair   = ( 5, 8)
+	stswop2RdPair   = (37,40)
+;
+
+attach variables [ oplow3_flag op4to6_flag ] [
+  Cflg Zflg Nflg Vflg Sflg Hflg Tflg Iflg
+];
+
+attach variables [ RdHi RrHi f3op2RdHi ]  [ 
+ R16 R17 R18 R19 
+ R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+ Zlo Zhi ]
+;
+attach variables [  RdHi3 RrHi3 ] [
+ R16 R17 R18 R19 
+ R20 R21 R22 R23
+];
+attach variables [ RrLow ] [
+ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9
+ R10 R11 R12 R13 R14 R15 
+];
+attach variables [ RdFull ] [
+ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9
+ R10 R11 R12 R13 R14 R15 
+ R16 R17 R18 R19 
+ R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+ Zlo Zhi
+];
+attach variables [ Rdw2 ] [
+ W X Y Z
+];
+attach variables [ Rstq ] [
+  Z Y 
+];
+attach variables [ RstPtr ] [
+  Z _ Y X
+];
+attach variables [ Rdw4 Rrw4 op1RdPair ldswop1RdPair stswop2RdPair ] [
+ R1R0 R3R2 R5R4 R7R6 R9R8 
+ R11R10 R13R12 R15R14 R17R16 R19R18 
+ R21R20 R23R22 W 
+ X Y Z 
+];
+attach variables [ op1RrPairLow ] [
+ R1R0 R3R2 R5R4 R7R6 R9R8 
+ R11R10 R13R12 R15R14 
+];
+attach variables [ op1RrPairHi op1RdPairHi f3op1RdPairHi ] [
+ R17R16 R19R18 
+ R21R20 R23R22 W 
+ X Y Z 
+];
+
+
+RrFull: RrHi is RrHiLowSel=1 & RrHi { tmp:1 = RrHi; export tmp; }
+RrFull: RrLow is RrHiLowSel=0 & RrLow { tmp:1 = RrLow; export tmp; }
+
+# Alternative: try using some subcontructors
+op1RrPair: op1RrPairHi is op1RrPairSel=1 & op1RrPairHi { tmp:2 = op1RrPairHi; export tmp; }
+op1RrPair: op1RrPairLow is op1RrPairSel=0 & op1RrPairLow { tmp:2 = op1RrPairLow; export tmp; }
+
+
+# I'm uneasy at these... as they require the top of the stack
+# to know what size element to reserve before the push.
+# The docs should probably say that the top of the stack byte is unused...
+macro pushPC(val) {
+  SP = SP - $(PCBYTESIZE);
+  *[mem]:$(PCBYTESIZE) SP = val;
+}
+macro popPC(val) {
+  val = *[mem]:$(PCBYTESIZE) SP;
+  SP = SP + $(PCBYTESIZE);
+}
+macro push8(val) {
+  SP = SP -1;
+  *[mem]:1 SP = val;
+}
+macro pop8(val) {
+  val = *[mem]:1 SP;
+  SP = SP + 1;
+}
+# .slaspec shortcoming: Hflag isn't computed for most results
+macro setSflag() {
+  $(Sflag) = $(Nflag) ^ $(Vflag);
+}
+macro setResultFlags(result){
+  $(Nflag) = (result & 0x80) == 0x80;
+  $(Zflag) = (result == 0x0);
+  setSflag();
+}
+macro setResult16Flags(result) {
+  $(Nflag) = (result & 0x8000) == 0x8000;
+  $(Zflag) = (result == 0x0);
+  setSflag();
+}
+macro setSubCarry(pre,sub){  # pre - sub
+  $(Cflag) = (pre < sub);
+}
+# The decompilation looks better when the pcode comparision is used,
+# rather than walking though the bit examples in the manual.
+# todo: consolidate these
+macro setVflagForSub(pre,sub,res){ # res = pre - sub
+  $(Vflag) = scarry(pre,sub);
+}
+macro setVflagForSub16(pre,sub){ # pre - sub
+  $(Vflag) = scarry(pre,sub);
+}
+macro setVflagForAdd(arg1,arg2,res){
+   local a = (res & 0x80) >> 7;
+  local b = (arg1 & 0x80) >> 7;
+  local c = (arg2 & 0x80) >> 7;
+  local V = (b & c & (~a)) ^ ((~b) & (~c) & a);
+  $(Vflag) = V & 0x01;
+}
+macro setCflagForAdd(arg1,arg2,res){
+  # pcode has a two form version... but not one taking carry in
+  $(Cflag) = carry(arg1,arg2);
+}
+macro doSubtract(pre,sub,res){
+  local x = pre - sub;
+  setVflagForSub(pre,sub,x);
+  res = x;
+  setSubCarry(pre, sub);
+  setResultFlags(res);
+  $(Sflag) = pre s< sub;
+}
+macro doSubtractWithCarry(pre,subNoCarry,res){
+  local sub = subNoCarry + $(Cflag);
+  local oldZflag = $(Zflag);
+  doSubtract(pre,sub,res);
+  $(Zflag) = oldZflag & $(Zflag);  
+  $(Sflag) = pre s< sub;
+}
+macro setMulFlags(res) {
+  $(Cflag) = ((res & 0x8000) != 0);
+  $(Zflag) = (res == 0);
+}
+
+# Handle possible skip instruction
+# This next line is a NOP except for the phase, which is never really checked.
+# A better fix may be to use -l, and ensure phase=1 is checked on the base constructors.
+:^instruction is phase=0 & useSkipCond=0 & instruction [ phase=1; ] { build instruction; }
+:^instruction is phase=0 & useSkipCond=1 & instruction [ phase=1; ] { 
+	if (SKIP) goto inst_next;
+	build instruction; 
+}
+
+# K8 is immediate for Rd,K8 forms
+K8: val is op0to3 & op8to11 [ val = (op8to11 << 4) | op0to3; ] { tmp:1 = val; export tmp; }
+
+@ifdef FUSION
+K16fuse: val is op1bits0to3 & op1bits8to11 & op2bits0to3 & op2bits8to11  [ val = (((op2bits8to11 << 4) | op2bits0to3) << 8) | ((op1bits8to11 << 4) | op1bits0to3); ] { tmp:2 = val; export tmp; }
+f3cmpK16: val is f3op1bits0to3 & f3op1bits8to11 & f3op2bits0to3 & f3op2bits8to11 [ val = (((f3op2bits8to11 << 4) | f3op2bits0to3) << 8) | ((f3op1bits8to11 << 4) | f3op1bits0to3); ] { tmp:2 = val; export tmp; }
+f3cmpK8: val is f3op2bits0to3 & f3op2bits8to11 [ val = (f3op2bits8to11 << 4) | f3op2bits0to3; ] { tmp:1 = val; export tmp; } 
+@endif
+
+rel7addr: rel is op3to9signed [ rel = (op3to9signed + inst_next);] { 
+  export *[code]:2 rel;
+}
+rel7dst: byteOffset is op3to9signed & rel7addr [ byteOffset = (op3to9signed + inst_next) << 1;] { 
+  export rel7addr;
+}
+
+rel12addr: rel is oplow12signed [ rel = oplow12signed + inst_start + 1; ] { 
+  export *[code]:2 rel; 
+}
+rel12dst: byteOffset is oplow12signed & rel12addr [ byteOffset = (oplow12signed + inst_start + 1) << 1; ] { 
+  export rel12addr; 
+}
+
+abs22addr: loc is op4to8 & opbit0; next16 [ loc = (op4to8 << 17) | (opbit0 << 16) | next16; ] { 
+ export *[code]:2 loc; 
+}
+abs22dst: byteOffset is (op4to8 & opbit0; next16) & abs22addr [ byteOffset = ((op4to8 << 17) | (opbit0 << 16) | next16) << 1; ] { 
+ export abs22addr; 
+}
+
+next16memPtrVal1: next16 is next16 { export *[mem]:1 next16; }
+
+@ifdef FUSION
+ldswMemPtrVal2: ldswop1imm16 is ldswop1imm16 { export *[mem]:2 ldswop1imm16; }
+stswMemPtrVal2: ldswop2imm16 is ldswop2imm16 { export *[mem]:2 ldswop2imm16; }
+@endif
+
+# K6 is used in dword operation
+K6: val is oplow4 & op6to7 [ val = (op6to7 << 4) | oplow4; ] { tmp:1 = val; export tmp; }
+# K7 is used by lds
+K7addr: val is oplow4 & op9to10 & opbit8 [ val = ((1 ^ opbit8) << 7) | (opbit8 << 6) | (op9to10 << 4) | oplow4; ] { 
+  tmp:1 = val; export tmp; 
+}
+# Join against various spaces for dataspace...
+# #####################################################################################
+# COMMENTING OUT BECAUSE "Subtable symbol K7addr is not allowed in context block"
+#K7Ioaddr: val is K7addr [ val = K7addr - 0x20; ] {   tmp:1 = val; export tmp;  }
+# #####################################################################################
+# COMMENTING OUT BECAUSE "Subtable symbol K7Ioaddr is not allowed in context block"
+#A7Ioaddr: val is K7Ioaddr [ val = (K7Ioaddr | 0x00) + 0x20 ; ] { export *[mem]:1 val; }
+Aio6: val is oplow4 & op9to10 [ val = ((op9to10 << 4) | oplow4) + 0x20; ] { export *[mem]:1 val; }
+Aio5: val is op3to7 [ val = (op3to7 | 0x00) + 0x20; ] { export *[mem]:1 val; }
+q6: val is oplow3 & op10to11 & opbit13 [ val = (opbit13 << 5) | (op10to11 << 3) | oplow3; ] {   tmp:1 = val; export tmp;  }
+
+@ifdef FUSION
+# Predicates to verify that fusion will be valid here.
+# We just want to construct these.  The rules are not null to avoid a NOP bug with sleigh
+fusion16rrrrPred: val is op1bit0=0 & op2bit0=1 & op1bit4=0 & op2bit4=1 & op1bit9=op2bit9 & op1bits5to8=op2bits5to8 & op1bits1to3=op2bits1to3 [ val = 0; ] { tmp:2=val; export tmp; }
+fusion16rkrkPred: val is op1bits5to7=op2bits5to7 & op1bit4=0 & op2bit4=1 [ val=0; ] { tmp:2 = val; export tmp; }
+f3cmpPairPred: val is f3op1bits5to7=f3op3bits5to7 & f3op1bit4=0 & f3op3bit4=1 & f3op3bit8=1 [ val=0; ] { tmp:2 = val; export tmp; }
+f3cmpLdiPred: val is f3op3bit9=1 & f3op3bits0to3=f3op2bits4to7 [ val=0; ] { tmp:2 = val; export tmp; }
+ldswPairPred: val is ldswop1bit4=0 & ldswop2bit4=1 & ldswop1bits5to8=ldswop2bits5to8  [ val=0; ] { tmp:2 = val; export tmp; }
+stswPairPred: val is ldswop1bit4=1 & ldswop2bit4=0 & ldswop1bits5to8=ldswop2bits5to8  [ val=0; ] { tmp:2 = val; export tmp; }
+# would like to check this for const pair, but hangs sleigh compiler:  ldswop1imm15=ldswop2imm15
+#  So check as a few in a row 
+#    Not any better & ldswop1imm5b=ldswop2imm5b & ldswop1imm5c=ldswop2imm5c
+ldswConstPairPred: val is ldswop1bit16=0 & ldswop2bit16=1 & ldswop1imm6=ldswop2imm6    [ val=0; ] { tmp:2 = val; export tmp; } 
+stswConstPairPred: val is ldswop1bit16=1 & ldswop2bit16=0 & ldswop1imm6=ldswop2imm6    [ val=0; ] { tmp:2 = val; export tmp; } 
+@endif
+
+define pcodeop todo;
+define pcodeop todoflow;
+define pcodeop todoflags;
+define pcodeop todotst;
+
+define pcodeop break;
+
+@ifdef FUSION
+# add followed by adc
+:addw op1RdPair,op1RrPair is phase=1 & op1hi6=0x3 & op2hi6=0x7 & op1RdPair & op1RrPair & fusion16rrrrPred {
+  $(Cflag) = carry(op1RdPair,op1RrPair);
+  local pre = op1RdPair;
+  local post = op1RdPair + op1RrPair;
+  op1RdPair = post;
+  $(Vflag) = (0x0000 == (pre & 0x8000)) & ((post & 0x8000) == 0x8000);
+  setResult16Flags(post);
+}
+@endif
+# Rd,Rr
+:adc RdFull,RrFull is phase=1 & ophi6=0x7 & RdFull & RrFull { 
+  local res = RdFull + RrFull + $(Cflag);
+  setCflagForAdd(RdFull,RrFull,res);
+  setResultFlags(res);
+  RdFull = res;
+}
+# Rd,Rr
+:add RdFull,RrFull is phase=1 & ophi6=0x3 & RdFull & RrFull { 
+  local res = RdFull + RrFull;
+  setCflagForAdd(RdFull,RrFull,res);
+  setResultFlags(res);
+  RdFull = res;
+}
+# adiw Rd+1:Rd,K6
+:adiw Rdw2,K6 is phase=1 & ophi8=0x96 & Rdw2 & K6 { 
+  local pre = Rdw2;
+  Rdw2 = Rdw2 + zext(K6);
+  $(Cflag) = carry(pre,zext(K6));
+  $(Vflag) = (0x0000 == (pre & 0x8000)) & ((Rdw2 & 0x8000) == 0x8000);
+  setResult16Flags(Rdw2);
+}
+# and Rd,Rr
+:and RdFull,RrFull is phase=1 & ophi6=8 & RdFull & RrFull { 
+  RdFull = RdFull & RrFull;
+  $(Vflag) = 0;
+  setResultFlags(RdFull);
+}
+# andi Rd,K
+:andi RdHi,K8 is phase=1 & ophi4=7 & RdHi & K8 {
+  RdHi = RdHi & K8;
+  $(Vflag) = 0;
+  setResultFlags(RdHi);
+}
+# asr Rd
+:asr RdFull is phase=1 & ophi7=0x4a & oplow4=0x5 & RdFull { #done
+  $(Cflag) = RdFull & 0x01;
+  RdFull = RdFull s>> 1;
+  $(Nflag) = (RdFull & 0x80) == 0x80;
+  $(Vflag) = $(Nflag) ^ $(Cflag);
+  setResultFlags(RdFull);
+}
+# bclr s
+:bclr op4to6_flag is phase=1 & ophi9=0x129 & oplow4=0x4 & op4to6_flag { #done
+  op4to6_flag = 0;
+}
+# bld Rd,b
+:bld RdFull,oplow3 is phase=1 & ophi7=0x7c & opbit3=0 & RdFull & oplow3 { 
+  local b = $(Tflag) << oplow3;
+  local mask = 0xff ^ (1 << oplow3);
+  RdFull = (RdFull & mask) | b;
+}
+# brbc s,k
+:brbc rel7dst,oplow3_flag is phase=1 & ophi6=0x3d & rel7dst & oplow3_flag { 
+  if (!oplow3_flag)
+    goto rel7dst;
+}
+# brbs s,k  (see prev instruction)
+:brbs rel7dst,oplow3_flag is phase=1 & ophi6=0x3c & rel7dst & oplow3_flag {
+  if (oplow3_flag)
+    goto rel7dst;
+}
+# brcs and brcc seem to be special cases of brbs
+:break is phase=1 & ophi16=0x9598 { 
+  break();
+}
+# Probably want to check for various decode logic for conditional branches...
+#   ... specifically BRBS 1,k
+# breq k    - really is BRBS 1,k
+# bset s
+:bset op4to6_flag is phase=1 & ophi9=(0x94<<1) & oplow4=0x8 & op4to6_flag { 
+  op4to6_flag = 1;
+}
+# bst Rd,b
+:bst RdFull,oplow3 is phase=1 & ophi7=0x7d & opbit3=0 & RdFull & oplow3 { 
+  $(Tflag) = (RdFull >> oplow3) & 0x01;
+}
+# call k - todo - handle upper bits for 24 bit architecture
+:call abs22dst is phase=1 & (ophi7=0x4a & op1to3=0x7) ... & abs22dst {
+  tmp:3 = inst_next >> 1;
+@if PCBYTESIZE == "2"
+  ptr:2 = tmp:2;
+@else
+  ptr:3 = tmp;
+@endif
+  pushPC(ptr); 
+  PC = &abs22dst;
+  call abs22dst; 
+}
+# cbi A,b
+:cbi Aio5,oplow3 is phase=1 & ophi8=0x98 & Aio5 & oplow3 { 
+  local x = Aio5;
+  x = x & (0xff ^ (1 << oplow3));
+  Aio5 = x;
+}
+# cbr  - not actual instruction
+
+# clc, clh, cli, cln ... variants on register clearing
+#   sub bits give which bits in SREG to clear
+:clc is phase=1 & ophi16=0x9488 { 
+  $(Cflag) = 0;
+}
+:clh is phase=1 & ophi16=0x94d8 { 
+  $(Hflag) = 0;
+}
+:cli is phase=1 & ophi16=0x94f8 { 
+  $(Iflag) = 0;
+}
+:cln is phase=1 & ophi16=0x94a8 { 
+  $(Nflag) = 0;
+}
+:cls is phase=1 & ophi16=0x94c8 { 
+  $(Sflag) = 0;
+}
+:clt is phase=1 & ophi16=0x94e8 { 
+  $(Tflag) = 0;
+}
+:clv is phase=1 & ophi16=0x94b8 { 
+  $(Vflag) = 0;
+}
+:clz is phase=1 & ophi16=0x9498 { 
+  $(Zflag) = 0;
+}
+# clr Rd  - really is EOR Rd, Rd
+:com RdFull is phase=1 & ophi7=0x4a & RdFull { 
+  RdFull = 0xff - RdFull;
+  $(Vflag) = 0;
+  $(Cflag) = 1;
+  setResultFlags(RdFull);
+}
+:cp RdFull,RrFull is phase=1 & ophi6=0x05 & RdFull & RrFull { 
+  local x = RdFull - RrFull; 
+  setSubCarry(RdFull,RrFull);
+  setVflagForSub(RdFull,RrFull,x);
+  setResultFlags(x);
+  # but doesn't set result into a register
+}
+:cpc RdFull,RrFull is phase=1 & ophi6=0x1 & RdFull & RrFull { 
+  local res = 3;
+  doSubtractWithCarry(RdFull,RrFull,res);
+}
+:cpi RdHi,K8 is phase=1 & ophi4=0x3 & RdHi & K8 { 
+  local res = 3;
+  doSubtract(RdHi,K8,res);
+}
+@ifdef FUSION
+# cpi; ldi; cpc sequence
+:cpiw f3op1RdPairHi,f3cmpK16" ;ldi "f3op2RdHi,f3cmpK8 is phase=1 & f3op1hi4=0x3 & f3op2hi4=0xe & f3op3hi6=0x1 & f3cmpPairPred & f3cmpLdiPred & f3op1RdPairHi & f3op2RdHi & f3cmpK16 & f3cmpK8 { 
+  local res = 3;
+  doSubtract(f3op1RdPairHi,f3cmpK16,res);
+  f3op2RdHi = f3cmpK8;
+}
+# cp; cpc sequence
+:cpw op1RdPair,op1RrPair phase=1 & is op1hi6=0x5 & op2hi6=0x1 & fusion16rrrrPred & op1RdPair & op1RrPair {
+  local res = op1RdPair - op1RrPair;
+  setVflagForSub16(op1RdPair,op1RrPair);
+  setSubCarry(op1RdPair, op1RrPair);
+  setResult16Flags(res);
+  $(Sflag) = op1RdPair s< op1RrPair;
+}
+@endif
+
+:cpse RdFull,RrFull is phase=1 & ophi6=0x4 & RdFull & RrFull [ useSkipCond=1; globalset(inst_next,useSkipCond); ] { 
+  SKIP = (RdFull == RrFull);
+}
+
+:dec RdFull is phase=1 & ophi7=0x4a & oplow4=0xa & RdFull {
+  # doesn't set the C flag
+  $(Vflag) = RdFull == 0x80;
+  RdFull = RdFull - 1;
+  setResultFlags(RdFull);
+}
+:des op4to7 is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 { todo(); }
+
+# I discovered some parts where PCBYTESIZE would be 3 don't have the EIND reg (Atmega128).
+# To handle that, need another flag
+@if HASEIND == "1"
+:eicall is phase=1 & ophi16=0x9519 { 
+  ptr:3 = inst_next >> 1;
+  pushPC(ptr);
+  PC = zext(Z) | (zext(EIND) << 16); 
+  call [PC];
+}
+
+:eijmp is phase=1 & ophi16=0x9419 {
+  PC = zext(Z) | (zext(EIND) << 16); 
+  goto [PC];
+}
+@endif
+
+@if PCBYTESIZE == "3"
+:elpm is phase=1 & ophi16=0x95d8 {
+	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
+	tmp:2 = *[code]:2 (ptr >> 1);
+	val:2 = (tmp >> (Z & 0x1));
+	R0 = val:1; 
+}
+:elpm RdFull, Z is phase=1 & ophi7=0x48 & oplow4=0x6 & RdFull & Z { 
+	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
+	tmp:2 = *[code]:2 (ptr >> 1);
+	val:2 = (tmp >> (Z & 0x1));
+	RdFull = val:1;
+}
+
+:elpm RdFull, Z^"+" is phase=1 & ophi7=0x48 & oplow4=0x7 & RdFull & Z { 
+	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
+	tmp:2 = *[code]:2 (ptr >> 1);
+	val:2 = (tmp >> (Z & 0x1));
+	RdFull = val:1;
+	ptr = ptr + 1;
+	Z = ptr:2;
+	RAMPZ = ptr[16,8];
+}
+@endif
+
+:eor RdFull,RrFull is phase=1 & ophi6=0x9 & RdFull & RrFull {
+  RdFull = RdFull ^ RrFull;
+  $(Vflag) = 0;
+  setResultFlags(RdFull);
+}
+
+# Manual uses fmul.  I prefer fracmul to distinguish from floating point
+:fracmul RdHi,RrHi is phase=1 & ophi9=0x6 & opbit3=1 & RdHi & RrHi { todo(); }
+:fracmuls RdHi,RrHi is phase=1 & ophi9=0x7 & opbit3=0 & RdHi & RrHi { todo(); }
+:fracmulsu RdHi,RrHi is phase=1 & ophi9=0x7 & opbit3=1 & RdHi & RrHi { todo(); }
+
+:icall is phase=1 & ophi16=0x9509 {
+  tmp:3 = inst_next >> 1;
+@if PCBYTESIZE == "2"
+  ptr:2 = tmp:2;
+@else
+  ptr:3 = tmp;
+@endif
+  pushPC(ptr);
+  PC = zext(Z);
+  call [PC];
+}
+:ijmp is phase=1 & ophi16=0x9409 {
+  PC = zext(Z);
+  goto [PC];
+}
+# in Rd,A
+:in RdFull,Aio6 is phase=1 & ophi5=0x16 & RdFull & Aio6 { 
+  RdFull = Aio6;
+}
+:in RdFull,SPL is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xd & SPL {
+  RdFull = SPL;
+}
+:in RdFull,SPH is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xe & SPH {
+  RdFull = SPH;
+}
+
+:inc RdFull is phase=1 & ophi7=0x4a & oplow4=0x3 & RdFull {
+  # inc doesn't set the C flag.
+  $(Vflag) = RdFull == 0x7f;
+  RdFull = RdFull + 1;
+  setResultFlags(RdFull);
+}
+:jmp abs22dst is phase=1 & (ophi7=0x4a & op1to3=0x6) ... & abs22dst {
+  PC = &abs22dst;
+  goto abs22dst;
+}
+
+:lac Z,RdFull is phase=1 & ophi7=0x49 & oplow4=0x6 & Z & RdFull {
+  tmp:1 = *[mem]:1 Z;
+  tmp = tmp & (0xff - RdFull);
+  *[mem]:1 Z = tmp;
+}
+
+:las Z,RdFull is phase=1 & ophi7=0x49 & oplow4=0x5 & Z & RdFull {
+  tmp:1 = *[mem]:1 Z;
+  tmp = tmp | RdFull;
+  *[mem]:1 Z = tmp;  
+}
+
+:lat Z,RdFull is phase=1 & ophi7=0x49 & oplow4=0x7 & Z & RdFull {
+  tmp:1 = *[mem]:1 Z;
+  tmp = tmp ^ RdFull;
+  *[mem]:1 Z = tmp;  
+}
+
+# three forms, really just specifying the increment mode
+# ld Rd,X
+:ld RdFull,X is phase=1 & ophi7=0x48 & oplow4=0xc & X & RdFull { 
+  tmp:2 = X;
+  RdFull = *[mem]:1 tmp;
+}
+# ld Rd,Y;  ld Rd,Z
+:ld RdFull,RstPtr is phase=1 & ophi7=0x40 & oplow3=0x0 & RdFull & RstPtr { 
+  tmp:2 = RstPtr;
+  RdFull = *[mem]:1 tmp;
+}
+
+# ld Rd,Y+ ; ld Rd, X+; ld Rd, Z+
+:ld RdFull,RstPtr"+" is phase=1 & ophi7=0x48 & oplow2=0x01 & RdFull & RstPtr {
+  tmp:2 = RstPtr;
+  RdFull = *[mem]:1 tmp;
+  RstPtr = RstPtr + 0x01;
+}
+# ld Rd,-Y ; ld Rd, -X; ld Rd, -Z
+LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
+:ld RdFull,LdPredec is phase=1 & ophi7=0x48 & oplow2=0x02 & RdFull & LdPredec {
+  tmp:2 = LdPredec;
+  RdFull = *[mem]:1 tmp;
+}
+
+# ldd Rd,Y+q
+# ldd Rd,Z+q
+:ldd RdFull,Rstq"+"q6 is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & Rstq & RdFull & q6 { 
+  local ptr = Rstq + zext(q6);
+  RdFull = *[mem]:1 ptr;
+}
+
+# Rd,K
+:ldi RdHi,K8 is phase=1 & ophi4=0xe & RdHi & K8 {
+  RdHi = K8; 
+}
+# lds Rd,k
+:lds RdFull,next16memPtrVal1 is phase=1 & ophi7=0x48 & oplow4=0 & RdFull; next16memPtrVal1 {
+  RdFull = next16memPtrVal1;
+}
+@ifdef FUSION
+# Fuse together consecuitive lds ; lds
+# 
+:ldsw ldswop1RdPair,ldswMemPtrVal2 is phase=1 & ldswop1hi7=0x48 & ldswop2hi7=0x48 & ldswop1low4=0 & ldswop2low4=0 & ldswMemPtrVal2 & ldswop1RdPair & ldswPairPred & ldswConstPairPred {
+  ldswop1RdPair = ldswMemPtrVal2;
+}
+@endif
+# lds Rd,k   Seem to get some problems here... but 16-bit instruction isn't available on all atmega64.
+#  Furthermore, it will sometimes conflict with ldd Z+q for q=0x2_
+#:lds RdHi,A7Ioaddr is ophi5=0x14 & RdHi & A7Ioaddr { 
+#  todo();  # Not currently implemented
+#  RdHi = A7Ioaddr;
+#}
+# TODO: lpm semantic behavior needs verification !
+# lpm R0
+:lpm R0 is phase=1 & ophi16=0x95c8 & R0 {
+  ptr:3 = zext(Z);
+  tmp:2 = *[code]:2 (ptr >> 1);
+  val:2 = (tmp >> (Z & 0x1));
+  R0 = val:1;
+}
+# lpm Rd,Z
+:lpm RdFull,Z is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=0 { 
+  ptr:3 = zext(Z);
+  tmp:2 = *[code]:2 (ptr >> 1);
+  val:2 = (tmp >> (Z & 0x1));
+  RdFull = val:1;
+}
+# lpm Rd,Z+
+:lpm RdFull,Z"+" is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=1 { 
+  ptr:3 = zext(Z);
+  tmp:2 = *[code]:2 (ptr >> 1);
+  val:2 = (tmp >> (Z & 0x1));
+  RdFull = val:1;
+  Z = Z + 1;
+}
+# lsl  - just an assembly mnenoic for add
+:lsr RdFull is phase=1 & ophi7=0x4a & oplow4=0x6 & RdFull {
+  $(Cflag) = RdFull & 0x01;
+  RdFull = (RdFull >> 1);
+  $(Vflag) = $(Cflag);
+  setResultFlags(RdFull);
+}
+# mov Rd,Rr
+:mov RdFull,RrFull is phase=1 & ophi6=0xb & RdFull & RrFull { 
+  RdFull = RrFull;
+}
+# movw Rd+1:Rd,Rr+1Rr   
+:movw Rdw4,Rrw4 is phase=1 & ophi8=0x1 & Rdw4 & Rrw4 { 
+  Rdw4 = Rrw4;
+}
+:mul RdFull,RrFull is phase=1 & ophi6=0x27 & RdFull & RrFull {
+  a:2 = zext(RdFull);
+  b:2 = zext(RrFull);
+  R1R0 = a * b;
+  setMulFlags(R1R0);
+}
+:muls RdHi,RrHi is phase=1 & ophi8=0x2 & RdHi & RrHi { 
+  a:2 = sext(RdHi);
+  b:2 = sext(RrHi);
+  R1R0 = a * b;
+  setMulFlags(R1R0);
+}
+:mulsu RdHi3,RrHi3 is phase=1 & ophi8=0x3 & opbit7=0 & opbit3=0 & RdHi3 & RrHi3 { 
+  a:2 = sext(RdHi3);
+  b:2 = zext(RrHi3);
+  R1R0 = a * b;
+  setMulFlags(R1R0);
+}
+:neg RdFull is phase=1 & ophi7=0x4a & oplow4=1 & RdFull { 
+  $(Vflag) = (RdFull == 0x80);
+  RdFull = 0 - RdFull;
+  $(Cflag) = (RdFull != 0);
+  setResultFlags(RdFull);
+}
+:nop is phase=1 & ophi16=0x0 {
+}
+:or RdFull,RrFull is phase=1 & ophi6=0xa & RdFull & RrFull {
+  RdFull = RdFull | RrFull;
+  $(Vflag) = 0;
+  setResultFlags(RdFull);
+}
+:ori RdHi,K8 is phase=1 & ophi4=0x6 & RdHi & K8 {
+  RdHi = RdHi | K8;
+  $(Vflag) = 0;
+  setResultFlags(RdHi);
+}
+# out A,Rr  # Note: Rr occupies the normal Rd position
+:out Aio6,RdFull is phase=1 & ophi5=0x17 & Aio6 & RdFull { 
+  Aio6 = RdFull;
+}
+:out SPL,RdFull is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xd & SPL { 
+  SPL = RdFull;
+}
+:out SPH,RdFull is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xe & SPH { 
+  SPH = RdFull;
+}
+
+:pop RdFull is phase=1 & ophi7=0x48 & oplow4=0xf & RdFull { 
+  pop8(RdFull);
+}
+# push Rf   # Note: Rr occupies the normal Rd position
+:push RdFull is phase=1 & ophi7=0x49 & oplow4=0xf & RdFull { 
+  push8(RdFull);
+}
+:rcall rel12dst is phase=1 & ophi4=0xd & rel12dst { 
+  tmp:3 = inst_next >> 1;
+@if PCBYTESIZE == "2"
+  ptr:2 = tmp:2;
+@else
+  ptr:3 = tmp;
+@endif
+  pushPC(ptr);
+  PC = &rel12dst;
+  call rel12dst;
+}
+:ret is phase=1 & ophi16=0x9508 {
+  # Could also handle word size options here
+  popPC(PC);
+  return [PC];
+}
+:reti is phase=1 & ophi16=0x9518 { 
+  $(Iflag) = 1;
+  popPC(PC);
+  return [PC];
+}
+# rjmp k
+:rjmp rel12dst is phase=1 & ophi4=0xc & rel12dst { 
+  goto rel12dst;
+}
+# ROL is ADC Rd,Rd
+:ror RdFull is phase=1 & ophi7=0x4a & oplow4=0x7 & RdFull {
+  local c = $(Cflag);
+  local cnew = RdFull & 0x01;
+  RdFull = (c << 7) | (RdFull >> 1);
+  $(Cflag) = cnew;
+  $(Nflag) = (RdFull & 0x80) == 0x80;
+  $(Vflag) = $(Cflag) ^ $(Nflag);
+  setResultFlags(RdFull);
+}
+:sbc RdFull,RrFull is phase=1 & ophi6=0x2 & RdFull & RrFull {
+  doSubtractWithCarry(RdFull,RrFull,RdFull);
+}
+:sbci RdHi,K8 is phase=1 & ophi4=4 & RdHi & K8 { 
+  doSubtractWithCarry(RdHi,K8,RdHi);
+}
+@ifdef FUSION
+# subi sbci
+:subiw op1RdPairHi,K16fuse is phase=1 & op1hi4=0x5 & op2hi4=0x4 & K16fuse & fusion16rkrkPred & op1RdPairHi {
+   # doSubtract(op1RdPairHi,K16fuse,op1RdPairHi);
+  local res = op1RdPairHi - K16fuse;
+  local pre = op1RdPairHi;
+  setVflagForSub16(pre,K16fuse);
+  setSubCarry(op1RdPairHi, K16fuse);
+  op1RdPairHi = res;
+  setResult16Flags(res);
+  $(Sflag) = pre s< K16fuse;
+}
+@endif
+:sbi Aio5,oplow3 is phase=1 & ophi8=0x9a & Aio5 & oplow3 {
+  Aio5 = Aio5 | (1 << oplow3);
+}
+
+:sbic Aio5,oplow3 is phase=1 & ophi8=0x99 & Aio5 & oplow3 [ useSkipCond=1; globalset(inst_next,useSkipCond); ] { 
+  SKIP = ((Aio5 & (1 << oplow3)) == 0);
+}
+:sbis Aio5,oplow3 is phase=1 & ophi8=0x9b & Aio5 & oplow3 [ useSkipCond=1; globalset(inst_next,useSkipCond); ] { 
+  SKIP = ((Aio5 & (1 << oplow3)) != 0);
+}
+
+:sbiw Rdw2,K6 is phase=1 & ophi8=0x97 & Rdw2 & K6 { 
+  local pre = Rdw2;
+  Rdw2 = Rdw2 - zext(K6);
+  $(Cflag) = Rdw2 < zext(K6);
+  $(Vflag) = (0x8000 == (pre & 0x8000)) & ((Rdw2 & 0x8000) == 0x0000);
+  setResult16Flags(Rdw2);
+}
+# sbr is an alias for ori
+
+:sbrc RdFull,oplow3 is phase=1 & ophi7=0x7e & opbit3=0 & RdFull & oplow3 [ useSkipCond=1; globalset(inst_next,useSkipCond); ] { 
+  SKIP = ((RdFull & (1 << oplow3)) == 0);
+}
+:sbrs RdFull,oplow3 is phase=1 & ophi7=0x7f & opbit3=0 & RdFull & oplow3 [ useSkipCond=1; globalset(inst_next,useSkipCond); ] { 
+  SKIP = ((RdFull & (1 << oplow3)) != 0);
+}
+
+# More flag setting sec, seh, sei, sen, ses, set, sev, sez
+#  Implemented as bset
+:ser RdHi is phase=1 & ophi8=0xef & oplow4=0xf & RdHi {
+  RdHi = 0xff;
+}
+define pcodeop sleep;
+:sleep is phase=1 & ophi16=0x9588 { 
+  sleep();
+}
+define pcodeop store_program_mem;  # make this stand out.
+:spm Z is phase=1 & ophi16=0x95e8 & Z {
+  ptr:3 = zext(Z) << 1; 
+  *[code]:2 ptr = R1R0;
+  store_program_mem();
+}
+:spm Z^"+" is phase=1 & ophi16=0x95f8 & Z { 
+  ptr:3 = zext(Z) << 1;
+  *[code]:2 ptr = R1R0;
+  Z = Z + 1;
+  store_program_mem();
+}
+# For stores, see the ld code  (just flip bit 9)
+:st X, RdFull is phase=1 & ophi7=0x49 & oplow4=0xc & X & RdFull { 
+  tmp:2 = X;
+  *[mem]:1 tmp = RdFull;
+}
+# st Rd,Y;  st Rd,Z
+:st RstPtr, RdFull is phase=1 & ophi7=0x41 & oplow3=0x0 & RdFull & RstPtr { 
+  tmp:2 = RstPtr;
+  *[mem]:1 tmp = RdFull;
+}
+
+# st Rd,Y+ ; st Rd, X+; st Rd, Z+
+StPlus: RstPtr^"+"  is  RstPtr  { tmp:2 = RstPtr; RstPtr = RstPtr + 0x01; export tmp; }
+:st StPlus, RdFull is phase=1 & ophi7=0x49 & oplow2=0x01 & RdFull & StPlus {
+  *[mem]:1 StPlus = RdFull;
+}
+# st Rd,-Y ; st Rd, -X; st Rd, -Z
+StPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
+:st StPredec, RdFull is phase=1 & ophi7=0x49 & oplow2=0x02 & RdFull & StPredec {
+  tmp:2 = StPredec;
+  *[mem]:1 tmp = RdFull;
+}
+# std Rd,Y+q; std Rd,Z+q
+StdYq:  Rstq^"+"^q6   is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
+:std StdYq, RdFull is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=1 & RdFull & StdYq { 
+  *[mem]:1 StdYq = RdFull;
+}
+
+:sts next16memPtrVal1,RdFull is phase=1 & ophi7=0x49 & oplow4=0 & RdFull; next16memPtrVal1 {
+  next16memPtrVal1 = RdFull;
+}
+@ifdef FUSION
+# sts ; sts   emits backwards with respect to lds; lds
+:stsw stswMemPtrVal2,stswop2RdPair is phase=1 & ldswop1hi7=0x49 & ldswop2hi7=0x49 & ldswop1low4=0 & ldswop2low4=0 & stswMemPtrVal2 & stswop2RdPair & stswPairPred & stswConstPairPred {
+  stswMemPtrVal2 = stswop2RdPair;
+}
+@endif
+# see manual for computation of address for 16-bit STS
+:sts RdHi is phase=1 & ophi5=0x15 & RdHi { todo(); }
+:sub RdFull,RrFull is phase=1 & ophi6=0x6 & RdFull & RrFull {
+  doSubtract(RdFull,RrFull,RdFull);
+}
+# Rd,K
+:subi RdHi,K8 is phase=1 & ophi4=5 & RdHi & K8 {
+  doSubtract(RdHi,K8,RdHi);
+}
+:swap RdFull is phase=1 & ophi7=0x4a & oplow4=2 & RdFull {
+  RdFull = (RdFull >> 4) | (RdFull << 4);
+}
+# tst is AND Rd,Rd
+define pcodeop watchdog_reset;
+:wdr is phase=1 & ophi16=0x95a8 {
+  watchdog_reset();
+}
+:xch RdFull is phase=1 & ophi7=0x49 & oplow4=0x4 & RdFull {
+  ptr:2 = Z;
+  local tmp = *[mem]:1 ptr;
+  *[mem]:1 ptr = RdFull;
+  RdFull = tmp;
+}

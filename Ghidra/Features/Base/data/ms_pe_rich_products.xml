@@ -1,0 +1,169 @@
+<products>
+<product name="Unmarked objects" prodid="0001" tool="" />
+<product name="Unmarked objects (old)" prodid="0000" tool="" />
+<product name="VS2015 UPD3.1" prodid="0104" tool="C" />
+<product name="VS2015 UPD3.1" prodid="0105" tool="C++" />
+<product name="VS2015 UPD3.1" prodid="0102" tool="LNK" />
+<product name="VS2015 UPD3.1" prodid="0100" tool="EXP" />
+<product name="VS2015 UPD3.1" prodid="0101" tool="IMP" />
+<product name="VS2015 UPD3" prodid="0104" tool="C" />
+<product name="VS2015 UPD3" prodid="0103" tool="ASM" />
+<product name="VS2015 UPD3" prodid="0105" tool="C++" />
+<product name="VS2015 UPD3" prodid="00ff" tool="RES" />
+<product name="VS2015 UPD3" prodid="0102" tool="LNK" />
+<product name="VS2015 UPD3" prodid="0100" tool="EXP" />
+<product name="VS2015 UPD3" prodid="0101" tool="IMP" />
+<product name="VS2015 UPD2" prodid="0104" tool="C" />
+<product name="VS2015 UPD2" prodid="0103" tool="ASM" />
+<product name="VS2015 UPD2" prodid="0105" tool="C++" />
+<product name="VS2015 UPD2" prodid="00ff" tool="RES" />
+<product name="VS2015 UPD2" prodid="0102" tool="LNK" />
+<product name="VS2015 UPD2" prodid="0100" tool="EXP" />
+<product name="VS2015 UPD2" prodid="0101" tool="IMP" />
+<product name="VS2015 UPD1" prodid="0104" tool="C" />
+<product name="VS2015 UPD1" prodid="0103" tool="ASM" />
+<product name="VS2015 UPD1" prodid="0105" tool="C++" />
+<product name="VS2015 UPD1" prodid="00ff" tool="RES" />
+<product name="VS2015 UPD1" prodid="0102" tool="LNK" />
+<product name="VS2015 UPD1" prodid="0100" tool="EXP" />
+<product name="VS2015 UPD1" prodid="0101" tool="IMP" />
+<product name="VS2015" prodid="0104" tool="C" />
+<product name="VS2015" prodid="0103" tool="ASM" />
+<product name="VS2015" prodid="0105" tool="C++" />
+<product name="VS2015" prodid="00ff" tool="RES" />
+<product name="VS2015" prodid="0102" tool="LNK" />
+<product name="VS2015" prodid="0100" tool="EXP" />
+<product name="VS2015" prodid="0101" tool="IMP" />
+<product name="VS2013 UPD5" prodid="00e0" tool="C" />
+<product name="VS2013 UPD5" prodid="00e1" tool="C++" />
+<product name="VS2013 UPD5" prodid="00de" tool="LNK" />
+<product name="VS2013 UPD5" prodid="00dc" tool="EXP" />
+<product name="VS2013 UPD5" prodid="00dd" tool="IMP" />
+<product name="VS2013 UPD5" prodid="00df" tool="ASM" />
+<product name="VS2013 UPD4" prodid="00e0" tool="C" />
+<product name="VS2013 UPD4" prodid="00e1" tool="C++" />
+<product name="VS2013 UPD4" prodid="00de" tool="LNK" />
+<product name="VS2013 UPD4" prodid="00dc" tool="EXP" />
+<product name="VS2013 UPD4" prodid="00dd" tool="IMP" />
+<product name="VS2013 UPD4" prodid="00df" tool="ASM" />
+<product name="VS2013 UPD3" prodid="00e0" tool="C" />
+<product name="VS2013 UPD3" prodid="00e1" tool="C++" />
+<product name="VS2013 UPD3" prodid="00de" tool="LNK" />
+<product name="VS2013 UPD3" prodid="00dc" tool="EXP" />
+<product name="VS2013 UPD3" prodid="00dd" tool="IMP" />
+<product name="VS2013 UPD3" prodid="00df" tool="ASM" />
+<product name="VS2013 UPD2" prodid="00e0" tool="C" />
+<product name="VS2013 UPD2" prodid="00e1" tool="C++" />
+<product name="VS2013 UPD2" prodid="00de" tool="LNK" />
+<product name="VS2013 UPD2" prodid="00dc" tool="EXP" />
+<product name="VS2013 UPD2" prodid="00dd" tool="IMP" />
+<product name="VS2013 UPD2" prodid="00df" tool="ASM" />
+<product name="VS2013" prodid="00e0" tool="C" />
+<product name="VS2013" prodid="00e1" tool="C++" />
+<product name="VS2013" prodid="00db" tool="RES" />
+<product name="VS2013" prodid="00de" tool="LNK" />
+<product name="VS2013" prodid="00dc" tool="EXP" />
+<product name="VS2013" prodid="00dd" tool="IMP" />
+<product name="VS2013" prodid="00df" tool="ASM" />
+<product name="VS2012 UPD4" prodid="00ce" tool="C" />
+<product name="VS2012 UPD4" prodid="00cf" tool="C++" />
+<product name="VS2012 UPD4" prodid="00cd" tool="ASM" />
+<product name="VS2012 UPD4" prodid="00c9" tool="RES" />
+<product name="VS2012 UPD4" prodid="00cc" tool="LNK" />
+<product name="VS2012 UPD4" prodid="00ca" tool="EXP" />
+<product name="VS2012 UPD4" prodid="00cb" tool="IMP" />
+<product name="VS2012 UPD3" prodid="00ce" tool="C" />
+<product name="VS2012 UPD3" prodid="00cf" tool="C++" />
+<product name="VS2012 UPD3" prodid="00cd" tool="ASM" />
+<product name="VS2012 UPD3" prodid="00c9" tool="RES" />
+<product name="VS2012 UPD3" prodid="00cc" tool="LNK" />
+<product name="VS2012 UPD3" prodid="00ca" tool="EXP" />
+<product name="VS2012 UPD3" prodid="00cb" tool="IMP" />
+<product name="VS2012 UPD2" prodid="00ce" tool="C" />
+<product name="VS2012 UPD2" prodid="00cf" tool="C++" />
+<product name="VS2012 UPD2" prodid="00cd" tool="ASM" />
+<product name="VS2012 UPD2" prodid="00c9" tool="RES" />
+<product name="VS2012 UPD2" prodid="00cc" tool="LNK" />
+<product name="VS2012 UPD2" prodid="00ca" tool="EXP" />
+<product name="VS2012 UPD2" prodid="00cb" tool="IMP" />
+<product name="VS2012 UPD1" prodid="00ce" tool="C" />
+<product name="VS2012 UPD1" prodid="00cf" tool="C++" />
+<product name="VS2012 UPD1" prodid="00cd" tool="ASM" />
+<product name="VS2012 UPD1" prodid="00c9" tool="RES" />
+<product name="VS2012 UPD1" prodid="00cc" tool="LNK" />
+<product name="VS2012 UPD1" prodid="00ca" tool="EXP" />
+<product name="VS2012 UPD1" prodid="00cb" tool="IMP" />
+<product name="VS2012" prodid="00ce" tool="C" />
+<product name="VS2012" prodid="00cf" tool="C++" />
+<product name="VS2012" prodid="00c9" tool="RES" />
+<product name="VS2012" prodid="00cd" tool="ASM" />
+<product name="VS2012" prodid="00ca" tool="EXP" />
+<product name="VS2012" prodid="00cb" tool="IMP" />
+<product name="VS2012" prodid="00cc" tool="LNK" />
+<product name="VS2010 SP1" prodid="00aa" tool="C" />
+<product name="VS2010 SP1" prodid="00ab" tool="C++" />
+<product name="VS2010 SP1" prodid="009d" tool="LNK" />
+<product name="VS2010 SP1" prodid="009a" tool="RES" />
+<product name="VS2010 SP1" prodid="009b" tool="EXP" />
+<product name="VS2010 SP1" prodid="009c" tool="IMP" />
+<product name="VS2010 SP1" prodid="009e" tool="ASM" />
+<product name="VS2010" prodid="00aa" tool="C" />
+<product name="VS2010" prodid="00ab" tool="C++" />
+<product name="VS2010" prodid="009d" tool="LNK" />
+<product name="VS2010" prodid="009a" tool="RES" />
+<product name="VS2010" prodid="009b" tool="EXP" />
+<product name="VS2010" prodid="009c" tool="IMP" />
+<product name="VS2010" prodid="009e" tool="ASM" />
+<product name="VS2008 SP1" prodid="0083" tool="C" />
+<product name="VS2008 SP1" prodid="0084" tool="C++" />
+<product name="VS2008 SP1" prodid="0095" tool="ASM" />
+<product name="VS2008 SP1" prodid="0092" tool="EXP" />
+<product name="VS2008 SP1" prodid="0093" tool="IMP" />
+<product name="VS2008 SP1" prodid="0091" tool="LNK" />
+<product name="VS2008" prodid="0083" tool="C" />
+<product name="VS2008" prodid="0084" tool="C++" />
+<product name="VS2008" prodid="0091" tool="LNK" />
+<product name="VS2008" prodid="0094" tool="RES" />
+<product name="VS2008" prodid="0092" tool="EXP" />
+<product name="VS2008" prodid="0093" tool="IMP" />
+<product name="VS2008" prodid="0095" tool="ASM" />
+<product name="VS2005" prodid="006d" tool="C" />
+<product name="VS2005" prodid="006e" tool="C++" />
+<product name="VS2005" prodid="0078" tool="LNK" />
+<product name="VS2005" prodid="007c" tool="RES" />
+<product name="VS2005" prodid="007a" tool="EXP" />
+<product name="VS2005" prodid="007b" tool="IMP" />
+<product name="VS2005" prodid="007d" tool="ASM" />
+<product name="VS2003 (.NET) SP1" prodid="005f" tool="C" />
+<product name="VS2003 (.NET) SP1" prodid="0060" tool="C++" />
+<product name="VS2003 (.NET) SP1" prodid="005a" tool="LNK" />
+<product name="VS2003 (.NET) SP1" prodid="000f" tool="ASM" />
+<product name="VS2003 (.NET) SP1" prodid="005c" tool="EXP" />
+<product name="VS2003 (.NET) SP1" prodid="005d" tool="IMP" />
+<product name="VS2003 (.NET)" prodid="005f" tool="C" />
+<product name="VS2003 (.NET)" prodid="0060" tool="C++" />
+<product name="VS2003 (.NET)" prodid="000f" tool="ASM" />
+<product name="VS2003 (.NET)" prodid="005e" tool="RES" />
+<product name="VS2003 (.NET)" prodid="005c" tool="EXP" />
+<product name="VS2003 (.NET)" prodid="005d" tool="IMP" />
+<product name="VS2003 (.NET)" prodid="005a" tool="LNK" />
+<product name="VS2002 (.NET)" prodid="001c" tool="C" />
+<product name="VS2002 (.NET)" prodid="001d" tool="C++" />
+<product name="VS2002 (.NET)" prodid="0040" tool="ASM" />
+<product name="VS2002 (.NET)" prodid="003d" tool="LNK" />
+<product name="VS2002 (.NET)" prodid="0045" tool="RES" />
+<product name="VS2002 (.NET)" prodid="003f" tool="EXP" />
+<product name="VS2002 (.NET)" prodid="0019" tool="IMP" />
+<product name="VS98 (6.0) SP6" prodid="000a" tool="C" />
+<product name="VS98 (6.0) SP6" prodid="000b" tool="C++" />
+<product name="VC++ 6.0 SP5" prodid="0015" tool="C" />
+<product name="VC++ 6.0 SP5" prodid="0016" tool="C++" />
+<product name="VC++ 6.0 SP5 imp/exp" prodid="0004" tool="LNK" />
+<product name="VS98 (6.0) SP6 cvtres" prodid="0006" tool="RES" />
+<product name="VS98 (6.0)" prodid="000a" tool="C" />
+<product name="VS98 (6.0)" prodid="000b" tool="C++" />
+<product name="VS98 (6.0) cvtres" prodid="0006" tool="RES" />
+<product name="VS98 (6.0) imp/exp" prodid="0004" tool="LNK" />
+<product name="VS97 (5.0) SP3 cvtres 5.00.1668" prodid="0006" tool="RES" />
+<product name="VS97 (5.0) SP3 link 5.10.7303" prodid="0002" tool="IMP" />
+</products>

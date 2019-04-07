@@ -1,0 +1,13 @@
+apply plugin: 'eclipse'
+eclipse.project.name = '_Skeleton'
+
+dependencies {
+	compile project(':Base')
+}
+
+// We don't want this to build
+compileJava.enabled = false
+jar.enabled = false
+
+// NOTE: In a build, this file will get replaced by buildTemplate.gradle.  This file mainly exists
+// so we can get an Eclipse project for the Skeleton.

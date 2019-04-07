@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  
+  <language processor="6502"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="6502.sla"
+            processorspec="6502.pspec"
+            manualindexfile="../manuals/6502.idx"
+            id="6502:LE:16:default">
+    <description>6502 Microcontroller Family</description>
+    <compiler name="default" spec="6502.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="m6502"/>
+	<external_name tool="IDA-PRO" name="m65c02"/>
+  </language>
+  
+  <!-- The following entry has a very misleading language id but
+       can not be removed since it may have already been referenced.
+       This entry has been marked deprecated to avoid its use in the future.
+   -->
+  <language deprecated="true"
+  			processor="6502"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="6502.sla"
+            processorspec="6502.pspec"
+            id="6502:BE:16:default">
+    <description>6502 Microcontroller Family</description>
+    <compiler name="default" spec="6502.cspec" id="default"/>
+  </language>
+  
+</language_definitions>

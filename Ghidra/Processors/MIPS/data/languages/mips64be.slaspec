@@ -1,0 +1,11 @@
+# SLA specification file for MIPS r5000 big endian
+
+@define ENDIAN "big"
+@define MIPS64 ""
+@define ISA_VARIANT ""
+
+@include "mips.sinc"
+@include "mips32Instructions.sinc"
+@include "mips16.sinc"
+@include "mipsmicro.sinc"
+@include "mips64Instructions.sinc"

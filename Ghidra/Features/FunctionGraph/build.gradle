@@ -1,0 +1,14 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features Graph FunctionGraph'
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+
+
+dependencies {
+	compile project(":Base")
+   
+   	testCompile "org.jmockit:jmockit:1.44"
+    
+	helpPath project(path: ":Base", configuration: 'helpPath')
+}
+

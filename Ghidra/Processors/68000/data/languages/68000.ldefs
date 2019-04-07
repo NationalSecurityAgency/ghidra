@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="68000"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.1"
+            slafile="68040.sla"
+            processorspec="68000.pspec"
+            manualindexfile="../manuals/68000.idx"
+            id="68000:BE:32:default">
+    <description>Motorola 32-bit 68040</description>
+    <compiler name="default" spec="68000.cspec" id="default"/>
+    <external_name tool="gnu" name="m68k"/>
+    <external_name tool="IDA-PRO" name="68000"/>
+    <external_name tool="IDA-PRO" name="68040"/>
+    <external_name tool="IDA-PRO" name="68K"/>
+  </language>
+  <language processor="68000"
+            endian="big"
+            size="32"
+            variant="MC68030"
+            version="1.1"
+            slafile="68030.sla"
+            processorspec="68000.pspec"
+            manualindexfile="../manuals/68000.idx"
+            id="68000:BE:32:MC68030">
+    <description>Motorola 32-bit 68030</description>
+    <compiler name="default" spec="68000.cspec" id="default"/>
+    <external_name tool="gnu" name="m68k:68030"/>
+    <external_name tool="IDA-PRO" name="68030"/>
+  </language>
+  <language processor="68000"
+            endian="big"
+            size="32"
+            variant="MC68020"
+            version="1.1"
+            slafile="68020.sla"
+            processorspec="68000.pspec"
+            manualindexfile="../manuals/68000.idx"
+            id="68000:BE:32:MC68020">
+    <description>Motorola 32-bit 68020</description>
+    <compiler name="default" spec="68000.cspec" id="default"/>
+    <external_name tool="gnu" name="m68k:68020"/>
+    <external_name tool="IDA-PRO" name="68010"/>
+    <external_name tool="IDA-PRO" name="68020"/>
+    <external_name tool="IDA-PRO" name="68020EX"/>
+  </language>
+  <language processor="68000"
+            endian="big"
+            size="32"
+            variant="Coldfire"
+            version="1.1"
+            slafile="coldfire.sla"
+            processorspec="68000.pspec"
+            manualindexfile="../manuals/68000.idx"
+            id="68000:BE:32:Coldfire">
+    <description>Motorola 32-bit Coldfire</description>
+    <compiler name="default" spec="68000.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="colfire"/>
+  </language>
+</language_definitions>

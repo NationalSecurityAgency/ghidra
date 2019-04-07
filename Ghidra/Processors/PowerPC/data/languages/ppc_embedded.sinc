@@ -1,0 +1,217 @@
+# these are identified as part of the PowerPC Embedded Architecture
+
+#dcba 0,r0		0x7c 00 05 ec
+:dcba RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=758 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockAllocate(ea);
+}
+
+#dcbf 0,r0		0x7c 00 00 ac
+:dcbf RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=86 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockFlush(ea);
+}
+
+#dcbi 0,r0		0x7c 00 03 ac
+:dcbi RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=470 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockInvalidate(ea);
+}
+
+#dcbst 0,r0		0x7c 00 00 6c
+:dcbst RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=54 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockStore(ea);
+}
+
+#dcbt 0,r0		0x7c 00 02 2c
+:dcbt RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=278 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockTouch(ea);
+}
+
+#dcbtst 0,r0		0x7c 00 01 ec
+:dcbtst RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=246 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockTouchForStore(ea);
+}
+
+#dcbz 0,r0		0x7c 00 07 ec
+:dcbz RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=1014 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockClearToZero(ea);
+}
+
+@ifndef IS_ISA
+# this is equilent to "mbar 0"
+#eieio 			0x7c 00 06 ac
+:eieio			is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=854 & BIT_0=0
+{
+	enforceInOrderExecutionIO();
+}
+@endif
+
+#icbi r0,r0		0x7c 00 07 ac
+:icbi RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=982 & BIT_0=0 & RA_OR_ZERO
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheBlockInvalidate(ea);	
+}
+
+#icbt 0,r0		0x7c 00 02 0c
+:icbt BITS_21_24,RA_OR_ZERO,B		is OP=31 & BIT_25=0 & BITS_21_24 & RA_OR_ZERO & B & XOP_1_10=22 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheBlockTouch(ea);	
+}
+
+#isync		0x4c 00 01 2c
+:isync		is $(NOTVLE) & OP=19 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=150 & BIT_0=0
+{
+	instructionSynchronize();
+}
+
+#mfdcr r0,DCRN	0x7c 00 02 86
+:mfdcr D, DCRN		is OP=31 & D & DCRN & XOP_1_10=323 & BIT_0=0
+{
+	D = DCRN;
+}
+
+#mfmsr r0	0x7c 00 00 a6
+:mfmsr D		is OP=31 & D & BITS_11_20=0 & XOP_1_10=83 & BIT_0=0
+{
+	D = MSR;
+}
+
+#mfspr r0	0x7c 00 02 a6
+:mfspr D,SPRVAL		is OP=31 & D & SPRVAL & XOP_1_10=339 & BIT_0=0
+{
+	D = SPRVAL;
+}
+
+#mftb r0,TBLr	0x7c 0c 42 e6
+:mftb D,TBLr		is $(NOTVLE) & OP=31 & D & TBR=392 & TBLr & XOP_1_10=371 & BIT_0=0
+{
+	D = TBLr;
+}
+#mftb r0,TBUr	0x7c 0d 42 e6
+:mftb D,TBUr		is $(NOTVLE) & OP=31 & D & TBR=424 & TBUr & XOP_1_10=371 & BIT_0=0
+{
+	D = TBUr;
+}
+
+#mtdcr DCRN,r0	0x7c 00 03 86
+:mtdcr DCRN, D		is OP=31 & D & DCRN & XOP_1_10=451 & BIT_0=0
+{
+	DCRN = D;
+}
+
+#mtmsr r0,0		0x7c 00 01 24
+:mtmsr S,0		is OP=31 & S & BITS_17_20=0 & MSR_L=0 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0
+{
+	bit58:$(REGISTER_SIZE) = (S >> 5) & 1;	#bit 58
+	bit49:$(REGISTER_SIZE) = (S >> 14)& 1;	#bit 49
+	bit59:$(REGISTER_SIZE) = (S >> 4) & 1;	#bit 59
+@ifdef BIT_64
+	tmp:8 = S & 0x00000000ffff6fcf;  #0b00000000000000000000000000000000 1111 1111 1111 1111 0110 1111 1100 1111
+	tmp = tmp & ((bit58 | bit49) << 5);
+	tmp = tmp & ((bit59 | bit49) << 4);
+	MSR = MSR & 0xffffffff00009030 | tmp;
+@else
+	tmp:4 = S & 0xffff6fcf;
+	tmp = tmp & ((bit58 | bit49) << 5);
+	tmp = tmp & ((bit59 | bit49) << 4);
+	MSR = MSR & 0x00009000 | tmp;
+@endif	
+}
+
+#mtmsr r0,1		0x7c 01 01 24
+:mtmsr S,1		is OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0 
+{
+@ifdef BIT_64
+	mask:8 = 0x000000000000fffe;
+@else 
+	mask:4 = 0x0000fffe;
+@endif
+	MSR = (MSR & ~mask) | (S & mask);
+}
+
+#mtspr spr000,r0	0x7c 00 02 a6
+:mtspr SPRVAL,S		is OP=31 & SPRVAL & S & XOP_1_10=467 & BIT_0=0
+{
+	SPRVAL = S;
+}
+
+:mtspr SPRVAL,S		is OP=31 & BITS_11_20=0x100 & BITS_21_25=0 & SPRVAL & S & XOP_1_10=467 & BIT_0=0
+                        [ linkreg=1; globalset(inst_next,linkreg); ]
+{
+	SPRVAL = S;
+}
+
+:mtspr SPRVAL,S		is linkreg=1 & OP=31 & BITS_11_20=0x100 & BITS_21_25=0 & SPRVAL & S & XOP_1_10=467 & BIT_0=0
+                        [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	SPRVAL = S;
+}
+
+:rfci				is $(NOTVLE) & OP=19 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=51 & BIT_0=0
+{
+	returnFromCriticalInterrupt();
+	return[SRR0]; 
+
+}
+
+#rfi	0x4c 00 00 64 
+:rfi		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=50 & BIT_0=0	
+{ 
+	returnFromInterrupt();  
+	return[SRR0]; 
+}
+
+
+#tlbre                  0x7c 00 07 64
+:tlbre	is OP=31 & XOP_1_10=946
+{
+	TLBRead();
+}
+
+#tlbsx r0,r0,r0		0x7c 00 07 24
+:tlbsx D,RA_OR_ZERO,B	is OP=31 & D & B & XOP_1_10=914 & RA_OR_ZERO & Rc=0
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	D = TLBSearchIndexed(D,ea);
+}
+
+#tlbsx. r0,r0,r0	0x7c 00 07 25
+:tlbsx. D,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & D & B & XOP_1_10=914 & RA_OR_ZERO & Rc=1
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	D = TLBSearchIndexed(D,ea);
+	cr0flags(D);
+}
+
+#tlbwe                  0x7c 00 07 a4
+:tlbwe D,A,B_BITS   is OP=31 & D & A & B_BITS & XOP_1_10=978
+{
+    D = TLBWrite(D,A,B_BITS:1);
+}
+
+
+#wrtee r0       0x7c 00 01 06
+:wrtee S	is OP=31 & S & XOP_1_10=131
+{
+	WriteExternalEnable(S);
+}
+
+#wrteei 0       0x7c 00 01 46
+:wrteei BIT_16	is OP=31 & BIT_16 & XOP_1_10=163
+{
+	WriteExternalEnableImmediate(BIT_16:1);
+}

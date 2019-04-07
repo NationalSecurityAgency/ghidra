@@ -1,0 +1,40 @@
+Design Steps:
+Format Opinion(s) for use in XFormatService, where X is the new Format:
+
+1.      Either locate formats.opinion file or create a new *.opinion file and place under the Ghidra/core/languages folder.
+        a.        In this XML based file, the following structure is required (attributes in italics are optional):
+
+                <format_opinions>
+                        <format name=”X”>
+                                <opinion magic=”(magic_string_for_binary)” 
+                                         processor=”(processor_for_X)”
+                                         endian=”(endian_of_processor)”
+                                         size=”(size_of_processor)”
+                                         variant=”(variant_of_processor)” />
+                       </format>
+                       ...
+                </format_opinions>
+
+        b.        Add information about X into this file.
+
+2.        Create a new class XFormatService implementing FormatService
+        a.        Methods to implement:
+                i.        getName:
+                        1.        Written to return the X name/id of the format service. (Currently id & name are equal).
+                ii.        getDescription:
+                        1.        Written to return a verbose description of format service X.
+                iii.        getRegisteredFormats:
+                        1.        Written to return the list of Formats registered for the X name/id stored in the formatInstances map.
+                iv.        registerFormat:
+                        1.        Written to gather information from the ByteProvider (binary) and generate the X Format
+                        2.        Register the Format in the formatInstances map (which takes a X name/id key and a list of Formats)
+                        3.        Make sure the magic string matches the magic string found in the *.opinion’s file.
+                        4.        Return whether or not the registration has been successful.
+                v.        getFormatOpinions:
+                        1.        Written to be called by AutoImporter in order to gather the XFormatService’s Format Opinions.
+                        2.        Essentially follow the formula in other *FormatServices, where:
+                                a.        Register the Format via the ByteProvider (binary), (if not already done).
+                                b.        Run through the list of Formats from the formatInstances map and gather FormatOpinions either via the QueryFormatOpinionServiceManager.getXMLFormatOpinionList(Format X) method (which queries the *.opinion file), or FormatOpinions existing programmatically.
+                                c.        Optionally (although, strongly recommended), add a warning message for a valid Format X from the ByteProvider with no existing “magic string” and Format Opinion.
+
+   

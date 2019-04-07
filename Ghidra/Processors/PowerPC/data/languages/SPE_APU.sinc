@@ -1,0 +1,3125 @@
+# Based on "EREF: A Reference for Motorola Book E and e500 Core" document version 01/2004 Rev2
+# Instructions that are specific to the (PowerPC) e500 core are implemented as auxiliary processing units (APUs)
+# Signal Processing Engine APU (SPE APU)
+
+@ifdef BIT_64
+@define MEMMASK "0xFFFFFFFFFFFFFFFF"
+@else
+@define MEMMASK "0xFFFFFFFF"
+@endif
+
+
+# There are three versions of e500 core, namely e500v1, the e500v2, and the e500mc.
+# A 64-bit evolution of the e500mc core is called e5500 core.
+# All PowerQUICC 85xx devices are based on e500v1 or e500v2 cores.
+
+# The SPE, and embedded SPFP functionality is implemented in
+# the MPC8540, the MPC8560 and in their derivatives (that is, in
+# all PowerQUICC III devices). However, these instructions will
+# not be supported in devices subsequent to PowerQUICC III.
+
+# version 1.0
+
+# SPEFSCR.OVH  Integer Overflow High                bit 33
+# SPEFSCR.OV   Integer Overflow                     bit 49
+# SPEFSCR.SOVH Summary Integer Overflow High        bit 32
+# SPEFSCR.SOV  Summary Integer Overflow                bit 48
+
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl
+
+# The SPE requires a GPR register file with thirty-two
+# 64-bit registers. For 32-bit implementations, instructions
+# that normally operate on a 32-bit register file
+# access and change only the least significant 32-bits of
+# the GPRs leaving the most significant 32-bits
+# unchanged. For 64-bit implementations, operation of
+# these instructions is unchanged, i.e. those instructions
+# continue to operate on the 64-bit registers as they
+# would if the SPE was not implemented. Most SPE
+# instructions view the 64-bit register as being composed
+# of a vector of two elements, each of which is 32 bits
+# wide (some instructions read or write 16-bit elements).
+# The most significant 32-bits are called the upper word,
+# high word or even word. The least significant 32-bits
+# are called the lower word, low word or odd word.
+# Unless otherwise specified, SPE instructions write all
+# 64-bits of the destination register.
+
+# Key to some symbols used in descriptions
+# RT.l          => low part of RT 0-31 bits
+# RT.h          => high part of RT 32-63 bits
+# RT.t          => total RT 0-63 bits
+# temp.b31      => bit 31 of temp
+# temp.B1       => byte 1 of temp
+# temp.S0       => first 2 bytes
+# ABS()
+# EXTZ()        => Result of extending x on the left with sign bits
+# SATURATE()    => 
+# ONESCOMP()    => one's complement
+# CR.bsub(..:..)=> bit range
+# >u            => unsigned greaterthan
+# EQUIV            => Equivalence logical operators = (a ^ (ONESCOMP(B)))
+# *si Signed-integer multiplication
+# *ui Unsigned-integer multiplication
+
+# *gsf 
+# Guarded signed fractional multiplication.
+# Result of multiplying 2 signed fractional
+# quantities having bit length 16 taking the
+# least significant 31 bits of the sign
+# extended product and concatenating a 0
+# to the least significant bit forming a
+# guarded signed fractional result of 64 bits.
+# Since guarded signed fractional multiplication
+# produces a 64-bit result, fractional
+# input quantities of -1 and -1 can produce
+# +1 in the intermediate product. Two 16-bit
+# fractional quantities, a and b are multiplied,
+# as shown below:
+# ea0:31 = EXTS(a)
+# eb0:31 = EXTS(b)
+# prod0:63 = ea X eb
+# eprod0:63 = EXTS(prod32:63)
+# result0:63 = eprod1:63 || 0b0
+
+define pcodeop GuardedSignedFractionalMultiplication;
+
+# *sf
+# Signed fractional multiplication. Result of
+# multiplying 2 signed fractional quantities
+# having bit length n taking the least significant
+# 2n-1 bits of the sign extended product
+# and concatenating a 0 to the least significant
+# bit forming a signed fractional result
+# of 2n bits. Two 16-bit signed fractional
+# quantities, a and b are multiplied, as
+# shown below:
+# ea0:31 = EXTS(a)
+# eb0:31 = EXTS(b)
+# prod0:63 = ea X eb
+# prod0:63 = EXTS(prod32:63)
+# result0:31 = eprod33:63 || 0b0
+
+define pcodeop SignedFractionalMultiplication;
+
+# ==================================================================
+
+# =======================================================================
+# Page D-10
+
+# evabs RT,RA
+# ISA-cmt: Vector Absolute Value
+# evabs rD,rA 010 0000 1000 SPE_APU_Vector_Instructions
+:evabs D,A is OP=4 & D & A & XOP_0_10=0x208 & BITS_11_15=0 {
+    # RT.l = ABS(RA.l);
+    # RT.h = ABS(RA.h);
+
+    temp:8 = zext(A);                   
+    lo:8   = (( temp & (0x00000000FFFFFFFF) ) );     
+    lo     = zext( ((lo:4 + (lo:4 >> 32)) ^ (lo:4 >> 32)) );     
+    hi:8   = (( temp & (0xFFFFFFFF00000000) ) >> 32);     
+    hi     = zext( ((hi:4 + (hi:4 >> 32)) ^ (hi:4 >> 32)) );     
+    D      = (( zext(hi) << 32) | zext(lo)  );         
+}
+
+# evaddiw RT,RB,UI
+# ISA-cmt: Vector Add Immediate Word
+# evaddiw rD,BU_UIMM,rB 010 0000 0010 SPE_APU_Vector_Instructions
+:evaddiw D,B,BU_UIMM is OP=4 & D & BU_UIMM & B & XOP_0_10=0x202 {
+    # RT.l = RB.l + EXTZ(UI);
+    # RT.h = RB.h + EXTZ(UI);
+
+    tmp:8  = BU_UIMM;
+    lo:8   = (( B & (0x00000000FFFFFFFF) ) ) + (tmp & 0xFFFF);
+    hi:8   = (( B & (0xFFFFFFFF00000000) ) >> 32) + (tmp & 0xFFFF);
+    D      = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evaddsmiaaw RT,RA
+# ISA-cmt: Vector Add Signed, Modulo, Integer to Accumulator Word
+# evaddsmiaaw rD,rA 100 1100 1001 SPE_APU_Vector_Instructions
+:evaddsmiaaw D,A is OP=4 & D & A & XOP_0_10=0x4C9 & BITS_11_15=0 {
+    # RT.l = ACC.l + RA.l;
+    # RT.h = ACC.h + RA.h;
+    # ACC.t = RT.t;
+
+    lo:8   = (( ACC & (0x00000000FFFFFFFF) ) ) + (( A & (0x00000000FFFFFFFF) ) );
+    hi:8   = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + (( A & (0xFFFFFFFF00000000) ) >> 32);
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# macro SATURATE(ov,carry, sat_ovn, sat_ov, val) {
+#     sat        = (ov * carray)*sat_ovn + (ov * !carray)*sat_ov + (! ov) * val;
+# }
+
+# evaddssiaaw RT,RA
+# ISA-cmt: Vector Add Signed, Saturate, Integer to Accumulator Word
+# evaddssiaaw rD,rA 100 1100 0001 SPE_APU_Vector_Instructions
+define pcodeop VectorAddSignedSaturateIntgerToAccumulatorWord1;
+define pcodeop VectorAddSignedSaturateIntgerToAccumulatorWord2;
+:evaddssiaaw D,A is OP=4 & D & A & XOP_0_10=0x4C1 & BITS_11_15=0 {
+    # TODO definition complicated SATURATE()
+    # temp.t = EXTS(ACC.l) + EXTS(RA.l);
+    # ovh    = temp.b31 ^ temp.b32;
+    # RT.l   = SATURATE(ovh, temp.b31, 0x8000_0000, 0x7FFF_FFFF, temp.h);
+    # temp.t = EXTS(ACC.h) + EXTS(RA.h);
+    # ovl    = temp.31 ^ temp.32;
+    # RT.h   = SATURATE(ovl, temp.b31, 0x8000_0000, 0x7FFF_FFFF, temp.h);
+    # ACC.t  = RT.t;
+    # SPEFSCR.ovh = ovh;
+    # SPEFSCR.ov  = ov;
+    # SPEFSCR.sovh  = SPEFSCR.sovh | ovh;
+    # SPEFSCR.sov    = SPEFSCR.sov  | ovh;
+
+#    temp:8 = sext( extrBytes(ACC,8,4,0) ) + sext( extrBytes(A,8,4,0) );
+#    ovh    = getBits(temp,31,31,8) ^ getBits(temp,32,32,8);
+#    SATURATE(ovh, getBits(temp,31,31,8), 0x80000000,0x7FFFFFFF, temp);
+#    lo        = sat;
+    
+    D      = VectorAddSignedSaturateIntgerToAccumulatorWord1(ACC, A);
+    spr200 = VectorAddSignedSaturateIntgerToAccumulatorWord2(ACC, A);
+}
+
+# evaddumiaaw RT,RA
+# ISA-cmt: Vector Add Unsigned, Modulo, Integer to Accumulator Word
+# evaddumiaaw rD,rA 100 1100 1000 SPE_APU_Vector_Instructions
+:evaddumiaaw D,A is OP=4 & D & A & XOP_0_10=0x4C8 & BITS_11_15=0 {
+    # RT.l  = ACC.l + RA.l;
+    # RT.h  = ACC.h + RA.h;
+    # ACC.t = RT.t;
+
+    lo:8   = (( ACC & (0x00000000FFFFFFFF) ) ) + (( A & (0x00000000FFFFFFFF) ) );
+    hi:8   = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + (( A & (0xFFFFFFFF00000000) ) >> 32);
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evaddusiaaw RT,RA
+# ISA-cmt: Vector Add Unsigned, Saturate, Integer to Accumulator Word
+# evaddusiaaw rD,rA 100 1100 0000
+define pcodeop VectorAddUnsignedSaturateIntegerToAccumulatorWord1;
+define pcodeop VectorAddUnsignedSaturateIntegerToAccumulatorWord2;
+:evaddusiaaw D,A is OP=4 & D & A & XOP_0_10=0x4C0 & BITS_11_15=0 {
+    # TODO definition complicated SATURATE()
+    # temp.t       = EXTZ(ACC.l) + EXTZ(RA.l);
+    # ovh          = temp.b31;
+    # RT.l         = SATURATE(ovh, temp.31, 0xFFFF_FFFF, 0xFFFF_FFFF, temp.h);
+    # ovl          = temp.b31
+    # RT.h         = SATURATE(ovl, temp.31, 0xFFFF_FFFF, 0xFFFF_FFFF, temp.h);
+    # ACC.t        = RT.t;
+    # SPEFSCR.ovh  = ovh;
+    # SPEFSCR.ov   = SPESCR.sovh | ovh;
+    # SPEFSCR.sovh = SPESCR.sov  | ovl;
+
+   D      = VectorAddUnsignedSaturateIntegerToAccumulatorWord1(ACC, A);
+   spr200 = VectorAddUnsignedSaturateIntegerToAccumulatorWord2(ACC, A);
+}
+
+# evaddw RT,RA,RB
+# ISA-cmt: Vector Add Word
+# evaddw rD,rA,rB 010 0000 0000
+:evaddw D,A,B is OP=4 & D & A & B & XOP_0_10=0x200 {
+    # RT.l      = RA.l + RB.l;
+    # RT.h      = RA.h + RB.h;
+
+    lo:8   = (( A & (0x00000000FFFFFFFF) ) ) + (( B & (0x00000000FFFFFFFF) ) );
+    hi:8   = (( A & (0xFFFFFFFF00000000) ) >> 32) + (( B & (0xFFFFFFFF00000000) ) >> 32);
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evand RT,RA,RB
+# ISA-cmt: Vector AND
+# evand rD,rA,rB 010 0001 0001
+:evand D,A,B is OP=4 & D & A & B& XOP_0_10=0x211 {
+    # RT.l  = RA.l & RB.l;
+    # RT.h  = RA.h & RB.h;
+
+    lo:8   = (( A & (0x00000000FFFFFFFF) ) ) & (( B & (0x00000000FFFFFFFF) ) );
+    hi:8   = (( A & (0xFFFFFFFF00000000) ) >> 32) & (( B & (0xFFFFFFFF00000000) ) >> 32);
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evandc RT,RA,RB
+# ISA-cmt: Vector AND with Complement
+# evandc rD,rA,rB 010 0001 0010
+:evandc D,A,B is OP=4 & D & A & B & XOP_0_10=0x212 {
+    # RT.l  = RA.l & (ONESCOMP(RB.l));
+    # RT.h     = RA.h & (ONESCOMP(RB.h));
+
+    lo:8   = (( A & (0x00000000FFFFFFFF) ) ) & (~ (( B & (0x00000000FFFFFFFF) ) ));
+    hi:8   = (( A & (0xFFFFFFFF00000000) ) >> 32) & (~ (( B & (0xFFFFFFFF00000000) ) >> 32));
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evcmpeq BF,RA,RB
+# ISA-cmt: Vector Compare Equal
+# evcmpeq crfD,rA,rB 010 0011 0100
+:evcmpeq crfD,A,B is OP=4 & crfD & A & B & XOP_0_10=0x234 & BITS_21_22=0 {
+    # ah    = RA.l
+    # al    = RA.h
+    # bh    = RB.l
+    # bl    = RB.h
+    # if (ah == bh) { 
+    #     ch = 1; 
+    # } else {
+    #    ch = 0;
+    # }
+    # if (al == bl) {
+    #     cl = 1;
+    # } else {
+    #     cl = 0;
+    # }
+    # CR.bsub(4xBF+32:4xBF+35) = ch || cl || (ch | cl) || (ch & cl);
+    
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ if (hi == b_hi) goto <label1>;
+  ch:1 = 0;
+ <label1>
+  ch = 1;
+ if (lo == b_lo) goto <label2>;
+  cl:1 = 0;
+ <label2>
+  ch = 1;
+ crfD = (ch | (cl < 1) | ((ch|cl) < 2) | ((ch&cl) < 3));
+}
+
+# evcmpgts BF,RA,RB
+# ISA-cmt: Vector Compare Greater Than Signed
+# evcmpgts crfD,rA,rB 010 0011 0001
+:evcmpgts crfD,A,B is OP=4 & crfD & A & B & XOP_0_10=0x231 & BITS_21_22=0 {
+    # ah    = RA.l;
+    # al    = RA.h;
+    # bh    = RB.l;
+    # bl    = RB.h;
+    # if (ah > bh) {
+    #    ch = 1;
+    # } else {
+    #    ch = 0;
+    # }
+    # if (al > bl) {
+    #     cl = 1;
+    # } else {
+    #    ch = 0;
+    # }
+    # CR.bsub(4xBF+32:4xBF+35)     = ch || cl || (ch | cl) || (ch & cl);
+
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ if (hi s> b_hi) goto <label1>;
+  ch:1 = 0;
+ <label1>
+  ch = 1;
+
+ if (lo s> b_lo) goto <label2>;
+  cl:1 = 0;
+ <label2>
+  cl = 1;
+ crfD = (ch | (cl < 1) | ((ch|cl) < 2) | ((ch&cl) < 3));
+}
+
+# evcmpgtu BF,RA,RB
+# ISA-cmt: Vector Compare Greater Than Unsigned
+# evcmpgtu crfD,rA,rB 010 0011 0000
+:evcmpgtu crfD,A,B is OP=4 & crfD & A & B & XOP_0_10=0x230 & BITS_21_22=0 {
+    # ah    = RA.l;
+    # al    = RA.h;
+    # bh    = RB.l;
+    # bl    = RB.h;
+    # if (ah >u bh) {
+    #    ch = 1;
+    # } else {
+    #    ch = 0;
+    # } 
+    # if (al >u bl) {
+    #     cl = 1;
+    # } else {
+    #     cl = 0;
+    # }
+    # CR.bsub(4xBF+32:4xBF+35) = ch || cl || (ch | cl) || (ch & cl);
+
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ if (hi > b_hi) goto <label1>;
+  ch:1 = 0;
+ <label1>
+  ch = 1;
+
+ if (lo > b_lo) goto <label2>;
+  cl:1 = 0;
+ <label2>
+  cl = 1;
+
+ crfD = (ch | (cl < 1) | ((ch|cl) < 2) | ((ch&cl) < 3));
+}
+
+# evcmplts BF,RA,RB
+# ISA-cmt: Vector Compare Less Than Signed
+# evcmplts crfD,rA,rB 010 0011 0011
+:evcmplts crfD,A,B is OP=4 & crfD & A & B & XOP_0_10=0x233 & BITS_21_22=0 {
+    # ah    = RA.l;
+    # al    = RA.h;
+    # bh    = RB.l;
+    # bl    = RB.h;
+    # if (ah < bh) {
+    #     ch = 1;
+    # } else {
+    #     ch = 0;
+    # } 
+    # if (al < bl) {
+    #     cl = 1;
+    # } else {
+    #     cl = 0;
+    # }
+    # CR.bsub(4xBF+32:4xBF+35) = ch || ch || (ch | cl) || (ch & cl);
+
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ if (hi s< b_hi) goto <label1>;
+  ch:1 = 0;
+ <label1>
+  ch = 1;
+
+ if (lo s< b_lo) goto <label2>;
+  cl:1 = 0;
+ <label2>
+  cl = 1;
+
+ crfD = (ch | (cl < 1) | ((ch|cl) < 2) | ((ch&cl) < 3));
+}
+
+# evcmpltu BF,RA,RB
+# ISA-cmt: Vector Compare Less Than Unsigned
+# evcmpltu crfD,rA,rB 010 0011 0010
+:evcmpltu crfD,A,B is OP=4 & crfD & A & B & XOP_0_10=0x232 & BITS_21_22=0 {
+    # ah    = RA.l;
+    # al    = RA.h;
+    # bh    = RB.l;
+    # bl    = RB.h;
+    # if (ah <u bh) {
+    #     ch = 1;
+    # } else {
+    #     ch = 0;
+    # }
+    # if (al <u bl) {
+    #     cl = 1;
+    # } else {
+    #     cl = 0;
+    # }
+    # CR.bsub(4xBF+32:4xBF+35) = ch || cl || (ch | cl) || (ch & cl);
+
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ if (hi < b_hi) goto <label1>;
+  ch:1 = 0;
+ <label1>
+  ch = 1;
+
+ if (lo < b_lo) goto <label2>;
+  cl:1 = 0;
+ <label2>
+  cl = 1;
+
+ crfD = (ch | (cl < 1) | ((ch|cl) < 2) | ((ch&cl) < 3));
+}
+
+# evcntlsw RT,RA
+# ISA-cmt: Vector Count Leading Signed Bits Word
+# evcntlsw rD,rA 010 0000 1110
+define pcodeop VectorCountLeadingSignBitsWord;
+:evcntlsw D,A is OP=4 & D & A & XOP_0_10=0x20E & BITS_11_15=0 { 
+    # TODO definition complicated
+    # n        = 0;
+    # s        = RA.b(n);
+    # do while (n < 32) {
+    #    if (RA.b(n) != s) {
+    #        leave;
+    #    } else {
+    #        n     = n + 1;
+    #    }
+    #    RT.l = n;
+    #    n    = 0;
+    #    s    = RA.b(n+32);
+    #    do while (n < 32) {
+    #        if (RA.b(n+32) != s) {
+    #            leave;
+    #        } 
+    #        n    = n + 1;
+    #    }
+    #    RT.h    = n;
+    # }
+
+    D = VectorCountLeadingSignBitsWord(A); 
+}
+
+# evcntlzw RT,RA
+# ISA-cmt: Vector Count Leading Zeros Word
+# evcntlzw rD,rA 010 0000 1101
+define pcodeop VectorCountLeadingZerosWord;
+:evcntlzw D,A is OP=4 & D & A & XOP_0_10=0x20D & BITS_11_15=0 { 
+    # TODO definition
+    # n    = 0;
+    # do while (n < 32) {
+    #    if (RA.b(n) = 1) {
+    #        leave;
+    #    } else {
+    #        n    = n + 1;
+    #     }
+    # } 
+    # RT.l     = n;
+    # n        = 0;
+    # do while (n < 32) {
+    #    if (RA.b(n+32) == 1) {
+    #        leave;
+    #    } else {
+    #        n    = n + 1;
+    #    }
+    # }
+    # RT.h    = n;
+
+    D = VectorCountLeadingZerosWord(A); 
+}
+
+# evdivws RT,RA,RB
+# ISA-cmt: Vector Divide Word Signed
+# evdivws rD,rA,rB 100 1100 0110
+define pcodeop VectorDivideWordSigned1;
+define pcodeop VectorDivideWordSigned2;
+:evdivws D,A,B is OP=4 & D & A & B & XOP_0_10=0x4C6 {
+    # TODO definition complicated
+#    SPEFSCR.OVH  = ovh;
+#    SPEFSCR.OV   = ovl;
+#    SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+#    SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+
+  D         = VectorDivideWordSigned1(A,B);
+  flags:8   = VectorDivideWordSigned2(A,B);  
+
+      spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evdivwu RT,RA,RB
+# ISA-cmt: Vector Divide Word Unsigned
+# evdivwu rD,rA,rB 100 1100 0111
+define pcodeop VectorDivideWordUnsigned1;
+define pcodeop VectorDivideWordUnsigned2;
+:evdivwu D,A,B is OP=4 & D & A & B & XOP_0_10=0x4C7 {
+    # TODO definition complicated
+# SPEFSCR.OV   = ovl
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl
+
+  D         = VectorDivideWordUnsigned1(A,B);
+  flags:8   = VectorDivideWordUnsigned2(A,B);  
+
+      spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+      spr200 = spr200 | (flags & (0x100000000));
+      spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+
+# eveqv RT,RA,RB
+# ISA-cmt: Vector Equivalent
+# eveqv rD,rA,rB 010 0001 1001
+:eveqv D,A,B is OP=4 & D & A & B & XOP_0_10=0x219 {
+    # RT.l    = EQUIV(RA.l, RB.l);
+    # RT.h    = EQUIV(RA.h, RB.h);
+
+ lo:$(REGISTER_SIZE) = (A & 0x00000000FFFFFFFF);
+ hi:$(REGISTER_SIZE) = ((A & 0xFFFFFFFF00000000) >> 32);
+ b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ lo = lo ^ b_lo; # TODO check
+ hi = hi ^ b_hi;
+
+ D = ((hi << 32) | lo);
+}
+
+# evextsb RT,RA
+# ISA-cmt: Vector Extend Sign Byte
+# evextsb rD,rA 010 0000 1010
+:evextsb D,A is OP=4 & D & A & XOP_0_10=0x20A & BITS_11_15=0 {
+    # RT.l  = EXTS(RA.B3);
+    # RT.h  = EXTS(RA.B7);
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FF000000) ) >> 24);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFF00000000000000) ) >> 56);
+    lo      = sext(lo:1);
+    hi      = sext(hi:1);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evextsh RT,RA
+# ISA-cmt: Vector Extend Sign Halfword
+# evextsh rD,rA, 010 0000 1011
+:evextsh D,A is OP=4 & D & A & XOP_0_10=0x20B & BITS_11_15=0 { 
+    # RT.l  = EXTS(RA.S1);
+    # RT.h  = EXTS(RA.S3);
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFF0000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFF000000000000) ) >> 48);
+    lo      = sext(lo:2);
+    hi      = sext(hi:2);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# =======================================================================
+# Page D-11
+
+# evldd RT,D(RA)
+# ISA-cmt: Vector Load Double Word into Double Word
+# evldd rD,d(rA)
+define pcodeop VectorLoadDoubleWordIntoDoubleWord;
+# TODO: defined in evx.sinc
+# if (RA == 0) {
+#    b = 0;
+# } else {
+#    b = RA;
+# }
+# EA    = b + EXTZ(UI*8);
+# RT    = MEM(EA,8);
+
+#:evldd D,A is OP=4 & D & A & XOP_0_10=769 & BITS_11_15=0 { 
+    # TODO: defined in evx.sinc
+#    VectorLoadDoubleWordIntoDoubleWord(D,A); 
+#}
+
+# evlddx RT,RA,RB
+# ISA-cmt: Vector Load Double Word into Double Word Indexed
+# evlddx
+# define pcodeop vectorLoadDoubleWordIntoDoubleWordIndexed1;
+# TODO: defined in evx.sinc
+# if (RA == 0) {
+#     b = 0;
+# } else {
+#     b = RA;
+# }
+# EA    = b + RB;
+# RT    = MEM(EA, 8);
+
+# :evlddx S,A,B is OP=4 & S & A & B & XOP_0_10=768 { 
+#    TODO: defined in evx.sinc
+#    vectorLoadDoubleWordIntoDoubleWordIndexed1(S,A,B); 
+#}
+
+# evldh RT,D(RA)
+# ISA-cmt: Vector Load Double into Four Halfwords
+# evldh rD,rA 011 0000 0101
+
+
+:evldh RT,EVUIMM_8_RAt is OP=4 & A & D & RT & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x305 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA        = b + EXTZ(UI*8);
+# RT.S0     = MEM(EA, 2);
+# RT.S1     = MEM(EA+2, 2);
+# RT.S2     = MEM(EA+4, 2);
+# RT.S3     = MEM(EA+6, 2);
+
+    EA:8    = A + zext(EVUIMM_8_RAt);
+    *:2 (RT) = *:2 ((EA) & $(MEMMASK));
+    *:2 (RT+2) = *:2 ((EA+2) & $(MEMMASK));
+    *:2 (RT+4) = *:2 ((EA+4) & $(MEMMASK));
+    *:2 (RT+6) = *:2 ((EA+6) & $(MEMMASK));
+}
+
+# evldhx RT,RA,RB
+# ISA-cmt: Vector Load Double into Four Halfwords Indexed
+# evldhx rD,rA,rB 011 0000 0100
+
+:evldhx D,A,B is OP=4 & A & D & B & XOP_0_10=0x304 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA       = b + RB;
+# RT.S0    = MEM(EA, 2);
+# RT.S1    = MEM(EA+2, 2);
+# RT.S2    = MEM(EA+4, 2);
+# RT.S3    = MEM(EA+6, 2);
+
+    EA:8    = A + B;
+    *:2 (D) = *:2 ((EA) & $(MEMMASK));
+    *:2 (D+2) = *:2 ((EA+2) & $(MEMMASK));
+    *:2 (D+4) = *:2 ((EA+4) & $(MEMMASK));
+    *:2 (D+6) = *:2 ((EA+6) & $(MEMMASK));
+}
+
+# evldw RT,D(RA)
+# ISA-cmt: Vector Load Double into Two Words
+# evldw rD,rA 011 0000 0011
+:evldw RT,EVUIMM_8_RAt is OP=4 & A & D & RT & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x303 { 
+# if (RA == 0) {
+#    b    = 0;
+# } else {
+#    b    = RA;
+# }
+# EA        = b + EXTZ(UI*8);
+# RT.l      = MEM(EA, 4);
+# RT.h      = MEM(EA+4, 4);
+
+    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_8_RAt);
+    *:4 (RT) = *:4 ((EA) & $(MEMMASK));
+    *:4 (RT+4) = *:4 ((EA+4) & $(MEMMASK));
+}
+
+# evldwx RT,RA,RB
+# ISA-cmt: Vector Load Double into Two Words Indexed
+# evldwx rD,rA,rB 011 0000 0010
+:evldwx D,A,B is OP=4 & A & B & D & XOP_0_10=0x302 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.l  = MEM(EA, 4);
+# RT.h  = MEM(EA+4, 4);
+    
+    EA:$(REGISTER_SIZE)  = A + B;
+    *:4 (D) = *:4 ((EA) & $(MEMMASK));
+    *:4 (D+4) = *:4 ((EA+4) & $(MEMMASK));
+}
+
+# evlhhesplat RT,D(RA)
+# ISA-cmt: Vector Load Halfword into Halfwords Even and Splat
+# evlhhesplat rD,rA 011 0000 1001
+:evlhhesplat RT,EVUIMM_2_RAt is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x309 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA       = b + EXTZ(UI*2);
+# RT.S0    = MEM(EA,2);
+# RT.S1    = 0x0000;
+# RT.S2    = MEM(EA,2);
+# RT.S3    = 0x0000;
+
+     EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+     *:2 (RT) = *:2 ((EA) & $(MEMMASK));
+     *:2 (RT+2) = 0x0000;
+     *:2 (RT+4) = *:2 ((EA) & $(MEMMASK));
+     *:2 (RT+6) = 0x0000;
+}
+
+# evlhhesplatx RT,RA,RB
+# ISA-cmt: Vector Load Halfword into Halfwords Even and Splat Indexed
+# evlhhesplatx rD,rA,rB 011 0000 1000
+:evlhhesplatx D,A,B is OP=4 & A & B & D & XOP_0_10=0x308 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.S0 = MEM(EA, 2);
+# RT.S1 = 0x0000;
+# RT.S2 = MEM(EA, 2);
+# RT.S3 = 0x0000;
+    
+    EA:$(REGISTER_SIZE)  = A + B;
+    *:2 (D) = *:2 ((EA) & $(MEMMASK));
+    *:2 (D+2) = 0x0000;
+    *:2 (D+4) = *:2 ((EA) & $(MEMMASK));
+    *:2 (D+6) = 0x0000;
+}
+
+# evlhhossplat RT,D(RA)
+# ISA-cmt: Vector Load Halfword into Halfword Odd Signed and Splat
+# evlhhossplat rD,rA 011 0000 1111
+:evlhhossplat RT,EVUIMM_2_RAt is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x30F { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + EXTZ(UI*2);
+# RT.l  = EXTS(MEM(EA, 2));
+# RT.h  = EXTS(MEM(EA, 2));
+
+    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+    *:4 (RT) = sext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (RT+4) = sext( *:2 (((EA) & $(MEMMASK))));
+}
+
+# evlhhossplatx RT,RA,RB
+# ISA-cmt: Vector Load Halfword into Halfword Odd Signed and Splat Indexed
+# evlhhossplatx rD,rA,rB 011 0000 1110
+:evlhhossplatx D,A,B is OP=4 & A & B & D & XOP_0_10=0x30E { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.l  = EXTS(MEM(EA, 2));
+# RT.h    = EXTS(MEM(EA, 2));
+
+    EA:$(REGISTER_SIZE) = A + B;
+    *:4 (D) = sext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (D+4) = sext( *:2 (((EA) & $(MEMMASK))));
+}
+
+# evlhhousplat RT,D(RA)
+# ISA-cmt: Vector Load Halfword into Halfword Odd Unsigned and Splat
+# evlhhousplat rD,rA 011 0000 1101
+:evlhhousplat RT,EVUIMM_2_RAt  is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x30D { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA     = b + EXTZ(UI*2);
+# RT.l   = EXTZ(MEM(EA, 2));
+# RT.h   = EXTZ(MEM(EA, 2));
+
+    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+    *:4 (RT) = zext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (RT+4) = zext( *:2 (((EA) & $(MEMMASK))));
+}
+
+# evlhhousplatx RT,RA,RB
+# ISA-cmt: Vector Load Halfword into Halfword Odd Unsigned and Splat Indexed
+# evlhhousplatx rD,rA,rB 011 0000 1100
+:evlhhousplatx D,A,B is OP=4 & A & B & D & XOP_0_10=0x30C { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.l  = EXTZ(MEM(EA, 2));
+# RT.h  = EXTZ(MEM(EA, 2));
+
+    EA:$(REGISTER_SIZE)  = A + B;
+    *:4 (D) = zext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (D) = zext( *:2 (((EA) & $(MEMMASK))));
+}
+
+# evlwhe RT,D(RA)
+# ISA-cmt: Vector Load Word into Two Halfwords Even
+# evlwhe rD,rA 011 0001 0001
+# evlwhe confict with mullhwu.
+# define pcodeop VectorLoadWordIntoTwoHalfWordsEven;
+# :evlwhe D,A is OP=4 & A & EVUIMM_4 & D & XOP_0_10=0x311 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + EXTZ(UI*4);
+# RT.S0 = MEM(EA, 2);
+# RT.S1 = 0x0000;
+# RT.S2 = MEM(EA+2, 2);
+# RT.S3 = 0x0000;
+
+#     VectorLoadWordIntoTwoHalfWordsEven(D,A); 
+# }
+
+# =================================================================
+# Page D-12
+
+# evlwhex RT,RA,RB
+# ISA-cmt: Vector Load Word into Two Halfwords Even Indexed
+# evlwhex rD,rA 011 0001 0000
+# evlwhex confict with mullhwu
+# define pcodeop VectorLoadWordIntoTwoHalfWordsEvenIndexed;
+# :evlwhex D,A is OP=4 & B & A & D & XOP_0_10=0x310 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA     = b+ RB;
+# RT.S0  = MEM(EA, 2);
+# RT.S1  = 0x0000;
+# RT.S2  = MEM(EA + 2, 2);
+# RT.S3  = 0x0000;
+
+# VectorLoadWordIntoTwoHalfWordsEvenIndexed(D,A); 
+# }
+
+# evlwhos RT,D(RA)
+# ISA-cmt: Vector Load Word into Two Halfwords Odd Signed (with sign extension)
+# evlwhos rD,rA 011 0001 0111
+:evlwhos RT,EVUIMM_4_RAt is OP=4 & A & EVUIMM_4_RAt & RT & D & XOP_0_10=0x317 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + EXTZ(UI*4);
+# RT.l  = EXTS(MEM(EA, 2));
+# RT.h  = EXTS(MEM(EA+2, 2));
+
+    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_4_RAt);
+    *:4 (RT) = sext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (RT+4) = sext( *:2 (((EA+2) & $(MEMMASK))));
+}
+
+# evlwhosx RT,RA,RB
+# ISA-cmt: Vector Load Word into Two Halfwords Odd Signed Indexed (with sign extension)
+# evlwhosx rD,rA,rB 011 0001 0110
+:evlwhosx D,A,B is OP=4 & A & B & D & XOP_0_10=0x316 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.l  = EXTS(MEM(EA,2));
+# RT.h  = EXTS(MEM(EA+2, 2));
+
+     EA:$(REGISTER_SIZE)  = A + B;
+     *:4 (D) = sext( *:2 (((EA) & $(MEMMASK))));
+     *:4 (D+4) = sext( *:2 (((EA+2) & $(MEMMASK))));
+}
+
+# evlwhou RT,D(RA)
+# ISA-cmt: Vector Load Word into Two Halfwords Odd Unsigned (zero-extended)
+# evlwhou rD,rA 011 0001 0101
+:evlwhou RT,EVUIMM_4_RAt is OP=4 & A & EVUIMM_4_RAt & RT & D & XOP_0_10=0x315 { 
+# if (RA == 0) { 
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + EXTZ(UI*4);
+# RT.l  = EXTZ(MEM(EA, 2));
+# RT.h  = EXTZ(MEM(EA+2, 2));
+
+    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_4_RAt);
+    *:4 (RT) = zext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (RT+4) = zext( *:2 (((EA+2) & $(MEMMASK))));
+}
+
+# evlwhoux RT,RA,RB
+# ISA-cmt: Vector Load Word into Two Halfwords Odd Unsigned Indexed (zero-extended)
+# evlwhoux rD,rA,rB 011 0001 0100
+:evlwhoux D,A,B is OP=4 & A & B & D & XOP_0_10=0x314 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b     = RA;
+# }
+# EA    = b + RB;
+# RT.l  = EXTZ(MEM(EA,2));
+# RT.h  = EXTZ(MEM(EA+2,2));
+
+    EA:$(REGISTER_SIZE)  = A + B;
+    *:4 (D) = zext( *:2 (((EA) & $(MEMMASK))));
+    *:4 (D+4) = zext( *:2 (((EA+2) & $(MEMMASK))));
+}
+
+# evlwhsplat RT,D(RA)
+# ISA-cmt: Vector Load Word into Two Halfwords and Splat
+# evlwhsplat rD,rA 011 0001 1101
+:evlwhsplat RS,EVUIMM_4_RAt is OP=4 & A & B & D & XOP_0_10=0x31D & EVUIMM_4_RAt & RS { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b     = RA;
+# }
+# EA     = b + EXTZ(UI*4);
+# RT.S0  = MEM(EA,2);
+# RT.S1  = MEM(EA,2);
+# RT.S2  = MEM(EA+2,2);
+# RT.S3  = MEM(EA+2,2);
+
+    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    *:2 (RS) = *:2 ((EA) & $(MEMMASK));
+    *:2 (RS+2) = *:2 ((EA) & $(MEMMASK));
+    *:2 (RS+4) = *:2 ((EA+2) & $(MEMMASK));
+    *:2 (RS+6) = *:2 ((EA+2) & $(MEMMASK));
+}
+
+# evlwhsplatx RT,RA,RB
+# ISA-cmt: Vector Load Word into Two Halfwords and Splat Indexed
+# evlwhsplatx rD,rA,rB 011 0001 1100
+:evlwhsplatx D,A,B is OP=4 & A & B & D & XOP_0_10=0x31C { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA     = b + RB;
+# RT.S0  = MEM(EA,2);
+# RT.S1  = MEM(EA,2);
+# RT.S2  = MEM(EA+2,2);
+# RT.S3  = MEM(EA+2,2);
+
+    EA:$(REGISTER_SIZE)  = A + B;
+    *:2 (D) = *:2 ((EA) & $(MEMMASK));
+    *:2 (D+2) = *:2 ((EA) & $(MEMMASK));
+    *:2 (D+4) = *:2 ((EA+2) & $(MEMMASK));
+    *:2 (D+6) = *:2 ((EA+2) & $(MEMMASK));
+}
+
+# evlwwsplat RT,D(RA)
+# ISA-cmt: Vector Load Word into Word and Splat
+# evlwwsplat rD,rA 011 0001 1001
+# define pcodeop VectorLoadWordIntoWordAndSplat;
+# evlwwsplat conficts with maclhwu.
+# :evlwwsplat RT,EVUIMM_4_RAt is OP=4 & A & D & EVUIMM_4_RAt & RT & XOP_0_10=0x319 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b     = RA;
+# }
+# EA    = b + EXTZ(UI*4);
+# RT.l  = MEM(EA,4);
+# RT.h  = MEM(EA,4);
+
+# VectorLoadWordIntoWordAndSplat(D,A); 
+# }
+
+# evlwwsplatx RT,RA,RB
+# ISA-cmt: Vector Load Word into Word and Splat Indexed
+# evlwwsplatx rD,rA,rB 011 0001 1000
+# define pcodeop VectorLoadWordIntoWordAndSplatIndexed;
+# evlwwsplatx conficts with maclhwu
+# :evlwwsplatx D,A,B is OP=4 & A & B & D & XOP_0_10=0x318 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA    = b + RB;
+# RT.l  = MEM(EA,4);
+# RT.h  = MEM(EA,4);
+
+# VectorLoadWordIntoWordAndSplatIndexed(D,A,B); 
+# }
+
+# evmergehi RT,RA,RB
+# ISA-cmt: Vector Merge High
+# evmergehi rD,rA,rB 010 0010 1100
+# defined evx.sinc XXX
+# define pcodeop VectorMergeHigh;
+# :evmergehi D,A,B is OP=4 & A & B & D & XOP_0_10=0x22C { 
+# RT.l    = RA.l;
+# RT.h    = RB.h;
+
+# VectorMergeHigh(D,A,B); 
+# }
+
+# evmergehilo RT,RA,RB
+# ISA-cmt: Vector Merge High/Low
+# evmergehilo rD,rA,rB 010 0010 1110
+#define pcodeop VectorMergeHighLow;
+#:evmergehilo D,A,B is OP=4 & A & B & D & XOP_0_10=0x22E {
+# RT.l    = RA.l;
+# RT.h    = RA.h;
+
+# lo = (A & 0x00000000FFFFFFFF);
+# hi = ((A & 0xFFFFFFFF00000000) >> 32);
+# b_lo = (B & 0x00000000FFFFFFFF);
+# b_hi = ((B & 0xFFFFFFFF00000000) >> 32);
+#
+# lo = lo;
+# hi = b_hi;
+#
+# D = ((hi << 32) | lo);
+#}
+
+# evmergelo RT,RA,RB
+# ISA-cmt: Vector Merge Low
+# evmergelo rD,rA,rB 010 0010 1101
+# defined evx.sinc XXX
+# define pcodeop VectorMergeLow;
+# :evmergelo D,A,B is OP=4 & A & B & D & XOP_0_10=0x22D { 
+# RT.l    = RA.h;
+# RT.h    = RA.l;
+
+# VectorMergeLow(D,A,B); 
+# }
+
+# evmergelohi RT,RA,RB
+# ISA-cmt: Vector Merge Low/High
+# evmergelohi rD,rA,rB 010 0010 1111
+#:evmergelohi D,A,B is OP=4 & D & A & B & XOP_0_10=0x22F {
+# RT.l    = RA.h;
+# RT.h    = RA.l;
+
+# lo = (A & 0x00000000FFFFFFFF);
+# hi = ((A & 0xFFFFFFFF00000000) >> 32);
+# b_lo = (B & 0x00000000FFFFFFFF);
+# b_hi = ((B & 0xFFFFFFFF00000000) >> 32);
+#
+# lo = lo;
+# hi = b_lo;
+#
+# D = ((hi << 32) | lo);
+#}
+
+
+# evmhegsmfaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Signed, Modulo, Fractional and Accumulate
+# evmhegsmfaa rD,rA,rB 101 0010 1011
+:evmhegsmfaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x52B {
+# u64 temp;
+# temp  = RA.S2 *gsf RB.S2;
+# RT    = ACC + temp;
+# ACC   = RT;
+
+    D   = ACC + GuardedSignedFractionalMultiplication( (( A & (0x0000FFFFFFFF0000) ) >> 16) , (( B & (0x0000FFFFFFFF0000) ) >> 16) );
+    ACC = D;
+}
+
+# evmhegsmfan RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Signed, Modulo, Fractional and Accumulate Negative
+# evmhegsmfan rD,rA,rB 101 1010 1011
+:evmhegsmfan D,A,B is OP=4 & A & B & D & XOP_0_10=0x5AB {
+# u64 temp;
+# temp  = RA.S2 *gsf RB.S2;
+# RT    = ACC - temp;
+# ACC    = RT;
+
+    D   = ACC - GuardedSignedFractionalMultiplication( (( A & (0x0000FFFFFFFF0000) ) >> 16) , (( B & (0x0000FFFFFFFF0000) ) >> 16) );
+    ACC = D;
+}
+
+# evmhegsmiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Signed, Modulo, Integer and Accumulate
+# evmhegsmiaa rD,rA,rB 101 0010 1001
+:evmhegsmiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x529 {
+# u64 temp;
+# temp.l    = RA.l2 *si RB.l2;
+# temp.h    = EXTS(temp.l);
+# RT        = ACC + temp;
+# ACC       = RT;
+
+    lo:8    = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    hi:8    = sext(lo:2);
+    lo      = (( zext(hi) << 32) | zext(lo)  );
+    D       = ACC + lo;
+    ACC     = D;
+}
+
+
+# evmhegsmian RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Signed, Modulo, Integer and Accumulate Negative
+# evmhegsmian rD,rA,rB 101 1010 1001
+:evmhegsmian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5A9 {
+# u64 temp;
+# temp.l    = RA.S2 *si RB.S2;
+# temp      = EXTS(temp.l);
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    lo:8    = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    hi:8    = sext(lo:2);
+    lo      = (( zext(hi) << 32) | zext(lo)  );
+    D       = ACC - lo;
+    ACC     = D;
+}
+
+# evmhegumiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Unsigned, Modulo, Integer and Accumulate
+# evmhegumiaa rD,rA,rB 101 0010 1000
+:evmhegumiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x528 {
+# u64 temp;
+# temp.l     = RA.S2 *ui RB.S2;
+# temp       = EXTZ(temp.l);
+# RT         = ACC + temp;
+# ACC        = RT;
+
+    temp:$(REGISTER_SIZE)    = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    temp    = zext(temp:4);
+    D       = ACC + temp;
+    ACC     = D;
+}
+
+# evmhegumian RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Unsigned, Modulo, Integer and Accumulate Negative
+# evmhegumian rD,rA,rB 101 1010 1000
+:evmhegumian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5A8 {
+# u64 temp;
+# temp.l    = RA.S2 *ui RB.S2;
+# temp      = EXTZ(temp);
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    temp:$(REGISTER_SIZE)    = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    temp    = zext(temp:4);
+    D       = ACC - temp;
+    ACC     = D;
+}
+
+# evmhesmf RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Fractional
+# evmhesmf rD,rA,rB 100 0000 1011
+:evmhesmf D,A,B is OP=4 & A & B & D & XOP_0_10=0x40B {
+# RT        = RA.S0 *sf RB.S0;
+# RT.S2     = RA.S2 *sf RB.S2;
+
+     D = SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 16) , (( B & (0x0000000000000000) ) >> 16) );
+     D = (D & 0xFFFF) | ( (SignedFractionalMultiplication((( A & (0x0000FFFFFFFF0000) ) >> 16),(( B & (0x0000FFFFFFFF0000) ) >> 16)) ) << 16);
+}
+
+# evmhesmfa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Fractional to Accumulator
+# evmhesmfa rD,rA,rB 100 0010 1011
+:evmhesmfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x42B {
+# RT.l   = RA.S0 *sf RB.S0;
+# RT.h   = RA.S2 *sf RB.S2;
+# ACC    = RT;
+
+     D   = SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 16) , (( B & (0x0000000000000000) ) >> 16) );
+     D   = (D & 0xFFFF) | ( (SignedFractionalMultiplication((( A & (0x0000FFFFFFFF0000) ) >> 16),(( B & (0x0000FFFFFFFF0000) ) >> 16)) ) << 16);
+     ACC = D;
+}
+
+# evmhesmfaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Fractional and Accumulate into Words
+# evmhesmfaaw rD,rA,rB 101 0000 1011
+:evmhesmfaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x50B {
+# u64 temp;
+# temp      = RA.S0 *sf RB.S0;
+# RT.l      = ACC.l + temp.l;
+# temp.l    = RA.S2 *sf RB.S2;
+# RT        = ACC.h + temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)  = (( ACC & (0x0000000000000000) ) >> 32) + SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 16) , (( B & (0x0000000000000000) ) >> 16) );
+    hi:$(REGISTER_SIZE)  = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + SignedFractionalMultiplication( (( A & (0x0000FFFFFFFF0000) ) >> 16) , (( B & (0x0000FFFFFFFF0000) ) >> 16) );
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmhesmfanw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Fractional and Accumulate Negative into Words
+# evmhesmfanw rD,rA,rB 101 1000 1011
+:evmhesmfanw D,A,B is OP=4 & A & B & D & XOP_0_10=0x58B {
+# u64 temp;
+# temp.l    = RA.S0 *sf RB.S0;
+# RT.l      = ACC.l - temp.l;
+# temp.l    = RA.S2 *sf RB.S2;
+# RT.h      = ACC.h - temp;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)  = (( ACC & (0x0000000000000000) ) >> 32) - SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 16) , (( B & (0x0000000000000000) ) >> 16) );
+    hi:$(REGISTER_SIZE)  = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - SignedFractionalMultiplication( (( A & (0x0000FFFFFFFF0000) ) >> 16) , (( B & (0x0000FFFFFFFF0000) ) >> 16) );
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmhesmi RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Integer
+# evmhesmi rD,rA,rB 100 0000 1001
+:evmhesmi D,A,B is OP=4 & A & B & D & XOP_0_10=0x409 {
+# RT.l    = RA.S0 *si RB.S0;
+# RT.h    = RA.S2 *si RB.S2;
+
+    lo:$(REGISTER_SIZE)  = (( A & (0x000000000000FFFF) ) ) * (( B & (0x000000000000FFFF) ) );
+    hi:$(REGISTER_SIZE)  = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    D   = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhesmia RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Integer to Accumulator
+# evmhesmia rD,rA,rB 100 0010 1001
+:evmhesmia D,A,B is OP=4 & A & B & D & XOP_0_10=0x429 {
+# RT.l       = RA.S0 *si RB.S0;
+# RT.h       = RA.S2 *si RB.s2;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)  = (( A & (0x000000000000FFFF) ) ) * (( B & (0x000000000000FFFF) ) );
+    hi:$(REGISTER_SIZE)  = (( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32);
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmhesmiaaw rD,rA,rB 101 0000 1001
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Integer and Accumulate into Words
+:evmhesmiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x509 {
+# u64 temp;
+# temp.l        = RA.S0 *si RB.S0;
+# RT.l          = ACC.l + temp.l;
+# temp.l        = RA.S2 *si RB.S2;
+# RT.h          = ACC.h + temp.l;
+# ACC           = RT;
+
+    lo:$(REGISTER_SIZE)     = (( ACC & (0x00000000FFFFFFFF) ) ) + ((( A & (0x000000000000FFFF) ) ) * (( B & (0x000000000000FFFF) ) ));
+    hi:$(REGISTER_SIZE)     = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + ((( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32));
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evmhesmianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Modulo, Integer and Accumulate Negative into Words
+# evmhesmianw rD,rA,rB 101 1000 1001
+:evmhesmianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x589 {
+# u64 temp;
+# temp.l        = RA.S0 *si RB.S0;
+# RT.l          = ACC.l - temp.l;
+# temp.l        = RA.S2 *si RB.S2;
+# RT.S2         = ACC.S2 - temp.l;
+# ACC           = RT;
+
+    lo:$(REGISTER_SIZE)     = (( ACC & (0x00000000FFFFFFFF) ) ) - ((( A & (0x000000000000FFFF) ) ) * (( B & (0x000000000000FFFF) ) ));
+    hi:$(REGISTER_SIZE)     = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - ((( A & (0x0000FFFF00000000) ) >> 32) * (( B & (0x0000FFFF00000000) ) >> 32));
+    D      = (( zext(hi) << 32) | zext(lo)  );
+    ACC    = D;
+}
+
+# evmhessf RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Fractional
+# evmhessf rD,rA,rB 100 0000 0011
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractional1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractional2;
+:evmhessf D,A,B is OP=4 & A & B & D & XOP_0_10=0x403 {
+    # TODO definition complicated
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+
+    D         = VectorMultiplyHalfWordsEvenSignedSaturateFractional1(A,B);
+    flags:8   = VectorMultiplyHalfWordsEvenSignedSaturateFractional2(A,B);
+ 
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));    
+}
+
+# evmhessfa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Fractional to Accumulator
+# evmhessfa rD,rA,rB 100 0010 0011
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAccumulate1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAccumulate2;
+:evmhessfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x423 {
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+    # TODO definition complicated
+    D         = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAccumulate1(A,B);
+    ACC       = D;
+    flags:8   = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAccumulate2(A,B);
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhessfaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Fractional and Accumulate into Words
+# evmhessfaaw rD,rA,rB 101 0000 0011
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateIntoWords2;
+:evmhessfaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x503 {
+# SPEFSCR.OVH  = ovh | movh
+# SPEFSCR.OV   = ovl| movl
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh | movh
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl| movl
+    # TODO definition complicated
+    D       = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateIntoWords1(A,B,ACC,spr200);
+    flags:8 = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateIntoWords2(A,B,ACC,spr200);
+    ACC        = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhessfanw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Fractional and Accumulate Negative into Words
+# evmhessfanw rD,rA,rB 101 1000 0011
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateNegativeIntoWords1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateNegativeIntoWords2;
+:evmhessfanw D,A,B is OP=4 & A & B & D & XOP_0_10=0x583 {
+# SPEFSCR.OVH  = ovh | movh;
+# SPEFSCR.OV   = ovl| movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl| movl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateNegativeIntoWords1(A,B,ACC,spr200);
+    flags:8  = VectorMultiplyHalfWordsEvenSignedSaturateFractionalAndAccumulateNegativeIntoWords2(A,B,ACC,spr200);
+    ACC      = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhessiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Integer and Accumulate into Words
+# evmhessiaaw rD,rA,rB 101 0000 0001
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateIntoWords2;
+:evmhessiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x501 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D         = VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateIntoWords1(A,B,ACC,spr200);
+    flags:8   = VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateIntoWords2(A,B,ACC,spr200);
+    ACC       = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhessianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Signed, Saturate, Integer and Accumulate Negative into Words
+# evmhessianw rD,rA,rB 101 1000 0001
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateNegativeIntoWords1;
+define pcodeop VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateNegativeIntoWords2;
+:evmhessianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x581 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+# TODO definition complicated
+    D         = VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateNegativeIntoWords1(A,B,ACC,spr200);
+    flags:8   = VectorMultiplyHalfWordsEvenSignedSaturateIntegerAndAccumulateNegativeIntoWords2(A,B,ACC,spr200);
+    ACC       = D;
+ 
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# =================================================================
+# Page D-13
+
+# evmheumi RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Modulo, Integer
+# evmheumi rD,rA,rB 100 0000 1000
+:evmheumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x408 {
+# RT.l        = RA.S0 *ui RB.S0;
+# RT.h        = RA.S2 *ui RB.S2;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 16) * (( B & (0x0000000000000000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0x0000FFFFFFFF0000) ) >> 16) * (( B & (0x0000FFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmheumia RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Modulo, Integer to Accumulator
+# evmheumia rD,rA,rB 100 0010 1000
+:evmheumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x428 {
+# RT.l       = RA.S0 *ui RB.S0;
+# RT.h       = RA.S2 *ui RB.S2;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 16) * (( B & (0x0000000000000000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0x0000FFFFFFFF0000) ) >> 16) * (( B & (0x0000FFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmheumiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Modulo, Integer and Accumulate into Words
+# evmheumiaaw rD,rA,rB 101 0000 1000
+:evmheumiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x508 {
+# u64 temp;
+# temp.l    = RA.S0 *ui RB.S0;
+# RT.l      = ACC.l + temp.l;
+# temp.l    = RA.S2 *ui RB.S2;
+# RT.h      = ACC.h + temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x0000000000000000) ) >> 32) + (( A & (0x0000000000000000) ) >> 16) * (( B & (0x0000000000000000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + (( A & (0x0000FFFFFFFF0000) ) >> 16) * (( B & (0x0000FFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmheumianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Modulo, Integer and Accumulate Negative into Words
+# evmheumianw rD,rA,rB 101 1000 1000
+:evmheumianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x588 {
+# u64 temp;
+# temp.l    = RA.S0 *ui RB.S0;
+# RT.l      = ACC.l - temp.l;
+# temp.l    = RA.S2 *ui RB.S2;
+# RT.h      = ACC.h - temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x0000000000000000) ) >> 32) - (( A & (0x0000000000000000) ) >> 16) * (( B & (0x0000000000000000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - (( A & (0x0000FFFFFFFF0000) ) >> 16) * (( B & (0x0000FFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmheusiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Saturate, Integer and Accumulate into Words
+# evmheusiaaw rD,rA,rB 101 0000 0000
+define pcodeop VectorMultiplyHalfWordsEvenUnsignedSaturateIntegerAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsEvenUnsignedSaturateIntegerAndAccumulateIntoWords2;
+:evmheusiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x500 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsEvenUnsignedSaturateIntegerAndAccumulateIntoWords1(A,B,ACC,spr200);
+    flags:8  = VectorMultiplyHalfWordsEvenUnsignedSaturateIntegerAndAccumulateIntoWords2(A,B,ACC,spr200);
+    ACC      = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmheusianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Even, Unsigned, Saturate, Integer and Accumulate Negative into Words
+# evmheusianw rD,rA,rB 101 1000 0000
+define pcodeop evmheusianwOP1;
+define pcodeop evmheusianwOP2;
+:evmheusianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x580 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D         = evmheusianwOP1(A,B,ACC,spr200);
+    flags:8   = evmheusianwOP2(A,B,ACC,spr200);
+    ACC       = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhogsmfaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Signed, Modulo, Fractional and Accumulate
+# evmhogsmfaa rD,rA,rB 101 0010 1111
+:evmhogsmfaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x52F {
+# u64 temp;
+# temp      = RA.S3 *gsf RB.S3;
+# RT        = ACC + temp;
+# ACC       = RT;
+
+    D   = ACC + GuardedSignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    ACC = D;
+}
+
+# evmhogsmfan RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Signed, Modulo, Fractional and Accumulate Negative
+# evmhogsmfan rD,rA,rB 101 1010 1111
+:evmhogsmfan D,A,B is OP=4 & A & B & D & XOP_0_10=0x5AF {
+# u64 temp;
+# temp      = RA.S3 *gsf RB.S3;
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    D   = ACC - GuardedSignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    ACC = D;
+}
+
+# evmhogsmiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Signed, Modulo, Integer and Accumulate
+# evmhogsmiaa rD,rA,rB 101 0010 1101
+:evmhogsmiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x52D {
+# u64 temp;
+# temp.l        = RA.S3 *si RB.S3;
+# temp          = EXTS(temp.l);
+# RT            = ACC + temp;
+# ACC           = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0xFFFF000000000000) ) >> 48);
+    lo      = sext(lo:2);
+    D       = ACC + lo;
+    ACC     = D;
+}
+
+# evmhogsmian RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Signed, Modulo, Integer and Accumulate Negative
+# evmhogsmian rD,rA,rB 101 1010 1101
+:evmhogsmian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5AD {
+# u64 temp;
+# temp.l    = RA.S3 *si RB.S3;
+# temp      = EXTS(temp);
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0xFFFF000000000000) ) >> 48);
+    lo      = sext(lo:2);
+    D       = ACC - lo;
+    ACC     = D;
+}
+
+# evmhogumiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Unsigned, Modulo, Integer and Accumulate
+# evmhogumiaa rD,rA,rB 101 0010 1100
+:evmhogumiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x52C {
+# u64 temp;
+# tempo.l       = RA.S3 *ui RB.S3;
+# temp          = EXTZ(temp.l);
+# RT            = ACC + temp;
+# ACC           = RT;
+
+    temp:8  = (( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16);
+    temp    = zext( (( temp & (0x0000000000000000) ) >> 32) );
+    D       = ACC + temp;
+    ACC     = D;
+}
+
+# evmhogumian RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Guarded, Unsigned, Modulo, Integer and Accumulate Negative
+# evmhogumian rD,rA,rB 101 1010 1100
+:evmhogumian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5AC {
+# u64    temp;
+# temp.l    = RA.S3 *ui RB.S3;
+# temp      = EXTZ(temp.l);
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    temp:8  = (( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16);
+    temp    = zext( (( temp & (0x0000000000000000) ) >> 32) );
+    D       = ACC - temp;
+    ACC     = D;
+}
+
+# evmhosmf RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Fractional
+# evmhosmf rD,rA,rB 100 0000 1111
+:evmhosmf D,A,B is OP=4 & A & B & D & XOP_0_10=0x40F {
+# RT.l        = RA.S1 *sf RB.S1;
+# RT.h        = RA.S3 *sf RB.S3;
+
+    lo:8      = SignedFractionalMultiplication( (( A & (0x00000000FFFF0000) ) >> 16) , (( B & (0x00000000FFFF0000) ) >> 16) );
+    hi:8      = SignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhosmfa RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Fractional to Accumulator
+# evmhosmfa rD,rA,rB 100 0010 1111
+:evmhosmfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x42F {
+# RT.l       = RA.S1 *sf RB.S1;
+# RT.h       = RA.S3 *sf RB.S3;
+# ACC        = RT;
+
+    lo:8      = SignedFractionalMultiplication( (( A & (0x00000000FFFF0000) ) >> 16) , (( B & (0x00000000FFFF0000) ) >> 16) );
+    hi:8      = SignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    D         = (( zext(hi) << 32) | zext(lo)  );
+    ACC       = D;
+}
+
+# evmhosmfaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Fractional and Accumulate into Words
+# evmhosmfaaw rD,rA,rB 101 0000 1111
+:evmhosmfaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x50F {
+# u64 temp;
+# temp.l    = RA.S1 *sf RB.S1;
+# RT.l      = ACC.l + temp.l;
+# temp.l    = RA.S3 *sf RB.S3;
+# RT.h      = ACC.h + temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)  = (( ACC & (0x0000000000000000) ) >> 32) + SignedFractionalMultiplication( (( A & (0x00000000FFFF0000) ) >> 16) , (( B & (0x00000000FFFF0000) ) >> 16) );
+    hi:$(REGISTER_SIZE)  = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + SignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmhosmfanw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Fractional and Accumulate Negative into Words
+# evmhosmfanw rD,rA,rB 101 1000 1111
+:evmhosmfanw D,A,B is OP=4 & A & B & D & XOP_0_10=0x58F {
+# u64 temp;
+# temp.l    = RA.S1 *sf RB.S1;
+# RT.l      = ACC.l - temp.l;
+# temp.l    = RA.S3 *sf RB.S3;
+# RT.h      = ACC.h - temp.l;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)  = (( ACC & (0x0000000000000000) ) >> 32) - SignedFractionalMultiplication( (( A & (0x00000000FFFF0000) ) >> 16) , (( B & (0x00000000FFFF0000) ) >> 16) );
+    hi:$(REGISTER_SIZE)  = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - SignedFractionalMultiplication( (( A & (0xFFFFFFFFFFFF0000) ) >> 16) , (( B & (0xFFFFFFFFFFFF0000) ) >> 16) );
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmhosmi RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Integer
+# evmhosmi rD,rA,rB 100 0000 1101
+:evmhosmi D,A,B is OP=4 & A & B & D & XOP_0_10=0x40D {
+# RT.l        = RA.S1 *si RB.S1;
+# RT.h        = RA.S3 *si RB.S3;
+    
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFF000000000000) ) >> 48) * (( B & (0xFFFF000000000000) ) >> 48);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhosmia RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Integer to Accumulator
+# evmhosmia rD,rA,rB 100 0010 1101
+:evmhosmia D,A,B is OP=4 & A & B & D & XOP_0_10=0x42D {
+# RT.l       = RA.S1 *si RB.S1;
+# RT.h       = RA.S3 *si RB.S3;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFF000000000000) ) >> 48) * (( B & (0xFFFF000000000000) ) >> 48);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmhosmiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Integer and Accumulate into Words
+# evmhosmiaaw rD,rA,rB 101 0000 1101
+:evmhosmiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x50D {
+# u64    temp;
+# temp.l    = RA.S1 *si RB.S1;
+# RT.l      = ACC.l + temp.l;
+# temp.l    = RA.S3 *si RB.S3;
+# RT.h      = ACC.h + temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x00000000FFFFFFFF) ) ) + ((( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16));
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + ((( A & (0xFFFF000000000000) ) >> 48) * (( B & (0xFFFF000000000000) ) >> 48));
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhosmianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Modulo, Integer and Accumulate Negative into Words
+# evmhosmianw rD,rA,rB 101 1000 1101
+:evmhosmianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x58D {
+# u64 temp;
+# temp.l    = RA.S1 *si RB.S1;
+# RT.l      = ACC.l    - temp.l;
+# temp.l    = RA.S3 *si RB.SI;
+# RT.h      = ACC.h - temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x00000000FFFFFFFF) ) ) - ((( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16));
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - ((( A & (0xFFFF000000000000) ) >> 48) * (( B & (0xFFFF000000000000) ) >> 48));
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhossf RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Fractional
+# evmhossf rD,rA,rB 100 0000 0111
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator1;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2;
+:evmhossf D,A,B is OP=4 & A & B & D & XOP_0_10=0x407 {
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+    # TODO definition complicated
+    D         = VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator1(A,B);
+    flags:8   = VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2(A,B);
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhossfa rD,rA,rB 100 0010 0111
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Fractional to Accumulator
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2a;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2b;
+:evmhossfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x427 {
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+    # TODO definition complicated
+    D       = VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2a(A,B);
+    flags:8 = VectorMultiplyHalfWordsOddSignedSaturateFractionalToAccumulator2b(A,B);
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhossfaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Fractional and Accumulate into Words
+# evmhossfaaw rD,rA,rB 101 0000 0111
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateIntoWords2;
+:evmhossfaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x507 {
+# SPEFSCR.OVH  = ovh | movh;
+# SPEFSCR.OV   = ovl| movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl| movl;
+    # TODO definition complicated
+    D         = VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateIntoWords1(A,B,ACC,spr200);
+    flags:8   = VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateIntoWords2(A,B,ACC,spr200);
+    ACC       = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhossfanw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Fractional and Accumulate Negative into Words
+# evmhossfanw rD,rA,rB 101 1000 0111
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateNegativeIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateNegativeIntoWords2;
+:evmhossfanw D,A,B is OP=4 & A & B & D & XOP_0_10=0x587 {
+# SPEFSCR.OVH  = ovh | movh;
+# SPEFSCR.OV   = ovl| movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl| movl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateNegativeIntoWords1(A,B,ACC,spr200);
+    flags:8  = VectorMultiplyHalfWordsOddSignedSaturateFractionalAndAccumulateNegativeIntoWords2(A,B,ACC,spr200);
+    ACC      = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhossiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Integer and Accumulate into Words
+# evmhossiaaw rD,rA,rB 101 0000 0101
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateIntoWords2;
+:evmhossiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x505 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateIntoWords1(A,B,ACC,spr200);
+    flags:8  = VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateIntoWords2(A,B,ACC,spr200);
+    ACC      = D;
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhossianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Signed, Saturate, Integer and Accumulate Negative into Words
+# evmhossianw rD,rA,rB 101 1000 0101
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateNegativeIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateNegativeIntoWords2;
+:evmhossianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x585 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateNegativeIntoWords1(A,B,ACC,spr200);
+    ACC      = D;
+    flags:8  = VectorMultiplyHalfWordsOddSignedSaturateIntegerAndAccumulateNegativeIntoWords2(A,B,ACC,spr200);    
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhoumi RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Modulo, Integer
+# evmhoumi rD,rA,rB 100 0000 1100
+:evmhoumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x40C {
+# RT.l        = RA.S1 *ui RB.S1;
+# RT.h        = RA.S3 *ui RB.S3;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmhoumia RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Modulo, Integer to Accumulator
+# evmhoumia rD,rA,rB 100 0010 1100
+:evmhoumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x42C {
+# RT.l       = RA.S1 *ui RB.S1;
+# RT.h       = RA.S3 *ui RB.S3;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16);
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmhoumiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Modulo, Integer and Accumulate into Words
+# evmhoumiaaw rD,rA,rB 101 0000 1100
+:evmhoumiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x50C {
+# u64 temp;
+# temp      = RA.S1 *ui RB.S1;
+# RT.l      = ACC.l + temp.l;
+# temp.l    = RA.S3 *ui RB.S3;
+# RT.h      = ACC.h + temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x0000000000000000) ) >> 32) + ((( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16));
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + ((( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16));
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmhoumianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Modulo, Integer and Accumulate Negative into Words
+# evmhoumianw rD,rA,rB 101 1000 1100
+:evmhoumianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x58C {
+# u64    temp;
+# temp      = RA.S1 *ui RB.S1;
+# RT.l      = ACC.l - temp.l;
+# temp.l    = RA.S3 *ui RB.S3;
+# RT.h      = ACC.h - temp.l;
+# ACC       = RT;
+
+    lo:$(REGISTER_SIZE)      = (( ACC & (0x0000000000000000) ) >> 32) - ((( A & (0x00000000FFFF0000) ) >> 16) * (( B & (0x00000000FFFF0000) ) >> 16));
+    hi:$(REGISTER_SIZE)      = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - ((( A & (0xFFFFFFFFFFFF0000) ) >> 16) * (( B & (0xFFFFFFFFFFFF0000) ) >> 16));
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmhousiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Saturate, Integer and Accumulate into Words
+# evmhousiaaw rD,rA,rB 101 0000 0100
+define pcodeop VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateIntoWords2;
+:evmhousiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x504 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateIntoWords1(A,B,ACC,spr200);
+    ACC      = D;
+    flags:8  = VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateIntoWords2(A,B,ACC,spr200);
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmhousianw RT,RA,RB
+# ISA-cmt: Vector Multiply Halfwords, Odd, Unsigned, Saturate, Integer and Accumulate Negative into Words
+# evmhousianw rD,rA,rB 101 1000 0100
+define pcodeop VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateNegativeIntoWords1;
+define pcodeop VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateNegativeIntoWords2;
+:evmhousianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x584 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateNegativeIntoWords1(A,B,ACC,spr200);
+    ACC      = D;
+    flags:8  = VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateNegativeIntoWords2(A,B,ACC,spr200);
+
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# =================================================================
+# Page D-14
+
+# evmra RT,RA
+# ISA-cmt: Initialize Accumulator
+# evmra rD,rA 100 1100 0100
+# defined evx.sinc
+# define pcodeop InitializeAccumulator;
+# :evmra D,A is OP=4 & A & D & XOP_0_10=0x4C4 { 
+# ACC       = RA;
+# RT        = RA;
+
+#    ACC      = A;
+#    D        = A;
+
+#    InitializeAccumulator(D,A); 
+# }
+
+# evmwhsmf RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Modulo, Fractional
+# evmwhsmf rD,rA,rB 100 0100 1111
+:evmwhsmf D,A,B is OP=4 & A & B & D & XOP_0_10=0x44F {
+# u64    temp;
+# temp        = RA.l *sf RB.l;
+# RT.l        = temp.l;
+# temp        = RA.h *sf RB.h;
+# RT.h        = temp.l;
+
+    lo:8  = SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 32) , (( B & (0x0000000000000000) ) >> 32) );
+    hi:8  = SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) );
+    D     = (( zext(hi) << 32) | zext(lo)  );
+} 
+
+# evmwhsmfa RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Modulo, Fractional to Accumulator
+# evmwhsmfa rD,rA,rB 100 0110 1111
+:evmwhsmfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x46F {
+# u64    temp;
+# temp       = RA.l *sf RB.l;
+# RT.l       = temp.l;
+# temp       = RA.h *sf RB.h;
+# RT.h       = temp.l;
+# ACC        = RT;
+
+    lo:8  = SignedFractionalMultiplication( (( A & (0x0000000000000000) ) >> 32) , (( B & (0x0000000000000000) ) >> 32) );
+    hi:8  = SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) );
+    D     = (( zext(hi) << 32) | zext(lo)  );
+    ACC   = D;
+}
+
+# evmwhsmi RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Modulo, Integer
+# evmwhsmi rD,rA,rB 100 0100 1101
+:evmwhsmi D,A,B is OP=4 & A & B & D & XOP_0_10=0x44D {
+# u64    temp;
+# temp        = RA.l *si RB.l;
+# RT.l        = temp.l;
+# temp        = RA.h *si RB.h;
+# RT.h        = temp.l;
+
+    lo:$(REGISTER_SIZE)  = ((( A & (0x00000000FFFFFFFF) ) ) * (( B & (0x00000000FFFFFFFF) ) )) & 0xFFFFFFFF;
+    hi:$(REGISTER_SIZE)  = ((( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32)) & 0xFFFFFFFF;
+    D   = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmwhsmia RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Modulo, Integer to Accumulator
+# evmwhsmia rD,rA,rB 100 0110 1101
+:evmwhsmia D,A,B is OP=4 & A & B & D & XOP_0_10=0x46D {
+# u64    temp;
+# temp       = RA.l *si RB.l;
+# RT.l       = temp.l;
+# temp       = RA.h *si RB.h;
+# RT.h       = temp.l;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)  = ((( A & (0x00000000FFFFFFFF) ) ) * (( B & (0x00000000FFFFFFFF) ) )) & 0xFFFFFFFF;
+    hi:$(REGISTER_SIZE)  = ((( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32)) & 0xFFFFFFFF;
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evmwhssf RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Saturate, Fractional
+# evmwhssf rD,rA,rB 100 0100 0111
+define pcodeop VectorMultiplyWordHighSignedSaturateFractional1;
+define pcodeop VectorMultiplyWordHighSignedSaturateFractional2;
+:evmwhssf D,A,B is OP=4 & A & B & D & XOP_0_10=0x447 {
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+    # TODO definition complicated
+    D        = VectorMultiplyWordHighSignedSaturateFractional1(A,B);
+    flags:8  = VectorMultiplyWordHighSignedSaturateFractional2(A,B);
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwhssfa RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Signed, Saturate, Fractional to Accumulator
+# evmwhssfa rD,rA,rB 100 0110 0111
+define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator1;
+define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2;
+:evmwhssfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x467 { 
+# SPEFSCR.OVH  = movh;
+# SPEFSCR.OV   = movl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | movh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | movl;
+    # TODO definition complicated
+    D        = VectorMultiplyWordHighSignedSaturateFractionalToAccumulator1(A,B); 
+    ACC      = D;
+    flags:8  = VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2(A,B); 
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwhumi RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Unsigned, Modulo, Integer
+# evmwhumi rD,rA,rB 100 0100 1100
+:evmwhumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x44C {
+# u64 temp;
+# temp        = RA.l *ui RB.l;
+# RT.l        = temp.l;
+# temp        = RA.h *ui RB.h;
+# RT.h        = temp.l;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
+    lo      = lo:4;
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    hi      = hi:4;
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmwhumia RT,RA,RB
+# ISA-cmt: Vector Multiply Word High Unsigned, Modulo, Integer to Accumulator
+# evmwhumia rD,rA,rB 100 0110 1100
+:evmwhumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x46C {
+# u64    temp;
+# temp      = RA.l *ui RB.l;
+# RT.l      = temp.l;
+# temp      = RA.h *ui RB.h;
+# RT.h      = temp.l;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
+    lo      = lo:4;
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    hi      = hi:4;
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmwlsmi rD,rA,rB
+# ISA-cmt: Vector Multiply Word Low Signed, Modulo, Integer and Accumulate into Words
+# define VectorMultiplyWordLowUnsigned,ModuloInteger;
+# YYY No definition in manual
+
+# evmwhusiaaw rD,rA,rB 101 0100 0100
+# TODO Not in PowerISA Version 2.06 manual?
+define pcodeop evmwhusiaawOP;
+:evmwhusiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x544 { evmwhusiaawOP(D,A,B); }
+
+# evmwhusianw rD,rA,rB 101 1100 0100
+# TODO Not in PowerISA Version 2.06 manual?
+define pcodeop evmwhusianwOP;
+:evmwhusianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x5C4 {
+ evmwhusianwOP(D,A,B,ACC);
+}
+
+# evmwlsmiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Signed, Modulo, Integer and Accumulate into Words
+# evmwlsmiaaw ??
+# u64 temp;
+# temp       = RA.l *si RB.l;
+# RT.l       = ACC.l + temp.h;
+# temp       = RA.h *si RB.h;
+# RT.h       = ACC.h + temp.h;
+# ACC        = RT;
+
+# evmwlsmianw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Signed, Modulo, Integer and Accumulate Negative in Words
+# evmwlsmianw ??
+# u64 temp;
+# temp       = RA.l *si RB.l;
+# RT.l       = ACC.l - temp.h;
+# temp       = RA.h *si RB.h;
+# RT.h       = ACC.h - temp.h;
+# ACC        = RT;
+
+# evmwlssiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Signed, aturate, Integer and Accumulate into Words
+# evmwlssiaaw rD,rA,rB 101 0100 0001
+define pcodeop VectorMultiplyWordLowSignedSaturateIntegerAndAccumulateInWords1;
+define pcodeop VectorMultiplyWordLowSignedSaturateIntegerAndAccumulateInWords2;
+:evmwlssiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x541 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D         = VectorMultiplyWordLowSignedSaturateIntegerAndAccumulateInWords1(A,B,ACC,spr200);
+    ACC       = D;
+    flags:8   = VectorMultiplyWordLowSignedSaturateIntegerAndAccumulateInWords2(A,B,ACC,spr200);    
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwlumi RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Modulo, Integer
+# evmwlumi rD,rA,rB 100 0100 1000
+:evmwlumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x448 {
+# u64 temp;
+# temp        = RA.l *ui RB.l;
+# RT.l        = temp.h;
+# temp        = RA.h *ui RB.h;
+# RT.h        = temp.h;
+
+    lo:8    = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
+    lo      = (( lo & (0xFFFFFFFF00000000) ) >> 32);
+    hi:8    = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    lo      = (( hi & (0xFFFFFFFF00000000) ) >> 32);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evmwlumia RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Modulo, Integer to Accumulator
+# evmwlumia rD,rA,rB 100 0110 1000
+:evmwlumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x468 {
+# u64 temp;
+# temp       = RA.l *ui RB.l;
+# RT.l       = temp.h;
+# temp       = RA.h *ui RB.h;
+# RT.h       = temp.h;
+# ACC        = RT;
+
+    lo:8    = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
+    lo      = (( lo & (0xFFFFFFFF00000000) ) >> 32);
+    hi:8    = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    lo      = (( hi & (0xFFFFFFFF00000000) ) >> 32);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+    ACC     = D;
+}
+
+# evmwlumiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Modulo, Integer and Accumulate into Words
+# evmwlumiaaw rD,rA,rB 101 0100 1000
+:evmwlumiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x548 {
+# u64    temp;
+# temp       = RA.l *ui RB.l;
+# RT.l       = ACC.l + temp.h;
+# temp       = RA.h *ui RB.h;
+# RT.h       = ACC.h + temp.h;
+# ACC        = RT;
+
+    lo:$(REGISTER_SIZE)    = (( ACC & (0x0000000000000000) ) >> 32) + ((( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32));
+    hi:$(REGISTER_SIZE)    = (( ACC & (0xFFFFFFFF00000000) ) >> 32) + ((( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32));
+    D     = (( zext(hi) << 32) | zext(lo)  );
+    ACC   = D;
+}
+
+# evmwlumianw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Modulo, Integer and Accumulate Negative in Words
+# evmwlumianw rD,rA,rB 101 1100 1000
+:evmwlumianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x5C8 {
+# u64 temp;
+# temp       = RA.l *ui RB.l;
+# RT.l       = ACC.l - temp.h;
+# temp       = RA.h *ui RB.h;
+# RT.h       = ACC.h - temp.h;
+# ACC       = RT;
+    
+    lo:$(REGISTER_SIZE)  =   (( ACC & (0x0000000000000000) ) >> 32) - ((( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32));
+    hi:$(REGISTER_SIZE)  =   (( ACC & (0xFFFFFFFF00000000) ) >> 32) - ((( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32));
+    D   =   (( zext(hi) << 32) | zext(lo)  );
+    ACC =   D;
+}
+
+# evmwlusiaaw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Saturate, Integer and Accumulate into Words
+# evmwlusiaaw rD,rA,rB 101 0100 0000
+define pcodeop VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateInWords1;
+define pcodeop VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateInWords2;
+:evmwlusiaaw D,A,B is OP=4 & A & B & D & XOP_0_10=0x540 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D         = VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateInWords1(A,B,ACC,spr200);
+    ACC       = D;
+    flags:8   = VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateInWords2(A,B,ACC,spr200);
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwlusianw RT,RA,RB
+# ISA-cmt: Vector Multiply Word Low Unsigned, Saturate, Integer and Accumulate Negative in Words
+# evmwlusianw rD,rA,rB 101 1100 0000
+define pcodeop VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateNegativeInWords1;
+define pcodeop VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateNegativeInWords2;
+:evmwlusianw D,A,B is OP=4 & A & B & D & XOP_0_10=0x5C0 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+    D        = VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateNegativeInWords1(D,A,B,ACC,spr200);
+    ACC      = D;
+    flags:8  = VectorMultiplyWordLowUnsignedSaturateIntegerAndAccumulateNegativeInWords2(D,A,B,ACC,spr200);
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwsmf RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Fractional
+# evmwsmf rD,rA,rB 100 0101 1011
+:evmwsmf D,A,B is OP=4 & A & B & D & XOP_0_10=0x45B {
+# RT        = RA.h *sf RB.h;
+
+    D   = SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) );
+}
+
+# evmwsmfa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Fractional to Accumulator
+# evmwsmfa rD,rA,rB 100 0111 1011
+:evmwsmfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x47B {
+# RT        = RA.h *sf RB.h;
+# ACC        = RT;
+
+    D   = SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) );
+    ACC = D;
+}
+
+# evmwsmfaa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Fractional and Accumulate
+# evmwsmfaa rD,rA,rB 101 0101 1011 101 0101 1011
+:evmwsmfaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x55B {
+# u64 temp;
+# temp      = RA.h *sf RB.h;
+# RT        = ACC + temp;
+# ACC       = RT;
+
+    D   = ACC + ( SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) ) );
+    ACC = D;
+}
+
+# evmwsmfan RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Fractional and Accumulate Negative
+# evmwsmfan rD,rA,rB 101 1101 1011
+:evmwsmfan D,A,B is OP=4 & A & B & D & XOP_0_10=0x5DB {
+# u64 temp;
+# temp      = RA.h *sf RB.h;
+# RT        = ACC - temp;
+# ACC       = RT;
+
+    D   = ACC - ( SignedFractionalMultiplication( (( A & (0xFFFFFFFF00000000) ) >> 32) , (( B & (0xFFFFFFFF00000000) ) >> 32) ) );
+    ACC = D;
+}
+
+# evmwsmi RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Integer
+# evmwsmi rD,rA,rB 100 0101 1001
+# evmwsmi confict with machhwo.
+# :evmwsmi D,A,B is OP=4 & A & B & D & XOP_0_10=0x459 {
+# RT        = RA.h *si RB.h;
+
+# }
+
+# evmwsmia RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Integer to Accumulator
+# evmwsmia rD,rA,rB 100 0111 1001
+:evmwsmia D,A,B is OP=4 & A & B & D & XOP_0_10=0x479 {
+# RT        = RA.h *si RB.h;
+# ACC        = RT;
+
+    D       = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    ACC     = D;
+}
+
+# evmwsmiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Integer and Accumulate
+# evmwsmiaa rD,rA,rB 101 0101 1001
+# YYY duplicate???
+# define pcodeop VectorMultiplyWordSignedModuloIntegerAndAccumulate2;
+# u64 temp;
+# temp  = RA.h *si RB.h;
+# RT    = ACC + temp;
+# ACC   = RT;
+
+# :evmwsmiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x559 {
+# u64 temp;
+# temp  = RA.h *si RB.h;
+# RT    = ACC + temp;
+# ACC   = RT;
+#}
+
+# evmwsmian RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Modulo, Integer and Accumulate Negative
+# evmwsmian rD,rA,rB 101 1101 1001
+# evmwsmian confict with macchwso.
+# ppc_instructions.sinc :macchwso. D,A,B is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=1
+# define pcodeop VectorMultiplyWordSignedModuloIntegerAndAccumulateNegative;
+# :evmwsmian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5D9 {
+# u64 temp;
+# temp  = RA.h *si RB.h;
+# RT    = ACC - temp;
+# ACC   = RT;
+# }
+
+# evmwssf RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Saturate, Fractional
+# evmwssf rD,rA,rB 100 0101 0011
+define pcodeop VectorMultiplyWordSignedSaturateFractional1;
+define pcodeop VectorMultiplyWordSignedSaturateFractional2;
+:evmwssf D,A,B is OP=4 & A & B & D & XOP_0_10=0x453 {
+# SPEFSCR.OVH = 0;
+# SPEFSCR.OV  = mov;
+# SPEFSCR.SOV = SPEFSCR.SOV | mov;
+    # TODO definition 
+    D        = VectorMultiplyWordSignedSaturateFractional1(D,A,B,ACC);
+    ACC      = D;
+    flags:8  = VectorMultiplyWordSignedSaturateFractional2(D,A,B,ACC);    
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwssfa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Saturate, Fractional to Accumulator
+# evmwssfa rD,rA,rB 100 0111 0011
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulate1a;
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulate1b;
+:evmwssfa D,A,B is OP=4 & A & B & D & XOP_0_10=0x473 {
+# SPEFSCR.OVH = 0;
+# SPEFSCR.OV  = mov;
+# SPEFSCR.SOV = SPEFSCR.SOV | mov;
+    # TODO definition 
+    D        = VectorMultiplyWordSignedSaturateFractionalAndAccumulate1a(D,A,B,ACC);
+    ACC      = D;
+    flags:8  = VectorMultiplyWordSignedSaturateFractionalAndAccumulate1b(D,A,B,ACC);    
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwssfaa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Saturate, Fractional and Accumulate
+# evmwssfaa rD,rA,rB 101 0101 0011
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulate2a;
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulate2b;
+:evmwssfaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x553 {
+# SPEFSCR.OVH = 0;
+# SPEFSCR.OV  = ov | mov;
+# SPEFSCR.SOV = SPEFSCR.SOV | ov | mov;
+    # TODO definition 
+    D        = VectorMultiplyWordSignedSaturateFractionalAndAccumulate2a(A,B,ACC);
+    flags:8  = VectorMultiplyWordSignedSaturateFractionalAndAccumulate2b(A,B,ACC);
+    ACC      = D;
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwssfan RT,RA,RB
+# ISA-cmt: Vector Multiply Word Signed, Saturate, Fractional and Accumulate Negative
+# evmwssfan rD,rA,rB 101 1101 0011
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulateNegative1;
+define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulateNegative2;
+:evmwssfan D,A,B is OP=4 & A & B & D & XOP_0_10=0x5D3 {
+# SPEFSCR.OVH = 0;
+# SPEFSCR.OV  = ov | mov;
+# SPEFSCR.SOV = SPEFSCR.SOV | ov | mov;
+    # TODO definition 
+    D        = VectorMultiplyWordSignedSaturateFractionalAndAccumulateNegative1(A,B,ACC,spr200);
+    flags:8  = VectorMultiplyWordSignedSaturateFractionalAndAccumulateNegative2(A,B,ACC,spr200);
+    ACC      = D;
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evmwumi RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer
+# evmwumi rD,rA,rB 100 01A1 1000 A=0
+# evmwumi confict with machhwo
+# define pcodeop VectorMultiplyWordUnsignedModuloInteger;
+# :evmwumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x458 { 
+# RT        = RA.h *ui RB.h;
+#    VectorMultiplyWordUnsignedModuloInteger(D,A,B,ACC); 
+# }
+
+# evmwumia RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer to Accumulator
+# evmwumia rD,rA,rB 100 01A1 1000 A=1
+:evmwumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x478 {
+# RT        = RA.h *ui RB.h;
+# ACC        = RT;
+
+    D   = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
+    ACC = D;
+}
+
+# evmwumiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer and Accumulate
+# evmwumiaa rD,rA,rB 101 0101 1000
+# evmwumiaa confict with macchwo
+# :evmwumiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x558 { 
+# u64 temp;
+# temp    = RA.h *ui RB.h;
+# RT      = ACC + temp;
+# ACC     = RT;
+
+#    VectorMultiplyWordUnsignedModuloIntegerAndAccumulate2(D,A,B,ACC); 
+# }
+
+# evmwumian RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer and Accumulate Negative
+# evmwumian rD,rA,rB 101 1101 1000
+# evmwumian confict with macchwso
+# :evmwumian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5D8 { 
+# u64 temp;
+# temp  = RA.h *ui RB.h;
+# RT    = ACC - temp;
+# ACC   = RT;
+
+#    VectorMultiplyWordUnsignedModuloIntegerAndAccumulateNegative(D,A,B,ACC); 
+# }
+
+# =================================================================
+# Page D-15
+
+# evnand RT,RA,RB
+# ISA-cmt: Vector NAND
+# evnand rD,rA,rB 010 0001 1110
+:evnand D,A,B is OP=4 & A & B & D & XOP_0_10=0x21E { 
+# RT.l      = ONESCOMP(RA.l & RB.l);
+# RT.h      = ONESCOMP(RA.h & RB.h);
+
+    lo:$(REGISTER_SIZE)      = ~ ( (( A & (0x00000000FFFFFFFF) ) ) & (( B & (0x00000000FFFFFFFF) ) ) );
+    hi:$(REGISTER_SIZE)      = ~ ( (( A & (0xFFFFFFFF00000000) ) >> 32) & (( B & (0xFFFFFFFF00000000) ) >> 32) );
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evneg RT,RA
+# ISA-cmt: Vector Negate
+# evneg rD,rA 010 0000 1001
+:evneg D,A is OP=4 & A & D & XOP_0_10=0x209 & BITS_11_15=0 { 
+# RT.l      = NEG(RA.l);
+# RT.h      = NEG(RA.h);
+
+    lo:$(REGISTER_SIZE)      = - (( A & (0x00000000FFFFFFFF) ) );
+    hi:$(REGISTER_SIZE)      = - (( A & (0xFFFFFFFF00000000) ) >> 32);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evnor RT,RA,RB
+# ISA-cmt: Vector NOR
+# evnor rD,rA,rB 010 0001 1000
+:evnor D,A,B is OP=4 & A & B & D & XOP_0_10=0x218 { 
+# RT.l      = ONESCOMP(RA.l | RB.l);
+# RT.h      = ONESCOMP(RA.h | RB.h);
+
+    lo:$(REGISTER_SIZE)      = ~ ( (( A & (0x00000000FFFFFFFF) ) ) | (( B & (0x00000000FFFFFFFF) ) ) );
+    hi:$(REGISTER_SIZE)      = ~ ( (( A & (0xFFFFFFFF00000000) ) >> 32) | (( B & (0xFFFFFFFF00000000) ) >> 32) );
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evnot => evnor
+
+# evor RT,RA,RB
+# ISA-cmt: Vector OR
+# evor rD,rA,rB 010 0001 0111
+:evor D,A,B is OP=4 & A & B & D & XOP_0_10=0x217 { 
+# RT.l      = RA.l | RB.l;
+# RT.h      = RA.h | RB.h;
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFFFFFF) ) ) | (( B & (0x00000000FFFFFFFF) ) );
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) | (( B & (0xFFFFFFFF00000000) ) >> 32);
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evorc RT,RA,RB
+# ISA-cmt: Vector OR with Complement
+# evorc rD,rA,rB 010 0001 1011
+:evorc D,A,B is OP=4 & A & B & D & XOP_0_10=0x21B { 
+# RT.l      = RA.l | ONESCOMP(RB.l);
+# RT.h      = RA.h | ONESCOMP(RB.h);
+
+    lo:$(REGISTER_SIZE)      = (( A & (0x00000000FFFFFFFF) ) ) | (~ (( B & (0x00000000FFFFFFFF) ) ));
+    hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) | (~ (( B & (0xFFFFFFFF00000000) ) >> 32));
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+define pcodeop ROTL64;
+
+# evrlw RT,RA,RB
+# ISA-cmt: Vector Rotate Left Word
+# evrlw rD,rA,rB 010 0010 1000
+:evrlw D,A,B is OP=4 & A & B & D & XOP_0_10=0x228 { 
+# nh    = RB.bsub(27:31);
+# nl    = RB.bsub(59:63);
+# RT.l  = ROTL(RA.l, nh);
+# RT.h  = ROTL(RA.h, nl);
+
+    nh:$(REGISTER_SIZE)   = ((B & 0x00000000f8000000) >> 27);
+    nl:$(REGISTER_SIZE)   = ((B & 0xf800000000000000) >> 59);
+    lo:8 = ROTL64( (( A & (0x00000000FFFFFFFF) ) ) ,nh);
+    hi:8 = ROTL64( (( A & (0xFFFFFFFF00000000) ) >> 32) ,nl);
+    D    = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evrlwi RT,RA,UI
+# ISA-cmt: Vector Rotate Left Word Immediate
+# evrlwi rD,rA,EVUIMM 010 0010 1010
+:evrlwi D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x22A { 
+# n     = UI;
+# RT.l  = ROTL(RA.l, n);
+# RT.h  = ROTL(RA.h, n);
+
+    n:8  = EVUIMM;
+    lo:8 = ROTL64( (( A & (0x00000000FFFFFFFF) ) ) ,n);
+    hi:8 = ROTL64( (( A & (0xFFFFFFFF00000000) ) >> 32) ,n);
+    D    = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evrndw RT,RA
+# ISA-cmt: Vector Round Word
+# evrndw rD,rA 010 0000 1100
+:evrndw D,A is OP=4 & A & D & UIMM & XOP_0_10=0x20C { 
+# RT.l      = (RA.l + 0x00008000) & 0xFFFF0000;
+# RT.h      = (RA.h + 0x00008000) & 0xFFFF0000;
+
+    lo:$(REGISTER_SIZE)      = ((( A & (0x00000000FFFFFFFF) ) ) + 0x00008000) & 0xFFFF0000;
+    hi:$(REGISTER_SIZE)      = ((( A & (0x00FFFFFFFF00000000) ) >> 32) + 0x00008000) & 0xFFFF0000;
+    D       = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# SPECIAL ** YYY
+# evsel RT,RA,RB,BFA
+# ISA-cmt: Vector Select
+# evsel rD,rA,rB,crS 0100 1111
+# define pcodeop VectorSelect;
+# :evsel D,A,B,crS is OP=4 & A & B & D & crS & XOP_3_10=0x4F { 
+    # TODO definition complicated
+#    VectorSelect(D,A,B,crS); 
+# }
+
+# evslw RT,RA,RB
+# ISA-cmt: Vector Shift Left Word
+# evslw rD,rA,rB 010 0010 0100
+:evslw D,A,B is OP=4 & A & B & D & XOP_0_10=0x224 { 
+# nh        = RB.bsub(26:31);
+# nl        = RB.bsub(58:63);
+# RT.l      = SL(RA.l,nh);
+# RT.h      = SL(RA.h,nl);
+
+    nh:$(REGISTER_SIZE)  = ((B & 0x00000000fc000000) >> 26);
+    nl:$(REGISTER_SIZE)  = ((B & 0xfc00000000000000) >> 58);
+    lo:$(REGISTER_SIZE)  = ((( A & (0x00000000FFFFFFFF) ) ) << nh);
+    hi:$(REGISTER_SIZE)  = ((( A & (0xFFFFFFFF00000000) ) >> 32) << nl);
+    D   = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# c RT,RA,UI
+# ISA-cmt: Vector Shift Left Word Immediate
+# evslwi rD,rA,EVUIMM 010 0010 0110
+:evslwi D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x226 { 
+# n     = UI;
+# RT.l  = SL(RA.l, n);
+# RT.h  = SL(RA.h, n);
+
+    n:8  = EVUIMM;
+    lo:8 = (( A & (0x00000000FFFFFFFF) ) ) << n;
+    hi:8 = (( A & (0xFFFFFFFF00000000) ) >> 32) << n;
+    D    = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evsplatfi RT,SI
+# ISA-cmt: Vector Splat Fractional Immediate
+# evsplatfi rD,BU_SIMM 010 0010 1011
+define pcodeop VectorSplatFractionalImmediate;
+:evsplatfi D,BU_SIMM is OP=4 & D & BU_SIMM & XOP_0_10=0x22B  { 
+    # TODO definition
+# RT0:31 ô SI || 270
+# RT32:63 ô SI || 270
+# The value specified by SI is padded with trailing zeros
+# and placed in both elements of RT. The SI ends up in
+# bit positions RT0:4 and RT32:36.
+
+    D = VectorSplatFractionalImmediate(); 
+}
+
+
+# BU_SIMMt: is BU_SIMM  [ val = BU_SIMM; ] { tmp:8 = sext(BU_SIMM); export tmp; }
+
+# evsplati RT,SI
+# ISA-cmt: Vector Splat Immediate
+# evsplati rD,BU_SIMM 010 0010 1001
+define pcodeop VectorSplatImmediate;
+:evsplati D,BU_SIMM is OP=4 & D & BU_SIMM & XOP_0_10=0x229  { 
+# RT.l  = EXTS(SI);
+# RT.h  = EXTS(SI);
+
+#   lo:8    = BU_SIMMt; # sign or zext
+#   hi:8    = BU_SIMM;
+#   D        = 64From2_32(hi,lo);
+ 
+    D = VectorSplatImmediate();
+}
+
+# evsrwis RT,RA,UI
+# ISA-cmt: Vector Shift Right Word Immediate Signed
+# evsrwis rD,rA,EVUIMM 010 0010 0011
+define pcodeop VectorShiftRightWordImmediateSigned;
+:evsrwis D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x223 { 
+   # TODO definition
+# n ô UI
+# RT0:31 ô EXTS((RA)0:31-n)
+# RT32:63 ô EXTS((RA)32:63-n)
+# Both high and low elements of RA are shifted right by
+# the 5-bit UI value. Bits in the most significant positions
+# vacated by the shift are filled with a copy of the sign bit.
+
+    D    = VectorShiftRightWordImmediateSigned(A); 
+}
+
+# evsrwiu RT,RA,UI
+# ISA-cmt: Vector Shift Right Word Immediate Unsigned
+# evsrwiu rD,rA,EVUIMM 010 0010 0010
+define pcodeop VectorShiftRightWordImmediateUnsigned;
+:evsrwiu D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x222 { 
+    # TODO definition
+# n ô UI
+# RT0:31 ô EXTZ((RA)0:31-n)
+# RT32:63 ô EXTZ((RA)32:63-n)
+# Both high and low elements of RA are shifted right by
+# the 5-bit UI value; zeros are shifted into the most significant
+# position.
+    D    = VectorShiftRightWordImmediateUnsigned(A); 
+}
+
+# evsrws RT,RA,RB
+# ISA-cmt: Vector Shift Right Word Signed
+# evsrws rD,rA,rB 010 0010 0001
+:evsrws D,A,B is OP=4 & A & B & D & XOP_0_10=0x221 { 
+# nh    = RB.bsub(26:31);
+# hl    = RB.bsub(58:63);
+# RT.l  = EXTS(RA.bsub(0:32-nh));
+# RT.h  = EXTS(RA.bsub(32:63-nl));
+
+    nh:$(REGISTER_SIZE)   = 32-((B & 0x00000000fc000000) >> 26);
+    nl:$(REGISTER_SIZE)   = 63-((B & 0xfc00000000000000) >> 58);
+    tmp:$(REGISTER_SIZE)  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nh) - (0) + 1))) << (0)) >> 0);
+    lo:8 = sext(tmp:4);
+    tmp  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nl) - (32) + 1))) << (32)) >> 32);
+    hi:8 = sext(tmp:4);
+    D    = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evsrwu RT,RA,RB
+# ISA-cmt: Vector Shift Right Word Unsigned
+# evsrwu rD,rA,rB 010 0010 0000
+:evsrwu D,A,B is OP=4 & A & B & D & XOP_0_10=0x220 { 
+# nh    = RB.bsub(26:31);
+# nl    = RB.bsub(58:63);
+# RT.l  = EXTZ(RA.bsub(0:32-nh));
+# RT.h  = EXTZ(RA.bsub(32:63-nl));
+
+    nh:$(REGISTER_SIZE)   = 32-((B & 0x00000000fc000000) >> 26);
+    nl:$(REGISTER_SIZE)   = 63-((B & 0xfc00000000000000) >> 58);
+    tmp:$(REGISTER_SIZE)  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nh) - (0) + 1))) << (0)) >> 0);
+    lo:8 = zext(tmp:4);
+    tmp  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nl) - (32) + 1))) << (32)) >> 32);
+    hi:8 = zext(tmp:4);
+    D    = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evstdd RS,D(RA)
+# ISA-cmt: Vector Store Double of Double
+# evstdd rD,rA,EVUIMM_8 011 0010 0001
+# defined evx.sinc EJ XXX
+#define pcodeop VectorStoreDoubleOfDouble;
+#:evstdd D,A,EVUIMM_8 is OP=4 & A & D & EVUIMM_8 & XOP_0_10=0x321 { 
+# if (RA == 0) {
+#     b     = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + EXTZ(UI*8);
+# MEM(EA,8)    = RS;
+
+#     VectorStoreDoubleOfDouble(D,A); 
+# }
+
+# evstddx RS,RA,RB
+# ISA-cmt: Vector Store Double of Double Indexed
+# evstddx rS,rA,rB 011 0010 0000
+# defined evx.sinc EJ XXX
+# define pcodeop VectorStoreDoubleOfDoubleIndexed;
+# :evstddx S,A,B is OP=4 & A & S & B & XOP_0_10=0x320 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + RB;
+# MEM(EA,8)     = RS;
+
+#     VectorStoreDoubleOfDoubleIndexed(S,A,B); 
+# }
+# :evstddx RS,RA_OR_ZERO,RB        is OP=4 & RS & RA_OR_ZERO & RB & XOP_0_10=800
+# {
+#     ea = RA_OR_ZERO + RB;
+#     *:8 ($(EATRUNC)) = RS;
+# }
+
+# evstdh RS,D(RA)
+# ISA-cmt: Vector Store Double of Four Halfwords
+# evstdh rS,rA,EVUIMM_8 011 0010 0101
+:evstdh S,EVUIMM_8_RAt is OP=4 & A & S & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x325 { 
+# if (RA == 0) {
+#     b     = 0;
+# } else {
+#     b     = RA;
+# }
+# EA            = b + EXTZ(UI*8);
+# MEM(EA,2)     = RS.S0;
+# MEM(EA+2,2)   = RS.S1;
+# MEM(EA+4,2)   = RS.S2;
+# MEM(EA+6,2)   = RS.S3;
+
+    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_8_RAt);
+    *:2 (EA) = *:2 ((S) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
+    *:2 (EA+4) = *:2 ((S+4) & $(MEMMASK));
+    *:2 (EA+6) = *:2 ((S+4) & $(MEMMASK));
+}
+
+# evstdhx RS,RA,RB
+# ISA-cmt: Vector Store Double of Four Halfwords Indexed
+# evstdhx rS,rA,rB 011 0010 0100
+:evstdhx S,A,B is OP=4 & A & B & S & XOP_0_10=0x324 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + RB;
+# MEM(EA,2)     = RS.S0;
+# MEM(EA+2,2)   = RS.S1;
+# MEM(EA+4,2)   = RS.S2;
+# MEM(EA+6,2)   = RS.S3;
+
+    EA:$(REGISTER_SIZE)    = A + B;
+    *:2 (EA) = *:2 ((S) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
+    *:2 (EA+4) = *:2 ((S+4) & $(MEMMASK));
+    *:2 (EA+6) = *:2 ((S+6) & $(MEMMASK));
+}
+
+# evstdw RS,D(RA)
+# ISA-cmt: Vector Store Double of Two Words
+# evstdw rS,rA,EVUIMM_8 011 0010 0011
+:evstdw S,EVUIMM_8_RAt is OP=4 & A & S & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x323 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + EXTZ(UI*8);
+# MEM(EA,4)     = RS.l;
+# MEM(EA+4,4)   = RS.h;
+
+    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_8_RAt);
+    *:4 (EA) = *:4 ((S) & $(MEMMASK));
+    *:4 (EA+4) = *:4 ((S+4) & $(MEMMASK));
+}
+
+# evstdwx RS,RA,RB
+# ISA-cmt: Vector Store Double of Two Words Indexed
+# evstdwx rS,rA,rB 011 0010 0010
+:evstdwx S,A,B is OP=4 & A & B & S & XOP_0_10=0x322 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + RB;
+# MEM(EA,4)     = RS.l;
+# MEM(EA+4,4)   = RS.h;
+
+    EA:$(REGISTER_SIZE)   = A + B;
+    *:4 (EA) = *:4 ((S) & $(MEMMASK));
+    *:4 (EA+4) = *:4 ((S+4) & $(MEMMASK));
+}
+
+# evstwhe RS,D(RA)
+# ISA-cmt: Vector Store Word of Two Halfwords from Even
+# evstwhe rS,rA,EVUIMM_4 011 0011 0001
+:evstwhe S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x331 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + EXTZ(UI*4);
+# MEM(EA,2)     = RS.S0;
+# MEM(EA+2,2)   = RS.S2;
+
+    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    *:2 (EA) = *:2 ((S) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
+}
+
+# evstwhex RS,RA,RB
+# ISA-cmt: Vector Store Word of Two Halfwords from Even Indexed
+# evstwhex rS,rA,rB 011 0011 0000
+:evstwhex S,A,B is OP=4 & A & B & S & XOP_0_10=0x330 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b     = RA;
+# }
+# EA            = b + RB;
+# MEM(EA,2)     = RS.S0;
+# MEM(EA+2,2)   = RS.S2;
+
+    EA:$(REGISTER_SIZE)   = A + B;
+    *:2 (EA) = *:2 ((S) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
+}
+
+# evstwho RS,D(RA)
+# ISA-cmt: Vector Store Word of Two Halfwords from Odd
+# evstwho rS,rA,EVUIMM_4 011 0011 0101
+:evstwho S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x335 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + EXTZ(UI*4);
+# MEM(EA,2)     = RS.S1;
+# MEM(EA+2,2)   = RS.S3;
+
+    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    *:2 (EA) = *:2 ((S+2) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+6) & $(MEMMASK));
+}
+
+# evstwhox RS,RA,RB
+# ISA-cmt: Vector Store Word of Two Halfwords from Odd Indexed
+# evstwhox rS,rA,rB 011 0011 0100
+:evstwhox S,A,B is OP=4 & A & B & S & XOP_0_10=0x334 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA            = b + RB;
+# MEM(EA,2)     = RS.S1;
+# MEM(EA+2,2)   = RS.S3;
+   
+    EA:$(REGISTER_SIZE)   = A + B;
+    *:2 (EA) = *:2 ((S+2) & $(MEMMASK));
+    *:2 (EA+2) = *:2 ((S+6) & $(MEMMASK));
+}
+
+# evstwwe RS,D(RA)
+# ISA-cmt: Vector Store Word of Word from Even
+# evstwwe rS,rA,EVUIMM_4 011 0011 1001
+#define pcodeop VectorStoreWordOfWordFromEven;
+#:evstwwe S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x339 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA        = b + EXTZ(UI*4);
+# MEM(EA,4) = RS;
+
+#     VectorStoreWordOfWordFromEven(S,A); 
+# }
+
+# evstwwex RS,RA,RB
+# ISA-cmt: Vector Store Word of Word from Even Indexed
+# evstwwex rS,rA,rB 011 0011 1000
+#define pcodeop VectorStoreWordOfWordFromEvenIndexed;
+#:evstwwex S,A,B is OP=4 & A & B & S & XOP_0_10=0x338 { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA        = b + RB;
+# MEM(EA,4) = RS;
+
+#    VectorStoreWordOfWordFromEvenIndexed(S,A,B); 
+# }
+
+# evstwwo RS,D(RA)
+# ISA-cmt: Vector Store Word of Word from Odd
+# evstwwo rS,rA,EVUIMM_4 011 0011 1101
+:evstwwo S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x33D { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA        = b + EXTZ(UI*4);
+# MEM(EA,4)    = RS.h;
+
+    EA:$(REGISTER_SIZE)    = A + zext(EVUIMM_4_RAt);
+    *:4 (EA) = *:4 ((S+4) & $(MEMMASK));
+}
+
+# evstwwox RS,RA,RB
+# ISA-cmt: Vector Store Word of Word from Odd Indexed
+# evstwwox rS,rA,rB 011 0011 1100
+:evstwwox S,A,B is OP=4 & A & B & S & XOP_0_10=0x33C { 
+# if (RA == 0) {
+#     b    = 0;
+# } else {
+#     b    = RA;
+# }
+# EA        = b + RB;
+# MEM(EA,4)    = RS.h;
+
+    EA:$(REGISTER_SIZE)   = A + B;
+    *:4 (EA) = *:4 ((S+4) & $(MEMMASK));
+}
+
+# evsubfsmiaaw RT,RA
+# ISA-cmt: Vector Subtract Signed, Modulo, Integer to Accumulator Word
+# evsubfsmiaaw rD,rA 100 0011 1011
+:evsubfsmiaaw D,A is OP=4 & A & D & XOP_0_10=0x4CB & BITS_11_15=0 {
+# RT.l  = ACC.l - RA.l;
+# RT.h  = ACC.h - RA.h;
+# ACC   = RT;
+
+    lo:$(REGISTER_SIZE)  = (( ACC & (0x00000000FFFFFFFF) ) ) - (( A & (0x00000000FFFFFFFF) ) );
+    hi:$(REGISTER_SIZE)  = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - (( A & (0xFFFFFFFF00000000) ) >> 32);
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# =================================================================
+# Page D-16
+
+# evsubfssiaaw RT,RA
+# ISA-cmt: Vector Subtract Signed, Saturate, Integer to Accumulator Word
+# evsubfssiaaw rD,rA 100 1100 0011
+define pcodeop VectorSubtractSignedSaturateIntegerToAccumulatorWord1;
+define pcodeop VectorSubtractSignedSaturateIntegerToAccumulatorWord2;
+:evsubfssiaaw D,A is OP=4 & A & D & XOP_0_10=0x4C3 & BITS_11_15=0 {
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+    # TODO definition complicated
+     D         = VectorSubtractSignedSaturateIntegerToAccumulatorWord1(A,ACC);
+     flags:8   = VectorSubtractSignedSaturateIntegerToAccumulatorWord2(A,ACC,spr200);
+         spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evsubfumiaaw RT,RA
+# ISA-cmt: Vector Subtract Unsigned, Modulo, Integer to Accumulator Word
+# evsubfumiaaw rD,rA 100 1100 1010
+:evsubfumiaaw D,A is OP=4 & A & D & XOP_0_10=0x4CA & BITS_11_15=0 {
+# RT.l       = ACC.l - RA.l;
+# RT.h       = ACC.h - RA.h;
+# ACC        = RT;
+
+   lo:$(REGISTER_SIZE)   = (( ACC & (0x0000000000000000) ) >> 32) - (( A & (0x0000000000000000) ) >> 32);
+   hi:$(REGISTER_SIZE)   = (( ACC & (0xFFFFFFFF00000000) ) >> 32) - (( A & (0xFFFFFFFF00000000) ) >> 32);
+   D    = (( zext(hi) << 32) | zext(lo)  );
+   ACC  = D;
+}
+
+# evsubfusiaaw RT,RA
+# ISA-cmt: Vector Subtract Unsigned, Saturate, Integer to Accumulator Word
+# evsubfusiaaw rD,rA 100 1100 0010
+define pcodeop VectorSubtractUnsignedSaturateIntegerToAccumulatorWord1;
+define pcodeop VectorSubtractUnsignedSaturateIntegerToAccumulatorWord2;
+# SPEFSCR.OVH  = ovh;
+# SPEFSCR.OV   = ovl;
+# SPEFSCR.SOVH = SPEFSCR.SOVH | ovh;
+# SPEFSCR.SOV  = SPEFSCR.SOV | ovl;
+:evsubfusiaaw D,A is OP=4 & A & D & XOP_0_10=0x4C2 & BITS_11_15=0 {
+    # TODO definition complicated
+    VectorSubtractUnsignedSaturateIntegerToAccumulatorWord1(D,A,ACC,spr200);
+    flags:8 = VectorSubtractUnsignedSaturateIntegerToAccumulatorWord2(D,A,ACC,spr200);
+        spr200 = (spr200 & (~ (0x200000000)) ) | (flags & (0x200000000));
+    spr200 = (spr200 & (~ (0x2000000000000)) ) | (flags & (0x2000000000000));
+    spr200 = spr200 | (flags & (0x100000000));
+    spr200 = spr200 | (flags & (0x1000000000000));
+}
+
+# evsubfw RT,RA,RB
+# ISA-cmt: Vector Subtract from Word
+# evsubfw rD,rA,rB 010 0000 0100
+:evsubfw D,A,B is OP=4 & A & B & D & XOP_0_10=0x204 { 
+# RT.l    = RB.l - RA.l;
+# RT.h    = RB.h - RA.h;
+
+    lo:$(REGISTER_SIZE)  = (( B & (0x00000000FFFFFFFF) ) ) - (( A & (0x00000000FFFFFFFF) ) );
+    hi:$(REGISTER_SIZE)  = (( B & (0xFFFFFFFF00000000) ) >> 32) - (( A & (0xFFFFFFFF00000000) ) >> 32);
+    D   = (( zext(hi) << 32) | zext(lo)  );
+    ACC = D;
+}
+
+# evsubifw RT,UI,RB
+# ISA-cmt: Vector Subtract Immediate from Word
+# evsubifw rD,UIMM,rB 010 0000 0110
+:evsubifw D,BITS_16_20,B is OP=4 & D & BITS_16_20 & B & XOP_0_10=0x206  { 
+# RT.l    = RB.l - EXTZ(UI);
+# RT.h    = RB.h - EXTZ(UI);
+
+    tmp:8 = BITS_16_20*1;
+    lo:$(REGISTER_SIZE)    = (( B & (0x0000000000000000) ) >> 32) - tmp;
+    hi:$(REGISTER_SIZE)    = (( B & (0xFFFFFFFF00000000) ) >> 32) - tmp;
+    D      = (( zext(hi) << 32) | zext(lo)  );
+}
+
+# evsubiw => evsubifw
+
+# evsubw => evsubfw
+
+# evxor RT,RA,RB
+# ISA-cmt: Vector XOR
+# evxor rD,rA,rB 010 0001 0110
+# defined evx.sinc EJ XXX
+# define pcodeop VectorXOR;
+# :    D    = 64From2_32(hi,lo);
+# :evxor S,A,B is OP=4 & S & A & B & XOP_0_10=0x216 {
+# RT.l     = RA.l ^ RB.l;
+# RT.h    = RA.h ^ RB.h;
+
+# VectorXOR(S,A,B);
+# lo = A:2 ^ B:2;
+# hi = A(2) ^ B(2);
+# D:2 = lo;
+# D(2) = hi;
+# }
+
+# TODO evmwlssianw RT,RA,RB
+# TODO complicated
+
+

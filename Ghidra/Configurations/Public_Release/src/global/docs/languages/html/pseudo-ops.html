@@ -1,0 +1,241 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Pseudo P-CODE Operations</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
+<link rel="prev" href="pcodedescription.html" title="P-Code Operation Reference">
+<link rel="next" href="additionalpcode.html" title="Additional P-CODE Operations">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Pseudo P-CODE Operations</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="pcodedescription.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="additionalpcode.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="pseudo-ops"></a>Pseudo P-CODE Operations</h2></div></div></div>
+<p>
+Practical analysis systems need to be able to describe operations, whose exact effect on a machine's
+memory state is not fully modeled. P-code allows for this by defining a small set of
+<span class="emphasis"><em>pseudo</em></span> operators. Such an operator is generally treated as a placeholder
+for some, possibly large, sequence of changes to the machine state. In terms of analysis,
+either the operator is just carried through as a black-box or it serves as a plug-in point for operator
+substitution or other specially tailored transformation. Pseudo operators may violate the requirement
+placed on other p-code operations that all effects must be explicit.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_userdefined"></a>USERDEFINED</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="userdefined.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td>(<span class="bold"><strong>special</strong></span>)</td>
+  <td>Constant ID of user-defined op to perform.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td></td>
+  <td>First parameter of user-defined op.</td>
+</tr>
+<tr>
+  <td align="right">...</td>
+  <td></td>
+  <td>Additional parameters of user-defined op.</td>
+</tr>
+<tr>
+  <td align="right">[output]</td>
+  <td></td>
+  <td>Optional output of user-defined op.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">userop(input1, ... );</code></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = userop(input1,...);</code></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This is a placeholder for (a family of) user-definable p-code
+instructions. It allows p-code instructions to be defined with
+semantic actions that are not fully specified. Machine instructions
+that are too complicated or too esoteric to fully implement can use
+one or more <span class="bold"><strong>USERDEFINED</strong></span> instructions
+as placeholders for their semantics.
+</p>
+<p>
+The first input parameter input0 is a constant ID assigned by the specification
+to a particular semantic action. Depending on how the specification
+defines the action associated with the ID,
+the <span class="bold"><strong>USERDEFINED</strong></span> instruction can take
+an arbitrary number of input parameters and optionally have an output
+parameter. Exact details are processor and specification dependent.
+Ideally, the output parameter is determined by the input
+parameters, and no variable is affected except the output
+parameter. But this is no longer a strict requirement, side-effects are possible.
+Analysis should generally treat these instructions as a &#8220;black-box&#8221; which
+still have normal data-flow and can be manipulated symbolically.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_cpoolref"></a>CPOOLREF</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="cpoolref.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode containing pointer offset to object.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td>(<span class="bold"><strong>special</strong></span>)</td>
+  <td>Constant ID indicating type of value to return.</td>
+</tr>
+<tr>
+  <td align="right">...</td>
+  <td></td>
+  <td>Additional parameters describing value to return.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode to contain requested size, offset, or address.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = cpool(input0,intput1);</code></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This operator returns specific run-time dependent values from the
+<span class="emphasis"><em>constant pool</em></span>.  This is a concept for object-oriented
+instruction sets and other managed code environments, where some details about
+how instructions behave can be deferred
+until run-time and are not directly encoded in the instruction. 
+The <span class="bold"><strong>CPOOLREF</strong></span> operator acts a query to the system to
+recover this type of information. The first parameter is a
+pointer to a specific object, and subsequent parameters are IDs or other special constants
+describing exactly what value is requested, relative to the object. The canonical example
+is requesting a method address given just an ID describing the method and a specific object, but
+<span class="bold"><strong>CPOOLREF</strong></span> can be used as a placeholder for recovering
+any important value the system knows about. Details about this instruction, in terms
+of emulation and analysis, are necessarily architecture dependent.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_new"></a>NEW</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="new.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode containing class reference</td>
+</tr>
+<tr>
+  <td align="right">[input1]</td>
+  <td></td>
+  <td>If present, varnode containing count of objects to allocate.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode to contain pointer to allocated memory.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = new(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This operator allocates memory for an object described by the first parameter and
+returns a pointer to that memory.
+This is used to model object-oriented instruction sets where object allocation is an atomic operation.
+Exact details about how memory is affected by a <span class="bold"><strong>NEW</strong></span> operation is generally
+not modeled in these cases, so the operator serves as a placeholder to allow analysis to proceed.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="pcodedescription.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="additionalpcode.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">P-Code Operation Reference </td>
+<td width="20%" align="center"><a accesskey="h" href="pcoderef.html">Home</a></td>
+<td width="40%" align="right" valign="top"> Additional P-CODE Operations</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

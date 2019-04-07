@@ -1,0 +1,1335 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+  <head>
+    <title>The Diff Tool</title>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </head>
+  <body>
+    <h1>
+      <a name="View_Program_Differences"></a>
+      <a name="Program_Differences"></a>
+      Program Differences
+    </h1>
+    <p>The Code Browser can be used to view a second program alongside the
+       tool's program to determine the differences between them. This is
+       called a Program Diff. The Program Diff highlights code units in the
+       second program to indicate there is a difference. Highlighted code
+       units in the second program can then have their differences applied to
+       the tool's program causing it to change. The ultimate goal is to apply 
+       some or all of the differences from the second program to the tool's 
+       program in order to get another user's changes into your program.
+    </p>
+    <h2>
+      <a name="Open_Close_Program_View"></a>
+      Opening and Closing the Second Program
+    </h2>
+    <blockquote>
+      <p>The <b>Open/Close Diff View</b> icon 
+         <img src="images/table_relationship.png" alt=""> 
+         in the Code Browser tool bar is used for both opening and closing 
+         the second program in the Code Browser. This is one of two ways to open the Diff
+         tool. The other is the menu action, <span style="font-weight: bold;">Tools</span>
+            <b>
+              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              Program Differences...
+            </b>
+            which is described later under <b>Viewing Program Differences</b>.
+      </p>
+      <p><b>Opening</b><br>
+         When there is only a single program displayed in the Code Browser,
+         select the Open Diff View icon 
+         <img src="images/table_relationship.png" alt="">
+         in the tool bar above the program to open a program for Diff. 
+         You will be prompted to select the second program and then prompted 
+         for Diff settings just as when 
+         <a href="#ViewAllProgramDifferences">viewing program differences</a>
+         .
+      </p>
+      <p><b>Closing</b><br>
+         When you are done working with program differences and the second
+         program, select the 
+         <img src="images/table_relationship.png" alt="">
+         icon in the tool bar above the second program. The second program 
+         and the associated Diff are closed and the Code Browser returns to
+         displaying only the tool's program.
+      </p>
+      <p><b>Bring Diff View to Front</b><br>
+      	 If you navigate away from the current diff session to another program tab, then 
+      	 clicking the <img src="images/table_relationship.png" alt=""> action will 
+      	 make the diff session be the active program tab.  
+      </p>
+    </blockquote>
+    <h2>
+      <a name="ViewAllProgramDifferences"></a>
+      Viewing Program Differences
+    </h2>
+    <blockquote>
+    <p>A Diff can be opened from the menu action, <span style="font-weight: bold;">Tools</span>
+            <b>
+              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              Program Differences...
+            </b>. This is one of two ways to open the Diff
+         tool. The other is the <b>Open/Close Program Diff </b> icon 
+         <img src="images/table_relationship.png" alt=""> 
+         in the Code Browser tool bar which is described above in <b>Open/Close Diff View</b>.
+         The following describes using the menu action to open the Diff tool.
+      </p>
+      <p>With a program open in the Code Browser tool, do the following to
+         view a second program's differences.
+      </p>
+      <ol type="1">
+        <li>From the Code Browser, select 
+            <span style="font-weight: bold;">Tools</span>
+            <b>
+              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              Program Differences...
+            </b>
+            .
+        </li>
+        <li>The <i>Select Other Program</i> dialog is displayed.</li>
+      </ol>
+      <p align="center">
+        <img src="images/SelectOtherProgram.png" alt="" border="0">
+      </p>
+      <ol start="3" type="1">
+        <li>From the <i>Select Other Program</i> dialog select the second
+            program to be viewed and compared with the tool's program.<br>
+            <img src="../../shared/note.png" alt="" border="0">
+            The second program must have the same address spaces
+            defined. In other words, they should be the same type of program
+            (i.e. based on the same program language).<br>
+            <img src="../../shared/tip.png" alt="">
+            If you wish to Diff against a previous version of a 
+            <b>versioned program, </b>select the <b>History&gt;&gt;</b> 
+            button of a program. Select the versioned program from the tree. 
+            Next select the desired version of the program from the history 
+            list on the right side of the dialog.<br>
+            <div align="center">
+              <img src="images/SelectOtherVersionedProgram.png" alt=""> <br>
+            </div>
+        </li>
+        <li>Click the <b>OK</b> button.</li>
+        <li>The <i>Determine Program Differences</i> dialog is displayed.
+            This dialog is displayed whenever you are going to determine the
+            differences between two programs. To get all the differences
+            between the two programs make sure all the check boxes in the 
+            <b>Do Differences On</b> area have checks and the check box in the 
+            <b>Address Ranges To Diff </b>should not have a check as shown here.
+        </li>
+      </ol>
+      <p align="center"><img src="images/DetermineDiffs.png" alt=""> <br>
+      </p>
+      <p align="left">
+        The check boxes allow you to limit the types of differences that are 
+        determined and where differences are determined in the program. 
+        To learn more, see 
+        <a href="#Get_Differences">Determine Program Differences Dialog</a>.
+      </p>
+      <ol start="6" type="1">
+        <li>Click the OK button to determine the differences.</li>
+        <li>An <i>In Progress</i> dialog appears while the differences are
+            being determined. Upon completion the dialog disappears and the code
+            unit's in the second program where differences exist will be
+            highlighted.
+        </li>
+      </ol>
+      <p><img src="../../shared/note.png" alt="" border="0"> 
+         The selected program is displayed as the second program in
+         the browser. Only the portion of the second program that matches the
+         address set of the current view is displayed. Highlighted code units in
+         the second program indicate where there are differences.
+      </p>
+      <p>The following illustrates a Program Diff where differences between
+         two programs are highlighted.
+      </p>
+    </blockquote>
+    <p align="center"><img src="images/Diff.png" alt="""> <br>
+    </p>
+    <blockquote>
+      <p>The tool's program, that will be modified by the Diff, is
+         displayed on the left-hand-side of the Code Browser.
+         The second program, where the differences to apply are obtained, is
+         displayed on the right-hand-side. Markers in the right margin of the
+         second program give an indication of all the positions in the current
+         view where there are differences between the two programs. The view of
+         both programs is still controlled by the program tree for the tool's
+         program. In other words, the second program's view will only show
+         addresses that match those viewed for the tool's program.<br>
+         <img src="../../shared/tip.png" alt="">
+         Notice that the difference highlights are light orange above. The selected
+         difference is green. These are only the default colors. They can be
+         changed from the tool's Options dialog (<b>Edit</b>
+         <img src="../../shared/arrow.gif" alt="-&gt;"> 
+         <b>O</b><b>ptions...</b>, open the <b>Listing Fields</b> folder,
+         and select <b>Selection Colors</b>, double click on the <b>Difference</b>
+         color).<br>
+      </p>
+      <p>Blank space is added to each program as necessary to align the
+         addresses between the two programs. The vertical or horizontal
+         scrollbar of either program causes both programs to scroll in a
+         synchronized manner. Also, changing the cursor location in one program,
+         changes it in the other program.
+      </p>
+      <p>The Program Diff colors the two programs where they differ. These
+         differences can then be applied individually from the second program to
+         the tool's program. Applying a difference changes the tool's program so
+         it matches the second program where it was different previously. The
+         ultimate goal is to apply some or all of the differences from the
+         second program to the tool's program.
+      </p>
+      <p>Program Diff is most commonly used to compare different users' copies 
+         of the same program. With versioned programs, it can also be used to 
+         determine differences against an older version of the same program. 
+         When working on a project as a team, each person can make changes to 
+         his own copy of a program file. The Program Diff can then be used to 
+         determine where the programs differ. Changes that another team member 
+         has in his program can be merged into yours by applying the difference.
+      </p>
+      <p>The <b>toolbar</b> above the displayed programs provides buttons
+         for use with a Program Diff. Click on the icon below to go to the help
+         section that gives details of that feature.
+      </p>
+      <table border="0" width="100%">
+        <tbody>
+          <tr>
+            <td align="left" valign="top" width="16"> 
+              <a href="#Apply_Differences">
+                <img src="images/pencil16.png" alt="" border="0"> 
+              </a> 
+            </td>
+            <td width="96%">
+              Apply the selected differences from the second program to the tool's program.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16"> 
+              <a href="#Apply_Differences_and_Goto_Next_Difference">
+                <img src="images/pencil_arrow16.png" alt="" border="0"> 
+              </a> 
+            </td>
+            <td valign="top">
+              Apply the selected difference and go to the next highlighted difference block.<br>
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Ignore_Selection_and_Goto_Next_Difference">
+                <img src="images/eraser_arrow16.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Ignore the selected differences and go to the next highlighted difference block.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Diff_Location_Details">
+                <img src="images/xmag.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">
+              Show the details of the differences between the programs at 
+              the current cursor location.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Next_Difference"><img src="images/down.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Go to the next highlighted difference block.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Previous_Difference">
+                <img src="images/up.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Go to the previous highlighted difference block.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Show_Diff_Apply_Settings">
+                <img src="images/settings16.gif" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Display the Program Difference Settings dialog.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Get_All_Differences">
+                <img src="images/Diff16.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Determine the differences between the programs.
+            </td>
+          </tr>
+          <tr>
+            <td align="left" valign="top" width="16">
+              <a href="#Open_Close_Program_View">
+                <img src="images/table_relationship.png" alt="" border="0">
+              </a>
+            </td>
+            <td width="96%">Open/Close the second program and the Program Diff.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </blockquote>
+    <hr>
+    <h2>
+      <a name="Get_Differences"></a> 
+      <a name="ExecuteDiffDialog"></a>
+      Determine Program Differences Dialog
+    </h2>
+    <blockquote>
+      <p>Whenever you initiate a Program Diff the <i>Determine Program
+         Differences</i> dialog allows you to control the following settings:
+      </p>
+      <ul>
+        <li>
+          <p align="left">
+            <a href="#ExecuteDiffDialog_DoDifferencesOn">
+              Do Differences On
+            </a>
+            : the types of differences to be determined and
+            highlighted by the Program Diff. The <b>Select All</b> button is a
+            convenience for selecting all of the check boxes for difference types.
+            Likewise, the <b>Deselect All</b> button removes the check marks from
+            all the difference type check boxes.
+          </p>
+        </li>
+        <li>
+          <p align="left">
+            <a href="#ExecuteDiffDialog_AddressRangesToDiff">
+              Address Ranges To Diff
+            </a>
+            : indicates the addresses to be checked for differences.
+          </p>
+          <ul>
+            <li>
+              <p align="left">
+                <a href="#ExecuteDiffDialog_LimitToSelection">
+                  Limit To Selection
+                </a>
+                : whether or not the Program Diff should be
+                limited to the current selection in the tool's program.
+              </p>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p align="center"><img src="images/DetermineDiffs.png" alt=""> <br>
+      </p>
+      <p>Pressing the <b> OK</b> button will check the indicated addresses
+         for differences. It then highlights the code units in the second
+         program where differences were found. While the Program Diff is 
+         determining the differences, an <i>In Progress</i> dialog is displayed. 
+         Pressing the <b>Cancel</b> button will remove the <i>Determine Program Differences</i>
+         dialog without performing the Program Diff.
+      </p>
+      <p><img src="../../shared/tip.png" alt="" border="0"> 
+         If the two programs being compared are large, determining
+         program differences can be time consuming. If you are not interested in
+         all of the differences in the program, you can reduce the amount of
+         time required to determine differences by removing some types of
+         differences being determined or by determining differences on just a
+        portion of a program.
+      </p>
+      <h3>
+        <a name="ExecuteDiffDialog_DoDifferencesOn"></a>
+        Do Differences On
+      </h3>
+      <p>The <b>Do Differences On</b> area specifies the types of
+         differences that will be determined. Placing a check in a box indicates
+         that this type of difference should be detected.
+      </p>
+      <blockquote>
+        <p><b>Bytes </b>- detect any code units that have memory bytes
+           that differ between the programs being compared.
+        </p>
+        <p><b>Labels</b> - detect any code units where the labels differ.<br>
+        </p>
+        <blockquote>
+          <p>Possible label differences are:
+          </p>
+          <ul>
+            <li>More labels at a code unit in one program than the other</li>
+            <li>Labels named differently</li>
+            <li>Different labels could be marked as the primary label </li>
+            <li>Same named label, but with different scope (parent namespace). 
+              For example, one program's label is local to a function and the 
+              other label is a global label.
+            </li>
+            <li>Same named label, but with different source. For example, one 
+              program's label was named by default and the other label 
+              was named by the user.<br>
+            </li>
+            <li>One program's code unit with a label could be an entry
+                point and the other program code unit is not an entry point
+            </li>
+          </ul>
+        </blockquote>
+        <p><b>Code Units</b> - detect any code units where the code unit or
+           equates differ.
+        </p>
+        <blockquote>
+          <p>Possible code unit differences are:</p>
+          <ul>
+          <li>Different instructions.</li>
+          <li>Instruction in one program and Data in the other program at
+            the same address.
+          </li>
+          <li>Different equates on the instruction in each program.</li>
+          <li>Different data types when data is defined in both programs
+            at an address.
+          </li>
+        </ul>
+      </blockquote>
+      <p> </p>
+      <p><b>References</b> - detect any code units where the references differ.</p>
+      <blockquote>
+        <p>Possible reference differences are:</p>
+        <ul>
+          <li>One program has a reference and the other doesn't.</li>
+          <li>References are not to the same address.</li>
+          <li>References are not on the same operand or mnemonic.</li>
+          <li>References types (Memory, Stack, External) are different.</li>
+        </ul>
+      </blockquote>
+      <p><b>Program Context</b> - detect any code units where the values
+         of the program context registers differ.<br>
+         <img src="../../shared/note.png" alt="" border="0">
+         If the two programs contexts don't have the same registers
+         defined, the program context is disabled and can't be compared between
+         the programs.
+      </p>
+      <p><b>Comments</b> - detect any code units where the comments differ.</p>
+      <blockquote>
+        <p>Possible comment types are:</p>
+        <ul>
+          <li>End of Line Comment</li>
+          <li>Pre-Comment</li>
+          <li>Post-Comment</li>
+          <li>Plate Comment</li>
+          <li>Repeatable Comment<br>
+          </li>
+        </ul>
+        <p>The difference could be that a comment exists in one program
+           and not the other. It could also be that the text of a particular
+           comment type is not exactly the same for the two programs.
+        </p>
+      </blockquote>
+      <p><b>Bookmarks</b> - detect any code units where bookmarks differ.</p>
+      <p><b>Properties</b> - detect any code units where User Defined
+         Properties differ.
+      </p>
+      <p><b>Functions<a name="ExecuteDiffDialog_DoDifferencesOn_Functions"></a></b>
+        - detect any code units where the functions differ.
+      </p>
+      <blockquote>
+        <p>Possible differences are:</p>
+        <ul type="disc">
+          <li>Function in one program and not in the other.</li>
+          <li>Function comment differs.</li>
+          <li>Addresses that make up the function body differs.</li>
+          <li>Function signature differs. (Function name, return type, or
+            parameters differ.)
+          </li>
+          <li>Parameters differ by name, data type, size or offset.</li>
+          <li>Local variables differ by name, data type, size, or offset.</li>
+          <li>Stack offset differs.</li>
+          <li>Stack Frame size differs.</li>
+          <li>Whether or not the stack grows in a negative direction.</li>
+          <li>Function tags differ.</li>
+        </ul>
+      </blockquote>
+    </blockquote>
+    <p>When the <i>Determine Program Differences</i> dialog is initially
+       displayed, all the Differences check boxes are checked. This indicates
+       that all the types of differences will be detected and displayed.
+    </p>
+    <h3>
+      <a name="ExecuteDiffDialog_AddressRangesToDiff"></a>
+      Address Ranges To Diff
+    </h3>
+    <p>The <b>Address Ranges To Diff</b> area indicates the address
+       ranges where program differences will be determined. If the two 
+       programs have different address sets, then only the addresses that 
+       the two programs have in common can be compared. The addresses 
+       where differences are determined can also be limited to a set of 
+       addresses that are selected in the tool's program.
+    </p>
+    <blockquote>
+      <h4>
+        <a name="ExecuteDiffDialog_LimitToSelection"></a>
+        Limit To Selection
+      </h4>
+      <p>If there is a selection in the tool's program when you determine
+         differences, the address set where differences are determined can be
+         limited to the addresses in the selection. Selecting the 
+         <b>Limit To Selection</b> box,
+         limits the differences to the selection's addresses.
+      </p>
+    </blockquote>
+    <hr>
+    <h2>Diff and Multiple Program Tabs</h2>
+    <blockquote>
+      <p>Only one Program Diff can be performed at a time. However, you can
+         view another program using the tabs in the 
+         <a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing View</a>
+         while a Program Diff is active. This will not terminate the current
+         Diff. The Diff will reappear when you change back to the tab for the program
+         that the Program Diff is being performed on.<br>
+      </p>
+      <p> </p>
+      <p>While a Program Diff is active, the <b>Diff View</b>
+         icon <img src="images/table_relationship.png" alt="">
+         &nbsp;is visually pressed down. If the Diff is being performed on a 
+         program that is not being actively displayed (in a tab other than the 
+         current tab), then pressing the <b>Diff View</b> icon&nbsp;
+         <img src="images/table_relationship.png" alt=""> will bring the tab 
+         containing the Diff to the front.&nbsp;<br>
+         If you attempt to start a Diff using <b>Tools</b>
+         <img src="../../shared/arrow.gif" alt=""> <b>Program Differences...</b> 
+         in the tool menu and a Diff is already being performed, the status bar
+         will indicate the name of the program that currently has a Diff.<br>
+      </p>
+      <p>A Program Diff is terminated by any of the following:<br>
+      </p>
+      <ul>
+        <li>Selecting the <b>Diff View</b> icon&nbsp;
+          <img src="images/table_relationship.png" alt=""> from the
+          Listing toolbar when the Program Diff is actively being displayed.
+        </li>
+        <li>Selecting the <b>Close Window</b> icon&nbsp;
+          <img src="../../shared/close16.gif" alt=""> from the
+          Listing toolbar when the Program Diff is actively being displayed.
+          (Normally this will close the current program, but when Diff is active
+          this closes the Diff.)
+        </li>
+        <li>Closing the Diff's program via the Tool's menu, <b>File</b>
+          <img src="../../shared/arrow.gif" alt=""><b>Close</b>,
+          when the Diff is actively displayed. (In this case the Diff is closed
+          along with the current program.)
+        </li>
+        <li>Exiting the Tool or Ghidra will also terminate an active Diff.</li>
+      </ul>
+      <p><img src="../../shared/note.png" alt="" border="0">
+         Hovering the mouse over the <b>Diff View</b> icon provides a tooltip 
+         indicating whether the current action is  
+         <i>Open Diff View</i>, <i>Close Diff View</i>, or <i>Bring Diff View to Front</i>.
+      </p>
+    </blockquote>
+    <blockquote>
+      <p> </p>
+    </blockquote>
+    <p> </p>
+    <hr size="2" width="100%">
+    <h2>
+      <a name="Diff_Apply_Settings"></a>
+      <a name="Show_Diff_Apply_Settings"></a>
+      Diff Apply Settings
+    </h2>
+    <p>The <i>Diff Apply Settings</i> dockable component allows you to
+       control which types of differences get applied from the second program 
+       to the tool's program, and how each type gets applied.
+    </p>
+    <p align="left">For each type of difference, you can select one of the
+      following apply settings:
+    </p>
+    <ul>
+      <li><b>Ignore </b>- do not change the selected code units in the
+        tool's program for this type of difference.
+      </li>
+      <li><b>Replace </b>- changes the tool's program to match the second
+        program for this type of difference.
+      </li>
+      <li><b>Merge </b>-
+        (Only available for Labels and Comments) changes the tool's program by
+        adding this type of difference from the second program to what is 
+        already in the tool's program. For Labels, this will not change which 
+        label is set to primary.
+      </li>
+      <li><b>Merge &amp; Set Primary</b>
+        - (Only available for Labels) merges labels from program 2 into the current
+        program and sets the primary label as it is in program 2, if possible.<br>
+      </li>
+    </ul>
+    <p align="center"><img src="images/DiffApplySettings.png" alt=""><br>
+    </p>
+    <blockquote>
+      <p>The following types of differences are controlled by the 
+         <i>Diff Apply Settings</i>.
+      </p>
+      <blockquote>
+        <p><b>Bookmarks</b> - all categories of bookmarks.</p>
+        <p><b>Bytes</b></p>
+        <p><b>Code Units</b> - includes code units 
+           (<b>instructions</b> &amp; <b>data</b>)
+           and <b>equates</b>.
+        </p>
+        <p><b>Comments</b> - <b>Plate, Pre, End-of-line, Repeatable, &amp;
+           Post</b> comments.<br>
+        </p>
+        <p><b>Functions</b> - functions 
+           (includes their associated stack frames).<br>
+           <b> & Function Tags</b>
+        </p>
+        <p><b>Labels</b> - labels or symbols.</p>
+        <p><b>Program Context</b> - program context <b>register</b> values.</p>
+        <p><b>Properties</b> - user defined properties that have been added
+           to the program by plugins.<br>
+        </p>
+        <p><b>References</b> - <b>Memory, External, &amp; Stack</b> references.</p>
+      </blockquote>
+    </blockquote>
+    <blockquote>
+      <p><a name="Save_Default_Diff_Apply_Settings"></a>The 
+         <i>Diff Apply Settings</i> toolbar has a <b>Save as Default</b> icon&nbsp;
+         <img src="images/disk.png" alt=""> to save your
+         current Diff Apply Settings to the tool as your new defaults. When you
+         select it, the current <i>Diff Apply Settings</i> values are set to
+         the default Diff Apply Settings. Whenever you start a new Diff, the
+         current <i>Diff Apply Settings</i>
+         will get set to the default settings for that Program Diff. If you determine
+         the program differences again for an existing Diff using the <b>Determine
+         Program Differences</b> icon <img src="images/Diff16.png" alt="">
+         , the current <i>Diff Apply Settings</i> will not be affected by the
+         defaults.<br>
+         <img src="../../shared/note.png" alt="">
+         The Default Diff Apply Settings can also be set by changing the 
+         <a href="#DiffApplySettingsToolOptions">
+           Diff Default Apply Settings tool options
+         </a>
+         .<br>
+      </p>
+      <p><a name="Set_All_To_Ignore"></a> <a name="Set_All_To_Replace"></a> 
+         <a name="Set_All_To_Merge"></a> The <i>Diff Apply Settings</i> toolbar menu
+         <img src="../../shared/menu16.gif" alt=""> also has actions for changing 
+         all the apply settings at once. They are:<br>
+      </p>
+    </blockquote>
+    <div align="center"><img src="images/DiffApplySettingsPopup.png" alt="">
+      <br>
+    </div>
+    <blockquote>
+      <ul>
+        <li><b>Set Ignore For All Apply Settings</b> - Changes all the settings
+            to <b>Ignore</b>. Before you can apply anything you would need to 
+            individually set at least one difference type's setting to 
+            <b>Replace</b> or <b>Merge.</b>
+        </li>
+        <li><b>Set Replace For All Apply Settings</b> - Changes all the
+          settings to <b>Replace</b>. 
+        </li>
+        <li><b>Set Merge For All Apply Settings</b> - Changes all the
+          settings to <b>Merge</b> that allow merging and all others are changed
+          to <b>Replace</b>. Labels will be set to <b>Merge &amp; Set Primary</b>.
+        </li>
+      </ul>
+    </blockquote>
+    <hr>
+    <h2><a name="Get_All_Differences"></a>Getting New Differences 
+      <img src="images/Diff16.png" alt="" border="0">
+    </h2>
+    <blockquote>
+      <p>There are several reasons to get new program differences.</p>
+      <ul>
+        <li>Changes were made to the tool's program directly (not by
+          applying a difference) since you last determined program differences.
+        </li>
+        <li>The second program has been changed since you last determined
+          program differences.
+        </li>
+        <li>You want to determine differences for different addresses of
+          the program than the current Diff used. For example, you initially
+          determined program differences limited to a selection and now you want
+          to know differences for the whole program or for a different set of
+          selected addresses.
+        </li>
+      </ul>
+      <p>When a second program is already displayed in the Code Browser
+         tool, do the following to determine new program differences between
+         that program and the tool's program.
+      </p>
+      <ol type="1">
+        <li>
+          <p align="left">From the toolbar above the second program, select
+            the Get Differences <img src="images/Diff16.png" alt="" border="0"> button.<br>
+            or<br>
+            Press the right mouse in the second program area. From the
+            popup menu, select <b>Get Differences...</b>.
+          </p>
+        </li>
+        <li>The <i><a href="#Get_Differences">Determine Program Differences</a></i>
+          dialog is displayed.
+        </li>
+        <li>From the dialog, select the types of differences to be
+          determined and the addresses to check for differences.
+        </li>
+        <li>Click the <b>OK</b> button.</li>
+      </ol>
+      <p>An <i>In Progress</i> dialog appears while the program
+         differences are being determined. When it is done determining the
+         differences, the dialog is removed and the differences are highlighted
+         in the second program.
+      </p>
+    </blockquote>
+    <h2>
+      <a name="Diff_Apply_Settings_Limit_To_Selection"></a>
+      Limiting the Diff to the Browser Selection
+    </h2>
+    <blockquote>
+      <p>The <b>Limit to Selection</b> box in the <i>Program Difference
+         Settings</i> dialog can be selected whenever a Program Diff is started
+         while there is a selection in the tool's program in the Code Browser. 
+         When the box is checked the differences will only be determined for 
+         addresses in that selection. This limits the differences being highlighted 
+         and manipulated by the Program Diff to only those that are in a specific 
+         set of code units in the program. To limit the Program Diff select the 
+         target code units in the tool's program in the browser and check the 
+         <b>Limit to Selection</b>
+         check box in the <i>Program Difference Settings</i> dialog. Notice
+         that the <b>Address Ranges To Diff </b> area changes as you check or
+         uncheck the <b>Limit to Selection</b> box. It switches between the 
+         addresses in common between the two programs and those in the selection.
+      </p>
+      <p><img src="../../shared/note.png" alt="" border="0"> 
+         Once you press the <b> OK</b> button on the <i> Program
+         Difference Settings</i> dialog, the Program Diff is performed against
+         the indicated address ranges (address set). You can make a selection in
+         the tool's program before initiating the Get Differences 
+         <img src="images/Diff16.png" alt="" border="0"> to
+         get differences against a different address set.
+      </p>
+    </blockquote>
+    <h2>Navigating Differences</h2>
+    <blockquote>
+      <p>When viewing program differences in the CodeBrowser, you can
+         navigate on difference blocks. A difference block is a contiguous group
+         of one or more highlighted code units in the second program. A difference 
+         block can be a single code unit where a difference was found if the code unit 
+         before and after it did not have a difference. There can be multiple code units 
+         in a difference block when each of the code units next to each other has a 
+         difference. To move to the next/previous code unit in a highlighted block use 
+         the up and down arrow keys on the keyboard or click the mouse on the desired code unit.
+      </p>
+      <h3>
+        <a name="Next_Difference"></a>
+        Next Difference
+      </h3>
+      <blockquote>
+        <p>Selecting the <b>Next Difference</b> button 
+           <img src="images/down.png" alt=""> moves the
+           current location in the Program Diff to the next difference block.
+        </p>
+        <p>If only part of the program is in the current view, the next
+           difference may be outside the current view of the program. If this is
+           so, then navigating will add the fragment, with the next difference, to
+           the view.
+        </p>
+      </blockquote>
+      <h3>
+        <a name="Previous_Difference"></a>
+        Previous Difference
+      </h3>
+      <blockquote>
+        <p>Selecting the <b>Previous Difference</b> button 
+           <img src="images/up.png" alt=""> moves the current location in 
+           the Program Diff to the previous difference block.
+        </p>
+        <p>If only part of the program is in the current view, the previous
+           difference may be outside the current view of the program. If this is
+           so, then navigating will add the fragment, with the previous
+           difference, to the view.
+        </p>
+      </blockquote>
+      <h3>Marker Margin</h3>
+      <blockquote>
+        <p>Clicking on a difference marker in the right margin will
+           navigate to that difference.
+        </p>
+      </blockquote>
+      <blockquote>
+        <p><img src="../../shared/tip.png" alt="" border="0"> 
+           Some of the difference markers may overlap in the right margin. 
+           Therefore, it is best to use the markers for navigation to a
+           region where there are differences and then use the 
+           <b> Next Difference</b> or <b>Previous Difference</b> buttons 
+           to navigate to the next/previous difference block.
+        </p>
+      </blockquote>
+    </blockquote>
+    <h2>
+      <a name="Selecting_Differences"></a>
+      Selecting Differences
+    </h2>
+    <blockquote>
+      <h3>Automatically Selecting a Difference Block</h3>
+      <blockquote>
+        <p>Using the <b> Next Difference</b> 
+           <img src="images/down.png" alt=""> or <b>Previous Difference</b> 
+           <img src="images/up.png" alt=""> to navigate to a highlighted 
+           difference block selects the code units contained in that
+           difference block. Left mouse clicking on a difference block also causes the entire 
+           difference block to become selected. You can then right mouse click and the 
+           popup menu appears so you can apply the selection.
+        </p>
+      </blockquote>
+      <h3>Manually Selecting Differences </h3>
+      <blockquote>
+        <p>Differences can be selected within the right-hand Diff listing as follows:
+        </p>
+        <ul>
+        <li>To select a single difference block, simply left mouse click on the highlighted 
+        difference block. It will become selected, so it can then be applied.
+        </li>
+        <li>Left mouse clicking on a code unit that is not highlighted as part of a difference
+        block will clear the current Diff selection.
+        </li>
+        <li>To select individual code units within a highlighted difference
+           block, drag the cursor in the second program as you normally would in
+           the Code Browser. If you select code units that are not highlighted as
+           a difference, they will automatically be removed from the selection
+           when the mouse button is released. When the cursor is released, the
+           selection will become restricted to only the
+           code units with highlighted differences in the selection.
+        </li>
+        <li>The Ctrl key along with a left mouse click can be used to add/remove a code unit
+           from the selection.
+        </li>
+        <li>The Shift key along with a left mouse click can 
+           be used to extend the selection.
+        </li>
+        </ul>
+        <p><img src="../../shared/tip.png" alt="" border="0"> 
+           When differences are applied from the second program to
+           the tool's program, only selected code units in the current view will
+           be applied.
+        </p>
+      </blockquote>
+      <h3><a name="Select_All_Differences"></a>Select All </h3>
+      <blockquote>
+        <p>Invoking the <b> Select All Differences</b> from the second
+           program's popup menu, selects all the currently highlighted differences
+           in the second program.
+        </p>
+      </blockquote>
+      <h3>
+        <a name="Set_Program1_Selection_On_Program2"></a>
+        Setting the Program Diff Selection From the Tool's Program Selection
+      </h3>
+      <blockquote>
+        <p>The selection from the tool's program can be used to select some
+           of the differences in the second program. While viewing program
+           differences in the Code Browser, make a selection in the tool's
+           program. Select the <b> Set Diff Selection</b> icon 
+           <img alt="" src="images/DiffSelect16.png" border="0""> in
+           the tool bar above the tool's program. The selection in the second
+           program will become any highlighted differences in the second program
+           that correspond to the selected code units in the tool's program.
+        </p>
+        <p>For example, you can use this to select all the differences in a
+           subroutine. First select all the code units in the tool's program 
+           that make up the subroutine. The <b>Set Diff Selection</b> icon 
+           <img alt="" src="images/DiffSelect16.png" border="0"> will become 
+           enabled. Select the <b>Set Diff Selection</b> icon 
+           <img alt="" src="images/DiffSelect16.png" border="0">. All the
+           corresponding code units with highlighted differences in the second 
+           program become selected. The selection of differences can then be 
+           <a href="#Apply_Differences">applied</a> or 
+           <a href="#Ignore_Selection_and_Goto_Next_Difference">ignored</a>.
+        </p>
+      </blockquote>
+    </blockquote>
+    <h2>
+      <a name="Apply_Differences"></a>
+      Applying Differences
+    </h2>
+    <blockquote>
+      <p>Applying a difference, changes the tool's program to match the
+         second program in the Program Diff for each type of difference being
+         applied. The Program Diff can control which types of differences get
+         applied from the second program to the tool's program 
+         (see <a href="#Diff_Apply_Settings">Apply</a>). It can also control 
+         whether some types of differences replace what is in the tool's program 
+         or whether they are merged into the tool's program. Only the highlighted 
+         code units in the second program, which are currently selected, can have 
+         their differences applied.
+      </p>
+      <h3>To apply a selection </h3>
+      <ol>
+        <li>Select Differences in the second program.</li>
+        <li>Make sure the difference types you want to apply have their
+          boxes checked in the <i>ProgramDiff Settings</i> dialog.
+        </li>
+        <li>Click the <b> Apply Selection</b> button 
+          <img src="images/pencil16.png" border="0"> in the toolbar.<br>
+          or<br>
+          Press the Apply Selection hot key.<br>
+          or<br>
+          Click the right mouse on the highlighted difference and select the 
+          <b>Apply Selection </b>button.
+        </li>
+      </ol>
+      <p>Remember all the types of differences that are being <b>Replaced </b>or
+         <b>Merged </b>in the <a href="#Diff_Apply_Settings">
+         <i>Diff Apply Settings</i></a>
+         dockable component will be applied for the selected code units.
+      </p>
+      <p>When applying differences, comments and labels can be replaced
+         with the second program's comments or merged with them. Merging comments 
+         or labels in the Program Diff results in the union of the two programs 
+         comments or labels for each code unit being applied.
+      </p>
+      <h3>Example:</h3>
+      <p>A code unit in the tool's program does not have any comments or
+         labels. The code unit in the second program has a pre-comment and a
+         bookmark. All Apply boxes are checked. Apply a selection containing the
+         code unit. The pre-comment and bookmark appear in the program in the
+         Code Browser.
+      </p>
+      <p>Say the Bookmarks box in the Apply area of the settings dialog was
+         not checked and the Comments box was checked when the difference was
+         applied. The pre-comment would appear in the Code Browser's program,
+         but the bookmark would not.
+      </p>
+    </blockquote>
+    <h2>
+      <a name="Apply_Differences_and_Goto_Next_Difference"></a>
+      Applying Differences and Going To Next
+    </h2>
+    <blockquote>
+      <p>This applies the selected differences and navigates to the next difference
+         in a single step (see <a href="#Apply_Differences">Apply</a> and 
+         <a href="#Next_Difference">Next</a>). It can also control whether some
+         types of differences replace what is in the tool's program or whether they
+         are merged into the tool's program. Only the highlighted code units in the
+         second program, which are currently selected, can have their differences applied.
+      </p>
+      <h3>To apply a selection and go to the next difference </h3>
+      <ol>
+        <li>Select differences in the second program.</li>
+        <li>Make sure the difference types you want to apply have their
+          boxes checked in the <i>Diff Apply Settings</i> dockable component.
+        </li>
+        <li>Click the <b> Apply &amp; Go To Next</b> button 
+          <img src="images/pencil_arrow16.png" alt="" border="0"> in the toolbar.<br>
+        </li>
+      </ol>
+      <p>All the types of differences that were last selected under Apply
+         in the <i> Program Difference Settings</i> dialog will be applied for
+         the selected code units. The Diff will then navigate to the next
+         difference and select it.
+      </p>
+    </blockquote>
+    <h2>
+      <a name="Ignore_Selection_and_Goto_Next_Difference"></a>
+      Ignoring Differences
+    </h2>
+    <blockquote>
+      <p>Ignoring a difference indicates you no longer want the current
+         Program Diff to highlight the code unit. The Diff then navigates to the next difference.
+      </p>
+      <p>Only selected code units in the second program of the Program Diff
+         can have their differences ignored. The selection can be made on an
+         entire highlight block or individual code units in one or more
+         difference blocks. 
+         (See <a href="#Selecting_Differences"> Selecting Differences</a>).
+      </p>
+      <p>Note: All versions of Ghidra before 7.4.<i>X</i> did not navigate to the next difference after ignoring.
+      </p>
+      <h3> To ignore a selection </h3>
+      <ol>
+        <li>Select Differences in the second program.</li>
+        <li>Click the <b> Ignore Selection</b> button 
+          <img src="images/eraser_arrow16.png" border="0"> in the toolbar.<br>
+          or<br>
+          Press the Ignore Selection hot key.<br>
+          or<br>
+          Click the right mouse on the highlighted difference and select the 
+          <b>Ignore Selection </b>button.
+        </li>
+      </ol>
+      <p> The selected code units will be ignored. This means they will no
+         longer be highlighted as a difference. The Diff will then navigate to the next difference and select it.
+      </p>
+      <p><img src="../../shared/note.png" border="0"> Once a code unit is
+         ignored, it will no longer be marked
+         in the browser with a change bar and will no longer be highlighted. If
+         you Determine Program Differences, any previously ignored items where
+         there are still differences will once again be highlighted.
+      </p>
+    </blockquote>
+    <h2>
+      <a name="Diff_Location_Details"></a>
+      <a name="Refresh_Diff_Details"></a>
+      Viewing Difference Details at a Location 
+    </h2>
+    <blockquote>
+      <p>When viewing two programs in the Code Browser, it is possible to
+         view all the differences at the current program location. The <i>Diff
+         Details</i>&nbsp;dockable component displays details indicating
+         differences, if any, between the two programs code units at the current
+         program location. 
+      </p>
+      <p>To view the difference details at a location:
+      </p>
+      <ol>
+        <li>Click on the code unit of interest to set the location and
+          select the <b>Location Details</b> button 
+          <img src="images/xmag.png" alt=""> in the tool bar.<br>
+          or<br>
+          Press the right mouse button on the code unit of interest and select
+          the <b>Location Details</b> button. 
+        </li>
+        <li>The <i>Diff Details</i> dockable component is displayed
+          indicating the detailed differences, if any, at the indicated location.
+        </li>
+      </ol>
+    </blockquote>
+    <ol>
+    </ol>
+    <blockquote>
+      <p>The following image shows the <i>Diff Details</i> dockable component.
+         In Program 1 of the Diff "MyLabel" is a global label,
+         whereas in Program 2 "MyLabel" is a local function label.<br>
+      </p>
+      <div align="center"><img src="images/DiffDetails.png" alt="">&nbsp; <br>
+        <div align="left">
+          <p>
+            <img src="../../shared/note.png" alt="" border="0">
+            When the <b>Automatically Update Details</b> check box is
+            selected, the Diff Details will update automatically to show the 
+            differences at the current location whenever the current address 
+            changes. This can be useful when you are navigating through 
+            Differences and need to see details that are not displayed
+            by the CodeBrowser.
+         </p>
+          <p>
+            <img src="../../shared/note.png" alt="" border="0">
+            When the <b>Only Show Expected Difference Types</b> check box is
+            selected, the Diff Details will only show Diff Details for the types 
+            of Differences that you chose to look for when you determined your differences.
+            If this box is not checked, you will see all types of differences that exist at 
+            the location regardless of whether it was one of the types of differences you were
+            seeking.
+         </p>
+         <p>
+            <img src="../../shared/note.png" alt="" border="0">
+            If you modify the program at the current location after the Diff
+            Details are displayed, press the <b>Refresh</b> button 
+            <img src="Icons.REFRESH_ICON" alt="""> 
+            in the local toolbar to update the difference details. This will 
+            recompute the differences and then redisplay them.<br>
+          </p>
+        </div>
+      </div>
+      <blockquote>
+        <h3>Why view the difference details at a particular program location?
+        </h3>
+      </blockquote>
+      <ul>
+        <li>The code units appear different between the two programs,
+          but are not highlighted.
+        </li>
+        <li>If a particular type of difference was not selected when
+          differences were determined, then it will not get highlighted.
+        </li>
+        <li>If the thing that appears different is due to a difference
+          elsewhere in the program, then it will not get highlighted. For
+          example, XREFs are not a difference where they are shown. The code unit
+          where the reference is from is different, not where the reference is
+          to. The XREF is displayed on the code unit the reference is to.
+        </li>
+        <li>The code units appear the same between the two programs, but
+          are highlighted. This can happen when there is something different
+          about the code unit, but that thing is not displayable. For example,
+          references are not visually displayed, but they are a valid difference
+          at the code unit the reference is from.
+        </li>
+        <li>The location is highlighted, but you want to know exactly
+          what is different here.
+        </li>
+      </ul>
+      <p>In other words, are there other types of differences here besides
+         the boxes I checked in the <i>Program Difference Settings</i> dialog?
+         Remember, only the difference types with their Apply boxes checked in
+         the dialog will be applied if an <i>Apply Selection </i>is done.<br>
+      </p>
+    </blockquote>
+    <h2><a name="DiffApplySettingsToolOptions"></a>
+      Diff Apply Settings Tool Options
+    </h2>
+    <blockquote>
+      <p>The Program Diff adds <b>Default Apply Settings</b> options to
+         the tool. To view or edit the option settings: 
+      </p>
+      <ul>
+        <li>From the tool's menu select <b>Edit</b>
+          <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+          <B>Tool Options...</b> which displays the 
+          <a href="help/topics/Tool/ToolOptions_Dialog.htm">
+            Tool Options Dialog.<br>
+          </a>
+        </li>
+        <li>Open the <i>Diff</i> tree node.<br>
+        </li>
+        <li>Click on the <i>Default Apply Settings</i> tree node to view its options.
+        </li>
+      </ul>
+      <p>Each time a new Program Diff begins, the <i>Diff Apply Settings</i>
+         will have their values set to the default ones specified by the&nbsp;
+         <i>Default Apply Settings Options</i>. <br>
+      </p>
+      <p>Each option will have one or more of the following settings available:<br>
+      </p>
+      <p> </p>
+      <div align="center">
+        <center>
+          <table widht="600" border="1" cellpadding="2">
+            <tbody>
+              <tr>
+                <th align="left" bgcolor="#c0c0c0" valign="top" width="200">
+                  Diff Apply Setting<br>
+                </th>
+                <th align="left" bgcolor="#c0c0c0" valign="top" width="100">
+                  Functionality<br>
+                </th>
+              </tr>
+              <tr>
+                <td align="left" valign="top" width="200">
+                  Ignore<br>
+                </td>
+                <td align="left" valign="top" width="350">
+                  Do not change the selected code units in the
+                  tool's program for this type of difference.<br>
+                </td>
+              </tr>
+              <tr>
+                <td valign="top" width="200">Replace<br>
+                </td>
+                <td valign="top">
+                  Change the selected code units in the
+                  tool's program to match the second
+                  program for this type of difference.<br>
+                </td>
+              </tr>
+              <tr>
+                <td valign="top" width="200">
+                  Merge<br>
+                </td>
+                <td valign="top">
+                  (Only available for Labels, Comments and Function Tags.)
+                  Change the selected code units in the tool's program by adding
+                  this type of difference from the second program to what is 
+                  already in the tool's program. For Labels, this will not change 
+                  which label is set to primary.<br>
+                </td>
+              </tr>
+              <tr>
+                <td align="left" valign="top" width="200">
+                  Merge &amp; Set Primary<br>
+                </td>
+                <td align="left" valign="top" width="100">
+                  (Only available for Labels.) Merges labels from the second 
+                  program into the tool's program for the selected code units 
+                  in the the Diff and set the primary labels as in the second 
+                  program, if possible.<br>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </center>
+      </div>
+      <p>The&nbsp;<i>Default Apply Settings Options</i>
+         contains the following options:
+      </p>
+      <p> </p>
+      <div align="center">
+        <center>
+          <table width="600" border="1" cellpadding="2">
+            <tbody>
+              <tr>
+                <th align="left" bgcolor="#c0c0c0" nowrap="nowrap" valign="top" width="180">
+                  Option
+                </th>
+                <th align="left" bgcolor="#c0c0c0" valign="top" width="100">
+                  Functionality<br>
+                </th>
+              </tr>
+              <tr>
+                <td align="left" nowrap="nowrap" valign="top" width="180">
+                  Bookmarks
+                </td>
+                <td align="left" valign="top" width="350">
+                  Controls whether bookmark differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Bytes<br>
+                </td>
+                <td valign="top">
+                  Controls whether byte differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Code Units<br>
+                </td>
+                <td valign="top">
+                  Controls whether instruction, data, and equate differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  End Of Line Comments<br>
+                </td>
+                <td valign="top">
+                  Controls whether end of line comment differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>, or <i>Merge</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Functions<br>
+                </td>
+                <td valign="top">
+                  Controls whether function differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Function Tags<br>
+                </td>
+                <td valign="top">
+                  Controls whether function tag differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Merge</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Labels<br>
+                </td>
+                <td valign="top">
+                  Controls whether label differences will be applied and 
+                  which to set as the primary label. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>,
+                  <i>Merge</i>, or <i>Merge &amp; Set Primary</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                Plate Comments<br>
+                </td>
+                <td valign="top">
+                  Controls whether plate comment differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>, or <i>Merge</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Post Comments<br>
+                </td>
+                <td valign="top">
+                  Controls whether post comment differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>, or <i>Merge</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Pre Comments<br>
+                </td>
+                <td valign="top">
+                  Controls whether pre comment differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>, or <i>Merge</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Program Context<br>
+                </td>
+                <td valign="top">
+                  Controls whether program context register value differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  Properties<br>
+                </td>
+                <td valign="top">
+                  Controls whether user defined property differences will be applied. 
+                  Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td nowrap="nowrap" valign="top" width="180">
+                  References<br>
+                </td>
+                <td valign="top">
+                  Controls whether reference differences will be
+                  applied. Can be: <i>Ignore</i> or <i>Replace</i>.<br>
+                </td>
+              </tr>
+              <tr>
+                <td align="left" nowrap="nowrap" valign="top" width="180">
+                  Repeatable Comments<br>
+                </td>
+                <td align="left" valign="top" width="100">
+                  Controls whether repeatable comment differences will be applied. 
+                  Can be: <i>Ignore</i>, <i>Replace</i>, or <i>Merge</i>.<br>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </center>
+      </div>
+      <p>To change an option, click on the combo box to the right of the
+         option name and select the desired setting from the list.<br>
+      </p>
+    </blockquote>
+    <h2>Problems/Limitations</h2>
+    <blockquote>
+      <p>You cannot undo an <b>Ignore Selection</b> <img src="images/eraser_arrow16.png" alt="" border="0"> action. Undo of an
+         <b>Apply Selection</b> or <b>Ignore Selection</b> in a Program Diff currently can't
+         re-highlight the code units with differences that were ignored. If you want to get
+         back differences after undo of an <b>Apply Selection</b> <img src="images/pencil_arrow16.png" alt="" border="0"> or if you want all ignored
+         differences to no longer be ignored, you must re-Diff the programs by selecting the
+         <b>Get Differences</b> button <img src="images/Diff16.png" alt="" border="0">.
+      </p>
+    </blockquote>
+    <p> </p>
+    <p class="providedbyplugin">Provided by: <i>Program Diff</i> Plugin</p>
+    <p class="relatedtopic">Related Topics:</p>
+    <ul>
+      <li>
+        <a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">
+          Code Browser
+        </a>
+      </li>
+    </ul>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+  </body>
+</html>

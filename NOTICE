@@ -29,10 +29,21 @@ U.S.), contributions made by U.S. Federal Government employees are released
 under the License. Merged contributions from private contributors are released
 under the License.
 
-Most portions of the Project are licensed under the Apache License, Version 2.0
-("Apache 2.0") unless indicated otherwise. Some modules incorporate code
-available under other licenses. These modules contain human- and machine-
-readable lists of the governing license(s). Consistent with the inbound=outbound
-model, contributions to such modules must be made available, by the contributor,
-under the applicable license(s). Please read the Legal section of the
-CONTRIBUTING.md guide.
+The Ghidra software is released under the Apache License, Version 2.0
+("Apache 2.0").
+
+In addition, each module may contain numerous 3rd party components (libraries,
+icons, etc.) that each have their own license which is compatible with Apache
+2.0. Each module has a LICENSE.txt file that lists each license used in that
+module and the 3rd party files that fall under that license. The license files
+for each license used by Ghidra can be found in the licenses directory at the
+installation root.
+
+Also, in the GPL directory, there are several stand-alone support programs that
+are released using the GPL 3 license.  Ghidra executes these programs as needed
+and parses the output to get the desired results. There is a licenses directory
+under the GPL directory that has the GPL license files.
+
+Consistent with the inbound=outbound model, contributions to any module must be
+made available, by the contributor, under the applicable license(s). Please read
+the Legal section of the CONTRIBUTING.md guide.

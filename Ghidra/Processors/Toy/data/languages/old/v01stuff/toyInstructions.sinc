@@ -1,0 +1,200 @@
+#### immediates
+#  0iii dddd iiii iiii  # imm rd, i          load 11-bit unsigned int into rd
+#  10nn dddd nnnn nnnn  # simm rd, n         load 10-bit signed int into rd
+#  
+#### arithmetic
+#  1100 0000 ssss tttt  # add rs, rt         rs = rs + rt
+#  1100 0001 ssss tttt  # sub rs, rt         rs = rs - rt
+#  1100 0010 ssss tttt  # rsub rs, rt        rs = rt - rs
+#  1100 0011 ssss tttt  # mul rs, rt         rs = rs * rt
+#  1100 0100 ssss tttt  # div rs, rt         rs = rs / rt
+#  1100 0101 ssss tttt  # mod rs, rt         rs = rs % rt
+#  1100 0110 ssss tttt  # cmp rs, rt         (set status only based on signed compare (rs - rt))
+#  1100 0111 ssss tttt  # ucmp rs, rt        (set status only based on unsigned compare (rs - rt))
+#  
+#  1100 1000 ssss nnnn  # add rs, n          rs = rs + n
+#  1100 1001 ssss nnnn  # sub rs, n          rs = rs - n
+#  1100 1010 ssss nnnn  # rsub rs, n         rs = n - rs
+#  1100 1011 ssss nnnn  # mul rs, n          rs = rs * n
+#  1100 1100 ssss nnnn  # div rs, n          rs = rs / n
+#  1100 1101 ssss iiii  # mod rs, i          rs = rs % i
+#  1100 1110 ssss nnnn  # cmp rs, n          (set status only based on signed compare (rs - n))
+#  1100 1111 ssss iiii  # ucmp rs, i         (set status only based on unsigned compare (rs - i))
+#  
+#### logic
+#  1101 0000 ssss tttt  # and rs, rt         rs = rs & rt
+#  1101 0001 ssss tttt  # or rs, rt          rs = rs | rt
+#  1101 0010 ssss tttt  # xor rs, rt         rs = rs ^ rt
+#  1101 0011 ssss tttt  # lsr rs, rt         rs = rs >> rt
+#  1101 0100 ssss tttt  # asr rs, rt         rs = rs s>> rt
+#  1101 0101 ssss tttt  # lsl rs, rt         rs = rs << rt
+#  1101 1000 ssss tttt  # saa rs, rt         rs = (rs << 11) | rt
+#  
+#  1101 1011 ssss iiii  # lsr rs, i          rs = rs >> i
+#  1101 1100 ssss iiii  # asr rs, i          rs = rs s>> i
+#  1101 1101 ssss iiii  # lsl rs, i          rs = rs << i
+#  1101 1110 ssss 0000  # inv rs             rs = ~rs
+#  1101 1110 ssss 0001  # neg rs             rs = -rs
+#  
+#### memory
+#  1101 0110 ssss tttt  # load rs, [rt]      rs = [rt]
+#  1101 0111 ssss tttt  # store [rs], rt     [rs] = rt
+#  1101 1111 ssss tttt  # mov rs, rt         rs = rt
+#  
+#### flow
+#  1110 nnnn nnnn 0ccc  # brcc n             if ccc goto pc + n
+#  1110 nnnn nnnn 1ccc  # brdscc n           if ccc goto pc + n with delay slot
+#  1111 0000 ssss 0ccc  # brcc rs            if ccc goto rs & ~1
+#  1111 0001 ssss 0ccc  # brdscc rs          if ccc goto rs & ~1 with delay slot
+#  1111 0010 ssss 0000  # push rs            push rs
+#  1111 0011 ssss 0000  # pop rs             pop rs
+#  1111 0100 0000 0000  # ret                return
+#  1111 0101 nnnn nnnn  # callds n           call n with delay slot
+#  1111 0110 ssss 0000  # call rs            call rs
+#  1111 1nnn nnnn nnnn  # call n             call n
+#
+#### RESERVED
+#  1101 1001 xxxx xxxx  # RESERVED BANK
+#  1101 1010 xxxx xxxx  # RESERVED BANK
+#  1111 0111 xxxx xxxx  # RESERVED BANK
+
+
+define token instr(16)
+	op1515   = (15, 15)
+	op1415   = (14, 15)
+	op1215   = (12, 15)
+	op1111   = (11, 11)
+	op0811   = (8, 11)
+	op0007   = (0, 7)
+	op0003   = (0, 3)
+	op0303   = (3, 3)
+	rd       = (8, 11)
+	rs       = (4, 7)
+	rt       = (0, 3)
+	imm1214  = (12, 14)
+	imm0007  = (0, 7)
+	imm0003  = (0, 3)
+	simm1213 = (12, 13) signed
+	simm0010 = (0, 10) signed
+	simm0411 = (4, 11) signed
+	simm0007 = (0, 7) signed
+	simm0003 = (0, 3) signed
+	cc0911   = (9, 11)
+	cc0002   = (0, 2)
+;
+
+attach variables [ rd rs rt ] [
+       a0  a1  a2  a3  a4  a5  a6  a7
+       a8  a9 a10 a11 a12  sp  lr  pc
+];
+
+# addressing mode subs
+
+Simm4:  "#"^simm0003 is simm0003 { export *[const]:$(SIZE) simm0003; }
+Simm10: "#"^computed is simm1213 & imm0007 [ computed = (simm1213 << 8) | imm0007; ] { export *[const]:$(SIZE) computed; }
+
+Imm4:  "#"^imm0003  is imm0003 { export *[const]:$(SIZE) imm0003; }
+Imm11: "#"^computed is imm1214 & imm0007 [ computed = (imm1214 << 8) | imm0007; ] { export *[const]:$(SIZE) computed; }
+
+Rel8:  addr is simm0007 [ addr = inst_start + simm0007; ] { export *:$(SIZE) addr; }
+Rel82: addr is simm0411 [ addr = inst_start + simm0411; ] { export *:$(SIZE) addr; }
+Rel11: addr is simm0010 [ addr = inst_start + simm0010; ] { export *:$(SIZE) addr; }
+
+RS: [rs] is rs { export *[ROM]:$(SIZE) rs; }
+RT: [rt] is rt { export *[ROM]:$(SIZE) rt; }
+
+CC: "eq" is cc0002=0x0 { export Z; }
+CC: "ne" is cc0002=0x1 { tmp = !Z; export tmp; }
+CC: "lt" is cc0002=0x2 { tmp = N != V; export tmp; }
+CC: "le" is cc0002=0x3 { tmp = Z || (N != V); export tmp; }
+CC: "lo" is cc0002=0x4 { export C; }
+CC: "mi" is cc0002=0x5 { export N; }
+CC: "vs" is cc0002=0x6 { export V; }
+CC: ""   is cc0002=0x7 { export 1:1; }
+
+COND: CC is CC                { if (!CC) goto inst_next; }
+COND: CC is CC & cc0002=0x7   { } # unconditional
+
+macro resultflags(result) {
+	N = result s< 0;
+	Z = result == 0;
+}
+macro addflags(a, b) {
+	C = carry(a, b);
+	V = scarry(a, b);
+}
+macro subflags(a, b) {
+	C = a s< b;
+	V = sborrow(a, b);
+}
+macro logicflags() {
+	C = 0;
+	V = 0;
+}
+
+# operations
+
+:imm  rd, Imm11  is $(INSTR_PHASE) op1515=0x0 & rd & Imm11   { logicflags(); rd = Imm11; resultflags(rd); }
+:simm rd, Simm10 is $(INSTR_PHASE) op1415=0x2 & rd & Simm10  { logicflags(); rd = Simm10; resultflags(rd); }
+
+:add  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x0 & rs & rt { addflags(rs, rt); rs = rs + rt; resultflags(rs); }
+:sub  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x1 & rs & rt { subflags(rs, rt); rs = rs - rt; resultflags(rs); }
+:rsub rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x2 & rs & rt { subflags(rt, rs); rs = rt - rs; resultflags(rs); }
+:mul  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x3 & rs & rt {                   rs = rs * rt; resultflags(rs); } # fix C & V
+:div  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x4 & rs & rt {                   rs = rs / rt; resultflags(rs); } # fix C & V
+:mod  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x5 & rs & rt {                   rs = rs % rt; resultflags(rs); } # fix C & V
+:cmp  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x6 & rs & rt { subflags(rs, rt); tmp:$(SIZE) = rs - rt; resultflags(tmp); }
+:ucmp rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x7 & rs & rt { logicflags(); N = rs < rt; Z = rs == rt; }
+
+:add  rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0x8 & rs & Simm4 { addflags(rs, Simm4); rs = rs + Simm4;          resultflags(rs); }
+:sub  rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0x9 & rs & Simm4 { subflags(rs, Simm4); rs = rs - Simm4;          resultflags(rs); }
+:rsub rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0xa & rs & Simm4 { subflags(Simm4, rs); rs = Simm4 - rs;          resultflags(rs); }
+:mul  rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0xb & rs & Simm4 {                      rs = rs * Simm4;          resultflags(rs); } # fix C & V
+:div  rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0xc & rs & Simm4 {                      rs = rs / Simm4;          resultflags(rs); } # fix C & V
+:mod  rs, Imm4  is $(INSTR_PHASE) op1215=0xc & op0811=0xd & rs & Imm4  {                      rs = rs % Imm4;           resultflags(rs); } # fix C & V
+:cmp  rs, Simm4 is $(INSTR_PHASE) op1215=0xc & op0811=0xe & rs & Simm4 { subflags(rs, Simm4); tmp:$(SIZE) = rs - Simm4; resultflags(tmp); }
+:ucmp rs, Imm4  is $(INSTR_PHASE) op1215=0xc & op0811=0xf & rs & Imm4  { logicflags(); N = rs < Imm4; Z = rs == Imm4; }
+
+:and rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x0 & rs & rt { logicflags(); rs = rs & rt;   resultflags(rs); }
+:or  rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x1 & rs & rt { logicflags(); rs = rs | rt;   resultflags(rs); }
+:xor rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x2 & rs & rt { logicflags(); rs = rs ^ rt;   resultflags(rs); }
+:lsr rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x3 & rs & rt { logicflags(); rs = rs >> rt;  resultflags(rs); }
+:asr rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x4 & rs & rt { logicflags(); rs = rs s>> rt; resultflags(rs); }
+:lsl rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x5 & rs & rt { logicflags(); rs = rs << rt;  resultflags(rs); }
+
+# saa == shift and accumulate; very useful for building up a 32 bit or 64 bit value in pieces, like:
+# imm r12, #32b
+# imm r11, #7d7
+# saa r12, r11
+# imm r11, #2be
+# saa r12, r11
+#
+# now r12 contains '0xcafebabe' (decompiler reconstitutes the pieces seamlessly)
+
+:saa rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x8 & rs & rt { logicflags(); rs = (rs << 11) | rt;  resultflags(rs); }
+
+:lsr  rs, Imm4 is $(INSTR_PHASE) op1215=0xd & op0811=0xb & rs & Imm4       { logicflags(); rs = rs >> Imm4;  resultflags(rs); }
+:asr  rs, Imm4 is $(INSTR_PHASE) op1215=0xd & op0811=0xc & rs & Imm4       { logicflags(); rs = rs s>> Imm4; resultflags(rs); }
+:lsl  rs, Imm4 is $(INSTR_PHASE) op1215=0xd & op0811=0xd & rs & Imm4       { logicflags(); rs = rs << Imm4;  resultflags(rs); } # fix C & V
+:inv  rs       is $(INSTR_PHASE) op1215=0xd & op0811=0xe & rs & op0003=0x0 { logicflags(); rs = ~rs; resultflags(rs); }
+:neg  rs       is $(INSTR_PHASE) op1215=0xd & op0811=0xe & rs & op0003=0x1 { logicflags(); rs = -rs; resultflags(rs); }
+
+:load  rs, RT is $(INSTR_PHASE) op1215=0xd & op0811=0x6 & rs & RT { rs = RT; logicflags(); resultflags(rs); }
+:store RS, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x7 & RS & rt { RS = rt; logicflags(); resultflags(rt); }
+:mov   rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0xf & rs & rt { rs = rt; logicflags(); resultflags(rs); }
+
+:br^COND Rel82   is $(INSTR_PHASE) op1215=0xe & op0303=0x0 & COND & Rel82           { build COND; goto Rel82; }
+:brds^COND Rel82 is $(INSTR_PHASE) op1215=0xe & op0303=0x1 & COND & Rel82           { build COND; delayslot(1); goto Rel82; }
+:br^COND rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x0 & COND & rs & op0303=0x0 { build COND; goto [rs]; }
+:brds^COND rs    is $(INSTR_PHASE) op1215=0xf & op0811=0x1 & COND & rs & op0303=0x0 { build COND; delayslot(1); goto [rs]; }
+@ifdef POS_STACK
+:push rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x2 & rs & op0003=0x0        { *[ROM]:$(SIZE) sp = rs; sp = sp + $(SIZE); logicflags(); resultflags(rs); }
+:pop rs       is $(INSTR_PHASE) op1215=0xf & op0811=0x3 & rs & op0003=0x0        { sp = sp - $(SIZE); rs = *[ROM]:$(SIZE) sp; logicflags(); resultflags(rs); }
+@else
+:push rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x2 & rs & op0003=0x0        { *[ROM]:$(SIZE) sp = rs; sp = sp - $(SIZE); logicflags(); resultflags(rs); }
+:pop rs       is $(INSTR_PHASE) op1215=0xf & op0811=0x3 & rs & op0003=0x0        { sp = sp + $(SIZE); rs = *[ROM]:$(SIZE) sp; logicflags(); resultflags(rs); }
+@endif
+:ret          is $(INSTR_PHASE) op1215=0xf & op0811=0x4      & op0007=0x0        { return [lr]; }
+:callds Rel8  is $(INSTR_PHASE) op1215=0xf & op0811=0x5 & Rel8                   { delayslot(1); lr = inst_next; call Rel8; }
+:call rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x6 & rs & op0003=0x0        { lr = inst_next; call [rs]; }
+:call Rel11   is $(INSTR_PHASE) op1215=0xf & op1111=0x1 & Rel11                  { lr = inst_next; call Rel11; }

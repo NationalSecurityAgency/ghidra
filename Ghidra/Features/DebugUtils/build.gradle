@@ -1,0 +1,7 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features DebugUtils'
+
+
+dependencies {
+	compile project(':Base')
+}

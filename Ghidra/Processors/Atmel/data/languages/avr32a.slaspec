@@ -1,0 +1,713 @@
+define endian=big;
+define alignment=2;
+
+define space RAM type=ram_space size=4 default;
+
+define space register type=register_space size=2;  
+
+# for the AVR32A
+define register offset=0x0000 size=4 [ 
+
+	SR			EVBA		ACBA		CPUCR		ECR			RSR_SUP		RSR_INT0	RSR_INT1
+	RSR_INT2	RSR_INT3	RSR_EX		RSR_NMI		RSR_DBG		RAR_SUP		RAR_INT0	RAR_INT1
+	RAR_INT2	RAR_INT3	RAR_EX		RAR_NMI		RAR_DBG		JECR		JOSP		JAVA_LV0
+	JAVA_LV1 	JAVA_LV2 	JAVA_LV3 	JAVA_LV4 	JAVA_LV5 	JAVA_LV6 	JAVA_LV7 	JTBA
+	JBCR
+];
+
+define register offset=0x0100 size=4 [ 
+	CONFIG0	CONFIG1	COUNT	COMPARE	TLBEHI		TLBELO		PTBR	TLBEAR
+	MMUCR	TLBARLO	TLBARHI	PCCNT	PCNT0		PCNT1		PCCR	BEAR
+	MPUAR0	MPUAR1	MPUAR2	MPUAR3	MPUAR4		MPUAR5		MPUAR6	MPUAR7
+	MPUPSR0	MPUPSR1	MPUPSR2	MPUPSR3	MPUPSR4		MPUPSR5		MPUPSR6	MPUPSR7
+	MPUCRA	MPUCRB	MPUBRA	MPUBRB	MPUAPRA		MPUAPRB		MPUCR	SS_STATUS
+	SS_ADRF	SS_ADRR	SS_ADR0	SS_ADR1	SS_SP_SYS	SS_SP_APP	SS_RAR	SS_RSR
+];
+
+# 103-191 reserved for future use
+# 192-255 implementation defined
+
+define register offset=0x1000 size=4 [
+	R0	R1	R2	R3	R4	R5	R6	R7
+	R8	R9	R10	R11	R12	SP	LR	PC
+];
+
+define register offset=0x1100 size=1  [
+	C Z N V Q L _ _ _ _ _ _ _ _ T R
+	GM I0M I1M I2M I3M EM M0 M1 M2 _ D DM J H _ _
+	ALWAYS_TRUE
+];
+
+macro SRTOLOWFLAGS() {
+	C =		(SR & 0x1) != 0;
+	Z =		(SR & 0x2) != 0;
+	N =		(SR & 0x4) != 0;
+	V =		(SR & 0x8) != 0;
+}
+
+macro SRTOFLAGS() {
+	C =		(SR & 0x1) != 0;
+	Z =		(SR & 0x2) != 0;
+	N =		(SR & 0x4) != 0;
+	V =		(SR & 0x8) != 0;
+	Q =		(SR & 0x10) != 0;
+	L =		(SR & 0x20) != 0;
+	T =		(SR & 0x4000) != 0;
+	R =		(SR & 0x8000) != 0;
+	GM =	(SR & 0x10000) != 0;
+	I0M =	(SR & 0x20000) != 0;
+	I1M =	(SR & 0x40000) != 0;
+	I2M =	(SR & 0x80000) != 0;
+	I3M =	(SR & 0x100000) != 0;
+	EM =	(SR & 0x200000) != 0;
+	M0 =	(SR & 0x400000) != 0;
+	M1 =	(SR & 0x800000) != 0;
+	M2 =	(SR & 0x1000000) != 0;
+	D =		(SR & 0x4000000) != 0;
+	DM =	(SR & 0x8000000) != 0;
+	J =		(SR & 0x10000000) != 0;
+	H =		(SR & 0x20000000) != 0;
+}
+
+macro CZNVTOSR() {
+	tmp:4 = zext(C&1) | (zext(Z&1) << 1) | (zext(N&1) << 2) | (zext(V&1) << 3);
+	SR = (SR & 0xFFFFFFF0) | tmp;
+}
+
+macro CZNVQTOSR() {
+	tmp:4 = zext(C&1) | (zext(Z&1) << 1) | (zext(N&1) << 2) | (zext(V&1) << 3) | (zext(Q&1) << 4);
+	SR = (SR & 0xFFFFFFE0) | tmp;
+}
+
+macro QTOSR() {
+	SR = (SR & 0xFFFFFFEF) | (zext(Q&1) << 4);
+}
+
+macro CZTOSR() {
+	tmp:4 = zext(C&1) | (zext(Z&1) << 1);
+	SR = (SR & 0xFFFFFFFC) | tmp;
+}
+
+macro JRGMTOSR() {
+	tmp:4 = (zext(R&1) << 15) | (zext(GM&1) << 16) | (zext(J&1) << 28);
+	SR = (SR & 0xEFFFFE7F) | tmp;
+}
+
+macro LTOSR() {
+	tmp:4 = zext(L&1) << 5;
+	SR = (SR & 0xFFFFFFDF) | tmp;
+}
+
+define register offset=0x1200 size=4 [
+  stadd ldadd
+];
+
+define register offset=0x1300 size=4 contextreg;
+define context contextreg
+	ctx_rel10=(0,9) signed noflow
+	ctx_rel8_2=(0,1) noflow
+	ctx_rel0_8=(2,9) noflow
+	ctx_rel21=(0,20) signed noflow
+	ctx_rel0_16=(5,20) noflow
+	ctx_rel16_1=(4,4) noflow
+	ctx_rel17_4=(0,3) noflow
+	ctx_rel3=(0,2) signed noflow
+	ctx_savex=(0,3) noflow
+	ctx_usex=(0,3) noflow
+	ctx_savey=(4,7) noflow
+	ctx_usey=(4,7) noflow
+	ctx_useu=(4,7) noflow
+	ctx_shift=(0,4) noflow
+	ctx_shigh=(0,3) noflow
+	ctx_slow=(4,4) noflow
+	ctx_coop=(0,6) noflow
+	ctx_cohi=(0,1) noflow
+	ctx_comid=(2,5) noflow
+	ctx_colow=(6,6) noflow
+	ctx_rdplus=(8,11) noflow
+	ctx_rdsave=(8,11) noflow
+;
+
+define token instr1(16)
+	op13_3 =	(13,15)
+    op11_5 =    (11, 15)
+    op0_3 =     (0, 2)
+	rs9 =		(9,12)
+	rp9 =		(9,12)
+    rb9 =       (9,12)
+	rx9 =       (9,12)
+	op9_4 = 	(9,12)
+	op9_7 = 	(9,15)
+	op9_2 =		(9,10)
+	op7_9 =		(7,15)
+	op7_2 =		(7,8)
+	op4_5 =		(4,8)
+	op4_12 = 	(4,15)
+    op9_1 =     (9,9)
+    op8_1 =     (8,8)
+    op8_8 =     (8,15)
+    op0_9 =		(0,8)
+	b9 = 		(9,9)
+	op10_6 =    (10,15)
+	disp4_3 =	(4,6)
+    disp4_5 =   (4,8)
+    disp4_7 =   (4,10)
+    disp4_4 =   (4,7)
+	rs0 =		(0,3)
+    rs0_hi =    (1,3)
+    rs0_low =   (1,3)
+    rd0_hi =    (1,3)
+    rd0_low =   (1,3)
+	rp0 =		(0,3)
+	rd0 =		(0,3)
+	rd9 =       (9,12)
+	ri0 =		(0,3)
+    rb0 =       (0,3)
+    ry0 =       (0,3)
+    b0 =        (0,0)
+    b02 =		(2,2)
+    b03 =       (3,3)
+    b04 =       (4,4)
+    b05 =       (5,5)
+    b06 =       (6,6)
+    b07 =       (7,7)
+    b08 =       (8,8)
+    b09 =       (9,9)
+    b10 =       (10,10)
+    b11 =       (11,11)
+    bp9_4 =     (9,12)
+    bp4_1 =     (4,4)
+    bp4_2 =		(4,5)
+    bp4_3 =		(4,6)
+    bp4_4 =		(4,7)
+    bp4_5 =		(4,8)
+    bp4_6 =		(4,9)
+    bp4_7 =		(4,10)
+	cond4_4 =  	(4,7)
+	cond0_4 =  	(0,3)
+	cond0_3 =  	(0,2)
+    imm4_8 = 	(4,11) signed
+    imm4_6 = 	(4,9) signed
+    imm4_5 = 	(4,8)
+	op12_1 = 	(12,12)
+	op5_4 = 	(5,8)
+	imm9_4 = 	(9,12) signed
+	imm4_1 = 	(4,4)
+	imm0_4 = 	(0,3)
+	b003 = 		(0,3)
+	disp4_8	= 	(4,11)
+	sdisp4_8 = 	(4,11) signed
+	op3_1 = 	(3,3)
+	op3_6 =		(3,8)
+    disp21part2_4_1 = (4,4)
+    disp21part3_9_4  = (9,12) signed
+	shift9_4 = 	(9,12)
+	shift4_1 = 	(4,4)
+	op12_4 = 	(12,15)
+	op0_4 = 	(0,3)
+	disp0_2	=	(0,1)
+	sdisp0_2 = 	(0,1) signed
+	op2_2 = 	(2,3)
+	op0_16 =	(0,15)
+	sa0_3 =		(0,2)
+	sa0_4 =		(0,3)
+    coh =       (9,9)
+;
+
+define token instr2(16)
+	ecop13_3 =	(13,15)
+    disp_16 =   (0,15) signed
+    ddisp_16 =  (0,15) signed
+	disp_9 = 	(0,8)
+	disp_8 = 	(0,7)
+	disp12_4 =	(12,15)
+	disp0_11 = 	(0,10) signed
+	disp0_12 =	(0,11) signed
+	edisp4_8 =	(4,11)
+	eop14_2 =	(14,15)
+	eop11_5 = 	(11,15)
+    eop12_4 =   (12,15)
+    eop6_10 =   (6,15)
+	eop8_4 =	(8,11)
+	eop6_2 =	(6,7)
+	eop5_3 = 	(5,7)
+    eop9_3 =    (9,11)
+    eop8_8 =    (8,15)
+	eop0_9 =	(0,8)
+    eop0_4 =    (0,3)
+    eop9_7 =    (9,15)	
+    eop12_1 =   (12,12)
+    eop5_11 =   (5,15)
+    eop0_8 =    (0,7)
+    eop0_16 =   (0,15)
+    eop4_12 =   (4,15)
+    eop4_8 =    (4,11)
+    eop4_4 =    (4,7)
+    eop10_6 =   (10,15)
+    eoff5_5 =   (5,9)
+    eoff0_5 =   (0,4)
+    elen0_5 =   (0,4)
+    eop10_2 = 	(10,11) 
+    esa0_5	= 	(0,4)
+    ebp5_5  = 	(5,9)             
+	crd8_4 =	(8,11)
+	crd9_3 = 	(9,11)
+	crx4_4 =	(4,7)
+	cry0_4 =	(0,3)
+	altcrd8_4 =	(8,11)
+	altcrx4_4 =	(4,7)
+	altcry0_4 =	(0,3)
+	altcrd9_3 =	(9,11)
+	crd8_1 = 	(8,8)
+	cp13_3 =	(13,15)
+	altcp13_3 =	(13,15)
+    shift4_2 =  (4,5)
+    shift4_5 =  (4,8)
+    shift0_5 =  (0,4)
+	selectorxy4_2 =	(4,5)
+	ers0 =		(0,3)
+	erb0 =		(0,3)
+	erd0 = 		(0,3)
+	erd0a =		(0,3)
+	erp0 = 		(0,3)
+    ers0_hi =   (1,3)
+    ers0_low =  (1,3)
+    erd0_hi =   (1,3)
+    erd0_low =  (1,3)
+	econd12_4 = (12, 15)
+	econd8_4 =  (8, 11)
+	econd4_4 =  (4, 7)
+	eri8 =		(8,11)
+	eri0 =		(0,3)
+    eb0 = 		(0,0)
+    eb1 = 		(1,1)
+    eb2 = 		(2,2)
+    eb3 = 		(3,3)
+    eb4 = 		(4,4)
+    eb5 = 		(5,5)
+    eb6 = 		(6,6)
+    eb7 = 		(7,7)
+    eb8 = 		(8,8)
+    eb9 = 		(9,9)
+    eb10 = 		(10,10)
+    eb11 = 		(11,11)
+    eb12 = 		(12,12)
+    eb13 = 		(13,13)
+    eb14 = 		(14,14)
+    eb15 = 		(15,15)
+    ypart = 	(4,4)
+    upart =		(4,4)
+    xpart = 	(5,5)
+    imm16 = 	(0,15)  
+    simm16 = 	(0,15) signed
+    simm0_8 = 	(0,7) signed
+    imm0_8 = 	(0,7)
+    simm0_15 =	(0,14) signed
+    imm12_2 = 	(12,13)
+    sysreg = 	(0,7)
+    dbgreg =	(0,7)
+    disp21part1_0_16 = (0,15)
+    deb0 = 		(0,0)
+    deb1 = 		(1,1)
+    deb2 = 		(2,2)
+    deb3 = 		(3,3)
+    deb4 = 		(4,4)
+    deb5 = 		(5,5)
+    deb6 = 		(6,6)
+    deb7 = 		(7,7)
+    deb8 = 		(8,8)
+    deb9 = 		(9,9)
+    deb10 = 	(10,10)
+    deb11 = 	(11,11)
+    deb12 = 	(12,12)
+    deb13 = 	(13,13)
+    deb14 = 	(14,14)
+    deb15 = 	(15,15)
+;
+
+attach variables [ rs9 rp9 rd9 rb9 rs0 rb0 rp0 rx9 ry0 rd0 ri0 ers0 erd0 erb0 eri0 erp0 eri8 ctx_rdplus ctx_usex ctx_usey] [
+	R0	R1	R2	R3	R4	R5	R6	R7
+	R8	R9	R10	R11	R12	SP	LR	PC
+];
+
+attach variables [ rs0_hi rd0_hi erd0_hi ers0_hi ] [
+        R1      R3      R5      R7      R9      R11     SP      PC
+];
+
+attach variables [ rs0_low rd0_low erd0_low ers0_low ] [
+        R0      R2      R4      R6      R8      R10     R12     LR
+];                      
+
+attach variables [ deb0 ] [ R0 R0 ];
+attach variables [ deb1 ] [ R1 R1 ];
+attach variables [ deb2 ] [ R2 R2 ];
+attach variables [ deb3 ] [ R3 R3 ];
+attach variables [ deb4 ] [ R4 R4 ];
+attach variables [ deb5 ] [ R5 R5 ];
+attach variables [ deb6 ] [ R6 R6 ];
+attach variables [ deb7 ] [ R7 R7 ];
+attach variables [ deb8 ] [ R8 R8 ];
+attach variables [ deb9 ] [ R9 R9 ];
+attach variables [ deb10 ] [ R10 R10 ];
+attach variables [ deb11 ] [ R11 R11 ];
+attach variables [ deb12 ] [ R12 R12 ];
+attach variables [ deb13 ] [ SP SP ];
+attach variables [ deb14 ] [ LR LR ];
+attach variables [ deb15 ] [ PC PC ];
+
+attach variables [ sysreg]
+[
+	SR			EVBA		ACBA		CPUCR		ECR			RSR_SUP		RSR_INT0	RSR_INT1
+	RSR_INT2	RSR_INT3	RSR_EX		RSR_NMI		RSR_DBG		RAR_SUP		RAR_INT0	RAR_INT1
+	RAR_INT2	RAR_INT3	RAR_EX		RAR_NMI		RAR_DBG		JECR		JOSP		JAVA_LV0
+	JAVA_LV1 	JAVA_LV2 	JAVA_LV3 	JAVA_LV4 	JAVA_LV5 	JAVA_LV6 	JAVA_LV7 	JTBA
+	JBCR		_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	CONFIG0		CONFIG1		COUNT		COMPARE		TLBEHI		TLBELO		PTBR		TLBEAR
+	MMUCR		TLBARLO		TLBARHI		PCCNT		PCNT0		PCNT1		PCCR		BEAR
+	MPUAR0		MPUAR1		MPUAR2		MPUAR3		MPUAR4		MPUAR5		MPUAR6		MPUAR7
+	MPUPSR0		MPUPSR1		MPUPSR2		MPUPSR3		MPUPSR4		MPUPSR5		MPUPSR6		MPUPSR7
+	MPUCRA		MPUCRB		MPUBRA		MPUBRB		MPUAPRA		MPUAPRB		MPUCR		SS_STATUS
+	SS_ADRF		SS_ADRR		SS_ADR0		SS_ADR1		SS_SP_SYS	SS_SP_APP	SS_RAR		SS_RSR
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+	_			_			_			_			_			_			_			_
+];
+
+# loadCoprocessorWord(CP:1, CRd:1, address:4)
+define pcodeop loadCoprocessorWord;
+
+# loadCoprocessorDWord(CP:1, CRd:1, address:4)
+define pcodeop loadCoprocessorDWord;
+
+define pcodeop CoProcessorDWordToReg;
+define pcodeop CoProcessorWordToReg;
+define pcodeop RegToCoProcessorDWord;
+define pcodeop RegToCoProcessorWord;
+define pcodeop storeCoprocessorDword;
+define pcodeop storeCoprocessorWord;
+define pcodeop CoprocessorOp;
+define pcodeop LoadCoProcessorWord;
+define pcodeop LoadCoProcessorDword;
+
+define pcodeop trap;
+define pcodeop cacheOp;
+define pcodeop CacheFetch;
+
+define pcodeop doSleep;
+
+define pcodeop CheckAndRestoreInterupt;
+define pcodeop CheckAndRestoreSupervisor;
+
+define pcodeop ReadTLBEntry;
+define pcodeop WriteTLBEntry;
+define pcodeop SearchTLBEntry;
+
+define pcodeop SynchMemory;
+
+define pcodeop JavaTrap;
+define pcodeop JavaPopContext;
+define pcodeop JavaPushContext;
+define pcodeop JavaCheckStack;
+
+define pcodeop SupervisorCallSetup;
+
+define pcodeop MoveToDebugReg;
+define pcodeop MoveFromDebugReg;
+
+# conditions
+
+# STATUS REGISTER MAP: (LOW)
+# C - CARRY
+# Z - ZERO
+# N - NEGATIVE
+# V - OVERFLOW
+# Q - SATURATION
+# L - LOCK
+# T - SCRATCH
+# R - REMAP
+
+# STATUS REGISTER MAP: (HIGH)
+# GM - Global Interrupt Mask
+# I0M - Interrupt Level 0 Mask
+# I1M - Interrupt Level 1 Mask
+# I2M - Interrupt Level 2 Mask
+# I3M - Interrupt Level 3 Mask
+# EM - Exception Mask
+# M0 - Execution Mode 0
+# M1 - Execution Mode 1
+# M2 - Execution Mode 2
+# D - Debug State
+# DM - Debug State Mask
+# J - Java State
+# H - Java Handle
+
+
+#Cond4 Registers Extended (12,15)
+cc4_e12: "EQ" is econd12_4=0x0 { export Z; }
+cc4_e12: "NE" is econd12_4=0x1 { tmp:1 = !Z; export tmp; }
+cc4_e12: "HS" is econd12_4=0x2 { tmp:1 = !C; export tmp; }
+cc4_e12: "LO" is econd12_4=0x3 { export C; }
+cc4_e12: "GE" is econd12_4=0x4 { tmp:1 = N == V; export tmp;}
+cc4_e12: "LT" is econd12_4=0x5 { tmp:1 = N!=V; export tmp; }
+cc4_e12: "MI" is econd12_4=0x6 { export N; }
+cc4_e12: "PL" is econd12_4=0x7 { tmp:1 = !N; export tmp; }
+cc4_e12: "LS" is econd12_4=0x8 { tmp:1 = C || Z; export tmp; }
+cc4_e12: "GT" is econd12_4=0x9 { tmp:1 = !Z && (N == V); export tmp; }
+cc4_e12: "LE" is econd12_4=0xa { tmp:1 = Z || (N!=V); export tmp; }
+cc4_e12: "HI" is econd12_4=0xb { tmp:1 = !C && !Z; export tmp; }
+cc4_e12: "VS" is econd12_4=0xc { export V; }
+cc4_e12: "VC" is econd12_4=0xd { tmp:1 = !V; export tmp; }
+cc4_e12: "QS" is econd12_4=0xe { export Q; }
+cc4_e12: "AL" is econd12_4=0xf { export ALWAYS_TRUE; }
+
+COND_e12: cc4_e12       is cc4_e12      { if (!cc4_e12) goto inst_next; }
+COND_e12: cc4_e12       is cc4_e12 & econd12_4=0xf { }
+
+#Cond4 Registers Extended (4,7)
+cc4_4: "EQ" is cond4_4=0x0 { export Z; }
+cc4_4: "NE" is cond4_4=0x1 { tmp:1 = !Z; export tmp; }
+cc4_4: "HS" is cond4_4=0x2 { tmp:1 = !C; export tmp; }
+cc4_4: "LO" is cond4_4=0x3 { export C; }
+cc4_4: "GE" is cond4_4=0x4 { tmp:1 = N == V; export tmp;}
+cc4_4: "LT" is cond4_4=0x5 { tmp:1 = N!=V; export tmp; }
+cc4_4: "MI" is cond4_4=0x6 { export N; }
+cc4_4: "PL" is cond4_4=0x7 { tmp:1 = !N; export tmp; }
+cc4_4: "LS" is cond4_4=0x8 { tmp:1 = C || Z; export tmp; }
+cc4_4: "GT" is cond4_4=0x9 { tmp:1 = !Z && (N == V); export tmp; }
+cc4_4: "LE" is cond4_4=0xa { tmp:1 = Z || (N!=V); export tmp; }
+cc4_4: "HI" is cond4_4=0xb { tmp:1 = !C && !Z; export tmp; }
+cc4_4: "VS" is cond4_4=0xc { export V; }
+cc4_4: "VC" is cond4_4=0xd { tmp:1 = !V; export tmp; }
+cc4_4: "QS" is cond4_4=0xe { export Q; }
+cc4_4: "AL" is cond4_4=0xf { export ALWAYS_TRUE; }
+
+COND_4_4: cc4_4       is cc4_4      { if (!cc4_4) goto inst_next; }
+COND_4_4: cc4_4       is cc4_4 & cond4_4=0xf { }
+
+#Cond4 Registers Extended (4,7)
+ecc4_4: "EQ" is econd4_4=0x0 { export Z; }
+ecc4_4: "NE" is econd4_4=0x1 { tmp:1 = !Z; export tmp; }
+ecc4_4: "HS" is econd4_4=0x2 { tmp:1 = !C; export tmp; }
+ecc4_4: "LO" is econd4_4=0x3 { export C; }
+ecc4_4: "GE" is econd4_4=0x4 { tmp:1 = N == V; export tmp;}
+ecc4_4: "LT" is econd4_4=0x5 { tmp:1 = N!=V; export tmp; }
+ecc4_4: "MI" is econd4_4=0x6 { export N; }
+ecc4_4: "PL" is econd4_4=0x7 { tmp:1 = !N; export tmp; }
+ecc4_4: "LS" is econd4_4=0x8 { tmp:1 = C || Z; export tmp; }
+ecc4_4: "GT" is econd4_4=0x9 { tmp:1 = !Z && (N == V); export tmp; }
+ecc4_4: "LE" is econd4_4=0xa { tmp:1 = Z || (N!=V); export tmp; }
+ecc4_4: "HI" is econd4_4=0xb { tmp:1 = !C && !Z; export tmp; }
+ecc4_4: "VS" is econd4_4=0xc { export V; }
+ecc4_4: "VC" is econd4_4=0xd { tmp:1 = !V; export tmp; }
+ecc4_4: "QS" is econd4_4=0xe { export Q; }
+ecc4_4: "AL" is econd4_4=0xf { export ALWAYS_TRUE; }
+
+ECOND_4_4: ecc4_4       is ecc4_4      { if (!ecc4_4) goto inst_next; }
+ECOND_4_4: ecc4_4       is ecc4_4 & econd4_4=0xf { }
+
+#Cond4 Registers Extended (4,7)
+ecc8_4: "EQ" is econd8_4=0x0 { export Z; }
+ecc8_4: "NE" is econd8_4=0x1 { tmp:1 = !Z; export tmp; }
+ecc8_4: "HS" is econd8_4=0x2 { tmp:1 = !C; export tmp; }
+ecc8_4: "LO" is econd8_4=0x3 { export C; }
+ecc8_4: "GE" is econd8_4=0x4 { tmp:1 = N == V; export tmp;}
+ecc8_4: "LT" is econd8_4=0x5 { tmp:1 = N!=V; export tmp; }
+ecc8_4: "MI" is econd8_4=0x6 { export N; }
+ecc8_4: "PL" is econd8_4=0x7 { tmp:1 = !N; export tmp; }
+ecc8_4: "LS" is econd8_4=0x8 { tmp:1 = C || Z; export tmp; }
+ecc8_4: "GT" is econd8_4=0x9 { tmp:1 = !Z && (N == V); export tmp; }
+ecc8_4: "LE" is econd8_4=0xa { tmp:1 = Z || (N!=V); export tmp; }
+ecc8_4: "HI" is econd8_4=0xb { tmp:1 = !C && !Z; export tmp; }
+ecc8_4: "VS" is econd8_4=0xc { export V; }
+ecc8_4: "VC" is econd8_4=0xd { tmp:1 = !V; export tmp; }
+ecc8_4: "QS" is econd8_4=0xe { export Q; }
+ecc8_4: "AL" is econd8_4=0xf { export ALWAYS_TRUE; }
+
+ECOND_8_4: ecc8_4       is ecc8_4      { if (!ecc8_4) goto inst_next; }
+ECOND_8_4: ecc8_4       is ecc8_4 & econd8_4=0xf { }
+
+#Cond3 Registers(0 - 2) 
+cc3_0: "eq" 		is cond0_3=0x0	 	{ export Z; }
+cc3_0: "ne" 		is cond0_3=0x1		{ tmp:1 = !Z; export tmp; }
+cc3_0: "cc/hs" 	is cond0_3=0x2			{ tmp:1 = !C; export tmp; }
+cc3_0: "cc/lo" 	is cond0_3=0x3			{ export C; }
+cc3_0: "ge" 		is cond0_3=0x4		{ tmp:1 = N == V; export tmp;}
+cc3_0: "lt" 		is cond0_3=0x5		{ tmp:1 = N!=V; export tmp; }
+cc3_0: "mi" 		is cond0_3=0x6		{ export N; }
+cc3_0: "pl" 		is cond0_3=0x7		{ tmp:1 = !N; export tmp; }
+
+COND_3: cc3_0 		is cc3_0			{ export cc3_0; }
+
+#Cond4 Registers(0 - 3)
+cc4_0: "eq" 		is cond0_4=0x0	 	{ export Z; }
+cc4_0: "ne" 		is cond0_4=0x1		{ tmp:1 = !Z; export tmp; }
+cc4_0: "cc/hs" 		is cond0_4=0x2		{ tmp:1 = !C; export tmp; }
+cc4_0: "cc/lo" 		is cond0_4=0x3		{ export C; }
+cc4_0: "ge" 		is cond0_4=0x4		{ tmp:1 = N == V; export tmp;}
+cc4_0: "lt" 		is cond0_4=0x5		{ tmp:1 = N!=V; export tmp; }
+cc4_0: "mi" 		is cond0_4=0x6		{ export N; }
+cc4_0: "pl" 		is cond0_4=0x7		{ tmp:1 = !N; export tmp; }
+cc4_0: "ls" 		is cond0_4=0x8		{ tmp:1 = C || Z; export tmp; }
+cc4_0: "gt" 		is cond0_4=0x9		{ tmp:1 = !Z && (N == V); export tmp; }
+cc4_0: "le" 		is cond0_4=0xa		{ tmp:1 = Z || (N!=V); export tmp; }
+cc4_0: "hi" 		is cond0_4=0xb		{ tmp:1 = !C && !Z; export tmp; }
+cc4_0: "vs" 		is cond0_4=0xc		{ export V; }
+cc4_0: "vc" 		is cond0_4=0xd		{ tmp:1 = !V; export tmp; }
+cc4_0: "qs" 		is cond0_4=0xe		{ export Q; }
+cc4_0: "al" 		is cond0_4=0xf		{ export ALWAYS_TRUE; }
+
+COND_4_0: cc4_0       is cc4_0   { if (!cc4_0) goto inst_next; }
+COND_4_0: cc4_0       is cc4_0 & cond0_4=0xf { }
+
+RP9bInc: rp9++			is rp9	{ ptr:4 = rp9; rp9 = rp9 + 1; export ptr; }
+RPhInc: rp9++			is rp9	{ ptr:4 = rp9; rp9 = rp9 + 2; export ptr; }
+RPwInc: rp9++			is rp9	{ ptr:4 = rp9; rp9 = rp9 + 4; export ptr; }
+RPdInc: rp9++			is rp9	{ ptr:4 = rp9; rp9 = rp9 + 8; export ptr; }
+
+RP9bDec: --rp9			is rp9	{ rp9 = rp9 - 1; ptr:4 = rp9; export ptr; }
+RPhDec: --rp9			is rp9	{ rp9 = rp9 - 2; ptr:4 = rp9; export ptr; }
+RPwDec: --rp9                   is rp9  { rp9 = rp9 - 4; ptr:4 = rp9; export ptr; }
+RPdDec: --rp9                   is rp9  { rp9 = rp9 - 8; ptr:4 = rp9; export ptr; }
+
+RPwDec0: --rp0			is rp0	{ rp0 = rp0 - 4; ptr:4 = rp0; export ptr; }
+RPdDec0: --rp0			is rp0	{ rp0 = rp0 - 8; ptr:4 = rp0; export ptr; }
+
+RPbDisp3: rp9[disp4_3]	is rp9 & disp4_3 { ptr:4 = rp9 + disp4_3; export ptr; }
+
+RPhDisp3: rp9[disp]	is rp9 & disp4_3
+[ disp = disp4_3 << 1; ]
+{ ptr:4 = rp9 + disp; export ptr; }
+
+RPwDisp4: rp9[disp]  is rp9 & disp4_4
+[ disp = disp4_4 << 2; ]
+{ ptr:4 = rp9 + disp; export ptr; }
+
+RPwDisp5: rp9[disp]  is rp9 & disp4_5
+[ disp = disp4_5 << 2; ]
+{ ptr:4 = rp9 + disp; export ptr; }
+
+RPwDisp8: rp0[disp]	is rp0; disp_8
+[ disp = disp_8 << 2; ]
+{ ptr:4 = rp0 + disp; export ptr; }
+
+RPbDisp9: rp9[disp_9]	is rp9; disp_9 { ptr:4 = rp9 + disp_9; export ptr; }	
+
+RPhDisp9: rp9[disp]	is rp9; disp_9
+[ disp = disp_9 << 1; ]
+{ ptr:4 = rp9 + disp; export ptr; }
+
+RPwDisp9: rp9[disp]	is rp9; disp_9
+[ disp = disp_9 << 2; ]
+{ ptr:4 = rp9 + disp; export ptr; }
+
+RPwDisp12: rp0[disp]	is rp0; disp12_4 & disp_8
+[ disp = ((disp12_4 << 8) | disp_8) << 2; ]
+{ ptr:4 = rp0 + disp; export ptr; }
+	
+PCDisp16: loc			is disp_16 [ loc = inst_start + disp_16; ] { export *[const]:4 loc; }
+
+RPDisp16: rp9[disp_16]  is rp9; disp_16 { ptr:4 = rp9 + disp_16; export ptr; }
+RPDisp16: PC[disp_16]  is rp9=15 & PC; disp_16 & PCDisp16 { export PCDisp16; }
+
+RB9Shift: rb9[ri0 "<<" shift4_2] is rb9 & ri0; shift4_2 { ptr:4 = rb9 + (ri0 << shift4_2); export ptr; }
+
+RBShift0: rb0[eri0 "<<" shift4_2] is rb0; eri0 & shift4_2 { ptr:4 = rb0 + (eri0 << shift4_2); export ptr; }
+
+RBSelector: rb9[ri0"<B> << 2]" is rb9 & ri0; selectorxy4_2=0x0 { ptr:4 = rb9 + ((ri0 & 0xff) << 0x02); export ptr; }
+RBSelector: rb9[ri0"<L> << 2]" is rb9 & ri0; selectorxy4_2=0x1 { ptr:4 = rb9 + (((ri0 >> 8) & 0xff) << 0x02); export ptr; }
+RBSelector: rb9[ri0"<U> << 2]" is rb9 & ri0; selectorxy4_2=0x2 { ptr:4 = rb9 + (((ri0 >> 16) & 0xff) << 0x02); export ptr; }
+RBSelector: rb9[ri0"<T> << 2]" is rb9 & ri0; selectorxy4_2=0x3 { ptr:4 = rb9 + (((ri0 >> 24) & 0xff) << 0x02); export ptr; }
+
+RS0A: rs0		is rs0 { export rs0; }
+RS0A: rs0		is rs0 & rs0=0xf { tmp:4 = inst_start; export *[const]:4 tmp; }
+
+RS9A: rs9		is rs9 { export rs9; }
+RS9A: rs9		is rs9 & rs9=0xf { tmp:4 = inst_start; export *[const]:4 tmp; }
+
+RX9A: rx9		is rx9 { export rx9; }
+RX9A: rx9		is rx9 & rx9=0xf { tmp:4 = inst_start; export *[const]:4 tmp; }
+
+RY0A: ry0		is ry0 { export ry0; }
+RY0A: ry0		is ry0 & ry0=0xf { tmp:4 = inst_start; export *[const]:4 tmp; }
+
+RD0A: rd0		is rd0 { export rd0; }
+RD0A: rd0		is rd0 & rd0=0xf { tmp:4 = inst_start; export *[const]:4 tmp; }
+
+macro ZSTATUS(RES) {
+        Z = RES == 0;
+        CZNVTOSR();
+}
+
+macro NZSTATUS(RES) {
+        N = RES s< 0;
+        ZSTATUS(RES);
+        CZNVTOSR();
+}
+
+macro addflags(OP1, OP2, RES) {
+
+        ## The REAL way to do it (in the processor spec)
+        #V = (OP1[31,1] && OP2[31,1] && !(RES[31,1])) ||
+        #    (!(OP1[31,1]) && !(OP2[31,1]) && RES[31,1]);
+
+        V = scarry(OP1, OP2);
+         
+        NZSTATUS(RES);        
+
+        ## The REAL way to do it (in the processor spec)
+        #C = (OP1[31,1] && OP2[31,1]) ||
+        #    (OP1[31,1] && !(RES[31,1])) ||
+        #    (OP2[31,1] && !(RES[31,1]));
+
+        C = carry(OP1, OP2);
+        CZNVTOSR();
+}
+
+macro subflags(OP1, OP2, RES) {
+
+        ## The REAL way to do it (in the processor spec)
+        #V = (OP1[31,1] && !(OP2[31,1]) && !(RES[31,1])) ||
+        #    (!(OP1[31,1]) && OP2[31,1] && RES[31,1]);
+
+        V = sborrow(OP1, OP2);
+        
+        NZSTATUS(RES);        
+
+        ## The REAL way to do it (in the processor spec)
+        #C = (!(OP1[31,1]) && (OP2[31,1])) ||
+        #    (OP2[31,1] && RES[31,1]) ||
+        #    (!(OP1[31,1]) && RES[31,1]);
+
+        C = OP1 < OP2;
+        CZNVTOSR();
+}
+
+@include "avr32a_arithmetic_operations.sinc"
+@include "avr32a_multiplication_operations.sinc"
+@include "avr32a_logic_operations.sinc"
+@include "avr32a_bit_operations.sinc"
+@include "avr32a_shift_operations.sinc"
+@include "avr32a_data_transfer.sinc"
+@include "avr32a_system_control.sinc"
+@include "avr32a_coprocessor_interface.sinc"
+@include "avr32a_instruction_flow.sinc"
+@include "avr32a_simd_operations.sinc"
+@include "avr32a_dsp_operations2.sinc"

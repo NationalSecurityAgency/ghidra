@@ -1,0 +1,391 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Symbol Tree</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Manage_Symbol_Tree"></A><A name="Symbol_Tree"></A>Symbol Tree</H1>
+
+    <P>The Symbol Tree shows symbols from a program in a hierarchical view. The Symbol tree is
+    organized by the following categories: <I>Externals</I>, <I>Function</I>, <I>Labels</I>,
+    <I>Classes</I>, and <I>Namespaces</I>.</P>
+
+    <P align="left">To display the Symbol Tree, select the icon <IMG alt="" src=
+    "images/sitemap_color.png"> on the tool bar, OR select the option <B>Window</B><IMG alt="" src=
+    "../../shared/arrow.gif"> <IMG alt="" src="images/sitemap_color.png"> <B>Symbol Tree</B>.</P>
+
+    <P align="center"><IMG alt="" src="images/SymbolTree.png"></P>
+
+    <H2>Display</H2>
+
+    <BLOCKQUOTE>
+      <P>The root of the Symbol Tree is the <I>Global</I> <I>namespace</I>. A <I><A name=
+      "Namespace"></A>Namespace</I>&nbsp; defines a scope, such that symbol names are unique
+      <I>within</I> a namespace. The types of namespaces that Ghidra supports are <B>Global</B>,
+      <B>External</B>, <B>Function</B>, <B>Class</B>, and <A name="GenericNamespace"></A> "generic"
+      <B>Namespaces</B> that reside in the global namespace. Every namespace has an associated
+      symbol.</P>
+
+      <UL>
+        <LI>The <B><A name="Externals"></A>Imports</B> category contains symbols that represent
+        external library namespaces which in turn contain anything considered to be "external" to
+        the program such as external locations/functions. The library name "&lt;EXTERNAL&gt;" is
+        reserved to hold those external symbols which have not yet been associated with a specific
+        library.</LI>
+
+        <LI>The <SPAN style="font-style: italic;">exports</SPAN> category contains symbols that
+        represent exported entry points into the program.<BR>
+        </LI>
+
+        <LI>The <B>Functions</B> category contains symbols that represent functions within the
+        program (excluding external functions). Expand a function symbol to show its parameter and
+        variable symbols.</LI>
+
+        <LI>All&nbsp; symbols in the <B>Labels</B> category are in the Global namespace.</LI>
+
+        <LI>The <B>Class</B> category contains class namespaces that may contain function
+        namespaces or label symbols. Class namespaces reside in the global namespace.</LI>
+
+        <LI>
+          The <B>Namespace</B> category contains generic namespaces that reside in the Global
+          namespace, and may contain class, function, label, or other namespaces.&nbsp; 
+
+          <UL>
+            <LI>The <A href="help/topics/ImporterPlugin/importer.htm">import</A> process creates a
+            namespace (under the <I>Namespace</I> category) for each external library it
+            encounters. (The name is created as _&lt;library name&gt;, e.g., _USER32.DLL,&nbsp; to
+            avoid naming collisions with the external library symbols, under <I>Externals</I>,
+            e.g., USER32.DLL.)</LI>
+
+            <LI>Based upon the importer capability and/or analysis, external locations or functions
+            may be associated with a <I>Library</I> namespace.&nbsp; You will find these external
+            location/function symbols under the <I>Imports</I> category node.</LI>
+
+            <LI>Any function node (internal or external) may be expanded to show parameters. In
+            addition, various popup function actions are available to modify the function. An
+            external location may be converted to a function using the <I>Create External
+            Function</I> popup action.</LI>
+          </UL>
+        </LI>
+      </UL>
+
+      <P align="left"><A name="GroupNode"></A>When a category or symbol has many elements, the
+      Symbol Tree will show <I>group nodes</I> that represent groups of symbols in order to reduce
+      the "clutter" in the tree. In the sample image above, the <I>Labels</I> category contains a
+      group node (indicated by the <IMG alt="" src="images/openFolderGroup.png"> icon). The
+      <I>group node</I> shows the names of the first and last symbols in the group. Long names are
+      truncated and are displayed with "..." to indicate this. The tool tip for the node shows the
+      complete names for the first and last symbols in the group.</P>
+
+      <BLOCKQUOTE>
+        <P align="left"><IMG alt="" src="../../shared/note.png"> The Symbol Tree does not show
+        <I>dynamic</I> symbols, i.e., those symbols that are created due to references. Use the <A
+        href="help/topics/SymbolTablePlugin/symbol_table.htm">Symbol Table</A> display to view
+        dynamic symbols; turn off the <A href=
+        "help/topics/SymbolTablePlugin/symbol_table.htm#Set_Filter">filter</A> for user-defined
+        symbols.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV STYLE="margin-top:50px; margin-bottom:50px">
+      <HR width="90%">
+
+    </DIV>
+
+    <P>Each group below lists operations that can be performed via the Symbol Tree.</P>
+
+    <H2><A name="Create_Library"></A>Create a Library</H2>
+
+    <BLOCKQUOTE>
+      <P>You can create a <I>Library</I> name used to refer to a external library. The name can
+      then be associated with a program (or library) to allow navigation or viewing of code. Right
+      mouse click on the Imports folder and choose the <B>Create Library</B> option. A cell editor
+      is displayed in the tree; the name defaults to "NewLibrary." You can change the name, or
+      press the &lt;escape&gt; key to exit the cell editor. If you choose the <B>Create Library</B>
+      option from the root node, the new library name appears in the <I>Imports</I> folder in the
+      tree.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Set_External_Program"></A>Set External Program</H2>
+
+    <BLOCKQUOTE>
+      <P>You can <I>Set the External Program</I> associated with a external library. Once the name
+      is associated with a program (or library), external references to a function or address in
+      that library will allow navigation or viewing of code. Right mouse click on the Library node
+      in the <I>Imports</I> folder that you want to associate with a program and choose the <B>Set
+      External Program</B> option. A program chooser dialog is displayed which shows the programs
+      in your project. You can then click on a program to select it and then click on the OK button
+      to associate that program with your named library.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Create_External_Location"></A>Create External Location</H2>
+
+    <BLOCKQUOTE>
+      <P>You can create a <I>External Location</I> used to refer to a location or function in a
+      external library. Right mouse click on the Imports node or on a particular library and choose
+      the <B>Create External Location</B> option. If invoked from a specific library node, the
+      <I>External Program Name</I> will default to that library for the location being created.
+      The default library <i>&lt;EXTERNAL&gt;</i> should be used when the library is unknown.
+      Otherwise you can type the name in the field or choose it from the combo box list. The
+      <I>External Program Path</I>, which is the program in the project which corresponds to the 
+      named library, will
+      be filled in if there is an associated program in the project. Otherwise, it can be selected via the
+      <I>Edit</I> button, which displays a chooser dialog. Either a <I>Label</I>, an
+      <I>Address</I>, or both must be specified for the External Location. If you check the <I>Make
+      External Function</I> box, then an external function will be created. Otherwise, if you don't
+      check the box, a non-function external location gets created.  The ability to associate a 
+      data type with the location is not yet supported. Press the <I>Create</I> button to create the
+      external location.</P>
+
+      <P>The following dialog shows a external function being created. It will be named "Sample"
+      and is in "TestLibrary" at address 01001234. The library name, TestLibrary, is
+      associated with "libraryA" in the project.</P>
+
+      <P align="center"><IMG alt="" src="images/CreateExternalLocation.png"></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_External_Location"></A>Edit External Location</H2>
+
+    <BLOCKQUOTE>
+      <P>You can edit the external location and associated library details for any <I>External Location</I>
+      symbol within the symbol tree (including locations which have been converted to an external function). 
+      Right mouse click on
+      the external location/function node in the symbol tree under Imports and choose the <B>Edit External
+      Location</B> action. </P>
+      <P>The Edit External Location dialog will default to the current
+      values for the location being edited. You can change the <I>External Program Name</I> in the
+      field or by selecting a different one from the combo box list. The <I>External Program
+      Path</I>, which is the program in the project corresponding to the named library, will be filled in if
+      there is an associated program. Otherwise, it can be selected via the <I>Edit</I> button,
+      which displays a chooser dialog. You can modify the <I>Label</I> and/or <I>Address</I> for
+      the location being edited. Either a <I>Label</I>, an <I>Address</I>, or both must be
+      specified for the external location. Press the <I>Update</I> button to apply your edits to
+      the external location or function.</P>
+      <P>If the location was initially created by the importer, and was subsequently demangled or changed,
+      the <I>Original Label</I> will be specified.  While you can not change this original name, you can revert 
+      the location to this label by clicking the <I>Restore</I> button.  If the symbol was not an imported symbol 
+      or has never been demangled or changed the <I>Original Label</I> and <I>Restore</I> button will not be displayed.
+    
+     <P align="center"><IMG alt="" src="images/EditExternalLocation.png"></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Show_References_to"></A>Show References to</H2>
+
+    <BLOCKQUOTE>
+      <P>Shows all locations that reference the given symbol.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Create_Class"></A>Create a Class</H2>
+
+    <BLOCKQUOTE>
+      <P>You can create a <I>Class</I> namespace within the Global namespace, or within another
+      namespace. Right mouse click on the parent namespace and choose the <B>Create Class</B>
+      option. A cell editor is displayed in the tree; the name defaults to "NewClass." You can
+      change the name, or press the &lt;escape&gt; key to exit the cell editor. If you choose the
+      <B>Create Class</B> option from the root node, the new class appears in the <I>Class</I>
+      category in the tree. This produces the same result as choosing the option from the
+      <I>Class</I> node. All of the classes in the <I>Class</I> category are in the global
+      namespace.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Create_Namespace"></A>Create a Namespace</H2>
+
+    <BLOCKQUOTE>
+      <P>You can create a namespace within the Global namespace, a Class, or another namespace.
+      Right mouse click on the parent namespace and choose the <B>Create Namespace</B> option. A
+      cell editor is displayed in the tree; the name defaults to "NewNamespace." You can change the
+      name, or press the &lt;escape&gt; key to exit the cell editor.&nbsp; If you choose the
+      <B>Create Namespace</B> option from the root node, the new namespaces appears in the
+      <I>Namespace</I> category in the tree. This produces the same result as choosing the option
+      from the <I>Namespaces</I> node. All of the namespaces in the <I>Namespace</I> category are
+      in the global namespace.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Rename_Symbol"></A>Rename a Symbol</H2>
+
+    <BLOCKQUOTE>
+      <P>You can rename any symbol by right mouse clicking on the symbol and choose the
+      <B>Rename</B> option. Enter the new name in the cell editor in the tree.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="../../shared/note.png">Category names and group nodes are not editable;
+        they exist only for organizational purposes.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Move Symbols</H2>
+
+    <BLOCKQUOTE>
+      <P>You can reorganize the symbol tree by using drag and drop or cut and paste. The following
+      lists the valid move operations for each symbol type:</P>
+
+      <UL>
+        <LI>Global namespace Labels can be moved to a class or other namespace; labels can be moved
+        to a function <I><B>if</B></I> <I>the</I> <I>address</I> <I>of the label is</I>
+        <I>contained in the function body</I>.</LI>
+
+        <LI>Labels within a Function namespace can be moved to a class or to another namespace that
+        is not a function namespace.</LI>
+
+        <LI>Function namespaces can be moved to a class or other namespace.</LI>
+
+        <LI>Class namespaces can be moved to another namespace.</LI>
+
+        <LI>Namespaces can be moved to a class or other namespace.</LI>
+
+        <LI>External library and functions may only be moved to another external Library or
+        associated namespace.</LI>
+      </UL>
+
+      <H3>Drag and Drop</H3>
+
+      <BLOCKQUOTE>
+        <P>To move a symbol, drag symbols and drop on destination symbol. To drag multiple symbols,
+        hold the Ctrl key down to add to the selection, then start dragging the mouse pointer.
+        Release the mouse when the cursor is over the destination node.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Paste_Symbols"></A><A name="Cut_Symbol"></A><A name=
+      "Cut_SymbolTree_Node"></A>Cut and Paste</H3>
+
+      <BLOCKQUOTE>
+        <P>To use cut and paste menu options, make a selection of symbols to move, right mouse
+        click and select the <B>Cut</B> option; select a destination symbol, right mouse click and
+        select the <B>Paste</B> option.</P>
+
+        <P><IMG alt="" src="../../shared/note.png">Other points of interest on moving symbols:</P>
+
+        <OL>
+          <LI>Parameters and stack variables within a function cannot be moved.</LI>
+
+          <LI>The nodes for <I>Functions</I>, <I>Labels</I>, <I>Classes</I>, or
+          <I>Namespaces</I>&nbsp; as a drop site or paste destination is equivalent to the root
+          node (Global), as the Functions, Labels, Classes, and Namespaces are just groupings of
+          function, label, class, and namespace symbols in the global namespace.</LI>
+
+          <LI>A label in the global namespace can be moved to a function <B><I>if</I></B> <I>the
+          label's address is contained in the function body.</I></LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Delete_Symbols"></A>Delete Symbols</H2>
+
+    <BLOCKQUOTE>
+      <P>To delete a symbol, make a selection of symbols, right mouse click and choose the
+      <B>Delete</B> option.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="../../shared/warning.png">If you select a <A href="#GroupNode">group
+        node</A> to delete, <I><B>all</B></I> the symbols in that group are deleted.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Make_Selection"></A>Make a Selection</H2>
+
+    <BLOCKQUOTE>
+      <P>To make a <A href="help/topics/Selection/Selecting.htm">selection</A> (in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>) corresponding to selected
+      symbols in the Symbol Tree, right mouse click and choose the <B>Make Selection</B> option. If
+      you select a <A href="#GroupNode">group node</A> for the <B>Make Selection</B> option, all
+      symbols in that group are selected in the Code Browser.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Navigate_To"></A>Navigation <IMG alt="" src="images/locationIn.gif"></H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Navigation"></A>Navigating to Locations within the Program</H3>
+
+      <BLOCKQUOTE>
+        <P>The <IMG alt="" src="images/locationIn.gif"> &nbsp; button controls whether a symbol is
+        selected in the Symbol Tree when you click in the Code Browser.&nbsp; While the <IMG alt=""
+        src="images/locationIn.gif"> &nbsp; button is selected, if the location from the Code
+        Browser can be interpreted as a symbol, the symbol is automatically selected in the Symbol
+        Tree.&nbsp; This toggle state is off by default; to turn on this feature, click on the
+        icon.&nbsp; The state of the <IMG alt="" src="images/locationIn.gif"> &nbsp; button is
+        saved when you close the project or exit Ghidra and restored when you reopen the
+        project.</P>
+
+        <P>The Symbol Tree allows you to navigate within the Code Browser when you mouse click on a
+        symbol in the tree. The <IMG alt="" src="images/locationIn.gif"> &nbsp; button applies only
+        to locations coming from the Code Browser and has no effect when you click in the tree.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Go_To_External_Location"></A>Navigating to External Locations</H3>
+
+      <BLOCKQUOTE>
+        <P>If you select an external symbol (under the <I>Externals</I> folder in the the symbol
+        tree), you will navigate to an external <I>reference</I> <I>source</I> which has a
+        <I>destination</I> corresponding to the external symbol (i.e., where it is being called
+        from). To actually <B>go to</B> the external location, right mouse click on the external
+        symbol and choose <B>Go To External Location</B>.&nbsp;&nbsp;</P>
+
+        <P>If the <I>External Program Name</I> associated with the external symbol has not been
+        resolved (i.e., no Program file has been associated with the <I>External Program Name</I>)
+        then a program chooser is displayed. Select a program to be associated with
+        the&nbsp;<I>External Program Name</I> for the selected external symbol. Then this program
+        is opened in the tool and becomes the <I>active</I> program.&nbsp;&nbsp;The current
+        location in this opened program will be set to the location corresponding to the external
+        symbol you had selected.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>View Qualified Names in Code Browser</H2>
+
+    <BLOCKQUOTE>
+      <P>To include namespace names in the display of labels and names within the Code Browser,
+      select <B>Edit</B> <IMG alt="" src="../../shared/arrow.gif"> <B>Tool Options...</B> from the
+      tool menu. &nbsp; This will display the <I>Options</I> dialog. &nbsp;Within the
+      <I><B>Options</B></I> tree, navigate to the folder node <B><I>Listing Fields</I></B>.
+      &nbsp;The <I><B>Display Namespace</B></I> option in the right-hand panel should be checked to
+      include the namespace names within the Listing &nbsp;(see <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm">CodeBrowser Options</A>).<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>SymbolTreePlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:&nbsp;</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/SymbolTablePlugin/symbol_table.htm">Symbol
+        Table</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Selection/Selecting.htm">Selection in the Code
+        Browser</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm">Listing Fields</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/LabelMgrPlugin/Labels.htm">Labels</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/ReferencesPlugin/References_from.htm#extRefs">External References</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/ReferencesPlugin/external_program_names.htm">Resolving External
+        References</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

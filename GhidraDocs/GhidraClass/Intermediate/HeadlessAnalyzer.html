@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>Headless Analyzer</title>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+
+<!-- This is the first slide -->
+<section>
+<header>Headless Analyzer</header>
+<br>
+<ul>
+  <li>Ghidra's Headless Analyzer allows users to run Ghidra from the command line without invoking the user interface.</li>
+  <li>Can be run on one file or a directory of files (including subdirectories).</li>
+  <li>Can either import programs to a project or process programs in an existing project.</li>
+  <li>Any Ghidra script including those that invoke the GUI can be run in headless mode.</li>
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:43px">How to Run the Headless Analyzer</span></header>
+<br>
+<ul class="medium">
+  <li>ghidra_&lt;version&gt;/support/analyzeHeadless.bat|sh</li>
+  <br>
+  <span style="font-size:18px; color:#FFD700">
+  <pre>
+  analyzeHeadless [&lt;project_location&gt; &lt;project_name&gt;[/&lt;folder_path&gt;]] |
+    [ghidra://&lt;server&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_path&gt;]]
+       [[-import [&lt;directory&gt;|&lt;file&gt;]+] | [-process [&lt;project_file&gt;]]]
+       [-preScript &lt;ScriptName&gt; [&lt;arg&gt;]*]
+       [-postScript &lt;ScriptName&gt; [&lt;arg&gt;]*]
+       [-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
+       [-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
+       [-log &lt;path to log file&gt;] [-scriptlog &lt;path to script log file&gt;]
+       [-overwrite] [-recursive] [-readOnly] [-deleteProject]
+       [-noanalysis]
+       [-processor &lt;languageID&gt;] [-cspec &lt;compilerSpecID&gt;]
+       [-analysisTimeoutPerFile &lt;timeout in seconds&gt;]
+       [-keystore &lt;KeystorePath&gt;] [-connect [&lt;userID&gt;]]
+       [-p] [-commit [&quot;&lt;comment&gt;&quot;]] [-okToDelete]
+       [-max-cpu &lt;max cpu cores to use&gt;] [-loader &lt;desired loader name&gt;]
+  </pre>
+  </span>
+  <li>NOTE: The analyzeHeadlessREADME.html has many more details and examples.</li>
+</ul>
+</section>
+
+<section>
+<header><span style="color:#FFD700">&lt;project_location&gt;</span></header>
+<br><br>
+<ul>
+  <li>The directory that either contains a current Ghidra project or will contain a newly-created project.</li>
+  <br><br>
+  <span style="color:#FFD700">NOTE: This directory must already exist; it will not be created for you.</span>
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:45px; color:#FFD700">&lt;project_name&gt;[/&lt;folder_path&gt;]</span></header>
+<br><br>
+<ul>
+  <li>The name of either an existing project or new project you wish to create in the <span style="color:#FFD700">&lt;project_location&gt;</span> directory.</li>
+  <li>If the optional folder path is included, import(s) will be rooted under this project folder.</li>
+</ul>
+<div role="note">
+  <p>In the normal case, if you don&apos;t have an existing project of the name &quot;project_name&quot;, then one will be created by the Headless Analyzer.</p>
+  <p>In the server case, a project must already exist.</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:35px; color:#FFD700">ghidra://&lt;server&gt;[:&lt;port&gt;]/<br>&lt;repository_name&gt;[/&lt;folder_path&gt;]</span></header>
+<ul class="medium">
+  <br>
+  <li>Used to specify a Ghidra Server repository URL and folder path instead of a local project_location and project_name.</li>
+  <li>If the optional folder path is used, imports will be rooted under this directory (subfolders will be created if they don't already exist).</li>
+  <li>The named repository must already exist on the Ghidra Server. </li>
+</ul>
+<div role="note">
+  <p>In the normal case, if you don&apos;t have an existing project of the name &quot;project_name&quot;, then one will be created by the Headless Analyzer.</p>
+  <p>In the server case, a project must already exist.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-import [&lt;directory&gt;|&lt;file&gt;]+</span></header>
+<br>
+<ul>
+  <li>Specifies one or more executables (or directories of executables) to import.</li>
+  <li>May use wildcard characters to specify a directory or file (valid characters and behavior subject to the host OS interpretation of wildcards).</li>
+  <li>This option may be repeated to specify additional imports.</li>
+  <li>NOTE: -import and -process can not both be present in the parameters list.
+</ul>
+<div role="note">
+  <ul>
+    <li>If importing a directory:</li>
+    <ul>
+      <li>Creates directory folder in project if it doesn&apos;t already exist.</li>
+      <li>When using -recursive, imports files in subdirectories as well; directory structure will be recreated in the Ghidra project.</li>
+    </ul>
+    <br>
+    <li>Wildcard characters can be used to specify multiple files (i.e., &quot;-import /home/files/n*&quot;). Valid wildcard characters are determined by the host OS.  For example:</li>
+    <ul>
+      <li>Linux:</li>
+      <ul>
+	<li>Allows * and ?</li>
+	<li>Allows ranges of characters:  [a-z] or [!a-z]</li>
+	<li>Wildcards can expand to either directories or files</li>
+      </ul>
+      <li>Windows:</li>
+      <ul>
+	<li>Allows * and ?</li>
+	<li>Wildcards can only expand to files</li>
+      </ul>
+    </ul>
+    <br>
+    <li>Can specify multiple imports two ways:</li>
+    <ul>
+      <li>Space-separated paths:</li>
+      <ul>
+	<li>-import [directory or file] [directory or file] [directory or file]</li>
+      </ul>
+      <li>Repeating the &quot;-import&quot; parameter</li>
+      <ul>
+	<li>-import [directory or file] –import [directory or file]</li>
+      </ul>
+    </ul>
+  </ul>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-process [&lt;project_file&gt;]</span></header>
+<br>
+<ul class="medium">
+  <li>Runs scripts and/or analysis on existing project file(s).</li>
+  <li>When <span style="color:#FFD700">[project_file]</span> is included, it specifies existing project executable(s).</li>
+  <li>When <span style="color:#FFD700">[project_file]</span> is omitted, runs on all the files in the project <span style="color:#FFD700">&lt;folder_path&gt;</span>.</li>
+  <li>May use &apos;*&apos; and &apos;?&apos; wildcards (wildcard string must be surrounded by single quotes)</li>
+  <li>Unlike -import, -process may only be used once.</li>
+  </ul>
+<div role="note">
+  <ul>
+    <li>[project_file] specifies a file only (can not contain a path to a file).  Use &lt;folder_path&gt; in the &quot;&lt;project_name&gt;[/&lt;folder_path&gt;]&quot; specification to identify the path to the file.</li>
+    <br>
+    <li>Wildcard characters are limited to &quot;?&quot; and &quot;*&quot;, and strings should be surrounded by single quotes (to prevent host OS from prematurely expanding the wildcard before it is passed to the Headless Analyzer).</li>
+    <br>
+    <li>Can use -recursive to run scripts/analysis over subfolders of a directory.</li>
+    <br>
+    <li>Using -recursive with wildcard string searches subfolders for files that match the wildcard string.</li>
+    <br>
+    <li>Examples:</li>
+    <ul>
+      <li>Find all .exe files starting with &apos;a&apos; in the root directory</li>
+      analyzeHeadless /home/usr/ghidra/projects TestProj -process &apos;a*.exe&apos;
+      <br>
+      <li>Find all .exe files starting with &apos;a&apos; in the root directory and child dirs</li>
+      analyzeHeadless /home/usr/ghidra/projects TestProj -process &apos;a*.exe&apos; -recursive
+    </ul>
+    <br>
+  </ul>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-preScript &lt;ScriptName.ext&gt; [&lt;arg&gt;]* </span></header>
+<br><br>
+<ul>
+  <li>Identifies the name of a script (including file extension, such as <span style="font-family:'Courier New';font-size:35px">MyScript.java</span>) that will execute before analysis. No path is necessary (script locations are specified using -scriptPath).</li>
+  <li>Parameters to the script may be passed to the script.</li>
+  <li>This option must be repeated to specify additional pre-scripts.</li>
+</ul>
+<div role="note">
+  <p>Headless Analyzer will look for script in default script directories and those specified by -scriptPath</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-postScript &lt;ScriptName&gt; [&lt;arg&gt;]* </span></header>
+<br><br>
+<ul>
+  <li>Identifies the name of a script (including file extension, such as <span style="font-family:'Courier New';font-size:35px">MyScript.java</span>) that will execute after analysis. No path is necessary (script locations are specified using -scriptPath).</li>
+  <li>Parameters to the script may be passed to the script.</li>
+  <li>This option must be repeated to specify additional post-scripts.</li>
+</ul>
+<div role="note">
+  <p>Headless Analyzer will look for script in default script directories and those specified by -scriptPath</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px; color:#FFD700">-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</span></header>
+<ul class="small">
+  <li>Specifies script search path(s).</li>
+  <li>A path may start with <span style="font-family:'Courier New'; font-size:30px">$GHIDRA_SCRIPT</span> (the Ghidra installation directory) or <span style="font-family:'Courier New'; font-size:30px">$USER_HOME</span> (the user&apos;s home directory).</li>
+  <ul>
+    <li>On Unix systems, these home variables must be escaped with a &apos;\&apos; character.</li>
+  </ul>
+  <li>Examples:</li>
+  <ul>
+    <li>Windows:</li>
+    <div style="word-wrap:break-word"><span style="color:#FFD700;font-size:28px">&nbsp;&nbsp;&nbsp;-scriptPath &quot;$GHIDRA_HOME/Ghidra/Features/Base/ghidra_scripts;/myscripts&quot;</span></div>
+    <br>
+    <li>Unix:</li>
+    <div style="word-wrap:break-word"><span style="color:#FFD700;font-size:28px">&nbsp;&nbsp;&nbsp;-scriptPath &quot;\$GHIDRA_HOME/Ghidra/Features/Base/ghidra_scripts;/myscripts&quot;</span></div>
+  </ul>
+</ul>
+<div role="note">
+<p>Specifies script paths for all these types of scripts: Pre, post, primary, and secondary</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:35px;color:#FFD700">-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</span></header>
+<br>
+<ul>
+  <li>Specifies <span style="color:#FFD700">*.properties</span> file search path(s).</li>
+  <li><span style="color:#FFD700">.properties</span> files are used to pass parameters to scripts </li>
+  <li>A path may start with <span style="font-family:'Courier New'; font-size:32px">$GHIDRA_SCRIPT</span> (the Ghidra installation directory) or <span style="font-family:'Courier New'; font-size:32px">$USER_HOME</span> (the user&apos;s home directory).</li>
+  <li style="color:#FFD700">NOTE: .properties files are a legacy way to pass parameters to scripts. It is now preferred to pass arguments as mentioned on previous slides. </li>
+</ul>
+<div role="note">
+  <p>More detail in later slide and analyzeHeadlessREADME.html file.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-log &lt;path to log file&gt;</span></header>
+<br><br>
+<ul>
+  <li>Sets the location of the file that stores logging output from importing, processing, and analysis.</li>
+  <li>If not used, logging output is written to the &quot;application.log&quot; file in the user directory.</li>
+</ul>
+<div role="note">
+  <p>Captures general-purpose logging for Ghidra. Script outputs can be redirected using the &quot;-scriptlog&quot; parameter.</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px; color:#FFD700">-scriptlog &lt;path to script log file&gt;</span></header>
+<br><br>
+<ul>
+  <li>Sets the location of the file that stores logging output from pre- and post-scripts.</li>
+  <li>If not used, script logging output is written to the &quot;script.log&quot; file in the user directory.</li>
+</ul>
+<div role="note">
+  <p>Captures script logging for Ghidra.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-overwrite</span></header>
+<br><br>
+<ul>
+  <li>Overwrites existing project files that conflict with an import file.</li>
+  <li>If not used, conflicting import files are skipped.</li>
+</ul>
+<div role="note">
+  <p>Allows an existing project file to be overwritten if it shares the same name as the imported binary.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-recursive</span></header>
+<br><br>
+<ul>
+  <li>Enables recursive descent into directories and project sub-folders when a directory has been specified in -import or -process mode.</li>
+  <li>If not used, only the immediate files contained within the specified directory are imported or processed.</li>
+</ul>
+<div role="note">
+  <p>Affects -import or -process modes – used for determining whether to process files in current directory or files in current directory + all its subfolders.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-readOnly</span></header>
+<br><br>
+<ul>
+  <li>In -import mode, imported files are <u>not</u> saved to the project after scripts and/or analysis.</li>
+  <li>In -process mode, any changes made to files by scripts or analysis are discarded.</li>
+  <li>The -overwrite option will be ignored if this option is specified during import operations. </li>
+</ul>
+<div role="note">
+  <p>For now, -readOnly must be used with -process when operating on a shared project.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-deleteProject</span></header>
+<br><br>
+<ul>
+  <li>Deletes the Ghidra project after scripts and/or analysis have completed.</li>
+  <br>
+  <span style="color:#FFD700">NOTE: This only applies if the project has been created in the current session with -import; existing projects are never deleted!</span>
+</ul>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-noanalysis</span></header>
+<br><br><br>
+<ul>
+  <li>Turns off analysis for executables.</li>
+</ul>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-processor &lt;languageID&gt;</span></header>
+<br>
+<ul class="medium">
+  <li>Sets the processor information to be used in -import mode (and any subsequent analysis).</li>
+  <li>If not used, Ghidra uses header info (if available) to determine the processor.</li>
+  <li><i>languageID</i> can be found in the<br><div style="word-wrap:break-word"><span style="font-family:'Courier New'; font-size:22px">&nbsp;&nbsp;&nbsp;..ghidra_&lt;version&gt;\Ghidra\Processors\<i>proc_name</i>\data\languages\<i>proc_name</i>.ldefs</span> file</div></li>
+  <ul>
+    <li>Example (path for x86 processor):<br><div style="word-wrap:break-word"><span style="font-family:'Courier New'; font-size:22px">&nbsp;&nbsp;&nbsp;..ghidra_&lt;version&gt;\Ghidra\Processors\x86\data\languages\x86.ldefs</span></div></li>
+  </ul>
+</ul>
+<div role="note">
+  <p>If Ghidra recognizes processor it uses the recognized one, if no processor recognized it uses the one specified by -processor option.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-processor &lt;languageID&gt;</span></header>
+<br><br>
+<img src="Images/Headless/languageExample.png" style="vertical-align:middle"></img>
+<div role="note">
+  <p>Or, in Help -> About &lt;name of program&gt;</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-cspec &lt;compilerSpecID&gt;</span></header>
+<br><br>
+<ul class="medium">
+  <li>Sets the compiler specification to be used in -import mode (and any subsequent analysis).</li>
+  <li>&apos;compilerSpecID&apos; can be found in the <div style="word-wrap:break-word"><span style="font-family:'Courier New'; font-size:28px">&nbsp;&nbsp;&nbsp;..ghidra_&lt;version&gt;\Ghidra\Processors\<i>proc_name</i>\data\languages\<i>proc_name</i>.ldefs</span> file</div></li>
+</ul>
+<div role="note">
+  <p>If Ghidra recognizes processor it uses the preferred or default cspec for the recognized processor spec, if no processor recognized it uses the one specified by combination –processor and –spec options</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-cspec &lt;compilerSpecID&gt;</span></header>
+<br><br>
+<img src="Images/Headless/compilerExample.png" style="vertical-align:middle"></img>
+</section>
+
+<section>
+<header><span style="font-size:40px;color:#FFD700">-analysisTimeoutPerFile<br>&lt;timeout in seconds&gt;</span></header>
+<ul>
+  <li>Sets a timeout value, in seconds, for analysis</li>
+  <li>If analysis on a file exceeds the specified time, analysis is interrupted and processing continues as scheduled</li>
+  <li>Can use postScripts to detect if analysis has timed out (see <span style="font-family:'Courier New';font-size:35px">analysisHeadlessREADME.html</span>)</li>
+</ul>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-keystore &lt;KeystorePath&gt;</span></header>
+<br><br>
+<ul>
+  <li>When using a Ghidra Server with PKI or SSH authentication, allows specification of a suitable private keystore file. The file should rely on file system protection only to avoid prompting for a password.</li>
+</ul>
+<div role="note">
+  <p>Better if you do it in the tool first to get it set up.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-connect [&lt;userID&gt;]</span></header>
+<br><br>
+<ul>
+  <li>Allows the process owner&apos;s default userID to be overridden with the given &lt;userID&gt; when connecting to a Ghidra Server (provided the server has been configured to allow this).</li>
+</ul>
+<div role="note">
+  <p>You can configure the Ghidra server to specify a different user ID. Ex: people who log in locally as root – wanted way to specify different users on Ghidra server</p>
+  <p>If you use the URL project path this option is implied – you don’t need to use this option unless you want to change the user name</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-p</span></header>
+<br><br>
+<ul>
+  <li>When connecting to a server, allows interactive prompting for a password via the console.</li>
+  <br>
+  <span style="color:#FFD700">NOTE: In rare cases, password text will be echoed to the console (warning will show at password prompt).</span>
+</ul>
+<div role="note">
+  <p>Used when connecting to a server that needs a password.</p>
+  <p>This method of authentication is normally discouraged – but if not used, the server connection will likely fail authentication if a password is required.</p>
+  <p>In some cases, password text will be echoed back (NOT masked) when the user is typing (there will be a warning).  Password masking seems to work when using the Ghidra jarFile, but not when using analyzeHeadless.bat/sh or eclipse launcher.</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-commit [&quot;&lt;comment&gt;&quot;]</span></header>
+<br><br>
+<ul>
+  <li>Commits all imported/processed files in a shared project to the project&apos;s underlying repository.</li>
+  <li>The <span style="color:#FFD700">&lt;comment&gt;</span> is optional and is saved with all commits in the headless session.
+  <li>Commits do not apply when the -readOnly parameter has been enabled.</li>
+</ul>
+<div role="note">
+  <p>If you use the URL project path, this option is implied – you don’t need to use this option unless you want to commit a comment when you commit.</p>
+  <p>Commits are currently not allowed for -process mode on shared projects (which must run in -readOnly mode).</p>
+</div>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-okToDelete</span></header>
+<br><br>
+<ul>
+  <li>When running in headless mode, some scripts exist that mark programs for deletion. This deletes all versions of a program in shared project mode and cannot be undone</li>
+  <li>Therefore, so that programs are not accidentally deleted, this option is required to be set if user wants program deleted in headless mode.</li>
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:40px;color:#FFD700">-max-cpu &lt;max cpu cores to use&gt;</span></header>
+<br><br><br>
+<ul>
+  <li>Sets the maximum number of CPU cores to use during headless processing</li>
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:40px;color:#FFD700">-loader &lt;desired loader name&gt;</span></header>
+<br><br><br>
+<ul>
+  <li>Forces the file to be imported using a specific loader. </li>
+  <li>Loaders can take additional arguments that they apply during the import process for things like block name, base address, file offset, length, etc... . See analyzeHeadlessREADME.html for full list.</li>
+</ul>
+</section>
+
+
+<section>
+<header>General Notes</header>
+<br>
+<ul>
+  <li>Make sure the specified project is not already open in the Ghidra GUI.</li>
+  <li>When importing in bulk (i.e., specifying a directory or wildcard string), files starting with &apos;.&apos; are ignored.</li>
+  <ul>
+    <li>Import can be forced by naming the file during import:</li>
+    <span style="font-family:'Courier New'; font-size:30px">-import /Users/user/.hidden.exe</span>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Shared Project Notes</header>
+<br>
+<ul>
+  <li>Avoid using the script API method &apos;setServerCredentials&apos;.
+  <li>Specify -connect with userID to override default userID (subject to server settings).</li>
+  <li>If server/keystore requires password, -connect will force prompting via stdin.</li>
+  <li>It is not possible to create a shared project via command line. See the GhidraProject class for a simple API that allows shared project creation using a script.</li>
+</ul>
+<div role="note">
+  <ul>
+    <li>Why should setServerCredentials be avoided:</li>
+    <ul>
+      <li>Because the headless analyzer already does it for you; when you use setServerCredentials, the two actions conflict with each other</li>
+    </ul>
+    <br>
+    <li>Note: be careful with password – it will show up in the clear (except when using ghidra.jar).</li>
+  </ul>
+</div>
+</section>
+
+<section>
+<header>Exercise 1</header>
+<ul class="small">
+  <li>Create a directory in your home directory called <span style="color:#FFD700">&quot;MyPrograms&quot;</span></li>
+  <li>Copy some of the class exercise programs to the <span style="color:#FFD700">&quot;MyPrograms&quot;</span> directory
+  <li>Run Ghidra in headless so that it:</li>
+  <ul>
+    <li>Analyzes the programs in the <span style="color:#FFD700">&quot;MyPrograms&quot;</span> directory</li>
+    <li>Creates a project called <span style="color:#FFD700">&quot;&lt;<i>your_name</i>&gt;_HeadlessProj&quot;</span> in your home directory that is saved after the script finishes.</li>
+    <li>Writes script output to a log called <span style="color:#FFD700">&quot;myLog&quot;</span> in your home directory.
+    <li>Calls the <span style="color:#FFD700">ReportPercentDisassembled.java</span> script on each program after analysis is finished.</li>
+  </ul>
+  <li>After the script finishes, verify that it created a project and log in the correct directory. Open the log and verify that the log contains lines that start with <span style="color:#FFD700">&quot;REPORT DISASSEMBLY...&quot;</span> for each program in your <span style="color:#FFD700">&quot;MyPrograms&quot;</span> directory. Open the project to verify that it contains analyzed programs from your <span style="color:#FFD700">&quot;MyPrograms&quot;</span> directory.
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:46px">Headless Scripting Capabilities</span></header>
+<br>
+<ul>
+  <li>Can do just about anything you can do in normal scripts including GUI-dependent actions</li>
+  <li>Can make scripts behave correctly in both GUI and headless environment</li>
+  <li>Any number Ghidra scripts can be run before and/or after analysis.</li>
+  <li>For multiple pre/post-scripts, scripts are executed in the order specified on the command line.</li>
+</li>
+</ul>
+<div role="note">
+  <p>When running scripts without -import or -process, only the specified pre/post-scripts will be executed. In this case, all scripts must execute in a program-independent manner, or errors will occur. Use -process for scripts that are program-dependent.</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:46px">Headless Scripting Capabilities</span></header>
+<ul>
+  <li>Selections made in scripts will carry through to following scripts unless changed/cleared.</li>
+  <li>When running in -import mode, any pre- or post-script may invoke the <span style="font-family:'Courier New'; font-size:35px">setTemporary()</span> method on currentProgram to prevent that import from being saved.</li>
+  <li>Advanced control for deleting programs or canceling future scripts is discussed in the &quot;Control Follow-On Program Processing&quot; section.</li>
+</li>
+</ul>
+<div role="note">
+  <p>Why setTemporary() is useful: if you are using scripts to determine which binaries are interesting, you can save the interesting ones in your project and ditch the others.</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:46px">Headless Scripting Capabilities</span></header>
+<br>
+<ul class="medium">
+  <li>Some useful features...</li>
+  <ul>
+    <li>Run other scripts from a script</li>
+    <li>Get current and default analysis options</li>
+    <li>Set analysis options</li>
+    <ul>
+      <li>Also reset to default</li>
+    </ul>
+    <li>Create and use selections</li>
+    <li>Detect auto-analysis timeout</li>
+    <li>Pass parameter values to a script</li>
+    <li>Control follow-on processing of a program after the current script (whether to abort future processing and/or delete program from project).</li>
+</li>
+</ul>
+<div role="note">
+  <p>New in 6.0: build-in methods for getting/setting analysis options.</p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:35px">Making a Script behave in<br>GUI and Headless environments</span></header>
+<br><br>
+<ul>
+  Use:
+  <br><br>
+  <span style="color:#FFD700;font-size:30px">
+<pre>
+   if ( isRunningHeadless() ) { }
+</pre>
+  </span>
+  <br>
+  to check whether running headless mode
+</ul>
+</section>
+
+<section>
+<header>Calling a Script from a Script</header>
+<br><br>
+<ul>
+  Example:
+  <br><br>
+  <span style="color:#FFD700;font-size:30px">
+<pre>
+   runScript(&quot;HelloWorldScript.java&quot;);
+</pre>
+</span>
+  <li>(See analyzeHeadlessREADME.html for different runScript options)</li>
+</ul>
+</section>
+
+<section>
+<header>Get Analyzer Information</header>
+<br>
+<ul>
+  <span style="font-size:20px">
+<pre>
+  <span style="color:#CD5C5C">
+  // Print analyzer names, their current values,
+  // and whether set to default value
+  </span>
+  <span style="color:#FFD700">
+  Map&lt;String, String&gt; analyzers =
+      getCurrentAnalysisOptionsAndValues(currentProgram);
+
+  for (String analyzer : analyzers.keySet()) {
+    String analyzerValue = analyzers.get(analyzer);
+    boolean isDefault =
+        isAnalysisOptionDefaultValue(currentProgram, analyzer,
+          analyzerValue);
+	println(analyzer + " : " + analyzerValue +
+          (isDefault ? &quot; (default)&quot; : &quot;&quot;));
+  }
+  </span>
+</pre>
+</span>
+</ul>
+<div role="note">
+  <ul>
+    <li>There are also built-in functions to:</li>
+    <ul>
+      <li>get option choices (for those analyzers that can only be set to certain values)</li>
+      <li>get descriptions for options (as provided by the analyzer)</li>
+      <li>reset some/all analysis options to default</li>
+      <li>get default values for analysis options</li>
+    </ul>
+  </ul>
+</section>
+
+<section>
+<header>Set Analysis Options</header>
+<br>
+<ul class="small">
+  &nbsp;&nbsp;&nbsp;Example (change one option):
+  <span style="font-size:22px">
+<pre>
+  <span style="color:#CD5C5C">
+  // Turn off Stack Analyzer</span>
+  <span style="color:#FFD700">
+  setAnalysisOption(currentProgram, &quot;Stack&quot;, &quot;false&quot;);
+  </span>
+</pre>
+  </span>
+  Example (change multiple options):
+  <span style="font-size:22px">
+  <pre>
+<span style="color:#CD5C5C">
+  // Turn off Stack Analyzer,
+  // Turn on Decompiler Param ID</span>
+<span style="color:#FFD700">
+  Map&lt;String,String&gt; optionsToSet =
+           new HashMap&lt;String, String&gt;();
+  optionsToSet.put(&quot;Stack&quot;, &quot;false&quot;);
+  optionsToSet.put(&quot;Decompiler Parameter ID&quot;, &quot;true&quot;);
+  setAnalysisOptions(currentProgram, optionsToSet);
+</span>
+</span>
+</ul>
+<div role="note">
+  <p>Note that option names and values must be strings (code will attempt to convert the value to the correct type).</p>
+</div>
+</section>
+
+<section>
+<header>Reset Analysis Options</header>
+<br>
+<ul class="small">
+  &nbsp;&nbsp;&nbsp;Example (reset all analysis options to default):
+  <span style="font-size:25px">
+<pre>
+  <span style="color:#FFD700">
+  resetAllAnalysisOptions(currentProgram);</span>
+</pre>
+  </span>
+  <br>
+  Example (reset some analysis options to default):
+  <span style="font-size:25px">
+  <pre>
+<span style="color:#FFD700">
+  List&lt;String&gt; opts = Arrays.asList(new String[] {
+	&quot;Stack&quot;, &quot;Decompiler Parameter ID&quot;});
+
+  resetAnalysisOption(currentProgram, opts);
+</span>
+</span>
+</ul>
+</section>
+
+<section>
+<header>Create a Selection</header>
+<br>
+<ul class="small">
+  &nbsp;&nbsp;&nbsp;Example:
+  <span style="font-size:25px">
+<pre>
+  <span style="color:#FFD700">
+  MemoryBlock block =
+     currentProgram.getMemory().getBlock(&quot;.data&quot;);
+
+  AddressSet set = createAddressSet();
+
+  set.addRange(block.getStart(),block.getEnd());
+
+  createSelection(set);</pre>
+  </span>
+  <br>
+  </span>
+  This selection will stay set and can be used by subsequently-called scripts until it is changed or cleared.
+</ul>
+</section>
+
+
+<section>
+<header><span style="font-size:35px">Control Follow-On Program<br>Processing from Scripts</span></header>
+<ul>
+  <span style="font-size:30px">&nbsp;&nbsp;&nbsp;Options (behavior after current script completes):</span>
+  <span style="font-size:22px">
+<pre>
+
+  <span style="color:#FFD700">CONTINUE</span>
+  <span style="color:#CD5C5C">// (default) Continue scheduled analysis/scripts,
+  // save program</span>
+
+  <span style="color:#FFD700">CONTINUE_THEN_DELETE</span>
+  <span style="color:#CD5C5C">// Continue scheduled analysis/scripts, do not
+  // import/save program</span>
+
+  <span style="color:#FFD700">ABORT</span>
+  <span style="color:#CD5C5C">// Abort scheduled analysis/scripts,
+  // save program</span>
+
+  <span style="color:#FFD700">ABORT_AND_DELETE</span>
+  <span style="color:#CD5C5C">// Abort scheduled analysis/scripts,
+  // do not import/save program</span>
+</pre>
+</span>
+</ul>
+</section>
+
+<section>
+<header><span style="font-size:35px">Control Follow-On Program<br>Processing from Scripts</span></header>
+<ul>
+  <span style="font-size:30px">&nbsp;&nbsp;&nbsp;Example:</span>
+  <span style="font-size:25px">
+<pre>
+  <span style="color:#CD5C5C">
+  // Abort processing for the current file
+  // because its version number is older than 8.1</span>
+  <span style="color:#FFD700">
+  GhidraState currState = getState();
+
+  if ( !getGhidraVersion().startsWith(&quot;8.1&quot;) ) {
+      currState.addEnvironmentVar(
+          SCRIPT_SET_CONTINUATION_STATUS,
+          HeadlessContinuationOption.ABORT);
+  }
+</span>
+</pre>
+</span>
+</ul>
+<div role="note">
+  <p>More specifics on usage in analyzeHeadlessREADME.html</p>
+</div>
+</section>
+
+
+<section>
+<header>How to write a Headless Script</header>
+<br>
+<ul class="medium">
+  <li>Exactly the same as writing any Ghidra script!</li>
+  <li>Best way: Use Eclipse Framework + GhidraDev plugin</span></li>
+  <li>GhidraDev plugin provides Headless Ghidra run configuration (requires customization of program arguments)</span></li>
+  <li>See <span style="font-family:'Courier New';font-size:30px">ghidra_&lt;version&gt;/Extensions/Eclipse/GhidraDev/GhidraDev_README.html</span> for more info.</li>
+</ul>
+<div role="note">
+ <nl>There are two ways to install the GhidraDev plugin into your Eclipse:
+	<li>Link Ghidra with an Eclipse in Front-End tool options and edit a script from the Ghidra script manager.  Ghidra will offer to install GhidraDev for you if not present.</li>
+	<li>Install directly into Eclipse using the file found at <span style="font-family:'Courier New';font-size:30px">ghidra_&lt;version&gt;/Extensions/Eclipse/GhidraDev/GhidraDev-x.x.x.zip</span></li>
+</nl>
+ See the GhidraDev_README.html for pros and cons of each.
+</div>
+</section>
+
+<section>
+<header>(Optional) Exercise 2</header>
+<br>
+<ul>
+  <li>Repeat the same exercise as in Exercise 1 but instead of using the -import to run against a non-shared project, run it against all programs in a shared project. </li>
+</ul>
+</section>
+
+<section>
+<header>More Headless Information</header>
+<br><br>
+<ul>
+  <li><span style="font-family:'Courier New';font-size:30px">analyzeHeadlessREADME.html</span> in the <span style="font-family:'Courier New';font-size:30px">ghidra_&ltversion&gt/support/</span> folder contains many more details, lots of examples, and is usually more up to date than these slides!</li>
+</ul>
+</section>
+
+<!-- COPY THE TEXT BELOW TO START A NEW SLIDE
+<section>
+<header>Insert Title of Slide Here</header>
+<ul class="small" comment="NOTE: remove the class attribute for regular size, adjust the name if you want big, small, or tiny">
+  <li>Bullet text here</li>
+  <ul>
+    <li>Nested bullet here</li>
+  </ul>
+</ul>
+<div role="note">
+<p>Insert notes here</p>
+<p>And here, too</p>
+</div>
+</section>
+END COPY -->
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<!--link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'-->
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section { background-color: black; border-radius: 12px; color: white; }
+  /* A section is a slide. It's size is 800x600, and this will never change */
+  section, .view head > title {
+      font-family: arial, serif;
+      font-size: 35px;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: black;
+  }
+
+  .view head > title {
+    color: black;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1, h2 {
+    margin-top: 200px;
+    text-align: center;
+    font-size: 80px;
+    font-family: 'Times New Roman'
+  }
+
+  h3 {
+    margin: 100px 0 50px 100px;
+  }
+
+/* My custom list sizes */
+
+  .big ul {
+    font-size: 45px;
+  }
+
+  .big ol {
+    font-size: 45px;
+  }
+
+  .big li {
+    font-size: 45px;
+  }
+
+  .big li:before {
+      font-size: 200px;
+  }
+
+  .medium ul {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium ol {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li:before {
+      font-size: 120px;
+  }
+
+  .small ul {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small ol {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li:before {
+      font-size: 80px;
+  }
+
+  .tiny ul {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny ol {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li:before {
+      font-size: 70px;
+  }
+/* end custom list sizes */
+
+/* Standard list size */
+  ul {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol.decimal {
+    list-style-position: inside;
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 10px 10px;
+    font-size: 35px;
+  }
+
+  ul > li:before {
+    content:"·";
+    font-size:160px;
+    vertical-align:middle;
+    line-height: 20px;
+    color: red;
+  }
+
+
+/* end custom list sizes */
+
+  p {
+    margin: 75px;
+    font-size: 100px;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 60px;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 50px;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 40px;
+    text-align: right;
+    background-color: black;
+    border-top: 1px solid #CCC;
+  }
+
+  header {
+    font-family: 'Times New Roman';
+    position: relative;
+    top: 0px;
+    width: 100%;
+    padding: 0px;
+    text-align: center;
+    background-image: url(Images/GhidraLogo64.png), url(Images/GhidraLogo64.png);
+    background-repeat: no-repeat, no-repeat;
+    background-position: left top, right top;
+    background-size: contain, contain;
+    border-bottom: 1px solid red;
+    font-size: 50px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    -moz-transition: left 400ms linear 0s;
+    -webkit-transition: left 400ms linear 0s;
+    -ms-transition: left 400ms linear 0s;
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+
+  /* Incremental elements */
+
+  /* By default, visible */
+  .incremental > * { opacity: 1; }
+
+  /* The current item */
+  .incremental > *[aria-selected] { opacity: 1; }
+
+  /* The items to-be-selected */
+  .incremental > *[aria-selected] ~ * { opacity: 0; }
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 2px;
+    background: #AAA;
+  }
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  body {
+    width: 800px; height: 600px;
+    margin-left: -400px; margin-top: -300px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+    -moz-transform: none !important;
+    -webkit-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+    -moz-transform: scale(.4);
+    -webkit-transform: scale(.4);
+    -o-transform: scale(.4);
+    -ms-transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .incremental {visibility: hidden; }
+  .incremental[active] {visibility: visible; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    -moz-transition: width 400ms linear 0s;
+    -webkit-transition: width 400ms linear 0s;
+    -ms-transition: width 400ms linear 0s;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79) { // o
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+    db.style.MozTransform = transform;
+    db.style.WebkitTransform = transform;
+    db.style.OTransform = transform;
+    db.style.msTransform = transform;
+    db.style.transform = transform;
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1 && this.step == 0) {
+      return;
+    }
+    if (this.step == 0) {
+      this.setCursor(this.idx - 1,
+                     this.slides[this.idx - 2].$$('.incremental > *').length);
+    } else {
+      this.setCursor(this.idx, this.step - 1);
+    }
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+        return;
+    }
+    if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+      this.setCursor(this.idx + 1, 0);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      }
+      var video = next.$("video");
+      if (video && !!+this.params.autoplay) {
+        video.play();
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+    if (old) {
+      old.removeAttribute('aria-selected');
+    }
+    var incrementals = $$('.incremental');
+    if (this.step <= 0) {
+      $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+      });
+      return;
+    }
+    var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+    if (next) {
+      next.setAttribute('aria-selected', true);
+      next.parentNode.setAttribute('active', true);
+      var found = false;
+      $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+          if (found)
+            aNode.removeAttribute('active');
+          else
+            aNode.setAttribute('active', true);
+        else
+          found = true;
+      });
+    } else {
+      setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.incremental > *').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+</script>
+
+
+<script> // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Generate Checksum Help</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  </HEAD>
+
+  <BODY>
+    <H1>Checksum Generator</H1>
+
+    <P>The Generate Checksum action generates checksums on the entire program or the current 
+       selection</P>
+
+    <P>These are the checksums that are calculated:</P>
+
+    <BLOCKQUOTE>
+
+	<!-- Group checksums together using color and indentation -->    
+    <DIV STYLE="background-color: #eeeeee;">
+    
+      <BLOCKQUOTE>
+        <H3>Checksum-8</H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 8-bit count. &nbsp;This checksum adds all of the bytes in a selection or entire
+          file, then calculates the checksum result, mod 2<SUP>8</SUP>.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>Checksum-16</B></H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 16-bit count. &nbsp;This checksum adds all of the words in a selection or
+          entire file, then calculates the checksum result, mod 2<SUP>16</SUP>.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>Checksum-32</B></H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 32-bit count. &nbsp;This checksum adds all of the dwords in a selection or
+          entire file, then calculates the checksum result, mod 2<SUP>32</SUP>.</P>
+        </BLOCKQUOTE>
+	        
+	    </DIV>
+	    
+	    
+        <P><IMG border="0" src="../../shared/note.png">
+	        	All of the preceding checksums may be modified using the <B>XOR</B> and <B>Carry</B>
+	        toggle buttons.
+	        <BLOCKQUOTE>
+	        		<P>
+		        <B>XOR</B> causes the fields to be XORed rather than added.<BR>
+		        <B>Carry</B> causes the overflow to be added back to the sum.</P>
+		        </P>
+	        </BLOCKQUOTE>
+	        
+      </BLOCKQUOTE>
+
+		<BR>
+		<BR>
+		<BR>	
+
+      <BLOCKQUOTE>
+      
+      
+      	<!-- Group checksums together using color and indentation -->    
+    		<DIV STYLE="background-color: #eeeeee;">
+    
+      
+        <H3>Adler-32</H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 32-bit count. &nbsp;This checksum calculates a running checksum over the bytes
+          in a selection or entire file.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>CRC-16</B></H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 16-bit count. &nbsp;This checksum calculates a running checksum over the bytes
+          in a selection or entire file. &nbsp;Uses an inverted bit polynomial of 0xA001 from
+          0x8005, with an initial value of 0x0000.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>CRC-16/CCITT</B></H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 16-bit count. &nbsp;This checksum calculates a running checksum over the bytes
+          in a selection or entire file. &nbsp;Uses a polynomial of 0x1021, with an initial value
+          of 0xFFFF. &nbsp;This checksum also uses the low and high values of the running checksum
+          to get a final result.</P>
+        </BLOCKQUOTE>
+
+        <H3><B>CRC-32</B></H3>
+
+        <BLOCKQUOTE>
+          <P>Uses a 32-bit running checksum over the bytes in a selection or entire file. &nbsp;The
+          polynomial used is 0x4C11DB7, and the initial value is 0xFFFFFFFF.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+		</DIV>
+
+
+        <P><IMG border="0" src="../../shared/note.png">
+	        	All of the preceding checksums may be modified using the <B>1's Complement</B> and
+        		<B>2's Complement</B> toggle buttons.
+	        <BLOCKQUOTE>
+	        		<P>
+		        <B>1's Complement</B> causes the fields to be complemented with a ones complement.<BR>
+		        <B>2's Complement</B> causes the fields to be complemented with a twos complement.
+		        </P>
+	        </BLOCKQUOTE>
+
+		</BLOCKQUOTE>
+
+		<BR>
+		<BR>
+		<BR>
+	
+		<BLOCKQUOTE>
+
+	      	<!-- Group checksums together using color and indentation -->    
+    			<DIV STYLE="background-color: #eeeeee;">
+    
+
+	        <H3><B>MD2</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 128-bit (16-byte) count. The MD2 hash is always represented in hexadecimal
+	          format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+	
+	        <H3><B>MD5</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 128-bit (16-byte) count. The MD5 hash is always represented in hexadecimal
+	          format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+	
+	        <H3><B>SHA-1</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 160-bit (20-byte) count. The SHA-1 hash is always represented in
+	          hexadecimal format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+	
+	        <H3><B>SHA-256</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 256-bit (32-byte) count. The SHA-256 hash is always represented in
+	          hexadecimal format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+	
+	        <H3><B>SHA-384</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 384-bit (48-byte) count. The SHA-384 hash is always represented in
+	          hexadecimal format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+	
+	        <H3><B>SHA-512</B></H3>
+	
+	        <BLOCKQUOTE>
+	          <P>Uses a 512-bit (64-byte) count. The SHA-512 hash is always represented in
+	          hexadecimal format.<BR>
+	          </P>
+	        </BLOCKQUOTE>
+        
+        		</DIV>
+        
+        	<BLOCKQUOTE>
+        
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><I><IMG border="0" src="../../shared/tip.png">It is now possible to write a custom checksum
+    algorithm and add it to the table using a script. Contact the Ghidra Team for more detail.</I><BR>
+    </P>
+    
+    <BLOCKQUOTE>
+    <HR>
+    </BLOCKQUOTE>
+
+    <H2>Using the Checksum Generator</H2>
+
+    <P>To display the <I>Generate Checksum</I> dialog, select <B>Tools</B><IMG border="0" src=
+    "../../shared/arrow.gif"><B>Generate Checksum...</B> or select <B>Window</B><IMG border="0"
+    src="../../shared/arrow.gif"><B>Checksum Generator</B>.&nbsp; The results of the thirteen types
+    of checksums can be viewed in decimal or hex format. There is also an option to have the
+    applicable results displayed in 1's or 2's complement.</P>
+    <BR>
+     
+
+    <DIV align="center">
+      &nbsp;&nbsp;<IMG src="images/Dialog_Blank.png"><BR>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H3>Checksum Options:</H3>
+
+      <BLOCKQUOTE>
+        <H4><A name="As_Hex"></A><IMG border="0" src="images/hexData.png">&nbsp;As Hex </H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to display all results as hexadecimal format. Otherwise, applicable
+          checksums will be displayed as decimal format.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="On_Selection"></A><IMG border="0" src=
+        "images/NextSelectionBlock16.gif">&nbsp;On Selection </H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to limit the checksum calculations to the bytes contained in the
+          current selection. A selection must exist for this option to be enabled. Otherwise, the
+          checksum calculations are computed over all bytes in the entire program.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="carry"></A><IMG border="0" src="images/carry.png">&nbsp;Carry </H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to perform a carry operation on the applicable checksums.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="xor"></A><IMG border="0" src="images/xor.png">&nbsp;XOR </H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to perform an XOR on the applicable checksums.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="ones_comp"></A> <IMG border="0" src=
+        "images/onesComplement.png">&nbsp;1's Complement</H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to perform a 1's complement on the applicable checksums.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="twos_comp">
+        </A><IMG border="0" src="images/twosComplement.png">&nbsp;2's Complement </H4>
+
+        <BLOCKQUOTE>
+          <P>Toggle this option to perform a 2's complement on the applicable checksums.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><I><IMG border="0" src="../../shared/note.png">Once the results are posted in the table,
+    choosing another checksum option will automatically update the results, without your having to
+    regenerate the results.</I><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <H3><A name="compute"></A>Generating Checksums:</H3>
+
+      <P>To compute the checksums, click on the <I>Generate</I> button (<IMG border="0" src=
+      "Icons.REFRESH_ICON">) or make a selection in the listing. When the <I>Generating
+      Checksums</I> task is completed, the checksum results are displayed in the <I>Checksum
+      Results</I> panel. If the checksum generation is cancelled before completion, the fields will
+      all be blank.</P>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      &nbsp;<IMG border="0" src="images/Dialog.png">
+    </DIV>
+
+    <P align="left">&nbsp;</P>
+
+    <P align="left" class="providedbyplugin"><B>Provided by:</B> <I>ComputeChecksumsPlugin</I></P>
+  </BODY>
+</HTML>

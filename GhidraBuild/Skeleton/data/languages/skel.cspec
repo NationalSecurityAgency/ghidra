@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/compiler_spec.rxg -->
+
+<compiler_spec>
+  <data_organization>
+	<pointer_size value="2" />
+  </data_organization>
+  <global>
+    <range space="ram"/>
+    <range space="io"/>
+  </global>
+  <stackpointer register="SP" space="ram"/>
+  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
+    <baseop code="INT_ZEXT"/>
+    <baseop code="INT_LEFT" value="12"/>
+    <innerop code="INT_ZEXT"/>
+    <constresolve>
+      <register name="rBBR"/>
+    </constresolve>
+  </segmentop>
+  <default_proto>
+    <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="BC"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="HL"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="DE"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IY"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="2">
+          <addr offset="2" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="BC_"/>
+        <register name="HL_"/>
+        <register name="DE_"/>
+        <register name="AF_"/>
+        <register name="rBBR"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <prototype name="__asmAF" extrapop="2" stackshift="2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="BC"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="HL"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="DE"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IY"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="2">
+          <addr offset="2" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AF"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="rBBR"/>
+        <register name="BC_"/>
+        <register name="HL_"/>
+        <register name="DE_"/>
+        <register name="AF_"/>
+      </unaffected>
+  </prototype>
+  <prototype name="__stdcall" extrapop="2" stackshift="2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="BC"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="HL"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="2">
+          <addr offset="2" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="AF"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="rBBR"/>
+        <register name="BC_"/>
+        <register name="HL_"/>
+        <register name="DE_"/>
+        <register name="AF_"/>
+      </unaffected>
+    </prototype>
+</compiler_spec>

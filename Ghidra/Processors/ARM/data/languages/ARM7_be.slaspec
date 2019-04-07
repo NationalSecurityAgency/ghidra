@@ -1,0 +1,15 @@
+
+@define ENDIAN "big"
+@define T_VARIANT ""
+@define VERSION_5 ""
+@define VERSION_5E ""
+@define VERSION_6 ""
+@define VERSION_6K ""
+@define VERSION_6T2 ""
+@define VERSION_7 ""
+@define VERSION_7M ""
+@define SIMD ""
+@define VFPv3 ""
+
+@include "ARM.sinc"
+

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--  
+
+	Log4j appender that writes messages to a file. 
+	
+	We filter the messages for this file by using the 'GhidraScript' text.  This text is added
+	to the 'unformatted message' by using the log4j's Message class.  We then emit the 
+	original message when writing to the file.
+	
+-->	
+<RollingFile 
+	name="script" 
+	fileName="${sys:scriptLogFilename}"
+	filePattern="${sys:scriptLogFilename}-%d{yyyy-MM-dd}-%i.log">   
+	
+	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %m %ex %n"/>	 
+	
+	<!--
+		Only allow messages from scripts (see the note above).  
+	 -->
+	<RegexFilter regex=".*Format:GhidraScript.*" onMatch="ACCEPT" onMismatch="DENY" useRawMsg="true" />	
+	
+	<Policies>
+		<SizeBasedTriggeringPolicy size="50000 KB"/>
+	</Policies>  
+	<DefaultRolloverStrategy max="20"/> 	
+</RollingFile>
+

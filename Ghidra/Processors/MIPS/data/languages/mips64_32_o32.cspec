@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This cspec describes the MIPS64 32bitmode ABI called "o32" which is commonly used for embedded API.
+     This ABI is actually the full 32-bit ABI forced onto what is otherwise 64-bit code, presumably to
+     allow binary compatibility with 32-bit code. This ABI is distinct from n32 and o64,
+     which are true 64-bit ABIs with 32-bit addresses.
+     This ABI can be requested explicitly in gcc with the -mabi=32 or -mabi=eabi option. 
+     
+     This cspec does not attempt to handle the various floating point variations which may exist (FP32, FPXX, FP64, FP64A)
+     due to the fact that we have 64-bit float registers.  This spec assumes FP64.  The maxsize attribute
+     of the integer parameter passing registers (a0-a3) must currently be set to 8, in order to achieve
+     reasonable analysis, even though the maximum sized value that can be passed in a single register
+     is really 4 bytes long. It may be better to import as MIPS32 if only 32-bit ISA is used.
+      
+     o32 specifies the original 32-bit MIPS ABI which treats the general purpose registers as 32-bit registers 
+     and pointers as 32-bits
+     
+     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005     
+-->
+<compiler_spec>
+  <data_organization>
+     <absolute_max_alignment value="0" />
+     <machine_alignment value="2" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="4" />
+     <pointer_size value="4" />
+     <wchar_size value="2" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="16" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="4" />
+     </size_alignment_map>
+  </data_organization>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <spacebase name="gp" register="gp" space="ram"/>
+  <global>
+    <range space="gp"/>
+    <range space="ram"/>
+    <range space="register" first="0x2000" last="0x2fff"/>
+  </global>
+  <returnaddress>
+    <register name="ra"/>
+  </returnaddress>
+  <aggressivetrim signext="true"/>  <!-- Aggressively try to eliminate sign extensions -->
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input killedbycall="true">
+        <!-- FIXME: unsure how to handle the float param passing for fp32 ? -->
+        <!--        currently limited to 4-byte float passing               -->
+        <!--
+        		If the first and second arguments floating-point arguments to a function are 
+        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value 
+        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are 
+        		both 64-bit values, they are passed in f12 and f13.
+        -->
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f12"/>
+        </pentry>
+<!--
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="f13"/>
+        </pentry>
+-->
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="a3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="16" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="f0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="v0"/>
+        </pentry>
+        <!-- FIXME unable to properly represent 8-byte double precision v0/v1 join -->
+        <!--
+		<pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="v0" piece2="v1"/>
+        </pentry>
+        -->
+      </output>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="sp"/>
+        <register name="gp"/>
+        <register name="f20"/>
+        <register name="f22"/>
+        <register name="f24"/>
+        <register name="f26"/>
+        <register name="f28"/>
+        <register name="f30"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
+        <range space="stack" first="0" last="15"/>  <!-- This is backup storage space for register params, but we treat as locals -->
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

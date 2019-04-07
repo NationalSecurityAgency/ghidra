@@ -1,0 +1,34 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="EAX"/>
+		<register_mapping dwarf="1" ghidra="ECX"/>
+		<register_mapping dwarf="2" ghidra="EDX"/>
+		<register_mapping dwarf="3" ghidra="EBX"/>
+		<register_mapping dwarf="4" ghidra="ESP" stackpointer="true"/>
+		<register_mapping dwarf="5" ghidra="EBP"/>
+		<register_mapping dwarf="6" ghidra="ESI"/>
+		<register_mapping dwarf="7" ghidra="EDI"/>
+		<register_mapping dwarf="8" ghidra="EIP"/>
+		<register_mapping dwarf="9" ghidra="eflags"/>
+		<!-- <register_mapping dwarf="10" ghidra="TRAPNO"/> **not implemented** -->
+		<register_mapping dwarf="11" ghidra="ST0" auto_count="8"/> <!-- ST0..ST7 -->
+		
+		<register_mapping dwarf="21" ghidra="XMM0" auto_count="8"/> <!-- XMM0..XMM7 -->
+		<register_mapping dwarf="29" ghidra="MM0" auto_count="8"/> <!-- MM0..MM7 -->
+		
+		<!-- <register_mapping dwarf="37" ghidra="FCW"/> **not implemented** -->
+		<!-- <register_mapping dwarf="38" ghidra="FSW"/> **not implemented** -->
+		<register_mapping dwarf="39" ghidra="MXCSR"/>
+		
+		<register_mapping dwarf="40" ghidra="ES"/>
+		<register_mapping dwarf="41" ghidra="CS"/>
+		<register_mapping dwarf="42" ghidra="SS"/>
+		<register_mapping dwarf="43" ghidra="DS"/>
+		<register_mapping dwarf="44" ghidra="FS"/>
+		<register_mapping dwarf="45" ghidra="GS"/>
+		
+		<register_mapping dwarf="48" ghidra="TR"/>
+		<register_mapping dwarf="49" ghidra="LDTR"/>
+	</register_mappings>
+	<call_frame_cfa value="4"/>
+</dwarf>

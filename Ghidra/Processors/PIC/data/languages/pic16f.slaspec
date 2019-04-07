@@ -1,0 +1,5 @@
+@define PROCESSOR "PIC_16F"
+
+@include "pic16.sinc"
+
+@include "pic16_instructions.sinc"

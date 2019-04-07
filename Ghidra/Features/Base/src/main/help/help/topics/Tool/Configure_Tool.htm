@@ -1,0 +1,163 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Configure Tool</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="ManagePluginsDialog"></A>Configure Tool</H1>
+
+    <P>The <I>Configure Tool</I> dialog allows you to add/remove plugin packages or individual <A
+    href="help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">Plugins</A> from a tool. To
+    display the <I>Configure Tool</I> dialog, select <B>File</B> <IMG alt="" src=
+    "../../shared/arrow.gif"><B>Configure...</B>.This dialog is also displayed when you <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm#Create_Tool">create a new
+    tool</A>.&nbsp;&nbsp;</P>
+
+    <P align="center"><IMG alt="" src="images/ConfigTool.png"><BR>
+    </P>
+
+    <P><A name="StepsToConfigureTool"></A></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The <I>Configure Tool</I> dialog shows a list of plugin packages that can be added to
+        the tool. Clicking the checkbox will add (or remove) all the plugins in the package to the
+        tool. Clicking on the <B>Configure</B> link will bring up a dialog for adding individual
+        plugins.</P>
+        
+        <BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="images/note.yellow.png" />
+        	The <A href=
+		    "help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A>'s <I><A href=
+		    "help/topics/FrontEndPlugin/Ghidra_Front_end_Menus.htm#Configure">Configure</A></I> 
+		    display shows its own list of eligible front-end plugins, as only certain plugins 
+		    may be added to the Project Window.
+        	</P>
+        </BLOCKQUOTE>
+
+        <H4>Saving</H4>
+
+        <BLOCKQUOTE>
+          <P><A name="SaveTool"></A> Save changes to your tool by clicking on the <IMG alt="" src=
+          "images/disk.png"> icon in the dialog's toolbar; <A href=
+          "help/topics/Tool/Ghidra_Tool_Administration.htm#Save_Tool">save your tool to a different
+          name</A> by clicking on the <IMG alt="" src="images/disk_save_as.png"> icon.</P>
+
+          <P>&nbsp;</P>
+        </BLOCKQUOTE>
+
+        <H4>Configuring All Plugins</H4>
+
+        <BLOCKQUOTE>
+          <P><A name="ConfigureAllPlugins"></A> To Configure all plugins regardless of package,
+          select the <IMG alt="" src="images/plugin.png"> icon in the dialog's toolbar and the
+          <I>Configure Plugins</I> dialog will appear with all plugins in its plugin table.</P>
+
+          <P>&nbsp;</P>
+        </BLOCKQUOTE>
+
+        <P><IMG alt="" src="../../shared/note.yellow.png">The <B>Experimental</B> package can't be
+        added as a package. Experimental plugins must be added individually.</P>
+
+        <P>&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="PluginDialog"></A>Configure Plugins Dialog</H3>
+
+      <BLOCKQUOTE>
+        <P>Selecting the <I>Configure</I> link for a package will bring up the the <I>Configure
+        Plugins Dialog</I>.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG alt="" src="images/ConfigurePlugins.png"><BR>
+      </P>
+
+      <BLOCKQUOTE>
+        <P>The dialog has two parts: A table at the top of the dialog that shows of all the plugins
+        in the package and an information window at the bottom that shows details about an
+        individual plugin.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <H3><A name="PluginTable"></A>Plugin Table</H3>
+
+        <BLOCKQUOTE>
+          <P>The plugin table shows the following information for each plugin:</P>
+
+          <UL>
+            <LI>Checkbox to indicate whether the plugin is in the tool;</LI>
+
+            <LI>
+              A status icon: 
+
+              <UL>
+                <LI>&nbsp;none&nbsp;&nbsp;&nbsp;&nbsp; - the plugin is good.&nbsp; It has help and
+                been reasonably tested.</LI>
+
+                <LI><IMG alt="" src=
+                "images/warning.png">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -
+                the plugin is useable, but has not been fully tested and/or not
+                documented.&nbsp;</LI>
+
+                <LI><IMG alt="" src=
+                "Icons.STRONG_WARNING_ICON">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - the
+                <A name="DevelopmentPlugin"></A> plugin is under development and may not be usable
+                at all. Not included with production distribution.</LI>
+              </UL>
+            </LI>
+
+            <LI>Plugin name: the name is displayed in red when some other plugin depends on this
+            plugin;</LI>
+
+            <LI>Short description of the plugin;</LI>
+
+            <LI>Category for where the plugin belongs functionally, e.g., it works in the context
+            of a Code Browser or Byte Viewer, etc.&nbsp;</LI>
+          </UL>
+
+          <P>The <I><A name="SearchFilter"></A> Search Filter</I> allows you to narrow the list of
+          plugins displayed in the table. Only those plugins whose name or description contains the
+          string that you enter as the filter will be displayed. As you type, the table is updated
+          to reflect the filter.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="InfoWindow"></A>Information Window</H3>
+
+        <BLOCKQUOTE>
+          <P>When you select a row in the table, the scrolled window below the table shows more
+          information about the plugin and any contact information that the author supplied, e.g.,
+          author's name, organization, etc.&nbsp; The <I>Dependencies</I> section lists the class
+          names of the plugins that depend on the selected plugin due to some service that it
+          provides. The <I>Class Location</I> indicates from where the java classes are being
+          loaded.</P>
+        </BLOCKQUOTE>
+
+        <H3>&nbsp;</H3>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Create_Tool">Create
+      Tool</A></LI>
+
+      <LI><A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Configure the Ghidra Project
+      Window</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Save_Tool">Save Tool to Tool
+      Chest</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm">Ghidra Tool
+      Administration</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

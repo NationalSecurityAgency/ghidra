@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+							Builds the Ghidra Help System
+
+	Note: This build file is created to be used from within the Eclipse development 
+	      environment.  As such, this file does not compile classes, but simply uses the 
+	      Eclipse-built classes (whether in jar files or 'bin' directories.
+
+
+
+-->
+<project name="Ghidra" default="Build Development Help Files">
+
+	<!--
+  		We set the project.dir value using pathconvert, as it resolves relative paths so we 
+  		don't have to look at '../..' in debug output 
+     -->
+	
+	<!-- 
+		This should be the parent folder that contains all repos.
+	 -->
+	<path id="raw.repo.dir.id" location="${basedir}/../../../../.." /> 
+	
+	
+	<pathconvert property="repo.dir" refid="raw.repo.dir.id" dirsep="/"/> 
+	<property name="ghidra.u.repo.name" value="ghidra.git" />
+	<property name="ghidra.ext.repo.name" value="ghidra.ext.git" />
+	<property name="ghidra.bin.repo.name" value="ghidra.bin.git" />
+	<property name="ghidra.u.repo.dir" value="${repo.dir}/${ghidra.u.repo.name}" />
+	<property name="ghidra.ext.repo.dir" value="${repo.dir}/${ghidra.ext.repo.name}" />
+	<property name="ghidra.bin.repo.dir" value="${repo.dir}/${ghidra.bin.repo.name}" />
+	<property name="ghidra.dir.in.repo.u" value="${ghidra.u.repo.dir}/Ghidra" />
+	<property name="ghidra.dir.in.repo.ext" value="${ghidra.ext.repo.dir}/Ghidra" />
+	<property name="ghidra.dir.in.repo.bin" value="${ghidra.bin.repo.dir}/Ghidra" />
+	
+	<!-- Use the 'u' repo for the build area (it's as good as any) -->
+	<property name="ghidra.base.help.dir" value="${ghidra.dir.in.repo.u}/Features/Base/help/shared" />
+	<property name="ghidra.build.project.dir" value="${ghidra.u.repo.dir}/GhidraBuild" />
+	
+	<path id="raw.utility.module.dir" location="${basedir}/../../Utility" />
+	<pathconvert property="utility.module.dir" refid="raw.utility.module.dir" />
+	<property name="utility.classes" value="${utility.module.dir}/bin" />
+	<property name="utility.lib" value="${utility.module.dir}/lib" />
+	
+	
+	<path id="raw.help.module.dir" location="${basedir}/.." />
+	<pathconvert property="help.module.dir" refid="raw.help.module.dir" />
+	<property name="help.src" value="${help.module.dir}/src" />
+	<property name="help.classes" value="${help.module.dir}/bin" />
+	
+	
+	<available file="${ghidra.bin.repo.dir}" property="help.lib" value="${ghidra.dir.in.repo.bin}/Framework/Help/lib" />
+	<property name="help.lib" value="${help.module.dir}/lib" /> <!-- this won't get set if the bin repo exists -->
+		
+
+	<path id="raw.framework.dir" location="${basedir}/../.." />
+	<pathconvert property="framework.dir" refid="raw.framework.dir" />
+
+	<property name="suspend" value="n" />
+	<property name="fail.if.invalid" value="true" />
+	
+	<path id="build.jar.files">
+		<fileset dir="${framework.dir}"> <!-- for distribution -->
+			<include name="Utility/lib/*.jar" /> 
+			<include name="Help/lib/*.jar" />
+		</fileset>
+		<fileset dir="${ghidra.dir.in.repo.bin}"> <!-- for non-distribution -->
+			<include name="Framework/Help/lib/*.jar" />
+		</fileset>
+	</path>
+	
+	<path id="build.classpath">		
+		<path refid="build.jar.files" />
+		<pathelement location="${utility.classes}" />
+		<pathelement location="${help.classes}" /> 
+    </path> 
+    
+	<property name="bin.dir" value="**/bin/**" />
+	<property name="shallow.recurse" value="*/*/*/*/*/**" />
+	<property name="excluded.directories" value="${bin.dir}"/>
+
+	<echo>
+		u repo: ${ghidra.dir.in.repo.u}
+	</echo>
+
+	<available file="${ghidra.dir.in.repo.ext}" property="ext.exists" />
+	
+
+	
+	<!-- ============================================= -->
+	<!-- 		Build Development Help Files	          -->
+	<!-- ============================================= -->
+	<target name="Build Development Help Files" depends="Set Modules">
+
+	    <!-- -->
+		<!-- Run the Help Builder driver file for building -->
+		<!-- -->
+		<java classname="help.GHelpBuilder" 
+		          fork="true"
+		          dir="${basedir}"
+		          maxmemory="512M"
+			      failonerror="true">
+					
+			
+			<jvmarg value="-Xdebug"/>
+			<jvmarg value="-Xnoagent"/>
+			<jvmarg value="-Djava.compiler=NONE"/>
+			<jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=${suspend},address=18500"/>
+			
+			<arg value="-debug" />
+			
+			<arg value="-fail.if.invalid" />
+			<arg value="${fail.if.invalid}" />
+			
+			<!-- Uncoment the following argument to fixup help links (e.g., change old-style 
+			relative links to the help/topics style -->
+			<!--
+			<arg value="-fixup.help.links" />
+			-->
+			
+			<arg value="-java.help.indexer.path" />
+			<arg value="${help.lib}/jhindexer.jar" />			
+
+			<!-- Uncomment to move shared resources from Base to each help dir			
+			<arg value="-shared.resources.dir" />
+			<arg value="${ghidra.base.help.dir}" />		
+			-->
+
+			<arg value="-output.dirname" /> 
+			<arg value="bin" />
+			
+			<!-- example for debugging a single module 
+			<arg value="<repo>/Ghidra/Features/Base/help" />
+			-->
+			<arg value="${module.help.dirs.path}" /> <!-- must be last in the list -->
+	        
+			<classpath refid="build.classpath" />
+		</java>	
+	
+	</target>
+	
+	
+	<!-- ============================================= --> 
+	<!--            Find Unused Help Images            -->
+	<!-- ============================================= -->
+	<target name="Find Unused Help Images" depends="Set Modules">
+
+		<java classname="help.validator.UnusedHelpImageFileFinder" 
+		          fork="true"
+		          dir="${basedir}"
+		          maxmemory="512M"
+			      failonerror="true">
+					
+			<arg value="-debug" />
+
+			<arg value="${module.help.dirs.path}" /> <!-- must be last in the list -->
+	        
+			<classpath refid="build.classpath" />
+		</java>
+	</target>	
+
+	<!--
+		Conditionally set the help modules, depending upon the environment
+	-->
+	<target name="Set Modules" depends="Set Default Modules, Set Advanced Modules">
+		
+		<pathconvert property="module.help.dirs.path" refid="module.help.dirs" />
+		<echo>
+			help source dir: ${module.help.dirs.path}
+		</echo>
+		
+	</target>
+	
+	<target name="Set Default Modules" unless="ext.exists">
+		<path id="module.help.dirs">
+			<dirset dir="${ghidra.dir.in.repo.u}" excludes="${excluded.directories},${shallow.recurse}">
+				<filename name="*/*/help" />
+			</dirset>
+		</path>
+	</target>
+	
+	<target name="Set Advanced Modules" if="ext.exists">
+		<path id="module.help.dirs">
+			<dirset dir="${ghidra.dir.in.repo.u}" excludes="${excluded.directories},${shallow.recurse}">
+				<filename name="*/*/help" />
+			</dirset>
+			<dirset dir="${ghidra.dir.in.repo.ext}" excludes="${excluded.directories},${shallow.recurse}">
+				<filename name="*/*/help" />
+			</dirset>
+		</path>
+	</target>
+	
+</project>

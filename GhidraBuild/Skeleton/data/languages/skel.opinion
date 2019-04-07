@@ -1,0 +1,12 @@
+<opinions>
+<!-- Example of importer opinions - commented-out to prevent use by Ghidra -->
+<!-- The primary and secondary constraint values must be specifide as a decimal string -->
+<!--
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+    		<constraint primary="40"   secondary="123"  processor="Skel"  size="16" variant="default" />
+    </constraint>
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="default">
+        <constraint primary="61"                    processor="Skel"  size="16" variant="default" />
+    </constraint>
+-->
+</opinions>

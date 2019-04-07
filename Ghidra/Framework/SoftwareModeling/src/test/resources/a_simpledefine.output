@@ -1,0 +1,5 @@
+a_simpledefine.input###1#@define FOO def
+abc
+print $(FOO)def
+ghi
+

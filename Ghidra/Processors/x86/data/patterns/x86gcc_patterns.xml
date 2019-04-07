@@ -1,0 +1,72 @@
+<patternlist>
+  <pattern>
+     <data>0x5589e583ec</data> <!-- PUSH EBP : MOV EBP,ESP : SUB ESP, -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+  <pattern>
+     <data>0x5589e581ec....0000</data> <!-- PUSH EBP : MOV EBP,ESP : SUB ESP,#bigconst -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+  <pattern>
+     <data>0x5589e5..83ec</data> <!-- PUSH EBP : MOV EBP,ESP - 1-BYTE -  SUB ESP, -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+  <pattern>
+     <data>0x5589e5....83ec</data> <!-- PUSH EBP : MOV EBP,ESP - 2-BYTES -  SUB ESP, -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+  <pattern>
+     <data>0x5589e5 01010... 01010... </data> <!-- PUSH EBP : MOV EBP,ESP : PUSH : PUSH -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+  <pattern>
+     <data>0x5589e58b 01...101 </data> <!-- PUSH EBP : MOV EBP,ESP : MOV ?,[EBP+#] -->
+     <codeboundary/>
+     <possiblefuncstart/>
+  </pattern>
+
+
+  <pattern>
+     <data>0x8b 0x1c 0x24 0xc3 </data> <!-- MOV  EBX,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.bx" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data>0x8b 0x0c 0x24 0xc3 </data> <!-- MOV  ECX,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.cx" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data>0x8b 0x14 0x24 0xc3 </data> <!-- MOV  EDX,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.dx" validcode="function"/>
+  </pattern>
+
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x90</data> <!-- NOP filler -->
+      <data>0xc3</data> <!-- RET -->
+      <data>0xe9........</data> <!-- JMP big -->
+      <data>0xeb..</data> <!-- JMP small -->
+      <data>0x89f6</data> <!-- NOP (MOV ESI,ESI) -->
+      <data>0x8d7600</data>  <!-- NOP (LEA ESI,[ESI]) -->
+      <data>0x8d742600</data>  <!-- NOP (LEA ESI,[ESI]) -->
+      <data>0x8db600000000</data> <!-- NOP (LEA ESI,[ESI]) -->
+      <data>0x8dbf00000000</data> <!-- NOP (LEA EDI,[EDI]) -->
+      <data>0x8dbc2700000000</data> <!-- NOP (LEA EDI,[EDI]) -->
+      <data>0x8db42600000000</data> <!-- NOP (LEA ESI,[ESI]) -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x5589e5</data> <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x8d 0x4c ..100100 0x04 0x83 0xe4 0xf. </data> <!-- LEA ECX [ESP+4] / AND ESP -->
+      <data>0x57 0x8d 0x7c ..100100 0x08 0x83 0xe4 0xf. </data> <!-- PUSH EDI / LEA EDI [ESP+8] / AND ESP -->
+      <codeboundary/>
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+
+</patternlist>

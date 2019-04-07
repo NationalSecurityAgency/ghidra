@@ -1,0 +1,665 @@
+<html>
+  <head>
+    <title>Ghidra Cheat Sheet</title>
+    <style>
+      ul {
+        font-size: smaller;
+        list-style-type: none;
+        margin: 0;
+      }
+      @media print {
+        @page {
+          margin: 0;
+        }
+        page {
+          padding: 0.25in;
+          display: block;
+          page-break-inside: avoid;
+          column-count: 3;
+          column-gap: 0.5in;
+        }
+        div.front {
+          position: relative;
+          height: 8in;
+          page-break-inside: avoid;
+        }
+        table {
+          page-break-inside: avoid;
+          margin-left: auto;
+          margin-right: auto;
+          margin-bottom: 1em;
+          border-spacing: 0px;
+          border: 2pt solid black;
+          font-size: 75%;
+        }
+        tr th, tr td {
+          border-top: 1pt solid black;
+        }
+        tr:first-child th, tr:first-child td {
+          border-top: none;
+        }
+        tr.footnotes td {
+          padding:0;
+          margin:0;
+        }
+        tr th {
+          text-align: left;
+        }
+        tr.head th {
+          color: #e22726;
+          border-bottom: 2pt solid black;
+          text-align: center;
+        }
+        td div + div {
+          border-top: 1pt solid black;
+        }
+        td.keys {
+          text-align: center;
+        }
+        key {
+          display: inline;
+          font-family: monospace;
+          border: 0.6pt solid black;
+          border-radius: 1pt;
+          padding: 1pt;
+          line-height: 2.2em;
+        }
+        plus:after {
+          content: '\200b';
+        }
+        option:before {
+          content: '\1f527 ';
+        }
+        footref, footnote {
+          font-weight: normal;
+          vertical-align: super;
+          font-size: smaller;
+        }
+        .footnotes p {
+          margin: 0;
+        }
+        context {
+          display: block;
+          font-weight: normal;
+          font-size: smaller;
+        }
+        typename {
+          display: inline;
+          font-family: monospace;
+          font-weight: normal;
+        }
+        img.button, img.button90 {
+          width: 1.5em;
+          height: 1.5em;
+          margin: 2pt;
+        }
+        img.button90 {
+          transform: rotate(90deg);
+        }
+        h1 {
+          text-align: center;
+        }
+        img.logo {
+          margin-top: 200px;
+        }
+        p.fineprint {
+          position: absolute;
+          bottom: 0;
+          font-size: 50%;
+        }
+      }
+      @media screen {
+        page {
+          font-family: sans-serif;
+          display: block;
+          column-count: 3;
+          margin-bottom: 1em;
+        }
+        div.front {
+          page-break-inside: avoid;
+        }
+        table {
+          page-break-inside: avoid;
+          margin-left: auto;
+          margin-right: auto;
+          border-spacing: 0px;
+          margin-bottom: 1em;
+        }
+        tr.head th {
+          background: #e22726;
+          color: #fff;
+          font-weight: bold;
+          text-align: center;
+          border-radius: 8px 8px 0 0;
+        }
+        td div + div {
+          border-top: 1pt solid black;
+        }
+        tr:nth-child(even) {
+          background: #eee;
+        }
+        td, th {
+          padding: 8px;
+          text-align: left;
+        }
+        td.keys {
+          text-align: center;
+        }
+        key {
+          display: inline;
+          font-family: monospace;
+          font-size: larger;
+          background: #ccc;
+          border-radius: 2px;
+          padding: 3px;
+          line-height: 2em;
+        }
+        plus:after {
+          content: '\200b';
+        }
+        option {
+          display: inline;
+          background: url('images/document-properties.png') no-repeat left center;
+          padding-left: 20px;
+        }
+        tr.footnotes {
+          background: none;
+        }
+        tr.footnotes td {
+          background: #f9d3d3;
+          border-radius: 0px 0px 8px 8px;
+        }
+        footref, footnote {
+          display: inline;
+          font-weight: normal;
+          vertical-align: super;
+          font-size: smaller;
+        }
+        context {
+          display: block;
+          font-weight: normal;
+          font-size: smaller;
+        }
+        typename {
+          display: inline;
+          font-family: monospace;
+          font-weight: normal;
+        }
+        img.button, img.button90 {
+          background: #ccc;
+          margin-right: 1ex;
+          padding: 2px;
+          width: 16px;
+          height: 16px;
+        }
+        img.button {
+          border-left: 2px solid #ddd;
+          border-top: 2px solid #ddd;
+          border-right: 2px solid #aaa;
+          border-bottom: 2px solid #aaa;
+        }
+        img.button90 {
+          border-left: 2px solid #ddd;
+          border-bottom: 2px solid #ddd;
+          border-right: 2px solid #aaa;
+          border-top: 2px solid #aaa;
+          transform: rotate(90deg);
+        }
+        h1 {
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <page>
+      <table>
+        <tr class="head">
+          <th colspan="3">Key</th>
+        </tr>
+        <tr>
+          <th>Action
+              <context>Context</context></th>
+          <td class="keys"><key>Mods</key><plus>+</plus><key>Key</key></td>
+          <td>Menu &rarr; Path</td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+          <p>The action may only be available in the given context.</p>
+          <p>&#x2756; indicates the context menu, i.e., right-click.</p>
+          <p>The <key>Ctrl</key> key is replaced by the command <key>&#8984</key> key on Macintosh.</p>
+        </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Load Project/Program</th>
+        </tr>
+        <tr>
+          <th>New Project</th>
+          <td class="keys"><key>Ctrl</key>+<key>N</key></td>
+          <td>File &rarr; New Project</td>
+        </tr>
+        <tr>
+          <th>Open Project</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>O</key></td>
+          <td>File &rarr; Open Project</td>
+        </tr>
+        <tr>
+          <th>Close Project<footref>1</footref></th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>W</key></td>
+          <td>File &rarr; Close Project</td>
+        </tr>
+        <tr>
+          <th>Save Project<footref>1</footref></th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>S</key></td>
+          <td>File &rarr; Save Project</td>
+        </tr>
+        <tr>
+          <th>Import File<footref>1</footref></th>
+          <td class="keys"><key>I</key></td>
+          <td>File &rarr; Import File</td>
+        </tr>
+        <tr>
+          <th>Export Program</th>
+          <td class="keys"><key>O</key></td>
+          <td>File &rarr; Export Program</td>
+        </tr>
+  	  <tr>
+  	    <th>Open File System<footref>1</footref></th>
+  	    <td class="keys"><key>Ctrl</key><plus>+</plus><key>I</key></td>
+  	    <td>File &rarr; Open File System</td>
+  	  </tr>
+  	  <tr class="footnotes"><td colspan="3">
+  	    <p><footnote>1</footnote>
+  	      These actions are only available if there is an active project. Create or open a project first.
+  	    </p>
+  	  </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Help/Customize/Info</th>
+        </tr>
+        <tr>
+          <th>Ghidra Help
+              <context>Hover on action</context></th>
+          <td class="keys"><key>F1</key></td>
+          <td>Help &rarr; Contents</td>
+        </tr>
+        <tr>
+          <th colspan="2">About Ghidra</th>
+          <td>Help &rarr; About Ghidra</td>
+        </tr>
+        <tr>
+          <th colspan="2">About Program</th>
+          <td>Help &rarr; About <i>program name<i></td>
+        </tr>
+        <tr>
+          <th colspan="2">Preferences</th>
+          <td>Edit &rarr; Tool Options</td>
+        </tr>
+        <tr>
+          <th>Set Key Binding
+              <context>Hover on action</context></th>
+          <td class="keys"><key>F4</key></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th colspan="2">Key Bindings</th>
+          <td>Edit &rarr; Tool Options &rarr; <option>Key Bindings</option></td>
+        </tr>
+        <tr>
+          <th colspan="2">Processor Manual</th>
+          <td>&#x2756; &rarr; Processor Manual</td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+        </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Markup</th>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/undo.png"/>Undo</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Z</key></td>
+          <td>Edit &rarr; Undo</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/redo.png"/>Redo</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Shift</key><plus>+</plus><key>Z</key></td>
+          <td>Edit &rarr; Redo</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/disk.png"/>Save Program</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>S</key></td>
+          <td>File &rarr; Save <em>program name</em></td>
+        </tr>
+        <tr>
+          <th>Disassemble</th>
+          <td class="keys"><key>D</key></td>
+          <td>&#x2756; &rarr; Disassemble</td>
+        </tr>
+        <tr>
+          <th>Clear Code/Data</th>
+          <td class="keys"><key>C</key></td>
+          <td>&#x2756; &rarr; Clear Code Bytes</td>
+        </tr>
+        <tr>
+          <th>Add Label
+              <context>Address field</context></th>
+          <td class="keys"><key>L</key></td>
+          <td>&#x2756; &rarr; Add Label</td>
+        </tr>
+        <tr>
+          <th>Edit Label
+              <context>Label field</context></th>
+          <td class="keys"><key>L</key></td>
+          <td>&#x2756; &rarr; Edit Label</td>
+        </tr>
+        <tr>
+          <th>Rename Function
+              <context>Function name field</context></th>
+          <td class="keys"><key>L</key></td>
+          <td>&#x2756; &rarr; Function &rarr; Rename Function</td>
+        </tr>
+        <tr>
+          <th>Remove Label
+              <context>Label field</context></th>
+          <td class="keys"><key>Del</key></td>
+          <td>&#x2756; &rarr; Remove Label</td>
+        </tr>
+        <tr>
+          <th>Remove Function
+              <context>Function name field</context></th>
+          <td class="keys"><key>Del</key></td>
+          <td>&#x2756; &rarr; Function &rarr; Delete Function</td>
+        </tr>
+        <tr>
+          <th rowspan="3">Define Data</th>
+          <td rowspan="3" class="keys"><key>T</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Choose Data Type</td>
+        </tr>
+        <tr></tr>
+        <tr>
+          <td>&#x2756; &rarr; Data &rarr; <em>type</em></td>
+        </tr>
+        <tr>
+          <th>Repeat Define Data</th>
+          <td class="keys"><key>Y</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Last Used: <em>type</em></td>
+        </tr>
+        <tr>
+          <th>Rename Variable
+              <context>Variable in decompiler</context></th>
+          <td class="keys"><key>L</key></td>
+          <td>&#x2756; &rarr; Rename Variable</td>
+        </tr>
+        <tr>
+          <th>Retype Variable
+              <context>Variable in decompiler</context></th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>L</key></td>
+          <td>&#x2756; &rarr; Retype Variable</td>
+        </tr>
+      </table>
+      <table>
+        <tr>
+          <th>Cycle Integer Types</th>
+          <td class="keys"><key>B</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Cycle &rarr;
+              <typename>byte</typename>,
+              <typename>word</typename>,
+              <typename>dword</typename>,
+              <typename>qword</typename></td>
+        </tr>
+        <tr>
+          <th>Cycle String Types</th>
+          <td class="keys"><key>'</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Cycle &rarr;
+              <typename>char</typename>,
+              <typename>string</typename>,
+              <typename>unicode</typename></td>
+        </tr>
+        <tr>
+          <th>Cycle Float Types</th>
+          <td class="keys"><key>F</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Cycle &rarr;
+              <typename>float</typename>,
+              <typename>double</typename></td>
+        </tr>
+        <tr>
+          <th>Create Array<footref>2</footref></th>
+          <td class="keys"><key>[</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Create Array</td>
+        </tr>
+        <tr>
+          <th>Create Pointer<footref>2</footref></th>
+          <td class="keys"><key>P</key></td>
+          <td>&#x2756; &rarr; Data &rarr; pointer</td>
+        </tr>
+        <tr>
+          <th>Create Structure
+              <context>Selection of data</context></th>
+          <td class="keys"><key>Shift</key><plus>+</plus><key>[</key></td>
+          <td>&#x2756; &rarr; Data &rarr; Create Structure</td>
+        </tr>
+        <tr>
+          <th colspan="2">New Structure
+              <context>Data type container</context></th>
+          <td>&#x2756; &rarr; New &rarr; Structure</td>
+        </tr>
+        <tr>
+          <th colspan="2">Import C Header</th>
+          <td>File &rarr; Parse C Source</td>
+        </tr>
+        <tr>
+          <th colspan="2">Cross References</th>
+          <td>&#x2756; &rarr; References &rarr; Show References to <em>context</em></td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+          <p><footnote>2</footnote>
+            When possible, arrays and pointers are created of the data type currently applied.
+          </p>
+        </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Miscellaneous</th>
+        </tr>
+        <tr>
+          <th colspan="2">Select</th>
+          <td>Select &rarr; <em>what</em></td>
+        </tr>
+        <tr>
+          <th>Program Differences</th>
+          <td class="keys"><key>2</key></td>
+          <td>Tools &rarr; Program Differences</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/play_again.png"/>Rerun Script</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Shift</key><plus>+</plus><key>R</key></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Assemble</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Shift</key><plus>+</plus><key>G</key></td>
+          <td>&#x2756 &rarr; Patch Instruction</td>
+        <tr class="footnotes"><td colspan="3">
+        </td></tr>
+      </table>
+    </page>
+    <page>
+      <table>
+        <tr class="head">
+          <th colspan="3">Navigation</th>
+        </tr>
+        <tr>
+          <th>Go To</th>
+          <td class="keys"><key>G</key></td>
+          <td>Navigation &rarr; Go To</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/left.png"/>Back</th>
+          <td class="keys"><key>Alt</key><plus>+</plus><key>&larr;</key></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/right.png"/>Forward</th>
+          <td class="keys"><key>Alt</key><plus>+</plus><key>&rarr;</key></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/down.png"/> <img class="button" src="images/up.png"> Toggle Direction</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>T</key></td>
+          <td>Navigation &rarr; Toggle Code Unit Search Direction</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/I.gif"/>Next Instruction</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>I</key></td>
+          <td>Navigation &rarr; Next Instruction</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/D.gif"/>Next Data</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>D</key></td>
+          <td>Navigation &rarr; Next Data</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/U.gif"/>Next Undefined</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>U</key></td>
+          <td>Navigation &rarr; Next Undefined</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/L.gif"/>Next Label</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>L</key></td>
+          <td>Navigation &rarr; Next Label</td>
+        </tr>
+        <tr>
+          <th rowspan="3"><img class="button" src="images/F.gif"/>Next Function</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>F</key></td>
+          <td>Navigation &rarr; Next Function</td>
+        </tr>
+        <tr></tr>
+        <tr>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>&darr;</key></td>
+          <td>Navigation &rarr; Go To Next Function</td>
+        </tr>
+        <tr>
+          <th>Previous Function</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>&uarr;</key></td>
+          <td>Navigation &rarr; Go To Previous Function</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/notF.gif"/>Next Non-function Instruction</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>N</key></td>
+          <td>Navigation &rarr; Next Instruction Not In a Function</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/V_slash.png"/>Next Different Byte Value</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>V</key></td>
+          <td>Navigation &rarr; Next Different Byte Value</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/B.gif"/>Next Bookmark</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Alt</key><plus>+</plus><key>B</key></td>
+          <td>Navigation &rarr; Next Bookmark</td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+        </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Windows</th>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/notes.gif"/>Bookmarks</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>B</key></td>
+          <td>Window &rarr; Bookmarks</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/binaryData.gif"/>Byte Viewer</th>
+          <td>Window &rarr; Bytes: <em>program name</em></td>
+        </tr>
+        <tr>
+          <th colspan="3"><img class="button90" src="images/viewmagfit.png"/>Function Call Trees</th>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/dataTypes.png"/>Data Types</th>
+          <td>Window &rarr; Data Type Manager</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/decompileFunction.gif"/>Decompiler</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>E</key></td>
+          <td>Window &rarr; Decompile: <em>function name</em></td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/function_graph.png"/>Function Graph</th>
+          <td>Window &rarr; Function Graph</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/play.png"/>Script Manager</th>
+          <td>Window &rarr; Script Manager</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/memory16.gif"/>Memory Map</th>
+          <td>Window &rarr; Memory Map</td>
+        </tr>
+        <tr>
+          <th><img class="button" src="images/registerGroup.png"/>Register Values</th>
+          <td class="keys"><key>V<span></td>
+          <td>Window &rarr; Register Manager</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/table.png"/>Symbol Table</th>
+          <td>Window &rarr; Symbol Table</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/table_go.png"/>Symbol References</th>
+          <td>Window &rarr; Symbol References</td>
+        </tr>
+        <tr>
+          <th colspan="2"><img class="button" src="images/sitemap_color.png"/>Symbol Tree</th>
+          <td>Window &rarr; Symbol Tree</td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+        </td></tr>
+      </table>
+      <table>
+        <tr class="head">
+          <th colspan="3">Search</th>
+        </tr>
+        <tr>
+          <th>Search Memory</th>
+          <td class="keys"><key>S</key></td>
+          <td>Search &rarr; Memory</td>
+        </tr>
+        <tr>
+          <th>Search Program Text</th>
+          <td class="keys"><key>Ctrl</key><plus>+</plus><key>Shift</key><plus>+</plus><key>E</key></td>
+          <td>Search &rarr; Program Text</td>
+        </tr>
+        <tr>
+          <th colspan="2">Search For ...<ul>
+            <li>Matching Instructions</li>
+            <li>Address Tables</li>
+            <li>Direct References</li>
+            <li>Instruction Patterns</li>
+            <li>Scalars</li>
+            <li>Strings</li>
+          </ul></th>
+          <td>Search &rarr; For <em>what</em></td>
+        </tr>
+        <tr class="footnotes"><td colspan="3">
+        </td></tr>
+      </table>
+      <div class="front">
+        <img class="logo" src="images/GHIDRA_1.png"/ width="100%">
+        <h1>Ghidra Cheat Sheet</h1>
+
+        <p class="fineprint">
+          Ghidra is licensed under the Apache License, Version 2.0 (the "License"); Unless required by applicable law or
+          agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, 
+          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the 
+          specific language governing permissions and limitations under the License.
+        </p>
+      </div>
+    </page>
+  </body>
+</html>

@@ -1,0 +1,84 @@
+#
+# Instructions based on Intel Control-flow Enforcement Technology Preview
+#
+# Note: Shadow Stack semantics is not currently implemented correctly in these instructions
+#       nor in the instructions affected by CET
+#
+
+
+define pcodeop ShadowStackPush8B;
+define pcodeop ShadowStackPush4B;
+
+define pcodeop ShadowStackLoad8B;
+define pcodeop ShadowStackLoad4B;
+
+:INCSSPD r32 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0xae; reg_opcode=5 & r32 {
+    SSP = SSP + zext(4 * r32:1);
+}
+@ifdef IA64
+:INCSSPQ r64 is vexMode=0 & $(PRE_F3) & $(REX_W) & byte=0x0f; byte=0xae; reg_opcode=5 & r64 {
+    SSP = SSP + zext(8 * r64:1);
+}
+@endif
+
+:RDSSPD r32 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x1e; mod=3 & reg_opcode=1 & r32 {
+    r32 = SSP:4;
+}
+@ifdef IA64
+:RDSSPQ r64 is vexMode=0 & $(PRE_F3) & $(REX_W) & byte=0x0f; byte=0x1e; mod=3 & reg_opcode=1 & r64 {
+    r64 = SSP;
+}
+@endif
+
+:SAVEPREVSSP  is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x01; byte=0xea {
+    tmp:8 = SSP;
+    SSP = SSP & ~0x7;
+    ShadowStackPush8B(tmp);
+}
+   
+
+:RSTORSSP m64 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x01; ( mod != 0b11 & reg_opcode=5 ) ... & m64 {
+    tmp_SSP:8 = m64;
+    SSP = tmp_SSP & ~0x01;
+}
+
+define pcodeop writeToShadowStack;
+define pcodeop writeToUserShadowStack;
+
+
+:WRSSD rm32,Reg32 is vexMode=0 & byte=0x0f; byte=0x38; byte=0xf6; rm32 & Reg32 ... { 
+    writeToShadowStack(rm32, Reg32);
+}
+@ifdef IA64
+:WRSSQ rm64,Reg64 is vexMode=0 & $(REX_W) & byte=0x0f; byte=0x0f; byte=0x38; byte=0xf6; rm64 & Reg64 ...  { 
+    writeToShadowStack(rm64, Reg64);
+}
+@endif
+
+:WRUSSD rm32,Reg32 is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0xf5; rm32 & Reg32 ... { 
+    writeToUserShadowStack(rm32, Reg32);
+}
+@ifdef IA64
+:WRUSSQ rm64,Reg64 is vexMode=0 & $(PRE_66) & $(REX_W) & byte=0x0f; byte=0x0f; byte=0x38; byte=0xf5; rm64 & Reg64 ...  { 
+    writeToUserShadowStack(rm64, Reg64);
+}
+@endif
+
+define pcodeop markShadowStackBusy;
+define pcodeop clearShadowStackBusy;
+
+:SETSSBSY is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x01; byte=0xe8 {
+   SSP = markShadowStackBusy(IA32_PL0_SSP);
+}
+
+:CLRSSBSY m64 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0xae; reg_opcode=6 ... & m64 {
+   clearShadowStackBusy(m64);
+   SSP=0;
+}
+
+:ENDBR32  is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x1e; byte=0xfb {}
+@ifdef IA64
+:ENDBR64  is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x1e; byte=0xfa {}
+@endif
+
+

@@ -1,0 +1,11 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework Help'
+
+dependencies {
+	compile project(':Utility')
+	compile project(':Docking')
+	
+//	compile name:'jh' - provided by Docking
+
+}
+

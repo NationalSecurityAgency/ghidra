@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Override Fallthrough Addresses</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Set_Fallthrough"></A>Fallthrough Address</H1>
+
+    <P>&nbsp;</P>
+
+    <P>The fallthrough address on an instruction is the address of the <I>next</I> instruction that
+    will be executed. You can change the fallthrough address by using the <I>Set Fallthrough
+    Address</I> dialog, as shown below. By default, an instruction's fallthrough address (or lack
+    thereof) is determined by the language processor. For example, a "return" or a "jump"
+    instruction does not have a fallthrough address.</P>
+
+    <P>&nbsp;</P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TR>
+            <TD width="100%" align="center"><IMG border="0" src="images/SetFallThrough.png"></TD>
+          </TR>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <H3>&nbsp;</H3>
+
+    <H3>Set a Fallthrough Address</H3>
+
+    <BLOCKQUOTE>
+      <P>The dialog shows the default fallthrough address of the instruction. The radio buttons
+      below the <I>Fallthrough Address</I> field indicate whether the address is the default
+      fallthrough or user defined. When the <B>Default</B> button is selected, the <I>Fallthrough
+      Address</I> field is disabled. If an instruction has no default fallthrough (e.g., "jump"),
+      the Fallthrough Address field is empty. Choose the <B>User</B> button to enter a new
+      fallthrough address. When the <B>User</B> button is selected, the <I>Fallthrough</I>
+      <I>Address</I> field is updated as you move the cursor in the the Code Browser.</P>
+
+      <P>Select the Home button to navigate the Code Browser back to this address. The home panel
+      shows the address and the instruction when you selected the <B>Set</B> option.</P>
+
+      <P>To change the fallthrough address,</P>
+
+      <OL>
+        <LI>Position the cursor on an instruction.</LI>
+
+        <LI>Right mouse click and select <B>Fallthrough</B><IMG border="0" src=
+        "../../shared/arrow.gif"><B>Set...</B> to display the dialog.</LI>
+
+        <LI>Select the <B>User</B> radio button.</LI>
+
+        <LI>Enter an address, or click in the Code Browser at the address of the new
+        fallthrough.</LI>
+
+        <LI>Select the <B>Apply</B> button to change the fallthrough and leave the dialog intact;
+        select the OK button to change the fallthrough and dismiss the dialog.</LI>
+      </OL>
+
+      <P>You can see the effects of setting the fallthrough address by selecting the <A href=
+      "help/topics/Selection/Selecting.htm#Select_Limited_Flows_From">limited flows from option</A>; the
+      instructions that are skipped over via setting the fallthrough address are not included in
+      the selection.&nbsp;</P>
+      
+      <P><IMG border="0" src="../../shared/tip.png">
+      	 Just below the overridden address will be a comment indicating the override, containing
+      	 the text <b>Fallthrough Override</b>, along with the updated fallthrough address.
+      </P>
+
+      <P>To clear a fallthrough address using this dialog, select the <B>None</B> button, then
+      <B>Apply</B> or <B>OK</B>.</P>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <H3><A name="Auto_Set_Fallthroughs"></A>Auto Override</H3>
+
+    <BLOCKQUOTE>
+      <P>The "auto override" feature skips over data following an instruction, finds the next
+      instruction following the data and sets this address as the fallthrough address. You can
+      automatically override the fallthrough address for a single instruction or override the
+      fallthrough addresses over a <A href="help/topics/Selection/Selecting.htm">selection</A>.</P>
+
+      <P>To auto override,</P>
+
+      <OL>
+        <LI><A href="help/topics/Selection/Selecting.htm">Make a selection</A> in the Code Browser
+        or position the cursor at an instruction.</LI>
+
+        <LI>Right mouse click and select <B>Fallthrough</B><IMG border="0" src=
+        "../../shared/arrow.gif"><B>Auto override</B></LI>
+      </OL>
+
+      <P><IMG border="0" src="../../shared/note.png"> The <B>Auto Override</B> option is disabled
+      for a single instruction if the instruction's fallthrough was already overridden.</P>
+    </BLOCKQUOTE>
+
+    <H3>&nbsp;</H3>
+
+    <H3><A name="Clear_Fallthroughs"></A>Clear Overrides</H3>
+
+    <BLOCKQUOTE>
+      <P>To clear overridden fallthroughs,</P>
+
+      <OL>
+        <LI><A href="help/topics/Selection/Selecting.htm">Make a selection</A> in the Code Browser
+        or position the cursor at an instruction whose fallthrough address was overridden.</LI>
+
+        <LI>Right mouse click and select <B>Fallthrough</B><IMG border="0" src=
+        "../../shared/arrow.gif"><B>Clear Overrides</B></LI>
+      </OL>
+
+      <P><IMG border="0" src="../../shared/note.png">The <B>Clear Overrides</B> option is disabled
+      for a single instruction if the instruction's fallthrough address was not overridden.</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">&nbsp;</P>
+
+    <P class="providedbyplugin">Provided by: <I>FallthroughPlugin</I> &nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Selection/Selecting.htm">Selections</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/LanguageProviderPlugin/Languages.htm">Languages</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

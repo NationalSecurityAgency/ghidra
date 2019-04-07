@@ -1,0 +1,69 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'GPL CabExtract'
+
+project.ext.cabextract = "cabextract-1.6"
+
+
+/*********************************************************************************
+ * CabExtract extraction task
+ *
+ * Unpacks the cabextract tar file that's needed for the symbol server.  This
+ * is only unpacked for building the tool; once it's built, this unzipped 
+ * archive is removed.
+ *
+ * NOTE: Ant is used so that timestamps are properly preserved, failure to 
+ * do so can cause the aclocal utility to be required which may be missing!
+ *********************************************************************************/
+ task unpackCabExtract (type: Copy) {
+ 
+ 	doFirst {
+ 		delete file("build/${cabextract}")
+ 	}
+ 	
+ 	doLast {
+ 		// Force all unpacked files to have the same timestamp
+ 		ant.touch() {
+ 			fileset(dir: file("build/${cabextract}"))
+	    }
+ 	}
+ 	
+	from tarTree(file("data/${cabextract}.tar.gz"))
+	into 'build'
+	
+	// Force the task to be executed every time by setting to false.
+	// This is done since configure changes the contents for a platform
+	outputs.upToDateWhen { false }
+ }
+
+/*********************************************************************************
+ * CabExtract platform specific tasks
+ *
+ * The cabextract tool requires that its 'configure' script is called before make.
+ *********************************************************************************/
+['linux64', 'osx64'].each { platform ->
+		
+	def configureName = "${platform}CabExtractConfigure"
+	def makeName = "${platform}CabExtractMake" // native Make task found automatically
+	
+	task (configureName, type: Exec) {
+		group "private"
+		workingDir "build/${cabextract}"
+		executable "./configure"
+		dependsOn unpackCabExtract
+	}
+	
+	task (makeName, type: Exec) {
+		group "private"
+		workingDir "build/${cabextract}"
+		executable "make"
+		dependsOn configureName
+		doLast {
+			copy {
+				from "build/${cabextract}/cabextract"
+				into "build/os/${platform}"
+			}
+		}
+	}
+}
+
+

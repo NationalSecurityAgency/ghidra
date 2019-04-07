@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+	<properties>
+		<property key="assemblyRating:dsPIC30F:LE:24:default" value="POOR"/>
+		<property key="assemblyMessage:dsPICdsPIC30F:LE:24:default" value="The language tested with a rating of POOR; however, the failures all deal with extraneous instructions. The assembler may offer you several options. At least one of them will be correct, but others may be erroneous."/>
+	</properties>
+	<programcounter register="PC"/>
+	<data_space space="ram"/>
+</processor_spec>

@@ -1,0 +1,1700 @@
+#
+# PIC-18 Instruction Section
+#   includes token definitions, macros, sub-constructors and instruction definitions
+#
+
+# The bytes are imported from the file in a 16-bit little-endian word format.  This, combined
+# with the little-endian mode used by this language results in an unusual instruction format.
+# The 16-bit instruction token uses what appears to be big endian bit numbering, whereas the 
+# 32-bit instruction token uses somewhat of a hybrid bit numbering (see below).
+
+# 16-bit instruction token uses big-endian bit numbering which agrees with
+# instruction bit numbering with PIC documentation.
+# 	15-14-13-12-11-10-9-8-7-6-5-4-3-2-1-0 
+define token instr16(16)
+	op4 =	(12,15)
+	op5 =	(11,15)
+	op6 =	(10,15)
+	op8 =	(8,15)
+	op12 =	(4,15)
+	op16 =	(0,15)
+	d =		(9,9)
+	a =		(8,8)
+	_xfsr =	(6,7)
+	xfsr =	(6,7)
+	f8_57 =	(5,7)
+	f8 =	(0,7)
+	freg =	(0,7)
+	b3 =	(9,11)
+	k8 =	(0,7)
+	k6 =	(0,5)
+	n11 =	(0,10) signed
+	n8 =	(0,7)  signed
+	s_0 =	(0,0)
+;
+
+# 32-bit instruction token uses a hybrid bit numbering:
+#   Natural bit numbering (used by documentation):
+#		31-30-29-28-27-26-25-24-23-22-21-20-19-18-17-16-15-14-13-12-11-10-09-08-07-06-05-04-03-02-01-00
+#	Hybrid bit nubering used by token:
+#		15-14-13-12-11-10-09-08-07-06-05-04-03-02-01-00-31-30-29-28-27-26-25-24-23-22-21-20-19-18-17-16
+define token instr32(32)
+	lop4 =	(12,15)
+	lop5 =	(11,15)
+	lop7 =	(9,15)
+	lop8 =	(8,15)
+	lop9 =	(7,15)
+	lop10 =	(6,15)
+	_fsr =	(4,5)
+	fsr =	(4,5)
+	kh =	(0,3)
+	s_8 =	(8,8)
+	n20_l =	(0,7)	# low order 8 bits of n20
+	zs =	(0,6)
+	fs_h =	(8,11)
+	fs_57 =	(5,7)
+	fs =	(0,11)
+	fsreg =	(0,7)
+	qual4 =	(28,31)
+	qual8 =	(24,31)
+	fd_h =	(24,27)
+	fd_57 =	(21,23)
+	fd =	(16,27)
+	fdreg =	(16,23)
+	kl =	(16,23)
+	n20_h =	(16,27)  # high order 12 bits of n20
+	zd =	(16,22)
+;
+
+attach variables [ freg fsreg fdreg ] [
+	BAD		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_		_		_		_		_		_		_		_		_
+	sfrF60	sfrF61	sfrF62	sfrF63	sfrF64	sfrF65	sfrF66	sfrF67	sfrF68	sfrF69	sfrF6A	RCSTA2	TXSTA2	TXREG2	RCREG2	SPBREG2
+	CCP5CON	CCP5RL	CCPR5H	CCP4CON	CCPR4L	CCPR4H	T4CON	PR4		TMR4	sfrF79	sfrF7A	sfrF7B	sfrF7C	sfrF7D	sfrF7E	sfrF7F
+	PORTA	PORTB	PORTC	PORTD	PORTE	PORTF	PORTG	PORTH	PORTJ	LATA	LATB	LATC	LATD	LATE	LATF	LATG
+	LATH	LATJ	TRISA	TRISB	TRISC	TRISD	TRISE	TRISF	TRISG	TRISH	TRISJ	sfrF9B	MEMCON	PIE1	PIR1	IPR1
+	PIE2	PIR2	IPR2	PIE3	PIR3	IPR3	EECON1	EECON2	EEDATA	EEADR	EEADRH	RCSTA1	TXSTA1	TXREG1	RCREG1	SPBRG1
+	PSPCON	T3CON	TMR3L	TMR3H	CMCON	CVRCON	sfrFB6	CCP3CON	CCP3RL	CCP3RH	CCP2CON	CCPR2L	CCPR2H	CCP1CON	CCPR1L	CCPR1H
+	ADCON2	ADCON1	ADCON0	ADRESL	ADRESH	SSPCON2	SSPCON1	SSPSTAT	SSPADD	SSPBUF	T2CON	PR2		TMR2	T1CON	TMR1L	TMR1H
+	RCON	WDTCON	LVDCON	OSCCON	sfrFD4	T0CON	TMR0L	TMR0H	STATUS	FSR2L	FSR2H	PLUSW2	PREINC2	POSTDEC2 POSTINC2 INDF2
+	BSR		FSR1L	FSR1H	PLUSW1	PREINC1	POSTDEC1 POSTINC1 INDF1	WREG	FSR0L	FSR0H	PLUSW0	PREINC0	POSTDEC0 POSTINC0 INDF0
+	INTCON3	INTCON2	INTCON	PRODL	PRODH	TABLAT	TBLPTRL	TBLPTRH	TBLPTRU	PCL		PCLATH	PCLATU	STKPTR	TOSL	TOSH	TOSU 
+];
+
+# attach variables [ _fsr _xfsr ] [ FSR0 FSR1 FSR2 _ ];
+
+#
+# Special PIC-18 Operations
+#
+
+# If stack is full (SP==0x1F) STKFUL gets set, if STVREN is set the processor will reset
+#define pcodeop CheckStackFull;
+
+# If stack is empty (SP==0) STKUNF gets set, if STVREN is set the processor will reset
+#define pcodeop CheckStackUnderflow;
+
+# Return a decimal adjusted value for the value provided (see DAW instruction)
+define pcodeop decimalAdjust;
+
+# Perform a Master Clear Reset
+define pcodeop reset;
+
+define pcodeop clearWatchDogTimer;
+
+define pcodeop sleep;
+
+#
+# MACROS
+#
+
+macro setResultFlags(result) {
+	N = (result s< 0);
+	Z = (result == 0);
+}
+
+macro setAddCOverflowFlag(op1,op2) {
+	local tmpC = C & 1;
+	OV = scarry(op1,tmpC) || scarry(op2,op1 + tmpC);
+}
+
+macro setAddCCarryFlag(op1,op2) {
+	local tmpC = C & 1;
+	C = carry(op1,tmpC) || carry(op2,op1 + tmpC);
+}
+
+macro setAddCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tmpDC = DC & 1;
+	DC = carry(tmp1,tmpDC) || carry(tmp2,tmp1 + tmpDC);
+}
+
+macro setAddCFlags(op1,op2) {
+	setAddCCarryFlag(op1,op2);
+	setAddCDigitCarryFlag(op1,op2);
+	setAddCOverflowFlag(op1,op2);
+}
+
+macro setAddFlags(op1,op2) {
+	C = carry(op1,op2);
+	DC = carry(op1<<4,op2<<4);
+	OV = scarry(op1,op2);
+}
+
+macro setSubtractCOverflowFlag(op1,op2) {
+	local notC = ~(C & 1);
+	OV = sborrow(op1,notC) || sborrow(op2,op1 - notC);
+}
+
+macro setSubtractCCarryFlag(op1,op2) {
+	local notC = ~(C & 1);
+	C = (op1 < notC) || (op2 < (op1 - notC));
+}
+
+macro setSubtractCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local notDC = ~(DC & 1);
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tmp3 = (tmp1 - notDC) << 4;
+	DC = (tmp1 < notDC) || (tmp2 < tmp3);
+}
+
+macro setSubtractCFlags(op1,op2) {
+	setSubtractCCarryFlag(op1,op2);
+	setSubtractCDigitCarryFlag(op1,op2);
+	setSubtractCOverflowFlag(op1,op2);
+}
+
+macro setSubtractFlags(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	# NOTE:  carry flag is SET if there is NO borrow
+	C = (op1 >= op2);
+	DC = ((op1<<4) < (op2<<4));
+	OV = sborrow(op1,op2);
+}
+
+macro push(val) {	# TODO: Uncertain about this !!
+#	CheckStackFull();
+	*[HWSTACK]:4 STKPTR = val;
+	STKPTR = STKPTR + 4;
+}
+
+macro pop(rval) {	# TODO: Uncertain about this !!
+#	CheckStackUnderflow();
+	STKPTR = STKPTR - 4;
+	rval = *[HWSTACK]:4 STKPTR;
+}
+
+#
+# SUB-CONSTRUCTORS
+#
+
+# PC register write - instruction must set PCLATH/PCL and perform branch operation
+pcl: "PC" 			is a=0 & f8=0xf9				{ export PCL; }
+
+# STATUS register
+status: freg 		is a=0 & f8=0xd8 & freg				{ export STATUS; }
+
+# File Register specified by an 8-bit file register offset within Bank specified by BSR
+fREGLoc: f8	is a=1 & f8									{ # (Banked mode) 
+	addr:2 = (zext(BSR) << 8) + f8; 
+	export *[DATA]:1 addr; 
+}
+
+# File Register specified by an 8-bit offset within "Access Bank"
+# The partitioning of the access bank may differ between specific PIC18 chips.
+# Some partition at 0x80 (i.e., PIC18Cxx2), while more advanced PIC18 chips partition at 0x60 (i.e., PIC18Fxx20).
+# This implementation partitions the access bank mode at 0x60.
+#
+#  TODO: Need to add another language PIC18C that has the SFR start at 0xf80
+#
+fREGLoc: f8			is a=0 & f8_57=0x0 & f8					{ export *[DATA]:1 f8; } # 0x00-0x1f   (Access mode)
+fREGLoc: f8			is a=0 & f8_57=0x1 & f8					{ export *[DATA]:1 f8; } # 0x20-0x3f   (Access mode)
+fREGLoc: f8			is a=0 & f8_57=0x2 & f8					{ export *[DATA]:1 f8; } # 0x40-0x5f   (Access mode)
+fREGLoc: freg		is a=0 & freg							{ export freg; }		 # 0xf60-0xfff (Access mode)
+
+# TOSL - access mirrored into stack space using STKPTR
+fREGLoc: freg			is a=0 & f8=0xfd & freg				{
+	addr:1 = STKPTR + 1;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSH - access mirrored into stack space using STKPTR
+fREGLoc: freg			is a=0 & f8=0xfe & freg				{
+	addr:1 = STKPTR + 2;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSU - access mirrored into stack space using STKPTR
+fREGLoc: freg			is a=0 & f8=0xff & freg				{
+	addr:1 = STKPTR + 3;
+	export *[HWSTACK]:1 addr;
+}
+
+# Indirect File Register access - INDF0
+fREGLoc: freg		is a=0 & f8=0xef & freg					{ 
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF1
+fREGLoc: freg		is a=0 & f8=0xe7 & freg					{
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF2
+fREGLoc: freg		is a=0 & f8=0xdf & freg					{ 
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC0
+fREGLoc: freg		is a=0 & f8=0xee & freg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC1
+fREGLoc: freg		is a=0 & f8=0xe6 & freg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC2
+fREGLoc: freg		is a=0 & f8=0xde & freg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC0
+fREGLoc: freg		is a=0 & f8=0xed & freg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC1
+fREGLoc: freg		is a=0 & f8=0xe5 & freg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC2
+fREGLoc: freg		is a=0 & f8=0xdd & freg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC0
+fREGLoc: freg		is a=0 & f8=0xec & freg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC1
+fREGLoc: freg		is a=0 & f8=0xe4 & freg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC2
+fREGLoc: freg		is a=0 & f8=0xdc & freg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW0
+fREGLoc: freg		is a=0 & f8=0xeb & freg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW1
+fREGLoc: freg		is a=0 & f8=0xe3 & freg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW2
+fREGLoc: freg		is a=0 & f8=0xdb & freg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Direct File register data
+srcREG: fREGLoc		is fREGLoc									{ export fREGLoc; }
+
+# PCL read - latch PC into PCL, PCLATH, and PCLATU
+srcREG: "PC"		is a=0 & f8=0xf9						{
+	PCLAT = inst_start;
+	export PCL; 
+}
+
+# Destination register (either srcREG or WREG)
+destREG: "0"	is d=0											{ export WREG; }
+destREG: "1"	is d=1 & srcREG									{ export srcREG; }
+#destREG: "1"	is d=1 & f8=0xf9						{ 
+#	# Storing to PCL must write the PC using both the stored PCL (PC<7:0>), PCLATH (PC<15:8>) and PCLATU (PC<21:16>)
+#	# The ADDWF and MOVWF definitions below have a specific case to handle this write to PCL
+#	export PCL; 
+#}
+
+# Destination operand representation (w: W register is destination; f: specified fREG is destination)
+D: "w"		is d=0										{ }
+D: "f"		is d=1										{ }
+
+# Source File Registers specified by a 12-bit absolute offsets within 32-bit instriction
+srcREG32: fs	is fs											{ export *[DATA]:1 fs; } # 0x000-0xeff
+srcREG32: fs	is fs_h=0xf & fs_57=0 & fs						{ export *[DATA]:1 fs; } # 0xf00-0xf1f
+srcREG32: fs	is fs_h=0xf & fs_57=1 & fs						{ export *[DATA]:1 fs; } # 0xf20-0xf3f
+srcREG32: fs	is fs_h=0xf & fs_57=2 & fs						{ export *[DATA]:1 fs; } # 0xf40-0xf5f
+srcREG32: fsreg	is fs_h=0xf & fsreg								{ export fsreg; } 		 # 0xf60-0xfff
+
+# PCL read - latch PC into PCL, PCLATH, and PCLATU
+srcREG32: "PC" is fs=0xff9										{
+	PCLAT = inst_start;
+	export PCL; 
+}
+
+# TOSL - access mirrored into stack space using STKPTR
+srcREG32: fsreg			is fs=0xffd & fsreg				{
+	addr:1 = STKPTR + 1;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSH - access mirrored into stack space using STKPTR
+srcREG32: fsreg			is fs=0xffe & fsreg				{
+	addr:1 = STKPTR + 2;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSU - access mirrored into stack space using STKPTR
+srcREG32: fsreg			is fs=0xfff & fsreg				{
+	addr:1 = STKPTR + 3;
+	export *[HWSTACK]:1 addr;
+}
+
+# Indirect File Register access - INDF0
+srcREG32: fsreg		is fs=0xfef & fsreg					{ 
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF1
+srcREG32: fsreg		is fs=0xfe7 & fsreg					{
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF2
+srcREG32: fsreg		is fs=0xfdf & fsreg					{ 
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC0
+srcREG32: fsreg		is fs=0xfee & fsreg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC1
+srcREG32: fsreg		is fs=0xfe6 & fsreg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC2
+srcREG32: fsreg		is fs=0xfde & fsreg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC0
+srcREG32: fsreg		is fs=0xfed & fsreg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC1
+srcREG32: fsreg		is fs=0xfe5 & fsreg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC2
+srcREG32: fsreg		is fs=0xfdd & fsreg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC0
+srcREG32: fsreg		is fs=0xfec & fsreg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC1
+srcREG32: fsreg		is fs=0xfe4 & fsreg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC2
+srcREG32: fsreg		is fs=0xfdc & fsreg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW0
+srcREG32: fsreg		is fs=0xfeb & fsreg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW1
+srcREG32: fsreg		is fs=0xfe3 & fsreg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW2
+srcREG32: fsreg		is fs=0xfdb & fsreg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Destination File Registers specified by a 12-bit absolute offsets within 32-bit instriction
+destREG32: fd	is fd											{ export *[DATA]:1 fd; } # 0x000-0xeff
+destREG32: fd	is fd_h=0xf & fd_57=0 & fd						{ export *[DATA]:1 fd; } # 0xf00-0xf1f
+destREG32: fd	is fd_h=0xf & fd_57=1 & fd						{ export *[DATA]:1 fd; } # 0xf20-0xf3f
+destREG32: fd	is fd_h=0xf & fd_57=2 & fd						{ export *[DATA]:1 fd; } # 0xf40-0xf5f
+destREG32: fdreg is fd_h=0xf & fdreg							{ export fdreg; } 		 # 0xf60-0xfff
+
+#destREG32: "PCL"	is fd=0xff9						{ 
+#	# Storing to PCL must write the PC using both the stored PCL (PC<7:0>), PCLATH (PC<15:8>) and PCLATU (PC<21:16>)
+#	# The MOVFF and MOVSF definitions below have a specific case to handle this write to PCL
+#	export PCL; 
+#}
+
+# TOSL - access mirrored into stack space using STKPTR
+destREG32: fdreg			is fd=0xffd & fdreg				{
+	addr:1 = STKPTR + 1;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSH - access mirrored into stack space using STKPTR
+destREG32: fdreg			is fd=0xffe & fdreg				{
+	addr:1 = STKPTR + 2;
+	export *[HWSTACK]:1 addr;
+}
+
+# TOSU - access mirrored into stack space using STKPTR
+destREG32: fdreg			is fd=0xfff & fdreg				{
+	addr:1 = STKPTR + 3;
+	export *[HWSTACK]:1 addr;
+}
+
+# Indirect File Register access - INDF0
+destREG32: fdreg		is fd=0xfef & fdreg					{ 
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF1
+destREG32: fdreg		is fd=0xfe7 & fdreg					{
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Indirect File Register access - INDF2
+destREG32: fdreg		is fd=0xfdf & fdreg					{ 
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC0
+destREG32: fdreg		is fd=0xfee & fdreg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC1
+destREG32: fdreg		is fd=0xfe6 & fdreg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-increment File Register access - POSTINC2
+destREG32: fdreg		is fd=0xfde & fdreg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 + 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC0
+destREG32: fdreg		is fd=0xfed & fdreg					{ 
+	addr:2 = FSR0;
+	FSR0 = FSR0 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC1
+destREG32: fdreg		is fd=0xfe5 & fdreg					{
+	addr:2 = FSR1;
+	FSR1 = FSR1 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Post-decrement File Register access - POSTDEC2
+destREG32: fdreg		is fd=0xfdd & fdreg					{ 
+	addr:2 = FSR2;
+	FSR2 = FSR2 - 1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC0
+destREG32: fdreg		is fd=0xfec & fdreg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC1
+destREG32: fdreg		is fd=0xfe4 & fdreg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment File Register access - PREINC2
+destREG32: fdreg		is fd=0xfdc & fdreg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2;
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW0
+destREG32: fdreg		is fd=0xfeb & fdreg					{ 
+	FSR0 = FSR0 + 1;
+	addr:2 = FSR0 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW1
+destREG32: fdreg		is fd=0xfe3 & fdreg					{
+	FSR1 = FSR1 + 1;
+	addr:2 = FSR1 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Pre-increment w/WREG-Offset File Register access - PLUSW2
+destREG32: fdreg		is fd=0xfdb & fdreg					{ 
+	FSR2 = FSR2 + 1;
+	addr:2 = FSR2 + sext(WREG);
+	export *[DATA]:1 addr; 
+}
+
+# Absolute 20-bit instruction location constructed from nl:8 and nh:12
+absAddr21: nLoc	is n20_h & n20_l 	[ nLoc  = (n20_h << 9) + (n20_l << 1); ] { export *[CODE]:2 nLoc; }
+
+# Relative 8-bit and 11-bit instruction offsets
+relAddr8: nLoc	is n8				[ nLoc = inst_next + (n8 << 1); ] 	{ export *[CODE]:2 nLoc; }
+relAddr11: nLoc is n11				[ nLoc = inst_next + (n11 << 1); ] 	{ export *[CODE]:2 nLoc; }
+
+# Skip instruction address (could jump into middle of 32-bit instruction which appears as NOP)
+skipInst: inst_skip	is op16	[ inst_skip = inst_next + 2; ]		{export *[CODE]:2 inst_skip; }
+
+# Immediate Data (Literal operation)
+imm6: "#"k6		is k6											{ export *[const]:1 k6; }
+imm8: "#"k8		is k8											{ export *[const]:1 k8; }
+imm12: "#"kVal	is kl & kh	[ kVal = (kh << 8) + kl; ]			{ export *[const]:2 kVal; }
+
+# Bit identifier
+bit: "#"b3		is b3											{ export *[const]:1 b3; }
+
+# FSR Register (see LFSR)
+FSRn: "FSR0"	is fsr=0 & _fsr									{ export FSR0; }
+FSRn: "FSR1"	is fsr=1 & _fsr									{ export FSR1; }
+FSRn: "FSR2"	is fsr=2 & _fsr									{ export FSR2; }
+
+# FSR Register (see Extended Instructions)
+xFSRn: "FSR0"	is xfsr=0 & _xfsr								{ export FSR0; }
+xFSRn: "FSR1"	is xfsr=1 & _xfsr								{ export FSR1; }
+xFSRn: "FSR2"	is xfsr=2 & _xfsr								{ export FSR2; }
+
+# Source and Destination FSR2 Indexed Operand
+ZS: zs"[FSR2]"		is zs										{ fsLoc:2 = FSR2 + zs; export *[DATA]:1 fsLoc; }
+ZD: zd"[FSR2]"		is zd										{ fdLoc:2 = FSR2 + zd; export *[DATA]:1 fdLoc; }
+
+# Access Bank mode
+A: "ACCESS"			is a=0										{ }
+A: "BANKED"			is a=1										{ }
+
+#
+# BYTE-ORIENTED FILE REGISTER OPERATIONS
+#
+
+:ADDWF srcREG, D, A		is op6=0x09 & srcREG & A & destREG & D	{
+	#  0010 01da ffff ffff
+	#  0010 0100 0000 0000  ->  ADDWF DAT_DATA_0000, w, ACCESS
+	#  0010 0101 0000 0000  ->  ADDWF REG0x0, w, BANKED
+	#  0010 0100 1101 1000  ->  ADDWF STATUS, w, ACCESS
+	#  0010 0101 1101 1000  ->  ADDWF REG0xD8, w, BANKED
+	#  0010 0110 0000 0000  ->  ADDWF DAT_DATA_0000, f, ACCESS
+	#  0010 0111 0000 0000  ->  ADDWF REG0x0, f, BANKED
+	#  0010 0110 1101 1000  ->  ADDWF STATUS, f, ACCESS
+	#  0010 0111 1101 1000  ->  ADDWF REG0xD8, f, BANKED
+	#  0010 0100 1111 1001	->	ADDWF PC, w, ACCESS
+	tmp:1 = srcREG; # read only once!
+	setAddFlags(tmp, WREG); 
+	tmp = tmp + WREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ADDWF pcl, D, A		is op6=0x09 & A & D & d=1 & pcl	{
+	#  0010 01da ffff ffff
+	#  0010 0110 1111 1001  ->  ADDWF PC, f, ACCESS
+	addr:3 = inst_start;
+	PCLAT = addr;
+	addrHi:2 = addr(1);
+	addrLo:1 = addr:1;
+	tmpW:1 = WREG;
+	setAddFlags(addrLo, tmpW);
+	addrLo = addrLo + tmpW;
+	addr = (zext(addrHi) << 8) + zext(addrLo);
+	setResultFlags(addrLo);
+	goto [addr];
+}
+
+:ADDWFC srcREG, D, A 		is op6=0x08 & srcREG & destREG & D & A	{ 
+	#  0010 00da ffff ffff
+	#  0010 0000 0000 0000  ->  ADDWFC DAT_DATA_0000, w, ACCESS
+	#  0010 0001 0000 0000  ->  ADDWFC REG0x0, w, BANKED
+	#  0010 0000 1101 1000  ->  ADDWFC STATUS, w, ACCESS
+	#  0010 0001 1101 1000  ->  ADDWFC REG0xD8, w, BANKED
+	#  0010 0010 0000 0000  ->  ADDWFC DAT_DATA_0000, f, ACCESS
+	#  0010 0011 0000 0000  ->  ADDWFC REG0x0, f, BANKED
+	#  0010 0010 1101 1000  ->  ADDWFC STATUS, f, ACCESS
+	#  0010 0011 1101 1000  ->  ADDWFC REG0xD8, f, BANKED
+	local tmpC = C & 1;
+	tmp:1 = srcREG;
+	setAddCFlags(tmp, WREG); 
+	tmp = tmp + WREG + tmpC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:ANDWF srcREG, D, A 		is op6=0x05 & srcREG & destREG & D & A	{ 
+	#  0001 01da ffff ffff
+	#  0001 0100 0000 0000  ->	ANDWF DAT_DATA_0000, w, ACCESS
+	#  0001 0101 0000 0000  ->	ANDWF REG0x0, w, BANKED
+	#  0001 0100 1101 1000  ->	ANDWF STATUS, w, ACCESS
+	#  0001 0101 1101 1000  ->	ANDWF REG0xD8, w, BANKED
+	#  0001 0110 0000 0000  ->	ANDWF DAT_DATA_0000, f, ACCESS
+	#  0001 0111 0000 0000  ->	ANDWF REG0x0, f, BANKED
+	#  0001 0110 1101 1000  ->	ANDWF STATUS, f, ACCESS
+	#  0001 0111 1101 1000  ->	ANDWF REG0xD8, f, BANKED
+	tmp:1 = srcREG & WREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:CLRF srcREG, A			is op6=0x1a & d=1	& srcREG & A	{ 
+	#  0110 101a ffff ffff
+	#  0110 1010 0000 0000  ->	CLRF DAT_DATA_0000, 0
+	#  0110 1011 0000 0000  ->	CLRF REG0x0, 1
+	#  0110 1010 1101 1000  ->	CLRF STATUS, 0
+	#  0110 1011 1101 1000  ->	CLRF REG0xD8, 1
+	srcREG = 0;
+	Z = 1;
+}
+
+:COMF srcREG, D, A		is op6=0x07 & srcREG & destREG & D & A		{ 
+	#  0001 11da ffff ffff
+	#  0001 1100 0000 0000  ->	COMF DAT_DATA_0000, w, ACCESS
+	#  0001 1101 0000 0000  ->	COMF REG0x0, w, BANKED
+	#  0001 1100 1101 1000  ->	COMF STATUS, w, ACCESS
+	#  0001 1101 1101 1000  ->	COMF REG0xD8, w, BANKED
+	#  0001 1110 0000 0000  ->	COMF DAT_DATA_0000, f, ACCESS
+	#  0001 1111 0000 0000  ->	COMF REG0x0, f, BANKED
+	#  0001 1110 1101 1000  ->	COMF STATUS, f, ACCESS
+	#  0001 1111 1101 1000  ->	COMF REG0xD8, f, BANKED
+	tmp:1 = ~srcREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:CPFSEQ srcREG, A			is op6=0x18 & d=1 & srcREG & A & skipInst	{ 
+	#  0110 001a ffff ffff
+	#  0110 0010 0000 0000  ->	CPFSEQ DAT_DATA_0000, 0
+	#  0110 0011 0000 0000  ->	CPFSEQ REG0x0, 1
+	#  0110 0010 1101 1000  ->	CPFSEQ STATUS, 0
+	#  0110 0011 1101 1000  ->	CPFSEQ REG0xD8, 1
+	if (srcREG == WREG) goto skipInst;
+}
+
+:CPFSGT srcREG, A			is op6=0x19 & d=0 & srcREG & A & skipInst	{ 
+	#  0110 010a ffff ffff
+	#  0110 0100 0000 0000  ->	CPFSGT DAT_DATA_0000, 0
+	#  0110 0101 0000 0000  ->	CPFSGT REG0x0, 1
+	#  0110 0100 1101 1000  ->	CPFSGT STATUS, 0
+	#  0110 0101 1101 1000  ->	CPFSGT REG0xD8, 1
+	if (srcREG > WREG) goto skipInst;
+}
+
+:CPFSLT srcREG, A			is op6=0x18 & d=0 & srcREG & A & skipInst	{ 
+	#  0110 000a ffff ffff
+	#  0110 0000 0000 0000  ->	CPFSLT DAT_DATA_0000, 0
+	#  0110 0001 0000 0000  ->	CPFSLT REG0x0, 1
+	#  0110 0000 1101 1000  ->	CPFSLT STATUS, 0
+	#  0110 0001 1101 1000  ->	CPFSLT REG0xD8, 1
+	if (srcREG < WREG) goto skipInst;
+}
+
+:DECF srcREG, D, A		is op6=0x01 & srcREG & destREG & D & A	{ 
+	#  0000 01da ffff ffff
+	#  0000 0100 0000 0000  ->  DECF DAT_DATA_0000, w, ACCESS
+	#  0000 0101 0000 0000  ->  DECF REG0x0, w, BANKED
+	#  0000 0100 1101 1000  ->  DECF STATUS, w, ACCESS
+	#  0000 0101 1101 1000  ->  DECF REG0xD8, w, BANKED
+	#  0000 0110 0000 0000  ->  DECF DAT_DATA_0000, f, ACCESS
+	#  0000 0111 0000 0000  ->  DECF REG0x0, f, BANKED
+	#  0000 0110 1101 1000  ->  DECF STATUS, f, ACCESS
+	#  0000 0111 1101 1000  ->  DECF REG0xD8, f, BANKED
+	tmp:1 = srcREG;
+	setSubtractFlags(tmp, 1); 
+	tmp = tmp - 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:DECFSZ srcREG, D, A		is op6=0x0b & srcREG & destREG & D & A & skipInst	{ 
+	#  0010 11da ffff ffff
+	#  0010 1100 0000 0000  ->  DECFSZ DAT_DATA_0000, w, ACCESS
+	#  0010 1101 0000 0000  ->  DECFSZ REG0x0, w, BANKED
+	#  0010 1100 1101 1000  ->  DECFSZ STATUS, w, ACCESS
+	#  0010 1101 1101 1000  ->  DECFSZ REG0xD8, w, BANKED
+	#  0010 1110 0000 0000  ->  DECFSZ DAT_DATA_0000, f, ACCESS
+	#  0010 1111 0000 0000  ->  DECFSZ REG0x0, f, BANKED
+	#  0010 1110 1101 1000  ->  DECFSZ STATUS, f, ACCESS
+	#  0010 1111 1101 1000  ->  DECFSZ REG0xD8, f, BANKED
+	tmp:1 = srcREG - 1;
+	destREG = tmp;
+	if (tmp == 0) goto skipInst;
+}
+
+:DCFSNZ srcREG, D, A		is op6=0x13 & srcREG & destREG & D & A & skipInst	{ 
+	#  0100 11da ffff ffff
+	#  0100 1100 0000 0000  ->  DCFSNZ DAT_DATA_0000, w, ACCESS
+	#  0100 1101 0000 0000  ->  DCFSNZ REG0x0, w, BANKED
+	#  0100 1100 1101 1000  ->  DCFSNZ STATUS, w, ACCESS
+	#  0100 1101 1101 1000  ->  DCFSNZ REG0xD8, w, BANKED
+	#  0100 1110 0000 0000  ->  DCFSNZ DAT_DATA_0000, f, ACCESS
+	#  0100 1111 0000 0000  ->  DCFSNZ REG0x0, f, BANKED
+	#  0100 1110 1101 1000  ->  DCFSNZ STATUS, f, ACCESS
+	#  0100 1111 1101 1000  ->  DCFSNZ REG0xD8, f, BANKED
+	tmp:1 = srcREG - 1;
+	destREG = tmp;
+	if (tmp != 0) goto skipInst;
+}
+
+:INCF srcREG, D, A		is op6=0x0a & srcREG & destREG & D & A	{ 
+	#  0010 10da ffff ffff
+	#  0010 1000 0000 0000  ->  INCF DAT_DATA_0000, w, ACCESS
+	#  0010 1001 0000 0000  ->  INCF REG0x0, w, BANKED
+	#  0010 1000 1101 1000  ->  INCF STATUS, w, ACCESS
+	#  0010 1001 1101 1000  ->  INCF REG0xD8, w, BANKED
+	#  0010 1010 0000 0000  ->  INCF DAT_DATA_0000, f, ACCESS
+	#  0010 1011 0000 0000  ->  INCF REG0x0, f, BANKED
+	#  0010 1010 1101 1000  ->  INCF STATUS, f, ACCESS
+	#  0010 1011 1101 1000  ->  INCF REG0xD8, f, BANKED
+	tmp:1 = srcREG; # read once only!
+	setAddFlags(tmp, 1); 
+	tmp = tmp + 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:INCFSZ srcREG, D, A	is op6=0x0f & srcREG & destREG & D & A & skipInst	{ 
+	#  0011 11da ffff ffff
+	#  0011 1100 0000 0000  ->  INCFSZ DAT_DATA_0000, w, ACCESS
+	#  0011 1101 0000 0000  ->  INCFSZ REG0x0, w, BANKED
+	#  0011 1100 1101 1000  ->  INCFSZ STATUS, w, ACCESS
+	#  0011 1101 1101 1000  ->  INCFSZ REG0xD8, w, BANKED
+	#  0011 1110 0000 0000  ->  INCFSZ DAT_DATA_0000, f, ACCESS
+	#  0011 1111 0000 0000  ->  INCFSZ REG0x0, f, BANKED
+	#  0011 1110 1101 1000  ->  INCFSZ STATUS, f, ACCESS
+	#  0011 1111 1101 1000  ->  INCFSZ REG0xD8, f, BANKED
+	tmp:1 = srcREG + 1;
+	destREG = tmp;
+	if (tmp == 0) goto skipInst;
+}
+
+:INFSNZ srcREG, D, A		is op6=0x12 & srcREG & destREG & D & A & skipInst		{ 
+	#  0100 10da ffff ffff
+	#  0100 1000 0000 0000  ->  INFSNZ DAT_DATA_0000, w, ACCESS
+	#  0100 1001 0000 0000  ->  INFSNZ REG0x0, w, BANKED
+	#  0100 1000 1101 1000  ->  INFSNZ STATUS, w, ACCESS
+	#  0100 1001 1101 1000  ->  INFSNZ REG0xD8, w, BANKED
+	#  0100 1010 0000 0000  ->  INFSNZ DAT_DATA_0000, f, ACCESS
+	#  0100 1011 0000 0000  ->  INFSNZ REG0x0, f, BANKED
+	#  0100 1010 1101 1000  ->  INFSNZ STATUS, f, ACCESS
+	#  0100 1011 1101 1000  ->  INFSNZ REG0xD8, f, BANKED
+	tmp:1 = srcREG + 1;
+	destREG = tmp;
+	if (tmp != 0) goto skipInst;
+}
+
+:IORWF srcREG, D, A		is op6=0x04	& srcREG & destREG & D & A		{ 
+	#  0001 00da ffff ffff
+	#  0001 0000 0000 0000  ->	IORWF DAT_DATA_0000, w, ACCESS
+	#  0001 0001 0000 0000  ->	IORWF REG0x0, w, BANKED
+	#  0001 0000 1101 1000  ->	IORWF STATUS, w, ACCESS
+	#  0001 0001 1101 1000  ->	IORWF REG0xD8, w, BANKED
+	#  0001 0010 0000 0000  ->	IORWF DAT_DATA_0000, f, ACCESS
+	#  0001 0011 0000 0000  ->	IORWF REG0x0, f, BANKED
+	#  0001 0010 1101 1000  ->	IORWF STATUS, f, ACCESS
+	#  0001 0011 1101 1000  ->	IORWF REG0xD8, f, BANKED
+	tmp:1 = srcREG | WREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:MOVF srcREG, D, A		is op6=0x14	& srcREG & destREG & D & A		{ 
+	#  0101 00da ffff ffff
+	#  0101 0000 0000 0000  ->	MOVF DAT_DATA_0000, w, ACCESS
+	#  0101 0001 0000 0000  ->	MOVF REG0x0, w, BANKED
+	#  0101 0000 1101 1000  ->	MOVF STATUS, w, ACCESS
+	#  0101 0001 1101 1000  ->	MOVF REG0xD8, w, BANKED
+	#  0101 0010 0000 0000  ->	MOVF DAT_DATA_0000, f, ACCESS
+	#  0101 0011 0000 0000  ->	MOVF REG0x0, f, BANKED
+	#  0101 0010 1101 1000  ->	MOVF STATUS, f, ACCESS
+	#  0101 0011 1101 1000  ->	MOVF REG0xD8, f, BANKED
+	
+	#  0101 0000 1110 1111  ->	MOVF INDF0, w, ACCESS
+	#  0101 0000 1110 0111  ->	MOVF INDF1, w, ACCESS
+	#  0101 0000 1101 1111  ->	MOVF INDF2, w, ACCESS
+	
+	tmp:1 = srcREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:MOVFF srcREG32, destREG32	is lop4=0x0c & srcREG32 & qual4=0x0f & destREG32	{ 
+	#  1100 ssss ssss ssss 1111 dddd dddd dddd
+	#  1100 0000 0000 0000 1111 1111 1101 1000 -> MOVFF DAT_DATA_0000, STATUS
+	destREG32 = srcREG32;
+}
+
+:MOVFF srcREG32, destREG32	is lop4=0x0c & srcREG32 & qual4=0x0f & destREG32 & fd=0xff9	{ 
+	#  1100 ssss ssss ssss 1111 dddd dddd dddd
+	#  1100 0000 0000 0000 1111 1111 1111 1001 -> MOVFF DAT_DATA_0000, PCL
+	addr:3 = (zext(PCLATU) << 16) + (zext(PCLATH) << 8) + zext(srcREG32);
+	goto [addr];
+}
+
+:MOVWF srcREG, A			is op6=0x1b & d=0x1	& srcREG & A	{ 
+	#  0110 111a ffff ffff
+	#  0110 1110 0000 0000  ->	MOVWF DAT_DATA_0000, 0
+	#  0110 1111 0000 0000  ->	MOVWF REG0x0, 1
+	#  0110 1110 1101 1000  ->	MOVWF STATUS, 0
+	#  0110 1111 1101 1000  ->	MOVWF REG0xD8, 1
+	srcREG = WREG;
+}
+
+:MOVWF pcl, A			is op6=0x1b & A & pcl	{ 
+	#  0110 111a ffff ffff
+	#  0110 1110 1111 1001  ->	MOVWF PCL, 0
+	addr:3 = (zext(PCLATU) << 16) + (zext(PCLATH) << 8) + zext(WREG);
+	goto [addr];
+}
+
+:MULWF srcREG, A			is op6=0x00 & d=0x1	& srcREG & A	{ 
+	#  0000 001a ffff ffff
+	#  0000 0010 0000 0000  ->	MULWF DAT_DATA_0000, 0
+	#  0000 0011 0000 0000  ->	MULWF REG0x0, 1
+	#  0000 0010 1101 1000  ->	MULWF STATUS, 0
+	#  0000 0011 1101 1000  ->	MULWF REG0xD8, 1
+	tmp1:2 = zext(srcREG);
+	tmp2:2 = zext(WREG);
+	PROD = tmp1 * tmp2;
+}
+
+:NEGF srcREG, A			is op6=0x1b & d=0x0	& srcREG & A	{ 
+	#  0110 110a ffff ffff
+	#  0110 1100 0000 0000  ->	NEGF DAT_DATA_0000, 0
+	#  0110 1101 0000 0000  ->	NEGF REG0x0, 1
+	#  0110 1100 1101 1000  ->	NEGF STATUS, 0
+	#  0110 1101 1101 1000  ->	NEGF REG0xD8, 1
+	tmp:1 = -srcREG;
+	srcREG = tmp;
+	C = (tmp s> 0);
+	OV = sborrow(0,tmp);
+	setResultFlags(tmp);
+}
+
+:RLCF srcREG, D, A		is op6=0x0d	& srcREG & destREG & D & A		{ 
+	#  0011 01da ffff ffff
+	#  0011 0100 0000 0000  ->	RLCF DAT_DATA_0000, w, ACCESS
+	#  0011 0101 0000 0000  ->	RLCF REG0x0, w, BANKED
+	#  0011 0100 1101 1000  ->	RLCF STATUS, w, ACCESS
+	#  0011 0101 1101 1000  ->	RLCF REG0xD8, w, BANKED
+	#  0011 0110 0000 0000  ->	RLCF DAT_DATA_0000, f, ACCESS
+	#  0011 0111 0000 0000  ->	RLCF REG0x0, f, BANKED
+	#  0011 0110 1101 1000  ->	RLCF STATUS, f, ACCESS
+	#  0011 0111 1101 1000  ->	RLCF REG0xD8, f, BANKED
+	local tmpC = C & 1;
+	tmp:1 = srcREG;
+	C = (tmp s< 0);
+	tmp = (tmp << 1) | tmpC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:RLNCF srcREG, D, A		is op6=0x11	& srcREG & destREG & D & A		{ 
+	#  0100 01da ffff ffff
+	#  0100 0100 0000 0000  ->	RLNCF DAT_DATA_0000, w, ACCESS
+	#  0100 0101 0000 0000  ->	RLNCF REG0x0, w, BANKED
+	#  0100 0100 1101 1000  ->	RLNCF STATUS, w, ACCESS
+	#  0100 0101 1101 1000  ->	RLNCF REG0xD8, w, BANKED
+	#  0100 0110 0000 0000  ->	RLNCF DAT_DATA_0000, f, ACCESS
+	#  0100 0111 0000 0000  ->	RLNCF REG0x0, f, BANKED
+	#  0100 0110 1101 1000  ->	RLNCF STATUS, f, ACCESS
+	#  0100 0111 1101 1000  ->	RLNCF REG0xD8, f, BANKED
+	tmp:1 = srcREG << 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:RRCF srcREG, D, A		is op6=0x0c	& srcREG & destREG & D & A		{ 
+	#  0011 00da ffff ffff
+	#  0011 0000 0000 0000  ->	RRCF DAT_DATA_0000, w, ACCESS
+	#  0011 0001 0000 0000  ->	RRCF REG0x0, w, BANKED
+	#  0011 0000 1101 1000  ->	RRCF STATUS, w, ACCESS
+	#  0011 0001 1101 1000  ->	RRCF REG0xD8, w, BANKED
+	#  0011 0010 0000 0000  ->	RRCF DAT_DATA_0000, f, ACCESS
+	#  0011 0011 0000 0000  ->	RRCF REG0x0, f, BANKED
+	#  0011 0010 1101 1000  ->	RRCF STATUS, f, ACCESS
+	#  0011 0011 1101 1000  ->	RRCF REG0xD8, f, BANKED
+	local tmpC = C << 7;
+	tmp:1 = srcREG;
+	C = (tmp & 1);
+	tmp = (tmp >> 1) | tmpC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:RRNCF srcREG, D, A		is op6=0x10	& srcREG & destREG & D & A		{ 
+	#  0100 00da ffff ffff
+	#  0100 0000 0000 0000  ->	RRNCF DAT_DATA_0000, w, ACCESS
+	#  0100 0001 0000 0000  ->	RRNCF REG0x0, w, BANKED
+	#  0100 0000 1101 1000  ->	RRNCF STATUS, w, ACCESS
+	#  0100 0001 1101 1000  ->	RRNCF REG0xD8, w, BANKED
+	#  0100 0010 0000 0000  ->	RRNCF DAT_DATA_0000, f, ACCESS
+	#  0100 0011 0000 0000  ->	RRNCF REG0x0, f, BANKED
+	#  0100 0010 1101 1000  ->	RRNCF STATUS, f, ACCESS
+	#  0100 0011 1101 1000  ->	RRNCF REG0xD8, f, BANKED
+	tmp:1 = srcREG >> 1;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SETF srcREG, A			is op6=0x1a & d=0x0	& srcREG & A	{ 
+	#  0110 100a ffff ffff
+	#  0110 1000 0000 0000  ->	SETF DAT_DATA_0000, 0
+	#  0110 1001 0000 0000  ->	SETF REG0x0, 1
+	#  0110 1000 1101 1000  ->	SETF STATUS, 0
+	#  0110 1001 1101 1000  ->	SETF REG0xD8, 1
+	srcREG = 0xff;
+}
+
+:SUBFWB srcREG, D, A		is op6=0x15	& srcREG & destREG & D & A		{ 
+	#  0101 01da ffff ffff
+	#  0101 0100 0000 0000  ->	SUBFWB DAT_DATA_0000, w, ACCESS
+	#  0101 0101 0000 0000  ->	SUBFWB REG0x0, w, BANKED
+	#  0101 0100 1101 1000  ->	SUBFWB STATUS, w, ACCESS
+	#  0101 0101 1101 1000  ->	SUBFWB REG0xD8, w, BANKED
+	#  0101 0110 0000 0000  ->	SUBFWB DAT_DATA_0000, f, ACCESS
+	#  0101 0111 0000 0000  ->	SUBFWB REG0x0, f, BANKED
+	#  0101 0110 1101 1000  ->	SUBFWB STATUS, f, ACCESS
+	#  0101 0111 1101 1000  ->	SUBFWB REG0xD8, f, BANKED
+	local notC = ~(C & 1);
+	tmp:1 = srcREG;
+	setSubtractCFlags(WREG, tmp); 
+	tmp = WREG - tmp - notC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SUBWF srcREG, D, A		is op6=0x17	& srcREG & destREG & D & A		{ 
+	#  0101 11da ffff ffff
+	#  0101 1100 0000 0000  ->	SUBWF DAT_DATA_0000, w, ACCESS
+	#  0101 1101 0000 0000  ->	SUBWF REG0x0, w, BANKED
+	#  0101 1100 1101 1000  ->	SUBWF STATUS, w, ACCESS
+	#  0101 1101 1101 1000  ->	SUBWF REG0xD8, w, BANKED
+	#  0101 1110 0000 0000  ->	SUBWF DAT_DATA_0000, f, ACCESS
+	#  0101 1111 0000 0000  ->	SUBWF REG0x0, f, BANKED
+	#  0101 1110 1101 1000  ->	SUBWF STATUS, f, ACCESS
+	#  0101 1111 1101 1000  ->	SUBWF REG0xD8, f, BANKED
+	tmp:1 = srcREG;
+	setSubtractFlags(tmp, WREG); 
+	tmp = tmp - WREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SUBWFB srcREG, D, A		is op6=0x16	& srcREG & destREG & D & A		{ 
+	#  0101 10da ffff ffff
+	#  0101 1000 0000 0000  ->	SUBWFB DAT_DATA_0000, w, ACCESS
+	#  0101 1001 0000 0000  ->	SUBWFB REG0x0, w, BANKED
+	#  0101 1000 1101 1000  ->	SUBWFB STATUS, w, ACCESS
+	#  0101 1001 1101 1000  ->	SUBWFB REG0xD8, w, BANKED
+	#  0101 1010 0000 0000  ->	SUBWFB DAT_DATA_0000, f, ACCESS
+	#  0101 1011 0000 0000  ->	SUBWFB REG0x0, f, BANKED
+	#  0101 1010 1101 1000  ->	SUBWFB STATUS, f, ACCESS
+	#  0101 1011 1101 1000  ->	SUBWFB REG0xD8, f, BANKED
+	local notC = ~(C & 1);
+	tmp:1 = srcREG;
+	setSubtractCFlags(tmp, WREG); 
+	tmp = tmp - WREG - notC;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SWAPF srcREG, D, A		is op6=0x0e	& srcREG & destREG & D & A		{ 
+	#  0011 10da ffff ffff
+	#  0011 1000 0000 0000  ->	SWAPF DAT_DATA_0000, w, ACCESS
+	#  0011 1001 0000 0000  ->	SWAPF REG0x0, w, BANKED
+	#  0011 1000 1101 1000  ->	SWAPF STATUS, w, ACCESS
+	#  0011 1001 1101 1000  ->	SWAPF REG0xD8, w, BANKED
+	#  0011 1010 0000 0000  ->	SWAPF DAT_DATA_0000, f, ACCESS
+	#  0011 1011 0000 0000  ->	SWAPF REG0x0, f, BANKED
+	#  0011 1010 1101 1000  ->	SWAPF STATUS, f, ACCESS
+	#  0011 1011 1101 1000  ->	SWAPF REG0xD8, f, BANKED
+	tmp:1 = srcREG;
+	destREG = (tmp << 4) | (tmp >> 4);	
+}
+
+:TSTFSZ srcREG, A			is op6=0x19 & d=0x1	& srcREG & A & skipInst	{ 
+	#  0110 011a ffff ffff
+	#  0110 0110 0000 0000  ->	TSTFSZ DAT_DATA_0000, 0
+	#  0110 0111 0000 0000  ->	TSTFSZ REG0x0, 1
+	#  0110 0110 1101 1000  ->	TSTFSZ STATUS, 0
+	#  0110 0111 1101 1000  ->	TSTFSZ REG0xD8, 1
+	if (srcREG == 0) goto skipInst;
+}
+
+:XORWF srcREG, D, A		is op6=0x06	& srcREG & destREG & D & A		{ 
+	#  0001 10da ffff ffff
+	#  0001 1000 0000 0000  ->	XORWF DAT_DATA_0000, w, ACCESS
+	#  0001 1001 0000 0000  ->	XORWF REG0x0, w, BANKED
+	#  0001 1000 1101 1000  ->	XORWF STATUS, w, ACCESS
+	#  0001 1001 1101 1000  ->	XORWF REG0xD8, w, BANKED
+	#  0001 1010 0000 0000  ->	XORWF DAT_DATA_0000, f, ACCESS
+	#  0001 1011 0000 0000  ->	XORWF REG0x0, f, BANKED
+	#  0001 1010 1101 1000  ->	XORWF STATUS, f, ACCESS
+	#  0001 1011 1101 1000  ->	XORWF REG0xD8, f, BANKED
+	tmp:1 = WREG ^ srcREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+
+#
+# BIT-ORIENTED FILE REGISTER OPERATIONS
+#
+
+:BCF srcREG, bit, A			is op4=0x09	& srcREG & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 0010 0000 0000	->	BCF DAT_DATA_0000, #0x1, 0
+	#  1001 0101 0000 0000  ->	BCF REG0x0, #0x2, 1
+	#  1001 0010 1101 1000  ->	BCF STATUS, #0x1, 0
+	#  1001 0101 1101 1000  ->	BCF REG0xD8, #0x2, 1
+	local bitmask = ~(1 << bit);
+	srcREG = srcREG & bitmask;
+}
+
+:BCF status, bit, A			is op4=0x09	& status & b3=0 & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 0000 1101 1000  ->	BCF STATUS, #C, 0
+	C = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BCF status, bit, A			is op4=0x09	& status & b3=1 & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 0010 1101 1000  ->	BCF STATUS, #DC, 0
+	DC = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BCF status, bit, A			is op4=0x09	& status & b3=2 & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 0100 1101 1000  ->	BCF STATUS, #Z, 0
+	Z = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BCF status, bit, A			is op4=0x09	& status & b3=3 & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 0110 1101 1000  ->	BCF STATUS, #OV, 0
+	OV = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BCF status, bit, A			is op4=0x09	& status & b3=4 & bit & A	{ 
+	#  1001 bbba ffff ffff
+	#  1001 1000 1101 1000  ->	BCF STATUS, #N, 0
+	N = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BSF srcREG, bit, A			is op4=0x08	& srcREG & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 0010 0000 0000	->	BSF DAT_DATA_0000, #0x1, 0
+	#  1000 0101 0000 0000  ->	BSF REG0x0, #0x2, 1
+	#  1000 0010 1101 1000  ->	BSF STATUS, #0x1, 0
+	#  1000 0101 1101 1000  ->	BSF REG0xD8, #0x2, 1	
+	local bitmask = 1 << bit;
+	srcREG = srcREG | bitmask;
+}
+
+:BSF status, bit, A			is op4=0x08	& status & b3=0 & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 0000 1101 1000  ->	BSF STATUS, #C, 0
+	C = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BSF status, bit, A			is op4=0x08	& status & b3=1 & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 0010 1101 1000  ->	BSF STATUS, #DC, 0
+	DC = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BSF status, bit, A			is op4=0x08	& status & b3=2 & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 0100 1101 1000  ->	BSF STATUS, #Z, 0
+	Z = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BSF status, bit, A			is op4=0x08	& status & b3=3 & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 0110 1101 1000  ->	BSF STATUS, #OV, 0
+	OV = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BSF status, bit, A			is op4=0x08	& status & b3=4 & bit & A	{ 
+	#  1000 bbba ffff ffff
+	#  1000 1000 1101 1000  ->	BSF STATUS, #N, 0
+	N = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BTFSC srcREG, bit, A		is op4=0x0b	& srcREG & bit & A & skipInst	{ 
+	#  1011 bbba ffff ffff
+	#  1011 0010 0000 0000	->	BTFSC DAT_DATA_0000, #0x1, 0
+	#  1011 0101 0000 0000  ->	BTFSC REG0x0, #0x2, 1
+	#  1011 0010 1101 1000  ->	BTFSC STATUS, #0x1, 0
+	#  1011 0101 1101 1000  ->	BTFSC REG0xD8, #0x2, 1	
+	local bitmask = 1 << bit;
+	local tmp = srcREG & bitmask;
+	if (tmp == 0) goto skipInst;
+}
+
+:BTFSC status, bit, A		is op4=0x0b & b3=0 & bit & status & A & skipInst				{
+	#  1011 bbba ffff ffff
+	#  1011 0000 1101 1000  ->	BTFSC STATUS, #C, 0
+	if ((C & 1) == 0) goto skipInst;
+}
+
+:BTFSC status, bit, A		is op4=0x0b & b3=1 & bit & status & A & skipInst				{
+	#  1011 bbba ffff ffff
+	#  1011 0000 1101 1000	->	BTFSC STATUS, #DC, 0
+	if ((DC & 1) == 0) goto skipInst;
+}
+
+:BTFSC status, bit, A		is op4=0x0b & b3=2 & bit & status & A & skipInst				{
+	#  1011 bbba ffff ffff
+	#  1011 0000 1101 1000	->	BTFSC STATUS, #Z, 0
+	if ((Z & 1) == 0) goto skipInst;
+}
+
+:BTFSC status, bit, A		is op4=0x0b & b3=3 & bit & status & A & skipInst				{
+	#  1011 bbba ffff ffff
+	#  1011 0110 1101 1000	->	BTFSC STATUS, #OV, 0
+	if ((OV & 1) == 0) goto skipInst;
+}
+
+:BTFSC status, bit, A		is op4=0x0b & b3=4 & bit & status & A & skipInst				{
+	#  1011 bbba ffff ffff
+	#  1011 1000 1101 1000	->	BTFSC STATUS, #N, 0
+	if ((N & 1) == 0) goto skipInst;
+}
+
+:BTFSS srcREG, bit, A		is op4=0x0a	& srcREG & bit & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 0010 0000 0000	->	BTFSS DAT_DATA_0000, #0x1, 0
+	#  1010 0101 0000 0000  ->	BTFSS REG0x0, #0x2, 1
+	#  1010 0010 1101 1000  ->	BTFSS STATUS, #0x1, 0
+	#  1010 0101 1101 1000  ->	BTFSS REG0xD8, #0x2, 1	
+	local bitmask = 1 << bit;
+	local tmp = srcREG & bitmask;
+	if (tmp != 0) goto skipInst;
+}
+
+:BTFSS status, bit, A		is op4=0x0a	& b3=0 & bit & status & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 0000 1101 1000  ->	BTFSS STATUS, #C, 0	
+	if ((C & 1) != 0) goto skipInst;
+}
+
+:BTFSS status, bit, A		is op4=0x0a	& b3=1 & bit & status & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 0010 1101 1000  ->	BTFSS STATUS, #DC, 0	
+	if ((DC & 1) != 0) goto skipInst;
+}
+
+:BTFSS status, bit, A		is op4=0x0a	& b3=2 & bit & status & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 0100 1101 1000  ->	BTFSS STATUS, #Z, 0	
+	if ((Z & 1) != 0) goto skipInst;
+}
+
+:BTFSS status, bit, A		is op4=0x0a	& b3=3 & bit & status & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 0110 1101 1000  ->	BTFSS STATUS, #OV, 0	
+	if ((OV & 1) != 0) goto skipInst;
+}
+
+:BTFSS status, bit, A		is op4=0x0a	& b3=4 & bit & status & A & skipInst	{ 
+	#  1010 bbba ffff ffff
+	#  1010 1000 1101 1000  ->	BTFSS STATUS, #N, 0	
+	if ((N & 1) != 0) goto skipInst;
+}
+
+:BTG srcREG, bit, A			is op4=0x07	& srcREG & bit & A	{ 
+	#  0111 bbba ffff ffff
+	#  0111 0010 0000 0000	->	BTG DAT_DATA_0000, #0x1, 0
+	#  0111 0101 0000 0000  ->	BTG REG0x0, #0x2, 1
+	#  0111 0010 1101 1000  ->	BTG STATUS, #0x1, 0
+	#  0111 0101 1101 1000  ->	BTG REG0xD8, #0x2, 1	
+	local bitmask = 1 << bit;
+	tmp:1 = srcREG;
+	srcREG = ~(tmp & bitmask) | (tmp & ~bitmask);
+}
+
+#
+# CONTROL OPERATIONS
+#
+
+:BC relAddr8			is op8=0xe2	& relAddr8		{ 
+	#  1110 0010 nnnn nnnn
+	#  1110 0010 0001 0000	->	BC LAB_CODE_XXXX
+	if ((C & 1) != 0) goto relAddr8;
+}
+
+:BN relAddr8			is op8=0xe6	& relAddr8		{ 
+	#  1110 0110 nnnn nnnn
+	#  1110 0110 0001 0000	->	BN LAB_CODE_XXXX
+	if ((N & 1) != 0) goto relAddr8;
+}
+
+:BNC relAddr8			is op8=0xe3	& relAddr8		{ 
+	#  1110 0011 nnnn nnnn
+	#  1110 0011 0001 0000	->	BNC LAB_CODE_XXXX
+	if ((C & 1) == 0) goto relAddr8;
+}
+
+:BNN relAddr8			is op8=0xe7	& relAddr8		{ 
+	#  1110 0111 nnnn nnnn
+	#  1110 0111 0001 0000	->	BNN LAB_CODE_XXXX
+	if ((N & 1) == 0) goto relAddr8;
+}
+
+:BNOV relAddr8			is op8=0xe5	& relAddr8		{ 
+	#  1110 0101 nnnn nnnn
+	#  1110 0101 0001 0000	->	BNOV LAB_CODE_XXXX
+	if ((OV & 1) == 0) goto relAddr8;
+}
+
+:BNZ relAddr8			is op8=0xe1	& relAddr8		{ 
+	#  1110 0001 nnnn nnnn
+	#  1110 0001 0001 0000	->	BNZ LAB_CODE_XXXX
+	if ((Z & 1) == 0) goto relAddr8;
+}
+
+:BOV relAddr8			is op8=0xe4	& relAddr8		{ 
+	#  1110 0100 nnnn nnnn
+	#  1110 0100 0001 0000	->	BOV LAB_CODE_XXXX
+	if ((OV & 1) != 0) goto relAddr8;
+}
+
+:BRA relAddr11			is op5=0x1a	& relAddr11		{ 
+	#  1101 0nnn nnnn nnnn
+	#  1101 0001 0001 0000	->	BRA LAB_CODE_XXXX  (inst_next+0x220)
+	goto relAddr11;	
+}
+
+:BZ relAddr8			is op8=0xe0 & relAddr8		{ 
+	#  1110 0000 nnnn nnnn
+	#  1110 0000 0001 0000	->	BZ LAB_CODE_XXXX
+	if ((Z & 1) != 0) goto relAddr8;
+}
+
+:CALL absAddr21, s_8		is lop8=0xec & absAddr21 & s_8	{ 
+	#  1110 110s kkkk kkkk 1111 kkkk kkkk kkkk
+	#  1110 1100 0100 0101 1111 0001 0010 0011	->	CALL SUB_CODE_02468a, 0
+	push(&:3 inst_next);
+	call absAddr21;
+}
+
+:CALL absAddr21, s_8		is lop8=0xed & absAddr21 & s_8	{ 
+	#  1110 110s kkkk kkkk 1111 kkkk kkkk kkkk
+	#  1110 1101 0100 0101 1111 0001 0010 0011	->	CALL SUB_CODE_02468a, 1
+	WS = WREG;
+	STATUSS = STATUS;
+	BSRS = BSR;
+	push(&:3 inst_next);
+	call absAddr21;
+} 
+
+:CLRWDT					is op16=0x0004				{
+	#  0000 0000 0000 0100
+	clearWatchDogTimer();
+}
+
+:DAW					is op16=0x0007				{ 
+	#  0000 0000 0000 0111
+	tmp:1 = decimalAdjust(WREG);
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:GOTO absAddr21			is lop8=0xef & absAddr21 	{ 
+	# 1110 1111 kkkk kkkk 1111 kkkk kkkk kkkk
+	# 1110 1111 0100 0101 1111 0001 0010 0011	->	GOTO LAB_CODE_02468a
+	goto absAddr21;
+} 
+
+:NOP					is op16=0x0000				{ }
+
+:NOP					is op4=0x0f					{ }
+
+:POP					is op16=0x0006				{ 
+	#  0000 0000 0000 0110
+	tmp:4 = 0;
+	pop(tmp);
+}
+
+:PUSH					is op16=0x0005				{ 
+	#  0000 0000 0000 0101
+	push(&:3 inst_next);
+}
+
+:RCALL relAddr11		is op5=0x1b	& relAddr11		{ 
+	#  1101 1nnn nnnn nnnn
+	#  1101 1001 0000 0000	->	CALL SUB_CODE_XXXX
+	push(&:3 inst_next);
+	call relAddr11;
+}
+
+:RESET					is op16=0x00ff				{ 
+	#  0000 0000 1111 1111
+	reset();
+}
+
+:RETFIE s_0				is op16=0x0010 & s_0			{ # TODO: Set GIE/GIEH and/or PEIE/GIEL
+	#  0000 0000 0001 0000
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETFIE s_0			is op16=0x0011 & s_0				{  # TODO: Set GIE/GIEH and/or PEIE/GIEL
+	#  0000 0000 0001 0001
+	WREG = WS;
+	STATUS = STATUSS;
+	BSR = BSRS;
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETURN s_0				is op16=0x0012 & s_0				{ 
+	#  0000 0000 0001 0010
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETURN s_0				is op16=0x0013 & s_0				{ 
+	#  0000 0000 0001 0011
+	WREG = WS;
+	STATUS = STATUSS;
+	BSR = BSRS;
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:SLEEP					is op16=0x0003				{ 
+	#  0000 0000 0000 0011
+	sleep();
+}
+
+#
+# LITERAL OPERATIONS
+#
+
+:ADDLW imm8				is op8=0x0f & imm8			{ 
+	#  0000 1111 kkkk kkkk
+	#  0000 1111 0001 0010	->	ADDLW #0x12
+	setAddFlags(imm8, WREG); 
+	WREG = WREG + imm8;
+	setResultFlags(WREG);
+}
+
+:ANDLW imm8				is op8=0xb & imm8			{ 
+	#  0000 1011 kkkk kkkk
+	#  0000 1011 0001 0010	->	ANDLW #0x12
+	WREG = WREG & imm8;
+	setResultFlags(WREG);
+}
+
+:IORLW imm8				is op8=0x9 & imm8			{ 
+	#  0000 1001 kkkk kkkk
+	#  0000 1001 0001 0010	->	IORLW #0x12
+	WREG = WREG | imm8;
+	setResultFlags(WREG);
+}
+
+:LFSR FSRn, imm12		is lop10=0x3b8 & fsr<3 & FSRn & imm12	{ 
+	#  1110 1110 00ff kkkk 1111 0000 kkkk kkkk
+	#  1110 1110 0001 0001 1111 0000 0010 0011	->	LFSR FSR1, 0x123
+	FSRn = imm12;
+}
+
+:MOVLB imm8				is op8=0x01 & imm8		{ # Manual is inconsistent imm4 vs. imm8
+	#  0000 0001 kkkk kkkk
+	#  0000 0001 0001 0010	->	MOVLB #0x12
+	BSR = imm8;
+}
+
+:MOVLW imm8				is op8=0x0e & imm8			{ 
+	#  0000 1110 kkkk kkkk
+	#  0000 1110 0001 0010	->	MOVLW #0x12
+	WREG = imm8;
+}
+
+:MULLW imm8				is op8=0x0d & imm8			{ 
+	#  0000 1101 kkkk kkkk
+	#  0000 1101 0001 0010	->	MULLW #0x12
+	tmp1:2 = zext(imm8);
+	tmp2:2 = zext(WREG);
+	PROD = tmp1 * tmp2;
+}
+
+:RETLW imm8				is op8=0x0c & imm8			{ 
+	#  0000 1100 kkkk kkkk
+	#  0000 1100 0001 0010	->	RETLW #0x12
+	WREG = imm8;
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:SUBLW imm8				is op8=0x08 & imm8			{ 
+	#  0000 1000 kkkk kkkk
+	#  0000 1000 0001 0010	->	SUBLW #0x12
+	setSubtractFlags(imm8, WREG); 
+	WREG = imm8 - WREG;
+	setResultFlags(WREG);
+}
+
+:XORLW imm8				is op8=0x0a & imm8			{ 
+	#  0000 1010 kkkk kkkk
+	#  0000 1010 0001 0010	->	XORLW #0x12
+	WREG = WREG ^ imm8;
+	setResultFlags(WREG);
+}
+
+#
+# DATA MEMORY <-> PROGRAM MEMORY OPERATIONS
+#
+
+:TBLRD*					is op16=0x0008				{
+	#  0000 0000 0000 1000 
+	ptr:3 = TBLPTR;
+	TABLAT = *[CODE] ptr;
+}
+
+:TBLRD*+				is op16=0x0009				{ 
+	#  0000 0000 0000 1001 
+	ptr:3 = TBLPTR;
+	TABLAT = *[CODE] ptr;
+	ptr = ptr + 1;
+	TBLPTR = ptr;
+}
+
+:TBLRD*-				is op16=0x000a				{ 
+	#  0000 0000 0000 1010 
+	ptr:3 = TBLPTR;
+	TABLAT = *[CODE] ptr;
+	ptr = ptr - 1;
+	TBLPTR = ptr;
+}
+
+:TBLRD+*				is op16=0x000b				{ 
+	#  0000 0000 0000 1011
+	ptr:3 = TBLPTR;
+	ptr = ptr + 1;
+	TBLPTR = ptr;
+	TABLAT = *[CODE] ptr;
+}
+
+:TBLWT*					is op16=0x000c				{ 
+	#  0000 0000 0000 1100
+	ptr:3 = TBLPTR;
+	*[CODE] ptr = TABLAT;
+}
+
+:TBLWT*+				is op16=0x000d				{ 
+	#  0000 0000 0000 1101
+	ptr:3 = TBLPTR;
+	*[CODE] ptr = TABLAT;
+	TBLPTR = ptr + 1;
+}
+
+:TBLWT*-				is op16=0x000e				{ 
+	#  0000 0000 0000 1110
+	ptr:3 = TBLPTR;
+	*[CODE] ptr = TABLAT;
+	TBLPTR = ptr - 1;
+}
+
+:TBLWT+*				is op16=0x000f				{ 
+	#  0000 0000 0000 1111
+	ptr:3 = TBLPTR;
+	ptr = ptr + 1;
+	TBLPTR = ptr;
+	*[CODE] ptr = TABLAT;
+}
+
+#
+# EXTENDED INSTRUCTION SET
+#
+
+:ADDFSR xFSRn, imm6	is op8=0xe8 & xfsr<3 & xFSRn & imm6	{ 
+	#  1110 1000 ffkk kkkk
+	#  1110 1000 1001 0010	->	ADDFSR FSR2, #0x12
+	xFSRn = xFSRn + zext(imm6);
+}
+
+:ADDULNK imm6		is op8=0xe8 & xfsr=3 & imm6	{ 
+	#  1110 1000 11kk kkkk
+	#  1110 1000 1101 0010	->	ADDULNK #0x12
+	retAddr:4 = 0;
+	pop(retAddr);
+	FSR2 = FSR2 + zext(imm6);
+	return [retAddr];
+}
+
+:CALLW				is op16=0x0014				{ 
+	#  0000 0000 0001 0100
+	loc:3 = (zext(PCLATU) << 16) | (zext(PCLATH) << 8) | zext(WREG);
+	push(&:3 inst_next);
+	call [loc];
+}
+
+:MOVSF ZS, destREG32	is lop9=0x1d6 & ZS & qual4=0xf & destREG32	{ 
+	#  1110 1011 0zzz zzzz 1111 ffff ffff ffff
+	#  1110 1011 0001 0010 1111 0001 0010 0011	->	MOVSF 0x12[FSR2], DAT_DATA_0123
+	destREG32 = ZS;
+}
+
+:MOVSF ZS, destREG32	is lop9=0x1d6 & ZS & qual4=0xf & destREG32 & fd=0xff9	{ 
+	#  1110 1011 0zzz zzzz 1111 ffff ffff ffff
+	#  1110 1011 0001 0010 1111 1111 1111 1001	->	MOVSF 0x12[FSR2], PCL
+	addr:3 = (zext(PCLATU) << 16) + (zext(PCLATH) << 8) + zext(ZS);
+	goto [addr];
+}
+
+:MOVSS ZS, ZD		is lop9=0x1d7 & ZS & ZD		{
+	#  1110 1011 1sss ssss 1111 xxxx xddd dddd
+	#    s: corresponds to zs
+	#    d: corresponds to zd
+	#    x: appear to be unused bits (don't care)
+	#  1110 1011 1001 0010 1111 1111 1100 0101	->	MOVSS 0x12[FSR2], 0x45[FSR2] 	
+	ZD = ZS;
+}
+
+:PUSHL imm8			is op8=0xfa & imm8			{ 
+	#  1111 1010 kkkk kkkk
+	#  1111 1010 0001 0010	->	PUSHL #0x12
+	local loc = FSR2;
+	*[DATA]:1 loc = imm8;
+	FSR2 = loc - 1;
+}
+
+:SUBFSR xFSRn, imm6	is op8=0xe9 & xfsr<3 & xFSRn & imm6	{ 
+	#  1110 1001 ffkk kkkk
+	#  1110 1001 0101 0010	-> SUBFSR FSR1, 0x12
+	xFSRn = xFSRn - zext(imm6);
+}
+
+:SUBULNK imm6		is op8=0xe9 & xfsr=3 & imm6	{ 
+	#  1110 1001 11kk kkkk
+	#  1110 1001 1101 0010	->	SUBULNK #0x12
+	retAddr:4 = 0;
+	pop(retAddr);
+	FSR2 = FSR2 - zext(imm6);
+	return [retAddr];
+}

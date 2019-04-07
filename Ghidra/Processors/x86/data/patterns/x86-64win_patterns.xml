@@ -1,0 +1,92 @@
+<patternlist>
+  <pattern>
+    <data>0x909090 * 0x4883ec</data>  <!--  NOP : NOP : NOP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x909090 * 0x4889 01...100..100100</data> <!-- NOP : NOP : NOP : MOV [RSP+#],R.. -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 0x4889 01...100..100100 0x..4889</data> <!-- NOP : MOV [RSP+#],R.. MOV [ ], -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 0x4889 01...100..100100 ......00 01010...01010... </data> <!-- NOP : MOV [RSP+#],R.. PUSH PUSH -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xc3 * 0x4889 01...100..100100 ......00 01010...01010... </data> <!-- RET : MOV [RSP+#],R.. PUSH PUSH -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xc3 * 0x55488d2c24 </data> <!-- RET : PUSH RBP, LEA RBP,[RSP] -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 0x55488d2c24 </data> <!-- NOP : PUSH RBP, LEA RBP,[RSP] -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 01010... 0x55488d2c24 </data> <!-- NOP : PUSH, PUSH RBP, LEA RBP,[RSP] -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xc3 * 01010... 0x55488d2c24 </data> <!-- RET : PUSH, PUSH RBP, LEA RBP,[RSP] -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x909090 * 0x488bc4</data>  <!-- NOP : NOP : NOP : MOV RAX,RSP -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 0xfff54883ec</data>  <!-- NOP : PUSH RBP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0x90 * 0x554883ec</data>  <!-- NOP : PUSH RBP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xc3 * 0x554883ec</data>  <!-- RET : PUSH RBP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+
+
+  <pattern>
+    <data>0xcccccc * 0x4883ec</data>  <!--  CC filler : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcccccc * 0x4889 01...100..100100</data> <!-- CC filler : MOV [RSP+#],R.. -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcccccc * 0x488bc4</data>  <!-- CC filler : MOV RAX,RSP -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcc * 0xfff54883ec</data>  <!-- CC : PUSH RBP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcc * 0x40 01010... 0x4883ec</data>  <!-- CC : PUSH Rxx : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcc * 0x554883ec</data>  <!-- CC : PUSH RBP : SUB RSP, # -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcccccc * 0x4055488b 11101...</data> <!-- CC filler : PUSH RBP : MOV RBP, ... -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcc * 0x4c8b 11...100 0x4883ec</data> <!-- CC : MOV -,RSP : SUB RSP,# -->
+    <funcstart/>
+  </pattern>
+  <pattern>
+    <data>0xcccc * 0x4c8b 11...100 01001.01 0x89</data> <!-- CC filler : MOV -,RSP : MOV [- + #], -->
+    <funcstart/>
+  </pattern>
+</patternlist>

@@ -1,0 +1,39 @@
+# sleigh specification file for Skeleton Processor
+#   >> see docs/languages/sleigh.htm or sleigh.pdf for Sleigh syntax
+# Other language modules (see Ghidra/Processors) may provide better examples
+# when creating a new language module.
+
+define endian=little;
+define alignment=1;
+
+define space ram     type=ram_space      size=2  default;
+
+define space io      type=ram_space      size=2;
+define space register type=register_space size=1;
+
+define register offset=0x00 size=1 [ F A C B E D L H I R ];
+define register offset=0x00 size=2 [ AF  BC  DE  HL ];
+define register offset=0x20 size=1 [ A_ F_ B_ C_ D_ E_ H_ L_ ]; # Alternate registers
+define register offset=0x20 size=2 [ AF_   BC_   DE_   HL_ ]; # Alternate registers
+
+define register offset=0x40 size=2 [ _  PC SP IX IY ];
+
+define register offset=0x50 size=1 [ rCBAR rCBR rBBR ];
+
+# Define context bits (if defined, size must be multiple of 4-bytes)
+define register offset=0xf0 size=4   contextreg;
+
+define context contextreg
+  assume8bitIOSpace		= (0,0)
+;
+
+# Flag bits (?? manual is very confusing - could be typos!)
+@define C_flag "F[0,1]"		# C: Carry
+@define N_flag "F[1,1]"		# N: Add/Subtract
+@define PV_flag "F[2,1]"	# PV: Parity/Overflow
+@define H_flag "F[4,1]"		# H: Half Carry
+@define Z_flag "F[6,1]"		# Z: Zero
+@define S_flag "F[7,1]"		# S: Sign
+
+# Include contents of skel.sinc file
+@include "skel.sinc"

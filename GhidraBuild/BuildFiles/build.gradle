@@ -1,0 +1,5 @@
+apply plugin: 'eclipse'
+eclipse.project.name = '_BuildFiles'
+
+ext.isPureEclipseProject = true
+ext.excludeFromBuild = true

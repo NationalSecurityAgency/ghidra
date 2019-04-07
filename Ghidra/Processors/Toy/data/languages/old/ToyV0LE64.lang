@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="0" endian="little">
+    <!-- This old Toy language exists purely to test language upgrades -->
+    <description>
+        <id>Toy:LE:64:default</id>
+        <processor>Toy</processor>
+        <variant>default</variant>
+        <size>64</size>
+    </description>
+    <compiler name="default" id="default" />
+    <spaces>
+        <space name="ROM" type="ram" size="8" default="yes" />
+        <space name="register" type="register" size="2" />
+    </spaces>
+    <registers>
+        <register name="a0" offset="0x1000" bitsize="64" />
+        <register name="a1" offset="0x1008" bitsize="64" />
+        <register name="a2" offset="0x1010" bitsize="64" />
+        <register name="a3" offset="0x1018" bitsize="64" />
+        <register name="a4" offset="0x1020" bitsize="64" />
+        <register name="a5" offset="0x1028" bitsize="64" />
+        <register name="a6" offset="0x1030" bitsize="64" />
+        <register name="a7" offset="0x1038" bitsize="64" />
+        <register name="a8" offset="0x1040" bitsize="64" />
+        <register name="a9" offset="0x1048" bitsize="64" />
+        <register name="a10" offset="0x1050" bitsize="64" />
+        <register name="a11" offset="0x1058" bitsize="64" />
+        <register name="a12" offset="0x1060" bitsize="64" />
+        <register name="sp" offset="0x1068" bitsize="64" />
+        <register name="lr" offset="0x1070" bitsize="64" />
+        <register name="pc" offset="0x1078" bitsize="64" />
+        <register name="C" offset="0x1100" bitsize="8" />
+        <register name="Z" offset="0x1101" bitsize="8" />
+        <register name="N" offset="0x1102" bitsize="8" />
+        <register name="V" offset="0x1103" bitsize="8" />
+    </registers>
+</language>
+

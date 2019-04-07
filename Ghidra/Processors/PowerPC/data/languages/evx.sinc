@@ -1,0 +1,129 @@
+
+@include "Scalar_SPFP.sinc"
+@ifdef IS_ISA
+@include "SPE_APU.sinc"
+@endif
+
+define pcodeop vectorExclusiveOr;
+define pcodeop vectorMergeHigh;
+define pcodeop vectorMergeLow;
+define pcodeop vectorLoadDoubleWordIntoDoubleWordIndexed;
+define pcodeop vectorStoreDoubleOfDoubleIndexed;
+define pcodeop initializeAccumulator;
+define pcodeop vectorShiftRightWordSigned;
+define pcodeop vectorShiftRightWordUnsigned;
+
+:evxor vrD_64_0,vrA_64_0,vrB_64_0        is OP=4 & vrD_64_0 & vrA_64_0 & vrB_64_0 & XOP_0_10=534
+{
+    vrD_64_0 = vrA_64_0 ^ vrB_64_0;
+}
+
+:evmergehi S,A,B        is OP=4 & S & A & B & XOP_0_10=556
+{
+    vectorMergeHigh(S,A,B);
+}
+
+:evmergelo S,A,B        is OP=4 & S & A & B & XOP_0_10=557
+{
+    vectorMergeLow(S,A,B);
+}
+
+
+:evldd RT,dUI16PlusRAOrZeroAddress is OP=4 & RT & dUI16PlusRAOrZeroAddress & XOP_0_10=769
+{
+   ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
+   RT = *:8 ($(EATRUNC));
+}
+
+:evlddx RT,RA_OR_ZERO,RB is OP=4 & RT & RA_OR_ZERO & RB & XOP_0_10=768
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    RT = *:8 ($(EATRUNC));
+}
+
+@ifndef IS_ISA
+:evsrws S,A,B        is OP=4 & S & A & B & XOP_0_10=545
+{
+    vectorShiftRightWordSigned(S,A,B);
+}
+@endif
+
+@ifndef IS_ISA
+:evsrwu S,A,B        is OP=4 & S & A & B & XOP_0_10=544
+{
+    vectorShiftRightWordUnsigned(S,A,B);
+}
+@endif
+
+:evstdd RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=801 
+{
+   ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
+   *:8 ($(EATRUNC)) = RS;
+}
+
+:evstddx RS,RA_OR_ZERO,RB        is OP=4 & RS & RA_OR_ZERO & RB & XOP_0_10=800
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    *:8 ($(EATRUNC)) = RS;
+}
+
+:evmra RT,RA        is OP=4 & RT & RA & BITS_11_15=0 & XOP_0_10=1220
+{
+	ACC = zext(RA);
+	RT = RA;
+}
+
+# evmergehilo rD,rA,rB 010 0010 1110
+define pcodeop VectorMergeHighLow;
+:evmergehilo D,A,B is OP=4 & A & B & D & XOP_0_10=558 {
+ local lo = (A & 0x00000000FFFFFFFF);
+ local hi = ((A & 0xFFFFFFFF00000000) >> 32);
+ #local b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ local b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ lo = lo;
+ hi = b_hi;
+
+ D = ((hi << 32) | lo);
+}
+
+# evmergelohi rD,rA,rB 010 0010 1111
+:evmergelohi D,A,B is OP=4 & D & A & B & XOP_0_10=559 {
+ local lo = (A & 0x00000000FFFFFFFF);
+ local hi = ((A & 0xFFFFFFFF00000000) >> 32);
+ local b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
+ #local b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+
+ lo = lo;
+ hi = b_lo;
+
+ D = ((hi << 32) | lo);
+}
+
+# evstwwe rS,rA,UIMM 011 0011 1001
+:evstwwe RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=0x339
+{
+   ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
+   *:4 ($(EATRUNC)) = RS:4;
+}
+
+# evstwwex rS,rA,rB 011 0011 1000
+:evstwwex RS,RA_OR_ZERO,RB is OP=4 & RS & RA_OR_ZERO & RB & XOP_0_10=0x338
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    *:4 ($(EATRUNC)) = RS:4;
+}
+
+:lvx vrD, RA_OR_ZERO, RB  is OP=31 & vrD & RA_OR_ZERO & RB & XOP_1_10=103 & BIT_0=0
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    vrD = *:16 ($(EATRUNC));
+}
+
+:stvx vrS, RA_OR_ZERO, RB  is OP=31 & vrS & RA_OR_ZERO & RB & XOP_1_10=231 & BIT_0=0
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    *:16 ($(EATRUNC)) = vrS;
+}
+
+

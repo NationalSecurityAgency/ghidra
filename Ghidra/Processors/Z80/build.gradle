@@ -1,0 +1,8 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors Z80'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+

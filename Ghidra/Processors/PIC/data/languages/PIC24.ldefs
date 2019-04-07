@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-24"
+            endian="little"
+            size="24"
+            variant="24E"
+            version="1.3"
+            slafile="PIC24E.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="PIC-24E:LE:24:default">
+    <description>PIC-24E</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+  <language processor="PIC-24"
+            endian="little"
+            size="24"
+            variant="24F"
+            version="1.3"
+            slafile="PIC24F.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="PIC-24F:LE:24:default">
+    <description>PIC-24F</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+  <language processor="PIC-24"
+            endian="little"
+            size="24"
+            variant="24H"
+            version="1.3"
+            slafile="PIC24H.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="PIC-24H:LE:24:default">
+    <description>PIC-24H</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+  <language processor="dsPIC30F"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.3"
+            slafile="dsPIC30F.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="dsPIC30F:LE:24:default">
+    <description>dsPIC30F</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+  <language processor="dsPIC33F"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.3"
+            slafile="dsPIC33F.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="dsPIC33F:LE:24:default">
+    <description>dsPIC33F</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+  <language processor="dsPIC33E"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.3"
+            slafile="dsPIC33E.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="dsPIC33E:LE:24:default">
+    <description>dsPIC33E</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
+</language_definitions>

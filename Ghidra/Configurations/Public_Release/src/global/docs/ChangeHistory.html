@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Ghidra Change History</TITLE>
+  </HEAD>
+
+<BODY>
+
+<H1 align="center">Ghidra 9.0.2 Change History (April 2019)</H1>
+
+<blockquote><p><u>Bugs</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Analysis.</I> Constant reference analysis boundary controls for speculative references has been fixed. Speculative references are references created from computed constants passed as parameters, stored to a location, or from indexed offsets from a register. (Issue #228)</li>
+
+<li><I>Decompiler. </I> Fixed rendering bug in the Decompiler when the "Find" dialog is closed. (Issue #282) </li>
+<li><I>Decompiler. </I> Fixed decompiler handling of Function Definition data types. (Issue #247) </li>
+
+<li><I>Decompiler. </I> Fixed "Free Varnode" exception in RuleConditionalMove. (Issue #294) </li>
+
+<li><I>Diff. </I> Fixed exceptions that can occur in the Diff View for programs with overlays. </li>
+
+<li><I>Documentation. </I> Corrected the spelling of "listener" throughout the source code. (Issue #235) </li>
+<li><I>Exporter. </I> Exporting a selection as Intel Hex will now allow a selection of any length. Previously this was restricted to multiples of 16 bytes. (Issue #260) </li>
+<li><I>GUI. </I> Fixed exception that occurs after disabling MyProgramChangesDisplayPlugin. </li>
+
+<li><I>GUI.</I> Updated the "Open Program" dialog to disallow file drop operations. (Issue #252)
+
+<li><I>Languages. </I> The ARM Thumb CMP.W and LSL isntructions have been changed to correctly decode. There are still issues to work out with Unpredictable execution when Rd is the PC. (Issue #280) </li>
+<li><I>Multi-User:Ghidra Server. </I> Corrected bug introduced into ghidraSvr.bat which could prevent Ghidra Server startup (Issue #279) </li>
+
+<li><I>Scripting.</I> MultiInstructionMemReference script has been corrected to consider input and output registers when placing a reference on an instruction.</li>
+
+</ul>
+</blockquote>
+
+<blockquote><p><u>Security</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Basic Infrastructure. </I> Added a property to support/launch.properties to prevent log4j from using jansi.dll on Windows. (Issue #286) </li>
+
+</ul>
+</blockquote>
+
+<H1 align="center">Ghidra 9.0.1 Change History (March 2019)</H1>
+ 
+ <blockquote><p><u>New Features</u></p></blockquote>
+<blockquote>
+<ul>
+	<li><I>Scripting</I>. Created a script to show all equates within the current selection. (Issue #111)</li>
+</ul>
+</blockquote>
+
+<blockquote><p><u>Improvements</u></p></blockquote>
+<blockquote>
+<ul>
+	<li><I>Basic Infrastructure</I>. Updated commons-compress library to version 1.18. (Issue #171)</li>
+	<li><I>Eclipse Integration</I>. Ghidra now connects to the Eclipse GhidraDev plugin on 127.0.0.1 rather than localhost.</li>
+	<li><I>GUI</I>. Turned on font anti-aliasing by default for Linux. (Issue #212)</li>
+	<li><I>GUI</I>. Fixed Options Dialog slow scrolling speed. (Issue #27)</li>
+	<li><I>Importer:ELF</I>. Corrected bug in ELF loader which can improperly process the GOT, PLT and relocations 
+	  when multiple symbol tables exist within the ELF binary. (Issue #52)</li>
+	<li><I>Languages</I>. Added ARM/Thumb SRS instruction decodes for undefined modes. (Issue #216)</li>
+	<li><I>Multi-User:Ghdira Server</I>. Corrected the Ghidra Server service wrapper (YAJSW) configuration for 
+	  Mac OS X to prevent a startup timeout condition which could occur.</li>
+</ul>
+</blockquote>
+
+<blockquote><p><u>Bugs</u></p></blockquote>
+<blockquote>
+<ul>
+	<li><I>API</I>. Fixed equals method on Varnode class. (Issue #97)</li>
+	<li><I>API</I>. Fixed a bug in MaskImpl.comlementMask(). (Issue #187)</li>
+	<li><I>Basic Infrasturcture</I>. Fixed special character handling in idaxml.py. (Issue #75)</li>
+	<li><I>Basic Infrastructure</I>. Ghidra now forces the locale to en_US by default. Only the en_US is currently supported. 
+	  This fixes certain unexpected exceptions. (Issue #209)</li>
+	<li><I>Diff</I>. Fixed exceptions occasionally encountered when starting a Diff session. (Issue #211)</li>
+	<li><I>Documentation</I>. Fixed javadoc search box redirecting to broken links. (Issue #129)</li>
+	<li><I>Function Graph</I>. Fixed Function Graph exception when generating tooltip. (Issue #65)</li>
+	<li><I>GUI</I>. Updted window placement to keep windows on screen. (Issue #41)</li>
+	<li><I>GUI</I>. Add/Edit References dialog now restricts users to creating refs in valid memory address spaces.</li>
+	<li><I>GUI</I>. Fixed exception when exiting Ghidra while a table is being edited. (Issue #51)</li>
+	<li><I>GUI</I>. Fixed some touchpad scrolling issues. (Issue #2)</li>
+	<li><I>GUI</I>. Fixed stack trace in the Data Type Manager's tooltip generation. (Issue #133)</li>
+	<li><I>GUI</I>. User key binding settings for the Recently Used and Define Pointer actions no longer lost after re-launching tool. (Issue #152)</li>
+	<li><I>GUI</I>. Toolbar buttons now respond to fast clicking.</li>
+	<li><I>Importer:MachO</I>. The MachoLoader can now find import libraries found in Universal Binary files. (Issue #136)</li>
+	<li><I>Importer:PE</I>. The PeLoader now correctly parses the GuardCFFunctionTable when entries are more than 4 bytes each. (Issue #220)</li>
+	<li><I>Languages</I>. Added missing PowerPC VLE conditional branch instructions: e_bdnz and e_bdz. (Issue #103)</li>
+	<li><I>Languages</I>. Fixed instruction semantics for several instructions and added Control Flow Enforcement, NOP variants, CMP variants, UD1, and 
+	  prefixed call instructions to X86 processor specification. (Issues #22, #53, #158, #157)</li>
+	<li><I>Languages</I>. The 68000 MOVE instruction now correctly sets the CF and VF flags. (Issue #163)</li>
+	<li><I>Languages</I>. Added four missing MOVEM instruction variants to the 68000 processor. (Issue  #219)</li>
+	<li><I>Languages</I>. An incorrect usage of X instead of Y in indexed mode for the 6502 has been corrected.(Issue #201)</li>
+	<li><I>Languages</I>. Added support for ARM Thumb half BL instruction on processor variants prior to v6. (Issue #39)</li>
+	<li><I>Multi-User:Ghidra Server</I>. Removed support for native OS authentication from Ghidra Server (removed modes -a2 and -a3) 
+	  due to incompatibility with newer OS releases including Windows 10 and Windows Server 2016. Re-introduction of this will be 
+	  considered for a future release.</li>
+	<li><I>PDB</I>. Corrected NPE error when processing PDB files. (Issues #138, #188)</li>
+	<li><I>Scripting</I>. Fixed a bug in ImportSymbolsScript.py that prevented it from running. (Issue #170)</li>
+</ul>
+</blockquote>
+
+<blockquote><p><u>Security</u></p></blockquote>
+<blockquote>
+<ul>
+	<li><I>Basic Infrastructure</I>. Running Ghidra in debug mode no longer opens remotely accessible ports by default. (Issue #6)</li>
+	<li><I>GUI</I>. The Defined Strings plugin no longer renders HTML in its table. (Issue #45)</li>
+	<li><I>Project Manager</I>. Fixed an XXE vulnerability affeting projects and many other saved components. (Issue #71)</li>
+</li>
+</ul>
+</blockquote>
+
+</BODY>
+</HTML>
+

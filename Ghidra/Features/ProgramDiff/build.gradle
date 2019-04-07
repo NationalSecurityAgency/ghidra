@@ -1,0 +1,10 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features ProgramDiff'
+
+apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+
+dependencies {
+	compile project(":Base")
+    helpPath project(path: ":Base", configuration: 'helpPath')
+	
+}

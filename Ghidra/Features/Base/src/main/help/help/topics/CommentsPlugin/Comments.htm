@@ -1,0 +1,213 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Comments</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Comments</H1>
+
+    <P>Comments can be added to any instruction or data item. There are five categories of comments
+    that are supported:<BR>
+    </P>
+
+    <CENTER>
+      <TABLE border="1" cellpadding="2" cellspacing="2" width="750">
+        <TBODY>
+          <TR>
+            <TD valign="top" width="217"><B>End-of-line (EOL)</B><BR>
+            </TD>
+
+            <TD valign="top" width="930">Displayed to the right of the instruction.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="217"><B>Pre</B><BR>
+            </TD>
+
+            <TD valign="top" width="930">Displayed above the instruction.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="217"><B>Post</B><BR>
+            </TD>
+
+            <TD valign="top" width="930">Displayed below the instruction.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="217"><B>Plate</B><BR>
+            </TD>
+
+            <TD valign="top" width="930">Displayed as a block header above the instruction. Plate
+            comments are automatically surrounded by '*'s<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="217"><B>Repeatable</B><BR>
+            </TD>
+
+            <TD valign="top" width="930">Displayed to the right of the instruction if there is no
+            EOL comment. These comments are also displayed at the "from" address of a reference to
+            this code unit, but only if there is no EOL or repeatable comment defined at the from
+            address.<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <P>You can create, edit, or delete comments. You can also view a <A href=
+    "#Show_Comment_History">history of comment changes</A> for each comment type. You may also use
+    <A href="help/topics/Annotations/Annotations.html"><B>annotations</B></A> to change the display
+    characteristics of data entered into the comment fields.</P>
+
+    <H2><A name="Edit_Comments"></A> <A name="Edit_Repeatable_Comment"></A> Adding or Editing
+    Comments (Set Comment)</H2>
+
+    <BLOCKQUOTE>
+      <P>Comments can be added or edited using the <I>Set Comment(s)</I> dialog as follows:</P>
+
+      <OL>
+        <LI>From the right-mouse pop-up menu over the Code Browser window, select the
+        <B>Comments<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Set</B> menu
+        option.</LI>
+
+        <LI>Choose the appropriate tab for the type of comment that is to be added or edited.</LI>
+
+        <LI>Enter the comment text in the text window.</LI>
+
+        <LI>Press the <B>OK</B> button to save the changes and close the dialog.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <IMG src="../../shared/note.png" alt=""> <FONT size="4">If the <I><A name=
+      "Comments_Option"></A>Enter accepts comment</I> checkbox is selected, you can simply press
+      the <B>Enter</B> key to set the comment and close the dialog. When the checkbox is not
+      selected, the <B>Enter</B> key simply adds a new line to the current comment for a multiple
+      line comment.<BR>
+      </FONT>
+    </BLOCKQUOTE><BR>
+     
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/Comment.png" alt="" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H2><A name="Delete_Comments"></A><B>Deleting Comments</B></H2>
+
+    <BLOCKQUOTE>
+      <P>Delete Comment will remove a specified comment from the listing. No confirmation is
+      displayed before the delete.&nbsp;</P>
+
+      <P>To Delete a Comment:</P>
+
+      <OL>
+        <LI>Right-click on the comment to be deleted.</LI>
+
+        <LI>Choose <B>Comments<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Delete
+        &lt;comment type&gt; Comment</B> from the popup-menu.</LI>
+      </OL>
+
+      <P align="left">To undo a delete comment operation, use the <A href=
+      "help/topics/Tool/Undo_Redo.htm">Undo Operation</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Navigating_through_Comments"></A>Navigating in the Code Browser</H2>
+
+    <BLOCKQUOTE>
+      <P>If a comment contains a string that can be interpreted as an address or a label, you can
+      navigate (in the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>) to
+      that address or label by double clicking on the address or label in the comment. If the
+      string matches more than one address or label, a <A href=
+      "help/topics/Search/Query_Results_Dialog.htm">Query Results dialog</A> displays the
+      matches.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Show_Comment_History"></A> Displaying Comment History</H2>
+
+    <BLOCKQUOTE>
+      <P>Comment history is maintained for each change made to a comment. The history includes the
+      name of the user who made the change, the modification date, and the comment. Comment changes
+      are sorted in descending date order (most recent date first).</P>
+    </BLOCKQUOTE>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/ShowCommentHistory.png" alt="" border=
+          "0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>To view the history of changes,</P>
+
+      <OL>
+        <LI>Right-click on the comment that you would like to view the history.</LI>
+
+        <LI>
+          Choose <B>Comments<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Show History
+          for &lt;comment type&gt;...</B>. 
+
+          <UL>
+            <LI>If you are not over a specific comment, right mouse click and choose
+            <B>Comments<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0"> Show
+            History...</B>.</LI>
+          </UL>
+        </LI>
+
+        <LI>
+          A dialog containing a tab for each of the comment types is displayed. 
+
+          <UL>
+            <LI>If the comment does not contain history, then "No History Found" is shown in the
+            tabbed panel for that comment.</LI>
+
+            <LI>Select a tab to view comment history for that comment type.</LI>
+          </UL>
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P><IMG src="../../shared/note.png" border="0"> Only comments that are placed at the start
+    address of data or instructions are displayed.&nbsp; Comments on addresses other than the start
+    (interior) address will remain <I>hidden</I> until the data or instructions are cleared.</P>
+
+    <P class="providedbyplugin">Provided by: <I>Edit Comments</I> Plugin</P>
+
+    <P>Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/BookmarkPlugin/Bookmarks.htm">Bookmarks</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">Browser Field
+      Formatter</A></LI>
+
+      <LI><A href="help/topics/LabelMgrPlugin/Labels.htm">Labels</A></LI>
+
+      <LI><A href="help/topics/Annotations/Annotations.html">Annotations</A></LI>
+    </UL><BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

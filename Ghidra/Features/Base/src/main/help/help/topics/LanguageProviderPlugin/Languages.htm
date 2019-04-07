@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+ <meta name="ProgId" content="FrontPage.Editor.Document">
+  <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  <title>Processor Languages</title>
+</head>
+<body>
+<h1>Processor Languages</h1>
+<p>All processors have an associated language that defines the mapping
+between
+user readable assembly language instructions (e.g. MOV, ADD,
+etc.)&nbsp; and their
+corresponding byte values.&nbsp; In order to disassemble a binary image
+for a
+specific processor, Ghidra requires a <i> language module</i> for that
+processor.&nbsp;
+A language module is the software that implements the language
+translation.
+Ghidra has a set of language modules for the most commonly-used
+processor
+languages. New languages can be added to Ghidra by writing new language
+modules.&nbsp;</p>
+<p>Ghidra uses a processor modeling language called <span
+ style="font-style: italic;">Sleigh </span>to define the binary
+parsing and instruction symantics associated with each language.&nbsp;
+The semantic information allows for
+more
+advanced analysis and enables features such as the decompiler. <br>
+</p>
+<p>The list of available languages can be found in the <b>Ghidra Release Notes</b>.&nbsp;</p>
+<blockquote>
+  <blockquote> </blockquote>
+</blockquote>
+<h2><a name="set_language"></a>Setting a Program's Language</h2>
+<p>All programs are initially assigned a Processor Language when they
+are first imported into a project.&nbsp; The processor language can be
+changed, but only to a closely related language.&nbsp;
+Any stored register values will
+be transferred if there is a register with the same name in the new
+language.&nbsp; If a matching register can't be found those values will
+be removed.</p>
+<p><img src="../../shared/note.png">
+If your program has been added to version control in a <a
+ href="help/topics/VersionControl/project_repository.htm#SharedProject">shared
+project</a>, you must first have an <a
+ href="help/topics/VersionControl/project_repository.htm#ExclusiveLock">exclusive
+check out </a>on the file before you can set the language.&nbsp;&nbsp;
+In addition, the program file may not be open in a tool when changing
+the assigned processor language.</p>
+<p> To change the processor language, right-click on the prorgam file
+within the <span style="font-style: italic;">Project Window</span>
+data tree, and setlect <span style="font-weight: bold;">Set Language...</span>
+from the popup menu.&nbsp; Since setting the language is such a major
+change, the following warning will appear.</p>
+<p align="center"><img alt="" src="images/Warning.png"></p>
+<p align="left">Alternatively, if your file is versioned, you you
+should check-in any recent changes prior to performing this
+operation.&nbsp; If you press the "OK" button, the Select Language
+dialog will be displayed:</p>
+<p align="center"><img src="images/Languages.png"></p>
+<p align="left">Select the language from the list and press "OK" to
+change the processor language for the current program.&nbsp; If the
+selected language is
+sufficiently similar to the existing language, the change will be
+made.&nbsp; Otherwise, an error dialog will appear and the change will
+not be allowed.
+<i>By default, a filter will automatically be applied that displays the
+most
+compatible languages. It is recommended to only use one of these
+languages.<br>
+</i></p>
+<p align="left"><img src="../../shared/note.png">
+Once the operation completes successfully the only way to
+revert to the previous language (aside from attempting another Set
+Language) is to undo your checkout if it is versioned.&nbsp; Otherwise,
+you must rely on a backup copy which you hopefully made prior to the
+operation.<br>
+</p>
+<p align="left">&nbsp;<img src="../../shared/note.png">
+Set Language will fail if any old address
+space can not be mapped to the same size or larger address spaces
+within the new language.&nbsp; This allows migration to larger
+processor implementations (e.g., 32-bit to 64-bit), but not the reverse.<br>
+<br>
+</p>
+<h2><a name="CodeBrowserPlugin_PCode"></a>PCode</h2>
+<p>The semantic information provided by the SLED and SLEIGH-based
+languages is called PCode (a form of generic microcode).&nbsp; Each
+assembly language instruction can be
+broken down into one or more PCode instructions.&nbsp; The more
+advanced automatic analysis features in Ghidra require PCode in order
+to operate.
+</p>
+<p>To see PCode, add the PCode field in the Instruction/Data tab of the
+<a href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">Browser Field</a>.&nbsp;
+The figure
+below shows a CodeBrowser with the PCode field added.&nbsp;&nbsp;<br>
+</p>
+<p align="center"><img src="images/PCodeDisplay.png"></p>
+<p class="relatedtopic">Related Topics:</p>
+<ul>
+  <li><a href="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Analysis</a></li>
+  <li><a href="help/topics/DisassemblerPlugin/Disassembly.htm">Disassembly</a></li>
+</ul>
+</body>
+</html>
