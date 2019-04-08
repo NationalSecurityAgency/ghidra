@@ -47,16 +47,16 @@ public class LabelMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether if is a near address.
+	 * @return True if it is a near address.
 	 */
 	public boolean isNear() {
 		return (mode == ADDRESS_MODE_NEAR);
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it is a far address.
+	 * @return True if it is a far address.
 	 */
 	public boolean isFar() {
 		return (mode == ADDRESS_MODE_FAR);

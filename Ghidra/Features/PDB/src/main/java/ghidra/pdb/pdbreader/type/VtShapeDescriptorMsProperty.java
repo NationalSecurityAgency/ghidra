@@ -48,10 +48,7 @@ public enum VtShapeDescriptorMsProperty {
 	}
 
 	public static VtShapeDescriptorMsProperty fromValue(int val) {
-		if (val < 0 || val >= 7) {
-			val = 7;
-		}
-		return BY_VALUE.get(val);
+		return BY_VALUE.getOrDefault(val, UNUSED);
 	}
 
 	private VtShapeDescriptorMsProperty(String label, int value) {

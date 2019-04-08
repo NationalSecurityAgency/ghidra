@@ -15,91 +15,158 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
 public abstract class AbstractPointerMsType extends AbstractMsType {
 
-	private static final int TYPE_NEAR = 0x00; // 16-bit pointer
-	private static final int TYPE_FAR = 0x01; // 16:16  far pointer
-	private static final int TYPE_HUGE = 0x02; // 16:16 huge pointer
-	private static final int TYPE_SEGMENT_BASED = 0x03;
-	private static final int TYPE_VALUE_BASED = 0x04;
-	private static final int TYPE_SEGMENT_VALUE_BASED = 0x05;
-	private static final int TYPE_ADDRESS_BASED = 0x06;
-	private static final int TYPE_SEGMENT_ADDRESS_BASED = 0x07;
-	private static final int TYPE_TYPE_BASED = 0x08;
-	private static final int TYPE_SELF_BASED = 0x09;
-	private static final int TYPE_NEAR32 = 0x0a; // 32-bit pointer
-	private static final int TYPE_FAR32 = 0x0b; // 16:32 pointer
-	private static final int TYPE_PTR64 = 0x0c; // 64-bit pointer
+	public enum PointerType {
 
-	private static final String[] TYPE_STRING = new String[14];
-	static {
-		TYPE_STRING[0] = "near";
-		TYPE_STRING[1] = "far";
-		TYPE_STRING[2] = "huge";
-		TYPE_STRING[3] = "base(seg)";
-		TYPE_STRING[4] = "base(val)";
-		TYPE_STRING[5] = "base(segval)";
-		TYPE_STRING[6] = "base(addr)";
-		TYPE_STRING[7] = "base(segaddr)";
-		TYPE_STRING[8] = "base(type)";
-		TYPE_STRING[9] = "base(self)";
-		TYPE_STRING[10] = "";
-		TYPE_STRING[11] = "far32";
-		TYPE_STRING[12] = "far64";
-		TYPE_STRING[13] = "unspecified";
+		INVALID("invalid", -1),
+		NEAR("near", 0), // 16-bit pointer
+		FAR("far", 1), // 16:16  far pointer
+		HUGE("huge", 2), // 16:16 huge pointer
+		SEGMENT_BASED("base(seg)", 3),
+		VALUE_BASED("base(val)", 4),
+		SEGMENT_VALUE_BASED("base(segval)", 5),
+		ADDRESS_BASED("base(addr)", 6),
+		SEGMENT_ADDRESS_BASED("base(segaddr)", 7),
+		TYPE_BASED("base(type)", 8),
+		SELF_BASED("base(addr)", 9),
+		NEAR32("", 10), // 32-bit pointer
+		FAR32("far32", 11), // 16:32 pointer
+		PTR64("far64", 12), // 64-bit pointer
+		UNSPECIFIED("unspecified", 13);
+
+		private static final Map<Integer, PointerType> BY_VALUE = new HashMap<>();
+		static {
+			for (PointerType val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static PointerType fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private PointerType(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
+
 	}
 
-	private static final int MODE_POINTER = 0x00; // Normal
-	private static final int MODE_OLD_REFERENCE = 0x01; // Same as LVALUE_REFERENCE
-	private static final int MODE_LVALUE_REFERENCE = 0x01; // Same as OLD_REFERENCE
-	private static final int MODE_MEMBER_DATA_POINTER = 0x02;
-	private static final int MODE_MEMBER_FUNCTION_POINTER = 0x03;
-	private static final int MODE_RVALUE_REFERENCE = 0x04;
-	private static final int MODE_RESERVED = 0x05;
+	public enum PointerMode {
 
-	private static final String[] MEMBER_POINTER_ATTRIBUTE_STRING = new String[14];
-	static {
-		MEMBER_POINTER_ATTRIBUTE_STRING[0] = "pdm16_nonvirt";
-		MEMBER_POINTER_ATTRIBUTE_STRING[1] = "pdm16_vfcn";
-		MEMBER_POINTER_ATTRIBUTE_STRING[2] = "pdm16_vbase";
-		MEMBER_POINTER_ATTRIBUTE_STRING[3] = "pdm32_nvvfcn";
-		MEMBER_POINTER_ATTRIBUTE_STRING[4] = "pdm32_vbase";
-		MEMBER_POINTER_ATTRIBUTE_STRING[5] = "pmf16_nearnvsa";
-		MEMBER_POINTER_ATTRIBUTE_STRING[6] = "pmf16_nearnvma";
-		MEMBER_POINTER_ATTRIBUTE_STRING[7] = "pmf16_nearvbase";
-		MEMBER_POINTER_ATTRIBUTE_STRING[8] = "pmf16_farnvsa";
-		MEMBER_POINTER_ATTRIBUTE_STRING[9] = "pmf16_farnvma";
-		MEMBER_POINTER_ATTRIBUTE_STRING[10] = "pmf16_farvbase";
-		MEMBER_POINTER_ATTRIBUTE_STRING[11] = "pmf32_nvsa";
-		MEMBER_POINTER_ATTRIBUTE_STRING[12] = "pmf32_nvma";
-		MEMBER_POINTER_ATTRIBUTE_STRING[13] = "pmf32_vbase";
+		INVALID("", -1), // Our default
+		POINTER("*", 0), // Normal
+		LVALUE_REFERENCE("&", 1), // Same as older style reference
+		MEMBER_DATA_POINTER("::*", 2),
+		MEMBER_FUNCTION_POINTER("::*", 3),
+		RVALUE_REFERENCE("&&", 4),
+		RESERVED("", 5);
+
+		private static final Map<Integer, PointerMode> BY_VALUE = new HashMap<>();
+		static {
+			for (PointerMode val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		/**
+		 * Emits {@link String} output of this class into the provided {@link StringBuilder}.
+		 * @param builder The {@link StringBuilder} into which the output is created.
+		 */
+		public void emit(StringBuilder builder) {
+			builder.append(this.getClass().getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static PointerMode fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private PointerMode(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
+
 	}
 
-	private static final int MEMBER_POINTER_UNSPECIFIED = 0x00;
-	private static final int MEMBER_POINTER_DATA_SINGLE_INHERITANCE = 0x01;
-	private static final int MEMBER_POINTER_DATA_MULTIPLE_INHERITANCE = 0x02;
-	private static final int MEMBER_POINTER_DATA_VIRTUAL_INHERITANCE = 0x03;
-	private static final int MEMBER_POINTER_DATA_GENERAL = 0x04;
-	private static final int MEMBER_POINTER_FUNCTION_SINGLE_INHERITANCE = 0x05;
-	private static final int MEMBER_POINTER_FUNCTION_MULTIPLE_INHERITANCE = 0x06;
-	private static final int MEMBER_POINTER_FUNCTION_VIRTUAL_INHERITANCE = 0x07;
-	private static final int MEMBER_POINTER_FUNCTION_GENERAL = 0x08;
+	public enum MemberPointerType {
+
+		INVALID("invalid", -1),
+		UNSPECIFIED("pdm16_nonvirt", 0), // 16-bit pointer
+		DATA_SINGLE_INHERITANCE("pdm16_vfcn", 1), // 16:16  far pointer
+		DATA_MULTIPLE_INHERITANCE("pdm16_vbase", 2), // 16:16 huge pointer
+		DATA_VIRTUAL_INHERITANCE("pdm32_nvvfcn", 3),
+		DATA_GENERAL("pdm32_vbase", 4),
+		FUNCTION_SINGLE_INHERITANCE("pmf16_nearnvsa", 5),
+		FUNCTION_MULTIPLE_INHERITANCE("pmf16_nearnvma", 6),
+		FUNCTION_VIRTUAL_INHERITANCE("pmf16_nearvbase", 7),
+		FUNCTION_SINGLE_INHERITANCE_1632("pmf16_farnvsa", 8),
+		FUNCTION_MULTIPLE_INHERITANCE_1632("pmf16_farnvma", 9),
+		FUNCTION_VIRTUAL_INHERITANCE_1632("pmf16_farnvbase", 10),
+		FUNCTION_SINGLE_INHERITANCE_32("pmf32_nvsa", 11),
+		FUNCTION_MULTIPLE_INHERITANCE_32("pmf32_nvma", 12),
+		FUNCTION_VIRTUAL_INHERITANCE_32("pmf32_nvbase", 13);
+
+		private static final Map<Integer, MemberPointerType> BY_VALUE = new HashMap<>();
+		static {
+			for (MemberPointerType val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static MemberPointerType fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private MemberPointerType(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
+
+	}
 
 	//==============================================================================================
 	protected AbstractTypeIndex underlyingTypeIndex;
-	protected int pointerTypeAttribute;
-	protected int pointerModeAttribute;
+	protected PointerType pointerType;
+	protected PointerMode pointerMode;
 	protected boolean isFlat; // 0:32 pointer
 	protected boolean isVolatile;
 	protected boolean isConst;
 	protected boolean isUnaligned;
 
 	protected AbstractTypeIndex memberPointerContainingClassIndex;
-	protected int memberPointerFormat;
+	protected MemberPointerType memberPointerType;
 
 	protected int baseSegment;
 	protected AbstractString baseSymbol;
@@ -121,19 +188,19 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 			new CategoryIndex(CategoryIndex.Category.DATA, underlyingTypeIndex.get()));
 		pdb.popDependencyStack();
 
-		if (pointerModeAttribute == MODE_MEMBER_DATA_POINTER ||
-			pointerModeAttribute == MODE_MEMBER_FUNCTION_POINTER) {
+		if (pointerMode == PointerMode.MEMBER_DATA_POINTER ||
+			pointerMode == PointerMode.MEMBER_FUNCTION_POINTER) {
 			memberPointerContainingClassIndex.parse(reader);
 			pdb.pushDependencyStack(new CategoryIndex(CategoryIndex.Category.DATA,
 				memberPointerContainingClassIndex.get()));
 			pdb.popDependencyStack();
-			memberPointerFormat = reader.parseUnsignedShortVal();
+			memberPointerType = MemberPointerType.fromValue(reader.parseUnsignedShortVal());
 			if (reader.hasMore()) {
 				//TODO: I think there might be possible padding
 				reader.parseBytesRemaining();
 			}
 		}
-		else if (pointerTypeAttribute == TYPE_SEGMENT_BASED) {
+		else if (pointerType == PointerType.SEGMENT_BASED) {
 			baseSegment = reader.parseUnsignedShortVal();
 			if (reader.hasMore()) {
 				//TODO: I think there might be possible padding
@@ -141,7 +208,7 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 				reader.parseBytesRemaining();
 			}
 		}
-		else if (pointerTypeAttribute == TYPE_TYPE_BASED) {
+		else if (pointerType == PointerType.TYPE_BASED) {
 			pointerBaseTypeIndex = reader.parseInt();
 			name.parse(reader);
 			reader.skipPadding();
@@ -152,7 +219,7 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 			}
 		}
 		// Something needs to trigger this code (might be a mode or a type
-		else if (pointerTypeAttribute == -1) {
+		else if (pointerType == PointerType.INVALID) {
 			baseSymbol.parse(reader);
 			//System.out.println(reader.dump());
 			reader.skipPadding();
@@ -190,260 +257,48 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
+	 * Returns {@link PointerType} attribute.
+	 * @return {@link PointerType} attribute.
 	 */
-	public boolean isNear() {
-		return (pointerTypeAttribute == TYPE_NEAR);
+	public PointerType getPointerType() {
+		return pointerType;
 	}
 
 	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
+	 * Returns {@link PointerMode} attribute.
+	 * @return {@link PointerMode} attribute.
 	 */
-	public boolean isFar() {
-		return (pointerTypeAttribute == TYPE_FAR);
+	public PointerMode getPointerMode() {
+		return pointerMode;
 	}
 
 	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
+	 * Returns {@link MemberPointerType} attribute.
+	 * @return {@link MemberPointerType} attribute.
 	 */
-	public boolean isHuge() {
-		return (pointerTypeAttribute == TYPE_HUGE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isSegmentBased() {
-		return (pointerTypeAttribute == TYPE_SEGMENT_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isValueBased() {
-		return (pointerTypeAttribute == TYPE_VALUE_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isSegmentValueBased() {
-		return (pointerTypeAttribute == TYPE_SEGMENT_VALUE_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isAddressBased() {
-		return (pointerTypeAttribute == TYPE_ADDRESS_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isSegmentAddressBased() {
-		return (pointerTypeAttribute == TYPE_SEGMENT_ADDRESS_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isTypeBased() {
-		return (pointerTypeAttribute == TYPE_TYPE_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isSelfBased() {
-		return (pointerTypeAttribute == TYPE_SELF_BASED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isNear32() {
-		return (pointerTypeAttribute == TYPE_NEAR32);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFar32() {
-		return (pointerTypeAttribute == TYPE_FAR32);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isPtr64() {
-		return (pointerTypeAttribute == TYPE_PTR64);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isNormal() {
-		return (pointerModeAttribute == MODE_POINTER);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isLOldReference() {
-		return (pointerModeAttribute == MODE_OLD_REFERENCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isLValueReference() {
-		return (pointerModeAttribute == MODE_LVALUE_REFERENCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isMemberDataPointer() {
-		return (pointerModeAttribute == MODE_MEMBER_DATA_POINTER);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isMemberFunctionPointer() {
-		return (pointerModeAttribute == MODE_MEMBER_FUNCTION_POINTER);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFValueReference() {
-		return (pointerModeAttribute == MODE_RVALUE_REFERENCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isModeReserved() {
-		return (pointerModeAttribute == MODE_RESERVED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isUnspecified() {
-		return (memberPointerFormat == MEMBER_POINTER_UNSPECIFIED);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isDataSingleInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_DATA_SINGLE_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isDataMultipleInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_DATA_MULTIPLE_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isDataVirtualInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_DATA_VIRTUAL_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isDataGeneral() {
-		return (memberPointerFormat == MEMBER_POINTER_DATA_GENERAL);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFunctionSingleInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_FUNCTION_SINGLE_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFunctionMultipleInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_FUNCTION_MULTIPLE_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFunctionVirtualInheritance() {
-		return (memberPointerFormat == MEMBER_POINTER_FUNCTION_VIRTUAL_INHERITANCE);
-	}
-
-	/**
-	 * Returns boolean regarding the fact of the property.
-	 * @return Truth about the property.
-	 */
-	public boolean isFunctionGeneral() {
-		return (memberPointerFormat == MEMBER_POINTER_FUNCTION_GENERAL);
+	public MemberPointerType getMemberPointerType() {
+		return memberPointerType;
 	}
 
 	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		StringBuilder myBuilder = new StringBuilder();
 		myBuilder.append(isFlat ? "flat " : "");
-		switch (pointerModeAttribute) {
-			case MODE_POINTER:
-				myBuilder.append(TYPE_STRING[pointerTypeAttribute]);
-				myBuilder.append("*");
-				break;
-			case MODE_LVALUE_REFERENCE:
-				myBuilder.append(TYPE_STRING[pointerTypeAttribute]);
-				myBuilder.append("&");
-				break;
-			case MODE_RVALUE_REFERENCE:
-				myBuilder.append(TYPE_STRING[pointerTypeAttribute]);
-				myBuilder.append("&&");
-				break;
-			case MODE_MEMBER_DATA_POINTER:
-			case MODE_MEMBER_FUNCTION_POINTER:
+		switch (pointerMode) {
+			case MEMBER_DATA_POINTER:
+			case MEMBER_FUNCTION_POINTER:
 				pdb.getTypeRecord(memberPointerContainingClassIndex.get()).emit(builder, Bind.NONE);
-				myBuilder.append("::* <");
-				myBuilder.append(MEMBER_POINTER_ATTRIBUTE_STRING[memberPointerFormat]);
+				myBuilder.append(pointerMode);
+				myBuilder.append(" <");
+				myBuilder.append(memberPointerType);
 				myBuilder.append(">");
+				break;
+			case POINTER:
+			case LVALUE_REFERENCE:
+			case RVALUE_REFERENCE:
+			default:
+				myBuilder.append(pointerType);
+				myBuilder.append(pointerMode);
 				break;
 		}
 		myBuilder.append(isConst ? "const " : "");
@@ -477,8 +332,8 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	 * Parses the attributes of the pointer.
 	 * <P>
 	 * Implementing class must, in the appropriate order pertinent to itself, parse
-	 * certain attributes, which at a minimum will fill in {@link #pointerTypeAttribute}, 
-	 * {@link #pointerModeAttribute}, {@link #isFlat}, {@link #isVolatile}, {@link #isConst},
+	 * certain attributes, which at a minimum will fill in {@link #pointerType}, 
+	 * {@link #pointerMode}, {@link #isFlat}, {@link #isVolatile}, {@link #isConst},
 	 * and {@link #isUnaligned}.
 	 * @param reader {@link PdbByteReader} from which the attributes are parsed.
 	 * @throws PdbException Upon not enough data left to parse.

@@ -50,40 +50,40 @@ public class PointerMsType extends AbstractPointerMsType {
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it has the restrict attribute.
+	 * @return True if it has the restrict attribute.
 	 */
 	public boolean isRestrict() {
 		return isRestrict;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it is Mocom.
+	 * @return True if it is Mocoem.
 	 */
 	public boolean isMocom() {
 		return isMocom;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it is a left reference.
+	 * @return True if it is a left reference.
 	 */
 	public boolean isLeftReference() {
 		return isLRef;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether if is a right reference.
+	 * @return True if it is a right reference.
 	 */
 	public boolean isRightReference() {
 		return isRRef;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether the attribute is unknown.
+	 * @return True if the attribute is unknown.
 	 */
 	public boolean isUnknownAttributes() {
 		return unk;
@@ -111,9 +111,10 @@ public class PointerMsType extends AbstractPointerMsType {
 	@Override
 	protected void parseAttributes(PdbByteReader reader) throws PdbException {
 		long attributes = reader.parseUnsignedIntVal();
-		pointerTypeAttribute = (int) (attributes & 0x001f);
+		pointerType = PointerType.fromValue((int) (attributes & 0x001f));
 		attributes >>= 5;
-		pointerModeAttribute = (int) (attributes & 0x0007);
+		pointerMode = PointerMode.fromValue((int) (attributes & 0x0007));
+		//pointerMode = (int) (attributes & 0x0007);
 		attributes >>= 3;
 
 		isFlat = ((attributes & 0x0001) == 0x0001);

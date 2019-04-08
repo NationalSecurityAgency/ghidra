@@ -15,6 +15,9 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.pdb.*;
 
 /**
@@ -22,31 +25,62 @@ import ghidra.pdb.*;
  */
 public class MsProperty extends AbstractParsableItem {
 
-	public static final int HFA_NONE = 0;
-	public static final int HFA_FLOAT = 1;
-	public static final int HFA_DOUBLE = 2;
-	public static final int HFA_RESV = 3;
+	public enum Hfa {
 
-	public static final int MOCOM_NONE = 0;
-	public static final int MOCOM_REF = 1;
-	public static final int MOCOM_VALUE = 2;
-	public static final int MOCOM_INTERFACE = 3;
+		NONE("", 0), FLOAT("hfaFloat", 1), DOUBLE("hfaDouble", 2), RESV("hfa(3)", 3);
 
-	private static final String[] HFA_STRING = new String[4];
-	static {
-		HFA_STRING[0] = "";
-		HFA_STRING[1] = "hfaFloat";
-		HFA_STRING[2] = "hfaDouble";
-		HFA_STRING[3] = "hfa(3)";
+		private static final Map<Integer, Hfa> BY_VALUE = new HashMap<>();
+		static {
+			for (Hfa val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
 
+		public final String label;
+		public final int value;
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static Hfa fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, NONE);
+		}
+
+		private Hfa(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
 	}
-	private static final String[] MOCOM_STRING = new String[4];
-	static {
-		MOCOM_STRING[0] = "";
-		MOCOM_STRING[1] = "ref";
-		MOCOM_STRING[2] = "value";
-		MOCOM_STRING[3] = "interface";
 
+	public enum Mocom {
+
+		NONE("", 0), REF("ref", 1), VALUE("value", 2), INTERFACE("interface", 3);
+
+		private static final Map<Integer, Mocom> BY_VALUE = new HashMap<>();
+		static {
+			for (Mocom val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static Mocom fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, NONE);
+		}
+
+		private Mocom(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
 	}
 
 	private static final String PACKED_STRING = "packed";
@@ -76,8 +110,8 @@ public class MsProperty extends AbstractParsableItem {
 	private boolean sealed; // Cannot be used as a base class
 	private boolean isIntrinsic; // (e.g., _m128d)
 
-	private int hfaVal; // ???
-	private int mocomVal; // ????
+	private Hfa hfa; // ???
+	private Mocom mocom; // ????
 
 	//==============================================================================================
 	/**
@@ -91,115 +125,115 @@ public class MsProperty extends AbstractParsableItem {
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether the structure is packed.
+	 * @return True if structure is packed.
 	 */
 	public boolean isPacked() {
 		return packedStructure;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether a constructor or destructor is present.
+	 * @return True if a constructor or destructor is present.
 	 */
 	public boolean hasConstructorOrDestructor() {
 		return constructorOrDestructorPresent;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether there are overloaded operators.
+	 * @return True if there are overloaded operators.
 	 */
 	public boolean hasOverloadedOperators() {
 		return overloadedOperatorsPresent;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether the class is a nested class.
+	 * @return True if the class is a nested class.
 	 */
 	public boolean isNestedClass() {
 		return isNestedClass;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether there are contained nested types.
+	 * @return True if there are nested types.
 	 */
 	public boolean containsNestedTypes() {
 		return containsNestedTypes;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether there is an overloaded assignment.
+	 * @return True if there is an overloaded assignment.
 	 */
 	public boolean hasOverloadedAssignment() {
 		return hasOverloadedAssignment;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether there are casting methods.
+	 * @return True if there are casting methods.
 	 */
 	public boolean hasCastingMethods() {
 		return hasCastingMethods;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it is a forward reference.
+	 * @return True if it is a forward reference.
 	 */
 	public boolean isForwardReference() {
 		return isForwardReference;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether the the definition is scoped.
+	 * @return True if there definition is scoped.
 	 */
 	public boolean hasScopedDefinition() {
 		return scopedDefinition;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells if it has a unique name.
+	 * @return True if it has a unique name.
 	 */
 	public boolean hasUniqueName() {
 		return hasUniqueName;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it can be a base class
+	 * @return True if it can be a base class.
 	 */
 	public boolean cannotBeBaseClass() {
 		return sealed;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether it is intrinsic.
+	 * @return True if it is intrinsic.
 	 */
 	public boolean isIntrinsic() {
 		return isIntrinsic;
 	}
 
 	/**
-	 * Gets the value (index) of the property.
-	 * @return The index value of the property.
+	 * Gets the {@link Hfa} kind.
+	 * @return The {@link Hfa} kind.
 	 */
-	public int getHfaVal() {
-		return hfaVal;
+	public Hfa getHfa() {
+		return hfa;
 	}
 
 	/**
-	 * Gets the value (index) of the property.
-	 * @return The index value of the property.
+	 * Gets the {@link Mocom} kind.
+	 * @return The {@link Mocom} kind.
 	 */
-	public int getMocomVal() {
-		return mocomVal;
+	public Mocom getMocom() {
+		return mocom;
 	}
 
 	@Override
@@ -216,9 +250,9 @@ public class MsProperty extends AbstractParsableItem {
 		builder.append(ds.out(scopedDefinition, SCOPED_STRING));
 		builder.append(ds.out(hasUniqueName, HAS_UNIQUE_NAME_STRING));
 		builder.append(ds.out(sealed, SEALED_STRING));
-		builder.append(ds.out((hfaVal != 0), HFA_STRING[hfaVal]));
+		builder.append(ds.out((hfa != Hfa.NONE), hfa));
 		builder.append(ds.out(isIntrinsic, INTRINSIC_STRING));
-		builder.append(ds.out((mocomVal != 0), MOCOM_STRING[mocomVal]));
+		builder.append(ds.out((mocom != Mocom.NONE), mocom));
 	}
 
 	private void processProperties(int properties) {
@@ -245,13 +279,13 @@ public class MsProperty extends AbstractParsableItem {
 		sealed = ((properties & 0x0001) == 0x0001);
 		properties >>= 1;
 
-		hfaVal = (properties & 0x0003);
+		hfa = Hfa.fromValue(properties & 0x0003);
 		properties >>= 2;
 
 		isIntrinsic = ((properties & 0x0001) == 0x0001);
 		properties >>= 1;
 
-		mocomVal = (properties & 0x0003);
+		mocom = Mocom.fromValue(properties & 0x0003);
 	}
 
 }

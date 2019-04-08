@@ -45,7 +45,8 @@ public class MethodRecordMs extends AbstractMethodRecordMs {
 		// API says optional offset "if intro virtual" but we have seen it for 6=<intro.pure>, so
 		//  it could be that we need to also include 2=virtual here; i.e., each 2, 4, and 6
 		//  (virtual, <intro>, and <intro,pure>) could have this optional field.
-		if ((attributes.getPropertyVal() == 4) || (attributes.getPropertyVal() == 6)) {
+		if ((attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) ||
+			(attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE)) {
 			optionalOffset = reader.parseUnsignedIntVal();
 		}
 		else {

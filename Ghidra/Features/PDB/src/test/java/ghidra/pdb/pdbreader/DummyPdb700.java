@@ -33,10 +33,14 @@ public class DummyPdb700 extends Pdb700 {
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
 	 *  Note: not all values are initialized.  Constructor for a dummy PDB used for testing.
-	 * @param tpiIndexMin int. The IndexMin to set/use for the TypeProgramInterface.
-	 * @param tpiIndexMaxExclusive int. MaxIndex+1 to set/use for the TypeProgramInterface.
-	 * @param ipiIndexMin int. The IndexMin to set/use for the ItemProgramInterface.
-	 * @param ipiIndexMaxExclusive int. MaxIndex+1 to set/use for the ItemProgramInterface.
+	 * @param tpiIndexMin int. The IndexMin to set/use for the
+	 *  {@link AbstractTypeProgramInterface}.
+	 * @param tpiIndexMaxExclusive int. MaxIndex+1 to set/use for the
+	 *  {@link AbstractTypeProgramInterface}.
+	 * @param ipiIndexMin int. The IndexMin to set/use for the
+	 *  {@link AbstractTypeProgramInterface}.
+	 * @param ipiIndexMaxExclusive int. MaxIndex+1 to set/use for the
+	 *  {@link AbstractTypeProgramInterface}.
 	 * @throws IOException Upon file IO seek/read issues.
 	 * @throws PdbException Upon unknown value for configuration or error in processing components.
 	 */

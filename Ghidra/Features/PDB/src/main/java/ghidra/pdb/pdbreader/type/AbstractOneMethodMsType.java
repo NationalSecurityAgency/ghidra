@@ -40,7 +40,8 @@ public abstract class AbstractOneMethodMsType extends AbstractMsType {
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, procedureTypeRecordIndex.get()));
 		pdb.popDependencyStack();
-		if ((attribute.getPropertyVal() == 0x04) || (attribute.getPropertyVal() == 0x06)) {
+		if ((attribute.getProperty() == ClassFieldMsAttributes.Property.INTRO) ||
+			(attribute.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE)) {
 			offsetInVFTableIfIntroVirtual = reader.parseUnsignedIntVal();
 		}
 		else {

@@ -865,8 +865,8 @@ public class RegisterName extends AbstractParsableItem {
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells if there is no register.
+	 * @return True if there is no register.
 	 */
 	public boolean isRegNone() {
 		return (register == 0);

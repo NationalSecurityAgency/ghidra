@@ -56,9 +56,10 @@ public class Pointer16MsType extends AbstractPointerMsType {
 	protected void parseAttributes(PdbByteReader reader) throws PdbException {
 		int attributes1 = reader.parseUnsignedByteVal();
 		int attributes2 = reader.parseUnsignedByteVal();
-		pointerTypeAttribute = attributes1 & 0x001f;
+		pointerType = PointerType.fromValue(attributes1 & 0x001f);
 		attributes1 >>= 5;
-		pointerModeAttribute = attributes1 & 0x0007;
+		pointerMode = PointerMode.fromValue(attributes1 & 0x0007);
+		//pointerMode = attributes1 & 0x0007;
 
 		isFlat = ((attributes2 & 0x0001) == 0x0001);
 		attributes2 >>= 1;

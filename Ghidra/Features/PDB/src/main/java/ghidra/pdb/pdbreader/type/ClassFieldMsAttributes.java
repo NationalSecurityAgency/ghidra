@@ -15,6 +15,9 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.pdb.*;
 
 /**
@@ -22,38 +25,91 @@ import ghidra.pdb.*;
  */
 public class ClassFieldMsAttributes extends AbstractParsableItem {
 
-	private static final int ACCESS_BLANK = 0;
-	private static final int ACCESS_PRIVATE = 1;
-	private static final int ACCESS_PROTECTED = 2;
-	private static final int ACCESS_PUBLIC = 3;
+	public enum Access {
 
-	private static final int PROPERTY_BLANK = 0;
-	private static final int PROPERTY_VIRTUAL = 1;
-	private static final int PROPERTY_STATIC = 2;
-	private static final int PROPERTY_FRIEND = 3;
-	private static final int PROPERTY_INTRO = 4;
-	private static final int PROPERTY_PURE = 5;
-	private static final int PROPERTY_INTRO_PURE = 6;
-	private static final int PROPERTY_RESV = 7;
+		INVALID("", -1), // Our default
+		BLANK("", 0),
+		PRIVATE("private", 1),
+		PROTECTED("protected", 2),
+		PUBLIC("public", 3);
 
-	private static final String[] ACCESS_STRING = new String[4];
-	static {
-		ACCESS_STRING[0] = "";
-		ACCESS_STRING[1] = "private";
-		ACCESS_STRING[2] = "protected";
-		ACCESS_STRING[3] = "public";
+		private static final Map<Integer, Access> BY_VALUE = new HashMap<>();
+		static {
+			for (Access val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		/**
+		 * Emits {@link String} output of this class into the provided {@link StringBuilder}.
+		 * @param builder The {@link StringBuilder} into which the output is created.
+		 */
+		public void emit(StringBuilder builder) {
+			builder.append(this.getClass().getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static Access fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private Access(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
 
 	}
-	private static final String[] PROPERTY_STRING = new String[8];
-	static {
-		PROPERTY_STRING[0] = "";
-		PROPERTY_STRING[1] = "virtual";
-		PROPERTY_STRING[2] = "static";
-		PROPERTY_STRING[3] = "friend";
-		PROPERTY_STRING[4] = "<intro>";
-		PROPERTY_STRING[5] = "<pure>";
-		PROPERTY_STRING[6] = "<intro,pure>";
-		PROPERTY_STRING[7] = "";
+
+	public enum Property {
+
+		INVALID("", -1),
+		BLANK("", 0),
+		VIRTUAL("virtual", 1),
+		STATIC("static", 2),
+		FRIEND("friend", 3),
+		INTRO("<intro>", 4),
+		PURE("<pure>", 5),
+		INTRO_PURE("<intro,pure>", 6),
+		RESERVED("", 7);
+
+		private static final Map<Integer, Property> BY_VALUE = new HashMap<>();
+		static {
+			for (Property val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		/**
+		 * Emits {@link String} output of this class into the provided {@link StringBuilder}.
+		 * @param builder The {@link StringBuilder} into which the output is created.
+		 */
+		public void emit(StringBuilder builder) {
+			builder.append(this.getClass().getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static Property fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private Property(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
 
 	}
 
@@ -62,9 +118,9 @@ public class ClassFieldMsAttributes extends AbstractParsableItem {
 	private boolean cannotBeInherited;
 	private boolean cannotBeConstructed;
 	private boolean compilerGenerateFunctionDoesExist;
-	private boolean cannotBeOverriden;
-	private int accessVal;
-	private int propertyVal;
+	private boolean cannotBeOverridden;
+	private Access access;
+	private Property property;
 
 	//==============================================================================================
 	/**
@@ -78,140 +134,44 @@ public class ClassFieldMsAttributes extends AbstractParsableItem {
 	}
 
 	/**
-	 * Returns the value (index) of the Access Value.
-	 * @return Index of Access Value.
+	 * Returns the {@link Access}.
+	 * @return the {@link Access}.
 	 */
-	public int getAccessVal() {
-		return accessVal;
+	public Access getAccess() {
+		return access;
 	}
 
 	/**
-	 * Returns the value (index) of the Property Value.
-	 * @return Index of Property Value.
+	 * Returns the {@link Property}.
+	 * @return the {@link Property}.
 	 */
-	public int getPropertyVal() {
-		return propertyVal;
+	public Property getProperty() {
+		return property;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isAccessBlank() {
-		return (accessVal == ACCESS_BLANK);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isAccessPrivate() {
-		return (accessVal == ACCESS_PRIVATE);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isAccessProtected() {
-		return (accessVal == ACCESS_PROTECTED);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isAccessPublic() {
-		return (accessVal == ACCESS_PUBLIC);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyBlank() {
-		return (propertyVal == PROPERTY_BLANK);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyVirtual() {
-		return (propertyVal == PROPERTY_VIRTUAL);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyStatic() {
-		return (propertyVal == PROPERTY_STATIC);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyFriend() {
-		return (propertyVal == PROPERTY_FRIEND);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyIntro() {
-		return (propertyVal == PROPERTY_INTRO);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyPure() {
-		return (propertyVal == PROPERTY_PURE);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyIntroPure() {
-		return (propertyVal == PROPERTY_INTRO_PURE);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
-	 */
-	public boolean isPropertyReserved() {
-		return (propertyVal == PROPERTY_RESV);
-	}
-
-	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells whether a compiler generated function exists.
+	 * @return True if a compiler generated function exists.
 	 */
 	public boolean isCompilerGeneratedFunctionDoesExist() {
 		return compilerGenerateFunctionDoesExist;
 	}
 
 	/**
-	 * Tells whether the property is true.
-	 * @return Truth about the property.
+	 * Tells if it cannot be overridden.
+	 * @return True if it cannot be overridden.
 	 */
-	public boolean isCannotBeOverriden() {
-		return cannotBeOverriden;
+	public boolean isCannotBeOverridden() {
+		return cannotBeOverridden;
 	}
 
 	@Override
 	public void emit(StringBuilder builder) {
-		builder.append(ACCESS_STRING[accessVal]);
-		if ((accessVal != 0) && (propertyVal != 0)) {
+		builder.append(access);
+		if ((access != Access.BLANK) && (property != Property.BLANK)) {
 			builder.append(" ");
 		}
-		builder.append(PROPERTY_STRING[propertyVal]);
+		builder.append(property);
 		if (compilerGenerateFunctionDoesNotExist || cannotBeInherited || cannotBeConstructed) {
 			DelimiterState ds = new DelimiterState("<", ", ");
 			builder.append(ds.out(compilerGenerateFunctionDoesNotExist, "pseudo"));
@@ -222,9 +182,9 @@ public class ClassFieldMsAttributes extends AbstractParsableItem {
 	}
 
 	private void processAttributes(int attributes) {
-		accessVal = (attributes & 0x0003);
+		access = Access.fromValue(attributes & 0x0003);
 		attributes >>= 2;
-		propertyVal = (attributes & 0x0007);
+		property = Property.fromValue(attributes & 0x0007);
 		attributes >>= 3;
 		compilerGenerateFunctionDoesNotExist = ((attributes & 0x0001) == 0x0001);
 		attributes >>= 1;
@@ -234,7 +194,7 @@ public class ClassFieldMsAttributes extends AbstractParsableItem {
 		attributes >>= 1;
 		compilerGenerateFunctionDoesExist = ((attributes & 0x0001) == 0x0001);
 		attributes >>= 1;
-		cannotBeOverriden = ((attributes & 0x0001) == 0x0001);
+		cannotBeOverridden = ((attributes & 0x0001) == 0x0001);
 	}
 
 }

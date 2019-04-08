@@ -41,7 +41,7 @@ public class MethodRecord16Ms extends AbstractMethodRecordMs {
 	protected void parseFields(PdbByteReader reader) throws PdbException {
 		attributes = new ClassFieldMsAttributes(reader);
 		procedureRecordNumber.parse(reader);
-		if (attributes.getPropertyVal() == 4) {
+		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) {
 			optionalOffset = reader.parseUnsignedIntVal();
 		}
 		else {

@@ -50,7 +50,7 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 		builder.append(attributes);
 		builder.append(": ");
 		builder.append(pdb.getTypeRecord(procedureRecordNumber.get()));
-		if (attributes.getPropertyVal() == 4) {
+		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) {
 			builder.append(",");
 			builder.append(optionalOffset);
 		}

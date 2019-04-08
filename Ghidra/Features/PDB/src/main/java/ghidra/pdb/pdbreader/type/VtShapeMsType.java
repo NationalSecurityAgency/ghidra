@@ -61,13 +61,22 @@ public class VtShapeMsType extends AbstractMsType {
 		return PDB_ID;
 	}
 
+	/**
+	 * Tells whether the the {@link VtShapeDescriptorMsProperty} is present.
+	 * @param descriptor the {@link VtShapeDescriptorMsProperty} to check.
+	 * @return True if the {@link VtShapeDescriptorMsProperty} is present.
+	 */
+	public boolean hasDescriptor(VtShapeDescriptorMsProperty descriptor) {
+		return descriptorList.contains(descriptor);
+	}
+
 	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		// No documented API for output.
 		DelimiterState ds = new DelimiterState("", ",");
 		builder.append("vtshape: {");
 		for (VtShapeDescriptorMsProperty descriptor : descriptorList) {
-			builder.append(ds.out(true, descriptor.toString()));
+			builder.append(ds.out(true, descriptor));
 		}
 		builder.append(")");
 	}

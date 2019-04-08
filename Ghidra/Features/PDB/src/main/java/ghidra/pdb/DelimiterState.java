@@ -44,6 +44,20 @@ public class DelimiterState {
 
 	/**
 	 * Method that adds delimiter information (based on the state to the {@link String}
+	 *  representation of the input object.  The boolean argument is available to give the
+	 *  caller a single-line way of calling the method in a conditional sense (i.e., eliminates
+	 *  the need for a conditional block wrapping the call).
+	 * @param output True: act as though called; false: act as though call was not made.
+	 * @param obj {@link Object} to be output.
+	 * @return {@link String} result that contains the {@link AbstractParsableItem} and any
+	 *  delimiter output based on the state.
+	 */
+	public String out(boolean output, Object obj) {
+		return out(output, String.valueOf(obj));
+	}
+
+	/**
+	 * Method that adds delimiter information (based on the state to the {@link String}
 	 *  representation of the input argument.  The boolean argument is available to give the
 	 *  caller a single-line way of calling the method in a conditional sense (i.e., eliminates
 	 *  the need for a conditional block wrapping the call).
