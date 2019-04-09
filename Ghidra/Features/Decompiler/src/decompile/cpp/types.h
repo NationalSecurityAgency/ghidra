@@ -101,6 +101,59 @@ typedef char int1;
 typedef uint8 uintp;
 #endif
 
+#if defined (__linux__) && defined (__powerpc64__)
+#ifdef __LITTLE_ENDIAN__
+#define HOST_ENDIAN 0
+#else
+#define HOST_ENDIAN 1
+#endif
+typedef unsigned int uintm;
+typedef int intm;
+typedef unsigned long uint8;
+typedef long int8;
+typedef unsigned int uint4;
+typedef int int4;
+typedef unsigned short uint2;
+typedef short int2;
+typedef unsigned char uint1;
+typedef signed char int1;
+typedef uint8 uintp;
+#endif
+
+#if defined (__linux__) && defined (__aarch64__)
+#ifdef __ARM_BIG_ENDIAN
+#define HOST_ENDIAN 1
+#else
+#define HOST_ENDIAN 0
+#endif
+typedef unsigned int uintm;
+typedef int intm;
+typedef unsigned long uint8;
+typedef long int8;
+typedef unsigned int uint4;
+typedef int int4;
+typedef unsigned short uint2;
+typedef short int2;
+typedef unsigned char uint1;
+typedef signed char int1;
+typedef uint8 uintp;
+#endif
+
+#if defined (__linux__) && defined (__riscv) && (__riscv_xlen == 64)
+#define HOST_ENDIAN 0
+typedef unsigned int uintm;
+typedef int intm;
+typedef unsigned long uint8;
+typedef long int8;
+typedef unsigned int uint4;
+typedef int int4;
+typedef unsigned short uint2;
+typedef short int2;
+typedef unsigned char uint1;
+typedef signed char int1;
+typedef uint8 uintp;
+#endif
+
 #if defined(_WINDOWS)
 
 #if defined(_WIN64)
