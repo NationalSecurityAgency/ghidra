@@ -5659,19 +5659,27 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   ct = op->getIn(1)->getType();
   if (ct->getMetatype() != TYPE_PTR) return 0;
   ct = ((TypePointer *)ct)->getPtrTo();
-  if (ct->getSize()<=movesize) {
-    //    if ((ct->getSize() < movesize)||(ct->getMetatype() != TYPE_STRUCT))
-      return 0;
-    // If we reach here (ct->getSize() == movesize) && (ct->getMetatype() == TYPE_STRUCT)
-    // So the LOAD/STORE encompasses the entire structure. By not returning here, if the first
-    // field of the struct is the whole struct, we display the field reference
-  }
   if (ct->getMetatype() == TYPE_STRUCT) {
+    if (ct->getSize() < movesize)
+      return 0;				// Moving something bigger than entire structure
     sub_ct = ct->getSubType(0,&offset); // Get field at offset 0
     if (sub_ct==(Datatype *)0) return 0;
     if (sub_ct->getSize() < movesize) return 0;	// Subtype is too small to handle LOAD/STORE
+//    if (ct->getSize() == movesize) {
+      // If we reach here, move is same size as the structure, which is the same size as
+      // the first element.
+//    }
   }
-  else if (ct->getMetatype() != TYPE_ARRAY)
+  else if (ct->getMetatype() == TYPE_ARRAY) {
+    if (ct->getSize() < movesize)
+      return 0;				// Moving something bigger than entire array
+    if (ct->getSize() == movesize) {	// Moving something the size of entire array
+      if (((TypeArray *)ct)->numElements() != 1)
+	return 0;
+      // If we reach here, moving something size of single element. Assume this is normal access.
+    }
+  }
+  else
     return 0;
 
   newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
