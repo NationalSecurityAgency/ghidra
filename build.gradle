@@ -1,6 +1,8 @@
 apply plugin: 'eclipse'
-apply from: 'gradleScripts/eclipseFilters.gradle'
-apply from: "gradleScripts/eclipseLauncher.gradle"
+
+apply from: 'gradle/root/eclipse.gradle'
+apply from: "gradle/support/eclipseLauncher.gradle"
+
 
 
 /***************************************************************************************
@@ -41,14 +43,7 @@ allprojects {
  *  load properties from Ghidra/application.properties file
  *********************************************************************************/
 
-apply from: "gradleScripts/loadApplicationProperties.gradle"
-
-/*********************************************************************************
- *  Set up the configurations and source sets for java projects
- *********************************************************************************/
-
-apply from: "gradleScripts/setupJava.gradle"
-apply from: "gradleScripts/setupJacoco.gradle" // Has a dependecy on ext vars in setupJava.gradle
+apply from: "gradle/support/loadApplicationProperties.gradle"
 
 /****************************************************************************
  * Create a set containing all the platforms we need when building native
@@ -71,15 +66,12 @@ project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
  * 		Eventually distribution.gradle will be removed entirely, but it is included
  *		here for the time being for those who need it.
  *********************************************************************************/
-
-apply from: "gradleScripts/ip.gradle"						// adds tasks for building ip notices
-apply from: 'gradleScripts/distribution.gradle'				// adds zip tasks
-//apply from: 'gradleScripts/diagnostics/findbugs.gradle'		// adds findbugs tasks
-apply from: 'gradleScripts/usage.gradle'						// adds task documentation
-apply from: "gradleScripts/prepDev.gradle"					// adds prepDev task for each subproject
-apply from: "gradleScripts/svg.gradle"						// adds task to process svg files
-apply from: "gradleScripts/test.gradle"                     // adds tasks for running tests
-apply from: "gradleScripts/jacoco.gradle"                   // adds tasks for java code coverage
+apply from: "gradle/root/test.gradle"                     // adds tasks for running tests
+apply from: "gradle/root/prepDev.gradle"					// adds prepDev task for each subproject
+apply from: 'gradle/root/distribution.gradle'				// adds zip tasks
+apply from: 'gradle/root/usage.gradle'						// adds task documentation
+apply from: "gradle/root/svg.gradle"						// adds task to process svg files
+apply from: "gradle/root/jacoco.gradle"                   // adds tasks for java code coverage
 
 
 apply plugin: 'base'
@@ -97,13 +89,7 @@ clean {
  * Returns true if the platform is a linux machine.
  *********************************************************************************/
 def isLinux(String platformName) {
-
-	if (platformName.startsWith("linux")) {
-		return true
-	}
-	else {
-		return false
-	}
+	return platformName.startsWith("linux")
 }
 
 
@@ -111,13 +97,7 @@ def isLinux(String platformName) {
  * Returns true if the platform is a mac
  *********************************************************************************/
 def isMac(String platformName) {
-
-	if (platformName.startsWith("osx")) {
-		return true
-	}
-	else {
-		return false
-	}
+	return platformName.startsWith("osx")
 }
 
 
@@ -125,13 +105,7 @@ def isMac(String platformName) {
  * Returns true if the platform is a Windows machine.
  *********************************************************************************/
 def isWindows(String platformName) {
-
-	if (platformName.startsWith("win")) {
-		return true
-	}
-	else {
-		return false
-	}
+	return platformName.startsWith("win")
 }
 
 /******************************************************************************************
@@ -289,7 +263,6 @@ String getCurrentPlatformName() {
  *
  *********************************************************************************/
 List<String> getExternalDependencies(Project project) {
-
 	List<String> list = new ArrayList<String>()
 
 	// for each dependency in the compile configuration
@@ -330,11 +303,13 @@ String generateLibraryDependencyMapping() {
 	
 	libsFile.withWriter { out ->
 		subprojects { p ->
-			List<String> libs = getExternalDependencies(p);
-			if (libs != null) {
-				out.println "Module: $p.name"
-				libs.each { path ->
-					out.println "\t$path"
+			p.plugins.withType(JavaPlugin) {
+				List<String> libs = getExternalDependencies(p);
+				if (libs != null) {
+					out.println "Module: $p.name"
+					libs.each { path ->
+						out.println "\t$path"
+					}
 				}
 			}
 		}
@@ -342,12 +317,5 @@ String generateLibraryDependencyMapping() {
 	return libsFile.absolutePath
 }
 
-task allEclipse {
-	dependsOn ':eclipse'
-}
-
-allprojects { proj ->
-	if (proj != rootProject) {
-		allEclipse.dependsOn ":$proj.name:eclipse"
-	}
+task allSleighCompile {
 }

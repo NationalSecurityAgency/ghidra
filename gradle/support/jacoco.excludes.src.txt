@@ -51,6 +51,7 @@ ghidra/HelpAdapter*
 ghidra/ClassSearcherStatusReportingTaskMonitor*
 ghidra/app/plugin/debug/**
 
+
 // Old/deprecated APIs
 ghidra/app/program/database/oldfunction/**
 ghidra/feature/vt/api/stringable/deprecated/**

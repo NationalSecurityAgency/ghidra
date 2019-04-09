@@ -1,11 +1,12 @@
-/*
-	This gradle file is a 'script plugin'.  That is, a script that provides features 
-	meant to be used by other build files via an 'apply' call like so:
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if they 
+	have content for the Ghidra help system. A gradle project can include help support by adding
+	the following to its build.gradle file.
 	
-		apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+		apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 		
-	This call will pull in the tasks in this file.   Clients can register dependencies
-	on other help modules by using the 'helpPath' configuration, like so:
+	Clients can register dependencies on other help modules by using the 
+	'helpPath' configuration, like so:
 	
 		helpPath project(path: ":Base", configuration: 'helpPath')
 		
@@ -15,7 +16,9 @@
 	the generated jar file.  This allows future clients of a given help module to get 
 	the jar file path of that help module's output.
 	
-*/
+ *****************************************************************************************/
+// The help modules must be configured first so that we can reference its runtime classpath
+
 configurations {
 	// The Help Build System takes optional paths to resolve dependencies.  Build files
 	// that use this 'script plugin' may put project paths into this variable. 
@@ -42,6 +45,7 @@ sourceSets {
 
 dependencies {
 	helpIndexCompile "javax.help:javahelp:2.0.05"
+	helpIndexCompile project(path: ':Help', configuration: 'archives')
 }
 
 // Task for calling the java help indexer, which creates a searchable index of the 
@@ -49,7 +53,7 @@ dependencies {
 task indexHelp(type: JavaExec) {	
 
 	group "private"
-	description "indexes the helps files for this module.  [gradleScripts/buildHelp.gradle]"
+	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
 
 
 	File helpRootDir = file('src/main/help/help')		
@@ -103,19 +107,14 @@ task indexHelp(type: JavaExec) {
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 task buildHelp(type: JavaExec, dependsOn: indexHelp) {
-
 	group rootProject.GHIDRA_GROUP
-	description "      Builds the help for this module.  [gradleScripts/buildHelp.gradle]\n"	
-
+	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"	
 
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
 
 	inputs.dir helpRootDir
 	outputs.dir outputDir
-
-	// this modules runtime classpath (contains jhall.jar)
-	classpath = project(':Help').sourceSets.main.runtimeClasspath		
 
 	main = 'help.GHelpBuilder'		
 	
@@ -127,6 +126,8 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 	// args '-debug' // print debug info
 
 	doFirst {		
+		// this modules runtime classpath (contains jhall.jar)
+		classpath project(':Help').sourceSets.main.runtimeClasspath		
 	
 		configurations.helpPath.each { 
 			args "-hp"
@@ -147,5 +148,9 @@ jar {
 }
 
 // build the help whenever this module's jar file is built
-jar.dependsOn 'buildHelp'		
+jar.dependsOn buildHelp		
 
+
+// make sure generated help directories exist during prepdev so that the directories are created and 
+// eclipse doesn't complain about missing src directories.
+rootProject.prepDev.dependsOn buildHelp

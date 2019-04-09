@@ -1,4 +1,15 @@
 /*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if they
+	have processor definitions.
+	
+	A gradle project can add native code support by including the following it its build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+ *****************************************************************************************/
+
+
+
+/*****************************************************************************************
  *
  *  Create a configuration so the a dependency can be declared on the the software modeling
  *  project which is where the sleigh compiler java code lives.  This will be used to
@@ -35,7 +46,7 @@ task saveSleighArgs {
 	}
 }
 
-prepDev.dependsOn(saveSleighArgs)
+rootProject.prepDev.dependsOn(saveSleighArgs)
 
 /*****************************************************************************************
  *
@@ -44,26 +55,28 @@ prepDev.dependsOn(saveSleighArgs)
  *****************************************************************************************/
 task writeSleighDevBuild {
 	def templateFilePath = project(':BuildFiles').projectDir.toString() + "/sleighDevBuild.template"
+
 	doLast {
 		// Generate build.xml with injected classpath for running sleigh compiler
+		def sleighDevClasspath = project(':SoftwareModeling').sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
 		copy {
 			into "data"
 			from (templateFilePath) {
 				rename { "build.xml" }
-				expand ( [ 'gradleSleighDevClasspath': project(':SoftwareModeling').sleighDevClasspath ] )
+				expand ( [ 'gradleSleighDevClasspath': sleighDevClasspath ] )
 			}
 		}
 	}
 }
 
-prepDev.dependsOn(writeSleighDevBuild)
+rootProject.prepDev.dependsOn(writeSleighDevBuild)
 
 /*****************************************************************************************
  *
- *  Write sleigh build.xml file for each language module into assembleCommon
+ *  Write sleigh build.xml file for each language module into assembleDistribution
  *
  *****************************************************************************************/
-rootProject.assembleCommon { 
+rootProject.assembleDistribution { 
 	into (getZipPath(this.project)  + "/data") {
 		from (rootProject.projectDir.toString() + "/GhidraBuild/BuildFiles/sleighDistBuild.template") {
 	        rename { "build.xml" }
@@ -97,26 +110,12 @@ task sleighCompile (type: JavaExec) {
 
 // The task that copies the common files to the distribution folder must depend on
 // the sleigh tasks before executing.
-rootProject.assembleCommon.dependsOn(sleighCompile)
-rootProject.assembleCommon.dependsOn(saveSleighArgs)
+rootProject.assembleDistribution.dependsOn sleighCompile
+rootProject.assembleDistribution.dependsOn saveSleighArgs
 
-//     For all tasks of type:Test (i.e., integrationTest, cunitTest, etc.), add a task dependency to 
-// sleighCompile.  The sleighCompile task inputs and outputs are defined such that the *.slaspec 
-// files will only be compiled once, in other words, the up-to-date checks work ok in the 
-// sleighCompile task.  To learn more, visit: 
-// https://docs.gradle.org/current/userguide/more_about_tasks.html#sec:up_to_date_checks
-//     This task dependency is needed because many tests rely on the language 
-// modules as seen in the use of ghidra.test.ToyProgramBuilder.
-//     The tasks of type:Test do not know about sleighCompile during their configuration phase, so the 
-// dependency must be done in this gradle file.
-rootProject.subprojects.findAll { subproject ->
-	boolean isSupporProject = subproject.findProperty("isSupportProject") ?: false;
-	if (!isSupporProject) {
-		subproject.tasks.withType(Test).all {		
-			it.dependsOn(sleighCompile)
-		}
-	}
-}
+// Add in this projects sleighCompile to the allSleighCompile task
+rootProject.allSleighCompile.dependsOn sleighCompile
+rootProject.allSleighCompile.dependsOn saveSleighArgs
 
 /*****************************************************************************************
  *
@@ -125,7 +124,7 @@ rootProject.subprojects.findAll { subproject ->
  *****************************************************************************************/
 task cleanSleigh  {
 	group rootProject.GHIDRA_GROUP
-	description "Removes all the compile sleigh language files (*.sla).   [gradleScripts/processUtils.gradle]\n"
+	description "Removes all the compile sleigh language files (*.sla).   [gradle/processProject.gradle]\n"
  	doLast {
 		def deleteTree = fileTree(dir: "data/languages", include: "*.sla")
 		deleteTree.each { File file ->
@@ -151,7 +150,3 @@ sleighCompile.outputs.files (taskOutputs)
 
 // define the sleigh compile inputs to saveSleighArgs to limit task creation to language modules
 saveSleighArgs.inputs.files (taskInputs)
-
-def isSupportModule(Project p) {
-	return p.findProperty("isSupportProject") ?: false
-}

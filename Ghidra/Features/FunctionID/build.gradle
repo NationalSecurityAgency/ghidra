@@ -1,8 +1,12 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features FunctionID'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
 
 dependencies {
 	compile project(":Base")
@@ -172,11 +176,11 @@ task buildFidDocumentationHtml(type: Exec) {
 	}
 }
 
-// Ensure that unpacked Fid Db's are included in common
-rootProject.assembleCommon.dependsOn(unpackFidDatabases)
+// Ensure that unpacked Fid Db's are included
+rootProject.assembleDistribution.dependsOn(unpackFidDatabases)
 
 // Ensure that Fidb's are unpacked in development
-prepDev.dependsOn unpackFidDatabases
+rootProject.prepDev.dependsOn unpackFidDatabases
 
 //********************************
 // Packed Database Unpack Methods

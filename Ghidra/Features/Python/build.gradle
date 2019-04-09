@@ -1,7 +1,12 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features Python'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
 
 def JYTHON = "org.python:jython-standalone:2.7.1"
 def JYTHON_DIR = "jython-2.7.1"
@@ -40,6 +45,6 @@ task pythonSrcCopy(type: Copy) {
 }
 
 // Ensure that Jython is usable in development xx
-prepDev.dependsOn jythonUnpack
+rootProject.prepDev.dependsOn jythonUnpack
 jar.dependsOn jythonUnpack
 jar.dependsOn pythonSrcCopy

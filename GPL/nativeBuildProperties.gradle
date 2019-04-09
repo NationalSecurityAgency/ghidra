@@ -110,7 +110,7 @@ def isNativeBinaryMakeTask(Task task, String platform) {
  ******************************************************************************************/
 tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for given platform") { String taskName ->
 
-	if (taskName.startsWith("buildNatives_") && !project.hasProperty('EXCLUDE_FROM_NATIVE_BUILD')) {
+	if (taskName.startsWith("buildNatives_")) {
 		String platform = taskName - "buildNatives_"
 		
 		task(taskName)  { myTask ->
@@ -179,4 +179,26 @@ tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for 
 			}	
 		}
 	}
+}
+
+/*****************************************************************************************
+ * The following block of code changes the output directory for native builds
+ * to <projectDir>/build/os/<platform>/<executable>  ?? is there a better way to do this?
+ ****************************************************************************************/
+gradle.taskGraph.whenReady {
+		def p = this.project
+		p.tasks.withType(LinkExecutable).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
+		p.tasks.withType(LinkSharedLibrary).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
 }

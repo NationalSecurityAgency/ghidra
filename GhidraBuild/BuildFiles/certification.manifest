@@ -1,8 +1,4 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
-JsonDoclet/.classpath||GHIDRA||||END|
-JsonDoclet/.project||GHIDRA||||END|
 JsonDoclet/Module.manifest||GHIDRA||||END|
 JsonDoclet/build.gradle||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
