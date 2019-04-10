@@ -19,7 +19,6 @@
 # **   migrate-all - migrate all named repositories to index data storage
 # ***********************************************************  
 
-UMASK=027
 SUDO=sudo
 
 # Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
@@ -45,9 +44,8 @@ fi
 OWNER="$(grep '^wrapper.app.account=' "${CONFIG}" | sed -e 's/^.*=\(.*\)\s*.*$/\1/')"
 
 if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
-	umask $UMASK
 	VMARGS="-DUserAdmin.invocation=$(basename "${SCRIPT_FILE}") -DUserAdmin.config=\"${CONFIG}\""
-	. "${SCRIPT_DIR}"/../support/launch.sh fg svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "$@"
+	"${SCRIPT_DIR}"/../support/launch.sh fg svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "$@"
 else
  	echo "Running svrAdmin with $SUDO as ${OWNER} ..."
  	$SUDO -u $OWNER "$0" "${ARGS[@]}"

@@ -99,17 +99,13 @@ public class ServerAdmin implements GhidraLaunchable {
 
 		File userFile = new File(serverDir, UserManager.USER_PASSWORD_FILE);
 		if (!serverDir.isDirectory() || !userFile.isFile()) {
-			System.err.println("Invalid Ghidra server directory specified: " + serverDir);
+			System.err.println("Invalid Ghidra server directory!");
 			System.exit(-1);
 		}
 
 		File cmdDir = new File(serverDir, UserAdmin.ADMIN_CMD_DIR);
-		if (!cmdDir.exists()) {
-			System.err.println("Insufficient privilege or server not started.");
-			System.exit(-1);
-		}
-		if (!cmdDir.isDirectory()) {
-			System.err.println("Bad server directory: " + serverDir);
+		if (!cmdDir.isDirectory() || !cmdDir.canWrite()) {
+			System.err.println("Insufficient privilege or server not started!");
 			System.exit(-1);
 		}
 

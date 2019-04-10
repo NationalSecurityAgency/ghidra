@@ -13,7 +13,7 @@ setlocal
 REM Get parent of current folder
 set SCRIPT_DIR=%~dp0
 
-set GHIDRA_DIR=%SCRIPT_DIR%Ghidra
+set GHIDRA_DIR=%SCRIPT_DIR%..\Ghidra
 set OS_DIR=os
 
 REM Production Environment
