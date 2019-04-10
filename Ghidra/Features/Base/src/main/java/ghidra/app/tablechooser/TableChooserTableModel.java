@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitor;
 public class TableChooserTableModel extends AddressBasedTableModel<AddressableRowObject> {
 
 	// we maintain this list so that any future reload operations can load the original user data
-	// (this downside of this is that two lists are maintained)
+	// (the downside of this is that two lists are maintained)
 	Set<AddressableRowObject> myPrivateList = new HashSet<AddressableRowObject>();
 
 	public TableChooserTableModel(String title, ServiceProvider serviceProvider, Program program,

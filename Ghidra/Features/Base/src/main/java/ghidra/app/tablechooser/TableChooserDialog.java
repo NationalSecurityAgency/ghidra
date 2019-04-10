@@ -51,7 +51,7 @@ import resources.ResourceManager;
  * to perform the action defined by the executor.
  * 
  * <p>Each button press will use the selected items as the items to be processed.  While the 
- * items are schedule to be processed, they will still be in the table, painted light gray.  
+ * items are scheduled to be processed, they will still be in the table, painted light gray.  
  * Attempting to reschedule any of these pending items will have no effect.   Each time the 
  * button is pressed, a new {@link SwingWorker} is created, which will put the processing into
  * a background thread.   Further, by using multiple workers, the work will be performed in
@@ -115,7 +115,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			e -> setOkEnabled(table.getSelectedRowCount() > 0));
 
 		GhidraTableFilterPanel<AddressableRowObject> filterPanel =
-			new GhidraTableFilterPanel<AddressableRowObject>(table, model);
+			new GhidraTableFilterPanel<>(table, model);
 		panel.add(tablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
 		return panel;
@@ -270,7 +270,7 @@ public class TableChooserDialog extends DialogComponentProvider
 
 	private List<AddressableRowObject> doProcessRowObjects(List<AddressableRowObject> rowObjects,
 			TaskMonitor monitor) {
-		List<AddressableRowObject> deleted = new ArrayList<AddressableRowObject>();
+		List<AddressableRowObject> deleted = new ArrayList<>();
 		for (AddressableRowObject rowObject : rowObjects) {
 			if (monitor.isCancelled()) {
 				break;
