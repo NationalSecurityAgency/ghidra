@@ -15,18 +15,29 @@
  */
 package ghidra.graph.algo;
 
-import java.util.List;
+/**
+ * An interface and state values used to follow the state of vertices as they are processed by 
+ * algorithms
+ *
+ * @param <V> the vertex type
+ */
+public class GraphAlgorithmStatusListener<V> {
 
-import ghidra.graph.GDirectedGraph;
-import ghidra.graph.GEdge;
-import ghidra.util.datastruct.Accumulator;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
+	public enum STATUS {
+		WAITING, SCHEDULED, EXPLORING, BLOCKED, IN_PATH,
+	}
 
-public interface FindPathsAlgorithm<V, E extends GEdge<V>> {
+	protected int totalStatusChanges;
 
-	public void findPaths(GDirectedGraph<V, E> g, V start, V end, Accumulator<List<V>> accumulator,
-			TaskMonitor monitor) throws CancelledException;
+	public void statusChanged(V v, STATUS s) {
+		// stub
+	}
 
-	public void setStatusListener(GraphAlgorithmStatusListener<V> listener);
+	public void finished() {
+		// stub
+	}
+
+	public int getTotalStatusChanges() {
+		return totalStatusChanges;
+	}
 }
