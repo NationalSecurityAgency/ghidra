@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
@@ -144,31 +145,31 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		lengthField.setChangeListener(e -> lengthChanged());
 		addrField.addChangeListener(ev -> addrChanged());
 
-		JLabel readLabel = new JLabel("Read");
+		JLabel readLabel = DockingUtils.createNonHtmlLabel("Read");
 		readCB = new JCheckBox();
 		readCB.setName("Read");
 
-		JLabel writeLabel = new JLabel("Write");
+		JLabel writeLabel = DockingUtils.createNonHtmlLabel("Write");
 		writeCB = new JCheckBox();
 		writeCB.setName("Write");
 
-		JLabel executeLabel = new JLabel("Execute");
+		JLabel executeLabel = DockingUtils.createNonHtmlLabel("Execute");
 		executeCB = new JCheckBox();
 		executeCB.setName("Execute");
 
-		JLabel volatileLabel = new JLabel("Volatile");
+		JLabel volatileLabel = DockingUtils.createNonHtmlLabel("Volatile");
 		volatileCB = new JCheckBox();
 		volatileCB.setName("Volatile");
 
 		JPanel topPanel = new JPanel(new PairLayout(4, 10, 150));
 		topPanel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
-		topPanel.add(new JLabel("Block Name:", SwingConstants.RIGHT));
+		topPanel.add(DockingUtils.createNonHtmlLabel("Block Name:", SwingConstants.RIGHT));
 		topPanel.add(nameField);
-		topPanel.add(new JLabel("Start Addr:", SwingConstants.RIGHT));
+		topPanel.add(DockingUtils.createNonHtmlLabel("Start Addr:", SwingConstants.RIGHT));
 		topPanel.add(addrField);
-		topPanel.add(new JLabel("Length:", SwingConstants.RIGHT));
+		topPanel.add(DockingUtils.createNonHtmlLabel("Length:", SwingConstants.RIGHT));
 		topPanel.add(lengthField);
-		topPanel.add(new JLabel("Comment:", SwingConstants.RIGHT));
+		topPanel.add(DockingUtils.createNonHtmlLabel("Comment:", SwingConstants.RIGHT));
 		topPanel.add(commentField);
 
 		JPanel execPanel = new JPanel();
@@ -234,7 +235,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		nameField.setText("");
 		addrField.setAddress(model.getStartAddress());
 
-		lengthField.setValue(new Long(0));
+		lengthField.setValue(Long.valueOf(0));
 		model.setLength(0);
 		commentField.setText("");
 
@@ -243,7 +244,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		executeCB.setSelected(false);
 		volatileCB.setSelected(false);
 
-		initialValueField.setValue(new Long(0));
+		initialValueField.setValue(Long.valueOf(0));
 		model.setBlockType(MemoryBlockType.DEFAULT);
 		model.setIsInitialized(initializedRB.isSelected());
 		model.setInitialValue(0);
@@ -411,7 +412,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private void createInitializedPanel() {
-		initialValueLabel = new JLabel("Initial Value");
+		initialValueLabel = DockingUtils.createNonHtmlLabel("Initial Value");
 		initialValueField = new RegisterField(8, null, false);
 		initialValueField.setName("Initial Value");
 		initialValueField.setEnabled(false);
@@ -427,7 +428,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JPanel createAddressPanel() {
 		JPanel addressPanel = new JPanel(new PairLayout());
 
-		JLabel addrToAddLabel = new JLabel("Source Addr:");
+		JLabel addrToAddLabel = DockingUtils.createNonHtmlLabel("Source Addr:");
 		baseAddrField = new AddressInput();
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");

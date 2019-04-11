@@ -26,8 +26,7 @@ import java.util.Scanner;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.widgets.dialogs.ObjectChooserDialog;
 import generic.jar.ResourceFile;
 import generic.util.WindowUtilities;
@@ -73,7 +72,7 @@ public class AskPdbUrlDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		label = new JLabel(message);
+		label = DockingUtils.createNonHtmlLabel(message);
 		panel.add(label, BorderLayout.WEST);
 
 		textField = new JTextField(40);

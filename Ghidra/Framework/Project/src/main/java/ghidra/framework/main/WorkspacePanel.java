@@ -23,6 +23,7 @@ import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.dialogs.InputDialog;
@@ -66,6 +67,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		// workspace becomes active
 		workspaceModel = new DefaultComboBoxModel<>();
 		workspaceChooser = new JComboBox<>(workspaceModel);
+		DockingUtils.turnOffHTMLRendering(workspaceChooser);
 		workspaceChooser.addItemListener(e -> {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				chooseWorkspace((String) workspaceModel.getSelectedItem());

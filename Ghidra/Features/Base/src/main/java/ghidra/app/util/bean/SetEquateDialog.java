@@ -28,6 +28,7 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.context.ListingActionContext;
@@ -222,13 +223,13 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 */
 	protected JPanel buildMainPanel() {
 
-		titleLabel = new JLabel("Possible Matches");
+		titleLabel = DockingUtils.createNonHtmlLabel("Possible Matches");
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
 		//long value = scalar.getSignedValue();
 		String labelText = "Scalar Value:  " + scalar.toString(16, false, true, "0x", "") + " (" +
 			scalar.toString(10, false, true, "", "") + ")";
-		JLabel label = new JLabel(labelText);
+		JLabel label = DockingUtils.createNonHtmlLabel(labelText);
 		label.setName("EquateField");
 		applyToCurrent = new JRadioButton("Current location", true);
 		applyToCurrent.setName("applyToCurrent");
@@ -315,7 +316,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		JPanel scopePanel = new JPanel(new HorizontalLayout(2));
 		scopePanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
 
-		scopePanel.add(new JLabel("Apply To: "));
+		scopePanel.add(DockingUtils.createNonHtmlLabel("Apply To: "));
 		scopePanel.add(applyToCurrent);
 		scopePanel.add(applyToSelection);
 		scopePanel.add(applyToAll);
@@ -323,7 +324,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		JPanel optionsPanel = new JPanel(new HorizontalLayout(2));
 		optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
-		optionsPanel.add(new JLabel("Options: "));
+		optionsPanel.add(DockingUtils.createNonHtmlLabel("Options: "));
 		optionsPanel.add(overwriteExistingEquates);
 
 		JPanel southPanel = new JPanel(new VerticalLayout(0));

@@ -90,11 +90,11 @@ public class AddressTypeOverviewColorService
 		AddressType addressType = getAddressType(address);
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("<b>");
-		buffer.append(getName());
+		buffer.append(HTMLUtilities.friendlyEncodeHTML(getName()));
 		buffer.append("</b>\n");
 		buffer.append(addressType.getDescription());
 		buffer.append(" (");
-		buffer.append(getBlockName(address));
+		buffer.append(HTMLUtilities.friendlyEncodeHTML(getBlockName(address)));
 		buffer.append(" ");
 		buffer.append(address);
 		buffer.append(" )");

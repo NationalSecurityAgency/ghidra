@@ -160,7 +160,7 @@ public class PlaceholderSetTest extends AbstractGenericTest {
 	}
 
 	private class TestProvider extends ComponentProvider {
-		JLabel label = new JLabel();
+		JLabel label = DockingUtils.createNonHtmlLabel();
 
 		public TestProvider() {
 			super(null, null, null);

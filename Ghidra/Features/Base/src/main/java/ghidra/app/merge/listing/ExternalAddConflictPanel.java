@@ -21,6 +21,7 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
@@ -253,7 +254,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		myTitlePanel = new TitledPanel(MergeConstants.MY_TITLE, myPanel, 5);
 
 		latestTitlePanel.addTitleComponent(new ShowHeaderButton());
-		myTitlePanel.addTitleComponent(new JLabel(new EmptyIcon(22, 22)));
+		myTitlePanel.addTitleComponent(DockingUtils.createNonHtmlLabel(new EmptyIcon(22, 22)));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setResizeWeight(0.5);

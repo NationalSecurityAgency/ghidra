@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
+import docking.DockingUtils;
 import docking.StatusBarSpacer;
 import docking.ToolTipManager;
 import docking.help.Help;
@@ -50,7 +51,7 @@ public class LogPanel extends JPanel implements LogListener {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 2));
 		button = new EmptyBorderButton(ResourceManager.loadImage("images/monitor.png"));
-		label = new JLabel();
+		label = DockingUtils.createNonHtmlLabel();
 		label.setName("Details");
 		defaultColor = label.getForeground();
 		panel.add(label, BorderLayout.CENTER);

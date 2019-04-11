@@ -24,6 +24,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.table.*;
@@ -176,7 +177,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			enableOptions(model);
 		});
 
-		memPanel.add(new JLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
+		memPanel.add(DockingUtils.createNonHtmlLabel("Memory Blocks", SwingConstants.CENTER),
+			BorderLayout.NORTH);
 		memPanel.add(memPane, BorderLayout.CENTER);
 
 		return memPanel;

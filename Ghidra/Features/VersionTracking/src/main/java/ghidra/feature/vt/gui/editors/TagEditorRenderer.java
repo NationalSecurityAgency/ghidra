@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +16,6 @@
 package ghidra.feature.vt.gui.editors;
 
 import static ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action.ADD;
-import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState;
-import ghidra.feature.vt.gui.editors.TagEditorDialog.TagStateListModel;
-import ghidra.util.exception.AssertException;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -27,6 +23,10 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
+import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState;
+import ghidra.feature.vt.gui.editors.TagEditorDialog.TagStateListModel;
+import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
 public class TagEditorRenderer extends DefaultListCellRenderer {
@@ -37,15 +37,15 @@ public class TagEditorRenderer extends DefaultListCellRenderer {
 	private static final Icon EXISTING_TAG_ICON = ResourceManager.loadImage("images/tag_blue.png");
 	private static final Icon UNDO_ICON = ResourceManager.loadImage("images/undo-apply.png");
 
-	private final JList list;
+	private final JList<TagState> list;
 	private final TagStateListModel listModel;
 
 	private JPanel panel;
-	private JLabel tagIconLabel = new JLabel();
+	private JLabel tagIconLabel = DockingUtils.createNonHtmlLabel();
 	private RemoveStateButton undoButton;
 	private MouseAdapter mouseForwarder;
 
-	TagEditorRenderer(final JList list, TagStateListModel listModel) {
+	TagEditorRenderer(JList<TagState> list, TagStateListModel listModel) {
 		this.list = list;
 		this.listModel = listModel;
 
@@ -156,11 +156,10 @@ public class TagEditorRenderer extends DefaultListCellRenderer {
 	}
 
 	@Override
-	public Component getListCellRendererComponent(JList jList, Object value, int index,
+	public Component getListCellRendererComponent(JList<?> jList, Object value, int index,
 			boolean isSelected, boolean cellHasFocus) {
-		JLabel renderer =
-			(JLabel) super.getListCellRendererComponent(jList, value, index, isSelected,
-				cellHasFocus);
+		JLabel renderer = (JLabel) super.getListCellRendererComponent(jList, value, index,
+			isSelected, cellHasFocus);
 
 		initializePanel(renderer);
 

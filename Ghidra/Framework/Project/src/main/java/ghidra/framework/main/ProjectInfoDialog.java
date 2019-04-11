@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.OptionDialog;
@@ -124,13 +125,15 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JPanel infoPanel = new JPanel(new PairLayout(5, 10));
 		infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel dirLabel = new JLabel("Directory Location:", SwingConstants.RIGHT);
+		JLabel dirLabel =
+			DockingUtils.createNonHtmlLabel("Directory Location:", SwingConstants.RIGHT);
 		dirLabel.setToolTipText("Directory where your project files reside.");
 		infoPanel.add(dirLabel);
-		projectDirLabel = new JLabel(dir.getAbsolutePath());
+		projectDirLabel = DockingUtils.createNonHtmlLabel(dir.getAbsolutePath());
 		infoPanel.add(projectDirLabel);
 
-		infoPanel.add(new JLabel("Project Storage Type:", SwingConstants.RIGHT));
+		infoPanel.add(
+			DockingUtils.createNonHtmlLabel("Project Storage Type:", SwingConstants.RIGHT));
 		Class<? extends LocalFileSystem> fsClass = project.getProjectData().getLocalStorageClass();
 		String fsClassName = "<UNKNOWN>";
 		if (IndexedV1LocalFileSystem.class.equals(fsClass)) {
@@ -143,11 +146,11 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			fsClassName = "Mangled Filesystem";
 		}
 
-		JLabel label = new JLabel(fsClassName);
+		JLabel label = DockingUtils.createNonHtmlLabel(fsClassName);
 		label.setName("Project Storage Type");
 		infoPanel.add(label);
-		infoPanel.add(new JLabel("Project Name:", SwingConstants.RIGHT));
-		label = new JLabel(project.getName());
+		infoPanel.add(DockingUtils.createNonHtmlLabel("Project Name:", SwingConstants.RIGHT));
+		label = DockingUtils.createNonHtmlLabel(project.getName());
 		label.setName("Project Name");
 		infoPanel.add(label);
 
@@ -226,25 +229,26 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout(5, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-		JLabel sLabel = new JLabel("Server Name:", SwingConstants.RIGHT);
+		JLabel sLabel = DockingUtils.createNonHtmlLabel("Server Name:", SwingConstants.RIGHT);
 		panel.add(sLabel);
-		serverLabel = new JLabel(serverName);
+		serverLabel = DockingUtils.createNonHtmlLabel(serverName);
 		serverLabel.setName("Server Name");
 		panel.add(serverLabel);
 
-		JLabel pLabel = new JLabel("Port Number:", SwingConstants.RIGHT);
+		JLabel pLabel = DockingUtils.createNonHtmlLabel("Port Number:", SwingConstants.RIGHT);
 		panel.add(pLabel);
-		portLabel = new JLabel(portNumberStr);
+		portLabel = DockingUtils.createNonHtmlLabel(portNumberStr);
 		portLabel.setName("Port Number");
 		panel.add(portLabel);
 
-		JLabel repLabel = new JLabel("Repository Name:", SwingConstants.RIGHT);
+		JLabel repLabel = DockingUtils.createNonHtmlLabel("Repository Name:", SwingConstants.RIGHT);
 		panel.add(repLabel);
-		repNameLabel = new JLabel(repositoryName);
+		repNameLabel = DockingUtils.createNonHtmlLabel(repositoryName);
 		repNameLabel.setName("Repository Name");
 		panel.add(repNameLabel);
 
-		JLabel connectLabel = new JLabel("Connection Status:", SwingConstants.RIGHT);
+		JLabel connectLabel =
+			DockingUtils.createNonHtmlLabel("Connection Status:", SwingConstants.RIGHT);
 		panel.add(connectLabel);
 
 		connectionButton = new JButton(
@@ -266,7 +270,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		buttonPanel.add(connectionButton);
 		panel.add(buttonPanel);
 
-		JLabel userLabel = new JLabel("User Access Level:", SwingConstants.RIGHT);
+		JLabel userLabel =
+			DockingUtils.createNonHtmlLabel("User Access Level:", SwingConstants.RIGHT);
 		userLabel.setToolTipText("Indicates your privileges in the shared repository");
 		panel.add(userLabel);
 		User user = null;
@@ -278,7 +283,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				Msg.error(this, "Unable to get the current user", e);
 			}
 		}
-		userAccessLabel = new JLabel(getAccessString(user));
+		userAccessLabel = DockingUtils.createNonHtmlLabel(getAccessString(user));
 		userAccessLabel.setName("User Access Level");
 		panel.add(userLabel);
 		panel.add(userAccessLabel);

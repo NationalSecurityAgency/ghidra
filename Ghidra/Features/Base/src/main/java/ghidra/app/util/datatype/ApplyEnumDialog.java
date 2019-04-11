@@ -17,6 +17,7 @@ package ghidra.app.util.datatype;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.data.DataTypeParser;
@@ -32,12 +33,12 @@ public class ApplyEnumDialog extends DataTypeSelectionDialog {
 	@Override
 	protected JComponent createEditorPanel(DataTypeSelectionEditor dtEditor) {
 		setTitle("Apply Enum");
-		
+
 		JPanel updatedPanel = new JPanel();
 		updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 		updatedPanel.setLayout(new VerticalLayout(5));
-		
-		JLabel label = new JLabel("Choose an Enum data type to apply.");
+
+		JLabel label = DockingUtils.createNonHtmlLabel("Choose an Enum data type to apply.");
 		label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
 		JCheckBox subOpCB = new JCheckBox("Apply to sub-operands", shouldApplyOnSubOps);

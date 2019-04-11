@@ -97,6 +97,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		return mainPanel;
 	}
 
+	@Override
 	public Map<String, VTMatchTag> getExcludedTags(Map<String, VTMatchTag> allTagsMap,
 			Map<String, VTMatchTag> currentExcludedTagsMap) {
 		this.allTags = allTagsMap;
@@ -108,7 +109,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		tool.showDialog(this);
 
 		int size = listModel.getSize();
-		Map<String, VTMatchTag> newExcludedTags = new TreeMap<String, VTMatchTag>();
+		Map<String, VTMatchTag> newExcludedTags = new TreeMap<>();
 		for (int i = 0; i < size; i++) {
 			TagInfo info = (TagInfo) listModel.get(i);
 			if (!info.isIncluded()) {
@@ -124,7 +125,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		if (session == null) {
 			return Collections.emptyMap();
 		}
-		TreeMap<String, VTMatchTag> map = new TreeMap<String, VTMatchTag>();
+		TreeMap<String, VTMatchTag> map = new TreeMap<>();
 
 		Set<VTMatchTag> matchTags = session.getMatchTags();
 		for (VTMatchTag tag : matchTags) {
@@ -196,11 +197,10 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		private JCheckBox checkBox = new JCheckBox();
 
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value, int index,
+		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
 				boolean isSelected, boolean cellHasFocus) {
-			JLabel renderer =
-				(JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
-					cellHasFocus);
+			JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index,
+				isSelected, cellHasFocus);
 
 			TagInfo info = (TagInfo) value;
 			checkBox.setSelected(info.isIncluded);

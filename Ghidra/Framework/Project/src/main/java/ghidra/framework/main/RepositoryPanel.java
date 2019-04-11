@@ -22,6 +22,7 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.DockingUtils;
 import docking.wizard.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.util.HelpLocation;
@@ -58,6 +59,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 	/* (non Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#getTitle()
 	 */
+	@Override
 	public String getTitle() {
 		return "Specify Repository Name on " + serverName;
 	}
@@ -65,6 +67,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 	/* (non Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#initialize()
 	 */
+	@Override
 	public void initialize() {
 		existingRepButton.setSelected(true);
 		nameList.clearSelection();
@@ -74,6 +77,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 	/**
 	 * Return whether the user entry is valid
 	 */
+	@Override
 	public boolean isValidInformation() {
 		if (createRepButton.isSelected()) {
 			String name = nameField.getText();
@@ -147,7 +151,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		buttonGroup.add(existingRepButton);
 
 		JPanel innerPanel = new JPanel(new BorderLayout());
-		JLabel label = new JLabel("Repository Names", SwingConstants.LEFT);
+		JLabel label = DockingUtils.createNonHtmlLabel("Repository Names", SwingConstants.LEFT);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 5));
 		innerPanel.add(label, BorderLayout.NORTH);
 
@@ -156,6 +160,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 			listModel.addElement(repositoryName);
 		}
 		nameList = new JList<>(listModel);
+		DockingUtils.turnOffHTMLRendering(nameList);
 		nameList.setEnabled(existingRepButton.isSelected());
 		JScrollPane sp = new JScrollPane(nameList);
 		innerPanel.add(sp);
@@ -174,19 +179,22 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		createRepButton = new JRadioButton("Create Repository", !existingRepButton.isSelected());
 		buttonGroup.add(createRepButton);
 
-		nameLabel = new JLabel("Repository Name:", SwingConstants.RIGHT);
+		nameLabel = DockingUtils.createNonHtmlLabel("Repository Name:", SwingConstants.RIGHT);
 		nameLabel.setEnabled(createRepButton.isSelected());
 
 		nameField = new JTextField(20);
 		DocumentListener dl = new DocumentListener() {
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				validateName();
 			}
 
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				validateName();
 			}
 
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				validateName();
 			}
@@ -226,6 +234,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 
 	private void addListeners() {
 		ActionListener listener = new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				boolean existingRepSelected = existingRepButton.isSelected();
 				nameList.setEnabled(existingRepSelected);
@@ -249,6 +258,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 			/* (non Javadoc)
 			 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
 			 */
+			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				if (e.getValueIsAdjusting()) {
 					return;

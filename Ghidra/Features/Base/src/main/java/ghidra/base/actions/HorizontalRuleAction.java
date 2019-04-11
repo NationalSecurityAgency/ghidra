@@ -18,6 +18,7 @@ package ghidra.base.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import ghidra.util.HTMLUtilities;
 
 /**
  * An action that can be added to a menu in order to separate menu items into groups
@@ -37,14 +38,19 @@ public class HorizontalRuleAction extends DockingAction {
 		super("HorizontalRuleAction: " + ++idCount, owner, false);
 		setEnabled(false);
 
-		// the menu name is both names, one over the other, in a small, light grayish font
-		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" +
-			topName + "<BR>" + bottomName + "</FONT></CENTER>" }));
+		// The menu name is both names, one over the other, in a small, light grayish font.
+		// If the original topName or bottomName contain html text that needs escaping, the first 
+		// '&' of the replacement html entity (like '&lt;') will be consumed by the menudata deity
+		// and lost forever.
+		setMenuBarData(new MenuData(new String[] {
+			"<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" + HTMLUtilities.friendlyEncodeHTML(topName) +
+				"<BR>" + HTMLUtilities.friendlyEncodeHTML(bottomName) + "</FONT></CENTER>" }));
 
 		// the description is meant to be used for the tooltip and is larger
 		String padding = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-		setDescription("<HTML><CENTER><B>" + padding + topName + padding + "<B><HR><B>" + padding +
-			bottomName + padding + "</B></CENTER>");
+		setDescription("<HTML><CENTER><B>" + padding + HTMLUtilities.friendlyEncodeHTML(topName) +
+			padding + "<B><HR><B>" + padding + HTMLUtilities.friendlyEncodeHTML(bottomName) +
+			padding + "</B></CENTER>");
 	}
 
 	@Override

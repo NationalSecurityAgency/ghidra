@@ -112,7 +112,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 				}
 			}
 		};
-		
+
 		// Some items in the dialog change depending on whether we have multiple selection
 		// ranges, so capture that information here.
 		int ranges = 0;
@@ -120,11 +120,11 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 			ranges = plugin.getProgramSelection().getNumAddressRanges();
 		}
 
-		JLabel locationLabel = new JLabel("Address: ", SwingConstants.RIGHT);
+		JLabel locationLabel = DockingUtils.createNonHtmlLabel("Address: ", SwingConstants.RIGHT);
 		locationTextField = new JTextField(50);
 		locationTextField.setText(address.toString());
 		if (hasSelection && ranges > 1) {
-			locationTextField.setText(address.toString() + " (plus " + (ranges-1) + " more)");
+			locationTextField.setText(address.toString() + " (plus " + (ranges - 1) + " more)");
 		}
 		locationTextField.setCaretPosition(0);
 		locationTextField.setEditable(false);
@@ -132,7 +132,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		locationTextField.setMinimumSize(locationTextField.getPreferredSize());
 		locationTextField.addKeyListener(listener);
 
-		JLabel categoryLabel = new JLabel("Category: ", SwingConstants.RIGHT);
+		JLabel categoryLabel = DockingUtils.createNonHtmlLabel("Category: ", SwingConstants.RIGHT);
 		categoryComboBox = new GhidraComboBox<>(getModel());
 		categoryComboBox.setEditable(true);
 		categoryComboBox.addKeyListener(listener);
@@ -140,7 +140,8 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		categoryTextField = (JTextField) categoryComboBox.getEditor().getEditorComponent();
 		categoryTextField.addKeyListener(listener);
 
-		JLabel commentLabel = new JLabel("Description: ", SwingConstants.RIGHT);
+		JLabel commentLabel =
+			DockingUtils.createNonHtmlLabel("Description: ", SwingConstants.RIGHT);
 		commentTextField = new JTextField(20);
 		commentTextField.addKeyListener(listener);
 
@@ -203,7 +204,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		mainPanel.add(commentTextField, gbc);
 
 		ImageIcon icon = BookmarkNavigator.NOTE_ICON;
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));
 

@@ -21,6 +21,7 @@ import java.math.BigInteger;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.textfield.IntegerTextField;
@@ -74,7 +75,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		// we want to have a panel with our options so that we may group them together
 		JPanel panel = new JPanel(new PairLayout(6, 10));
 
-		JLabel label = new JLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
+		JLabel label = DockingUtils.createNonHtmlLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(label);
 		showBlocknameCheckbox = new JCheckBox();
@@ -82,14 +83,14 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		panel.add(showBlocknameCheckbox);
 
 		// the namespace checkbox will disable the text field options when it is not used
-		label = new JLabel(PADDING_LABEL, SwingConstants.RIGHT);
+		label = DockingUtils.createNonHtmlLabel(PADDING_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, ADDRESS_PADDING_TOOLTIP);
 		panel.add(label);
 		padCheckBox = new JCheckBox();
 		panel.add(padCheckBox);
 		padCheckBox.setSelected(false);
 		ToolTipManager.setToolTipText(padCheckBox, ADDRESS_PADDING_TOOLTIP);
-		label = new JLabel(ADDRESS_DIGITS_LABEL, SwingConstants.RIGHT);
+		label = DockingUtils.createNonHtmlLabel(ADDRESS_DIGITS_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, MIN_HEX_DIGITS_TOOLTIP);
 		panel.add(label);
 
@@ -101,7 +102,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 
 		panel.add(minDigitsField.getComponent());
 
-		label = new JLabel(JUSTIFICATION_LABEL, SwingConstants.RIGHT);
+		label = DockingUtils.createNonHtmlLabel(JUSTIFICATION_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, RIGHT_JUSTIFY_TOOLTIP);
 		panel.add(label);
 		justificationCombobox = new GhidraComboBox<>(new String[] { "Left", "Right" });

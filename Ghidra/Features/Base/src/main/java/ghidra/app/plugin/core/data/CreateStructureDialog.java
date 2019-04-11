@@ -35,8 +35,7 @@ import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.InvalidNameException;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -174,7 +173,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		structurePanel.setBorder(structureBorder);
 
 		GTable table = buildMatchingStructuresTable();
-		filterPanel = new GhidraTableFilterPanel<StructureWrapper>(table, structureTableModel) {
+		filterPanel = new GhidraTableFilterPanel<>(table, structureTableModel) {
 			// make sure our height doesn't stretch
 			@Override
 			public Dimension getMaximumSize() {
@@ -570,7 +569,8 @@ public class CreateStructureDialog extends DialogComponentProvider {
 			message = EXISITING_STRUCTURE_STATUS_PREFIX;
 		}
 
-		setStatusText("<HTML>" + message + "<BR>\"" + name + "\"");
+		setStatusText(
+			"<HTML>" + message + "<BR>\"" + HTMLUtilities.friendlyEncodeHTML(name) + "\"");
 	}
 
 	// this class is used instead of a cell renderer so that sorting will

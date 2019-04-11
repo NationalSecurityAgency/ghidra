@@ -27,6 +27,7 @@ import javax.swing.border.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
@@ -216,21 +217,21 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		Border border = new TitledBorder(new EtchedBorder(), "Source");
 		setBorder(border);
 
-		addressLabel = new JLabel("FFFFFFFF"); // use a default
+		addressLabel = DockingUtils.createNonHtmlLabel("FFFFFFFF"); // use a default
 
 		Font font = addressLabel.getFont();
 		monoFont = new Font("monospaced", font.getStyle(), font.getSize());
 		addressLabel.setFont(monoFont);
 		addressLabel.setName("addressLabel");
 
-		mnemonicLabel = new JLabel("movl");
+		mnemonicLabel = DockingUtils.createNonHtmlLabel("movl");
 		mnemonicLabel.setFont(monoFont);
 		mnemonicLabel.setName("mnemonicLabel");
 		mnemonicLabel.addMouseListener(mouseListener);
 
 		operandLabels = new JLabel[Program.MAX_OPERANDS];
 		for (int i = 0; i < operandLabels.length; i++) {
-			operandLabels[i] = new JLabel("%ebp, ");
+			operandLabels[i] = DockingUtils.createNonHtmlLabel("%ebp, ");
 			operandLabels[i].setName("operandLabels[" + i + "]");
 			operandLabels[i].setFont(monoFont);
 			operandLabels[i].addMouseListener(mouseListener);

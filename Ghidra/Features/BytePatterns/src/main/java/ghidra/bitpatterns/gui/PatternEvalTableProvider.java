@@ -19,6 +19,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.WindowPosition;
 import ghidra.app.services.GoToService;
 import ghidra.bitpatterns.info.*;
@@ -109,16 +110,17 @@ public class PatternEvalTableProvider extends ComponentProviderAdapter {
 
 	private JPanel buildInfoPanel(PatternEvaluationStats stats) {
 		JPanel evalPanel = new JPanel(new GridLayout(2, 8));
-		evalPanel.add(new JLabel("Match Type"));
-		evalPanel.add(new JLabel(PatternMatchType.TRUE_POSITIVE.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_WRONG_FLOW.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_MISALIGNED.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_DATA.name()));
-		evalPanel.add(new JLabel(PatternMatchType.POSSIBLE_START_CODE.name()));
-		evalPanel.add(new JLabel(PatternMatchType.POSSIBLE_START_UNDEFINED.name()));
-		evalPanel.add(new JLabel(PatternMatchType.CONTEXT_CONFLICT.name()));
-		evalPanel.add(new JLabel(PatternMatchType.PRE_PATTERN_HIT.name()));
-		evalPanel.add(new JLabel("Number"));
+		evalPanel.add(DockingUtils.createNonHtmlLabel("Match Type"));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.TRUE_POSITIVE.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.FP_WRONG_FLOW.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.FP_MISALIGNED.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.FP_DATA.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.POSSIBLE_START_CODE.name()));
+		evalPanel.add(
+			DockingUtils.createNonHtmlLabel(PatternMatchType.POSSIBLE_START_UNDEFINED.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.CONTEXT_CONFLICT.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel(PatternMatchType.PRE_PATTERN_HIT.name()));
+		evalPanel.add(DockingUtils.createNonHtmlLabel("Number"));
 		JTextField truePositivesField = new JTextField(8);
 		truePositivesField.setEditable(false);
 		truePositivesField.setText(Integer.toString(stats.getNumTruePositives()));

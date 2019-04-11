@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.app.plugin.core.clear;
 
-import ghidra.app.context.ListingActionContext;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.*;
@@ -26,6 +22,9 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import ghidra.app.context.ListingActionContext;
+import ghidra.util.HelpLocation;
 
 /**
  * Dialog that shows options for "Clear Flow and Repair." User can choose to clear
@@ -92,7 +91,7 @@ public class ClearFlowDialog extends DialogComponentProvider {
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(10, 10));
 
-		JLabel label = new JLabel("Clear Flow Options:");
+		JLabel label = DockingUtils.createNonHtmlLabel("Clear Flow Options:");
 		panel.add(label, BorderLayout.NORTH);
 
 		JPanel cbPanel = new JPanel();

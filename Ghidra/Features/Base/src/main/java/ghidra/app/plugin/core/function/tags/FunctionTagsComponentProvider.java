@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
@@ -376,7 +377,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	private JPanel createFilterPanel() {
 		filterPanel = new JPanel(new BorderLayout());
-		JLabel label = new JLabel(" Filter:");
+		JLabel label = DockingUtils.createNonHtmlLabel(" Filter:");
 
 		filterInputTF = new HintTextField("");
 		filterInputTF.setName("filterInputTF");
@@ -411,7 +412,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private JPanel createInputPanel() {
 
 		inputPanel = new JPanel(new BorderLayout());
-		JLabel label = new JLabel(" Create new tag(s):");
+		JLabel label = DockingUtils.createNonHtmlLabel(" Create new tag(s):");
 		tagInputTF = new HintTextField("tag 1, tag 2, ...");
 		tagInputTF.setName("tagInputTF");
 		tagInputTF.addActionListener(e -> processCreates());

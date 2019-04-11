@@ -15,20 +15,20 @@
  */
 package ghidra.framework.analysis.gui;
 
+import java.awt.*;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+
+import docking.DockingUtils;
+import docking.widgets.*;
+import docking.widgets.textfield.IntegerTextField;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import ghidra.app.services.AnalyzerType;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.VerticalLayout;
-
-import java.awt.*;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-
-import docking.widgets.*;
-import docking.widgets.textfield.IntegerTextField;
 
 public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFile> {
 	private ButtonGroup buttonGroup;
@@ -40,7 +40,8 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	}
 
 	@Override
-	protected JComponent buildWorkPanel(String label, DropDownTextFieldDataModel<ResourceFile> model) {
+	protected JComponent buildWorkPanel(String label,
+			DropDownTextFieldDataModel<ResourceFile> model) {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.add(super.buildWorkPanel(label, model));
 		panel.add(buildTypePanel());
@@ -51,7 +52,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	private Component buildPriorityPanel() {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 40, 20, 0));
-		panel.add(new JLabel("Priority:  "));
+		panel.add(DockingUtils.createNonHtmlLabel("Priority:  "));
 		priorityField = new IntegerTextField(5, 0L);
 		panel.add(priorityField.getComponent());
 		return panel;
@@ -68,7 +69,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 		}
 		buttonGroup.add(button);
 		panel.add(button, BorderLayout.WEST);
-		JLabel label = new JLabel(type.getName(), icon, SwingConstants.LEFT);
+		JLabel label = DockingUtils.createNonHtmlLabel(type.getName(), icon, SwingConstants.LEFT);
 		label.setToolTipText(type.getDescription());
 		panel.add(label);
 		return panel;

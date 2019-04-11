@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import docking.DockingUtils;
 import docking.widgets.dialogs.NumberInputDialog;
 import docking.widgets.tree.GTree;
 import ghidra.bitpatterns.info.*;
@@ -119,7 +120,7 @@ public class InstructionSequenceTreePanelBuilder extends ContextRegisterFilterab
 		countPanel = new JPanel();
 		PairLayout countLayout = new PairLayout();
 		countPanel.setLayout(countLayout);
-		JLabel countLabel = new JLabel(COUNT_FIELD_LABEL);
+		JLabel countLabel = DockingUtils.createNonHtmlLabel(COUNT_FIELD_LABEL);
 		countPanel.add(countLabel);
 		countField = new JTextField(25);
 		countField.setEditable(false);

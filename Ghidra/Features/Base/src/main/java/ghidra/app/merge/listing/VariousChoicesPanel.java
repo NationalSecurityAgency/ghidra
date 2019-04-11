@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.app.merge.listing;
 
-import ghidra.app.merge.util.ConflictUtility;
-import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -28,6 +24,11 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
+
+import docking.DockingUtils;
+import ghidra.app.merge.util.ConflictUtility;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
 
 /**
  * <code>VariousChoicesPanel</code> provides a table type of format for resolving
@@ -40,8 +41,8 @@ import javax.swing.event.ChangeListener;
 public class VariousChoicesPanel extends ConflictPanel {
 
 	private final static long serialVersionUID = 1;
-	private static final Border UNDERLINE_BORDER = BorderFactory.createMatteBorder(0, 0, 1, 0,
-		Color.BLACK);
+	private static final Border UNDERLINE_BORDER =
+		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK);
 
 	private JPanel rowPanel;
 	private JLabel headerLabel;
@@ -71,12 +72,12 @@ public class VariousChoicesPanel extends ConflictPanel {
 
 	private void init() {
 		setBorder(BorderFactory.createTitledBorder("Resolve Conflict"));
-		rows = new ArrayList<ChoiceRow>();
+		rows = new ArrayList<>();
 		layout = new MaximizeSpecificColumnGridLayout(5, 5, columnCount);
 		rowPanel = new JPanel(layout);
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		setLayout(new BorderLayout());
-		headerLabel = new JLabel(" ");
+		headerLabel = DockingUtils.createNonHtmlLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);
@@ -86,9 +87,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 		indent = Math.max(rb.getPreferredSize().width, cb.getPreferredSize().width);
 		int radioButtonOffset = (rb.getPreferredSize().height - lbl.getPreferredSize().height) / 2;
 		int checkBoxOffset = (cb.getPreferredSize().height - lbl.getPreferredSize().height) / 2;
-		radioButtonBorder =
-			BorderFactory.createEmptyBorder((radioButtonOffset > 0 ? radioButtonOffset : 0), 0, 0,
-				0);
+		radioButtonBorder = BorderFactory.createEmptyBorder(
+			(radioButtonOffset > 0 ? radioButtonOffset : 0), 0, 0, 0);
 		checkBoxBorder =
 			BorderFactory.createEmptyBorder((checkBoxOffset > 0 ? checkBoxOffset : 0), 0, 0, 0);
 
@@ -171,7 +171,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 	 * @param listener listener that gets notified whenever the state of 
 	 * one of the radiobuttons in this row changes.
 	 */
-	void addSingleChoice(final String title, final String[] choices, final ChangeListener listener) {
+	void addSingleChoice(final String title, final String[] choices,
+			final ChangeListener listener) {
 		adjustColumnCount(choices.length + 1);
 		for (int i = 0; i < choices.length; i++) {
 			if (choices[i] == null) {
@@ -225,7 +226,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 	 * @param listener listener that gets notified whenever the state of 
 	 * one of the checkboxes in this row changes.
 	 */
-	void addMultipleChoice(final String title, final String[] choices, final ChangeListener listener) {
+	void addMultipleChoice(final String title, final String[] choices,
+			final ChangeListener listener) {
 		adjustColumnCount(choices.length + 1);
 		MyLabel titleComp = new MyLabel(title);
 		MyCheckBox[] cb = new MyCheckBox[choices.length];
@@ -506,6 +508,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		 */
 		public MyLabel(final String text) {
 			super(text);
+			DockingUtils.turnOffHTMLRendering(this);
 			addComponentListener(new ComponentListener() {
 
 				@Override
@@ -522,7 +525,9 @@ public class VariousChoicesPanel extends ConflictPanel {
 						(displayedFont != null) ? getFontMetrics(displayedFont) : null;
 					int stringWidth =
 						(fontMetrics != null) ? fontMetrics.stringWidth(displayedText) : 0;
-					setToolTipText((stringWidth > displayedWidth) ? text : null);
+					setToolTipText((stringWidth > displayedWidth)
+							? "<html>" + HTMLUtilities.friendlyEncodeHTML(text)
+							: null);
 				}
 
 				@Override

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +19,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
 
-import javax.swing.JList;
-import javax.swing.ListModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import docking.DockingUtils;
 import docking.widgets.table.GTable;
 
 /**
@@ -81,7 +80,12 @@ public class GList<T> extends JList<T> {
 	}
 
 	private void init() {
+		DockingUtils.turnOffHTMLRendering(this);
+		if (getCellRenderer() instanceof JComponent) {
+			DockingUtils.turnOffHTMLRendering(((JComponent) getCellRenderer()));
+		}
 		addKeyListener(new KeyListener() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 //				if (e.isActionKey() ||
 //				    e.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
@@ -105,13 +109,16 @@ public class GList<T> extends JList<T> {
 //				e.consume();
 			}
 
+			@Override
 			public void keyReleased(KeyEvent e) {
 			}
 
+			@Override
 			public void keyTyped(KeyEvent e) {
 			}
 		});
 		addListSelectionListener(new ListSelectionListener() {
+			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				ensureIndexIsVisible(getSelectedIndex());
 			}

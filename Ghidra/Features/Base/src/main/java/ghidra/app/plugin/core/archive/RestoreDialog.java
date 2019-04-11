@@ -23,6 +23,7 @@ import java.io.File;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -76,7 +77,7 @@ public class RestoreDialog extends DialogComponentProvider {
 	protected JPanel buildMainPanel() {
 
 		// Create the individual components that make up the panel.
-		archiveLabel = new JLabel(" Archive File ");
+		archiveLabel = DockingUtils.createNonHtmlLabel(" Archive File ");
 		archiveField = new JTextField();
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
 		archiveField.setName("archiveField");
@@ -115,7 +116,7 @@ public class RestoreDialog extends DialogComponentProvider {
 		Font font = archiveBrowse.getFont();
 		archiveBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
-		restoreLabel = new JLabel(" Restore Directory ");
+		restoreLabel = DockingUtils.createNonHtmlLabel(" Restore Directory ");
 		restoreField = new JTextField();
 		restoreField.setName("restoreField");
 		restoreField.setColumns(RestoreDialog.NUM_TEXT_COLUMNS);
@@ -132,7 +133,7 @@ public class RestoreDialog extends DialogComponentProvider {
 		font = restoreBrowse.getFont();
 		restoreBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
-		projectNameLabel = new JLabel(" Project Name ");
+		projectNameLabel = DockingUtils.createNonHtmlLabel(" Project Name ");
 		projectNameField = new JTextField();
 		projectNameField.setName("projectNameField");
 		projectNameField.setColumns(RestoreDialog.NUM_TEXT_COLUMNS);

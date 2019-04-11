@@ -25,6 +25,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.DockingUtils;
 import docking.util.GraphicsUtils;
 
 /**
@@ -133,7 +134,7 @@ public class KnotPanel extends JPanel implements ComponentListener {
 
 		ArrayList<KnotRecord> knots = palette.getKnots();
 		for (KnotRecord record : knots) {
-			JLabel label = new JLabel(record.name);
+			JLabel label = DockingUtils.createNonHtmlLabel(record.name);
 			label.setFont(FONT);
 			label.setBorder(new ToplessLineBorder(Color.BLACK));
 			label.setHorizontalAlignment(SwingConstants.CENTER);

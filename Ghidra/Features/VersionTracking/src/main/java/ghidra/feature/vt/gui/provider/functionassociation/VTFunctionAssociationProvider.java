@@ -28,9 +28,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 
-import docking.ActionContext;
+import docking.*;
 import docking.ToolTipManager;
-import docking.WindowPosition;
 import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
@@ -143,8 +142,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private void createFilterAction() {
 		MultiStateDockingAction<FilterSettings> filterAction =
-			new MultiStateDockingAction<FilterSettings>("Function Association Functions Filter",
-				VTPlugin.OWNER) {
+			new MultiStateDockingAction<>("Function Association Functions Filter", VTPlugin.OWNER) {
 
 				@Override
 				public void actionStateChanged(ActionState<FilterSettings> newActionState,
@@ -357,7 +355,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		dualTablePanel.add(splitPane, BorderLayout.CENTER);
 
 		JPanel statusPanel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(NO_ERROR_MESSAGE);
+		statusLabel = DockingUtils.createNonHtmlLabel(NO_ERROR_MESSAGE);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.RED.darker());
 		statusLabel.addComponentListener(new ComponentAdapter() {
@@ -486,7 +484,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		String sourceString =
 			(sourceProgram != null) ? sourceProgram.getDomainFile().toString() : NO_SESSION;
 		String sourceTitle = SOURCE_TITLE + " = " + sourceString;
-		sourceSessionLabel = new JLabel(sourceTitle);
+		sourceSessionLabel = DockingUtils.createNonHtmlLabel(sourceTitle);
 		sourceSessionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		sourceFunctionPanel.add(sourceSessionLabel, BorderLayout.NORTH);
 		sourceFunctionPanel.add(sourceThreadedTablePanel, BorderLayout.CENTER);
@@ -544,7 +542,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			(destinationProgram != null) ? destinationProgram.getDomainFile().toString()
 					: NO_SESSION;
 		String destinationTitle = DESTINATION_TITLE + " = " + destinationString;
-		destinationSessionLabel = new JLabel(destinationTitle);
+		destinationSessionLabel = DockingUtils.createNonHtmlLabel(destinationTitle);
 		destinationSessionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		destinationFunctionPanel.add(destinationSessionLabel, BorderLayout.NORTH);
 		destinationFunctionPanel.add(destinationThreadedTablePanel, BorderLayout.CENTER);

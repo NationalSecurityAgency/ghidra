@@ -21,8 +21,7 @@ import java.awt.Component;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.help.HelpService;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
@@ -326,13 +325,13 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
 			add(Box.createHorizontalStrut(4));
-			add(new JLabel("Min:"));
+			add(DockingUtils.createNonHtmlLabel("Min:"));
 			add(Box.createHorizontalStrut(5));
 			add(createMinFilterWidget());
 
 			add(Box.createHorizontalStrut(10));
 
-			add(new JLabel("Max:"));
+			add(DockingUtils.createNonHtmlLabel("Max:"));
 			add(Box.createHorizontalStrut(5));
 			add(createMaxFilterWidget());
 		}

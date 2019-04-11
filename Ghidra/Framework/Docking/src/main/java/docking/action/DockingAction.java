@@ -494,7 +494,9 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	protected JMenuItem doCreateMenuItem() {
-		return new DockingMenuItem();
+		DockingMenuItem dmi = new DockingMenuItem();
+		DockingUtils.turnOffHTMLRendering(dmi);
+		return dmi;
 	}
 
 	private void recordInception() {

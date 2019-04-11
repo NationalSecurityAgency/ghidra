@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.context.ProgramActionContext;
@@ -218,7 +219,8 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		setEquateTableRenderer();
 
 		JPanel equatesPanel = new JPanel(new BorderLayout());
-		equatesPanel.add(new JLabel("Equates", SwingConstants.CENTER), BorderLayout.NORTH);
+		equatesPanel.add(DockingUtils.createNonHtmlLabel("Equates", SwingConstants.CENTER),
+			BorderLayout.NORTH);
 		equatesPanel.add(equatesTablePane, BorderLayout.CENTER);
 		equatesPanel.add(equatesFilterPanel, BorderLayout.SOUTH);
 
@@ -245,7 +247,8 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		setReferenceTableRenderer();
 
 		JPanel referencesPanel = new JPanel(new BorderLayout());
-		referencesPanel.add(new JLabel("References", SwingConstants.CENTER), "North");
+		referencesPanel.add(DockingUtils.createNonHtmlLabel("References", SwingConstants.CENTER),
+			"North");
 		referencesPanel.add(referencesTablePane, "Center");
 
 		//////////////////////////////////////////////////////////////

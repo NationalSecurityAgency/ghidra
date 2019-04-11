@@ -121,15 +121,8 @@ public class ConstraintFilterPanel extends JPanel {
 	private class ConstraintComboBoxCellRenderer extends GListCellRenderer<ColumnConstraint<?>> {
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends ColumnConstraint<?>> list,
-				ColumnConstraint<?> value, int index, boolean isSelected, boolean cellHasFocus) {
-
-			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
-				isSelected, cellHasFocus);
-
-			label.setText(value.getName());
-
-			return label;
+		protected String getItemText(ColumnConstraint<?> value) {
+			return value.getName();
 		}
 
 		@Override

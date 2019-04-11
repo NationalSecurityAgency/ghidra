@@ -197,8 +197,8 @@ class OpenDomainFileTask extends Task {
 		if (dfile.isInWritableProject() && dfile.canRecover()) {
 			Runnable r = () -> {
 				int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-					dfile.getName() + " has crash data.\n" +
-						"Would you like to recover unsaved changes?");
+					"<html>" + HTMLUtilities.friendlyEncodeHTML(dfile.getName()) +
+						" has crash data.<br>" + "Would you like to recover unsaved changes?");
 				recoverFile[0] = (option == OptionDialog.OPTION_ONE);
 			};
 			SwingUtilities.invokeAndWait(r);

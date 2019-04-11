@@ -66,7 +66,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
 
 		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
 		bgColor = imageLabel.getBackground();
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));
@@ -75,8 +75,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		StyledDocument document = pane.getStyledDocument();
 		try {
-			document.insertString(0, "To add or change a key binding, type any key combination.\n"
-				+ "To remove a key binding, press <Enter> or <Backspace>.", null);
+			document.insertString(0, "To add or change a key binding, type any key combination.\n" +
+				"To remove a key binding, press <Enter> or <Backspace>.", null);
 		}
 		catch (BadLocationException e1) {
 			// shouldn't be possible
@@ -204,7 +204,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return Collections.emptyList();
 		}
 		List<DockingActionIf> list = multiAction.getActions();
-		Map<String, DockingActionIf> nameMap = new HashMap<String, DockingActionIf>(list.size());
+		Map<String, DockingActionIf> nameMap = new HashMap<>(list.size());
 
 		// the list may have multiple matches for a single owner, which we do not want (see
 		// DummyKeyBindingsOptionsAction)
@@ -215,7 +215,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			}
 		}
 
-		return new ArrayList<DockingActionIf>(nameMap.values());
+		return new ArrayList<>(nameMap.values());
 	}
 
 	/**

@@ -23,6 +23,7 @@ import java.util.Vector;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
+import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.list.GListCellRenderer;
@@ -114,7 +115,7 @@ class ColumnFilterPanel extends JPanel {
 	}
 
 	private Component createOrLabel() {
-		JLabel jLabel = new JLabel("<OR>", SwingConstants.CENTER);
+		JLabel jLabel = DockingUtils.createNonHtmlLabel("<OR>", SwingConstants.CENTER);
 		jLabel.setForeground(Color.GRAY);
 		return jLabel;
 	}

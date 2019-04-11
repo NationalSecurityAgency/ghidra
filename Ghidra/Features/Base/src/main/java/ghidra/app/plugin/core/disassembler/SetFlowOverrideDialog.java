@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.disassembler;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.cmd.disassemble.SetFlowOverrideCmd;
 import ghidra.framework.plugintool.PluginTool;
@@ -96,8 +97,8 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 
 		FlowType flowType = instruction.getFlowType();
 
-		panel.add(new JLabel("Current Flow: " + flowType.getName() +
-			(flowType.isConditional() ? "*" : "")));
+		panel.add(DockingUtils.createNonHtmlLabel(
+			"Current Flow: " + flowType.getName() + (flowType.isConditional() ? "*" : "")));
 
 		panel.add(Box.createGlue());
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -110,7 +111,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		panel.add(new JLabel(note));
+		panel.add(DockingUtils.createNonHtmlLabel(note));
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -139,7 +140,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 			flowOverrideComboBox.setSelectedItem(flowOverride);
 		}
 
-		panel.add(new JLabel("Instruction Flow:"));
+		panel.add(DockingUtils.createNonHtmlLabel("Instruction Flow:"));
 		panel.add(flowOverrideComboBox);
 
 		panel.add(Box.createGlue());
@@ -191,8 +192,8 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 			return true;
 		}
 		else {
-			tool.executeBackgroundCommand(
-				new SetFlowOverrideCmd(instruction.getMinAddress(), flow), program);
+			tool.executeBackgroundCommand(new SetFlowOverrideCmd(instruction.getMinAddress(), flow),
+				program);
 		}
 		return true;
 	}

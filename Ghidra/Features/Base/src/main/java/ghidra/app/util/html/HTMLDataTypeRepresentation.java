@@ -94,8 +94,8 @@ public abstract class HTMLDataTypeRepresentation {
 		return buffer.toString();
 	}
 
-	protected static StringBuffer addDataTypeLength(String dataTypeLengthString,
-			StringBuffer buffer) {
+	protected static StringBuilder addDataTypeLength(String dataTypeLengthString,
+			StringBuilder buffer) {
 
 		buffer.append(BR);
 		buffer.append(LENGTH_PREFIX);
@@ -135,7 +135,7 @@ public abstract class HTMLDataTypeRepresentation {
 		if (comment == null) {
 			comment = dataType.getDescription();
 		}
-		return comment == null ? "" : comment;
+		return comment == null ? "" : HTMLUtilities.friendlyEncodeHTML(comment);
 	}
 
 	protected static String truncateAsNecessary(String string) {
@@ -327,7 +327,7 @@ public abstract class HTMLDataTypeRepresentation {
 
 		// put the path info in
 		CategoryPath path = dataType.getCategoryPath();
-		headerLines.add(new TextLine(path.toString()));
+		headerLines.add(new TextLine(HTMLUtilities.friendlyEncodeHTML(path.getPath())));
 		headerLines.add(new TextLine(BR));
 
 		return headerLines;

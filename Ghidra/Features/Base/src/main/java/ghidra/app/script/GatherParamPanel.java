@@ -20,8 +20,10 @@ import java.awt.GridLayout;
 import java.io.File;
 import java.util.HashMap;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
+import docking.DockingUtils;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.filechooser.GhidraFileChooserPanel;
 import ghidra.app.util.AddressInput;
@@ -96,8 +98,7 @@ public class GatherParamPanel extends JPanel {
 			displayComponent = textField;
 			parameters.put(key, new ParamComponent(displayComponent, type));
 		}
-		JLabel displayLabel = new JLabel(label);
-		add(displayLabel);
+		add(DockingUtils.createNonHtmlLabel(label));
 		add(displayComponent);
 		shown = false;
 	}
@@ -110,7 +111,7 @@ public class GatherParamPanel extends JPanel {
 	}
 
 	public void setParamsInState() {
-		for (String string2 : parameters.keySet()) {//OMG!!
+		for (String string2 : parameters.keySet()) {
 			String key = string2.toString();
 			ParamComponent pc = parameters.get(key);
 			switch (pc.getType()) {

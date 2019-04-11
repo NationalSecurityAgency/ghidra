@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.widgets.MultiLineLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -178,13 +179,13 @@ class DataTypeMergePanel extends JPanel {
 	private JPanel createInfoPanel() {
 
 		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
 
 		MultiLineLabel label =
-			new MultiLineLabel("A data type change in your checked out version conflicts with a "
-				+ "data type change in the latest version.\n"
-				+ "Select the data type change you want included in the version "
-				+ "that will result from this check-in.");
+			new MultiLineLabel("A data type change in your checked out version conflicts with a " +
+				"data type change in the latest version.\n" +
+				"Select the data type change you want included in the version " +
+				"that will result from this check-in.");
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));

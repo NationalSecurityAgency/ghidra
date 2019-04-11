@@ -21,6 +21,7 @@ import java.awt.Dimension;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
 
 /**
@@ -109,8 +110,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 		workPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		// COMBO BOX PANEL
-		JLabel messageLabel = new JLabel();
-		messageLabel.setText(labelText);
+		JLabel messageLabel = DockingUtils.createNonHtmlLabel(labelText);
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 		combo = createComboBox(optionValues, initialValue);
 
@@ -122,7 +122,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 
 		// ICON PANEL (if an icon has been supplied)
 		if (messageIcon != null) {
-			JLabel iconLabel = new JLabel();
+			JLabel iconLabel = DockingUtils.createNonHtmlLabel();
 			iconLabel.setIcon(messageIcon);
 			iconLabel.setVerticalAlignment(SwingConstants.TOP);
 

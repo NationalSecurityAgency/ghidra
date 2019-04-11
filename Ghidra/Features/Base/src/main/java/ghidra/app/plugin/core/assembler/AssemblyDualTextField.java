@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 
+import docking.DockingUtils;
 import docking.EmptyBorderToggleButton;
 import docking.widgets.autocomplete.*;
 import docking.widgets.textfield.TextFieldLinker;
@@ -705,7 +706,7 @@ public class AssemblyDualTextField {
 			Box hbox = Box.createHorizontalBox();
 			dialog.add(hbox, BorderLayout.NORTH);
 
-			JLabel addrlabel = new JLabel(String.format(ADDR_FORMAT, curAddr));
+			JLabel addrlabel = DockingUtils.createNonHtmlLabel(String.format(ADDR_FORMAT, curAddr));
 			hbox.add(addrlabel);
 
 			AssemblyDualTextField input = new AssemblyDualTextField();

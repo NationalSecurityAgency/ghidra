@@ -23,8 +23,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.table.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.docking.settings.*;
@@ -223,8 +222,8 @@ public class SettingsDialog extends DialogComponentProvider {
 
 	}
 
-	private class SettingsEditor extends AbstractCellEditor implements TableCellEditor,
-			PopupMenuListener {
+	private class SettingsEditor extends AbstractCellEditor
+			implements TableCellEditor, PopupMenuListener {
 
 		final static int ENUM = 0;
 		final static int BOOLEAN = 1;
@@ -242,6 +241,7 @@ public class SettingsDialog extends DialogComponentProvider {
 
 		SettingsEditor() {
 			super();
+			DockingUtils.turnOffHTMLRendering(comboBox);
 			comboBox.addPopupMenuListener(this);
 		}
 
@@ -273,8 +273,8 @@ public class SettingsDialog extends DialogComponentProvider {
 		 * @see javax.swing.table.TableCellEditor#getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)
 		 */
 		@Override
-		public Component getTableCellEditorComponent(JTable table, Object value,
-				boolean isSelected, int row, int column) {
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+				int row, int column) {
 			if (value instanceof StringChoices) {
 				initComboBox((StringChoices) value);
 				return comboBox;
@@ -283,8 +283,8 @@ public class SettingsDialog extends DialogComponentProvider {
 				initCheckBox((Boolean) value);
 				return checkBox;
 			}
-			throw new AssertException("SettingsEditor: " + value.getClass().getName() +
-				" not supported");
+			throw new AssertException(
+				"SettingsEditor: " + value.getClass().getName() + " not supported");
 		}
 
 		private void initCheckBox(Boolean b) {

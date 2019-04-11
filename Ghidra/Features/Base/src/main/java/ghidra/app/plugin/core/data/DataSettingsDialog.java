@@ -719,7 +719,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox comboBox = new JComboBox();
+		private JComboBox<String> comboBox = new JComboBox<>();
 
 		SettingsEditor() {
 			comboBox.addItemListener(new ItemListener() {
@@ -747,7 +747,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		private StringChoices getComboBoxEnum() {
 			String[] items = new String[comboBox.getItemCount()];
 			for (int i = 0; i < items.length; i++) {
-				items[i] = (String) comboBox.getItemAt(i);
+				items[i] = comboBox.getItemAt(i);
 			}
 			StringChoices enuum = new StringChoices(items);
 			enuum.setSelectedValue(comboBox.getSelectedIndex());

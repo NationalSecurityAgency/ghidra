@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.MultiLineLabel;
@@ -34,8 +35,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import ghidra.framework.options.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.task.SwingUpdateManager;
@@ -138,7 +138,7 @@ public class OptionsPanel extends JPanel {
 			Options currentOptions = getSelectedOptions();
 
 			int userChoice = OptionDialog.showOptionDialog(viewPanel, "Restore Defaults?",
-				"<html>Restore <b>" + currentOptions.getName() +
+				"<html>Restore <b>" + HTMLUtilities.friendlyEncodeHTML(currentOptions.getName()) +
 					"</b> to default option values <b>and erase current settings?</b>",
 				"Restore Defaults");
 			if (userChoice == OptionDialog.CANCEL_OPTION) {
@@ -243,7 +243,7 @@ public class OptionsPanel extends JPanel {
 		panel.setName("Default");
 
 		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
 
 		MultiLineLabel label =
 			new MultiLineLabel("To change Options, select a Folder or Option Group from the\n" +

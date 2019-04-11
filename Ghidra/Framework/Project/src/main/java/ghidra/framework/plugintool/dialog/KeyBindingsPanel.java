@@ -38,6 +38,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.ToolConstants;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
@@ -273,8 +274,8 @@ public class KeyBindingsPanel extends JPanel {
 		JPanel keyPanel = new JPanel(new BorderLayout());
 
 		JPanel defaultPanel = new JPanel(new BorderLayout());
-		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel =
+			DockingUtils.createNonHtmlLabel(ResourceManager.loadImage("images/information.png"));
 
 		// the content of the left-hand side label
 		MultiLineLabel mlabel =
@@ -720,7 +721,7 @@ public class KeyBindingsPanel extends JPanel {
 				if (description == null || description.trim().isEmpty()) {
 					description = actions.get(0).getName();
 				}
-				statusLabel.setText(description);
+				statusLabel.setText("<html>" + HTMLUtilities.friendlyEncodeHTML(description));
 			}
 			catch (Exception ex) {
 				statusLabel.setText("");

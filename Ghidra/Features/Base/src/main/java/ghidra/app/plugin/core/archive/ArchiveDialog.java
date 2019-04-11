@@ -21,6 +21,7 @@ import java.io.File;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.GenericRunInfo;
@@ -75,7 +76,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 		GridBagLayout gbl = new GridBagLayout();
 		JPanel outerPanel = new JPanel(gbl);
 
-		archiveLabel = new JLabel(" Archive File ");
+		archiveLabel = DockingUtils.createNonHtmlLabel(" Archive File ");
 		archiveField = new JTextField();
 		archiveField.setName("archiveField");
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
@@ -153,7 +154,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 			}
 			File file = new File(archive);
 			if (file.exists() && OptionDialog.showOptionDialog(rootPanel, "Archive File Exists",
-				archive + " exists.\n " + "Do you want to overwrite existing file?",
+				"File " + archive + " exists.\n " + "Do you want to overwrite existing file?",
 				"Yes") != OptionDialog.OPTION_ONE) {
 				return;
 			}

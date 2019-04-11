@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -140,9 +141,10 @@ public class ConflictDialog extends DialogComponentProvider {
 	}
 
 	private JPanel createLabelPanel(String dtName, String categoryPath) {
-		JLabel imageLabel = new JLabel(INFORM_ICON);
+		JLabel imageLabel = DockingUtils.createNonHtmlLabel(INFORM_ICON);
 
-		JLabel infoLabel = new JLabel("Conflict exists in " + categoryPath + " for " + dtName);
+		JLabel infoLabel = DockingUtils.createNonHtmlLabel(
+			"Conflict exists in " + categoryPath + " for " + dtName);
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 20));

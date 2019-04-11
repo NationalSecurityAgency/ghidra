@@ -31,6 +31,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.ListSelectionTableDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -185,7 +186,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		sourceListPanel.add(sourceOptionsPanel, BorderLayout.SOUTH);
 
 		JPanel maxDepthPanel = new JPanel();
-		JLabel maxDepthLabel = new JLabel("Depth limit:");
+		JLabel maxDepthLabel = DockingUtils.createNonHtmlLabel("Depth limit:");
 		String maxDepthTip = "Maximum container (ie. nested zip, tar, etc) depth in the " +
 			"source file to recursively descend into";
 		maxDepthLabel.setToolTipText(maxDepthTip);
@@ -455,6 +456,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private TableCellEditor createFilesColumnCellEditor() {
 		JComboBox<Object> comboBox = new JComboBox<>();
+		DockingUtils.turnOffHTMLRendering(comboBox);
 		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
 			@Override
 			public boolean shouldSelectCell(EventObject anEvent) {

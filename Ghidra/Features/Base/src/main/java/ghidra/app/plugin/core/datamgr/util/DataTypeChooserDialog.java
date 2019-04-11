@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.filter.TextFilterStrategy;
 import docking.widgets.tree.*;
@@ -98,8 +99,7 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		String message = "Choose the data type you wish to use.";
-		messageLabel = new JLabel(message);
+		messageLabel = DockingUtils.createNonHtmlLabel("Choose the data type you wish to use.");
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 2));
 		panel.add(messageLabel, BorderLayout.NORTH);
 		panel.add(this.tree, BorderLayout.CENTER);

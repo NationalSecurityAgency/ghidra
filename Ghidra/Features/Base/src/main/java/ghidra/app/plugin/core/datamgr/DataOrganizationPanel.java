@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.DockingUtils;
 import ghidra.program.model.data.DataOrganizationImpl;
 import ghidra.util.layout.PairLayout;
 
@@ -61,41 +62,41 @@ public class DataOrganizationPanel extends JPanel {
 		setUpDoubleSize();
 		setUpLongDoubleSize();
 
-		add(new JLabel(""));
-		add(new JLabel(""));
-		add(new JLabel("Absolute Max Alignment"));
+		add(DockingUtils.createNonHtmlLabel(""));
+		add(DockingUtils.createNonHtmlLabel(""));
+		add(DockingUtils.createNonHtmlLabel("Absolute Max Alignment"));
 		add(absoluteMaxAlignComponent);
-		add(new JLabel("Machine Alignment"));
+		add(DockingUtils.createNonHtmlLabel("Machine Alignment"));
 		add(machineAlignComponent);
-		add(new JLabel("Default Alignment"));
+		add(DockingUtils.createNonHtmlLabel("Default Alignment"));
 		add(defaultAlignComponent);
-		add(new JLabel("Default Pointer Alignment"));
+		add(DockingUtils.createNonHtmlLabel("Default Pointer Alignment"));
 		add(pointerAlignComponent);
 
-		add(new JLabel(""));
-		add(new JLabel(""));
-		add(new JLabel("Signed-Char:"));
+		add(DockingUtils.createNonHtmlLabel(""));
+		add(DockingUtils.createNonHtmlLabel(""));
+		add(DockingUtils.createNonHtmlLabel("Signed-Char:"));
 		add(charIsSignedCheckbox);
-		add(new JLabel("Char Size"));
+		add(DockingUtils.createNonHtmlLabel("Char Size"));
 		add(charSizeComponent);
-		add(new JLabel("Wide-Char Size"));
+		add(DockingUtils.createNonHtmlLabel("Wide-Char Size"));
 		add(wcharSizeComponent);
-		add(new JLabel("Short Size"));
+		add(DockingUtils.createNonHtmlLabel("Short Size"));
 		add(shortSizeComponent);
-		add(new JLabel("Integer Size"));
+		add(DockingUtils.createNonHtmlLabel("Integer Size"));
 		add(integerSizeComponent);
-		add(new JLabel("Long Size"));
+		add(DockingUtils.createNonHtmlLabel("Long Size"));
 		add(longSizeComponent);
-		add(new JLabel("LongLong Size"));
+		add(DockingUtils.createNonHtmlLabel("LongLong Size"));
 		add(longLongSizeComponent);
-		add(new JLabel("Float Size"));
+		add(DockingUtils.createNonHtmlLabel("Float Size"));
 		add(floatSizeComponent);
-		add(new JLabel("Double Size"));
+		add(DockingUtils.createNonHtmlLabel("Double Size"));
 		add(doubleSizeComponent);
-		add(new JLabel("LongDouble Size"));
+		add(DockingUtils.createNonHtmlLabel("LongDouble Size"));
 		add(longDoubleSizeComponent);
-		add(new JLabel(""));
-		add(new JLabel(""));
+		add(DockingUtils.createNonHtmlLabel(""));
+		add(DockingUtils.createNonHtmlLabel(""));
 	}
 
 	public void setOrganization(DataOrganizationImpl dataOrganization) {
@@ -133,7 +134,7 @@ public class DataOrganizationPanel extends JPanel {
 		doubleSizeComponent.setText(Integer.toString(doubleSize));
 		longDoubleSizeComponent.setText(Integer.toString(longDoubleSize));
 	}
-	
+
 	private void setUpSignedChar() {
 		charIsSignedCheckbox = new JCheckBox();
 		charIsSignedCheckbox.addChangeListener(new ChangeListener() {
@@ -143,19 +144,22 @@ public class DataOrganizationPanel extends JPanel {
 			}
 		});
 	}
-	
+
 	private void setUpCharSize() {
 		charSizeComponent = new JTextField(3);
 		charSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedCharSize();
 			}
 		});
 		charSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedCharSize();
 			}
@@ -165,15 +169,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpWideCharSize() {
 		wcharSizeComponent = new JTextField(3);
 		wcharSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedWideCharSize();
 			}
 		});
 		wcharSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedWideCharSize();
 			}
@@ -183,15 +190,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpShortSize() {
 		shortSizeComponent = new JTextField(3);
 		shortSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedShortSize();
 			}
 		});
 		shortSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedShortSize();
 			}
@@ -201,15 +211,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpIntegerSize() {
 		integerSizeComponent = new JTextField(3);
 		integerSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedIntegerSize();
 			}
 		});
 		integerSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedIntegerSize();
 			}
@@ -219,15 +232,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpLongSize() {
 		longSizeComponent = new JTextField(3);
 		longSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedLongSize();
 			}
 		});
 		longSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedLongSize();
 			}
@@ -237,15 +253,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpLongLongSize() {
 		longLongSizeComponent = new JTextField(3);
 		longLongSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedLongLongSize();
 			}
 		});
 		longLongSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedLongLongSize();
 			}
@@ -255,15 +274,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpFloatSize() {
 		floatSizeComponent = new JTextField(3);
 		floatSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedFloatSize();
 			}
 		});
 		floatSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedFloatSize();
 			}
@@ -273,15 +295,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpDoubleSize() {
 		doubleSizeComponent = new JTextField(3);
 		doubleSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedDoubleSize();
 			}
 		});
 		doubleSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedDoubleSize();
 			}
@@ -291,15 +316,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpLongDoubleSize() {
 		longDoubleSizeComponent = new JTextField(3);
 		longDoubleSizeComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedLongDoubleSize();
 			}
 		});
 		longDoubleSizeComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedLongDoubleSize();
 			}
@@ -309,15 +337,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpAbsoluteMaxAlignment() {
 		absoluteMaxAlignComponent = new JTextField(3);
 		absoluteMaxAlignComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedAbsoluteMaxAlignment();
 			}
 		});
 		absoluteMaxAlignComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedAbsoluteMaxAlignment();
 			}
@@ -327,15 +358,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpMachineAlignment() {
 		machineAlignComponent = new JTextField(3);
 		machineAlignComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedMachineAlignment();
 			}
 		});
 		machineAlignComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedMachineAlignment();
 			}
@@ -345,15 +379,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpDefaultAlignment() {
 		defaultAlignComponent = new JTextField(3);
 		defaultAlignComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedDefaultAlignment();
 			}
 		});
 		defaultAlignComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedDefaultAlignment();
 			}
@@ -363,15 +400,18 @@ public class DataOrganizationPanel extends JPanel {
 	private void setUpPointerAlignment() {
 		pointerAlignComponent = new JTextField(3);
 		pointerAlignComponent.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatedDefaultPointerAlignment();
 			}
 		});
 		pointerAlignComponent.addFocusListener(new FocusListener() {
+			@Override
 			public void focusGained(FocusEvent e) {
 				// TODO
 			}
 
+			@Override
 			public void focusLost(FocusEvent e) {
 				updatedDefaultPointerAlignment();
 			}
@@ -382,7 +422,7 @@ public class DataOrganizationPanel extends JPanel {
 		boolean isSigned = charIsSignedCheckbox.isSelected();
 		dataOrganization.setCharIsSigned(isSigned);
 	}
-	
+
 	protected void updatedCharSize() {
 		int charSize = Integer.decode(charSizeComponent.getText()).intValue();
 		dataOrganization.setCharSize(charSize);

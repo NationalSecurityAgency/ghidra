@@ -889,7 +889,7 @@ public class DialogComponentProvider
 
 	private JPanel buildStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(" ");
+		statusLabel = DockingUtils.createHtmlLabel(" ");
 		statusLabel.setName("statusLabel");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);

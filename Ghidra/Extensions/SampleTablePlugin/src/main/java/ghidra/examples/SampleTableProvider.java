@@ -162,7 +162,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 
 				StringBuilder buffer = new StringBuilder();
 				buffer.append("Writing the following objects to file: ");
-				buffer.append(fileChooserPanel.getFileName());
+				buffer.append(HTMLUtilities.friendlyEncodeHTML(fileChooserPanel.getFileName()));
 
 				List<FunctionStatsRowObject> selectedObjects = filterTable.getSelectedRowObjects();
 				for (FunctionStatsRowObject stats : selectedObjects) {

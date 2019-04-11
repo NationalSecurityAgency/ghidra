@@ -63,7 +63,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	private JButton allButton;
 	private JTextField valueField;
 	private GhidraComboBox<String> valueComboBox;
-	private List<String> history = new LinkedList<String>();
+	private List<String> history = new LinkedList<>();
 	private JLabel hexSeqField;
 	private CardLayout formatOptionsLayout;
 	private JRadioButton searchSelectionRadioButton;
@@ -214,7 +214,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	private void updateCombo() {
 		String[] list = new String[history.size()];
 		history.toArray(list);
-		valueComboBox.setModel(new DefaultComboBoxModel<String>(list));
+		valueComboBox.setModel(new DefaultComboBoxModel<>(list));
 	}
 
 	private void truncateHistoryAsNeeded() {
@@ -231,8 +231,8 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	private CodeUnitSearchInfo createCodeUnitSearchInfo() {
-		return new CodeUnitSearchInfo(codeUnitTypesList.get(0).isSelected(), codeUnitTypesList.get(
-			1).isSelected(), codeUnitTypesList.get(2).isSelected());
+		return new CodeUnitSearchInfo(codeUnitTypesList.get(0).isSelected(),
+			codeUnitTypesList.get(1).isSelected(), codeUnitTypesList.get(2).isSelected());
 	}
 
 	private void nextPreviousCallback(boolean forward) {
@@ -248,8 +248,8 @@ class MemSearchDialog extends DialogComponentProvider {
 		}
 		if (searchData.isValidSearchData()) {
 			if (plugin.searchOnce(new SearchInfo(searchData, 1,
-				searchSelectionRadioButton.isSelected(), forward, alignment,
-				allBlocks.isSelected(), createCodeUnitSearchInfo(), plugin.createTaskListener()))) {
+				searchSelectionRadioButton.isSelected(), forward, alignment, allBlocks.isSelected(),
+				createCodeUnitSearchInfo(), plugin.createTaskListener()))) {
 				addToHistory(valueField.getText());
 				setStatusText("Searching...");
 				isSearching = true;
@@ -294,9 +294,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 		labelPanel.setLayout(new GridLayout(0, 1));
-		JLabel valueLabel = new JLabel("Search Value: ");
+		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Search Value: ");
 		labelPanel.add(valueLabel);
-		JLabel hexSeqLabel = new JLabel("Hex Sequence: ");
+		JLabel hexSeqLabel = DockingUtils.createNonHtmlLabel("Hex Sequence: ");
 		labelPanel.add(hexSeqLabel);
 
 		JPanel inputPanel = new JPanel();
@@ -315,7 +315,7 @@ class MemSearchDialog extends DialogComponentProvider {
 		});
 
 		inputPanel.add(valueComboBox);
-		hexSeqField = new JLabel();
+		hexSeqField = DockingUtils.createNonHtmlLabel();
 		hexSeqField.setName("HexSequenceField");
 		hexSeqField.setBorder(BorderFactory.createLoweredBevelBorder());
 		inputPanel.add(hexSeqField);
@@ -425,7 +425,7 @@ class MemSearchDialog extends DialogComponentProvider {
 
 		ItemListener stateListener = e -> validate();
 
-		codeUnitTypesList = new ArrayList<JCheckBox>();
+		codeUnitTypesList = new ArrayList<>();
 		codeUnitTypesList.add(instructionsCheckBox);
 		codeUnitTypesList.add(definedCheckBox);
 		codeUnitTypesList.add(undefinedCheckBox);
@@ -468,7 +468,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	private Component buildAlignmentPanel() {
-		alignLabel = new JLabel("Alignment: ");
+		alignLabel = DockingUtils.createNonHtmlLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
 		alignField.setText("0");
@@ -578,10 +578,12 @@ class MemSearchDialog extends DialogComponentProvider {
 		memoryBlockGroup.add(loadedBlocks);
 		memoryBlockGroup.add(allBlocks);
 
-		loadedBlocks.setToolTipText(HTMLUtilities.toHTML("Only searches memory blocks that are loaded in a running executable.\n  "
-			+ "Ghidra now includes memory blocks for other data such as section headers.\n"
-			+ "This option exludes these OTHER (non loaded) blocks."));
-		allBlocks.setToolTipText("Searches all memory blocks including blocks that are not actually loaded in a running executable");
+		loadedBlocks.setToolTipText(HTMLUtilities.toHTML(
+			"Only searches memory blocks that are loaded in a running executable.\n  " +
+				"Ghidra now includes memory blocks for other data such as section headers.\n" +
+				"This option exludes these OTHER (non loaded) blocks."));
+		allBlocks.setToolTipText(
+			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 
 		JPanel directionPanel = new JPanel();
 		directionPanel.setLayout(new BoxLayout(directionPanel, BoxLayout.Y_AXIS));

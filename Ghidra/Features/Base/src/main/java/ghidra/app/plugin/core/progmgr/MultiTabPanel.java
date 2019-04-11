@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import docking.DockingUtils;
 import docking.util.KeyBindingUtils;
 import generic.util.WindowUtilities;
 import ghidra.framework.model.ProjectLocator;
@@ -227,7 +228,7 @@ public class MultiTabPanel extends JPanel {
 		final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 1));
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
 
-		final JLabel nameLabel = new JLabel();
+		JLabel nameLabel = DockingUtils.createNonHtmlLabel();
 		nameLabel.setIconTextGap(1);
 		nameLabel.setName("objectName"); // junit access
 		nameLabel.setFont(LABEL_FONT);
@@ -236,7 +237,7 @@ public class MultiTabPanel extends JPanel {
 
 		labelPanel.add(nameLabel);
 
-		final JLabel iconLabel = new JLabel(EMPTY16_ICON);
+		JLabel iconLabel = DockingUtils.createNonHtmlLabel(EMPTY16_ICON);
 		Icon icon = isSelected ? CLOSE_ICON : EMPTY16_ICON;
 		iconLabel.setIcon(icon);
 
@@ -642,7 +643,7 @@ public class MultiTabPanel extends JPanel {
 	}
 
 	private JLabel createLabel() {
-		final JLabel newLabel = new JLabel(LIST_ICON, SwingConstants.LEFT);
+		JLabel newLabel = DockingUtils.createNonHtmlLabel(LIST_ICON, SwingConstants.LEFT);
 		newLabel.setIconTextGap(0);
 		newLabel.setFont(LIST_LABEL_FONT);
 		newLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));

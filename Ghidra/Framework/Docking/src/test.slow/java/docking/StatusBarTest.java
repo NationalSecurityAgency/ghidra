@@ -107,8 +107,8 @@ public class StatusBarTest extends AbstractDockingTest {
 	}
 
 	private void addAndRemoveStatusItems() {
-		final JLabel label1 = new JLabel("Test Label 1");
-		final JLabel label2 = new JLabel("Test Label 2");
+		final JLabel label1 = DockingUtils.createNonHtmlLabel("Test Label 1");
+		final JLabel label2 = DockingUtils.createNonHtmlLabel("Test Label 2");
 
 		// normal add/remove operations
 		runSwing(new Runnable() {
@@ -165,7 +165,7 @@ public class StatusBarTest extends AbstractDockingTest {
 			@Override
 			public void run() {
 				try {
-					statusBar.removeStatusItem(new JLabel("Test Label 3"));
+					statusBar.removeStatusItem(DockingUtils.createNonHtmlLabel("Test Label 3"));
 
 					Assert.fail("Did not receive an expected NullPointerException.");
 				}

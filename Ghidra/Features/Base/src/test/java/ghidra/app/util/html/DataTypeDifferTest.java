@@ -26,12 +26,13 @@ import javax.swing.*;
 import org.junit.Assert;
 import org.junit.Test;
 
+import docking.DockingUtils;
 import ghidra.app.util.html.diff.*;
 
 public class DataTypeDifferTest {
 
 	@Test
-    public void testDiffBody_EmptyInputs() {
+	public void testDiffBody_EmptyInputs() {
 
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		List<ValidatableLine> rightLines = new ArrayList<>();
@@ -44,7 +45,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_SingleInput_Same() {
+	public void testDiffBody_SingleInput_Same() {
 
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Line One");
@@ -67,7 +68,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_SingleInput_Different() {
+	public void testDiffBody_SingleInput_Different() {
 
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Left One");
@@ -90,7 +91,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_DifferentSize_SameStart() {
+	public void testDiffBody_DifferentSize_SameStart() {
 
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Line One");
@@ -117,7 +118,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_TrippleInput_AllDifferentButLast() {
+	public void testDiffBody_TrippleInput_AllDifferentButLast() {
 
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Left One");
@@ -145,7 +146,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_DifferentSize_SameTopAndBottom() {
+	public void testDiffBody_DifferentSize_SameTopAndBottom() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Line One");
 		TestLine l2 = addLine(leftLines, "Line Two");
@@ -174,7 +175,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_DifferentSize_AllDifferent() {
+	public void testDiffBody_DifferentSize_AllDifferent() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Left One");
 		addLine(leftLines, "Left Two");
@@ -202,7 +203,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testDiffBody_SameInitialLines_InsertsToBothAtDifferentOffsets() {
+	public void testDiffBody_SameInitialLines_InsertsToBothAtDifferentOffsets() {
 		//
 		// This test is a bit peculiar.  It intends to test that the diffs generated will not
 		// be the same size when there are different inserted elements at indices that overlap.
@@ -250,7 +251,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHeaderLines_Same() {
+	public void testHeaderLines_Same() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Line One");
 		addLine(leftLines, "Line Two");
@@ -275,7 +276,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHeaderLines_Different_SameSize() {
+	public void testHeaderLines_Different_SameSize() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Line One");
 		TestLine l2 = addLine(leftLines, "Left Two");
@@ -300,7 +301,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHeaderLines_Different_DifferentSize() {
+	public void testHeaderLines_Different_DifferentSize() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Line One");
 		TestLine l2 = addLine(leftLines, "Left Two");
@@ -327,7 +328,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHighlightDifferences_Same() {
+	public void testHighlightDifferences_Same() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Line One");
 		TestLine l2 = addLine(leftLines, "Line Two");
@@ -342,7 +343,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHighlightDifferences_Different() {
+	public void testHighlightDifferences_Different() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		TestLine l1 = addLine(leftLines, "Line One");
 		TestLine l2 = addLine(leftLines, "Left Two");
@@ -358,7 +359,7 @@ public class DataTypeDifferTest {
 	}
 
 	@Test
-    public void testHighlightDifferences_DifferentSizes() {
+	public void testHighlightDifferences_DifferentSizes() {
 		List<ValidatableLine> leftLines = new ArrayList<>();
 		addLine(leftLines, "Line One");
 
@@ -442,8 +443,9 @@ public class DataTypeDifferTest {
 	private void showDiffs(DataTypeDiff diff) {
 
 		// debug
-		if (true)
+		if (true) {
 			return;
+		}
 
 		DiffLines leftLines = diff.getLeftLines();
 		DiffLines rightLines = diff.getRightLines();
@@ -489,7 +491,7 @@ public class DataTypeDifferTest {
 
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		StringBuffer buffy1 = new StringBuffer(htmlLeft);
-		JLabel rightLabel = new JLabel();
+		JLabel rightLabel = DockingUtils.createNonHtmlLabel();
 		rightLabel.setOpaque(true);
 		rightLabel.setBackground(Color.WHITE);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -497,7 +499,7 @@ public class DataTypeDifferTest {
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		StringBuffer buffy2 = new StringBuffer(htmlRight);
-		JLabel leftLabel = new JLabel();
+		JLabel leftLabel = DockingUtils.createNonHtmlLabel();
 		leftLabel.setOpaque(true);
 		leftLabel.setBackground(Color.WHITE);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);

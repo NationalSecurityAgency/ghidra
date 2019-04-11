@@ -312,8 +312,8 @@ public class SplashScreen extends JWindow {
 		titlePanel.setBackground(backgroundColor);
 		titlePanel.setLayout(new BorderLayout());
 
-		JLabel titleLabel =
-			new JLabel(ApplicationInformationDisplayFactory.createSplashScreenTitle());
+		JLabel titleLabel = DockingUtils.createNonHtmlLabel(
+			ApplicationInformationDisplayFactory.createSplashScreenTitle());
 		Font font = titleLabel.getFont();
 		font = new Font(font.getName(), Font.BOLD, 11);
 		titleLabel.setFont(font);
@@ -328,7 +328,7 @@ public class SplashScreen extends JWindow {
 
 	private Component createStatusComponent() {
 		Font f = new Font("serif", Font.BOLD, 12);
-		statusLabel = new JLabel(" Loading...");
+		statusLabel = DockingUtils.createNonHtmlLabel(" Loading...");
 		statusLabel.setFont(f);
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));

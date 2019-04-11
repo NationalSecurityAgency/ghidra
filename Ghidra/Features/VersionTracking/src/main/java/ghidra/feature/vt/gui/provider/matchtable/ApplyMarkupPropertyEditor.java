@@ -26,6 +26,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.help.HelpService;
 import ghidra.GhidraOptions;
@@ -276,22 +277,23 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	private void createFunctionSignatureDetailLabels() {
 
-		returnTypeLabel = new JLabel("Return Type", SwingConstants.RIGHT);
+		returnTypeLabel = DockingUtils.createNonHtmlLabel("Return Type", SwingConstants.RIGHT);
 		returnTypeLabel.setToolTipText(FUNCTION_RETURN_TYPE_TOOLTIP);
 
-		inlineLabel = new JLabel("Inline", SwingConstants.RIGHT);
+		inlineLabel = DockingUtils.createNonHtmlLabel("Inline", SwingConstants.RIGHT);
 		inlineLabel.setToolTipText(INLINE_TOOLTIP);
 
-		noReturnLabel = new JLabel("No Return", SwingConstants.RIGHT);
+		noReturnLabel = DockingUtils.createNonHtmlLabel("No Return", SwingConstants.RIGHT);
 		noReturnLabel.setToolTipText(NO_RETURN_TOOLTIP);
 
-		callingConventionLabel = new JLabel("Calling Convention", SwingConstants.RIGHT);
+		callingConventionLabel =
+			DockingUtils.createNonHtmlLabel("Calling Convention", SwingConstants.RIGHT);
 		callingConventionLabel.setToolTipText(CALLING_CONVENTION_TOOLTIP);
 
-		callFixupLabel = new JLabel("Call Fixup", SwingConstants.RIGHT);
+		callFixupLabel = DockingUtils.createNonHtmlLabel("Call Fixup", SwingConstants.RIGHT);
 		callFixupLabel.setToolTipText(CALL_FIXUP_TOOLTIP);
 
-		varArgsLabel = new JLabel("Var Args", SwingConstants.RIGHT);
+		varArgsLabel = DockingUtils.createNonHtmlLabel("Var Args", SwingConstants.RIGHT);
 		varArgsLabel.setToolTipText(VAR_ARGS_TOOLTIP);
 
 	}
@@ -347,7 +349,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(parameterNamesLabel);
 		panel.add(parameterNamesComboBox);
 
-		panel.add(new JLabel(" "));
+		panel.add(DockingUtils.createNonHtmlLabel(" "));
 		panel.add(createPrioritySubPanel());
 
 		panel.add(parameterCommentsLabel);
@@ -358,13 +360,16 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	}
 
 	private void createParameterLabels() {
-		parameterDataTypesLabel = new JLabel("Parameter Data Types", SwingConstants.RIGHT);
+		parameterDataTypesLabel =
+			DockingUtils.createNonHtmlLabel("Parameter Data Types", SwingConstants.RIGHT);
 		parameterDataTypesLabel.setToolTipText(PARAMETER_DATA_TYPES_TOOLTIP);
 
-		parameterNamesLabel = new JLabel("Parameter Names", SwingConstants.RIGHT);
+		parameterNamesLabel =
+			DockingUtils.createNonHtmlLabel("Parameter Names", SwingConstants.RIGHT);
 		parameterNamesLabel.setToolTipText(PARAMETER_NAMES_TOOLTIP);
 
-		parameterCommentsLabel = new JLabel("Parameter Comments", SwingConstants.RIGHT);
+		parameterCommentsLabel =
+			DockingUtils.createNonHtmlLabel("Parameter Comments", SwingConstants.RIGHT);
 		parameterCommentsLabel.setToolTipText(PARAMETER_COMMENTS_TOOLTIP);
 	}
 
@@ -415,7 +420,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.setToolTipText(PARAMETER_NAME_PRIORITY_TOOTIP);
 
 		Box buttonBox = new Box(BoxLayout.X_AXIS);
-		JLabel highestPriorityLabel = new JLabel(" Highest: ");
+		JLabel highestPriorityLabel = DockingUtils.createNonHtmlLabel(" Highest: ");
 		highestPriorityLabel.setToolTipText(HIGHEST_NAME_PRIORITY_TOOLTIP);
 		buttonBox.add(highestPriorityLabel);
 		buttonBox.add(userHighestPriorityRB);
@@ -452,16 +457,18 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	}
 
 	private void createNonCommentMarkupLabels() {
-		dataMatchDataTypeLabel = new JLabel("Data Match Data Type", SwingConstants.RIGHT);
+		dataMatchDataTypeLabel =
+			DockingUtils.createNonHtmlLabel("Data Match Data Type", SwingConstants.RIGHT);
 		dataMatchDataTypeLabel.setToolTipText(DATA_MATCH_DATA_TYPE_TOOLTIP);
 
-		labelsLabel = new JLabel("Labels", SwingConstants.RIGHT);
+		labelsLabel = DockingUtils.createNonHtmlLabel("Labels", SwingConstants.RIGHT);
 		labelsLabel.setToolTipText(LABELS_TOOLTIP);
 
-		functionNameLabel = new JLabel("Function Name", SwingConstants.RIGHT);
+		functionNameLabel = DockingUtils.createNonHtmlLabel("Function Name", SwingConstants.RIGHT);
 		functionNameLabel.setToolTipText(FUNCTION_NAME_TOOLTIP);
 
-		functionSignatureLabel = new JLabel("Function Signature", SwingConstants.RIGHT);
+		functionSignatureLabel =
+			DockingUtils.createNonHtmlLabel("Function Signature", SwingConstants.RIGHT);
 		functionSignatureLabel.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
 	}
 
@@ -519,19 +526,22 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	}
 
 	private void createCommentLabels() {
-		plateCommentsLabel = new JLabel("Plate Comments", SwingConstants.RIGHT);
+		plateCommentsLabel =
+			DockingUtils.createNonHtmlLabel("Plate Comments", SwingConstants.RIGHT);
 		plateCommentsLabel.setToolTipText(PLATE_COMMENT_TOOLTIP);
 
-		preCommentsLabel = new JLabel("Pre-Comments", SwingConstants.RIGHT);
+		preCommentsLabel = DockingUtils.createNonHtmlLabel("Pre-Comments", SwingConstants.RIGHT);
 		preCommentsLabel.setToolTipText(PRE_COMMENT_TOOLTIP);
 
-		endOfLineCommentsLabel = new JLabel("End of Line Comments", SwingConstants.RIGHT);
+		endOfLineCommentsLabel =
+			DockingUtils.createNonHtmlLabel("End of Line Comments", SwingConstants.RIGHT);
 		endOfLineCommentsLabel.setToolTipText(END_OF_LINE_COMMENT_TOOLTIP);
 
-		repeatableCommentsLabel = new JLabel("Repeatable Comments", SwingConstants.RIGHT);
+		repeatableCommentsLabel =
+			DockingUtils.createNonHtmlLabel("Repeatable Comments", SwingConstants.RIGHT);
 		repeatableCommentsLabel.setToolTipText(REPEATABLE_COMMENT_TOOLTIP);
 
-		postCommentsLabel = new JLabel("Post Comments", SwingConstants.RIGHT);
+		postCommentsLabel = DockingUtils.createNonHtmlLabel("Post Comments", SwingConstants.RIGHT);
 		postCommentsLabel.setToolTipText(POST_COMMENT_TOOLTIP);
 	}
 

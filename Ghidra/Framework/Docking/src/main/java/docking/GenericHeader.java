@@ -342,7 +342,7 @@ public class GenericHeader extends JPanel {
 		TitlePanel() {
 			super(new BorderLayout());
 			setFocusable(false);
-			titleLabel = new JLabel();
+			titleLabel = DockingUtils.createNonHtmlLabel();
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
 			titleLabel.setForeground(Color.BLACK);
 			titleLabel.setFocusable(false);

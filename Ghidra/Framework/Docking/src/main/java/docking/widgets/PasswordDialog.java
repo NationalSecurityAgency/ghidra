@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
@@ -56,7 +57,7 @@ public class PasswordDialog extends DialogComponentProvider {
 			int defaultChoice, boolean includeAnonymousOption) {
 		this(title, serverType, serverName, passPrompt, namePrompt, defaultUserID);
 		if (choicePrompt != null) {
-			workPanel.add(new JLabel(choicePrompt));
+			workPanel.add(DockingUtils.createNonHtmlLabel(choicePrompt));
 			choiceCB = new JComboBox<>(choices);
 			choiceCB.setName("CHOICES-COMPONENT");
 			choiceCB.setSelectedIndex(defaultChoice);
@@ -79,7 +80,7 @@ public class PasswordDialog extends DialogComponentProvider {
 					choiceCB.setEnabled(enableOtherFields);
 				}
 			});
-			workPanel.add(new JLabel(""));
+			workPanel.add(DockingUtils.createNonHtmlLabel(""));
 			workPanel.add(anonymousAccess);
 		}
 	}
@@ -124,24 +125,25 @@ public class PasswordDialog extends DialogComponentProvider {
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
 
 		if (serverName != null) {
-			workPanel.add(new JLabel(serverType + ":"));
-			workPanel.add(new JLabel(serverName));
+			workPanel.add(DockingUtils.createNonHtmlLabel(serverType + ":"));
+			workPanel.add(DockingUtils.createNonHtmlLabel(serverName));
 		}
 
 		if (namePrompt != null) {
-			workPanel.add(new JLabel(namePrompt));
+			workPanel.add(DockingUtils.createNonHtmlLabel(namePrompt));
 			nameField = new JTextField(defaultUserID, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
 			workPanel.add(nameField);
 		}
 		else if (defaultUserID != null) {
-			workPanel.add(new JLabel("User ID:"));
-			JLabel nameLabel = new JLabel(defaultUserID);
+			workPanel.add(DockingUtils.createNonHtmlLabel("User ID:"));
+			JLabel nameLabel = DockingUtils.createNonHtmlLabel(defaultUserID);
 			nameLabel.setName("NAME-COMPONENT");
 			workPanel.add(nameLabel);
 		}
 
-		workPanel.add(new JLabel(passPrompt != null ? passPrompt : "Password:"));
+		workPanel.add(
+			DockingUtils.createNonHtmlLabel(passPrompt != null ? passPrompt : "Password:"));
 		passwordField = new JPasswordField(16);
 		passwordField.setName("PASSWORD-ENTRY-COMPONENT");
 		workPanel.add(passwordField);

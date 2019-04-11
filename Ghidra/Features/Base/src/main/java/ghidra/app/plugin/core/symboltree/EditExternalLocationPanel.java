@@ -25,6 +25,7 @@ import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
@@ -119,7 +120,7 @@ class EditExternalLocationPanel extends JPanel {
 		topPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Program"), new EmptyBorder(0, 5, 5, 5)));
 
-		JLabel label = new JLabel("Name:");
+		JLabel label = DockingUtils.createNonHtmlLabel("Name:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		topPanel.add(label);
 		extLibNameComboBox = new GhidraComboBox<>();
@@ -169,7 +170,7 @@ class EditExternalLocationPanel extends JPanel {
 		buttonPanel.add(editButton);
 		pathPanel.add(buttonPanel, BorderLayout.EAST);
 
-		label = new JLabel("Path:");
+		label = DockingUtils.createNonHtmlLabel("Path:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		topPanel.add(label);
 		topPanel.add(pathPanel);
@@ -178,27 +179,27 @@ class EditExternalLocationPanel extends JPanel {
 		bottomPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Location"), new EmptyBorder(0, 5, 5, 5)));
 
-		label = new JLabel("Type:");
+		label = DockingUtils.createNonHtmlLabel("Type:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		bottomPanel.add(label);
 
-		extTypeLabel = new JLabel("Function");
+		extTypeLabel = DockingUtils.createNonHtmlLabel("Function");
 		bottomPanel.add(extTypeLabel);
 
-		label = new JLabel("Label:");
+		label = DockingUtils.createNonHtmlLabel("Label:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		bottomPanel.add(label);
 		extLabelTextField = new JTextField();
 		bottomPanel.add(extLabelTextField);
 
-		label = new JLabel("Address:");
+		label = DockingUtils.createNonHtmlLabel("Address:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		bottomPanel.add(label);
 		extAddressInputWidget = new AddressInput();
 		bottomPanel.add(extAddressInputWidget);
 
 		if (startingOriginalName != null) {
-			label = new JLabel("Original Label:");
+			label = DockingUtils.createNonHtmlLabel("Original Label:");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			bottomPanel.add(label);
 			bottomPanel.add(buildOriginalLableFieldAndRestoreButton());

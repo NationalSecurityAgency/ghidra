@@ -25,6 +25,7 @@ import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.DockingUtils;
 import ghidra.program.model.address.*;
 
 /**
@@ -41,9 +42,9 @@ public class AddressInput extends JPanel {
 	private boolean updateSpaceField;
 	private boolean stateChanging;
 	private JTextField spaceField;
-	
+
 	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		new Comparator<AddressSpace>() {
+		new Comparator<>() {
 			@Override
 			public int compare(AddressSpace s1, AddressSpace s2) {
 				if (s1.isOverlaySpace()) {
@@ -68,6 +69,7 @@ public class AddressInput extends JPanel {
 		textField.setName("JTextField");//for JUnits...
 		combo = new JComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
+		DockingUtils.turnOffHTMLRendering(combo);
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);
 		comboAdded = false;
@@ -194,7 +196,7 @@ public class AddressInput extends JPanel {
 			// We don't want to let users create functions in certain memory spaces (eg: OTHER),
 			// so don't populate the model with them.
 			if (!spaces[i].isLoadedMemorySpace()) {
-				continue;
+				//continue;
 			}
 
 			String s = spaces[i].toString();

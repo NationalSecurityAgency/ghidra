@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -92,7 +93,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		resultsMainPanel.add(tablePanel);
 		main.add(resultsMainPanel, BorderLayout.CENTER);
 
-		errorStatus = new JLabel(" ");
+		errorStatus = DockingUtils.createNonHtmlLabel(" ");
 		errorStatus.setName("message");
 		errorStatus.setHorizontalAlignment(SwingConstants.CENTER);
 		errorStatus.setForeground(Color.RED);

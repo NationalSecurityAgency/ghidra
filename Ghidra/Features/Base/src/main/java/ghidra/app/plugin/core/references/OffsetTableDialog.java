@@ -23,6 +23,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -130,11 +131,13 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 		addrInput = new AddressInput();
 		addrInput.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				okCallback();
 			}
 		});
 		addrInput.addChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				clearStatusText();
 			}
@@ -142,12 +145,13 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		addrInput.setAddressFactory(addrFactory);
 		addrInput.setAddress(defaultAddress);
 
-		JLabel label = new JLabel("Enter Base Address:", SwingConstants.RIGHT);
+		JLabel label = DockingUtils.createNonHtmlLabel("Enter Base Address:", SwingConstants.RIGHT);
 		panel.add(label);
 		panel.add(addrInput);
 
-		JLabel sizeLabel = new JLabel("Select Data Size (Bytes):", SwingConstants.RIGHT);
-		comboBox = new JComboBox<String>(new String[] { "1", "2", "4", "8" });
+		JLabel sizeLabel =
+			DockingUtils.createNonHtmlLabel("Select Data Size (Bytes):", SwingConstants.RIGHT);
+		comboBox = new JComboBox<>(new String[] { "1", "2", "4", "8" });
 		int pointerSize = defaultAddress.getPointerSize();
 		comboBox.setSelectedItem(Integer.toString(pointerSize));
 

@@ -128,9 +128,9 @@ public class ErrLogDialog extends DialogComponentProvider {
 
 	private void buildMainPanel(String message, String details, boolean isException) {
 
-		messageLabel = new JLabel(HTMLUtilities.toHTML(message));
-		JLabel iconLabel =
-			new JLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT);
+		messageLabel = DockingUtils.createHtmlLabel(HTMLUtilities.toHTML(message));
+		JLabel iconLabel = DockingUtils.createNonHtmlLabel(
+			UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT);
 
 		JPanel introPanel = new JPanel(new BorderLayout(10, 10));
 		introPanel.add(iconLabel, BorderLayout.WEST);

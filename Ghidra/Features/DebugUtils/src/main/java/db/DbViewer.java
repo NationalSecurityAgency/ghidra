@@ -27,6 +27,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import db.buffers.LocalBufferFile;
+import docking.DockingUtils;
 import docking.framework.DockingApplicationConfiguration;
 import docking.framework.DockingApplicationLayout;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -52,8 +53,7 @@ public class DbViewer extends JFrame {
 	private JPanel southPanel;
 	private JComboBox<String> combo;
 	private Table[] tables;
-	private Hashtable<String, TableStatistics[]> tableStats =
-		new Hashtable<String, TableStatistics[]>();
+	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
 
 	DbViewer() {
 		super("Database Viewer");
@@ -130,8 +130,8 @@ public class DbViewer extends JFrame {
 		}
 		catch (IOException e) {
 			try {
-				PackedDatabase pdb =
-					PackedDatabase.getPackedDatabase(selectedFile, TaskMonitorAdapter.DUMMY_MONITOR);
+				PackedDatabase pdb = PackedDatabase.getPackedDatabase(selectedFile,
+					TaskMonitorAdapter.DUMMY_MONITOR);
 				dbh = pdb.open(TaskMonitorAdapter.DUMMY_MONITOR);
 				tables = dbh.getTables();
 				Arrays.sort(tables, new TableNameComparator());
@@ -157,9 +157,9 @@ public class DbViewer extends JFrame {
 		mainPanel = new JPanel(new BorderLayout());
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
-		subNorthPanel.add(new JLabel("Database:"));
-		subNorthPanel.add(new JLabel(dbFile.getName()));
-		subNorthPanel.add(new JLabel("Tables:"));
+		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Database:"));
+		subNorthPanel.add(DockingUtils.createNonHtmlLabel(dbFile.getName()));
+		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Tables:"));
 		String[] names = new String[tables.length];
 		for (int i = 0; i < names.length; i++) {
 			names[i] =
@@ -223,9 +223,8 @@ public class DbViewer extends JFrame {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		JLabel statsLabel =
-			new JLabel(recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt +
-				"   " + size);
+		JLabel statsLabel = DockingUtils.createNonHtmlLabel(
+			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size);
 		panel.add(statsLabel, BorderLayout.SOUTH);
 
 		return panel;
@@ -353,7 +352,7 @@ class ColumnAdapter {
 				return new Integer(((IntField) rec.getKeyField()).getIntValue());
 			case LONG:
 				return "0x" + Long.toHexString(rec.getKey());
-				//return new Long(rec.getKey());
+			//return new Long(rec.getKey());
 			case STRING:
 				return ((StringField) rec.getKeyField()).getString();
 			case BINARY:
@@ -387,7 +386,7 @@ class ColumnAdapter {
 				return new Integer(rec.getIntValue(col));
 			case LONG:
 				return "0x" + Long.toHexString(rec.getLongValue(col));
-				//return new Long(rec.getLongValue(col)); 
+			//return new Long(rec.getLongValue(col)); 
 			case STRING:
 				return "  " + rec.getString(col);
 			case BINARY:
@@ -437,7 +436,7 @@ class ColumnAdapter {
 }
 
 class DbSmallTableModel implements TableModel {
-	ArrayList<TableModelListener> listeners = new ArrayList<TableModelListener>();
+	ArrayList<TableModelListener> listeners = new ArrayList<>();
 	Table table;
 	Schema schema;
 	ColumnAdapter[] colAdapters;
@@ -565,7 +564,7 @@ class DbSmallTableModel implements TableModel {
 }
 
 class DbLargeTableModel implements TableModel {
-	ArrayList<TableModelListener> listeners = new ArrayList<TableModelListener>();
+	ArrayList<TableModelListener> listeners = new ArrayList<>();
 	Table table;
 	Schema schema;
 	ColumnAdapter keyAdapter;
@@ -800,8 +799,9 @@ class DbLargeTableModel implements TableModel {
 	}
 
 	private long getLong(byte[] bytes) {
-		if (bytes == null || bytes.length == 0)
+		if (bytes == null || bytes.length == 0) {
 			return 0;
+		}
 		long value = 0;
 		for (int i = 0; i < 8; i++) {
 			value <<= 8;

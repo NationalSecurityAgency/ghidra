@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,6 @@
  */
 package ghidra.app.plugin.core.register;
 
-import ghidra.app.util.AddressInput;
-import ghidra.app.util.bean.FixedBitSizeValueField;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Register;
-import ghidra.util.HelpLocation;
-import ghidra.util.MessageType;
-import ghidra.util.layout.PairLayout;
-
 import java.math.BigInteger;
 
 import javax.swing.*;
@@ -31,6 +22,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import ghidra.app.util.AddressInput;
+import ghidra.app.util.bean.FixedBitSizeValueField;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.util.HelpLocation;
+import ghidra.util.MessageType;
+import ghidra.util.layout.PairLayout;
 
 class EditRegisterValueDialog extends DialogComponentProvider {
 
@@ -51,10 +50,10 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 
 	private JComponent buildWorkPanel(Register register, Address start, Address end,
 			BigInteger value, AddressFactory factory) {
-		JLabel regLabel = new JLabel("Register:");
-		JLabel startAddrLabel = new JLabel("Start Address:");
-		JLabel endAddrLabel = new JLabel("End Address:");
-		JLabel valueLabel = new JLabel("Value:");
+		JLabel regLabel = DockingUtils.createNonHtmlLabel("Register:");
+		JLabel startAddrLabel = DockingUtils.createNonHtmlLabel("Start Address:");
+		JLabel endAddrLabel = DockingUtils.createNonHtmlLabel("End Address:");
+		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Value:");
 
 		JTextField registerField =
 			new JTextField(register.getName() + " (" + register.getBitLength() + ")");

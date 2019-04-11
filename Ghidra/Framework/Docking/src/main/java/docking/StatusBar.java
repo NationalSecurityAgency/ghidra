@@ -83,7 +83,7 @@ public class StatusBar extends JPanel {
 		JPanel eastPanel = createEastPanel(statusAreaPanel);
 		add(eastPanel, BorderLayout.EAST);
 
-		statusLabel = new JLabel(" ");
+		statusLabel = DockingUtils.createNonHtmlLabel(" ");
 		statusLabel.setOpaque(true);
 
 		statusLabel.setName("Tool Status");

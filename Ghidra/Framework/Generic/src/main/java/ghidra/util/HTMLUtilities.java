@@ -481,12 +481,39 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * This is just a convenience call to {@link #friendlyEncodeHTML(String, boolean)} with a
-	 * value of <tt>true</tt>.
+	 * Converts any special or reserved characters in the specified string into HTML-escaped
+	 * entities.  Use this method when you have content containing HTML that you do not want
+	 * interpreted as HTML, such as when displaying text that uses angle brackets around words.
+	 *
+	 * <P>For example, consider the following<br><br>
+	 *
+	 * <table border=1>
+	 * 		<tr>
+	 * 			<th>Input</th><th>Output</th><th>Rendered as</th><th>(Without Friendly Encoding)</th>
+	 * 		</tr>
+	 * 		<tr>
+	 * 			<td>
+	 * 				Hi &lt;b&gt;mom &lt;/b&gt;
+	 * 			</td>
+	 * 			<td>
+	 * 				Hi<font color="green">
+	 *  &#x26;nbsp;<b>&#x26;lt;</b></font>b<font color="green"><b>&#x26;gt;</b></font>mom
+	 *  <font color="green">&#x26;nbsp;<b>&#x26;lt;</b></font>/b<font color="green"><b>&#x26;gt;</b>
+	 *  </font>
+	 * 			</td>
+	 * 			<td>
+	 * 				Hi &lt;b&gt;mom &lt;/b&gt;
+	 * 			</td>
+	 * 			<td>
+	 * 				Hi <b>mom </b>
+	 * 			</td>
+	 * 		</tr>
+	 * </table>
+	 *
+	 *  <br><br><br>
 	 *
 	 * @param text string to be encoded
 	 * @return the encoded HTML string
-	 * @see #friendlyEncodeHTML(String, boolean)
 	 */
 	public static String friendlyEncodeHTML(String text) {
 		return friendlyEncodeHTML(text, true);

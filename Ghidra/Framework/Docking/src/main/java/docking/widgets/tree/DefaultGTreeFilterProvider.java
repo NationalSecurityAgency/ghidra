@@ -22,6 +22,7 @@ import javax.swing.border.BevelBorder;
 
 import org.jdom.Element;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
@@ -120,7 +121,7 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 	private JPanel createFilterPanel() {
 		JPanel newFilterPanel = new JPanel(new BorderLayout());
 		newFilterPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		JLabel filterLabel = new JLabel(" Filter: ");
+		JLabel filterLabel = DockingUtils.createNonHtmlLabel(" Filter: ");
 		newFilterPanel.add(filterLabel, BorderLayout.WEST);
 
 		filterField = new FilterTextField(gTree.getJTree());

@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.fieldpanel.*;
@@ -824,21 +825,21 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	private JPanel createStatusPanel() {
 
-		JLabel startLabel = new JLabel("Start:", SwingConstants.RIGHT);
-		JLabel endLabel = new JLabel("End:", SwingConstants.RIGHT);
-		JLabel offsetLabel = new JLabel("Offset:", SwingConstants.RIGHT);
-		JLabel insertionLabel = new JLabel("Insertion:", SwingConstants.RIGHT);
+		JLabel startLabel = DockingUtils.createNonHtmlLabel("Start:", SwingConstants.RIGHT);
+		JLabel endLabel = DockingUtils.createNonHtmlLabel("End:", SwingConstants.RIGHT);
+		JLabel offsetLabel = DockingUtils.createNonHtmlLabel("Offset:", SwingConstants.RIGHT);
+		JLabel insertionLabel = DockingUtils.createNonHtmlLabel("Insertion:", SwingConstants.RIGHT);
 
-		startField = new JLabel("00000000");
+		startField = DockingUtils.createNonHtmlLabel("00000000");
 		startField.setName("Start");
 
-		endField = new JLabel("00000000");
+		endField = DockingUtils.createNonHtmlLabel("00000000");
 		endField.setName("End");
 
-		offsetField = new JLabel("00000000");
+		offsetField = DockingUtils.createNonHtmlLabel("00000000");
 		offsetField.setName("Offset");
 
-		insertionField = new JLabel("00000000");
+		insertionField = DockingUtils.createNonHtmlLabel("00000000");
 		insertionField.setName("Insertion");
 
 		Font f = new Font("SansSerif", Font.PLAIN, 11);
@@ -1030,6 +1031,11 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 		return viewList;
 	}
 
+	/**
+	 * Set the status info on the tool.
+	 * 
+	 * @param message non-html text to display
+	 */
 	void setStatusMessage(String message) {
 		provider.setStatusMessage(message);
 	}

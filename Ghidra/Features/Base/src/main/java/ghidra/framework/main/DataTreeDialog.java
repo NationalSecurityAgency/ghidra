@@ -563,6 +563,7 @@ public class DataTreeDialog extends DialogComponentProvider
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(new TitledBorder("Current Projects"));
 		projectComboBox = new JComboBox<>();
+		DockingUtils.turnOffHTMLRendering(projectComboBox);
 		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
 		projectComboBox.setModel(model);
 		model.addElement("defaultProject");
@@ -625,7 +626,7 @@ public class DataTreeDialog extends DialogComponentProvider
 			}
 		});
 
-		folderNameLabel = new JLabel("   ");
+		folderNameLabel = DockingUtils.createNonHtmlLabel("   ");
 		boolean userChoosesName = (type == SAVE) || (type == CREATE);
 		nameField.setEditable(userChoosesName);
 		nameField.setEnabled(userChoosesName);
@@ -635,10 +636,10 @@ public class DataTreeDialog extends DialogComponentProvider
 
 		JLabel nameLabel = null;
 		if (type == CHOOSE_FOLDER) {
-			nameLabel = new JLabel("Folder Name:", SwingConstants.RIGHT);
+			nameLabel = DockingUtils.createNonHtmlLabel("Folder Name:", SwingConstants.RIGHT);
 		}
 		else {
-			nameLabel = new JLabel("Name:", SwingConstants.RIGHT);
+			nameLabel = DockingUtils.createNonHtmlLabel("Name:", SwingConstants.RIGHT);
 		}
 
 		JPanel namePanel = new JPanel(new PairLayout(2, 5, 100));
@@ -646,7 +647,7 @@ public class DataTreeDialog extends DialogComponentProvider
 		if (!userChoosesName) {
 			namePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 5, 5));
 		}
-		namePanel.add(new JLabel("Folder Path:", SwingConstants.RIGHT));
+		namePanel.add(DockingUtils.createNonHtmlLabel("Folder Path:", SwingConstants.RIGHT));
 		namePanel.add(folderNameLabel);
 		namePanel.add(nameLabel);
 		namePanel.add(nameField);

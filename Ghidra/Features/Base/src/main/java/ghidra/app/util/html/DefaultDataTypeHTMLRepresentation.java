@@ -68,7 +68,7 @@ public class DefaultDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 	}
 
 	private static String buildHTMLText(TextLine header, TextLine footer) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 
 		String headerText = header.getText();
 		String encodedHeaderText = HTMLUtilities.friendlyEncodeHTML(headerText);

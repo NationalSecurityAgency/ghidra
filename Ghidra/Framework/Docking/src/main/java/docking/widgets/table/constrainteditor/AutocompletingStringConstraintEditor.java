@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownTextField;
 import docking.widgets.DropDownTextFieldDataModel;
+import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.constraint.*;
 import ghidra.util.HTMLUtilities;
 
@@ -200,14 +201,13 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 	 * Cell renderer for suggestion nominees. Substrings that match the models' query
 	 * are highlighted for ease-of-use.
 	 */
-	private class AutocompleteListCellRenderer implements ListCellRenderer<String> {
-
-		private DefaultListCellRenderer delegate = new DefaultListCellRenderer();
+	private class AutocompleteListCellRenderer extends GListCellRenderer<String> {
 
 		private final AutocompleteDataModel model;
 
 		public AutocompleteListCellRenderer(AutocompleteDataModel autocompleteDataModel) {
 			this.model = autocompleteDataModel;
+			this.setHTMLRenderingEnabled(true);
 		}
 
 		private String formatListValue(String value, boolean isSelected) {
@@ -216,7 +216,7 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 
 			Color color = isSelected ? Color.YELLOW : Color.MAGENTA;
 
-			StringBuffer sb = new StringBuffer("<html>");
+			StringBuilder sb = new StringBuilder("<html>");
 			// find and highlight all instances of the user-defined pattern
 			while (matcher.find()) {
 				String group = matcher.group(1);
@@ -226,19 +226,17 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 			matcher.appendTail(sb);
 
 			return sb.toString();
-
 		}
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends String> list, String value,
 				int index, boolean isSelected, boolean cellHasFocus) {
-			JLabel label = (JLabel) delegate.getListCellRendererComponent(list, value, index,
-				isSelected, cellHasFocus);
+			super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
 			String valueString = formatListValue(value, isSelected);
 
-			label.setText(valueString);
-			return label;
+			setText(valueString);
+			return this;
 		}
 
 	}

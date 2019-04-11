@@ -28,8 +28,7 @@ import javax.swing.table.TableModel;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.help.HelpService;
 import docking.menu.*;
 import docking.widgets.EmptyBorderButton;
@@ -348,7 +347,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
-		searchLabel = new JLabel(filterLabel);
+		searchLabel = DockingUtils.createNonHtmlLabel(filterLabel);
 		searchLabel.setToolTipText("Include only table elements that match the given search text");
 
 		filterField = new FilterTextField(table);
@@ -401,7 +400,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 		RowObjectFilterModel<ROW_OBJECT> tableModel =
 			(RowObjectFilterModel<ROW_OBJECT>) table.getModel();
-		columnFilterAction = new NonToolbarMultiStateAction<ColumnBasedTableFilter<ROW_OBJECT>>(
+		columnFilterAction = new NonToolbarMultiStateAction<>(
 			"Column Filter", "GTableFilterPanel") {
 
 			@Override

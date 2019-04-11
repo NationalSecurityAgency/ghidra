@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
@@ -369,7 +370,7 @@ public class GProgressBar extends JPanel {
 		iconList.add(ResourceManager.loadImage("images/hourglass24_10.png"));
 		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
 		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
-		imageLabel = new JLabel(progressIcon);
+		imageLabel = DockingUtils.createNonHtmlLabel(progressIcon);
 	}
 
 }

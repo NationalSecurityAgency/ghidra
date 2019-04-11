@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
 import docking.DisabledComponentLayerFactory;
+import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.ColumnData;
@@ -90,7 +91,7 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 	@Override
 	protected Component buildInlineEditorComponent() {
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel();
+		statusLabel = DockingUtils.createHtmlLabel();
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		taskMonitorComponent = new TaskMonitorComponent();

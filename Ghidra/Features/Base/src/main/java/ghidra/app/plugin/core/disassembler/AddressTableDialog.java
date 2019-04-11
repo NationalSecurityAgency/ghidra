@@ -23,8 +23,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.ToolTipManager;
 import docking.action.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -148,7 +147,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel searchOptionsPanel = new JPanel(new BorderLayout());
 		searchOptionsPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
-		JLabel minLengthLabel = new JLabel("Minimum Length: ");
+		JLabel minLengthLabel = DockingUtils.createNonHtmlLabel("Minimum Length: ");
 		ToolTipManager.setToolTipText(minLengthLabel,
 			"The minimum number of consecutive addresses that will make an address table.");
 		minLengthField = new JTextField(5);
@@ -159,7 +158,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		minLengthPanel.add(minLengthLabel);
 		minLengthPanel.add(minLengthField);
 
-		alignLabel = new JLabel("Alignment: ");
+		alignLabel = DockingUtils.createNonHtmlLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
 		ToolTipManager.setToolTipText(alignLabel,
@@ -170,7 +169,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		}
 		alignField.setText("" + align);
 
-		skipLabel = new JLabel("Skip Length: ");
+		skipLabel = DockingUtils.createNonHtmlLabel("Skip Length: ");
 		skipField = new JTextField(5);
 		skipField.setName("Skip");
 		ToolTipManager.setToolTipText(skipLabel,
@@ -230,12 +229,12 @@ public class AddressTableDialog extends DialogComponentProvider {
 		ToolTipManager.setToolTipText(autoLabelCB,
 			"Label the top of the address table and all members of the table.");
 
-		offsetLabel = new JLabel("Offset: ");
+		offsetLabel = DockingUtils.createNonHtmlLabel("Offset: ");
 		ToolTipManager.setToolTipText(offsetLabel,
 			"Offset from the beginning of the selected table(s)");
 		offsetLabel.setEnabled(false);
 
-		JLabel viewOffsetLabel = new JLabel("  ");
+		JLabel viewOffsetLabel = DockingUtils.createNonHtmlLabel("  ");
 		viewOffsetLabel.setEnabled(false);
 
 		viewOffset = new HintTextField(20);

@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.util.AnimatedIcon;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
@@ -181,7 +180,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			AnimatedIcon icon = new AnimatedIcon(iconList, 200, 0);
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setSize(new Dimension(200, 100));
-			panel.add(new JLabel(icon));
+			panel.add(DockingUtils.createNonHtmlLabel(icon));
 			mainPanel.add(panel, BorderLayout.CENTER);
 
 			repack();

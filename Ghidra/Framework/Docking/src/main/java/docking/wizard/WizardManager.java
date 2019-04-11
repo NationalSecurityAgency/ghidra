@@ -23,8 +23,7 @@ import java.io.IOException;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
@@ -215,8 +214,8 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 			}
 		});
 
-		titleLabel = (wizardIcon == null ? new JLabel(INIT_TITLE)
-				: new JLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
+		titleLabel = (wizardIcon == null ? DockingUtils.createNonHtmlLabel(INIT_TITLE)
+				: DockingUtils.createNonHtmlLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
 
 		EmptyBorderButton helpButton =
 			new EmptyBorderButton(ResourceManager.loadImage("images/information.png"));

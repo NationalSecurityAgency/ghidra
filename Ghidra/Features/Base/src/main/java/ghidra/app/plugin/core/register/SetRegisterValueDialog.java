@@ -26,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -34,7 +35,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 
 public class SetRegisterValueDialog extends DialogComponentProvider {
-	private JComboBox registerComboBox;
+	private JComboBox<RegisterWrapper> registerComboBox;
 	private FixedBitSizeValueField registerValueField;
 	private JList addressRangeList;
 	private BigInteger registerValue;
@@ -61,8 +62,8 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 		registerChanged();
 		updateOkEnablement();
 		setDefaultButton(okButton);
-		setHelpLocation(new HelpLocation("RegisterPlugin", useValueField ? "SetRegisterValues"
-				: "ClearRegisterValues"));
+		setHelpLocation(new HelpLocation("RegisterPlugin",
+			useValueField ? "SetRegisterValues" : "ClearRegisterValues"));
 		setRememberSize(false);
 	}
 
@@ -73,12 +74,12 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel(Register[] registers) {
-		JLabel regLabel = new JLabel("Register:");
-		JLabel valueLabel = new JLabel("Value:");
-		JLabel addressLabel = new JLabel("Address(es):");
+		JLabel regLabel = DockingUtils.createNonHtmlLabel("Register:");
+		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Value:");
+		JLabel addressLabel = DockingUtils.createNonHtmlLabel("Address(es):");
 		addressLabel.setVerticalAlignment(SwingConstants.TOP);
 
-		registerComboBox = new JComboBox(wrapRegisters(registers));
+		registerComboBox = new JComboBox<>(wrapRegisters(registers));
 		Font f = registerComboBox.getFont().deriveFont(13f);
 		registerComboBox.setFont(f);
 		registerValueField = new FixedBitSizeValueField(32, true, false);
@@ -159,7 +160,7 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 	void setSelectedRegister(Register register) {
 		int n = registerComboBox.getItemCount();
 		for (int i = 0; i < n; i++) {
-			RegisterWrapper rw = (RegisterWrapper) registerComboBox.getItemAt(i);
+			RegisterWrapper rw = registerComboBox.getItemAt(i);
 			if (rw.register == register) {
 				registerComboBox.setSelectedIndex(i);
 				return;
@@ -185,11 +186,8 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 
 	}
 
-	Object[] wrapRegisters(Register[] registers) {
-		if (registers.length == 0) {
-			return registers;
-		}
-		Object[] registerWrappers = new Object[registers.length];
+	RegisterWrapper[] wrapRegisters(Register[] registers) {
+		RegisterWrapper[] registerWrappers = new RegisterWrapper[registers.length];
 		for (int i = 0; i < registers.length; i++) {
 			registerWrappers[i] = new RegisterWrapper(registers[i]);
 		}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package ghidra.util;
 
-import generic.util.WindowUtilities;
-import ghidra.util.layout.PairLayout;
-import ghidra.util.layout.VerticalLayout;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,8 +22,12 @@ import java.net.URL;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
+import generic.util.WindowUtilities;
+import ghidra.util.layout.PairLayout;
+import ghidra.util.layout.VerticalLayout;
 
 public class LaunchErrorDialog extends JDialog {
 
@@ -51,8 +50,8 @@ public class LaunchErrorDialog extends JDialog {
 		Point centerPoint = WindowUtilities.centerOnComponent(activeWindow, this);
 		setLocation(centerPoint);
 
-		DockingWindowManager.setHelpLocation(workPanel, new HelpLocation(
-			"ShowInstructionInfoPlugin", "Show_Processor_Manual"));
+		DockingWindowManager.setHelpLocation(workPanel,
+			new HelpLocation("ShowInstructionInfoPlugin", "Show_Processor_Manual"));
 	}
 
 	private JComponent createWorkPanel() {
@@ -77,18 +76,18 @@ public class LaunchErrorDialog extends JDialog {
 		JPanel innerPanel = new JPanel(new BorderLayout());
 
 		Icon icon = OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE);
-		JLabel iconLabel = new JLabel(icon);
+		JLabel iconLabel = DockingUtils.createNonHtmlLabel(icon);
 		iconLabel.setVerticalAlignment(SwingConstants.TOP);
 
 		JPanel widgetPanel = new JPanel(new VerticalLayout(5));
 		widgetPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JLabel messageLabel =
-			new JLabel("<html>Unable to launch a viewer for the "
-				+ "manual below.<br><br>Click <b>Edit Settings</b> to change the manual "
-				+ "viewer launch settings, or <br> click "
-				+ "<b>Cancel</b> to abort launching a manual viewer ("
-				+ "<font size=\"2\">See the help (F1) for more information).</font>");
+			DockingUtils.createHtmlLabel("<html>Unable to launch a viewer for the " +
+				"manual below.<br><br>Click <b>Edit Settings</b> to change the manual " +
+				"viewer launch settings, or <br> click " +
+				"<b>Cancel</b> to abort launching a manual viewer (" +
+				"<font size=\"2\">See the help (F1) for more information).</font>");
 
 		JTextField urlField = new JTextField(40);
 		urlField.setText(url.toString());
@@ -103,12 +102,13 @@ public class LaunchErrorDialog extends JDialog {
 		fileField.setBackground(backgroundColor);
 
 		JPanel textFieldPanel = new JPanel(new PairLayout(2, 0));
-		textFieldPanel.add(new JLabel("URL: "));
+		textFieldPanel.add(DockingUtils.createNonHtmlLabel("URL: "));
 		textFieldPanel.add(urlField);
-		textFieldPanel.add(new JLabel("File: "));
+		textFieldPanel.add(DockingUtils.createNonHtmlLabel("File: "));
 		textFieldPanel.add(fileField);
 
-		JLabel copyLabel = new JLabel("<html><font size=\"2\"><i>Ctrl-C to copy</i></font>");
+		JLabel copyLabel =
+			DockingUtils.createHtmlLabel("<html><font size=\"2\"><i>Ctrl-C to copy</i></font>");
 		copyLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		widgetPanel.add(messageLabel);

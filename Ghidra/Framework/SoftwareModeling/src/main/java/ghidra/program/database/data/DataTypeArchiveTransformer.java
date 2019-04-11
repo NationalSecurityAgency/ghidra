@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingUtils;
 import docking.framework.DockingApplicationConfiguration;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
@@ -788,7 +789,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		monitorComponent.setVisible(true);
 		statusPanel.add(monitorComponent, BorderLayout.EAST);
 		// Add the status message to the status area.
-		final JLabel statusLabel = new JLabel("    ");
+		JLabel statusLabel = DockingUtils.createNonHtmlLabel("    ");
 		statusPanel.add(statusLabel, BorderLayout.CENTER);
 		Dimension preferredSize = statusLabel.getPreferredSize();
 		preferredSize.height = monitorComponent.getPreferredSize().height;

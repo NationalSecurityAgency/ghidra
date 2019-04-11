@@ -23,6 +23,7 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import resources.ResourceManager;
 
@@ -42,7 +43,7 @@ public class SearchControlPanel extends JPanel {
 		this.editorPanel = editorPanel;
 
 		setLayout(new BorderLayout());
-		JLabel label = new JLabel("Search: ");
+		JLabel label = DockingUtils.createNonHtmlLabel("Search: ");
 		add(label, BorderLayout.WEST);
 		textField = new JTextField(20);
 		add(textField, BorderLayout.CENTER);

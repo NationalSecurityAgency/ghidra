@@ -15,9 +15,9 @@
  */
 package ghidra.bitpatterns.gui;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.util.HelpLocation;
@@ -60,12 +60,12 @@ public class BitsInputDialogComponentProvider extends InputDialogComponentProvid
 		PairLayout pairLayout = new PairLayout();
 		mainPanel.setLayout(pairLayout);
 
-		mainPanel.add(new JLabel(TOTAL_BITS_LABEL));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(TOTAL_BITS_LABEL));
 		totalBitsBox = new IntegerTextField();
 		totalBitsBox.setValue(DEFAULT_TOTAL_BITS);
 		mainPanel.add(totalBitsBox.getComponent());
 
-		mainPanel.add(new JLabel(POST_BITS_LABEL));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(POST_BITS_LABEL));
 		preBitsBox = new IntegerTextField();
 		preBitsBox.setValue(DEFAULT_POST_BITS);
 		mainPanel.add(preBitsBox.getComponent());

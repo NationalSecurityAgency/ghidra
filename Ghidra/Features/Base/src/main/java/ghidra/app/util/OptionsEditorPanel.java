@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.collections4.map.LazyMap;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
@@ -70,7 +71,7 @@ public class OptionsEditorPanel extends JPanel {
 
 		panel.setBorder(createBorder(group));
 		for (Option option : optionGroup) {
-			panel.add(new JLabel(option.getName(), SwingConstants.RIGHT));
+			panel.add(DockingUtils.createNonHtmlLabel(option.getName(), SwingConstants.RIGHT));
 			Component editorComponent = getEditorComponent(option);
 			editorComponent.setName(option.getName()); // set the component name to the option name
 			panel.add(editorComponent);
@@ -234,6 +235,7 @@ public class OptionsEditorPanel extends JPanel {
 
 	private Component getAddressSpaceEditorComponent(Option option) {
 		JComboBox<AddressSpace> combo = new JComboBox<>();
+		DockingUtils.turnOffHTMLRendering(combo);
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressSpace[] spaces =
 			addressFactory == null ? new AddressSpace[0] : addressFactory.getAddressSpaces();
@@ -244,6 +246,9 @@ public class OptionsEditorPanel extends JPanel {
 		if (space != null) {
 			combo.setSelectedItem(space);
 		}
+		combo.addActionListener(e -> {
+			option.setValue(combo.getSelectedItem());
+		});
 		return combo;
 	}
 

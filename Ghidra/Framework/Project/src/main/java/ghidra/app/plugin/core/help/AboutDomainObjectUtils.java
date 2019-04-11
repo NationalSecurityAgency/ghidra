@@ -125,8 +125,8 @@ public class AboutDomainObjectUtils {
 			contentPanel.add(sp, BorderLayout.SOUTH);
 		}
 
-		JLabel infoLabel =
-			new JLabel(OptionDialog.getIconForMessageType(OptionDialog.INFORMATION_MESSAGE));
+		JLabel infoLabel = DockingUtils.createNonHtmlLabel(
+			OptionDialog.getIconForMessageType(OptionDialog.INFORMATION_MESSAGE));
 		JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 10));
 		infoPanel.add(infoLabel);
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,6 @@
  */
 package ghidra.app.plugin.core.totd;
 
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -24,13 +22,12 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.*;
 import resources.ResourceManager;
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
 	private static final int _24_HOURS = 86400000;
-    private TipOfTheDayPlugin plugin;
+	private TipOfTheDayPlugin plugin;
 	private JCheckBox showTipsCheckbox;
 	private JButton nextTipButton;
 	private JButton closeButton;
@@ -44,13 +41,14 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		this.plugin = plugin;
 		this.tips = tips;
 
-		if ( tips.isEmpty() ) {
-		    tips.add( "Could not find any tips!" );
+		if (tips.isEmpty()) {
+			tips.add("Could not find any tips!");
 		}
-		
+
 		ImageIcon tipIcon = ResourceManager.loadImage("images/help-hint.png");
 
-		JLabel label = new JLabel("Did you know...", tipIcon, SwingConstants.LEFT);
+		JLabel label =
+			DockingUtils.createNonHtmlLabel("Did you know...", tipIcon, SwingConstants.LEFT);
 		label.setFont(new Font("dialog", Font.BOLD, 12));
 
 		tipArea = new JTextArea(4, 30);
@@ -58,7 +56,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		tipArea.setFont(new Font("dialog", Font.PLAIN, 12));
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
-		tipArea.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+		tipArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JScrollPane tipScroll = new JScrollPane(tipArea);
 		tipScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -69,6 +67,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		showTipsCheckbox = new JCheckBox("Show Tips on Startup?");
 		showTipsCheckbox.setSelected(true); // TODO (FixMe) Moved this before its listener to prevent project save for now.
 		showTipsCheckbox.addItemListener(new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				showTipsChanged();
 			}
@@ -76,6 +75,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 
 		nextTipButton = new JButton("Next Tip");
 		nextTipButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				incrementTipIndex();
 				loadNextTip();
@@ -85,6 +85,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 
 		closeButton = new JButton("Close");
 		closeButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				close();
 			}
@@ -92,16 +93,16 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		addButton(closeButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
-		Border panelBorder = BorderFactory.createCompoundBorder(
-				BorderFactory.createEmptyBorder(10,10,10,10), 
+		Border panelBorder =
+			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
 				BorderFactory.createLineBorder(Color.BLACK));
 		panel.setBorder(panelBorder);
 		panel.setBackground(Color.WHITE);
 		panel.add(label, BorderLayout.NORTH);
 		panel.add(tipScroll, BorderLayout.CENTER);
 
-		JPanel panel2 = new JPanel(new BorderLayout(5,5));
-		panel2.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+		JPanel panel2 = new JPanel(new BorderLayout(5, 5));
+		panel2.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel2.add(panel, BorderLayout.CENTER);
 		panel2.add(showTipsCheckbox, BorderLayout.SOUTH);
 
@@ -115,18 +116,18 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 	private static long lastTipTime = 0;
 
 	void show(Component parent) {
-	    long now = System.currentTimeMillis();
-	    if (now - lastTipTime > _24_HOURS) {
-    		doShow( parent );
-	    }
-	    lastTipTime = now;
+		long now = System.currentTimeMillis();
+		if (now - lastTipTime > _24_HOURS) {
+			doShow(parent);
+		}
+		lastTipTime = now;
 	}
 
-	void doShow( Component parent ) {
-	    loadNextTip();
-	    DockingWindowManager.showDialog(parent, this);
+	void doShow(Component parent) {
+		loadNextTip();
+		DockingWindowManager.showDialog(parent, this);
 	}
-	
+
 	private void incrementTipIndex() {
 		tipIndex = (++tipIndex) % tips.size();
 		plugin.writePreferences();
@@ -136,7 +137,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		if (tips.isEmpty()) {
 			return;
 		}
-		if (tipIndex < 0 || tipIndex > tips.size()-1) {
+		if (tipIndex < 0 || tipIndex > tips.size() - 1) {
 			return;
 		}
 		String tip = tips.get(tipIndex);

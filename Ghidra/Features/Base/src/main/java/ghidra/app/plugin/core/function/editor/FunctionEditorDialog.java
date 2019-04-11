@@ -290,9 +290,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 15));
 
 		JPanel leftPanel = new JPanel(new PairLayout(4, 8));
-		leftPanel.add(new JLabel("Function Name:"));
+		leftPanel.add(DockingUtils.createNonHtmlLabel("Function Name:"));
 		leftPanel.add(createNameField());
-		leftPanel.add(new JLabel("Calling Convention"));
+		leftPanel.add(DockingUtils.createNonHtmlLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
 
@@ -601,7 +601,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					color = Color.red;
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
-				String headerText = "<HTML><b>" + dataType.getPathName() + "</b><BR>";
+				String headerText = "<HTML><b>" +
+					HTMLUtilities.friendlyEncodeHTML(dataType.getPathName()) + "</b><BR>";
 				toolTipText = toolTipText.replace("<HTML>", headerText);
 				setToolTipText(toolTipText);
 			}

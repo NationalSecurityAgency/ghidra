@@ -22,8 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.widgets.dialogs.*;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
@@ -276,11 +275,8 @@ public class OptionDialog extends DialogComponentProvider {
 
 	private JPanel buildMessagePanel(String message, int messageType, Icon icon) {
 		JPanel panel = new JPanel(new BorderLayout());
-		JLabel iconLabel = new JLabel();
-		if (icon == null) {
-			icon = getIconForMessageType(messageType);
-		}
-		iconLabel.setIcon(icon);
+		JLabel iconLabel = DockingUtils.createNonHtmlLabel(
+			(icon == null) ? getIconForMessageType(messageType) : icon);
 		JPanel textPanel = createTextPanel(message);
 		textPanel.setMaximumSize(textPanel.getPreferredSize());
 		panel.add(iconLabel, BorderLayout.WEST);
@@ -364,7 +360,7 @@ public class OptionDialog extends DialogComponentProvider {
 
 		this.dialogMessage = message;
 		if (HTMLUtilities.isHTML(dialogMessage)) {
-			JLabel messageLabel = new JLabel(dialogMessage);
+			JLabel messageLabel = DockingUtils.createHtmlLabel(dialogMessage);
 			messageLabel.setName(MESSAGE_COMPONENT_NAME);
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

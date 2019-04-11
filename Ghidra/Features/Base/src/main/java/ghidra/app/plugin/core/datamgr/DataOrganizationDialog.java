@@ -17,11 +17,12 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.program.model.data.*;
+import ghidra.util.HTMLUtilities;
 
 /**
  * The DataOrganizationDialog
@@ -34,8 +35,8 @@ public class DataOrganizationDialog extends DialogComponentProvider {
 	private JPanel mainPanel;
 	private DataOrganizationPanel alignPanel;
 	private SizeAlignmentPanel sizePanel;
-    private boolean actionComplete;
-	
+	private boolean actionComplete;
+
 	/**
 	 * Creates a data type organization dialog for specifying data type alignment information 
 	 * for a single data type manager. This dialog allows the user to align all data types in
@@ -46,52 +47,52 @@ public class DataOrganizationDialog extends DialogComponentProvider {
 	 */
 	public DataOrganizationDialog(DataTypeManager dataTypeManager,
 			DataOrganizationImpl dataOrganization) {
-        super(TITLE, true);
-        this.dataTypeManager = dataTypeManager;
-        this.dataOrganization = dataOrganization;
-		
+		super(TITLE, true);
+		this.dataTypeManager = dataTypeManager;
+		this.dataOrganization = dataOrganization;
+
 		JPanel headerPanel = new JPanel();
-		headerPanel.add(new JLabel("<HTML>Alignment Information for <b>" + 
-				dataTypeManager.getName() + "</b>.</HTML>"));
-		
+		headerPanel.add(DockingUtils.createHtmlLabel("<HTML>Alignment Information for <b>" +
+			HTMLUtilities.friendlyEncodeHTML(dataTypeManager.getName()) + "</b>.</HTML>"));
+
 		alignPanel = new DataOrganizationPanel();
 		alignPanel.setOrganization(dataOrganization);
 		sizePanel = new SizeAlignmentPanel();
 		sizePanel.setOrganization(dataOrganization);
-		
+
 		JPanel infoPanel = new JPanel(new BorderLayout());
 		infoPanel.add(alignPanel, BorderLayout.NORTH);
 		infoPanel.add(sizePanel, BorderLayout.CENTER);
-        
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(infoPanel, BorderLayout.CENTER);
-        addWorkPanel(mainPanel);
-        initialize();
-    }
 
-    private void initialize() {
-    	actionComplete = false;
-    	addOKButton();
-    	setOkButtonText("Set");
-        addCancelButton();
+		mainPanel = new JPanel(new BorderLayout());
+		mainPanel.add(headerPanel, BorderLayout.NORTH);
+		mainPanel.add(infoPanel, BorderLayout.CENTER);
+		addWorkPanel(mainPanel);
+		initialize();
+	}
+
+	private void initialize() {
+		actionComplete = false;
+		addOKButton();
+		setOkButtonText("Set");
+		addCancelButton();
 //        setHelpLocation(new HelpLocation(plugin, "Align_Data_Types_In_Archive"));
-    }
-    
-    public boolean userCanceled() {
-        return !actionComplete && !isVisible(); 
-    }
+	}
+
+	public boolean userCanceled() {
+		return !actionComplete && !isVisible();
+	}
 
 	@Override
 	protected void okCallback() {
-        actionComplete = true;
+		actionComplete = true;
 		close();
 	}
 
 	@Override
 	protected void cancelCallback() {
 		super.cancelCallback();
-        actionComplete = false;
+		actionComplete = false;
 	}
 
 	public DataOrganization getDataOrganization() {

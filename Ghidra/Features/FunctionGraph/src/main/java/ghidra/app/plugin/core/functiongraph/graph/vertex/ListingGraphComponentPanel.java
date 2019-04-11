@@ -27,8 +27,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
-import docking.ActionContext;
-import docking.GenericHeader;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -203,7 +202,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		//            previewListingPanel.getFieldPanel().setSelectionMode( FieldPanel.NO_SELECTION );
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 
-		tooltipTitleLabel = new JLabel();
+		tooltipTitleLabel = DockingUtils.createNonHtmlLabel();
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
 		tooltipTitleLabel.setBackground(FGVertex.TOOLTIP_BACKGROUND_COLOR);
 		tooltipTitleLabel.setOpaque(true);
@@ -492,7 +491,8 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		if (address == null) {
 			// This is an unusual case.   For now, do something reasonable.
 			String side = isDestinationVertex ? "end" : "start";
-			toolTipComponent = new JLabel("Unable to find address for edge " + side + ": " + edge);
+			toolTipComponent = DockingUtils.createNonHtmlLabel(
+				"Unable to find address for edge " + side + ": " + edge);
 			toolTipComponent.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 			if (previewListingPanel != null) {
 				previewListingPanel = null;

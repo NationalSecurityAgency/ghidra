@@ -24,6 +24,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import docking.DockingUtils;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
 
@@ -230,8 +232,10 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 			}
 		});
 		eventList.setCellRenderer(new DataCellRenderer());
-		producerList.setCellRenderer(new ToolListCellRenderer());
-		consumerList.setCellRenderer(new ToolListCellRenderer());
+		producerList.setCellRenderer(
+			GListCellRenderer.createDefaultCellTextRenderer(tool -> tool.getName()));
+		consumerList.setCellRenderer(
+			GListCellRenderer.createDefaultCellTextRenderer(tool -> tool.getName()));
 		producerModel = (DefaultListModel<Tool>) producerList.getModel();
 		consumerModel = (DefaultListModel<Tool>) consumerList.getModel();
 	}
@@ -419,9 +423,9 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		JComponent[] row1 = null;
 		JComponent[] row2 = null;
 
-		JLabel producerLabel = new JLabel("Event Producer:");
-		JLabel consumerLabel = new JLabel("Event Consumer:");
-		JLabel eventLabel = new JLabel("Event Names:");
+		JLabel producerLabel = DockingUtils.createNonHtmlLabel("Event Producer:");
+		JLabel consumerLabel = DockingUtils.createNonHtmlLabel("Event Consumer:");
+		JLabel eventLabel = DockingUtils.createNonHtmlLabel("Event Names:");
 
 		JComponent[] c1 = { producerLabel, consumerLabel, eventLabel };
 		JComponent[] c2 = { producerListScrollPane, consumerListScrollPane, eventListScrollPane };
@@ -481,34 +485,4 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		}
 	}
 
-	private class ToolListCellRenderer extends JLabel implements ListCellRenderer<Tool> {
-		ToolListCellRenderer() {
-			setOpaque(true);
-			setVerticalAlignment(CENTER);
-		}
-
-		@Override
-		public Component getListCellRendererComponent(JList<? extends Tool> list, Tool value,
-				int index, boolean isSelected, boolean cellHasFocus) {
-			Tool tool = null;
-			if (list == consumerList) {
-				tool = consumerModel.elementAt(index);
-			}
-			else {
-				tool = producerModel.elementAt(index);
-			}
-
-			if (isSelected) {
-				setBackground(list.getSelectionBackground());
-				setForeground(list.getSelectionForeground());
-			}
-			else {
-				setBackground(list.getBackground());
-				setForeground(list.getForeground());
-			}
-
-			setText(tool.getName());
-			return this;
-		}
-	}
 }

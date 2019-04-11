@@ -24,8 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.*;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -42,10 +41,10 @@ import ghidra.util.layout.PairLayout;
  * 
  */
 class ExpandBlockDialog extends DialogComponentProvider implements ChangeListener {
-	
+
 	final static int EXPAND_UP = 0;
 	final static int EXPAND_DOWN = 1;
-	
+
 	private final static String EXPAND_UP_TITLE = "Expand Block Up";
 	private final static String EXPAND_DOWN_TITLE = "Expand Block Down";
 	private int dialogType;
@@ -58,6 +57,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	private ExpandBlockModel model;
 	private boolean isChanging;
 	private PluginTool tool;
+
 	/**
 	 * Constructor
 	 * @param parent
@@ -65,15 +65,14 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	 * @param af
 	 * @param dialogType
 	 */
-	ExpandBlockDialog(PluginTool tool, ExpandBlockModel model, MemoryBlock block,
-		AddressFactory af, int dialogType) {
-		super(dialogType == EXPAND_UP? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE, 
-			  true);
+	ExpandBlockDialog(PluginTool tool, ExpandBlockModel model, MemoryBlock block, AddressFactory af,
+			int dialogType) {
+		super(dialogType == EXPAND_UP ? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE, true);
 		this.tool = tool;
 		this.model = model;
 		this.dialogType = dialogType;
 		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP,
-					dialogType == EXPAND_UP? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE));
+			dialogType == EXPAND_UP ? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE));
 		addrFactory = af;
 		model.setChangeListener(this);
 		addWorkPanel(create(block));
@@ -88,9 +87,10 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	 * @see ghidra.util.bean.GhidraDialog#okCallback()
 	 */
 	@Override
-    protected void okCallback() {
-			
+	protected void okCallback() {
+
 		Runnable doExpand = new Runnable() {
+			@Override
 			public void run() {
 				if (model.execute()) {
 					close();
@@ -102,18 +102,18 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 				rootPanel.setCursor(Cursor.getDefaultCursor());
 			}
 		};
-		
+
 		rootPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		SwingUtilities.invokeLater(doExpand);
 	}
-	
+
 	/**
 	 * Create the main work panel.
 	 * @return JPanel
 	 */
 	private JPanel create(MemoryBlock block) {
-		JPanel panel = new JPanel(new PairLayout(5,5, 150));
-		startAddressInput = new AddressInput(); 
+		JPanel panel = new JPanel(new PairLayout(5, 5, 150));
+		startAddressInput = new AddressInput();
 		startAddressInput.setName("NewStartAddress");
 		startAddressInput.setAddressFactory(addrFactory);
 		endAddressInput = new AddressInput();
@@ -121,22 +121,22 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		endAddressInput.setAddressFactory(addrFactory);
 		Address start = block.getStart();
 		Address end = block.getEnd();
-		
+
 		startAddressInput.setAddress(start);
 		startAddressInput.setAddressSpaceEditable(false);
 		endAddressInput.setAddress(end);
 		endAddressInput.setAddressSpaceEditable(false);
-		
+
 		startField = new JTextField(10);
 		startField.setName("StartAddress");
 		endField = new JTextField(10);
 		endField.setName("EndAddress");
 		startField.setText(start.toString());
 		endField.setText(end.toString());
-		
-		JLabel startLabel = new JLabel("Start Address:", SwingConstants.RIGHT);
-		JLabel endLabel = new JLabel("End Address:", SwingConstants.RIGHT);
-		
+
+		JLabel startLabel = DockingUtils.createNonHtmlLabel("Start Address:", SwingConstants.RIGHT);
+		JLabel endLabel = DockingUtils.createNonHtmlLabel("End Address:", SwingConstants.RIGHT);
+
 		if (dialogType == EXPAND_UP) {
 			endField.setEnabled(false);
 			startLabel.setText("New Start Address:");
@@ -147,29 +147,28 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		}
 		lengthField = new RegisterField(32, null, false);
 		lengthField.setName("BlockLength");
-		lengthField.setValue(new Long(model.getLength()));
-		
+		lengthField.setValue(Long.valueOf(model.getLength()));
+
 		panel.add(startLabel);
-		panel.add((dialogType == EXPAND_UP)? 
-					(JComponent)startAddressInput : startField);
+		panel.add((dialogType == EXPAND_UP) ? (JComponent) startAddressInput : startField);
 		panel.add(endLabel);
-		panel.add((dialogType == EXPAND_UP)? 
-					(JComponent)endField : endAddressInput);
-		panel.add(new JLabel("Block Length:", SwingConstants.RIGHT));
+		panel.add((dialogType == EXPAND_UP) ? (JComponent) endField : endAddressInput);
+		panel.add(DockingUtils.createNonHtmlLabel("Block Length:", SwingConstants.RIGHT));
 		panel.add(lengthField);
-		
+
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(panel, BorderLayout.CENTER);
 		return mainPanel;
 	}
 
 	private void addListeners() {
-		
+
 		startAddressInput.addChangeListener(new AddressChangeListener());
 		endAddressInput.addChangeListener(new AddressChangeListener());
 		lengthField.setChangeListener(new LengthChangeListener());
-		
+
 		ActionListener al = new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setStatusText("");
 			}
@@ -180,13 +179,14 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		startAddressInput.addActionListener(al);
 		endAddressInput.addActionListener(al);
 	}
-		
+
 	/**
 	 * Listener on the length text fields; update other fields
 	 * according to the entered value.
 	 */
 	private class LengthChangeListener implements ChangeListener {
 
+		@Override
 		public void stateChanged(ChangeEvent e) {
 			if (isChanging) {
 				return;
@@ -194,7 +194,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 			setStatusText("");
 			lengthChanged();
 		}
-		
+
 		private void lengthChanged() {
 			long length = 0;
 			Long val = lengthField.getValue();
@@ -207,13 +207,14 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 			model.setLength(length);
 		}
 	}
-	
+
 	/**
 	 * Listener on the AddressInput field; update length field when the 
 	 * address input field changes.
 	 */
 	private class AddressChangeListener implements ChangeListener {
-		
+
+		@Override
 		public void stateChanged(ChangeEvent event) {
 			if (isChanging) {
 				return;
@@ -221,8 +222,8 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 			setStatusText("");
 			addressChanged();
 		}
-		
-		private void addressChanged() {			
+
+		private void addressChanged() {
 			if (dialogType == EXPAND_UP) {
 				Address startAddr = startAddressInput.getAddress();
 				if (startAddr == null) {
@@ -238,34 +239,35 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 				if (endAddr == null) {
 					if (endAddressInput.hasInput()) {
 						setStatusText("Invalid Address");
-					} 
+					}
 					setOkEnabled(false);
 				}
 				model.setEndAddress(endAddr);
 			}
 		}
 	}
-	
+
 	/**
 	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
 	 */
+	@Override
 	public void stateChanged(ChangeEvent e) {
-		
+
 		String message = model.getMessage();
 		setStatusText(message);
 		setOkEnabled(message.length() == 0);
 		lengthField.setValue(new Long(model.getLength()));
- 		Address startAddr = model.getStartAddress();
- 		Address endAddr = model.getEndAddress();
- 		isChanging = true;
- 		if (dialogType == EXPAND_UP && startAddr != null) {
- 			startAddressInput.setAddress(startAddr);
- 		}
- 		else if (endAddr != null) {
- 			endAddressInput.setAddress(endAddr);
- 		}
- 		isChanging = false;
- 		
+		Address startAddr = model.getStartAddress();
+		Address endAddr = model.getEndAddress();
+		isChanging = true;
+		if (dialogType == EXPAND_UP && startAddr != null) {
+			startAddressInput.setAddress(startAddr);
+		}
+		else if (endAddr != null) {
+			endAddressInput.setAddress(endAddr);
+		}
+		isChanging = false;
+
 		if (!isVisible()) {
 			setOkEnabled(false);
 			ComponentProvider provider = tool.getComponentProvider(PluginConstants.MEMORY_MAP);

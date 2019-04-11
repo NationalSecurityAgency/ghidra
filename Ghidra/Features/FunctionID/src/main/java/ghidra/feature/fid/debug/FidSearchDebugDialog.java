@@ -20,6 +20,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.feature.fid.db.FidFileManager;
 import ghidra.feature.fid.db.FidQueryService;
 import ghidra.feature.fid.plugin.FidPlugin;
@@ -73,7 +74,7 @@ public class FidSearchDebugDialog extends DialogComponentProvider {
 	}
 
 	private JLabel getPreparedLabel(String text) {
-		JLabel label = new JLabel(text, SwingConstants.RIGHT);
+		JLabel label = DockingUtils.createNonHtmlLabel(text, SwingConstants.RIGHT);
 		label.setFont(FidDebugUtils.MONOSPACED_FONT);
 		return label;
 	}

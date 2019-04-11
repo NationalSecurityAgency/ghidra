@@ -493,7 +493,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	}
 
 	class MyProvider extends ComponentProviderAdapter {
-		JLabel label = new JLabel();
+		JLabel label = DockingUtils.createNonHtmlLabel();
 
 		public MyProvider(String owner, String name, String group,
 				WindowPosition defaultWindowPosition) {

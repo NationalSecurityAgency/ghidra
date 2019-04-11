@@ -389,7 +389,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			return program.getFunctionManager().getFunctionsOverlapping(new AddressSet(loc, loc));
 		}
 		//return an empty iterator....
-		return new Iterator<Function>() {
+		return new Iterator<>() {
 			@Override
 			public void remove() {
 				// not supported
@@ -580,8 +580,8 @@ public class FunctionPlugin extends Plugin implements DataService {
 		catch (VariableSizeException e) {
 			tool.setStatusInfo(e.getMessage());
 			if (e.canForce() && promptForConflictRemoval) {
-				String msg = variable.getName() + " size change resulted in \n" + e.getMessage() +
-					"\n \nDelete conflicting " + varType + "(s)";
+				String msg = varType + " " + variable.getName() + " size change resulted in \n" +
+					e.getMessage() + "\n \nDelete conflicting " + varType + "(s)";
 				if (OptionDialog.YES_OPTION == OptionDialog.showYesNoDialog(tool.getActiveWindow(),
 					varType + " Conflict", msg)) {
 					tool.setStatusInfo("");

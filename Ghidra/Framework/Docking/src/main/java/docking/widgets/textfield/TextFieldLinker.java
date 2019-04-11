@@ -31,6 +31,8 @@ import javax.swing.text.Caret;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingUtils;
+
 /**
  * A class that links text fields into a "formatted text field", separated by expressions.
  * 
@@ -54,7 +56,7 @@ import org.apache.commons.lang3.StringUtils;
  * 
  * JTextField second = new JTextField();
  * hbox.add(second);
- * hbox.add(new JLabel("-"));
+ * hbox.add(DockingUtils.createNonHtmlLabel("-"));
  * linker.linkField(second, "-", "-");
  * 
  * JTextField third = new JTextField();
@@ -881,7 +883,7 @@ public class TextFieldLinker {
 
 			JTextField second = new JTextField();
 			hbox.add(second);
-			hbox.add(new JLabel("-"));
+			hbox.add(DockingUtils.createNonHtmlLabel("-"));
 			linker.linkField(second, "-", "-");
 
 			JTextField third = new JTextField();

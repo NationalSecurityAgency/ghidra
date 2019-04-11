@@ -331,7 +331,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 			setBorder(lowerBorder);
 
 			add(Box.createHorizontalStrut(4));
-			add(new JLabel("Min:"));
+			add(DockingUtils.createNonHtmlLabel("Min:"));
 			add(Box.createHorizontalStrut(19));
 
 			minField = createFilterWidget(FilterType.MIN);
@@ -339,7 +339,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 
 			add(Box.createHorizontalStrut(10));
 
-			add(new JLabel("Max:"));
+			add(DockingUtils.createNonHtmlLabel("Max:"));
 			add(Box.createHorizontalStrut(5));
 			maxField = createFilterWidget(FilterType.MAX);
 			add(maxField.getComponent());

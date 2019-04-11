@@ -25,6 +25,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.OptionDialog;
@@ -157,7 +158,7 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 		gbc.gridy = 0;
 
 		if (!createBorder && title != null) {
-			add(new JLabel(title), gbc);
+			add(DockingUtils.createNonHtmlLabel(title), gbc);
 		}
 
 		gbc.fill = GridBagConstraints.HORIZONTAL;

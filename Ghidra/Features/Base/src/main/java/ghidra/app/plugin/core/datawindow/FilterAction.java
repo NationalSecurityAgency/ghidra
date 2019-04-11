@@ -317,7 +317,7 @@ class FilterAction extends ToggleDockingAction {
 			JPanel filterPanel = new JPanel(new BorderLayout());
 			filterField = new FilterTextField(checkboxPanel);
 			filterPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-			filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+			filterPanel.add(DockingUtils.createNonHtmlLabel("Filter:"), BorderLayout.WEST);
 
 			filterPanel.add(filterField, BorderLayout.CENTER);
 			filterField.addFilterListener(filterListener);

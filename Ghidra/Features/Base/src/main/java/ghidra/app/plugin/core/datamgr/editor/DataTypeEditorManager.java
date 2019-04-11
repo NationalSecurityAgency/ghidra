@@ -21,6 +21,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.ComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -574,7 +575,7 @@ public class DataTypeEditorManager
 			}
 
 			setCallingConventionChoices(choices);
-			parentPanel.add(new JLabel("Calling Convention:"));
+			parentPanel.add(DockingUtils.createNonHtmlLabel("Calling Convention:"));
 			parentPanel.add(callingConventionComboBox);
 		}
 

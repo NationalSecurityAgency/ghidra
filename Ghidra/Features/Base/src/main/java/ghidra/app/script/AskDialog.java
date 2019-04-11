@@ -21,8 +21,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import generic.util.WindowUtilities;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.NumericUtilities;
@@ -74,7 +73,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		label = new JLabel(message);
+		label = DockingUtils.createNonHtmlLabel(message);
 		panel.add(label, BorderLayout.WEST);
 
 		if (choices == null) {

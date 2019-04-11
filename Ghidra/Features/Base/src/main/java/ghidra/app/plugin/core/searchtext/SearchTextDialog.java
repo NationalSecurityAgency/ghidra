@@ -216,7 +216,7 @@ class SearchTextDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 10, 4));
 		panel.setLayout(new BorderLayout());
 
-		JLabel searchLabel = new JLabel("Search for:");
+		JLabel searchLabel = DockingUtils.createNonHtmlLabel("Search for:");
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
 		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.app.util.GenericHelpTopics;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.util.List;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import ghidra.app.util.GenericHelpTopics;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.HelpLocation;
 
 /**
  * Dialog that confirms undo of an action; specify whether a .keep file
@@ -103,9 +102,9 @@ public class UndoActionDialog extends DialogComponentProvider {
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.add(saveCopyCB);
 
-		JLabel label =
-			new JLabel("Undo " + actionString + " of the selected files:", SwingConstants.LEFT);
-		JLabel iconLabel = new JLabel(icon);
+		JLabel label = DockingUtils.createNonHtmlLabel(
+			"Undo " + actionString + " of the selected files:", SwingConstants.LEFT);
+		JLabel iconLabel = DockingUtils.createNonHtmlLabel(icon);
 		JPanel iconPanel = new JPanel(new BorderLayout(10, 0));
 		iconPanel.add(iconLabel, BorderLayout.WEST);
 		iconPanel.add(label, BorderLayout.CENTER);

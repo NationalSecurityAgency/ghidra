@@ -15,16 +15,6 @@
  */
 package ghidra.app.plugin.core.references;
 
-import ghidra.app.util.AddressInput;
-import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainFile;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
-import ghidra.util.layout.PairLayout;
-import ghidra.util.layout.VerticalLayout;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.*;
@@ -35,8 +25,18 @@ import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.widgets.combobox.GhidraComboBox;
+import ghidra.app.util.AddressInput;
+import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DomainFile;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.util.layout.PairLayout;
+import ghidra.util.layout.VerticalLayout;
 
 class EditExternalReferencePanel extends EditReferencePanel {
 
@@ -51,7 +51,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 
 	private JButton clearButton;
 	private JButton editButton;
-	private GhidraComboBox extLibName;
+	private GhidraComboBox<String> extLibName;
 	private JTextField extLibPath;
 	private JTextField extLabel;
 	private AddressInput extAddr;
@@ -67,13 +67,13 @@ class EditExternalReferencePanel extends EditReferencePanel {
 	private void buildPanel() {
 
 		JPanel topPanel = new JPanel(new PairLayout(5, 10, 160));
-		topPanel.setBorder(new CompoundBorder(new TitledBorder("External Program"),
-			new EmptyBorder(0, 5, 5, 5)));
+		topPanel.setBorder(
+			new CompoundBorder(new TitledBorder("External Program"), new EmptyBorder(0, 5, 5, 5)));
 
-		JLabel label = new JLabel("Name:");
+		JLabel label = DockingUtils.createNonHtmlLabel("Name:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		topPanel.add(label);
-		extLibName = new GhidraComboBox();
+		extLibName = new GhidraComboBox<>();
 		extLibName.setEditable(true);
 		extLibName.addDocumentListener(new DocumentListener() {
 			@Override
@@ -130,7 +130,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		buttonPanel.add(editButton);
 		pathPanel.add(buttonPanel, BorderLayout.EAST);
 
-		label = new JLabel("Path:");
+		label = DockingUtils.createNonHtmlLabel("Path:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		topPanel.add(label);
 		topPanel.add(pathPanel);
@@ -139,13 +139,13 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		bottomPanel.setBorder(new CompoundBorder(new TitledBorder("External Reference Data"),
 			new EmptyBorder(0, 5, 5, 5)));
 
-		label = new JLabel("Label:");
+		label = DockingUtils.createNonHtmlLabel("Label:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		bottomPanel.add(label);
 		extLabel = new JTextField();
 		bottomPanel.add(extLabel);
 
-		label = new JLabel("Address:");
+		label = DockingUtils.createNonHtmlLabel("Address:");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
 		bottomPanel.add(label);
 		extAddr = new AddressInput();
@@ -318,16 +318,18 @@ class EditExternalReferencePanel extends EditReferencePanel {
 			return false;
 		}
 		if (addr == null && (label == null || label.length() == 0)) {
-			showInputErr("Either (or both) an external 'Label' and/or 'Address' must be specified.");
+			showInputErr(
+				"Either (or both) an external 'Label' and/or 'Address' must be specified.");
 			return false;
 		}
 
 // FIXME The following needs to handle labels in external namespaces too.
 		if (editRef != null) {
-			return plugin.updateReference(editRef, fromCodeUnit, name, libraryProgramPathname,
-				addr, label);
+			return plugin.updateReference(editRef, fromCodeUnit, name, libraryProgramPathname, addr,
+				label);
 		}
-		return plugin.addReference(fromCodeUnit, opIndex, name, libraryProgramPathname, addr, label);
+		return plugin.addReference(fromCodeUnit, opIndex, name, libraryProgramPathname, addr,
+			label);
 	}
 
 	@Override

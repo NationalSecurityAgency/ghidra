@@ -17,8 +17,10 @@ package ghidra.bitpatterns.gui;
 
 import java.awt.Component;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.bitpatterns.info.DataGatheringParams;
@@ -82,37 +84,37 @@ public class DataGatheringParamsDialog extends InputDialogComponentProvider {
 		PairLayout pairLayout = new PairLayout();
 		mainPanel.setLayout(pairLayout);
 
-		mainPanel.add(new JLabel(FIRST_BYTES_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(FIRST_BYTES_TEXT));
 		firstBytesField = new IntegerTextField();
 		firstBytesField.setValue(DEFAULT_FIRST_BYTES);
 		mainPanel.add(firstBytesField.getComponent());
 
-		mainPanel.add(new JLabel(PRE_BYTES_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(PRE_BYTES_TEXT));
 		preBytesField = new IntegerTextField();
 		preBytesField.setValue(DEFAULT_PRE_BYTES);
 		mainPanel.add(preBytesField.getComponent());
 
-		mainPanel.add(new JLabel(RETURN_BYTES_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(RETURN_BYTES_TEXT));
 		returnBytesField = new IntegerTextField();
 		returnBytesField.setValue(DEFAULT_RETURN_BYTES);
 		mainPanel.add(returnBytesField.getComponent());
 
-		mainPanel.add(new JLabel(FIRST_INSTRUCTIONS_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(FIRST_INSTRUCTIONS_TEXT));
 		firstInstructionsField = new IntegerTextField();
 		firstInstructionsField.setValue(DEFAULT_FIRST_INSTRUCTIONS);
 		mainPanel.add(firstInstructionsField.getComponent());
 
-		mainPanel.add(new JLabel(PRE_INSTRUCTIONS_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(PRE_INSTRUCTIONS_TEXT));
 		preInstructionsField = new IntegerTextField();
 		preInstructionsField.setValue(DEFAULT_PRE_INSTRUCTIONS);
 		mainPanel.add(preInstructionsField.getComponent());
 
-		mainPanel.add(new JLabel(RETURN_INSTRUCTIONS_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(RETURN_INSTRUCTIONS_TEXT));
 		returnInstructionsField = new IntegerTextField();
 		returnInstructionsField.setValue(DEFAULT_RETURN_INSTRUCTIONS);
 		mainPanel.add(returnInstructionsField.getComponent());
 
-		mainPanel.add(new JLabel(CONTEXT_REGISTER_TEXT));
+		mainPanel.add(DockingUtils.createNonHtmlLabel(CONTEXT_REGISTER_TEXT));
 		contextRegistersField = new JTextField(DEFAULT_CONTEXT_REGISTERS);
 		mainPanel.add(contextRegistersField);
 

@@ -21,8 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.help.Help;
 import docking.help.HelpService;
@@ -161,6 +160,7 @@ public abstract class FunctionChoiceComparisonPanel extends FunctionComparisonPa
 	private Component createLeftChoicePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		leftComboBox = new JComboBox<>(leftWrappedFunctions);
+		DockingUtils.turnOffHTMLRendering(leftComboBox);
 		adjustSelectedLeftFunction();
 		leftComboBox.addItemListener(e -> {
 			WrappedFunction wrappedFunction = (WrappedFunction) leftComboBox.getSelectedItem();
@@ -174,6 +174,7 @@ public abstract class FunctionChoiceComparisonPanel extends FunctionComparisonPa
 	private Component createRightChoicePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		rightComboBox = new JComboBox<>(rightWrappedFunctions);
+		DockingUtils.turnOffHTMLRendering(rightComboBox);
 		adjustSelectedRightFunction();
 		rightComboBox.addItemListener(e -> {
 			WrappedFunction wrappedFunction = (WrappedFunction) rightComboBox.getSelectedItem();

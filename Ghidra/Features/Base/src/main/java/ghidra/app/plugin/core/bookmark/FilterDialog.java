@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
@@ -59,8 +60,8 @@ class FilterDialog extends DialogComponentProvider {
 			JPanel p = new JPanel(new BorderLayout());
 			p.add(buttons[i], BorderLayout.WEST);
 			buttons[i].setSelected(provider.isShowingType(types[i].getTypeString()));
-			JLabel l =
-				new JLabel(types[i].getTypeString(), types[i].getIcon(), SwingConstants.LEFT);
+			JLabel l = DockingUtils.createNonHtmlLabel(types[i].getTypeString(), types[i].getIcon(),
+				SwingConstants.LEFT);
 			p.add(l, BorderLayout.CENTER);
 			panel.add(p);
 		}
@@ -69,7 +70,7 @@ class FilterDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		List<String> typesList = new ArrayList<String>(types.length);
+		List<String> typesList = new ArrayList<>(types.length);
 		for (int i = 0; i < types.length; i++) {
 			if (buttons[i].isSelected()) {
 				typesList.add(types[i].getTypeString());

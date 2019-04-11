@@ -26,6 +26,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -323,27 +324,27 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 		// LABEL,
 		String labelText = (isSource ? "Source" : "Destination") + " Label: ";
-		label = new JLabel(labelText);
+		label = DockingUtils.createNonHtmlLabel(labelText);
 //		label.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
-		labelValue = new JLabel("     ");
+		labelValue = DockingUtils.createNonHtmlLabel("     ");
 		labelValue.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
 		labelPanel.add(label);
 		labelPanel.add(labelValue);
 
 		// LABEL_TYPE,
 		String labelTypeText = "Label Type: ";
-		labelType = new JLabel(labelTypeText);
+		labelType = DockingUtils.createNonHtmlLabel(labelTypeText);
 //		labelType.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
-		labelTypeValue = new JLabel("     ");
+		labelTypeValue = DockingUtils.createNonHtmlLabel("     ");
 		labelTypeValue.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
 		labelTypePanel.add(labelType);
 		labelTypePanel.add(labelTypeValue);
 
 		// ADDRESS
 		String addressText = (isSource ? "Source" : "Destination") + " Address: ";
-		address = new JLabel(addressText);
+		address = DockingUtils.createNonHtmlLabel(addressText);
 //		address.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
-		addressValue = new JLabel("     ");
+		addressValue = DockingUtils.createNonHtmlLabel("     ");
 		addressValue.setForeground(LOCAL_INFO_FOREGROUND_COLOR);
 		addressPanel.add(address);
 		addressPanel.add(addressValue);

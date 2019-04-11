@@ -630,7 +630,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 
@@ -644,7 +644,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 

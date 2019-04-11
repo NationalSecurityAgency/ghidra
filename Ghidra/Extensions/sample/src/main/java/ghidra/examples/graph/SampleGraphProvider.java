@@ -28,8 +28,7 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
 import docking.menu.ActionState;
@@ -146,7 +145,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		JLabel label = new JLabel("Vertex Filter: ");
+		JLabel label = DockingUtils.createNonHtmlLabel("Vertex Filter: ");
 		label.setToolTipText(
 			"Vertices with names matching the filter will remain, along with connected vertices");
 		panel.add(label);
@@ -198,7 +197,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		fadedButton.setSelected(true);
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panel.add(new JLabel("Filtered Display: "));
+		panel.add(DockingUtils.createNonHtmlLabel("Filtered Display: "));
 		panel.add(fadedButton);
 		panel.add(removedButton);
 		return panel;
@@ -207,7 +206,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 	private void installTooltipProvider() {
 
 		VertexTooltipProvider<SampleVertex, SampleEdge> tooltipProvider =
-			new VertexTooltipProvider<SampleVertex, SampleEdge>() {
+			new VertexTooltipProvider<>() {
 
 				@Override
 				public JComponent getTooltip(SampleVertex v) {
@@ -342,8 +341,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 	private void addLayoutAction() {
 
 		MultiStateDockingAction<LayoutProvider<SampleVertex, SampleEdge, SampleGraph>> layoutAction =
-			new MultiStateDockingAction<LayoutProvider<SampleVertex, SampleEdge, SampleGraph>>(
-				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
 				protected void doActionPerformed(ActionContext context) {

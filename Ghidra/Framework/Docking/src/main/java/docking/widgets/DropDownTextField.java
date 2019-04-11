@@ -26,6 +26,7 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingUtils;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;
@@ -130,6 +131,7 @@ public class DropDownTextField<T> extends JTextField {
 	}
 
 	private void init(int updateMinDelay) {
+		DockingUtils.turnOffHTMLRendering(list);
 		updateManager = new SwingUpdateManager(updateMinDelay, DEFAULT_MAX_UPDATE_DELAY,
 			"Drop Down Selection Text Field Update Manager", () -> {
 				if (pendingTextUpdate == null) {
@@ -154,7 +156,7 @@ public class DropDownTextField<T> extends JTextField {
 	}
 
 	protected void setPreviewPaneAttributes() {
-		previewLabel = new JLabel();
+		previewLabel = DockingUtils.createNonHtmlLabel();
 		previewLabel.setOpaque(true);
 		previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);

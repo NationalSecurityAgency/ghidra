@@ -25,8 +25,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
@@ -100,7 +99,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	}
 
 	private JPanel buildNamePanel() {
-		JLabel label = new JLabel("Enter script file name:");
+		JLabel label = DockingUtils.createNonHtmlLabel("Enter script file name:");
 		nameField = new JTextField(20);
 		nameField.setText(scriptFile == null ? "" : scriptFile.getName());
 

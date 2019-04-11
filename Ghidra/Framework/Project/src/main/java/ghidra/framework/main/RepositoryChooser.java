@@ -15,15 +15,6 @@
  */
 package ghidra.framework.main;
 
-import ghidra.framework.client.*;
-import ghidra.framework.model.ServerInfo;
-import ghidra.framework.protocol.ghidra.GhidraURL;
-import ghidra.framework.remote.GhidraServerHandle;
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
-import ghidra.util.layout.MiddleLayout;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.event.*;
@@ -34,8 +25,17 @@ import java.net.URL;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import resources.ResourceManager;
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import ghidra.framework.client.*;
+import ghidra.framework.model.ServerInfo;
+import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.framework.remote.GhidraServerHandle;
+import ghidra.util.MessageType;
+import ghidra.util.Msg;
+import ghidra.util.layout.MiddleLayout;
+import ghidra.util.layout.PairLayout;
+import resources.ResourceManager;
 
 class RepositoryChooser extends DialogComponentProvider {
 
@@ -73,6 +73,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		serverInfoComponent = new ServerInfoComponent();
 		serverInfoComponent.setStatusListener(this);
 		serverInfoComponent.setChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				serverInfoChanged();
 			}
@@ -83,6 +84,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		queryButton.setToolTipText("Refresh Repository Names List");
 		setDefaultButton(queryButton);
 		queryButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				queryServer();
 			}
@@ -94,14 +96,16 @@ class RepositoryChooser extends DialogComponentProvider {
 		serverInfoPanel.add(topPanel, BorderLayout.NORTH);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
-		JLabel label = new JLabel("Repository Names", SwingConstants.LEFT);
+		JLabel label = DockingUtils.createNonHtmlLabel("Repository Names", SwingConstants.LEFT);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 5));
 		lowerPanel.add(label, BorderLayout.NORTH);
 
-		listModel = new DefaultListModel<String>();
-		nameList = new JList<String>(listModel);
+		listModel = new DefaultListModel<>();
+		nameList = new JList<>(listModel);
+		DockingUtils.turnOffHTMLRendering(nameList);
 		nameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		nameList.addListSelectionListener(new ListSelectionListener() {
+			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				selectionChanged();
 			}
@@ -134,7 +138,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		urlTextField = new JTextField("ghidra:");
 
 		JPanel panel = new JPanel(new PairLayout());
-		panel.add(new JLabel("URL:"));
+		panel.add(DockingUtils.createNonHtmlLabel("URL:"));
 		panel.add(urlTextField);
 
 		urlPanel.add(panel, BorderLayout.NORTH);
@@ -172,6 +176,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		radioButtonPanel.setBorder(BorderFactory.createTitledBorder("Repository Specification"));
 
 		ChangeListener choiceListener = new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				Object src = e.getSource();
 				if (src instanceof JRadioButton) {
@@ -225,9 +230,8 @@ class RepositoryChooser extends DialogComponentProvider {
 
 		listModel.clear();
 
-		RepositoryServerAdapter repositoryServer =
-			ClientUtil.getRepositoryServer(serverInfoComponent.getServerName(),
-				serverInfoComponent.getPortNumber(), true);
+		RepositoryServerAdapter repositoryServer = ClientUtil.getRepositoryServer(
+			serverInfoComponent.getServerName(), serverInfoComponent.getPortNumber(), true);
 
 		if (repositoryServer == null) {
 			return;

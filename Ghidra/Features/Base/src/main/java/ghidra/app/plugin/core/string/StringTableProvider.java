@@ -377,12 +377,12 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 	}
 
 	private Component buildOffsetPanel() {
-		JLabel offsetLabel = new JLabel("Offset: ");
+		JLabel offsetLabel = DockingUtils.createNonHtmlLabel("Offset: ");
 		offsetField = new IntegerTextField(4, 0L);
 		offsetField.setAllowNegativeValues(false);
 		offsetField.addChangeListener(e -> updatePreview());
 
-		JLabel previewLabel = new JLabel("Preview: ");
+		JLabel previewLabel = DockingUtils.createNonHtmlLabel("Preview: ");
 		preview = new JTextField(5);
 		preview.setEditable(false);
 		preview.setEnabled(false);
@@ -552,7 +552,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 	private JComponent buildTablePanel() {
 		stringModel = new StringTableModel(tool, options);
 
-		threadedTablePanel = new GhidraThreadedTablePanel<FoundString>(stringModel, 1000) {
+		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000) {
 			@Override
 			protected GTable createTable(ThreadedTableModel<FoundString, ?> model) {
 				return new StringTable(model);

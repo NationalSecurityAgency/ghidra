@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.framework.preferences.Preferences;
-import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,7 +23,11 @@ import java.io.IOException;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
+import ghidra.framework.preferences.Preferences;
+import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 public class DataTypeArchiveTransformerPanel extends JPanel {
 
@@ -61,10 +60,10 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 	private void setupDescription() {
 		String description =
-			"<HTML>" + "Specify the files for converting a new data type archive (.gdt)<BR>"
-				+ "to match the IDs of data types in an old data type archive.<BR>"
-				+ "The result will be saved to the destination archive." + "</HTML>";
-		JLabel label = new JLabel(description);
+			"<HTML>" + "Specify the files for converting a new data type archive (.gdt)<BR>" +
+				"to match the IDs of data types in an old data type archive.<BR>" +
+				"The result will be saved to the destination archive." + "</HTML>";
+		JLabel label = DockingUtils.createHtmlLabel(description);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		add(label, BorderLayout.NORTH);
@@ -77,7 +76,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 0;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(new JLabel("Old file name "), gbc);
+		filePanel.add(DockingUtils.createNonHtmlLabel("Old file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
@@ -88,6 +87,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridwidth = 1;
 		JButton oldBrowseButton = new JButton(DOT_DOT_DOT);
 		oldBrowseButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setCursor(WAIT_CURSOR);
 				File file = chooseFile("Choose old data type archive");
@@ -114,7 +114,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 1;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(new JLabel("New file name "), gbc);
+		filePanel.add(DockingUtils.createNonHtmlLabel("New file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
@@ -125,6 +125,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridwidth = 1;
 		JButton newBrowseButton = new JButton(DOT_DOT_DOT);
 		newBrowseButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setCursor(WAIT_CURSOR);
 				File file = chooseFile("Choose new data type archive");
@@ -146,7 +147,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 2;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(new JLabel("Destination file name "), gbc);
+		filePanel.add(DockingUtils.createNonHtmlLabel("Destination file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
@@ -157,6 +158,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridwidth = 1;
 		JButton destinationBrowseButton = new JButton(DOT_DOT_DOT);
 		destinationBrowseButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setCursor(WAIT_CURSOR);
 				File file = chooseFile("Choose destination file");
@@ -192,14 +194,13 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 	}
 
 	File getLastDataTypeArchiveDirectory() {
-		String lastDirStr =
-			Preferences.getProperty(Preferences.LAST_OPENED_ARCHIVE_DIRECTORY,
-				System.getProperty("user.home"));
+		String lastDirStr = Preferences.getProperty(Preferences.LAST_OPENED_ARCHIVE_DIRECTORY,
+			System.getProperty("user.home"));
 		return new File(lastDirStr);
 	}
 
-	protected void transform(TaskMonitor monitor) throws InvalidInputException,
-			DuplicateFileException, IOException, CancelledException {
+	protected void transform(TaskMonitor monitor)
+			throws InvalidInputException, DuplicateFileException, IOException, CancelledException {
 
 		DataTypeArchiveTransformer.transform(getOldFile(), getNewFile(), getDestinationFile(),
 			useOldFileIDCheckBox.isSelected(), monitor);

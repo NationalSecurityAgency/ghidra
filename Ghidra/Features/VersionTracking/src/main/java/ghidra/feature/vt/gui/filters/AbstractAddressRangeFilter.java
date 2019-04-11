@@ -25,6 +25,7 @@ import javax.swing.event.EventListenerList;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.textfield.HexIntegerFormatter;
 import ghidra.feature.vt.api.main.VTAssociation;
@@ -110,14 +111,15 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		upperRangeComboBox =
 			createComboBox(upperAddressRangeTextField, MAX_ADDRESS_VALUE, prototypeDisplay);
 
-		JLabel rangeLabel = new JLabel("<=");
+		JLabel rangeLabel = DockingUtils.createNonHtmlLabel("<=");
 		rangeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		//
 		// Lower Score Panel
 		//
 		lowerRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel lowLabel = new JLabel("<html><font size=\"2\" color=\"808080\">low</font>");
+		JLabel lowLabel =
+			DockingUtils.createHtmlLabel("<html><font size=\"2\" color=\"808080\">low</font>");
 		lowLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lowLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		lowerRangePanel.add(lowLabel);
@@ -128,7 +130,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		//
 		JPanel labelPanel = new JPanel(new GridLayout(2, 1));
 		labelPanel.add(Box.createVerticalStrut(5)); // space filler
-		JLabel statusLabel = new JLabel("<=");
+		JLabel statusLabel = DockingUtils.createNonHtmlLabel("<=");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		labelPanel.add(statusLabel);
 
@@ -136,7 +138,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		// Upper Score Panel
 		//
 		upperRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel upperLabel = new JLabel("<html><font size=\"2\" color=\"808080\">high</font>");
+		JLabel upperLabel =
+			DockingUtils.createHtmlLabel("<html><font size=\"2\" color=\"808080\">high</font>");
 		upperLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		upperLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		upperRangePanel.add(upperLabel);
@@ -239,7 +242,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	private JComboBox<String> createComboBox(FilterFormattedTextField field, Long defaultValue,
 			String prototypeString) {
 		GhidraComboBox<String> comboBox =
-			new GhidraComboBox<String>(new LimitedHistoryComboBoxModel()) {
+			new GhidraComboBox<>(new LimitedHistoryComboBoxModel()) {
 				// overridden to paint seamlessly with out color changing text field
 				@Override
 				protected void paintComponent(Graphics g) {

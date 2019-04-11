@@ -25,8 +25,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
@@ -79,12 +78,12 @@ public class ProjectDataTablePanel extends JPanel {
 	private void buildContent() {
 		model = new ProjectDataTableModel(tool);
 		model.addThreadedTableModelListener(new SelectPendingFilesListener());
-		table = new GFilterTable<DomainFileInfo>(model) {
+		table = new GFilterTable<>(model) {
 			@Override
 			protected GThreadedTablePanel<DomainFileInfo> createThreadedTablePanel(
 					ThreadedTableModel<DomainFileInfo, ?> threadedModel) {
 
-				return new GThreadedTablePanel<DomainFileInfo>(threadedModel) {
+				return new GThreadedTablePanel<>(threadedModel) {
 					@Override
 					protected GTable createTable(ThreadedTableModel<DomainFileInfo, ?> m) {
 						// the table's default actions aren't that useful in the Front End
@@ -221,8 +220,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private JLabel capacityExceededText =
-		new JLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+	private JLabel capacityExceededText = DockingUtils.createHtmlLabel(
+		"<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
 			"View will remain disabled until project is closed.</I></CENTER></HTML>");
 

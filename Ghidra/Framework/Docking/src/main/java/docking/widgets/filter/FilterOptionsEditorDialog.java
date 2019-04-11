@@ -24,8 +24,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import docking.DialogComponentProvider;
-import docking.DisabledComponentLayerFactory;
+import docking.*;
 import docking.widgets.InlineComponentTitledPanel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.util.HelpLocation;
@@ -210,13 +209,17 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			}
 
 			add(containsButton);
-			add(new JLabel(FilterOptions.getIcon(TextFilterStrategy.CONTAINS)));
+			add(DockingUtils.createNonHtmlLabel(
+				FilterOptions.getIcon(TextFilterStrategy.CONTAINS)));
 			add(startsWithButton);
-			add(new JLabel(FilterOptions.getIcon(TextFilterStrategy.STARTS_WITH)));
+			add(DockingUtils.createNonHtmlLabel(
+				FilterOptions.getIcon(TextFilterStrategy.STARTS_WITH)));
 			add(matchesExactlyButton);
-			add(new JLabel(FilterOptions.getIcon(TextFilterStrategy.MATCHES_EXACTLY)));
+			add(DockingUtils.createNonHtmlLabel(
+				FilterOptions.getIcon(TextFilterStrategy.MATCHES_EXACTLY)));
 			add(regularExpressionButton);
-			add(new JLabel(FilterOptions.getIcon(TextFilterStrategy.REGULAR_EXPRESSION)));
+			add(DockingUtils.createNonHtmlLabel(
+				FilterOptions.getIcon(TextFilterStrategy.REGULAR_EXPRESSION)));
 		}
 	}
 
@@ -403,22 +406,21 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 		 * Creates the main panel for this dialog.
 		 */
 		private void createPanel() {
-		
+
 			getContentPane().setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-			
+
 			JPanel outerPanel = new JPanel();
 			outerPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
 			JPanel optionsPanel = new JPanel();
 			optionsPanel.setLayout(new PairLayout());
-					
+
 			// Delimiter Row
-			JLabel delimiterCharacterFieldName = new JLabel("Delimiter:");
+			JLabel delimiterCharacterFieldName = DockingUtils.createNonHtmlLabel("Delimiter:");
 			delimiterCharacterFieldName.setToolTipText(
 				"Set the character used to separate filter terms.");
 
-			delimiterCharacterCB =
-				new JComboBox<String>(FilterOptions.VALID_MULTITERM_DELIMITERS.split("(?!^)"));
+			delimiterCharacterCB = new JComboBox<>(FilterOptions.VALID_MULTITERM_DELIMITERS_ARRAY);
 			delimiterCharacterCB.setRenderer(new DelimiterListCellRenderer());
 
 			JPanel fixedSizePanel = new JPanel();
@@ -429,7 +431,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			optionsPanel.add(fixedSizePanel);
 
 			// Mode Row
-			JLabel label = new JLabel("Evaluation Mode:");
+			JLabel label = DockingUtils.createNonHtmlLabel("Evaluation Mode:");
 
 			JPanel buttonGroupPanel = new JPanel();
 			buttonGroupPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -465,19 +467,13 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			}
 
 			@Override
-			protected String getText(Object value) {
-				String label = "";
+			protected String getItemText(String value) {
 
-				char char0 = ((String) value).charAt(0);
-
-				label = FilterOptions.DELIMITER_NAME_MAP.get(char0);
-				if (label == null) {
-					label = "<i>Unrecognized</i>";
-				}
-
+				char char0 = value.length() > 0 ? value.charAt(0) : ' ';
+				String delimiterName =
+					FilterOptions.DELIMITER_NAME_MAP.getOrDefault(char0, "<i>Unrecognized</i>");
 				return String.format("<html><font face=monospace>%s</font> &nbsp;&nbsp; <i>%s</i>",
-					char0 == ' ' ? "&nbsp;" : char0, label);
-
+					char0 == ' ' ? "&nbsp;" : char0, delimiterName);
 			}
 		}
 	}

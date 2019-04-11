@@ -415,7 +415,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 		private final int EMTPY_SEPARATOR_HEIGHT = 10;
 		private final int TEXT_SEPARATOR_HEIGHT = 32;
-		private JLabel renderer = new JLabel();
+		private JLabel renderer = DockingUtils.createHtmlLabel();
 
 		private int separatorHeight = EMTPY_SEPARATOR_HEIGHT;
 

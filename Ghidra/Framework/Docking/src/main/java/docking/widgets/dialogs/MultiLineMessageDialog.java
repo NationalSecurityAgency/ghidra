@@ -87,7 +87,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		if (!StringUtils.isBlank(shortMessage)) {
-			JLabel shortMessageLabel = new JLabel(shortMessage);
+			JLabel shortMessageLabel = DockingUtils.createNonHtmlLabel(shortMessage);
 			shortMessageLabel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
 			workPanel.add(shortMessageLabel, BorderLayout.NORTH);
 		}
@@ -134,7 +134,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 
 		Icon icon = OptionDialog.getIconForMessageType(messageType);
 		if (icon != null) {
-			JLabel iconLabel = new JLabel(icon);
+			JLabel iconLabel = DockingUtils.createNonHtmlLabel(icon);
 			iconLabel.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
 			workPanel.add(iconLabel, BorderLayout.WEST);
 		}

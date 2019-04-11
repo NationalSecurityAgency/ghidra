@@ -98,14 +98,15 @@ public class ActionDialog extends DialogComponentProvider {
 		JPanel innerPanel = new JPanel(new BorderLayout());
 
 		JPanel labelPanel = new JPanel(new GridLayout(0, 1));
-		labelPanel.add(new JLabel("Multiple actions have been mapped to " + keystrokeName));
-		labelPanel.add(new JLabel("Actions that can be enabled at the same"));
-		labelPanel.add(new JLabel("time should be mapped to different keys"));
+		labelPanel.add(DockingUtils.createNonHtmlLabel(
+			"Multiple actions have been mapped to " + keystrokeName));
+		labelPanel.add(DockingUtils.createNonHtmlLabel("Actions that can be enabled at the same"));
+		labelPanel.add(DockingUtils.createNonHtmlLabel("time should be mapped to different keys"));
 
 		innerPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
 
 		ImageIcon image = ResourceManager.loadImage("images/warning.png");
-		JLabel cautionLabel = new JLabel(image);
+		JLabel cautionLabel = DockingUtils.createNonHtmlLabel(image);
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		panel.add(cautionLabel);

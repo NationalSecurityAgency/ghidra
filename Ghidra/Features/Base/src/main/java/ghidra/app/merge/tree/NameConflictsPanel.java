@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.DockingUtils;
 import ghidra.app.merge.MergeConstants;
 import ghidra.program.model.listing.Program;
 import resources.ResourceManager;
@@ -58,17 +59,15 @@ class NameConflictsPanel extends JPanel {
 			text = "Use name '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ")";
 		}
 		else {
-			text =
-				"Use '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ") & lose '" + myName +
-					"' (" + MergeConstants.MY_TITLE + ")";
+			text = "Use '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ") & lose '" +
+				myName + "' (" + MergeConstants.MY_TITLE + ")";
 		}
 		keepOtherRB.setText(text);
 
 		String myText;
 		if (myName.equals(latestName)) {
-			myText =
-				"Add '" + myName + "' (" + MergeConstants.MY_TITLE + ") as '" +
-					ProgramTreeMergeManager.getUniqueTreeName(resultProgram, myName) + "'";
+			myText = "Add '" + myName + "' (" + MergeConstants.MY_TITLE + ") as '" +
+				ProgramTreeMergeManager.getUniqueTreeName(resultProgram, myName) + "'";
 		}
 		else {
 			myText = "Add tree '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
@@ -82,15 +81,13 @@ class NameConflictsPanel extends JPanel {
 		}
 		else {
 			if (origName.equals(latestName)) {
-				origText =
-					"Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE + ") as '" +
-						ProgramTreeMergeManager.getUniqueTreeName(resultProgram, origName) + "'" +
-						" & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
+				origText = "Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE +
+					") as '" + ProgramTreeMergeManager.getUniqueTreeName(resultProgram, origName) +
+					"'" + " & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
 			}
 			else {
-				origText =
-					"Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE + ") & lose '" +
-						myName + "' (" + MergeConstants.MY_TITLE + ")";
+				origText = "Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE +
+					") & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
 			}
 		}
 		originalRB.setText(origText);
@@ -129,9 +126,10 @@ class NameConflictsPanel extends JPanel {
 		JPanel iconPanel = new JPanel();
 		iconPanel.setLayout(new BoxLayout(iconPanel, BoxLayout.X_AXIS));
 
-		conflictsLabel = new JLabel("'My' name already exists in Latest Version");
+		conflictsLabel =
+			DockingUtils.createNonHtmlLabel("'My' name already exists in Latest Version");
 		ImageIcon icon = ResourceManager.loadImage("images/information.png");
-		iconPanel.add(new JLabel(icon));
+		iconPanel.add(DockingUtils.createNonHtmlLabel(icon));
 		iconPanel.add(Box.createHorizontalStrut(5));
 		iconPanel.add(conflictsLabel);
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));

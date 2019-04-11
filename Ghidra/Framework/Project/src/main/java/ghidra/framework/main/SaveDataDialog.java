@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,6 @@
  */
 package ghidra.framework.main;
 
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.ProjectLocator;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
@@ -33,10 +24,16 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.list.ListPanel;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.*;
 
 /**
  * Modal dialog to display a list of domain objects that have changed.
@@ -136,7 +133,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 	@Override
 	protected void okCallback() {
 
-		List<DomainFile> list = new ArrayList<DomainFile>();
+		List<DomainFile> list = new ArrayList<>();
 
 		for (int i = 0; i < checkboxes.length; i++) {
 			if (checkboxes[i].isSelected()) {
@@ -180,8 +177,8 @@ public class SaveDataDialog extends DialogComponentProvider {
 		deselectAllButton = new JButton(DESELECT_ALL);
 		deselectAllButton.setMnemonic('N');
 
-		JPanel buttonPanel =
-			ButtonPanelFactory.createButtonPanel(new JButton[] { selectAllButton, deselectAllButton });
+		JPanel buttonPanel = ButtonPanelFactory.createButtonPanel(
+			new JButton[] { selectAllButton, deselectAllButton });
 
 		//
 		// List Panel
@@ -247,7 +244,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 	private List<DomainFile> checkForUnsavedFiles(List<DomainFile> domainFiles) {
 
-		List<DomainFile> unsavedFiles = new ArrayList<DomainFile>();
+		List<DomainFile> unsavedFiles = new ArrayList<>();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isChanged()) {
 				unsavedFiles.add(domainFile);
@@ -267,6 +264,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 		yesButton.setEnabled(false);
 		for (int i = 0; i < files.size(); i++) {
 			checkboxes[i] = new JCheckBox(files.get(i).getName());
+			DockingUtils.turnOffHTMLRendering(checkboxes[i]);
 			checkboxes[i].setBackground(Color.white);
 			saveable[i] = files.get(i).canSave();
 			if (!saveable[i]) {
@@ -274,9 +272,8 @@ public class SaveDataDialog extends DialogComponentProvider {
 				if (!files.get(i).isInWritableProject()) {
 					ProjectLocator projectLocator = files.get(i).getProjectLocator();
 					if (projectLocator != null) {
-						text =
-							files.get(i).getName() + " (Read-Only from " +
-								files.get(i).getProjectLocator().getName() + ")";
+						text = files.get(i).getName() + " (Read-Only from " +
+							files.get(i).getProjectLocator().getName() + ")";
 					}
 				}
 				checkboxes[i].setText(text);
@@ -295,13 +292,13 @@ public class SaveDataDialog extends DialogComponentProvider {
 	/**
 	 * Cell renderer to show the checkboxes for the changed data files.
 	 */
-	private class DataCellRenderer implements ListCellRenderer {
+	private class DataCellRenderer implements ListCellRenderer<JCheckBox> {
 
 		private Font boldFont;
 
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus) {
+		public Component getListCellRendererComponent(JList<? extends JCheckBox> list,
+				JCheckBox value, int index, boolean isSelected, boolean cellHasFocus) {
 
 			if (boldFont == null) {
 				Font font = list.getFont();
@@ -313,7 +310,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 				checkboxes[index].setForeground(Color.red);
 				checkboxes[index].setFont(boldFont);
 			}
-			return (checkboxes[index]);
+			return checkboxes[index];
 		}
 	}
 
@@ -333,8 +330,8 @@ public class SaveDataDialog extends DialogComponentProvider {
 			}
 
 			if (!saveable[index]) {
-				setStatusText(files.get(index).getPathname() +
-					" cannot be saved to current location");
+				setStatusText(
+					files.get(index).getPathname() + " cannot be saved to current location");
 				return;
 			}
 			boolean selected = checkboxes[index].isSelected();

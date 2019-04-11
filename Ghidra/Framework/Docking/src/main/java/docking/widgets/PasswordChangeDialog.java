@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package docking.widgets;
 
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.Toolkit;
 import java.awt.event.*;
 import java.util.Arrays;
@@ -27,6 +22,10 @@ import java.util.Arrays;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import ghidra.util.MessageType;
+import ghidra.util.Msg;
+import ghidra.util.layout.PairLayout;
 
 public class PasswordChangeDialog extends DialogComponentProvider {
 
@@ -45,33 +44,34 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		wp.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
 
 		if (serverName != null) {
-			wp.add(new JLabel(serverType + ":"));
-			wp.add(new JLabel(serverName));
+			wp.add(DockingUtils.createNonHtmlLabel(serverType + ":"));
+			wp.add(DockingUtils.createNonHtmlLabel(serverName));
 		}
 
 		if (userID != null) {
-			wp.add(new JLabel("User ID:"));
-			JLabel nameLabel = new JLabel(userID);
+			wp.add(DockingUtils.createNonHtmlLabel("User ID:"));
+			JLabel nameLabel = DockingUtils.createNonHtmlLabel(userID);
 			nameLabel.setName("NAME-COMPONENT");
 			wp.add(nameLabel);
 		}
 
-		wp.add(new JLabel("New Password:"));
+		wp.add(DockingUtils.createNonHtmlLabel("New Password:"));
 		passwordField1 = new JPasswordField(16);
 		passwordField1.setName("PASSWORD-ENTRY1-COMPONENT");
 		wp.add(passwordField1);
 
-		wp.add(new JLabel("Repeat Password:"));
+		wp.add(DockingUtils.createNonHtmlLabel("Repeat Password:"));
 		passwordField2 = new JPasswordField(16);
 		passwordField2.setName("PASSWORD-ENTRY2-COMPONENT");
 		passwordField2.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				okCallback();
 			}
 		});
 		wp.add(passwordField2);
 
-		wp.add(new JLabel());
+		wp.add(DockingUtils.createNonHtmlLabel());
 
 		KeyListener keyListener = new KeyListener() {
 

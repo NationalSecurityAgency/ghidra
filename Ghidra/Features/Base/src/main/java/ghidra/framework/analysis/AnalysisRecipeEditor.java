@@ -56,7 +56,7 @@ public class AnalysisRecipeEditor {
 	private void buildNoOptionsPanel() {
 		noOptionsPanel = new JPanel(new MiddleLayout());
 		noOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-		JLabel label = new JLabel("No options available.");
+		JLabel label = DockingUtils.createNonHtmlLabel("No options available.");
 		label.setFont(label.getFont().deriveFont(20f));
 		noOptionsPanel.add(label);
 	}

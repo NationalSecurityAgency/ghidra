@@ -15,10 +15,6 @@
  */
 package ghidra.framework.project.tool;
 
-import ghidra.framework.model.Tool;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.layout.VerticalLayout;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
@@ -28,7 +24,11 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import ghidra.framework.model.Tool;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.layout.VerticalLayout;
 
 public class SelectChangedToolDialog extends DialogComponentProvider {
 
@@ -36,85 +36,89 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 	private boolean wasCancelled;
 
 	private Tool selectedTool;
-	
-	public SelectChangedToolDialog( List<Tool> toolList ) {
-		super( "Save Tool Changes?", true, false, true, false );
+
+	public SelectChangedToolDialog(List<Tool> toolList) {
+		super("Save Tool Changes?", true, false, true, false);
 		this.toolList = toolList;
-		
-		addWorkPanel( buildWorkPanel() );
-		
+
+		addWorkPanel(buildWorkPanel());
+
 		addOKButton();
 		addCancelButton();
 		Dimension preferredSize = getPreferredSize();
-		setPreferredSize( preferredSize.width, Math.min( 300, preferredSize.height) );
-        setRememberLocation( false );
-        setRememberSize( false );
+		setPreferredSize(preferredSize.width, Math.min(300, preferredSize.height));
+		setRememberLocation(false);
+		setRememberSize(false);
 
 	}
-	
+
 	private JPanel buildWorkPanel() {
-		
-		JPanel panel = new JPanel( new BorderLayout() );
-		
+
+		JPanel panel = new JPanel(new BorderLayout());
+
 		String toolName = toolList.get(0).getToolName();
-		JLabel descriptionLabel = new JLabel( 
-			HTMLUtilities.toHTML( "There are multiple changed instances of "+toolName+
-				" running.<p>Which one would like to save to your tool chest?" ) );
-		descriptionLabel.setIconTextGap( 15 );
-		descriptionLabel.setIcon( 
-			OptionDialog.getIconForMessageType( OptionDialog.WARNING_MESSAGE ) );
-		descriptionLabel.setBorder( BorderFactory.createEmptyBorder( 10, 10, 10, 10 ) );
-		panel.add( descriptionLabel, BorderLayout.NORTH );
-		JScrollPane scrollPane = new JScrollPane( buildRadioButtonPanel() );
-		scrollPane.setBorder( BorderFactory.createEmptyBorder( 10, 10, 10, 10 ) );
-		panel.add( scrollPane );
+		JLabel descriptionLabel = DockingUtils.createHtmlLabel(
+			HTMLUtilities.toHTML("There are multiple changed instances of " +
+				HTMLUtilities.friendlyEncodeHTML(toolName) +
+				" running.<p>Which one would like to save to your tool chest?"));
+		descriptionLabel.setIconTextGap(15);
+		descriptionLabel.setIcon(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE));
+		descriptionLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		panel.add(descriptionLabel, BorderLayout.NORTH);
+		JScrollPane scrollPane = new JScrollPane(buildRadioButtonPanel());
+		scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		panel.add(scrollPane);
 		return panel;
 	}
-	
+
 	private JPanel buildRadioButtonPanel() {
-		JPanel panel = new JPanel( new VerticalLayout( 5 ) );
-		
+		JPanel panel = new JPanel(new VerticalLayout(5));
+
 		ButtonGroup buttonGroup = new ButtonGroup();
-		
-		JRadioButton noneButton = new JRadioButton( "None" );
+
+		JRadioButton noneButton = new JRadioButton("None");
 		ItemListener listener = new ItemListener() {
-			public void itemStateChanged( ItemEvent e ) {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
 				selectedTool = null;
 			}
 		};
-		noneButton.addItemListener( listener );
-		buttonGroup.add( noneButton ); 		
-		panel.add( noneButton );
-		
-		for ( final Tool tool : toolList ) {
-			JRadioButton radioButton = new JRadioButton( tool.getName() );
-			radioButton.addItemListener( new ItemListener() {
-				public void itemStateChanged( ItemEvent e ) {
+		noneButton.addItemListener(listener);
+		buttonGroup.add(noneButton);
+		panel.add(noneButton);
+
+		for (final Tool tool : toolList) {
+			JRadioButton radioButton = new JRadioButton(tool.getName());
+			radioButton.addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent e) {
 					selectedTool = tool;
 				}
-			} );
-			buttonGroup.add( radioButton );
-			panel.add( radioButton );
+			});
+			buttonGroup.add(radioButton);
+			panel.add(radioButton);
 		}
-		
-		buttonGroup.setSelected( noneButton.getModel(), true );
-		
+
+		buttonGroup.setSelected(noneButton.getModel(), true);
+
 		return panel;
 	}
-	
+
 	@Override
 	protected void cancelCallback() {
 		super.cancelCallback();
 		wasCancelled = true;
 	}
+
 	@Override
 	protected void okCallback() {
 		close();
 	}
+
 	boolean wasCancelled() {
 		return wasCancelled;
 	}
-	
+
 	Tool getSelectedTool() {
 		return selectedTool;
 	}

@@ -360,7 +360,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	}
 
 	private Component createLogicalOperationLabel(LogicOperation op) {
-		JLabel jLabel = new JLabel("<" + op + ">", SwingConstants.CENTER);
+		JLabel jLabel = DockingUtils.createNonHtmlLabel("<" + op + ">", SwingConstants.CENTER);
 		jLabel.setForeground(Color.GRAY);
 		return jLabel;
 	}
@@ -368,9 +368,9 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	private JComponent buildHeaderPanel() {
 		JPanel headerPanel = new JPanel(new FilterPanelLayout(200, 0));
 
-		headerPanel.add(new JLabel("Table Column", SwingConstants.CENTER));
-		headerPanel.add(new JLabel("Filter", SwingConstants.CENTER));
-		headerPanel.add(new JLabel("Filter Value", SwingConstants.CENTER));
+		headerPanel.add(DockingUtils.createNonHtmlLabel("Table Column", SwingConstants.CENTER));
+		headerPanel.add(DockingUtils.createNonHtmlLabel("Filter", SwingConstants.CENTER));
+		headerPanel.add(DockingUtils.createNonHtmlLabel("Filter Value", SwingConstants.CENTER));
 
 		headerPanel.setBorder(new CompoundBorder(
 			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY.brighter().brighter()),

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
@@ -485,7 +486,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		iconList.add(ResourceManager.loadImage("images/hourglass24_10.png"));
 		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
 		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
-		imageLabel = new JLabel(progressIcon);
+		imageLabel = DockingUtils.createNonHtmlLabel(progressIcon);
 	}
 
 	/**

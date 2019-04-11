@@ -27,8 +27,7 @@ import java.util.Collection;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.util.Msg;
@@ -170,18 +169,18 @@ public class ImageDialogProvider extends DialogComponentProvider {
 
 		JPanel imagePanel = new JPanel(new BorderLayout());
 
-		newImageLabel = new JLabel(new ImageIcon(newImage));
+		newImageLabel = DockingUtils.createNonHtmlLabel(new ImageIcon(newImage));
 		newImageLabel.setOpaque(true);
 		newImageLabel.setBackground(Color.BLACK);
 		JPanel newLabelPanel = new JPanel(new BorderLayout());
 
 		if (oldImage != null) {
-			oldImageLabel = new JLabel(new ImageIcon(oldImage));
+			oldImageLabel = DockingUtils.createNonHtmlLabel(new ImageIcon(oldImage));
 			oldImageLabel.setOpaque(true);
 			oldImageLabel.setBackground(Color.BLACK);
 		}
 		else {
-			oldImageLabel = new JLabel("     Old image not found     ");
+			oldImageLabel = DockingUtils.createNonHtmlLabel("     Old image not found     ");
 		}
 
 		newLabelPanel.add(createImageLabelComponent("New Image"), BorderLayout.NORTH);
@@ -213,7 +212,8 @@ public class ImageDialogProvider extends DialogComponentProvider {
 	}
 
 	private JLabel createNameLabel(String name) {
-		JLabel label = new JLabel("<html><b><font color='yellow' size='8'>" + name);
+		JLabel label =
+			DockingUtils.createHtmlLabel("<html><b><font color='yellow' size='8'>" + name);
 		label.setOpaque(true);
 		//	label.setForeground(Color.YELLOW);
 		label.setBackground(Color.BLACK);

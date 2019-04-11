@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
+import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.CancelledException;
@@ -200,11 +201,12 @@ public class ConditionTestPanel extends JPanel {
 	private Component createSummaryPanel() {
 		JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		runsLabel = new JLabel("Tests: 0/" + conditionTestModel.getTestCount());
+		runsLabel =
+			DockingUtils.createNonHtmlLabel("Tests: 0/" + conditionTestModel.getTestCount());
 		panel.add(runsLabel);
-		errorsLabel = new JLabel("Errors: 0");
+		errorsLabel = DockingUtils.createNonHtmlLabel("Errors: 0");
 		panel.add(errorsLabel);
-		warningsLabel = new JLabel("Warnings: 0");
+		warningsLabel = DockingUtils.createNonHtmlLabel("Warnings: 0");
 		panel.add(warningsLabel);
 
 		return panel;
@@ -366,7 +368,7 @@ public class ConditionTestPanel extends JPanel {
 			checkbox = new JCheckBox();
 			checkbox.setSelected(true);
 			add(checkbox);
-			label = new JLabel(test.getName());
+			label = DockingUtils.createNonHtmlLabel(test.getName());
 			add(label);
 			label.setToolTipText(test.getDescription());
 			checkbox.addChangeListener(e -> {
@@ -404,7 +406,7 @@ public class ConditionTestPanel extends JPanel {
 		public TestStatusPanel(ConditionTester test) {
 			super(new BorderLayout());
 			this.test = test;
-			label = new JLabel();
+			label = DockingUtils.createNonHtmlLabel();
 			label.setHorizontalAlignment(SwingConstants.LEFT);
 			add(label);
 		}
