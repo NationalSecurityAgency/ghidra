@@ -151,7 +151,7 @@
     <target name="_guard_dispatch_icall"/>
     <pcode>
       <body><![CDATA[
-        goto [RAX];
+        call [RAX];
       ]]></body>
     </pcode>
   </callfixup>
