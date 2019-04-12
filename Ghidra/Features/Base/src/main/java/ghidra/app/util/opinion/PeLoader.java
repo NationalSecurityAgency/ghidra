@@ -678,7 +678,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
 
 				int rawDataSize = sections[i].getSizeOfRawData();
-				int virtualSize = sections[i].getVirtualSize();
+
+				/* Align the virtual size according to: https://docs.microsoft.com/en-us/windows/desktop/debug/pe-format */
+				int sectionAlignment = optionalHeader.getSectionAlignment();
+				if (sectionAlignment < 512)
+				{
+					/* sectionAlignment should be at least 512, because according to
+					 * https://docs.microsoft.com/en-us/windows/desktop/debug/pe-format :
+					 * "It must be greater than or equal to FileAlignment."
+					 * and
+					 * For fileAlignment it says:
+					 * "The value should be a power of 2 between 512 and 64 K, inclusive."
+					 * 
+					 * too large values however shouldn't be a problem
+					 */
+					sectionAlignment = 512;
+				}
+				int virtualSize = (((sections[i].getVirtualSize() + sectionAlignment - 1) / sectionAlignment) * sectionAlignment);
+				
 				if (rawDataSize != 0) {
 					try (InputStream dataStream = sections[i].getDataStream()) {
 						int dataSize =
@@ -700,7 +717,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 						continue;
 					}
 					else if (rawDataSize > virtualSize) {
-						// virtual size fully initialized
+						Msg.warn(this,
+								"Section[" + i + "] has rawDataSize (" +
+									Integer.toHexString(rawDataSize) + " ) > " +
+									"virtualSize (" +
+									Integer.toHexString(virtualSize) + ")");
 						continue;
 					}
 					// remainder of virtual size is uninitialized
