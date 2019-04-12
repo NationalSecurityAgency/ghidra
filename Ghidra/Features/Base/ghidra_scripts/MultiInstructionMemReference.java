@@ -384,12 +384,6 @@ public class MultiInstructionMemReference extends GhidraScript {
 	 * @param scalar used as offset into address space
 	 */
 	private void makeReference(Instruction instruction, int opIndex, Address addr) {
-		if (instruction.getPrototype().hasDelaySlots()) {
-			instruction = instruction.getNext();
-			if (instruction == null) {
-				return;
-			}
-		}
 		if (opIndex == -1) {
 			for (int i = 0; i < instruction.getNumOperands(); i++) {
 				int opType = instruction.getOperandType(i);
