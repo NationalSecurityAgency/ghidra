@@ -102,7 +102,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	public SymbolTable getSymbolTable();
 
 	/**
-
+	
 	 * Returns the external manager.
 	 */
 	public ExternalManager getExternalManager();
@@ -189,6 +189,18 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * @param md5 MD5 binary file hash
 	 */
 	public void setExecutableMD5(String md5);
+
+	/**
+	 * Sets the value corresponding to the original binary file SHA256 hash.
+	 * @param sha256 SHA256 binary file hash
+	 */
+	public void setExecutableSHA256(String sha256);
+
+	/**
+	 * Returns a value corresponding to the original binary file SHA256 hash.
+	 * May be null if program source did not correspond to a binary file.
+	 */
+	public String getExecutableSHA256();
 
 	/**
 	 * Returns the creation date of this program.
@@ -343,8 +355,8 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * This will never be thrown if commit is false.
 	 * @throws IllegalStateException if the program state is not suitable for setting the image base.
 	 */
-	public void setImageBase(Address base, boolean commit) throws AddressOverflowException,
-			LockException, IllegalStateException;
+	public void setImageBase(Address base, boolean commit)
+			throws AddressOverflowException, LockException, IllegalStateException;
 
 	/**
 	 * Restores the last committed image base.
@@ -365,8 +377,8 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * @throws LockException if the program is shared and not checked out exclusively.
 	 */
 	public void setLanguage(Language language, CompilerSpecID compilerSpecID,
-			boolean forceRedisassembly, TaskMonitor monitor) throws IllegalStateException,
-			IncompatibleLanguageException, LockException;
+			boolean forceRedisassembly, TaskMonitor monitor)
+			throws IllegalStateException, IncompatibleLanguageException, LockException;
 
 	/**
 	 * Returns the global namespace for this program
