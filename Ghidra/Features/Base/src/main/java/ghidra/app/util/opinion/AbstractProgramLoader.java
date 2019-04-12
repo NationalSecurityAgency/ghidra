@@ -39,9 +39,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
-import ghidra.util.InvalidNameException;
-import ghidra.util.MD5Utilities;
-import ghidra.util.HashUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -112,8 +110,8 @@ public abstract class AbstractProgramLoader implements Loader {
 			return results;
 		}
 
-		List<Program> programs = loadProgram(provider, name, folder, loadSpec, options, messageLog,
-			consumer, monitor);
+		List<Program> programs =
+			loadProgram(provider, name, folder, loadSpec, options, messageLog, consumer, monitor);
 
 		boolean success = false;
 		try {

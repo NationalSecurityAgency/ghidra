@@ -102,7 +102,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	public SymbolTable getSymbolTable();
 
 	/**
-
+	
 	 * Returns the external manager.
 	 */
 	public ExternalManager getExternalManager();
@@ -355,8 +355,8 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * This will never be thrown if commit is false.
 	 * @throws IllegalStateException if the program state is not suitable for setting the image base.
 	 */
-	public void setImageBase(Address base, boolean commit) throws AddressOverflowException,
-			LockException, IllegalStateException;
+	public void setImageBase(Address base, boolean commit)
+			throws AddressOverflowException, LockException, IllegalStateException;
 
 	/**
 	 * Restores the last committed image base.
@@ -377,8 +377,8 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * @throws LockException if the program is shared and not checked out exclusively.
 	 */
 	public void setLanguage(Language language, CompilerSpecID compilerSpecID,
-			boolean forceRedisassembly, TaskMonitor monitor) throws IllegalStateException,
-			IncompatibleLanguageException, LockException;
+			boolean forceRedisassembly, TaskMonitor monitor)
+			throws IllegalStateException, IncompatibleLanguageException, LockException;
 
 	/**
 	 * Returns the global namespace for this program
