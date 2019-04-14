@@ -1381,7 +1381,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		if (taskMgr.hasTasksForDomainObject(dObj)) {
 			Msg.showInfo(getClass(), getToolFrame(), "Close " + dObj.getName() + " Failed",
 				"The tool is currently working in the background on " + dObj.getName() +
-					".\nPlease stop the backgound processing first.");
+					".\nPlease stop the background processing first.");
 
 			return false;
 		}
