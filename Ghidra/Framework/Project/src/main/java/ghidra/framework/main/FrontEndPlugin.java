@@ -1191,7 +1191,7 @@ public class FrontEndPlugin extends Plugin
 			// assume no tools in the tool chest
 			Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
 				"<html>Cannot find tool to open file: <b>" +
-					HTMLUtilities.friendlyEncodeHTML(domainFile.getName()) +
+					HTMLUtilities.escapeHTML(domainFile.getName()) +
 					"</b>.<br><br>Make sure you have an appropriate tool installed <br>from the " +
 					"<b>Tools->Import Default Tools...</b> menu.  Alternatively, you can " +
 					"use <b>Tool->Set Tool Associations</b> menu to change how Ghidra " +

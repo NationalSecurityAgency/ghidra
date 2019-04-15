@@ -298,7 +298,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 			buffy.append("<TR>");
 			buffy.append("<TD>");
 			buffy.append(specialFontOpen);
-			buffy.append(HTMLUtilities.friendlyEncodeHTML(program.getName()));
+			buffy.append(HTMLUtilities.escapeHTML(program.getName()));
 			buffy.append(specialFontClose);
 			buffy.append("</TD>");
 			buffy.append("<TD>");
@@ -325,7 +325,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		for (Program program : invalidList) {
 			buffy.append("<TR>");
 			buffy.append("<TD>");
-			buffy.append(HTMLUtilities.friendlyEncodeHTML(program.getName()));
+			buffy.append(HTMLUtilities.escapeHTML(program.getName()));
 			buffy.append("</TD>");
 			buffy.append("<TD>");
 			buffy.append(program.getLanguageID());

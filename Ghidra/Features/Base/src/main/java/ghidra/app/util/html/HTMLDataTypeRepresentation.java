@@ -135,7 +135,7 @@ public abstract class HTMLDataTypeRepresentation {
 		if (comment == null) {
 			comment = dataType.getDescription();
 		}
-		return comment == null ? "" : HTMLUtilities.friendlyEncodeHTML(comment);
+		return comment == null ? "" : HTMLUtilities.escapeHTML(comment);
 	}
 
 	protected static String truncateAsNecessary(String string) {
@@ -327,7 +327,7 @@ public abstract class HTMLDataTypeRepresentation {
 
 		// put the path info in
 		CategoryPath path = dataType.getCategoryPath();
-		headerLines.add(new TextLine(HTMLUtilities.friendlyEncodeHTML(path.getPath())));
+		headerLines.add(new TextLine(HTMLUtilities.escapeHTML(path.getPath())));
 		headerLines.add(new TextLine(BR));
 
 		return headerLines;

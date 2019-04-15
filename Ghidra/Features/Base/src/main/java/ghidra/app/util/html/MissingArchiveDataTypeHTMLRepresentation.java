@@ -29,7 +29,7 @@ public class MissingArchiveDataTypeHTMLRepresentation extends HTMLDataTypeRepres
 			return "<i>Could not find data type archive</i>";
 		}
 		return "<i>Could not access data type archive: " +
-			HTMLUtilities.friendlyEncodeHTML(sourceArchive.getName()) + "</i>";
+			HTMLUtilities.escapeHTML(sourceArchive.getName()) + "</i>";
 	}
 
 	@Override

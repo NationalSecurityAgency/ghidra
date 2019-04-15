@@ -175,7 +175,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 			buffer.append("<B>");
 		}
 
-		buffer.append(HTMLUtilities.friendlyEncodeHTML(string));
+		buffer.append(HTMLUtilities.escapeHTML(string));
 
 		if (isBold) {
 			buffer.append("</B>");

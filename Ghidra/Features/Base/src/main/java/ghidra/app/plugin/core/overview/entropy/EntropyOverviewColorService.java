@@ -88,17 +88,17 @@ public class EntropyOverviewColorService implements OverviewColorService {
 		double entropy = (entropyScaled * 8.0d) / 255; 	// convert back from palette scale to original entropy value
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("<b>");
-		buffer.append(HTMLUtilities.friendlyEncodeHTML(getName()));
+		buffer.append(HTMLUtilities.escapeHTML(getName()));
 		buffer.append("</b>\n");
 		buffer.append(" ");
 		buffer.append(formatter.format(entropy));
 		buffer.append(" ");
-		buffer.append(HTMLUtilities.friendlyEncodeHTML(getKnotName(entropyScaled)));
+		buffer.append(HTMLUtilities.escapeHTML(getKnotName(entropyScaled)));
 		buffer.append(" ");
 		buffer.append(" &nbsp&nbsp&nbsp(");
-		buffer.append(HTMLUtilities.friendlyEncodeHTML(getBlockName(address)));
+		buffer.append(HTMLUtilities.escapeHTML(getBlockName(address)));
 		buffer.append(" ");
-		buffer.append(HTMLUtilities.friendlyEncodeHTML(address.toString()));
+		buffer.append(HTMLUtilities.escapeHTML(address.toString()));
 		buffer.append(" )");
 		return HTMLUtilities.toWrappedHTML(buffer.toString(), 0);
 	}

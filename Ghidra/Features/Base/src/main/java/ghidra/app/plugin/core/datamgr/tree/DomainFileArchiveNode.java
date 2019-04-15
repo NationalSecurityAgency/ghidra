@@ -103,7 +103,7 @@ public class DomainFileArchiveNode extends ArchiveNode {
 	public String getToolTip() {
 		DomainFile file = ((DomainFileArchive) archive).getDomainFile();
 		if (file != null) {
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(file.getPathname());
+			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
 		}
 		return "[Unsaved New Domain File Archive]";
 	}

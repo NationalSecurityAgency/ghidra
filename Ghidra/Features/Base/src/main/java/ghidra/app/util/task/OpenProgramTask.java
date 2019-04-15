@@ -253,7 +253,7 @@ public class OpenProgramTask extends Task {
 
 		SystemUtilities.runSwingNow(() -> {
 			int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-				"<html>" + HTMLUtilities.friendlyEncodeHTML(filename) + " has crash data.<br>" +
+				"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
 					"Would you like to recover unsaved changes?");
 			result.set(option == OptionDialog.OPTION_ONE);
 		});

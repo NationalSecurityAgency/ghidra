@@ -127,7 +127,7 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 	public String getDescription(File file) {
 		boolean isDir = file.isDirectory();
 		return "<html><table>" + "<tr><td>" + (isDir ? "Directory: " : "File: ") + "</td><td>" +
-			"<b>" + HTMLUtilities.friendlyEncodeHTML(file.getName()) + "</b>" + "</td></tr>" +
+			"<b>" + HTMLUtilities.escapeHTML(file.getName()) + "</b>" + "</td></tr>" +
 			"<tr><td>Size:</td><td>" + (isDir ? "0" : file.length()) + " bytes" + "</td></tr>" +
 			"<tr><td>Last modified:</td><td>" +
 			GhidraFileChooser.format.format(new Date(file.lastModified())) + "</td></tr>" +

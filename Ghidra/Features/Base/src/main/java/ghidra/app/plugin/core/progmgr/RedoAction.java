@@ -69,7 +69,7 @@ public class RedoAction extends ProgramContextAction {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Redo " + programName);
 			String tip = HTMLUtilities.toWrappedHTML(
-				"Redo " + HTMLUtilities.friendlyEncodeHTML(program.getRedoName()));
+				"Redo " + HTMLUtilities.escapeHTML(program.getRedoName()));
 			setDescription(tip);
 			return true;
 		}

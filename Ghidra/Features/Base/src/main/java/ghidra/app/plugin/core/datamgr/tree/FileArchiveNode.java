@@ -54,7 +54,7 @@ public class FileArchiveNode extends ArchiveNode {
 	public String getToolTip() {
 		ResourceFile file = fileArchive.getFile();
 		if (file != null) {
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(file.getAbsolutePath());
+			return "<html>" + HTMLUtilities.escapeHTML(file.getAbsolutePath());
 		}
 		return "[Unsaved New Archive]";
 	}

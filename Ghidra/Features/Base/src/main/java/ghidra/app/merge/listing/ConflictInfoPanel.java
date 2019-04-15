@@ -156,8 +156,8 @@ public class ConflictInfoPanel extends JPanel {
 	}
 
 	private void addAddress(StringBuffer buf, Address addr) {
-		buf.append("<font color=\"#990000\">" + HTMLUtilities.friendlyEncodeHTML(addr.toString()) +
-			"</font>");
+		buf.append(
+			"<font color=\"#990000\">" + HTMLUtilities.escapeHTML(addr.toString()) + "</font>");
 	}
 
 	private void updateWest() {

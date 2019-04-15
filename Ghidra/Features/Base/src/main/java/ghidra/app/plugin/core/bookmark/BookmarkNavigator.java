@@ -118,11 +118,11 @@ public class BookmarkNavigator {
 					String cat = bookmarks[i].getCategory();
 					if (cat != null && cat.length() != 0) {
 						buf.append(" [");
-						buf.append(HTMLUtilities.friendlyEncodeHTML(cat));
+						buf.append(HTMLUtilities.escapeHTML(cat));
 						buf.append("]");
 					}
 					buf.append(": ");
-					buf.append(HTMLUtilities.friendlyEncodeHTML(bookmarks[i].getComment()));
+					buf.append(HTMLUtilities.escapeHTML(bookmarks[i].getComment()));
 				}
 				return buf.toString();
 			}

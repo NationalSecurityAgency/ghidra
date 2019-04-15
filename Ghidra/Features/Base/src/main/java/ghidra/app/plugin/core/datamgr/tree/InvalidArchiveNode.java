@@ -44,7 +44,7 @@ public class InvalidArchiveNode extends ArchiveNode {
 		ArchiveType archiveType = ((InvalidFileArchive) archive).getArchiveType();
 		String type = archiveType == ArchiveType.FILE ? "File" : "Project";
 		return "<html>Unable to locate " + type + " data type archive: " +
-			HTMLUtilities.friendlyEncodeHTML(archive.getName());
+			HTMLUtilities.escapeHTML(archive.getName());
 	}
 
 	@Override

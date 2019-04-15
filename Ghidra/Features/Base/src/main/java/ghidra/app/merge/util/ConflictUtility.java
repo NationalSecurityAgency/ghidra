@@ -240,7 +240,7 @@ public class ConflictUtility {
 	 */
 	public static String getAddressString(Address address) {
 		return colorString(ADDRESS_COLOR,
-			((address != null) ? HTMLUtilities.friendlyEncodeHTML(address.toString()) : ""));
+			((address != null) ? HTMLUtilities.escapeHTML(address.toString()) : ""));
 	}
 
 	/**
@@ -251,8 +251,7 @@ public class ConflictUtility {
 	 */
 	public static String getAddressString(Address address, boolean showAddressSpace) {
 		return colorString(ADDRESS_COLOR,
-			((address != null)
-					? HTMLUtilities.friendlyEncodeHTML(address.toString(showAddressSpace))
+			((address != null) ? HTMLUtilities.escapeHTML(address.toString(showAddressSpace))
 					: ""));
 	}
 

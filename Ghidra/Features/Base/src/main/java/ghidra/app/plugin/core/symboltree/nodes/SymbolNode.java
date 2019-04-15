@@ -138,7 +138,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return "<html>" + HTMLUtilities.friendlyEncodeHTML(symbol.getName(true));
+		return "<html>" + HTMLUtilities.escapeHTML(symbol.getName(true));
 	}
 
 	@Override

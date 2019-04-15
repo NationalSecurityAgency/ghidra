@@ -71,7 +71,7 @@ public class DefaultDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		StringBuilder buffer = new StringBuilder();
 
 		String headerText = header.getText();
-		String encodedHeaderText = HTMLUtilities.friendlyEncodeHTML(headerText);
+		String encodedHeaderText = HTMLUtilities.escapeHTML(headerText);
 		headerText = wrapStringInColor(encodedHeaderText, header.getTextColor());
 		buffer.append(headerText);
 

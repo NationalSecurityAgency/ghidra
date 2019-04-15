@@ -139,13 +139,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	public String getToolTipText(MouseEvent event) {
 		if (associatedRunningTool != null) {
 			if (associatedRunningTool instanceof PluginTool) {
-				return "<html>" + HTMLUtilities.friendlyEncodeHTML(
+				return "<html>" + HTMLUtilities.escapeHTML(
 					((PluginTool) associatedRunningTool).getToolFrame().getTitle());
 			}
 
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(associatedRunningTool.getName());
+			return "<html>" + HTMLUtilities.escapeHTML(associatedRunningTool.getName());
 		}
-		return "<html>" + HTMLUtilities.friendlyEncodeHTML(template.getName());
+		return "<html>" + HTMLUtilities.escapeHTML(template.getName());
 	}
 
 	public void launchTool(DomainFile domainFile) {

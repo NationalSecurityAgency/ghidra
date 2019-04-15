@@ -1466,7 +1466,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 					originalIsChanging = true;
 					try {
 						if (hadChanges) {
-							String message = "<html>" + HTMLUtilities.friendlyEncodeHTML(oldName) +
+							String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
 								" has changed outside the editor.<br>" +
 								"Discard edits & reload the " + getTypeName() + "?";
 							String title = "Reload " + getTypeName() + " Editor?";
@@ -1570,7 +1570,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 							consideringReplacedDataType = true;
 							try {
 								String message =
-									"<html>" + HTMLUtilities.friendlyEncodeHTML(oldPath.getPath()) +
+									"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
 										" has changed outside the editor.<br>" +
 										"Discard edits & reload the " + getTypeName() + "?";
 								String title = "Reload " + getTypeName() + " Editor?";

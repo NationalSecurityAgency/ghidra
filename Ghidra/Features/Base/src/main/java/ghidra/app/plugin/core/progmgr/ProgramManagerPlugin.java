@@ -558,7 +558,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				Program program = context.getProgram();
 				String programName = "'" + program.getDomainFile().getName() + "'";
 				getMenuBarData().setMenuItemName("&Close " + programName);
-				setDescription("<html>Close " + HTMLUtilities.friendlyEncodeHTML(programName));
+				setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
 				return true;
 			}
 		};

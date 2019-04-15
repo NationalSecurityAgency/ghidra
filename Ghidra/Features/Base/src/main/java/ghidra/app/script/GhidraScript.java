@@ -388,7 +388,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	protected boolean promptToKeepChangesOnException() {
 
 		String message = "<html>Encountered exception running script \"" +
-			HTMLUtilities.friendlyEncodeHTML(sourceFile.getName()) +
+			HTMLUtilities.escapeHTML(sourceFile.getName()) +
 			"\".<br><br>Keep the changes to the program?";
 		//@formatter:off
 			int choice =

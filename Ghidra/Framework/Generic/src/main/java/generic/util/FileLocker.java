@@ -125,11 +125,10 @@ public class FileLocker {
 		for (String name : PROPERTY_KEYS) {
 			buf.append("<tr><td>");
 			buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-			buf.append(HTMLUtilities.friendlyEncodeHTML(name));
+			buf.append(HTMLUtilities.escapeHTML(name));
 			buf.append(": ");
 			buf.append("</td><td>");
-			buf.append(
-				HTMLUtilities.friendlyEncodeHTML(existingLockProperties.get(name).toString()));
+			buf.append(HTMLUtilities.escapeHTML(existingLockProperties.get(name).toString()));
 			buf.append("</td></tr>");
 		}
 		buf.append("</table>");

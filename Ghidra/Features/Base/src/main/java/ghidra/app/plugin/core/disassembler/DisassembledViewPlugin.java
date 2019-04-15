@@ -440,7 +440,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					setFont(font);
 
 					setToolTipText(TOOLTIP_TEXT_PREPEND +
-						HTMLUtilities.friendlyEncodeHTML(currentLocation.getAddress().toString()));
+						HTMLUtilities.escapeHTML(currentLocation.getAddress().toString()));
 
 					// make sure the first value is highlighted to indicate
 					// that it is the selected program location

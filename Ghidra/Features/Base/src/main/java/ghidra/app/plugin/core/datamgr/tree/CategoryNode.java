@@ -140,7 +140,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return "<html>" + HTMLUtilities.friendlyEncodeHTML(category.getCategoryPathName());
+		return "<html>" + HTMLUtilities.escapeHTML(category.getCategoryPathName());
 	}
 
 	@Override

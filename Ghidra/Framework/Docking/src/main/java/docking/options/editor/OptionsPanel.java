@@ -138,7 +138,7 @@ public class OptionsPanel extends JPanel {
 			Options currentOptions = getSelectedOptions();
 
 			int userChoice = OptionDialog.showOptionDialog(viewPanel, "Restore Defaults?",
-				"<html>Restore <b>" + HTMLUtilities.friendlyEncodeHTML(currentOptions.getName()) +
+				"<html>Restore <b>" + HTMLUtilities.escapeHTML(currentOptions.getName()) +
 					"</b> to default option values <b>and erase current settings?</b>",
 				"Restore Defaults");
 			if (userChoice == OptionDialog.CANCEL_OPTION) {

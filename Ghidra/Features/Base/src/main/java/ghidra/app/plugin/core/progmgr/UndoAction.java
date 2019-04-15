@@ -76,7 +76,7 @@ public class UndoAction extends ProgramContextAction {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Undo " + programName);
 			String tip = HTMLUtilities.toWrappedHTML(
-				"Undo " + HTMLUtilities.friendlyEncodeHTML(program.getUndoName()));
+				"Undo " + HTMLUtilities.escapeHTML(program.getUndoName()));
 			setDescription(tip);
 			return true;
 		}

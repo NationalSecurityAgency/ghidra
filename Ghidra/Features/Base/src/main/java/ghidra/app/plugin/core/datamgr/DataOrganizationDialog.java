@@ -53,7 +53,7 @@ public class DataOrganizationDialog extends DialogComponentProvider {
 
 		JPanel headerPanel = new JPanel();
 		headerPanel.add(new GHtmlLabel("<HTML>Alignment Information for <b>" +
-			HTMLUtilities.friendlyEncodeHTML(dataTypeManager.getName()) + "</b>.</HTML>"));
+			HTMLUtilities.escapeHTML(dataTypeManager.getName()) + "</b>.</HTML>"));
 
 		alignPanel = new DataOrganizationPanel();
 		alignPanel.setOrganization(dataOrganization);

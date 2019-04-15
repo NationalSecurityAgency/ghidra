@@ -434,22 +434,20 @@ public class ScriptInfo {
 	 */
 	public String getToolTipText() {
 		String htmlDescription = (description == null) ? "No Description"
-				: HTMLUtilities.friendlyEncodeHTML(description).replaceAll("\n",
+				: HTMLUtilities.escapeHTML(description).replaceAll("\n",
 					HTML_NEW_LINE + HTML_SPACE);
 		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE +
-			HTMLUtilities.friendlyEncodeHTML(toToolTip(author));
-		String htmlCategory =
-			HTMLUtilities.bold("Category:") + HTML_SPACE + HTMLUtilities.friendlyEncodeHTML(
-				toToolTip(StringUtilities.convertStringArray(category, ".")));
+			HTMLUtilities.escapeHTML(toToolTip(author));
+		String htmlCategory = HTMLUtilities.bold("Category:") + HTML_SPACE +
+			HTMLUtilities.escapeHTML(toToolTip(StringUtilities.convertStringArray(category, ".")));
 		String htmlKeyBinding =
 			HTMLUtilities.bold("Key Binding:") + HTML_SPACE + getKeybindingToolTip();
-		String htmlMenuPath =
-			HTMLUtilities.bold("Menu Path:") + HTML_SPACE + HTMLUtilities.friendlyEncodeHTML(
-				toToolTip(StringUtilities.convertStringArray(menupath, ".")));
+		String htmlMenuPath = HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
+			HTMLUtilities.escapeHTML(toToolTip(StringUtilities.convertStringArray(menupath, ".")));
 
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("<h3>").append(HTML_SPACE).append(
-			HTMLUtilities.friendlyEncodeHTML(getName())).append("</h3>");
+		buffer.append("<h3>").append(HTML_SPACE).append(HTMLUtilities.escapeHTML(getName())).append(
+			"</h3>");
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(HTML_SPACE).append(htmlDescription);
 		buffer.append(HTML_NEW_LINE);

@@ -524,9 +524,9 @@ public class VariousChoicesPanel extends ConflictPanel {
 						(displayedFont != null) ? getFontMetrics(displayedFont) : null;
 					int stringWidth =
 						(fontMetrics != null) ? fontMetrics.stringWidth(displayedText) : 0;
-					setToolTipText((stringWidth > displayedWidth)
-							? "<html>" + HTMLUtilities.friendlyEncodeHTML(text)
-							: null);
+					setToolTipText(
+						(stringWidth > displayedWidth) ? "<html>" + HTMLUtilities.escapeHTML(text)
+								: null);
 				}
 
 				@Override

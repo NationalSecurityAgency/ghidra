@@ -569,8 +569,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 			message = EXISITING_STRUCTURE_STATUS_PREFIX;
 		}
 
-		setStatusText(
-			"<HTML>" + message + "<BR>\"" + HTMLUtilities.friendlyEncodeHTML(name) + "\"");
+		setStatusText("<HTML>" + message + "<BR>\"" + HTMLUtilities.escapeHTML(name) + "\"");
 	}
 
 	// this class is used instead of a cell renderer so that sorting will

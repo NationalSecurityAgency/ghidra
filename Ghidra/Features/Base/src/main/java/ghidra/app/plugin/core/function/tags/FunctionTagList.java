@@ -50,7 +50,7 @@ public class FunctionTagList extends JList<FunctionTag> {
 				return "<no comment set>";
 			}
 
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(tag.getComment());
+			return "<html>" + HTMLUtilities.escapeHTML(tag.getComment());
 		}
 
 		return "";

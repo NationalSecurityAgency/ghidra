@@ -334,8 +334,8 @@ public class DataTypeSynchronizer {
 
 		buffy.append("<TR BORDER=LEFT>");
 		buffy.append("<TD VALIGN=\"TOP\">");
-		buffy.append("<B>").append(
-			HTMLUtilities.friendlyEncodeHTML(dataTypeManager.getName())).append("</B><HR NOSHADE>");
+		buffy.append("<B>").append(HTMLUtilities.escapeHTML(dataTypeManager.getName())).append(
+			"</B><HR NOSHADE>");
 		buffy.append(htmlContent);
 
 		// horizontal spacer below the inner table in order to force a minimum width
@@ -347,8 +347,8 @@ public class DataTypeSynchronizer {
 		buffy.append("</TD>");
 
 		buffy.append("<TD VALIGN=\"TOP\">");
-		buffy.append("<B>").append(
-			HTMLUtilities.friendlyEncodeHTML(sourceArchive.getName())).append("</B><HR NOSHADE>");
+		buffy.append("<B>").append(HTMLUtilities.escapeHTML(sourceArchive.getName())).append(
+			"</B><HR NOSHADE>");
 
 		buffy.append(otherContent);
 

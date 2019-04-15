@@ -176,7 +176,7 @@ class DiffActionManager {
 		openCloseProgram2Action.setDescription(
 			"<html><center>Close Diff View</center><br>" +
 			"Current diff: " +
-			"<b>"+HTMLUtilities.friendlyEncodeHTML(firstName)+"</b> to <b>" +HTMLUtilities.friendlyEncodeHTML(secondName)+"</b>");
+			"<b>"+HTMLUtilities.escapeHTML(firstName)+"</b> to <b>" +HTMLUtilities.escapeHTML(secondName)+"</b>");
 		//@formatter:on
 	}
 

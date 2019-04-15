@@ -720,7 +720,7 @@ public class KeyBindingsPanel extends JPanel {
 				if (description == null || description.trim().isEmpty()) {
 					description = actions.get(0).getName();
 				}
-				statusLabel.setText("<html>" + HTMLUtilities.friendlyEncodeHTML(description));
+				statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
 			}
 			catch (Exception ex) {
 				statusLabel.setText("");

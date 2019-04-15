@@ -119,10 +119,9 @@ public class ApplyBlockedMatchAction extends DockingAction {
 
 	private String getAssociationDisplayString(VTAssociation association) {
 		return association.getType().toString() + " match with source of <b>" +
-			HTMLUtilities.friendlyEncodeHTML(association.getSourceAddress().toString()) +
+			HTMLUtilities.escapeHTML(association.getSourceAddress().toString()) +
 			"</b> and destination of <b>" +
-			HTMLUtilities.friendlyEncodeHTML(association.getDestinationAddress().toString()) +
-			"</b>";
+			HTMLUtilities.escapeHTML(association.getDestinationAddress().toString()) + "</b>";
 	}
 
 	@Override

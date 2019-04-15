@@ -93,7 +93,7 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 
 		MemoryBlock block = program.getMemory().getBlock(loc);
 		long memblockOffset = loc.subtract(block.getStart());
-		appendTableRow(sb, "Memory Block Offset", HTMLUtilities.friendlyEncodeHTML(block.getName()),
+		appendTableRow(sb, "Memory Block Offset", HTMLUtilities.escapeHTML(block.getName()),
 			memblockOffset);
 
 		addFunctionInfo(program, loc, sb);
@@ -143,8 +143,8 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 		Function function = program.getFunctionManager().getFunctionContaining(loc);
 		if (function != null) {
 			long functionOffset = loc.subtract(function.getEntryPoint());
-			appendTableRow(sb, "Function Offset",
-				HTMLUtilities.friendlyEncodeHTML(function.getName()), functionOffset);
+			appendTableRow(sb, "Function Offset", HTMLUtilities.escapeHTML(function.getName()),
+				functionOffset);
 		}
 	}
 

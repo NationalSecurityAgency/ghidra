@@ -29,7 +29,7 @@ public class ProgramArchiveNode extends DomainFileArchiveNode {
 	public String getToolTip() {
 		DomainFile file = ((ProgramArchive) archive).getDomainFile();
 		if (file != null) {
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(file.getPathname());
+			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
 		}
 		return "[Unsaved New Program Archive]";
 	}

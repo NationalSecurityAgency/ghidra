@@ -99,8 +99,8 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		// source program
 
 		label.append("Source Program:");
-		summary.append(sourceProgramName == null ? "(null)"
-				: HTMLUtilities.friendlyEncodeHTML(sourceProgramName));
+		summary.append(
+			sourceProgramName == null ? "(null)" : HTMLUtilities.escapeHTML(sourceProgramName));
 		label.append("<br>");
 		summary.append("<br>");
 
@@ -108,7 +108,7 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 		label.append("Destination Program:");
 		summary.append(destinationProgramName == null ? "(null)"
-				: HTMLUtilities.friendlyEncodeHTML(destinationProgramName));
+				: HTMLUtilities.escapeHTML(destinationProgramName));
 		label.append("<br>");
 		summary.append("<br>");
 

@@ -90,7 +90,7 @@ public class ProjectDataDeleteAction extends ProjectDataContextAction {
 			if (!selectedFiles.isEmpty()) {
 				DomainFile file = CollectionUtils.any(selectedFiles);
 				return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete \"" +
-					HTMLUtilities.friendlyEncodeHTML(file.getName()) + "\"?";
+					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
 
 			// only folders are selected, but they contain files

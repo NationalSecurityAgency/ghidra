@@ -321,10 +321,9 @@ abstract class FlowArrow {
 	}
 
 	public String getDisplayString() {
-		return "<html><table><tr><td>start</td><td>" +
-			HTMLUtilities.friendlyEncodeHTML(start.toString()) + "</td><tr><td>end</td><td>" +
-			HTMLUtilities.friendlyEncodeHTML(end.toString()) + "</td><tr><td>ref type</td><td>" +
-			refType + "</td></tr></table>";
+		return "<html><table><tr><td>start</td><td>" + HTMLUtilities.escapeHTML(start.toString()) +
+			"</td><tr><td>end</td><td>" + HTMLUtilities.escapeHTML(end.toString()) +
+			"</td><tr><td>ref type</td><td>" + refType + "</td></tr></table>";
 	}
 
 	@Override

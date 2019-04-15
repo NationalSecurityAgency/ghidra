@@ -266,7 +266,7 @@ class ProgramSaveManager {
 		if (!df.isInWritableProject()) {
 			return OptionDialog.showOptionDialog(tool.getToolFrame(), "Program Changed",
 				HTMLUtilities.lineWrapWithHTMLLineBreaks(
-					"<html>Viewed file '" + HTMLUtilities.friendlyEncodeHTML(filename) +
+					"<html>Viewed file '" + HTMLUtilities.escapeHTML(filename) +
 						"' has been changed.  \n" + "If you continue, your changes will be lost!"),
 				"Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 		}
@@ -274,16 +274,15 @@ class ProgramSaveManager {
 		if (df.isReadOnly()) {
 			return OptionDialog.showOptionDialog(tool.getToolFrame(), "Program Changed",
 				HTMLUtilities.lineWrapWithHTMLLineBreaks(
-					"<html>Read-only file '" + HTMLUtilities.friendlyEncodeHTML(filename) +
+					"<html>Read-only file '" + HTMLUtilities.escapeHTML(filename) +
 						"' has been changed.  \n" + "If you continue, your changes will be lost!"),
 				"Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 
 		}
 
 		int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
-			HTMLUtilities.lineWrapWithHTMLLineBreaks(
-				"<html>" + HTMLUtilities.friendlyEncodeHTML(filename) +
-					" has changed.\nDo you want to save it?"),
+			HTMLUtilities.lineWrapWithHTMLLineBreaks("<html>" + HTMLUtilities.escapeHTML(filename) +
+				" has changed.\nDo you want to save it?"),
 			"&Save", "Do&n't Save", OptionDialog.QUESTION_MESSAGE);
 
 		if (result == OptionDialog.CANCEL_OPTION) {

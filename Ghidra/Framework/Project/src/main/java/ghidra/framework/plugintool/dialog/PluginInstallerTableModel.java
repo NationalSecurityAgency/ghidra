@@ -142,9 +142,9 @@ class PluginInstallerTableModel
 			if (pluginsThatUseTarget.isEmpty() ||
 				OptionDialog.showYesNoDialog(parentComponent, "Confirm plugin removal",
 					"<html>Other plugins depend on " +
-						HTMLUtilities.friendlyEncodeHTML(targetPluginDescription.getName()) +
-						"<p><p>" + "Removing it will also remove:" + dependenciesToUnloadHtmlList +
-						"<p><p>" + "Continue?") == OptionDialog.YES_OPTION) {
+						HTMLUtilities.escapeHTML(targetPluginDescription.getName()) + "<p><p>" +
+						"Removing it will also remove:" + dependenciesToUnloadHtmlList + "<p><p>" +
+						"Continue?") == OptionDialog.YES_OPTION) {
 				model.removePlugin(targetPluginDescription);
 			}
 

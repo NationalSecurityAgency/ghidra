@@ -77,7 +77,7 @@ public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 
 		if (OptionDialog.showOptionDialog(gtree, "Confirm Remove Invalid Archive(s)",
 			"<html><b>Are you sure you want to delete archive: " +
-				HTMLUtilities.friendlyEncodeHTML(invalidArchiveNode.getName()) +
+				HTMLUtilities.escapeHTML(invalidArchiveNode.getName()) +
 				" from the program?<br><br>" +
 				"<font color=\"red\">(WARNING: This action will disassociate " +
 				"all datatypes in the program from this archive.)</font></b>",

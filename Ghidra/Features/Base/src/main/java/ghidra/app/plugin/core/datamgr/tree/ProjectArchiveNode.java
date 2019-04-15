@@ -37,7 +37,7 @@ public class ProjectArchiveNode extends DomainFileArchiveNode {
 	public String getToolTip() {
 		DomainFile file = ((ProjectArchive) archive).getDomainFile();
 		if (file != null) {
-			return "<html>" + HTMLUtilities.friendlyEncodeHTML(file.getPathname());
+			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
 		}
 		return "[Unsaved New Project Archive]";
 	}

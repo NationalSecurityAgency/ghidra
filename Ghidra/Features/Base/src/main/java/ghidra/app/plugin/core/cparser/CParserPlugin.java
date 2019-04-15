@@ -302,7 +302,7 @@ public class CParserPlugin extends ProgramPlugin {
 				list.add(openDTmanagers[i]);
 				if (!(openDTmanagers[i] instanceof BuiltInDataTypeManager)) {
 					htmlNamesList += "<li><b>" +
-						HTMLUtilities.friendlyEncodeHTML(openDTmanagers[i].getName()) + "</b></li>";
+						HTMLUtilities.escapeHTML(openDTmanagers[i].getName()) + "</b></li>";
 				}
 			}
 			openDTmanagers = list.toArray(new DataTypeManager[0]);

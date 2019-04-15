@@ -94,7 +94,7 @@ public class DeleteArchiveAction extends DockingAction {
 		if (OptionDialog.showOptionDialogWithCancelAsDefaultButton(gTree,
 			"Confirm Delete Operation",
 			"<html><b>Are you sure you want to delete archive: " +
-				HTMLUtilities.friendlyEncodeHTML(node.getName()) + "?<br><br>" +
+				HTMLUtilities.escapeHTML(node.getName()) + "?<br><br>" +
 				"<font color=\"red\">(WARNING: This action will permanently " +
 				"delete the file from disk.)</font></b>",
 			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {

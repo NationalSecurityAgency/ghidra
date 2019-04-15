@@ -82,7 +82,7 @@ public class VTWizardUtils {
 		String filename = domainFile.getName();
 		int result = OptionDialog.showYesNoDialog(parent, "Save Version Tracking Changes?",
 			"<html>Unsaved Version Tracking changes found for session: " +
-				HTMLUtilities.friendlyEncodeHTML(filename) + ".  <br>" +
+				HTMLUtilities.escapeHTML(filename) + ".  <br>" +
 				"Would you like to save these changes?");
 
 		boolean doSave = result == OptionDialog.YES_OPTION;
@@ -100,7 +100,7 @@ public class VTWizardUtils {
 		String filename = domainFile.getName();
 		int result = OptionDialog.showYesNoCancelDialog(parent, "Save Version Tracking Changes?",
 			"<html>Unsaved Version Tracking changes found for session: " +
-				HTMLUtilities.friendlyEncodeHTML(filename) + ".  <br>" +
+				HTMLUtilities.escapeHTML(filename) + ".  <br>" +
 				"Would you like to save these changes?");
 
 		if (result == OptionDialog.CANCEL_OPTION) {

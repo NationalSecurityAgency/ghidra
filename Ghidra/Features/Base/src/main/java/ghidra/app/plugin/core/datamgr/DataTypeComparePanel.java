@@ -65,8 +65,8 @@ class DataTypeComparePanel extends JPanel {
 		leftPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 		rightPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 
-		setLabelText(leftPanelLabel, HTMLUtilities.friendlyEncodeHTML(clientName) + ":");
-		setLabelText(rightPanelLabel, HTMLUtilities.friendlyEncodeHTML(sourceName) + ":");
+		setLabelText(leftPanelLabel, HTMLUtilities.escapeHTML(clientName) + ":");
+		setLabelText(rightPanelLabel, HTMLUtilities.escapeHTML(sourceName) + ":");
 
 		add(leftPanel);
 		add(rightPanel);
