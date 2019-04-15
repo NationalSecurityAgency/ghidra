@@ -25,8 +25,9 @@ import javax.swing.event.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.address.Address;
@@ -161,7 +162,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new PairLayout(10, 4));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-		panel.add(DockingUtils.createNonHtmlLabel("Datatype: "));
+		panel.add(new GLabel("Datatype: "));
 
 		dataTypeEditor = new ParameterDataTypeCellEditor(this, service);
 
@@ -211,11 +212,11 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		});
 
 		panel.add(dataTypeEditComponent);
-		panel.add(DockingUtils.createNonHtmlLabel("Datatype Size: "));
-		sizeLabel = DockingUtils.createNonHtmlLabel("" + size);
+		panel.add(new GLabel("Datatype Size: "));
+		sizeLabel = new GDLabel("" + size);
 		panel.add(sizeLabel);
-		panel.add(DockingUtils.createNonHtmlLabel("Allocated Size:"));
-		currentSizeLabel = DockingUtils.createNonHtmlLabel("");
+		panel.add(new GLabel("Allocated Size:"));
+		currentSizeLabel = new GDLabel("");
 		panel.add(currentSizeLabel);
 
 		setFocusComponent(textField);

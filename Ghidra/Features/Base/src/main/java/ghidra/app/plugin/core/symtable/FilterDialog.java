@@ -24,7 +24,10 @@ import javax.swing.*;
 
 import org.jdom.Element;
 
-import docking.*;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -160,16 +163,15 @@ public class FilterDialog extends DialogComponentProvider {
 		JPanel infoPanel = new JPanel(new HorizontalLayout(20));
 		Icon icon = ResourceManager.loadImage("images/information.png");
 
-		JLabel infoLabel = DockingUtils.createHtmlLabel(
+		infoPanel.add(new GIconLabel(icon));
+		infoPanel.add(new GHtmlLabel(
 			HTMLUtilities.toHTML("Advanced filters do not apply to all symbol types.\n" +
 				"All symbols without applicable advanced filters will\n" +
 				"be included. If more than one advanced filter is\n" +
 				"applicable to a symbol type, then those symbols will\n" +
 				"be included if any of the applicable filters match. \n" +
 				"Filters that are not applicable to any of the selected\n" +
-				"symbol types are disabled."));
-		infoPanel.add(DockingUtils.createNonHtmlLabel(icon));
-		infoPanel.add(infoLabel);
+				"symbol types are disabled.")));
 
 		JPanel filtersPanel = new JPanel(new GridLayout(0, 2));
 //		Border outer = BorderFactory.createEmptyBorder(0,40,0,0);

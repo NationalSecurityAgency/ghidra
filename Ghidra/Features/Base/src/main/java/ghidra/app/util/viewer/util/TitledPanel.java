@@ -21,7 +21,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 
 /**
  * Adds a border to a component that displays a title and provides a area for adding
@@ -45,9 +45,9 @@ public class TitledPanel extends JPanel {
 		titlePanel = new JPanel(new BorderLayout());
 		iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 1));
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-		title = DockingUtils.createNonHtmlLabel(name);
+		title = new GDLabel(name);
 		title.setToolTipText(name);
-		JLabel filler = DockingUtils.createNonHtmlLabel();
+		JLabel filler = new GDLabel();
 		filler.setPreferredSize(new Dimension(margin, filler.getPreferredSize().height));
 		titlePanel.add(filler, BorderLayout.WEST);
 

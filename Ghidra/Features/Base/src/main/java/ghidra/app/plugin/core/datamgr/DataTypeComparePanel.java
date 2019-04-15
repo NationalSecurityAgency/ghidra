@@ -21,7 +21,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.HTMLDataTypeRepresentation;
 import ghidra.program.model.data.DataType;
@@ -60,8 +60,8 @@ class DataTypeComparePanel extends JPanel {
 		leftPanel = new JPanel(new BorderLayout());
 		rightPanel = new JPanel(new BorderLayout());
 
-		leftPanelLabel = DockingUtils.createHtmlLabel();
-		rightPanelLabel = DockingUtils.createHtmlLabel();
+		leftPanelLabel = new GDHtmlLabel();
+		rightPanelLabel = new GDHtmlLabel();
 		leftPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 		rightPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 
@@ -70,12 +70,12 @@ class DataTypeComparePanel extends JPanel {
 
 		add(leftPanel);
 		add(rightPanel);
-		dtLabel1 = DockingUtils.createHtmlLabel();
+		dtLabel1 = new GDHtmlLabel();
 		dtLabel1.setOpaque(true);
 		dtLabel1.setBackground(Color.WHITE);
 		dtLabel1.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
 		dtLabel1.setVerticalAlignment(SwingConstants.TOP);
-		dtLabel2 = DockingUtils.createHtmlLabel();
+		dtLabel2 = new GDHtmlLabel();
 		dtLabel2.setOpaque(true);
 		dtLabel2.setBackground(Color.WHITE);
 		dtLabel2.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));

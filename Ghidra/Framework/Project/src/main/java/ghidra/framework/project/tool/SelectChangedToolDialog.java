@@ -24,8 +24,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GHtmlLabel;
 import ghidra.framework.model.Tool;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.VerticalLayout;
@@ -57,8 +57,8 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		String toolName = toolList.get(0).getToolName();
-		JLabel descriptionLabel = DockingUtils.createHtmlLabel(
-			HTMLUtilities.toHTML("There are multiple changed instances of " +
+		JLabel descriptionLabel =
+			new GHtmlLabel(HTMLUtilities.toHTML("There are multiple changed instances of " +
 				HTMLUtilities.friendlyEncodeHTML(toolName) +
 				" running.<p>Which one would like to save to your tool chest?"));
 		descriptionLabel.setIconTextGap(15);

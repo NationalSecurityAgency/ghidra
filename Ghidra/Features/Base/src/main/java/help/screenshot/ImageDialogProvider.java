@@ -27,9 +27,12 @@ import java.util.Collection;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.*;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
@@ -159,7 +162,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel() {
-		shapeCombo = new JComboBox<>();
+		shapeCombo = new GComboBox<>();
 		shapeCombo.addItem("Rectangle");
 		shapeCombo.addItem("Oval");
 		shapeCombo.addItem("Arrow");
@@ -169,18 +172,18 @@ public class ImageDialogProvider extends DialogComponentProvider {
 
 		JPanel imagePanel = new JPanel(new BorderLayout());
 
-		newImageLabel = DockingUtils.createNonHtmlLabel(new ImageIcon(newImage));
+		newImageLabel = new GIconLabel(new ImageIcon(newImage));
 		newImageLabel.setOpaque(true);
 		newImageLabel.setBackground(Color.BLACK);
 		JPanel newLabelPanel = new JPanel(new BorderLayout());
 
 		if (oldImage != null) {
-			oldImageLabel = DockingUtils.createNonHtmlLabel(new ImageIcon(oldImage));
+			oldImageLabel = new GIconLabel(new ImageIcon(oldImage));
 			oldImageLabel.setOpaque(true);
 			oldImageLabel.setBackground(Color.BLACK);
 		}
 		else {
-			oldImageLabel = DockingUtils.createNonHtmlLabel("     Old image not found     ");
+			oldImageLabel = new GLabel("     Old image not found     ");
 		}
 
 		newLabelPanel.add(createImageLabelComponent("New Image"), BorderLayout.NORTH);
@@ -212,8 +215,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 	}
 
 	private JLabel createNameLabel(String name) {
-		JLabel label =
-			DockingUtils.createHtmlLabel("<html><b><font color='yellow' size='8'>" + name);
+		JLabel label = new GDHtmlLabel("<html><b><font color='yellow' size='8'>" + name);
 		label.setOpaque(true);
 		//	label.setForeground(Color.YELLOW);
 		label.setBackground(Color.BLACK);

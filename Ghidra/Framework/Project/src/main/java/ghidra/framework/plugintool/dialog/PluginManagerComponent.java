@@ -25,9 +25,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent.EventType;
 
-import docking.DockingUtils;
 import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.label.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginPackage;
@@ -96,8 +96,8 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			jCheckBox.setBackground(BG);
 			panel.add(jCheckBox);
 			panel.add(Box.createHorizontalStrut(10));
-			JLabel label = DockingUtils.createNonHtmlLabel(
-				ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
+			JLabel label =
+				new GIconLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
 			label.setBackground(BG);
 			panel.add(label);
 			panel.add(Box.createHorizontalStrut(10));
@@ -106,7 +106,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			JPanel labelPanel = new JPanel(new VerticalLayout(3));
 			labelPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
 			labelPanel.setBackground(BG);
-			label = DockingUtils.createNonHtmlLabel(pluginPackage.getName());
+			label = new GLabel(pluginPackage.getName());
 			//label.setVerticalAlignment(SwingConstants.TOP);
 			label.setFont(label.getFont().deriveFont(18f));
 			label.setForeground(Color.BLACK);
@@ -124,7 +124,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 
 			add(labelPanel);
 			String htmlDescription = getHTMLDescription();
-			JLabel descriptionlabel = DockingUtils.createHtmlLabel(htmlDescription);
+			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
 			descriptionlabel.setForeground(Color.GRAY);
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);

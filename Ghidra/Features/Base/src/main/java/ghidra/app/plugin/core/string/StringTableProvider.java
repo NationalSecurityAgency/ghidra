@@ -25,6 +25,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.textfield.IntegerTextField;
@@ -377,12 +378,10 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 	}
 
 	private Component buildOffsetPanel() {
-		JLabel offsetLabel = DockingUtils.createNonHtmlLabel("Offset: ");
 		offsetField = new IntegerTextField(4, 0L);
 		offsetField.setAllowNegativeValues(false);
 		offsetField.addChangeListener(e -> updatePreview());
 
-		JLabel previewLabel = DockingUtils.createNonHtmlLabel("Preview: ");
 		preview = new JTextField(5);
 		preview.setEditable(false);
 		preview.setEnabled(false);
@@ -402,7 +401,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		panel.add(Box.createHorizontalStrut(60), gbc);
 
 		gbc.gridx = 2;
-		panel.add(offsetLabel, gbc);
+		panel.add(new GLabel("Offset: "), gbc);
 
 		gbc.gridx = 3;
 		panel.add(offsetField.getComponent(), gbc);
@@ -411,7 +410,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		panel.add(Box.createHorizontalStrut(20), gbc);
 
 		gbc.gridx = 5;
-		panel.add(previewLabel, gbc);
+		panel.add(new GLabel("Preview: "), gbc);
 
 		gbc.weightx = 1;
 		gbc.gridx = 6;

@@ -22,8 +22,8 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
+import docking.widgets.label.GDLabel;
 import ghidra.framework.options.EditorState;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.PairLayout;
@@ -37,7 +37,7 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 		setLayout(new PairLayout(0, 6, 40));
 		this.component = editorState.getEditorComponent();
 
-		label = DockingUtils.createNonHtmlLabel(editorState.getTitle(), SwingConstants.RIGHT);
+		label = new GDLabel(editorState.getTitle(), SwingConstants.RIGHT);
 
 		if (component instanceof AbstractButton) {
 			label.addMouseListener(new MouseAdapter() {

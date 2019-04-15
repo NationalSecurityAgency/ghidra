@@ -21,7 +21,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -145,17 +145,15 @@ public class VersionControlDialog extends DialogComponentProvider {
 		ImageIcon icon = resources.ResourceManager.loadImage(
 			addToVersionControl ? "images/vcAdd.png" : "images/vcCheckIn.png");
 
-		descriptionLabel = DockingUtils.createNonHtmlLabel(
-			addToVersionControl ? "Add comments to describe the file."
-					: "Add comments to describe changes",
+		descriptionLabel = new GDLabel(addToVersionControl ? "Add comments to describe the file."
+				: "Add comments to describe changes",
 			SwingConstants.LEFT);
 		JPanel dPanel = new JPanel(new BorderLayout(10, 0));
-		dPanel.add(DockingUtils.createNonHtmlLabel(icon), BorderLayout.WEST);
+		dPanel.add(new GIconLabel(icon), BorderLayout.WEST);
 		dPanel.add(descriptionLabel, BorderLayout.CENTER);
 
-		JLabel commentsLabel = DockingUtils.createNonHtmlLabel("Comments:", SwingConstants.LEFT);
 		JPanel cPanel = new JPanel(new BorderLayout());
-		cPanel.add(commentsLabel);
+		cPanel.add(new GLabel("Comments:", SwingConstants.LEFT));
 
 		commentsTextArea = new JTextArea(4, 20);
 		JScrollPane sp = new JScrollPane(commentsTextArea);

@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.util.HelpLocation;
@@ -151,7 +152,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		buttonGroup.add(existingRepButton);
 
 		JPanel innerPanel = new JPanel(new BorderLayout());
-		JLabel label = DockingUtils.createNonHtmlLabel("Repository Names", SwingConstants.LEFT);
+		JLabel label = new GDLabel("Repository Names", SwingConstants.LEFT);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 5));
 		innerPanel.add(label, BorderLayout.NORTH);
 
@@ -179,7 +180,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		createRepButton = new JRadioButton("Create Repository", !existingRepButton.isSelected());
 		buttonGroup.add(createRepButton);
 
-		nameLabel = DockingUtils.createNonHtmlLabel("Repository Name:", SwingConstants.RIGHT);
+		nameLabel = new GDLabel("Repository Name:", SwingConstants.RIGHT);
 		nameLabel.setEnabled(createRepButton.isSelected());
 
 		nameField = new JTextField(20);

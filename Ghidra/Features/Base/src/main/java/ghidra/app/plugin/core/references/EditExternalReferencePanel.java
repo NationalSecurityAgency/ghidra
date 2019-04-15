@@ -25,9 +25,9 @@ import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
@@ -70,9 +70,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		topPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Program"), new EmptyBorder(0, 5, 5, 5)));
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Name:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		extLibName = new GhidraComboBox<>();
 		extLibName.setEditable(true);
 		extLibName.addDocumentListener(new DocumentListener() {
@@ -130,24 +128,18 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		buttonPanel.add(editButton);
 		pathPanel.add(buttonPanel, BorderLayout.EAST);
 
-		label = DockingUtils.createNonHtmlLabel("Path:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Path:", SwingConstants.RIGHT));
 		topPanel.add(pathPanel);
 
 		JPanel bottomPanel = new JPanel(new PairLayout(10, 10, 160));
 		bottomPanel.setBorder(new CompoundBorder(new TitledBorder("External Reference Data"),
 			new EmptyBorder(0, 5, 5, 5)));
 
-		label = DockingUtils.createNonHtmlLabel("Label:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Label:", SwingConstants.RIGHT));
 		extLabel = new JTextField();
 		bottomPanel.add(extLabel);
 
-		label = DockingUtils.createNonHtmlLabel("Address:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Address:", SwingConstants.RIGHT));
 		extAddr = new AddressInput();
 		bottomPanel.add(extAddr);
 

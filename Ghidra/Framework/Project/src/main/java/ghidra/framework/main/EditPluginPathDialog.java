@@ -32,10 +32,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -123,7 +123,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 		// construct the bottom error message panel
 		JPanel statusMessagePanel = new JPanel();
-		statusMessage = DockingUtils.createNonHtmlLabel("Ready to set User Plugin Paths");
+		statusMessage = new GDLabel("Ready to set User Plugin Paths");
 		statusMessage.setName("statusLabel");
 
 		statusMessage.setForeground(STATUS_MESSAGE_COLOR);

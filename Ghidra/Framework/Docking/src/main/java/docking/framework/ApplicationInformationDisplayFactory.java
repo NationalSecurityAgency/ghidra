@@ -21,7 +21,8 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.Application;
 import ghidra.framework.PluggableServiceRegistry;
 import ghidra.util.HelpLocation;
@@ -118,8 +119,7 @@ public class ApplicationInformationDisplayFactory {
 
 		panel.setBackground(background);
 
-		JLabel nameLabel = DockingUtils.createNonHtmlLabel();
-		nameLabel.setText(Application.getName());
+		JLabel nameLabel = new GLabel(Application.getName());
 		nameLabel.setForeground(new Color(155, 155, 155));
 		Font newFont = new Font("Garamond", Font.BOLD, 35);
 		nameLabel.setFont(newFont);
@@ -129,7 +129,7 @@ public class ApplicationInformationDisplayFactory {
 
 		final JPanel imagePanel = new JPanel(new BorderLayout());
 		imagePanel.setBackground(background);
-		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
+		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setVerticalAlignment(SwingConstants.CENTER);
 		imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		imagePanel.add(imageLabel);

@@ -25,9 +25,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
 import docking.wizard.AbstractWizardJPanel;
 import docking.wizard.WizardManager;
 import ghidra.app.util.GenericHelpTopics;
@@ -135,8 +135,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		GridBagLayout gbl = new GridBagLayout();
 		outerPanel.setLayout(gbl);
 
-		JLabel dirLabel =
-			DockingUtils.createNonHtmlLabel("Project Directory:", SwingConstants.RIGHT);
+		JLabel dirLabel = new GDLabel("Project Directory:", SwingConstants.RIGHT);
 		directoryField = new JTextField(25);
 		directoryField.setName("Project Directory");
 
@@ -149,8 +148,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			directoryField.setText(projectDirectory.getAbsolutePath());
 		}
 		directoryField.setCaretPosition(directoryField.getText().length() - 1);
-		JLabel projectNameLabel =
-			DockingUtils.createNonHtmlLabel("Project Name:", SwingConstants.RIGHT);
+		JLabel projectNameLabel = new GDLabel("Project Name:", SwingConstants.RIGHT);
 		projectNameField = new JTextField(25);
 		projectNameField.setName("Project Name");
 		projectNameField.addActionListener(new ActionListener() {

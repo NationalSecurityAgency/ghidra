@@ -21,7 +21,10 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
 import generic.util.WindowUtilities;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.NumericUtilities;
@@ -73,7 +76,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		label = DockingUtils.createNonHtmlLabel(message);
+		label = new GDLabel(message);
 		panel.add(label, BorderLayout.WEST);
 
 		if (choices == null) {
@@ -85,7 +88,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 			panel.add(textField, BorderLayout.CENTER);
 		}
 		else {
-			comboField = new JComboBox<>(choices.toArray(new Object[choices.size()]));
+			comboField = new GComboBox<>(choices.toArray(new Object[choices.size()]));
 			comboField.setEditable(false);
 			comboField.setName("JComboBox");
 			if (defaultValue != null) {

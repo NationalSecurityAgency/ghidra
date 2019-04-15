@@ -23,8 +23,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 
 public class FindDialog extends DialogComponentProvider {
 
@@ -98,7 +98,7 @@ public class FindDialog extends DialogComponentProvider {
 			}
 		});
 
-		JLabel findLabel = DockingUtils.createNonHtmlLabel("Find: ");
+		JLabel findLabel = new GLabel("Find: ");
 
 		// associate this label with a mnemonic key that activates the text field
 		findLabel.setDisplayedMnemonic(KeyEvent.VK_N);

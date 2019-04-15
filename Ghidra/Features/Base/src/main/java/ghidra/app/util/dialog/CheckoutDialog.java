@@ -21,9 +21,11 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.remote.User;
@@ -106,8 +108,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
 		msgPanel.add(
-			DockingUtils.createNonHtmlLabel(
-				OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE)),
+			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE)),
 			BorderLayout.WEST);
 
 		MultiLineLabel msgText = new MultiLineLabel("File " + df.getName() +

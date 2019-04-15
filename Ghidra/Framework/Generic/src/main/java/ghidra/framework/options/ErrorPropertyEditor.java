@@ -32,6 +32,7 @@ public class ErrorPropertyEditor extends PropertyEditorSupport {
 			message += " - value: " + value.toString();
 		}
 
+		// Use native java JLabel because we can't use docking widgets here
 		errorLabel = new JLabel(message);
 		errorLabel.setForeground(Color.RED);
 		errorLabel.putClientProperty("html.disable", true);

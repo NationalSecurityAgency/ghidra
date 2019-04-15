@@ -20,7 +20,7 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GHtmlLabel;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
 
@@ -52,7 +52,7 @@ public class DataOrganizationDialog extends DialogComponentProvider {
 		this.dataOrganization = dataOrganization;
 
 		JPanel headerPanel = new JPanel();
-		headerPanel.add(DockingUtils.createHtmlLabel("<HTML>Alignment Information for <b>" +
+		headerPanel.add(new GHtmlLabel("<HTML>Alignment Information for <b>" +
 			HTMLUtilities.friendlyEncodeHTML(dataTypeManager.getName()) + "</b>.</HTML>"));
 
 		alignPanel = new DataOrganizationPanel();

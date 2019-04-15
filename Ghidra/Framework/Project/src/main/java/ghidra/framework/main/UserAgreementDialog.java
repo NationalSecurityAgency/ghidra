@@ -21,7 +21,9 @@ import java.io.InputStream;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.label.GDLabel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
@@ -53,8 +55,7 @@ public class UserAgreementDialog extends DialogComponentProvider {
 	private JComponent buildWorkPanel() {
 		Font font = new Font("Default", Font.PLAIN, 16);
 		JPanel panel = new JPanel(new BorderLayout());
-		JLabel label =
-			DockingUtils.createNonHtmlLabel("Ghidra User Agreement", SwingConstants.CENTER);
+		JLabel label = new GDLabel("Ghidra User Agreement", SwingConstants.CENTER);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		label.setFont(font.deriveFont(Font.ITALIC, 22f));
 		panel.add(label, BorderLayout.NORTH);

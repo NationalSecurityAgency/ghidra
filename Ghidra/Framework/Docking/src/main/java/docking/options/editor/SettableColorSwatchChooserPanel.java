@@ -24,7 +24,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
-import docking.DockingUtils;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GLabel;
 import ghidra.util.layout.VerticalLayout;
 
 public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
@@ -129,7 +130,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		recentSwatchPanel.addMouseListener(recentSwatchListener);
 		recentSwatchPanel.setBorder(border);
 		JPanel recentLabelHolder = new JPanel(new BorderLayout());
-		JLabel l = DockingUtils.createHtmlLabel(recentStr);
+		JLabel l = new GHtmlLabel(recentStr);
 		l.setLabelFor(recentSwatchPanel);
 		recentLabelHolder.add(l, BorderLayout.NORTH);
 		gbc.weighty = 0.0;
@@ -144,7 +145,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		historySwatchPanel.addMouseListener(historySwatchListener);
 		historySwatchPanel.setBorder(border);
 		JPanel historyLabelHolder = new JPanel(new BorderLayout());
-		JLabel historyLabel = DockingUtils.createNonHtmlLabel("History:");
+		JLabel historyLabel = new GLabel("History:");
 		historyLabel.setLabelFor(historySwatchPanel);
 		historyLabelHolder.add(historyLabel, BorderLayout.NORTH);
 		gbc.weighty = 0.0;

@@ -23,8 +23,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.main.DataTreeDialog;
@@ -62,7 +62,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		this.tool = tool;
 		setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-		JLabel folderLabel = DockingUtils.createNonHtmlLabel("Project folder ");
+		JLabel folderLabel = new GDLabel("Project folder ");
 		folderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		folderLabel.setToolTipText("The folder to store the new Version Tracking Session");
 		folderNameField = new JTextField();
@@ -80,7 +80,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		Font font = browseFolderButton.getFont();
 		browseFolderButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
-		JLabel newSessionLabel = DockingUtils.createNonHtmlLabel("New Session Name: ");
+		JLabel newSessionLabel = new GDLabel("New Session Name: ");
 		newSessionLabel.setToolTipText("The name for the new Version Tracking Session");
 		newSessionLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -102,12 +102,12 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			}
 		});
 
-		JLabel sourceLabel = DockingUtils.createNonHtmlLabel("Source Program: ");
+		JLabel sourceLabel = new GDLabel("Source Program: ");
 		sourceLabel.setIcon(INFO_ICON);
 		sourceLabel.setToolTipText("Analyzed program with markup to transfer");
 		sourceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		JLabel destinationLabel = DockingUtils.createNonHtmlLabel("Destination Program: ");
+		JLabel destinationLabel = new GDLabel("Destination Program: ");
 		destinationLabel.setIcon(INFO_ICON);
 		destinationLabel.setToolTipText("New program that receives the transferred markup");
 		destinationLabel.setHorizontalAlignment(SwingConstants.RIGHT);

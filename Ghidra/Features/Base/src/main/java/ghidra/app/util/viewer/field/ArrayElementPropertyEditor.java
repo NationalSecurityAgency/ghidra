@@ -26,8 +26,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
+import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.HTMLUtilities;
@@ -103,7 +103,7 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport
 		JPanel textFieldPanel = new JPanel();
 		textFieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
-		elementsLabel = DockingUtils.createNonHtmlLabel(labelText);
+		elementsLabel = new GDLabel(labelText);
 		textFieldPanel.add(elementsLabel);
 		textFieldPanel.add(textField.getComponent());
 		textField.addChangeListener(new ChangeListener() {

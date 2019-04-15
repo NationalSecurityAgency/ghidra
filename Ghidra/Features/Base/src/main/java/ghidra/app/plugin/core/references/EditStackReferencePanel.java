@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.references;
 
-import javax.swing.*;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
@@ -60,14 +61,9 @@ class EditStackReferencePanel extends EditReferencePanel {
 
 		refTypes = new GhidraComboBox<>(STACK_REF_TYPES);
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Stack Offset:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Stack Offset:", SwingConstants.RIGHT));
 		add(stackOffset);
-
-		label = DockingUtils.createNonHtmlLabel("Ref-Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
 	}
 

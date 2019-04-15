@@ -28,8 +28,9 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.filter.FilterListener;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.context.ListingActionContext;
 /**
@@ -223,14 +224,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 */
 	protected JPanel buildMainPanel() {
 
-		titleLabel = DockingUtils.createNonHtmlLabel("Possible Matches");
+		titleLabel = new GDLabel("Possible Matches");
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
 		//long value = scalar.getSignedValue();
-		String labelText = "Scalar Value:  " + scalar.toString(16, false, true, "0x", "") + " (" +
-			scalar.toString(10, false, true, "", "") + ")";
-		JLabel label = DockingUtils.createNonHtmlLabel(labelText);
-		label.setName("EquateField");
 		applyToCurrent = new JRadioButton("Current location", true);
 		applyToCurrent.setName("applyToCurrent");
 		applyToCurrent.setToolTipText("Apply to current scalar operand only");
@@ -293,7 +290,6 @@ public class SetEquateDialog extends DialogComponentProvider {
 		});
 		tablePanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 5, 5));
 
-		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		filterPanel =
 			new GhidraTableFilterPanel<>(suggestedEquatesTable, model, " Equate String: ");
 		model.addTableModelListener(evt -> updateFilter());
@@ -308,6 +304,11 @@ public class SetEquateDialog extends DialogComponentProvider {
 		filterPanel.addEnterListener(enterListener);
 
 		JPanel northPanel = new JPanel(new VerticalLayout(2));
+		String labelText = "Scalar Value:  " + scalar.toString(16, false, true, "0x", "") + " (" +
+			scalar.toString(10, false, true, "", "") + ")";
+		JLabel label = new GLabel(labelText);
+		label.setName("EquateField");
+		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		northPanel.add(label);
 		northPanel.add(titleLabel);
 		northPanel.add(filterPanel);
@@ -316,7 +317,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		JPanel scopePanel = new JPanel(new HorizontalLayout(2));
 		scopePanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
 
-		scopePanel.add(DockingUtils.createNonHtmlLabel("Apply To: "));
+		scopePanel.add(new GLabel("Apply To: "));
 		scopePanel.add(applyToCurrent);
 		scopePanel.add(applyToSelection);
 		scopePanel.add(applyToAll);
@@ -324,7 +325,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		JPanel optionsPanel = new JPanel(new HorizontalLayout(2));
 		optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
-		optionsPanel.add(DockingUtils.createNonHtmlLabel("Options: "));
+		optionsPanel.add(new GLabel("Options: "));
 		optionsPanel.add(overwriteExistingEquates);
 
 		JPanel southPanel = new JPanel(new VerticalLayout(0));

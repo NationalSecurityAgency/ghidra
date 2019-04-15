@@ -22,7 +22,7 @@ import java.util.Arrays;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
@@ -44,23 +44,23 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		wp.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
 
 		if (serverName != null) {
-			wp.add(DockingUtils.createNonHtmlLabel(serverType + ":"));
-			wp.add(DockingUtils.createNonHtmlLabel(serverName));
+			wp.add(new GLabel(serverType + ":"));
+			wp.add(new GLabel(serverName));
 		}
 
 		if (userID != null) {
-			wp.add(DockingUtils.createNonHtmlLabel("User ID:"));
-			JLabel nameLabel = DockingUtils.createNonHtmlLabel(userID);
+			wp.add(new GLabel("User ID:"));
+			JLabel nameLabel = new GLabel(userID);
 			nameLabel.setName("NAME-COMPONENT");
 			wp.add(nameLabel);
 		}
 
-		wp.add(DockingUtils.createNonHtmlLabel("New Password:"));
+		wp.add(new GLabel("New Password:"));
 		passwordField1 = new JPasswordField(16);
 		passwordField1.setName("PASSWORD-ENTRY1-COMPONENT");
 		wp.add(passwordField1);
 
-		wp.add(DockingUtils.createNonHtmlLabel("Repeat Password:"));
+		wp.add(new GLabel("Repeat Password:"));
 		passwordField2 = new JPasswordField(16);
 		passwordField2.setName("PASSWORD-ENTRY2-COMPONENT");
 		passwordField2.addActionListener(new ActionListener() {
@@ -71,7 +71,7 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		});
 		wp.add(passwordField2);
 
-		wp.add(DockingUtils.createNonHtmlLabel());
+		wp.add(new GLabel());
 
 		KeyListener keyListener = new KeyListener() {
 

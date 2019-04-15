@@ -17,8 +17,12 @@ package docking.widgets;
 
 import java.awt.*;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
+
+import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.
@@ -27,7 +31,7 @@ import javax.swing.border.Border;
  * background colors, and highlights the drop target in a drag-n-drop operation.
  *
  */
-public abstract class AbstractGCellRenderer extends JLabel {
+public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 
 	private static final Color ALTERNATE_BACKGROUND_COLOR = new Color(237, 243, 254);
 
@@ -45,9 +49,6 @@ public abstract class AbstractGCellRenderer extends JLabel {
 
 		return !Boolean.parseBoolean(disable);
 	}
-
-	// taken from BasicHTML.htmlDisable, which is private
-	public static final String HTML_DISABLE_STRING = "html.disable";
 
 	protected final Border focusBorder;
 	protected final Border noFocusBorder;
@@ -81,7 +82,7 @@ public abstract class AbstractGCellRenderer extends JLabel {
 	 * @param enable true to enable HTML rendering; false to disable it
 	 */
 	public void setHTMLRenderingEnabled(boolean enable) {
-		putClientProperty(HTML_DISABLE_STRING, !enable);
+		putClientProperty(DockingUtils.HTML_DISABLE_STRING, !enable);
 	}
 
 	public void setShouldAlternateRowBackgroundColors(boolean alternate) {

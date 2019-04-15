@@ -22,8 +22,9 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
@@ -128,7 +129,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		String signature = function.getPrototypeString(false, false);
 		signatureField = new JTextField(signature.length()); // add some extra room to edit
 		signatureField.setText(signature);
-		signatureLabel = DockingUtils.createNonHtmlLabel("Signature:");
+		signatureLabel = new GDLabel("Signature:");
 		signaturePanel.add(signatureLabel);
 		signaturePanel.add(signatureField);
 
@@ -165,7 +166,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			function.getProgram().getFunctionManager().getCallingConventionNames();
 		String[] choices = callingConventions.toArray(new String[callingConventions.size()]);
 		setCallingConventionChoices(choices);
-		parentPanel.add(DockingUtils.createNonHtmlLabel("Calling Convention:"));
+		parentPanel.add(new GLabel("Calling Convention:"));
 		parentPanel.add(callingConventionComboBox);
 	}
 
@@ -215,7 +216,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			callFixupComboBox.setSelectedItem(callFixupName);
 		}
 
-		callFixupPanel.add(DockingUtils.createNonHtmlLabel("Call-Fixup:"));
+		callFixupPanel.add(new GLabel("Call-Fixup:"));
 		callFixupPanel.add(callFixupComboBox);
 
 		callFixupPanel.add(Box.createGlue());

@@ -21,8 +21,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.tree.TreePath;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
@@ -59,18 +59,18 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout());
 
 		// category info
-		panel.add(DockingUtils.createNonHtmlLabel("Category:"));
-		panel.add(DockingUtils.createNonHtmlLabel(category.getCategoryPath().getPath()));
+		panel.add(new GLabel("Category:"));
+		panel.add(new GLabel(category.getCategoryPath().getPath()));
 
 		// name info
 		nameTextField = new JTextField(15);
-		panel.add(DockingUtils.createNonHtmlLabel("Name:"));
+		panel.add(new GLabel("Name:"));
 		panel.add(nameTextField);
 
 		// data type info
 		dataTypeEditor =
 			new DataTypeSelectionEditor(plugin.getTool(), Integer.MAX_VALUE, AllowedDataTypes.ALL);
-		panel.add(DockingUtils.createNonHtmlLabel("Data type:"));
+		panel.add(new GLabel("Data type:"));
 		panel.add(dataTypeEditor.getEditorComponent());
 
 		dataTypeEditor.addCellEditorListener(new CellEditorListener() {
@@ -90,7 +90,6 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		dataTypeManagerBox = new GhidraComboBox<>();
 		dataTypeManagerBox.setRenderer(
 			GListCellRenderer.createDefaultCellTextRenderer(dtm -> dtm.getName()));
-		DockingUtils.turnOffHTMLRendering(dataTypeManagerBox);
 
 		DataTypeManager[] dataTypeManagers = plugin.getDataTypeManagers();
 		for (DataTypeManager manager : dataTypeManagers) {
@@ -115,7 +114,7 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 
 		dataTypeManagerBox.setSelectedItem(itemToSelect);
 
-		panel.add(DockingUtils.createNonHtmlLabel("Archive:"));
+		panel.add(new GLabel("Archive:"));
 		panel.add(dataTypeManagerBox);
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));

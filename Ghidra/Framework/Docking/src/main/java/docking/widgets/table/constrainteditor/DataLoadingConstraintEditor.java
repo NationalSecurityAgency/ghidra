@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
 import docking.DisabledComponentLayerFactory;
-import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.ColumnData;
 import ghidra.util.HTMLUtilities;
@@ -91,7 +91,7 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 	@Override
 	protected Component buildInlineEditorComponent() {
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		statusLabel = DockingUtils.createHtmlLabel();
+		statusLabel = new GDHtmlLabel();
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		taskMonitorComponent = new TaskMonitorComponent();

@@ -22,8 +22,8 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.widgets.MultiLineLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
@@ -174,7 +174,7 @@ class SourceArchiveMergePanel extends JPanel {
 	private JPanel createInfoPanel() {
 
 		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
+		JLabel imageLabel = new GIconLabel(icon);
 
 		MultiLineLabel label = new MultiLineLabel(
 			"A source archive change in your checked out version conflicts with a " +

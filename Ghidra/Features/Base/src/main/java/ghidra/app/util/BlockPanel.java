@@ -21,7 +21,7 @@ import java.awt.event.ComponentListener;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.viewer.util.AddressPixelMap;
 import ghidra.program.model.mem.MemoryBlock;
 
@@ -94,7 +94,7 @@ public class BlockPanel extends JPanel implements ComponentListener {
 		}
 
 		for (MemoryBlock block : blocks) {
-			JLabel label = DockingUtils.createNonHtmlLabel(block.getName());
+			JLabel label = new GDLabel(block.getName());
 			label.setFont(FONT);
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			label.setToolTipText(block.getName());

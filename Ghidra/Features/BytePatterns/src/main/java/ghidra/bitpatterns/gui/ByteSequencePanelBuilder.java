@@ -22,7 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GFilterTable;
 import ghidra.bitpatterns.info.*;
 import ghidra.util.layout.PairLayout;
@@ -113,7 +113,7 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 		JPanel numSeqsPanel = new JPanel();
 		PairLayout numSeqsLayout = new PairLayout();
 		numSeqsPanel.setLayout(numSeqsLayout);
-		numSeqsPanel.add(DockingUtils.createNonHtmlLabel(NUM_SEQS_LABEL_TEXT));
+		numSeqsPanel.add(new GLabel(NUM_SEQS_LABEL_TEXT));
 		numSeqsField = new JTextField(25);
 		numSeqsField.setEditable(false);
 		numSeqsPanel.add(numSeqsField);

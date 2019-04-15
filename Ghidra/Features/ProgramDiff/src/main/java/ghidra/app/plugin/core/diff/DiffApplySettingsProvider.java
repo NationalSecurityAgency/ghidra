@@ -24,9 +24,10 @@ import java.util.Collections;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.WindowPosition;
 import docking.widgets.VariableHeightPanel;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.diff.DiffApplySettingsOptionManager.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -405,14 +406,14 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 		protected void init() {
 			applyCB =
-				new JComboBox<>(allowMerge ? DiffApplySettingsOptionManager.MERGE_CHOICE.values()
+				new GComboBox<>(allowMerge ? DiffApplySettingsOptionManager.MERGE_CHOICE.values()
 						: DiffApplySettingsOptionManager.REPLACE_CHOICE.values());
 			applyCB.setName(type + " Diff Apply CB");
 			String typeName = type;
 			if (typeName.endsWith(" Comments")) {
 				typeName = "Comments, " + typeName.substring(0, typeName.length() - 9);
 			}
-			label = DockingUtils.createNonHtmlLabel(" " + typeName + " ");
+			label = new GDLabel(" " + typeName + " ");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			add(applyCB, BorderLayout.EAST);
 			add(label, BorderLayout.CENTER);
@@ -458,9 +459,9 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 		@Override
 		protected void init() {
-			applyCB = new JComboBox<>(DiffApplySettingsOptionManager.SYMBOL_MERGE_CHOICE.values());
+			applyCB = new GComboBox<>(DiffApplySettingsOptionManager.SYMBOL_MERGE_CHOICE.values());
 			applyCB.setName(type + " Diff Apply CB");
-			label = DockingUtils.createNonHtmlLabel(" " + type + " ");
+			label = new GDLabel(" " + type + " ");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			add(applyCB, BorderLayout.EAST);
 			add(label, BorderLayout.CENTER);

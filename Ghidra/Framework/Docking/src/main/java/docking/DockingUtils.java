@@ -24,11 +24,12 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import javax.swing.undo.UndoableEdit;
 
-import docking.widgets.AbstractGCellRenderer;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import resources.ResourceManager;
 
 public class DockingUtils {
+	// taken from BasicHTML.htmlDisable, which is private
+	public static final String HTML_DISABLE_STRING = "html.disable";
 
 	private static final int ICON_SIZE = 16;
 
@@ -69,72 +70,20 @@ public class DockingUtils {
 		return separator;
 	}
 
-	public static JLabel createHtmlLabel() {
-		return createHtmlLabel("");
-	}
-
-	public static JLabel createHtmlLabel(String text) {
-		JLabel label = new JLabel(text);
-		return label;
-	}
-
-	public static JLabel createHtmlLabel(String text, int horizontalAlignment) {
-		JLabel label = new JLabel(text, horizontalAlignment);
-		return label;
-	}
-
-	public static JLabel createHtmlLabel(String text, Icon icon, int horizontalAlignment) {
-		JLabel label = new JLabel(text, icon, horizontalAlignment);
-		return label;
+	/**
+	 * Turns off the HTML rendering in the specified component.
+	 * 
+	 * @param comp the thing
+	 */
+	public static void turnOffHTMLRendering(JComponent comp) {
+		comp.putClientProperty(HTML_DISABLE_STRING, true);
 	}
 
 	/**
-	 * Creates a JLabel that has HTML rendering disabled.
+	 * Turns off the HTML rendering in the specified component and its current cell renderer.
 	 * 
-	 * @param text
-	 * @return
+	 * @param list the list
 	 */
-	public static JLabel createNonHtmlLabel(String text) {
-		JLabel label = new JLabel(text);
-		turnOffHTMLRendering(label);
-		return label;
-	}
-
-	public static JLabel createNonHtmlLabel(Icon icon) {
-		JLabel label = new JLabel(icon);
-		turnOffHTMLRendering(label);
-		return label;
-	}
-
-	public static JLabel createNonHtmlLabel() {
-		return createNonHtmlLabel("");
-	}
-
-	public static JLabel createNonHtmlLabel(String text, int horizontalAlignment) {
-		JLabel label = new JLabel(text, horizontalAlignment);
-		turnOffHTMLRendering(label);
-
-		return label;
-	}
-
-	public static JLabel createNonHtmlLabel(String text, Icon icon, int horizontalAlignment) {
-		JLabel label = new JLabel(text, icon, horizontalAlignment);
-		turnOffHTMLRendering(label);
-
-		return label;
-	}
-
-	public static JLabel createNonHtmlLabel(Icon icon, int horizontalAlignment) {
-		JLabel label = new JLabel(icon, horizontalAlignment);
-		turnOffHTMLRendering(label);
-
-		return label;
-	}
-
-	public static void turnOffHTMLRendering(JComponent comp) {
-		comp.putClientProperty(AbstractGCellRenderer.HTML_DISABLE_STRING, true);
-	}
-
 	public static void turnOffHTMLRendering(JList<?> list) {
 		turnOffHTMLRendering((JComponent) list);
 		if (list.getCellRenderer() instanceof JComponent) {
@@ -142,6 +91,11 @@ public class DockingUtils {
 		}
 	}
 
+	/**
+	 * Turns off the HTML rendering in the specified component and its current renderer.
+	 * 
+	 * @param cb the combobox
+	 */
 	public static void turnOffHTMLRendering(JComboBox<?> cb) {
 		turnOffHTMLRendering((JComponent) cb);
 		if (cb.getRenderer() instanceof JComponent) {

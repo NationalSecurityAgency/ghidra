@@ -22,7 +22,8 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.merge.MergeConstants;
 
 /**
@@ -85,14 +86,13 @@ class CategoryConflictPanel extends JPanel {
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel clabel = DockingUtils.createNonHtmlLabel("Category: ");
-		categoryLabel = DockingUtils.createNonHtmlLabel("CategoryName");
+		categoryLabel = new GDLabel("CategoryName");
 		categoryLabel.setForeground(MergeConstants.CONFLICT_COLOR);
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-		labelPanel.add(clabel);
+		labelPanel.add(new GLabel("Category: "));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(categoryLabel);
 

@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.AnalyzerType;
 import ghidra.framework.analysis.AnalysisPhase;
@@ -102,7 +102,7 @@ public class AnalyzerPanel extends JPanel {
 		enabledCheckbox.setSelected(recipe.isAnalyzerEnabled(analyzer));
 		panel.add(enabledCheckbox, BorderLayout.WEST);
 
-		iconLabel = DockingUtils.createNonHtmlLabel();
+		iconLabel = new GDLabel();
 		updateIconLabel();
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(2, 15, 2, 5));
 		panel.add(iconLabel, BorderLayout.EAST);
@@ -116,11 +116,11 @@ public class AnalyzerPanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 10, 2, 5));
 		panel.setOpaque(false);
 
-		analyzerNameLabel = DockingUtils.createNonHtmlLabel(analyzer.getName());
+		analyzerNameLabel = new GDLabel(analyzer.getName());
 		analyzerNameLabel.setFont(analyzerNameLabel.getFont().deriveFont(18f));
 		panel.add(analyzerNameLabel, BorderLayout.CENTER);
 
-		priorityLabel = DockingUtils.createNonHtmlLabel(analyzer.getPriority().toString());
+		priorityLabel = new GDLabel(analyzer.getPriority().toString());
 		priorityLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		priorityLabel.setFont(priorityLabel.getFont().deriveFont(10f));
 		priorityLabel.setForeground(Color.GRAY);
@@ -141,7 +141,7 @@ public class AnalyzerPanel extends JPanel {
 		phasePanel.setBorder(BorderFactory.createCompoundBorder(etched, empty));
 		phasePanel.setOpaque(false);
 		phasePanel.setPreferredSize(new Dimension(60, 0));
-		phaseLabel = DockingUtils.createNonHtmlLabel("");
+		phaseLabel = new GDLabel("");
 
 		//@formatter:off
 		String text = analyzer.getAnalysisType() == AnalyzerType.ONE_SHOT_ANALYZER ? 

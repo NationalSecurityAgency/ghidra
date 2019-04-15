@@ -23,7 +23,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -145,17 +146,14 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		addrInput.setAddressFactory(addrFactory);
 		addrInput.setAddress(defaultAddress);
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Enter Base Address:", SwingConstants.RIGHT);
-		panel.add(label);
+		panel.add(new GLabel("Enter Base Address:", SwingConstants.RIGHT));
 		panel.add(addrInput);
 
-		JLabel sizeLabel =
-			DockingUtils.createNonHtmlLabel("Select Data Size (Bytes):", SwingConstants.RIGHT);
-		comboBox = new JComboBox<>(new String[] { "1", "2", "4", "8" });
+		comboBox = new GComboBox<>(new String[] { "1", "2", "4", "8" });
 		int pointerSize = defaultAddress.getPointerSize();
 		comboBox.setSelectedItem(Integer.toString(pointerSize));
 
-		panel.add(sizeLabel);
+		panel.add(new GLabel("Select Data Size (Bytes):", SwingConstants.RIGHT));
 		panel.add(comboBox);
 
 		signedCheckBox = new JCheckBox("Signed Data Value(s)", true);

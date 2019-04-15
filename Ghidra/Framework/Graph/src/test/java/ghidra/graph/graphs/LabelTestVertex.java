@@ -20,14 +20,14 @@ import java.awt.Dimension;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 
 /**
  * A test vertex that renders using a {@link JLabel}.
  */
 public class LabelTestVertex extends AbstractTestVertex {
 
-	private JLabel label = DockingUtils.createNonHtmlLabel();
+	private JLabel label = new GDLabel();
 
 	public LabelTestVertex(String name) {
 		super(name);

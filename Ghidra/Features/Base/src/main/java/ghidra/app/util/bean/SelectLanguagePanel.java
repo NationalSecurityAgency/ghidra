@@ -28,7 +28,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumnModel;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortingContext;
 import ghidra.program.model.lang.*;
@@ -110,7 +110,7 @@ public class SelectLanguagePanel extends JPanel {
 		});
 
 		JPanel filterPanel = new JPanel(new BorderLayout());
-		filterPanel.add(DockingUtils.createNonHtmlLabel("Filter:"), BorderLayout.WEST);
+		filterPanel.add(new GLabel("Filter:"), BorderLayout.WEST);
 		filterPanel.add(filterField, BorderLayout.CENTER);
 
 		setLayout(new BorderLayout(10, 10));

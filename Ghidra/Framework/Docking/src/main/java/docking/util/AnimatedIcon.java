@@ -29,7 +29,7 @@ public class AnimatedIcon implements Icon {
 	/** best guess at how many timer invocations may happen before paint gets called*/
 	private static final int MAGIC_TIMER_CALLS_WITHOUT_PAINT_CALL = 5;
 
-	private final List<Icon> iconList;
+	private final List<? extends Icon> iconList;
 	private int currentIconIndex = 0;
 	private Component component;
 	private int height;
@@ -39,7 +39,7 @@ public class AnimatedIcon implements Icon {
 	private Timer timer;
 	private int paintCounter = 0;
 
-	public AnimatedIcon(List<Icon> icons, int frameDelay, int framesToSkip) {
+	public AnimatedIcon(List<? extends Icon> icons, int frameDelay, int framesToSkip) {
 		this.iconList = icons;
 		this.skipFrames = framesToSkip;
 		timer = new Timer(frameDelay, new ActionListener() {

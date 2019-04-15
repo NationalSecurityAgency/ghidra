@@ -24,7 +24,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.label.GDHtmlLabel;
 
 /**
  * Color editor that uses the JColorChooser.
@@ -36,7 +38,7 @@ public class ColorEditor extends PropertyEditorSupport {
 
 	private static GhidraColorChooser colorChooser;
 
-	private JLabel previewLabel = DockingUtils.createHtmlLabel();
+	private JLabel previewLabel = new GDHtmlLabel();
 	private Color color;
 	private Color lastUserSelectedColor;
 

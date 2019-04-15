@@ -31,10 +31,11 @@ import javax.swing.event.ListDataListener;
 import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.ListSelectionTableDialog;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
@@ -186,7 +187,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		sourceListPanel.add(sourceOptionsPanel, BorderLayout.SOUTH);
 
 		JPanel maxDepthPanel = new JPanel();
-		JLabel maxDepthLabel = DockingUtils.createNonHtmlLabel("Depth limit:");
+		JLabel maxDepthLabel = new GDLabel("Depth limit:");
 		String maxDepthTip = "Maximum container (ie. nested zip, tar, etc) depth in the " +
 			"source file to recursively descend into";
 		maxDepthLabel.setToolTipText(maxDepthTip);
@@ -455,8 +456,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private TableCellEditor createFilesColumnCellEditor() {
-		JComboBox<Object> comboBox = new JComboBox<>();
-		DockingUtils.turnOffHTMLRendering(comboBox);
+		JComboBox<Object> comboBox = new GComboBox<>();
 		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
 			@Override
 			public boolean shouldSelectCell(EventObject anEvent) {
@@ -508,7 +508,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private TableCellEditor createLangColumnCellEditor() {
-		JComboBox<Object> comboBox = new JComboBox<>();
+		JComboBox<Object> comboBox = new GComboBox<>();
 		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
 			@Override
 			public boolean shouldSelectCell(EventObject anEvent) {

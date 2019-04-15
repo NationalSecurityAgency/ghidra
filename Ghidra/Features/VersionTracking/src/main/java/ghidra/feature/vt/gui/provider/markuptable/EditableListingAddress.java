@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.gui.editors.*;
@@ -68,7 +68,7 @@ public class EditableListingAddress extends DisplayableListingAddress implements
 					}
 				}
 			});
-			JLabel label = DockingUtils.createNonHtmlLabel("Address: ");
+			JLabel label = new GDLabel("Address: ");
 			add(label);
 			add(addressField);
 		}

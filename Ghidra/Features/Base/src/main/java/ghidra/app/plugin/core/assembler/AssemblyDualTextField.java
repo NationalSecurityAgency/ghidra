@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 
-import docking.DockingUtils;
 import docking.EmptyBorderToggleButton;
 import docking.widgets.autocomplete.*;
+import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.TextFieldLinker;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
@@ -706,7 +706,7 @@ public class AssemblyDualTextField {
 			Box hbox = Box.createHorizontalBox();
 			dialog.add(hbox, BorderLayout.NORTH);
 
-			JLabel addrlabel = DockingUtils.createNonHtmlLabel(String.format(ADDR_FORMAT, curAddr));
+			JLabel addrlabel = new GDLabel(String.format(ADDR_FORMAT, curAddr));
 			hbox.add(addrlabel);
 
 			AssemblyDualTextField input = new AssemblyDualTextField();

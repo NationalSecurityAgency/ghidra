@@ -28,6 +28,8 @@ import javax.swing.text.*;
 
 import docking.*;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -294,10 +296,8 @@ class MemSearchDialog extends DialogComponentProvider {
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 		labelPanel.setLayout(new GridLayout(0, 1));
-		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Search Value: ");
-		labelPanel.add(valueLabel);
-		JLabel hexSeqLabel = DockingUtils.createNonHtmlLabel("Hex Sequence: ");
-		labelPanel.add(hexSeqLabel);
+		labelPanel.add(new GLabel("Search Value: "));
+		labelPanel.add(new GLabel("Hex Sequence: "));
 
 		JPanel inputPanel = new JPanel();
 		inputPanel.setLayout(new GridLayout(0, 1));
@@ -315,7 +315,7 @@ class MemSearchDialog extends DialogComponentProvider {
 		});
 
 		inputPanel.add(valueComboBox);
-		hexSeqField = DockingUtils.createNonHtmlLabel();
+		hexSeqField = new GDLabel();
 		hexSeqField.setName("HexSequenceField");
 		hexSeqField.setBorder(BorderFactory.createLoweredBevelBorder());
 		inputPanel.add(hexSeqField);
@@ -468,7 +468,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	private Component buildAlignmentPanel() {
-		alignLabel = DockingUtils.createNonHtmlLabel("Alignment: ");
+		alignLabel = new GDLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
 		alignField.setText("0");

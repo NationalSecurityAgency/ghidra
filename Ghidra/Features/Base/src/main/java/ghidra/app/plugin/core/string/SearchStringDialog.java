@@ -25,9 +25,9 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.AddressSetView;
@@ -179,7 +179,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		JPanel panel = new JPanel(new PairLayout(10, 2));
 
-		JLabel minLengthLabel = DockingUtils.createNonHtmlLabel("Minimum Length: ");
+		JLabel minLengthLabel = new GLabel("Minimum Length: ");
 		minLengthLabel.setName("minLen");
 		minLengthLabel.setToolTipText("<html>Searches for valid ascii or ascii unicode strings " +
 			"greater or equal to minimum search length.<br> The null characters are not included " +
@@ -190,7 +190,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		minLengthField.getComponent().setName("minDefault");
 		panel.add(minLengthField.getComponent());
 
-		JLabel alignLabel = DockingUtils.createNonHtmlLabel("Alignment: ");
+		JLabel alignLabel = new GLabel("Alignment: ");
 		alignLabel.setName("alignment");
 		alignLabel.setToolTipText(
 			"<html>Searches for strings that start on the given alignment<br>" +
@@ -213,7 +213,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 	 */
 	private void createModelFieldPanel(JPanel panel) {
 
-		JLabel modelLabel = DockingUtils.createNonHtmlLabel("Word Model: ");
+		JLabel modelLabel = new GLabel("Word Model: ");
 		modelLabel.setName("wordModel");
 		modelLabel.setToolTipText(
 			"<html>" + "Strings Analyzer model used to detect high-confidence words.<br> " +

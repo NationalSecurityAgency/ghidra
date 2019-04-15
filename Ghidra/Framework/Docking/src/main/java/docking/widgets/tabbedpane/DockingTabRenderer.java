@@ -20,8 +20,8 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import resources.ResourceManager;
 
 /**
@@ -50,8 +50,8 @@ public class DockingTabRenderer extends JPanel {
 		final ForwardingMouseListener eventForwardingListener =
 			new ForwardingMouseListener(tabbedPane);
 
-		titleLabel = DockingUtils.createNonHtmlLabel();
-		iconLabel = DockingUtils.createNonHtmlLabel();
+		titleLabel = new GDLabel();
+		iconLabel = new GDLabel();
 		closeButton = new EmptyBorderButton();
 
 		setTitle(tabTitle, fullTitle);

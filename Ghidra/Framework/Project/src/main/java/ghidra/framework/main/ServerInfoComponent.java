@@ -22,8 +22,8 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
+import docking.widgets.label.GDLabel;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.GhidraServerHandle;
 import ghidra.util.MessageType;
@@ -94,7 +94,7 @@ public class ServerInfoComponent extends JPanel {
 	}
 
 	private void buildMainPanel() {
-		JLabel nameLabel = DockingUtils.createNonHtmlLabel("Server Name:", SwingConstants.RIGHT);
+		JLabel nameLabel = new GDLabel("Server Name:", SwingConstants.RIGHT);
 		nameField = new JTextField(20);
 		nameField.setName("Server Name");
 		nameField.addActionListener(new ActionListener() {
@@ -121,7 +121,7 @@ public class ServerInfoComponent extends JPanel {
 		};
 		nameField.getDocument().addDocumentListener(nameDocListener);
 
-		JLabel portLabel = DockingUtils.createNonHtmlLabel("Port Number:", SwingConstants.RIGHT);
+		JLabel portLabel = new GDLabel("Port Number:", SwingConstants.RIGHT);
 		portNumberField = new JTextField(20);
 		portNumberField.setName("Port Number");
 

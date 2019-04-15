@@ -22,7 +22,8 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.program.model.listing.Program;
 import resources.ResourceManager;
@@ -126,10 +127,9 @@ class NameConflictsPanel extends JPanel {
 		JPanel iconPanel = new JPanel();
 		iconPanel.setLayout(new BoxLayout(iconPanel, BoxLayout.X_AXIS));
 
-		conflictsLabel =
-			DockingUtils.createNonHtmlLabel("'My' name already exists in Latest Version");
+		conflictsLabel = new GDLabel("'My' name already exists in Latest Version");
 		ImageIcon icon = ResourceManager.loadImage("images/information.png");
-		iconPanel.add(DockingUtils.createNonHtmlLabel(icon));
+		iconPanel.add(new GIconLabel(icon));
 		iconPanel.add(Box.createHorizontalStrut(5));
 		iconPanel.add(conflictsLabel);
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));

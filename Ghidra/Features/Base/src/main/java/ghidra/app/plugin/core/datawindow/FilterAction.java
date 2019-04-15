@@ -29,6 +29,7 @@ import docking.action.ToolBarData;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.filter.FilterTextField;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.StringUtilities;
@@ -317,7 +318,7 @@ class FilterAction extends ToggleDockingAction {
 			JPanel filterPanel = new JPanel(new BorderLayout());
 			filterField = new FilterTextField(checkboxPanel);
 			filterPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-			filterPanel.add(DockingUtils.createNonHtmlLabel("Filter:"), BorderLayout.WEST);
+			filterPanel.add(new GLabel("Filter:"), BorderLayout.WEST);
 
 			filterPanel.add(filterField, BorderLayout.CENTER);
 			filterField.addFilterListener(filterListener);

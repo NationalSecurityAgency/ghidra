@@ -26,6 +26,7 @@ public class DockingMenuItem extends JMenuItem {
 
 	public DockingMenuItem() {
 		setUI(DockingMenuItemUI.createUI(this));
+		DockingUtils.turnOffHTMLRendering(this);
 	}
 
 	@Override

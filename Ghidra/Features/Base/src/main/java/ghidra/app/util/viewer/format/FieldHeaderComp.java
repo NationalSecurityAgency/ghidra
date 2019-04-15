@@ -21,9 +21,9 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.util.HelpLocation;
 
@@ -73,7 +73,7 @@ public class FieldHeaderComp extends JPanel {
 		Border border1 = BorderFactory.createRaisedBevelBorder();
 		Border border2 = BorderFactory.createEmptyBorder(0, 0, 1, 1);
 
-		label = DockingUtils.createNonHtmlLabel("Test");
+		label = new GDLabel("Test");
 		label.setOpaque(true);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		buttonColor = label.getBackground();

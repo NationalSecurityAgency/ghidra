@@ -27,7 +27,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
 import ghidra.util.StringUtilities;
 
 public class AsciiSearchFormat extends SearchFormat {
@@ -55,9 +56,9 @@ public class AsciiSearchFormat extends SearchFormat {
 				changeListener.stateChanged(new ChangeEvent(this));
 			}
 		};
-		searchType = DockingUtils.createNonHtmlLabel("Encoding: ");
+		searchType = new GDLabel("Encoding: ");
 
-		encodingCB = new JComboBox<>(supportedCharsets);
+		encodingCB = new GComboBox<>(supportedCharsets);
 		encodingCB.setName("Encoding Options");
 		encodingCB.setSelectedIndex(0);
 		encodingCB.addActionListener(al);

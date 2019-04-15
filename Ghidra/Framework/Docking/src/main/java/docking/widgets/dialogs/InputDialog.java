@@ -23,7 +23,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.util.layout.PairLayout;
 
 /**
@@ -225,7 +225,7 @@ public class InputDialog extends DialogComponentProvider {
 			textFields[i] = new MyTextField(initialValues[i]);
 			textFields[i].addKeyListener(keyListener);
 			textFields[i].setName("input.dialog.text.field." + i);
-			panel.add(DockingUtils.createNonHtmlLabel(inputLabels[i], SwingConstants.RIGHT));
+			panel.add(new GLabel(inputLabels[i], SwingConstants.RIGHT));
 			panel.add(textFields[i]);
 		}
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));

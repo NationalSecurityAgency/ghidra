@@ -23,7 +23,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState;
 import ghidra.feature.vt.gui.editors.TagEditorDialog.TagStateListModel;
 import ghidra.util.exception.AssertException;
@@ -41,7 +41,7 @@ public class TagEditorRenderer extends DefaultListCellRenderer {
 	private final TagStateListModel listModel;
 
 	private JPanel panel;
-	private JLabel tagIconLabel = DockingUtils.createNonHtmlLabel();
+	private JLabel tagIconLabel = new GDLabel();
 	private RemoveStateButton undoButton;
 	private MouseAdapter mouseForwarder;
 

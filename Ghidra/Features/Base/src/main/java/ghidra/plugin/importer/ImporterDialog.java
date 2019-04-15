@@ -31,11 +31,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
@@ -156,13 +156,13 @@ public class ImporterDialog extends DialogComponentProvider {
 	private Component buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(DockingUtils.createNonHtmlLabel("Format: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Format: ", SwingConstants.RIGHT));
 		panel.add(buildLoaderChooser());
-		panel.add(DockingUtils.createNonHtmlLabel("Language: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguagePanel());
-		panel.add(DockingUtils.createNonHtmlLabel("Destination Folder: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Destination Folder: ", SwingConstants.RIGHT));
 		panel.add(buildFolderPanel());
-		panel.add(DockingUtils.createNonHtmlLabel("Program Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
 		panel.add(buildFilenameTextField());
 		return panel;
 	}
@@ -260,7 +260,6 @@ public class ImporterDialog extends DialogComponentProvider {
 			}
 		}
 		loaderComboBox = new GhidraComboBox<>(new Vector<>(set));
-		DockingUtils.turnOffHTMLRendering(loaderComboBox);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
 		loaderComboBox.setRenderer(

@@ -26,8 +26,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.ToolTipManager;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
@@ -192,13 +192,13 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(new TitledBorder("Home"));
 
-		addressLabel = DockingUtils.createNonHtmlLabel("01001000");
+		addressLabel = new GDLabel("01001000");
 
 		Font font = addressLabel.getFont();
 		Font monoFont = new Font("monospaced", font.getStyle(), font.getSize());
 		addressLabel.setFont(monoFont);
 
-		instLabel = DockingUtils.createNonHtmlLabel("jmp DAT_01001000");
+		instLabel = new GDLabel("jmp DAT_01001000");
 		instLabel.setFont(monoFont);
 
 		homeButton = createButton("images/go-home.png", "Home");

@@ -25,10 +25,12 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
 import ghidra.framework.main.FrontEndPlugin;
@@ -220,8 +222,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private JLabel capacityExceededText = DockingUtils.createHtmlLabel(
-		"<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+	private JLabel capacityExceededText =
+		new GDHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
 			"View will remain disabled until project is closed.</I></CENTER></HTML>");
 

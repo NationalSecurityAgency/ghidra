@@ -20,7 +20,7 @@ import java.awt.Dimension;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
@@ -64,7 +64,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		addressRangePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
 		addressRangePanel.setLayout(new PairLayout(5, 5));
 
-		minLabel = DockingUtils.createNonHtmlLabel("Minimum:");
+		minLabel = new GDLabel("Minimum:");
 		minLabel.setToolTipText("Enter minimum address to add or remove");
 		addressRangePanel.add(minLabel);
 
@@ -75,7 +75,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		minAddressField.setPreferredSize(minPreferredSize);
 		addressRangePanel.add(minAddressField);
 
-		maxLabel = DockingUtils.createNonHtmlLabel("Maximum:");
+		maxLabel = new GDLabel("Maximum:");
 		maxLabel.setToolTipText("Enter maximum address to add or remove");
 		addressRangePanel.add(maxLabel);
 

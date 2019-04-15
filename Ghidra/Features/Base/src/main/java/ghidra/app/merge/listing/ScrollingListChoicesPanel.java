@@ -25,7 +25,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.merge.util.ConflictUtility;
@@ -70,7 +70,7 @@ public class ScrollingListChoicesPanel extends ConflictPanel {
 		gbl = new GridBagLayout();
 		rowPanel = new JPanel(gbl);
 		setLayout(new BorderLayout());
-		headerLabel = DockingUtils.createNonHtmlLabel(" ");
+		headerLabel = new GDLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);

@@ -23,6 +23,8 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 
@@ -69,7 +71,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		}
 		inputTextArea.selectAll();
 
-		JLabel messageLabel = DockingUtils.createNonHtmlLabel();
+		JLabel messageLabel = new GDLabel();
 		messageLabel.setText(messageText);
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
@@ -78,7 +80,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		if (OS == OperatingSystem.MAC_OS_X) {
 			metaKeyText = "Command";
 		}
-		JLabel hintLabel = DockingUtils.createNonHtmlLabel("(" + metaKeyText + "-Enter to accept)");
+		JLabel hintLabel = new GLabel("(" + metaKeyText + "-Enter to accept)");
 		hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		Font font = hintLabel.getFont();
 		Font smallerFont = font.deriveFont(12F);
@@ -90,7 +92,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		dataPanel.add(new JScrollPane(inputTextArea), BorderLayout.CENTER);
 		dataPanel.add(hintLabel, BorderLayout.SOUTH);
 
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel();
+		JLabel iconLabel = new GDLabel();
 		iconLabel.setIcon(icon);
 		iconLabel.setVerticalAlignment(SwingConstants.TOP);
 

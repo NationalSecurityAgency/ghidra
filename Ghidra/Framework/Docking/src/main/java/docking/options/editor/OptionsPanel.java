@@ -27,11 +27,11 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import docking.DockingUtils;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import ghidra.framework.options.*;
@@ -242,9 +242,6 @@ public class OptionsPanel extends JPanel {
 		JPanel panel = new JPanel(new MiddleLayout());
 		panel.setName("Default");
 
-		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
-
 		MultiLineLabel label =
 			new MultiLineLabel("To change Options, select a Folder or Option Group from the\n" +
 				"Options Tree and change the Option settings.");
@@ -255,7 +252,7 @@ public class OptionsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(imageLabel);
+		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(label);
 

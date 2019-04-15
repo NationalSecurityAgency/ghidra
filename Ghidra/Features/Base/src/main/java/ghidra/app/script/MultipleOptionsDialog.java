@@ -24,7 +24,9 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.label.GLabel;
 import ghidra.util.Msg;
 
 public class MultipleOptionsDialog<T> extends DialogComponentProvider {
@@ -69,8 +71,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new GridLayout(0, 1));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel label = DockingUtils.createNonHtmlLabel(message);
-		panel.add(label, BorderLayout.WEST);
+		panel.add(new GLabel(message), BorderLayout.WEST);
 
 		if (includeSelectAll) {
 			selectAllGroup = new SelectAllCheckBox();

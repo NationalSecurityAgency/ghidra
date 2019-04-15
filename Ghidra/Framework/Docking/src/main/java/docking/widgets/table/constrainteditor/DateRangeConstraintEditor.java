@@ -23,7 +23,7 @@ import java.util.Calendar;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
 import docking.widgets.table.constraint.provider.DateColumnConstraintProvider;
@@ -108,7 +108,7 @@ public class DateRangeConstraintEditor extends AbstractColumnConstraintEditor<Lo
 
 		panel.add(controlPanel);
 
-		infoLabel = DockingUtils.createHtmlLabel();
+		infoLabel = new GDHtmlLabel();
 		infoLabel.setForeground(Color.GRAY);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);

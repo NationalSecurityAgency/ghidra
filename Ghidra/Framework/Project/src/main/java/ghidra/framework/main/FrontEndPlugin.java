@@ -35,6 +35,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
@@ -774,7 +775,7 @@ public class FrontEndPlugin extends Plugin
 			connectionIconPanel.remove(connectionButton);
 		}
 		if (project == null || project.getRepository() == null) {
-			connectionLabel = DockingUtils.createNonHtmlLabel(emptyIcon);
+			connectionLabel = new GIconLabel(emptyIcon);
 			connectionIconPanel.add(connectionLabel);
 			return;
 		}
@@ -924,10 +925,10 @@ public class FrontEndPlugin extends Plugin
 
 		JPanel connectionPanel = new JPanel();
 		connectionPanel.setLayout(new BorderLayout());
-		repositoryLabel = DockingUtils.createNonHtmlLabel();
+		repositoryLabel = new GDLabel();
 		repositoryLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 		connectionIconPanel = new JPanel();
-		connectionLabel = DockingUtils.createNonHtmlLabel();
+		connectionLabel = new GLabel();
 		connectionIconPanel.add(connectionLabel);
 		connectionPanel.add(repositoryLabel, BorderLayout.CENTER);
 		connectionPanel.add(connectionIconPanel, BorderLayout.EAST);

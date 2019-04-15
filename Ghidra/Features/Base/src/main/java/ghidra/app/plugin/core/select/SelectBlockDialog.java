@@ -22,7 +22,9 @@ import java.math.BigInteger;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigationUtils;
@@ -90,13 +92,13 @@ class SelectBlockDialog extends DialogComponentProvider {
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 
-		main.add(DockingUtils.createNonHtmlLabel("Ending Address:"), gbc);
+		main.add(new GLabel("Ending Address:"), gbc);
 		gbc.gridx++;
 		toAddressField = new JTextField(10);
 		main.add(toAddressField, gbc);
 		gbc.gridx = 0;
 		gbc.gridy++;
-		main.add(DockingUtils.createNonHtmlLabel("Length: "), gbc);
+		main.add(new GLabel("Length: "), gbc);
 		gbc.gridx++;
 		numberInputField = new IntegerTextField(10);
 		numberInputField.setMaxValue(BigInteger.valueOf(Integer.MAX_VALUE));

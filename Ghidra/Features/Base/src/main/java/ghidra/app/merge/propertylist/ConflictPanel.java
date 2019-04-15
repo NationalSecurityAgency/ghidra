@@ -22,7 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.merge.MergeConstants;
 
 /**
@@ -133,7 +133,7 @@ class ConflictPanel extends JPanel {
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		propertyGroupLabel = DockingUtils.createNonHtmlLabel("Property Group:  ");
+		propertyGroupLabel = new GDLabel("Property Group:  ");
 
 		JPanel namePanel = new JPanel(new BorderLayout());
 		namePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));

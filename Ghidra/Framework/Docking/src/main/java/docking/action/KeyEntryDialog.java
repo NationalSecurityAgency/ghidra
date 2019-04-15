@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.HelpLocation;
 import ghidra.util.ReservedKeyBindings;
 import resources.ResourceManager;
@@ -65,8 +66,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel = new JPanel(new BorderLayout());
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
 
-		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
+		JLabel imageLabel = new GIconLabel(ResourceManager.loadImage("images/information.png"));
 		bgColor = imageLabel.getBackground();
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));

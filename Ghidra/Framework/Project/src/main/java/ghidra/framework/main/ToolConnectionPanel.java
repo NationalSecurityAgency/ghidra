@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
@@ -423,9 +423,9 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		JComponent[] row1 = null;
 		JComponent[] row2 = null;
 
-		JLabel producerLabel = DockingUtils.createNonHtmlLabel("Event Producer:");
-		JLabel consumerLabel = DockingUtils.createNonHtmlLabel("Event Consumer:");
-		JLabel eventLabel = DockingUtils.createNonHtmlLabel("Event Names:");
+		JLabel producerLabel = new GDLabel("Event Producer:");
+		JLabel consumerLabel = new GDLabel("Event Consumer:");
+		JLabel eventLabel = new GDLabel("Event Names:");
 
 		JComponent[] c1 = { producerLabel, consumerLabel, eventLabel };
 		JComponent[] c2 = { producerListScrollPane, consumerListScrollPane, eventListScrollPane };

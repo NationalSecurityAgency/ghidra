@@ -24,7 +24,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.context.ListingActionContext;
 import ghidra.util.HelpLocation;
 
@@ -114,8 +114,7 @@ public class ClearDialog extends DialogComponentProvider {
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(10, 10));
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Clear Options:");
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel("Clear Options:"), BorderLayout.NORTH);
 
 		JPanel cbPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);

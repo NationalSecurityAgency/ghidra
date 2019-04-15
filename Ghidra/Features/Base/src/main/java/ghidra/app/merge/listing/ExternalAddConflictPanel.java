@@ -21,10 +21,10 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -254,7 +254,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		myTitlePanel = new TitledPanel(MergeConstants.MY_TITLE, myPanel, 5);
 
 		latestTitlePanel.addTitleComponent(new ShowHeaderButton());
-		myTitlePanel.addTitleComponent(DockingUtils.createNonHtmlLabel(new EmptyIcon(22, 22)));
+		myTitlePanel.addTitleComponent(new GIconLabel(new EmptyIcon(22, 22)));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setResizeWeight(0.5);

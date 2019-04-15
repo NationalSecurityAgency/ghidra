@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.ToolTipUtils;
@@ -377,8 +377,8 @@ public class DataTypeSynchronizer {
 	private static String createHTMLSpacerString(String htmlContent, String otherHTMLContent) {
 		// unfortunately, to get the displayed widths, we have to have rendered content, which 
 		// is what the JLabels below are doing for us
-		JLabel label1 = DockingUtils.createHtmlLabel("<HTML>" + htmlContent);
-		JLabel label2 = DockingUtils.createHtmlLabel("<HTML>" + otherHTMLContent);
+		JLabel label1 = new GDHtmlLabel("<HTML>" + htmlContent);
+		JLabel label2 = new GDHtmlLabel("<HTML>" + otherHTMLContent);
 
 		int maxPixelWidth =
 			Math.max(label1.getPreferredSize().width, label2.getPreferredSize().width);

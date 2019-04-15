@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
@@ -377,7 +377,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	private JPanel createFilterPanel() {
 		filterPanel = new JPanel(new BorderLayout());
-		JLabel label = DockingUtils.createNonHtmlLabel(" Filter:");
 
 		filterInputTF = new HintTextField("");
 		filterInputTF.setName("filterInputTF");
@@ -398,7 +397,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			}
 		});
 
-		filterPanel.add(label, BorderLayout.WEST);
+		filterPanel.add(new GLabel(" Filter:"), BorderLayout.WEST);
 		filterPanel.add(filterInputTF, BorderLayout.CENTER);
 
 		return filterPanel;
@@ -412,12 +411,11 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private JPanel createInputPanel() {
 
 		inputPanel = new JPanel(new BorderLayout());
-		JLabel label = DockingUtils.createNonHtmlLabel(" Create new tag(s):");
 		tagInputTF = new HintTextField("tag 1, tag 2, ...");
 		tagInputTF.setName("tagInputTF");
 		tagInputTF.addActionListener(e -> processCreates());
 
-		inputPanel.add(label, BorderLayout.WEST);
+		inputPanel.add(new GLabel(" Create new tag(s):"), BorderLayout.WEST);
 		inputPanel.add(tagInputTF, BorderLayout.CENTER);
 
 		return inputPanel;

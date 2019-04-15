@@ -22,7 +22,9 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.label.GLabel;
 import resources.ResourceManager;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
@@ -46,10 +48,6 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		}
 
 		ImageIcon tipIcon = ResourceManager.loadImage("images/help-hint.png");
-
-		JLabel label =
-			DockingUtils.createNonHtmlLabel("Did you know...", tipIcon, SwingConstants.LEFT);
-		label.setFont(new Font("dialog", Font.BOLD, 12));
 
 		tipArea = new JTextArea(4, 30);
 		tipArea.setEditable(false);
@@ -98,7 +96,11 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 				BorderFactory.createLineBorder(Color.BLACK));
 		panel.setBorder(panelBorder);
 		panel.setBackground(Color.WHITE);
+
+		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
+		label.setFont(new Font("dialog", Font.BOLD, 12));
 		panel.add(label, BorderLayout.NORTH);
+
 		panel.add(tipScroll, BorderLayout.CENTER);
 
 		JPanel panel2 = new JPanel(new BorderLayout(5, 5));

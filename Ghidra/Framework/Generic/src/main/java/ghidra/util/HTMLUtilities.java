@@ -25,6 +25,8 @@ import javax.swing.JLabel;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import generic.text.TextLayoutGraphics;
 import ghidra.util.html.HtmlLineSplitter;
 import utilities.util.reflection.ReflectionUtilities;
@@ -520,37 +522,8 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * Converts any special or reserved characters in the specified string into HTML-escaped
-	 * entities.  Use this method when you have content containing HTML that you do not want
-	 * interpreted as HTML, such as when displaying text that uses angle brackets around words.
-	 *
-	 * <P>For example, consider the following<br><br>
-	 *
-	 * <table border=1>
-	 * 		<tr>
-	 * 			<th>Input</th><th>Output</th><th>Rendered as</th><th>(Without Friendly Encoding)</th>
-	 * 		</tr>
-	 * 		<tr>
-	 * 			<td>
-	 * 				Hi &lt;b&gt;mom &lt;/b&gt;
-	 * 			</td>
-	 * 			<td>
-	 * 				Hi<font color="green">
-	 *  &#x26;nbsp;<b>&#x26;lt;</b></font>b<font color="green"><b>&#x26;gt;</b></font>mom
-	 *  <font color="green">&#x26;nbsp;<b>&#x26;lt;</b></font>/b<font color="green"><b>&#x26;gt;</b>
-	 *  </font>
-	 * 			</td>
-	 * 			<td>
-	 * 				Hi &lt;b&gt;mom &lt;/b&gt;
-	 * 			</td>
-	 * 			<td>
-	 * 				Hi <b>mom </b>
-	 * 			</td>
-	 * 		</tr>
-	 * </table>
-	 *
-	 *  <br><br><br>
-	 *
+	 * @see {@link #friendlyEncodeHTML(String)}
+	 * 
 	 * @param text string to be encoded
 	 * @param skipLeadingWhitespace  true signals to ignore any leading whitespace characters.
 	 * 	      This is useful when line wrapping to force wrapped lines to the left
@@ -621,6 +594,46 @@ public class HTMLUtilities {
 			}
 			++col;
 		}
+
+		return buffer.toString();
+	}
+
+	/**
+	 * Escapes any HTML special characters in the specified text.
+	 * <p>
+	 * Does not otherwise modify the input text or wrap lines. 
+	 * <p>
+	 * See also {@link StringEscapeUtils#escapeHtml3(String)}.
+	 *  
+	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
+	 * @return string with any html characters replaced with equivalents
+	 */
+	public static String escapeHTML(String text) {
+
+		StringBuilder buffer = new StringBuilder(text.length());
+		text.codePoints().forEach(cp -> {
+			switch (cp) {
+				case '&':
+					buffer.append("&amp;");
+					break;
+				case '<':
+					buffer.append("&lt;");
+					break;
+				case '>':
+					buffer.append("&gt;");
+					break;
+				default:
+					if (cp < ' ' || cp >= 0x7F) {
+						buffer.append("&#x");
+						buffer.append(Integer.toString(cp, 16).toUpperCase());
+						buffer.append(";");
+					}
+					else {
+						buffer.appendCodePoint(cp);
+					}
+					break;
+			}
+		});
 
 		return buffer.toString();
 	}

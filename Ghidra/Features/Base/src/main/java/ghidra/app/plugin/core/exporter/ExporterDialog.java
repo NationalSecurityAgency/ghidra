@@ -27,12 +27,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
 import ghidra.app.util.*;
 import ghidra.app.util.exporter.Exporter;
@@ -184,16 +184,16 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	private Component buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(DockingUtils.createNonHtmlLabel("Format: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Format: ", SwingConstants.RIGHT));
 		panel.add(buildFormatChooser());
-		panel.add(DockingUtils.createNonHtmlLabel("Output File: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Output File: ", SwingConstants.RIGHT));
 		panel.add(buildFilePanel());
 		return panel;
 	}
 
 	private Component buildSelectionCheckboxPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
-		selectionOnlyLabel = DockingUtils.createNonHtmlLabel("Selection Only:");
+		selectionOnlyLabel = new GLabel("Selection Only:");
 		panel.add(selectionOnlyLabel);
 		panel.add(buildSelectionCheckbox());
 		return panel;

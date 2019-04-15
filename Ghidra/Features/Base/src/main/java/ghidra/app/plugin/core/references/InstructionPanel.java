@@ -27,11 +27,11 @@ import javax.swing.border.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.util.KeyBindingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.program.model.address.Address;
@@ -217,21 +217,21 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		Border border = new TitledBorder(new EtchedBorder(), "Source");
 		setBorder(border);
 
-		addressLabel = DockingUtils.createNonHtmlLabel("FFFFFFFF"); // use a default
+		addressLabel = new GDLabel("FFFFFFFF"); // use a default
 
 		Font font = addressLabel.getFont();
 		monoFont = new Font("monospaced", font.getStyle(), font.getSize());
 		addressLabel.setFont(monoFont);
 		addressLabel.setName("addressLabel");
 
-		mnemonicLabel = DockingUtils.createNonHtmlLabel("movl");
+		mnemonicLabel = new GDLabel("movl");
 		mnemonicLabel.setFont(monoFont);
 		mnemonicLabel.setName("mnemonicLabel");
 		mnemonicLabel.addMouseListener(mouseListener);
 
 		operandLabels = new JLabel[Program.MAX_OPERANDS];
 		for (int i = 0; i < operandLabels.length; i++) {
-			operandLabels[i] = DockingUtils.createNonHtmlLabel("%ebp, ");
+			operandLabels[i] = new GDLabel("%ebp, ");
 			operandLabels[i].setName("operandLabels[" + i + "]");
 			operandLabels[i].setFont(monoFont);
 			operandLabels[i].addMouseListener(mouseListener);

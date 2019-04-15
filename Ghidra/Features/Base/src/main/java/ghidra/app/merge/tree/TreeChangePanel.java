@@ -19,7 +19,8 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.layout.PairLayout;
 import resources.ResourceManager;
 
@@ -56,15 +57,13 @@ class TreeChangePanel extends JPanel {
 		nameLabel.setText(nameChanged ? "Name Changed" : "Name Not Changed");
 		nameLabel.setForeground(nameChanged ? CHANGED_COLOR : NO_CHANGE_COLOR);
 		namePanel.remove(nameIconLabel);
-		nameIconLabel =
-			DockingUtils.createNonHtmlLabel(nameChanged ? CHANGED_ICON : NO_CHANGE_ICON);
+		nameIconLabel = new GIconLabel(nameChanged ? CHANGED_ICON : NO_CHANGE_ICON);
 		namePanel.add(nameIconLabel, 0);
 
 		structureLabel.setText(structureChanged ? "Structure Changed" : "Structure Not Changed");
 		structureLabel.setForeground(structureChanged ? CHANGED_COLOR : NO_CHANGE_COLOR);
 		structurePanel.remove(structureIconLabel);
-		structureIconLabel =
-			DockingUtils.createNonHtmlLabel(structureChanged ? CHANGED_ICON : NO_CHANGE_ICON);
+		structureIconLabel = new GIconLabel(structureChanged ? CHANGED_ICON : NO_CHANGE_ICON);
 		structurePanel.add(structureIconLabel, 0);
 	}
 
@@ -72,16 +71,16 @@ class TreeChangePanel extends JPanel {
 		JPanel panel = new JPanel(new BorderLayout(0, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		treeNameLabel = DockingUtils.createNonHtmlLabel("Tree Name");
+		treeNameLabel = new GDLabel("Tree Name");
 		Font font = treeNameLabel.getFont();
 		font = new Font(font.getName(), Font.BOLD, font.getSize());
 		treeNameLabel.setFont(font);
 
-		nameLabel = DockingUtils.createNonHtmlLabel("Name Changed");
-		nameIconLabel = DockingUtils.createNonHtmlLabel(CHANGED_ICON);
+		nameLabel = new GDLabel("Name Changed");
+		nameIconLabel = new GIconLabel(CHANGED_ICON);
 
-		structureLabel = DockingUtils.createNonHtmlLabel("Structure Changed");
-		structureIconLabel = DockingUtils.createNonHtmlLabel(CHANGED_ICON);
+		structureLabel = new GDLabel("Structure Changed");
+		structureIconLabel = new GIconLabel(CHANGED_ICON);
 
 		namePanel = new JPanel(new PairLayout(0, 5));
 		namePanel.add(nameIconLabel);

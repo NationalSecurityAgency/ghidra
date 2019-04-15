@@ -21,7 +21,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.util.table.GhidraTableCellRenderer;
@@ -54,32 +54,22 @@ public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 	private static void initialize() {
 		if (sourceMap == null) {
 			sourceMap = new HashMap<>();
-			sourceMap.put(VTRelatedMatchCorrelationType.TARGET,
-				DockingUtils.createNonHtmlLabel(TARGET_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.CALLER,
-				DockingUtils.createNonHtmlLabel(CALLER_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.CALLEE,
-				DockingUtils.createNonHtmlLabel(CALLEE_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.UNRELATED,
-				DockingUtils.createNonHtmlLabel(UNRELATED_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.TARGET, new GIconLabel(TARGET_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.CALLER, new GIconLabel(CALLER_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.CALLEE, new GIconLabel(CALLEE_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.UNRELATED, new GIconLabel(UNRELATED_ICON));
 
 			destinationMap = new HashMap<>();
-			destinationMap.put(VTRelatedMatchCorrelationType.TARGET,
-				DockingUtils.createNonHtmlLabel(TARGET_ICON));
-			destinationMap.put(VTRelatedMatchCorrelationType.CALLER,
-				DockingUtils.createNonHtmlLabel(CALLER_ICON));
-			destinationMap.put(VTRelatedMatchCorrelationType.CALLEE,
-				DockingUtils.createNonHtmlLabel(CALLEE_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.TARGET, new GIconLabel(TARGET_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.CALLER, new GIconLabel(CALLER_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.CALLEE, new GIconLabel(CALLEE_ICON));
 			destinationMap.put(VTRelatedMatchCorrelationType.UNRELATED,
-				DockingUtils.createNonHtmlLabel(UNRELATED_ICON));
+				new GIconLabel(UNRELATED_ICON));
 
 			statusMap = new HashMap<>();
-			statusMap.put(VTAssociationStatus.ACCEPTED,
-				DockingUtils.createNonHtmlLabel(ACCEPTED_ICON));
-			statusMap.put(VTAssociationStatus.AVAILABLE,
-				DockingUtils.createNonHtmlLabel(AVAILABLE_ICON));
-			statusMap.put(VTAssociationStatus.BLOCKED,
-				DockingUtils.createNonHtmlLabel(LOCKED_OUT_ICON));
+			statusMap.put(VTAssociationStatus.ACCEPTED, new GIconLabel(ACCEPTED_ICON));
+			statusMap.put(VTAssociationStatus.AVAILABLE, new GIconLabel(AVAILABLE_ICON));
+			statusMap.put(VTAssociationStatus.BLOCKED, new GIconLabel(LOCKED_OUT_ICON));
 		}
 	}
 

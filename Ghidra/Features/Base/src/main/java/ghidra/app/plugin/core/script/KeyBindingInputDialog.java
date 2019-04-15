@@ -21,6 +21,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.*;
+import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
 import ghidra.util.ReservedKeyBindings;
@@ -34,7 +35,6 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 			Plugin plugin, HelpLocation help) {
 		super("Assign Script Key Binding", true, true, true, false);
 
-		JLabel label = DockingUtils.createNonHtmlLabel(scriptName);
 		kbField = new KeyEntryTextField(20, this);
 		kbField.setName("KEY_BINDING");
 		kbField.setText(
@@ -42,7 +42,7 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel(scriptName), BorderLayout.NORTH);
 		panel.add(kbField, BorderLayout.CENTER);
 
 		addWorkPanel(panel);

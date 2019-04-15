@@ -24,8 +24,12 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DisabledComponentLayerFactory;
 import docking.widgets.InlineComponentTitledPanel;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.*;
@@ -209,17 +213,13 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			}
 
 			add(containsButton);
-			add(DockingUtils.createNonHtmlLabel(
-				FilterOptions.getIcon(TextFilterStrategy.CONTAINS)));
+			add(new GIconLabel(FilterOptions.getIcon(TextFilterStrategy.CONTAINS)));
 			add(startsWithButton);
-			add(DockingUtils.createNonHtmlLabel(
-				FilterOptions.getIcon(TextFilterStrategy.STARTS_WITH)));
+			add(new GIconLabel(FilterOptions.getIcon(TextFilterStrategy.STARTS_WITH)));
 			add(matchesExactlyButton);
-			add(DockingUtils.createNonHtmlLabel(
-				FilterOptions.getIcon(TextFilterStrategy.MATCHES_EXACTLY)));
+			add(new GIconLabel(FilterOptions.getIcon(TextFilterStrategy.MATCHES_EXACTLY)));
 			add(regularExpressionButton);
-			add(DockingUtils.createNonHtmlLabel(
-				FilterOptions.getIcon(TextFilterStrategy.REGULAR_EXPRESSION)));
+			add(new GIconLabel(FilterOptions.getIcon(TextFilterStrategy.REGULAR_EXPRESSION)));
 		}
 	}
 
@@ -416,11 +416,11 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			optionsPanel.setLayout(new PairLayout());
 
 			// Delimiter Row
-			JLabel delimiterCharacterFieldName = DockingUtils.createNonHtmlLabel("Delimiter:");
+			JLabel delimiterCharacterFieldName = new GLabel("Delimiter:");
 			delimiterCharacterFieldName.setToolTipText(
 				"Set the character used to separate filter terms.");
 
-			delimiterCharacterCB = new JComboBox<>(FilterOptions.VALID_MULTITERM_DELIMITERS_ARRAY);
+			delimiterCharacterCB = new GComboBox<>(FilterOptions.VALID_MULTITERM_DELIMITERS_ARRAY);
 			delimiterCharacterCB.setRenderer(new DelimiterListCellRenderer());
 
 			JPanel fixedSizePanel = new JPanel();
@@ -431,7 +431,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			optionsPanel.add(fixedSizePanel);
 
 			// Mode Row
-			JLabel label = DockingUtils.createNonHtmlLabel("Evaluation Mode:");
+			JLabel label = new GLabel("Evaluation Mode:");
 
 			JPanel buttonGroupPanel = new JPanel();
 			buttonGroupPanel.setLayout(new FlowLayout(FlowLayout.LEFT));

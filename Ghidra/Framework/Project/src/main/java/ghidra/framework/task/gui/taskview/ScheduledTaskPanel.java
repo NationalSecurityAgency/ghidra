@@ -19,7 +19,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.framework.task.gui.GProgressBar;
 
 public class ScheduledTaskPanel extends JPanel {
@@ -37,7 +37,7 @@ public class ScheduledTaskPanel extends JPanel {
 
 		layout = new ScheduledElementLayout();
 		setLayout(layout);
-		label = DockingUtils.createNonHtmlLabel(labelText);
+		label = new GDLabel(labelText);
 		setBackground(Color.WHITE);
 		add(label);
 	}

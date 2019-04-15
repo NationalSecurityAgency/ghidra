@@ -24,7 +24,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.LongArrayList;
@@ -89,7 +90,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		setBorder(BorderFactory.createTitledBorder("Resolve Conflict"));
 		setLayout(new BorderLayout());
 
-		headerLabel = DockingUtils.createNonHtmlLabel(" ");
+		headerLabel = new GDLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 
@@ -108,7 +109,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		indent = Math.max(rb.getPreferredSize().width, cb.getPreferredSize().width);
 
 		defaultInsets = new Insets(DEFAULT_TOP, DEFAULT_LEFT, DEFAULT_BOTTOM, DEFAULT_RIGHT);
-		int labelHeight = (int) DockingUtils.createNonHtmlLabel("A").getPreferredSize().getHeight();
+		int labelHeight = (int) new GDLabel("A").getPreferredSize().getHeight();
 		double buttonHeight = new MyRadioButton("A",
 			ListingMergeConstants.KEEP_LATEST).getPreferredSize().getHeight();
 		int borderHeight;
@@ -452,15 +453,13 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		return allChoicesAreResolved();
 	}
 
-	private class MyLabel extends JLabel {
-		private final static long serialVersionUID = 1;
+	private class MyLabel extends GLabel {
 
 		/**
 		 * @param text the text of this label.
 		 */
 		public MyLabel(final String text) {
 			super(text);
-			DockingUtils.turnOffHTMLRendering(this);
 			addComponentListener(new ComponentListener() {
 
 				@Override

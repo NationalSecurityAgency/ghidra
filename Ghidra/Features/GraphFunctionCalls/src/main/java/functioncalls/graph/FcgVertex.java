@@ -26,8 +26,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import ghidra.graph.viewer.vertex.AbstractVisualVertex;
 import ghidra.graph.viewer.vertex.VertexShapeProvider;
 import ghidra.program.model.address.Address;
@@ -68,8 +68,8 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	private JLayeredPane layeredPane;
 	private JButton toggleInsButton = new EmptyBorderButton(EXPAND_ICON);
 	private JButton toggleOutsButton = new EmptyBorderButton(EXPAND_ICON);
-	private JLabel nameLabel = DockingUtils.createNonHtmlLabel();
-	private JLabel vertexImageLabel = DockingUtils.createNonHtmlLabel();
+	private JLabel nameLabel = new GDLabel();
+	private JLabel vertexImageLabel = new GDLabel();
 
 	private Double vertexShape;
 	private Double compactShape;

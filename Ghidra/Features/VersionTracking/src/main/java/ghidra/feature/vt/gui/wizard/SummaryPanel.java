@@ -20,7 +20,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import docking.wizard.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
 import ghidra.feature.vt.gui.wizard.ChooseAddressSetEditorPanel.AddressSetChoice;
@@ -39,8 +39,8 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	SummaryPanel() {
 
-		labelLabel = DockingUtils.createHtmlLabel();
-		summaryLabel = DockingUtils.createHtmlLabel();
+		labelLabel = new GDHtmlLabel();
+		summaryLabel = new GDHtmlLabel();
 
 		JPanel mainPanel = new JPanel(new PairLayout(5, 10));
 		mainPanel.add(labelLabel);

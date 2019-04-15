@@ -23,7 +23,9 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.table.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.docking.settings.*;
@@ -229,7 +231,7 @@ public class SettingsDialog extends DialogComponentProvider {
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox comboBox = new JComboBox();
+		private JComboBox<String> comboBox = new GComboBox<>();
 		private JCheckBox checkBox = new JCheckBox();
 
 		private final Runnable editStopped = new Runnable() {
@@ -241,7 +243,6 @@ public class SettingsDialog extends DialogComponentProvider {
 
 		SettingsEditor() {
 			super();
-			DockingUtils.turnOffHTMLRendering(comboBox);
 			comboBox.addPopupMenuListener(this);
 		}
 
@@ -254,7 +255,7 @@ public class SettingsDialog extends DialogComponentProvider {
 				case ENUM:
 					return getComboBoxEnum();
 				case BOOLEAN:
-					return new Boolean(checkBox.isSelected());
+					return Boolean.valueOf(checkBox.isSelected());
 			}
 			throw new AssertException();
 		}
@@ -262,7 +263,7 @@ public class SettingsDialog extends DialogComponentProvider {
 		private StringChoices getComboBoxEnum() {
 			String[] items = new String[comboBox.getItemCount()];
 			for (int i = 0; i < items.length; i++) {
-				items[i] = (String) comboBox.getItemAt(i);
+				items[i] = comboBox.getItemAt(i);
 			}
 			StringChoices choices = new StringChoices(items);
 			choices.setSelectedValue(comboBox.getSelectedIndex());

@@ -30,8 +30,9 @@ import javax.swing.table.AbstractTableModel;
 
 import org.jdom.Element;
 
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -103,7 +104,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		});
 		offsetField = new JTextField();
 
-		addrLabel = DockingUtils.createNonHtmlLabel("Base Address:");
+		addrLabel = new GDLabel("Base Address:");
 		addrLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		Dimension d = addrLabel.getPreferredSize();
 		addrLabel.setPreferredSize(d);
@@ -142,9 +143,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		add(addrLabel);
 		add(addrPanel);
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Ref-Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
 
 		enableOffsetField(false);

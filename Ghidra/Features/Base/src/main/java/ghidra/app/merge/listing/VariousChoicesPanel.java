@@ -25,7 +25,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
@@ -77,7 +78,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		rowPanel = new JPanel(layout);
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		setLayout(new BorderLayout());
-		headerLabel = DockingUtils.createNonHtmlLabel(" ");
+		headerLabel = new GDLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);
@@ -500,15 +501,13 @@ public class VariousChoicesPanel extends ConflictPanel {
 		return rows.size() > 0;
 	}
 
-	private class MyLabel extends JLabel {
-		private final static long serialVersionUID = 1;
+	private class MyLabel extends GLabel {
 
 		/**
 		 * @param text the text of this label.
 		 */
-		public MyLabel(final String text) {
+		public MyLabel(String text) {
 			super(text);
-			DockingUtils.turnOffHTMLRendering(this);
 			addComponentListener(new ComponentListener() {
 
 				@Override

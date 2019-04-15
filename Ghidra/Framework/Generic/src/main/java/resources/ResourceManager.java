@@ -690,4 +690,12 @@ public class ResourceManager {
 		testSearchPaths = results;
 		return testSearchPaths;
 	}
+
+	public static List<ImageIcon> loadImages(String... filenames) {
+		List<ImageIcon> results = new ArrayList<>(filenames.length);
+		for (String filename : filenames) {
+			results.add(loadImage(filename));
+		}
+		return results;
+	}
 }

@@ -26,7 +26,7 @@ import javax.swing.text.JTextComponent;
 
 import docking.*;
 import docking.widgets.OptionDialog;
-import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.combobox.GComboBox;
 import ghidra.app.util.viewer.field.AnnotatedStringHandler;
 import ghidra.app.util.viewer.field.Annotation;
 import ghidra.framework.plugintool.PluginTool;
@@ -266,7 +266,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 
 		AnnotationAdapterWrapper[] annotations = getAnnotationAdapterWrappers();
 		Arrays.sort(annotations);
-		JComboBox<AnnotationAdapterWrapper> annotationsComboBox = new GhidraComboBox<>(annotations);
+		GComboBox<AnnotationAdapterWrapper> annotationsComboBox = new GComboBox<>(annotations);
 		JButton addAnnotationButton = new JButton("Add Annotation");
 		addAnnotationButton.addActionListener(new ActionListener() {
 			@Override

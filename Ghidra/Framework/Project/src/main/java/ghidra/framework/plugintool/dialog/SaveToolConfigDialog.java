@@ -26,10 +26,10 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GLabel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -281,7 +281,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		nameField = new JTextField(11);
 		nameField.setName("ToolName");
 
-		namePanel.add(DockingUtils.createNonHtmlLabel("Tool Name:", SwingConstants.RIGHT));
+		namePanel.add(new GLabel("Tool Name:", SwingConstants.RIGHT));
 		namePanel.add(nameField);
 
 		return namePanel;
@@ -316,7 +316,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		panel.add(DockingUtils.createNonHtmlLabel("Icon Name:"), BorderLayout.WEST);
+		panel.add(new GLabel("Icon Name:"), BorderLayout.WEST);
 		panel.add(iconField, BorderLayout.CENTER);
 		panel.add(browseButton, BorderLayout.EAST);
 		return panel;

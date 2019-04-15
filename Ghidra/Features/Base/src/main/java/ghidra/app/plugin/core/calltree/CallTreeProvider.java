@@ -24,10 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import docking.*;
+import docking.ActionContext;
+import docking.WindowPosition;
 import docking.action.*;
 import docking.util.GraphicsUtils;
 import docking.widgets.dialogs.NumberInputDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
@@ -791,8 +793,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JPanel createTreePanel(boolean isIncoming, GTree tree) {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		panel.add(DockingUtils.createNonHtmlLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"),
-			BorderLayout.NORTH);
+		panel.add(new GLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"), BorderLayout.NORTH);
 		panel.add(tree, BorderLayout.CENTER);
 
 		return panel;

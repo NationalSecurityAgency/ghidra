@@ -32,6 +32,9 @@ import javax.swing.filechooser.FileSystemView;
 import docking.*;
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.*;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.*;
@@ -355,7 +358,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	private JPanel buildFileNamePanel() {
-		JLabel filenameLabel = DockingUtils.createNonHtmlLabel("File name:");
+		JLabel filenameLabel = new GDLabel("File name:");
 		FileDropDownSelectionDataModel model = new FileDropDownSelectionDataModel(this);
 		filenameTextField = new DropDownSelectionTextField<>(model);
 		filenameTextField.setMatchingWindowHeight(200);
@@ -384,9 +387,8 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 		filenameTextField.setName("filenameTextField");
 
-		JLabel filterLabel = DockingUtils.createNonHtmlLabel("Type:");
-		filterCombo = new JComboBox<>();
-		DockingUtils.turnOffHTMLRendering(filterCombo);
+		JLabel filterLabel = new GLabel("Type:");
+		filterCombo = new GComboBox<>();
 		filterCombo.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
 			gff -> gff != null ? gff.getDescription() : ""));
 		filterCombo.addItemListener(e -> rescanCurrentDirectory());

@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 
-import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GLabel;
 import ghidra.GhidraOptions;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.DomainObject;
@@ -508,7 +508,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 				editorPane.setName("MESSAGE-COMPONENT");
 				editorPane.setText(message);
 
-				editorPane.setBackground(DockingUtils.createNonHtmlLabel().getBackground());
+				editorPane.setBackground(new GLabel().getBackground());
 
 				JPanel panel = new JPanel(new BorderLayout());
 				panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

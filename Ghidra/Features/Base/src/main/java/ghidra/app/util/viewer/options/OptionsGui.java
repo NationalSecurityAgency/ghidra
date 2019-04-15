@@ -26,11 +26,13 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import docking.widgets.label.GDLabel;
 import ghidra.GhidraOptions;
 import ghidra.util.SystemUtilities;
 
@@ -338,12 +340,12 @@ public class OptionsGui extends JPanel {
 
 		GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		String envfonts[] = gEnv.getAvailableFontFamilyNames();
-		fontNameField = new JComboBox<>(envfonts);
+		fontNameField = new GComboBox<>(envfonts);
 		fontNameField.setBackground(Color.white);
 		fontNameField.setRenderer(new FontRenderer());
 		panel1.add(fontNameField);
 
-		fontSizeField = new JComboBox<>(fontSizes);
+		fontSizeField = new GComboBox<>(fontSizes);
 		fontSizeField.setBackground(Color.white);
 		panel1.add(fontSizeField);
 		panel.add(panel1, BorderLayout.NORTH);
@@ -361,7 +363,7 @@ public class OptionsGui extends JPanel {
 	}
 
 	//Displays the font field with the actual fonts for easier selection
-	class FontRenderer extends JLabel implements ListCellRenderer<String> {
+	class FontRenderer extends GDLabel implements ListCellRenderer<String> {
 		private static final long serialVersionUID = 1L;
 		private final Color SELECTED_COLOR = new Color(10, 36, 106);
 
@@ -372,7 +374,7 @@ public class OptionsGui extends JPanel {
 		@Override
 		public Component getListCellRendererComponent(JList<? extends String> list, String value,
 				int index, boolean isSelected, boolean cellHasFocus) {
-			setText(value.toString());
+			setText(value);
 			Font origFont = fontNameField.getFont();
 			setFont(new Font(value.toString(), origFont.getStyle(), origFont.getSize()));
 

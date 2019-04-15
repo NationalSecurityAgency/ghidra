@@ -22,8 +22,11 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
 import docking.widgets.dialogs.*;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -275,11 +278,10 @@ public class OptionDialog extends DialogComponentProvider {
 
 	private JPanel buildMessagePanel(String message, int messageType, Icon icon) {
 		JPanel panel = new JPanel(new BorderLayout());
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel(
-			(icon == null) ? getIconForMessageType(messageType) : icon);
 		JPanel textPanel = createTextPanel(message);
 		textPanel.setMaximumSize(textPanel.getPreferredSize());
-		panel.add(iconLabel, BorderLayout.WEST);
+		panel.add(new GIconLabel((icon == null) ? getIconForMessageType(messageType) : icon),
+			BorderLayout.WEST);
 		panel.add(textPanel, BorderLayout.CENTER);
 		return panel;
 	}
@@ -360,7 +362,7 @@ public class OptionDialog extends DialogComponentProvider {
 
 		this.dialogMessage = message;
 		if (HTMLUtilities.isHTML(dialogMessage)) {
-			JLabel messageLabel = DockingUtils.createHtmlLabel(dialogMessage);
+			JLabel messageLabel = new GHtmlLabel(dialogMessage);
 			messageLabel.setName(MESSAGE_COMPONENT_NAME);
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

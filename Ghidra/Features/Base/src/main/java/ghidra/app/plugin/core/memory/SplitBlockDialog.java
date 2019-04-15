@@ -24,7 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
@@ -118,13 +118,13 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneLengthField = new RegisterField(32, null, false);
 		blockOneLengthField.setName("BlockOneLength");
 
-		panelOne.add(DockingUtils.createNonHtmlLabel("Block Name:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelOne.add(blockOneNameField);
-		panelOne.add(DockingUtils.createNonHtmlLabel("Start Address:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panelOne.add(blockOneStartField);
-		panelOne.add(DockingUtils.createNonHtmlLabel("End Address:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("End Address:", SwingConstants.RIGHT));
 		panelOne.add(blockOneEnd);
-		panelOne.add(DockingUtils.createNonHtmlLabel("Block Length:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Block Length:", SwingConstants.RIGHT));
 		panelOne.add(blockOneLengthField);
 
 		JPanel panelTwo = new JPanel(new PairLayout(5, 5, 150));
@@ -139,13 +139,13 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockTwoLengthField = new RegisterField(32, null, false);
 		blockTwoLengthField.setName("BlockTwoLength");
 
-		panelTwo.add(DockingUtils.createNonHtmlLabel("Block Name:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoNameField);
-		panelTwo.add(DockingUtils.createNonHtmlLabel("Start Address:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoStart);
-		panelTwo.add(DockingUtils.createNonHtmlLabel("End Address:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("End Address:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoEndField);
-		panelTwo.add(DockingUtils.createNonHtmlLabel("Block Length:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Block Length:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoLengthField);
 
 		JPanel mainPanel = new JPanel();

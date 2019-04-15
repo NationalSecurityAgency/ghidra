@@ -22,7 +22,8 @@ import java.text.DecimalFormat;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.util.layout.PairLayout;
 
 class ShowMemoryDialog extends DialogComponentProvider {
@@ -81,18 +82,18 @@ class ShowMemoryDialog extends DialogComponentProvider {
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new PairLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		maxMem = DockingUtils.createNonHtmlLabel("00000000000", SwingConstants.RIGHT);
-		totalMem = DockingUtils.createNonHtmlLabel("00000000000", SwingConstants.RIGHT);
-		freeMem = DockingUtils.createNonHtmlLabel("00000000000", SwingConstants.RIGHT);
-		usedMem = DockingUtils.createNonHtmlLabel("00000000000", SwingConstants.RIGHT);
+		maxMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		totalMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		freeMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		usedMem = new GDLabel("00000000000", SwingConstants.RIGHT);
 
-		panel.add(DockingUtils.createNonHtmlLabel("Max Memory:"));
+		panel.add(new GLabel("Max Memory:"));
 		panel.add(maxMem);
-		panel.add(DockingUtils.createNonHtmlLabel("Total Memory:"));
+		panel.add(new GLabel("Total Memory:"));
 		panel.add(totalMem);
-		panel.add(DockingUtils.createNonHtmlLabel("Free Memory:"));
+		panel.add(new GLabel("Free Memory:"));
 		panel.add(freeMem);
-		panel.add(DockingUtils.createNonHtmlLabel("Used Memory:"));
+		panel.add(new GLabel("Used Memory:"));
 		panel.add(usedMem);
 
 		return panel;

@@ -23,8 +23,9 @@ import java.io.IOException;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -59,11 +60,10 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 	}
 
 	private void setupDescription() {
-		String description =
-			"<HTML>" + "Specify the files for converting a new data type archive (.gdt)<BR>" +
+		JLabel label = new GHtmlLabel(
+			"<HTML>Specify the files for converting a new data type archive (.gdt)<BR>" +
 				"to match the IDs of data types in an old data type archive.<BR>" +
-				"The result will be saved to the destination archive." + "</HTML>";
-		JLabel label = DockingUtils.createHtmlLabel(description);
+				"The result will be saved to the destination archive.</HTML>");
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		add(label, BorderLayout.NORTH);
@@ -76,7 +76,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 0;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(DockingUtils.createNonHtmlLabel("Old file name "), gbc);
+		filePanel.add(new GLabel("Old file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
@@ -114,7 +114,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 1;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(DockingUtils.createNonHtmlLabel("New file name "), gbc);
+		filePanel.add(new GLabel("New file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
@@ -147,7 +147,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridy = 2;
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
-		filePanel.add(DockingUtils.createNonHtmlLabel("Destination file name "), gbc);
+		filePanel.add(new GLabel("Destination file name "), gbc);
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;

@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreePath;
 
+import docking.widgets.label.GHtmlLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import ghidra.util.*;
@@ -171,7 +172,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		msgPanel.setLayout(new BorderLayout(16, 16));
 		msgPanel.setBorder(new EmptyBorder(16, 16, 16, 16));
 		{
-			JLabel msgText = new JLabel(getHTML(msg, report)) {
+			JLabel msgText = new GHtmlLabel(getHTML(msg, report)) {
 				@Override
 				public Dimension getPreferredSize() {
 					// when rendering HTML the label can expand larger than the screen;

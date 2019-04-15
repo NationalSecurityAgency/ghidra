@@ -24,12 +24,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
-import docking.DockingUtils;
 import docking.StatusBarSpacer;
 import docking.ToolTipManager;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import ghidra.util.*;
 import ghidra.util.layout.HorizontalLayout;
 import log.LogListener;
@@ -51,7 +51,7 @@ public class LogPanel extends JPanel implements LogListener {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 2));
 		button = new EmptyBorderButton(ResourceManager.loadImage("images/monitor.png"));
-		label = DockingUtils.createNonHtmlLabel();
+		label = new GDLabel();
 		label.setName("Details");
 		defaultColor = label.getForeground();
 		panel.add(label, BorderLayout.CENTER);

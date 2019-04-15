@@ -26,8 +26,8 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
+import docking.widgets.label.GDLabel;
 import docking.widgets.list.GList;
 import ghidra.util.exception.AssertException;
 
@@ -122,7 +122,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			updateChooserForSelection();
 		});
 
-		listEditorLabel = DockingUtils.createNonHtmlLabel();
+		listEditorLabel = new GDLabel();
 		listEditorLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {

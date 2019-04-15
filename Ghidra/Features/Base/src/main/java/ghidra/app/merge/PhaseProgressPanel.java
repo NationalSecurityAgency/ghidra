@@ -22,7 +22,8 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GIconLabel;
 import resources.ResourceManager;
 
 /**
@@ -80,7 +81,7 @@ public class PhaseProgressPanel extends JPanel {
 
 	private void createProgressPanel() {
 
-		titleLabel = DockingUtils.createNonHtmlLabel(title);
+		titleLabel = new GDLabel(title);
 		add(titleLabel);
 		progressLayout.putConstraint(SpringLayout.WEST, titleLabel, 5, SpringLayout.WEST, this);
 		progressLayout.putConstraint(SpringLayout.NORTH, titleLabel, 5, SpringLayout.NORTH, this);
@@ -96,9 +97,9 @@ public class PhaseProgressPanel extends JPanel {
 		doSetProgress(0);
 
 		progressMessagePanel = new JPanel(new BorderLayout());
-		messageIcon = DockingUtils.createNonHtmlLabel(INFORM_ICON);
+		messageIcon = new GIconLabel(INFORM_ICON);
 		messageIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-		messageLabel = DockingUtils.createNonHtmlLabel(DEFAULT_INFO);
+		messageLabel = new GDLabel(DEFAULT_INFO);
 		progressMessagePanel.add(messageIcon, BorderLayout.WEST);
 		progressMessagePanel.add(messageLabel, BorderLayout.CENTER);
 		doSetMessage(DEFAULT_INFO);

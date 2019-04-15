@@ -20,8 +20,8 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.DockingUtils;
 import docking.widgets.*;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
@@ -52,7 +52,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	private Component buildPriorityPanel() {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 40, 20, 0));
-		panel.add(DockingUtils.createNonHtmlLabel("Priority:  "));
+		panel.add(new GLabel("Priority:  "));
 		priorityField = new IntegerTextField(5, 0L);
 		panel.add(priorityField.getComponent());
 		return panel;
@@ -69,7 +69,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 		}
 		buttonGroup.add(button);
 		panel.add(button, BorderLayout.WEST);
-		JLabel label = DockingUtils.createNonHtmlLabel(type.getName(), icon, SwingConstants.LEFT);
+		JLabel label = new GLabel(type.getName(), icon, SwingConstants.LEFT);
 		label.setToolTipText(type.getDescription());
 		panel.add(label);
 		return panel;

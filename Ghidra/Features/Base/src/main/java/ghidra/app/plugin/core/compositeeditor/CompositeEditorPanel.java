@@ -32,7 +32,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.action.DockingActionIf;
 import docking.dnd.*;
@@ -43,6 +42,8 @@ import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.textfield.GValidatedTextField;
@@ -603,7 +604,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private JPanel createStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = DockingUtils.createNonHtmlLabel(" ");
+		statusLabel = new GDLabel(" ");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);
 		statusLabel.addComponentListener(new ComponentAdapter() {
@@ -657,7 +658,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel label = DockingUtils.createNonHtmlLabel(name + ":", SwingConstants.RIGHT);
+		JLabel label = new GLabel(name + ":", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(label.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));

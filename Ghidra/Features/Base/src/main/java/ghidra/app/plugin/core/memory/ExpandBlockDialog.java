@@ -24,7 +24,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.*;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -127,33 +129,29 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		endAddressInput.setAddress(end);
 		endAddressInput.setAddressSpaceEditable(false);
 
+		boolean isExpandUp = dialogType == EXPAND_UP;
+
 		startField = new JTextField(10);
 		startField.setName("StartAddress");
+		startField.setEnabled(isExpandUp);
+		startField.setText(start.toString());
+
 		endField = new JTextField(10);
 		endField.setName("EndAddress");
-		startField.setText(start.toString());
+		endField.setEnabled(!isExpandUp);
 		endField.setText(end.toString());
 
-		JLabel startLabel = DockingUtils.createNonHtmlLabel("Start Address:", SwingConstants.RIGHT);
-		JLabel endLabel = DockingUtils.createNonHtmlLabel("End Address:", SwingConstants.RIGHT);
-
-		if (dialogType == EXPAND_UP) {
-			endField.setEnabled(false);
-			startLabel.setText("New Start Address:");
-		}
-		else {
-			startField.setEnabled(false);
-			endLabel.setText("New End Address:");
-		}
 		lengthField = new RegisterField(32, null, false);
 		lengthField.setName("BlockLength");
 		lengthField.setValue(Long.valueOf(model.getLength()));
 
-		panel.add(startLabel);
-		panel.add((dialogType == EXPAND_UP) ? (JComponent) startAddressInput : startField);
-		panel.add(endLabel);
-		panel.add((dialogType == EXPAND_UP) ? (JComponent) endField : endAddressInput);
-		panel.add(DockingUtils.createNonHtmlLabel("Block Length:", SwingConstants.RIGHT));
+		panel.add(
+			new GLabel(isExpandUp ? "New Start Address:" : "Start Address:", SwingConstants.RIGHT));
+		panel.add(isExpandUp ? (JComponent) startAddressInput : startField);
+		panel.add(
+			new GLabel(isExpandUp ? "End Address:" : "New End Address:", SwingConstants.RIGHT));
+		panel.add(isExpandUp ? (JComponent) endField : endAddressInput);
+		panel.add(new GLabel("Block Length:", SwingConstants.RIGHT));
 		panel.add(lengthField);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());

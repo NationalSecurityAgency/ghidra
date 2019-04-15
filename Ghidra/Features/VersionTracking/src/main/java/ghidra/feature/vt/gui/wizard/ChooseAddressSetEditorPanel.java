@@ -25,6 +25,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -229,7 +230,7 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		buttonPanel.add(addRangeButton);
 		buttonPanel.add(subtractRangeButton);
 		JPanel headerPanel = new JPanel(new BorderLayout());
-		headerPanel.add(DockingUtils.createNonHtmlLabel("Address Ranges:"), BorderLayout.WEST);
+		headerPanel.add(new GLabel("Address Ranges:"), BorderLayout.WEST);
 		headerPanel.add(buttonPanel, BorderLayout.EAST);
 
 		listModel = new AddressSetListModel(myCurrentAddressSet.toList());

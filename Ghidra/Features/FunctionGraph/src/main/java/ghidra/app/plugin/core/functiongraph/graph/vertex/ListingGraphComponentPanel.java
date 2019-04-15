@@ -27,13 +27,15 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
-import docking.*;
+import docking.ActionContext;
+import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
@@ -202,7 +204,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		//            previewListingPanel.getFieldPanel().setSelectionMode( FieldPanel.NO_SELECTION );
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 
-		tooltipTitleLabel = DockingUtils.createNonHtmlLabel();
+		tooltipTitleLabel = new GDLabel();
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
 		tooltipTitleLabel.setBackground(FGVertex.TOOLTIP_BACKGROUND_COLOR);
 		tooltipTitleLabel.setOpaque(true);
@@ -491,8 +493,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		if (address == null) {
 			// This is an unusual case.   For now, do something reasonable.
 			String side = isDestinationVertex ? "end" : "start";
-			toolTipComponent = DockingUtils.createNonHtmlLabel(
-				"Unable to find address for edge " + side + ": " + edge);
+			toolTipComponent = new GDLabel("Unable to find address for edge " + side + ": " + edge);
 			toolTipComponent.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 			if (previewListingPanel != null) {
 				previewListingPanel = null;

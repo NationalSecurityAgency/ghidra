@@ -22,7 +22,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
@@ -50,10 +50,6 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 
 	private JComponent buildWorkPanel(Register register, Address start, Address end,
 			BigInteger value, AddressFactory factory) {
-		JLabel regLabel = DockingUtils.createNonHtmlLabel("Register:");
-		JLabel startAddrLabel = DockingUtils.createNonHtmlLabel("Start Address:");
-		JLabel endAddrLabel = DockingUtils.createNonHtmlLabel("End Address:");
-		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Value:");
 
 		JTextField registerField =
 			new JTextField(register.getName() + " (" + register.getBitLength() + ")");
@@ -80,13 +76,13 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout(5, 1));
 
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(regLabel);
+		panel.add(new GLabel("Register:"));
 		panel.add(registerField);
-		panel.add(startAddrLabel);
+		panel.add(new GLabel("Start Address:"));
 		panel.add(startAddrField);
-		panel.add(endAddrLabel);
+		panel.add(new GLabel("End Address:"));
 		panel.add(endAddrField);
-		panel.add(valueLabel);
+		panel.add(new GLabel("Value:"));
 		panel.add(registerValueField);
 
 		return panel;

@@ -30,6 +30,8 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
@@ -120,7 +122,6 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 			ranges = plugin.getProgramSelection().getNumAddressRanges();
 		}
 
-		JLabel locationLabel = DockingUtils.createNonHtmlLabel("Address: ", SwingConstants.RIGHT);
 		locationTextField = new JTextField(50);
 		locationTextField.setText(address.toString());
 		if (hasSelection && ranges > 1) {
@@ -132,7 +133,6 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		locationTextField.setMinimumSize(locationTextField.getPreferredSize());
 		locationTextField.addKeyListener(listener);
 
-		JLabel categoryLabel = DockingUtils.createNonHtmlLabel("Category: ", SwingConstants.RIGHT);
 		categoryComboBox = new GhidraComboBox<>(getModel());
 		categoryComboBox.setEditable(true);
 		categoryComboBox.addKeyListener(listener);
@@ -140,8 +140,6 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		categoryTextField = (JTextField) categoryComboBox.getEditor().getEditorComponent();
 		categoryTextField.addKeyListener(listener);
 
-		JLabel commentLabel =
-			DockingUtils.createNonHtmlLabel("Description: ", SwingConstants.RIGHT);
 		commentTextField = new JTextField(20);
 		commentTextField.addKeyListener(listener);
 
@@ -161,7 +159,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		gbc.weighty = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(categoryLabel, gbc);
+		mainPanel.add(new GLabel("Category: ", SwingConstants.RIGHT), gbc);
 
 		gbc.gridx = 2;
 		gbc.gridy = 1;
@@ -177,7 +175,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		gbc.weighty = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(locationLabel, gbc);
+		mainPanel.add(new GLabel("Address: ", SwingConstants.RIGHT), gbc);
 
 		gbc.gridx = 2;
 		gbc.gridy = 0;
@@ -193,7 +191,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		gbc.weighty = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(commentLabel, gbc);
+		mainPanel.add(new GLabel("Description: ", SwingConstants.RIGHT), gbc);
 
 		gbc.gridx = 2;
 		gbc.gridy = 2;
@@ -204,7 +202,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		mainPanel.add(commentTextField, gbc);
 
 		ImageIcon icon = BookmarkNavigator.NOTE_ICON;
-		JLabel imageLabel = DockingUtils.createNonHtmlLabel(icon);
+		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));
 

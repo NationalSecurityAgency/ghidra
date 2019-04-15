@@ -24,6 +24,8 @@ import java.net.UnknownHostException;
 import javax.swing.*;
 
 import docking.widgets.ScrollableTextArea;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.util.HTMLUtilities;
@@ -48,7 +50,6 @@ public class ErrLogDialog extends DialogComponentProvider {
 	private ErrorDetailsPanel detailsPanel;
 	private JButton detailsButton;
 	private JButton sendButton;
-	private JLabel messageLabel;
 	private JPanel mainPanel;
 	private static ErrorReporter errorReporter;
 
@@ -128,13 +129,11 @@ public class ErrLogDialog extends DialogComponentProvider {
 
 	private void buildMainPanel(String message, String details, boolean isException) {
 
-		messageLabel = DockingUtils.createHtmlLabel(HTMLUtilities.toHTML(message));
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel(
-			UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT);
-
 		JPanel introPanel = new JPanel(new BorderLayout(10, 10));
-		introPanel.add(iconLabel, BorderLayout.WEST);
-		introPanel.add(messageLabel, BorderLayout.CENTER);
+		introPanel.add(
+			new GIconLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT),
+			BorderLayout.WEST);
+		introPanel.add(new GHtmlLabel(HTMLUtilities.toHTML(message)), BorderLayout.CENTER);
 
 		mainPanel = new JPanel(new BorderLayout(10, 20));
 		mainPanel.add(introPanel, BorderLayout.NORTH);

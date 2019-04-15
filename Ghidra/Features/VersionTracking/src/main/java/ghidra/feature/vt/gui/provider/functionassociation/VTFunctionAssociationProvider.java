@@ -28,13 +28,15 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 
-import docking.*;
+import docking.ActionContext;
 import docking.ToolTipManager;
+import docking.WindowPosition;
 import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
 import ghidra.app.services.GoToService;
@@ -355,7 +357,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		dualTablePanel.add(splitPane, BorderLayout.CENTER);
 
 		JPanel statusPanel = new JPanel(new BorderLayout());
-		statusLabel = DockingUtils.createNonHtmlLabel(NO_ERROR_MESSAGE);
+		statusLabel = new GDLabel(NO_ERROR_MESSAGE);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.RED.darker());
 		statusLabel.addComponentListener(new ComponentAdapter() {
@@ -484,7 +486,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		String sourceString =
 			(sourceProgram != null) ? sourceProgram.getDomainFile().toString() : NO_SESSION;
 		String sourceTitle = SOURCE_TITLE + " = " + sourceString;
-		sourceSessionLabel = DockingUtils.createNonHtmlLabel(sourceTitle);
+		sourceSessionLabel = new GDLabel(sourceTitle);
 		sourceSessionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		sourceFunctionPanel.add(sourceSessionLabel, BorderLayout.NORTH);
 		sourceFunctionPanel.add(sourceThreadedTablePanel, BorderLayout.CENTER);
@@ -542,7 +544,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			(destinationProgram != null) ? destinationProgram.getDomainFile().toString()
 					: NO_SESSION;
 		String destinationTitle = DESTINATION_TITLE + " = " + destinationString;
-		destinationSessionLabel = DockingUtils.createNonHtmlLabel(destinationTitle);
+		destinationSessionLabel = new GDLabel(destinationTitle);
 		destinationSessionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		destinationFunctionPanel.add(destinationSessionLabel, BorderLayout.NORTH);
 		destinationFunctionPanel.add(destinationThreadedTablePanel, BorderLayout.CENTER);

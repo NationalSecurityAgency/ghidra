@@ -22,7 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
@@ -60,8 +60,8 @@ class FilterDialog extends DialogComponentProvider {
 			JPanel p = new JPanel(new BorderLayout());
 			p.add(buttons[i], BorderLayout.WEST);
 			buttons[i].setSelected(provider.isShowingType(types[i].getTypeString()));
-			JLabel l = DockingUtils.createNonHtmlLabel(types[i].getTypeString(), types[i].getIcon(),
-				SwingConstants.LEFT);
+			JLabel l =
+				new GLabel(types[i].getTypeString(), types[i].getIcon(), SwingConstants.LEFT);
 			p.add(l, BorderLayout.CENTER);
 			panel.add(p);
 		}

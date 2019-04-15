@@ -26,12 +26,12 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.io.FilenameUtils;
 
 import docking.ActionContext;
-import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
@@ -693,7 +693,7 @@ class FSBActionManager {
 					}
 					else {
 						SystemUtilities.runSwingLater(() -> {
-							JLabel label = DockingUtils.createNonHtmlLabel(icon);
+							JLabel label = new GIconLabel(icon);
 							JOptionPane.showMessageDialog(null, label,
 								"Image Viewer: " + fsrl.getName(), JOptionPane.INFORMATION_MESSAGE);
 						});

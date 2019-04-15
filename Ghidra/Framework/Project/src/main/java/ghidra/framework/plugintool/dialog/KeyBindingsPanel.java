@@ -33,6 +33,7 @@ import docking.action.KeyBindingData;
 import docking.util.KeyBindingUtils;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -274,8 +275,6 @@ public class KeyBindingsPanel extends JPanel {
 		JPanel keyPanel = new JPanel(new BorderLayout());
 
 		JPanel defaultPanel = new JPanel(new BorderLayout());
-		JLabel imageLabel =
-			DockingUtils.createNonHtmlLabel(ResourceManager.loadImage("images/information.png"));
 
 		// the content of the left-hand side label
 		MultiLineLabel mlabel =
@@ -288,7 +287,7 @@ public class KeyBindingsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(imageLabel);
+		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(mlabel);
 

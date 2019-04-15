@@ -35,15 +35,15 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * Use this if you only need to provide a way to get the string value from the type being shown
 	 * in the list.
 	 * 
-	 * @param cellTextFunc a function that maps a custom type to a string value
+	 * @param cellToTextMappingFunction a function that maps your custom type to a string value
 	 * @return new GListCellRenderer instance
 	 */
 	public static <E> GListCellRenderer<E> createDefaultCellTextRenderer(
-			Function<E, String> cellTextFunc) {
+			Function<E, String> cellToTextMappingFunction) {
 		return new GListCellRenderer<>() {
 			@Override
 			protected String getItemText(E value) {
-				return cellTextFunc.apply(value);
+				return cellToTextMappingFunction.apply(value);
 			}
 		};
 	}

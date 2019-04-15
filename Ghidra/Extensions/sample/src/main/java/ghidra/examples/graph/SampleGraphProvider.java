@@ -28,12 +28,15 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.*;
+import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.*;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.examples.graph.layout.SampleGraphPluginDependencyLayoutProvider;
 import ghidra.framework.plugintool.*;
 import ghidra.graph.job.FilterVerticesJob;
@@ -145,7 +148,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		JLabel label = DockingUtils.createNonHtmlLabel("Vertex Filter: ");
+		JLabel label = new GDLabel("Vertex Filter: ");
 		label.setToolTipText(
 			"Vertices with names matching the filter will remain, along with connected vertices");
 		panel.add(label);
@@ -197,7 +200,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		fadedButton.setSelected(true);
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panel.add(DockingUtils.createNonHtmlLabel("Filtered Display: "));
+		panel.add(new GLabel("Filtered Display: "));
 		panel.add(fadedButton);
 		panel.add(removedButton);
 		return panel;

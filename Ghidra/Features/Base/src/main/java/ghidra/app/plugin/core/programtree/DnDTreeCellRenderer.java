@@ -22,8 +22,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import docking.DockingUtils;
 import docking.ToolTipManager;
-import docking.widgets.AbstractGCellRenderer;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
 
@@ -87,7 +87,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 * @param enable true to enable HTML rendering; false to disable it
 	 */
 	public void setHTMLRenderingEnabled(boolean enable) {
-		putClientProperty(AbstractGCellRenderer.HTML_DISABLE_STRING, !enable);
+		putClientProperty(DockingUtils.HTML_DISABLE_STRING, !enable);
 	}
 
 	void setSelectionForDrag(Color color) {

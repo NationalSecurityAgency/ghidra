@@ -26,7 +26,9 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 
 import db.*;
-import docking.DockingUtils;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.plugin.debug.dbtable.*;
 import ghidra.util.Msg;
@@ -59,11 +61,11 @@ class DbViewerComponent extends JPanel {
 
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
-		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Database:"));
-		dbLabel = DockingUtils.createNonHtmlLabel();
+		subNorthPanel.add(new GLabel("Database:"));
+		dbLabel = new GDLabel();
 		subNorthPanel.add(dbLabel);
-		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Tables:"));
-		combo = new JComboBox<>();
+		subNorthPanel.add(new GLabel("Tables:"));
+		combo = new GComboBox<>();
 		combo.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -226,9 +228,9 @@ class DbViewerComponent extends JPanel {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		JLabel statsLabel = DockingUtils.createNonHtmlLabel(
-			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size);
-		panel.add(statsLabel, BorderLayout.SOUTH);
+		panel.add(new GLabel(
+			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size),
+			BorderLayout.SOUTH);
 
 		return panel;
 	}

@@ -30,9 +30,9 @@ import javax.swing.table.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import docking.DockingUtils;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.options.*;
@@ -522,7 +522,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		List<Options> optionGroups = analysisOptions.getChildOptions();
 		noOptionsPanel = new JPanel(new VerticalLayout(5));
 		noOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-		noOptionsPanel.add(DockingUtils.createNonHtmlLabel("No options available."));
+		noOptionsPanel.add(new GLabel("No options available."));
 
 		for (Options optionsGroup : optionGroups) {
 			String analyzerName = optionsGroup.getName();

@@ -20,9 +20,11 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.ActionContext;
+import docking.WindowPosition;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.nav.Navigatable;
@@ -205,13 +207,12 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 
 		mainPanel.setLayout(new BorderLayout(0, 10));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		nameLabel = DockingUtils.createNonHtmlLabel("Merge Programs", SwingConstants.LEFT);
+		nameLabel = new GDLabel("Merge Programs", SwingConstants.LEFT);
 
 		JPanel iconPanel = new JPanel();
 		new BoxLayout(iconPanel, BoxLayout.X_AXIS);
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel(MERGE_ICON);
 		iconPanel.add(Box.createHorizontalStrut(5));
-		iconPanel.add(iconLabel);
+		iconPanel.add(new GIconLabel(MERGE_ICON));
 		iconPanel.add(Box.createHorizontalStrut(5));
 		iconPanel.add(nameLabel);
 
@@ -262,7 +263,7 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 		phasePanel = new PhaseProgressPanel("Progress In Current Phase");
 
 		defaultPanel.add(progressPanel); // panel with each phase and their status indicators.
-		defaultPanel.add(DockingUtils.createNonHtmlLabel(" ")); // Blank separator label.
+		defaultPanel.add(new GLabel(" ")); // Blank separator label.
 		defaultPanel.add(phasePanel); // panel for the current phase's progress and message.
 		conflictPanel.add(defaultPanel, DEFAULT_ID);
 		conflictPanel.setPreferredSize(new Dimension(610, 500));

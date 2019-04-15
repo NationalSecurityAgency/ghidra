@@ -27,10 +27,12 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import db.buffers.LocalBufferFile;
-import docking.DockingUtils;
 import docking.framework.DockingApplicationConfiguration;
 import docking.framework.DockingApplicationLayout;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.Application;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.Msg;
@@ -157,15 +159,15 @@ public class DbViewer extends JFrame {
 		mainPanel = new JPanel(new BorderLayout());
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
-		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Database:"));
-		subNorthPanel.add(DockingUtils.createNonHtmlLabel(dbFile.getName()));
-		subNorthPanel.add(DockingUtils.createNonHtmlLabel("Tables:"));
+		subNorthPanel.add(new GLabel("Database:"));
+		subNorthPanel.add(new GLabel(dbFile.getName()));
+		subNorthPanel.add(new GLabel("Tables:"));
 		String[] names = new String[tables.length];
 		for (int i = 0; i < names.length; i++) {
 			names[i] =
 				tables[i].getName() + " (" + Integer.toString(tables[i].getRecordCount()) + ")";
 		}
-		combo = new JComboBox<>(names);
+		combo = new GComboBox<>(names);
 		combo.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -223,7 +225,7 @@ public class DbViewer extends JFrame {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		JLabel statsLabel = DockingUtils.createNonHtmlLabel(
+		JLabel statsLabel = new GDLabel(
 			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size);
 		panel.add(statsLabel, BorderLayout.SOUTH);
 

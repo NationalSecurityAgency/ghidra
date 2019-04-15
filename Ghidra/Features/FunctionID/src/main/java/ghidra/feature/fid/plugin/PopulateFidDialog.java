@@ -24,9 +24,11 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.script.SelectLanguageDialog;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.DefaultFidPopulateResultReporter;
@@ -106,36 +108,36 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private JComponent buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		JLabel jLabel = DockingUtils.createNonHtmlLabel("Fid Database: ", SwingConstants.RIGHT);
+		JLabel jLabel = new GDLabel("Fid Database: ", SwingConstants.RIGHT);
 		jLabel.setToolTipText("Choose the Fid Database to populate");
 		panel.add(jLabel);
 		panel.add(buildFidCombo());
 
-		panel.add(DockingUtils.createNonHtmlLabel("Library Family Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Library Family Name: ", SwingConstants.RIGHT));
 		libraryFamilyNameTextField = new JTextField(20);
 		libraryFamilyNameTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(libraryFamilyNameTextField);
 
-		panel.add(DockingUtils.createNonHtmlLabel("Library Version: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Library Version: ", SwingConstants.RIGHT));
 		versionTextField = new JTextField();
 		versionTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(versionTextField);
 
-		panel.add(DockingUtils.createNonHtmlLabel("Library Variant: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Library Variant: ", SwingConstants.RIGHT));
 		variantTextField = new JTextField();
 		variantTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(variantTextField);
 
-		panel.add(DockingUtils.createNonHtmlLabel("Base Library: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Base Library: ", SwingConstants.RIGHT));
 		panel.add(buildLibraryCombo());
 
-		panel.add(DockingUtils.createNonHtmlLabel("Root Folder: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Root Folder: ", SwingConstants.RIGHT));
 		panel.add(buildDomainFolderChooserField());
 
-		panel.add(DockingUtils.createNonHtmlLabel("Language: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguageField());
 
-		panel.add(DockingUtils.createNonHtmlLabel("Common Symbols File: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Common Symbols File: ", SwingConstants.RIGHT));
 		panel.add(buildSymbolsFileField(), jLabel);
 
 		return panel;
@@ -182,8 +184,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 
 	private Component buildLibraryCombo() {
 		LibraryChoice[] choices = getChoicesForLibraryCombo();
-		libraryComboBox = new JComboBox<>(choices);
-		DockingUtils.turnOffHTMLRendering(libraryComboBox);
+		libraryComboBox = new GComboBox<>(choices);
 		return libraryComboBox;
 	}
 
@@ -235,7 +236,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private Component buildFidCombo() {
 		List<FidFile> fidFileList = FidFileManager.getInstance().getUserAddedFiles();
 		FidFile[] files = fidFileList.toArray(new FidFile[fidFileList.size()]);
-		fidFileComboBox = new JComboBox<>(files);
+		fidFileComboBox = new GComboBox<>(files);
 		fidFileComboBox.addActionListener(e -> updateLibraryChoices());
 		return fidFileComboBox;
 	}

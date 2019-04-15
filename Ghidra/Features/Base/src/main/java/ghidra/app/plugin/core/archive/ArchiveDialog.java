@@ -21,9 +21,9 @@ import java.io.File;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.plugintool.PluginTool;
@@ -76,7 +76,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 		GridBagLayout gbl = new GridBagLayout();
 		JPanel outerPanel = new JPanel(gbl);
 
-		archiveLabel = DockingUtils.createNonHtmlLabel(" Archive File ");
+		archiveLabel = new GDLabel(" Archive File ");
 		archiveField = new JTextField();
 		archiveField.setName("archiveField");
 		archiveField.setColumns(NUM_TEXT_COLUMNS);

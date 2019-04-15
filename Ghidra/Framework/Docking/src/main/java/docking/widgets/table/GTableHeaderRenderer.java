@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
@@ -52,8 +52,8 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 	private static final Icon FILTER_ICON =
 		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/filter_off.png"), 12, 12);
 
-	private JLabel textLabel = DockingUtils.createNonHtmlLabel();
-	private JLabel iconLabel = DockingUtils.createNonHtmlLabel();
+	private JLabel textLabel = new GDLabel();
+	private JLabel iconLabel = new GDLabel();
 	private Icon helpIcon = null;
 	private CustomPaddingBorder customBorder;
 	protected boolean isPaintingPrimarySortColumn;

@@ -26,8 +26,9 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
-import docking.DockingUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.label.GDLabel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
@@ -201,12 +202,11 @@ public class ConditionTestPanel extends JPanel {
 	private Component createSummaryPanel() {
 		JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		runsLabel =
-			DockingUtils.createNonHtmlLabel("Tests: 0/" + conditionTestModel.getTestCount());
+		runsLabel = new GDLabel("Tests: 0/" + conditionTestModel.getTestCount());
 		panel.add(runsLabel);
-		errorsLabel = DockingUtils.createNonHtmlLabel("Errors: 0");
+		errorsLabel = new GDLabel("Errors: 0");
 		panel.add(errorsLabel);
-		warningsLabel = DockingUtils.createNonHtmlLabel("Warnings: 0");
+		warningsLabel = new GDLabel("Warnings: 0");
 		panel.add(warningsLabel);
 
 		return panel;
@@ -269,7 +269,7 @@ public class ConditionTestPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class ScrollableLabel extends JLabel implements Scrollable {
+	private class ScrollableLabel extends GDHtmlLabel implements Scrollable {
 
 		@Override
 		public Dimension getPreferredScrollableViewportSize() {
@@ -368,7 +368,7 @@ public class ConditionTestPanel extends JPanel {
 			checkbox = new JCheckBox();
 			checkbox.setSelected(true);
 			add(checkbox);
-			label = DockingUtils.createNonHtmlLabel(test.getName());
+			label = new GDLabel(test.getName());
 			add(label);
 			label.setToolTipText(test.getDescription());
 			checkbox.addChangeListener(e -> {
@@ -406,7 +406,7 @@ public class ConditionTestPanel extends JPanel {
 		public TestStatusPanel(ConditionTester test) {
 			super(new BorderLayout());
 			this.test = test;
-			label = DockingUtils.createNonHtmlLabel();
+			label = new GDLabel();
 			label.setHorizontalAlignment(SwingConstants.LEFT);
 			add(label);
 		}

@@ -27,6 +27,7 @@ import javax.swing.text.*;
 
 import docking.*;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.*;
@@ -216,7 +217,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 10, 4));
 		panel.setLayout(new BorderLayout());
 
-		JLabel searchLabel = DockingUtils.createNonHtmlLabel("Search for:");
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
 		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();
@@ -240,7 +240,7 @@ class SearchTextDialog extends DialogComponentProvider {
 		JPanel searchPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(searchPanel, BoxLayout.X_AXIS);
 		searchPanel.setLayout(bl);
-		searchPanel.add(searchLabel);
+		searchPanel.add(new GLabel("Search for:"));
 		searchPanel.add(Box.createHorizontalStrut(5));
 		searchPanel.add(valueComboBox);
 		JPanel outerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));

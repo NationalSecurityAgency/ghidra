@@ -20,7 +20,7 @@ import java.awt.BorderLayout;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.program.model.address.*;
 import ghidra.util.HTMLUtilities;
@@ -60,8 +60,8 @@ public class ConflictInfoPanel extends JPanel {
 		setLayout(new BorderLayout());
 		setBorder(BorderFactory.createTitledBorder("Resolve Current Conflict"));
 
-		westLabel = DockingUtils.createHtmlLabel("<html></html>");
-		eastLabel = DockingUtils.createHtmlLabel("<html></html>");
+		westLabel = new GDHtmlLabel("<html></html>");
+		eastLabel = new GDHtmlLabel("<html></html>");
 		add(westLabel, BorderLayout.WEST);
 		add(eastLabel, BorderLayout.EAST);
 	}

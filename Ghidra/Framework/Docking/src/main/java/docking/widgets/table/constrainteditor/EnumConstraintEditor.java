@@ -21,7 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.EnumColumnConstraint;
 
@@ -77,7 +77,7 @@ public class EnumConstraintEditor<T extends Enum<T>> extends AbstractColumnConst
 		JPanel outerPanel = new JPanel(new BorderLayout());
 		outerPanel.add(panel, BorderLayout.CENTER);
 
-		infoLabel = DockingUtils.createHtmlLabel("");
+		infoLabel = new GDHtmlLabel("");
 		infoLabel.setForeground(Color.GRAY);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		outerPanel.add(infoLabel, BorderLayout.SOUTH);

@@ -25,7 +25,7 @@ import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.DockingUtils;
+import docking.widgets.combobox.GComboBox;
 import ghidra.program.model.address.*;
 
 /**
@@ -67,9 +67,8 @@ public class AddressInput extends JPanel {
 		setLayout(new BorderLayout());
 		textField = new JTextField(10);
 		textField.setName("JTextField");//for JUnits...
-		combo = new JComboBox<>();
+		combo = new GComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
-		DockingUtils.turnOffHTMLRendering(combo);
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);
 		comboAdded = false;
@@ -196,7 +195,7 @@ public class AddressInput extends JPanel {
 			// We don't want to let users create functions in certain memory spaces (eg: OTHER),
 			// so don't populate the model with them.
 			if (!spaces[i].isLoadedMemorySpace()) {
-				//continue;
+				continue;
 			}
 
 			String s = spaces[i].toString();

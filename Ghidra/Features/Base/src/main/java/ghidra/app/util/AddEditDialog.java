@@ -24,7 +24,8 @@ import javax.swing.border.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.*;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.cmd.label.*;
 import ghidra.framework.cmd.CompoundCmd;
@@ -427,9 +428,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 */
 	private JPanel create() {
 		labelNameChoices = new GhidraComboBox<>();
-		DockingUtils.turnOffHTMLRendering(labelNameChoices);
 		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
-		DockingUtils.turnOffHTMLRendering(comboBox);
 		comboBox.setEnterKeyForwarding(true);
 		namespaceChoices = comboBox;
 

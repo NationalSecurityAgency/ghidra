@@ -21,7 +21,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
@@ -102,12 +103,11 @@ public class UndoActionDialog extends DialogComponentProvider {
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.add(saveCopyCB);
 
-		JLabel label = DockingUtils.createNonHtmlLabel(
-			"Undo " + actionString + " of the selected files:", SwingConstants.LEFT);
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel(icon);
 		JPanel iconPanel = new JPanel(new BorderLayout(10, 0));
-		iconPanel.add(iconLabel, BorderLayout.WEST);
-		iconPanel.add(label, BorderLayout.CENTER);
+		iconPanel.add(new GIconLabel(icon), BorderLayout.WEST);
+		iconPanel.add(
+			new GLabel("Undo " + actionString + " of the selected files:", SwingConstants.LEFT),
+			BorderLayout.CENTER);
 
 		innerPanel.add(Box.createVerticalStrut(10));
 		innerPanel.add(iconPanel);

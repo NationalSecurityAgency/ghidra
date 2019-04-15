@@ -20,12 +20,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
 
-import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ChangeFunctionTagCmd;
 import ghidra.app.cmd.function.DeleteFunctionTagCmd;
 import ghidra.framework.cmd.Command;
@@ -150,9 +151,7 @@ public abstract class TagListPanel extends JPanel {
 			}
 		});
 
-		JLabel label = DockingUtils.createNonHtmlLabel(title);
-
-		add(label, BorderLayout.NORTH);
+		add(new GLabel(title), BorderLayout.NORTH);
 		add(list, BorderLayout.CENTER);
 	}
 

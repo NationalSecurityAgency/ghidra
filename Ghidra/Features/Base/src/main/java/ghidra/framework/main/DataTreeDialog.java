@@ -27,6 +27,9 @@ import javax.swing.event.DocumentListener;
 
 import docking.*;
 import docking.event.mouse.GMouseListenerAdapter;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.framework.main.datatree.ClearCutAction;
@@ -562,8 +565,7 @@ public class DataTreeDialog extends DialogComponentProvider
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(new TitledBorder("Current Projects"));
-		projectComboBox = new JComboBox<>();
-		DockingUtils.turnOffHTMLRendering(projectComboBox);
+		projectComboBox = new GComboBox<>();
 		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
 		projectComboBox.setModel(model);
 		model.addElement("defaultProject");
@@ -626,7 +628,6 @@ public class DataTreeDialog extends DialogComponentProvider
 			}
 		});
 
-		folderNameLabel = DockingUtils.createNonHtmlLabel("   ");
 		boolean userChoosesName = (type == SAVE) || (type == CREATE);
 		nameField.setEditable(userChoosesName);
 		nameField.setEnabled(userChoosesName);
@@ -634,22 +635,18 @@ public class DataTreeDialog extends DialogComponentProvider
 		// don't put the filter in the dialog when the user can/must type a name, as it's confusing
 		treePanel.setTreeFilterEnabled(!userChoosesName);
 
-		JLabel nameLabel = null;
-		if (type == CHOOSE_FOLDER) {
-			nameLabel = DockingUtils.createNonHtmlLabel("Folder Name:", SwingConstants.RIGHT);
-		}
-		else {
-			nameLabel = DockingUtils.createNonHtmlLabel("Name:", SwingConstants.RIGHT);
-		}
-
 		JPanel namePanel = new JPanel(new PairLayout(2, 5, 100));
 
 		if (!userChoosesName) {
 			namePanel.setBorder(BorderFactory.createEmptyBorder(20, 5, 5, 5));
 		}
-		namePanel.add(DockingUtils.createNonHtmlLabel("Folder Path:", SwingConstants.RIGHT));
+		namePanel.add(new GLabel("Folder Path:", SwingConstants.RIGHT));
+
+		folderNameLabel = new GDLabel("   ");
 		namePanel.add(folderNameLabel);
-		namePanel.add(nameLabel);
+
+		namePanel.add(
+			new GLabel(type == CHOOSE_FOLDER ? "Folder Name:" : "Name:", SwingConstants.RIGHT));
 		namePanel.add(nameField);
 
 		outerPanel.add(namePanel, BorderLayout.CENTER);

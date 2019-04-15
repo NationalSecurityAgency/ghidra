@@ -23,7 +23,8 @@ import java.util.*;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
@@ -42,7 +43,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	static final String EXCLUDED_TAGS_KEY = "TagFilter.tags";
 	private static final String DELIMITER = ":";
 	private Map<String, VTMatchTag> excludedTags = new TreeMap<>(); // ordered by String
-	private JLabel excludedTagsLabel = DockingUtils.createNonHtmlLabel();
+	private JLabel excludedTagsLabel = new GDLabel();
 	private JComponent component;
 
 	private final VTController controller;
@@ -72,7 +73,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
-		innerPanel.add(DockingUtils.createNonHtmlLabel("Excluded Tags: "));
+		innerPanel.add(new GLabel("Excluded Tags: "));
 		innerPanel.add(excludedTagsLabel);
 		innerPanel.add(Box.createHorizontalGlue());
 		innerPanel.add(editButton);

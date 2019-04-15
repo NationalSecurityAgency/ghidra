@@ -21,7 +21,7 @@ import java.awt.FlowLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 
 /**
  * Simple panel containing a JLabel for displaying error messages.
@@ -37,7 +37,7 @@ public class MessagePanel extends JPanel {
 	 */
 	public MessagePanel() {
 		setLayout(new FlowLayout(FlowLayout.CENTER));
-		msgLabel = DockingUtils.createNonHtmlLabel(NO_STATUS);
+		msgLabel = new GDLabel(NO_STATUS);
 		add(msgLabel);
 	}
 

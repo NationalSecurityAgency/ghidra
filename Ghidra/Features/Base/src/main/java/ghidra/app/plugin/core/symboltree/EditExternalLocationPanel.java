@@ -25,11 +25,12 @@ import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.main.AppInfo;
@@ -120,9 +121,7 @@ class EditExternalLocationPanel extends JPanel {
 		topPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Program"), new EmptyBorder(0, 5, 5, 5)));
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Name:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		extLibNameComboBox = new GhidraComboBox<>();
 		extLibNameComboBox.setEditable(true);
 		nameDocumentListener = new DocumentListener() {
@@ -170,38 +169,28 @@ class EditExternalLocationPanel extends JPanel {
 		buttonPanel.add(editButton);
 		pathPanel.add(buttonPanel, BorderLayout.EAST);
 
-		label = DockingUtils.createNonHtmlLabel("Path:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Path:", SwingConstants.RIGHT));
 		topPanel.add(pathPanel);
 
 		JPanel bottomPanel = new JPanel(new PairLayout(10, 10, 160));
 		bottomPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Location"), new EmptyBorder(0, 5, 5, 5)));
 
-		label = DockingUtils.createNonHtmlLabel("Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Type:", SwingConstants.RIGHT));
 
-		extTypeLabel = DockingUtils.createNonHtmlLabel("Function");
+		extTypeLabel = new GDLabel("Function");
 		bottomPanel.add(extTypeLabel);
 
-		label = DockingUtils.createNonHtmlLabel("Label:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GDLabel("Label:", SwingConstants.RIGHT));
 		extLabelTextField = new JTextField();
 		bottomPanel.add(extLabelTextField);
 
-		label = DockingUtils.createNonHtmlLabel("Address:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Address:", SwingConstants.RIGHT));
 		extAddressInputWidget = new AddressInput();
 		bottomPanel.add(extAddressInputWidget);
 
 		if (startingOriginalName != null) {
-			label = DockingUtils.createNonHtmlLabel("Original Label:");
-			label.setHorizontalAlignment(SwingConstants.RIGHT);
-			bottomPanel.add(label);
+			bottomPanel.add(new GLabel("Original Label:", SwingConstants.RIGHT));
 			bottomPanel.add(buildOriginalLableFieldAndRestoreButton());
 		}
 

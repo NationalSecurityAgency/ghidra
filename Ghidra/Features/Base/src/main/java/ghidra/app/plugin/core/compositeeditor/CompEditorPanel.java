@@ -25,9 +25,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.DockingUtils;
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GDLabel;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Composite.AlignmentType;
@@ -186,7 +186,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupName() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		nameLabel = DockingUtils.createNonHtmlLabel("Name:");
+		nameLabel = new GDLabel("Name:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -217,7 +217,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupDescription() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		descriptionLabel = DockingUtils.createNonHtmlLabel("Description:");
+		descriptionLabel = new GDLabel("Description:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -248,7 +248,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupCategory() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		categoryLabel = DockingUtils.createNonHtmlLabel("Category:");
+		categoryLabel = new GDLabel("Category:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -487,7 +487,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"aligning this data type inside another data type." + "</HTML>";
 
 		JPanel actualAlignmentPanel = new JPanel(new BorderLayout());
-		actualAlignmentLabel = DockingUtils.createNonHtmlLabel("Alignment:");
+		actualAlignmentLabel = new GDLabel("Alignment:");
 		gridBagConstraints.insets = new Insets(2, 7, 2, 2);
 		gridBagConstraints.anchor = GridBagConstraints.EAST;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -719,7 +719,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	protected void setupSize() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		sizeLabel = DockingUtils.createNonHtmlLabel("Size:");
+		sizeLabel = new GDLabel("Size:");
 		ToolTipManager.setToolTipText(sizeLabel, "The current size in bytes.");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;

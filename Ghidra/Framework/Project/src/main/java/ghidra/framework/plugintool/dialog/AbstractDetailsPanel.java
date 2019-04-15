@@ -24,7 +24,7 @@ import javax.swing.text.StyleConstants;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.HTMLUtilities;
 
 /**
@@ -105,7 +105,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 */
 	protected void createMainPanel() {
 		setLayout(new BorderLayout());
-		textLabel = DockingUtils.createHtmlLabel("");
+		textLabel = new GDHtmlLabel("");
 		textLabel.setVerticalAlignment(SwingConstants.TOP);
 		textLabel.setOpaque(true);
 		textLabel.setBackground(Color.WHITE);

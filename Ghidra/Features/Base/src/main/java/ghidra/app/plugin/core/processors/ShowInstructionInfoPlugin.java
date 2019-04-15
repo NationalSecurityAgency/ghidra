@@ -27,9 +27,11 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import docking.*;
+import docking.ActionContext;
+import docking.ToolTipManager;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.widgets.label.GDLabel;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -94,7 +96,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 	private void createStatusPanels() {
 		instructionPanel = new JPanel(new BorderLayout());
-		instructionLabel = DockingUtils.createNonHtmlLabel("                         ");
+		instructionLabel = new GDLabel("                         ");
 		instructionPanel.setPreferredSize(
 			new Dimension(200, instructionLabel.getPreferredSize().height));
 		ToolTipManager.setToolTipText(instructionLabel, CURRENT_INSTRUCTION_PREPEND_STRING);
@@ -103,7 +105,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		tool.addStatusComponent(instructionPanel, true, false);
 
 		functionPanel = new JPanel(new BorderLayout());
-		functionLabel = DockingUtils.createNonHtmlLabel("                   ");
+		functionLabel = new GDLabel("                   ");
 		functionLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -121,7 +123,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		tool.addStatusComponent(functionPanel, true, false);
 
 		addressPanel = new JPanel(new BorderLayout());
-		addressLabel = DockingUtils.createNonHtmlLabel("          ");
+		addressLabel = new GDLabel("          ");
 		addressPanel.setPreferredSize(new Dimension(95, addressLabel.getPreferredSize().height));
 		ToolTipManager.setToolTipText(addressLabel, "Current Address");
 		addressPanel.add(addressLabel);

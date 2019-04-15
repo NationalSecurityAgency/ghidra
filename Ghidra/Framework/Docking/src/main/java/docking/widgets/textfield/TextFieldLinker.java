@@ -16,7 +16,6 @@
 package docking.widgets.textfield;
 
 import java.awt.Component;
-import java.awt.Window;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 
 import org.apache.commons.lang3.StringUtils;
-
-import docking.DockingUtils;
 
 /**
  * A class that links text fields into a "formatted text field", separated by expressions.
@@ -56,7 +54,7 @@ import docking.DockingUtils;
  * 
  * JTextField second = new JTextField();
  * hbox.add(second);
- * hbox.add(DockingUtils.createNonHtmlLabel("-"));
+ * hbox.add(new GLabel("-"));
  * linker.linkField(second, "-", "-");
  * 
  * JTextField third = new JTextField();
@@ -861,39 +859,4 @@ public class TextFieldLinker {
 		return linker;
 	}
 
-	/**
-	 * A demonstration of the {@link TextFieldLinker}
-	 * 
-	 * It demonstrates three fields. The first two are separated by whitespace. The second two are
-	 * separated by a dash.
-	 */
-	public static class TextFieldLinkerDemo {
-		public static void main(String[] args) {
-			JDialog dialog = new JDialog((Window) null, "TextFieldLinker Demo");
-
-			Box hbox = Box.createHorizontalBox();
-			dialog.add(hbox);
-
-			TextFieldLinker linker = new TextFieldLinker();
-
-			JTextField first = new JTextField();
-			hbox.add(first);
-			hbox.add(Box.createHorizontalStrut(10));
-			linker.linkField(first, "\\s+", " ");
-
-			JTextField second = new JTextField();
-			hbox.add(second);
-			hbox.add(DockingUtils.createNonHtmlLabel("-"));
-			linker.linkField(second, "-", "-");
-
-			JTextField third = new JTextField();
-			hbox.add(third);
-			linker.linkLastField(third);
-
-			dialog.setBounds(2560, 500, 400, 200);
-			dialog.setModal(true);
-			linker.setVisible(true);
-			dialog.setVisible(true);
-		}
-	}
 }

@@ -27,6 +27,8 @@ import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.client.*;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.protocol.ghidra.GhidraURL;
@@ -96,7 +98,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		serverInfoPanel.add(topPanel, BorderLayout.NORTH);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
-		JLabel label = DockingUtils.createNonHtmlLabel("Repository Names", SwingConstants.LEFT);
+		JLabel label = new GDLabel("Repository Names", SwingConstants.LEFT);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 5));
 		lowerPanel.add(label, BorderLayout.NORTH);
 
@@ -138,7 +140,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		urlTextField = new JTextField("ghidra:");
 
 		JPanel panel = new JPanel(new PairLayout());
-		panel.add(DockingUtils.createNonHtmlLabel("URL:"));
+		panel.add(new GLabel("URL:"));
 		panel.add(urlTextField);
 
 		urlPanel.add(panel, BorderLayout.NORTH);

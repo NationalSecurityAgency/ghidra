@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -63,8 +63,8 @@ public class ProcessorStateDialog extends DialogComponentProvider {
 		for (int i = 0; i < fields.length; i++) {
 			Register register = registerList.get(i);
 			int numbits = register.getBitLength();
-			JLabel label = DockingUtils.createNonHtmlLabel(register.getName() + " [ " +
-				register.getBitLength() + " bit" + ((numbits == 1) ? "" : "s") + " ] :");
+			JLabel label = new GLabel(register.getName() + " [ " + register.getBitLength() +
+				" bit" + ((numbits == 1) ? "" : "s") + " ] :");
 			label.setHorizontalAlignment(SwingConstants.TRAILING);
 			label.setToolTipText(register.getDescription());
 			workPanel.add(label);

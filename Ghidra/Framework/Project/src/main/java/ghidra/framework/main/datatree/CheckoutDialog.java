@@ -20,9 +20,9 @@ import java.awt.BorderLayout;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -78,9 +78,9 @@ public class CheckoutDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
-		JLabel warnIcon = DockingUtils.createNonHtmlLabel(
-			OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE));
-		msgPanel.add(warnIcon, BorderLayout.WEST);
+		msgPanel.add(
+			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE)),
+			BorderLayout.WEST);
 
 		MultiLineLabel msgText = new MultiLineLabel("Check out selected file(s)?");
 		msgText.setMaximumSize(msgText.getPreferredSize());

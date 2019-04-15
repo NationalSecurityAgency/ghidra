@@ -22,7 +22,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.context.ListingActionContext;
 import ghidra.util.HelpLocation;
 
@@ -91,8 +91,7 @@ public class ClearFlowDialog extends DialogComponentProvider {
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(10, 10));
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Clear Flow Options:");
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel("Clear Flow Options:"), BorderLayout.NORTH);
 
 		JPanel cbPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);

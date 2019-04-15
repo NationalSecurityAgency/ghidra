@@ -24,7 +24,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.api.main.VTMarkupItemDestinationAddressEditStatus;
 import ghidra.feature.vt.gui.plugin.VTController;
@@ -51,7 +51,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		EditableAddress editableAddress = (EditableAddress) value;
 		address = editableAddress.getAddress();
 
-		JLabel label = DockingUtils.createNonHtmlLabel();
+		JLabel label = new GDLabel();
 		label.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		label.setText(editableAddress.getDisplayString());
 

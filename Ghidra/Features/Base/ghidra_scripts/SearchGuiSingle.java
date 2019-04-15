@@ -23,7 +23,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 
 public class SearchGuiSingle extends SearchBaseExtended {
 
@@ -50,7 +50,7 @@ public class SearchGuiSingle extends SearchBaseExtended {
 		opTwoCheckBox = new JCheckBox("Operand 2", false);
 		constCheckBox = new JCheckBox("Constants", false);
 		searchButton = new JButton();
-		jLabel1 = DockingUtils.createNonHtmlLabel();
+		jLabel1 = new GDLabel();
 
 		GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
 		jPanel1.setLayout(jPanel1Layout);

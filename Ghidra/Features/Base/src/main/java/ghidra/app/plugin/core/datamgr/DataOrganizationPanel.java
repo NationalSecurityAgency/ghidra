@@ -21,7 +21,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.data.DataOrganizationImpl;
 import ghidra.util.layout.PairLayout;
 
@@ -62,41 +62,41 @@ public class DataOrganizationPanel extends JPanel {
 		setUpDoubleSize();
 		setUpLongDoubleSize();
 
-		add(DockingUtils.createNonHtmlLabel(""));
-		add(DockingUtils.createNonHtmlLabel(""));
-		add(DockingUtils.createNonHtmlLabel("Absolute Max Alignment"));
+		add(new GLabel(""));
+		add(new GLabel(""));
+		add(new GLabel("Absolute Max Alignment"));
 		add(absoluteMaxAlignComponent);
-		add(DockingUtils.createNonHtmlLabel("Machine Alignment"));
+		add(new GLabel("Machine Alignment"));
 		add(machineAlignComponent);
-		add(DockingUtils.createNonHtmlLabel("Default Alignment"));
+		add(new GLabel("Default Alignment"));
 		add(defaultAlignComponent);
-		add(DockingUtils.createNonHtmlLabel("Default Pointer Alignment"));
+		add(new GLabel("Default Pointer Alignment"));
 		add(pointerAlignComponent);
 
-		add(DockingUtils.createNonHtmlLabel(""));
-		add(DockingUtils.createNonHtmlLabel(""));
-		add(DockingUtils.createNonHtmlLabel("Signed-Char:"));
+		add(new GLabel(""));
+		add(new GLabel(""));
+		add(new GLabel("Signed-Char:"));
 		add(charIsSignedCheckbox);
-		add(DockingUtils.createNonHtmlLabel("Char Size"));
+		add(new GLabel("Char Size"));
 		add(charSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Wide-Char Size"));
+		add(new GLabel("Wide-Char Size"));
 		add(wcharSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Short Size"));
+		add(new GLabel("Short Size"));
 		add(shortSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Integer Size"));
+		add(new GLabel("Integer Size"));
 		add(integerSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Long Size"));
+		add(new GLabel("Long Size"));
 		add(longSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("LongLong Size"));
+		add(new GLabel("LongLong Size"));
 		add(longLongSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Float Size"));
+		add(new GLabel("Float Size"));
 		add(floatSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("Double Size"));
+		add(new GLabel("Double Size"));
 		add(doubleSizeComponent);
-		add(DockingUtils.createNonHtmlLabel("LongDouble Size"));
+		add(new GLabel("LongDouble Size"));
 		add(longDoubleSizeComponent);
-		add(DockingUtils.createNonHtmlLabel(""));
-		add(DockingUtils.createNonHtmlLabel(""));
+		add(new GLabel(""));
+		add(new GLabel(""));
 	}
 
 	public void setOrganization(DataOrganizationImpl dataOrganization) {

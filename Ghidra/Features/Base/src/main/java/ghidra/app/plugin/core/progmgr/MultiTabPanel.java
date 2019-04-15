@@ -24,8 +24,9 @@ import java.util.Map.Entry;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import docking.DockingUtils;
 import docking.util.KeyBindingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GIconLabel;
 import generic.util.WindowUtilities;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.program.model.listing.Program;
@@ -53,6 +54,7 @@ public class MultiTabPanel extends JPanel {
 
 	private static final Font LABEL_FONT = new Font("Tahoma", Font.PLAIN, 11);
 	private static final Font LIST_LABEL_FONT = new Font("Tahoma", Font.BOLD, 9);
+	private static final String DEFAULT_HIDDEN_COUNT_STR = "99";
 
 	/** A list of tabs that are hidden from view due to space constraints */
 	private List<TabPanel> hiddenTabList;
@@ -228,7 +230,7 @@ public class MultiTabPanel extends JPanel {
 		final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 1));
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
 
-		JLabel nameLabel = DockingUtils.createNonHtmlLabel();
+		JLabel nameLabel = new GDLabel();
 		nameLabel.setIconTextGap(1);
 		nameLabel.setName("objectName"); // junit access
 		nameLabel.setFont(LABEL_FONT);
@@ -237,9 +239,7 @@ public class MultiTabPanel extends JPanel {
 
 		labelPanel.add(nameLabel);
 
-		JLabel iconLabel = DockingUtils.createNonHtmlLabel(EMPTY16_ICON);
-		Icon icon = isSelected ? CLOSE_ICON : EMPTY16_ICON;
-		iconLabel.setIcon(icon);
+		JLabel iconLabel = new GIconLabel(isSelected ? CLOSE_ICON : EMPTY16_ICON);
 
 		iconLabel.setToolTipText("Close");
 		iconLabel.setName("Close"); // junit access
@@ -643,7 +643,7 @@ public class MultiTabPanel extends JPanel {
 	}
 
 	private JLabel createLabel() {
-		JLabel newLabel = DockingUtils.createNonHtmlLabel(LIST_ICON, SwingConstants.LEFT);
+		JLabel newLabel = new GDLabel(DEFAULT_HIDDEN_COUNT_STR, LIST_ICON, SwingConstants.LEFT);
 		newLabel.setIconTextGap(0);
 		newLabel.setFont(LIST_LABEL_FONT);
 		newLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
@@ -682,7 +682,6 @@ public class MultiTabPanel extends JPanel {
 			}
 		});
 
-		newLabel.setText("99");
 		newLabel.setPreferredSize(newLabel.getPreferredSize());
 
 		return newLabel;

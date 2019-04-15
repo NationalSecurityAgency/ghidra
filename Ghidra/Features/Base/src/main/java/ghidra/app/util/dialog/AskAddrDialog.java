@@ -16,14 +16,17 @@
 package ghidra.app.util.dialog;
 
 import java.awt.BorderLayout;
-import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
+import ghidra.util.SystemUtilities;
 
 public class AskAddrDialog extends DialogComponentProvider {
 	private boolean isCanceled;
@@ -43,7 +46,7 @@ public class AskAddrDialog extends DialogComponentProvider {
 
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(DockingUtils.createNonHtmlLabel(message), BorderLayout.WEST);
+		panel.add(new GLabel(message), BorderLayout.WEST);
 		panel.add(addrInput, BorderLayout.CENTER);
 
 		addWorkPanel(panel);
@@ -51,23 +54,8 @@ public class AskAddrDialog extends DialogComponentProvider {
 		addCancelButton();
 		setDefaultButton(okButton);
 
-		if (SwingUtilities.isEventDispatchThread()) {
-			DockingWindowManager.showDialog(null, this);
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						DockingWindowManager.showDialog(null, AskAddrDialog.this);
-					}
-				});
-			}
-			catch (InterruptedException e) {
-			}
-			catch (InvocationTargetException e) {
-			}
-		}
+		SystemUtilities.runSwingNow(
+			() -> DockingWindowManager.showDialog(null, AskAddrDialog.this));
 	}
 
 	@Override

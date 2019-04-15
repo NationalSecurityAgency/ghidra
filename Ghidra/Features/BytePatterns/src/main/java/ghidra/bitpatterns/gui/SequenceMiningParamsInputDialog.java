@@ -19,8 +19,8 @@ import java.awt.Component;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
 import docking.DockingWindowManager;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.closedpatternmining.SequenceMiningParams;
 import ghidra.framework.preferences.Preferences;
@@ -80,7 +80,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 		PairLayout mainLayout = new PairLayout();
 		mainPanel.setLayout(mainLayout);
 
-		mainPanel.add(DockingUtils.createNonHtmlLabel(PERCENTAGE_BOX_TEXT));
+		mainPanel.add(new GLabel(PERCENTAGE_BOX_TEXT));
 		percentageBox = new JTextField(16);
 		double percentage =
 			Double.parseDouble(Preferences.getProperty(PERCENTAGE_PROPERTY, DEFAULT_PERCENTAGE));
@@ -88,7 +88,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 		percentageBox.setEditable(true);
 		mainPanel.add(percentageBox);
 
-		mainPanel.add(DockingUtils.createNonHtmlLabel(MIN_FIXED_BITS_BOX_TEXT));
+		mainPanel.add(new GLabel(MIN_FIXED_BITS_BOX_TEXT));
 		minFixedBitsBox = new IntegerTextField();
 		int minFixBits = Integer.parseInt(
 			Preferences.getProperty(MIN_FIXED_BITS_PROPERTY, DEFAULT_MIN_FIXED_BITS));

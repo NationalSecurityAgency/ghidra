@@ -17,12 +17,11 @@ package ghidra.app.plugin.core.references;
 
 import java.util.*;
 
-import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import docking.DockingUtils;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -60,14 +59,9 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 
 		refTypes = new GhidraComboBox<>(REGISTER_REF_TYPES);
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Register:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Register:", SwingConstants.RIGHT));
 		add(regList);
-
-		label = DockingUtils.createNonHtmlLabel("Ref-Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
 	}
 

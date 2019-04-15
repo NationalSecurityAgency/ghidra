@@ -26,7 +26,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -74,12 +75,7 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel(Register[] registers) {
-		JLabel regLabel = DockingUtils.createNonHtmlLabel("Register:");
-		JLabel valueLabel = DockingUtils.createNonHtmlLabel("Value:");
-		JLabel addressLabel = DockingUtils.createNonHtmlLabel("Address(es):");
-		addressLabel.setVerticalAlignment(SwingConstants.TOP);
-
-		registerComboBox = new JComboBox<>(wrapRegisters(registers));
+		registerComboBox = new GComboBox<>(wrapRegisters(registers));
 		Font f = registerComboBox.getFont().deriveFont(13f);
 		registerComboBox.setFont(f);
 		registerValueField = new FixedBitSizeValueField(32, true, false);
@@ -114,15 +110,17 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 		gbc.insets = new Insets(5, 5, 1, 5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		panel.add(regLabel, gbc);
+		panel.add(new GLabel("Register:"), gbc);
 		gbc.gridy = 1;
 		if (useValueField) {
-			panel.add(valueLabel, gbc);
+			panel.add(new GLabel("Value:"), gbc);
 		}
 		gbc.gridy = 2;
 
 		gbc.anchor = GridBagConstraints.NORTHWEST;
 		gbc.insets = new Insets(10, 5, 1, 5);
+		GLabel addressLabel = new GLabel("Address(es):");
+		addressLabel.setVerticalAlignment(SwingConstants.TOP);
 		panel.add(addressLabel, gbc);
 
 		gbc.insets = new Insets(5, 5, 1, 5);

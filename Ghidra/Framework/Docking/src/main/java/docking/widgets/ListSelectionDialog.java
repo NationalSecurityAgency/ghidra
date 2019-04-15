@@ -22,8 +22,10 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
 import docking.widgets.table.RowObjectTableModel;
 
@@ -127,7 +129,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		selectionListener = new SelectionListener<>();
 		field.addDropDownSelectionChoiceListener(selectionListener);
 
-		JLabel jLabel = DockingUtils.createNonHtmlLabel(label);
+		JLabel jLabel = new GLabel(label);
 		jLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);

@@ -30,6 +30,8 @@ import javax.swing.table.TableCellEditor;
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
@@ -290,9 +292,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 15));
 
 		JPanel leftPanel = new JPanel(new PairLayout(4, 8));
-		leftPanel.add(DockingUtils.createNonHtmlLabel("Function Name:"));
+		leftPanel.add(new GLabel("Function Name:"));
 		leftPanel.add(createNameField());
-		leftPanel.add(DockingUtils.createNonHtmlLabel("Calling Convention"));
+		leftPanel.add(new GLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
 
@@ -327,7 +329,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent createCallingConventionCombo() {
 		List<String> callingConventionNames = model.getCallingConventionNames();
 		String[] names = new String[callingConventionNames.size()];
-		callingConventionComboBox = new JComboBox<>(callingConventionNames.toArray(names));
+		callingConventionComboBox = new GComboBox<>(callingConventionNames.toArray(names));
 		callingConventionComboBox.setSelectedItem(model.getCallingConventionName());
 		callingConventionComboBox.addItemListener(e -> model.setCallingConventionName(
 			(String) callingConventionComboBox.getSelectedItem()));
@@ -335,7 +337,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private JComponent createCallFixupComboPanel() {
-		callFixupComboBox = new JComboBox<>();
+		callFixupComboBox = new GComboBox<>();
 		String[] callFixupNames = model.getCallFixupNames();
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);

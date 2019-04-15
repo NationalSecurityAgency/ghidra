@@ -24,7 +24,7 @@ import javax.swing.JComponent;
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.Options;
 import ghidra.util.Msg;
@@ -203,7 +203,7 @@ public class PythonCodeCompletionFactory {
 				description = description + " (" + className + ")";
 			}
 
-			comp = DockingUtils.createNonHtmlLabel(description);
+			comp = new GDLabel(description);
 			Iterator<Class<?>> iter = classes.iterator();
 			while (iter.hasNext()) {
 				Class<?> testClass = iter.next();

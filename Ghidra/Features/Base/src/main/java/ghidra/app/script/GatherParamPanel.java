@@ -23,9 +23,9 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import docking.DockingUtils;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.filechooser.GhidraFileChooserPanel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 
 public class GatherParamPanel extends JPanel {
@@ -98,7 +98,7 @@ public class GatherParamPanel extends JPanel {
 			displayComponent = textField;
 			parameters.put(key, new ParamComponent(displayComponent, type));
 		}
-		add(DockingUtils.createNonHtmlLabel(label));
+		add(new GLabel(label));
 		add(displayComponent);
 		shown = false;
 	}

@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
-import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 
@@ -44,7 +44,7 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 		this.directoryTable = table;
 		this.model = model;
 
-		iconLabel = DockingUtils.createNonHtmlLabel();
+		iconLabel = new GDLabel();
 		iconLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {

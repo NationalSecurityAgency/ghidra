@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.analysis.*;
 
@@ -140,8 +140,7 @@ public class AnalyzerListPanel extends JPanel {
 		//	panel.setBackground(HEADER_COLOR);
 		//panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		panel.add(DockingUtils.createNonHtmlLabel("ANALYZERS", SwingConstants.CENTER),
-			BorderLayout.CENTER);
+		panel.add(new GLabel("ANALYZERS", SwingConstants.CENTER), BorderLayout.CENTER);
 		panel.add(buildPhaseHeader(), BorderLayout.EAST);
 		return panel;
 	}
@@ -149,9 +148,8 @@ public class AnalyzerListPanel extends JPanel {
 	private Component buildPhaseHeader() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
-//		panel.add(DockingUtils.createNonHtmlLabel("START", SwingConstants.CENTER), BorderLayout.NORTH);
-		panel.add(DockingUtils.createNonHtmlLabel("PHASE", SwingConstants.CENTER),
-			BorderLayout.SOUTH);
+//		panel.add(new GLabel("START", SwingConstants.CENTER), BorderLayout.NORTH);
+		panel.add(new GLabel("PHASE", SwingConstants.CENTER), BorderLayout.SOUTH);
 		Dimension dim = panel.getPreferredSize();
 		dim.width = getAnalysisPanelPhaseWidth();
 		panel.setPreferredSize(dim);

@@ -17,7 +17,7 @@ package ghidra.app.util.datatype;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.data.DataTypeParser;
@@ -38,16 +38,16 @@ public class ApplyEnumDialog extends DataTypeSelectionDialog {
 		updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 		updatedPanel.setLayout(new VerticalLayout(5));
 
-		JLabel label = DockingUtils.createNonHtmlLabel("Choose an Enum data type to apply.");
-		label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
 		JCheckBox subOpCB = new JCheckBox("Apply to sub-operands", shouldApplyOnSubOps);
 		subOpCB.setName("subOpCB");
 		subOpCB.setToolTipText("Applies this enum to the 'nested scalars'.");
 		subOpCB.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 		subOpCB.addActionListener(evt -> shouldApplyOnSubOps = subOpCB.isSelected());
 
+		GLabel label = new GLabel("Choose an Enum data type to apply.");
+		label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 		updatedPanel.add(label);
+
 		updatedPanel.add(dtEditor.getEditorComponent());
 		updatedPanel.add(subOpCB);
 
