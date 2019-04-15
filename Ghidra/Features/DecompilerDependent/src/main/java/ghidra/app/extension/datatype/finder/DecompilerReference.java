@@ -83,6 +83,10 @@ public abstract class DecompilerReference {
 		return var.getAddress();
 	}
 
+	public ClangLine getLine() {
+		return line;
+	}
+
 	protected String getContext() {
 		String context = getContext(variable);
 		return context;
