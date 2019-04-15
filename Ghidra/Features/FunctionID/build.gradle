@@ -97,10 +97,10 @@ task buildFidDocumentationPdf(type: Exec) {
 
 	// Check the OS before executing command.
 	doFirst {
-		if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
-			|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+		String osName = System.getProperty("os.name")
+		if ( !(isLinux(osName) || isMac(osName) || isOpenBSD(osName))) {
 			throw new TaskExecutionException( it,
-				new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
+				new Exception( "The '$it.name' task only works on Linux, Mac OS X, or OpenBSD" ))
 		}
 	}
 

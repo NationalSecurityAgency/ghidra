@@ -33,6 +33,13 @@ ifeq ($(OS),Darwin)
   OSDIR=osx64
 endif
 
+ifeq ($(OS),OpenBSD)
+ifeq ($(ARCH),x86_64)
+  ARCH_TYPE=-m64
+  OSDIR=openbsd64
+endif
+endif
+
 CC=gcc
 CXX=g++
 

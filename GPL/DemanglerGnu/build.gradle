@@ -25,6 +25,10 @@ model {
 			architecture 'x86_64'
 			operatingSystem 'osx'
 		}
+		openbsd64 {
+			architecture 'x86_64'
+			operatingSystem 'openbsd'
+		}
 	}	
 }
 
@@ -65,6 +69,7 @@ model {
 			targetPlatform "win64"
 			targetPlatform "linux64"
 			targetPlatform "osx64"
+			targetPlatform "openbsd64"
 			sources {
 				c {
 					source {

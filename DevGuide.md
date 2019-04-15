@@ -176,7 +176,7 @@ However, some features of Ghidra will not be functional until further steps are 
 ### Building the natives
 
 Some of Ghidra's components are built for the native platform.
-We currently support Linux, macOS, and Windows 64-bit x86 systems.
+We currently support Linux, macOS, Windows, and OpenBSD 64-bit x86 systems.
 Others should be possible, but we do not test on them.
 
 Ensure bison and flex are installed and in your `PATH`.
@@ -198,6 +198,11 @@ On Windows:
 
 ```bash
 gradle buildNatives_win64
+```
+
+On OpenBSD:
+```bash
+gradle buildNatives_openbsd64
 ```
 
 This will build the decompiler, the demangler for GNU toolchains, the sleigh compiler, and (on Windows only) the PDB parser.

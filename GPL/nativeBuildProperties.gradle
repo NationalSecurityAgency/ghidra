@@ -25,8 +25,9 @@ project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 project.ext.MSVC_SDK_VERSION = "UNKNOWN"
 project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
 
-if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 
+String osName = System.getProperty("os.name")
+if (isWindows(osName)) {
 	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
 	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
 		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
@@ -74,6 +75,10 @@ model {
 		osx64 {
 			architecture 'x86_64'
 			operatingSystem 'osx'
+		}
+		openbsd64 {
+			architecture 'x86_64'
+			operatingSystem 'openbsd'
 		}
 	}	
 }
@@ -208,15 +213,15 @@ gradle.taskGraph.whenReady {
 			File f = t.linkedFile.getAsFile().get()
 			String filename = f.getName()
 			NativePlatform platform = t.targetPlatform.get()
-			String osName = platform.getName()
-			t.linkedFile = p.file("build/os/${osName}/$filename")
+			String platformName = platform.getName()
+			t.linkedFile = p.file("build/os/${platformName}/$filename")
 		}
 		p.tasks.withType(LinkSharedLibrary).each { t ->
 			File f = t.linkedFile.getAsFile().get()
 			String filename = f.getName()
 			NativePlatform platform = t.targetPlatform.get()
-			String osName = platform.getName()
-			t.linkedFile = p.file("build/os/${osName}/$filename")
+			String platformName = platform.getName()
+			t.linkedFile = p.file("build/os/${platformName}/$filename")
 		}
 }
 

@@ -17,7 +17,7 @@ rootProject.OS_NAMES.each { platform ->
 	rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
 		def p = this.project
 
-		if (isLinux(platform) || isMac(platform)) {
+		if (isLinux(platform) || isMac(platform) || isOpenBSD(platform)) {
 			t.from ("${p.projectDir}/Linux/support") {
 				into "support"
 			}

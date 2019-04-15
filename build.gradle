@@ -53,7 +53,7 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
  *		project.OS_NAMES.each {...}
  ****************************************************************************/
 
-project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64", "openbsd64"])
 
 /*********************************************************************************
  * Imports
@@ -89,7 +89,7 @@ clean {
  * Returns true if the platform is a linux machine.
  *********************************************************************************/
 def isLinux(String platformName) {
-	return platformName.startsWith("linux")
+	return platformName.toLowerCase().startsWith("linux")
 }
 
 
@@ -97,15 +97,21 @@ def isLinux(String platformName) {
  * Returns true if the platform is a mac
  *********************************************************************************/
 def isMac(String platformName) {
-	return platformName.startsWith("osx")
+	return platformName.toLowerCase().startsWith("osx")
 }
 
+/*********************************************************************************
+ * Returns true if the platform is an openbsd machine.
+ *********************************************************************************/
+def isOpenBSD(String platformName) {
+	return platformName.toLowerCase().startsWith("openbsd")
+}
 
 /*********************************************************************************
  * Returns true if the platform is a Windows machine.
  *********************************************************************************/
 def isWindows(String platformName) {
-	return platformName.startsWith("win")
+	return platformName.toLowerCase().startsWith("win")
 }
 
 /******************************************************************************************
@@ -247,6 +253,11 @@ String getCurrentPlatformName() {
 	else if (osName.startsWith("Linux")) {
 		if (isX86_64) {
 			return 'linux64'
+		}
+	}
+	else if (osName.startsWith("OpenBSD")) {
+		if (isX86_64) {
+			return 'openbsd64'
 		}
 	}
 	else if (osName.startsWith("Mac OS X")) {

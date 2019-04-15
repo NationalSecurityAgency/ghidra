@@ -387,6 +387,7 @@ task createInstallationZip(type: Zip) { t ->
 		dependsOn ":assembleDistribution_win64"
 		dependsOn ":assembleDistribution_linux64"
 		dependsOn ":assembleDistribution_osx64"
+		dependsOn ":assembleDistribution_openbsd64"
 		dependsOn ":assembleSource"
 	}
 

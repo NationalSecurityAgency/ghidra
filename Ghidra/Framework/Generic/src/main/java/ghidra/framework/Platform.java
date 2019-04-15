@@ -71,6 +71,21 @@ public enum Platform {
 	MAC_UNKNOWN(OperatingSystem.MAC_OS_X, Architecture.UNKNOWN, "osx64", ".dylib", ""),
 
 	/**
+	 * Identifies an OpenBSD OS for the Intel x86 32-bit platform.
+	 */
+	OPENBSD(OperatingSystem.OPENBSD, Architecture.X86, "openbsd32", ".so", ""),
+
+	/**
+	 * Identifies an OpenBSD OS for the Intel x86 64-bit platform.
+	 */
+	OPENBSD_64(OperatingSystem.OPENBSD, Architecture.X86_64, "openbsd64", ".so", ""),
+
+	/**
+	 * Identifies an OpenBSD OS, the architecture for which we do not know or have not encountered
+	 */
+	OPENBSD_UNKNOWN(OperatingSystem.OPENBSD, Architecture.UNKNOWN, "openbsd32", ".so", ""),
+
+	/**
 	 * Identifies an unsupported OS.
 	 */
 	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, "");
@@ -140,6 +155,13 @@ public enum Platform {
 		if (operatingSystem == OperatingSystem.LINUX) {
 			paths.add("/bin");
 			paths.add("/lib");
+			paths.add("/usr/bin");
+			paths.add("/usr/lib");
+			paths.add("/usr/X11R6/bin");
+			paths.add("/usr/X11R6/lib");
+		}
+		else if (operatingSystem == OperatingSystem.OPENBSD) {
+			paths.add("/bin");
 			paths.add("/usr/bin");
 			paths.add("/usr/lib");
 			paths.add("/usr/X11R6/bin");

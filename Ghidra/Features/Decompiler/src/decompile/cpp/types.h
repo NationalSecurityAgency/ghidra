@@ -86,7 +86,8 @@ typedef char int1;
 typedef uint4 uintp;
 #endif
 
-#if defined (__linux__) && defined (__x86_64__)
+#if (defined (__linux__) && defined (__x86_64__)) || \
+	(defined (__OpenBSD__) && defined (__x86_64__))
 #define HOST_ENDIAN 0
 typedef unsigned int uintm;
 typedef int intm;
