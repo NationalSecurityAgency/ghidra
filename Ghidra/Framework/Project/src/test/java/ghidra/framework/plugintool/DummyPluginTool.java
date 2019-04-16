@@ -38,7 +38,8 @@ public class DummyPluginTool extends PluginTool {
 
 		@Override
 		public void closeTool(Tool t) {
-			System.exit(0);
+			// If we call this, then the entire test VM will exit, which is bad
+			// System.exit(0);
 		}
 	}
 }

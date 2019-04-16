@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.app.tablechooser;
 
+import java.util.*;
+
+import docking.widgets.table.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -25,11 +27,10 @@ import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.field.AddressTableColumn;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.*;
-
-import docking.widgets.table.*;
-
 public class TableChooserTableModel extends AddressBasedTableModel<AddressableRowObject> {
+
+	// we maintain this list so that any future reload operations can load the original user data
+	// (the downside of this is that two lists are maintained)
 	Set<AddressableRowObject> myPrivateList = new HashSet<AddressableRowObject>();
 
 	public TableChooserTableModel(String title, ServiceProvider serviceProvider, Program program,
@@ -47,6 +48,11 @@ public class TableChooserTableModel extends AddressBasedTableModel<AddressableRo
 	public synchronized void removeObject(AddressableRowObject obj) {
 		myPrivateList.remove(obj);
 		super.removeObject(obj);
+	}
+
+	public synchronized boolean containsObject(AddressableRowObject obj) {
+		// checking this list allows us to work around the threaded nature of our parent
+		return myPrivateList.contains(obj);
 	}
 
 	@Override
