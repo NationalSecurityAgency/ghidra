@@ -20,6 +20,12 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.StringUtf8Nt;
 
+/**
+ * This class represents the <B>MsType</B> flavor of Managed type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class ManagedMsType extends AbstractManagedMsType {
 
 	public static final int PDB_ID = 0x1514;

@@ -541,6 +541,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 */
 	static int deserializeVersionNumber(AbstractMsf msf, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
+
 		MsfStream directoryStream = msf.getStream(PDB_DIRECTORY_STREAM_NUMBER);
 		if (directoryStream.getLength() < AbstractPdb.getVersionNumberSize()) {
 			throw new PdbException("Directory Stream too short");
@@ -548,9 +549,6 @@ public abstract class AbstractPdb implements AutoCloseable {
 		byte[] bytes = directoryStream.read(0, AbstractPdb.getVersionNumberSize(), monitor);
 		PdbByteReader pdbDirectoryReader = new PdbByteReader(bytes);
 		return pdbDirectoryReader.parseInt();
-//			int versionNumber = AbstractPdb.deserializeVersionNumber(pdbDirectoryReader);
-//			return versionNumber;
-//		}
 	}
 
 	/**
@@ -635,6 +633,44 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
+	 * Returns a {@link PdbByteReader} initialized with the complete contents of the
+	 * {@link MsfStream} referenced by {@code streamNumber}.
+	 * @param streamNumber The stream number of the {@link MsfStream} from which to load the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
+	 * @return The {@link PdbByteReader}.
+	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes.
+	 * @throws CancelledException Upon user cancellation.
+	 */
+	PdbByteReader getReaderForStreamNumber(int streamNumber, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return getReaderForStreamNumber(streamNumber, 0, MsfStream.MAX_STREAM_LENGTH, monitor);
+	}
+
+	/**
+	 * Returns a {@link PdbByteReader} initialized with up to  {@code numToRead} byte of content
+	 *  (less if not available) from the {@link MsfStream} referenced by {@code streamNumber}
+	 *  starting at {@code streamOffset}.
+	 * @param streamNumber The stream number of the {@link MsfStream} from which to load the data.
+	 * @param streamOffset Starting location within the {@link MsfStream} from which to get the
+	 *  data.
+	 * @param numToRead Number of bytes used to initialize the {@link PdbByteReader}.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
+	 * @return The {@link PdbByteReader}.
+	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes.
+	 * @throws CancelledException Upon user cancellation.
+	 */
+	PdbByteReader getReaderForStreamNumber(int streamNumber, int streamOffset, int numToRead,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		MsfStream stream = msf.getStream(streamNumber);
+		numToRead = Math.min(numToRead, stream.getLength());
+		byte[] bytes = stream.read(streamOffset, numToRead, monitor);
+		PdbByteReader reader = new PdbByteReader(bytes);
+		return reader;
+	}
+
+	/**
 	 * Debug method to dump the number of bytes for the specified stream to a {@link String}.
 	 * @param streamNumber The stream number to dump.
 	 * @param maxOut The maximum number of bytes to dump.
@@ -682,10 +718,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 */
 	protected PdbByteReader getDirectoryReader(TaskMonitor monitor)
 			throws IOException, CancelledException {
-		MsfStream directoryStream = msf.getStream(PDB_DIRECTORY_STREAM_NUMBER);
-		int length = directoryStream.getLength();
-		byte[] bytes = directoryStream.read(0, length, monitor);
-		return new PdbByteReader(bytes);
+		return getReaderForStreamNumber(PDB_DIRECTORY_STREAM_NUMBER, 0, MsfStream.MAX_STREAM_LENGTH,
+			monitor);
 	}
 
 	/**

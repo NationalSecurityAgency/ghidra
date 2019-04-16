@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>StMsType</B> flavor of One Method type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class OneMethodStMsType extends AbstractOneMethodMsType {
 
 	public static final int PDB_ID = 0x140b;

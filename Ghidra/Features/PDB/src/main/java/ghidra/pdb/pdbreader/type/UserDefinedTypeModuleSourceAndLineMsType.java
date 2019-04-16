@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>MsType</B> flavor of User Defined Type Module Source and Lines type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class UserDefinedTypeModuleSourceAndLineMsType extends AbstractMsType {
 
 	public static final int PDB_ID = 0x1607;

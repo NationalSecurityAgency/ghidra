@@ -20,6 +20,9 @@ import ghidra.pdb.pdbreader.AbstractPdb;
 /**
  * A class for a specific PDB data type--In this case one of many possible primitive types,
  *  specified by the record number.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
  */
 public class PrimitiveMsType extends AbstractMsType {
 

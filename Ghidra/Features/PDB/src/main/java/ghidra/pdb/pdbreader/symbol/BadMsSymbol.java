@@ -23,7 +23,7 @@ import ghidra.pdb.pdbreader.AbstractPdb;
  */
 public class BadMsSymbol extends AbstractMsSymbol {
 
-	/** This should not be a the PDB_ID value of a real AbstractMsType. */
+	/** This should not be a the PDB_ID value of a real AbstractMsSymbol. */
 	public static final int PDB_ID = 0xff01;
 
 	// Symbol ID that had an issue;

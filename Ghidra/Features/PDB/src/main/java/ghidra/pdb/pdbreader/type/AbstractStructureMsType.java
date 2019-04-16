@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
+/**
+ * This class represents various flavors of C/C++ Struct type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractStructureMsType extends AbstractCompositeMsType {
 
 	private static final String TYPE_STRING = "struct";

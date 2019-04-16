@@ -21,7 +21,6 @@ import java.util.Map;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -196,10 +195,8 @@ public class NameTable {
 		for (int streamNumber : streamNumbers) {
 			monitor.checkCanceled();
 			Map<Integer, String> mapOffsetToString = new HashMap<>();
-			MsfStream stream = pdb.getMsf().getStream(streamNumber);
-			if (stream.getLength() >= 12) {
-				byte[] buffer = stream.read(0, stream.getLength(), monitor);
-				PdbByteReader reader = new PdbByteReader(buffer);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+			if (reader.getLimit() >= 12) {
 				long hdrMagic = reader.parseUnsignedIntVal();
 				int hdrVer = reader.parseInt();
 				if ((hdrMagic == HEADER_MAGIC) && (hdrVer != 0)) {

@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>MsSymbol</B> flavor of Register symbol.
+ * <P>
+ * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
+ *  base class for more information.
+ */
 public class RegisterMsSymbol extends AbstractRegisterMsSymbol {
 
 	public static final int PDB_ID = 0x1106;

@@ -19,6 +19,13 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Dimensioned Array type with variable upper
+ *  and lower bounds on the dimensions.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class DimensionedArrayVarBoundsLowerUpper16MsType
 		extends AbstractDimensionedArrayVarBoundsLowerUpperMsType {
 

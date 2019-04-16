@@ -16,10 +16,10 @@
 package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
+import java.io.Writer;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,6 +39,11 @@ public class GlobalSymbolInformation {
 	protected int lengthHashRecordsBitMap;
 	protected int numHashRecords;
 
+	private long headerSignature;
+	private long versionNumber;
+	private int lengthHashRecords;
+	private int lengthBuckets;
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -54,13 +59,14 @@ public class GlobalSymbolInformation {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserialize the Global Symbol Information from the appropriate stream in the Pdb.
+	 * Deserialize the {@link GlobalSymbolInformation} from the appropriate stream in the Pdb.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
 	 * @throws PdbException Upon not enough data left to parse.
 	 * @throws CancelledException Upon user cancellation.
 	 */
+	@SuppressWarnings("unused") // for buf1Reader and buf2Reader--still under investigation.
 	void deserialize(TaskMonitor monitor) throws IOException, PdbException, CancelledException {
 		if (pdb.minimalDebugInfo) {
 			//Maybe 0x200 for some and 0x201 for others? 0x200 works for cn3.pdb
@@ -71,16 +77,24 @@ public class GlobalSymbolInformation {
 			lengthHashRecordsBitMap = 0x8000;
 			numHashRecords = 0x3ffff; //0x40000?
 		}
-		int streamNumber = pdb.databaseInterface.getGlobalSymbolsStreamNumber();
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		int length = stream.getLength();
-		byte[] bytes = stream.read(0, length, monitor);
-		PdbByteReader reader = new PdbByteReader(bytes);
-		//System.out.println(reader.dump(0x200));
-		//SymbolParser parser = new SymbolParser(pdb);
+		int streamNumber = pdb.databaseInterface.getGlobalSymbolsHashMaybeStreamNumber();
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+		//System.out.println(reader.dump());
+
 		deserializeHeader(reader);
+
+		PdbByteReader buf1Reader = reader.getSubPdbByteReader(lengthHashRecords);
+		//System.out.println(buf1Reader.dump());
+		PdbByteReader buf2Reader = reader.getSubPdbByteReader(lengthBuckets);
+//	junkCheck(buf1, buf2); // TODO: this contains experiments if we want to do more.
+		//System.out.println(buf2Reader.dump());
+		if (reader.hasMore()) {
+			assert false;
+		}
+
 		//parser.deserializeSymbolRecords(reader);
 		//TODO: left off here 20180717
+
 	}
 
 	//==============================================================================================
@@ -147,42 +161,49 @@ public class GlobalSymbolInformation {
 		System.out.println("maxx1: " + maxx1);
 	}
 
-	// TODO: this parsing is incomplete.
-	// Suppress "unused" for headerSignature, versionNumber, buf1Reader, and buf2Reader
 	/**
-	 * Deserialize the header of the Global Symbol Information from the appropriate stream
+	 * Deserialize the header of the {@link GlobalSymbolInformation} from the appropriate stream
 	 *  in the PDB.
 	 * @param reader {@link PdbByteReader} containing the data buffer to process.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
-	@SuppressWarnings("unused")
 	void deserializeHeader(PdbByteReader reader) throws PdbException {
-		long headerSignature = reader.parseUnsignedIntVal();
-		long versionNumber = reader.parseUnsignedIntVal();
-		int lengthHashRecords = reader.parseInt();
-		int lengthBuckets = reader.parseInt();
-//		System.out.println(String.format("GSI: %08x %08x %d %d", headerSignature, versionNumber,
-//			lengthHashRecords, lengthBuckets));
-		PdbByteReader buf1Reader = reader.getSubPdbByteReader(lengthHashRecords);
-		//System.out.println(buf1Reader.dump());
-		PdbByteReader buf2Reader = reader.getSubPdbByteReader(lengthBuckets);
-//		junkCheck(buf1, buf2); // TODO: this contains experiments if we want to do more.
-		//System.out.println(buf2Reader.dump());
-		if (reader.hasMore()) {
-			assert false;
-		}
+		headerSignature = reader.parseUnsignedIntVal();
+		versionNumber = reader.parseUnsignedIntVal();
+		lengthHashRecords = reader.parseInt();
+		lengthBuckets = reader.parseInt();
 	}
 
 	/**
-	 * Outputs dump of class contents as {@link String}.
-	 * @return {@link String} containing user-viewable results.
+	 * Debug method for dumping information from this {@link GlobalSymbolInformation}.
+	 * @param writer {@link Writer} to which to dump the information.
+	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
-	protected String dump() {
+	protected void dump(Writer writer) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("GlobalSymbolInformation-------------------------------------\n");
+		dumpHeader(builder);
 		//builder.append(": " + );
 		builder.append("\nEnd GlobalSymbolInformation---------------------------------\n");
-		return builder.toString();
+		writer.write(builder.toString());
 	}
 
+	/**
+	 * Debug method for dumping information from this {@link GlobalSymbolInformation} header.
+	 * @param builder {@link StringBuilder} to which to dump the information.
+	 */
+	protected void dumpHeader(StringBuilder builder) {
+//		System.out.println(String.format("GSI: %08x %08x %d %d", headerSignature, versionNumber,
+//		lengthHashRecords, lengthBuckets));
+		builder.append("GlobalSymbolInformationHeader-------------------------------\n");
+		builder.append("headerSignature: ");
+		builder.append(headerSignature);
+		builder.append("\nversionNumber: ");
+		builder.append(versionNumber);
+		builder.append("\nlengthHashRecords: ");
+		builder.append(lengthHashRecords);
+		builder.append("\nlengthBuckets: ");
+		builder.append(lengthBuckets);
+		builder.append("\n End GlobalSymbolInformationHeader--------------------------\n");
+	}
 }

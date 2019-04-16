@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Precompiled type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class PrecompiledType16MsType extends AbstractPrecompiledTypeMsType {
 
 	public static final int PDB_ID = 0x0013;

@@ -78,12 +78,12 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		versionNumber = reader.parseUnsignedIntVal();
 		age = reader.parseUnsignedIntVal();
 
-		streamNumberGlobalStaticSymbols = reader.parseUnsignedShortVal();
+		streamNumberGlobalStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 
 		// Has bit-fields that could be broken out further
 		universalVersion = reader.parseUnsignedShortVal();
 
-		streamNumberPublicStaticSymbols = reader.parseUnsignedShortVal();
+		streamNumberPublicStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 		pdbDllBuildVersion = reader.parseUnsignedShortVal();
 
 		streamNumberSymbolRecords = reader.parseUnsignedShortVal();
@@ -121,8 +121,10 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	@Override
 	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
+		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
+		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
+		// globalSymbolInformation.deserialize(monitor);
 		symbolRecords.deserialize(monitor);
-//		super.deserializeAdditionalSubstreams();
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// processEditAndContinueInformation, and processDebugHeader.  The last of these created
 		// a list of debug streams (also seen in each SectionContributionInformation).
@@ -157,10 +159,10 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		builder.append("\nage: ");
 		builder.append(age);
 		builder.append("\nstreamNumberGlobalStaticSymbols: ");
-		builder.append(streamNumberGlobalStaticSymbols);
+		builder.append(streamNumberGlobalStaticSymbolsHashMaybe);
 		builder.append(String.format("\nuniversalVersion: 0x%04x", universalVersion));
 		builder.append("\nstreamNumberPublicStaticSymbols: ");
-		builder.append(streamNumberPublicStaticSymbols);
+		builder.append(streamNumberPublicStaticSymbolsHashMaybe);
 		builder.append(String.format("\npdbDllBuildVersion: 0x%04x", pdbDllBuildVersion));
 		builder.append("\nstreamNumberSymbolRecords: ");
 		builder.append(streamNumberSymbolRecords);

@@ -19,6 +19,17 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>MsType</B> flavor of C/C++ Union type.
+ * <P>
+ * Note that class, struct, and interface are very closed related and have many of the same
+ *  constructs and parsing procedures.  However, they are separate.  If any of the internals
+ *  of one of these is changed, it is highly suggested that the others be changed as well as
+ *  there is not code-shared between these other than by code duplication.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class UnionMsType extends AbstractUnionMsType {
 
 	public static final int PDB_ID = 0x1506;

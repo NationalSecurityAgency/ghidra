@@ -20,6 +20,12 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.TypeIndex32;
 
+/**
+ * This class represents the <B>MsType</B> flavor of Modifier type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class ModifierMsType extends AbstractModifierMsType {
 
 	public static final int PDB_ID = 0x1001;

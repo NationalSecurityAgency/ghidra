@@ -22,7 +22,6 @@ import java.util.List;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -60,8 +59,8 @@ public abstract class AbstractDatabaseInterface {
 
 	protected long versionNumber = 0; // unsigned 32-bit
 
-	protected int streamNumberGlobalStaticSymbols = 0; // unsigned 16-bit
-	protected int streamNumberPublicStaticSymbols = 0; // unsigned 16-bit
+	protected int streamNumberGlobalStaticSymbolsHashMaybe = 0; // unsigned 16-bit
+	protected int streamNumberPublicStaticSymbolsHashMaybe = 0; // unsigned 16-bit
 	protected int streamNumberSymbolRecords = 0; // unsigned 16-bit
 
 	protected int lengthModuleInformationSubstream = 0; // signed 32-bit
@@ -74,7 +73,7 @@ public abstract class AbstractDatabaseInterface {
 	protected List<SegmentMapDescription> segmentMapList = new ArrayList<>();
 
 	protected SymbolRecords symbolRecords;
-	protected GlobalSymbolInformation globalSymbolInformation;
+//	protected GlobalSymbolInformation globalSymbolInformation;
 
 	//==============================================================================================
 	// API
@@ -87,6 +86,7 @@ public abstract class AbstractDatabaseInterface {
 	public AbstractDatabaseInterface(AbstractPdb pdb, int streamNumber) {
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
+//		globalSymbolInformation = new GlobalSymbolInformation(pdb);
 		symbolRecords = new SymbolRecords(pdb);
 	}
 
@@ -109,9 +109,7 @@ public abstract class AbstractDatabaseInterface {
 	 */
 	public long deserialize(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		byte[] bytes = stream.read(0, stream.getLength(), monitor);
-		PdbByteReader reader = new PdbByteReader(bytes);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 		deserializeHeader(reader);
 		deserializeInternalSubstreams(reader);
 		deserializeAdditionalSubstreams(monitor);
@@ -173,9 +171,8 @@ public abstract class AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Returns the list of {@link AbstractMsSymbol} global symbols.  TODO: check if global and
-	 *  static.
-	 * @return {@link AbstractMsSymbol} global symbols.  TODO: check if global and static.
+	 * Returns the list of regular {@link AbstractMsSymbol} symbols.
+	 * @return Regular {@link AbstractMsSymbol} symbols.
 	 */
 	public List<AbstractMsSymbol> getSymbolsList() {
 		return symbolRecords.getSymbolsList();
@@ -214,13 +211,13 @@ public abstract class AbstractDatabaseInterface {
 		return symbolRecords;
 	}
 
-	/**
-	 * Returns {@link GlobalSymbolInformation} component for this Database Interface.
-	 * @return {@link GlobalSymbolInformation} component.
-	 */
-	public GlobalSymbolInformation getGlobalSymbolInformation() {
-		return globalSymbolInformation;
-	}
+//	/**
+//	 * Returns {@link GlobalSymbolInformation} component for this Database Interface.
+//	 * @return {@link GlobalSymbolInformation} component.
+//	 */
+//	public GlobalSymbolInformation getGlobalSymbolInformation() {
+//		return globalSymbolInformation;
+//	}
 
 	//==============================================================================================
 	// Package-Protected Internals
@@ -229,16 +226,16 @@ public abstract class AbstractDatabaseInterface {
 	 * Returns the stream number for the GlobalSymbols component.
 	 * @return Stream number.
 	 */
-	int getGlobalSymbolsStreamNumber() {
-		return streamNumberGlobalStaticSymbols;
+	int getGlobalSymbolsHashMaybeStreamNumber() {
+		return streamNumberGlobalStaticSymbolsHashMaybe;
 	}
 
 	/**
 	 * Returns the stream number for the PublicStaticSymbols component.
 	 * @return Stream number.
 	 */
-	int getPublicStaticSymbolsStreamNumber() {
-		return streamNumberPublicStaticSymbols;
+	int getPublicStaticSymbolsHashMaybeStreamNumber() {
+		return streamNumberPublicStaticSymbolsHashMaybe;
 	}
 
 	/**
@@ -480,8 +477,8 @@ public abstract class AbstractDatabaseInterface {
 	 */
 	protected void dumpAdditionalSubstreams(Writer writer) throws IOException {
 		symbolRecords.dump(writer);
-		//builder.append("\n");
-		//builder.append(globalSymbolInformation.dump());
+//		writer.write("\n");
+//		globalSymbolInformation.dump(writer);
 	}
 
 	/**

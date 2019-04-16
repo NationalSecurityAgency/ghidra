@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents various flavors of Member Function type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 
 	protected AbstractTypeIndex returnValueTypeIndex;
@@ -110,11 +116,27 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 	}
 
 	/**
+	 * Returns the type index for the class containing this method.
+	 * @return The type index of the {@link AbstractMsType} class containing this method.
+	 */
+	public int getContainingClassTypeIndex() {
+		return containingClassTypeIndex.get();
+	}
+
+	/**
 	 * Returns the type for the class containing this method.
 	 * @return The {@link AbstractMsType} class containing this method.
 	 */
 	public AbstractMsType getContainingClassType() {
 		return pdb.getTypeRecord(containingClassTypeIndex.get());
+	}
+
+	/**
+	 * Returns the type index for the "this" pointer type.
+	 * @return The type index of the {@link AbstractMsType} "this" pointer type.
+	 */
+	public int getThisPointerTypeIndex() {
+		return thisPointerTypeIndex.get();
 	}
 
 	/**

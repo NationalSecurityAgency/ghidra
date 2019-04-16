@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Dimensioned Array type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class DimensionedArray16MsType extends AbstractDimensionedArrayMsType {
 
 	public static final int PDB_ID = 0x0011;

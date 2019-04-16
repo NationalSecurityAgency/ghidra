@@ -20,6 +20,12 @@ import java.util.List;
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents various flavors of Arguments List type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractArgumentsListMsType extends AbstractMsType {
 
 	protected List<AbstractTypeIndex> argTypeIndexList;

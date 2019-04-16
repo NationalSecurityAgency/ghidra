@@ -17,10 +17,44 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.AbstractParsableItem;
 import ghidra.pdb.PdbByteReader;
-import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This is the abstract class for PDB Symbol units.
+ * <P>
+ * The leaves in the {@link AbstractMsSymbol} hierarchy generally end in one of the following,
+ *  which <B>generally</B> have the differences noted here:
+ *  <UL>
+ *  <LI> 16MsSymbol
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex16} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link Offset16} version version of {@link AbstractOffset} </LI>
+ *  <LI> Uses {@link StringSt} version of {@link AbstractString} </LI>
+ *  </UL>
+ *  <LI> StMsSymbol and 32StMsSymbol (not sure what <B>ST</B> means in MSFT parlance)
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex32} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link Offset16} version version of {@link AbstractOffset} </LI>
+ *  <LI> Uses {@link StringSt} version of {@link AbstractString} </LI>
+ *  </UL>
+ *  <LI> 3216MsSymbol
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex16} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link Offset32} version version of {@link AbstractOffset} </LI>
+ *  <LI> Uses {@link StringNt}, {@link StringUtf8Nt}, or {@link StringWcharNt} version of
+ *      {@link AbstractString} </LI>
+ *  </UL>
+ *  <LI> MsSymbol or 32MsSymbol
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex32} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link Offset32} version version of {@link AbstractOffset} </LI>
+ *  <LI> Uses {@link StringNt}, {@link StringUtf8Nt}, or {@link StringWcharNt} version of
+ *      {@link AbstractString} </LI>
+ *  </UL>
+ *  </UL>
+ * <P>
+ * Many/most of the symbol types have a {@code create()} method used to create the appropriate
+ * versions of the above components.  These components then get parsed during deserialization.
  * <P>
  * For more information about PDBs, consult the Microsoft PDB API, see
  * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">

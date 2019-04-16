@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Field List type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class FieldList16MsType extends AbstractFieldListMsType {
 
 	public static final int PDB_ID = 0x0204;

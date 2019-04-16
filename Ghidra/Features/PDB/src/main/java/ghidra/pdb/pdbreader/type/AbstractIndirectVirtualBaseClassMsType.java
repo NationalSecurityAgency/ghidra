@@ -21,6 +21,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents various flavors of C++ Indirect Virtual Base Class type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractIndirectVirtualBaseClassMsType extends AbstractMsType {
 
 	protected AbstractTypeIndex directVirtualBaseClassTypeIndex;

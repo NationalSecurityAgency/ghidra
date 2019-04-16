@@ -20,6 +20,13 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.TypeIndex16;
 
+/**
+ * This class represents the <B>MsType</B> flavor of Dimensioned Array type with constant upper
+ *  and lower bounds on the dimensions.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class DimensionedArrayConstBoundsLowerUpper16MsType
 		extends AbstractDimensionedArrayConstBoundsLowerUpperMsType {
 

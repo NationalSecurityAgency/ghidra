@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -57,12 +56,10 @@ public class DatabaseInterfaceParser {
 		AbstractDatabaseInterface databaseInterface;
 
 		int streamNumber = getStreamNumber();
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		if (stream.getLength() == 0) {
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, 8, monitor);
+		if (reader.getLimit() == 0) {
 			return null;
 		}
-		byte[] bytes = stream.read(0, 8, monitor);
-		PdbByteReader reader = new PdbByteReader(bytes);
 		int headerSignature = reader.parseInt();
 		int versionNumber = reader.parseInt();
 

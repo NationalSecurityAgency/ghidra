@@ -22,6 +22,14 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>MsType</B> flavor of High Level Shader Language type.
+ * <P>
+ * Note: we have guessed that HLSL means High Level Shader Language.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class HighLevelShaderLanguageMsType extends AbstractMsType {
 
 	public static final int PDB_ID = 0x1517;

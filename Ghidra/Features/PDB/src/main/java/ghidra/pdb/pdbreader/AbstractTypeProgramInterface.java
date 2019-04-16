@@ -21,7 +21,6 @@ import java.util.*;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.pdb.pdbreader.type.AbstractMsType;
 import ghidra.pdb.pdbreader.type.PrimitiveMsType;
 import ghidra.util.exception.CancelledException;
@@ -158,9 +157,7 @@ public abstract class AbstractTypeProgramInterface {
 			// Should only be null dummy PDBs used for testing.
 			throw new PdbException("Unexpected null MSF.");
 		}
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		byte[] bytes = stream.read(0, stream.getLength(), monitor);
-		PdbByteReader reader = new PdbByteReader(bytes);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 
 		deserializeHeader(reader);
 		deserializeTypeRecords(reader);

@@ -47,8 +47,8 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 	//==============================================================================================
 	@Override
 	protected void deserializeHeader(PdbByteReader reader) throws PdbException {
-		streamNumberGlobalStaticSymbols = reader.parseUnsignedShortVal();
-		streamNumberPublicStaticSymbols = reader.parseUnsignedShortVal();
+		streamNumberGlobalStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
+		streamNumberPublicStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 		streamNumberSymbolRecords = reader.parseUnsignedShortVal();
 		lengthModuleInformationSubstream = reader.parseInt();
 		lengthSectionContributionSubstream = reader.parseInt();
@@ -67,12 +67,10 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 	@Override
 	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
-		symbolRecords.deserialize(monitor);
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
-//		globalSymbolInformation = new GlobalSymbolInformation();
-//		globalSymbolInformation.deserialize(pdb);
-
+		// globalSymbolInformation.deserialize(monitor);
+		symbolRecords.deserialize(monitor);
 		//TODO: SectionContributions has information about code sections and refers to
 		// debug streams for each.
 	}
@@ -100,9 +98,9 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 	protected void dumpHeader(Writer writer) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("streamNumberGlobalStaticSymbols: ");
-		builder.append(streamNumberGlobalStaticSymbols);
+		builder.append(streamNumberGlobalStaticSymbolsHashMaybe);
 		builder.append("\nstreamNumberPublicStaticSymbols: ");
-		builder.append(streamNumberPublicStaticSymbols);
+		builder.append(streamNumberPublicStaticSymbolsHashMaybe);
 		builder.append("\nstreamNumberSymbolRecords: ");
 		builder.append(streamNumberSymbolRecords);
 		builder.append("\nlengthModuleInformationSubstream: ");

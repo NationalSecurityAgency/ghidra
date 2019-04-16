@@ -22,6 +22,12 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.AbstractTypeIndex;
 
+/**
+ * This class represents various flavors of OEM Definable String type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractOemDefinableStringMsType extends AbstractMsType {
 
 	protected int msAssignedOEMIdentifier;

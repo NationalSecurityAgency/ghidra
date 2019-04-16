@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>MsType</B> flavor of Pointer type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class PointerMsType extends AbstractPointerMsType {
 
 	public static final int PDB_ID = 0x1002;
@@ -90,11 +96,6 @@ public class PointerMsType extends AbstractPointerMsType {
 	}
 
 	@Override
-	public int getSize() {
-		return size;
-	}
-
-	@Override
 	protected void create() {
 		underlyingTypeIndex = new TypeIndex32();
 		memberPointerContainingClassIndex = new TypeIndex32();
@@ -142,7 +143,7 @@ public class PointerMsType extends AbstractPointerMsType {
 
 	@Override
 	protected int getMySize() {
-		return 4;
+		return size;
 	}
 
 }

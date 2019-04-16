@@ -22,7 +22,6 @@ import java.util.List;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -83,8 +82,8 @@ public class SymbolRecords {
 	}
 
 	/**
-	 * Returns the list of global symbols.  TODO: check if global and static.
-	 * @return Global {@link AbstractMsSymbol} symbols.  TODO: check if global and static.
+	 * Returns the list of regular symbols.
+	 * @return Regular {@link AbstractMsSymbol} symbols.
 	 */
 	protected List<AbstractMsSymbol> getSymbolsList() {
 		return symbolList;
@@ -115,14 +114,14 @@ public class SymbolRecords {
 		PdbByteReader reader;
 
 		streamNumber = pdb.databaseInterface.getSymbolRecordsStreamNumber();
-		reader = getReaderForStreamNumber(streamNumber, monitor);
+		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 		symbolList = deserializeSymbolRecords(reader);
 
 		for (AbstractModuleInformation module : pdb.databaseInterface.moduleInformationList) {
 			streamNumber = module.getStreamNumberDebugInformation();
 			if (streamNumber != 0xffff) {
 //				System.out.println("\n\nStreamNumber: " + streamNumber);
-				reader = getReaderForStreamNumber(streamNumber, monitor);
+				reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 				int x = reader.parseInt(); // TODO: do not know what this value is.
 				int sizeDebug = module.getSizeLocalSymbolsDebugInformation();
 				sizeDebug -= x; //TODO: seems right, but need to evaluate this
@@ -201,15 +200,6 @@ public class SymbolRecords {
 	//==============================================================================================
 	// Internal Data Methods
 	//==============================================================================================
-	private PdbByteReader getReaderForStreamNumber(int streamNumber, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		int length = stream.getLength();
-		byte[] bytes = stream.read(0, length, monitor);
-		PdbByteReader reader = new PdbByteReader(bytes);
-		return reader;
-	}
-
 	/**
 	 * Debug method for dumping the symbols from a symbol list
 	 * @param list The symbol list to dump.

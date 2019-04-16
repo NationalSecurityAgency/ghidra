@@ -20,8 +20,13 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
 /**
+ * This class represents the a Strided Array type.
+ * <P>
  * We decided to make this a derivation of {@link AbstractArrayMsType}.  Could make it its own
  *  if we decide to do that.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
  * <P>
  * TODO: We are currently not outputting stride information--might need to create overloaded
  *  method called by emit.

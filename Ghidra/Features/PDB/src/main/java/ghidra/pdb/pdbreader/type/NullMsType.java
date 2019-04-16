@@ -18,6 +18,12 @@ package ghidra.pdb.pdbreader.type;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
+/**
+ * This class represents the <B>MsType</B> flavor of Null type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class NullMsType extends AbstractMsType {
 
 	public static final int PDB_ID = 0x000f;

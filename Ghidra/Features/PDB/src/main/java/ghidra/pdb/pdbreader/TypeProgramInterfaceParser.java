@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -64,13 +63,12 @@ public class TypeProgramInterfaceParser {
 
 		int versionNumberSize = AbstractTypeProgramInterface.getVersionNumberSize();
 		int streamNumber = getStreamNumber();
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		if (stream.getLength() < versionNumberSize) {
+		PdbByteReader reader =
+			pdb.getReaderForStreamNumber(streamNumber, 0, versionNumberSize, monitor);
+		if (reader.getLimit() < versionNumberSize) {
 			return null;
 		}
-		byte[] bytes = stream.read(0, versionNumberSize, monitor);
 
-		PdbByteReader reader = new PdbByteReader(bytes);
 		int versionNumber = AbstractTypeProgramInterface.deserializeVersionNumber(reader);
 
 		// TODO: we do not know where the line should be drawn for each of these

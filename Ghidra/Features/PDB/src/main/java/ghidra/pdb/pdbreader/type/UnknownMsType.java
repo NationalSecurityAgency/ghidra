@@ -21,6 +21,9 @@ import ghidra.pdb.pdbreader.AbstractPdb;
 /**
  * This is not a real MS Type.  We made this up to take the place of anticipated, unknown
  *  types.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
  */
 public class UnknownMsType extends AbstractMsType {
 

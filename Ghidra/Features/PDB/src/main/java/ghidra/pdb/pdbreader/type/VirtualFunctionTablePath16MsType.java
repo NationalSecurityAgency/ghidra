@@ -22,6 +22,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Virtual Function Table Path type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class VirtualFunctionTablePath16MsType extends AbstractVirtualFunctionTablePathMsType {
 
 	public static final int PDB_ID = 0x0012;

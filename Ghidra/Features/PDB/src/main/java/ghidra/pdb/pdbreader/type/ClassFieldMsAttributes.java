@@ -21,7 +21,7 @@ import java.util.Map;
 import ghidra.pdb.*;
 
 /**
- * Class field attributes used on fields within specific PDB data type.
+ * Class field attributes used on fields within specific PDB data types.
  */
 public class ClassFieldMsAttributes extends AbstractParsableItem {
 

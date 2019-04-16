@@ -20,6 +20,12 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.StringSt;
 
+/**
+ * This class represents the <B>StMsType</B> flavor of Modify type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class MemberModifyStMsType extends AbstractMemberModifyMsType {
 
 	public static final int PDB_ID = 0x140e;

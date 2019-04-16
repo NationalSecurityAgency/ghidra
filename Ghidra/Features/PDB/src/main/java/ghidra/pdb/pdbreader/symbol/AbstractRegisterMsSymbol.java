@@ -19,6 +19,12 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.*;
 
+/**
+ * This class represents various flavors of Register symbol.
+ * <P>
+ * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractRegisterMsSymbol extends AbstractMsSymbol {
 
 	protected AbstractTypeIndex typeIndex;

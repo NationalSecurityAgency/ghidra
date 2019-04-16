@@ -17,10 +17,33 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.AbstractParsableItem;
 import ghidra.pdb.PdbByteReader;
-import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This is the abstract class for PDB Data Type units.
+ * <P>
+ * The leaves in the {@link AbstractMsType} hierarchy generally end in one of the following,
+ *  which <B>generally</B> have the differences noted here:
+ *  <UL>
+ *  <LI> 16MsType
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex16} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link StringSt} version of {@link AbstractString} </LI>
+ *  </UL>
+ *  <LI> StMsType (not sure what <B>ST</B> means in MSFT parlance)
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex32} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link StringSt} version of {@link AbstractString} </LI>
+ *  </UL>
+ *  <LI> MsType
+ *  <UL>
+ *  <LI> Uses {@link TypeIndex32} version version of {@link AbstractTypeIndex} </LI>
+ *  <LI> Uses {@link StringNt} version of {@link AbstractString} </LI>
+ *  </UL>
+ *  </UL>
+ * <P>
+ * Many/most of the data types have a {@code create()} method used to create the appropriate
+ * versions of the above components.  These components then get parsed during deserialization.
  * <P>
  * For more information about PDBs, consult the Microsoft PDB API, see
  * <a href="https://devblogs.microsoft.com/cppblog/whats-inside-a-pdb-file">

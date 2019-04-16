@@ -20,6 +20,12 @@ import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.TypeIndex16;
 
+/**
+ * This class represents the <B>16MsType</B> flavor of Index type.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
+ */
 public class Index16MsType extends AbstractIndexMsType {
 
 	public static final int PDB_ID = 0x0405;

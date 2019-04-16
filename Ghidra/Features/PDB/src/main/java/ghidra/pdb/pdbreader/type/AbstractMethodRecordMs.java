@@ -19,7 +19,10 @@ import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 
 /**
- * An abstract class for Method Record attributes used for various specific PDB data type.
+ * This class represents various flavors of Method Records.
+ * <P>
+ * Note: we do not necessarily understand each of these data type classes.  Refer to the
+ *  base class for more information.
  */
 public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 

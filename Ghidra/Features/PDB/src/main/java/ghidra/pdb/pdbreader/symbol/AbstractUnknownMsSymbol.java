@@ -18,6 +18,15 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.AbstractPdb;
 
+/**
+ * This class represents various flavors of Unknown symbol.
+ * <P>
+ * Note: This is not part of the MSFT API, but we wanted to catch newer symbol types if/when
+ *  they are seen.
+ * <P>
+ * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
+ *  base class for more information.
+ */
 public abstract class AbstractUnknownMsSymbol extends AbstractMsSymbol {
 
 	/**

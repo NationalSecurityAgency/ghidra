@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.msfreader.MsfStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -147,9 +146,7 @@ public class TypeProgramInterface800 extends AbstractTypeProgramInterface {
 			if (streamNumber == 0xffff) {
 				return;
 			}
-			MsfStream stream = pdb.getMsf().getStream(streamNumber);
-			byte[] bytes = stream.read(0, stream.getLength(), monitor);
-			PdbByteReader reader = new PdbByteReader(bytes);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 			//System.out.println(reader.dump());
 			reader.setIndex(offsetHashVals);
 			byte[] hashBuffer = reader.parseBytes(lengthHashVals);
@@ -160,9 +157,8 @@ public class TypeProgramInterface800 extends AbstractTypeProgramInterface {
 			if (streamNumberAuxilliary == 0xffff) {
 				return;
 			}
-			MsfStream streamAuxilliary = pdb.getMsf().getStream(streamNumberAuxilliary);
-			byte[] bytesAuxilliary = streamAuxilliary.read(0, stream.getLength(), monitor);
-			PdbByteReader readerAuxilliary = new PdbByteReader(bytesAuxilliary);
+			PdbByteReader readerAuxilliary =
+				pdb.getReaderForStreamNumber(streamNumberAuxilliary, monitor);
 			//readerAuxilliary.dump();
 		}
 
