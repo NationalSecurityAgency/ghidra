@@ -48,9 +48,16 @@ public class HorizontalRuleAction extends DockingAction {
 
 		// the description is meant to be used for the tooltip and is larger
 		String padding = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-		setDescription("<HTML><CENTER><B>" + padding + HTMLUtilities.escapeHTML(topName) + padding +
-			"<B><HR><B>" + padding + HTMLUtilities.escapeHTML(bottomName) + padding +
-			"</B></CENTER>");
+		setDescription("<HTML><CENTER><B>" + padding +
+			fixupFirstAmp(HTMLUtilities.escapeHTML(topName) + padding + "<B><HR><B>" + padding +
+				HTMLUtilities.escapeHTML(bottomName)) +
+			padding + "</B></CENTER>");
+	}
+
+	private String fixupFirstAmp(String text) {
+		// add an extra & to replace the one that the MenuData will eat
+		int index = text.indexOf('&');
+		return index < 0 ? text : text.substring(0, index) + "&" + text.substring(index);
 	}
 
 	@Override

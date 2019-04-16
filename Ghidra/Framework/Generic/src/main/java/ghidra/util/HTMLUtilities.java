@@ -601,9 +601,12 @@ public class HTMLUtilities {
 	/**
 	 * Escapes any HTML special characters in the specified text.
 	 * <p>
-	 * Does not otherwise modify the input text or wrap lines. 
+	 * Does not otherwise modify the input text or wrap lines.
 	 * <p>
-	 * See also {@link StringEscapeUtils#escapeHtml3(String)}.
+	 * Calling this twice will result in text being double-escaped, which will not display correctly.
+	 * <p>
+	 * See also {@link StringEscapeUtils#escapeHtml3(String)} if you need quote-safe html encoding.
+	 * <p>
 	 *  
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
 	 * @return string with any html characters replaced with equivalents

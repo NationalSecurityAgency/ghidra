@@ -26,7 +26,7 @@ import javax.swing.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.label.GHtmlLabel;
 import ghidra.app.util.html.diff.*;
 
 public class DataTypeDifferTest {
@@ -490,23 +490,18 @@ public class DataTypeDifferTest {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		JPanel rightPanel = new JPanel(new BorderLayout());
-		StringBuffer buffy1 = new StringBuffer(htmlLeft);
-		JLabel rightLabel = new GDHtmlLabel();
+		JLabel rightLabel = new GHtmlLabel(htmlLeft);
 		rightLabel.setOpaque(true);
 		rightLabel.setBackground(Color.WHITE);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
 		rightPanel.add(rightLabel);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
-		StringBuffer buffy2 = new StringBuffer(htmlRight);
-		JLabel leftLabel = new GDHtmlLabel();
+		JLabel leftLabel = new GHtmlLabel(htmlRight);
 		leftLabel.setOpaque(true);
 		leftLabel.setBackground(Color.WHITE);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);
 		leftPanel.add(leftLabel);
-
-		rightLabel.setText(buffy1.toString());
-		leftLabel.setText(buffy2.toString());
 
 		JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(leftPanel),
 			new JScrollPane(rightPanel));
