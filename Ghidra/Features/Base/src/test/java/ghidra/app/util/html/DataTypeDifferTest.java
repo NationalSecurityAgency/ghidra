@@ -26,7 +26,7 @@ import javax.swing.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import docking.widgets.label.GDLabel;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.util.html.diff.*;
 
 public class DataTypeDifferTest {
@@ -491,7 +491,7 @@ public class DataTypeDifferTest {
 
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		StringBuffer buffy1 = new StringBuffer(htmlLeft);
-		JLabel rightLabel = new GDLabel();
+		JLabel rightLabel = new GDHtmlLabel();
 		rightLabel.setOpaque(true);
 		rightLabel.setBackground(Color.WHITE);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -499,7 +499,7 @@ public class DataTypeDifferTest {
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		StringBuffer buffy2 = new StringBuffer(htmlRight);
-		JLabel leftLabel = new GDLabel();
+		JLabel leftLabel = new GDHtmlLabel();
 		leftLabel.setOpaque(true);
 		leftLabel.setBackground(Color.WHITE);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);

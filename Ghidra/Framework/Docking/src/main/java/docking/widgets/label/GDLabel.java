@@ -18,9 +18,11 @@ package docking.widgets.label;
 import javax.swing.*;
 
 import docking.DockingUtils;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.checkbox.GHtmlCheckBox;
 
 /**
- * A 'dynamic' label with HTML rendering disabled.
+ * A 'dynamic' label (the text can be changed), with HTML rendering disabled.
  * <p>
  * See also:
  * <table border=1>
@@ -30,6 +32,9 @@ import docking.DockingUtils;
  *  <tr><td>{@link GHtmlLabel}</td><td>Immutable</td><td>YES</td><td>Html unchangeable label</td></tr>
  *  <tr><td>{@link GDHtmlLabel}</td><td>Mutable</td><td>YES</td><td>Html changeable label</td></tr>
  *  <tr><td>{@link GIconLabel}</td><td>N/A</td><td>NO</td><td>Label that only has an icon image, no text</td></tr>
+ *  <tr><th colspan=4>Other components of note:</th></tr>
+ *  <tr><td>{@link GCheckBox}</td><td></td><td>NO</td><td>Non-html checkbox</td></tr>
+ *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
 public class GDLabel extends JLabel {

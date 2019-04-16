@@ -19,7 +19,14 @@ import javax.swing.*;
 
 /**
  * A {@link JCheckBox} that allows HTML rendering.
- */
+ * <p>
+ * See also:
+ * <table border=1>
+ * 	<tr><th>Class</th><th>HTML rendering</th><th>Description</th></tr>
+ *  <tr><td>{@link GCheckBox}</td><td>NO</td><td>HTML disabled JCheckBox</td></tr>
+ *  <tr><td>{@link GHtmlCheckBox}</td><td>YES</td><td>HTML allowed JCheckBox</td></tr>
+ * </table>
+*/
 public class GHtmlCheckBox extends JCheckBox {
 
 	/**

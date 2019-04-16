@@ -27,8 +27,13 @@ import docking.widgets.table.GTable;
 
 /**
  * A sub-class of JList that provides an auto-lookup feature.
+ * <p>
  * The user can begin typing the first few letters of a desired
  * list element and the selection will automatically navigate to it.
+ * <p>
+ * HTML rendering is disabled by default.
+ * <p>
+ * 
  */
 public class GList<T> extends JList<T> {
 	private static final long serialVersionUID = 1L;

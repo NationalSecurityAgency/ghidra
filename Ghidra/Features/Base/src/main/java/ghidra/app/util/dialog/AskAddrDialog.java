@@ -26,7 +26,6 @@ import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.util.SystemUtilities;
 
 public class AskAddrDialog extends DialogComponentProvider {
 	private boolean isCanceled;
@@ -54,8 +53,7 @@ public class AskAddrDialog extends DialogComponentProvider {
 		addCancelButton();
 		setDefaultButton(okButton);
 
-		SystemUtilities.runSwingNow(
-			() -> DockingWindowManager.showDialog(null, AskAddrDialog.this));
+		DockingWindowManager.showDialog(null, this);
 	}
 
 	@Override

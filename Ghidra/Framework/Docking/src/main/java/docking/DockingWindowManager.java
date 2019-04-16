@@ -1904,7 +1904,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Set the status text in the active component window.
-	 * @param text non-html status text
+	 * @param text status text
 	 */
 	public void setStatusText(String text) {
 		if (root != null) {

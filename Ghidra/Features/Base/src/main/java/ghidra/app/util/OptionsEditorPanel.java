@@ -247,6 +247,8 @@ public class OptionsEditorPanel extends JPanel {
 			combo.setSelectedItem(space);
 		}
 		combo.addActionListener(e -> {
+			// called whenever the combobox changes to push the value back to the Option that is
+			// our 'model'
 			option.setValue(combo.getSelectedItem());
 		});
 		return combo;

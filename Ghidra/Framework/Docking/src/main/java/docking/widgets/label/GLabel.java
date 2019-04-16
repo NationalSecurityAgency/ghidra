@@ -17,11 +17,16 @@ package docking.widgets.label;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DockingUtils;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.checkbox.GHtmlCheckBox;
 import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * An immutable label with HTML rendering disabled.
+ * An immutable label (the text can NOT be changed), with HTML rendering disabled.
  * <p>
  * See also:
  * <table border=1>
@@ -31,6 +36,9 @@ import ghidra.util.Msg;
  *  <tr><td>{@link GHtmlLabel}</td><td>Immutable</td><td>YES</td><td>Html unchangeable label</td></tr>
  *  <tr><td>{@link GDHtmlLabel}</td><td>Mutable</td><td>YES</td><td>Html changeable label</td></tr>
  *  <tr><td>{@link GIconLabel}</td><td>N/A</td><td>NO</td><td>Label that only has an icon image, no text</td></tr>
+ *  <tr><th colspan=4>Other components of note:</th></tr>
+ *  <tr><td>{@link GCheckBox}</td><td></td><td>NO</td><td>Non-html checkbox</td></tr>
+ *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
 public class GLabel extends JLabel {
@@ -100,9 +108,6 @@ public class GLabel extends JLabel {
 		init();
 	}
 
-	//---------------------------------------------------------------------------------------------
-	// Protected ctors for derived classes
-	//---------------------------------------------------------------------------------------------
 	/**
 	 * 
 	 * @param image icon to display
@@ -126,8 +131,6 @@ public class GLabel extends JLabel {
 		init();
 	}
 
-	//---------------------------------------------------------------------------------------------
-
 	private void init() {
 		DockingUtils.turnOffHTMLRendering(this);
 	}
@@ -145,20 +148,29 @@ public class GLabel extends JLabel {
 	@Deprecated
 	@Override
 	public void setText(String text) {
-		if (getText() != null && !getText().isEmpty()) {
-			Msg.warn(this, "Trying to set text on an immutable label!  Current text: [" +
-				getText() + "], new text: [" + text + "]", new Throwable());
+		if (!StringUtils.isEmpty(getText())) {
+			Msg.warn(this,
+				"Trying to set text on an immutable label!  Current text: [" + getText() +
+					"], new text: [" + text + "]",
+				ReflectionUtilities.createJavaFilteredThrowable());
 			return;
 		}
 		warnAboutHtmlText(text);
 		super.setText(text);
 	}
 
+	/**
+	 * Helper function that logs a warning about a string text that looks like it has HTML text.
+	 * <p>
+	 * Use this when working with a string in a label that has already disabled HTML rendering.
+	 * <p>
+	 * @param text string to test for HTML and warn about
+	 */
 	public static void warnAboutHtmlText(String text) {
 		// #ifdef still_finding_html_labels_in_our_huge_codebase
-		if (text != null && (text.startsWith("<html>") || text.startsWith("<HTML>"))) {
+		if (StringUtils.startsWithIgnoreCase(text, "<html>")) {
 			Msg.warn(GLabel.class, "HTML text detected in non-HTML component: " + text,
-				new Throwable());
+				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 		// #endif
 	}

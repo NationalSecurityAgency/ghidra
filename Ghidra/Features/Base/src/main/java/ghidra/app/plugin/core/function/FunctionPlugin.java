@@ -388,23 +388,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			Address loc = location.getAddress();
 			return program.getFunctionManager().getFunctionsOverlapping(new AddressSet(loc, loc));
 		}
-		//return an empty iterator....
-		return new Iterator<>() {
-			@Override
-			public void remove() {
-				// not supported
-			}
-
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public Function next() {
-				return null;
-			}
-		};
+		return Collections.emptyIterator();
 	}
 
 	Function getFunction(ListingActionContext context) {

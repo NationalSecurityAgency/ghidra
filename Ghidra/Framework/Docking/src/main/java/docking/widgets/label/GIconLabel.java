@@ -17,7 +17,12 @@ package docking.widgets.label;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.checkbox.GHtmlCheckBox;
 import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A label that only contains an image and no text.
@@ -30,6 +35,9 @@ import ghidra.util.Msg;
  *  <tr><td>{@link GHtmlLabel}</td><td>Immutable</td><td>YES</td><td>Html unchangeable label</td></tr>
  *  <tr><td>{@link GDHtmlLabel}</td><td>Mutable</td><td>YES</td><td>Html changeable label</td></tr>
  *  <tr><td>{@link GIconLabel}</td><td>N/A</td><td>NO</td><td>Label that only has an icon image, no text</td></tr>
+ *  <tr><th colspan=4>Other components of note:</th></tr>
+ *  <tr><td>{@link GCheckBox}</td><td></td><td>NO</td><td>Non-html checkbox</td></tr>
+ *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
 public class GIconLabel extends GLabel {
@@ -88,9 +96,9 @@ public class GIconLabel extends GLabel {
 	@Deprecated
 	@Override
 	public void setText(String text) {
-		if (text != null && !text.isEmpty()) {
+		if (!StringUtils.isEmpty(text)) {
 			Msg.warn(this, "Trying to set text on an icon label! New text: [" + text + "]",
-				new Throwable());
+				ReflectionUtilities.createJavaFilteredThrowable());
 			return;
 		}
 		super.setText(text);

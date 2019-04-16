@@ -24,6 +24,8 @@ import docking.widgets.AbstractGCellRenderer;
 
 /**
  * Provides a common implementation of a list renderer, for use in both JList and JComboBox.
+ * <p>
+ * HTML rendering defaults to disabled.  See {@link #setHTMLRenderingEnabled(boolean)}.
  *
  * @param <E> the element-type this list models.
  */

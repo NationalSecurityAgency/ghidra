@@ -67,8 +67,7 @@ public class ByteViewerPlugin extends Plugin {
 
 	private ProgramByteViewerComponentProvider connectedProvider;
 
-	private List<ProgramByteViewerComponentProvider> disconnectedProviders =
-		new ArrayList<>();
+	private List<ProgramByteViewerComponentProvider> disconnectedProviders = new ArrayList<>();
 
 	public ByteViewerPlugin(PluginTool tool) {
 		super(tool);
@@ -336,7 +335,7 @@ public class ByteViewerPlugin extends Plugin {
 	/**
 	 * Set the status info on the tool.
 	 * 
-	 * @param msg non-html text to display
+	 * @param msg text to display
 	 * @param provider not used
 	 */
 	void setStatusMessage(String msg, ComponentProvider provider) {
