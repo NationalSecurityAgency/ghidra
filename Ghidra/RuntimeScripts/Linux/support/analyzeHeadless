@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #----------------------------------------------------------------------
 # Ghidra Headless Analyzer launch (see analyzeHeadlessREADME.html)

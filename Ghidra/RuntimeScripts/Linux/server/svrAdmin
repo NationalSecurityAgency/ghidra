@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ***********************************************************
 # ** Arguments (each -argument option may be repeated):
 # **   [-add <sid>] [-remove <sid>] [-reset <sid>] [-dn <sid> "<x500_distinguished_name>"] 
