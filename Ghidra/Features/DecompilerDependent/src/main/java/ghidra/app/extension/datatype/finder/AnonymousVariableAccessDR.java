@@ -25,7 +25,7 @@ import ghidra.program.model.data.DataType;
 
 /**
  * This class represents the use of a field of a {@link Composite} data type <b>where there is
- * not variable in the Decompiler</b> for that data type.   A normal variable access in the
+ * no variable in the Decompiler</b> for that data type.   A normal variable access in the
  * Decompiler may look like so:
  * <pre>
  * 	Foo f;

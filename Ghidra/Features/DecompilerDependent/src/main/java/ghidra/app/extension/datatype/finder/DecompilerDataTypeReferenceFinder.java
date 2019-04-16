@@ -346,7 +346,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		 * field accesses.
 		 * 
 		 * <p>Sometimes a line is structured such that there are anonymous variable accesses.  This
-		 * is the case where the field a Composite is being accessed, but the Composite itself is
+		 * is the case where a Composite is being accessed, but the Composite itself is
 		 * not a variable in the current function.  See {@link AnonymousVariableAccessDR} for 
 		 * more details.
 		 * 
