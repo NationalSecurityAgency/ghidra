@@ -290,6 +290,11 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 	}
 
 	@Override
+	public Color getSelectionColor() {
+		return doGetComponent().getSelectionColor();
+	}
+
+	@Override
 	public void clearColor() {
 		doGetComponent().clearColor();
 	}

@@ -86,6 +86,8 @@ public interface FGVertex extends VisualVertex {
 
 	public Color getBackgroundColor();
 
+	public Color getSelectionColor();
+
 	public void setBackgroundColor(Color color);
 
 	public void clearColor();
@@ -205,5 +207,7 @@ public interface FGVertex extends VisualVertex {
 	 */
 	public void setShowing(boolean isShowing);
 
+	@Override
 	public void dispose();
+
 }

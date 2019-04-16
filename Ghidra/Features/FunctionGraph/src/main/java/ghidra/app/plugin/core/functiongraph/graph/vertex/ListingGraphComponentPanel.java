@@ -261,6 +261,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		return listingPanel.getTextBackgroundColor();
 	}
 
+	@Override
+	Color getSelectionColor() {
+		return fieldPanel.getSelectionColor();
+	}
+
 	private void createActions() {
 		String firstGroup = "group1";
 		String secondGroup = "group2";
