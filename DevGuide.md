@@ -194,7 +194,7 @@ On macOS:
 gradle buildNatives_osx64
 ```
 
-On macOS:
+On Windows:
 
 ```bash
 gradle buildNatives_win64
