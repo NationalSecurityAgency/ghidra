@@ -56,7 +56,7 @@ public class GhidraLauncher {
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
-			addPatchPaths(classpathList, layout.getApplicationRootDirs());
+			addPatchPaths(classpathList, layout.getApplicationInstallationDir());
 			addModuleJarPaths(classpathList, layout.getModules());
 		}
 		classpathList = orderClasspath(classpathList);
@@ -79,25 +79,16 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add bin patch directories and lib patch jars to the given path list.  This should be done
+	 * Add patch jars to the given path list.  This should be done
 	 * first so they take precedence in the classpath.
 	 * 
 	 * @param pathList The list of paths to add to.
 	 * @param appRootDirs The application root directories to search.
 	 */
-	private static void addPatchPaths(List<String> pathList, Collection<ResourceFile> appRootDirs) {
-
-		for (ResourceFile rootDir : appRootDirs) {
-
-			ResourceFile dir = new ResourceFile(rootDir, "bin");
-			if (dir.exists()) {
-				pathList.add(dir.getAbsolutePath());
-			}
-
-			ResourceFile debugLibDir = new ResourceFile(rootDir, "lib");
-			if (debugLibDir.exists()) {
-				pathList.addAll(findJarsInDir(debugLibDir));
-			}
+	private static void addPatchPaths(List<String> pathList, ResourceFile installDir) {
+		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
+		if (patchDir.exists()) {
+			pathList.addAll(findJarsInDir(patchDir));
 		}
 	}
 
