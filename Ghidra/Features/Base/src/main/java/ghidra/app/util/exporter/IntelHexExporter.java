@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.util.*;
 import ghidra.app.util.opinion.IntelHexRecord;
@@ -296,14 +297,14 @@ public class IntelHexExporter extends Exporter {
 	private class RecordSizeComponent extends JPanel {
 
 		private HintTextField input;
-		private JCheckBox dropCb;
+		private GCheckBox dropCb;
 
 		public RecordSizeComponent(int recordSize) {
 			setLayout(new BorderLayout());
 
 			input = new HintTextField(Integer.toString(recordSize), false,
 				new BoundedIntegerVerifier());
-			dropCb = new JCheckBox("Align To Record Size");
+			dropCb = new GCheckBox("Align To Record Size");
 
 			input.setText(Integer.toString(recordSize));
 

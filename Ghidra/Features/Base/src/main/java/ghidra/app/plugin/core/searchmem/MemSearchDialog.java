@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -419,9 +420,9 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	private Container buildCodeUnitTypesPanel() {
-		final JCheckBox instructionsCheckBox = new JCheckBox("Instructions", true);
-		final JCheckBox definedCheckBox = new JCheckBox("Defined Data", true);
-		final JCheckBox undefinedCheckBox = new JCheckBox("Undefined Data", true);
+		final JCheckBox instructionsCheckBox = new GCheckBox("Instructions", true);
+		final JCheckBox definedCheckBox = new GCheckBox("Defined Data", true);
+		final JCheckBox undefinedCheckBox = new GCheckBox("Undefined Data", true);
 
 		ItemListener stateListener = e -> validate();
 

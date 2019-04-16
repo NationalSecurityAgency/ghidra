@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import resources.ResourceManager;
 
@@ -62,7 +63,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		tipScroll.setBorder(null);
 		tipScroll.setPreferredSize(tipArea.getPreferredSize());
 
-		showTipsCheckbox = new JCheckBox("Show Tips on Startup?");
+		showTipsCheckbox = new GCheckBox("Show Tips on Startup?");
 		showTipsCheckbox.setSelected(true); // TODO (FixMe) Moved this before its listener to prevent project save for now.
 		showTipsCheckbox.addItemListener(new ItemListener() {
 			@Override

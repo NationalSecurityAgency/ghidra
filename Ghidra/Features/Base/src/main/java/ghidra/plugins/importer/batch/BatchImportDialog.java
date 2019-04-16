@@ -32,6 +32,7 @@ import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.ListSelectionTableDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -288,27 +289,19 @@ public class BatchImportDialog extends DialogComponentProvider {
 		JPanel outputChoicesPanel = new JPanel();
 		outputChoicesPanel.setLayout(new BoxLayout(outputChoicesPanel, BoxLayout.LINE_AXIS));
 
-		JCheckBox stripLeadingCb = new JCheckBox("Strip leading path");
-		stripLeadingCb.setSelected(stripLeading);
-		stripLeadingCb.addChangeListener(e -> {
-			setStripLeading(stripLeadingCb.isSelected());
-		});
+		GCheckBox stripLeadingCb = new GCheckBox("Strip leading path", stripLeading);
+		stripLeadingCb.addChangeListener(e -> setStripLeading(stripLeadingCb.isSelected()));
 		stripLeadingCb.setToolTipText("The destination folder for imported files will not " +
 			"include the source file's leading path");
 
-		JCheckBox stripContainerCb = new JCheckBox("Strip container paths");
-		stripContainerCb.setSelected(stripContainer);
-		stripContainerCb.addChangeListener(e -> {
-			setStripContainer(stripContainerCb.isSelected());
-		});
+		GCheckBox stripContainerCb = new GCheckBox("Strip container paths", stripContainer);
+		stripContainerCb.addChangeListener(e -> setStripContainer(stripContainerCb.isSelected()));
 		stripContainerCb.setToolTipText(
 			"The destination folder for imported files will not include any source path names");
 
-		JCheckBox openAfterImportCb = new JCheckBox("Open after import");
-		openAfterImportCb.setSelected(openAfterImporting);
-		openAfterImportCb.addChangeListener(e -> {
-			setOpenAfterImporting(openAfterImportCb.isSelected());
-		});
+		GCheckBox openAfterImportCb = new GCheckBox("Open after import", openAfterImporting);
+		openAfterImportCb.addChangeListener(
+			e -> setOpenAfterImporting(openAfterImportCb.isSelected()));
 		openAfterImportCb.setToolTipText("Open imported binaries in Code Browser");
 
 		outputChoicesPanel.add(stripLeadingCb);

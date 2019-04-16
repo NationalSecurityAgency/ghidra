@@ -116,7 +116,7 @@ public class GHtmlLabel extends JLabel {
 	@Deprecated
 	@Override
 	public void setText(String text) {
-		if (StringUtils.isEmpty(getText())) {
+		if (!StringUtils.isEmpty(getText())) {
 			Msg.warn(this,
 				"Trying to set text on an immutable label!  Current text: [" + getText() +
 					"], new text: [" + text + "]",

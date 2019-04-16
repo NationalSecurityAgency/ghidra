@@ -28,6 +28,7 @@ import javax.swing.border.TitledBorder;
 
 import docking.DockingWindowManager;
 import docking.help.HelpService;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -230,10 +231,10 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	}
 
 	private void createIgnoreCheckBoxes() {
-		ignoreIncompleteCheckBox = new JCheckBox("Set Incomplete Markup Items To Ignored");
+		ignoreIncompleteCheckBox = new GCheckBox("Set Incomplete Markup Items To Ignored");
 		ignoreIncompleteCheckBox.setToolTipText(IGNORE_INCOMPLETE_TOOLTIP);
 
-		ignoreExcludedCheckBox = new JCheckBox("Set Excluded Markup Items To Ignored");
+		ignoreExcludedCheckBox = new GCheckBox("Set Excluded Markup Items To Ignored");
 		ignoreExcludedCheckBox.setToolTipText(IGNORE_EXCLUDED_TOOLTIP);
 	}
 
@@ -834,8 +835,8 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		return applyComboBox;
 	}
 
-	private JCheckBox createCheckBox(final String optionName) {
-		final JCheckBox applyCheckBox = new JCheckBox(optionName);
+	private JCheckBox createCheckBox(String optionName) {
+		JCheckBox applyCheckBox = new GCheckBox(optionName);
 		applyCheckBox.addChangeListener(e -> changesMade(true));
 
 		return applyCheckBox;

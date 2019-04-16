@@ -27,6 +27,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
 import ghidra.util.HTMLUtilities;
@@ -365,7 +366,7 @@ public class ConditionTestPanel extends JPanel {
 			backgroundColor = getBackground();
 			selectedColor = Color.LIGHT_GRAY;
 			this.test = conditionTest;
-			checkbox = new JCheckBox();
+			checkbox = new GCheckBox();
 			checkbox.setSelected(true);
 			add(checkbox);
 			label = new GDLabel(test.getName());

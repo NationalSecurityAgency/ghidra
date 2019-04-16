@@ -30,6 +30,7 @@ import javax.swing.table.TableCellEditor;
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
@@ -305,18 +306,18 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private Component buildTogglePanel() {
 		JPanel panel = new JPanel(new PairLayout());
-		varArgsCheckBox = new JCheckBox("Varargs");
+		varArgsCheckBox = new GCheckBox("Varargs");
 		varArgsCheckBox.addItemListener(e -> model.setHasVarArgs(varArgsCheckBox.isSelected()));
 		panel.add(varArgsCheckBox);
 
-		inLineCheckBox = new JCheckBox("In Line");
+		inLineCheckBox = new GCheckBox("In Line");
 		panel.add(inLineCheckBox);
 		inLineCheckBox.addItemListener(e -> model.setIsInLine(inLineCheckBox.isSelected()));
 		inLineCheckBox.setEnabled(model.isInlineAllowed());
 
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
-		storageCheckBox = new JCheckBox("Use Custom Storage");
+		storageCheckBox = new GCheckBox("Use Custom Storage");
 		storageCheckBox.addItemListener(
 			e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);

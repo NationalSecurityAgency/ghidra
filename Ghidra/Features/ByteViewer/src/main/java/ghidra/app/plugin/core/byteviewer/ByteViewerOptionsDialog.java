@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.format.ByteBlockSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
@@ -115,7 +116,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		Set<String> currentViews = provider.getCurrentViews();
 		List<String> dataModelNames = provider.getDataFormatNames();
 		for (String formatName : dataModelNames) {
-			JCheckBox checkBox = new JCheckBox(formatName);
+			GCheckBox checkBox = new GCheckBox(formatName);
 			checkBox.addActionListener(this);
 			checkboxMap.put(formatName, checkBox);
 			if (currentViews.contains(formatName)) {

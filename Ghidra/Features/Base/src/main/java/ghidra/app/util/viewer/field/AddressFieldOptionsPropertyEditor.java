@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import javax.swing.*;
 
 import docking.ToolTipManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -78,7 +79,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		JLabel label = new GDLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(label);
-		showBlocknameCheckbox = new JCheckBox();
+		showBlocknameCheckbox = new GCheckBox();
 		ToolTipManager.setToolTipText(showBlocknameCheckbox, SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(showBlocknameCheckbox);
 
@@ -86,7 +87,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		label = new GDLabel(PADDING_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, ADDRESS_PADDING_TOOLTIP);
 		panel.add(label);
-		padCheckBox = new JCheckBox();
+		padCheckBox = new GCheckBox();
 		panel.add(padCheckBox);
 		padCheckBox.setSelected(false);
 		ToolTipManager.setToolTipText(padCheckBox, ADDRESS_PADDING_TOOLTIP);

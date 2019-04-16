@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
 import ghidra.framework.model.DomainFile;
 
@@ -33,7 +34,7 @@ import ghidra.framework.model.DomainFile;
 class DomainFilesPanel extends JPanel {
 
 	private List<DomainFile> fileList;
-	private JCheckBox[] checkboxes;
+	private GCheckBox[] checkboxes;
 	private ListPanel listPanel;
 
 	/**
@@ -47,12 +48,11 @@ class DomainFilesPanel extends JPanel {
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		JPanel innerPanel = new JPanel(new BorderLayout());
-		checkboxes = new JCheckBox[fileList.size()];
+		checkboxes = new GCheckBox[fileList.size()];
 		for (int i = 0; i < fileList.size(); i++) {
 			DomainFile df = fileList.get(i);
-			checkboxes[i] = new JCheckBox(df.getPathname());
+			checkboxes[i] = new GCheckBox(df.getPathname(), true);
 			checkboxes[i].setBackground(Color.white);
-			checkboxes[i].setSelected(true);
 		}
 
 		//

@@ -27,6 +27,7 @@ import javax.swing.text.Document;
 
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.Composite;
@@ -275,7 +276,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupInternallyAligned() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		internalAlignmentCheckBox = new JCheckBox("Align");
+		internalAlignmentCheckBox = new GCheckBox("Align");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 4;

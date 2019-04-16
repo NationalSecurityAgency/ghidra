@@ -26,6 +26,7 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -158,8 +159,8 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		JPanel panel = new JPanel(new GridLayout(3, 1, 10, 14));
 
-		nullTerminateCheckbox = new JCheckBox("Require Null Termination");
-		pascalStringsCheckbox = new JCheckBox("Pascal Strings");
+		nullTerminateCheckbox = new GCheckBox("Require Null Termination");
+		pascalStringsCheckbox = new GCheckBox("Pascal Strings");
 		nullTerminateCheckbox.setSelected(true);
 
 		panel.add(nullTerminateCheckbox);

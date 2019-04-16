@@ -22,6 +22,8 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.feature.vt.api.main.VTMatchTag;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.editors.TagEditorDialog;
@@ -191,21 +193,20 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		}
 	}
 
-	private class TagRenderer extends DefaultListCellRenderer {
+	private class TagRenderer extends GListCellRenderer<TagInfo> {
 
 		private JPanel panel;
-		private JCheckBox checkBox = new JCheckBox();
+		private GCheckBox checkBox = new GCheckBox();
 
 		@Override
-		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus) {
+		public Component getListCellRendererComponent(JList<? extends TagInfo> list, TagInfo value,
+				int index, boolean isSelected, boolean cellHasFocus) {
 			JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index,
 				isSelected, cellHasFocus);
 
-			TagInfo info = (TagInfo) value;
-			checkBox.setSelected(info.isIncluded);
+			checkBox.setSelected(value.isIncluded);
 
-			renderer.setText(info.getDisplayText());
+			renderer.setText(value.getDisplayText());
 
 			return getPanel(renderer);
 		}

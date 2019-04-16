@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
@@ -103,7 +104,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 3;
 		gbc.gridwidth = 1;
-		useOldFileIDCheckBox = new JCheckBox("  Use Old File ID");
+		useOldFileIDCheckBox = new GCheckBox("  Use Old File ID");
 		filePanel.add(useOldFileIDCheckBox, gbc);
 	}
 

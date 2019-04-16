@@ -16,14 +16,13 @@
 package ghidra.framework.analysis.gui;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.AnalyzerType;
@@ -91,13 +90,9 @@ public class AnalyzerPanel extends JPanel {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setOpaque(false);
 		panel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
-		enabledCheckbox = new JCheckBox();
-		enabledCheckbox.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				recipe.setAnalyzerEnablement(analyzer, enabledCheckbox.isSelected());
-			}
-		});
+		enabledCheckbox = new GCheckBox();
+		enabledCheckbox.addActionListener(
+			e -> recipe.setAnalyzerEnablement(analyzer, enabledCheckbox.isSelected()));
 
 		enabledCheckbox.setSelected(recipe.isAnalyzerEnabled(analyzer));
 		panel.add(enabledCheckbox, BorderLayout.WEST);

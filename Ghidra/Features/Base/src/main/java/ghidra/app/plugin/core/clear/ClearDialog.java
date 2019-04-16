@@ -24,6 +24,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.context.ListingActionContext;
 import ghidra.util.HelpLocation;
@@ -120,20 +122,20 @@ public class ClearDialog extends DialogComponentProvider {
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);
 		cbPanel.setLayout(bl);
 
-		symbolsCb = new JCheckBox("Symbols");
-		commentsCb = new JCheckBox(
+		symbolsCb = new GCheckBox("Symbols");
+		commentsCb = new GHtmlCheckBox(
 			"<HTML>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>");
 		commentsCb.setVerticalTextPosition(SwingConstants.TOP);
-		propertiesCb = new JCheckBox("Properties");
-		codeCb = new JCheckBox("Code");
-		functionsCb = new JCheckBox("Functions");
-		registersCb = new JCheckBox("Registers");
-		equatesCb = new JCheckBox("Equates");
-		userReferencesCb = new JCheckBox("User-defined References");
-		analysisReferencesCb = new JCheckBox("Analysis References");
-		importReferencesCb = new JCheckBox("Import References");
-		systemReferencesCb = new JCheckBox("Default References");
-		bookmarksCb = new JCheckBox("Bookmarks");
+		propertiesCb = new GCheckBox("Properties");
+		codeCb = new GCheckBox("Code");
+		functionsCb = new GCheckBox("Functions");
+		registersCb = new GCheckBox("Registers");
+		equatesCb = new GCheckBox("Equates");
+		userReferencesCb = new GCheckBox("User-defined References");
+		analysisReferencesCb = new GCheckBox("Analysis References");
+		importReferencesCb = new GCheckBox("Import References");
+		systemReferencesCb = new GCheckBox("Default References");
+		bookmarksCb = new GCheckBox("Bookmarks");
 
 		symbolsCb.setSelected(true);
 		symbolsCb.addKeyListener(listener);

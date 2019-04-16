@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.app.merge.MergeConstants;
 
@@ -178,7 +179,7 @@ class ConflictPanel extends JPanel {
 	}
 
 	protected JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Property"));
+		useForAllCB = new GCheckBox(getUseAllString("Property"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

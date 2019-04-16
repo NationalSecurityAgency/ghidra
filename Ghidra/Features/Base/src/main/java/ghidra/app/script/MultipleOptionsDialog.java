@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.util.Msg;
 
@@ -33,7 +34,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 
 	private boolean isCanceled;
 
-	private JCheckBox[] selectOptions;
+	private GCheckBox[] selectOptions;
 	private List<T> actualChoices;
 	private List<String> stringChoices;
 	private List<T> chosenByUser;
@@ -76,7 +77,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 		if (includeSelectAll) {
 			selectAllGroup = new SelectAllCheckBox();
 
-			JCheckBox selectAllCheckBox = new JCheckBox("[ Select All ]", false);
+			GCheckBox selectAllCheckBox = new GCheckBox("[ Select All ]", false);
 			selectAllCheckBox.setName("select.all.check.box");
 			panel.add(selectAllCheckBox);
 			panel.add(new JSeparator());
@@ -84,10 +85,10 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 			selectAllGroup.setSelectAllCheckBox(selectAllCheckBox);
 		}
 
-		selectOptions = new JCheckBox[stringChoices.size()];
+		selectOptions = new GCheckBox[stringChoices.size()];
 
 		for (int i = 0; i < selectOptions.length; i++) {
-			JCheckBox newCheckBox = new JCheckBox(stringChoices.get(i));
+			GCheckBox newCheckBox = new GCheckBox(stringChoices.get(i));
 			newCheckBox.setActionCommand(Integer.toString(i));
 			newCheckBox.setName("choice.check.box." + (i + 1));
 			newCheckBox.setSelected(false);

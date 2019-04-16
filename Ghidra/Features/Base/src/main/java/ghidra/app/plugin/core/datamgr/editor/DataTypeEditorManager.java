@@ -18,9 +18,11 @@ package ghidra.app.plugin.core.datamgr.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.JPanel;
 
 import docking.ComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.compositeeditor.*;
@@ -581,12 +583,12 @@ public class DataTypeEditorManager
 
 		@Override
 		protected void installInlineWidget(JPanel parentPanel) {
-			inlineCheckBox = new JCheckBox("Inline");
+			inlineCheckBox = new GCheckBox("Inline");
 		}
 
 		@Override
 		protected void installNoReturnWidget(JPanel parentPanel) {
-			noReturnCheckBox = new JCheckBox("No Return");
+			noReturnCheckBox = new GCheckBox("No Return");
 		}
 
 		@Override

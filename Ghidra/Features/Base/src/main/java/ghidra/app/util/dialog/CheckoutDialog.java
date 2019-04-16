@@ -25,6 +25,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.model.DomainFile;
@@ -124,7 +125,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 		if (user != null) {
 			exclusiveCheckout = false;
 			if (user.hasWritePermission()) {
-				final JCheckBox exclusiveCB = new JCheckBox("Request exclusive check out");
+				final JCheckBox exclusiveCB = new GCheckBox("Request exclusive check out");
 				exclusiveCB.setSelected(false);
 				exclusiveCB.addActionListener(new ActionListener() {
 					@Override

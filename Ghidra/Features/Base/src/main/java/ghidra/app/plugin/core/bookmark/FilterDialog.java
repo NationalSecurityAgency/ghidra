@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.*;
@@ -31,7 +32,7 @@ import ghidra.util.layout.VerticalLayout;
 
 class FilterDialog extends DialogComponentProvider {
 	private BookmarkProvider provider;
-	private JCheckBox[] buttons;
+	private GCheckBox[] buttons;
 	private BookmarkType[] types;
 
 	FilterDialog(BookmarkProvider provider, Program p) {
@@ -52,11 +53,11 @@ class FilterDialog extends DialogComponentProvider {
 	private JPanel getTypesPanel(Program program) {
 		BookmarkManager bmMgr = program.getBookmarkManager();
 		types = bmMgr.getBookmarkTypes();
-		buttons = new JCheckBox[types.length];
+		buttons = new GCheckBox[types.length];
 		JPanel panel = new JPanel(new PairLayout(5, 20));
 		panel.setBorder(BorderFactory.createTitledBorder("Include Bookmark Types"));
 		for (int i = 0; i < types.length; i++) {
-			buttons[i] = new JCheckBox();
+			buttons[i] = new GCheckBox();
 			JPanel p = new JPanel(new BorderLayout());
 			p.add(buttons[i], BorderLayout.WEST);
 			buttons[i].setSelected(provider.isShowingType(types[i].getTypeString()));

@@ -27,6 +27,7 @@ import javax.swing.event.HyperlinkEvent.EventType;
 
 import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
@@ -87,7 +88,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			this.pluginPackage = pluginPackage;
 			JPanel panel = new JPanel(new HorizontalLayout(0));
 			panel.setBackground(BG);
-			jCheckBox = new JCheckBox();
+			jCheckBox = new GCheckBox();
 			jCheckBox.addActionListener(e -> checkBoxClicked());
 			if (!pluginPackage.isfullyAddable()) {
 				jCheckBox.setEnabled(false);

@@ -185,7 +185,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			}
 		});
 
-//		sharedProjectCB = new JCheckBox("Project can be Shared with Others"); 
+//		sharedProjectCB = new GCheckBox("Project can be Shared with Others"); 
 //		sharedProjectCB.addItemListener(new ItemListener() {
 //			public void itemStateChanged(ItemEvent e) {
 //				panelManager.getWizardManager().validityChanged();

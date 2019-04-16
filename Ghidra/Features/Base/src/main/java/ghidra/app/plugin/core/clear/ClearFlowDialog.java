@@ -22,6 +22,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.context.ListingActionContext;
 import ghidra.util.HelpLocation;
@@ -97,9 +98,9 @@ public class ClearFlowDialog extends DialogComponentProvider {
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);
 		cbPanel.setLayout(bl);
 
-		symbolsCb = new JCheckBox("Clear Symbols");
-		dataCb = new JCheckBox("Clear Data");
-		repairCb = new JCheckBox("Repair Flow");
+		symbolsCb = new GCheckBox("Clear Symbols");
+		dataCb = new GCheckBox("Clear Data");
+		repairCb = new GCheckBox("Repair Flow");
 
 		symbolsCb.setSelected(false);
 		symbolsCb.addKeyListener(listener);

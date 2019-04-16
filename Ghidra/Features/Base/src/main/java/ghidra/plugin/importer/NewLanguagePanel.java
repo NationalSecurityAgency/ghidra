@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -67,7 +68,7 @@ public class NewLanguagePanel extends JPanel {
 		descriptionLabel = new GDLabel(DEFAULT_DESCRIPTION_TEXT);
 		descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(Font.ITALIC));
 
-		recommendedCheckbox = new JCheckBox("Show Only Recommended Language/Compiler Specs");
+		recommendedCheckbox = new GCheckBox("Show Only Recommended Language/Compiler Specs");
 		recommendedCheckbox.addItemListener(e -> {
 			switch (e.getStateChange()) {
 				case ItemEvent.SELECTED:

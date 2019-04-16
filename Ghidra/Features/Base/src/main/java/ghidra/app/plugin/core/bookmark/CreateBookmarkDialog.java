@@ -29,6 +29,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
@@ -143,7 +144,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		commentTextField = new JTextField(20);
 		commentTextField.addKeyListener(listener);
 
-		selectionCB = new JCheckBox("Bookmark Top of Each Selection", hasSelection);
+		selectionCB = new GCheckBox("Bookmark Top of Each Selection", hasSelection);
 		selectionCB.setEnabled(false);
 		if (hasSelection) {
 			selectionCB.setEnabled(ranges > 1);

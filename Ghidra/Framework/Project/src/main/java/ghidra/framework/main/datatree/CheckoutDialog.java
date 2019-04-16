@@ -22,6 +22,7 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -88,7 +89,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 
 		innerPanel.add(msgPanel, BorderLayout.CENTER);
 
-		exclusiveCB = new JCheckBox("Request exclusive check out");
+		exclusiveCB = new GCheckBox("Request exclusive check out");
 
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));

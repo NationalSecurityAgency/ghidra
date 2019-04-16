@@ -23,6 +23,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.MultiLineLabel;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -200,7 +201,7 @@ class DataTypeMergePanel extends JPanel {
 	}
 
 	private JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Data Type"));
+		useForAllCB = new GCheckBox(getUseAllString("Data Type"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

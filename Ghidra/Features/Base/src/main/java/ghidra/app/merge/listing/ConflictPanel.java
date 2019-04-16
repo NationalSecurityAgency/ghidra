@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,8 @@ package ghidra.app.merge.listing;
 import java.awt.LayoutManager;
 
 import javax.swing.JCheckBox;
+
+import docking.widgets.checkbox.GCheckBox;
 
 /**
  * Abstract class that should be implemented by the conflict panel that appears 
@@ -76,7 +77,7 @@ public abstract class ConflictPanel extends ChoiceComponent {
 	public abstract void clear();
 
 	protected JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("unknown"));
+		useForAllCB = new GCheckBox(getUseAllString("unknown"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

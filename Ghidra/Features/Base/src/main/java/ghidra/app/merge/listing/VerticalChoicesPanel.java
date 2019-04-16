@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
@@ -105,7 +106,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		JRadioButton rb = new JRadioButton();
-		JCheckBox cb = new JCheckBox();
+		JCheckBox cb = new GCheckBox();
 		indent = Math.max(rb.getPreferredSize().width, cb.getPreferredSize().width);
 
 		defaultInsets = new Insets(DEFAULT_TOP, DEFAULT_LEFT, DEFAULT_BOTTOM, DEFAULT_RIGHT);

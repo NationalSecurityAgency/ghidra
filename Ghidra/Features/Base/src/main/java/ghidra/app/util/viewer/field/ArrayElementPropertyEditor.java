@@ -27,6 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.ToolTipManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.framework.options.CustomOptionsEditor;
@@ -66,7 +67,7 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport
 		JPanel panel = new JPanel(new VerticalLayout(3));
 
 		// the namespace checkbox will disable the text field options when it is not used
-		groupElementsCheckBox = new JCheckBox(SHOW_MULTI_ELEMENTS_LABEL);
+		groupElementsCheckBox = new GCheckBox(SHOW_MULTI_ELEMENTS_LABEL);
 		groupElementsCheckBox.setSelected(true);
 		ToolTipManager.setToolTipText(groupElementsCheckBox, SHOW_MULTI_ELEMENTS_TOOLTIP);
 

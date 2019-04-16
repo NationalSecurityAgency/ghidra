@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 
 public class SearchGuiSingle extends SearchBaseExtended {
@@ -45,10 +46,10 @@ public class SearchGuiSingle extends SearchBaseExtended {
 
 		frame = new JFrame();
 		jPanel1 = new JPanel();
-		mnemonicCheckBox = new JCheckBox("Mnemonics", true);
-		opOneCheckBox = new JCheckBox("Operand 1", false);
-		opTwoCheckBox = new JCheckBox("Operand 2", false);
-		constCheckBox = new JCheckBox("Constants", false);
+		mnemonicCheckBox = new GCheckBox("Mnemonics", true);
+		opOneCheckBox = new GCheckBox("Operand 1", false);
+		opTwoCheckBox = new GCheckBox("Operand 2", false);
+		constCheckBox = new GCheckBox("Constants", false);
 		searchButton = new JButton();
 		jLabel1 = new GDLabel();
 

@@ -30,6 +30,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.jdom.Element;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -94,7 +95,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	private void buildPanel() {
 		setLayout(new PairLayout(10, 10, 160));
 
-		offsetCheckbox = new JCheckBox("Offset:");
+		offsetCheckbox = new GCheckBox("Offset:");
 		offsetCheckbox.setHorizontalAlignment(SwingConstants.RIGHT);
 		offsetCheckbox.addChangeListener(new ChangeListener() {
 			@Override

@@ -26,6 +26,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.*;
@@ -352,8 +353,8 @@ public class OptionsGui extends JPanel {
 
 		JPanel panel2 = new JPanel(new FlowLayout());
 		JPanel subPanel = new JPanel(new GridLayout(1, 2, 2, 4));
-		globalBoldCheckbox = new JCheckBox("Bold");
-		globalItalicsCheckbox = new JCheckBox("Italics");
+		globalBoldCheckbox = new GCheckBox("Bold");
+		globalItalicsCheckbox = new GCheckBox("Italics");
 		subPanel.add(globalBoldCheckbox);
 		subPanel.add(globalItalicsCheckbox);
 		panel2.add(subPanel);
@@ -396,9 +397,9 @@ public class OptionsGui extends JPanel {
 
 		JPanel subPanel = new JPanel(new GridLayout(1, 3, 2, 4));
 		subPanel.setBorder(BorderFactory.createTitledBorder(border, "Style Settings"));
-		boldCheckbox = new JCheckBox("Bold");
-		italicsCheckbox = new JCheckBox("Italics");
-		customCheckbox = new JCheckBox("Custom");
+		boldCheckbox = new GCheckBox("Bold");
+		italicsCheckbox = new GCheckBox("Italics");
+		customCheckbox = new GCheckBox("Custom");
 		subPanel.add(customCheckbox);
 		subPanel.add(boldCheckbox);
 		subPanel.add(italicsCheckbox);

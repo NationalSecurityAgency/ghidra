@@ -27,6 +27,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import ghidra.util.StringUtilities;
@@ -63,11 +64,11 @@ public class AsciiSearchFormat extends SearchFormat {
 		encodingCB.setSelectedIndex(0);
 		encodingCB.addActionListener(al);
 
-		caseSensitiveCkB = new JCheckBox("Case Sensitive");
+		caseSensitiveCkB = new GCheckBox("Case Sensitive");
 		caseSensitiveCkB.setToolTipText("Allows for case sensitive searching.");
 		caseSensitiveCkB.addActionListener(al);
 
-		escapeSequencesCkB = new JCheckBox("Escape Sequences");
+		escapeSequencesCkB = new GCheckBox("Escape Sequences");
 		escapeSequencesCkB.setToolTipText(
 			"Allows specifying control characters using escape sequences " +
 				"(i.e., allows \\n to be searched for as a single line feed character).");

@@ -26,6 +26,7 @@ import javax.swing.border.Border;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
@@ -282,12 +283,12 @@ class SearchTextDialog extends DialogComponentProvider {
 	private JPanel createOptionsPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(3));
 
-		caseSensitiveCB = new JCheckBox("Case Sensitive");
+		caseSensitiveCB = new GCheckBox("Case Sensitive");
 		caseSensitiveCB.setToolTipText(
 			HTMLUtilities.toHTML("Select this if the search\n should be case sensitive."));
 		panel.add(caseSensitiveCB);
 
-		searchSelectionCB = new JCheckBox("Search Selection");
+		searchSelectionCB = new GCheckBox("Search Selection");
 		panel.add(searchSelectionCB);
 
 		panel.setBorder(BorderFactory.createTitledBorder("Options"));
@@ -304,27 +305,27 @@ class SearchTextDialog extends DialogComponentProvider {
 		BoxLayout bl = new BoxLayout(optionsPanel, BoxLayout.Y_AXIS);
 		optionsPanel.setLayout(bl);
 
-		functionsCB = new JCheckBox("Functions");
+		functionsCB = new GCheckBox("Functions");
 		functionsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Function Header fields"));
 
-		commentsCB = new JCheckBox("Comments", true);
+		commentsCB = new GCheckBox("Comments", true);
 		commentsCB.setToolTipText(HTMLUtilities.toHTML("Search in any of the comment fields"));
 
-		labelsCB = new JCheckBox("Labels");
+		labelsCB = new GCheckBox("Labels");
 		labelsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Lable field"));
 
-		mnemonicsCB = new JCheckBox("Instruction Mnemonics");
+		mnemonicsCB = new GCheckBox("Instruction Mnemonics");
 		mnemonicsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Instruction Mnemonic field"));
 
-		operandsCB = new JCheckBox("Instruction Operands");
+		operandsCB = new GCheckBox("Instruction Operands");
 		operandsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Instruction Operand fields"));
 
-		dataMnemonicsCB = new JCheckBox("Defined Data Mnemonics");
+		dataMnemonicsCB = new GCheckBox("Defined Data Mnemonics");
 		dataMnemonicsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Data Mnemonic and Value fields"));
 
-		dataOperandsCB = new JCheckBox("Defined Data Values");
+		dataOperandsCB = new GCheckBox("Defined Data Values");
 		dataOperandsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Data Mnemonic and Value fields"));
 

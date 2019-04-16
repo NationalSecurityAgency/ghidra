@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.program.model.data.DataOrganizationImpl;
 import ghidra.util.layout.PairLayout;
@@ -136,7 +137,7 @@ public class DataOrganizationPanel extends JPanel {
 	}
 
 	private void setUpSignedChar() {
-		charIsSignedCheckbox = new JCheckBox();
+		charIsSignedCheckbox = new GCheckBox();
 		charIsSignedCheckbox.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {

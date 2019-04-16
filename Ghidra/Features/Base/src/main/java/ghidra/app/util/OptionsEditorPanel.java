@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -222,7 +223,7 @@ public class OptionsEditorPanel extends JPanel {
 			e -> DockingWindowManager.showDialog(panel, new LibraryPathsDialog()));
 		Boolean value = (Boolean) option.getValue();
 		boolean initialState = value != null ? value : false;
-		JCheckBox jCheckBox = new JCheckBox("", initialState);
+		GCheckBox jCheckBox = new GCheckBox("", initialState);
 		button.setEnabled(initialState);
 		jCheckBox.addActionListener(e -> {
 			boolean b = jCheckBox.isSelected();
@@ -292,7 +293,7 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getBooleanEditorComponent(Option option) {
-		JCheckBox cb = new JCheckBox();
+		GCheckBox cb = new GCheckBox();
 		cb.setName(option.getName());
 		Boolean b = (Boolean) option.getValue();
 		boolean initialState = b != null ? b : false;

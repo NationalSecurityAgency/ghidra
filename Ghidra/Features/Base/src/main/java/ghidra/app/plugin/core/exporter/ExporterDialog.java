@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -200,7 +201,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	}
 
 	private Component buildSelectionCheckbox() {
-		selectionCheckBox = new JCheckBox("");
+		selectionCheckBox = new GCheckBox("");
 		updateSelectionCheckbox();
 		return selectionCheckBox;
 	}

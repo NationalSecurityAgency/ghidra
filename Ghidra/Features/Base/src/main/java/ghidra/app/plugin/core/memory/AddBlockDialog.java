@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -146,16 +147,16 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		lengthField.setChangeListener(e -> lengthChanged());
 		addrField.addChangeListener(ev -> addrChanged());
 
-		readCB = new JCheckBox();
+		readCB = new GCheckBox();
 		readCB.setName("Read");
 
-		writeCB = new JCheckBox();
+		writeCB = new GCheckBox();
 		writeCB.setName("Write");
 
-		executeCB = new JCheckBox();
+		executeCB = new GCheckBox();
 		executeCB.setName("Execute");
 
-		volatileCB = new JCheckBox();
+		volatileCB = new GCheckBox();
 		volatileCB.setName("Volatile");
 
 		JPanel topPanel = new JPanel(new PairLayout(4, 10, 150));

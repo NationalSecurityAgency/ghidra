@@ -23,6 +23,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
@@ -156,7 +157,7 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		panel.add(new GLabel("Select Data Size (Bytes):", SwingConstants.RIGHT));
 		panel.add(comboBox);
 
-		signedCheckBox = new JCheckBox("Signed Data Value(s)", true);
+		signedCheckBox = new GCheckBox("Signed Data Value(s)", true);
 		panel.add(signedCheckBox);
 		return panel;
 	}

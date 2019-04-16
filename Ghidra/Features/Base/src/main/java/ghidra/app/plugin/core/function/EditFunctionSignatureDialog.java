@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -171,7 +172,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	}
 
 	protected void installInlineWidget(JPanel parentPanel) {
-		inlineCheckBox = new JCheckBox("Inline");
+		inlineCheckBox = new GCheckBox("Inline");
 		inlineCheckBox.addChangeListener(e -> {
 			if (inlineCheckBox.isSelected() && callFixupComboBox != null) {
 				callFixupComboBox.setSelectedItem(NONE_CHOICE);
@@ -181,7 +182,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	}
 
 	protected void installNoReturnWidget(JPanel parentPanel) {
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		parentPanel.add(noReturnCheckBox);
 	}
 

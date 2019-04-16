@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 import docking.DockingWindowManager;
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -199,7 +200,7 @@ class EditExternalLocationPanel extends JPanel {
 		add(bottomPanel);
 
 		if (externalLocation == null) {
-			functionCheckBox = new JCheckBox("Make External Function");
+			functionCheckBox = new GCheckBox("Make External Function");
 			add(functionCheckBox);
 		}
 	}

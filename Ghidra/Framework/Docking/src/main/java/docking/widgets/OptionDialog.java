@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.dialogs.*;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GIconLabel;
@@ -264,11 +265,11 @@ public class OptionDialog extends DialogComponentProvider {
 	private JPanel buildRememberOptionChoicePanel(DialogRememberOption rememberOptionChoice) {
 		if (rememberOptionChoice == null) {
 			this.rememberOption = new DoNothingDialogRememberOption();
-			rememberOptionCheckBox = new JCheckBox(); // to prevent null checks, create dummy checkbox
+			rememberOptionCheckBox = new GCheckBox(); // to prevent null checks, create dummy checkbox
 			return null;
 		}
 		this.rememberOption = rememberOptionChoice;
-		rememberOptionCheckBox = new JCheckBox(rememberOptionChoice.getDescription());
+		rememberOptionCheckBox = new GCheckBox(rememberOptionChoice.getDescription());
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));

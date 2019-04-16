@@ -23,6 +23,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 import docking.framework.DockingApplicationConfiguration;
+import docking.widgets.checkbox.GCheckBox;
 import generic.concurrent.GThreadPool;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.Application;
@@ -79,7 +80,7 @@ public class TaskSimulator {
 		group.add(urgentButton);
 		mediumButton.setSelected(true);
 
-		yieldingCheckbox = new JCheckBox("Yielding");
+		yieldingCheckbox = new GCheckBox("Yielding");
 
 		addGroupButton.addActionListener(new ActionListener() {
 

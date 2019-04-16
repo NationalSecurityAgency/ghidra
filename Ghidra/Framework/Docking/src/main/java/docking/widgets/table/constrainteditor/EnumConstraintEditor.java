@@ -21,6 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.EnumColumnConstraint;
@@ -57,7 +58,7 @@ public class EnumConstraintEditor<T extends Enum<T>> extends AbstractColumnConst
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
 
 		for (T t : allValues) {
-			JCheckBox jCheckBox = new JCheckBox(getElementDisplayName(t));
+			GCheckBox jCheckBox = new GCheckBox(getElementDisplayName(t));
 
 			enumCheckboxMap.put(t, jCheckBox);
 

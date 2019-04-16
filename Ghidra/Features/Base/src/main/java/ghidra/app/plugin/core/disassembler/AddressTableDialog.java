@@ -27,6 +27,7 @@ import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.ToolTipManager;
 import docking.action.*;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -192,14 +193,14 @@ public class AddressTableDialog extends DialogComponentProvider {
 		optPanel.add(alignPanel);
 		optPanel.add(skipPanel);
 
-		selectionButton = new JCheckBox("Search Selection");
+		selectionButton = new GCheckBox("Search Selection");
 		selectionButton.setSelected(false);
 		ToolTipManager.setToolTipText(selectionButton,
 			"If checked, search only the current selection.");
 		JPanel searchOptionsWestPanel = new JPanel(new GridLayout(2, 1));
 		searchOptionsWestPanel.add(selectionButton);
 
-		shiftedAddressButton = new JCheckBox("Shifted Addresses");
+		shiftedAddressButton = new GCheckBox("Shifted Addresses");
 
 		boolean allowShiftedAddresses =
 			plugin.getProgram().getDataTypeManager().getDataOrganization().getPointerShift() != 0;
@@ -226,7 +227,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel makeOptionsPanel = new JPanel(new BorderLayout());
 		makeOptionsPanel.setBorder(BorderFactory.createTitledBorder("Make Table Options"));
 
-		autoLabelCB = new JCheckBox("Auto Label");
+		autoLabelCB = new GCheckBox("Auto Label");
 		autoLabelCB.setSelected(true);
 		autoLabelCB.setEnabled(false);
 		ToolTipManager.setToolTipText(autoLabelCB,

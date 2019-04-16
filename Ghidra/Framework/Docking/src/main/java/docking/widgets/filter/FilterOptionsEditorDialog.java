@@ -27,6 +27,7 @@ import javax.swing.border.EmptyBorder;
 import docking.DialogComponentProvider;
 import docking.DisabledComponentLayerFactory;
 import docking.widgets.InlineComponentTitledPanel;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
@@ -266,14 +267,14 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			this.setLayout(new HorizontalLayout(6));
 			setBorder(BorderFactory.createEmptyBorder(10, 4, 0, 4));
 
-			caseSensitiveCheckbox = new JCheckBox("Case Sensitive");
+			caseSensitiveCheckbox = new GCheckBox("Case Sensitive");
 			caseSensitiveCheckbox.setToolTipText(
 				"Toggles whether the case of the filter text matters in the match.  NOTE: does not apply to regular expressons.");
 			if (initialFilterOptions.isCaseSensitive()) {
 				caseSensitiveCheckbox.setSelected(true);
 			}
 
-			globbingCheckbox = new JCheckBox("Allow Globbing");
+			globbingCheckbox = new GCheckBox("Allow Globbing");
 			globbingCheckbox.setToolTipText(
 				"Toggles whether globbing chars (?*) are literal or wildcards");
 			if (initialFilterOptions.isGlobbingAllowed()) {
@@ -308,7 +309,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			this.setLayout(new HorizontalLayout(6));
 			setBorder(BorderFactory.createEmptyBorder(10, 4, 10, 4));
 
-			invertCheckbox = new JCheckBox("Invert Filter");
+			invertCheckbox = new GCheckBox("Invert Filter");
 			invertCheckbox.setToolTipText("<html>" +
 				"Inverts the match.  For example, <i>contains</i> becomes <i>does not contain</i>.");
 			if (initialFilterOptions.isInverted()) {
@@ -337,13 +338,11 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 		public MultiTermPanel() {
 
-			super(new JCheckBox("Enable Multi-Term Filtering"), BorderFactory.createEtchedBorder());
+			super(new GCheckBox("Enable Multi-Term Filtering", true),
+				BorderFactory.createEtchedBorder());
 
 			enableCheckbox = (JCheckBox) getTitleComponent();
-			enableCheckbox.setSelected(true);
-			enableCheckbox.addActionListener(e -> {
-				setOptionsEnabled(enableCheckbox.isSelected());
-			});
+			enableCheckbox.addActionListener(e -> setOptionsEnabled(enableCheckbox.isSelected()));
 
 			createPanel();
 		}

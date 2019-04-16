@@ -25,6 +25,7 @@ import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
@@ -231,8 +232,8 @@ public class SettingsDialog extends DialogComponentProvider {
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox<String> comboBox = new GComboBox<>();
-		private JCheckBox checkBox = new JCheckBox();
+		private GComboBox<String> comboBox = new GComboBox<>();
+		private GCheckBox checkBox = new GCheckBox();
 
 		private final Runnable editStopped = new Runnable() {
 			@Override

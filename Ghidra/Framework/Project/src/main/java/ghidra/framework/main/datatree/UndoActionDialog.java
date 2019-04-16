@@ -21,6 +21,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.GenericHelpTopics;
@@ -98,8 +99,7 @@ public class UndoActionDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
 		filePanel = new DomainFilesPanel(fileList, null);
-		saveCopyCB = new JCheckBox("Save copy of the file with a .keep extension");
-		saveCopyCB.setSelected(true);
+		saveCopyCB = new GCheckBox("Save copy of the file with a .keep extension", true);
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.add(saveCopyCB);
 

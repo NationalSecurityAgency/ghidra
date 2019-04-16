@@ -26,6 +26,7 @@ import javax.swing.*;
 import docking.*;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.filter.FilterTextField;
@@ -389,7 +390,7 @@ class FilterAction extends ToggleDockingAction {
 		}
 
 		private void createCheckBox(String curTypeHtml, String curType, Boolean lEnabled) {
-			JCheckBox newCheckbox = new JCheckBox(curTypeHtml, lEnabled.booleanValue());
+			JCheckBox newCheckbox = new GHtmlCheckBox(curTypeHtml, lEnabled.booleanValue());
 			newCheckbox.setName(curType);
 			newCheckbox.addKeyListener(listener);
 			newCheckbox.addItemListener(itemListener);

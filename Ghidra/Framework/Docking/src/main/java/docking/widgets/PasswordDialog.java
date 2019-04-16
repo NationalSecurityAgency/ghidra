@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.util.MessageType;
@@ -65,7 +66,7 @@ public class PasswordDialog extends DialogComponentProvider {
 			workPanel.add(choiceCB);
 		}
 		if (includeAnonymousOption) {
-			anonymousAccess = new JCheckBox("Request Anonymous Access");
+			anonymousAccess = new GCheckBox("Request Anonymous Access");
 			anonymousAccess.setName("ANONYMOUS-COMPONENT");
 			anonymousAccess.addChangeListener(e -> {
 				boolean anonymousAccessRequested = anonymousAccess.isSelected();

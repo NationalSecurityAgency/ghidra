@@ -17,6 +17,7 @@ package ghidra.app.util.datatype;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataTypeManager;
@@ -38,7 +39,7 @@ public class ApplyEnumDialog extends DataTypeSelectionDialog {
 		updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 		updatedPanel.setLayout(new VerticalLayout(5));
 
-		JCheckBox subOpCB = new JCheckBox("Apply to sub-operands", shouldApplyOnSubOps);
+		JCheckBox subOpCB = new GCheckBox("Apply to sub-operands", shouldApplyOnSubOps);
 		subOpCB.setName("subOpCB");
 		subOpCB.setToolTipText("Applies this enum to the 'nested scalars'.");
 		subOpCB.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));

@@ -21,6 +21,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -158,8 +159,7 @@ public class VersionControlDialog extends DialogComponentProvider {
 		commentsTextArea = new JTextArea(4, 20);
 		JScrollPane sp = new JScrollPane(commentsTextArea);
 
-		keepCB = new JCheckBox("Keep File Checked Out");
-		keepCB.setSelected(true);
+		keepCB = new GCheckBox("Keep File Checked Out", true);
 		JPanel kPanel = new JPanel(new BorderLayout());
 		kPanel.add(keepCB, BorderLayout.WEST);
 
@@ -172,8 +172,7 @@ public class VersionControlDialog extends DialogComponentProvider {
 		innerPanel.add(kPanel);
 
 		if (!addToVersionControl) {
-			keepFileCB = new JCheckBox("Create \".keep\" file");
-			keepFileCB.setSelected(false);
+			keepFileCB = new GCheckBox("Create \".keep\" file", false);
 			JPanel kpPanel = new JPanel(new BorderLayout());
 			kpPanel.add(keepFileCB, BorderLayout.WEST);
 			innerPanel.add(kpPanel);

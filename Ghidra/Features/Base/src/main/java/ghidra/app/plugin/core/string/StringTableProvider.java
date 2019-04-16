@@ -25,6 +25,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -385,9 +386,9 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		preview = new JTextField(5);
 		preview.setEditable(false);
 		preview.setEnabled(false);
-		autoLabelCheckbox = new JCheckBox("Auto Label");
-		addAlignmentBytesCheckbox = new JCheckBox("Include Alignment Nulls");
-		allowTruncationCheckbox = new JCheckBox("Truncate If Needed");
+		autoLabelCheckbox = new GCheckBox("Auto Label");
+		addAlignmentBytesCheckbox = new GCheckBox("Include Alignment Nulls");
+		allowTruncationCheckbox = new GCheckBox("Truncate If Needed");
 		autoLabelCheckbox.setSelected(false); // discourage labeling since dynamic labels are preferred
 
 		JPanel panel = new JPanel(new GridBagLayout());

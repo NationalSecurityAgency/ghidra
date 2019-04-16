@@ -28,6 +28,7 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -247,7 +248,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		group.add(applyToSelection);
 		group.add(applyToAll);
 
-		overwriteExistingEquates = new JCheckBox("Overwrite existing equates", false);
+		overwriteExistingEquates = new GCheckBox("Overwrite existing equates", false);
 		overwriteExistingEquates.setName("Overwrite");
 		overwriteExistingEquates.setEnabled(false);
 		overwriteExistingEquates.setToolTipText("If checked, apply equates to all unmarked " +

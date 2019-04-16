@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.app.plugin.core.printing;
 
-import ghidra.util.HelpLocation;
-
 import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.util.HelpLocation;
 
 public class PrintOptionsDialog extends DialogComponentProvider {
 
@@ -33,18 +31,18 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 
 	private boolean selectionEnabled;
 	private boolean cancelled = false;
-	
+
 	private JRadioButton selection;
 	private JRadioButton visible;
 	private JRadioButton view;
 	private JCheckBox monochrome;
-	
+
 	private JCheckBox title;
 	private JCheckBox date;
 	private JCheckBox pageNum;
-	
+
 	private ButtonGroup group;
-	
+
 	protected PrintOptionsDialog(boolean selectionEnabled) {
 		super("Print Options", true, false, true, false);
 		setResizable(false);
@@ -57,13 +55,13 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 	}
 
 	@Override
-    protected void cancelCallback() {
+	protected void cancelCallback() {
 		close();
 		cancelled = true;
 	}
 
 	@Override
-    protected void okCallback() {
+	protected void okCallback() {
 		close();
 		cancelled = false;
 	}
@@ -77,9 +75,9 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 
 		KeyListener key = new KeyAdapter() {
 			@Override
-            public void keyPressed(KeyEvent e) {
+			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					((AbstractButton)e.getSource()).setSelected(true);
+					((AbstractButton) e.getSource()).setSelected(true);
 					okCallback();
 				}
 			}
@@ -105,33 +103,31 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 		headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
 		headerPanel.setBorder(BorderFactory.createTitledBorder("Header and Footer"));
 
-		title = new JCheckBox("Title");
+		title = new GCheckBox("Title");
 		title.setSelected(true);
 		title.addKeyListener(key);
 		headerPanel.add(title);
-		date = new JCheckBox("Date/Time");
+		date = new GCheckBox("Date/Time");
 		date.setSelected(true);
 		date.addKeyListener(key);
 		headerPanel.add(date);
-		pageNum = new JCheckBox("Page Numbers");
+		pageNum = new GCheckBox("Page Numbers");
 		pageNum.setSelected(true);
 		pageNum.addKeyListener(key);
 		headerPanel.add(pageNum);
-		
 
 		JPanel optionsPanel = new JPanel();
 		optionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		optionsPanel.setBorder(BorderFactory.createTitledBorder("Other Print Options"));
 
-		monochrome = new JCheckBox("Use Monochrome", true);
+		monochrome = new GCheckBox("Use Monochrome", true);
 		monochrome.addKeyListener(key);
 		optionsPanel.add(monochrome);
-
 
 		outerPanel.add(rangePanel, BorderLayout.NORTH);
 		outerPanel.add(headerPanel, BorderLayout.CENTER);
 		outerPanel.add(optionsPanel, BorderLayout.SOUTH);
-		
+
 		setFocusComponent();
 
 		return outerPanel;
@@ -144,28 +140,27 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 	public boolean getVisible() {
 		return visible.isSelected();
 	}
-	
+
 	public boolean getView() {
 		return view.isSelected();
 	}
-	
+
 	public boolean getPrintTitle() {
 		return title.isSelected();
 	}
-	
+
 	public boolean getPrintDate() {
 		return date.isSelected();
 	}
-	
+
 	public boolean getPrintPageNum() {
 		return pageNum.isSelected();
 	}
 
-
 	public boolean isCancelled() {
 		return cancelled;
 	}
-	
+
 	public Font getHeaderFont() {
 		return HEADER_FONT;
 	}
@@ -173,37 +168,39 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 	public FontMetrics getHeaderMetrics() {
 		return HEADER_METRICS;
 	}
-	
+
 	public boolean showHeader() {
 		return getPrintTitle();
 	}
-	
+
 	public boolean showFooter() {
-		return getPrintDate()  ||  getPrintPageNum();
+		return getPrintDate() || getPrintPageNum();
 	}
-	
+
 	public boolean getMonochrome() {
 		return monochrome.isSelected();
 	}
-	
+
 	public int getHeaderHeight() {
 		return HEADER_METRICS.getMaxAscent() + HEADER_METRICS.getMaxDescent();
 	}
-	
+
 	public void setSelectionEnabled(boolean selectionEnabled) {
 		this.selectionEnabled = selectionEnabled;
 		selection.setEnabled(selectionEnabled);
 		selection.setSelected(selectionEnabled);
-		if (!selectionEnabled)
+		if (!selectionEnabled) {
 			view.setSelected(true);
+		}
 		setFocusComponent();
 	}
-	
+
 	public void setFocusComponent() {
 		if (selectionEnabled) {
 			group.setSelected(selection.getModel(), true);
 			setFocusComponent(selection);
-		} else {
+		}
+		else {
 			group.setSelected(view.getModel(), true);
 			setFocusComponent(view);
 		}

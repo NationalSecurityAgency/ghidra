@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.analysis.*;
@@ -51,15 +52,9 @@ public class AnalyzerListPanel extends JPanel {
 		//		jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		add(jScrollPane, BorderLayout.CENTER);
 		if (phase != null) {
-			final JCheckBox checkbox = new JCheckBox("Create Checkpoint When Phase Completed");
-			checkbox.setSelected(phase.isCheckPoint());
-			checkbox.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					relevantPhase.setIsCheckPoint(checkbox.isSelected());
-				}
-			});
+			GCheckBox checkbox =
+				new GCheckBox("Create Checkpoint When Phase Completed", phase.isCheckPoint());
+			checkbox.addActionListener(e -> relevantPhase.setIsCheckPoint(checkbox.isSelected()));
 			add(checkbox, BorderLayout.SOUTH);
 			if (phase == recipe.getLastPhase()) {
 				checkbox.setEnabled(false);

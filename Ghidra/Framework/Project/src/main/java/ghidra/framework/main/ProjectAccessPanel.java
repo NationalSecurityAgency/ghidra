@@ -24,6 +24,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTable;
 import docking.wizard.AbstractWizardJPanel;
@@ -192,8 +193,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		add(mainPanel, BorderLayout.CENTER);
 
 		if (anonymousServerAccessAllowed) {
-			anonymousAccessCB = new JCheckBox("Allow Anonymous Access");
-			anonymousAccessCB.setSelected(origAnonymousAccessEnabled);
+			anonymousAccessCB = new GCheckBox("Allow Anonymous Access", origAnonymousAccessEnabled);
 			anonymousAccessCB.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
 			add(anonymousAccessCB, BorderLayout.SOUTH);
 		}

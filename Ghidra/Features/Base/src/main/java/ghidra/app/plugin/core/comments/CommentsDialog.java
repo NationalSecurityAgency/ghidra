@@ -26,6 +26,7 @@ import javax.swing.text.JTextComponent;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import ghidra.app.util.viewer.field.AnnotatedStringHandler;
 import ghidra.app.util.viewer.field.Annotation;
@@ -60,7 +61,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	private boolean wasChanged;
 
 	private boolean enterMode = false;
-	private JCheckBox enterBox = new JCheckBox("Enter accepts comment", enterMode);
+	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", enterMode);
 	{
 		enterBox.addChangeListener(new ChangeListener() {
 			@Override

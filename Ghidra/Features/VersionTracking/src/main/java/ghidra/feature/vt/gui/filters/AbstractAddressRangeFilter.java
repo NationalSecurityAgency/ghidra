@@ -25,6 +25,7 @@ import javax.swing.event.EventListenerList;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GHtmlLabel;
@@ -77,8 +78,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		// Enable panel
 		// check box for enabled/disabled, so the user can keep previous values
 		//
-		enableCheckBox = new JCheckBox("enable");
-		enableCheckBox.setSelected(true);
+		enableCheckBox = new GCheckBox("enable", true);
 		enableCheckBox.addItemListener(e -> enableFilter(enableCheckBox.isSelected()));
 		enableCheckBox.setSelected(true);
 		JPanel enablePanel = new JPanel(new BorderLayout());

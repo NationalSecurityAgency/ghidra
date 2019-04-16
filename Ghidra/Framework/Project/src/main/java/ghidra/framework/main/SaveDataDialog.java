@@ -24,8 +24,10 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.DockingWindowManager;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectLocator;
@@ -51,7 +53,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 	private ListPanel listPanel;
 	private JPanel mainPanel;
-	private JCheckBox[] checkboxes;
+	private GCheckBox[] checkboxes;
 	private List<DomainFile> files;
 	private boolean[] saveable;
 	private JButton selectAllButton;
@@ -258,13 +260,12 @@ public class SaveDataDialog extends DialogComponentProvider {
 		// initList() may be called multiple times within one dialog showing,
 		// and some files may have been changed, so we need to update the list
 		files = checkForUnsavedFiles(files);
-		checkboxes = new JCheckBox[files.size()];
+		checkboxes = new GCheckBox[files.size()];
 		saveable = new boolean[files.size()];
 		String readOnlyString = " (Read-Only)";
 		yesButton.setEnabled(false);
 		for (int i = 0; i < files.size(); i++) {
-			checkboxes[i] = new JCheckBox(files.get(i).getName());
-			DockingUtils.turnOffHTMLRendering(checkboxes[i]);
+			checkboxes[i] = new GCheckBox(files.get(i).getName());
 			checkboxes[i].setBackground(Color.white);
 			saveable[i] = files.get(i).canSave();
 			if (!saveable[i]) {
