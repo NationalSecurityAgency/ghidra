@@ -35,6 +35,7 @@ import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.*;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.examples.graph.layout.SampleGraphPluginDependencyLayoutProvider;
@@ -189,9 +190,9 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		//
 		// How should we display the filtered-out vertices? 
 		//
-		fadedButton = new JRadioButton("Faded");
+		fadedButton = new GRadioButton("Faded");
 		fadedButton.setToolTipText("Filtered vertices remain in the graph, but are grayed-out");
-		removedButton = new JRadioButton("Removed");
+		removedButton = new GRadioButton("Removed");
 		removedButton.setToolTipText("Filtered vertices are removed from the graph");
 
 		ButtonGroup group = new ButtonGroup();

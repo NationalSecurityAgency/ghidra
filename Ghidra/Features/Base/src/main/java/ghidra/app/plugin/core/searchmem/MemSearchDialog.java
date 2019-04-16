@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
@@ -396,8 +397,8 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	private Container buildEndienessPanel() {
 		ButtonGroup endianGroup = new ButtonGroup();
-		littleEndian = new JRadioButton("Little Endian", true);
-		bigEndian = new JRadioButton("Big Endian", false);
+		littleEndian = new GRadioButton("Little Endian", true);
+		bigEndian = new GRadioButton("Big Endian", false);
 		endianGroup.add(bigEndian);
 		endianGroup.add(littleEndian);
 
@@ -450,8 +451,8 @@ class MemSearchDialog extends DialogComponentProvider {
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(new TitledBorder("Selection Scope"));
 
-		searchSelectionRadioButton = new JRadioButton("Search Selection");
-		searchAllRadioButton = new JRadioButton("Search All");
+		searchSelectionRadioButton = new GRadioButton("Search Selection");
+		searchAllRadioButton = new GRadioButton("Search All");
 
 		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(searchSelectionRadioButton);
@@ -497,7 +498,7 @@ class MemSearchDialog extends DialogComponentProvider {
 		};
 
 		for (SearchFormat element : allFormats) {
-			JRadioButton formatButton = new JRadioButton(element.getName(), true);
+			GRadioButton formatButton = new GRadioButton(element.getName(), true);
 			formatButton.setToolTipText(element.getToolTip());
 
 			formatGroup.add(formatButton);
@@ -574,8 +575,8 @@ class MemSearchDialog extends DialogComponentProvider {
 	 */
 	private JPanel buildExtrasPanel() {
 		ButtonGroup memoryBlockGroup = new ButtonGroup();
-		loadedBlocks = new JRadioButton("Loaded Blocks", true);
-		allBlocks = new JRadioButton("All Blocks", false);
+		loadedBlocks = new GRadioButton("Loaded Blocks", true);
+		allBlocks = new GRadioButton("All Blocks", false);
 		memoryBlockGroup.add(loadedBlocks);
 		memoryBlockGroup.add(allBlocks);
 

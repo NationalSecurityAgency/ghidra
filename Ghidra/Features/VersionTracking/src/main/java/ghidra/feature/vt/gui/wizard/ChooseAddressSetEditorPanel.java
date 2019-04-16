@@ -25,6 +25,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DockingUtils;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -119,9 +120,9 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		JPanel chooseSourcePanel = new JPanel(new VerticalLayout(5));
 
 		ButtonGroup originGroup = new ButtonGroup();
-		entireProgramButton = new JRadioButton("Use Entire " + name + " Program", false);
-		toolSelectionButton = new JRadioButton("Use " + name + " Tool's Selection", false);
-		myRangesButton = new JRadioButton("Specify My Own Address Ranges", false);
+		entireProgramButton = new GRadioButton("Use Entire " + name + " Program", false);
+		toolSelectionButton = new GRadioButton("Use " + name + " Tool's Selection", false);
+		myRangesButton = new GRadioButton("Specify My Own Address Ranges", false);
 		originGroup.add(entireProgramButton);
 		originGroup.add(toolSelectionButton);
 		originGroup.add(myRangesButton);

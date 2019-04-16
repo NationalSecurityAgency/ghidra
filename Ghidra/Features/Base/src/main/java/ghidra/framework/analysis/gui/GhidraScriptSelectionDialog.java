@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.widgets.*;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import generic.jar.ResourceFile;
@@ -61,7 +62,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	private JComponent createButtonComponent(AnalyzerType type) {
 		JPanel panel = new JPanel(new HorizontalLayout(1));
 		Icon icon = AnalyzerUtil.getIcon(type);
-		JRadioButton button = new JRadioButton();
+		GRadioButton button = new GRadioButton();
 		button.setActionCommand(type.name());
 		button.setToolTipText(type.getDescription());
 		if (buttonGroup == null) {

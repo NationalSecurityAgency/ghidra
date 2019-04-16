@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.app.merge.MergeConstants;
@@ -140,9 +141,9 @@ class ConflictPanel extends JPanel {
 		namePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
 		namePanel.add(propertyGroupLabel);
 
-		latestRB = new JRadioButton("Use " + MergeConstants.LATEST_TITLE);
-		myRB = new JRadioButton("Use " + MergeConstants.MY_TITLE);
-		originalRB = new JRadioButton("Use " + MergeConstants.ORIGINAL_TITLE);
+		latestRB = new GRadioButton("Use " + MergeConstants.LATEST_TITLE);
+		myRB = new GRadioButton("Use " + MergeConstants.MY_TITLE);
+		originalRB = new GRadioButton("Use " + MergeConstants.ORIGINAL_TITLE);
 
 		latestRB.setName(LATEST_BUTTON_NAME);
 		myRB.setName(CHECKED_OUT_BUTTON_NAME);

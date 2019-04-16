@@ -27,6 +27,7 @@ import javax.swing.border.EmptyBorder;
 import docking.DialogComponentProvider;
 import docking.DisabledComponentLayerFactory;
 import docking.widgets.InlineComponentTitledPanel;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GIconLabel;
@@ -148,10 +149,10 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			setLayout(new PairLayout(2, 2));
 			setBorder(BorderFactory.createTitledBorder("Text Filter Strategy"));
 			ButtonGroup buttonGroup = new ButtonGroup();
-			JRadioButton startsWithButton = new JRadioButton("Starts With");
-			JRadioButton containsButton = new JRadioButton("Contains");
-			JRadioButton matchesExactlyButton = new JRadioButton("Matches Exactly");
-			JRadioButton regularExpressionButton = new JRadioButton("Regular Expression");
+			GRadioButton startsWithButton = new GRadioButton("Starts With");
+			GRadioButton containsButton = new GRadioButton("Contains");
+			GRadioButton matchesExactlyButton = new GRadioButton("Matches Exactly");
+			GRadioButton regularExpressionButton = new GRadioButton("Regular Expression");
 
 			startsWithButton.setToolTipText(
 				"The filter will match all entries that start with the entered filter text.");
@@ -437,7 +438,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			ButtonGroup modeBtnGroup = new ButtonGroup();
 			MultitermEvaluationMode[] modes = MultitermEvaluationMode.values();
 			for (MultitermEvaluationMode mode : modes) {
-				JRadioButton modeRB = new JRadioButton(mode.name());
+				GRadioButton modeRB = new GRadioButton(mode.name());
 				modeRB.setToolTipText(mode.getDescription());
 				modeRB.addActionListener(e -> {
 					evalMode = MultitermEvaluationMode.valueOf(mode.name());

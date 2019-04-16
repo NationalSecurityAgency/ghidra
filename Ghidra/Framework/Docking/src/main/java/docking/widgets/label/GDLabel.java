@@ -106,7 +106,7 @@ public class GDLabel extends JLabel {
 
 	@Override
 	public void setText(String text) {
-		GLabel.warnAboutHtmlText(text);
+		DockingUtils.warnAboutHtmlText(text);
 		super.setText(text);
 	}
 

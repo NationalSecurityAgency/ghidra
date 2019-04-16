@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import ghidra.util.HelpLocation;
 
@@ -85,16 +86,16 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 
 		group = new ButtonGroup();
 
-		selection = new JRadioButton("Selected area(s)");
+		selection = new GRadioButton("Selected area(s)");
 		selection.addKeyListener(key);
 		rangePanel.add(selection);
 		group.add(selection);
 		selection.setEnabled(selectionEnabled);
-		visible = new JRadioButton("Code visible on screen");
+		visible = new GRadioButton("Code visible on screen");
 		visible.addKeyListener(key);
 		rangePanel.add(visible);
 		group.add(visible);
-		view = new JRadioButton("Current view");
+		view = new GRadioButton("Current view");
 		view.addKeyListener(key);
 		rangePanel.add(view);
 		group.add(view);

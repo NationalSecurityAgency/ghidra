@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -105,7 +106,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		add(rowPanel, BorderLayout.CENTER);
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		JRadioButton rb = new JRadioButton();
+		GRadioButton rb = new GRadioButton();
 		JCheckBox cb = new GCheckBox();
 		indent = Math.max(rb.getPreferredSize().width, cb.getPreferredSize().width);
 
@@ -504,7 +505,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		}
 	}
 
-	private class MyRadioButton extends JRadioButton {
+	private class MyRadioButton extends GRadioButton {
 		private final static long serialVersionUID = 1;
 		private int option;
 
@@ -560,7 +561,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 
 	}
 
-	private class MyCheckBox extends JCheckBox {
+	private class MyCheckBox extends GCheckBox {
 		private final static long serialVersionUID = 1;
 		private int option;
 

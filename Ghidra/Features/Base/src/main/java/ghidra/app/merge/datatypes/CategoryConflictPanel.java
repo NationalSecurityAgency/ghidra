@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.merge.MergeConstants;
@@ -96,9 +97,9 @@ class CategoryConflictPanel extends JPanel {
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(categoryLabel);
 
-		latestRB = new JRadioButton("Use Latest");
-		myRB = new JRadioButton("Use My Version");
-		originalRB = new JRadioButton("Use Original");
+		latestRB = new GRadioButton("Use Latest");
+		myRB = new GRadioButton("Use My Version");
+		originalRB = new GRadioButton("Use Original");
 		latestRB.setName(LATEST_BUTTON_NAME);
 		myRB.setName(CHECKED_OUT_BUTTON_NAME);
 		originalRB.setName(ORIGINAL_BUTTON_NAME);

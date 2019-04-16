@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.nav.Navigatable;
@@ -116,7 +117,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		gbc.insets = new Insets(2, 2, 2, 2);
 		gbc.anchor = GridBagConstraints.WEST;
 
-		forwardButton = new JRadioButton("Select Forward", true);
+		forwardButton = new GRadioButton("Select Forward", true);
 		forwardButton.setName("forwardButton");
 		forwardButton.addActionListener(new ActionListener() {
 			@Override
@@ -127,7 +128,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 			}
 		});
 		buttonGroup.add(forwardButton);
-		backwardButton = new JRadioButton("Select Backward");
+		backwardButton = new GRadioButton("Select Backward");
 		backwardButton.setName("backwardButton");
 		backwardButton.addActionListener(new ActionListener() {
 			@Override
@@ -138,7 +139,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 			}
 		});
 		buttonGroup.add(backwardButton);
-		allButton = new JRadioButton("Select All");
+		allButton = new GRadioButton("Select All");
 		allButton.setName("allButton");
 		allButton.addActionListener(new ActionListener() {
 			@Override
@@ -149,7 +150,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		});
 
 		buttonGroup.add(allButton);
-		toButton = new JRadioButton("To Address");
+		toButton = new GRadioButton("To Address");
 		toButton.setName("toButton");
 		toButton.addActionListener(new ActionListener() {
 			@Override

@@ -25,6 +25,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GHtmlLabel;
 import ghidra.framework.model.Tool;
 import ghidra.util.HTMLUtilities;
@@ -75,7 +76,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 
 		ButtonGroup buttonGroup = new ButtonGroup();
 
-		JRadioButton noneButton = new JRadioButton("None");
+		GRadioButton noneButton = new GRadioButton("None");
 		ItemListener listener = new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -87,7 +88,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		panel.add(noneButton);
 
 		for (final Tool tool : toolList) {
-			JRadioButton radioButton = new JRadioButton(tool.getName());
+			GRadioButton radioButton = new GRadioButton(tool.getName());
 			radioButton.addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {

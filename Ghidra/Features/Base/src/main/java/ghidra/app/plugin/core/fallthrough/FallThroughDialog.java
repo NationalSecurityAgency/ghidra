@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
 import docking.ToolTipManager;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
@@ -231,7 +232,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		panel.setLayout(bl);
 
 		ButtonGroup group = new ButtonGroup();
-		defaultRB = new JRadioButton("Default", true);
+		defaultRB = new GRadioButton("Default", true);
 		defaultRB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
@@ -240,7 +241,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		});
 		ToolTipManager.setToolTipText(defaultRB, "Use default fallthrough address");
 
-		userRB = new JRadioButton("User", false);
+		userRB = new GRadioButton("User", false);
 		userRB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ev) {

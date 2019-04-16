@@ -142,8 +142,7 @@ public class ErrLogDialog extends DialogComponentProvider {
 		sendButton.addActionListener(e -> sendDetails());
 
 		detailsPanel = new ErrorDetailsPanel();
-		String text = isShowingDetails ? CLOSE : DETAIL;
-		detailsButton = new JButton(text);
+		detailsButton = new JButton(isShowingDetails ? CLOSE : DETAIL);
 		detailsButton.addActionListener(e -> {
 			String label = detailsButton.getText();
 			showDetails(label.equals(DETAIL));

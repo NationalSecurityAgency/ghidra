@@ -23,6 +23,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 
@@ -63,8 +64,8 @@ public class FindDialog extends DialogComponentProvider {
 	private JPanel buildMainPanel() {
 
 		ButtonGroup formatGroup = new ButtonGroup();
-		stringRadioButton = new JRadioButton("String", true);
-		regexRadioButton = new JRadioButton("Regular Expression", false);
+		stringRadioButton = new GRadioButton("String", true);
+		regexRadioButton = new GRadioButton("Regular Expression", false);
 		formatGroup.add(stringRadioButton);
 		formatGroup.add(regexRadioButton);
 

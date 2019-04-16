@@ -20,6 +20,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.DockingWindowManager;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.closedpatternmining.SequenceMiningParams;
@@ -97,9 +98,9 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 
 		boolean useBinary = Boolean.parseBoolean(
 			Preferences.getProperty(BINARY_SEQUENCES_PROPERTY, BINARY_SEQUENCES_DEFAULT));
-		binaryButton = new JRadioButton(BINARY_BUTTON_TEXT, useBinary);
+		binaryButton = new GRadioButton(BINARY_BUTTON_TEXT, useBinary);
 		binaryButton.setMnemonic(BINARY_MNEMONIC);
-		nibbleButton = new JRadioButton(NIBBLE_BUTTON_TEXT, !useBinary);
+		nibbleButton = new GRadioButton(NIBBLE_BUTTON_TEXT, !useBinary);
 		nibbleButton.setMnemonic(NIBBLE_MNEMONIC);
 		mainPanel.add(binaryButton);
 		mainPanel.add(nibbleButton);

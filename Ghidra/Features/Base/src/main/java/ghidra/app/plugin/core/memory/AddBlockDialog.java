@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
@@ -379,11 +380,11 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		panel.setLayout(bl);
 
 		ButtonGroup radioGroup = new ButtonGroup();
-		initializedRB = new JRadioButton("Initialized", false);
+		initializedRB = new GRadioButton("Initialized", false);
 		initializedRB.setName(initializedRB.getText());
 		initializedRB.addActionListener(ev -> initializeRBChanged());
 
-		uninitializedRB = new JRadioButton("Uninitialized", true);
+		uninitializedRB = new GRadioButton("Uninitialized", true);
 		uninitializedRB.setName(uninitializedRB.getText());
 		uninitializedRB.addActionListener(ev -> uninitializedRBChanged());
 

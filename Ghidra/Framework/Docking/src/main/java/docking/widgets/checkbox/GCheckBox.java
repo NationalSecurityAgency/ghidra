@@ -136,4 +136,16 @@ public class GCheckBox extends JCheckBox {
 		DockingUtils.turnOffHTMLRendering(this);
 	}
 
+	/**
+	 * See {@link JCheckBox#setText(String)}.
+	 * <p>
+	 * Overridden to warn about HTML text in non-HTML enabled checkbox.
+	 * 
+	 * @param text string this label will display 
+	 */
+	@Override
+	public void setText(String text) {
+		DockingUtils.warnAboutHtmlText(text);
+		super.setText(text);
+	}
 }

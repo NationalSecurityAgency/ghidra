@@ -26,6 +26,7 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GLabel;
@@ -267,8 +268,8 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createTitledBorder("Memory Block Types"));
 
 		ButtonGroup memoryBlockGroup = new ButtonGroup();
-		loadedBlocksRB = new JRadioButton("Loaded Blocks", true);
-		allBlocksRB = new JRadioButton("All Blocks", false);
+		loadedBlocksRB = new GRadioButton("Loaded Blocks", true);
+		allBlocksRB = new GRadioButton("All Blocks", false);
 		memoryBlockGroup.add(loadedBlocksRB);
 		memoryBlockGroup.add(allBlocksRB);
 
@@ -296,8 +297,8 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(new TitledBorder("Selection Scope"));
 
-		searchSelectionRB = new JRadioButton("Search Selection");
-		searchAllRB = new JRadioButton("Search All");
+		searchSelectionRB = new GRadioButton("Search Selection");
+		searchAllRB = new GRadioButton("Search All");
 
 		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(searchSelectionRB);

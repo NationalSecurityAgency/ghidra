@@ -23,6 +23,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 import docking.framework.DockingApplicationConfiguration;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import generic.concurrent.GThreadPool;
 import ghidra.GhidraApplicationLayout;
@@ -69,10 +70,10 @@ public class TaskSimulator {
 		JButton addGroupButton = new JButton("Add Group");
 		JButton addTaskButton = new JButton("Add Task");
 		JButton showResultsButton = new JButton("Show Results");
-		lowButton = new JRadioButton("Low");
-		mediumButton = new JRadioButton("Medium");
-		highButton = new JRadioButton("High");
-		urgentButton = new JRadioButton("Urgent");
+		lowButton = new GRadioButton("Low");
+		mediumButton = new GRadioButton("Medium");
+		highButton = new GRadioButton("High");
+		urgentButton = new GRadioButton("Urgent");
 		ButtonGroup group = new ButtonGroup();
 		group.add(lowButton);
 		group.add(mediumButton);

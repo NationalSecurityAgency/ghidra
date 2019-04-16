@@ -25,6 +25,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
@@ -547,7 +549,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		}
 	}
 
-	private class MyRadioButton extends JRadioButton {
+	private class MyRadioButton extends GRadioButton {
 		private final static long serialVersionUID = 1;
 
 		/**
@@ -592,7 +594,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		}
 	}
 
-	private class MyCheckBox extends JCheckBox {
+	private class MyCheckBox extends GCheckBox {
 		private final static long serialVersionUID = 1;
 
 		/**

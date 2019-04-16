@@ -29,6 +29,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.table.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
@@ -245,8 +246,8 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		matchingStylePanel.setBorder(
 			new TitledBorder(BorderFactory.createEmptyBorder(), "Matching: "));
 
-		exactMatchButton = new JRadioButton("Exact");
-		sizeMatchButton = new JRadioButton("Size");
+		exactMatchButton = new GRadioButton("Exact");
+		sizeMatchButton = new GRadioButton("Size");
 
 		exactMatchButton.setToolTipText(
 			"Match structures with the same " + "number and type of data elements");

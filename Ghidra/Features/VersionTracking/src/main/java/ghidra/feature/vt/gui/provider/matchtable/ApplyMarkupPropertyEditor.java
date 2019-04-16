@@ -28,6 +28,7 @@ import javax.swing.border.TitledBorder;
 
 import docking.DockingWindowManager;
 import docking.help.HelpService;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
@@ -843,7 +844,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	}
 
 	private JRadioButton createRadioButton(final String optionName) {
-		final JRadioButton applyRadioButton = new JRadioButton(optionName);
+		final GRadioButton applyRadioButton = new GRadioButton(optionName);
 		applyRadioButton.addActionListener(e -> changesMade(true));
 
 		return applyRadioButton;

@@ -27,6 +27,7 @@ import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.framework.client.*;
@@ -190,12 +191,12 @@ class RepositoryChooser extends DialogComponentProvider {
 			}
 		};
 
-		serverInfoChoice = new JRadioButton("Ghidra Server");
+		serverInfoChoice = new GRadioButton("Ghidra Server");
 		serverInfoChoice.setSelected(true);
 		serverInfoChoice.addChangeListener(choiceListener);
 		radioButtonPanel.add(serverInfoChoice);
 
-		urlChoice = new JRadioButton("Ghidra URL");
+		urlChoice = new GRadioButton("Ghidra URL");
 		urlChoice.addChangeListener(choiceListener);
 		radioButtonPanel.add(urlChoice);
 

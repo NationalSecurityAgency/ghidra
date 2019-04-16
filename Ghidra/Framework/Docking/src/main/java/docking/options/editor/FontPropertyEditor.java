@@ -37,25 +37,21 @@ import docking.widgets.label.GDLabel;
 public class FontPropertyEditor extends PropertyEditorSupport {
 	private Font font;
 //    private JLabel previewLabel = new GDLabel();
-	private JButton previewButton = new JButton();
 	private final static String SAMPLE_STRING = "ABCabc \u00a9\u00ab\u00a7\u0429\u05d1\u062c\u4eb9";
+	private JButton previewButton = new JButton(SAMPLE_STRING);
 
 	/**
 	 * The default constructor.
 	 *
 	 */
 	public FontPropertyEditor() {
-		previewButton.setText(SAMPLE_STRING);
 
-		previewButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// show the editor to get the user value
-				showDialog();
+		previewButton.addActionListener(e -> {
+			// show the editor to get the user value
+			showDialog();
 
-				// now set the new value
-				previewButton.setFont(font);
-			}
+			// now set the new value
+			previewButton.setFont(font);
 		});
 
 //        previewLabel.addMouseListener( new MouseAdapter() {

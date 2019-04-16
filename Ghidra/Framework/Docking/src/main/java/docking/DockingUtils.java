@@ -27,6 +27,9 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.undo.UndoableEdit;
 
+import org.apache.commons.lang3.StringUtils;
+
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.combobox.GComboBox;
@@ -38,7 +41,9 @@ import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import resources.ResourceManager;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * <h1>Notes about how to use HTML safely:</h1>
@@ -87,6 +92,7 @@ import resources.ResourceManager;
  * 	<tr><td>{@link ListCellRenderer}<br>{@link DefaultListCellRenderer}</td><td>{@link GListCellRenderer}</td></tr>
  * 	<tr><td>{@link TableCellRenderer}</td><td>{@link GTableCellRenderer}</td></tr>
  * 	<tr><td>{@link TreeCellRenderer}<br>{@link DefaultTreeCellRenderer}</td><td>{@link GTreeRenderer}<br>{@link DnDTreeCellRenderer}</td></tr>
+ * 	<tr><td>{@link JRadioButton}</td><td>{@link GRadioButton}</td></tr>
  * 	<tr><td>{@link JButton}</td><td>???tbd???</td></tr>
  * </table>
  */
@@ -131,6 +137,22 @@ public class DockingUtils {
 		}
 		separator.setPreferredSize(sepDim); // ugly work around to force height of separator
 		return separator;
+	}
+
+	/**
+	 * Helper function that logs a warning about a string text that looks like it has HTML text.
+	 * <p>
+	 * Use this when working with a string in a label that has already disabled HTML rendering.
+	 * <p>
+	 * @param text string to test for HTML and warn about
+	 */
+	public static void warnAboutHtmlText(String text) {
+		// #ifdef still_finding_html_labels_in_our_huge_codebase
+		if (StringUtils.startsWithIgnoreCase(text, "<html>")) {
+			Msg.warn(GLabel.class, "HTML text detected in non-HTML component: " + text,
+				ReflectionUtilities.createJavaFilteredThrowable());
+		}
+		// #endif
 	}
 
 	/**

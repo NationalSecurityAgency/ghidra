@@ -27,6 +27,7 @@ import javax.swing.text.Document;
 
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import ghidra.program.model.data.Category;
@@ -332,9 +333,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupMinimumAlignment() {
-		defaultMinAlignButton = new JRadioButton("none           ");
-		machineMinAlignButton = new JRadioButton("machine      ");
-		byValueMinAlignButton = new JRadioButton();
+		defaultMinAlignButton = new GRadioButton("none           ");
+		machineMinAlignButton = new GRadioButton("machine      ");
+		byValueMinAlignButton = new GRadioButton();
 		minAlignValueTextField = new JTextField();
 		setupDefaultMinAlignButton();
 		setupMachineMinAlignButton();
@@ -519,8 +520,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupPacking() {
-		noPackingButton = new JRadioButton("none           ");
-		byValuePackingButton = new JRadioButton();
+		noPackingButton = new GRadioButton("none           ");
+		byValuePackingButton = new GRadioButton();
 		packingValueTextField = new JTextField();
 		setupNoPackingButton();
 		setupByValuePackingButton();

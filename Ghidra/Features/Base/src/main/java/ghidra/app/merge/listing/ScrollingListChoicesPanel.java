@@ -25,6 +25,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
@@ -253,7 +254,7 @@ class ListChoice extends JPanel {
 
 		setLayout(new BorderLayout());
 
-		rb = new JRadioButton("UNKNOWN");
+		rb = new GRadioButton("UNKNOWN");
 		rb.addItemListener(radioButtonListener);
 		group.add(rb);
 		add(rb, BorderLayout.NORTH);

@@ -26,6 +26,7 @@ import javax.swing.border.Border;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
@@ -345,14 +346,14 @@ class SearchTextDialog extends DialogComponentProvider {
 		JPanel radioPanel = new JPanel(new VerticalLayout(10));
 
 		ButtonGroup bg = new ButtonGroup();
-		searchFieldRB = new JRadioButton("Selected Fields", true);
+		searchFieldRB = new GRadioButton("Selected Fields", true);
 		searchFieldRB.setToolTipText(HTMLUtilities.toHTML("Search for specific fields. Use the\n" +
 			"checkboxes to mark which fields to search.\n" +
 			"This option applies to either the Program Database Search\n" +
 			"or the Listing Display Match Search.\n\n" +
 			"NOTE: Selecting all of these fields is NOT the same as selecting \"All Fields\".\n"));
 
-		searchAllRB = new JRadioButton("All Fields", false);
+		searchAllRB = new GRadioButton("All Fields", false);
 		searchAllRB.setToolTipText(
 			HTMLUtilities.toHTML("Search all the fields displayed in the Code Browser.\n" +
 				"The option applies only to the Listing Display Search."));
@@ -389,7 +390,7 @@ class SearchTextDialog extends DialogComponentProvider {
 
 		ButtonGroup bg = new ButtonGroup();
 
-		programDatabaseSearchRB = new JRadioButton("Program Database", true);
+		programDatabaseSearchRB = new GRadioButton("Program Database", true);
 		programDatabaseSearchRB.setToolTipText(HTMLUtilities.toHTML(
 			"Searches comments, labels, instructions, function signatures, and data stored in the" +
 				" program database.\n This search is much faster, but does not search all text displayed in the Code Browser\n" +
@@ -406,7 +407,7 @@ class SearchTextDialog extends DialogComponentProvider {
 			changingState = false;
 		});
 
-		listingDisplaySearchRB = new JRadioButton("Listing Display", false);
+		listingDisplaySearchRB = new GRadioButton("Listing Display", false);
 		listingDisplaySearchRB.setToolTipText(
 			HTMLUtilities.toHTML("Searches the text displayed in the Code Browser\n" +
 				"Listing Display. (Depending on which fields are selected)\n" +
@@ -433,9 +434,9 @@ class SearchTextDialog extends DialogComponentProvider {
 		directionPanel.setBorder(BorderFactory.createTitledBorder("Memory Block Types"));
 
 		ButtonGroup directionGroup = new ButtonGroup();
-		loadedBlocksButton = new JRadioButton("Loaded Blocks", true);
+		loadedBlocksButton = new GRadioButton("Loaded Blocks", true);
 
-		allBlocksButton = new JRadioButton("All Blocks", false);
+		allBlocksButton = new GRadioButton("All Blocks", false);
 		loadedBlocksButton.setToolTipText(HTMLUtilities.toHTML(
 			"Only searches memory blocks that are loaded in a running executable.\n  " +
 				"Ghidra now includes memory blocks for other data such as section headers.\n" +

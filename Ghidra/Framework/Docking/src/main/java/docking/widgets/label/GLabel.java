@@ -155,24 +155,8 @@ public class GLabel extends JLabel {
 				ReflectionUtilities.createJavaFilteredThrowable());
 			return;
 		}
-		warnAboutHtmlText(text);
+		DockingUtils.warnAboutHtmlText(text);
 		super.setText(text);
-	}
-
-	/**
-	 * Helper function that logs a warning about a string text that looks like it has HTML text.
-	 * <p>
-	 * Use this when working with a string in a label that has already disabled HTML rendering.
-	 * <p>
-	 * @param text string to test for HTML and warn about
-	 */
-	public static void warnAboutHtmlText(String text) {
-		// #ifdef still_finding_html_labels_in_our_huge_codebase
-		if (StringUtils.startsWithIgnoreCase(text, "<html>")) {
-			Msg.warn(GLabel.class, "HTML text detected in non-HTML component: " + text,
-				ReflectionUtilities.createJavaFilteredThrowable());
-		}
-		// #endif
 	}
 
 }

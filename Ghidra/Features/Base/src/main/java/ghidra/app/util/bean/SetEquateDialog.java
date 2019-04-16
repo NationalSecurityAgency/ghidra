@@ -28,6 +28,7 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.label.GDLabel;
@@ -229,16 +230,16 @@ public class SetEquateDialog extends DialogComponentProvider {
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
 		//long value = scalar.getSignedValue();
-		applyToCurrent = new JRadioButton("Current location", true);
+		applyToCurrent = new GRadioButton("Current location", true);
 		applyToCurrent.setName("applyToCurrent");
 		applyToCurrent.setToolTipText("Apply to current scalar operand only");
 
-		applyToSelection = new JRadioButton("Current selection", false);
+		applyToSelection = new GRadioButton("Current selection", false);
 		applyToSelection.setName("applyToSelection");
 		applyToSelection.setToolTipText(
 			"Apply to all matching, defined scalar code " + "units in current selection.");
 
-		applyToAll = new JRadioButton("Entire program", false);
+		applyToAll = new GRadioButton("Entire program", false);
 		applyToAll.setName("applyToAll");
 		applyToAll.setToolTipText(
 			"Apply to all matching, defined scalar code units " + "in entire program.");

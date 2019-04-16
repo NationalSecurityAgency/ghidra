@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.label.GIconLabel;
@@ -224,19 +225,19 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 			}
 		};
 
-		keepLatestRB = new JRadioButton(MergeConstants.LATEST_TITLE);
+		keepLatestRB = new GRadioButton(MergeConstants.LATEST_TITLE);
 		keepLatestRB.setName(KEEP_LATEST_BUTTON_NAME);
 		keepLatestRB.addItemListener(listener);
 
-		keepMyRB = new JRadioButton(MergeConstants.MY_TITLE);
+		keepMyRB = new GRadioButton(MergeConstants.MY_TITLE);
 		keepMyRB.setName(KEEP_MY_BUTTON_NAME);
 		keepMyRB.addItemListener(listener);
 
-		keepBothRB = new JRadioButton("Both");
+		keepBothRB = new GRadioButton("Both");
 		keepBothRB.setName(KEEP_BOTH_BUTTON_NAME);
 		keepBothRB.addItemListener(listener);
 
-		mergeBothRB = new JRadioButton("Merge");
+		mergeBothRB = new GRadioButton("Merge");
 		mergeBothRB.setName(MERGE_BOTH_BUTTON_NAME);
 		mergeBothRB.addItemListener(listener);
 

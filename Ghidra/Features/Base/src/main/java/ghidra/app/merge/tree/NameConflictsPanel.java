@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
@@ -134,9 +135,9 @@ class NameConflictsPanel extends JPanel {
 		iconPanel.add(conflictsLabel);
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-		keepOtherRB = new JRadioButton("Keep 'Other' Name");
-		addOrRenameRB = new JRadioButton("Rename 'My' name to My.username");
-		originalRB = new JRadioButton("Use 'Original' name");
+		keepOtherRB = new GRadioButton("Keep 'Other' Name");
+		addOrRenameRB = new GRadioButton("Rename 'My' name to My.username");
+		originalRB = new GRadioButton("Use 'Original' name");
 
 		keepOtherRB.setName(ProgramTreeMergePanel.KEEP_OTHER_BUTTON_NAME);
 		addOrRenameRB.setName(ProgramTreeMergePanel.RENAME_PRIVATE_BUTTON_NAME);

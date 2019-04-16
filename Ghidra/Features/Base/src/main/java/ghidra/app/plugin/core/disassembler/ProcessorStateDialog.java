@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.lang.Register;
@@ -77,8 +78,8 @@ public class ProcessorStateDialog extends DialogComponentProvider {
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
 		JPanel radioPanel = new JPanel(new FlowLayout());
 		mainPanel.add(radioPanel, BorderLayout.SOUTH);
-		JRadioButton hexButton = new JRadioButton("Hex");
-		JRadioButton decimalButton = new JRadioButton("Decimal");
+		GRadioButton hexButton = new GRadioButton("Hex");
+		GRadioButton decimalButton = new GRadioButton("Decimal");
 		hexButton.setSelected(true);
 		ButtonGroup group = new ButtonGroup();
 		group.add(hexButton);

@@ -26,6 +26,7 @@ import javax.swing.*;
 import docking.*;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
@@ -243,11 +244,11 @@ class FilterAction extends ToggleDockingAction {
 
 			JPanel enablePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			ButtonGroup group = new ButtonGroup();
-			enableButton = new JRadioButton("Enabled", true);
+			enableButton = new GRadioButton("Enabled", true);
 			enableButton.addKeyListener(listener);
 			enablePanel.add(enableButton);
 			group.add(enableButton);
-			disableButton = new JRadioButton("Disabled", false);
+			disableButton = new GRadioButton("Disabled", false);
 			disableButton.addKeyListener(listener);
 			enablePanel.add(disableButton);
 			group.add(disableButton);

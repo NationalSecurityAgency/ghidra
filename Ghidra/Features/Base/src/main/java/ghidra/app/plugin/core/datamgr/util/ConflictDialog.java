@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import ghidra.util.HelpLocation;
@@ -119,9 +120,9 @@ public class ConflictDialog extends DialogComponentProvider {
 		};
 
 		ButtonGroup bg = new ButtonGroup();
-		renameRB = new JRadioButton("Rename new data type to " + newDTName, true);
-		replaceRB = new JRadioButton("Replace existing data type");
-		useExistingRB = new JRadioButton("Use existing data type");
+		renameRB = new GRadioButton("Rename new data type to " + newDTName, true);
+		replaceRB = new GRadioButton("Replace existing data type");
+		useExistingRB = new GRadioButton("Use existing data type");
 
 		renameRB.addItemListener(listener);
 		useExistingRB.addItemListener(listener);

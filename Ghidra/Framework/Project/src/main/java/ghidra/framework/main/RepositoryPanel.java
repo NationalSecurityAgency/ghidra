@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DockingUtils;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import ghidra.app.util.GenericHelpTopics;
@@ -147,7 +148,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 	private JPanel createListPanel(String[] repositoryNames) {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createTitledBorder("Choose Existing Repository"));
-		existingRepButton = new JRadioButton("Existing Repository", (repositoryNames.length > 0));
+		existingRepButton = new GRadioButton("Existing Repository", (repositoryNames.length > 0));
 		existingRepButton.setEnabled(repositoryNames.length > 0);
 		buttonGroup.add(existingRepButton);
 
@@ -177,7 +178,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		namePanel.setLayout(new VerticalLayout(5));
 		namePanel.setBorder(BorderFactory.createTitledBorder("Create Repository"));
 
-		createRepButton = new JRadioButton("Create Repository", !existingRepButton.isSelected());
+		createRepButton = new GRadioButton("Create Repository", !existingRepButton.isSelected());
 		buttonGroup.add(createRepButton);
 
 		nameLabel = new GDLabel("Repository Name:", SwingConstants.RIGHT);
