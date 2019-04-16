@@ -1986,8 +1986,7 @@ Varnode *SubfloatFlow::getReplaceVarnode(ReplaceVarnode *rvn)
     // Here we artificially truncate the location, which isn't realistic
     if (addr.isBigEndian())
       addr = addr + (rvn->vn->getSize() - precision);
-    if (isinput)
-      replaceInput(rvn);	// Replace input to avoid overlap errors
+    replaceInput(rvn);	// Replace input to avoid overlap errors
     rvn->replacement = fd->newVarnode(precision,addr);
   }
   else

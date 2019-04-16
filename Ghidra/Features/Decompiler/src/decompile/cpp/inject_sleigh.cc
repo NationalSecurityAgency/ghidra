@@ -281,9 +281,8 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
 PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g,uintb tmpbase)
   : PcodeInjectLibrary(g,tmpbase)
 {
-  glb = g;
-  slgh = (const SleighBase *)glb->translate;
-  contextCache.glb = glb;
+  slgh = (const SleighBase *)g->translate;
+  contextCache.glb = g;
 }
 
 int4 PcodeInjectLibrarySleigh::registerDynamicInject(InjectPayload *payload)
