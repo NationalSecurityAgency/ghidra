@@ -1,0 +1,281 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Tool</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Version_Tracking_Tool"></A>Version Tracking Tool</H1>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG border="1" src="images/VersionTrackingTool.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+	<BLOCKQUOTE>
+
+	    <BLOCKQUOTE>
+	      <P>The primary Version Tracking Tool, by default, consists of a few actions and 
+	      a couple provider views.  The primary view of the tool is the 
+	      <b><a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">
+	      Matches Table</a></b>.  The other default component view is the 
+	      <b><a href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">
+	      Markup Items Table</a></b>.	      
+	      </P>
+	      <p>
+	      The Version Tracking Tool also has sub-tools that are present when a Version Tracking
+	      Session is open.
+	      </p>
+	
+	    </BLOCKQUOTE>
+	
+		<H2><A name="Version_Tracking_Session"></A>Version Tracking Session</H2>		
+	    <BLOCKQUOTE>
+		    <P>
+			    A version tracking session is created when you run the 
+				<a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking Wizard</a>.
+				Once created, the session will be saved to the 
+				<a href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window">Ghidra Project Window</a>.
+				As you make changes to version tracking data (i.e., matches and markup items), those 
+				changes are applied to the current session.
+			</P>
+			<P>
+				You can open an existing session by dragging it from the Ghidra Project Window's data
+				tree onto: 
+					<UL>
+						<LI>A running Version Tracking Tool, or
+						</LI>
+						<LI>The Version Tracking Tool icon in the Ghidra Project Window's 
+						<a href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">
+						Tool Chest</a>, or
+						</LI>
+						<LI>
+						The icon of a running Version Tracking Tool in the 
+						<a href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#RunningTools">
+						Running Tools panel</a> of the Ghidra Project Window.
+						</LI>
+					</UL>
+					
+				<P>
+				You can also double-click the session file in the Ghidra Project Window.  This will 
+				launch the session in a <b>new Version Tracking Tool instance</b>.
+				</P>								
+			</P>			
+			
+			<P>
+			When you open a session, the Version Tracking Sub-tools (mentioned below)
+			 are also opened.  When you close a session, the sub-tools are closed.
+			</P>
+	    </BLOCKQUOTE>
+	
+	    <H2><A name="Version_Tracking_Sub_Tools"></A>Version Tracking Sub-tools</H2>
+	    <BLOCKQUOTE>
+	      <P>When a session is open in the primary Version Tracking Tool, then two other tool 
+	      windows will be opened: the source tool and the destination tool.  Both tools look the
+	      same.  They differ in which program they show, the source program or the destination
+	      program.
+	      </p>
+	      
+	      <TABLE x-use-null-cells="" width="100%">
+	      <TBODY>
+	        <TR>
+	          <TD align="center" width="100%"><IMG border="1" src="images/SourceTool.png"></TD>
+	        </TR>
+	      </TBODY>
+	    </TABLE>
+	    
+	      
+	      <p>
+	       Each of these tools is similar to default Ghidra 
+	       <a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</a>
+	      in that they each provider full Ghidra functionality.  However, these tools differ from 
+	      the default Ghidra Tool in that they offer a few extra plugins, which add version tracking
+	      functionality.     
+	       </P>       
+	       <p>
+	       	
+	       </p>
+	    </BLOCKQUOTE>
+	
+	    
+	    <H2><A name="Tool_Actions"></A>Version Tracking Tool Actions</H2>	
+	    <BLOCKQUOTE>
+	      <P align="left"><A name="Create_Session"></A>The <b>Create Session</b> 
+	      <IMG src="images/start-here_16.png" border="0"> action will launch the 
+	      <a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking Wizard</a> to
+	      guide you through the process of create a new 
+	      <a href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html#Session">version tracking session</a>.      	
+	      </P>
+	
+		  <P align="left"><A name="Add_To_Session"></A>The <b>Add to Session</b> 
+	      <IMG src="images/Plus.png" border="0"> action will launch the 
+	      <a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking Wizard</a> to
+	      guide you through the process of create adding new 
+	      <a href="help/topics/VersionTrackingPlugin/VT_Correlators.html">Program Correlator</a> results to 
+	      an existing  
+	      <a href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html#Session">version tracking session</a>.      	
+	      </P>
+	      
+	      <P align="left"><A name="Automatic_Version_Tracking"></A> The <b>Automatic Version Tracking</b> 
+	      <IMG src="images/wizard.png" border="0"> action uses various correlators in a predetermined order 
+	      to automatically create matches, accept the most likely matches, and apply markup all with one button press. The following
+	      correlators are run in this order:
+	      <ul>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Symbol_Match">Exact Symbol Name Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Data_Match">Exact Data Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Exact_Function_Bytes_Match">Exact Function Bytes Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Exact_Function_Instructions_Match">Exact Function Instructions Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Exact_Function_Mnemonics_Match">Exact Function Mnemonics Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Duplicate_Function_Instructions_Match">Duplicate Function Instructions Correlator</a></li>
+	        <li><a href="help/topics/VersionTrackingPlugin/VT_Correlators.html#Comb_Func_Data_Ref">Combined Function and Data Reference Correlator</a></li>
+	      </ul>
+	      <blockquote>
+	      <P> <IMG src="../../shared/note.yellow.png" border="0"> <b>NOTE: It is unlikely that all matches in the entire program will be made and there is no guarantee that no mistakes will be made. This 
+	      action was designed to try to save as much time as possible while also taking a conservative approach to the automation.</b>
+	      </blockquote>
+	     
+	      </P>
+	
+		   <P align="left"><A name="Open_Session"></A>The <b>Open Session...</b> 
+	       action will launch a session chooser dialog that allows you to pick a previously 
+	       created session.  This action is available only from the <b>File</b> menu.      	
+	      </P>
+	
+	    </BLOCKQUOTE>
+	    
+	    
+	    <H2>Version Tracking Menu</H2>	
+	    <BLOCKQUOTE>
+	    	This section describes the various menu actions available from the Version Tracking
+	    	Tool.
+	    	
+	    	<BLOCKQUOTE>
+	    	<P>
+	    	The <B>File</B> menu	    	
+	    		<UL>
+	    			<LI><B>Add to Session</B> - Shows the
+	    			<a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">
+	    			Version Tracking Wizard</a> so that you can perform 
+	    			<a href="help/topics/VersionTrackingPlugin/VT_Correlators.html">
+	    			program correlation</a> and have the results <b>added to the currently open 
+	    			version tracking session.</b>
+	    			</LI>
+	    			<LI><B>New Session</B> - Shows the 
+	    			<a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">
+	    			Version Tracking Wizard</a> so that you can create a new version tracking 
+	    			session. 
+	    			</LI>
+	    			<LI><b>Auto Version Track</b> - Runs various correlators in a predetermined order 
+	      			and automatically creates matches, accepts the most likely matches, and applies markup
+	      			 all with one button press. </LI>
+	    			<LI><B>Open Session</B> - Shows a chooser dialog that allows 
+	    			you to open an <b>existing</b> version tracking session.
+	    			</LI>
+	    			<LI><B>Close Session - Closes the currently open version tracking session.</B>
+	    			</LI>
+	    			<LI><B>Save Session - Saves any changes to the current version tracking
+	    			session.</B>
+	    			</LI>
+	    			
+	    			<LI><B>Save Tool</B> - Saves the state Version Tracking Tool (e.g.,
+	    			window locations, size and open state). 
+	    			</LI>
+	    			<LI><B>Close Tool</B> - Closes the Version Tracking Tool and the current 
+	    			version tracking session, if one is open.</LI>
+	    			<LI><B>Exit Ghidra</B> - Exits the Ghidra application.</LI>
+	    		</UL>	    	
+	    	</P>
+	    	
+	    	<P>
+	    	The <B>Edit</B> menu	    	
+	    		<UL>
+	    			<LI><B>Tool Options...</B> - Shows the Options Dialog for the Version 
+	    			Tracking Tool. 
+	    			</LI>
+	    			<LI><B>Undo</B> - Performs an undo of the last edit (e.g., accepting a
+	    			match, applying markup, etc). 
+	    			</LI>
+	    			<LI><B>Redo</B> - Performs a redo of the previous undo action.</LI>
+	    			<LI><A NAME="Reset_Tools"></A><B>Reset Source and Destination Tools</B> - 
+	    						Will reset the sub-tools to be the default configurations.  This
+	    				          is useful if you have made changes (layout, size, etc.) 
+	    				          to the tools and would like to undo those changes.</LI>
+	    		</UL>	    	
+	    	</P>
+	    	
+	    	<P>
+	    	The <B>Window</B> menu - Contains menu actions to show the various view components
+	    	that are available in the Version Tracking tool.   For help with a specific 
+	    	view component, press <B>F1</B> on the view component itself or the menu action 
+	    	for that component.
+	    	</P>
+	    	</BLOCKQUOTE>	
+	    	
+	    	
+	    </BLOCKQUOTE>
+	    
+	    <H2>Version Tracking Menu</H2>	
+	    <BLOCKQUOTE>
+	    	This section describes the version tracking actions that are available from 
+	    	the <A href="#Version_Tracking_Sub_Tools">sub tools</A>.
+	    	
+	    	<H3><A NAME="Create_Manual_Match_From_Subtools"></A>Create Manual Match</H3>
+	    	<BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create Manual Match</b> action (<img src="images/Plus.png"/>) allows 
+	            the user to create a match for the 
+				selected function in the source sub tool to the selected function in the destination sub tool.
+				The action will only appear in the popup menu if your cursor is in a function in both tools.
+			</P>
+	    	</BLOCKQUOTE>
+	    	
+	    	<H3><A NAME=Create_And_Accept_Manual_Match_From_Subtools></A>Create And Accept Manual Match</H3>
+	    	<BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create And Accept Manual Match</b> action (<img src="images/flag.png"/>) allows 
+	            the user to create a match for the 
+				selected function in the source sub tool to the selected function in the destination sub tool.
+				It then accepts the match if possible.
+				The action will only appear in the popup menu if your cursor is in a function in both tools.
+			</P>
+			</BLOCKQUOTE>
+	    	
+	    	<H3><A NAME="Create_And_Apply_Manual_Match_From_Subtools"></A>Create And Apply Manual Match</H3>
+	    	<BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create And Apply Manual Match</b> action (<img src="images/checkmark_green.gif"/>) allows 
+	            the user to create a match for the 
+				selected function in the source sub tool to the selected function in the destination sub tool.
+				It then applies the match if possible.
+				The action will only appear in the popup menu if your cursor is in a function in both tools.
+			</P>
+			</BLOCKQUOTE>
+	    
+	    </BLOCKQUOTE><!-- Main content blockquote -->
+
+	</BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">Version
+      Tracking Markup Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version
+      Tracking Introduction</A></LI>
+      <li><a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</a></li>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

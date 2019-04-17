@@ -1,0 +1,247 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Edit Plugin Path</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Edit Plugin Path</H1>
+
+    <P>The Plugin Path is a preference that indicates where Ghidra should search for Java classes
+    outside of the standard installation locations.&nbsp; User developed Java classes can be used
+    to extend Ghidra with additional <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">plugins</A> and <A href=
+    "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">data types</A>. 
+    
+    
+    <BLOCKQUOTE>
+    	<BLOCKQUOTE>
+    	<P>
+    	<IMG SRC="images/tip.png" />
+    	All plugins discovered by Ghidra can be displayed in the <I><A href=
+	    "help/topics/Tool/Configure_Tool.htm">Configure</A></I> dialog for all tools. All known data
+	    types are shown in the <I><A href=
+	    "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A></I>
+	    display.</P>
+    	</P>
+    	</BLOCKQUOTE>
+	</BLOCKQUOTE>    
+    
+
+
+    <P><A name="EditPluginPathDialog"></A></P>
+
+    <TABLE border="0" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%">
+          <IMG src="images/EditPluginPath.png" alt="" border="0"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+	
+	<UL>
+		
+	</UL>
+
+    <P>The <I>User Plugin Paths</I> list shows the paths in the order to be searched.  Each 
+    path is either a directory path or a jar file path.  If the path is a directory, then only
+    class files in that directory will be used (not jar files within that directory).   
+    If the path is a jar file, then classes within the jar file will be used.
+    </P>
+    
+    <P>
+    The <I>User Plugin Jar Directory</I> shows the directory that contains jar files to 
+    search. 
+
+	<P>
+    	<IMG SRC="images/note.png" />
+    	In addition to the above, Ghidra also searches in the installation directory, in the
+    	<code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt;/plugins</code> directory, if it exists.
+    </P>
+
+
+	<P>
+	The directories noted above, as well as any found jar files, are added to Ghidra's 
+	classpath.   The search order of these paths is:<A name="SearchOrder"></A></P>
+	</P>
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Jar files in <I>User Plugin Jar Directory</I> (Plugin Path preference)</LI>
+
+        <LI>Jar files in the Ghidra <code>plugins</code> installation directory</LI>
+
+        <LI><I>User Plugin Paths</I> from the Plugin Paths preference</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+	<H2>Editing Plugin Paths</H2>
+	
+	<BLOCKQUOTE>
+	
+	    <P><IMG src="../../shared/note.png" border="0"> After you make a change
+	    to the plugin path, you must restart Ghidra to see the effects.<BR>
+	    </P>
+
+	    <H3>Add a Plugin Path</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>To add a Plugin Path,</P>
+	
+	      <OL start="1" type="1">
+	        <LI>From the Ghidra Project Window, select <B>Edit<IMG src="../../shared/arrow.gif" border=
+	        "0"> Plugin Path...</B></LI>
+	
+	        <LI>
+	          The <I>Edit Plugin Path</I> <A href="#EditPluginPathDialog">dialog</A> is displayed; in
+	          the <I>Directory or Jar File Name</I> field 
+	
+	          <UL>
+	            <LI>Select the <B>Add Jar...</B> or <B>Add Dir...</B> button to choose either a jar
+	            file or directory from the file system.</LI>
+	
+	            <LI>Locate and select the appropriate jar file or directory within the file chooser
+	            dialog.</LI>
+	
+	            <LI>Select the <B>Add Jar</FONT>,</B> or <B>Add
+	            Dir</FONT></B> button within the file chooser dialog.</LI>
+	          </UL>
+	        </LI>
+	
+	        <LI>
+	          Select the <B>Apply</B> or <B>OK</B> button from the <I>Edit Plugin Path</I> dialog. 
+	
+	          <UL>
+	            <LI><B>Apply</B> applies the changes and leaves the dialog up.</LI>
+	
+	            <LI><B>OK</B> applies the changes and dismisses the dialog.</LI>
+	          </UL>
+	        </LI>
+	      </OL>
+	    </BLOCKQUOTE>
+	
+	    <H3>Change the Search Order</H3>
+	
+	    <BLOCKQUOTE>
+	      <P>To change the search order of the paths within the User Plugin Path list,&nbsp;</P>
+	
+	      <OL>
+	        <LI>Select a path from the User Plugin Paths list.</LI>
+	
+	        <LI>Select the <IMG src="images/up.png" border="0"> button to move
+	        the path up in the list; select the <IMG src="images/down.png" border="0"> 
+	        to move the path down in the list.&nbsp;</LI>
+	      </OL>
+	
+	      <P><IMG src="../../shared/note.png" border="0">The search order is
+	      important when you have different versions of a plugin in different jar files. The first
+	      class that is loaded is the one that you will be using when you run Ghidra.&nbsp;</P>
+	    </BLOCKQUOTE>
+	
+	    <H3>Set the User Plugin Jar Directory</H3>
+	
+	    <UL>
+	      <LI>To set the User Plugin Jar Directory,</LI>
+	    </UL>
+	
+	    <BLOCKQUOTE>
+	      <OL>
+	        <LI>Enter the absolute directory path in the <I>User Plugin Jar Directory</I> field, OR
+	        click on the <B>...</B> button to choose a directory from the file system.</LI>
+	
+	        <LI>
+	          Select the <B>Apply or OK</B> button<B>.</B> 
+	
+	          <UL>
+	            <LI><B>Apply</B> applies the changes and leaves the dialog up.</LI>
+	
+	            <LI><B>OK</B> applies the changes and dismisses the dialog.&nbsp;</LI>
+	          </UL>
+	        </LI>
+	      </OL>
+	    </BLOCKQUOTE>
+	
+	    <H3>Remove Paths</H3>
+	
+	    <UL>
+	      <LI>To Remove an existing jar from the Plugin Path,</LI>
+	    </UL>
+	
+	    <BLOCKQUOTE>
+	      <OL start="1" type="1">
+	        <LI>From the Ghidra Project Window,&nbsp; select <B>Edit<IMG src="../../shared/arrow.gif"
+	        border="0"> Plugin Path...</B></LI>
+	
+	        <LI>Select <B>a User Plugin Path.</B></LI>
+	
+	        <LI><B>Click the Remove Button.</B></LI>
+	
+	        <LI><B>Click Apply or OK.</B></LI>
+	      </OL>
+	    </BLOCKQUOTE>
+	
+	    <UL>
+	      <LI>To Remove the User Plugin Jar Directory from the Plugin Path,</LI>
+	    </UL>
+	
+	    <BLOCKQUOTE>
+	      <OL>
+	        <LI>Clear the <I>User Plugin Jar Directory</I> field.</LI>
+	
+	        <LI>
+	          Select the <B>Apply or OK</B> button<B>.</B> 
+	
+	          <UL>
+	            <LI><B>Apply</B> applies the changes and leaves the dialog up.</LI>
+	
+	            <LI><B>OK</B> applies the changes and dismisses the dialog.</LI>
+	          </UL>
+	        </LI>
+	      </OL>
+	
+	      <P><IMG src="../../shared/note.png" border="0">When you click on the
+	      <B>Apply</FONT></B> or <B>OK</FONT></B> button, your
+	      <code>preferences</code> file in your 
+	      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt;</code>
+	      folder is updated immediately.</P>
+
+    	</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+	<BR>
+	<BR>
+
+      <P><IMG src="../../shared/tip.png" border="0">If you have a tool that
+      was built with Plugins that came from the paths that you removed, you will get an error
+      message listing each Plugin that could not be found when you re-open the project or when you
+      launch that tool.</P>
+
+	<BR>
+	<BR>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Ghidra_Front_end.htm">Ghidra Project Window</A></LI>
+
+      <LI><A href="Ghidra_Front_end_Menus.htm#Configure">Configure Ghidra Project Window</A></LI>
+
+      <LI><A href="help/topics/Tool/Configure_Tool.htm">Configure Tool</A></LI>
+
+      <LI><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Manage Data
+      Types</A></LI>
+
+      <LI><A href="help/topics/DataPlugin/Data.htm#DataTypes">Built in Data Types</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">Plugins</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+    <BR>
+    <BR>
+  </BODY>
+</HTML>

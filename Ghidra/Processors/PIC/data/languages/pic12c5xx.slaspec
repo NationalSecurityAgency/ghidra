@@ -1,0 +1,28 @@
+@define PROCESSOR "PIC_12C5XX"
+
+@include "pic12.sinc"
+
+#
+# NOTES	-
+#	1. If a specific PIC-12 has a different register set, this file and the pic12c5xx.specl file may be copied/renamed and
+#      slightly modified to specify a the correct Register File Map.
+#
+
+# Bank-0 File Registers
+define DATA offset=0x00 size=1 [
+	INDF	TMR0	PCL.0	STATUS.0 FSR.0	OSCCAL	GPIO
+];
+
+@include "pic12_instructions.sinc"
+
+# IO Tristate Register
+define register offset=0x0020 size=1 [ TRIS ];
+
+# TRIS register
+trisREG: "6"	is f5=0x6								{ export TRIS; }
+
+:TRIS trisREG				is op6=0x00 & d=0 & trisREG					{
+	#  ---- 0000 0000 0fff
+	#  0000 0000 0000 0110	->	TRIS 6
+	trisREG = W;
+}

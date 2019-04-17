@@ -1,0 +1,220 @@
+
+	Instructions Table
+	
+	--------------------------------------
+	|  address  |  instruction proto ID  |
+	--------------------------------------
+
+	Used By: ghidra.program.database.code.CodeManager
+				
+	key:	long	address					- address of the instruction represented by this row
+	col 0:	int	instruction proto ID	- ID of the instruction at this address
+				
+	This table is used to keep track of instructions in the program.  The table is keyed
+	by address since there can only be one instruction at a given address.  The only field
+	is the proto ID field which is used as a key into map of instruction prototypes.  The
+	instruction prototypes are not stored in the database.  If the prototype map does not
+	have a prototype for a ID which has been stored in this table, the prototype can easily
+	be reconstructed by disassembling at the address.
+	
+
+
+	Data Table
+	
+	-----------------------------
+	|  address  |  Datatype ID  |
+	-----------------------------
+
+	Used By: 	ghidra.program.database.code.CodeManager
+	
+	key:	long	address				- address of the data object represented by this row	
+	col 0:	long	datatype ID			- high order byte is ID of the table used to look up 
+	                                      the datatype and remaining bytes are the primary key 
+	                                      into table identified by table ID.
+				
+				
+	This table is used to keep track of defined data in the program.  The Datatype Table ID and
+	the datatype ID together uniquely identify a datatype in the program.  Different types
+	of datatypes are stored in different tables which are specified using the Datatype Table ID.
+	The entry within that table is specified using the Datatype ID.  Datatype IDs are never
+	reused within their respective tables.
+	
+
+	Comments Table
+	
+	-------------------------------------------------------------------------------
+	|  address  |  Pre comment  |  Post comment |  EOL comment  |  Plate comment  | 
+	-------------------------------------------------------------------------------
+
+	Used By: 	ghidra.program.database.code.CodeManager
+	
+	key:	long	address				- address of these comment	
+	col 0:	String	Pre comment			- the pre comment string
+	col 1:	String	Post comment		- the post comment string
+	col 2:	String	EOL comment			- the end-of-line comment string
+	col 3:	String	Plate comment		- the plate comment string
+				
+				
+	This table is used to store the comments associated with a code unit.  It is keyed by the
+	address of the code unit and simply contains the strings for each type of comment.  If the 
+	code unit does not have a comment for a particular type, then that field will contain a
+	null string.  If a code unit does not have any comments, then a record will not be created
+	for that address key.
+				
+				
+	Length Table
+	------------------------
+	|  address  |  length  | 
+	------------------------
+
+	Used By: 	ghidra.program.database.code.CodeManager
+	
+	key:	long	address		- address of this length property	
+	col 0:	int	length		- the length of the code unit at the address
+				
+				
+	This table is used to store the length of a code unit.  A record in this table is only created
+	when the length can not be determined from the instruction or datatype associated with 
+	this address. Only a few datatypes currently require the use of this table.  One such datatype
+	is String.  Unlike a byte datatype that "knows" it is 1 byte long, a String datatype does
+	not "know" how long it is - that information is specified when the datatype is "applied" to
+	an address.
+	
+	
+	Built-in Datatypes Table
+	------------------------------------------------------
+	|  datatype ID  |  name  | classname  |  category ID |
+	------------------------------------------------------
+	
+	Used by: ghidra.program.database.data.DataManager
+
+	key:	long	datatype ID	- unique key assigned for this datatype	
+	col 0:  String  name        - name of the built in type
+	col 1:	String  classname	- qualified java class name
+	col 2:  long    category ID - ID of the category that contains the built in type 
+	
+	This table stores datatypes that have java classes that implement them.
+	
+	
+	
+	Composite Table  (Structures & Unions)
+	---------------------------------------------------------------------------------------------
+	|  datatype ID  |  name  |  Comment  | isUnion  |  Category ID  |  length  | num components |
+	---------------------------------------------------------------------------------------------
+	
+	Used by: ghidra.program.database.data.DataManager
+
+	key:	long	datatype ID	- unique key assigned for this structure or union	
+	col 0:	String	name		- the name of the structure or union.
+	col 1: 	String  comment		- short description or comment about this structure
+	col 2:	boolean isUnion	- true if this is a union, false if this is a structure
+	col 3:	long	Category ID - unique id for the category that this structure belongs to
+	col 4:	int	length		- total number of bytes in the structure or union
+	col 5:	num components  - number of components for this structure or union
+	
+	This table (along with the Component table) is used to store structure and union definitions.
+	
+ 	Component Table
+ 	---------------------------------------------------------------------------------------------------------------
+ 	| Component ID  |  Parent*  | Offset  |  Datatype ID  |  Field name  |  Comment  |  component size | oridinal |
+ 	---------------------------------------------------------------------------------------------------------------
+ 	Used by: ghidra.program.database.data.DataManager
+
+ 	key: long component ID - unique key assigned for the component
+ 	col 0: long   parent 	 	- ID of parent datatype that contains the component (has an Index)
+ 	col 1: int    offset 	 	- offset into the parent data type
+ 	col 3: long   datatype ID 	- datatype ID of the component
+ 	col 4: String field name    - field name of the component
+ 	col 5: String comment       - comment for the component
+ 	col 6: int    component size- size of the component
+ 	col 7: int    ordinal       - index position of the component within the parent data type
+ 	
+ 	Array Table
+ 	----------------------------------------------------
+ 	| array ID  |  Datatype ID  |  Dimension  | Length |
+ 	----------------------------------------------------
+  	Used by: ghidra.program.database.data.DataManager
+
+ 	key: long array ID - unique key assigned for the array
+ 	col 0: long  datatype ID   - ID of base datatype
+ 	col 1: int   dimension     - number of elements in the array
+ 	col 3: ing   length        - array size for multi dimension array
+ 	
+ 	This table is used to store arrays.
+ 	
+ 	Pointer Table
+ 	----------------------------------------
+ 	|  pointer ID  | Datatype ID  |  size  |
+ 	----------------------------------------
+   	Used by: ghidra.program.database.data.DataManager
+
+ 	key: long pointer ID - unique key assigned for the poiinter
+ 	col 0: long  datatype ID   - ID of base datatype
+ 	col 1: int   size          - pointer size in bytes
+ 	
+ 	This table is used to store pointers.
+ 	
+ 	
+ 	Typedef Table
+ 	----------------------------------------
+ 	|  typedef ID  | Datatype ID  |  name  |
+ 	----------------------------------------
+   	Used by: ghidra.program.database.data.DataManager
+
+ 	key: long typedef ID - unique key assigned for the typedef
+ 	col 0: long    datatype ID   - ID of base datatype
+	col 1: String  name 	   	 - name of the typedef
+	
+	This table is used to store typedefs; a typedef is an alias for another datatype.
+	
+	Instance Settings Table
+ 	---------------------------------------------------------------------------------------
+ 	| settings ID  |  address*  |  name  |  long value  |  string value  |  byte[] value  |
+ 	---------------------------------------------------------------------------------------
+   	Used by: ghidra.program.database.data.DataManager
+
+ 	key: long settings ID - unique key assigned for the instance settings
+ 	col 0: long    address   	- address of where the settings is applied (has an index)
+ 	col 1: String  name			- name of the settings
+ 	col 2: long    long value	- long value for the settings (-1 if not set)
+ 	col 3: String  String value - String value for the settings (null if not set)
+ 	col 4: byte[]  byte[] value - byte array value for the settins (null if not set)
+ 	
+ 	This table is used to store name/value pairs on a data type that has been applied to the program.
+ 	Settings are used to indictate how the data type is to be displayed. Any string, long, or
+ 	byte array can be specified as a setting.
+ 	
+	
+	Default Settings Table
+ 	------------------------------------------------------------------------
+ 	| Datatype ID |  name  |  long value  |  string value  |  byte[] value |
+ 	------------------------------------------------------------------------
+    Used by: ghidra.program.database.data.DataManager
+
+	key: long settings ID 		- unique key assigned for the default settings
+ 	col 0: long datatype ID 	- ID of the datatype
+ 	col 1: String  name			- name of the settings
+ 	col 2: long    long value	- long value for the settings (-1 if not set)
+ 	col 3: String  String value - String value for the settings (null if not set)
+ 	col 4: byte[]  byte[] value - byte array value for the settins (null if not set)
+ 	
+ 	This table is used to store default name/value pairs that a data type may have. 
+ 	For example, a Word data type may have its settings "format" as "octal" such 
+ 	that by default, it would be displayed in octal format. The default settings can be changed.
+ 	
+ 	
+ 	
+ 	Category Table
+ 	-----------------------------------------------
+ 	| Category ID  |  name  |  Parent Category ID* |
+ 	-----------------------------------------------
+    Used by: ghidra.program.database.data.DataManager
+
+	key: long category ID 		- unique key assigned for the category (0 is the root category)
+	col 0: String	name		- name of the category
+	col 1: long		parent		- ID of the parent category (-1 if this is the root category)
+ 	
+ 	This table is used to store the categories that are used to organize data types.
+ 	
+ 	
+ 	* Indicates that the field has an index.

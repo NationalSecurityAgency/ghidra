@@ -1,0 +1,92 @@
+apply plugin: 'eclipse'
+eclipse {
+	project {
+		name = 'Eclipse GhidraDevPlugin'
+		buildCommand 'org.eclipse.pde.ManifestBuilder'
+		buildCommand 'org.eclipse.pde.SchemaBuilder'
+		natures 'org.eclipse.pde.PluginNature'
+		classpath.file {
+			def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
+			beforeMerged { classpath ->
+				classpath.entries.removeAll { entry ->
+					entry.path == requiredPlugins
+				}
+			}
+			whenMerged { classpath ->
+				withXml {
+					def node = it.asNode()
+					node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+				}
+			}
+		}
+	}
+}
+
+// We want GhidraDev to run with Eclipses launched with Java 8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+	compile project(':Utility')
+	compile project(':LaunchSupport')
+}
+
+// We are currently building this with Eclipse, so prevent gradle from trying.
+// See build_README.txt for instructions on how to build from Eclipse.
+compileJava.enabled = false
+jar.enabled = false
+
+File libraryJarDestDir = file("build/data")
+
+File pyDevSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
+File cdtSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
+
+File pyDevDestDir = file("build/data/buildDependencies/pydev")
+File cdtDestDir = file("build/data/buildDependencies/cdt")
+
+task utilityJar(type:Copy) {
+	from (project(':Utility').jar)
+
+	destinationDir libraryJarDestDir
+}
+
+task launchSupportJar(type:Copy) {
+	from (project(':LaunchSupport').jar)
+
+	destinationDir libraryJarDestDir
+}
+
+task pyDevUnpack(type:Copy) {
+	description "Unpack PyDev plugin archive for development use"
+	group "Development Preparation"
+
+	// Without this, the copyTask will unzip the file to check for "up to date"
+	onlyIf {
+		!pyDevDestDir.exists()
+	}
+
+	from zipTree(pyDevSourceZipFile)
+	exclude "**/.project", "**/.pydevproject"
+
+	destinationDir pyDevDestDir
+}
+
+task cdtUnpack(type:Copy) {
+	description "Unpack CDT plugin archive for development use"
+	group "Development Preparation"
+
+	// Without this, the copyTask will unzip the file to check for "up to date"
+	onlyIf {
+		!cdtDestDir.exists()
+	}
+
+	from zipTree(cdtSourceZipFile)
+
+	destinationDir cdtDestDir
+}
+
+// PrepDev dependencies
+prepDev.dependsOn utilityJar
+prepDev.dependsOn launchSupportJar
+prepDev.dependsOn pyDevUnpack
+prepDev.dependsOn cdtUnpack

@@ -1,0 +1,11 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Framework FileSystem'
+
+dependencies {
+	compile project(':Generic')
+	compile project(':DB')
+	compile project(':Docking')
+	compile "ch.ethz.ganymed:ganymed-ssh2:262@jar"
+	
+}
+

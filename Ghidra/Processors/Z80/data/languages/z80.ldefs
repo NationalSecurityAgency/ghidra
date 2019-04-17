@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Z80"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="z80.sla"
+            processorspec="z80.pspec"
+            manualindexfile="../manuals/Z80.idx"
+            id="z80:LE:16:default">
+    <description>Zilog Z80</description>
+    <compiler name="default" spec="z80.cspec" id="default"/>
+    <external_name tool="gnu" name="z80"/>
+    <external_name tool="IDA-PRO" name="z80"/>
+  </language>
+  <language processor="Z80"
+            endian="little"
+            size="16"
+            variant="Z8401x"
+            version="1.0"
+            slafile="z80.sla"
+            processorspec="z8401x.pspec"
+            manualindexfile="../manuals/Z80.idx"
+            id="z8401x:LE:16:default">
+    <description>Zilog Z8401x (IPC) microcontroller</description>
+    <compiler name="default" spec="z80.cspec" id="default"/>
+    <external_name tool="gnu" name="z80"/>
+    <external_name tool="IDA-PRO" name="z80"/>
+  </language>
+  <language processor="Z180"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="z180.sla"
+            processorspec="z180.pspec"
+            manualindexfile="../manuals/Z180.idx"
+            id="z180:LE:16:default">
+    <description>Zilog Z180</description>
+    <compiler name="default" spec="z80.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="z180"/>
+  </language>
+    <language processor="Z180"
+            endian="little"
+            size="16"
+            variant="Z182"
+            version="1.0"
+            slafile="z180.sla"
+            processorspec="z182.pspec"
+            manualindexfile="../manuals/Z180.idx"
+            id="z182:LE:16:default">
+    <description>Zilog Z182</description>
+    <compiler name="default" spec="z80.cspec" id="default"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,540 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Ghidra Tool Administration</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Ghidra Tool Administration</H1>
+
+    <P>&nbsp;</P>
+
+    <P>A Ghidra Tool is a collection of building blocks, called <A name=
+    "Plugins"></A><B><I>Plugins</I></B>.&nbsp; You can create tools by combining different Plugins
+    that cooperate with one another to achieve certain functionality. You can add tools to the Tool
+    Chest or configure them to share data and resources with other tools.&nbsp; Ghidra provides a
+    set of Plugins, but you may create your own Plugins to add more functionality to your
+    tools.</P>
+
+    <H2><A name="DefaultTools"></A>Default Tool</H2>
+
+    <P>Ghidra provides a default tool, the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A> that is in your Tool Chest. It
+    has all of the Core plugins
+    already loaded. This tool may be <A href="#Import_Ghidra_Tools">re-imported</A> into your tool
+    chest at any time. If the tools exist in your tool chest, then a one-up number is assigned to
+    the name to make them unique. (You will see the name in the tool tip, and in the <B><FONT size=
+    "4">Tools</FONT></B><IMG src="../../shared/arrow.gif"> <B><FONT size="4">Run</FONT></B> menu.)
+    Any tool that you create and add to your Tool Chest is always available to your active
+    Project.&nbsp; However, you should save the tool if&nbsp; you plan to use it for other Ghidra
+    projects.&nbsp;</P>
+
+    <H2><A name="Tool_Management"></A> Tool Management</H2>
+
+    <P>The following sections describe tool management:</P>
+
+    <UL>
+      <LI><A href="#Create_Tool">Create Tool</A></LI>
+
+      <LI><A href="#Save_Tool">Save Tool to Tool Chest</A></LI>
+
+      <LI><A href="#Export_Tool">Export Tool</A></LI>
+
+      <LI><A href="#Import_Tool">Import Tool into Tool Chest</A></LI>
+
+      <LI><A href="help/topics/Tool/Configure_Tool.htm">Configure Tool</A></LI>
+
+      <LI><A href="#Run_Tool">Run&nbsp; Tool</A></LI>
+
+      <LI><A href="help/topics/FrontEndPlugin/Connecting_Tools.htm">Connect Tools</A></LI>
+
+      <LI><A href="#Close_Tool">Close Tool</A></LI>
+
+      <LI><A href="#Delete_Tool">Delete Tool</A></LI>
+    </UL>
+
+    <BLOCKQUOTE>
+      <H3><A name="Create_Tool"></A>Create Tool</H3>
+
+      <BLOCKQUOTE>
+        <P>Create Tool creates an empty tool (no Plugins). What Plugins you should add is dictated
+        by what you want the tool to do. The following steps can help you create a useful tool:</P>
+
+        <OL>
+          <LI>Define your requirements for a tool.</LI>
+
+          <LI>Determine whether the existing Plugins meet your requirements. If the Plugins do not
+          provide the functionality, you may need to write your own&nbsp; Plugin that does meet
+          your requirements.</LI>
+
+          <LI>Add these Plugins to an existing tool or to a new tool.</LI>
+        </OL>
+
+        <P>To create a New Tool,</P>
+
+        <OL>
+          <LI>From the Ghidra Project Window, select the <B><FONT size="4">Tools</FONT></B><IMG
+          src="../../shared/arrow.gif"> <B><FONT size="4">Create Tool...</FONT></B> option.</LI>
+
+          <LI>A new "empty" tool is displayed; the <I><A href=
+          "help/topics/Tool/Configure_Tool.htm">Configure</A></I> dialog is displayed.</LI>
+
+          <LI><A href="help/topics/Tool/Configure_Tool.htm">Configure</A> the tool.</LI>
+
+          <LI>Save the tool.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Save_Tool"></A>Save Tool to Tool Chest</H3>
+
+      <BLOCKQUOTE>
+        <P>When you save a tool to your Tool Chest, you are saving the tool's configuration such
+        that it is available to your active project.&nbsp; (When you open any project, icons for
+        all tools from your Tool Chest will appear in the Tool Chest panel in the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Ghidra Project
+        Window</A>).&nbsp; An icon for a new tool shows up on the Tool Chest panel of the Ghidra
+        Project Window.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/SaveTool.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To save a tool,</P>
+
+        <UL class="noindent">
+          <LI>From the tool, select <B><FONT size="4">File</FONT></B><IMG src=
+          "../../shared/arrow.gif"> <B><FONT size="4">Save Tool</FONT></B></LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To save a tool to a different name, or to change the icon,</P>
+
+        <OL>
+          <LI>From the tool, select <B><FONT size="4">File</FONT></B><IMG src=
+          "../../shared/arrow.gif"> <B><FONT size="4">Save Tool As...</FONT></B></LI>
+
+          <LI>Enter a new tool name (the current tool name is shown in the <I>Tool Name</I> field
+          by default).</LI>
+
+          <LI>
+            Choose an icon from the list of icons ... OR 
+
+            <UL>
+              <LI>Click on the file chooser button (<B><FONT size="4">...</FONT></B>) to choose a
+              filename from the file system.</LI>
+            </UL>
+          </LI>
+
+          <LI>Click on the <B><FONT size="4">Save</FONT></B> button; if this is a new tool that you
+          are adding to your tool chest, the Tool Chest panel will show the icon for the tool; icon
+          and name changes (tool tip) and are reflected in the Tool Chest panel as well.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Export_Tool"></A>Export Tool</H3>
+
+      <BLOCKQUOTE>
+        <P>You can export your tool to an XML file in order to share your tool with other users.
+        You may have configured your tool for a particular area of research or practice; others who
+        are working on a similar problem may find your tool useful.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>To export a tool from the menu:</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select <B><FONT size="4">File</FONT></B><IMG src="../../shared/arrow.gif"> <B><FONT
+          size="4">Export Tool</FONT></B>; a file chooser is displayed.</LI>
+
+          <LI>Select a folder and name for the exported file.</LI>
+
+          <LI>Click on the <B><FONT size="4">Export</FONT></B> button.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>To export a tool from the icon:</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>In the "Tool Chest", right mouse click on the icon for the tool</LI>
+
+          <LI>Select the <B><FONT size="4">Export...</FONT></B> option.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P>The <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#StatusWindow">Status</A>
+        area on the Ghidra Project Window indicates whether the export was successful.&nbsp;</P>
+
+        <P><I><IMG src="../../shared/note.png"> If the tool contains Plugins that are not part of
+        Ghidra (i.e., you wrote new Plugins), you will have to distribute a jar file containing the
+        class files for the Plugins along with the XML file. The recipient can then just place the
+        jar file in one of the <A href=
+        "help/topics/FrontEndPlugin/Edit_Plugin_Path.htm#SearchOrder">locations</A> where Ghidra
+        will search for available Plugins.</I>&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <H3>Import Tool</H3>
+
+      <BLOCKQUOTE>
+        <H4><A name="Import_Tool"></A>Import Tool to Tool Chest</H4>
+
+        <P>Use the Import Tool option to import an <A href="#Export_Tool">exported tool</A>&nbsp;
+        into Ghidra.&nbsp; The imported tool will appear in your <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A> with the other
+        tools. If the name of the imported tool already exists, a one-up number is assigned to the
+        newly imported tool to make the name unique.</P>
+
+        <P>To import a tool,</P>
+
+        <OL>
+          <LI>From the Ghidra Project Window, select <B><FONT size="4">Tools</FONT></B><IMG src=
+          "../../shared/arrow.gif"> <B><FONT size="4">Import Tool to Tool Chest...</FONT></B></LI>
+
+          <LI>Select a file with a ".tool" or ".obj" extension.</LI>
+
+          <LI>Click on the <B><FONT size="4">Import</FONT></B> button.</LI>
+        </OL>
+
+        <P>If the import was successful, an icon for the tool is added to the Tool Chest panel. Any
+        errors during the import are reported in the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#StatusWindow">Status</A> area on the
+        Ghidra Project Window.</P>
+
+        <P><I><IMG src="../../shared/note.png"> If the tool that you are importing contains Plugins
+        that are not part of Ghidra, you must have the jar file containing the class files for the
+        Plugins. Place the jar file in one of the <A href=
+        "help/topics/FrontEndPlugin/Edit_Plugin_Path.htm#SearchOrder">locations</A> where Ghidra
+        will search for available Plugins and restart Ghidra.</I></P>
+      </BLOCKQUOTE>
+
+      <H4><A name="Import_Ghidra_Tools"></A>Import Default Tools to Tool Chest</H4>
+
+      <BLOCKQUOTE>
+        <P>The default tool for the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A> is part of the Ghidra installation, and can be added to your Tool Chest at any
+        time. So if you <A href="#Delete_Tool">delete</A> the default tool from your Tool Chest,
+        you can always recover them by using the <B><FONT size="4">Import Default Tools to Tool
+        Chest</FONT></B> option.</P>
+
+        <P>To import default tools,</P>
+
+        <OL>
+          <LI>From the <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
+          Window</A>, select <B><FONT size="4">Tools</FONT></B><IMG src="../../shared/arrow.gif">
+          <FONT size="4"><B>Import Default...</B>.</FONT></LI>
+
+          <LI><FONT size="4">A dialog is displayed that allows you to selectively import default
+          tools. Select the tools you want to import and then select <B>OK</B>.</FONT></LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <DIV align="center">
+        <IMG src="images/ImportDefaultToolsDialog.png"><BR>
+      </DIV>
+
+      <BLOCKQUOTE>
+        <OL start="3">
+          <LI>The default tools are added to your Tool Chest; if the default tools already exist,
+          then a one-up number is assigned to them to make the names unique, e.g.,
+          CodeBrowser_1.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Run_Tool"></A>Run Tool</H3>
+
+      <BLOCKQUOTE>
+        <P>To launch a tool from the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A>,&nbsp;</P>
+
+        <UL>
+          <LI>Click on the icon for that tool in the Tool Chest panel on the Ghidra Project Window,
+          OR</LI>
+
+          <LI>From the <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
+          Window</A>, select <B><FONT size="4">Tools</FONT></B><IMG src="../../shared/arrow.gif">
+          <B><FONT size="4">Run Tool</FONT></B><IMG src="../../shared/arrow.gif"> <B><FONT size=
+          "4"><I>&lt;tool name&gt;</I></FONT></B></LI>
+        </UL>
+
+        <P>To launch a tool with a specific Program,</P>
+
+        <UL>
+          <LI>Drag a Program file from the <A href=
+          "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ProjectDataTree">data tree</A> in the
+          Ghidra Project Window, and drop it onto a tool&nbsp; icon in the Tool Chest panel. The
+          tool is launched and has the Program opened.</LI>
+        </UL>
+
+        <P><I><IMG src="../../shared/note.png">If you bring up more than one instance of the same
+        tool, the window title shows a one-up number appended to the tool name, e.g.,
+        CodeBrowser(2).</I></P>
+      </BLOCKQUOTE>
+
+      <H3>&nbsp;<A name="Rename_Tool"></A>Rename Tool</H3>
+
+      <DIV style="margin-left: 40px;">
+        <P>To rename a tool&nbsp; from the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A>,<BR>
+        </P>
+
+        <UL>
+          <LI>Right-click on the icon for the tool in the Tool Chest panel in the Ghidra Project
+          Window and select <SPAN style="font-weight: bold;">Rename</SPAN> from the popup&nbsp;
+          menu<B><FONT size="4"><I>.</I></FONT></B></LI>
+
+          <LI><FONT size="4">Enter the new tool name in the dialog that appears and press the
+          &lt;OK&gt; button.</FONT><B><FONT size="4"><I><BR>
+          </I></FONT></B></LI>
+        </UL>
+      </DIV>
+
+	  <H3><A name="Set_Tool_Associations"></A>Set Tool Associations</H3>
+	  <BLOCKQUOTE>
+        <P>For each type of file in the Front End you can set the tool that Ghidra uses to 
+        open that file, the associated tool.  As an example, programs in Ghidra are, by default,
+        associated with the 
+        <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A> tool.  The 
+        associated tool is the tool that will be chosen by Ghidra to open any file that is 
+        double-clicked.  Regardless of the current associated tool, you may, at any time,
+         drag a file in the Front End onto any tool 
+        in the Tool Chest in order to open the file in that tool.
+        </P>
+        
+        <P>
+        To change the associated tool for any file type, select <B>
+        Tools<IMG src="../../shared/arrow.gif"> Set Tool Associations...</B> menu.   This will
+        open the <B>Set Tool Associations Dialog</B>
+        </P>
+        
+	     <CENTER>
+	      <TABLE border="0" width="100%">
+	        <TBODY>
+	          <TR>
+	            <TD align="center" width="100%"><IMG src="images/SetToolAssociations.png"></TD>
+	          </TR>
+	        </TBODY>
+	      </TABLE>
+	    </CENTER>
+	    
+	    <P>
+	    This dialog shows a list of known content types and the tool that is currently used 
+	    to open that type when double-clicked in the Front End.  If the name and icon of the
+	    tool is grayed-out, that means the associated tool is not in your tool chest.
+	    </P>
+	    
+	    <P>
+	    To change a tool association, select the desired <B>Content Type</B> in the list and
+	    then click the <B>Edit</B> button.  This button will trigger the 
+	    <B>Pick Tool</B> dialog.
+	    
+	    <BLOCKQUOTE>
+	    <CENTER>
+	      <TABLE border="0" width="100%">
+	        <TBODY>
+	          <TR>
+	            <TD align="center" width="100%"><IMG src="images/PickTool.png"></TD>
+	          </TR>
+	        </TBODY>
+	      </TABLE>
+	    </CENTER>
+	    </P>
+	    
+	    <P>
+	    This dialog shows a list of all tools that can open the given content type.  If you 
+	    choose a tool from the list that is not in your tool chest, then that tool will be 
+	    added for you when you close the dialogs.	    
+        </P>        
+        </BLOCKQUOTE>
+        
+        <P>
+        The <B>Restore Default</B> button allows you to restore the tool association to the 
+        default setting.
+        </P>
+        
+        <P><I><IMG src="../../shared/note.png"></I>Ghidra uses tool names to store tool 
+        associations.  This can lead to odd behavior if you rename a custom tool to be the 
+        name of a default tool.  If your tools exhibit odd behavior, such as being unable to
+        open a file that is considered to be a default type, then you can always delete your 
+        tools and <A href="#Import_Ghidra_Tools">re-import the default tools</A> again.
+        </P>
+        
+      </BLOCKQUOTE>
+	  
+
+      <H3><A name="Close_Tool"></A>Close Tool&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>To close a tool (not the <A href=
+        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A>),&nbsp;</P>
+
+        <OL>
+          <LI>Select the <B>File</B><IMG src="../../shared/arrow.gif"> <B>Close Tool</B> option,
+          OR&nbsp;</LI>
+
+          <LI>Right mouse click on the icon for the running tool and choose the <B>Close</B>
+          option.</LI>
+        </OL>
+
+        <H4>Program Changes</H4>
+
+        <BLOCKQUOTE>
+          <P>If you made changes to the Program and not saved them before you closed the tool, then
+          a dialog is displayed to ask whether you want to save your changes.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/SaveChangesDialog.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <UL>
+          <LI>Choose the <B>Save</B> button to save the Program.</LI>
+
+          <LI>Choose the <B>Don't Save</B> button to close the tool but do not save the
+          changes.</LI>
+
+          <LI>Choose the <B>Cancel</B> button if you do not want to close the tool.</LI>
+        </UL>
+
+        <BLOCKQUOTE>
+          <P><I><IMG src="../../shared/note.png"></I> This dialog is displayed when the <I>last</I>
+          <I>tool is closed that has this Program opened</I>. So if you have two tools running with
+          the same Program opened and you close one tool, the dialog will not be displayed until
+          you close the second tool.</P>
+
+          <P><I><IMG src="../../shared/note.png"></I> You cannot close a tool while a background
+          process is running, e.g., Disassembly or Clear. You must first stop the operation, then
+          close the tool.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Tool_Changes"></A>Tool Configuration Changes</H4>
+
+        <BLOCKQUOTE>
+          <P>Changes to tools are automatically saved by default. If you open multiple instances of
+          the same tool and make changes to that tool, then Ghidra cannot automatically save the
+          tool for you. In this case, Ghidra will ask you to make a decision regarding saving the
+          changes.</P>
+
+          <P>You may configure Ghidra to not automatically save the tool via the Front End options
+          (Edit-&gt;Options-&gt;Tool-&gt;Automatically Save Tools).</P>
+        </BLOCKQUOTE>
+
+        <H2>&nbsp;</H2>
+
+        <BLOCKQUOTE>
+          <H3><A name="Delete_Tool"></A>Delete Tool</H3>
+
+          <BLOCKQUOTE>
+            <P>To delete a tool from your <A href=
+            "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A>,</P>
+
+            <UL>
+              <LI>From the <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
+              Window</A>, Select the <B><FONT size="4">Tools</FONT></B><IMG src=
+              "../../shared/arrow.gif"> <B><FONT size="4">Delete Tool</FONT></B><IMG src=
+              "../../shared/arrow.gif"> <B><FONT size="4"><I>&lt;tool name&gt;</I></FONT></B>
+              OR,</LI>
+
+              <LI>Right mouse click on the icon in the Tool Chest and select the <B><FONT size=
+              "4">Delete...</FONT></B> option.</LI>
+            </UL>
+
+            <P>A dialog to confirm your delete request is displayed; choose the <B><FONT size=
+            "4">Delete</FONT></B> button to remove the tool from your Tool Chest.</P>
+
+            <P><IMG src="../../shared/tip.png"> You can always get your default tools back into
+            your Tool Chest by selecting the <FONT size="4"><B><A href=
+            "#Import_Ghidra_Tools">Import Default Tools to Tool Chest</A></B></FONT><A href=
+            "#Import_Ghidra_Tools">option</A>. However, deleting your own custom tool from your
+            Tool Chest is a <B>permanent</B> <B>operation</B>.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H2>&nbsp;</H2>
+
+        <H2><A name="ToolStatus"></A>Tool Status Components</H2>
+
+        <BLOCKQUOTE>
+          <P>The tool has a status area to display messages and an area to show progress for a
+          running task, e.g., disassembly. On the right side of the lower portion of the tool, a
+          "write" icon indicates that the program is being modified. The progress bar shows the
+          progress of the running task.&nbsp; The spinning globe indicates that something is
+          happening in the tool. The cancel button allows you to cancel the currently running
+          task.&nbsp;You can still interact with the program while the task is running.</P>
+        </BLOCKQUOTE>
+
+        <P align="center">&nbsp;</P>
+
+        <P class="relatedtopic" align="center"><IMG src="images/Progress.png"></P>
+
+        <BLOCKQUOTE>
+          <P align="left">&nbsp;</P>
+
+          <P align="left"><A name="TaskDialog"></A>There may be times when a task is "modal" such
+          that no user interaction with the program is allowed until either the task completes or
+          you cancel it. A dialog is displayed to indicate what task is running and to allow you to
+          cancel it. Depending on the task, the dialog may or may not show a progress
+          bar.&nbsp;</P>
+
+          <P align="center"><IMG src="images/ModalTaskDialog.png"></P>
+
+          <P align="left">&nbsp;</P>
+        </BLOCKQUOTE>
+
+        <P class="relatedtopic">Related Topics:</P>
+
+        <UL>
+          <LI><A href="help/topics/Tool/Configure_Tool.htm">Configure Tool</A></LI>
+
+          <LI><A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
+          Window</A></LI>
+
+          <LI><A href="help/topics/FrontEndPlugin/Ghidra_Front_end_Menus.htm#Configure">Configure
+          Ghidra Project Window</A></LI>
+
+          <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Viewer</A></LI>
+        </UL>
+
+        <P>&nbsp;</P>
+        <BR>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

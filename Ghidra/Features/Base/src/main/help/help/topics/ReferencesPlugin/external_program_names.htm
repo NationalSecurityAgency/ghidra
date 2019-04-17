@@ -1,0 +1,199 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>External Program Names</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="View_External_Program_Names"></A>External Program Names</H1>
+
+    <P>An external reference is a reference to a location in another program. The reference
+    destination includes the name of some program. To use an external reference to navigate, the
+    external program name must be associated with an existing program file in the Ghidra project.
+    <A name="Resolve"></A>If the association has been defined, then the external reference is said
+    to have been <B><I>resolved</I></B>. The <I>External Programs</I> view manages the associations
+    between external program names and program files. The table shows all external program names
+    and their associated links to program files. Use the <I>External Programs</I> view to add
+    external names, delete external names, set associations, and clear associations.</P>
+
+    <H2><A name="ExternalNamesDialog"></A>External Programs View</H2>
+
+    <P style="text-align: center;"><IMG alt="" src="images/External_names_dialog.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <P>The <I>External Programs</I> view consists of a main scrollable list of external program
+      names and their associated Ghidra program files.</P>
+
+      <BLOCKQUOTE>
+        <H3>Name Column</H3>
+
+        <BLOCKQUOTE>
+          <P>The name of the external program. Many external programs will share the same external
+          program name. Setting or changing the associated Ghidra file will affect all the external
+          references to that name. Double-click on this field to edit the name. After you change
+          the name, hit the &lt;Enter&gt; key.</P>
+        </BLOCKQUOTE>
+
+        <H3>Ghidra Program Column<BR>
+        </H3>
+
+        <BLOCKQUOTE>
+          <P>The Ghidra file associated with the external program name. This field is blank if
+          external reference has not been resolved. Ghidra will not be able to "follow" an external
+          reference if its external program name does not have an associated Ghidra file.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Add_External_Program_Name"></A>Add Button</H3>
+
+        <BLOCKQUOTE>
+          <P>The <B>Add</B> <IMG alt="" src="images/Plus.png"> button will bring up a text dialog
+          for entering a new external program name.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="ChooseExternalProgram"></A><A name="Set_External_Name_Association"></A>Set
+        External Name Association Button</H3>
+
+        <BLOCKQUOTE>
+          <P>The <SPAN style="font-weight: bold;">Set</SPAN> <IMG alt="" src=
+          "images/editbytes.gif"> button brings up a <I>Ghidra program chooser</I> dialog. Choose a
+          Ghidra program file to associate it with the selected external program name. This button
+          is only enabled when a single external program name is selected.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <IMG src="images/Choose_external_prog.png" border="0">
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <H3><A name="Clear_External_Name_Association"></A>Clear External Name Association
+        Button</H3>
+
+        <BLOCKQUOTE>
+          <P>This <SPAN style="font-weight: bold;">Clear <IMG alt="" src=
+          "images/edit-delete.png">&nbsp;</SPAN> button clears the assocated program for all the
+          selected external program names.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Delete_External_Program_Name"></A>Delete External Name Button</H3>
+
+        <BLOCKQUOTE>
+          <P>This <SPAN style="font-weight: bold;">Delete</SPAN> <IMG alt="" src=
+          "images/edit-delete.png"> button deletes the selected external program names from the
+          program.&nbsp; If a selected external program name contains external locations, it can
+          not be deleted. The <SPAN style="font-weight: bold;">Delete</SPAN> button is enabled
+          whenever one or more external program names are selected.</P>
+
+          <P><BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Working with External Program Names</H2>
+
+    <BLOCKQUOTE>
+      <H3>Adding a New External Program Name</H3>
+
+      <OL>
+        <LI>Select <B>Window<IMG src="../../shared/arrow.gif" border="0"> External Programs</B>
+        from the main Code Browser menu.</LI>
+
+        <LI>Press the <B>Add</B> <IMG alt="" src="images/Plus.png"> button.</LI>
+
+        <LI>Enter the new external program name into the pop-up dialog.</LI>
+
+        <LI style="list-style: none">
+          &lt;&gt; 
+
+          <P><I><IMG src="../../shared/note.png" border="0"> If the table is sorted by Name, then
+          the name you enter will be placed at the correct position in the table to maintain the
+          sort order. The sort icon <IMG src="Icons.SORT_ASCENDING_ICON" border="0"> or <IMG
+          src="Icons.SORT_DESCENDING_ICON" border="0"> indicates the order and what column is
+          being sorted. You can also sort by Ghidra Pathname by clicking on the header for this
+          column. Click on the sort icon to change the order.</I></P>
+          &lt;/&gt;
+        </LI>
+      </OL>
+
+      <H3>Resolving an External Name to an existing Ghidra program<BR>
+      </H3>
+
+      <OL>
+        <LI>Select <SPAN style="font-weight: bold;">Window</SPAN><B><IMG src=
+        "../../shared/arrow.gif" border="0"> External Programs</B> from the main Code Browser
+        menu.</LI>
+
+        <LI>Click on the external program name that is be associated with a Ghidra program
+        file.</LI>
+
+        <LI>Press the <B>Edit</B> <IMG alt="" src="images/editbytes.gif"> button.</LI>
+
+        <LI>Use the <I><A href="#ChooseExternalProgram">Ghidra Program Chooser</A></I> dialog to
+        select the Ghidra file to associate to the selected program name.</LI>
+
+        <LI>The Code Browser updates to indicate that the external reference has been resolved.
+        (Unresolved references are shown in red.)</LI>
+      </OL>
+
+      <H3>Clearing a Resolved External Program Name</H3>
+
+      <OL>
+        <LI>Select <SPAN style="font-weight: bold;">Window</SPAN><B><IMG src=
+        "../../shared/arrow.gif" border="0"> External Programs</B> from the main Code Browser
+        menu.</LI>
+
+        <LI>Click on the external program name that has an association to be cleared.</LI>
+
+        <LI>Press the <B>Clear</B> <IMG alt="" src="images/erase16.png"> button</LI>
+      </OL>
+
+      <H3>Removing an External Program Name</H3>
+
+      <OL>
+        <LI>Select <SPAN style="font-weight: bold;">Window</SPAN><B><IMG src=
+        "../../shared/arrow.gif" border="0"> External Programs</B> from the main Code Browser
+        menu.</LI>
+
+        <LI>Click on the external program name to be removed.<BR>
+        </LI>
+
+        <LI>
+          Press the <SPAN style="font-weight: bold;">Delete&nbsp;<IMG alt="" src=
+          "images/edit-delete.png">&nbsp;</SPAN> button. 
+
+          <UL>
+            <LI>If external references still exist, a dialog is displayed indicating that the
+            external program name cannot be deleted.&nbsp; All external references to that <SPAN
+            style="font-style: italic;">external program name</SPAN> must be deleted before it can
+            be deleted.<BR>
+            </LI>
+          </UL>
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>References</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="References_from.htm#extRefs">Set External Reference</A></LI>
+
+      <LI><A href="help/topics/SymbolTreePlugin/SymbolTree.htm#Externals">External Symbols</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

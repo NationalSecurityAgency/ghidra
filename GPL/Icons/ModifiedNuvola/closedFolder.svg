@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="25"
+   height="17"
+   id="svg2">
+  <defs
+     id="defs4">
+    <linearGradient
+       x1="1.3965347"
+       y1="2.8009901"
+       x2="7.6133666"
+       y2="6.9455447"
+       id="linearGradient4260"
+       xlink:href="#linearGradient4254"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="2.6579208"
+       y1="2.260396"
+       x2="6.6222773"
+       y2="3.2934308"
+       id="linearGradient4239"
+       xlink:href="#linearGradient4233"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="9.6405945"
+       y1="1.4495049"
+       x2="5.4509902"
+       y2="9.19802"
+       id="linearGradient4228"
+       xlink:href="#linearGradient4222"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       id="linearGradient4222">
+      <stop
+         id="stop4224"
+         style="stop-color:#a38300;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4226"
+         style="stop-color:#6c5600;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4233">
+      <stop
+         id="stop4235"
+         style="stop-color:#32ac00;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4237"
+         style="stop-color:#116200;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4254">
+      <stop
+         id="stop4256"
+         style="stop-color:#166500;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4258"
+         style="stop-color:#3a3000;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <clipPath
+       id="clipPath4146">
+      <rect
+         width="8"
+         height="7"
+         x="-0.0004619"
+         y="9"
+         id="rect4148"
+         style="opacity:0.55979644;fill:#0060c0;fill-opacity:1;stroke:none" />
+    </clipPath>
+    <linearGradient
+       x1="4"
+       y1="1045.5497"
+       x2="-6.0625"
+       y2="1026.2684"
+       id="linearGradient3693"
+       xlink:href="#linearGradient3613"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(2,2)" />
+    <linearGradient
+       x1="-5.095274"
+       y1="1033.3518"
+       x2="13.163674"
+       y2="1058.4865"
+       id="linearGradient3647"
+       xlink:href="#linearGradient3639"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(1.96875,2)" />
+    <linearGradient
+       x1="-5.095274"
+       y1="1033.3518"
+       x2="13.163674"
+       y2="1058.4865"
+       id="linearGradient3633"
+       xlink:href="#linearGradient3639"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-0.03124999,0)" />
+    <linearGradient
+       x1="4"
+       y1="1045.5497"
+       x2="-6.0625"
+       y2="1026.2684"
+       id="linearGradient3619"
+       xlink:href="#linearGradient3613"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       id="linearGradient3613">
+      <stop
+         id="stop3615"
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3617"
+         style="stop-color:#000000;stop-opacity:0.72944295"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3639">
+      <stop
+         id="stop3641"
+         style="stop-color:#000000;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3643"
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+  </defs>
+  <g
+     transform="translate(0,-1035.3622)"
+     id="layer1">
+    <image
+       xlink:href="../nuvola/16x16/folder_yellow.png"
+       x="1"
+       y="1036.3622"
+       width="16"
+       height="16"
+       id="image2998" />
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)" compilerSpecID="default">
+        <constraint primary="496"   processor="PowerPC" endian="little" size="32" />
+        <constraint primary="497"   processor="PowerPC" endian="little" size="32" />
+    </constraint>
+    <constraint loader="Debug Symbols (DBG)" compilerSpecID="default">
+        <constraint primary="496"   processor="PowerPC" endian="little" size="32" />
+        <constraint primary="497"   processor="PowerPC" endian="little" size="32" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="20"   processor="PowerPC"                  size="32" />
+        <constraint primary="21"   processor="PowerPC"                  size="64" />
+    </constraint>
+    <constraint loader="Preferred Executable Format (PEF)" compilerSpecID="default">
+        <constraint primary="pwpc" processor="PowerPC" endian="big" size="32" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
+        <constraint primary="18"       processor="PowerPC" endian="big"    size="32" />
+        <constraint primary="16777234" processor="PowerPC" endian="big"    size="64" />
+    </constraint>
+</opinions>

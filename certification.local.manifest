@@ -1,0 +1,11 @@
+##VERSION: 2.0
+.gitattributes||GHIDRA|exclude|||END|
+.gitignore||GHIDRA|exclude|||END|
+CONTRIBUTING.md||GHIDRA||||END|
+DISCLAIMER.md||GHIDRA||||END|
+DevGuide.md||GHIDRA||||END|
+LICENSE||GHIDRA||||END|
+NOTICE||GHIDRA||||END|
+README.md||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+settings.gradle||GHIDRA||||END|

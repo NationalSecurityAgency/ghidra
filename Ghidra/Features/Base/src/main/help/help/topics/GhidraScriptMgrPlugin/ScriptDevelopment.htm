@@ -1,0 +1,174 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Script Development</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="script_development"></A>Ghidra Script Development</H1>
+
+    <P>Ghidra provides built-in support for creating scripts using the Java language and 
+    	add-on packages to support other scripting languages.</P>
+
+    <H2>Creating Scripts in Java</H2>
+
+    <BLOCKQUOTE>
+      <P>In order to write a script in Java:</P>
+
+      <OL>
+        <LI>Your script class must extend <CODE><A href=
+        "../../docs/api/ghidra/app/script/GhidraScript.html"><B>ghidra.app.script.GhidraScript</B></A></CODE>.</LI>
+
+        <LI>You must implement the <CODE><B>run()</B></CODE> method. This is where you insert your
+        script-specific code.</LI>
+
+        <LI>Of course if you choose Java, the Ghidra script must be written in Java.
+        An implementation for Python (based on Jython) is also provided.</LI>
+      </OL>
+
+      <P align="center"><IMG border="0" src="images/New_Script_Editor.png" ></P>
+    </BLOCKQUOTE>
+
+    <H2>Tips</H2>
+
+    <BLOCKQUOTE>
+      <P>Classes for performing file I/O are located in the java.io package.</P>
+      <P>To develop using the Eclipse IDE, instead of a simple text editor, install the 
+      	developer add-on package. Next, install the GhidraDev plugin for Eclipse. If you don't already
+      	have Eclipse, you will need to install this separately.
+      	The GhidraDev extension is distributed in <CODE>&lt;GHIDRA_INSTALLATION&gt;/Extensions/Eclipse/GhidraDev</CODE>.
+      	Please see the README.
+      	This is highly recommended if you plan to do more than simple edits to scripts.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="meta_data">Meta-data</H2>	
+	
+    <BLOCKQUOTE>
+      <P>The scripting framework supports special meta-data comments. This comment is treated
+      specially by the script manager. A meta-data comment may contain HTML characters (such as
+      &lt;pre&gt; and &lt;code&gt;).</P>
+
+      <OL>
+        <LI>Each line of meta-data should start with the scripting language comment character. For
+        example, "//".</LI>
+
+        <LI>The first portion is the description.</LI>
+
+        <LI>The first line that starts with "@" terminates the description.</LI>
+      </OL>
+
+      <P>The available tags are listed below:</P>
+
+      <BLOCKQUOTE>
+        <P><B><CODE>@author</CODE></B></P>
+
+        <BLOCKQUOTE>
+          <P>This tag indicates the author of this script. It may include contact information.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <P><B><CODE>@category</CODE></B></P>
+
+        <BLOCKQUOTE>
+          <P>This tag indicates the category path for this script. Category levels are delimited
+          using the "." character.<BR>
+          </P>
+
+          <P>For example, <CODE>"@category categoryA.categoryB"</CODE>.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <P><B><CODE>@keybinding</CODE></B></P>
+
+        <BLOCKQUOTE>
+          <P>This tag indicates the default keybinding that will activate this script. If the
+          Script Manager is unable to interpret the keybinding, it will be ignored. The format for
+          the key binding is ["ctrl"] ["alt"] ["shift"] [A-Z,0-9,F1-F12]. The format string is not
+          case-sensitive.<BR>
+          </P>
+
+          <P>For example:</P>
+
+          <BLOCKQUOTE>
+            <P><TT>@keybinding ctrl shift H<BR>
+             @keybinding ctrl alt shift F1<BR>
+             @keybinding L<BR>
+             @keybinding ctrl shift COMMA<BR>
+            </TT></P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <P><B><CODE>@menupath</CODE></B><BR>
+        </P>
+
+        <BLOCKQUOTE>
+          <P>The tag indicates the top-level menu path. Path levels are delimited using the "."
+          character.</P>
+
+          <P>For example, <TT>"@menupath File.Run.My Script"</TT>.</P>
+        </BLOCKQUOTE>
+
+        <P><CODE><B>@toolbar</B></CODE></P>
+
+        <BLOCKQUOTE>
+          <P>This tag indicates a top-level toolbar button should be created to launch this script
+          and the image to use for the button. The Script Manager will attempt to locate the image
+          in the <A href="GhidraScriptMgrPlugin.htm#Script_Directories">Script Directories</A> and
+          then in the Ghidra installation. If the image does not exists, a toolbar button will be
+          created using the default Ghidra <IMG src="images/core.png" alt=""> image.<BR>
+          <BR>
+           For example, <TT>"@toolbar myScriptImage.gif"</TT>.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Supporting Other Languages</H2>
+
+    <BLOCKQUOTE>
+      <P>The scripting framework can be extended to support scripts written in other languages.</P>
+
+      <P>In order to write scripts in other languages, you must extend <CODE><A href=
+      "../../docs/api/ghidra/app/script/GhidraScriptProvider.html"><B>ghidra.app.script.GhidraScriptProvider</B></A><B>.</B></CODE></P>
+
+      <P>The methods that must be overridden are:</P>
+
+      <H3>File createNewScript()</H3>
+
+      <BLOCKQUOTE>
+        <P>Creates a file containing a new template in the script language</P>
+      </BLOCKQUOTE>
+
+      <H3>String getCommentCharacter()</H3>
+
+      <BLOCKQUOTE>
+        <P>Returns the comment character used in the script language. For example, "//" or "#".</P>
+      </BLOCKQUOTE>
+
+      <H3>String getDescription()</H3>
+
+      <BLOCKQUOTE>
+        <P>Returns of description of the script language. For example, "JAVA" or "Python".</P>
+      </BLOCKQUOTE>
+
+      <H3>String getExtension()</H3>
+
+      <BLOCKQUOTE>
+        <P>Returns the file extension for script language. For example ".java" or ".py".</P>
+      </BLOCKQUOTE>
+
+      <H3>GhidraScript getScriptInstance(File sourceFile, PrintWriter writer)</H3>
+
+      <BLOCKQUOTE>
+        <P>Returns a new instance of the GhidraScript</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

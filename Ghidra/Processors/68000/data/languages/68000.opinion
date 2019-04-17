@@ -1,0 +1,17 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="4"    processor="68000"    endian="big"    size="32" />
+    </constraint>
+    <constraint loader="Preferred Executable Format (PEF)" compilerSpecID="default">
+        <constraint primary="m68k" processor="68000"   endian="big" size="32" />
+    </constraint>
+    <constraint loader="Palm Pilot Program (Palm)" compilerSpecID="default">
+        <constraint primary="0" processor="68000" endian="big" size="32" />
+    </constraint>
+    <constraint loader="Assembler Output (AOUT)" compilerSpecID="default">
+        <constraint primary="1"  processor="68000" endian="big" size="32" />
+        <constraint primary="2"  processor="68000" endian="big" size="32" />
+        <constraint primary="200"  processor="68000" endian="big" size="32" />
+        <constraint primary="300"  processor="68000" endian="big" size="32" />
+    </constraint>
+</opinions>

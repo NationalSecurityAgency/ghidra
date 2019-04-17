@@ -1,0 +1,449 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Tool Options Dialog</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Tool Options Dialog</H1>
+
+    <P>Each tool has an <I>Options</I> dialog that shows options in a tree format. When you click
+    on the node, the associated options appear in a panel to the right of the tree. At a minimum,
+    the tree has a node for key bindings and tool options . Select the node to show the
+    corresponding options that you can change. Plugins may provide their own options, in which case
+    new nodes in the tree or new options for the tool may show up. Options provide a flexible way
+    for changing plugin behavior or functionality.<BR>
+    </P>
+
+    <BLOCKQUOTE>
+        <BLOCKQUOTE>
+	      <P><IMG alt="" src="../../shared/note.png"> The Tool Options dialog has a filter text field
+	      that can be used to quickly find options relating to a keyword. Any options names or
+	      descriptions that contain the keyword text will be displayed.<BR>
+	      </P>
+        </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>To display the <I>Options</I> dialog, select <B>Edit<IMG alt="" border="0" src=
+    "../../shared/arrow.gif">Tool Options...</B> from the tool menu.</P>
+
+    <H2><B>Restoring Default Settings</B></H2>
+
+    <BLOCKQUOTE>
+      <P>You can restore any currently selected options panel to its default settings by pressing
+      the <I><B>Restore Defaults</B></I> button at the bottom of the options panel. Use caution
+      when executing this action, as it cannot be undone.</P>
+
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD width="100%">
+              <P align="center"><IMG alt="" border="1" src="images/RestoreDefaults.png"></P>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </BLOCKQUOTE><BR>
+     <BR>
+     
+
+    <H2><A name="KeyBindings_Option"></A><B>Key Bindings</B></H2>
+
+    <BLOCKQUOTE>
+      <P>You can create a new "hot key" for a Plugin's action or modify the default key binding.
+      The hot key (or accelerator) that you add can be used to execute the action with a keystroke
+      combination.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" border="0" src="../../shared/note.png"> You can also change key bindings
+        from within Ghidra by pressing <B>F4</B> while the mouse is over any toolbar icon or menu
+        item. Click <A href="#KeyBindingPopup">here</A> for more info.</P>
+      </BLOCKQUOTE>
+
+      <P>The <I>Key Bindings</I> panel has a table containing the <I>Action Name</I>, <I>Key
+      Binding</I>, and <I>Plugin Name</I>. You can sort the columns in ascending or descending
+      order. (By default, the <I>Action Nam</I>e column is sorted in ascending order.) The Plugin
+      name is the name of the plugin supplying the action.</P>
+
+      <UL>
+        <LI>Click on the category header to change the sort order.</LI>
+
+        <LI>Change the order of the columns by dragging the column header to another position in
+        the table.</LI>
+
+        <LI>The text field below the table captures keystroke combinations entered.</LI>
+
+        <LI>If an action has a description to explain what it does, it will be displayed below the
+        text field.</LI>
+      </UL>
+
+      <P><IMG alt="" border="0" src="../../shared/note.png"> The table entries are not
+      editable.</P>
+
+      <P>The display below shows the key bindings panel for the <I>Project Window</I>. Using the
+      Key Bindings Options panel works the same as for a regular Ghidra Tool.</P>
+    </BLOCKQUOTE>
+
+    <TABLE border="0" width="100%">
+      <TBODY>
+        <TR>
+          <TD width="100%">
+            <P align="center"><IMG alt="" border="0" src="images/KeyBindings.png"></P>
+          </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <H3>Change a Key Binding</H3>
+
+      <BLOCKQUOTE>
+        <P>To change the Key Binding,</P>
+
+        <OL>
+          <LI>Select <FONT size="4"><B>Edit</B></FONT><IMG alt="" border="0" src=
+          "../../shared/arrow.gif"> <FONT size="4"><B>Tool Options...</B></FONT> from the main
+          menu.</LI>
+
+          <LI>Select the <I>Key Bindings</I> node in the options tree.</LI>
+
+          <LI>Select an action name to either set a key binding or change the existing key
+          binding.</LI>
+
+          <LI>
+            Click in the text field and type the key or keystroke combination (e.g., Ctrl x). 
+
+            <UL>
+              <LI>When a key is mapped to multiple actions, the action name is listed below the
+              text field.</LI>
+            </UL>
+          </LI>
+
+          <LI>Click on the <B><FONT size="4">OK</FONT></B> or <FONT size="4"><B>Apply</B></FONT>
+          button.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P><IMG alt="" border="0" src="../../shared/note.png"> When a key is mapped to multiple
+      actions, and more than one of these actions is valid in the current context (i.e., the action
+      is enabled), then a dialog is displayed for you to choose what action you want to
+      perform.</P>
+
+      <P><IMG alt="" border="0" src="../../shared/tip.png"> To avoid the extra step of choosing the
+      action from the dialog, do not map the same key to actions that are applicable in the same
+      context.</P>
+
+      <H3>Remove a Key Binding</H3>
+
+      <BLOCKQUOTE>
+        <P>To remove a Key Binding,</P>
+
+        <OL>
+          <LI>Select <FONT size="4"><B>Edit</B></FONT><IMG alt="" border="0" src=
+          "../../shared/arrow.gif"> <FONT size="4"><B>Tool Options...</B></FONT> from the main
+          menu.</LI>
+
+          <LI>Select the <I>Key Bindings</I> node in the options tree.</LI>
+
+          <LI>Select an action name for the key binding that you want to remove.</LI>
+
+          <LI>Click in the text field for the key binding.</LI>
+
+          <LI>Press the &lt;Enter&gt; or &lt;Backspace&gt; to clear it.</LI>
+
+          <LI>Click on the <B><FONT size="4">OK</FONT></B> or <FONT size="4"><B>Apply</B></FONT>
+          button.</LI>
+        </OL>
+      </BLOCKQUOTE><!-- Import/Export Key Bindings --><A name="Import"></A> 
+
+      <H3>Import Key Bindings</H3>
+
+      <BLOCKQUOTE>
+        <P>To import a Key Binding,</P>
+
+        <OL>
+          <LI>Select <FONT size="4"><B>Edit</B></FONT><IMG alt="" border="0" src=
+          "../../shared/arrow.gif"> <FONT size="4"><B>Tool Options...</B></FONT> from the main
+          menu.</LI>
+
+          <LI>Select the <I>Key Bindings</I> node in the options tree.</LI>
+
+          <LI>Press the <B>Import...</B> button.</LI>
+
+          <LI>On the warning dialog, press the <B>Yes</B> button to import key bindings or the
+          <B>No</B> button to cancel the process.</LI>
+
+          <LI>On the file chooser dialog, choose a previously exported file from which to import
+          key bindings.</LI>
+
+          <LI>Press <B>OK</B> to import the key bindings.</LI>
+        </OL>
+
+        <P><IMG alt="" border="0" src="../../shared/note.png"> Importing key bindings will override
+        your current key bindings settings. It is suggested that you <A href="#Export">export your
+        key bindings</A> before you import so that you may revert to your previous settings if
+        necessary.</P>
+
+        <P><IMG alt="" border="0" src="../../shared/note.png"> After importing you must save your
+        tool (<B><FONT size="4">File</FONT></B> <IMG alt="" border="0" src=
+        "../../shared/arrow.gif"> <FONT size="4"><B>Save Tool</B></FONT>) if you want you changes
+        to persist between tool invocations.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="KeyBindingPopup">Key Binding Short-Cut</A></H3>
+
+      <BLOCKQUOTE>
+        <P>A key binding can be applied to any menu item or toolbar icon. For example:</P>
+
+        <BLOCKQUOTE>
+          <P style="margin-top: 0pt; margin-bottom: 0pt;"><FONT size="4"><B>File</B></FONT> <IMG
+          alt="" border="0" src="../../shared/arrow.gif"> <FONT size="4"><B>Close</B></FONT></P>
+
+          <P style="margin-top: 0pt; margin-bottom: 0pt;"><FONT size="4"><B>Data</B></FONT> <IMG
+          alt="" border="0" src="../../shared/arrow.gif"> <FONT size="4"><B>Cycle</B></FONT> <IMG
+          alt="" border="0" src="../../shared/arrow.gif"> <B><FONT size="4">Cycle: Float,
+          Double</FONT></B></P>
+        </BLOCKQUOTE>
+
+        <P><FONT size="4">Apply key bindings to menu items or icons that are frequently accessed.
+        To do this:</FONT></P>
+
+        <OL>
+          <LI><FONT size="4">Display a menu item.</FONT></LI>
+
+          <LI><FONT size="4">Place the cursor on the menu item or let the mouse hover over an icon
+          on the toolbar.</FONT></LI>
+        </OL>
+
+        <P><IMG alt="" border="0" src="../../shared/note.png"> This menu item or icon will be
+        associated with the Key Binding. When the Key Binding key is used, this menu item or action
+        associated with the icon will be applied.</P>
+
+        <OL>
+          <LI value="3"><FONT size="4">Press the &lt;F4&gt; key to display</FONT> <B>Set Key
+          Binding</B> dialog:</LI>
+        </OL>
+
+        <P align="center"><IMG alt="" border="0" src="images/SetKeyBindings.png"></P>
+
+        <OL start="4">
+          <LI>Enter a key combination in the <B>Set Key Binding</B> dialog, The panel below the
+          text field that accepts the key input shows the other actions that are mapped to the key.
+          These are potential collisions if these actions are enabled at the same time. Press
+          <B>OK</B> to change the key binding.</LI>
+
+          <LI>The key combination that is entered in this dialog will be the key binding for the
+          menu item.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Export"></A>Export Key Bindings</H3>
+
+      <BLOCKQUOTE>
+        <P>To export a Key Binding,</P>
+
+        <OL>
+          <LI>Select <FONT size="4"><B>Edit</B></FONT><IMG alt="" border="0" src=
+          "../../shared/arrow.gif"> <FONT size="4"><B>Options...</B></FONT> from the Tool
+          menu.</LI>
+
+          <LI>Select the <I>Key Bindings</I> node in the options tree.</LI>
+
+          <LI>Press the <B>Export...</B> button.</LI>
+
+          <LI>If you have made changes, then you will be promted to apply those changes before
+          continuing.</LI>
+
+          <LI>On the file chooser dialog, choose a file to which to export key bindings.</LI>
+
+          <LI>Press <B>OK</B> to export the key bindings.</LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="OptionsForTool"></A><B>Tool</B></H2>
+
+    <BLOCKQUOTE>
+      <P><I>Tool</I> is a default node in the options tree that shows up in each tool's options
+      window. The <I>Tool</I> panel defines the options for the Tool. The table below lists the
+      basic options. Plugins may add their own options to the <I>Tool</I> options. If a tool does
+      not have a plugin that uses an option, the option will not show up on the <I>Tool</I> panel.
+      For example, the Ghidra Project Window does not have plugins that use the Max Go to Entries,
+      Search Limit, or Subroutine Model so these options will not appear on the <I>Tool</I> panel.
+      If an option has a description, it will show up in the description panel below the tree when
+      you pass the mouse pointer over the component in the options panel.</P>
+
+      <P align="left"><A name="SearchLimit"></A></P>
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="1" width="80%">
+            <TBODY>
+              <TR valign="middle">
+                <TD colspan="2" bgcolor="#c0c0c0" valign="top" align="left">
+                  <P align="center"><B>Tool Options</B></P>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD bgcolor="#DDDDDD" align="left"><B>Option</B></TD>
+
+                <TD bgcolor="#DDDDDD" align="left"><B>Description</B></TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Docking Windows On Top</TD>
+
+                <TD valign="top" align="left">Selected means to show each undocked window on top of
+                its parent tool window; the undocked window will not get "lost" behind its parent
+                window. Unselected means that the undocked window may go behind other windows once
+                it loses focus. Use the Windows menu to make the undocked window visible.</TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Max Goto Entries</TD>
+
+                <TD valign="top" align="left">Number of past entries to keep in the <A href=
+                "help/topics/Navigation/Navigation.htm#Go_To_Address_Label">Go to Address or
+                Label</A> dialog</TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Search Limit</TD>
+
+                <TD valign="top" align="left">Numeric: The maximum number of search hits to allow;
+                for example, when you <A href="help/topics/Search/Search_Program_Text.htm">search
+                for text</A> in the Program, the search is stopped when the number of matches
+                exceeds this limit, or the max number of addresses displayed while doing a <A href=
+                "help/topics/Navigation/Navigation.htm#Go_To_Address_Label">Go To</A> for an entry
+                that has multiple matches.</TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Subroutine Model</TD>
+
+                <TD valign="top" align="left">
+                  <P>Sets the default subroutine model. This setting is mainly used when creating
+                  call graphs. See <A href=
+                  "help/topics/BlockModel/Block_Model.htm#BlockModelDefinition">Block Models</A>
+                  for a description of the valid Models.</P>
+                </TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Use C-like Numeric Formatting for
+                Addresses</TD>
+
+                <TD valign="top" align="left">
+                  Selected means to attempt to interpret the value entered in the <A href=
+                  "help/topics/Navigation/Navigation.htm#Go_To_Address_Label">Go To dialog</A> as a
+                  number as follows: 
+
+                  <UL>
+                    <LI>interpret the value as a hex number if it starts with "0x"</LI>
+
+                    <LI>interpret the value as an octal number if it starts with "0"</LI>
+
+                    <LI>interpret the value as a binary number if it ends with a "b"</LI>
+                  </UL>
+                </TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>To change Tool Options,</P>
+
+      <OL>
+        <LI>From the tool, select <B>Edit</B><IMG alt="" border="0" src="../../shared/arrow.gif">
+        <B>Tool Options...</B></LI>
+
+        <LI>Select the <I>Tool</I> node in the options tree.</LI>
+
+        <LI>Change the value for the option.</LI>
+
+        <LI>Click on the <FONT size="4"><B>OK</B></FONT> or <FONT size="4"><B>Apply</B>
+        button<B>.</B></FONT></LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H3><B>Tool</B></H3>
+
+    <BLOCKQUOTE>
+      <P>Some <B>Tool</B> options can only be set from the <A href=
+      "help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Front End</A>. Some of those are described
+      below.</P>
+      <BR>
+       
+
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="1" width="80%">
+            <TBODY>
+              <TR valign="middle">
+                <TD colspan="2" bgcolor="#c0c0c0" valign="top" align="center"><B>Tool
+                Options</B></TD>
+              </TR>
+
+              <TR>
+                <TD bgcolor="#DDDDDD" valign="top" align="left"><B>Option</B></TD>
+
+                <TD bgcolor="#DDDDDD" valign="top" align="left"><B>Description</B></TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" width="200" align="left">Swing Look and Feel</TD>
+
+                <TD valign="top" align="left"><A name="Look_And_Feel"></A> This controls the
+                appearance of the UI widgets for things such as colors and fonts. Each operating
+                system provides a different default Look and Feel. Some of these work better than
+                others.</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top" width="200" align="left"><A name="Use_Inverted_Colors"></A>Use
+                Inverted Colors</TD>
+
+                <TD valign="top" align="left">
+                  <P>This is a <B>prototype</B> feature that allows the user to invert each color
+                  of the UI. Doing this effectively creates a Dark Theme, which some users find
+                  less visually straining.</P>
+
+                  <BLOCKQUOTE style="background-color: #FFF0E0;">
+                    <P><IMG alt="" border="0" src="../../shared/warning.png"> As a prototype
+                    feature, this feature has many known issues, including:</P>
+
+                    <UL>
+                      <LI>Pre-generated content, such as images, icons and help files will have
+                      inverted colors,</LI>
+
+                      <LI>Some color combinations will be difficult to read</LI>
+                    </UL>
+                  </BLOCKQUOTE>
+                </TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:<A name="RelatedTopics"></A></P>
+
+    <UL>
+      <LI><A href="help/topics/Navigation/Navigation.htm#Go_To_Address_Label">Go to Address or
+      Label</A></LI>
+
+      <LI><A href="help/topics/BlockModel/Block_Model.htm">Subroutine Model</A></LI>
+    </UL>
+  </BODY>
+</HTML>

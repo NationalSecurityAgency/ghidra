@@ -1,0 +1,13 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/JVM.cspec||GHIDRA||||END|
+data/languages/JVM.ldefs||GHIDRA||||END|
+data/languages/JVM.opinion||GHIDRA||||END|
+data/languages/JVM.pspec||GHIDRA||||END|
+data/languages/JVM.slaspec||GHIDRA||||END|
+data/manuals/JVM.idx||GHIDRA||||END|

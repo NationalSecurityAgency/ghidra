@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
+    <property key="assemblyRating:x86:LE:32:default" value="PLATINUM"/>
+  </properties>
+  <programcounter register="EIP"/>
+  <incidentalcopy>
+    <register name="ST0"/>
+    <register name="ST1"/>
+    <register name="ST2"/>
+    <register name="ST3"/>
+    <register name="ST4"/>
+    <register name="ST5"/>
+    <register name="ST6"/>
+    <register name="ST7"/>
+  </incidentalcopy>
+  <context_data>
+    <context_set space="ram">
+      <set name="addrsize" val="1"/>
+      <set name="opsize" val="1"/>
+    </context_set>
+    <tracked_set space="ram">
+      <set name="DF" val="0"/>
+    </tracked_set>
+  </context_data>
+  <register_data>
+    <register name="DR0" group="DEBUG"/>
+    <register name="DR1" group="DEBUG"/>
+    <register name="DR2" group="DEBUG"/>
+    <register name="DR3" group="DEBUG"/>
+    <register name="DR4" group="DEBUG"/>
+    <register name="DR5" group="DEBUG"/>
+    <register name="DR6" group="DEBUG"/>
+    <register name="DR7" group="DEBUG"/>
+    <register name="CR0" group="CONTROL"/>
+    <register name="CR2" group="CONTROL"/>
+    <register name="CR3" group="CONTROL"/>
+    <register name="CR4" group="CONTROL"/>
+    <register name="ST0" group="ST"/>
+    <register name="ST1" group="ST"/>
+    <register name="ST2" group="ST"/>
+    <register name="ST3" group="ST"/>
+    <register name="ST4" group="ST"/>
+    <register name="ST5" group="ST"/>
+    <register name="ST6" group="ST"/>
+    <register name="ST7" group="ST"/>
+    <register name="FPUControlWord" group="FPU"/>
+    <register name="FPUStatusWord" group="FPU"/>
+    <register name="FPUTagWord" group="FPU"/>
+    <register name="FPUInstructionPointer" group="FPU"/>
+    <register name="FPULastInstructionOpcode" group="FPU"/>
+    <register name="FPUDataPointer" group="FPU"/>
+    <register name="MM0" group="MMX"/>
+    <register name="MM1" group="MMX"/>
+    <register name="MM2" group="MMX"/>
+    <register name="MM3" group="MMX"/>
+    <register name="MM4" group="MMX"/>
+    <register name="MM5" group="MMX"/>
+    <register name="MM6" group="MMX"/>
+    <register name="MM7" group="MMX"/>
+    <register name="YMM0" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM1" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM2" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM3" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM4" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM5" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM6" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM7" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM8" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM9" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM10" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM11" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM12" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM13" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM14" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="YMM15" group="AVX" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM0" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM1" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM2" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM3" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM4" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM5" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM6" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM7" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM8" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM9" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM10" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM11" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM12" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM13" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM14" vector_lane_sizes="1,2,4,8"/> 
+    <register name="XMM15" vector_lane_sizes="1,2,4,8"/> 
+    <register name="CF" group="FLAGS"/>
+    <register name="F1" group="FLAGS"/>
+    <register name="PF" group="FLAGS"/>
+    <register name="F3" group="FLAGS"/>
+    <register name="AF" group="FLAGS"/>
+    <register name="F5" group="FLAGS"/>
+    <register name="ZF" group="FLAGS"/>
+    <register name="SF" group="FLAGS"/>
+    <register name="TF" group="FLAGS"/>
+    <register name="IF" group="FLAGS"/>
+    <register name="DF" group="FLAGS"/>
+    <register name="OF" group="FLAGS"/>
+    <register name="IOPL" group="FLAGS"/>
+    <register name="NT" group="FLAGS"/>
+    <register name="F15" group="FLAGS"/>
+    <register name="RF" group="FLAGS"/>
+    <register name="VM" group="FLAGS"/>
+    <register name="AC" group="FLAGS"/>
+    <register name="VIF" group="FLAGS"/>
+    <register name="VIP" group="FLAGS"/>
+    <register name="ID" group="FLAGS"/>
+    <register name="eflags" group="FLAGS"/>
+    <register name="flags" group="FLAGS"/>
+    <register name="repneprefx" hidden="true"/>
+    <register name="segover" hidden="true"/>
+  </register_data>
+</processor_spec>

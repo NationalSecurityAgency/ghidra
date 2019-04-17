@@ -1,0 +1,1022 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Markup Items Table</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+  
+  
+  	<BLOCKQUOTE>
+  
+	    <H1><A name="Markup_Items_Table"></A></A>Version Tracking Markup Items Table</H1>
+	
+		<BLOCKQUOTE>
+			<P>
+	      	<i>Marking up</i> a program means adding information to a program to help understand it. 
+	      	A markup item is some type of information that has been specified in the source program 
+	      	that you now wish to move to the equivalent function or data within the destination program. 
+	      	The Version Tracking Markup Items table shows a list of markup items for the currently 
+	      	selected match in the <A href="VT_Matches_Table.html#Matches_Table">Version Tracking Matches table</A>. 
+	      	</P>
+	      	<P>Below the Markup Items table you can also view two listings, 
+	      	one for the source program and the other for the destination program. The dual listings 
+	      	provide an alternate way, besides the table, to view and manipulate the markup items. 
+	      	This also provides the capability to drag a markup item from the source program and apply it, 
+	      	where you want, by dropping it in the destination program. 
+	      	The <A href="#Dual_Listing">dual listing</A> will be described below in more detail.
+	      	</P>
+	  
+	    </BLOCKQUOTE>
+	
+	
+	    <TABLE x-use-null-cells="" width="100%">
+	      <TBODY>
+	        <TR>
+	          <TD align="center" width="100%"><IMG border="0" src="../images/VersionTrackingMarkupItems.png"></TD>
+	        </TR>
+	      </TBODY>
+	    </TABLE>
+	    
+	    <BLOCKQUOTE>
+	    
+		    <BLOCKQUOTE>
+			
+		  		<P>
+				Once you have decided that you believe a function or data match is correct, 
+				the Markup Items table allows you to decide whether you want to apply or ignore 
+				individual markup items. Applying a markup item changes the information in the
+				destination program using information from the source program. The Markup Items table
+				lets you decide what to apply from the source program to the destination program 
+				and how to apply it.
+		  		</P>
+			      
+		    </BLOCKQUOTE>
+		    
+		 	
+			<BLOCKQUOTE>
+				<H2>Markup Items Table Columns</H2>
+		    	<BLOCKQUOTE>
+			        <P>
+			        You can add columns to and remove columns from the Markup Items table by right clicking
+			        on any column title in the table and choosing the <B>Add/Remove Columns...</B> button 
+			        from the popup menu.
+			        The following table describes the default columns for the Markup Items table.
+			        </P>
+		    	</BLOCKQUOTE>
+		    </BLOCKQUOTE>
+		    
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+			        <table border="1" width="100%">
+			        	<tr>
+			        		<th nowrap>
+			        			Column Name
+			        		</th>
+			        		<th>
+			        			Description
+			        		</th>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Status
+			        		</td>
+			        		<td>
+			        		The current status of this markup item.  Is this item unapplied, applied, rejected, etc.
+			        		Each possible markup item status is described below in more detail.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Source Address
+			        		</td>
+			        		<td>
+			        		This column shows the address where the markup item's value is coming from in the 
+			        		source program.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Dest Address
+			        		</td>
+			        		<td>
+			        		This column shows the address where the markup item will be applied or has been 
+			        		applied in the destination program. <B>No Address</B> is displayed if the address 
+			        		correlator couldn't determine a destination address to associate with the source 
+			        		address and the user hasn't manually specified the destination address.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Displacement
+			        		</td>
+			        		<td>
+			        		This column shows the relative displacement of the destination address as compared 
+			        		to the source address. Positive numbers indicate additions in the destination and 
+			        		negative numbers indicate subtractions.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Markup Type
+			        		</td>
+			        		<td>
+			        		This column identifies the type of markup item for this row. 
+			        		Each possible markup type is described below in more detail.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Source Value
+			        		</td>
+			        		<td>
+			        		This column shows the value for this markup type at the associated address in the 
+			        		source program.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Current Dest Value
+			        		</td>
+			        		<td>
+			        		This column shows the current value for this markup type at the associated
+			        		address in the destination program.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Original Dest Value
+			        		</td>
+			        		<td>
+			        		This column shows what the value for this markup type was originally (before
+			        		being applied) at the associated address in the destination program.  If the item
+			        		hasn't been applied yet, this will be the current destination value.
+			        		</td>
+			        	</tr>
+			        	
+			        </table>
+				</BLOCKQUOTE>
+		    </BLOCKQUOTE>
+			
+			<BLOCKQUOTE>
+			    <BLOCKQUOTE>
+				<H3><A name="Markup_Type"></A>Markup Type</H3>
+				 	<BLOCKQUOTE>
+			        	<P>
+				        There are many different types of markup that can be applied from the source to the destination. 
+				        The table below lists the various types of markup items.
+				        </P>
+				        <P>Some types of markup items can conflict with others. This simply means
+				        that once any markup is applied, then any of its conflicting markup types
+				        cannot be applied for that same Match result. The conflicting markup item
+				        that can no longer be applied is given a status of 
+				        <A href="#Conflict_Status">Conflict</A>.
+				        </P>
+		    		</BLOCKQUOTE>
+		    	</BLOCKQUOTE>
+			</BLOCKQUOTE>
+			        
+			<BLOCKQUOTE>
+		    	<BLOCKQUOTE>
+		    		<BLOCKQUOTE>
+		
+			        <table border="1" width="100%">
+			        	<tr>
+			        		<th nowrap>
+			        			Markup Type
+			        		</th>
+			        		<th>
+			        			Description
+			        		</th>
+			        	</tr>
+			        	        	
+			        	<tr>
+			        		<td nowrap>
+			        		Function Name
+			        		</td>
+			        		<td>
+			        		The name labeling the function. Any non-default name in the source program can 
+			        		replace the function name in the destination program. A default function name
+			        		has the "FUN_" prefix. You can choose to only replace the destination function
+			        		name when it is a default name or you can always replace it whether a default or not.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Function Signature
+			        		</td>
+			        		<td>
+			        		The signature of the function. The items included in the function 
+			        		signature are: the return type, the number of parameters and each 
+			        		parameter's associated data type, name, and comment and whether the 
+			        		function has variable arguments (varargs). 
+			        		There are several other markup apply options that are included with 
+			        		the function signature markup: the calling convention, the inline flag, 
+			        		the no return flag, and the call fixup for the function. These each have 
+			        		their own options for whether they get applied with the function signature.
+		    					<BLOCKQUOTE>
+				        		Return Type and Parameter DataTypes
+				        		<br>
+				        		When data types are applied the default data type, which 
+				        		is a single undefined byte, will not replace any other data types.
+				        		An undefined data type of a particular size will not replace a defined data type.
+				        		A defined data type can replace any other data type, but will not if
+				        		the option is set to "Replace Undefined Data Types Only" and the 
+				        		destination is a defined data type.
+		    					</BLOCKQUOTE>
+		    					<BLOCKQUOTE>
+				        		Parameter Names
+				        		<br>
+				        		A default parameter name begins with "param_". Default parameter 
+				        		names in the source program will not replace a defined 
+				        		parameter name in the destination program.
+				        		<br>
+				        		If you choose to do a "Priority Replace" for the parameter names,
+				        		whether or not the name is replaced depends on their source types.
+				        		The options let you choose whether User Defined names or Imported
+				        		names are higher priority. You can also specify whether the source 
+				        		name should replace the destination whenever their source types are the same.
+			    				</BLOCKQUOTE>
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Label
+			        		</td>
+			        		<td>
+			        		The labels on an instruction or defined data can replace or be added to those 
+			        		in the destination program at the associated address. If replacing the destination 
+			        		labels you can choose to only replace if the destination label is a default or
+			        		replace all destination labels.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		EOL Comment
+			        		</td>
+			        		<td>
+			        		The end of line comment from the source program can be added to an existing comment
+			        		in the destination program or can simply replace the destination comment.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Plate Comment
+			        		</td>
+			        		<td>
+			        		The plate comment from the source program can be added to an existing comment
+			        		in the destination program or can simply replace the destination comment.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Pre Comment
+			        		</td>
+			        		<td>
+			        		The pre-comment from the source program can be added to an existing comment
+			        		in the destination program or can simply replace the destination comment.
+			        		</td>
+			        	</tr>
+			         	
+			        	<tr>
+			        		<td nowrap>
+			        		Post Comment
+			        		</td>
+			        		<td>
+			        		The post comment from the source program can be added to an existing comment
+			        		in the destination program or can simply replace the destination comment.
+			        		</td>
+			        	</tr>
+			         	
+			        	<tr>
+			        		<td nowrap>
+			        		Repeatable Comment
+			        		</td>
+			        		<td>
+			        		The repeatable comment from the source program can be added to an existing comment
+			        		in the destination program or can simply replace the destination comment.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Data Type
+			        		</td>
+			        		<td>
+			        		The data type for an address with defined data in the source program can replace 
+			        		the data type of an associated address of data in the destination program.
+			        		</td>
+			        	</tr>
+			        	
+			        	
+			        </table>
+			        
+					</BLOCKQUOTE>
+		    	</BLOCKQUOTE>
+		    </BLOCKQUOTE>
+			
+			
+		    <BLOCKQUOTE>
+				<BLOCKQUOTE>
+				<H3><A name="Markup_Item_Status"></A>Markup Item Status</H3>
+					<BLOCKQUOTE>
+				        <P>
+				        Each markup item has a status (indicated in the <b>Status</b> column). 
+				        The table below lists each markup item status along with its 
+				        associated icon in the table, background color in the code listing, 
+				        and a description of that status.
+				        </P>
+		    		</BLOCKQUOTE>
+				</BLOCKQUOTE>
+		    </BLOCKQUOTE>
+			        
+		    <BLOCKQUOTE>
+		    	<BLOCKQUOTE>
+					<BLOCKQUOTE>
+			        <table border="1" width="100%">
+			        	<tr>
+			        		<th>
+			        			Status
+			        		</th>
+			        		<th>
+			        			Icon
+			        		</th>
+			        		<th>
+			        			Color
+			        		</th>
+			        		<th>
+			        			Description
+			        		</th>
+			        	</tr>
+			        	        	
+			        	<tr>
+			        		<td nowrap>
+			        		Unapplied
+			        		</td>
+			        		<td nowrap>
+			        		<i>no icon</i>
+			        		</td>
+			                <td bgcolor="#FFAA55" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The markup item has not had anything done to it and if a destination address is 
+			        		specified the source and destination values are not the same.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		No Address
+			        		</td>
+			        		<td nowrap>
+			        		<i>no icon</i>
+			        		</td>
+			                <td bgcolor="#CDB9DC" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The markup item has not had anything done to it because it doesn't have a 
+			        		destination address associated with it.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Same
+			        		</td>
+			        		<td>
+			        		<img src="../images/Same.png" />
+			        		</td>
+			                <td bgcolor="#AFE1FF" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The destination already has the same value as the source.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Added
+			        		</td>
+			        		<td>
+			        		<img src="../images/ApplyAdd.png" />
+			        		</td>
+			                <td bgcolor="#96DC96" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The source value was applied by adding it to the destination value. 
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Replaced
+			        		</td>
+			        		<td>
+			        		<img src="../images/ApplyReplace.png" />
+			        		</td>
+			                <td bgcolor="#96DC96" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The destination value was applied by replacing it with the source value.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Don't Care
+			        		</td>
+			        		<td>
+			        		<img src="../images/asterisk_orange.png" />
+			        		</td>
+			                <td bgcolor="#DCDCDC" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The user set this markup item to indicate that we don't care about it 
+			        		and it should be ignored when applying the match for this item.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Don't Know
+			        		</td>
+			        		<td>
+			        		<img src="../images/unknown.gif" />
+			        		</td>
+			                <td bgcolor="#DCDCDC" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The user set this markup item to indicate that we don't know if it is correct
+			        		or if it should be applied 
+			        		and therefore it should be ignored when applying the match for this item.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Conflict_Status"></A>Conflict
+			        		</td>
+			        		<td>
+			        		<img src="../images/cache.png" />
+			        		</td>
+			                <td bgcolor="#FFE169" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The user applied another markup item for this match that conflicts with
+			        		this markup item and prevents it from being applied.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Reject
+			        		</td>
+			        		<td>
+			        		<img src="../images/dialog-cancel.png" />
+			        		</td>
+			                <td bgcolor="#FAC8C8" width="25"><BR>
+			                </td>
+			        		<td>
+			        		The user rejected this markup item and it should be ignored
+			        		when applying the match for this item.  
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		Failed
+			        		</td>
+			        		<td>
+			        		<img src="../images/edit-delete.png" />
+			        		</td>
+			                <td bgcolor="#FF5050" width="25"><BR>
+			                </td>
+			        		<td>
+			        		An attempt to apply this markup item failed. 
+			        		If you hover over the icon in the markup item table a tooltip will appear with 
+			        		more information about the failure.  
+			        		</td>
+			        	</tr>
+			        	
+			        </table>
+			        
+					</BLOCKQUOTE>
+		    	</BLOCKQUOTE>
+		    </BLOCKQUOTE>
+			
+			
+			<BLOCKQUOTE>
+				<H2><A name="Markup_Actions"></A>Markup Item Actions</H2>
+				<BLOCKQUOTE>
+			        <P>
+			        There are actions that can be performed on markup items in the table and in the dual
+			        listing. The table below lists these actions.
+			        </P>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+		    
+		    <BLOCKQUOTE>
+				<BLOCKQUOTE>
+			        
+			        <table border="1" width="100%">
+			        	<tr>
+			        		<th>
+			        			Action
+			        		</th>
+			        		<th>
+			        			Icon
+			        		</th>
+			        		<th>
+			        			Description
+			        		</th>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Apply_Markup_Item_Using_Options_And_Forcing">Apply (Use Options; Force If Necessary)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/checkmark_green.gif" />
+			        		</td>
+			        		<td>
+			        		This action applies the selected markup items using the current apply
+			        		match option for each markup type. For each selected markup item this 
+			        		action will force (or try to cause) the option to be applied. 
+			        		For example, if the option for a selected markup type is set to 
+			        		"Do Not Apply", this action would cause an add or replace to be
+			        		performed depending on the item.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Add_As_Primary_Markup_Item">Apply (Add As Primary)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/Plus.png" />
+			        		</td>
+			        		<td>
+			        		This action applies the source value for each selected markup item 
+			        		by adding it to the destination value. If possible the source markup 
+			        		item becomes the primary one. 
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Add_Markup_Item">Apply (Add)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/Plus.png" />
+			        		</td>
+			        		<td>
+			        		This action applies the source value for each selected markup item by adding it 
+			        		to the destination value. The destination markup item remains the primary one.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Replace_Default_Markup_Item">Apply (Replace Default Only)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/sync_enabled.png" />
+			        		</td>
+			        		<td>
+			        		This action applies the source value for each selected markup item by 
+			        		replacing the destination value with the source value only if the 
+			        		destination value is a default value.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Replace_First_Markup_Item">Apply (Replace First Only)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/sync_enabled.png" />
+			        		</td>
+			        		<td>
+			        		This action applies the source value for each selected markup item by 
+			        		replacing the destination value with the source value if the only 
+			        		defined data being replaced is the Data item at the destination address. 
+			        		If there is more than one defined data in the destination program that 
+			        		would be replaced by the source data type, then no replace will occur.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Replace_Markup_Item">Apply (Replace)</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/sync_enabled.png" />
+			        		</td>
+			        		<td>
+			        		This action applies the source value for each selected markup item by 
+			        		replacing the destination value with the source value. For data this 
+			        		will replace all defined data that is currently in the way of the
+			        		source data type being created.
+			        		<br>
+			        		<p>
+			        		<FONT color="red"><b>Important</b>: For Data markup that is replaced, 
+			        		the <i>Reset Mark-up</i> action will only be able to restore the single 
+			        		Data item that was originally at the Destination Address. Any other 
+			        		Data items that were replaced by this action will not be restored by 
+			        		<i>Reset Mark-up</i>.</FONT>
+			        		</p>
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Tag_Markup_Item_Dont_Care">Don't Care</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/asterisk_orange.png" />
+			        		</td>
+			        		<td>
+			        		This action sets the status of this markup item to Don't Care. This indicates that
+			        		we don't care about this markup item and it shouldn't be applied when the match
+			        		is applied.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Tag_Markup_Item_Dont_Know">Don't Know</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/unknown.gif" />
+			        		</td>
+			        		<td>
+			        		This action sets the status of this markup item to Don't Know. This indicates that
+			        		we don't know if this markup item is correct or don't know if it should be applied
+			        		when the match is applied.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			         		<A name="Tag_Markup_Item_Rejected">Reject</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/dialog-cancel.png" />
+			        		</td>
+			        		<td>
+			        		This action sets the status of this markup item to rejected. Once a markup item is 
+			        		rejected, it will be ignored when applying the match for this item.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Edit_Markup_Item_Destination_Address">Edit Destination Address</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/edit-rename.png" />
+			        		</td>
+			        		<td>
+			        		This action provides an edit address dialog that allows you to specify a destination 
+			        		address for any markup item that doesn't already have an address as indicated by "No Address".
+			        		It also allows you to change the destination address if the one specified for the markup item
+			        		is incorrect. In some circumstances you can't edit the destination address and an
+			        		information dialog indicating why it's not editable will be displayed instead.
+			        		</td>
+			        	</tr>
+			        	
+			        	<tr>
+			        		<td nowrap>
+			        		<A name="Reset_Markup_Item">Reset</A>
+			        		</td>
+			        		<td>
+			        		<img src="../images/undo-apply.png" />
+			        		</td>
+			        		<td>
+			        		This action resets the markup item back to its original unapplied state and 
+			        		restores the markup in the destination program back to its original state if
+			        		necessary.
+			        		</td>
+			        	</tr>
+			        	
+			        	
+			        </table>
+			        
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+			
+			<BLOCKQUOTE>
+				<H2><A name="Markup_Filters"></A>Markup Items Filters</H2>
+				<BLOCKQUOTE>
+				        <P align="left"> 
+							Below the Markup Items table is a text field labeled "<B>Filter</B>". This text field is the 
+							primary text filter. Typing text into the filter will remove all markup item rows 
+							that don't have that text in at least one of the displayed fields.		
+						</P>	       
+						
+						<P>
+							The <img src="../images/view-filter.png" border="1"/> button to the right of the 
+							primary text filter will show the ancillary filters that are
+							available.  You can apply an ancillary filter by removing the check mark from its 
+							box and pressing the <B>Apply</B> or <B>OK</b> button.
+							Once an ancillary filter is applied the ancillary filters icon will change to 
+							<img src="../images/lightbulb.png" border="1"/>.  Further, 
+							the icon may occasionally flash as a reminder that there is a filter applied.
+							The following image shows the available ancillary filters.
+						</P>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+						
+			<BLOCKQUOTE>
+			  <BLOCKQUOTE>
+			    <TABLE x-use-null-cells="" width="100%">
+			      <TBODY>
+			        <TR>
+			          <TD align="center" width="100%"><IMG border="0" src="../images/MarkupItemsFilters.png"></TD>
+			        </TR>
+			      </TBODY>
+			    </TABLE>
+			  </BLOCKQUOTE>
+			</BLOCKQUOTE>
+			    
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+						<P>The table below lists and describes the groups of available filters.</P>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+						   
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+						<table border="1" width="100%">
+			        	<tr>
+			        		<th nowrap>
+			        			Filter Group
+			        		</th>
+			        		<th>
+			        			Description
+			        		</th>
+			        	</tr>
+			        	     
+			        	<tr>
+			        		<td nowrap>
+			        		Markup Status
+			        		</td>
+			        		<td>
+			        		Markup items with any status that is checked will appear in the markup item table. 
+			        		Any item with a status that is not checked will be filtered out and not displayed in
+			        		the table.
+			        		</td>
+			        	</tr>   
+			        	        	
+			        	<tr>
+			        		<td nowrap>
+			        		Markup Type
+			        		</td>
+			        		<td>
+			        		Markup items of any type that is checked will appear in the markup item table. 
+			        		Any item of a type that is not checked will be filtered out and not displayed in
+			        		the table.
+			        		</td>
+			        	</tr>        	
+			        	
+			        </table>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+					  
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+					  <P>
+					  <img src="../../../shared/note.png"/> The window title above the Markup Items table displays an
+					  indicator that a filter is set on the markup items table and not all items are shown.
+					  For example, the title might contain "<B>2 markup items (of 8)</B>"
+					  indicating 6 items are hidden or filtered out.
+					  </P>
+						
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+				
+			      
+			<BLOCKQUOTE>
+			     <H2><A name="Comparison_Views"></A>Comparison Views</H2>
+			     <BLOCKQUOTE>
+					<P>There can be multiple types of comparison views which are provided by various 
+					plugins. Illustrated below is the Listing View. This view provides a side by 
+					side comparison of two functions (source and destination) that make up the 
+					currently selected function match. For a selected data match, the Listing 
+					View will provide side by side comparison of the data.
+					</P>
+				</BLOCKQUOTE>
+					
+				<BLOCKQUOTE>
+				     <H2><A name="Dual_Listing"></A>Dual Listing Window</H2>
+					<BLOCKQUOTE>
+					  
+				        <P align="left">The dual listing appears below the Markup Items table when
+				        the <B>Listing View</B> tab is selected. It shows one listing 
+				        for the source program and another listing for the destination program. When a function 
+				        match is selected, each listing displays only the addresses that are part of the function. 
+				        When a data match is selected, the source listing will display the addresses that make up that data
+				        and the destination listing will display the addresses that would be affected if it were 
+				        applied.
+				        </P>
+				        <P>
+				        The two listings can be positioned with one above the other or they can be side by side. You can 
+				        also hide the dual listings altogether. The colored background areas in each listing 
+				        indicate anywhere that one of the markup items exists for the current match. If you right 
+				        click on a markup item in either of the listings, a popup menu will appear containing actions, 
+				        such as apply, reject, reset, etc., for 
+				        that markup item. You can also drag and drop a markup item 
+				        from the source listing to an address in the destination listing causing it to be applied 
+				        at that address.
+						</P>
+						<P>The following shows the dual listings below the Markup Items table with the source listing
+						positioned above the destination listing.
+						</P>
+					</BLOCKQUOTE> 
+				</BLOCKQUOTE> 
+			</BLOCKQUOTE>
+					
+			    <TABLE x-use-null-cells="" width="100%">
+			      <TBODY>
+			        <TR>
+			          <TD align="center" width="100%"><IMG border="0" src="../images/VersionTrackingMarkupItems.png"></TD>
+			        </TR>
+			      </TBODY>
+			    </TABLE>
+			    
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+					<BR>
+				    <H3>Dual Listing Actions</H3>    
+				    
+						<P>
+				        <A name="Toggle_Dual_Listing_Visibility"></A>
+						The <B>Toggle Dual Listing Visibility</B> <img src="../images/application_tile_horizontal.png" /> toolbar 
+						action allows you to control whether or not the dual listing is displayed. When it is 
+						toggled on (appearing pressed in) the dual listings are shown below the Markup Items table.
+						<BR>
+						The following shows the Version Tracking Markup Items window with the 
+						Dual Listings visibility toggled off.
+						</P>
+			    </BLOCKQUOTE>
+			</BLOCKQUOTE>
+				      
+						<TABLE x-use-null-cells="" width="100%">
+					      <TBODY>
+					        <TR>
+					          <TD align="center" width="100%"><IMG border="0" src="../images/VersionTrackingMarkupItemsTableOnly.png"></TD>
+					        </TR>
+					      </TBODY>
+					    </TABLE>
+				
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+				        <A name="Markup_Item_Menu_Actions"></A>
+				        <P align="left">
+				        From the toolbar menu <img src="../images/menu16.gif" /> 
+				        there are selectable options that apply to the dual listing.
+				        </P>
+				        <UL>
+				          <LI><B>Show Listing Format Header</B><BR>When this item has a checkmark next to it, the 
+				          header is displayed above the source listing and allows the listing fields to be adjusted.
+				          More information about using the header to change the listing format can be found in
+				          the help for the <A href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">
+				          Browser Field Formatter</A>.
+				          </LI>
+				          <LI><B>Show Listings Side By Side</B><BR>When this item has a checkmark next to it, the 
+				          destination listing will be positioned to the right of the source listing. 
+				          Otherwise the destination listing is positioned below the source listing.
+				          </LI>
+				          <LI><B>Synchronize Scrolling</B><BR>When this item has a checkmark next to it, 
+				          the <IMG alt="" src="images/lock.gif"> button will show in the toolbar and 
+				          the dual listing will synchronize scrolling of the left and right function in 
+				          their views. Scrolling or moving the cursor in one side will cause the location 
+				          in the other side to also scroll or move if a matching location can be determined.
+				          <BR>Otherwise when this item has no checkmark next to it,
+				          the <IMG alt="" src="images/unlock.gif"> button will show in the toolbar and the
+				          left and right sides of the dual listing will scroll independent of the other side.
+				          </LI>
+				        </UL>
+				        
+						<BR>
+						<P>
+						The following shows the <I>format header</I> being displayed for the dual listings.
+						</P>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+				
+				    <TABLE x-use-null-cells="" width="100%">
+				      <TBODY>
+				        <TR>
+				          <TD align="center" width="100%"><IMG border="0" src="../images/VersionTrackingMarkupItemsHeader.png"></TD>
+				        </TR>
+				      </TBODY>
+				    </TABLE>
+				    
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+						<BR>
+						<P>
+						The following shows the dual listings being displayed <I>side by side</I>.
+						</P>
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+				
+				    <TABLE x-use-null-cells="" width="100%">
+				      <TBODY>
+				        <TR>
+				          <TD align="center" width="100%"><IMG border="0" src="../images/VersionTrackingMarkupItemsSideBySide.png"></TD>
+				        </TR>
+				      </TBODY>
+				    </TABLE>
+				    	  
+					  
+			<BLOCKQUOTE>
+				<BLOCKQUOTE>
+						<BR>
+				        <H3><A name="Markup_Item_Colors"></A>Background Colors in the Listings</H3>
+					  			<P>
+					  			The background colors in the listings are used to identify where you have markup items.
+					  			The colors are also used to indicate the status of each markup item.
+					  			For example a green background indicates markup items that have already been applied, 
+					  			orange indicates markup that is still unapplied, 
+					  			blue indicates a markup item where the source and destination already match,
+					  			grey indicates a markup item you have chosen to ignore,
+					  			pink indicates a markup item you have rejected,
+					  			and red indicates a markup item where an attempt to apply the item to the destination failed.
+					  			Each Markup Item Status and its associated color is defined above in a 
+					  			<A href="#Markup_Item_Status">Markup Item Status table</A>.
+					  			</P>
+				    	  
+						<BR>
+				        <H3><A name="Markup_Item_Drag_And_Drop"></A>Drag and Drop</H3>
+					  		    <P>
+					  			You can use drag and drop in the dual listing window to apply markup items. 
+					  			This provides a quick visual way to apply a particular markup item to a specific 
+					  			spot in the destination listing. If the address correlator has associated the 
+					  			incorrect destination address with the markup item's source address or if the correlator 
+					  			couldn't determine a destination address, you can quickly apply an item by dragging 
+					  			it to the correct address in the destination listing. Manually editing the destination 
+					  			address and then applying the item is more time consuming, but can be done instead 
+					  			of using drag and drop.
+					  			Drag and drop of markup items isn't available from the separate Source and Destination Tools
+					  			because dragging begins selection of code there.
+					  			</P>
+					  			<P>
+					  			Drag and drop is available for all markup items in the dual listing where it makes 
+					  			sense to apply a markup item. For example, you can't drag an already applied markup item.
+					  			To apply an item, click on the markup item in the source listing you 
+					  			want to apply and drag it to the code in the destination listing where you want it applied.
+					  			When you start dragging, the cursor will change to indicate that dragging is allowed
+					  			for the item. Once you drop the item, the destination listing will update to show 
+					  			the markup where it was dropped, the background color will change, and the markup 
+					  			item's status should change in the table.
+					  			</P>
+					  			<P>
+					  			<img src="../../../shared/note.png"/> Some markup item's can only be applied at a 
+					  			particular spot. For example, a function's
+					  			name or signature can only be applied to the function. Therefore the destination
+					  			function's entry point is the expected destination address. In this case, the destination
+					  			address will become the destination function's entry point no matter where you drop 
+					  			the markup item in the destination listing.
+					  			</P>
+				  		
+				</BLOCKQUOTE>
+			</BLOCKQUOTE>
+	
+	
+		 </BLOCKQUOTE> <!--end Dual Listing blockquote -->
+
+	</BLOCKQUOTE> <!--end top-level blockquote -->
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version Tracking Introduction</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

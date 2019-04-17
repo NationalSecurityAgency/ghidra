@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="ghidra.ghidradev"
+      label="GhidraDev"
+      version="2.0.0.qualifier"
+      provider-name="Ghidra">
+
+   <description>
+      Ghidra Development support for Eclipse
+   </description>
+
+   <copyright>
+      None
+   </copyright>
+
+   <license url="">
+      Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+   </license>
+
+   <requires>
+      <import plugin="org.eclipse.ant.core" version="3.4.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.expressions" version="3.5.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.externaltools" version="1.0.400" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.runtime" version="3.12.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.debug.ui" version="3.11.200" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.core" version="3.12.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.core.manipulation" version="1.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.debug.ui" version="3.7.200" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.launching" version="3.8.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.ui" version="3.12.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ltk.core.refactoring" version="3.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui" version="3.108.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.ide" version="3.12.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="ghidra.ghidradev"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

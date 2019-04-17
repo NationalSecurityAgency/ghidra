@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Sample Help File for a Plugin</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><a name="SampleHelpTopic_Anchor_Name"></a>Sample Help File for a Plugin</H1>
+
+    <P>The first paragraph should describe the purpose of the plugin and explain <I>why</I> a user
+    would want to add this plugin to a tool. The Hello World plugin is a sample plugin to
+    demonstrate the how to set up an action and how to add a listener to the Project. The listener
+    is notified when a project is opened and closed. The Hello World plugin implements the <FONT
+    face="Courier New" size="3">FrontEndable</FONT> interface so that it becomes eligible to be
+    added to the Ghidra Project Window, which is also a tool. Finally, it shows how to add a help
+    URL to the action so that when the user presses the &lt;F1&gt; or &lt;Help&gt; key, this page
+    will be displayed in the Ghidra Help Browser.</P>
+
+    <P>If the plugin pops up a dialog, the display elements and input fields should be explained in
+    detail, as well as any resulting changes which may be made to the current program.<BR>
+    </P>
+
+    <P><B>Note on the Style Sheet</B>: This sample help file uses a style sheet that is consistent
+    with Ghidra Help. Specify <I>Frontpage.css</I> as the style sheet for your help page if you
+    would like to maintain the same "look and feel." The <I>Frontpage.css</I> file is in the
+    <I>help/shared/</I> directory.</P>
+
+    <P>Here are some sample bookmarks for the actions in the sample plugins (see the <FONT face=
+    "Courier New"><FONT size="3">setupActions()</FONT></FONT> method in <FONT size="3" face=
+    "Courier New">ghidra.examples.KitchenSinkPlugin</FONT> for how to specify a bookmark in the
+    URL that is used as the help URL for the action):</P>
+
+    <UL>
+      <LI><A name="KS_Hello_World"></A>The Hello world action displays a dialog to say "Hello
+      World."</LI>
+    </UL>
+
+    <UL>
+      <LI><A name="KS_Hello_Program"></A>The Hello program action displays a dialog to say "Hello
+      Program."</LI>
+    </UL>
+
+    <P class="relatedtopic">Related Topics: add links to related pages</P>
+
+    <P class="providedbyplugin">Provided By: the <I>Hello World</I> and <I>Kitchen Sink</I>
+    plugins</P>
+    <BR>
+  </BODY>
+</HTML>

@@ -1,0 +1,185 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Opening Program Files</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Open_File"></A>Opening Program Files</H1>
+
+    <P>Ghidra Tools can open an existing Ghidra <A href=
+    "help/topics/Program/Ghidra_Programs.htm">program</A> file and present it for review and
+    analysis. Programs from other <A href=
+    "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#View_Project">viewed projects</A> or
+    <A href=
+    "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#View_Repository">viewed repositories</A> may also be
+    opened.</P>
+
+    <P>A program can be opened in the currently displayed tool or can be displayed in a <A href=
+    "#CBOpenFileDragandDrop">new instance of a Tool</A>.&nbsp;</P>
+
+    <H2>&nbsp;</H2>
+
+    <H2><A name="Open_File_Dialog"></A>Opening a Program File in the Current Tool</H2>
+
+    <OL>
+      <LI>To open a program file in the currently displayed tool, select <B>File<IMG src=
+      "../../shared/arrow.gif" border="0"> Open...</B> from the Ghidra Tool's menu.</LI>
+
+      <LI>The <I>Open Program</I> dialog is displayed.</LI>
+    </OL>
+
+    <P align="center"><BR>
+     <IMG src="images/OpenProgram.png" border="0"><BR>
+     &nbsp;</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P align="left">This allows selection of any file that is part of the active project.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <OL start="3">
+      <LI>Select the program file to open.</LI>
+
+      <LI>Click the <B>OK</B> button&nbsp;<I>OR</I>&nbsp;double click on the program to open.</LI>
+    </OL>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The selected program is opened and displayed in the tool.&nbsp; <A name=
+        "MultiplePrograms"></A>More than one program can be opened at the same time, but only one
+        of them can be <I>active</I> at a time. The Code Browser window shows a tab for each
+        program that you have opened. Select a tab to make that program the active one, as shown in
+        the image below.</P>
+
+        <P align="center"><IMG border="0" src="images/Tabs.png"></P>
+
+        <P align="center">&nbsp;</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <P>In addition to selecting a file, this dialog can be used to perform some basic
+      directory/file operations. Right click on a program to get the directory/file menu.</P>
+
+      <P align="center"><IMG border="0" src="images/OpenProgramMenu.png"></P>
+    </BLOCKQUOTE>
+
+    <H3><A name="VersionHistory"></A>History</H3>
+
+    <BLOCKQUOTE>
+      <P>The History button on the <I>Open Program</I> dialog expands the dialog to show previous
+      versions of a program (if the selected program is <A href=
+      "help/topics/Glossary/glossary.htm#SharedProgram">shared</A>),&nbsp; allowing the user to
+      view a read-only previous version of the program.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG border="0" src="images/OpenHistory.png"></P>
+
+    <P>&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <P>The History panel shows all previous versions for the selected program.&nbsp; Each entry
+      shows which user created the version, the date and time the version was created, the version
+      number, and the comment for that version.&nbsp; To open a history file, select it in the
+      Version History table, and press the "OK" button.&nbsp; The version history can be hidden by
+      pressing the "No History" button.</P>
+    </BLOCKQUOTE>
+
+    <H2>&nbsp;</H2>
+
+    <H2><A name="CBOpenFileDragandDrop"></A>Opening a Program in a New Tool via Drag and Drop</H2>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Locate the program to open in the Ghidra Project Window.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P align="center"><BR>
+     <IMG src="images/FrontEnd3.png" border="0"></P>
+
+    <P>&nbsp;</P>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL start="2" type="1">
+        <LI>Left mouse press on the program in the tree, drag it to the Tool Chest, and drop it on
+        the desired tool by releasing the left mouse button.&nbsp;</LI>
+      </OL>
+    </DIV>
+
+    <P><BR>
+     <IMG src="../../shared/tip.png" x-maintain-ratio="TRUE" border="0">&nbsp;&nbsp;&nbsp;&nbsp;
+    The <IMG src="images/dragon.gif" x-maintain-ratio="TRUE" border="0"> icon in the Tool
+    Chest indicates the CodeBrowser tool.&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL start="3" type="1">
+        <LI>A new instance of the tool is launched with the selected program open. The Running
+        Tools area of the Ghidra Project Window now shows the newly launched tool.</LI>
+      </OL>
+    </DIV>
+
+    <P align="center"><BR>
+     <IMG src="images/FrontEndWithProgram.png" border="0"></P>
+
+    <P align="left">&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <P align="left">Alternatively, programs can be dropped onto running tools (either the icon in
+      the Running Tools area or onto the tool itself). In this case, the program is opened in the
+      existing tool in addition to any programs that are already open.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="FileNotCheckedOut"></A>Opening a Versioned Program File</H2>
+
+    <BLOCKQUOTE>
+      <P align="left">If you attempt to open a versioned program file that is not checked out, a
+      dialog is displayed to warn you of this. You will not be allowed to save changes to this file
+      unless you check it out.</P>
+
+      <P align="center"><IMG border="0" src="images/FileNotCheckedOut.png"></P>
+
+      <P align="left">If you are working in a <A href=
+      "help/topics/VersionControl/project_repository.htm">shared project</A>, AND if you plan to make
+      drastic changes to memory, e.g., add or remove memory blocks, select the checkbox on the
+      dialog to obtain an <A href=
+      "help/topics/VersionControl/project_repository.htm#ExclusiveLock">exclusive lock</A> on the
+      program file.&nbsp;</P>
+
+      <P align="left">If you choose the "No" option, the program will be opened <I>read only</I>,
+      thus you will have to save your changes to <I>another</I> filename.</P>
+
+      <P align="left">&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P align="left" class="providedbyplugin">Provided by: <I>ProgramManagerPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Program/Ghidra_Programs.htm">Ghidra Programs</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Importing Programs</A></LI>
+
+      <LI><A href="Closing_Program_Files.htm">Closing Programs</A></LI>
+
+      <LI><A href="help/topics/VersionControl/project_repository.htm">Shared Project</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+    <BR>
+  </BODY>
+</HTML>

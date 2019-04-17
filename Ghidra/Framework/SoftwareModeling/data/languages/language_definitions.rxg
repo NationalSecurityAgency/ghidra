@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  
+  <include href="language_common.rxg" />
+
+  <!-- language_definitions files have extension .ldefs -->
+
+  <start>
+    <element name="language_definitions">
+      <zeroOrMore>
+        <element name="language">
+          <optional>
+            <attribute name="hidden">
+              <!-- a language marked as hidden will only be available within a development environment -->
+              <ref name="boolean_type" />
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="deprecated">
+              <ref name="boolean_type" />
+            </attribute>
+          </optional>
+          <attribute name="processor"/>
+          <attribute name="endian">
+            <ref name="endian_type" />
+          </attribute>
+          <optional>
+          	<attribute name="instructionEndian">
+            	<ref name="endian_type" />
+          	</attribute>
+          </optional>
+          <attribute name="size" />
+          <attribute name="variant" />
+          <attribute name="version" />
+          <attribute name="slafile" />
+          <attribute name="processorspec" />
+          <optional>
+            <attribute name="manualindexfile" />
+          </optional>
+          <attribute name="id" />
+          <element name="description"> <text/> </element>
+          <optional>
+            <element name="truncate_space">
+              <attribute name="space" />
+              <attribute name="size" />
+            </element>
+          </optional>
+          <oneOrMore>
+            <!-- first compiler spec is the default!!! -->
+            <element name="compiler">
+              <attribute name="name" />
+              <attribute name="spec" />
+              <attribute name="id" />
+            </element>
+          </oneOrMore>
+          <zeroOrMore>
+            <element name="external_name">
+            	<attribute name="tool" />
+            	<attribute name="name" />
+            </element>
+          </zeroOrMore>
+        </element>
+      </zeroOrMore>
+    </element>
+  </start>
+</grammar>

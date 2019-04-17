@@ -1,0 +1,2627 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Merge Program Files</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1 align="center"><A name="Merge_Manager"></A>Merge Program Files</H1>
+
+    <P>The Ghidra Server provides file access to multiple users enabling a team to collaborate on a
+    single effort. It provides network storage for <A href=
+    "help/topics/VersionControl/project_repository.htm#SharedProject">shared project repositories</A> while controlling user
+    access. Together the Ghidra Server and the shared project repository allow multiple users to
+    concurrently:</P>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI>Check out the same version of a program file</LI>
+
+        <LI>Make changes to the program file</LI>
+
+        <LI>Check the changed program file back into the shared project repository</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <P><I>Merging</I> is necessary to integrate changes made to a single version of a program file
+    by multiple users. The following steps show a typical merge scenario:</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P align="left"><B>Check in / Merge Sequence:</B></P>
+
+        <OL>
+          <LI>
+            <P style="margin-bottom: 12px;" align="left">A file is added to version control,
+            creating Version <B>0</B>.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left">A user checks out Version <B>0</B>, makes
+            changes, and checks it in to create Version <B>1</B>.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left"><B>User A</B> checks out Version
+            <B>1</B>.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left"><B>User B</B> checks out Version <B>1</B>
+            and makes changes.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left"><B>User B</B> checks in his changed file,
+            creating Version <B>2</B> in the project repository. Because no other versions were
+            created since <B>User B</B> originally checked out his file, Version <B>2</B> can be
+            created automatically. This new version will be the changed file created by <B>User
+            B</B> (Step 4). In this case, merging is not involved in the check in process.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left"><B>User A</B> completes his changes and
+            checks in the file.</P>
+          </LI>
+
+          <LI>
+            <P style="margin-bottom: 12px;" align="left">During the check in process, the Ghidra
+            Server determines that a new version of the program file has been added since <B>User
+            A</B> originally checked out the file (Step 3). The latest version of the file
+            contained in the repository, Version <B>2</B>, is not the same file that <B>User A</B>
+            had checked out, Version <B>1</B>. A merge is required since a new version of the file
+            was added to the repository after User <B>A</B> checked out the file.</P>
+          </LI>
+        </OL>
+
+        <P style="margin-bottom: 12px;" align="left"><IMG src="../../shared/note.png" border="0">
+        If a new version of a file has been added since the user checked out the file, a merge is
+        required at check in. This is the <B>only</B> time a merge is required.</P>
+
+        <BLOCKQUOTE>
+          <P style="margin-bottom: 12px;" align="left">The Ghidra Server starts the merge process
+          by making a copy of Version <B>2</B>. Changes from <B>User</B> <B>A</B>'s checked in file
+          are applied to this copy to create the new file, Version <B>3</B>. There are two types of
+          merges - <B>automatic</B> and <B>manual</B>. If changes made by <B>User A</B> and <B>User
+          B</B> do not conflict <A href="#Automatic">automatic</A> merging is done. If changes made
+          by <B>User A</B> and <B>User B</B> do conflict, then <B>User A</B> must manually <A href=
+          "#ResolveConflicts">resolve the conflicts</A>. Note that the last user checking in
+          changes must resolve conflicts. A conflict results when <B>User A</B> and <B>User B</B>
+          make the <I>same type of changes</I> at a location in the program.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P>The figure below illustrates this typical scenario where two users check out a file, as
+    described above. The sequence of events are numbered in parentheses in the diagram, and
+    correspond with the <B>Check in/Merge Sequence</B> above:</P>
+
+    <P align="center"><IMG src="images/MultiUser.png" border="0"></P>
+
+    <P align="left">To begin the merge process, select the <A href=
+    "help/topics/VersionControl/project_repository.htm#CheckIn">Check In</A> option on the Ghidra Project Window. A progress
+    bar is displayed while the merge is in progress. The merge begins with a copy of the latest
+    version of the file from the repository. All changes are applied to this copy. At the
+    conclusion of the merge, this copy along with the applied changes will be saved in the
+    repository, and will become the newest version of the file.</P>
+
+    <P align="left">The merge processes program elements in the following order:</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <UL>
+          <LI>
+            <P align="left"><A href="#MemoryAuto">Memory</A></P>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#ProgramTreeAuto">Program Trees</A></P>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#DataTypeAuto">Data Types and Categories</A></P>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#ProgramContextRegistersAuto">Program Context
+            Registers</A></P>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#ListingAuto">Listing</A></P>
+
+            <UL>
+              <LI>
+                <P align="left"><A href="#CodeUnitsAuto">Code Units</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#ExternalsAuto">Externals</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#FunctionsAuto">Functions</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#SymbolsAuto">Symbols</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#EquatesAuto">Equates</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#UserDefinedPropertiesAuto">User Defined
+                Properties</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#ReferencesAuto">References</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#BookmarksAuto">Bookmarks</A></P>
+              </LI>
+
+              <LI>
+                <P align="left"><A href="#CommentsAuto">Comments</A></P>
+              </LI>
+            </UL>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#ExternalProgramNamesAuto">External Program Names</A></P>
+          </LI>
+
+          <LI>
+            <P align="left"><A href="#PropertyAuto">Property Lists</A></P>
+          </LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="left">Within each program element an automatic merge is attempted first. If conflicts
+    arise, the user must manually resolve conflicts before moving on to the next program element.
+    For example, the Program Tree merge performs the auto merge, and then requests user input to
+    resolve conflicts, as required. Once the Program Tree has been merged, with all conflicts
+    resolved, the merge of Data Types and Categories begins.</P>
+
+    <P align="left">If you cancel the merge at any time, you are canceling the entire <I>check
+    in</I> process and your file remains checked out. None of the changes that was made as a result
+    of the merge is applied to the program that you have checked out.<BR>
+    </P>
+
+    <P align="left">While the auto merge is occurring and conflicts are being determined the merge
+    status is displayed in the merge tool. The following image shows an example of the merge tool
+    when the merge process is auto merging code units.<BR>
+    </P>
+
+    <P style="text-align: center;"><IMG alt="" src="images/AutoMergeCodeUnits.png"><BR>
+    </P>
+
+    <P style="text-align: left;">At this point the Memory, Program Trees, Data Types and Program
+    Context phases have already completed as indicated by the Completed icon, <IMG alt="" src=
+    "images/checkmark_green.gif" border="0">. The Bytes &amp; Code Units sub-phase of the Listing
+    is currently In Progress, <IMG alt="" src="images/right.png" border="0">. The <SPAN style=
+    "font-weight: bold;">Progress In Current Phase</SPAN> progress bar provides the user with an
+    idea of how much of the phase has completed. The other sub-phases of Listing, the External
+    Programs and Property Lists have not been merged yet as indicated by the Pending icon, <IMG
+    alt="" src="images/label.png">. The message below the current phase progress bar gives
+    additional information about what is currently happening in the phase.<BR>
+    </P>
+
+    <P style="text-align: left;">At the bottom of the merge tool is a progress bar and message for
+    an immediate task. When multiple of these smaller tasks are combined sequentially they perform
+    the merge of the current phase.<BR>
+    </P>
+
+    <P align="left">The following sections describe the auto merge process and conflict resolution
+    process in greater detail.</P>
+
+    <H2><A name="Automatic"></A>Auto Merge</H2>
+
+    <BLOCKQUOTE>
+      <P>For each program element, the <I>Auto Merge</I> is the first of the two merges which is
+      performed. The following paragraphs describe how Auto Merging applies to each program
+      element.</P>
+
+      <H3><A name="MemoryAuto"></A>Memory</H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Program memory is organized in <A href=
+        "help/topics/Glossary/glossary.htm#MemoryBlock">memory blocks</A>. The only changes to a
+        memory block that can be merged are:</P>
+
+        <UL>
+          <LI>
+            <P align="left">Name</P>
+          </LI>
+
+          <LI>
+            <P align="left">Permissions</P>
+          </LI>
+
+          <LI>
+            <P align="left">Comments</P>
+          </LI>
+        </UL>
+
+        <P align="left">You can make changes to the memory structure (add a block, remove a block,
+        etc.) only when you have checked out the program with an <A href=
+        "help/topics/VersionControl/project_repository.htm#ExclusiveLock">exclusive lock</A>. This restriction prevents
+        drastic changes in memory that could potentially have a major impact on other users.
+        Typically, all users working on the same program should agree on memory structure changes
+        and then have one user make them. An exclusive lock prevents anyone else from checking out
+        the program while the exclusive lock exists. When you check in your changes, merging is not
+        necessary as no other versions were created while you had the program checked out. Your
+        program becomes the new version.</P>
+
+        <P align="left">Comments on the memory block are <I>replaced</I> in the results program
+        during the merge process. You must resolve all <A href="#MemoryConflict">memory
+        conflicts</A> before the merge process can continue with the next program element, program
+        trees.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ProgramTreeAuto"></A>Program Trees</H3>
+
+      <BLOCKQUOTE>
+        <P>If you make <B>any</B> change to a <A href=
+        "help/topics/ProgramTreePlugin/program_tree.htm">program tree</A>, it is marked as changed
+        and may be merged. No further inspection of changes is done. If the tree was not changed in
+        the latest version, then the automatic merge can be done. If the tree was changed in the
+        latest version, this is considered a <A href="#ProgramTreeConflict">conflict</A> that you
+        must resolve before the merge process can continue with the next program elements, data
+        types and categories.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="DataTypeAuto"></A>Data Types and Categories</H3>
+
+      <BLOCKQUOTE>
+        <P><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data
+        types</A> can be created, renamed, edited (contents), or deleted. During merging, newly
+        created data types are added automatically (if a data type with the same name already
+        exists in the parent category, then your new data type is created with a ".conflict"
+        appended to the name). All other changes to data types are merged.</P>
+
+        <P>When merging data types, there is only one way that data type conflicts can occur. A
+        conflict results <B>only</B> if in both files the same <I>type</I> of change (rename, edit
+        contents, delete) was made to a particular data type. Other than this, no conflicts can
+        occur and the data type you changed can be merged automatically. For example, if you
+        renamed a structure data type and in the latest version the contents of that data type were
+        edited, this will <B>not</B> cause a conflict and your change can be applied automatically
+        during the merge process.</P>
+
+        <P><A href=
+        "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Category">Categories</A>
+        can be renamed, moved, deleted, or restructured (add/remove data types and categories).
+        Note that moving a data type to a different parent category is considered a category
+        change, not a data type change.</P>
+
+        <P>As with data types, there is only one way that category conflicts can occur. A conflict
+        results only if, in both files, the same <I>type</I> of change (rename, move, delete,
+        restructure) was made to a particular category. Other than this, no conflicts can occur and
+        the category you changed can be merged automatically. For example, if you renamed a
+        category and in the latest version the category was moved to a different parent category,
+        this will <B>not</B> cause a conflict and your change can be applied automatically during
+        the merge process.</P>
+
+        <P>All <A href="#DataTypeConflicts">conflicts</A> must be resolved before the merge process
+        can continue with the next program element, Program Context Registers.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ProgramContextRegistersAuto"></A>Program Context Registers</H3>
+
+      <BLOCKQUOTE>
+        <P>For any of the registers defined by the program's language you can set a register value
+        for an address or range of addresses. If you set a register value or remove a register
+        value at an address, it will automatically change the value during the merge process if the
+        value wasn't changed at that address in the latest version. If your version and the latest
+        version change the register to the same value at an address, it will also get merged
+        automatically.</P>
+
+        <P>Automatic merging of all the registers will happen before you are prompted to resolve
+        any conflicting register values.</P>
+
+        <P>You must resolve all <A href=
+        "Merge_Program_Files.htm#ProgramContextRegistersConflict">register conflicts</A> before the
+        merge process can continue with the next program element, Listing.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ListingAuto"></A>Listing</H3>
+
+      <BLOCKQUOTE>
+        <P>Various parts of the program are merged in the Listing merge. These include the bytes,
+        code units, functions, symbols, equates, user defined properties, references, bookmarks,
+        and comments. For each of these parts the auto merge will occur followed by a manual merge
+        of any conflicts.<BR>
+        </P>
+
+        <H4><A name="CodeUnitsAuto"></A>Code Units</H4>
+
+        <BLOCKQUOTE>
+          <P>If you make any change to the memory bytes or to a code unit, such as creating or
+          clearing an instruction or defining data, the code unit gets marked as changed and may be
+          merged. If you change the memory bytes and the latest version doesn't have memory byte or
+          code unit changes, your byte changes will be merged automatically. If you changed the
+          code unit and it does not conflict with a change in the latest version, the change to the
+          code unit will be merged automatically.<BR>
+          </P>
+
+          <P>If the latest version had any of the following changes, the code unit is in conflict
+          and must be manually merged:<BR>
+          </P>
+
+          <UL>
+            <LI>The latest version and your version have memory bytes changed to different
+            values</LI>
+
+            <LI>The latest version changed memory bytes where you changed the code unit or vice
+            versa</LI>
+
+            <LI>The latest version created or cleared instructions or data differently than you
+            did</LI>
+
+            <LI>The latest version created, changed, or removed an equate for the code unit you
+            changed or vice versa</LI>
+          </UL>
+
+          <P>You must resolve all <A href="Merge_Program_Files.htm#CodeUnitsConflict">byte and code
+          unit conflicts</A> before the merge process can continue with the next program element,
+          Functions.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="ExternalsAuto"></A>External Functions and Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>If you make any change to the external locations (external functions or external labels) 
+          defined within the program, such as creating,
+          updating, or removing an external location, the external location gets marked as changed
+          and it may be merged.</P>
+
+          <P>The following types of changes will get merged automatically:</P>
+
+          <UL>
+            <LI>Changing the name, external memory address, or data type for an external location as 
+            long as the latest version didn't change the same attribute of the external location.</LI>
+
+            <LI>Changing from an external label to an external function as long as the latest version 
+            didn't set the data type for the same external label or remove the label.</LI>
+
+            <LI>Changing from an external function to a label or removing an external function as 
+            long as the latest version didn't change the external function.</LI>
+
+            <LI>Setting the data type on an external label as long as the latest version didn't 
+            also set the data type or change the label into an external function.</LI>
+
+            <LI>Changing an external function as long as the latest version also didn't make 
+            changes to the function.<BR>
+             Conflicts could be:</LI>
+
+            <LI style="list-style: none">
+              <UL>
+                <LI>another variable at the same offsets on the stack frame</LI>
+
+                <LI>another register variable with the same named register and first use
+                address.</LI>
+              </UL>
+            </LI>
+          </UL>
+
+          <P>You must resolve all <A href="Merge_Program_Files.htm#ExternalsConflict">external location
+          conflicts</A> before the merge process can continue with the next program element,
+          Functions.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="FunctionsAuto"></A>Functions</H4>
+
+        <BLOCKQUOTE>
+          <P>If you make any change to the functions defined within the program, such as creating,
+          updating, or removing a function, the entry point of the function gets marked as changed
+          and the function may be merged.</P>
+
+          <P>The following types of changes will get merged automatically:</P>
+
+          <UL>
+            <LI>Adding a function with a body that doesn't overlap any function body in the latest
+            version.</LI>
+
+            <LI>Removing a function as long as the latest version did not change this function or
+            its stack frame.</LI>
+
+            <LI>Making changes to the function name, return type, parameters, parameter offset,
+            return type offset, etc. as long as the latest version didn't also change the same part
+            of the function.</LI>
+
+            <LI>If a variable name conflicts with a variable or symbol of the same name in the
+            function's <A href=
+            "help/topics/SymbolTreePlugin/SymbolTree.htm#Namespace">namespace</A> of the latest
+            version, that variable will automatically be renamed to a conflict name. This
+            eliminates the name conflict.</LI>
+
+            <LI>Making changes to existing parameters such as the name, data type, or description
+            if the latest version didn't change the same part of the parameter.</LI>
+
+            <LI>All local variables will be automatically added if they don't conflict with changes
+            to the latest version.<BR>
+             Conflicts could be:</LI>
+
+            <LI style="list-style: none">
+              <UL>
+                <LI>another variable at the same offsets on the stack frame</LI>
+
+                <LI>another register variable with the same named register and first use
+                address.</LI>
+
+                <LI>another symbol with the same name in the function's namespace</LI>
+
+                <LI>the name, datatype, or comment for a local variable is changed to different
+                values in your version and the latest version.<BR>
+                </LI>
+              </UL>
+            </LI>
+          </UL>
+
+          <P>You must resolve all <A href="Merge_Program_Files.htm#FunctionsConflict">function
+          conflicts</A> before the merge process can continue with the next program element,
+          Symbols.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="SymbolsAuto"></A>Symbols</H4>
+
+        <BLOCKQUOTE>
+          <P>Whenever you add, remove, or rename a symbol, the program gets marked as changed. It
+          also gets marked if you change the primary symbol at an address or if you make an address
+          an external entry point. The symbol phase of the Listing merge will merge labels,
+          namespace symbols, class symbols, and external symbols. Symbols associated with
+          functions, function parameters, and function local variables have already been resolved
+          by the function phase of the Listing merge.<BR>
+          </P>
+
+          <P>The following types of changes will get merged automatically:</P>
+
+          <UL>
+            <LI>Any symbol you removed will automatically be removed if the latest version didn't
+            change that symbol.</LI>
+
+            <LI>Any symbol you added will automatically be added if latest version did not create
+            the same named symbol at that address with a different parent namespace.</LI>
+
+            <LI>If each program has a symbol named the same within a namespace but at a different
+            address. These are resolved automatically by merging your symbol using a
+            <B>.conflict</B> name. In other words, your symbol will have a .conflict suffix added
+            to its name when it is merged. You are notified at the end of the symbol merge phase of
+            any symbols that were renamed to avoid a conflict.</LI>
+
+            <LI>Any symbol you renamed will automatically get renamed if the latest version didn't
+            rename that symbol to a different name.</LI>
+
+            <LI>If you change which symbol is primary, it will be automatically set to primary
+            unless the latest version set a different symbol to primary.</LI>
+
+            <LI>Entry points that you added or removed will be added or removed automatically.</LI>
+          </UL>
+
+          <P>You must resolve all <A href="Merge_Program_Files.htm#SymbolsConflict">symbol
+          conflicts</A> before the merge process can continue with the next Listing merge phase,
+          the Address Based Listing Merge.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H4><U>Address Based Listing Merge</U></H4>
+
+        <BLOCKQUOTE>
+          <P>During this phase of the Listing merge each of the address based listing elements (the
+          equates, user defined properties, references, bookmarks, and comments) will get merged.
+          First an auto merge will occur for each of these elements. When all of the auto merges
+          are complete, conflict resolution will proceed in address order for each address that has
+          a conflict for any of the address based listing elements. At each address with a conflict
+          you will have to resolve all of the conflicts (equates, user defined properties,
+          references, bookmarks, and comments) before proceeding to the next address with
+          conflicts. The following sub-sections describe the auto merge for each of the address
+          based listing elements.</P>
+
+          <H4><A name="EquatesAuto"></A>Equates</H4>
+
+          <BLOCKQUOTE>
+            <P>An equate associates a display name with a scalar operand or sub-operand at a
+            particular address in the program. Whenever you create, rename, or remove an equate the
+            program gets marked as changed. An equate conflict can arise between your version and
+            the latest version. The following types of equate changes will get merged
+            automatically:</P>
+
+            <UL>
+              <LI>If an equate was set on a scalar and the latest version didn't set an equate on
+              that scalar, the equate will be added automatically.</LI>
+
+              <LI>If an equate name's associated value differs between the two versions then there
+              is an equate conflict that will be resolved automatically by changing your version's
+              equate name to a conflict name by appending "_conflict" to your equate name.</LI>
+
+              <LI>If your version's scalar had its associated equate removed, it will get
+              automatically removed if the latest version didn't change the named equate for that
+              scalar.</LI>
+
+              <LI>If your version's scalar had its associated equate name changed, it will get
+              automatically renamed if the latest version didn't remove or rename it
+              differently.</LI>
+            </UL>
+
+            <P>If an equate is changed for a scalar operand or sub-operand differently in the
+            latest and your versions, then you must resolve the conflict.</P>
+
+            <P>The <A href="Merge_Program_Files.htm#EquatesConflict">equate conflicts</A> will need
+            to be resolved after all of the address based auto merges complete. After the Equates
+            auto merge completes, an auto merge will begin for User Defined Properties.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H4><A name="UserDefinedPropertiesAuto"></A>User Defined Properties</H4>
+
+          <BLOCKQUOTE>
+            <P>A user defined property change gets marked in the program whenever the named
+            property gets added, removed or changed at an address. An example property is the
+            <B>Space</B> property created by the <B>Format</B> plugin.</P>
+
+            <P>A user defined property change will get merged automatically if the latest version
+            didn't change the same named property at the same address in the program. If the named
+            property was changed at an address in your version of the program and in the latest
+            version then a user defined property conflict exists.</P>
+
+            <P>The <A href="Merge_Program_Files.htm#UserDefinedPropertiesConflict">user defined
+            property conflicts</A> will need to be resolved after all of the address based auto
+            merges complete. After the User Defined Properties auto merge completes, an auto merge
+            will begin for References.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H4><A name="ReferencesAuto"></A>References</H4>
+
+          <BLOCKQUOTE>
+            <P>References consist of memory references, variable (stack and register) references,
+            and external references. Changes to these include adding references, changing
+            references, and removing references. The references in your checked out version and the
+            latest version are compared for each of the mnemonic and operands at an address to
+            determine whether a conflict exists or the changes can be automatically merged.</P>
+
+            <P>The following types of changes will get merged automatically:</P>
+
+            <UL>
+              <LI>If you added, changed, or removed a reference for a mnemonic or operand at an
+              address and the latest version didn't change the references.</LI>
+
+              <LI>If your version and the latest version only have memory references for the
+              mnemonic or operand.</LI>
+
+              <LI>If your reference is a stack variable reference and the latest version has a
+              stack reference to the same stack frame offset or no references.</LI>
+
+              <LI>If your reference is a register variable reference and the latest version has a
+              register reference to the same register or no references.</LI>
+
+              <LI>If your reference is an external reference and the latest version has the same
+              external reference or no references.</LI>
+            </UL>
+
+            <P>If your checked out version and the latest version both have changes to the
+            references for a mnemonic or operand, the references are in conflict whenever your
+            version and the latest version have references that are different types (for example,
+            one has memory references and the other has an external reference).</P>
+
+            <P>The <A href="Merge_Program_Files.htm#ReferencesConflict">reference conflicts</A>
+            will need to be resolved after all of the address based auto merges complete. After the
+            References auto merge completes, an auto merge will begin for Bookmarks.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H4><A name="BookmarksAuto"></A>Bookmarks</H4>
+
+          <BLOCKQUOTE>
+            <P>Bookmarks allow you to associate a description with an address in the program. The
+            bookmark has a type and category associated with it. Bookmarks that the user has
+            entered via the GUI are <B>Note</B> type bookmarks. Ghidra plugins can also add
+            bookmarks of various other types. For example <B>Auto Analysis</B> adds <B>Analysis</B>
+            type bookmarks. Only one bookmark of a particular type and category can exist at an
+            address. However, only one <B>Note</B> type of bookmark can exist at an address
+            regardless of the category.</P>
+
+            <P>Changes to bookmarks include adding a new bookmark, removing a bookmark, changing
+            the description for a bookmark, and changing the category for a note bookmark.</P>
+
+            <P>Any changes to the bookmarks will get automatically merged as long as your changes
+            and the latest versions changes do not result in one of the following conflict
+            situations:</P>
+
+            <UL>
+              <LI>your version and the latest version added or changed a <B>Note</B> bookmark
+              resulting in a different category or description for the two versions.</LI>
+
+              <LI>your version and the latest version added or changed the same bookmark type and
+              category resulting in a different description for the two versions.</LI>
+            </UL>
+
+            <P>The <A href="Merge_Program_Files.htm#BookmarksConflict">bookmark conflicts</A> will
+            need to be resolved after all of the address based auto merges complete. After the
+            Bookmarks auto merge completes, an auto merge will begin for Comments.</P>
+          </BLOCKQUOTE>
+
+          <H4><A name="CommentsAuto"></A>Comments</H4>
+
+          <BLOCKQUOTE>
+            <P>If you make a change to a comment (Plate, Pre, End-of-line, Repeatable, or Post) and
+            the latest version did not have any changes to that type of comment at the same
+            address, the change is automatically accepted. Comment changes include adding,
+            removing, or updating the comment. If the latest version has a change to the same
+            comment then the conflict will need to be resolved manually.</P>
+
+            <P>The <A href="Merge_Program_Files.htm#CommentsConflict">comment conflicts</A> will
+            need to be resolved after all of the address based auto merges complete. After the
+            Comments auto merge completes, the conflict merge will begin for address based listing
+            elements (the equates, user defined properties, references, bookmarks, and comments) at
+            each of the addresses with a conflict.</P>
+
+            <P>After all address based conflicts are resolved, the auto merge process continues
+            with the next program element, External Program Names.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="ExternalProgramNamesAuto"></A>External Program Names</H3>
+
+      <BLOCKQUOTE>
+        <P>Each external reference has an associated external program name. The external name
+        provides an association to the external program. Changing an external program name is
+        marked as a change and may be merged. Changes include adding or removing an external
+        program name, and changing the Ghidra program associated with an external program name. If
+        the change doesn't conflict with a change in the latest version then it will be merged
+        automatically.<BR>
+        </P>
+
+        <P>A conflict occurs whenever your version removes an external program name and the latest
+        version changes the associated Ghidra program or vice versa. A conflict can also occur if
+        the latest version and your version both change the Ghidra program associated with a
+        particular external program name.<BR>
+        </P>
+
+        <P>You must resolve all <A href="#ExternalProgramNamesConflict">external program name
+        conflicts</A> before the merge process can continue with the next program element, Property
+        Lists.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="PropertyAuto"></A>Property Lists</H3>
+
+      <BLOCKQUOTE>
+        <P><A href=
+        "help/topics/ProgramManagerPlugin/Program_Options_Dialog.htm#Properties">Property lists</A>
+        are lists of options that are saved as part of the program. You can view and edit these
+        properties through the <I><A href=
+        "help/topics/ProgramManagerPlugin/Program_Options_Dialog.htm">Program Options
+        Dialog</A></I>. A property will be merged automatically if it is a new property or it was
+        not changed in the latest version. A <A href="#PropertyListConflict">conflict</A> results
+        when you change a property that was either removed or changed in the latest version.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="ResolveConflicts"></A>Resolving Conflicts</H2>
+
+    <BLOCKQUOTE>
+      <P>For each program element, the <I>Conflict Resolution Merge</I> is the second of the two
+      merges which is performed. The first time a conflict is encountered, the merge process
+      displays a Merge Tool. Use this tool to resolve each conflict one at a time. To resolve any
+      conflict, you must choose a radio button or check box depending on the type of conflict.
+      Most conflicts require you to select from the following:</P>
+
+      <UL>
+        <LI>Latest version (changes from the Latest version that is checked into the
+        repository)</LI>
+
+        <LI>Checked Out version (your changes)</LI>
+
+        <LI>Original version (values from the file when you originally checked it out)</LI>
+      </UL>
+      
+      <P>However, there may be other conflict options that let you choose to add or rename the type of 
+      item that is in conflict in addition to keeping the one that was checked in the Latest version
+      in the repository. Some conflicts, such as comment conflicts, allow you to check one or both 
+      check boxes for the comment conflict. This allows you to keep the Latest comment, your comment, 
+      or a combined copy of both the Latest and your (Checked Out) comments.</P>
+
+      <H3><A name="MemoryConflict"></A>Memory</H3>
+
+      <BLOCKQUOTE>
+        <P>All memory conflicts that remain after the <A href="#MemoryAuto">auto merge</A> must be
+        resolved.</P>
+
+        <P>The only conflicts on a memory block will be changes to the name, permissions, or
+        comments. A conflict occurs when you change the name of a memory block and another user has
+        changed the name of the same memory block. Similarly, if you changed the permissions or
+        comments on a memory block, and another user has changed the permissions or comments on the
+        same memory block you will have to select which changes to keep.</P>
+
+        <P>The image below is the panel that is shown when there is a conflict on the block name.
+        In this sample image, the user who created the latest version had changed the block name to
+        "LatestText" (radio button for <I>Latest</I>). You changed the block name to "MY_Text"
+        (radio button for <I>Checked Out</I>). The block name in the original program (the version
+        that you had originally checked out) is shown as ".text" (radio button for
+        <I>Original</I>).</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/MemoryConflict.png" border="0"></P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>To resolve the conflict, you must select a radio button. After you select a radio
+        button, the <B>Apply</B> button becomes enabled. Click on the <B>Apply</B> button to
+        continue the merge process. In this example, there was only one conflict in the Memory
+        merge, as indicated by the <I>Current Conflict</I> area of the panel. The progress bar on
+        the lower right corner of the Merge Tool indicates progress only for the Memory Block
+        merge, not the entire merge process.</P>
+
+        <P>The merge process continues with Program Trees.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ProgramTreeConflict"></A>Program Trees</H3>
+
+      <BLOCKQUOTE>
+        <P>All program tree conflicts that remain after the <A href="#ProgramTreeAuto">auto
+        merge</A> must be resolved.</P>
+
+        <P>If you make any change to a <A href=
+        "help/topics/ProgramTreePlugin/program_tree.htm">program tree</A>, it is marked as changed
+        and may be merged. There is no finer granularity than detecting that the tree changed, so
+        the merge is going to do "all or nothing" on the program tree. For example, if you change
+        the tree (add a folder, rename a fragment, etc.) and another user changed the same tree,
+        you will get a choice to keep your changes, keep the changes from the latest, keep the tree
+        from the original program that you checked out, or rename your tree to a new name. The last
+        option to rename your tree allows you to create your tree in the program that results in
+        the latest version, and not lose anyone else's changes. The image below shows this
+        scenario:</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ProgramTreeConflict.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The conflict resolution panel shows what kind of change it is, name change versus a
+        structure change; the checkbox indicates the change in <I>Latest Version</I> and <I>Current
+        Checked Out Version</I>. In this example, another user changed the name of a program tree
+        to "Tree3_XXX" (<I>Latest</I>). You changed the name of the same program tree to "MY TREE
+        3" (<I>Checked Out</I>). The original name of the tree was "Tree Three" (<I>Original</I>).
+        The <I>Resolve Tree Name Conflict</I> area of the panel shows radio buttons for each
+        option:</P>
+
+        <UL>
+          <LI>Use name 'Tree3_XXX' (Latest) - select this option to lose your changes and keep what
+          is in the latest version</LI>
+
+          <LI>Use name 'MY TREE 3 (Checked Out) - select this option to rename the tree in the
+          program that will become the latest version; the tree is renamed to 'MY TREE 3'</LI>
+
+          <LI>Add new tree named 'MY TREE 3' - select this option to create a new tree named 'MY
+          TREE 3' in the program that will become the latest version; changes by other users are
+          retained</LI>
+
+          <LI>Use name 'Tree Three' (Original) - select this option to lose your changes;
+          'Tree3_XXX' will be renamed to 'Tree Three' which is the name from the program that you
+          had originally checked out</LI>
+        </UL>
+
+        <P>Select an option to resolve the conflict, then click on <B>Apply</B>. In this example,
+        the next conflict will be displayed that must be resolved. The progress bar on the lower
+        right corner of the Merge Tool indicates progress only for the Program Tree merge, not the
+        entire merge process.</P>
+
+        <P>After all program tree conflicts are resolved, the merge process continues with data
+        types and categories.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="DataTypeConflicts"></A>Data Types and Categories</H3>
+
+      <BLOCKQUOTE>
+        <P>All data type or category conflicts that remain after the <A href="#DataTypeAuto">auto
+        merge</A> must be resolved.</P>
+
+        <P>If you make a change (rename, edit contents, delete) to a data type, and the same
+        <I>type</I> of change was made in the latest version, then a conflict arises that you must
+        resolve. The merge process for data types and categories handles these conflicts one at a
+        time. The <I>Current Conflict</I> area of the panel shows:</P>
+
+        <P align="center"><I>Conflict # x of n</I></P>
+
+        <P>where <I>x</I> is the current conflict number, and <I>n</I> is the total number of data
+        type and category conflicts that must be resolved. Data type conflicts are resolved
+        first.</P>
+
+        <P>The image below shows the scenario where you:</P>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P><B>renamed</B> Foo <IMG alt="-&gt;" src="../../shared/arrow.gif"> My_Foo<BR>
+             <B>moved</B> /MISC <IMG alt="-&gt;" src="../../shared/arrow.gif"> /Category1<BR>
+             <SPAN style="font-weight: bold;">changed</SPAN> undefined <IMG alt="-&gt;" src=
+            "../../shared/arrow.gif"> char</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <P>In the latest version:</P>
+
+        <P><B>moved</B> /MISC <IMG alt="-&gt;" src="../../shared/arrow.gif">
+        /Category1/Category2/Category3<BR>
+         <SPAN style="font-weight: bold;">changed</SPAN> undefined <IMG alt="-&gt;" src=
+        "../../shared/arrow.gif"> byte<BR>
+        </P>
+
+        <P>The conflict arises because in both versions the file was <B>moved</B> and also because
+        the second component was changed to a different data type. The rename of Foo to My_Foo
+        doesn't cause a conflict. If you had only <B>renamed</B> the data type (without
+        <B>moving</B> it or <SPAN style="font-weight: bold;">changing</SPAN> the undefined), there
+        would not have been a conflict.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/DataTypeConflict.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>These are the options to resolve the conflict:</P>
+
+        <UL>
+          <LI><I>Latest</I> - select this option to keep what is in the latest version (lose your
+          changes)</LI>
+
+          <LI><I>Checked Out</I> - select this option to apply your changes; (changes in the latest
+          version are lost)</LI>
+
+          <LI><I>Original</I> - select this option to apply what was in the program that you had
+          originally checked out (your changes and those in the latest version are lost)</LI>
+        </UL>
+
+        <P>Select a radio button to resolve the conflict.<BR>
+        </P>
+
+        <P><IMG alt="Note:" src="../../shared/note.png">In the Merge Tool window above, the title
+        indicates the project, program and new version number that will result from the merge.
+        Version 5 of&nbsp; "helloProgram" in the "SampleProject" will be created by the merge. The
+        source archive is indicated for each data tpe in the conflict window. The "Foo" data type
+        was added to "helloProgram" from the "MyTestArchive" data type archive and is still
+        associated with it in each program version (Latest, Checked Out and Original.)<BR>
+        <BR>
+        </P>
+
+        <P>Category conflicts are resolved after data type conflicts. If you make a category change
+        (rename, move, delete, restructure) in your version of the file, and the same <I>type</I>
+        of change was made in the latest version of the file, then a conflict arises that you must
+        resolve.</P>
+
+        <P>The image below shows the scenario where you:</P>
+
+        <BLOCKQUOTE>
+          <P><B>moved</B> /MISC <IMG src="../../shared/arrow.gif" border="0"> /Category1/MISC</P>
+        </BLOCKQUOTE>
+
+        <P>In the latest version:</P>
+
+        <P style="margin-left: 40px;"><B>moved</B> /MISC <IMG src="../../shared/arrow.gif" border=
+        "0"> /Category1/Cateogry2/Category3/MISC</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/CategoryConflict.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P align="left">The options to resolve the conflict are:</P>
+
+        <UL>
+          <LI>
+            <P align="left"><I>Latest</I> - select this option to keep what is in the latest
+            version (lose your changes)</P>
+          </LI>
+
+          <LI>
+            <P align="left"><I>Checked Out</I> - select this option to apply your changes</P>
+          </LI>
+
+          <LI>
+            <P align="left"><I>Original</I> - select this option to apply what was in the program
+            that you had originally checked out (your changes and those in the latest version are
+            lost)</P>
+          </LI>
+        </UL>
+
+        <P align="left">Select a radio button to resolve the conflict.</P>
+
+        <P align="left">After all data type and category conflicts are resolved, the merge process
+        continues with Program Context Registers.<BR>
+        <BR>
+        </P>
+
+        <P align="left"><A name="SourceArchiveConflict"></A>For data types a source archive
+        conflict can occur if the name of an associated source archive changes to a different name
+        in each of the two programs being merged. In the following, the "helloProgram" in the
+        "SampleProject" (as indicated by the Merge Tool title) has a data type that originated from
+        "MyTestArchive". Before you checked in your last changes to the program, the source data
+        type archive was renamed to "TestArchiveTwo". Before someone checked in the Latest changes
+        the source archive had been renamed "TestArchiveOne".<BR>
+        </P>
+
+        <DIV style="text-align: center;">
+          <IMG alt="" src="images/DataTypeSourceConflict.png"><BR>
+        </DIV>
+
+        <P align="left"><SPAN style="font-weight: bold;">Name</SPAN>: This is the name of the
+        source archive in that version of the program.<BR>
+         <SPAN style="font-weight: bold;">Last Sync Time</SPAN>: This is when the program was last
+        synchronized with the source archive.<BR>
+         <SPAN style="font-weight: bold;">Changed Since Last Sync?</SPAN> yes, means that one of
+        the program's data types associated with the source archive has been changed since the last
+        time it was synchronized.<BR>
+        </P>
+
+        <P align="left">To resolve the conflict, select the radio button associated with the
+        current name of the archive.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ProgramContextRegistersConflict"></A>Program Context Registers</H3>
+
+      <BLOCKQUOTE>
+        <P>All register value conflicts that remain after the <A href=
+        "Merge_Program_Files.htm#ProgramContextRegistersAuto">auto merge</A> must be resolved.</P>
+
+        <P><FONT color="#ff0000"><FONT color="#000000"><A href=
+        "help/topics/RegisterPlugin/Registers.htm">Register</A> values can be set on an individual
+        address or a range of addresses. When a register's value at an address or address range is
+        changed in both the latest version and your checked out version and the two values are
+        different, this results in a conflict. For each conflict, the merge tool will display the
+        address or address ranges where the two versions conflict.<BR>
+        </FONT></FONT></P>
+
+        <P><FONT color="#ff0000"><FONT color="#000000">The conflict window will present you with
+        each register that has value conflicts. For each of these registers you will have to
+        resolve each of the address ranges that has a conflict. The conflict information area at
+        the top of the window indicates the register name. It also indicates which address range
+        you are resolving of all the ranges in conflict for this register.<BR>
+        </FONT></FONT></P>
+
+        <P><FONT color="#000000"><FONT>The following image illustrates a conflict due to the
+        DIRECTION register's value being changed in the latest version and cleared in your checked
+        out version of the program. The address range affected by this particular conflict is from
+        address 01002329 to 0100233b. This is indicated in the conflict resolution area below the
+        program listings. The affected addresses are also indicated by the gray
+        ba</FONT></FONT>ckground in the program listings.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/RegConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P align="left"><IMG src="../../shared/tip.png" alt=""> The scrolled listings allow you to
+        see the code units in the different program versions, which may help determine the correct
+        register value to choose. The layout of the Merge Program Context window is very similar to
+        the <A href="Merge_Program_Files.htm#MergeListingWindow">Merge Listing</A> window.</P>
+
+        <P align="left">The options to resolve the conflict are:</P>
+
+        <UL>
+          <LI>
+            <P align="left"><I>Latest</I> - select this option to keep what is in the latest
+            version (lose your changes)</P>
+          </LI>
+
+          <LI>
+            <P align="left"><I>Checked Out</I> - select this option to apply your changes
+            (overwrites change in the latest version)</P>
+          </LI>
+
+          <LI><I>Original</I> - select this option to restore the original register values (your
+          changes and those in the latest version are lost)<BR>
+          </LI>
+        </UL>
+
+        <P align="left">Select a radio button to resolve the conflict and then press the
+        <B>Apply</B> button to continue merging.</P>
+
+        <P align="left">After all register conflicts are resolved, the merge process continues with
+        the Listing.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ListingConflict"></A>Listing</H3>
+
+      <BLOCKQUOTE>
+        <P>Various parts of the program are merged in the Listing merge phase. These include the
+        bytes and code units, functions, symbols, equates, user defined properties, references,
+        bookmarks, and comments. Listing conflicts must be resolved in the order they are presented
+        before moving to the next conflict and eventually completing the merge process.</P>
+
+        <H4><A name="ListingConflictWindow"></A>Listing Conflict Window</H4>
+
+        <P><A name="MergeListingWindow"></A>Listing conflicts are presented in a Merge Listing
+        Window. The Merge Listing Window displays four program listings:</P>
+
+        <BLOCKQUOTE>
+          <TABLE border="1" cellpadding="2" cellspacing="2" width="100%">
+            <TBODY>
+              <TR>
+                <TD valign="top">Result<BR>
+                </TD>
+
+                <TD valign="top">The new program version that will result from this merge.<BR>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">Latest<BR>
+                </TD>
+
+                <TD valign="top">The latest checked-in version of the program.<BR>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">Checked Out<BR>
+                </TD>
+
+                <TD valign="top">Your checked out version of the program to be merged.<BR>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">Original<BR>
+                </TD>
+
+                <TD valign="top">The version of the program that you originally checked out.<BR>
+                </TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <P>The following shows the Merge Listing Window and describes (<FONT color="#ff0000">in red
+        text</FONT>) some of the features of the conflict window.<BR>
+        </P>
+
+        <P>The <I><IMG src="images/Merge.png" alt=""> Merge Listing</I> on the top left side of the
+        window indicates that you are in the Listing phase of the merge. The <I>Resolve Byte / Code
+        Unit Conflict</I> area title indicates you are in the Code Unit phase of Listing Merge.
+        This area provides the following information:<BR>
+        </P>
+
+        <UL>
+          <LI>the addresses for the conflict currently being resolved</LI>
+
+          <LI>number of conflicts at the indicated address(es)</LI>
+
+          <LI>current conflict</LI>
+
+          <LI>how many sets of conflicts there are to resolve in this phase of the Listing
+          merge<BR>
+          </LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ListingMergeDescriptions.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Each of the listings in the above image displays the associated program (Result, Latest,
+        etc). This allows you to look at each of the programs involved in the merge whenever you
+        are trying to resolve a Listing conflict. You can use the <IMG src="images/expand.gif" alt=
+        ""> expand icon in the Result listing's toolbar to adjust the fields that are displayed in
+        all of the listings like in the Code Browser. The <I>GoTo</I> is also available for
+        navigating within the listings.<BR>
+        </P>
+
+        <P><U>Scroll Locks for the Listings</U> <IMG src="images/lock.gif" alt=""> <IMG src=
+        "images/unlock.gif" alt=""></P>
+
+        <BLOCKQUOTE>
+          <P>Initially, the four programs scroll together. Each listing has a lock icon <IMG src=
+          "images/lock.gif" alt=""> associated with it. When the lock icon <IMG src=
+          "images/lock.gif" alt=""> is displayed for a listing, scrolling that listing or
+          navigating within that listing will also cause all other locked listings to scroll to the
+          same address. When a listing is displaying the unlocked icon <IMG src="images/unlock.gif"
+          alt=""> , it will not scroll when the other listings scroll. Likewise, scrolling it will
+          not cause any of the other listings to scroll.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <H4><A name="CodeUnitsConflict"></A>Code Units</H4>
+
+        <BLOCKQUOTE>
+          <P>The first type of Listing conflict you may encounter is a byte or code unit conflict.
+          All byte and code unit conflicts that remain after the <A href=
+          "Merge_Program_Files.htm#CodeUnitsAuto">auto merge</A> must be resolved.</P>
+
+          <P>The following types of changes will result in code unit conflicts that need
+          resolving.<BR>
+          </P>
+
+          <UL>
+            <LI>The same bytes had their values changed to different values in the latest version
+            and your checked out version.</LI>
+
+            <LI>A byte was changed in one version where a code unit was changed in the other
+            version.</LI>
+
+            <LI>The code units were changed in your version and the latest version but not to the
+            same new code units.<BR>
+            For example, latest created an instruction and your version created data at an address.
+            Another example would be that a different structure was applied in your version and the
+            latest version at the same address.</LI>
+
+            <LI>An instruction was cleared in one version and an equate was set in the other
+            version.<BR>
+            </LI>
+
+            <LI>An instruction had a flow override applied in one version and a reference was added 
+            in the other version.<BR>
+            </LI>
+          </UL>
+          <P><IMG src="../../shared/note.png" alt=""> If an instruction change conflicts with a 
+          reference change, the references can be viewed by right clicking on an instruction in 
+          one of the four listings (Result, Latest, Checked Out, Original) and choosing the 
+          <B>View Instruction Details...</B> action. This will pop up a dialog indicating any 
+          fallthrough override or flow override and the references for that instruction.
+          </P>
+
+          <P><U>Example</U> : The following image shows a code unit conflict that occurred because
+          you changed the second component of the <I>SampleStructure</I> from a word to an array of
+          two characters and the word was changed in the latest version to two separate
+          characters.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/CodeUnit2CharConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">Notice that the listings allow you to open and close the structure in the
+          same way that you can in the CodeBrowser by clicking on the + in the listing. The
+          addresses with the gray background in the listing indicate the code unit(s) that you are
+          currently trying to resolve.</P>
+
+          <P align="left">Note that you will have already resolved all <A href=
+          "#DataTypeConflicts">data type conflicts</A> by this time; this conflict is due to
+          different data types being applied at the same address. You are resolving <I>which data
+          type to apply</I> at the address.</P>
+
+          <P align="left">In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>'Latest' version</I> - select this option to keep the structure
+              containing two separate characters as in the latest version (lose your changes)</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>'Checked Out' version</I> - select this option to apply your
+              structure containing the 2 character array (overwrites change in the latest
+              version)</P>
+            </LI>
+
+            <LI><I>'Original' version</I> - select this option to restore the original structure
+            containing the word (your changes and those in the latest version are lost)<BR>
+            </LI>
+          </UL>
+
+          <P align="left">Depending on which option you choose, you may end up with a
+          "SampleStructure.conflict" as the data type name.</P>
+
+          <P align="left">Select a radio button to resolve the conflict and press the <B>Apply</B>
+          button to continue with the merge process.</P>
+
+          <P align="left">After all byte and code unit conflicts are resolved, the merge process
+          continues with any Function conflicts in the Listing.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="ExternalsConflict"></A>External Functions and Labels</H4>
+
+        <BLOCKQUOTE>
+          <P>All external location conflicts that remain after the <A href=
+          "Merge_Program_Files.htm#ExternalsAuto">auto merge</A> must be resolved.</P>
+
+          <P>The following types of changes to external locations will result in conflicts that need
+          resolving between your checked out version and the latest version in the repository.<BR>
+          </P>
+
+          <UL>
+            <LI>
+              If you add an external function or label and it appears to be the same external as
+              one that was added in the latest version. (i.e. It has the same name or is 
+              referenced from the same code.)
+            </LI>
+
+            <LI>If an existing external function or label is removed in your version and changed 
+            in the latest version in any way or vice versa.</LI>
+
+            <LI>If you change an external label into an external function and the latest sets the 
+            data type on the external label or vice versa.</LI>
+
+            <LI>If you change the number of parameters, the parameter storage, or the parameter type 
+            (stack versus register) and the latest also changed parameters in any way, then you must 
+            select to keep all of your parameters or all of the latest version's parameters. The 
+            same is true if the latest version changed the number or type of parameters and you changed
+            parameters in any way.</LI>
+
+            <LI>
+              If you change a piece of an external functions information and the latest version 
+              changes the same piece of function information to a different value.<BR>
+              For example, if one changes the function's name and the other changes the return
+              type, then both changes occur without a conflict. If both change the name, this is a
+              conflict.<BR>
+            </LI>
+
+            <LI>
+              If you change a piece of stack information and the latest version changes the same
+              piece of stack information to a different value.<BR>
+              Stack information includes: 
+
+              <UL>
+                <LI>return address offset</LI>
+
+                <LI>parameter offset</LI>
+
+                <LI>stack purge size</LI>
+              </UL>
+            </LI>
+
+            <LI>
+              If you change a piece of parameter information and the latest version changes the
+              same piece of parameter information to a different value.<BR>
+              Parameter information includes: 
+
+              <UL>
+                <LI>name</LI>
+
+                <LI>data type</LI>
+
+                <LI>comment</LI>
+
+                <LI>offset</LI>
+
+                <LI>register</LI>
+              </UL>
+            </LI>
+
+          </UL>
+
+          <P><U>Example 1</U> : The following image illustrates a possible Add conflict. In this case,
+          an external label was added to the Latest program and an external function was added to
+          the Checked Out program. Both external locations refer to the same external memory address and
+          may be intended as the same external.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ExternalAddConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+
+          <P>In this case you must select the radio button indicating which external(s) to keep:</p>
+          
+             <UL>
+                <LI><P align="left"><I>Keep 'Latest'</I> will keep the external label.</P></LI>
+
+                <LI><P align="left"><I>Keep 'Checked Out'</I> will keep the external function.</P></LI>
+
+                <LI><P align="left"><I>Keep Both</I> will keep Both the external label and the 
+                external function. If the label and function had the same name, the function would 
+                get renamed with a new name containing a conflict extension.</P></LI>
+
+                <LI><P align="left"><I>Merge Together</I> will merge the external label and 
+                function together. In this case, the result would be an external function, 
+                but after pressing the Apply button, you would be prompted 
+                with an additional name conflict that you would need to resolve.</P></LI>
+             </UL>
+
+          <P align="left">Select a radio button and press the
+          <B>Apply</B> button to continue with the merge process.</P>
+
+          <P><U>Example 2</U> : The following image illustrates a conflict due to an external label
+          having its data type set in the latest version while you changed it into a function. 
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ExternalDataTypeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>In this case you must select the radio button indicating which change to keep:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Keep 'Latest'</I> will result in the external label with a Float
+              data type and the change to a function is discarded.</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Keep 'Checked Out'</I> will keep the external as a function and the
+              data type change will be discarded.</P>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button and press the <B>Apply</B> button to continue with
+          the merge process.</P>
+
+          <P><BR>
+          <U>Example 3</U> : The following image illustrates a conflict because you created the
+          same external function as was created in the latest version. However, parameter storage 
+          has been defined differently in each version. You must choose which parameter signature
+          and its associated storage should be kept.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ExternalFunctionParametersConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Use Latest version.</I> will use the function parameter storage
+              as it is in the Latest version.</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Use Checked Out version</I> will use the function parameter storage
+              as it is in your Checked Out version.</P>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button and press the <B>Apply</B> button to continue with
+          the merge process.</P>
+
+          <P align="left">After all external label and external function conflicts are resolved, 
+          the merge process continues
+          with any regular Function conflicts in the Listing.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="FunctionsConflict"></A>Functions</H4>
+
+        <BLOCKQUOTE>
+          <P>All function conflicts that remain after the <A href=
+          "Merge_Program_Files.htm#FunctionsAuto">auto merge</A> must be resolved.</P>
+
+          <P>The following types of changes to functions will result in conflicts that need
+          resolving between your checked out version and the latest version in the repository.<BR>
+          </P>
+
+          <UL>
+            <LI>
+              If you create or change a function causing its body to overlap one or more functions
+              that are defined in the latest version. 
+
+              <UL>
+                <LI>Functions with bodies that have addresses in common are said to <I>overlap</I>
+                if their entry points and bodies are not exactly the same.</LI>
+
+                <LI>In this case you must choose which version's function(s) to keep.</LI>
+              </UL>
+            </LI>
+
+            <LI>If an existing function is removed in your version and changed in the latest
+            version in any way or vice versa.</LI>
+
+            <LI>If both versions add a function with the same entry point, but all parts of the
+            function are not the same.</LI>
+
+            <LI>If you change the number of parameters or the parameter type (stack versus
+            register) and the latest also changed parameters in any way, then you must select to
+            keep all of your parameters or all of the latest version's parameters. The same is true
+            if the latest version changed the number or type of parameters and you changed
+            parameters in any way.</LI>
+
+            <LI>
+              If you change a piece of function information and the latest version changes the same
+              piece of function information to a different value.<BR>
+              Function information includes: 
+
+              <UL>
+                <LI>name</LI>
+
+                <LI>body</LI>
+
+                <LI>return data type</LI>
+              </UL>For example, if one changes the function's name and the other changes the return
+              type, then both changes occur without a conflict. If both change the name, this is a
+              conflict.<BR>
+            </LI>
+
+            <LI>
+              If you change a piece of stack information and the latest version changes the same
+              piece of stack information to a different value.<BR>
+              Stack information includes: 
+
+              <UL>
+                <LI>return address offset</LI>
+
+                <LI>parameter offset</LI>
+
+                <LI>local size</LI>
+
+                <LI>stack purge size</LI>
+              </UL>
+            </LI>
+
+            <LI>
+              If you change a piece of parameter information and the latest version changes the
+              same piece of parameter information to a different value.<BR>
+              Parameter information includes: 
+
+              <UL>
+                <LI>name</LI>
+
+                <LI>data type</LI>
+
+                <LI>comment</LI>
+
+                <LI>offset</LI>
+
+                <LI>register</LI>
+              </UL>
+            </LI>
+
+            <LI>
+              If you change a piece of local variable information and the latest version changes
+              the same piece of local variable information to a different value.<BR>
+              Local variable information includes: 
+
+              <UL>
+                <LI>name</LI>
+
+                <LI>data type</LI>
+
+                <LI>comment</LI>
+
+                <LI>offset</LI>
+
+                <LI>register<BR>
+                </LI>
+              </UL>
+            </LI>
+          </UL>
+
+          <P><U>Example 1</U> : The following image illustrates a function parameter with multiple
+          conflicts. In this case the conflict resolution area below the listings is different than
+          many of the other listing conflict resolution areas. Each row of the table provides you
+          with a separate conflict and a choice that must be made.</P>
+
+          <P>Notice in the image that the parameter name and the parameter type are each in
+          conflict. You must choose a radio button on each row to indicate what you want to keep in
+          the version that will get checked in.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ParameterMultiConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">The function FUN_01002b44 has two conflicts for its second parameter.<BR>
+          In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>Conflict column - indicates what specific part of the function is in conflict.<BR>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Latest</I> column - select the item from this column to keep the
+              latest version's change (lose your changes).</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Checked Out</I> column - select the item from this column to keep
+              your change (overwrites change in the latest version).</P>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button on each row to resolve the conflicts and press the
+          <B>Apply</B> button to continue with the merge process.</P>
+
+          <P><U>Example 2</U> : The following image illustrates a conflict due to overlapping
+          function bodies. In this case you created a function at address 01001984 and the latest
+          version created a function at address 01001979. The two functions don't have the same
+          entry point, but their bodies overlap. Since function bodies can't overlap, you must
+          choose which version's functions should be kept. The <I>Resolve Function Overlap
+          Conflict</I> area indicates the address range(s) that are in conflict. This is also
+          indicated by the gray background in the listings.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/FunctionOverlapConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>In this case you must select the radio button indicating which version's functions to
+          keep:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Latest</I> - select the radio button in front of Latest to keep
+              the latest version's functions for the indicated address ranges (lose your
+              functions).</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Checked Out</I> - select the radio button in front of Checked Out
+              to keep the your functions for the indicated address ranges (overwrites change in the
+              latest version).</P>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button and press the <B>Apply</B> button to continue with
+          the merge process.</P>
+
+          <P><BR>
+          <U>Example 3</U> : The following image illustrates a conflict because you changed the
+          return type and the function was deleted in the latest version. You must choose whether
+          to keep the function or remove it.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/FunctionRemoveVsChangeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Delete function as in 'Latest' version.</I> - select this option
+              to remove the function as in the latest version (lose your changes)</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Keep function 'FUN_010031ee' as in 'Checked Out' version</I> -
+              select this option to keep the function and your changes to it (overwrites change in
+              the latest version)</P>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button and press the <B>Apply</B> button to continue with
+          the merge process.</P>
+
+          <P align="left">After all function conflicts are resolved, the merge process continues
+          with any Symbol conflicts in the Listing.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="SymbolsConflict"></A>Symbols</H4>
+
+        <BLOCKQUOTE>
+          <P>All symbol conflicts that remain after the <A href=
+          "Merge_Program_Files.htm#SymbolsAuto">auto merge</A> must be resolved.</P>
+
+          <P>The symbol phase of the Listing merge will merge labels, <A href=
+          "help/topics/SymbolTreePlugin/SymbolTree.htm#Namespace">namespace</A> symbols, class
+          symbols, and external symbols.<BR>
+          The following are the types of symbol conflicts that require manual resolution:</P>
+
+          <UL>
+            <LI>Removed symbol in one version and changed it in other.</LI>
+
+            <LI>Symbol was renamed differently in each version.</LI>
+
+            <LI>Same named symbol at the same address in each version, but in different namespaces
+            (symbols with different scope).</LI>
+
+            <LI>Each version set a different symbol to primary at an address.<BR>
+            </LI>
+          </UL>
+
+          <P><U>Example 1</U> : The following image shows a symbol conflict that occurred because
+          you changed the label "DDD" from global scope to function scope (in the FUN_01004444
+          function's namespace) and the latest version removed the symbol.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolRemoveVsChangeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">In the <I>Resolve Symbol Conflict</I> area you must choose an option to
+          resolve the conflict. Each row shows the information for a different version of the
+          program. The Option column allows you to choose a version change or simply indicates
+          which version's information follows it in the row. The Symbol column gives the symbol
+          name. The Scope gives the namespace containing the symbol. The address indicates the
+          address where the symbol is located. The Type indicates whether the symbol is a label,
+          namespace, class, etc. Primary indicates whether the symbol is the primary symbol at the
+          address in that version.<BR>
+          </P>
+
+          <P align="left">In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Remove as in 'Latest' version</I> - select this option to leave
+              the label DDD removed (lose your changes)</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Change as in 'Checked Out' version</I> - select this option to
+              change the label DDD to be in the function's scope (overwrites change in the latest
+              version)</P>
+            </LI>
+
+            <LI><I>'Original' version</I> - this is not selectable, but shows the symbol in the
+            original version you checked out.<BR>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button to resolve the conflict and press the <B>Apply</B>
+          button to continue with the merge process.</P>
+
+          <P><BR>
+          <U><BR>
+          Example 2</U> : The following image shows a symbol conflict that occurred because you
+          changed the label "AAA" to "ME" and changed it to global scope, but the latest version
+          only renamed the symbol.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolRenameWithScopeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Rename as in 'Latest' version</I> - select this option if ME
+              should be in the function's scope (lose your changes)</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Rename as in 'Checked Out' version</I> - select this option if ME
+              should have global scope (overwrites change in the latest version)</P>
+            </LI>
+
+            <LI><I>'Original' version</I> - this is not selectable, but shows the symbol in the
+            original version you checked out.<BR>
+            </LI>
+          </UL>
+
+          <P align="left">Select a radio button to resolve the conflict and press the <B>Apply</B>
+          button to continue with the merge process.</P>
+
+          <P><BR>
+          <U><BR>
+          Example 3</U> : The following image shows a symbol conflict that occurred because you
+          added the label "Bud" to the function scope (in the FUN_01004bc0 function's namespace)
+          and the latest version added the same named symbol at the same address, but gave it
+          global scope.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolAddressConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">In the <I>Resolve Symbol Conflict</I> area you must choose an option to
+          resolve the conflict. Each of the first two rows shows the information for a different
+          version of the program. Below these rows are two radio buttons that let you choose to
+          either discard your symbol or rename it so that its name will not conflict with the one
+          from the latest version.<BR>
+          </P>
+
+          <P align="left">In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>'Latest' version</I> - this is not selectable, but shows the
+              symbol in the latest version.</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>'Checked Out' version</I> - this is not selectable, but shows your
+              symbol.</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Discard 'Checked Out' symbol</I> - select this option to not
+              include your symbol (lose your changes).</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Rename 'Checked Out' symbol to 'Bud_conflict1'</I> - select this
+              option to rename your symbol to avoid the conflict.</P>
+            </LI>
+          </UL>
+
+          <P>Select a radio button to resolve the conflict and press the <B>Apply</B> button to
+          continue with the merge process.</P>
+
+          <P><BR>
+           <U><BR>
+          Example 4</U> : The next image shows a symbol conflict about which symbol to make the
+          primary symbol at an address. In the following scenario, you added the label "Bar" and
+          the latest version added the label "Foo" at the same address. Both labels can exist at
+          the same address since they have different names, but they cannot both be the primary
+          symbol. So you must choose which label is the primary one.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolPrimaryConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">In this case the options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Set 'Latest' to primary</I> - select this option if Foo should be
+              the primary symbol.</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Set 'Checked Out' to primary</I> - select this option if Bar
+              should be the primary symbol.</P>
+            </LI>
+
+            <LI><I>'Original' version</I> - this is not selectable, but shows the symbol in the
+            original version you checked out. In this case there was no label originally.<BR>
+            </LI>
+          </UL>
+
+          <P>Notice that both symbol are kept as shown in the Result program's listing.<BR>
+          </P>
+
+          <BLOCKQUOTE>
+            <P>Select a radio button to resolve the conflict and press the <B>Apply</B> button to
+            continue with the merge process.<BR>
+             <U><BR>
+            Symbol Merge Information Dialog</U></P>
+
+            <BLOCKQUOTE>
+              <P>At the end of the Symbol merge phase, a <I>Symbol Merge Information</I> dialog
+              will appear if any namespaces could not be removed as expected. You might indicate to
+              remove a namespace when it is in conflict with another symbol or it may have been
+              removed by auto merge. However, if another symbol gets placed into that namespace as
+              a result of resolving a conflict, the namespace must be retained. The dialog is
+              simply to inform you that this has occurred. The following image illustrates that the
+              namespace called SecondNamespace was not removed since it contained at least one
+              other symbol.<BR>
+              </P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolNamespaceKept.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>Press the OK button on this dialog to continue with the merge process.<BR>
+          </P>
+
+          <P>The <I>Symbol Merge Information</I> dialog can also have symbol conflict information.
+          If a symbol must be renamed as part of the merge process, you are notified of the new
+          symbol names at the end of the Symbol merge phase.</P>
+
+          <P>Conflicting symbols are renamed by adding a suffix of "_conflict" and an incremented
+          number to make the name unique. The following image shows two renamed symbols. The first
+          is the global symbol ME which was renamed to ME_conflict1. The second is the symbol YOU
+          in the FUN_01001ae3 namespace which was renamed YOU_conflict1.<BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SymbolConflictAutoRenamed.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>Press the OK button to continue with the merge process.<BR>
+          </P>
+
+          <P align="left">After all symbol conflicts are resolved, the merge process continues with
+          any Address Based Listing Merge conflicts.</P>
+        </BLOCKQUOTE>
+
+        <H4><U>Address Based Listing Merge</U></H4>
+
+        <BLOCKQUOTE>
+          <P>All of the address based listing elements (equates, user defined properties,
+          references, bookmarks, and comments) has already been auto merged before any of their
+          conflicts are presented for conflict resolution. Conflict resolution will proceed in
+          address order for each address that has a conflict for any of the address based listing
+          elements. At each address with a conflict you will have to resolve all of the conflicts
+          (equates, user defined properties, references, bookmarks, and comments) before proceeding
+          to the next address with conflicts. The following sub-sections describe conflict merging
+          for each of the address based listing elements.</P>
+
+          <H4><A name="EquatesConflict"></A>Equates</H4>
+
+          <BLOCKQUOTE>
+            <P>All equate conflicts that remain after the <A href=
+            "Merge_Program_Files.htm#EquatesAuto">auto merge</A> must be resolved.<BR>
+            <BR>
+             <A href="help/topics/EquatePlugin/Equates.htm">Equates</A> associate a name with a
+            scalar. If your version and the latest version change the equate for a scalar and they
+            are different as a result of the change, then the equates are in conflict and must be
+            resolved manually. Changes include adding an equate to a scalar, removing an equate for
+            a scalar, changing the equate name for a scalar.<BR>
+            </P>
+
+            <P>If an equate is changed differently in the latest and your versions, then you must
+            resolve the conflict.<BR>
+            </P>
+
+            <P><U>Example</U> : The following illustrates an equate conflict on the scalar 0x1 of
+            operand 0 at 01001d0b. The scalar originally had an equate of <B>01</B>. Each version
+            changed the equate on 0x1 to a new name.<BR>
+            The image below shows the scenario where you:<BR>
+            </P>
+
+            <BLOCKQUOTE>
+              <P><B>changed</B> 01 <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              PEAR</P>
+            </BLOCKQUOTE>
+
+            <P>In the latest version:</P>
+
+            <BLOCKQUOTE>
+              <P><B>changed</B> 01 <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              ORANGE</P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/EquateConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">The options to resolve the conflict are:</P>
+
+            <UL>
+              <LI>
+                <P align="left"><I>Keep 'Latest' version</I> - select this option to keep the
+                equate for the latest version (lose your changes)</P>
+              </LI>
+            </UL>
+
+            <UL>
+              <LI>
+                <P align="left"><I>Keep 'Checked Out' version</I> - select this option to keep your
+                equate</P>
+              </LI>
+
+              <LI>
+                <P align="left"><I>'Original' version</I> - this row simply indicates the original
+                value at the time you checked out the program</P>
+              </LI>
+            </UL>
+
+            <P align="left">Select the radio button for either the latest or checked out version
+            and press the <B>Apply</B> button to continue with the merge process.</P>
+
+            <P align="left">After all equate conflicts are resolved, the merge process continues
+            with the User Defined Properties.</P>
+          </BLOCKQUOTE>
+
+          <H4><A name="UserDefinedPropertiesConflict"></A>User Defined Properties</H4>
+
+          <BLOCKQUOTE>
+            <P>All user defined property conflicts that remain after the <A href=
+            "Merge_Program_Files.htm#UserDefinedPropertiesAuto">auto merge</A> must be
+            resolved.</P>
+
+            <P>User defined properties are individual named properties associated with addresses in
+            the program. Individual plugins can create one or more property. All of the conflicts
+            for a named property are presented to you and must be resolved before the next named
+            property with conflicts is presented.</P>
+
+            <P>If the named property was changed at an address in your version of the program and
+            changed differently in the latest version then a user defined property conflict
+            exists.<BR>
+            </P>
+
+            <P><U>Example</U> : The image below shows the scenario where you:<BR>
+            </P>
+
+            <BLOCKQUOTE>
+              <P>Added a <B>Space</B> property with a value of <B>4</B>.</P>
+            </BLOCKQUOTE>
+
+            <P>In the latest version:</P>
+
+            <BLOCKQUOTE>
+              <P>Added a <B>Space</B> property with a value of <B>3</B>.<BR>
+              </P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/UserDefinedUseForAllConflict.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left">The options to resolve the conflict are:</P>
+
+          <UL>
+            <LI>
+              <P align="left"><I>Keep 'Latest' version</I> - select this option to keep what is in
+              the latest version (lose your changes)</P>
+            </LI>
+
+            <LI>
+              <P align="left"><I>Keep 'Checked Out' version</I> - select this option to apply your
+              changes (overwrites change in the latest version)</P>
+            </LI>
+
+            <LI><I>Keep 'Original' version</I> - select this option to restore the original value
+            of the property (your changes and those in the latest version are lost)<BR>
+            </LI>
+          </UL>
+
+          <P>Select the radio button for the value of the Space property you want to have in the
+          checked in version.</P>
+
+          <P>You can resolve the remaining conflicts for the same named property by selecting the
+          checkbox, <I>Use the selected option for resolving all remaining 'Space' property
+          conflicts.</I> The same program version option that you selected will be applied to the
+          remaining conflicts for the same named property. In the example above, the 'Check Out'
+          version option would be used for the remaining conflicts for the <B>Space</B>
+          property.</P>
+
+          <P>When you <B>Apply</B> after selecting the radio button and checkbox as illustrated in
+          the example above, your changes (the Checked Out version) would be chosen for the
+          <B>Space</B> property at the indicated address and for all remaining addresses that have
+          the <B>Space</B> property in conflict. Because you selected the checkbox, you will no
+          longer be prompted to resolve conflicts for that property type.<BR>
+          </P>
+
+          <P><IMG src="../../shared/note.png" alt="">Selecting the <I>Use the selected option for
+          resolving all ...</I> checkbox for the Space property would not affect the resolving of
+          conflicts for any other named property. However, the user can select the checkbox for
+          each different named property with conflicts.<BR>
+          </P>
+
+          <P align="left">After all user defined property conflicts are resolved, the merge process
+          continues with the References.</P>
+
+          <H4><A name="ReferencesConflict"></A>References</H4>
+
+          <BLOCKQUOTE>
+            <P>All reference conflicts that remain after the <A href=
+            "Merge_Program_Files.htm#ReferencesAuto">auto merge</A> must be resolved.</P>
+
+            <P><A href="help/topics/ReferencesPlugin/References_from.htm">References</A> consist of
+            memory references, stack references, register references and external references. The
+            references in your checked out version and the latest version are compared for each
+            mnemonic and operand at an address to determine if a conflict exists.</P>
+
+            <P><A name="ReferenceConflict"></A>References conflict if the two versions of the
+            program (your version and the latest version) have a reference at the same address and
+            operand, but they are different types of references (memory, stack, register,
+            external). References can also conflict when they are the same type if both versions
+            changed the reference and one or more parts are now different. The following indicates
+            the parts of a reference that can conflict with another reference of the same type.<BR>
+            </P>
+
+            <P>Parts of an <I><B>external</B></I> reference that may conflict:</P>
+
+            <UL>
+              <LI>external program name</LI>
+
+              <LI>referenced label</LI>
+
+              <LI>referenced address</LI>
+
+              <LI>whether or not it is user defined<BR>
+              </LI>
+            </UL>
+
+            <P>Parts of a <I><B>stack</B></I> reference that may conflict:</P>
+
+            <UL>
+              <LI>stack offset</LI>
+
+              <LI>referenced variable name</LI>
+
+              <LI>first-use address</LI>
+            </UL>
+
+            <P>Parts of a <I><B>register</B></I> reference that may conflict:</P>
+
+            <UL>
+              <LI>the register</LI>
+
+              <LI>referenced variable name</LI>
+
+              <LI>first-use address</LI>
+            </UL>
+
+            <P>Parts of a <I><B>memory</B></I> reference that may conflict:</P>
+
+            <UL>
+              <LI>offset</LI>
+
+              <LI>label</LI>
+
+              <LI>reference type (computed call, computed jump, data, read, write, flow, etc.)</LI>
+
+              <LI>whether or not it is a user reference<BR>
+              </LI>
+            </UL>
+
+            <P>The following types of changes will result in reference conflicts:</P>
+
+            <UL>
+              <LI>
+                Your version and the latest version each added a different <I>reference type</I>
+                (memory, stack, or external). 
+
+                <P>If your checked out version and the latest version both have changes to the
+                references for a mnemonic or operand, the references are in conflict whenever your
+                version and the latest version have references that are different types (for
+                example, one has memory references and the other has an external reference.)</P>
+              </LI>
+
+              <LI>You removed a reference and the latest version changed the same reference or vice
+              versa.<BR>
+              </LI>
+
+              <LI>Your version and the latest version both changed a reference and it now differs
+              in one of the ways they can conflict as indicated above.<BR>
+              </LI>
+
+              <LI>Your version and the latest version both added the same type of reference with
+              the same from and to addresses, but differed such that they <A href=
+              "#ReferenceConflict">conflict</A>.<BR>
+              </LI>
+
+              <LI>Your version and the latest version both set the primary reference, but not to
+              the same reference.<BR>
+              </LI>
+            </UL>
+
+            <P align="left"><IMG src="../../shared/note.png" alt="Note:"> The first operand of an
+            instruction is numbered as operand 0.<BR>
+             <U><BR>
+            </U></P>
+
+            <P align="left"><U>Example 1</U> : The following image illustrates an <I>external
+            reference conflict</I>. Your version and the latest version both changed the external
+            reference at address 01001000 operand 0. The latest version caused it to become user
+            defined and you changed it to refer to the symbol "bud" instead of "IsTextUnicode".<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/ExternalRefConflict.png" alt=""><BR>
+      </P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">The options to resolve the conflict are:</P>
+
+            <UL>
+              <LI>
+                <P align="left"><I>Change as in 'Latest' version</I> - select this option to keep
+                what is in the latest version (lose your changes). In this case, keep the reference
+                to "IsTextUnicode."</P>
+              </LI>
+
+              <LI>
+                <P align="left"><I>Change as in 'Checked Out' version</I> - select this option to
+                apply your changes (overwrites change in the latest version). In this case keep the
+                reference to "bud."</P>
+              </LI>
+
+              <LI><I>'Original' version</I> - This field is not selectable, but is provided to show
+              the value in the Original version that you checked out.<BR>
+              </LI>
+            </UL>
+
+            <P align="left">Select the radio button for whether to keep the reference to 0x10 or
+            0x14 and select the <B>Apply</B> button to continue with the merge process.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left"><BR>
+            <U><BR>
+            Example 2</U> : The following image illustrates <I>conflicting reference types</I>
+            being added in your version and the latest version. Possible reference types are
+            memory, stack, register or external. In this case, you added a stack reference and the
+            latest version has a register reference added at address 010018cd operand 0.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/RefRegStackConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">Once again, select the radio button for which reference to keep and
+            select the <B>Apply</B> button to continue with the merge process.<BR>
+            <BR>
+            </P>
+
+            <P align="left"><U>Example 3</U> : The next image illustrates a <I>memory reference
+            conflict</I> where you changed an existing memory reference from a DATA reference to a
+            WRITE reference and the latest version changed the memory reference to a READ_WRITE
+            reference.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/MemRefConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">Select the radio button for which reference to keep and select the
+            <B>Apply</B> button to continue with the merge process.<BR>
+            </P>
+
+            <P align="left"><U>Example 4</U> : The following illustrates a <I>conflict when
+            different reference types are added</I> in your version and the latest version. In this
+            case you added an external reference at address 01002510 operand 0 and the latest
+            version added multiple memory references.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/RefTypeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">The options to resolve the conflict are:</P>
+
+            <UL>
+              <LI>
+                <P align="left"><I>Use all in 'Latest' version</I> - select this option to keep
+                what is in the latest version (lose your changes). This would keep all of the
+                memory references and lose the external reference.</P>
+              </LI>
+
+              <LI>
+                <P align="left"><I>Use 'Checked Out' version</I> - select this option to apply your
+                changes (overwrites change in the latest version). This would keep the external
+                reference and lose all of the memory references.</P>
+              </LI>
+
+              <LI><I>'Original' version</I> - This field is not selectable, but is provided to show
+              the value in the Original version that you checked out. In this case there was no
+              reference originally.<BR>
+              </LI>
+            </UL>
+
+            <P align="left">Select the radio button for which references to keep and press the
+            <B>Apply</B> button to continue with the merge process.</P>
+
+            <P align="left">After all reference conflicts are resolved, the merge process continues
+            with the Bookmarks.</P>
+          </BLOCKQUOTE>
+
+          <H4><A name="BookmarksConflict"></A>Bookmarks</H4>
+
+          <BLOCKQUOTE>
+            <P>All bookmark conflicts that remain after the <A href=
+            "Merge_Program_Files.htm#BookmarksAuto">auto merge</A> must be resolved.<BR>
+            </P>
+
+            <P><B>Note</B> bookmarks are in conflict when any of the following occur:</P>
+
+            <UL>
+              <LI>your version and the latest version both add a <B>Note</B> bookmark and the
+              category or description differ.</LI>
+
+              <LI>your version removes a bookmark and the latest version changes the category or
+              description or vice versa.</LI>
+
+              <LI>your version and the latest version change the category and/or description so
+              that they no longer match.</LI>
+            </UL>
+
+            <P>All other bookmarks are in conflict when any of the following occur:</P>
+
+            <UL>
+              <LI>your version and the latest version both add a non-<B>Note</B> bookmark with the
+              same category but different description.</LI>
+
+              <LI>your version removes a non-<B>Note</B> bookmark of a specific category and the
+              latest version changes the description for that bookmark type and category or vice
+              versa.<BR>
+               <IMG src="../../shared/note.png" alt=""> You cannot directly change the description
+              on a non-<B>Note</B> bookmark through regular bookmark editing in Ghidra, but a
+              plugin could change it programmatically.<BR>
+              </LI>
+
+              <LI>your version and the latest version change the description for a bookmark of a
+              particular type and category so that they no longer match.<BR>
+              </LI>
+            </UL>
+
+            <P><U>Example 1</U> : The next image illustrates a conflict due to your version and the
+            latest version both adding different <B>Note</B> bookmarks at the same address.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/BmNoteBothAddConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="left">When bookmarks are in conflict, you can:</P>
+
+            <UL>
+              <LI>
+                <P align="left"><I>Keep 'Latest' version</I> - select this option to keep the
+                bookmark change in the latest version (lose your changes)</P>
+              </LI>
+
+              <LI>
+                <P align="left"><I>Keep 'Checked Out' version</I> - select this option to apply
+                your bookmark changes at the address (overwrites change in the latest version)</P>
+              </LI>
+
+              <LI><I>'Original' version</I> - This field is not selectable, but is provided to show
+              the value in the Original version that you checked out</LI>
+            </UL>
+
+            <P><IMG src="../../shared/note.png" alt=" border="> Notice that the above bookmarks
+            conflict even though they are not in the same category. This is because only one
+            <B>Note</B> bookmark is allowed at an address regardless of its category.</P>
+
+            <P>Select either the latest version or your checked out version and then select
+            <B>Apply</B> to continue with the merge.<BR>
+            </P>
+
+            <P><BR>
+            <U><BR>
+            Example 2</U> : The next image illustrates an <B>Analysis</B> bookmark where another
+            user changed the comment in the latest version, but you removed the bookmark.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/BmRemoveVsChangeConflict.png" alt="" border="0"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P>Select <I>Keep 'Latest' version</I> to keep the other user's changes or select
+            <I>Remove as in 'Checked Out' version</I> if you don't want the bookmark in the
+            resulting program. Then select the <B>Apply</B> button to continue merging.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H4><A name="CommentsConflict"></A>Comments</H4>
+
+          <BLOCKQUOTE>
+            <P>All comment conflicts that remain after the <A href=
+            "Merge_Program_Files.htm#CommentsAuto">auto merge</A> must be resolved at each conflict
+            address.<BR>
+            <BR>
+            Only comments of the same type and at the same address can conflict with each other.
+            The types of comments are Plate, Pre, End-of-Line, Repeatable, and Post.<BR>
+            </P>
+
+            <P>If a comment is removed in one version and changed in the other version, you must
+            choose whether to keep or remove it. This scenario is shown in the image below.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/CommentRemoveVsChangeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P>If both versions added the same type of comment at an address and the two comments
+            don't match, then you must decide to keep the latest version's comment, your comment,
+            or both comments.<BR>
+            </P>
+
+            <P>Similarly, if a particular comment was changed in both versions and the two comments
+            no longer match then you must decide to keep the latest version's comment, your
+            comment, or both comments. This scenario is shown in the image below.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/CommentChangeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P><IMG src="../../shared/note.png" alt=""> If you choose to keep both comments by
+            placing checkmarks in both boxes, your comment is appended to the latest comment with a
+            new line separating them. If one of the comments is contained within the other comment,
+            then the longer comment is kept instead of combining them with a new line
+            separator.<BR>
+            </P>
+
+            <P align="left">After all address based listing conflicts are resolved, the merge
+            process continues with External Program Names.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="ExternalProgramNamesConflict"></A>External Program Names</H3>
+
+      <BLOCKQUOTE>
+        <P>All external program name conflicts that remain after the <A href=
+        "Merge_Program_Files.htm#ExternalProgramNamesAuto">auto merge</A> must be resolved.</P>
+
+        <P>A conflict occurs if :</P>
+
+        <UL>
+          <LI>both versions add the same external program name with different paths</LI>
+
+          <LI>both versions changed the path for an existing name</LI>
+
+          <LI>one version removes the external program name and the other redefines the Ghidra
+          program path associated with that name<BR>
+          </LI>
+        </UL>
+
+        <P><U>Example 1</U> : The following image shows a conflict when the latest and your
+        versions changed the path for an external program name.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ExternalProgramChangeConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Select the version (Latest or Checked Out) of Ghidra program path to associate with the
+        external program name and then select the <B>Apply</B> button to proceed with the
+        merge.</P>
+
+        <P><BR>
+         <U>Example 2</U> : The image below shows a conflict due to an external program name being
+        removed in one version and changed in the other.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ExternalProgramRemoveConflict.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>In the above scenario, the external program name "ADVAPI32.DLL" was removed in the
+        latest version. However, the program path indicating which Ghidra program is associated
+        with the external program name, was modified in your checked out version.<BR>
+        </P>
+
+        <P align="left">The options to resolve the conflict are:</P>
+
+        <UL>
+          <LI>
+            <P align="left"><I>Remove as in 'Latest' version</I> - select this option to remove the
+            External Program Name definition for ADVAPI32.DLL (lose your changes)</P>
+          </LI>
+
+          <LI>
+            <P align="left"><I>Keep 'Checked Out' version</I> - select this option to apply your
+            changes resulting in a new program path for ADVAPI32.DLL (overwrites change in the
+            latest version)</P>
+          </LI>
+
+          <LI><I>'Original' version</I> - This field is not selectable, but is provided to show the
+          value in the Original version that you checked out<BR>
+          </LI>
+        </UL>
+
+        <P>Select the radio button for the desired result and then select the <B>Apply</B> button
+        to proceed with the merge.</P>
+
+        <P><IMG src="../../shared/note.png" alt="">When you remove an external program name that is
+        in conflict, it will get added back later as a result of choosing a reference that refers
+        to that external program name.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="PropertyListConflict"></A>Property Lists</H3>
+
+      <BLOCKQUOTE>
+        <P>All property list conflicts that remain after the <A href="#PropertyAuto">auto merge</A>
+        must be resolved.</P>
+
+        <P>A property list conflict will result when you change a property that was either deleted
+        or changed in the latest version. The image below shows this scenario:</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/ProperyListConflict.png" border="0"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>Here, in the <I>Analysis Disassembly</I> Property Group, another user changed the
+          <I>Mark Bad Disassembly</I> property. You changed the same property. You have following
+          choices:</P>
+
+          <UL>
+            <LI>Keep the other user's changes (<I>Latest</I>), and lose your change</LI>
+
+            <LI>Keep your changes (<I>Checked Out</I>) and lose the change in latest version</LI>
+
+            <LI>Keep the values from the original version of the program (<I>Original</I>), lose
+            your changes and lose changes made in the latest version. In this example, if you
+            choose this option, the property will be deleted.</LI>
+          </UL>
+
+          <P>To resolve the conflict, select a radio button, and then click on the <B>Apply</B>
+          button to go to the next property conflict. In this example, there are three property
+          list conflicts (noted in the <I>Current Conflict</I> area of this window). The progress
+          bar on the lower right corner of the Merge Tool indicates progress only for the Property
+          List merge, not the entire merge process.</P>
+
+          <P>After you resolve all conflicts, the check in process is complete. The Ghidra Server
+          will contain a new version of the program file.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/VersionControl/project_repository.htm#SharedProject">Shared Project
+        Repository</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/VersionControl/project_repository.htm#CheckIn">Check in</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Glossary/glossary.htm#MemoryBlock">Memory
+        Blocks</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/ProgramTreePlugin/program_tree.htm">Program
+        Trees</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Types and
+        Categories</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/ProgramManagerPlugin/Program_Options_Dialog.htm#Properties">Program
+        Options</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/ProgramManagerPlugin/Program_Options_Dialog.htm#Properties">Property
+        lists</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/SymbolTablePlugin/symbol_table.htm">Symbols</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/PropertyManagerPlugin/Property_Viewer.htm">Property Viewer</A></P>
+      </LI>
+    </UL><BR>
+    <BR>
+  </BODY>
+</HTML>

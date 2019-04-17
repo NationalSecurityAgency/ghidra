@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
+    <property key="allowOffcutReferencesToFunctionStarts" value="true"/>
+    <property key="useNewFunctionStackAnalysis" value="true"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
+  </properties>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="TMode" val="1" description="0 for ARM 32-bit, 1 for THUMB 16-bit"/>
+      <set name="LRset" val="0" description="0 lr reg not set, 1 for LR set, affects BX as a call"/>
+    </context_set>
+    <tracked_set space="ram">
+      <set name="spsr" val="0"/>
+    </tracked_set>
+  </context_data>
+  
+  <default_symbols>
+    <symbol name="MasterStackPointer" address="ram:0x0" entry="false" type="code_ptr"/>
+    <symbol name="Reset" address="ram:0x4" entry="true" type="code_ptr"/>
+    <symbol name="NMI" address="ram:0x8" entry="true" type="code_ptr"/>
+    <symbol name="HardFault" address="ram:0xC" entry="true" type="code_ptr"/>
+    <symbol name="MemManage" address="ram:0x10" entry="true" type="code_ptr"/>
+    <symbol name="BusFault" address="ram:0x14" entry="true" type="code_ptr"/>
+    <symbol name="UsageFault" address="ram:0x18" entry="true" type="code_ptr"/>
+    <symbol name="Reserved1" address="ram:0x1c" entry="true" type="code_ptr"/>
+    <symbol name="Reserved2" address="ram:0x20" entry="true" type="code_ptr"/>
+    <symbol name="Reserved3" address="ram:0x24" entry="true" type="code_ptr"/>
+    <symbol name="Reserved4" address="ram:0x28" entry="true" type="code_ptr"/>
+    <symbol name="SVCall" address="ram:0x2c" entry="true" type="code_ptr"/>
+    
+    <symbol name="Reserved5" address="ram:0x28" entry="true" type="code_ptr"/>
+    <symbol name="Reserved6" address="ram:0x28" entry="true" type="code_ptr"/>
+    
+    <symbol name="PendSV" address="ram:0x38" entry="true" type="code_ptr"/>
+    <symbol name="SysTick" address="ram:0x3C" entry="true" type="code_ptr"/>
+    <symbol name="IRQ" address="ram:0x40" entry="true" type="code_ptr"/>
+  </default_symbols>
+  
+</processor_spec>

@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="PowerPC:BE:*:*">
+    <patternfile>PPC_BE_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

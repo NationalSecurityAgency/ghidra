@@ -1,0 +1,5 @@
+This license is the same as the GPL 3 license with linking exceptions.  
+
+See individual files for specific wording.
+See GPL 3 license in this directory.
+

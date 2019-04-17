@@ -1,0 +1,938 @@
+#
+# PIC-16 Instruction Section
+#   includes token definitions, macros, sub-constructors and instruction definitions
+#
+# PC register write - instruction must set PC with PCLATH/PCL and perform branch operation
+
+# Little-endian bit numbering
+define token instr16(16)
+	op14 =	(0,13)
+	op12 =  (2,13)
+	op11 =	(3,13)
+	op9 =	(5,13)
+	op7 =   (7,13)
+	op6 =	(8,13)
+	op5 =	(9,13)
+	op4 =	(10,13)
+	op3 =	(11,13)
+	d =		(7,7)
+	b3 =	(7,9)
+	IntConBits = (7,9)
+	StatusBit = (7,9)
+	f7 =	(0,6)
+	lf7 = 	(0,3)
+	uf7 =	(4,6)
+	fsr = 	(2,2)
+	fsrk =	(6,6)
+	fregCore = (0,3)
+	k5 = 	(0,4)
+	k7 = 	(0,6)
+	k8 =	(0,7)
+	sk9 =   (0,8) signed
+	k11 =	(0,10)
+	sk6 =	(0,5) signed
+	l5 =	(0,4)	# low order 5-bits of instr16
+	mm =	(0,1)
+;
+
+define register offset=0x100 size=4 contextreg;
+define context contextreg
+	doPseudo = (0,0)
+	possibleSkip = (1,1) noflow
+;
+
+
+@if PROCESSOR == "PIC_16"
+attach variables [ fregCore ] [
+	INDF TMR0 PCL STATUS FSR PORTA PORTB PORTC PORTD PORTE PCLATH INTCON _ _ _ _
+];
+
+@elif PROCESSOR == "PIC_16F"
+attach variables [ fregCore ] [
+	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	WREG	PCLATH	INTCON	_ _ _ _
+];
+
+attach names [IntConBits] [ IOCIF INTF TMR0IF IOCIE INTE TMR0IE PEIE GIE  ];
+
+attach variables [ fsr fsrk ] [ FSR0 FSR1 ];
+
+@endif
+
+#
+# Unsupported Operations
+#
+
+define pcodeop clearWatchDogTimer;
+
+define pcodeop sleep;
+define pcodeop reset;
+
+#
+# MACROS
+#
+
+# Pack status bits into STATUS register
+macro packStatus() {
+#	STATUS = (IRP << $(STATUS_IRP_BIT))
+#				| (RP << $(STATUS_RP0_BIT))
+#				| (Z << $(STATUS_Z_BIT))
+#				| (DC << $(STATUS_DC_BIT))
+#				| (C << $(STATUS_C_BIT));
+}
+
+# Unpack status bits from STATUS register
+macro unpackStatus() {
+#	IRP = ((STATUS & $(STATUS_IRP_MASK)) != 0);
+#	RP = (STATUS & $(STATUS_RP_MASK)) >> $(STATUS_RP0_BIT);
+#	Z = ((STATUS & $(STATUS_Z_MASK)) != 0);
+#	DC = ((STATUS & $(STATUS_DC_MASK)) != 0);
+#	C = ((STATUS & $(STATUS_C_MASK)) != 0);
+}
+
+macro setResultFlags(result) {
+	$(Z) = (result == 0);
+}
+
+macro setAddCCarryFlag(op1,op2) {
+	local tc = $(C);
+	$(C) = (carry(op1,tc) || carry(op2,op1 + tc));
+}
+
+macro setAddCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tdc = $(DC);
+	$(DC) = (carry(tmp1,tdc) || carry(tmp2,tmp1 + tdc));
+}
+
+macro setAddCFlags(op1,op2) {
+	setAddCCarryFlag(op1,op2);
+	setAddCDigitCarryFlag(op1,op2);
+}
+
+macro setAddFlags(op1,op2) {
+	$(C)= carry(op1,op2);
+	$(DC) = carry(op1<<4,op2<<4);
+}
+
+macro setSubtractCCarryFlag(op1,op2) {
+	local tc = $(C);
+	local notC = !tc;
+	$(C) = op2 >= !tc & op1 >= (op2 - !tc);
+}
+
+macro setSubtractCDigitCarryFlag(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	local notDC = ~$(DC);
+	local tmp1 = op1 << 4;
+	local tmp2 = op2 << 4;
+	local tmp3 = (tmp1 - notDC) << 4;
+	$(DC) = ((tmp1 < notDC) || (tmp2 < tmp3));
+}
+
+macro setSubtractCFlags(op1,op2) {
+	setSubtractCCarryFlag(op1,op2);
+	setSubtractCDigitCarryFlag(op1,op2);
+}
+
+macro setSubtractFlags(op1,op2) {
+	# op1 and op2 are assumed to be 8-bit values
+	# NOTE:  carry flag is SET if there is NO borrow
+	C = (op1 >= op2);
+	DC = ((op1<<4) < (op2<<4));
+}
+
+macro push(val) {	# TODO: Uncertain about this !!
+	*[HWSTACK]:2 STKPTR = val;
+	STKPTR = STKPTR + 2;
+}
+
+macro pop(val) {	# TODO: Uncertain about this !!
+	STKPTR = STKPTR - 2;
+	val = *[HWSTACK]:2 STKPTR;
+}
+
+#
+# SUB-CONSTRUCTORS
+#
+
+# File register index (f7!=0): bank selection determined by RP bits in STATUS reg
+@if PROCESSOR == "PIC_16"
+srcREG: f7		is f7									{ 
+	 addr:2 = (zext(RP) << 7) + f7;
+	 export *[DATA]:1 addr;
+}
+@elif PROCESSOR == "PIC_16F"
+srcREG: f7		is f7									{ 
+	 addr:2 = (zext(BSR) << 7) + f7;
+	 export *[DATA]:1 addr;
+}
+@endif
+
+# Top 16 bytes are shared RAM on PIC16 and PIC16F
+srcREG: fv		is uf7=0x7 & lf7  [fv = 0x70 + lf7; ]								{ 
+	 addr:2 = fv;
+	 export *[DATA]:1 addr;
+}
+
+# File register index (f7=0): INDF use implies indirect data access using FSR value and IRP bit in STATUS reg
+@if PROCESSOR == "PIC_16"
+srcREG: fregCore		is f7=0 & fregCore									{ 
+	addr:2 = (zext(IRP) << 8) + zext(FSR);
+	export *[DATA]:1 addr; 
+}
+srcREG: fregCore		is f7=1	& fregCore								{ 
+     rpval:2 = zext(RP == 1) + zext(RP == 2);
+	 addr:2 = (zext(rpval) << 7) + 1;
+	 export *[DATA]:1 addr;
+}
+@elif PROCESSOR == "PIC_16F"
+srcREG: fregCore		is f7=0 & fregCore									{ 
+	addr:2 = FSR0;
+	export *[DATA]:1 addr; 
+}
+
+srcREG: fregCore		is f7=1 & fregCore									{ 
+	addr:2 = FSR1;
+	export *[DATA]:1 addr; 
+}
+@endif
+
+# Special File Registers always mapped to Bank-0
+srcREG: fregCore	is f7=0x02 & fregCore {
+	# PCL and PCLATH must be latched
+	addr:2 = inst_start >> 1; # Compensate for CODE wordsize
+	PCL = addr:1;
+	PCLATH = addr(1);
+	export PCL;
+}
+
+srcREG: fregCore		is f7=0x03 & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x04 & fregCore				{ export fregCore; }
+@if PROCESSOR == "PIC_16F"
+srcREG: fregCore		is f7=0x05 & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x06 & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x07 & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x08 & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x09 & fregCore				{ export fregCore; }
+@endif
+srcREG: fregCore		is f7=0x0a & fregCore				{ export fregCore; }
+srcREG: fregCore		is f7=0x0b & fregCore				{ export fregCore; }
+
+
+# Destination register (either srcREG or W)
+destREG: "0"		is d=0									{ export W; }
+
+# Destination register: bank selection determined by RP bits in STATUS reg
+destREG: "1"		is d=1 & f7 & srcREG					{ export srcREG; }
+
+# Destination register: Special File Registers always mapped to Bank-0
+destREG: "1"		is d=1 & f7=0x02 & fregCore				{ export fregCore; } # PCL (special behavior reqd)
+
+# Destination operand representation (w: W register is destination; f: specified srcREG is destination)
+D: "w"		is d=0										{ }
+D: "f"		is d=1										{ }
+
+# Absolute address generated from k11 and PCLATH<4:3>
+absAddr11: k11	is k11									{
+	addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
+	export addr; 
+}
+
+@if PROCESSOR == "PIC_16F"
+
+# Absolute address generated from k11 and PCLATH<4:3>
+relAddr9: addr	is sk9	[ addr = inst_next + sk9; ]								{
+	export *[CODE]:2 addr;
+}
+
+@endif
+
+# Immediate Data (Literal operation)
+imm8: "#"k8	is k8										{ export *[const]:1 k8; }
+
+@if PROCESSOR == "PIC_16F"
+# Immediate Data (Literal operation)
+imm7: "#"k7	is k7										{ export *[const]:1 k7; }
+
+# Immediate Data (Literal operation)
+imm5: "#"k5	is k5										{ export *[const]:1 k5; }
+@endif
+
+# Bit identifier
+bit: "#"b3		is b3									{ export *[const]:1 b3; }
+
+# TRIS register (TODO: not sure if this TRIS mapping is correct - see TRIS instruction)
+@if PROCESSOR == "PIC_16"
+trisREG: "5"	is l5=5												{ local trl:2 = 0x89; export *[DATA]:1 trl; } # TRISA
+trisREG: "6"	is l5=6												{ local trl:2 = 0x187; export *[DATA]:1 trl; } # TRISB
+trisREG: "7"	is l5=7												{ local trl:2 = 0x188; export *[DATA]:1 trl; } # TRISC
+@elif PROCESSOR == "PIC_16F"
+trisREG: "5"	is l5=5												{ local trl:2 = 0x10C; export *[DATA]:1 trl; } # TRISA
+trisREG: "6"	is l5=6												{ local trl:2 = 0x10D; export *[DATA]:1 trl; } # TRISB
+trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } # TRISC
+@endif
+
+:^instruction is possibleSkip=1 & instruction [ possibleSkip=0; ] {
+	if (SkipNext) goto inst_next;
+	build instruction;
+}
+
+
+
+#
+# BYTE-ORIENTED FILE REGISTER OPERATIONS
+#
+
+@if PROCESSOR == "PIC_16F"
+
+:ADD^fsrk sk6	is op7=0x62 & fsrk & sk6 {
+	fsrk = fsrk + sk6;
+}
+@endif
+
+:ADDLW imm8				is op6=0x3e & imm8								{
+	#  --11 111x kkkk kkkk
+	#  0011 1110 0001 0010	->	ADDLW #0x12
+	setAddFlags(W, imm8); 
+	W = W + imm8;
+	setResultFlags(W);
+}
+
+:ADDWF srcREG, D	is op6=0x07 & srcREG & D & destREG					{
+	#  --00 0111 dfff ffff
+	#  0000 0111 0000 0000	->	ADDWF INDF, 0 
+	#  0000 0111 1000 0000	->	ADDWF INDF, 1
+	#  0000 0111 0010 0000	->	ADDWF 0x20, 0
+	#  0000 0111 1010 0000	->	ADDWF 0x20, 1
+	val:1 = srcREG;
+	setAddFlags(W, val); 
+	val = W + val;
+	setResultFlags(val);
+	destREG = val;
+}
+
+:ADDWF PC, D		is op6=0x07 & D & d=1 & f7=0x02 & PC	{
+	#  --00 0111 dfff ffff
+	#  0000 0111 1000 0010  ->  ADDWF PCL, w, ACCESS
+	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
+	PCLATH = addr(1);
+	tmp:1 = addr:1;
+	setAddFlags(tmp, W);
+	tmp = tmp + W;
+	addr = (zext(PCLATH) << 8) + zext(tmp);
+	PCL = tmp;
+	setResultFlags(tmp);
+	goto [addr];
+}
+
+:ADDWFC srcREG, D	is op6=0x3D & srcREG & D & destREG					{
+	val:1 = srcREG;
+	local tmpC = $(C);
+	
+	setAddFlags(W, val);
+	val = W + val;
+	local tc = $(C);
+	
+	setAddFlags(val,tmpC);
+	$(C) = $(C) | tc;
+	val = val + tmpC;
+	
+	setResultFlags(val);
+	destREG = val;
+}
+
+:ADDWFC PC, D		is op6=0x3D & D & d=1 & f7=0x02 & PC	{
+	#  --00 0111 dfff ffff
+	#  0000 0111 1000 0010  ->  ADDWF PCL, w, ACCESS
+	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
+	PCLATH = addr(1);
+	val:1 = addr:1;
+	
+	local tmpC = $(C);
+	setAddFlags(W, val);
+	local tc = $(C);
+	val = W + val;
+
+	setAddFlags(val,tmpC);
+	$(C) = $(C) | tc;
+	val = val + tmpC;
+	
+	addr = (zext(PCLATH) << 8) + zext(val);
+	PCL = val;
+	setResultFlags(val);
+	goto [addr];
+}
+
+:ANDLW imm8				is op6=0x39 & imm8								{
+	#  --11 1001 kkkk kkkk
+	#  0011 1001 0001 0010	->	ANDLW #0x12
+	W = W & imm8;
+	setResultFlags(W);
+}
+
+:ANDWF srcREG, D	is op6=0x05 & srcREG & D & destREG					{
+	#  --00 0101 dfff ffff
+	#  0000 0101 0000 0000	->	ANDWF INDF, 0 
+	#  0000 0101 1000 0000	->	ANDWF INDF, 1
+	#  0000 0101 0010 0000	->	ANDWF 0x20, 0
+	#  0000 0101 1010 0000	->	ANDWF 0x20, 1
+	val:1 = srcREG;
+	val = W & val;
+	setResultFlags(val);
+	destREG = val;
+}
+
+:BCF srcREG, bit			is op4=0x4 & srcREG & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0010 0000 0000	->	BCF INDF, #0x4
+	#  0001 0010 0010 0000	->	BCF 0x20, #0x4
+	local bitmask = ~(1 << bit);
+	srcREG = srcREG & bitmask;
+}
+
+
+:BCF srcREG, IntConBits			is op4=0x4 & f7=0xb & bit & srcREG & IntConBits							{
+	local bitmask = ~(1 << bit);
+	srcREG = srcREG & bitmask;
+}
+
+:BCF STATUS, "C"			is op4=0x4 & b3=0 & f7=0x3 & STATUS							{
+	#  --01 00bb bfff ffff
+	#  0001 0000 0000 0011	->	BCF STATUS, #C
+	$(C) = 0;
+}
+
+:BCF STATUS, "DC"		is op4=0x4 & b3=1 & f7=0x3 & STATUS & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0000 1000 0011	->	BCF STATUS, #DC
+	$(DC) = 0;
+}
+
+
+:BCF STATUS, "Z"			is op4=0x4 & b3=2 & f7=0x3 & STATUS & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0001 0000 0011	->	BCF STATUS, #Z
+	$(Z) = 0;
+}
+
+
+:BCF STATUS, "RP0"			is op4=0x4 & b3=5 & f7=0x3 & STATUS & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0010 1000 0011	->	BCF STATUS, #RP0
+	RP = RP & 0x2;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+
+:BCF STATUS, "RP1"			is op4=0x4 & b3=6 & f7=0x3 & STATUS & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0011 0000 0011	->	BCF STATUS, #RP1
+	RP = RP & 0x1;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+
+:BCF STATUS, "IRP"			is op4=0x4 & b3=7 & f7=0x3 & STATUS & bit							{
+	#  --01 00bb bfff ffff
+	#  0001 0011 1000 0011	->	BCF STATUS, #IRP
+	IRP = 0;
+	local bitmask = ~(1 << bit);
+	STATUS = STATUS & bitmask;
+}
+
+:BSF srcREG, bit			is op4=0x5 & bit & srcREG							{
+	#  --01 01bb bfff ffff
+	#  0001 0110 0000 0000	->	BSF INDF, #0x4
+	#  0001 0110 0010 0000	->	BSF 0x20, #0x4
+	local bitmask = 1 << bit;
+	srcREG = srcREG | bitmask;
+}
+
+:BSF srcREG, IntConBits			is op4=0x5 & f7=0xb & bit & srcREG & IntConBits							{
+	local bitmask = 1 << bit;
+	srcREG = srcREG | bitmask;
+}
+
+:BSF STATUS, "C"			is op4=0x5 & b3=0 & f7=0x3 & STATUS							{
+	#  --01 01bb bfff ffff
+	#  0001 0100 0000 0011	->	BSF STATUS, #C
+	$(C) = 1;
+}
+
+:BSF STATUS, "DC"			is op4=0x5 & b3=1 & f7=0x3 & STATUS							{
+	#  --01 01bb bfff ffff
+	#  0001 0100 1000 0011	->	BSF STATUS, #DC
+	$(DC) = 1;
+}
+
+:BSF STATUS, "Z"			is op4=0x5 & b3=2 & f7=0x3 & STATUS & bit							{
+	#  --01 01bb bfff ffff
+	#  0001 0111 0000 0011	->	BSF STATUS, #Z
+	$(Z) = 1;
+}
+
+:BSF STATUS, "RP0"			is op4=0x5 & b3=5 & f7=0x3 & STATUS & bit							{
+	#  --01 01bb bfff ffff
+	#  0001 0110 1000 0011	->	BSF STATUS, #RP0
+	RP = RP | 0x1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BSF STATUS, "RP1"			is op4=0x5 & b3=6 & f7=0x3 & STATUS & bit							{
+	#  --01 01bb bfff ffff
+	#  0001 0111 0000 0011	->	BSF STATUS, #RP1
+	RP = RP | 0x2;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+
+:BSF STATUS, "IRP"			is op4=0x5 & b3=7 & f7=0x3 & STATUS & bit							{
+	#  --01 01bb bfff ffff
+	#  0001 0111 1000 0011	->	BSF STATUS, #IRP
+	IRP = 1;
+	local bitmask = 1 << bit;
+	STATUS = STATUS | bitmask;
+}
+
+:BTFSC srcREG, bit		is op4=0x6 & bit & srcREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 10bb bfff ffff
+	#  0001 1010 0000 0000	->	BTFSC INDF, #0x4
+	#  0001 1010 0010 0000	->	BTFSC 0x20, #0x4
+	local bitmask = 1 << bit;
+	local tmp = srcREG & bitmask;
+	SkipNext = (tmp == 0); 
+}
+
+:BC absAddr11	is doPseudo=1 & op4=0x6 & b3=0 & bit & f7=0x3 ; op3=0x5 & absAddr11 {
+	if ($(C) == 0) goto inst_next;
+	goto [absAddr11];
+}
+
+@if PROCESSOR == "PIC_16F"
+
+:BRA relAddr9  is op5=0x19 & relAddr9 {
+	goto [relAddr9];
+}
+
+:BRW 			is op14=0xb {
+	# inst_next is byte, not word offset, need to load PC with word offset
+	PC = (inst_next >> 1) + zext(W);
+	goto [PC];
+}
+
+@endif
+
+:BTFSC STATUS, bit		is op4=0x6 & b3=0 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 10bb bfff ffff
+	#  0001 1000 0000 0011	->	BTFSC STATUS, #C
+	SkipNext = ($(C) == 0);
+}
+
+:SKPC is doPseudo=1 & op4=0x6 & b3=0 & bit & f7=0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+   SkipNext = ($(C) == 1);
+}
+
+:SKPNC is doPseudo=1 & op4=0x7 & b3=0 & bit & f7=0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+   SkipNext = ($(C) != 1);
+}
+
+:SKPZ is doPseudo=1 & op4=0x6 & b3=2 & bit & f7=0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+   SkipNext = ($(Z) == 1);
+}
+
+:SKPNZ is doPseudo=1 & op4=0x7 & b3=2 & bit & f7=0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+   SkipNext = ($(Z) != 1);
+}
+
+:BTFSC STATUS, bit		is op4=0x6 & b3=1 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ]  {
+	#  --01 10bb bfff ffff
+	#  0001 1000 1000 0011	->	BTFSC STATUS, #DC
+   SkipNext = ($(DC) == 0);
+}
+
+:BZ absAddr11	is doPseudo=1 & op4=0x6 & b3=2 & bit & f7=0x3 ; op3=0x5 & absAddr11 {
+	if ($(Z) == 0) goto inst_next;
+	goto [absAddr11];
+}
+
+:BTFSC STATUS, bit		is op4=0x6 & b3=2 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 10bb bfff ffff
+	#  0001 1001 0000 0011	->	BTFSC STATUS, #Z
+   SkipNext = ($(Z) == 0);
+}
+
+:BTFSS srcREG, bit		is op4=0x7 & bit & srcREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 11bb bfff ffff
+	#  0001 1110 0000 0000	->	BTFSS INDF, #0x4
+	#  0001 1110 0010 0000	->	BTFSS 0x20, #0x4
+	local bitmask = 1 << bit;
+	local tmp = srcREG & bitmask;
+   SkipNext = (tmp != 0);
+}
+
+:BNC absAddr11	is doPseudo=1 & op4=0x7 & b3=0 & bit & f7=0x3 ; op3=0x5 & absAddr11 {
+	if ($(C) != 0) goto inst_next;
+	goto [absAddr11];
+}
+
+:BTFSS STATUS, bit		is op4=0x7 & b3=0 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 11bb bfff ffff
+	#  0001 1100 0000 0011	->	BTFSS STATUS, #C
+   SkipNext = ($(C) != 0);
+}
+
+:BTFSS STATUS, bit		is op4=0x7 & b3=1 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ]{
+	#  --01 11bb bfff ffff
+	#  0001 1100 1000 0011	->	BTFSS STATUS, #DC
+   SkipNext = ($(DC) != 0);
+}
+
+:BNZ absAddr11	is doPseudo=1 & op4=0x7 & b3=2 & bit & f7=0x3 ; op3=0x5 & absAddr11 {
+	if ($(Z) != 0) goto inst_next;
+	goto [absAddr11];
+}
+
+:BTFSS STATUS, bit		is op4=0x7 & b3=2 & bit & f7=0x3 & STATUS [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --01 11bb bfff ffff
+	#  0001 1101 0000 0011	->	BTFSS STATUS, #Z
+   SkipNext = ($(Z) != 0);
+}
+
+:CALL absAddr11			is op3=0x4 & absAddr11							{
+	#  --10 0kkk kkkk kkkk
+	#  0010 0001 0010 0011	->	CALL 0x123
+	#  0010 0000 0001 0000	->	CALL 0x10
+	push(&:2 inst_next);
+	call [absAddr11];
+}
+
+:CLRF srcREG				is op6=0x01 & d=1 & srcREG						{
+	#  --00 0001 1fff ffff
+	#  0000 0001 1000 0000	->	CLRF INDF
+	#  0000 0001 1010 0000	->	CLRF 0x20
+	srcREG = 0;
+	$(Z) = 1;
+}
+
+:CLRF STATUS				is op6=0x01 & d=1 & f7=0x3 & STATUS						{
+	#  --00 0001 1fff ffff
+	#  0000 0001 1000 0011	->	CLRF STATUS
+	STATUS = 0;
+	IRP = 0;
+	RP = 0;
+	$(Z) = 0;
+	$(DC) = 0;
+	$(C) = 0;
+}
+
+:CLRW					is op12=0b000001000000 & mm			{
+	#  --00 0001 0xxx xxxx
+	#  0000 0001 0000 0000	->	CLRW
+	W = 0;
+	$(Z) = 1;
+}
+
+:CLRWDT					is op14=0x0064				{
+	#  --00 0000 0110 0100
+	# Clear Watchdog Timer - Not Implemented
+	clearWatchDogTimer();
+}
+
+:COMF srcREG, D		is op6=0x09 & srcREG & D & destREG					{
+	#  --00 1001 dfff ffff
+	#  0000 1001 0000 0000	->	COMF INDF, 0 
+	#  0000 1001 1000 0000	->	COMF INDF, 1
+	#  0000 1001 0010 0000	->	COMF 0x20, 0
+	#  0000 1001 1010 0000	->	COMF 0x20, 1
+	tmp:1 = ~srcREG;
+	destREG = tmp;
+	setResultFlags(tmp);
+}
+
+:DECF srcREG, D		is op6=0x03 & srcREG & D & destREG					{
+	#  --00 0011 dfff ffff
+	#  0000 0011 0000 0000	->	DECF INDF, 0 
+	#  0000 0011 1000 0000	->	DECF INDF, 1
+	#  0000 0011 0010 0000	->	DECF 0x20, 0
+	#  0000 0011 1010 0000	->	DECF 0x20, 1
+	val:1 = srcREG - 1;
+	destREG = val;
+	setResultFlags(val);
+}
+
+:DECFSZ srcREG, D		is op6=0x0b & srcREG & D & destREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --00 1011 dfff ffff
+	#  0000 1011 0000 0000	->	DECFSZ INDF, 0 
+	#  0000 1011 1000 0000	->	DECFSZ INDF, 1
+	#  0000 1011 0010 0000	->	DECFSZ 0x20, 0
+	#  0000 1011 1010 0000	->	DECFSZ 0x20, 1
+	val:1 = srcREG - 1;
+	destREG = val;
+	SkipNext = (val == 0);
+}
+
+:GOTO absAddr11			is op3=0x5 & absAddr11							{
+	#  --10 1kkk kkkk kkkk
+	#  0010 1001 0010 0011	->	GOTO 0x123
+	#  0010 1000 0001 0000	->	GOTO 0x10
+	goto [absAddr11];
+}
+
+:INCF srcREG, D		is op6=0x0a & srcREG & D & destREG					{
+	#  --00 1010 dfff ffff
+	#  0000 1010 0000 0000	->	INCF INDF, 0 
+	#  0000 1010 1000 0000	->	INCF INDF, 1
+	#  0000 1010 0010 0000	->	INCF 0x20, 0
+	#  0000 1010 1010 0000	->	INCF 0x20, 1
+	val:1 = srcREG + 1;
+	destREG = val;
+	setResultFlags(val);
+}
+
+:INCFSZ srcREG, D		is op6=0x0f & srcREG & D & destREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+	#  --00 1111 dfff ffff
+	#  0000 1111 0000 0000	->	INCFSZ INDF, 0 
+	#  0000 1111 1000 0000	->	INCFSZ INDF, 1
+	#  0000 1111 0010 0000	->	INCFSZ 0x20, 0
+	#  0000 1111 1010 0000	->	INCFSZ 0x20, 1
+	val:1 = srcREG + 1;
+	destREG = val;
+   SkipNext = (val == 0);
+}
+
+:IORLW imm8				is op6=0x38 & imm8								{
+	#  --11 1000 kkkk kkkk
+	#  0011 1000 0001 0010	->	IORLW #0x12
+	W = W | imm8;
+	setResultFlags(W);
+}
+
+:IORWF srcREG, D		is op6=0x04 & srcREG & D & destREG					{
+	#  --00 0100 dfff ffff
+	#  0000 0100 0000 0000	->	IORWF INDF, 0 
+	#  0000 0100 1000 0000	->	IORWF INDF, 1
+	#  0000 0100 0010 0000	->	IORWF 0x20, 0
+	#  0000 0100 1010 0000	->	IORWF 0x20, 1
+	val:1 = W | srcREG;
+	destREG = val;
+	setResultFlags(val);
+}
+
+@if PROCESSOR == "PIC_16F"
+
+srcFSR: "++"fsr		is fsr & mm=0 { fsr = fsr + 1; addr:2 = fsr; export *[DATA]:1 addr; }
+srcFSR: "--"fsr		is fsr & mm=1 { fsr = fsr - 1; addr:2 = fsr; export *[DATA]:1 addr; }
+srcFSR: fsr"++"		is fsr & mm=2 { addr:2 = fsr; fsr = fsr + 1; export *[DATA]:1 addr; }
+srcFSR: fsr"--"		is fsr & mm=3 { addr:2 = fsr; fsr = fsr - 1; export *[DATA]:1 addr; }
+
+srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
+	addr:2 = fsrk + sk6; export *[DATA]:1 addr;
+}
+
+:MOVIW srcFSR			is op11=2 & srcFSR {
+	W = srcFSR;
+}
+
+:MOVIW srcFSRk			is op7=0x7e & srcFSRk {
+	W = srcFSRk;
+}
+
+:MOVWI srcFSR			is op11=3 & srcFSR {
+	srcFSR = W;
+}
+
+:MOVWI srcFSRk			is op7=0x7f & srcFSRk {
+	srcFSRk = W;
+}
+
+:MOVLB imm5			is op9=0x1 & imm5 {
+	BSR = imm5;
+}
+
+:MOVLP imm7				is op7=0x63 & imm7 {
+	PCLATH = imm7;
+}
+@endif
+
+:MOVLW imm8				is op6=0x30 & imm8								{
+	#  --11 00xx kkkk kkkk
+	#  0011 0000 0001 0010	->	MOVLW #0x12
+	W = imm8;
+}
+
+:MOVF srcREG, D		is op6=0x08 & srcREG & D & destREG					{
+	#  --00 1000 dfff ffff
+	#  0000 1000 0000 0000	->	MOVF INDF, 0 
+	#  0000 1000 1000 0000	->	MOVF INDF, 1
+	#  0000 1000 0010 0000	->	MOVF 0x20, 0
+	#  0000 1000 1010 0000	->	MOVF 0x20, 1
+	val:1 = srcREG;
+	destREG = val;
+	setResultFlags(val);
+}
+
+:MOVWF srcREG				is op6=0x00 & d=1 & srcREG						{
+	#  --00 0000 1fff ffff
+	#  0000 0000 1000 0000	->	MOVWF INDF
+	#  0000 0000 1010 0000	->	MOVWF 0x20
+	srcREG = W;
+}
+
+:MOVWF PC					is op6=0x00 & d=1 & f7=0x02 & PC			 				{
+	#  --00 0000 1fff ffff
+	#  0000 0000 1000 0010	->	MOVWF PCL
+	PCL = W;
+	addr:2 = (zext(PCLATH) << 8) + zext(PCL);
+	goto [addr];
+}
+
+:NOP					is op6=0 & d=0 & l5=0				{
+	#  --00 0000 0xx0 0000
+}
+
+:OPTION					is op14=0x0062						{
+	#  --00 0000 0110 0010
+	OPTION = W;
+}
+
+:RESET is op14=0x0001 {
+	reset();
+	goto 0x0;
+}
+
+:RETFIE					is op14=0x0009						{
+	#  --00 0000 0000 1001
+	INTCON = 0x80 | INTCON;  # set INTCON.GIE bit
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETLW imm8				is op4=0xd & imm8								{
+	#  --11 01xx kkkk kkkk
+	#  0011 0100 0001 0010	->	RETLW #0x12
+	W = imm8;
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RETURN					is op14=0x0008						{
+	#  --00 0000 0000 1000
+	retAddr:4 = 0;
+	pop(retAddr);
+	return [retAddr];
+}
+
+:RLF srcREG, D		is op6=0x0d & srcREG & D & destREG					{
+	#  --00 1101 dfff ffff
+	#  0000 1101 0000 0000	->	RLF INDF, 0 
+	#  0000 1101 1000 0000	->	RLF INDF, 1
+	#  0000 1101 0010 0000	->	RLF 0x20, 0
+	#  0000 1101 1010 0000	->	RLF 0x20, 1
+	local tmpC = $(C);
+	val:1 = srcREG;
+	$(C) = (val s< 0);
+	val = (val << 1) | tmpC;
+	destREG = val;
+	setResultFlags(val);
+}
+
+:RRF srcREG, D		is op6=0x0c & srcREG & D & destREG					{
+	#  --00 1100 dfff ffff
+	#  0000 1100 0000 0000	->	RRF INDF, 0 
+	#  0000 1100 1000 0000	->	RRF INDF, 1
+	#  0000 1100 0010 0000	->	RRF 0x20, 0
+	#  0000 1100 1010 0000	->	RRF 0x20, 1
+	local tmpC = $(C) << 7;
+	val:1 = srcREG;
+	$(C) = (val & 1) != 0;
+	val = (val >> 1) | tmpC;
+	destREG = val;
+	setResultFlags(val);
+}
+
+:SLEEP					is op14=0x0063				{ 
+	#  --00 0000 0110 0011
+	# Sleep - Not Implemented
+	sleep();
+}
+
+:SUBLW imm8				is op6=0x3c & imm8								{
+	#  --11 110x kkkk kkkk
+	#  0011 1100 0001 0010	->	SUBLW #0x12
+	setSubtractFlags(imm8, W); 
+	W = imm8 - W;
+	setResultFlags(W);
+}
+
+:SUBWF srcREG, D		is op6=0x02 & srcREG & D & destREG					{
+	#  --00 0010 dfff ffff
+	#  0000 0010 0000 0000	->	SUBWF INDF, 0 
+	#  0000 0010 1000 0000	->	SUBWF INDF, 1
+	#  0000 0010 0010 0000	->	SUBWF 0x20, 0
+	#  0000 0010 1010 0000	->	SUBWF 0x20, 1
+	val:1 = srcREG;
+	setSubtractFlags(val, W); 
+	val = val - W;
+	setResultFlags(val);
+	destREG = val;
+}
+
+:SUBWFB srcREG, D		is op6=0x3b & srcREG & D & destREG {
+	val:1 = srcREG;
+	bor:1 = !$(C);
+	
+	setSubtractFlags(val, W); 
+	val = val - W;
+	tb:1 = $(C);
+
+	setSubtractFlags(val,bor);
+	# first subtraction could cause borrow
+	$(C) = $(C) & tb;   # borrow if C not set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+	
+	val = val - bor;
+	
+	setResultFlags(val);
+	destREG = val;
+}
+
+:SWAPF srcREG, D		is op6=0x0e & srcREG & D & destREG					{
+	#  --00 1110 dfff ffff
+	#  0000 1110 0000 0000	->	SUBWF INDF, 0 
+	#  0000 1110 1000 0000	->	SUBWF INDF, 1
+	#  0000 1110 0010 0000	->	SUBWF 0x20, 0
+	#  0000 1110 1010 0000	->	SUBWF 0x20, 1
+	val:1 = srcREG;
+	destREG = (val << 4) | (val >> 4);
+}
+
+:TRIS trisREG				is op9=0x3 & trisREG				{
+	#  --00 0000 0110 0fff
+	#  0000 0000 0110 0101	->	TRIS 5
+	trisREG = W;
+}
+
+:XORLW imm8				is op6=0x3a & imm8								{
+	#  --11 1010 kkkk kkkk
+	#  0011 1010 0001 0010	->	XORLW #0x12
+	W = imm8 ^ W;
+	setResultFlags(W);
+}
+
+:XORWF srcREG, D		is op6=0x06 & srcREG & D & destREG					{
+	#  --00 0110 dfff ffff
+	#  0000 0110 0000 0000	->	XORWF INDF, 0 
+	#  0000 0110 1000 0000	->	XORWF INDF, 1
+	#  0000 0110 0010 0000	->	XORWF 0x20, 0
+	#  0000 0110 1010 0000	->	XORWF 0x20, 1
+	val:1 = W ^ srcREG;
+	destREG = val;
+	setResultFlags(val);
+}

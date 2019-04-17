@@ -1,0 +1,25 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||reviewed||END|
+build.gradle||GHIDRA||||END|
+buildTemplate.gradle||GHIDRA||||END|
+data/README.txt||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/skel.cspec||GHIDRA||||END|
+data/languages/skel.ldefs||GHIDRA||||END|
+data/languages/skel.opinion||GHIDRA||||END|
+data/languages/skel.pspec||GHIDRA||||END|
+data/languages/skel.sinc||GHIDRA||||END|
+data/languages/skel.slaspec||GHIDRA||||END|
+data/sleighArgs.txt||GHIDRA||||END|
+extension.properties||GHIDRA||||END|
+ghidra_scripts/README.txt||GHIDRA||||END|
+lib/README.txt||GHIDRA||||END|
+os/linux64/README.txt||GHIDRA||||END|
+os/osx64/README.txt||GHIDRA||||END|
+os/win64/README.txt||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/skeleton/help.html||GHIDRA||||END|
+src/main/resources/images/README.txt||GHIDRA||||END|
+src/test/java/README.test.txt||GHIDRA||||END|

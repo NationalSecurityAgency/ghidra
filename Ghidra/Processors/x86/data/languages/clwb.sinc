@@ -1,0 +1,14 @@
+define pcodeop clwb;
+:CLWB m8      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xAE; m8 & reg_opcode=6 ... {
+	clwb(m8);
+}
+
+@ifdef IA64
+define pcodeop clflushopt;
+:CLFLUSHOPT m8      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xAE; m8 & reg_opcode=7 ... {
+	clflushopt(m8);
+}
+@endif
+
+# Note: PCOMMIT was deprecated prior to it ever being implemented in production processors.
+# I never found the encoding for it.  Therefore, no constructor.

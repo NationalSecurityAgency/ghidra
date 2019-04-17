@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>Intermediate Ghidra</title>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+
+<!-- This is the first slide -->
+<section>
+<h1>Intermediate Ghidra</h1>
+<div role="note">
+  <p>
+  <b>STUDENT GUIDE</b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>How to Use Slides</header>
+<ul class="medium">
+  <li>Use Arrow keys to go to next/previous slide</li>
+  <li>Double click page number to edit/jump to specific page</li>
+  <li>"withNotes" slide deck contains detailed notes below slides and can be used as a tutorial.</li>
+  <li>Click "Pop-up" to launch presentation slides</li>
+<li>Should display correctly in modern versions of all browsers. </li>
+  <li>Microsoft Edge displays incorrectly at first. To fix, go to Edge options (...) and click zoom once. </li>
+
+</ul>
+</section>
+
+
+<section>
+<header>Installing Ghidra</header>
+<br>
+<ul class="medium">
+  <li>To install Ghidra unzip the Ghidra installation file: </li>
+  <ul>
+    <li>ghidra_&lt;version&gt;_&lt;release&gt;_&lt;date&gt;.zip</li>
+</ul>
+<br>
+<ul>
+      <li>&lt;version&gt;  is the version number of the release</li>
+      <li>&lt;release&gt; is the name of the release</li>
+      <li>&lt;date&gt; is the date the release was built</li>
+    </ul>
+<br>
+<li>Platforms Supported:</li>
+<ul>
+  <li>Microsoft Windows 7 or 10 (64-bit)</li>
+  <li>Linux (64-bit, CentOS 7 is preferred)</li>
+  <li>macOS (OS X) 10.8.3+ (Mountain Lion or later)</li>
+</ul>
+
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise Files</header>
+<br>
+<ul class="medium">
+<li>Referenced exercise files are located in ghidra_&lt;version&gt;/docs/GhidraClass/ExerciseFiles</li>
+<br>
+<li>If an exercise file is not specifically listed then do the exercise with your choice of program.</li>
+<br>
+</ul>
+
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Course Objectives</header>
+<ul>
+  <li>By the end of this course you will be able to:</li>
+  <ul>
+    <li>Use some of the more advanced Ghidra features including creating data types, memory map, multi-user projects, comparing programs, and version tracking</li>    
+    <li>Setup Ghidra development environment and write Ghidra scripts</li> 
+	<li>Run Ghidra in headless mode</li>
+  </ul>
+</ul>
+<div role="note">
+  <p><u><b>Notes:</b></u>
+</div>
+</section>
+
+<section>
+<header>Course Topics</header>
+<table style="width:100%; border-spacing:0px;">
+  <tr>
+    <td style="vertical-align:top">
+      <br>
+      <ul class="medium">
+	<li>Creating data types</li>
+	<li>Memory Map</li>
+	<li>Multi-user projects</li>
+	<li>Comparing programs</li>
+	<li>Version tracking</li>
+      </ul>
+    </td>
+    <td style="vertical-align:top">
+      <br>
+      <ul class="medium ">
+	<li>Scripting Development</li>
+	<li>Running Ghidra in headless mode</li>
+	<li>Optional topics if time allows</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+<div role="note">
+  <p>
+  <u><b>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Advanced Data Types<br>Creating Structures and Arrays</header>
+<br>
+<ul class="medium">
+  <li>Create data in Listing first, then make a structure or array from it</li>
+  <span style="color:#FFFF00;font-size:30px">&nbsp;&nbsp;&nbsp;&nbsp;OR</span>
+  <li>Create structure or array first then apply it</li>
+  <ul>
+    <li>Right mouse menu –&gt; Data->Create Array</li>
+    <li>Right mouse menu –&gt; Data->Create Structure</li>
+    <li>Data Type Manager -&gt; Create Structure</li>
+  </ul>
+  <br>
+  <span style="font-size:30px"><span style="color:#FFFF00">NOTE:</span> If you edit structure later, the edits will take effect in all places where that structure has been defined.</span>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>There are two ways to create your own structures. You can create structures from the Listing or From the Data Type Manager.</li>
+    <li><b>If creating a structure from the Listing:</b></li>
+    <ul>
+      <li>You can create data in the Listing before or after creating the structure</li>
+      <li>Make selection then choose Data-&gt;Create Structure</li>
+      <li>If you already had data created, the field types in the Structure Editor will be pre-populated – you just have to edit the field names</li>
+      <li>If you didn&apos;t have data created you need to fill in the field types and names in the editor</li>
+    </ul>
+    <li><b>If creating a structure from the Data Type Manager:</b></li>
+    <ul>
+      <li>In the &lt;<i>program name</i>&gt; folder, right click and choose New-&gt;Create Structure</li>
+    </ul>
+    <li><b>Creating your own Arrays</b></li>
+    <ul>
+      <li>You can create data in the Listing before or after creating the array. If you are creating an array from the Listing, make a selection, then choose Data -&gt; Create Array</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 1<br>Create and Apply Structure</header>
+<br>
+<ul class="small">
+  <li>Import and analyze docs\GhidraClass\ExerciseFiles\WinhelloCPP\winhelloCPP.exe</li>
+  <li>Go to address 0040e4a8 and make a label &quot;topErrorNumber&quot;</li>
+  <li>Go to address 0040e4ac and make a label &quot;topPtrErrorMsg&quot;</li>
+  <li>Create a structure that contains the following elements:</li>
+  <ul>
+    <li>Int  - named errorNumber</li>
+    <li>Char * - named ptrErrorMsg</li>
+  </ul>
+  <li>Make a selection from 0040e4a8 to 40e55f and clear the data that is there</li>
+  <li>Apply your structure to this selection with one apply action. This should make all the structures in the selection at once.</li>
+  </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Advanced Data Types</header>
+<ul>
+  <br>
+  <br>
+  <li>Creating Enums</li>
+  <li>Function Definitions</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes</u></b>
+  <ul>
+    <li><b>Enums:</b></li>
+    <ul>
+      <li>Users can create their own Enums data types by choosing New-&gt;Enum... from the Data Type Manager right mouse menu.</li>
+      <li>Users can create Enum data types by selecting a group of Enums in the Data Type Manager and selecting Create Enum From Selection.</li>
+    </ul>
+    <br>
+    <li><b>Function Definitions:</b></li>
+    <ul>
+	<li>Users can create a function definition data type for function signatures they might want apply again in a new program for a particular named function. To do this, click on a function signature and choose Function->Create Function Definition from the Listing right mouse menu.</li>
+      <li>Users can create function definitions for their whole program by choosing Capture Function Data Types from the Data Type Manager right mouse menu.</li>
+     <li>In new program, apply function signature by right mousing on appropriate folder in Data Type Manager and choosing Apply Function Data Types</li>
+
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Advanced Data Types</header>
+<ul>
+  <br><br>
+  <li>Shared Data Archives</li>
+  <li>Advanced Data Options</li>
+  <li>C parser</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes</u></b>
+  <ul>
+    <li><b>Shared Data Archives:</b><br>
+    There are two types of Shared Data Archives called File archives and Project archives.</li>
+    <ul>
+      <li><b>File Archives:</b></li>
+      <ul>
+	<li>This archive is stored on the file system and accessible by anyone with access to the file system.</li>
+	<li>To create a File Archive, pull down on the black triangle in the Data Type manager and choose New File Archive.</li>
+      </ul>
+      <li><b>Project Archives:</b></li>
+      <ul>
+	<li>This archive is stored within a Ghidra project and is accessible by anyone with access to that project.</li>
+	<li>To create a Project Archive, pull down on the black triangle in the Data Type manager and choose New File Archive.</li>
+      </ul>
+    </ul>
+    <li><b>Advanced Data Options:</b></li>
+    <ul>
+      <li>Users can change the settings on a single data item or on any applied data of a particular type using the Data-&gt;Settings or Data-Default Settings actions on the Listing right mouse menu.</li>
+    </ul>
+    <li><b>C parser:</b></li>
+    <ul>
+      <li>Users can create data types by parsing header files. To do this, use the File-&gt;Parse C Source action.</li>
+      <li>It is sometimes tricky to get the options setup correctly in this feature. Please contact the Ghidra team if you have troubles.</li>
+    </ul>
+  </ul>
+</p>
+</div>
+</section>
+
+
+<section>
+<header>Exercise 2<br>Create and Apply Enum</header>
+<ul class="small">
+  <li>In winhelloCPP.exe</li>
+  <ul>
+    <li>1. Create an new Enum named MyEnum with values 0-3 with corresponding names Enum0, Enum1, Enum2, and Enum3. Find a scalar operand reference with one of these values and use the Set Equate action to apply one of your Enums to it. (NOTE: If you cannot find a scalar use Search->Program Text to help you)</li>
+    <li>2. Create an ENUM named ExceptionNumbers  out of the already defined _FPE_ enums, using the Create Enum from Selection feature. Edit the Enum and make it size 4. Apply the ExceptionNumbers Enum  to the appropriate variable in the __XcptFilter function in both the Listing and the decompiler.  </li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes:</b></u>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Memory Map</header>
+<ul class="medium">
+  <li>The Memory Map</li>
+  <li>Allows users to add, delete, move, split, merge, or expand memory blocks in their program.</li>
+  <li>Memory Blocks can be byte-mapped, bit-mapped (if supported by processor) or overlays</li>
+  <li>Allows users to rename memory blocks</li>
+  <li>Allows users to change the image base of their program</li>
+  <li>Allows users to edit settings on individual memory blocks</li>
+  <ul>
+    <li>Read/Write/Execute</li>
+    <li>Volatile/non-volatile</li>
+    <li>Initialized/non-initialized</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Program Differences</header>
+<ul>
+  <br><br>
+  <li>Users can find differences between two programs</li>
+  <li>Users can apply differences from one program to another</li>
+  <li>Users can customize how their differences are applied</li>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes:</b></u>
+  <ul>
+    <li>To open the Program Differences Tool, go to Tools-&gt;Program Differences and choose a program to compare against the currently opened program in the Code Browser.</li>
+    <br>
+    <li>Next, choose what types of program differences you want to see: bytes, bookmarks, labels, comments, etc.</li>
+    <br>
+    <li>Notice that the program you are comparing shows up to the right of the current program. There are extra icons added to the tool that allow you to navigate to the next difference, view what is different about a particular item, apply differences, or ignore differences.</li>
+    <br>
+    <li>You can decide how differences are applied for each kind of item. Most let you ignore, replace, or merge the difference.</li>
+    <br>
+    <li>If you want to select all differences, choose Select All Differences from the right mouse menu.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 3<br>Program Differences</header>
+<ul>
+  <br>
+  <li>Import winhelloCPP.exe again and call it winhelloCPP2.exe</li>
+  <li>Pick a new kind of analyzer when you auto-analyze it.</li>
+  <li>Use the Program Differences Tool to view and apply some of the differences between the two programs.</li>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes:</b></u>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Shared Project</header>
+<ul class="small">
+  <li>Setup server</li>
+  <ul>
+    <li>Edit Server.conf file to decide how users will authenticate and other options</li>
+    <li>Install service</li>
+    <li>Start service</li>
+    <li>Add users to the server</li>
+  </ul>
+  <li>Setup project</li>
+  <ul>
+    <li>Create new shared project</li>
+    <li>Add users to project (subgroup of server users)</li>
+    <li>Import and initial analysis of binaries</li>
+    <li>Add to version control so others can get access to it</li>
+    <li>Others do a check out to get access</li>
+  </ul>
+  <li>Shared Project actions</li>
+  <ul>
+    <li>Changes should be checked in so others can see them</li>
+    <li>Others do an update to see the changes</li>
+    <li>Conflicts get merged one at a time </li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes</b></u>
+  <ul>
+    <li>As a user, you can run Ghidra in Shared Project mode which allows users to collaborate with other users when using Ghidra to understand and markup a binary.</li>
+    <li><b>Server Setup:</b></li>
+    <ul>
+      <li>Done once by whoever will administer the server</li>
+      <li>Users can set up Ghidra servers anywhere there is shared access amongst the users they want to share with</li>
+      <li>Go to C:\ghidra_&lt;version&gt;\server\svrREADME.html file for server setup instructions</li>
+      <li>Edit the server.conf file to setup server per the readme file</li>
+      <li>Install the server using svrInstall</li>
+	<li>Once server is up and running add people allowed to create shared projects on the server by using the \server\svrAdmin -add <user> command in a cmd window. </li>
+    </ul>
+    <li><b>Shared Projects:</b></li>
+    <ul>
+	<ul>
+	<li><b>Person Starting a New Project</b></li>
+	<ul>
+      <li>Create a new Ghidra Project using File->New Project and choose "Shared Project" and do the following in New Project Wizard:</li>
+	<ul>
+      <li>Type in server name or IP and use default port in most cases</li>
+	<li>Authenticate with method chosen in server.conf file -- server administrator should communicate this. </li>
+      <li>Create a new Repository</li>
+      <li>Give subgroup of people access to your project. You can give them admin, read/write, or read-only access.</li>
+      <li>Choose storage location for your local version of project</li>
+	</ul>
+	</ul>
+<li><b>Others joining project</b></li>
+ <ul>
+      <li>Create a new Ghidra Project using File->New Project and choose "Shared Project" and do the following in New Project Wizard:</li>
+	<ul>
+      <li>Type in server name or IP and use default port in most cases</li>
+	<li>Authenticate with method chosen in server.conf file -- server administrator or project owner should communicate this. </li>
+	<li>Join existing Repository</li>
+      <li>Choose storage location for your local version of project</li>
+</ul>
+       </ul>
+      
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Checksum Tool</header>
+<ul>
+  <br>
+  <li>The Checksum Tool allows users to generate a variety of checksums on either the whole program or a selection.</li>
+  <li>Results are shown in various formats.</li>
+  <ul>
+    <li>Decimal</li>
+    <li>Hex</li>
+    <li>1&apos;s Complement</li>
+    <li>2&apos;s Complement</li>
+  <ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  To open the Checksum Tool, go to Tools-&gt;Generate Checksum.
+  </p>
+</div>
+</section>
+
+<section>
+<header>Version Tracking</header>
+<ul>
+  <br><br>
+  <li>Version Tracking is the process of identifying matching functions or data in a new version of a binary.</li>
+  <li>See VersionTracking.html or VersionTracking_withNotes.html to follow along with the Version Tracking instruction to follow along with the Version Tracking instruction.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  The VersionTracking.ppt slides are located in your <b>ghidra_&lt;version&gt;\docs\GhidraClass\Intermediate</b> directory.
+  </p>
+</div>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br><br>
+  <li>Ghidra allows users to extend its functionality. One way to do this is to develop scripts</li>
+  <li>See Scripting.html to follow along with the Scripting instruction</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  The Scripting slides are located in your <b>ghidra_&lt;version&gt;\docs\GhidraClass\Intermediate</b> directory.
+  </p>
+</div>
+</section>
+
+<section>
+<header>Headless Analyzer</header>
+<ul>
+  <br><br>
+  <li>Analysis and all non-GUI Ghidra scripts can be run without running the Ghidra tool</li>
+  <li>See HeadlessAnalyzer.html or HeadlessAnalyzer_withNotes.html to follow along with the Headless Analyzer instruction</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  The HeadlessAnalyzer slides are located in your <b>ghidra_&lt;version&gt;\docs\GhidraClass\Intermediate</b> directory.
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Course Summary</header>
+<br>
+<ul class="medium">
+  <li>You now should be able to:</li>
+  <ul>    
+    <li>Use the more advanced Ghidra features including intermediate code analysis and decompiler, advanced data types and program tree, memory map, multi-user projects, comparing programs, and version tracking</li>
+	<li>Setup the Ghidra development environment</li>
+    <li>Write basic Ghidra scripts</li>
+ 	<li>Run Ghidra in headless mode</li>  
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+
+<!-- COPY THE TEXT BELOW TO START A NEW SLIDE
+<section>
+<header>Insert Title of Slide Here</header>
+<ul class="small" comment="NOTE: remove the class attribute for regular size, adjust the name if you want big, small, or tiny">
+  <li>Bullet text here</li>
+  <ul>
+    <li>Nested bullet here</li>
+  </ul>
+</ul>
+<div role="note">
+<p>Insert notes here</p>
+<p>And here, too</p>
+</div>
+</section>
+END COPY -->
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<!--link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'-->
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section { background-color: black; border-radius: 12px; color: white; }
+  /* A section is a slide. It's size is 800x600, and this will never change */
+  section, .view head > title {
+      font-family: arial, serif;
+      font-size: 35px;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: black;
+  }
+
+  .view head > title {
+    color: black;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1, h2 {
+    margin-top: 200px;
+    text-align: center;
+    font-size: 80px;
+    font-family: 'Times New Roman'
+  }
+
+  h3 {
+    margin: 100px 0 50px 100px;
+  }
+
+/* My custom list sizes */
+
+  .big ul {
+    font-size: 45px;
+  }
+
+  .big ol {
+    font-size: 45px;
+  }
+
+  .big li {
+    font-size: 45px;
+  }
+
+  .big li:before {
+      font-size: 200px;
+  }
+
+  .medium ul {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium ol {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li:before {
+      font-size: 120px;
+  }
+
+  .small ul {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small ol {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li:before {
+      font-size: 80px;
+  }
+
+  .tiny ul {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny ol {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li:before {
+      font-size: 70px;
+  }
+/* end custom list sizes */
+
+/* Standard list size */
+  ul {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol.decimal {
+    list-style-position: inside;
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 10px 10px;
+    font-size: 35px;
+  }
+
+  ul li:before {
+    content:"·";
+    font-size:160px;
+    vertical-align:middle;
+    line-height: 20px;
+    color: red;
+  }
+
+
+/* end custom list sizes */
+
+  p {
+    margin: 75px;
+    font-size: 100px;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 60px;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 50px;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 40px;
+    text-align: right;
+    background-color: black;
+    border-top: 1px solid #CCC;
+  }
+
+  header {
+    font-family: 'Times New Roman';
+    position: relative;
+    top: 0px;
+    width: 100%;
+    padding: 0px;
+    text-align: center;
+    background-image: url(Images/GhidraLogo64.png), url(Images/GhidraLogo64.png);
+    background-repeat: no-repeat, no-repeat;
+    background-position: left top, right top;
+    background-size: contain, contain;
+    border-bottom: 1px solid red;
+    font-size: 50px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    -moz-transition: left 400ms linear 0s;
+    -webkit-transition: left 400ms linear 0s;
+    -ms-transition: left 400ms linear 0s;
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+
+  /* Incremental elements */
+
+  /* By default, visible */
+  .incremental > * { opacity: 1; }
+
+  /* The current item */
+  .incremental > *[aria-selected] { opacity: 1; }
+
+  /* The items to-be-selected */
+  .incremental > *[aria-selected] ~ * { opacity: 0; }
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 2px;
+    background: #AAA;
+  }
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  body {
+    width: 800px; height: 600px;
+    margin-left: -400px; margin-top: -300px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+    -moz-transform: none !important;
+    -webkit-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+    -moz-transform: scale(.4);
+    -webkit-transform: scale(.4);
+    -o-transform: scale(.4);
+    -ms-transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .incremental {visibility: hidden; }
+  .incremental[active] {visibility: visible; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    -moz-transition: width 400ms linear 0s;
+    -webkit-transition: width 400ms linear 0s;
+    -ms-transition: width 400ms linear 0s;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79) { // o
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+    db.style.MozTransform = transform;
+    db.style.WebkitTransform = transform;
+    db.style.OTransform = transform;
+    db.style.msTransform = transform;
+    db.style.transform = transform;
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1 && this.step == 0) {
+      return;
+    }
+    if (this.step == 0) {
+      this.setCursor(this.idx - 1,
+                     this.slides[this.idx - 2].$$('.incremental > *').length);
+    } else {
+      this.setCursor(this.idx, this.step - 1);
+    }
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+        return;
+    }
+    if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+      this.setCursor(this.idx + 1, 0);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      }
+      var video = next.$("video");
+      if (video && !!+this.params.autoplay) {
+        video.play();
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+    if (old) {
+      old.removeAttribute('aria-selected');
+    }
+    var incrementals = $$('.incremental');
+    if (this.step <= 0) {
+      $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+      });
+      return;
+    }
+    var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+    if (next) {
+      next.setAttribute('aria-selected', true);
+      next.parentNode.setAttribute('active', true);
+      var found = false;
+      $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+          if (found)
+            aNode.removeAttribute('active');
+          else
+            aNode.setAttribute('active', true);
+        else
+          found = true;
+      });
+    } else {
+      setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.incremental > *').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+</script>
+
+
+<script> // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

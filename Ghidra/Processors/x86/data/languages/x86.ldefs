@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="x86"
+            endian="little"
+            size="32"
+            variant="default"
+            version="2.8"
+            slafile="x86.sla"
+            processorspec="x86.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:32:default">
+    <description>Intel/AMD 32-bit x86</description>
+    <compiler name="Visual Studio" spec="x86win.cspec" id="windows"/>
+    <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
+    <compiler name="Borland C++" spec="x86borland.cspec" id="borlandcpp"/>
+    <compiler name="Delphi" spec="x86delphi.cspec" id="borlanddelphi"/>
+    <external_name tool="gnu" name="i386:intel"/>
+    <external_name tool="IDA-PRO" name="8086"/>
+	<external_name tool="IDA-PRO" name="80486p"/>
+	<external_name tool="IDA-PRO" name="80586p"/>
+	<external_name tool="IDA-PRO" name="80686p"/>
+	<external_name tool="IDA-PRO" name="k62"/>
+	<external_name tool="IDA-PRO" name="p2"/>
+	<external_name tool="IDA-PRO" name="p3"/>
+	<external_name tool="IDA-PRO" name="athlon"/>
+	<external_name tool="IDA-PRO" name="p4"/>
+	<external_name tool="IDA-PRO" name="metapc"/>
+    <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
+  </language>
+  <language processor="x86"
+            endian="little"
+            size="32"
+            variant="System Management Mode"
+            version="2.8"
+            slafile="x86.sla"
+            processorspec="x86-smm.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:32:System Management Mode">
+    <description>Intel/AMD 32-bit x86 System Management Mode</description>
+    <compiler name="default" spec="x86-smm.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
+  </language>
+  <language processor="x86"
+            endian="little"
+            size="16"
+            variant="Real Mode"
+            version="2.8"
+            slafile="x86.sla"
+            processorspec="x86-16.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:16:Real Mode">
+    <description>Intel/AMD 16-bit x86 Real Mode</description>
+    <compiler name="default" spec="x86-16.cspec" id="default"/>
+	<external_name tool="IDA-PRO" name="8086"/>
+	<external_name tool="IDA-PRO" name="8086r"/>
+	<external_name tool="IDA-PRO" name="8086p"/>
+	<external_name tool="IDA-PRO" name="80386r"/>
+	<external_name tool="IDA-PRO" name="80486r"/>
+	<external_name tool="IDA-PRO" name="80586r"/>
+  </language>
+    <language processor="x86"
+            endian="little"
+            size="64"
+            variant="default"
+            version="2.8"
+            slafile="x86-64.sla"
+            processorspec="x86-64.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:64:default">
+    <description>Intel/AMD 64-bit x86</description>
+    <compiler name="Visual Studio" spec="x86-64-win.cspec" id="windows"/>
+    <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
+    <external_name tool="gnu" name="i386:x86-64:intel"/>
+    <external_name tool="IDA-PRO" name="metapc"/>
+    <external_name tool="DWARF.register.mapping.file" name="x86-64.dwarf"/>
+  </language>
+</language_definitions>

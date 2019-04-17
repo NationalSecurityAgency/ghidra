@@ -1,0 +1,186 @@
+#stswi	r5,r3,0x02   7c a4 14 aa
+#stswi  r5,r4,0x08   7c a4 44 aa
+
+
+DYN_S1: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 1)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S2: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 2)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S3: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 3)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S4: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 4)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S5: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 5)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S6: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 6)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+DYN_S7: regaddr is BITS_21_25 [ regaddr = ((BITS_21_25 + 7)&0x1f) * $(REGISTER_SIZE); ] { export *[register]:$(REGISTER_SIZE) regaddr; }
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=0 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5 & DYN_S6 & DYN_S7
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  storeRegister(DYN_S5,ea);
+  storeRegister(DYN_S6,ea);
+  storeRegister(DYN_S7,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=0 & BH & XOP_1_10=725 & BIT_0=0
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  sa:1 = BH;
+  storeRegisterPartial(S,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=1 & BH=0 & XOP_1_10=725 & BIT_0=0
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=1 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S1,ea,sa);
+}
+
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=2 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=2 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S2,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=3 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=3 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S3,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=4 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=4 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S4,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=5 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=5 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S5,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=6 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  storeRegister(DYN_S5,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=6 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5 & DYN_S6
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  storeRegister(DYN_S5,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S6,ea,sa);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=7 & BH=0 & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5 & DYN_S6
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  storeRegister(DYN_S5,ea);
+  storeRegister(DYN_S6,ea);
+}
+
+:stswi  S,RA_OR_ZERO,NB  is OP=31 & S & RA_OR_ZERO & NB & BITS_13_15=7 & BH & XOP_1_10=725 & BIT_0=0
+                             & DYN_S1 & DYN_S2 & DYN_S3 & DYN_S4 & DYN_S5 & DYN_S6 & DYN_S7
+{
+  ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+  storeRegister(S,ea);
+  storeRegister(DYN_S1,ea);
+  storeRegister(DYN_S2,ea);
+  storeRegister(DYN_S3,ea);
+  storeRegister(DYN_S4,ea);
+  storeRegister(DYN_S5,ea);
+  storeRegister(DYN_S6,ea);
+  sa:1 = BH;
+  storeRegisterPartial(DYN_S7,ea,sa);
+}

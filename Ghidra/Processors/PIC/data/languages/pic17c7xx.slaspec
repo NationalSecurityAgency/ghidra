@@ -1,0 +1,67 @@
+@define PROCESSOR "PIC_17C7xx"
+
+@include "pic17c7xx.sinc"
+
+# 0x00 - 0x0f (Unbanked - BSR ignored, WREG hidden and mirrored in register space)
+define DATA offset=0x000 size=1 [
+	INDF0	FSR0	PCL		PCLATH	ALUSTA	T0STA	CPUSTA	INTSTA	INDF1	FSR1	_	TMR0L	TMR0H	TBLPTRL	TBLPTRH	BSR
+];
+
+# Bank-0 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x010 size=1 [
+	PORTA	DDRB	PORTB	RCSTA1	RCREG1	TXSTA1	TXREG1	SPBRG1
+];
+
+# Bank-1 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x110 size=1 [
+	DDRC	PORTC	DDRD	PORTD	DDRE	PORTE	PIR1	PIE1
+];
+
+# Bank-2 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x210 size=1 [
+	TMR1	TMR2	TMR3L	TMR3H	PR1		PR2		PR3LCA1L	PR3HCA1H
+];
+
+# Bank-3 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x310 size=1 [
+	PW1DCL	PW2DCL	PW1DCH	PW2DCH	CA2L	CA2H	TCON1	TCON2
+];
+
+# Bank-4 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x410 size=1 [
+	PIR2	PIE2	_		RCSTA2	RCREG2	TXSTA2	TXREG2	SPBRG2
+];
+
+# Bank-5 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x510 size=1 [
+	DDRF	PORTF	DDRG	PORTG	ADCON0	ADCON1	ADRESL	ADRESH
+];
+
+# Bank-6 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x610 size=1 [
+	SSPADD	SSPCON1	SSPCON2	SSPSTAT	SSPBUF
+];
+
+# Bank-7 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x710 size=1 [
+	PW3DCL	PW3DCH	CA3L	CA3H	CA4L	CA4H	TCON3
+];
+
+# Bank-8 0x10 - 0x17 (lower nibble of BSR determines bank, i.e. address<11:8>)
+define DATA offset=0x810 size=1 [
+	DDRH	PORTH	DDRJ	PORTJ
+];
+
+# 0x18 - 0x1f (Unbanked - BSR ignored)
+define DATA offset=0x018 size=1 [
+	PRODL	PRODH
+];
+
+define DATA offset=0x00d size=2 [ TBLPTR ];
+define DATA offset=0x002 size=2 [ PCLAT ];
+
+define DATA offset=0x018 size=2 [ PROD ];
+
+define DATA offset=0x516 size=2 [ ADRES ];
+
+@include "pic17c7xx_instructions.sinc"

@@ -1,0 +1,8 @@
+apply plugin: 'eclipse'
+eclipse {
+	project {
+		name = 'Eclipse GhidraDevFeature'
+		buildCommand 'org.eclipse.pde.FeatureBuilder'
+		natures 'org.eclipse.pde.FeatureNature'
+	}
+}

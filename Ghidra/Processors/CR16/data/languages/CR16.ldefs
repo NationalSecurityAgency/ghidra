@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+<!--
+  <language processor="CR16A/B"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="CR16B.sla"
+            processorspec="CR16.pspec"
+            manualindexfile="../manuals/CR16.idx"
+            id="CR16AB:LE:16:default">
+    <description>National Semiconductor's CompactRISC CR16A/B little endian</description>
+    <compiler name="default" spec="CR16.cspec" id="default"/>
+  </language>
+-->
+  <language processor="CR16C"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="CR16C.sla"
+            processorspec="CR16.pspec"
+            manualindexfile="../manuals/CR16.idx"
+            id="CR16C:LE:16:default">
+    <description>National Semiconductor's CompactRISC CR16C little endian</description>
+    <compiler name="default" spec="CR16.cspec" id="default"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,4237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article>
+<info>
+  <title>P-Code Reference Manual</title>
+  <releaseinfo>Last updated September 21, 2017</releaseinfo>
+</info>
+<table xml:id="mytoc.htmltable" width="90%" frame='none'>
+  <col width="25%"/>
+  <col width="25%"/>
+  <col width="25%"/>
+  <col width="25%"/>
+<tbody>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_copy">COPY</link></td>
+ <td><link linkend="cpui_int_add">INT_ADD</link></td>
+ <td><link linkend="cpui_bool_or">BOOL_OR</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_load">LOAD</link></td>
+ <td><link linkend="cpui_int_sub">INT_SUB</link></td>
+ <td><link linkend="cpui_float_equal">FLOAT_EQUAL</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_store">STORE</link></td>
+ <td><link linkend="cpui_int_carry">INT_CARRY</link></td>
+ <td><link linkend="cpui_float_notequal">FLOAT_NOTEQUAL</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_branch">BRANCH</link></td>
+ <td><link linkend="cpui_int_scarry">INT_SCARRY</link></td>
+ <td><link linkend="cpui_float_less">FLOAT_LESS</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_cbranch">CBRANCH</link></td>
+ <td><link linkend="cpui_int_sborrow">INT_SBORROW</link></td>
+ <td><link linkend="cpui_float_lessequal">FLOAT_LESSEQUAL</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_branchind">BRANCHIND</link></td>
+ <td><link linkend="cpui_int_2comp">INT_2COMP</link></td>
+ <td><link linkend="cpui_float_add">FLOAT_ADD</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_call">CALL</link></td>
+ <td><link linkend="cpui_int_negate">INT_NEGATE</link></td>
+ <td><link linkend="cpui_float_sub">FLOAT_SUB</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_callind">CALLIND</link></td>
+ <td><link linkend="cpui_int_xor">INT_XOR</link></td>
+ <td><link linkend="cpui_float_mult">FLOAT_MULT</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_userdefined">USERDEFINED</link></td>
+ <td><link linkend="cpui_int_and">INT_AND</link></td>
+ <td><link linkend="cpui_float_div">FLOAT_DIV</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_return">RETURN</link></td>
+ <td><link linkend="cpui_int_or">INT_OR</link></td>
+ <td><link linkend="cpui_float_neg">FLOAT_NEG</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_piece">PIECE</link></td>
+ <td><link linkend="cpui_int_left">INT_LEFT</link></td>
+ <td><link linkend="cpui_float_abs">FLOAT_ABS</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_subpiece">SUBPIECE</link></td>
+ <td><link linkend="cpui_int_right">INT_RIGHT</link></td>
+ <td><link linkend="cpui_float_sqrt">FLOAT_SQRT</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_equal">INT_EQUAL</link></td>
+ <td><link linkend="cpui_int_sright">INT_SRIGHT</link></td>
+ <td><link linkend="cpui_float_ceil">FLOAT_CEIL</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_notequal">INT_NOTEQUAL</link></td>
+ <td><link linkend="cpui_int_mult">INT_MULT</link></td>
+ <td><link linkend="cpui_float_floor">FLOAT_FLOOR</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_less">INT_LESS</link></td>
+ <td><link linkend="cpui_int_div">INT_DIV</link></td>
+ <td><link linkend="cpui_float_round">FLOAT_ROUND</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_sless">INT_SLESS</link></td>
+ <td><link linkend="cpui_int_rem">INT_REM</link></td>
+ <td><link linkend="cpui_float_nan">FLOAT_NAN</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_lessequal">INT_LESSEQUAL</link></td>
+ <td><link linkend="cpui_int_sdiv">INT_SDIV</link></td>
+ <td><link linkend="cpui_int2float">INT2FLOAT</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_slessequal">INT_SLESSEQUAL</link></td>
+ <td><link linkend="cpui_int_srem">INT_SREM</link></td>
+ <td><link linkend="cpui_float2float">FLOAT2FLOAT</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_zext">INT_ZEXT</link></td>
+ <td><link linkend="cpui_bool_negate">BOOL_NEGATE</link></td>
+ <td><link linkend="cpui_trunc">TRUNC</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_sext">INT_SEXT</link></td>
+ <td><link linkend="cpui_bool_xor">BOOL_XOR</link></td>
+ <td><link linkend="cpui_cpoolref">CPOOLREF</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td></td>
+ <td><link linkend="cpui_bool_and">BOOL_AND</link></td>
+ <td><link linkend="cpui_new">NEW</link></td>
+</tr>
+</tbody>
+</table>
+<sect1 id="index">
+  <title>A Brief Introduction to P-Code</title>
+<para>
+P-code is a <emphasis>register transfer language</emphasis> designed
+for reverse engineering applications. The language is general enough
+to model the behavior of many different processors. By modeling in
+this way, the analysis of different processors is put into a common
+framework, facilitating the development of retargetable analysis
+algorithms and applications. 
+</para>
+<para>
+Fundamentally, p-code works by translating individual processor instructions
+into a sequence of <emphasis role="bold">p-code operations</emphasis> that take
+parts of the processor state as input and output variables
+(<emphasis role="bold">varnodes</emphasis>). The set of unique p-code operations
+(distinguished by <emphasis role="bold">opcode</emphasis>) comprise a fairly tight set
+of the arithmetic and logical actions performed by general purpose processors.
+The direct translation of instructions into these operations is referred
+to as <emphasis role="bold">raw p-code</emphasis>. Raw p-code can be used to directly emulate
+instruction execution and generally follows the same control-flow,
+although it may add some of its own internal control-flow. The subset of
+opcodes that can occur in raw p-code is described in
+<xref linkend="pcodedescription"/> and in <xref linkend="pseudo-ops"/>, making up
+the bulk of this document. 
+</para>
+<para>
+P-code is designed specifically to facilitate the
+construction of <emphasis>data-flow</emphasis> graphs for follow-on analysis of
+disassembled instructions. Varnodes and
+p-code operators can be thought of explicitly as nodes in these graphs.
+Generation of raw p-code is a necessary first step in graph construction,
+but additional steps are required, which introduces some new
+opcodes. Two of these,
+<emphasis role="bold">MULTIEQUAL</emphasis> and <emphasis role="bold">INDIRECT</emphasis>,
+are specific to the graph construction process, but other opcodes can be introduced during
+subsequent analysis and transformation of a graph and help hold recovered data-type relationships.
+All of the new opcodes are described in <xref linkend="additionalpcode"/>, none of which can occur
+in the original raw p-code translation. Finally, a few of the p-code operators,
+<emphasis role="bold">CALL</emphasis>,
+<emphasis role="bold">CALLIND</emphasis>, and <emphasis role="bold">RETURN</emphasis>,
+may have their input and output varnodes changed during analysis so that they no
+longer match their <emphasis>raw p-code</emphasis> form.
+</para>
+<para>
+The core concepts of p-code are:
+</para>
+<sect2>
+  <title>Address Space</title>
+<para>
+The <emphasis role="bold">address space</emphasis> for p-code is a generalization
+of RAM. It is defined simply as an indexed sequence of bytes that can
+be read and written by the p-code operations. For a specific byte, the unique index
+that labels it is the byte's <emphasis role="bold">address</emphasis>. An address space has a
+name to identify it, a size that indicates the number of distinct
+indices into the space, and an <emphasis role="bold">endianess</emphasis>
+associated with it that indicates how integers and other multi-byte
+values are encoded into the space. A typical processor
+will have a <emphasis role="bold">ram</emphasis> space, to model
+memory accessible via its main data bus, and
+a <emphasis role="bold">register</emphasis> space for modeling the
+processor's general purpose registers. Any data that a processor
+manipulates must be in some address space. The specification for a
+processor is free to define as many address spaces as it needs. There
+is always a special address space, called
+a <emphasis role="bold">constant</emphasis> address space, which is
+used to encode any constant values needed for p-code operations. Systems generating
+p-code also generally use a dedicated <emphasis role="bold">temporary</emphasis>
+space, which can be viewed as a bottomless source of temporary registers. These
+are used to hold intermediate values when modeling instruction behavior.
+
+</para>
+<para>
+P-code specifications allow the addressable unit of an address
+space to be bigger than just a byte. Each address space has
+a <emphasis role="bold">wordsize</emphasis> attribute that can be set
+to indicate the number of bytes in a unit. A wordsize which is bigger
+than one makes little difference to the representation of p-code. All
+the offsets into an address space are still represented internally as
+a byte offset. The only exceptions are
+the <emphasis role="bold">LOAD</emphasis> and
+<emphasis role="bold">STORE</emphasis> p-code
+operations. These operations read a pointer offset that must be scaled properly to get the
+right byte offset when dereferencing the pointer. The wordsize attribute has no effect on
+any of the other p-code operations.
+</para>
+</sect2>
+<sect2>
+  <title>Varnode</title>
+<para>
+A <emphasis role="bold">varnode</emphasis> is a generalization of
+either a register or a memory location. It is represented by the formal triple:
+an address space, an offset into the space, and a size. Intuitively, a
+varnode is a contiguous sequence of bytes in some address space that
+can be treated as a single value.  All manipulation of data by p-code
+operations occurs on varnodes.
+</para>
+<para>
+Varnodes by themselves are just a contiguous chunk of bytes,
+identified by their address and size, and they have no type. The
+p-code operations however can force one of three <emphasis>type</emphasis> interpretations
+on the varnodes: integer, boolean, and floating-point.
+<informalexample>
+<itemizedlist mark='bullet' spacing='compact'>
+  <listitem>
+    Operations that manipulate integers always interpret a varnode as a
+    twos-complement encoding using the endianess associated with the
+    address space containing the varnode.
+  </listitem>
+  <listitem>
+    A varnode being used as a boolean value is assumed to be a single byte
+    that can only take the value 0, for <emphasis>false</emphasis>, and 1,
+    for <emphasis>true</emphasis>.
+  </listitem>
+  <listitem>
+    Floating-point operations use the encoding expected by the processor being modeled,
+    which varies depending on the size of the varnode.
+    For most processors, these encodings are described by the IEEE 754 standard, but
+    other encodings are possible in principle.
+  </listitem>
+</itemizedlist>
+</informalexample>
+</para>
+<para>
+If a varnode is specified as an offset into
+the <emphasis role="bold">constant</emphasis> address space, that
+offset is interpreted as a constant, or immediate value, in any p-code
+operation that uses that varnode. The size of the varnode, in this
+case, can be treated as the size or precision available for the encoding
+of the constant. As with other varnodes, constants only have a type forced
+on them by the p-code operations that use them.
+</para>
+</sect2>
+<sect2>
+  <title>P-code Operation</title>
+<para>
+A <emphasis role="bold">p-code operation</emphasis> is the analog of a
+machine instruction. All p-code operations have the same basic format
+internally. They all take one or more varnodes as input and optionally
+produce a single output varnode. The action of the operation is determined by
+its <emphasis role="bold">opcode</emphasis>.
+For almost all p-code operations, only the output varnode can have its
+value modified; there are no indirect effects of the operation.
+The only possible exceptions are <emphasis>pseudo</emphasis> operations,
+see <xref linkend="pseudo-ops"/>, which are sometimes necessary when there
+is incomplete knowledge of an instruction's behavior.
+</para>
+<para>
+All p-code operations are associated with the address of the original
+processor instruction they were translated from. For a single instruction,
+a 1-up counter, starting at zero, is used to enumerate the
+multiple p-code operations involved in its translation. The address and
+counter as a pair are referred to as the p-code op's
+unique <emphasis role="bold">sequence number</emphasis>. Control-flow of
+p-code operations generally follows sequence number order. When execution
+of all p-code for one instruction is completed, if the
+instruction has <emphasis>fall-through</emphasis> semantics, p-code
+control-flow picks up with the first p-code operation in sequence corresponding to
+the instruction at the fall-through address. Similarly, if a p-code operation
+results in a control-flow branch, the first p-code operation in sequence executes
+at the destination address.
+</para>
+<para>
+The list of possible
+opcodes are similar to many RISC based instruction sets. The effect of
+each opcode is described in detail in the following sections,
+and a reference table is given
+in <xref linkend="reference"/>. In general, the size or
+precision of a particular p-code operation is determined by the size
+of the varnode inputs or output, not by the opcode.
+</para>
+</sect2>
+</sect1>
+<sect1 id="pcodedescription">
+  <title>P-Code Operation Reference</title>
+<para>
+For each possible p-code operation, we give a brief description and
+provide a table that lists the inputs that must be present and their
+meaning. We also list the basic syntax for denoting the operation when
+describing semantics in a processor specification file.
+</para>
+
+<sect2 id="cpui_copy">
+  <title>COPY</title>
+<informalexample>
+<table xml:id="copy.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Source varnode.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Destination varnode.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+Copy a sequence of contiguous bytes from anywhere to anywhere. Size of
+input0 and output must be the same.
+</para>
+</sect2>
+
+<sect2 id="cpui_load"><title>LOAD</title>
+<informalexample>
+<table xml:id="load.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Constant ID of space to load from.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode containing pointer offset to data.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Destination varnode.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = *input1;</code></td>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = *[input0]input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This instruction loads data from a dynamic location into the output
+variable by dereferencing a pointer. The “pointer” comes in two
+pieces. One piece, input1, is a normal variable containing the offset
+of the object being pointed at. The other piece, input1, is a constant
+indicating the space into which the offset applies. The data in input1
+is interpreted as an unsigned offset and should have the same size as
+the space referred to by the ID, i.e. a 4-byte address space requires
+a 4-byte offset. The space ID is not manually entered by a user but is
+automatically generated by the p-code compiler. The amount of data
+loaded by this instruction is determined by the size of the output
+variable.  It is easy to confuse the address space of the output and
+input1 variables and the Address Space represented by the ID, which
+could all be different. Unlike many programming models, there are
+multiple spaces that a “pointer” can refer to, and so an extra ID is
+required.
+</para>
+<para>
+It is possible for the addressable unit of an address
+space to be bigger than a single byte. If
+the <emphasis role="bold">wordsize</emphasis> attribute of the space
+given by the ID is bigger than one, the offset into the space obtained
+from input1 must be multiplied by this value in order to obtain the
+correct byte offset into the space.
+</para>
+</sect2>
+
+<sect2 id="cpui_store"><title>STORE</title>
+<informalexample>
+<table xml:id="store.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Constant ID of space to store into.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode containing pointer offset of destination.</td>
+</tr>
+<tr>
+  <td align='right'>input2</td>
+  <td/>
+  <td>Varnode containing data to be stored.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>*input1 = input2;</code></td>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>*[input0]input1 = input2; </code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This instruction is the complement
+of <emphasis role="bold">LOAD</emphasis>.  The data in the variable
+input2 is stored at a dynamic location by dereferencing a pointer. As
+with <emphasis role="bold">LOAD</emphasis>, the “pointer” comes in two
+pieces: a space ID part, and an offset variable. The size of input1
+must match the address space specified by the ID, and the amount of
+data stored is determined by the size of input2.
+</para>
+<para>
+Its possible for the addressable unit of an address
+space to be bigger than a single byte. If
+the <emphasis role="bold">wordsize</emphasis> attribute of the space
+given by the ID is bigger than one, the offset into the space obtained
+from input1 must be multiplied by this value in order to obtain the
+correct byte offset into the space.
+</para>
+</sect2>
+
+<sect2 id="cpui_branch"><title>BRANCH</title>
+<informalexample>
+<table xml:id="branch.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Location of next instruction to execute.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>goto input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an absolute jump instruction. The varnode parameter input0 encodes
+the destination address (address space and offset) of the jump. The varnode is not
+treated as a variable for this instruction and does not store the destination. Its address space and
+offset <emphasis>are</emphasis> the destination. The size of input0 is irrelevant.
+</para>
+<para>
+Confusion about the meaning of this instruction can result because of
+the translation from machine instructions to p-code. The destination of the jump is
+a <emphasis>machine</emphasis> address and refers to
+the <emphasis>machine</emphasis> instruction at that address. When
+attempting to determine which p-code instruction is executed next, the
+rule is: execute the first p-code instruction resulting from the
+translation of the machine instruction(s) at that address. The
+resulting p-code instruction may not be attached directly to the
+indicated address due to NOP instructions and delay slots.
+</para>
+<para>
+If input0 is constant, i.e. its address space
+is the <emphasis role="bold">constant</emphasis>
+address space, then it encodes a <emphasis>p-code relative branch</emphasis>.
+In this case, the offset of input0 is considered a relative offset into
+the indexed list of p-code operations corresponding to the translation
+of the current machine instruction. This allows branching within the
+operations forming a single instruction. For example, if
+the <emphasis role="bold">BRANCH</emphasis> occurs as the pcode
+operation with index 5 for the instruction, it can branch to operation
+with index 8 by specifying a constant destination “address” of
+3. Negative constants can be used for backward branches.
+</para>
+</sect2>
+
+<sect2 id="cpui_cbranch"><title>CBRANCH</title>
+<informalexample>
+<table xml:id="cbranch.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Location of next instruction to execute.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Boolean varnode indicating whether branch is taken.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>if (input1) goto input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a conditional branch instruction where the dynamic condition
+for taking the branch is determined by the 1 byte variable input1. If
+this variable is non-zero, the condition is
+considered <emphasis>true</emphasis> and the branch is taken.  As in
+the <emphasis role="bold">BRANCH</emphasis> instruction the parameter
+input0 is not treated as a variable but as an address and is
+interpreted in the same way. Furthermore, a constant space address is
+also interpreted as a relative address so that
+a <emphasis role="bold">CBRANCH</emphasis> can do <emphasis>p-code
+relative branching</emphasis>.  See the discussion for the
+<emphasis role="bold">BRANCH</emphasis> operation.
+</para>
+</sect2>
+
+<sect2 id="cpui_branchind"><title>BRANCHIND</title>
+<informalexample>
+<table xml:id="branchind.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing offset of next instruction.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>goto [input0];</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an indirect branching instruction. The address to branch to is
+determined dynamically (at runtime) by examining the contents of the
+variable input0. As this instruction is currently defined, the
+variable input0 only contains the <emphasis>offset</emphasis> of the
+destination, and the address space is taken from the address
+associated with the branching instruction
+itself. So <emphasis>execution can only branch within the same address
+space</emphasis> via this instruction. The size of the variable input0
+must match the size of offsets for the current address space. P-code
+relative branching is not possible with <emphasis role="bold">BRANCHIND</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_call"><title>CALL</title>
+<informalexample>
+<table xml:id="call.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Location of next instruction to execute.</td>
+</tr>
+<tr>
+  <td align='right'>[input1]</td>
+  <td/>
+  <td>First parameter to call (never present in raw p-code)</td>
+</tr>
+<tr>
+  <td align='right'>...</td>
+  <td/>
+  <td>Additional parameters to call (never present in raw p-code)</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>call [input0];</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This instruction is semantically equivalent to
+the <emphasis role="bold">BRANCH</emphasis> instruction.
+<emphasis role="bold">Beware:</emphasis> This instruction does not
+behave like a typical function call. In particular, there is no
+internal stack in p-code for saving the return address. Use of this
+instruction instead of <emphasis role="bold">BRANCH</emphasis> is
+intended to provide a hint to algorithms that try to follow code flow.
+It indicates that the original machine instruction, of which this
+p-code instruction is only a part, is intended to be a function
+call. The p-code instruction does not implement the full semantics of
+the call itself; it only implements the final branch.
+</para>
+<para>
+In the raw p-code translation process, this operation can only take
+input0, but in follow-on analysis, it can take arbitrary additional inputs.
+These represent (possibly partial) recovery of the parameters being
+passed to the logical <emphasis>call</emphasis> represented by this
+operation.  These additional parameters have no effect on the original
+semantics of the raw p-code but naturally hold the varnode values flowing
+into the call.
+</para>
+</sect2>
+
+<sect2 id="cpui_callind"><title>CALLIND</title>
+<informalexample>
+<table xml:id="callind.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing offset of next instruction.</td>
+</tr>
+<tr>
+  <td align='right'>[input1]</td>
+  <td/>
+  <td>First parameter to call (never present in raw p-code)</td>
+</tr>
+<tr>
+  <td align='right'>...</td>
+  <td/>
+  <td>Additional parameters to call (never present in raw p-code)</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>call [input0];</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This instruction is semantically equivalent to
+the <emphasis role="bold">BRANCHIND</emphasis> instruction. It does
+not perform a function call in the usual sense of the term. It merely
+indicates that the original machine instruction is intended to be an
+indirect call. See the discussion for
+the <emphasis role="bold">CALL</emphasis> instruction.
+</para>
+<para>As with the <emphasis role="bold">CALL</emphasis> instruction,
+this operation may take additional inputs when not in raw form, representing
+the parameters being passed to the logical call.
+</para>
+</sect2>
+
+<sect2 id="cpui_return"><title>RETURN</title>
+<informalexample>
+<table xml:id="return.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing offset of next instruction.</td>
+</tr>
+<tr>
+  <td align='right'>[input1]</td>
+  <td/>
+  <td>Value returned from call (never present in raw p-code)</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>return [input0];</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This instruction is semantically equivalent to
+the <emphasis role="bold">BRANCHIND</emphasis> instruction. It does
+not perform a return from subroutine in the usual sense of the
+term. It merely indicates that the original machine instruction is
+intended to be a return from subroutine. See the discussion for
+the <emphasis role="bold">CALL</emphasis> instruction.
+</para>
+<para>
+Similarly to <emphasis role="bold">CALL</emphasis> and <emphasis role="bold">CALLIND</emphasis>,
+this operation may take an additional input when not in raw form. If input1 is
+present it represents the value being <emphasis>returned</emphasis> by this operation.
+This is used by analysis algorithms to hold the value logically flowing back to the parent
+subroutine.
+</para>
+</sect2>
+
+<sect2 id="cpui_piece"><title>PIECE</title>
+<informalexample>
+<table xml:id="piece.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing most significant data to merge.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode containing least significant data to merge.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode to contain resulting concatenation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot (currently) be explicitly coded</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a concatenation operator that understands the endianess of the
+data. The size of input0 and input1 must add up to the size of
+output. The data from the inputs is concatenated in such a way that,
+if the inputs and output are considered integers, the first input
+makes up the most significant part of the output.
+</para>
+</sect2>
+
+<sect2 id="cpui_subpiece"><title>SUBPIECE</title>
+<informalexample>
+<table xml:id="subpiece.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing source data to truncate.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td>(<emphasis role="bold">constant</emphasis>)</td>
+  <td>Constant indicating how many bytes to truncate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode to contain result of truncation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0(input1);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a truncation operator that understands the endianess of the
+data. Input1 indicates the number of least significant bytes of input0
+to be thrown away. Output is then filled with any remaining bytes of
+input0 <emphasis>up to the size of output</emphasis>. If the size of
+output is smaller than the size of input0 plus the constant input1,
+then the additional most significant bytes of input0 will also be
+truncated.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_equal"><title>INT_EQUAL</title>
+<informalexample>
+<table xml:id="intequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 == input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is the integer equality operator. Output is
+assigned <emphasis>true</emphasis>, if input0 equals input1. It works
+for signed, unsigned, or any contiguous data where the match must be
+down to the bit. Both inputs must be the same size, and the output
+must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_notequal"><title>INT_NOTEQUAL</title>
+<informalexample>
+<table xml:id="intnotequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 != input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is the integer inequality operator. Output is
+assigned <emphasis>true</emphasis>, if input0 does not equal
+input1. It works for signed, unsigned, or any contiguous data where
+the match must be down to the bit. Both inputs must be the same size,
+and the output must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_less"><title>INT_LESS</title>
+<informalexample>
+<table xml:id="intless.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First unsigned varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second unsigned varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 &lt; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an unsigned integer comparison operator. If the unsigned
+integer input0 is strictly less than the unsigned integer input1,
+output is set to <emphasis>true</emphasis>. Both inputs must be the
+same size, and the output must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sless"><title>INT_SLESS</title>
+<informalexample>
+<table xml:id="intsless.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First signed varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second signed varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 s&lt; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a signed integer comparison operator. If the signed integer
+input0 is strictly less than the signed integer input1, output is set
+to <emphasis>true</emphasis>. Both inputs must be the same size, and
+the output must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_lessequal"><title>INT_LESSEQUAL</title>
+<informalexample>
+<table xml:id="intlessequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First unsigned varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second unsigned varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 &lt;= input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an unsigned integer comparison operator. If the unsigned
+integer input0 is less than or equal to the unsigned integer input1,
+output is set to <emphasis>true</emphasis>. Both inputs must be the
+same size, and the output must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_slessequal"><title>INT_SLESSEQUAL</title>
+<informalexample>
+<table xml:id="intslessequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First signed varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second signed varnode to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 s&lt;= input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a signed integer comparison operator. If the signed integer
+input0 is less than or equal to the signed integer input1, output is
+set to <emphasis>true</emphasis>. Both inputs must be the same size,
+and the output must have a size of 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_zext"><title>INT_ZEXT</title>
+<informalexample>
+<table xml:id="intzext.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode to zero-extend.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing zero-extended result.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = zext(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+Zero-extend the data in input0 and store the result in output. Copy
+all the data from input0 into the least significant positions of
+output. Fill out any remaining space in the most significant bytes of
+output with zero. The size of output must be strictly bigger than the
+size of input.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sext"><title>INT_SEXT</title>
+<informalexample>
+<table xml:id="intsext.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode to sign-extend.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing sign-extended result.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = sext(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+Sign-extend the data in input0 and store the result in output. Copy
+all the data from input0 into the least significant positions of
+output. Fill out any remaining space in the most significant bytes of
+output with either zero or all ones (0xff) depending on the most
+significant bit of input0. The size of output must be strictly bigger
+than the size of input0.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_add"><title>INT_ADD</title>
+<informalexample>
+<table xml:id="intadd.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of integer addition.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 + input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is standard integer addition. It works for either unsigned or
+signed interpretations of the integer encoding (twos complement). Size
+of both inputs and output must be the same. The addition is of course
+performed modulo this size. Overflow and carry conditions are
+calculated by other
+operations. See <emphasis role="bold">INT_CARRY</emphasis>
+and <emphasis role="bold">INT_SCARRY</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sub"><title>INT_SUB</title>
+<informalexample>
+<table xml:id="intsub.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode to subtract from first.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of integer subtraction.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 - input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is standard integer subtraction. It works for either unsigned or
+signed interpretations of the integer encoding (twos complement). Size
+of both inputs and output must be the same. The subtraction is of
+course performed modulo this size. Overflow and borrow conditions are
+calculated by other
+operations. See <emphasis role="bold">INT_SBORROW</emphasis>
+and <emphasis role="bold">INT_LESS</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_carry"><title>INT_CARRY</title>
+<informalexample>
+<table xml:id="intcarry.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean result containing carry condition.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = carry(input0,input1);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation checks for unsigned addition overflow or carry
+conditions. If the result of adding input0 and input1 as unsigned
+integers overflows the size of the varnodes, output is
+assigned <emphasis>true</emphasis>. Both inputs must be the same size,
+and output must be size 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_scarry"><title>INT_SCARRY</title>
+<informalexample>
+<table xml:id="intscarry.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to add.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean result containing signed overflow condition.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = scarry(input0,input1);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation checks for signed addition overflow or carry
+conditions. If the result of adding input0 and input1 as signed
+integers overflows the size of the varnodes, output is
+assigned <emphasis>true</emphasis>. Both inputs must be the same size,
+and output must be size 1.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sborrow"><title>INT_SBORROW</title>
+<informalexample>
+<table xml:id="intsborrow.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode to subtract from first.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean result containing signed overflow condition.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = sborrow(input0,input1);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation checks for signed subtraction overflow or borrow
+conditions. If the result of subtracting input1 from input0 as signed
+integers overflows the size of the varnodes, output is
+assigned <emphasis>true</emphasis>. Both inputs must be the same size,
+and output must be size 1.  Note that the equivalent unsigned
+subtraction overflow condition
+is <emphasis role="bold">INT_LESS</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_2comp"><title>INT_2COMP</title>
+<informalexample>
+<table xml:id="int2comp.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First to negate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing twos complement.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = -input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is the twos complement or arithmetic negation operation. Treating input0 as a signed
+integer, the result is the same integer value but with the opposite sign. This is equivalent
+to doing a bitwise negation of input0 and then adding one. Both input0 and output must
+be the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_negate"><title>INT_NEGATE</title>
+<informalexample>
+<table xml:id="intnegate.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode to negate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing bitwise negation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = ~input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is the bitwise negation operation. Output is the result of taking
+every bit of input0 and flipping it. Both input0 and output must be
+the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_xor"><title>INT_XOR</title>
+<informalexample>
+<table xml:id="intxor.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First input to exclusive-or.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second input to exclusive-or.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing exclusive-or of inputs.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 ^ input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs a logical Exclusive-Or on the bits of input0
+and input1. Both inputs and output must be the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_and"><title>INT_AND</title>
+<informalexample>
+<table xml:id="intand.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First input to logical-and.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second input to logical-and.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing logical-and of inputs.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 &amp; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs a Logical-And on the bits of input0 and input1. Both inputs and
+output must be the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_or"><title>INT_OR</title>
+<informalexample>
+<table xml:id="intor.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First input to logical-or.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second input to logical-or.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing logical-or of inputs.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 | input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs a Logical-Or on the bits of input0 and input1. Both inputs and
+output must be the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_left"><title>INT_LEFT</title>
+<informalexample>
+<table xml:id="intleft.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode input being shifted.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode indicating number of bits to shift.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing shifted result.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 &lt;&lt; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs a left shift on input0. The value given by
+input1, interpreted as an unsigned integer, indicates the number of
+bits to shift. The vacated (least significant) bits are filled with
+zero. If input1 is zero, no shift is performed and input0 is copied
+into output. If input1 is larger than the number of bits in output,
+the result is zero. Both input0 and output must be the same
+size. Input1 can be any size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_right"><title>INT_RIGHT</title>
+<informalexample>
+<table xml:id="intright.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode input being shifted.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode indicating number of bits to shift.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing shifted result.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 >> input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs an unsigned (logical) right shift on
+input0. The value given by input1, interpreted as an unsigned integer,
+indicates the number of bits to shift. The vacated (most significant)
+bits are filled with zero. If input1 is zero, no shift is performed
+and input0 is copied into output. If input1 is larger than the number
+of bits in output, the result is zero. Both input0 and output must be
+the same size. Input1 can be any size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sright"><title>INT_SRIGHT</title>
+<informalexample>
+<table xml:id="intsright.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode input being shifted.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode indicating number of bits to shift.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing shifted result.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 s>> input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation performs a signed (arithmetic) right shift on
+input0. The value given by input1, interpreted as an unsigned integer,
+indicates the number of bits to shift. The vacated bits are filled
+with the original value of the most significant (sign) bit of input0.
+If input1 is zero, no shift is performed and input0 is copied into
+output. If input1 is larger than the number of bits in output, the
+result is zero or all 1-bits (-1), depending on the original sign of
+input0. Both input0 and output must be the same size. Input1 can be
+any size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_mult"><title>INT_MULT</title>
+<informalexample>
+<table xml:id="intmult.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode to be multiplied.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode to be multiplied.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of multiplication.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 * input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an integer multiplication operation. The result of multiplying
+input0 and input1, viewed as integers, is stored in output. Both
+inputs and output must be the same size. The multiplication is
+performed modulo the size, and the result is true for either a signed
+or unsigned interpretation of the inputs and output. To get extended
+precision results, the inputs must first by zero-extended or
+sign-extended to the desired size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_div"><title>INT_DIV</title>
+<informalexample>
+<table xml:id="intdiv.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode input (divisor).</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of division.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 / input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an unsigned integer division operation. Divide input0 by
+input1, truncating the result to the nearest integer, and store the
+result in output. Both inputs and output must be the same size. There
+is no handling of division by zero. To simulate a processor’s handling
+of a division-by-zero trap, other operations must be used before
+the <emphasis role="bold">INT_DIV</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_rem"><title>INT_REM</title>
+<informalexample>
+<table xml:id="intrem.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode input (divisor).</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing remainder of division.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 % input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an unsigned integer remainder operation. The remainder of
+performing the unsigned integer division of input0 and input1 is put
+in output. Both inputs and output must be the same size. If q =
+input0/input1, using the <emphasis role="bold">INT_DIV</emphasis>
+operation defined above, then output satisfies the equation q*input1 +
+output = input0, using the <emphasis role="bold">INT_MULT</emphasis>
+and <emphasis role="bold">INT_ADD</emphasis> operations.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_sdiv"><title>INT_SDIV</title>
+<informalexample>
+<table xml:id="intsdiv.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode input (divisor).</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of signed division.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 s/ input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a signed integer division operation. The resulting integer is
+the one closest to the rational value input0/input1 but which is still
+smaller in absolute value. Both inputs and output must be the same
+size. There is no handling of division by zero. To simulate a
+processor’s handling of a division-by-zero trap, other operations must
+be used before the <emphasis role="bold">INT_SDIV</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_int_srem"><title>INT_SREM</title>
+<informalexample>
+<table xml:id="intsrem.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First varnode input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second varnode input (divisor).</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing remainder of signed division.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 s% input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a signed integer remainder operation. The remainder of
+performing the signed integer division of input0 and input1 is put in
+output. Both inputs and output must be the same size. If q = input0 s/
+input1, using the <emphasis role="bold">INT_SDIV</emphasis> operation
+defined above, then output satisfies the equation q*input1 + output =
+input0, using the <emphasis role="bold">INT_MULT</emphasis>
+and <emphasis role="bold">INT_ADD</emphasis> operations.
+</para>
+</sect2>
+
+<sect2 id="cpui_bool_negate"><title>BOOL_NEGATE</title>
+<informalexample>
+<table xml:id="boolnegate.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Boolean varnode to negate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of negation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = !input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a logical negate operator, where we assume input0 and output
+are boolean values.  It puts the logical complement of input0, treated
+as a single bit, into output. Both input0 and output are size
+1. Boolean values are implemented with a full byte, but are still
+considered to only support a value of <emphasis>true</emphasis>
+or <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_bool_xor"><title>BOOL_XOR</title>
+<informalexample>
+<table xml:id="boolxor.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First boolean input to exclusive-or.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second boolean input to exclusive-or.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of exclusive-or.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 ^^ input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an Exclusive-Or operator, where we assume the inputs and
+output are boolean values. It puts the exclusive-or of input0 and
+input1, treated as single bits, into output.  Both inputs and output
+are size 1. Boolean values are implemented with a full byte, but are
+still considered to only support a value of <emphasis>true</emphasis>
+or <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_bool_and"><title>BOOL_AND</title>
+<informalexample>
+<table xml:id="booland.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First boolean input to logical-and.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second boolean input to logical-and.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of logical-and.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 &amp;&amp; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a Logical-And operator, where we assume the inputs and output
+are boolean values. It puts the logical-and of input0 and input1,
+treated as single bits, into output.  Both inputs and output are size
+1. Boolean values are implemented with a full byte, but are still
+considered to only support a value of <emphasis>true</emphasis>
+or <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_bool_or"><title>BOOL_OR</title>
+<informalexample>
+<table xml:id="boolor.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First boolean input to logical-or.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second boolean input to logical-or.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of logical-or.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 || input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a Logical-Or operator, where we assume the inputs and output
+are boolean values. It puts the logical-or of input0 and input1,
+treated as single bits, into output.  Both inputs and output are size
+1. Boolean values are implemented with a full byte, but are still
+considered to only support a value of <emphasis>true</emphasis>
+or <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_equal"><title>FLOAT_EQUAL</title>
+<informalexample>
+<table xml:id="floatequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f== input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point equality operator. Output is
+assigned <emphasis>true</emphasis>, if input0 and input1 are
+considered equal as floating-point values. Both inputs must be the
+same size, and output is size 1. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_notequal"><title>FLOAT_NOTEQUAL</title>
+<informalexample>
+<table xml:id="floatnotequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f!= input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point inequality operator. Output is
+assigned <emphasis>true</emphasis>, if input0 and input1 are not
+considered equal as floating-point values. Both inputs must be the
+same size, and output is size 1. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_less"><title>FLOAT_LESS</title>
+<informalexample>
+<table xml:id="floatless.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f&lt; input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a comparison operator, where both inputs are considered
+floating-point values. Output is assigned <emphasis>true</emphasis>,
+if input0 is less than input1. Both inputs must be the same size, and
+output is size 1. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_lessequal"><title>FLOAT_LESSEQUAL</title>
+<informalexample>
+<table xml:id="floatlessequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to compare.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of comparison.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f&lt;= input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a comparison operator, where both inputs are considered
+floating-point values. Output is assigned <emphasis>true</emphasis>,
+if input0 is less than or equal to input1. Both inputs must be the
+same size, and output is size 1. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis>false</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_add"><title>FLOAT_ADD</title>
+<informalexample>
+<table xml:id="floatadd.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to add.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to add.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of addition.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f+ input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point addition operator. The result of adding
+input0 and input1 as floating-point values is stored in output. Both
+inputs and output must be the same size. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>. If any overflow condition
+occurs, output is set to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_sub"><title>FLOAT_SUB</title>
+<informalexample>
+<table xml:id="floatsub.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Floating-point varnode to subtract from first.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of subtraction.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f- input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point subtraction operator. The result of
+subtracting input1 from input0 as floating-point values is stored in
+output. Both inputs and output must be the same size.  If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>. If any overflow condition
+occurs, output is set to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_mult"><title>FLOAT_MULT</title>
+<informalexample>
+<table xml:id="floatmult.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input to multiply.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input to multiply.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of multiplication.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f* input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point multiplication operator. The result of
+multiplying input0 to input1 as floating-point values is stored in
+output. Both inputs and output must be the same size.  If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>. If any overflow condition
+occurs, output is set to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_div"><title>FLOAT_DIV</title>
+<informalexample>
+<table xml:id="floatdiv.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>First floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Second floating-point input (divisor).</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of division.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = input0 f/ input1;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point division operator. The result of dividing
+input1 into input0 as floating-point values is stored in output. Both
+inputs and output must be the same size. If either input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>. If any overflow condition
+occurs, output is set to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_neg"><title>FLOAT_NEG</title>
+<informalexample>
+<table xml:id="floatneg.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point varnode to negate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of negation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = f- input0;</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point negation operator. The floating-point value
+in input0 is stored in output with the opposite sign. Both input and
+output must be the same size. If input
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_abs"><title>FLOAT_ABS</title>
+<informalexample>
+<table xml:id="floatabs.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing absolute-value.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = abs(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point absolute-value operator. The absolute value
+of input0 is stored in output. Both input0 and output must be the same
+size. If input0 is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_sqrt"><title>FLOAT_SQRT</title>
+<informalexample>
+<table xml:id="floatsqrt.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing square root.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = sqrt(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point square-root operator. The square root of
+input0 is stored in output.  Both input0 and output must be the same
+size. If input0 is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_ceil"><title>FLOAT_CEIL</title>
+<informalexample>
+<table xml:id="floatceil.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing result of truncation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = ceil(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation rounds input0, as a signed floating-point value, towards <emphasis>positive infinity</emphasis>.
+For instance, the value 1.2 rounds to 2.0; -1.2 rounds to -1.0.
+The integral value obtained by rounding input0 up is stored in output, as a floating-point
+value. Both input0 and output must be the same size. If input0
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_floor"><title>FLOAT_FLOOR</title>
+<informalexample>
+<table xml:id="floatfloor.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing result of truncation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = floor(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation rounds input0, as a floating-point value, towards <emphasis>negative infinity</emphasis>.
+For instance, the value 1.2 rounds to 1.0 and -1.2 rounds to -2.0.
+The integral value obtained by rounding input0 down is stored in output, as a floating-point
+value. <emphasis role="bold">FLOAT_FLOOR</emphasis> does <emphasis>not</emphasis> produce
+a twos complement integer output (See the <emphasis role="bold">TRUNC</emphasis> operator).
+Both input0 and output must be the same size. If input0
+is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_round"><title>FLOAT_ROUND</title>
+<informalexample>
+<table xml:id="floatround.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing result of truncation.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = round(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point rounding operator. The integral value closest to the
+floating-point value in input0 is stored in output, as a floating-point value.
+For example, 1.2 rounds to 1.0 and 1.9 rounds to 2.0.
+<emphasis role="bold">FLOAT_ROUND</emphasis> does <emphasis>not</emphasis>
+produce a twos complement integer output (See the <emphasis role="bold">TRUNC</emphasis> operator).
+Both input0 and output must be the same size. If
+input0 is <emphasis role="bold">NaN</emphasis>, output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_float_nan"><title>FLOAT_NAN</title>
+<informalexample>
+<table xml:id="floatnan.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Boolean varnode containing result of NaN test.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = nan(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator returns <emphasis>true</emphasis> in output if input0 is
+interpreted as <emphasis role="bold">NaN</emphasis>. Output must be
+size 1, and input0 can be any size.
+</para>
+</sect2>
+
+<sect2 id="cpui_int2float"><title>INT2FLOAT</title>
+<informalexample>
+<table xml:id="int2float.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Signed integer input.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Result containing floating-point conversion.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = int2float(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is an integer to floating-point conversion operator. Input0
+viewed as a signed integer is converted to floating-point format and
+stored in output. Input0 and output do not need to be the same
+size. The conversion to floating-point may involve a loss of
+precision.
+</para>
+</sect2>
+
+<sect2 id="cpui_float2float"><title>FLOAT2FLOAT</title>
+<informalexample>
+<table xml:id="float2float.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input varnode.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Result varnode containing conversion.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = float2float(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point precision conversion operator. The
+floating-point value in input0 is converted to a floating-point value
+of a different size and stored in output. If output is smaller than
+input0, then the operation will lose precision. Input0 and output
+should be different sizes. If input0
+is <emphasis role="bold">NaN</emphasis>, then output is set
+to <emphasis role="bold">NaN</emphasis>.
+</para>
+</sect2>
+
+<sect2 id="cpui_trunc"><title>TRUNC</title>
+<informalexample>
+<table xml:id="trunc.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Floating-point input varnode.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Resulting integer varnode containing conversion.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = trunc(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a floating-point to integer conversion operator. The
+floating-point value in input0 is converted to a signed integer and
+stored in output using the default twos complement encoding.
+The fractional part of input0 is dropped in the conversion by rounding <emphasis>towards zero</emphasis>.
+Input0 and output can be different sizes. 
+</para>
+</sect2>
+</sect1>
+
+<sect1 id="pseudo-ops">
+<title>Pseudo P-CODE Operations</title>
+<para>
+Practical analysis systems need to be able to describe operations, whose exact effect on a machine's
+memory state is not fully modeled. P-code allows for this by defining a small set of
+<emphasis>pseudo</emphasis> operators. Such an operator is generally treated as a placeholder
+for some, possibly large, sequence of changes to the machine state. In terms of analysis,
+either the operator is just carried through as a black-box or it serves as a plug-in point for operator
+substitution or other specially tailored transformation. Pseudo operators may violate the requirement
+placed on other p-code operations that all effects must be explicit.
+</para>
+<sect2 id="cpui_userdefined"><title>USERDEFINED</title>
+<informalexample>
+<table xml:id="userdefined.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Constant ID of user-defined op to perform.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>First parameter of user-defined op.</td>
+</tr>
+<tr>
+  <td align='right'>...</td>
+  <td/>
+  <td>Additional parameters of user-defined op.</td>
+</tr>
+<tr>
+  <td align='right'>[output]</td>
+  <td/>
+  <td>Optional output of user-defined op.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>userop(input1, ... );</code></td>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = userop(input1,...);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This is a placeholder for (a family of) user-definable p-code
+instructions. It allows p-code instructions to be defined with
+semantic actions that are not fully specified. Machine instructions
+that are too complicated or too esoteric to fully implement can use
+one or more <emphasis role="bold">USERDEFINED</emphasis> instructions
+as placeholders for their semantics.
+</para>
+<para>
+The first input parameter input0 is a constant ID assigned by the specification
+to a particular semantic action. Depending on how the specification
+defines the action associated with the ID,
+the <emphasis role="bold">USERDEFINED</emphasis> instruction can take
+an arbitrary number of input parameters and optionally have an output
+parameter. Exact details are processor and specification dependent.
+Ideally, the output parameter is determined by the input
+parameters, and no variable is affected except the output
+parameter. But this is no longer a strict requirement, side-effects are possible.
+Analysis should generally treat these instructions as a “black-box” which
+still have normal data-flow and can be manipulated symbolically.
+</para>
+</sect2>
+<sect2 id="cpui_cpoolref"><title>CPOOLREF</title>
+<informalexample>
+<table xml:id="cpoolref.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing pointer offset to object.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Constant ID indicating type of value to return.</td>
+</tr>
+<tr>
+  <td align='right'>...</td>
+  <td/>
+  <td>Additional parameters describing value to return.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode to contain requested size, offset, or address.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = cpool(input0,intput1);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator returns specific run-time dependent values from the
+<emphasis>constant pool</emphasis>.  This is a concept for object-oriented
+instruction sets and other managed code environments, where some details about
+how instructions behave can be deferred
+until run-time and are not directly encoded in the instruction. 
+The <emphasis role="bold">CPOOLREF</emphasis> operator acts a query to the system to
+recover this type of information. The first parameter is a
+pointer to a specific object, and subsequent parameters are IDs or other special constants
+describing exactly what value is requested, relative to the object. The canonical example
+is requesting a method address given just an ID describing the method and a specific object, but
+<emphasis role="bold">CPOOLREF</emphasis> can be used as a placeholder for recovering
+any important value the system knows about. Details about this instruction, in terms
+of emulation and analysis, are necessarily architecture dependent.
+</para>
+</sect2>
+<sect2 id="cpui_new"><title>NEW</title>
+<informalexample>
+<table xml:id="new.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing class reference</td>
+</tr>
+<tr>
+  <td align='right'>[input1]</td>
+  <td/>
+  <td>If present, varnode containing count of objects to allocate.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode to contain pointer to allocated memory.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = new(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator allocates memory for an object described by the first parameter and
+returns a pointer to that memory.
+This is used to model object-oriented instruction sets where object allocation is an atomic operation.
+Exact details about how memory is affected by a <emphasis role="bold">NEW</emphasis> operation is generally
+not modeled in these cases, so the operator serves as a placeholder to allow analysis to proceed.
+</para>
+</sect2>
+</sect1>
+
+<sect1 id="additionalpcode">
+<title>Additional P-CODE Operations</title>
+<para>
+The following opcodes are not generated as part of the raw translation
+of a machine instruction into p-code operations, so none of them can be used
+in a processor specification. But, they may be
+introduced at a later stage by various analysis algorithms.
+</para>
+
+<sect2 id="cpui_multiequal"><title>MULTIEQUAL</title>
+<informalexample>
+<table xml:id="multiequal.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode to merge from first basic block.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode to merge from second basic block.</td>
+</tr>
+<tr>
+  <td align='right'>[...]</td>
+  <td/>
+  <td>Varnodes to merge from additional basic blocks.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Merged varnode for basic block containing op.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operation represents a copy from one or more possible
+locations. From the compiler theory concept of Static Single Assignment form, this is
+a <emphasis role="bold">phi-node</emphasis>.  Each input corresponds to a control-flow path
+flowing into the basic block containing the <emphasis role="bold">MULTIEQUAL</emphasis>.
+The operator copies a particular input into the output varnode depending on what path
+was last executed. All inputs and outputs must be the same size.
+</para>
+</sect2>
+
+<sect2 id="cpui_indirect"><title>INDIRECT</title>
+<informalexample>
+<table xml:id="indirect.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode on which output may depend.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td>(<emphasis role="bold">special</emphasis>)</td>
+  <td>Code iop of instruction causing effect.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing result of effect.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+An <emphasis role="bold">INDIRECT</emphasis> operator copies input0 into output,
+but the value may be altered in an indirect way
+by the operation referred to by input1. The varnode input1 is not part of the
+machine state but is really an internal reference to a specific p-code operator that
+may be affecting the value of the output varnode. A special address space indicates
+input1's use as an internal reference encoding.
+An <emphasis role="bold">INDIRECT</emphasis> op is a placeholder for possible
+indirect effects (such as pointer aliasing or missing code) when data-flow
+algorithms do not have enough information to follow the data-flow directly. Like
+the <emphasis role="bold">MULTIEQUAL</emphasis>, this op is used
+for generating Static Single Assignment form.
+</para>
+<para>
+A constant varnode (zero) for input0 is used by analysis to indicate that the output
+of the <emphasis role="bold">INDIRECT</emphasis> is produced solely by the p-code operation
+producing the indirect effect, and there is no possibility that the value existing prior
+to the operation was used or preserved.
+</para>
+</sect2>
+
+<sect2 id="cpui_ptradd"><title>PTRADD</title>
+<informalexample>
+<table xml:id="ptradd.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing pointer to an array.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode containing integer index.</td>
+</tr>
+<tr>
+  <td align='right'>input2</td>
+  <td>(<emphasis role="bold">constant</emphasis>)</td>
+  <td>Constant varnode indicating element size.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing pointer to indexed array entry.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator serves as a more compact representation of the pointer calculation,
+input0 + input1 * input2, but also indicates explicitly that
+input0 is a reference to
+an array data-type. Input0 is a pointer to the beginning of the array, input1 is an
+index into the array, and input2 is a constant indicating the size of
+an element in the array. As an
+operation, <emphasis role="bold">PTRADD</emphasis> produces the
+pointer value of the element at the indicated index in the array
+and stores it in output.
+</para>
+</sect2>
+
+<sect2 id="cpui_ptrsub"><title>PTRSUB</title>
+<informalexample>
+<table xml:id="ptrsub.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing pointer to structure.</td>
+</tr>
+<tr>
+  <td align='right'>input1</td>
+  <td/>
+  <td>Varnode containing integer offset to a subcomponent.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result containing pointer to the subcomponent.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+A <emphasis role="bold">PTRSUB</emphasis> performs the simple pointer calculation,
+input0 + input1, but also indicates explicitly that input0 is a
+reference to a structured data-type
+and one of its subcomponents is being accessed. Input0 is a pointer
+to the beginning of the structure, and input1 is a byte offset to the subcomponent.
+As an operation, <emphasis role="bold">PTRSUB</emphasis> produces a
+pointer to the subcomponent and stores it in output.
+</para>
+</sect2>
+
+<sect2 id="cpui_cast"><title>CAST</title>
+<informalexample>
+<table xml:id="cast.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode containing value to be copied.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode result of copy.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+A <emphasis role="bold">CAST</emphasis> performs identically to the <emphasis role="bold">COPY</emphasis>
+operator but also indicates that there is a forced change in the data-types associated with the varnodes
+at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast. 
+This operator is intended specifically for when the value doesn't change but its
+interpretation as a data-type changes at this point.
+</para>
+</sect2>
+
+</sect1>
+
+<sect1 id="reference">
+<title>Syntax Reference</title>
+
+<informalexample>
+<table xml:id="ref.htmltable" width="90%" frame="box" rules="rows">
+  <col width="25%"/>
+  <col width="25%"/>
+  <col width="50%"/>
+<thead>
+<tr>
+  <td><emphasis role="bold">Name</emphasis></td>
+  <td><emphasis role="bold">Syntax</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>COPY</td>
+  <td><code>v0 = v1;</code></td>
+  <td>Copy v1 into v0.</td>
+</tr>
+<tr>
+  <td>LOAD</td>
+  <td>
+    <table xml:id="loadtmp.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>* v1</code></td>
+      </tr>
+      <tr>
+        <td><code>*[spc]v1</code></td>
+      </tr>
+      <tr>
+        <td><code>*:2 v1</code></td>
+      </tr>
+      <tr>
+        <td><code>*[spc]:2 v1</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>Dereference v1 as pointer into default space. Optionally specify a space
+      to load from and size of data in bytes.</td>
+</tr>
+<tr>
+  <td>STORE</td>
+  <td>
+    <table xml:id="storetmp.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>*v0 = v1;</code></td>
+      </tr>
+      <tr>
+        <td><code>*[spc]v0 = v1;</code></td>
+      </tr>
+      <tr>
+        <td><code>*:4 v0 = v1;</code></td>
+      </tr>
+      <tr>
+        <td><code>*[spc]:4 v0 = v1;</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>Store in v1 in default space using v0 as pointer. Optionally specify space to store in
+      and size of data in bytes.</td>
+</tr>
+<tr>
+  <td>BRANCH</td>
+  <td><code>goto v0;</code></td>
+  <td>Branch execution to address of v0.</td>
+</tr>
+<tr>
+  <td>CBRANCH</td>
+  <td><code>if (v0) goto v1;</code></td>
+  <td>Branch execution to address of v1 if v0 equals 1 (true).</td>
+</tr>
+<tr>
+  <td>BRANCHIND</td>
+  <td><code>goto [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.</td>
+</tr>
+<tr>
+  <td>CALL</td>
+  <td><code>call v0;</code></td>
+  <td>Branch execution to address of v0. Hint that the branch is a subroutine call.</td>
+</tr>
+<tr>
+  <td>CALLIND</td>
+  <td><code>call [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.
+      Hint that the branch is a subroutine call.</td>
+</tr>
+<tr>
+  <td>RETURN</td>
+  <td><code>return [v0];</code></td>
+  <td>Branch execution to value in v0 viewed as an offset into the current space.
+      Hint that the branch is a subroutine return.</td>
+</tr>
+<tr>
+  <td>INT_EQUAL</td>
+  <td><code>v0 == v1</code></td>
+  <td>True if v0 equals v1.</td>
+</tr>
+<tr>
+  <td>INT_NOTEQUAL</td>
+  <td><code>v0 != v1</code></td>
+  <td>True if v0 does not equal v1.</td>
+</tr>
+<tr>
+  <td>INT_SLESS</td>
+  <td>
+    <table xml:id="sless.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 s&lt; v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 s> v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td>INT_SLESSEQUAL</td>
+  <td>
+    <table xml:id="slessequal.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 s&lt;= v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 s>= v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than or equal to v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td>INT_LESS</td>
+  <td>
+    <table xml:id="less.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 &lt; v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 > v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td>INT_LESSEQUAL</td>
+  <td>
+    <table xml:id="lessequal.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 &lt;= v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 >= v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than or equal to v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td>INT_ZEXT</td>
+  <td><code>zext(v0)</code></td>
+  <td>Zero extension of v0.</td>
+</tr>
+<tr>
+  <td>INT_SEXT</td>
+  <td><code>sext(v0)</code></td>
+  <td>Sign extension of v0.</td>
+</tr>
+<tr>
+  <td>INT_ADD</td>
+  <td><code>v0 + v1</code></td>
+  <td>Addition of v0 and v1 as integers.</td>
+</tr>
+<tr>
+  <td>INT_SUB</td>
+  <td><code>v0 - v1</code></td>
+  <td>Subtraction of v1 from v0 as integers.</td>
+</tr>
+<tr>
+  <td>INT_CARRY</td>
+  <td><code>carry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce an unsigned carry.</td>
+</tr>
+<tr>
+  <td>INT_SCARRY</td>
+  <td><code>scarry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce an signed carry.</td>
+</tr>
+<tr>
+  <td>INT_SBORROW</td>
+  <td><code>sborrow(v0,v1)</code></td>
+  <td>True if subtracting v1 from v0 would produce a signed borrow.</td>
+</tr>
+<tr>
+  <td>INT_2COMP</td>
+  <td><code>-v0</code></td>
+  <td>Twos complement of v0.</td>
+</tr>
+<tr>
+  <td>INT_NEGATE</td>
+  <td><code>~v0</code></td>
+  <td>Bitwise negation of v0.</td>
+</tr>
+<tr>
+  <td>INT_XOR</td>
+  <td><code>v0 ^ v1</code></td>
+  <td>Bitwise Exclusive Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_AND</td>
+  <td><code>v0 &amp; v1</code></td>
+  <td>Bitwise Logical And of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_OR</td>
+  <td><code>v0 | v1</code></td>
+  <td>Bitwise Logical Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td>INT_LEFT</td>
+  <td><code>v0 &lt;&lt; v1</code></td>
+  <td>Left shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_RIGHT</td>
+  <td><code>v0 >> v1</code></td>
+  <td>Unsigned (logical) right shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_SRIGHT</td>
+  <td><code>v0 s>> v1</code></td>
+  <td>Signed (arithmetic) right shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td>INT_MULT</td>
+  <td><code>v0 * v1</code></td>
+  <td>Integer multiplication of v0 and v1.</td>
+</tr>
+<tr>
+  <td>INT_DIV</td>
+  <td><code>v0 / v1</code></td>
+  <td>Unsigned division of v0 by v1.</td>
+</tr>
+<tr>
+  <td>INT_SDIV</td>
+  <td><code>v0 s/ v1</code></td>
+  <td>Signed division of v0 by v1.</td>
+</tr>
+<tr>
+  <td>INT_REM</td>
+  <td><code>v0 % v1</code></td>
+  <td>Unsigned remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td>INT_SREM</td>
+  <td><code>v0 s% v1</code></td>
+  <td>Signed remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td>BOOL_NEGATE</td>
+  <td><code>!v0</code></td>
+  <td>Negation of boolean value v0.</td>
+</tr>
+<tr>
+  <td>BOOL_XOR</td>
+  <td><code>v0 ^^ v1</code></td>
+  <td>Exclusive-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>BOOL_AND</td>
+  <td><code>v0 &amp;&amp; v1</code></td>
+  <td>Logical-And of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>BOOL_OR</td>
+  <td><code>v0 || v1</code></td>
+  <td>Logical-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td>FLOAT_EQUAL</td>
+  <td><code>v0 f== v1</code></td>
+  <td>True if v0 equals v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NOTEQUAL</td>
+  <td><code>v0 f!= v1</code></td>
+  <td>True if v0 does not equal v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_LESS</td>
+  <td>
+    <table xml:id="floatlesstmp.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 f&lt; v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 f> v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_LESSEQUAL</td>
+  <td>
+    <table xml:id="floatlessequaltmp.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>v0 f&lt;= v1</code></td>
+      </tr>
+      <tr>
+        <td><code>v1 f>= v0</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>True if v0 is less than or equal to v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NAN</td>
+  <td><code>nan(v0)</code></td>
+  <td>True if v0 is not a valid floating-point number (NaN).</td>
+</tr>
+<tr>
+  <td>FLOAT_ADD</td>
+  <td><code>v0 f+ v1</code></td>
+  <td>Addition of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_DIV</td>
+  <td><code>v0 f/ v1</code></td>
+  <td>Division of v0 by v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_MULT</td>
+  <td><code>v0 f* v1</code></td>
+  <td>Multiplication of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_SUB</td>
+  <td><code>v0 f- v1</code></td>
+  <td>Subtraction of v1 from v0 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td>FLOAT_NEG</td>
+  <td><code>f- v0</code></td>
+  <td>Additive inverse of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_ABS</td>
+  <td><code>abs(v0)</code></td>
+  <td>Absolute value of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_SQRT</td>
+  <td><code>sqrt(v0)</code></td>
+  <td>Square root of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td>INT2FLOAT</td>
+  <td><code>int2float(v0)</code></td>
+  <td>Floating-point representation of v0 viewed as an integer.</td>
+</tr>
+<tr>
+  <td>FLOAT2FLOAT</td>
+  <td><code>float2float(v0)</code></td>
+  <td>Copy of floating-point number v0 with more or less precision.</td>
+</tr>
+<tr>
+  <td>TRUNC</td>
+  <td><code>trunc(v0)</code></td>
+  <td>Signed integer obtained by truncating v0 viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_CEIL</td>
+  <td><code>ceil(v0)</code></td>
+  <td>Nearest integral floating-point value greater than v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_FLOOR</td>
+  <td><code>floor(v0)</code></td>
+  <td>Nearest integral floating-point value less than v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>FLOAT_ROUND</td>
+  <td><code>round(v0)</code></td>
+  <td>Nearest integral floating-point to v0, viewed as a floating-point number.</td>
+</tr>
+<tr>
+  <td>SUBPIECE</td>
+  <td><code>v0:2</code></td>
+  <td>The least signficant n bytes of v0.</td>
+</tr>
+<tr>
+  <td>SUBPIECE</td>
+  <td><code>v0(2)</code></td>
+  <td>All but the least significant n bytes of v0.</td>
+</tr>
+<tr>
+  <td>PIECE</td>
+  <td><code>&lt;na></code></td>
+  <td>Concatenate two varnodes into a single varnode.</td>
+</tr>
+<tr>
+  <td>CPOOLREF</td>
+  <td><code>cpool(v0,...)</code></td>
+  <td>Obtain constant pool value.</td>
+</tr>
+<tr>
+  <td>NEW</td>
+  <td>
+    <table xml:id="newtmp.htmltable" frame='none'>
+      <tbody>
+      <tr>
+        <td><code>newobject(v0)</code></td>
+      </tr>
+      <tr>
+        <td><code>newobject(v0,v1)</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </td>
+  <td>Allocate an object or an array of objects.</td>
+</tr>
+<tr>
+  <td>MULTIEQUAL</td>
+  <td><code>&lt;na></code></td>
+  <td>Compiler phi-node: values merging from multiple control-flow paths.</td>
+</tr>
+<tr>
+  <td>INDIRECT</td>
+  <td><code>&lt;na></code></td>
+  <td>Indirect effect from input varnode to output varnode.</td>
+</tr>
+<tr>
+  <td>CAST</td>
+  <td><code>&lt;na></code></td>
+  <td>Copy from input to output. A hint that the underlying datatype has changed.</td>
+</tr>
+<tr>
+  <td>PTRADD</td>
+  <td><code>&lt;na></code></td>
+  <td>Construct a pointer to an element from a pointer to the start of an array and an index.</td>
+</tr>
+<tr>
+  <td>PTRSUB</td>
+  <td><code>&lt;na></code></td>
+  <td>Construct a pointer to a field from a pointer to a structure and an offset.</td>
+</tr>
+</tbody>
+</table>
+</informalexample>
+
+</sect1>
+</article>

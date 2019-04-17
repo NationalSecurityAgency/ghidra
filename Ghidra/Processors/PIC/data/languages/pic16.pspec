@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <data_space space="DATA"/>
+  <context_data>
+  	<context_set space="CODE">
+  		<set name="doPseudo" val="0"/>
+  	</context_set>
+  	<tracked_set space="CODE">
+  		<set name="SkipNext" val="0"/>
+  	</tracked_set>
+  	<tracked_set space="CODE" first="0x0" last="0x1ff">
+  	  	<set name="PCLATH" val="0"/>
+  	</tracked_set>
+  </context_data>
+  <volatile outputop="write_sfr" inputop="read_sfr">
+    <range space="DATA" first="0x1" last="0x1"/>
+    <range space="DATA" first="0x5" last="0x9"/>
+    <range space="DATA" first="0xb" last="0x1f"/>
+    <range space="DATA" first="0x81" last="0x81"/>
+    <range space="DATA" first="0x85" last="0x89"/>
+    <range space="DATA" first="0x8b" last="0x9f"/>
+    <range space="DATA" first="0x101" last="0x101"/>
+    <range space="DATA" first="0x105" last="0x109"/>
+    <range space="DATA" first="0x10b" last="0x11f"/>
+    <range space="DATA" first="0x181" last="0x181"/>
+    <range space="DATA" first="0x185" last="0x189"/>
+    <range space="DATA" first="0x18b" last="0x19f"/>
+  </volatile>
+  <register_data>
+    <register name="STATUS" group="STATUS"/>
+    <register name="IRP" group="STATUS"/>
+    <register name="RP" group="STATUS"/>
+    <register name="PC" group="PC"/>
+    <register name="PCL" group="PC"/>
+    <register name="PCLATH" group="PC"/>
+    <register name="SkipNext" hidden="true"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="Reset" address="CODE:0000" entry="true"/>
+    <symbol name="Interrupt" address="CODE:0004" entry="true"/>
+    <symbol name="PIR1" address="DATA:0C" entry="false"/>
+    <symbol name="PIR2" address="DATA:0D" entry="false"/>
+    <symbol name="TMR1L" address="DATA:0E" entry="false"/>
+    <symbol name="TMR1H" address="DATA:0F" entry="false"/>
+        
+    <symbol name="T1CON" address="DATA:10" entry="false"/>
+    <symbol name="TMR2" address="DATA:11" entry="false"/>   
+    <symbol name="T2CON" address="DATA:12" entry="false"/> 
+    <symbol name="SSPBUF" address="DATA:13" entry="false"/> 
+    <symbol name="SSPCON" address="DATA:14" entry="false"/> 
+    <symbol name="CCPR1L" address="DATA:15" entry="false"/> 
+    <symbol name="CCPR1H" address="DATA:16" entry="false"/> 
+    <symbol name="CCP1CON" address="DATA:17" entry="false"/> 
+    <symbol name="RCSTA" address="DATA:18" entry="false"/> 
+    <symbol name="TXREG" address="DATA:19" entry="false"/> 
+    <symbol name="RCREG" address="DATA:1A" entry="false"/> 
+    <symbol name="CCPR2L" address="DATA:1B" entry="false"/> 
+    <symbol name="CCPR2H" address="DATA:1C" entry="false"/> 
+    <symbol name="CCP2CON" address="DATA:1D" entry="false"/> 
+    <symbol name="ADRES" address="DATA:1E" entry="false"/> 
+    <symbol name="ADCON0" address="DATA:1F" entry="false"/> 
+    
+    <symbol name="OPTION_REG" address="DATA:81" entry="false"/>
+
+    <symbol name="TRISA" address="DATA:85" entry="false"/>
+    <symbol name="TRISB" address="DATA:86" entry="false"/>
+    <symbol name="TRISC" address="DATA:87" entry="false"/>
+    <symbol name="TRISD" address="DATA:88" entry="false"/>
+    <symbol name="TRISE" address="DATA:89" entry="false"/>
+
+    <symbol name="PIE1" address="DATA:8c" entry="false"/>
+    <symbol name="PIE2" address="DATA:8d" entry="false"/>
+    <symbol name="PCON" address="DATA:8e" entry="false"/>
+    <symbol name="OSCCAL" address="DATA:8f" entry="false"/>
+    <symbol name="PR2" address="DATA:92" entry="false"/>
+    <symbol name="SSPADD" address="DATA:93" entry="false"/>
+    <symbol name="SSPATAT" address="DATA:94" entry="false"/>
+    <symbol name="TXSTA" address="DATA:98" entry="false"/>
+    <symbol name="SPBRG" address="DATA:99" entry="false"/>
+    <symbol name="ADCON1" address="DATA:9f" entry="false"/>
+
+	<symbol name="PORTB" address="DATA:106" entry="false"/>
+	<symbol name="PORTF" address="DATA:107" entry="false"/>
+	<symbol name="PORTG" address="DATA:108" entry="false"/>
+	
+	<symbol name="TRISB" address="DATA:186" entry="false"/>
+	<symbol name="TRISF" address="DATA:187" entry="false"/>
+	<symbol name="TRISG" address="DATA:188" entry="false"/>
+
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="GPR" start_address="DATA:0000" mode="rw" length="0x2000" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

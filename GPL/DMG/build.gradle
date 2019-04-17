@@ -1,0 +1,54 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'GPL DMG'
+
+/*********************************************************************************
+ *
+ * Define a new source set for dmg source because it is not part of Ghidra, it is 
+ * a standalone application that is executed and called from Ghidra. 
+ *  			
+ * see DmgServerProcessManager 
+ *
+ *********************************************************************************/
+sourceSets {
+	dmg {
+		java {
+			srcDir 'src/dmg/java'
+		}
+	}
+}
+
+eclipse.classpath.plusConfigurations += [configurations.dmgCompile]
+
+dependencies {
+	dmgCompile ':csframework@jar'
+	dmgCompile ':hfsx@jar'
+	dmgCompile ':hfsx_dmglib@jar'
+}
+
+
+/***************************************************************************************
+ *
+ * Task to create the dmg.jar file
+ *
+ ***************************************************************************************/
+task dmgJar(type: Jar) {
+	from sourceSets.dmg.output
+	destinationDir = file("build/data/lib")
+	baseName = 'dmg'
+}
+
+jar {
+	doLast {
+		File f = file("build/libs/DMG.jar")
+		delete "build/libs"
+	}
+}
+
+/***************************************************************************************
+ *
+ * plugin the jar task into global task for building and zipping contribs
+ *
+ ***************************************************************************************/
+assemble.dependsOn dmgJar
+
+

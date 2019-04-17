@@ -1,0 +1,176 @@
+#---------------------------------------------------------------------
+# 8.3.7 Shift Operations
+#---------------------------------------------------------------------
+
+macro do_asr(VAL, SA, DEST) {
+	tmp:8 = zext(VAL) << 32;
+	tmp = tmp s>> SA;
+    DEST = VAL s>> SA;
+    C = (tmp & 0x0000000080000000) != 0;
+    NZSTATUS(DEST);
+       
+}
+
+#---------------------------------------------------------------------
+# ASR - Arithmetic Shift Right
+# I.       {d, x, y} -> {0, 1, ..., 15}
+# II.      d -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+# III.     {d, s} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# ASR Format I
+# Operation: Rd <- ASR(Rx, Ry[4:0])
+# Syntax:    asr Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1000 0100 dddd
+
+:ASR erd0, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A;
+                       eop4_12=0x084 & erd0
+{
+        do_asr(RX9A, RY0A, erd0);
+}
+
+# ASR Format II
+# Operation: Rd <- ASR(Rd, sa5)
+# Syntax:    asr Rd, sa
+# 101t ttt1 010t dddd
+
+:ASR rd0, shift is op13_3=5 & op5_4=0xa & shift9_4 & shift4_1 & rd0
+        [ shift = (shift9_4 << 1) | shift4_1; ]
+{
+        do_asr(rd0, shift, rd0);
+}
+
+# ASR Format III
+# Operation: Rd <- ASR(Rs, sa5)
+# Syntax:    asr Rd, Rs, sa
+# 111s sss0 0000 dddd   0001 0100 000t tttt
+
+:ASR rd0, RS9A, shift0_5 is op13_3=7 & op5_4=0 & RS9A & rd0;
+                            eop5_11=0xa0 & shift0_5
+{
+        do_asr(RS9A, shift0_5, rd0);
+}
+
+macro do_lsl(VAL, SA, DEST) {
+	tmp:8 = zext(VAL);
+	tmp = tmp << SA;
+	DEST = tmp:4;
+    C = (tmp & 0x0000000100000000) != 0;
+    NZSTATUS(DEST);
+}
+
+#---------------------------------------------------------------------
+# LSL - Logical Shift Left
+# I.       {d, x, y} -> {0, 1, ..., 15}
+# II.      d -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+# III.     {d, s} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# LSL Format I
+# Operation: Rd <- LSL(Rx, Ry[4:0])
+# Syntax:    lsl Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1001 0100 dddd
+
+:LSL erd0, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A;
+                       eop4_12=0x094 & erd0
+{
+		tmp:4 = RY0A & 0x0000001F;
+        do_lsl(RX9A, tmp, erd0);
+}
+
+# LSL Format II
+# Operation: Rd <- LSL(Rd, sa5)
+# Syntax:    lsl Rd, sa
+# 101t ttt1 011t dddd
+
+:LSL rd0, shift is op13_3=5 & op5_4=0xb & shift9_4 & shift4_1 & rd0
+        [ shift = (shift9_4 << 1) | shift4_1; ]
+{
+        do_lsl(rd0, shift, rd0);
+}
+
+# LSL Format III
+# Operation: Rd <- LSL(Rs, sa5)
+# Syntax:    lsl Rd, Rs, sa
+# 111s sss0 0000 dddd   0001 0101 000t tttt
+
+:LSL rd0, RS9A, shift0_5 is op13_3=7 & op5_4=0 & RS9A & rd0;
+                            eop5_11=0xa8 & shift0_5
+{
+        do_lsl(RS9A, shift0_5, rd0);
+}
+
+macro do_lsr(VAL, SA, DEST) {
+	tmp:8 = zext(VAL) << 32;
+	tmp = tmp >> SA;
+    DEST = VAL >> SA;
+    C = (tmp & 0x0000000080000000) != 0;
+    NZSTATUS(DEST);
+}
+
+#---------------------------------------------------------------------
+# LSR - Logical Shift Right
+# I.       {d, x, y} -> {0, 1, ..., 15}
+# II.      d -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+# III.     {d, s} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# LSR Format I
+# Operation: Rd <- LSR(Rx, Ry[4:0])
+# Syntax:    lsr Rd, Rx, Ry
+# 111x xxx0 0000 yyyy   0000 1010 0100 dddd
+
+:LSR erd0, RX9A, RY0A is op13_3=7 & op4_5=0 & RY0A & RX9A;
+                       eop4_12=0x0a4 & erd0
+{
+		tmp:4 = RY0A & 0x0000001F;
+        do_lsr(RX9A, tmp, erd0);
+}
+
+# LSR Format II
+# Operation: Rd <- LSR(Rd, sa5)
+# Syntax:    lsr Rd, sa
+# 101t ttt1 100t dddd
+
+:LSR rd0, shift is op13_3=5 & op5_4=0xc & shift9_4 & shift4_1 & rd0
+        [ shift = (shift9_4 << 1) | shift4_1; ]
+{
+        do_lsr(rd0, shift, rd0);
+}
+
+# LSR Format III
+# Operation: Rd <- LSR(Rs, sa5)
+# Syntax:    lsr Rd, Rs, sa
+# 111s sss0 0000 dddd   0001 0110 000t tttt
+
+:LSR rd0, RS9A, shift0_5 is op13_3=7 & op5_4=0 & RS9A & rd0;
+                            eop5_11=0xb0 & shift0_5
+{
+        do_lsr(RS9A, shift0_5, rd0);
+}
+
+:ROL rd0 		is op4_12=0x5cf & rd0 {
+	tmp:4 = rd0 >> 31;
+	tmpa:4 = zext(C);
+	rd0 = rd0 << 1;
+	rd0 = rd0 | tmpa;
+	C = tmp:1;
+	CZNVTOSR();
+}
+ 
+:ROR rd0 		is op4_12=0x5d0 & rd0 {
+	tmp:4 = rd0 & 0x1;
+	tmpa:4 = zext(C);
+	tmpa = tmpa << 31;
+	rd0 = rd0 >> 1;
+	rd0 = rd0 | tmpa;
+	C = tmp:1;
+    CZNVTOSR();
+}
+

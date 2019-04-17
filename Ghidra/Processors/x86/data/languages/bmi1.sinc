@@ -1,0 +1,188 @@
+macro tzcntflags(input, output) {
+ ZF = (output == 0);
+ CF = (input == 0);
+ # OF, SF, PF, AF are undefined
+}
+
+
+####
+#### BMI1 instructions
+####
+
+# TODO remove ANDN from ia.sinc ?????
+:ANDN Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf2; Reg32 ... & rm32
+{
+  Reg32 = ~(vexVVVV_r32) & rm32;
+  resultflags(Reg32);
+  OF = 0;
+  CF = 0;
+}
+
+@ifdef IA64
+# TODO remove ANDN from ia.sinc ?????
+:ANDN Reg64, vexVVVV_r64, rm64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf2; Reg64 ... & rm64
+{
+  Reg64 = ~(vexVVVV_r64) & rm64;
+  resultflags(Reg64);
+  OF = 0;
+  CF = 0;
+}
+@endif
+
+
+:BEXTR Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+{
+  sourceTmp:1 = vexVVVV_r32[0,8];
+  lengthTmp:1 = vexVVVV_r32[8,8];
+
+  Reg32 = (rm32 >> sourceTmp) & ((1 << lengthTmp) - 1);
+
+  ZF = (Reg32 == 0);
+  OF = 0;
+  CF = 0;
+  # AF, SF, and PF are undefined
+}
+
+@ifdef IA64
+:BEXTR Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
+{
+  sourceTmp:1 = vexVVVV_r64[0,8];
+  lengthTmp:1 = vexVVVV_r64[8,8];
+
+  Reg64 = (rm64 >> sourceTmp) & ((1 << lengthTmp) - 1);
+
+  ZF = (Reg64 == 0);
+  OF = 0;
+  CF = 0;
+  # AF, SF, and PF are undefined
+}
+@endif
+
+
+:BLSI vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=3 ... & rm32
+{
+  vexVVVV_r32 = -rm32 & rm32;
+
+  ZF = (vexVVVV_r32 == 0);
+  SF = (vexVVVV_r32 s< 0);
+  CF = (rm32 != 0);
+  OF = 0;
+  # AF and PF are undefined
+}
+
+@ifdef IA64
+:BLSI vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=3 ... & rm64
+{
+  vexVVVV_r64 = -rm64 & rm64;
+
+  ZF = (vexVVVV_r64 == 0);
+  SF = (vexVVVV_r64 s< 0);
+  CF = (rm64 != 0);
+  OF = 0;
+  # AF and PF are undefined
+}
+@endif
+
+
+:BLSMSK vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=2 ... & rm32
+{
+  vexVVVV_r32 = (rm32 - 1) ^ rm32;
+
+  SF = (vexVVVV_r32 s< 0);
+  CF = (rm32 == 0);
+  ZF = 0;
+  OF = 0;
+  # AF and PF are undefined
+}
+
+@ifdef IA64
+:BLSMSK vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=2 ... & rm64
+{
+  vexVVVV_r64 = (rm64 - 1) ^ rm64;
+
+  SF = (vexVVVV_r64 s< 0);
+  CF = (rm64 == 0);
+  ZF = 0;
+  OF = 0;
+  # AF and PF are undefined
+}
+@endif
+
+
+:BLSR vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=1 ... & rm32
+{
+  vexVVVV_r32 = (rm32 - 1) & rm32;
+
+  ZF = (vexVVVV_r32 == 0);
+  SF = (vexVVVV_r32 s< 0);
+  CF = (rm32 == 0);
+  OF = 0;
+  # AF and PF are undefined
+}
+
+@ifdef IA64
+:BLSR vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=1 ... & rm64
+{
+  vexVVVV_r64 = (rm64 - 1) & rm64;
+
+  ZF = (vexVVVV_r64 == 0);
+  SF = (vexVVVV_r64 s< 0);
+  CF = (rm64 == 0);
+  OF = 0;
+  # AF and PF are undefined
+}
+@endif
+
+# not as documented in manual; requires PRE_66 prefix to get 16-bit operation
+:TZCNT Reg16, rm16	is vexMode=0 & opsize=0 & $(PRE_66) & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg16 ... & rm16 {
+
+  countTmp:2 = 0;
+  inputTmp:2 = rm16;
+
+ <loopbegin>
+  if ((inputTmp & 1) != 0) goto <loopend>;
+
+  countTmp = countTmp + 1;
+  inputTmp = (inputTmp >> 1) | 0x8000;
+  goto <loopbegin>;
+
+ <loopend>
+  Reg16 = countTmp;
+  tzcntflags(rm16, Reg16);
+}
+
+:TZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg32 ... & rm32 {
+
+  countTmp:4 = 0;
+  inputTmp:4 = rm32;
+
+ <loopbegin>
+  if ((inputTmp & 1) != 0) goto <loopend>;
+
+  countTmp = countTmp + 1;
+  inputTmp = (inputTmp >> 1) | 0x80000000;
+  goto <loopbegin>;
+
+ <loopend>
+  Reg32 = countTmp;
+  tzcntflags(rm32, Reg32);
+}
+
+@ifdef IA64
+:TZCNT Reg64, rm64	is vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBC; Reg64 ... & rm64 {
+
+  countTmp:8 = 0;
+  inputTmp:8 = rm64;
+
+ <loopbegin>
+  if ((inputTmp & 1) != 0) goto <loopend>;
+
+  countTmp = countTmp + 1;
+  inputTmp = (inputTmp >> 1) | 0x8000000000000000;
+  goto <loopbegin>;
+
+ <loopend>
+  Reg64 = countTmp;
+  tzcntflags(rm64, Reg64);
+}
+@endif

@@ -1,0 +1,4 @@
+##VERSION: 2.0
+.gitattributes||GHIDRA||||END|
+.gitignore||GHIDRA||||END|
+application.properties||GHIDRA||||END|

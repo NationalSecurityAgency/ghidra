@@ -1,0 +1,303 @@
+# Specification for the ARM Version 4, 4T, 5, 5T, 5E
+# The following boolean defines control specific support: T_VARIANT, VERSION_5, VERSION_5E
+
+define endian=$(ENDIAN);
+define alignment=2;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+define register offset=0x0020 size=4 [ r0 r1 r2 r3  r4  r5  r6  r7	r8 r9 r10 r11 r12  sp  lr  pc ];
+define register offset=0x0060 size=1 [ NG ZR CY OV tmpNG tmpZR tmpCY tmpOV shift_carry TB Q GE1 GE2 GE3 GE4 ]; 
+define register offset=0x0070 size=4 [ cpsr spsr ];
+define register offset=0x0080 size=4 [ mult_addr ];	# Special internal register for dealing with multiple stores/loads
+define register offset=0x0084 size=4 [ r14_svc r13_svc spsr_svc ];
+define register offset=0x0090 size=8 [ mult_dat8 ];	# Special internal register for dealing with multiple stores/loads
+define register offset=0x0090 size=16 [ mult_dat16 ];	# Special internal register for dealing with multiple stores/loads
+define register offset=0x00A0 size=4 [ fpsr ];		# floating point state register (for FPA10 floating-point accelerator)
+define register offset=0x00B0 size=1 [ ISAModeSwitch ];  # generic name for TB ThumbBit - set same as TB
+
+@define FPSCR_N "fpscr[31,1]"
+@define FPSCR_Z "fpscr[30,1]"
+@define FPSCR_C "fpscr[29,1]"
+@define FPSCR_V "fpscr[28,1]"
+
+@if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
+	define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 ];
+@endif
+define register offset=0x0100 size=10 [ fp0 fp1 fp2 fp3 fp4 fp5 fp6 fp7 ];	# eight 80-bit floating registers
+
+# pseudo-registers for coprocessor calculations
+define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ];
+
+# Advanced SIMD and VFP extension registers
+@if defined(VFPv2) || defined(VFPv3)
+
+@if ENDIAN == "little"
+  define register offset=0x0300 size=4  [ s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 
+  										s16 s17 s18 s19 s20 s21 s22 s23 s24 s25 s26 s27 s28 s29 s30 s31 ];
+@else # ENDIAN == "big"
+  define register offset=0x0300 size=4  [ s31 s30 s29 s28 s27 s26 s25 s24 s23 s22 s21 s20 s19 s18 s17 s16
+  										s15 s14 s13 s12 s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ];
+@endif # ENDIAN = "big"
+  
+@endif # VFPv2 || VFPv3
+
+@if defined(VFPv2)
+
+@if ENDIAN == "little"
+  define register offset=0x0300 size=8  [ d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 ];
+@else # ENDIAN == "big"
+  define register offset=0x0300 size=8  [ d15 d14 d13 d12 d11 d10 d9 d8 d7 d6 d5 d4 d3 d2 d1 d0 ];
+@endif # ENDIAN = "big"
+
+@endif # VFPv2
+
+@if defined(SIMD) || defined(VFPv3)
+
+@if ENDIAN == "little"
+  define register offset=0x0300 size=8  [ d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 
+  										d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 ];
+@else # ENDIAN == "big"
+  define register offset=0x0300 size=8  [ d31 d30 d29 d28 d27 d26 d25 d24 d23 d22 d21 d20 d19 d18 d17 d16
+  										d15 d14 d13 d12 d11 d10 d9 d8 d7 d6 d5 d4 d3 d2 d1 d0 ];
+@endif # ENDIAN = "big"
+
+@endif # SIMD || VFPv3
+
+@if defined(SIMD)
+
+@if ENDIAN == "little"
+  define register offset=0x0300 size=16  [ q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 ];
+@else # ENDIAN == "big"
+  define register offset=0x0300 size=16 [ q15 q14 q13 q12 q11 q10 q9 q8 q7 q6 q5 q4 q3 q2 q1 q0 ];
+@endif # ENDIAN = "big"
+
+@endif # SIMD
+
+# Define context bits
+# WARNING: when adjusting context keep compiler packing in mind
+# and make sure fields do not span a 32-bit boundary before or 
+# after context packing
+define register offset=0x00 size=8   contextreg;
+define context contextreg
+@ifdef T_VARIANT
+  	TMode		   = (0,0)    # 1 if in Thumb instruction decode mode
+  	T    		   = (0,0)    # exact copy (alias!) of TMode
+  	LowBitCodeMode = (0,0)    # 1 if low bit of instruction address is set on a branch
+  	ISA_MODE       = (0,0)    # 1 for Thumb instruction decode mode
+@endif
+  	LRset        = (1,1) noflow    # 1 if the instruction right before was a mov lr,pc
+  	REToverride  = (2,2) noflow    # 1 if the instruction should be a branch not a return
+  	CALLoverride = (3,3) noflow    # 1 if the call should actually be a jump
+@if defined(VERSION_6T2) || defined(VERSION_7)
+	TEEMode     = (4,4)    # 1 if in ThumbEE mode, changes some instruction behavior, and makes some instructions invalid
+  	condit      = (5,13) noflow  # both base and shift
+  	cond_mask   = (10,13)  # base condition
+  	cond_full   = (6,9)    # full condition
+  	cond_true   = (9,9)    # true if this condition should be tested for true
+  	cond_base   = (6,8)    # shift mask for controlling shift
+  	cond_shft   = (9,13)   # mask and lower bit of it condition field
+  	itmode      = (5,5)    # true if in ITBlock mode
+     
+@endif
+
+	# Transient context bits
+	counter		= (14,18)	# 0 to 7 counter (for building variable length register lists)
+#	dreg		= (17,21)	# D register (attached, for building register lists)
+#	sreg		= (17,21)	# S register (attached, for building register lists)
+	regNum		= (19,23)	# D register number (see dreg)
+	counter2	= (24,26)	# 0 to 7 counter (for building variable length register lists)
+#	dreg2		= (25,29)	# 2nd D register (attached, for building register lists)
+#	sreg2		= (25,29)	# 2nd S register (attached, for building register lists)
+	reg2Num		= (27,31)	# 2nd D register number (see dreg2)
+# --- do not allow any field to span 32-bit boundary ---
+	regInc		= (32,33)	# Pair register increment
+	ARMcond		= (34,34)	# ARM conditional instruction
+	ARMcondCk	= (35,35)   # Finished ARM condition check phase
+;
+
+define pcodeop count_leading_zeroes;
+define pcodeop coprocessor_function;
+define pcodeop coprocessor_function2;
+define pcodeop coprocessor_load;
+define pcodeop coprocessor_load2;
+define pcodeop coprocessor_loadlong;
+define pcodeop coprocessor_loadlong2;
+define pcodeop coprocessor_moveto;
+define pcodeop coprocessor_moveto2;
+define pcodeop coprocessor_movefromRt;
+define pcodeop coprocessor_movefromRt2;
+define pcodeop coprocessor_movefrom2;
+define pcodeop coprocessor_store;
+define pcodeop coprocessor_store2;
+define pcodeop coprocessor_storelong;
+define pcodeop coprocessor_storelong2;
+define pcodeop software_interrupt;
+define pcodeop software_bkpt;
+define pcodeop software_udf;
+define pcodeop software_hlt;
+define pcodeop software_hvc;
+define pcodeop software_smc;
+
+# CPS methods (Version 6)
+define pcodeop setUserMode;
+define pcodeop setFIQMode;
+define pcodeop setIRQMode;
+define pcodeop setSupervisorMode;
+define pcodeop setMonitorMode;
+define pcodeop setAbortMode;
+define pcodeop setUndefinedMode;
+define pcodeop setSystemMode;
+define pcodeop enableIRQinterrupts;
+define pcodeop enableFIQinterrupts;
+define pcodeop enableDataAbortInterrupts;
+define pcodeop disableIRQinterrupts;
+define pcodeop disableFIQinterrupts;
+define pcodeop isFIQinterruptsEnabled;
+define pcodeop isIRQinterruptsEnabled;
+define pcodeop disableDataAbortInterrupts;
+define pcodeop hasExclusiveAccess;
+define pcodeop isCurrentModePrivileged;
+define pcodeop setThreadModePrivileged;
+define pcodeop isThreadMode;
+
+define pcodeop jazelle_branch;
+define pcodeop ClearExclusiveLocal;
+define pcodeop HintDebug;
+
+define pcodeop DataMemoryBarrier;
+define pcodeop DataSynchronizationBarrier;
+
+define pcodeop secureMonitorCall;
+
+define pcodeop WaitForEvent;
+define pcodeop WaitForInterrupt;
+
+define pcodeop HintYield;
+define pcodeop InstructionSynchronizationBarrier;
+
+define pcodeop HintPreloadData;
+define pcodeop HintPreloadDataForWrite;
+define pcodeop HintPreloadInstruction;
+
+define pcodeop SignedSaturate;
+define pcodeop SignedDoesSaturate;
+define pcodeop UnsignedSaturate;
+define pcodeop UnsignedDoesSaturate;
+define pcodeop Absolute;
+define pcodeop ReverseBitOrder;
+define pcodeop SendEvent;
+define pcodeop setEndianState;
+
+macro affectflags() {
+  CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV;
+}
+
+macro affect_resflags() {
+  ZR = tmpZR; NG = tmpNG;
+}
+
+macro SetThumbMode(value) {
+  ISAModeSwitch = value;
+  TB = ISAModeSwitch;
+}
+
+#
+# simple branch, not inter-working
+macro BranchWritePC(addr) {
+   pc = addr;
+}
+
+#
+# Interworking branch, ARM<->Thumb
+macro BXWritePC(addr) {
+   SetThumbMode((addr & 0x1) != 0);
+   local tmp = addr & 0xfffffffe;
+   pc = tmp;
+}
+
+#
+# Branch depends on version
+macro LoadWritePC(addr) {
+@if defined(VERSION_5)
+   BXWritePC(addr);
+@else
+   BranchWritePC(addr);
+@endif
+}
+
+# Branch depends on version
+macro ALUWritePC(addr) {
+@if defined(VERSION_7)
+   BXWritePC(addr);
+@else
+   BranchWritePC(addr);
+@endif
+}
+
+@if defined(T_VARIANT)
+
+ItCond:              is TMode=1			{ }
+CheckInIT_CZNO:      is TMode=1  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }		# in older, arms always affect flags
+CheckInIT_CZN:       is TMode=1  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; }		# in older, arms always affect flags
+CheckInIT_ZN:        is TMode=1			{ ZR = tmpZR; NG = tmpNG;  }   							# in older, arms always affect flags
+
+@endif
+
+@if defined(VERSION_6T2) || defined(VERSION_7)
+
+#  conditionals for instruction following IT Block
+thfcc: "eq"	is cond_full=0	{ local tmp = (ZR!=0); export tmp; }
+thfcc: "ne"	is cond_full=1	{ local tmp = (ZR==0); export tmp; }
+thfcc: "cs"	is cond_full=2	{ local tmp = (CY!=0); export tmp; }
+thfcc: "cc"	is cond_full=3	{ local tmp = (CY==0); export tmp; }
+thfcc: "mi"	is cond_full=4	{ local tmp = (NG!=0); export tmp; }
+thfcc: "pl"	is cond_full=5	{ local tmp = (NG==0); export tmp; }
+thfcc: "vs"	is cond_full=6	{ local tmp = (OV!=0); export tmp; }
+thfcc: "vc"	is cond_full=7	{ local tmp = (OV==0); export tmp; }
+thfcc: "hi"	is cond_full=8	{ local tmp = CY && !ZR; export tmp; }
+thfcc: "ls"	is cond_full=9	{ local tmp = !CY || ZR; export tmp; }
+thfcc: "ge"	is cond_full=10	{ local tmp = (NG == OV); export tmp; }
+thfcc: "lt"	is cond_full=11	{ local tmp = (NG != OV); export tmp; }
+thfcc: "gt"	is cond_full=12	{ local tmp = !ZR && (NG == OV); export tmp; }
+thfcc: "le"	is cond_full=13	{ local tmp = ZR || (NG != OV); export tmp; }
+# thfcc: "AL" is cond_full=14 { local tmp = 1; export tmp; }
+# thfcc: "NV" is cond_full=15 { local tmp = 0; export tmp; }
+
+
+# no ITcondition
+ItCond:              is TMode=1 & itmode=0 & cond_mask=0 {}
+# ITBlock then/else case - the condition being tested is modified by the shift below
+ItCond:  "."thfcc    is TMode=1 & itmode=0 & cond_mask & thfcc [ itmode=1; globalset(inst_next,condit);]
+   { if (!thfcc) goto inst_next; }
+
+# last ITBlock then/else case - the condition being tested is modified by the shift below
+ItCond:  "."thfcc    is TMode=1 & itmode=0 & cond_mask=8 & thfcc
+   { if (!thfcc) goto inst_next; }
+
+# certain Thumb instructions don't affect all flags in the IT block
+CheckInIT_CZNO:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_CZNO:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_CZNO:     is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }
+
+CheckInIT_CZN:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_CZN:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_CZN:     is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; }
+
+CheckInIT_ZN:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_ZN:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
+CheckInIT_ZN:     is TMode=1 & itmode=0 & cond_mask=0			{ ZR = tmpZR; NG = tmpNG; }
+
+
+:^instruction  is itmode=1 & cond_mask=8 & instruction  [ condit=0; ] {}
+:^instruction  is itmode=1 & cond_mask   & instruction  [ cond_shft=cond_shft << 1; itmode=0; ]{}
+
+@endif  # defined(VERSION_6T2) || defined(VERSION_7)
+
+@include "ARMinstructions.sinc"
+
+# THUMB instructions
+@ifdef T_VARIANT
+@include "ARMTHUMBinstructions.sinc"
+@endif

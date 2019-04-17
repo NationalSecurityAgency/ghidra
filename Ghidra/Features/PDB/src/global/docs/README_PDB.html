@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>PDB Parser Application</TITLE>
+<STYLE>
+body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 10px; } /* some padding to improve readability */ 
+li { font-family:times new roman; font-size:14pt; }
+h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold;  }
+h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
+p { margin-left: 40px; font-family:times new roman; font-size:14pt; }
+blockquote p { margin-left: 10px; }
+table { margin-left: 20px; margin-top: 10px; width: 80%;}
+td { font-family:times new roman; font-size:14pt; vertical-align: top; }
+th { font-family:times new roman; font-size:14pt; font-weight:bold; background-color: #EDF3FE; }
+code { color: black; font-family: courier new; font-size: 14pt; }
+</STYLE>
+</HEAD>
+<BODY>
+<H1>PDB Parser Application</H1>
+
+<p>GHIDRA includes a bundled application <i>pdb.exe</i> for use within Microsoft Windows environments.
+This application is used to parse program debug information provided in the form of PDB files which are associated 
+with specific executable programs and libraries.  PDB files are produced during the compilation and linking
+process and may be made available by the software vendor for debugging purposes. 
+
+<H2>Prerequisites</H2>
+
+<p>The native PDB parser application has been built with Microsoft Visual Studio 2017 using the 8.1 SDK to allow for possible use
+under Windows 7, 8.x and 10.  For this application to execute properly the following prerequisites must be properly installed: 
+
+<ul>	
+	<li><a href="https://go.microsoft.com/fwlink/?LinkId=746572">Microsoft Visual C++ Redistributable for Visual Studio 2017</a> with its'
+	prerequisite updates, and</li>
+	<li><a href="#DIASDK">DIA SDK runtime support.</a></li>
+</ul>
+
+<H2>PDB File Processing</H2>
+
+<p>Execution of the native PDB parser for a specified PDB file produces an XML output which is subsequently parsed by GHIDRA
+during PDB Analysis.  If running under windows the native PDB parser may be invoked directly if the appropriate
+PDB file can be located locally, while on other platforms only the XML file form produced by the PDB parser 
+is supported.  Batch conversion of PDB files to XML is facilitated by the <I>support/createPdbXmlFiles.bat</I>
+script.  In the near future GHIDRA will adopt a pure Java implementation which will eliminate the Microsoft Windows
+native execution issue and the use of an intermediate XML format.
+
+<H2>Microsoft Symbol Server</H2>
+
+<p>Although GHIDRA has been primarily designed to utilize locally stored PDB files during analysis, 
+the ability to interactively download individual PDB files from a web-based Microsoft Symbol Server 
+is also provided.  This capability is accessed via the GUI while a program is open via the 
+<B><I>File->Download PDB File...</I></B> action.
+
+<H2><a name="DIASDK">DIA SDK Dependency</a></H2>
+
+<p>In order for the native PDB parser to work on your Microsoft Windows machine, you must:
+<ol>
+<li>Ensure you have <i>msdia140.dll</i> on your computer, and</li>
+<li>Register <i>msdia140.dll</i> in the Windows registry.</li>
+</ol>
+
+<B>NOTES:</B>
+<ul> 
+<li>The following instructions assume you have a 64-bit operating system.  If you have rebuilt 
+pdb.exe with a newer version of the DIA SDK you will need to register the corresponding 
+version of the 64-bit DLL.  The DIA SDK 14.0 corresponds to Visual Studio 2017.<br><br></li>   
+<li>The PDB format is known to change over time and may be incompatible with the current <i>pdb.exe</i>
+parser contained within Ghidra.  A Microsoft Visual Studio project is provided within the
+<i>Ghidra/Features/PDB/src/pdb</i> directory which will allow you to rebuild it with a newer version 
+of Visual Studio and DIA SDK.</li>
+</ul>	
+
+<h3>Ensure you have <i>msdia140.dll</i> on your computer</h3>
+
+<p>First, check to see if you already have the <i>msdia140.dll</i> library installed on your system.  
+It is generally installed installed with Microsoft Visual Studio 2017 when C/C++ development support
+is included (<DISTRO> may be Community, Professional, or other VS 2017 distribution package name).
+<pre>
+        C:\Program Files (x86)\Microsoft Visual Studio\2017\<DISTRO>\DIA SDK\bin\amd64\msdia140.dll
+</pre>
+<p>This file is commonly located here, although it may be installed in other locations as well.  Any 64-bit 
+copy may be registered provided it is the correct version.  There is no need to register more than
+one.
+
+<h3>Register 'msdia140.dll' in the Windows registry</h3>
+
+<p>Please register 64-bit <i>msdia140.dll</i> even if you already had a copy of it on your computer
+since it is not registered by the Visual Studio installation process.  You will need administrative 
+rights/privileges in order to register the DLL in the Windows registry.
+<blockquote>
+<ol>
+<li>Start a command prompt as an administrator:</li>
+<ul>
+  <li>Click Windows Start menu, enter CMD in the search box to locate CMD program.</li>
+  <li>Right-click on CMD program and then click Run as administrator.</li>
+  <li>If the User Account Control dialog box appears, confirm that the action it displays is 
+		what you want, and then click Yes to continue.  You may be prompted for an
+		Admin password to elevate permissions.</li>
+</ul>
+<li>At the prompt within the displayed CMD window, navigate to the parent folder that 
+contains the 64-bit version of <i>msdia140.dll</i> or specify the full path of the DLL to 
+regsvr32 command below.</li>
+<li>Enter the following command to register the DLL:</li>
+</ol></blockquote>
+<pre>
+	   regsvr32 msdia140.dll
+</pre>	
+<p>When the registration has completed you should see a popup that indicates that "DllRegisterServer in <i>msdia140.dll</i> 
+succeeded".</li>
+
+</BODY>
+</HTML>
+

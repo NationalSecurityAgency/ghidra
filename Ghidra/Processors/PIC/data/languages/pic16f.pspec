@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <data_space space="DATA"/>
+  <context_data>
+  	<context_set space="CODE">
+  		<set name="doPseudo" val="0"/>
+  	</context_set>
+  	<tracked_set space="CODE">
+  		<set name="BSR" val="0"/>
+  	</tracked_set>
+  	<tracked_set space="CODE" first="0x0" last="0x1ff">
+  	  	<set name="PCLATH" val="0"/>
+  	</tracked_set>
+  </context_data>
+  <volatile outputop="write_sfr" inputop="read_sfr">
+    <range space="DATA" first="0xb" last="0x1f"/>
+    <range space="DATA" first="0x81" last="0x81"/>
+    <range space="DATA" first="0x85" last="0x89"/>
+    <range space="DATA" first="0x8b" last="0x9f"/>
+    <range space="DATA" first="0x101" last="0x101"/>
+    <range space="DATA" first="0x105" last="0x109"/>
+    <range space="DATA" first="0x10b" last="0x11f"/>
+    <range space="DATA" first="0x181" last="0x181"/>
+    <range space="DATA" first="0x185" last="0x189"/>
+    <range space="DATA" first="0x18b" last="0x19f"/>
+  </volatile>
+  <register_data>
+    <register name="STATUS" group="STATUS"/>
+    <register name="IRP" group="STATUS"/>
+    <register name="RP" group="STATUS"/>
+    <register name="PC" group="PC"/>
+    <register name="PCL" group="PC"/>
+    <register name="PCLATH" group="PC"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="Reset" address="CODE:0000" entry="true"/>
+    <symbol name="Interrupt" address="CODE:0004" entry="true"/>
+    
+    <symbol name="PORTA" address="DATA:0C" entry="false"/>
+    <symbol name="PORTB" address="DATA:0D" entry="false"/>
+    
+    <symbol name="PIR1" address="DATA:11" entry="false"/>   
+    <symbol name="PIR2" address="DATA:12" entry="false"/> 
+    <symbol name="PIR3" address="DATA:13" entry="false"/> 
+    <symbol name="PIR4" address="DATA:14" entry="false"/> 
+    <symbol name="TMR0" address="DATA:15" entry="false"/> 
+    <symbol name="TMR1L" address="DATA:16" entry="false"/> 
+    <symbol name="TMR1H" address="DATA:17" entry="false"/> 
+    <symbol name="T1CON" address="DATA:18" entry="false"/> 
+    <symbol name="T1GCON" address="DATA:19" entry="false"/> 
+    <symbol name="TMR2" address="DATA:1A" entry="false"/> 
+    <symbol name="PR2" address="DATA:1B" entry="false"/> 
+    <symbol name="T2CON" address="DATA:1C" entry="false"/> 
+    <symbol name="CPSCON0" address="DATA:1E" entry="false"/>
+    <symbol name="CPSCON1" address="DATA:1F" entry="false"/> 
+    
+    <symbol name="TRISA" address="DATA:8C" entry="false"/> 
+    <symbol name="TRISB" address="DATA:8D" entry="false"/>
+    
+    <symbol name="PIE1" address="DATA:91" entry="false"/> 
+    <symbol name="PIE2" address="DATA:92" entry="false"/>
+    <symbol name="PIE3" address="DATA:93" entry="false"/>
+    <symbol name="PIE4" address="DATA:94" entry="false"/>
+    <symbol name="OPTION_REG" address="DATA:95" entry="false"/>
+    <symbol name="PCON" address="DATA:96" entry="false"/>
+    <symbol name="WDTCON" address="DATA:97" entry="false"/>
+    <symbol name="OSCTUNE" address="DATA:98" entry="false"/>
+    <symbol name="OSCCON" address="DATA:99" entry="false"/>
+    <symbol name="OSCSTAT" address="DATA:9a" entry="false"/>
+    <symbol name="ADRESL" address="DATA:9b" entry="false"/>
+    <symbol name="ASRESH" address="DATA:9c" entry="false"/>
+    <symbol name="ADCON0" address="DATA:9d" entry="false"/>
+    <symbol name="ADCON1" address="DATA:9e" entry="false"/>
+    
+    <symbol name="LATA" address="DATA:10c" entry="false"/>
+    <symbol name="LATB" address="DATA:10d" entry="false"/>
+    <symbol name="CM1CON0" address="DATA:111" entry="false"/>
+    <symbol name="CM1CON1" address="DATA:112" entry="false"/>
+    <symbol name="CM2CON0" address="DATA:113" entry="false"/>
+    <symbol name="CM2CON1" address="DATA:114" entry="false"/>
+    <symbol name="CMOUT" address="DATA:115" entry="false"/>
+    <symbol name="BORCON" address="DATA:116" entry="false"/>
+    <symbol name="FVRCON" address="DATA:117" entry="false"/>
+    <symbol name="DACCON0" address="DATA:118" entry="false"/>
+    <symbol name="DACCON1" address="DATA:119" entry="false"/>
+    <symbol name="SRCON0" address="DATA:11a" entry="false"/>
+    <symbol name="SRCON1" address="DATA:11b" entry="false"/>
+    <symbol name="APFCON0" address="DATA:11d" entry="false"/>
+    <symbol name="APFCON1" address="DATA:11e" entry="false"/>
+    
+    <symbol name="ANSELA" address="DATA:18c" entry="false"/>
+    <symbol name="ANSELB" address="DATA:18d" entry="false"/>
+    <symbol name="EEADRL" address="DATA:191" entry="false"/>
+    <symbol name="EEADRH" address="DATA:192" entry="false"/>
+    <symbol name="EEDATL" address="DATA:193" entry="false"/>
+    <symbol name="EEDATH" address="DATA:194" entry="false"/>
+    <symbol name="EECON1" address="DATA:195" entry="false"/>
+    <symbol name="EECON2" address="DATA:196" entry="false"/>
+    <symbol name="RCREG" address="DATA:199" entry="false"/>
+    <symbol name="TXREG" address="DATA:19a" entry="false"/>
+    <symbol name="SPBRGL" address="DATA:19b" entry="false"/>
+    <symbol name="SPBRGH" address="DATA:19c" entry="false"/>
+    <symbol name="RCSTA" address="DATA:19d" entry="false"/>
+    <symbol name="TXSTA" address="DATA:19e" entry="false"/>
+    <symbol name="BAUDCON" address="DATA:19f" entry="false"/>
+    
+    <symbol name="WPUA" address="DATA:20c" entry="false"/>
+    <symbol name="WPUB" address="DATA:20d" entry="false"/>
+    <symbol name="SSP1BUF" address="DATA:211" entry="false"/>
+    <symbol name="SSP1ADD" address="DATA:212" entry="false"/>
+    <symbol name="SSP1MSK" address="DATA:213" entry="false"/>
+    <symbol name="SSP1STAT" address="DATA:214" entry="false"/>
+    <symbol name="SSP1CON1" address="DATA:215" entry="false"/>
+    <symbol name="SSP1CON2" address="DATA:216" entry="false"/>
+    <symbol name="SSP1CON3" address="DATA:217" entry="false"/>
+    <symbol name="SSP2BUF" address="DATA:219" entry="false"/>
+    <symbol name="SSP2ADD" address="DATA:21a" entry="false"/>
+    <symbol name="SSP2MSK" address="DATA:21b" entry="false"/>
+    <symbol name="SSP2STAT" address="DATA:21c" entry="false"/>
+    <symbol name="SSP2CON1" address="DATA:21d" entry="false"/>
+    <symbol name="SSP2CON2" address="DATA:21e" entry="false"/>
+    <symbol name="SSP2CON3" address="DATA:21f" entry="false"/>
+    
+    <symbol name="CCPR1L" address="DATA:291" entry="false"/>
+    <symbol name="CCPR1H" address="DATA:292" entry="false"/>
+    <symbol name="CCP1CON" address="DATA:293" entry="false"/>
+    <symbol name="PWM1CON" address="DATA:294" entry="false"/>
+    <symbol name="CCP1AS" address="DATA:295" entry="false"/>
+    <symbol name="PSTR1CON" address="DATA:296" entry="false"/>
+    <symbol name="CCPR2L" address="DATA:298" entry="false"/>
+    <symbol name="CCPR2H" address="DATA:299" entry="false"/>
+    <symbol name="CCP2CON" address="DATA:29a" entry="false"/>
+    <symbol name="PWM2CON" address="DATA:29b" entry="false"/>
+    <symbol name="CCP2AS" address="DATA:29c" entry="false"/>
+    <symbol name="PSTR2CON" address="DATA:29d" entry="false"/>
+    <symbol name="CCPTMRS" address="DATA:29e" entry="false"/>
+    
+    <symbol name="CCPR3L" address="DATA:311" entry="false"/>
+    <symbol name="CCPR3H" address="DATA:312" entry="false"/>
+    <symbol name="CCPR3CON" address="DATA:313" entry="false"/>
+    <symbol name="CCPR4L" address="DATA:318" entry="false"/>
+    <symbol name="CCPR4H" address="DATA:319" entry="false"/>
+    <symbol name="CCP4CON" address="DATA:31a" entry="false"/>
+    
+    <symbol name="IOCBP" address="DATA:394" entry="false"/>
+    <symbol name="IOCBN" address="DATA:395" entry="false"/>
+    <symbol name="IOCBF" address="DATA:396" entry="false"/>
+    <symbol name="CLKRCON" address="DATA:39a" entry="false"/>
+    <symbol name="MDCON" address="DATA:39c" entry="false"/>
+    <symbol name="MDSRC" address="DATA:39d" entry="false"/>
+    <symbol name="MDCARL" address="DATA:39e" entry="false"/>
+    <symbol name="MDCARH" address="DATA:39f" entry="false"/>
+    
+    <symbol name="TMR4" address="DATA:415" entry="false"/>
+    <symbol name="PR4" address="DATA:416" entry="false"/>
+    <symbol name="T4CON" address="DATA:417" entry="false"/>
+    <symbol name="TMR6" address="DATA:41c" entry="false"/>
+    <symbol name="PR6" address="DATA:41d" entry="false"/>
+    <symbol name="T6CON" address="DATA:41e" entry="false"/>
+    
+    <symbol name="STATUS_SHAD" address="DATA:FE4" entry="false"/>
+    <symbol name="WREG_SHAD" address="DATA:FE5" entry="false"/>
+    <symbol name="BSR_SHAD" address="DATA:FE6" entry="false"/>
+    <symbol name="PCLATH_SHAD" address="DATA:FE7" entry="false"/>
+    <symbol name="FSR0L_SHAD" address="DATA:FE8" entry="false"/>
+    <symbol name="FSR0H_SHAD" address="DATA:FE9" entry="false"/>
+    <symbol name="FSR1L_SHAD" address="DATA:FEA" entry="false"/>
+    <symbol name="FSR1H_SHAD" address="DATA:FEB" entry="false"/>
+    <symbol name="STKPTR" address="DATA:FED" entry="false"/>
+    <symbol name="TOSL" address="DATA:FEE" entry="false"/>
+    <symbol name="TOSH" address="DATA:FEF" entry="false"/>
+    
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="GPR" start_address="DATA:0000" mode="rw" length="0x2000" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

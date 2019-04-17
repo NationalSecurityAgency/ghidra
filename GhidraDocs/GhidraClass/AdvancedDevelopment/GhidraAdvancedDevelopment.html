@@ -1,0 +1,2300 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>Ghidra Advanced Development Class</title>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+
+<!-- This is the first slide -->
+<section>
+<h2>Ghidra Advanced Development Class</h2>
+</section>
+
+<section>
+<header>Topics</header>
+<br>
+<ul class="medium">
+  <li>Ghidra and Eclipse Background</li>
+  <li>Development and Extensions</li>
+  <li>Program API vs Flat Program API</li>
+  <li>Scripting</li>
+  <li>Plugins</li>
+  <li>Ghidra GUI Components</li>
+  <li>Handling Binary Formats</li>
+  <li>Writing Analyzers</li>
+  <li>Writing Binary Loaders</li>
+  <li>Writing File System Loaders</li>
+  <li>Writing Languages: Sleigh</li>
+  <li>Building your Extension</li>
+</ul>
+</section>
+
+<section>
+<h2>What is Ghidra?</h2>
+</section>
+
+<section>
+<header>What is Ghidra?</header>
+<br>
+<ul>
+  <li>Integrated environment for software reverse engineering ("IDE" for SRE)</li>
+  <li>Developed by NSA Research</li>
+  <li>Written almost entirely in Java</li>
+  <li>Some native code (C/C++, Objective-C, Assembly)</li>
+</ul>
+</section>
+
+<section>
+<header>What is Ghidra?</header>
+<br>
+<ul>
+  <li>Consists of six major parts</li>
+  <ul>
+    <li>Programs</li>
+    <li>Plugins</li>
+    <li>Scripts</li>
+    <li>Tools</li>
+    <li>Project Manager</li>
+    <li>Server</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Programs</header>
+<br>
+<ul>
+  <li>Information stored about a binary/executable in a Ghidra database</li>
+  <ul>
+    <li>Symbols</li>
+    <li>Bytes / Memory</li>
+    <li>References</li>
+    <li>Instructions / Data</li>
+    <li>Comments</li>
+    <li>...etc.</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Plugins</header>
+<br>
+<ul>
+  <li>Each plugin provides a specific functionality</li>
+  <li>All plugins communicate within the tool</li>
+  <li>Users can choose which plugins are active</li>
+  <li>Users can write their own plugins</li>
+  <li>Written in Java</li>
+  <li>Preferred IDE is Eclipse with GhidraDev</li>
+  <ul>
+    <li>Others possible, but not supported</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripts</header>
+<br>
+<ul>
+  <li>Can be written in Java or Python</li>
+  <li>Extensible to other JVM-based languages</li>
+  <li>Simplifies Ghidra programming API</li>
+  <li>Full API is still available</li>
+  <li>Run-time compilation for fast dev cycles</li>
+  <li>Preferred IDE is Eclipse with GhidraDev</li>
+  <ul>
+    <li>Ghidra provides very basic editor without Eclipse</li>
+    <li>Others possible, but not supported</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Tools</header>
+<br>
+<ul>
+  <li>Collection of plugins and state</li>
+  <li>Ghidra includes pre-configured tools</li>
+  <ul>
+    <li>Code Browser</li>
+    <li>Version Tracker</li>
+  </ul>
+  <li>Extensions may provide more</li>
+</ul>
+</section>
+
+<section>
+<header>Project Manager</header>
+<br><br>
+<ul>
+  <li>Manages projects, tools, and data for a particular group of programs</li>
+  <li>Programs must be imported into a project before work can be done</li>
+  <li>Project configurations are saved for future use</li>
+</ul>
+</section>
+
+<section>
+<header>Server</header>
+<br>
+<ul>
+  <li>Used when multiple users want to collaborate on the same project</li>
+  <li>Provides network shared repository</li>
+  <li>Provides user access control</li>
+  <li>Keeps revision history (like Subversion)</li>
+  <li>Supports check-in, check-out, history</li>
+  <li>Does not support branching</li>
+</ul>
+</section>
+
+<section>
+<header>Why Use Ghidra?</header>
+<br>
+<ul>
+  <li>Tools can dynamically share data</li>
+  <li>Designed to handle large data sets</li>
+  <li>Supports teaming</li>
+  <li>Highly configurable environment</li>
+  <li>Highly extensible via plugins and scripts</li>
+  <li>Multi-platform (Linux, Mac, Windows)</li>
+</ul>
+</section>
+
+<section>
+<header>How to Install Ghidra</header>
+<br>
+<ul>
+  <li>Install the required version of Java</li>
+  <li>Extract the Ghidra distribution <file>.zip</file></li>
+  <li>For development, install a supported version of Eclipse</li>
+  <br>
+  <li>See the documentation for version requirements</li>
+</ul>
+</section>
+
+<section>
+<h2>What is Eclipse?</h2>
+</section>
+
+<section>
+<header>Eclipse</header>
+<br><br>
+<ul>
+  <li>Integrated Development Environment (IDE)</li>
+  <ul>
+    <li>Java, C/C++, Python, and more!</li>
+  </ul>
+  <li>Can be used for script development</li>
+  <li>Can be used for extension development</li>
+</ul>
+</section>
+
+<section>
+<header>Eclipse</header>
+<br><br>
+<ul>
+  <li>To integrate with Ghidra:</li>
+  <ul>
+    <li>Install the GhidraDev plugin</li>
+    <li>Connect Ghidra to GhidraDev/Eclipse</li>
+    <br>
+    <li>GhidraDev is distributed with Ghidra</li>
+    <li>See <span style="font-family:monospace;">"GhidraDev_README.html"</font></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Eclipse</header>
+<ul>
+  <li>Eclipse Java Editor Tips and Tricks (1/3)</li>
+  <ul>
+    <li>Open Type: <keys><k>Ctrl</k> <k>Shift</k> <k>T</k></keys></li>
+    <ul>
+      <li>Allows you to find a class without knowing the package</li>
+    </ul>
+    <li>Organize Imports: <keys><k>Ctrl</k> <k>Shift</k> <k>O</k></keys></li>
+    <ul>
+      <li>Automatically fixes import statements</li>
+    </ul>
+    <li>Navigate to: <keys><k>F3</k></keys></li>
+    <ul>
+      <li>Navigate to the class, method, variable, etc., at the current cursor location</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Eclipse</header>
+<ul>
+  <li>Eclipse Java Editor Tips and Tricks (2/3)</li>
+  <ul>
+    <li>Type Hierarchy: <keys><k>F4</k></keys></li>
+    <ul>
+      <li>Show inheritance hierarchy of current class/interface</li>
+    </ul>
+    <li>Find References to: <keys><k>Ctrl</k> <k>Shift</k> <k>G</k></keys></li>
+    <ul>
+      <li>Finds all references to the item at current cursor location</li>
+    </ul>
+    <li>Toggle Comments: <keys><k>Ctrl</k> <k>/</k></keys></li>
+    <ul>
+      <li>Comment or uncomment the selection</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Eclipse</header>
+<ul>
+  <li>Eclipse Java Editor Tips and Tricks (3/3)</li>
+  <ul>
+    <li>Outline View: <keys><k>Ctrl</k> <k>O</k></keys></li>
+    <ul>
+      <li>Lists members of the class</li>
+    </ul>
+    <li>Code Completion: <keys><k>Ctrl</k> <k>Space</k></keys></li>
+    <ul>
+      <li>Displays a list of matches to complete the current expression</li>
+    </ul>
+    <li>Quick Fix: <keys><k>Ctrl</k> <k>1</k></keys></li>
+    <ul>
+      <li>Offer corrections to most problems (errors, warnings, etc.)</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+  <header>Eclipse</header>
+  <br>
+  <ul>
+    <li>Provides templates and common tasks for Ghidra development</li>
+    <br>
+    <li><menus><m>GhidraDev</m><m>New</m><m>Ghidra Module Project</m></menus></li>
+    <li><menus><m>GhidraDev</m><m>New</m><m>Ghidra Script</m></menus></li>
+    <li><menus><m>GhidraDev</m><m>Export</m><m>Ghidra Module Extension</m></menus></li>
+  </ul>
+</section>
+
+
+<section>
+<header>Lab 1</header>
+<br><br>
+<ul>
+  <li>Launch Ghidra through Eclipse in debug mode</li>
+</ul>
+</section>
+
+<section>
+<h2>Development</h2>
+</section>
+
+<section>
+<header>Development</header>
+<br>
+<ul class="medium">
+  <li>Every piece of Ghidra is extensible</li>
+  <ul>
+    <li>Plugins, Scripts, Analyzers, Fields, Importers, Exporters, etc.</li>
+  </ul>
+  <li>Extensible components implement <cls>ExtensionPoint</cls></li>
+  <ul>
+    <li>List suffix in <file>ExtensionPoint.manifest</file></li>
+  </ul>
+  <br>
+  <li>Create a New Ghidra Module Project...</li>
+  <ul>
+    <li>You may be prompted to locate Ghidra</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<h2>Anatomy of an Extension Project</h2>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<ul class="bare medium">
+  <li><folder class="icon">MyExtension/</folder></li>
+  <ul class="bare">
+    <li><folder class="icon">src/main/java/</folder></li>
+    <li><folder class="icon">src/main/help/</folder></li>
+    <li><folder class="icon">src/main/resources/</folder></li>
+    <li><folder class="icon">ghidra_scripts/</folder></li>
+    <li><folder class="icon">data/</folder></li>
+    <li><folder class="icon">lib/</folder></li>
+    <li><folder class="icon">os/</folder></li>
+    <li><file class="icon">extension.properties</file></li>
+    <li><file class="icon">Module.manifest</file></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<br>
+<folder class="icon">src/main/java/</folder>
+<br>
+<folder class="icon">src/main/resoures/</folder>
+<ul>
+  <li>Hold the Java source for this extension</li>
+  <li>Packaged into a <file>.jar</file> file</li>
+  <li>Add <folder>src/test/java/</folder> manually to include unit tests</li>
+  <ul>
+    <li>Unit tests are not included in the <file>.jar</file> file</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br><br>
+<folder class="icon">src/main/help/</folder>
+<ul>
+  <li>Holds online help for this extension</li>
+  <li>Contains the table of contents to append</li>
+  <li>Contains the CSS and HTML contents</li>
+  <li>Java help does not support the latest HTML/CSS. Please preview using the help viewer rather than your browser.</li>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br><br>
+<folder class="icon">ghidra_scripts/</folder>
+<ul>
+  <li>Holds scripts for this extension</li>
+  <li>Expect the user to copy and modify scripts</li>
+  <li>Unpacked as source to the file system on installation</li>
+  <li>May provide examples to use an extension's API</li>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<folder class="icon">data/</folder>
+<ul>
+  <li>Holds data files for this extension</li>
+  <li>Will not end up inside the <file>.jar</file> file</li>
+  <li>Will be present in the distribution <file>.zip</file> file</li>
+  <li>Unpacked to the file system on installation</li>
+  <li>Allows user to easily edit or append data compared to resources in the <file>.jar</file></li>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<folder class="icon">lib/</folder>
+<ul>
+  <li>Holds external Java dependencies for this extension</li>
+  <li>When working in Eclipse, the contents of this directory must be manually added to the class path of the Eclipse project</li>
+  <li>Optional</li>
+  <ul>
+    <li>This directory may be deleted if there are no external dependencies</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<folder class="icon">os/</folder>
+<ul>
+  <li>Holds native components for this extension</li>
+  <li>Optional</li>
+  <ul>
+    <li>This directory may be deleted if there are no native components</li>
+  </ul>
+  <li>NEVER EVER USE JNI!</li>
+  <ul>
+    <li>Communicate with a native process using sockets, I/O stream, etc.</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Extension Project</header>
+<br>
+<ul class="bare">
+  <li><folder class="icon">os/</folder>
+  <ul class="bare">
+    <li><folder class="icon">linux64/</folder></li>
+    <ul>
+      <li>Linux x86_64 natives</li>
+    </ul>
+    <li><folder class="icon">osx64/</folder></li>
+    <ul>
+      <li>Mac OSX x86_64 natives</li>
+    </ul>
+    <li><folder class="icon">win64/</folder></li>
+    <ul>
+      <li>Windows x64 natives</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+  <header>Lab 2</header>
+  <br>
+  <ul>
+    <li>Create a new Ghidra module project</li>
+    <li>From the Eclipse menu bar, select:</li>
+    <ul>
+      <li><menus><m>GhidraDev</m><m>New</m><m>Ghidra Module Project</m></menus></li>
+    </ul>
+    <li>In the "Module name" field, enter "gadc"</li>
+    <li>Click the "Finish" button to complete</li>
+  </ul>
+</section>
+
+
+<section>
+<h2>Program API</h2>
+</section>
+
+<section>
+<header>High-Level Classes</header>
+<br>
+<img width="95%" src="Images/highLevelClasses.png" style="vertical-align:middle"></img>
+<br>
+<ul><ul>
+<span style="font-size:25px"><i>Note: this diagram is not complete.</i></span>
+</ul></ul>
+</section>
+
+<section>
+<h2>Flat vs. Program API</h2>
+</section>
+
+<section>
+<header>Program API</header>
+<br>
+<div style="width:55%;display:inline-block;vertical-align:middle;">
+  <ul class="medium">
+    <li>Ghidra Program API</li>
+    <ul>
+      <li>Object-Oriented</li>
+      <li>Very deep</li>
+      <li>Can change from version to version</li>
+    </ul>
+  </ul>
+</div><div style="width:45%;display:inline-block;vertical-align:middle;">
+  <ul class="tiny">
+    <li><cls>Program</cls></li>
+    <ul>
+      <li><cls>Listing</span></li>
+      <ul>
+        <li><cls>Instructions</cls></li>
+        <li><cls>Data</cls></li>
+        <li><cls>Functions</cls></li>
+        <li><cls>Comments</cls></li>
+      </ul>
+      <li><cls>Memory</cls></li>
+      <ul>
+        <li><cls>Memory Blocks</cls></li>
+        <li><cls>Bytes</cls></li>
+      </ul>
+      <li><cls>Symbol Table</cls></li>
+      <ul>
+        <li><cls>Symbols</cls></li>
+      </ul>
+      <li><cls>Reference Manager</cls></li>
+      <ul>
+        <li><cls>References</cls></li>
+        <ul>
+          <li><cls>Memory</cls></li>
+          <li><cls>Stack</cls></li>
+          <li><cls>External</cls></li>
+        </ul>
+      </ul>
+      <li>...etc.</li>
+    </ul>
+  </ul>
+</div>
+</section>
+
+<section>
+<header>Flat Program API</header>
+<br><br>
+<ul>
+  <li>Flat</li>
+  <li>Provides access to most common features</li>
+  <li>Is not complete</li>
+  <li>Will not change on you*</li>
+</ul>
+</section>
+
+<section>
+<header>Flat Program API</header>
+<codeblock class="smaller"><kw>public</kw> <kw>class</kw> FlatProgramAPI {
+    FlatProgramAPI(<if>Program</if>)
+
+    analyze()
+    clear...()
+    create...()
+    find...()
+    get...()
+    remove...()
+    save()
+    set...()
+    to...()
+}</codeblock>
+</section>
+
+<section>
+<h2>Scripting</h2>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul class="medium">
+  <li>Script Manager</li>
+  <ul>
+    <li>Script Category Tree</li>
+    <ul>
+      <li>Displays dynamic tree of categories</li>
+    </ul>
+    <li>Script Table</li>
+    <ul>
+      <li>Displays name, description, key binding</li>
+    </ul>
+    <li>Filter</li>
+    <ul>
+      <li>Matches filter to name or description</li>
+      <li>Wildcard and case-insensitive</li>
+    </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script Directories</li>
+  <ul>
+    <li>Allows management of script directories</li>
+    <li>Default directories</li>
+    <ul class="bare small">
+      <li><folder class="icon"><vardir>HOME</vardir>/ghidra_scripts/</folder></li>
+      <li><folder class="icon"><vardir>INSTALL</vardir>/Features/Base/ghidra_scripts/</folder></li>
+      <li><folder class="icon"><vardir>Each other module</vardir>/ghidra_scripts/</folder></li>
+    </ul>
+    <li>Useful for sharing scripts in multi-user</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>GhidraScript API</li>
+</ul>
+<codeblock class="smaller"><kw>public</kw> <kw>abstract</kw> <kw>class</kw> GhidraScript
+      <kw>extends</kw> FlatProgramAPI {
+
+    ask...()
+    create...()
+    get...()
+    goto...()
+    print...()
+    run...()
+    to...()
+}</codeblock>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Sample script template in Java</li>
+  <ul>
+    <li>Must fill in the TODO areas</li>
+    <li>Create a description</li>
+    <li>Fill in the <tt>run()</tt> method</li>
+  </ul>
+</ul>
+<codeblock class="small"><com>//TODO add description here</com>
+<com>//TODO add metadata here</com>
+<kw>public</kw> <kw>class</kw> MyScript <kw>extends</kw> GhidraScript {
+    <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
+        <com>//TODO add code here</com>
+    }
+}
+</codeblock>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul>
+    <li>Special tags in header comment</li>
+    <li>Describe the script</li>
+    <li>All are optional</li>
+    <li>Handle all the messy Java GUI stuff (buttons, menus, etc.)</li>
+    <li>Do not insert blank lines between meta-data</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul>
+    <li><tt>@category</tt></li>
+    <ul>
+      <li>The category path for the script</li>
+      <li>Levels are separated by "."</li>
+      <li>Example</li>
+      <ul>
+        <li><tt>@category A.B.C</tt></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul class="medium">
+    <li><tt>@keybinding</tt></li>
+    <ul>
+      <li>Default key binding for a script</li>
+      <li>Format is <tt>[ctrl] [alt] [shift] [A-Z,0-9,F1-F12]</tt> and is case-sensitive</li>
+      <li>Examples</li>
+      <ul>
+        <li><tt>@keybinding L</tt></li>
+        <li><tt>@keybinding ctrl alt shift F1</tt></li>
+        <li><tt>@keybinding ctrl shift COMMA</tt></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul class="medium">
+    <li><tt>@menupath</tt></li>
+    <ul>
+      <li>Top-level menu path for a script</li>
+      <li>Use with caution!</li>
+      <ul>
+        <li>Overcrowded menu</li>
+        <li>Collide with system action</li>
+      </ul>
+      <li>Example</li>
+      <ul>
+        <li><tt>@menupath File.Run.My Script</tt></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Script Meta-data</li>
+  <ul>
+    <li><tt>@toolbar</tt></li>
+    <ul>
+      <li>Image for top-level toolbar button to launch this script</li>
+      <li>Searches for image in script directories and then Ghidra installation directory</li>
+      <li>Also use with caution! (same issues as <tt>@menupath</tt>)</li>
+      <li>Example</li>
+      <ul>
+        <li><tt>@toolbar myScriptImage.gif</tt></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State (1/3)</li>
+  <ul class="medium">
+    <li><tt>currentProgram</tt></li>
+    <ul>
+      <li>The current active open program</li>
+    </ul>
+    <li><tt>currentAddress</tt></li>
+    <ul>
+      <li>The current address of the location of the cursor</li>
+    </ul>
+    <li><tt>currentLocation</tt></li>
+    <ul>
+      <li>The program location of the cursor</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State (2/3)</li>
+  <ul class="medium">
+    <li><tt>currentSelection</tt></li>
+    <ul>
+      <li>The current <span style="color:#7CFC00">selection</span> or <tt>null</tt> if no selection exists</li>
+    </ul>
+    <li><tt>currentHighlight</tt></li>
+    <ul>
+      <li>The current <span style="color:#F0E68C">highlight</span> or <tt>null</tt> if no highlight exists</li>
+    </ul>
+    <li><tt>state</tt></li>
+    <ul>
+      <li>Provides place to store environment variables</li>
+      <li>Static and non-static</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State (3/3)</li>
+  <ul class="medium">
+    <li><tt>monitor</tt></li>
+    <ul>
+      <li>Allows script writer to inform user</li>
+      <ul>
+        <li>messages and progress</li>
+      </ul>
+      <li>Allows user to cancel script</li>
+      <li>Always use inside loops</li>
+    </ul>
+  </ul>
+</ul>
+<codeblock class="smaller"><kw>while</kw> (!<fld>monitor</fld>.isCancelled()) {
+    ...
+}</codeblock>
+</section>
+
+<section>
+<header>Console</header>
+<br><br>
+<ul>
+  <li>Provides a place to dump information</li>
+  <li>Any text representing a symbol or address can be navigated by double-clicking</li>
+  <li>Example</li>
+  <ul class="small">
+    <li>Run <file>PropagateExternalParametersScript.java</file></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<h2>Scripting Lab</h2>
+</section>
+
+<section>
+<header>Lab 3</header>
+<br>
+<ul class="medium">
+  <li>Create a new Java script: <file><im>Lab3Script.java</im></file></li>
+  <li>Set the description</li>
+  <li>Set category: <im>Category A.Category B</im></li>
+  <li>Set key binding: <im><keys><k>Alt</k> <k>Shift</k> <k>6</k></im></li>
+  <li>Set menu path: <im><menus><m>Script</m><m>My Class Script</m></menus></im></li>
+  <li>Set toolbar button: <im><file>Info.png</file></im></li>
+  <li>Change the body of the <tt>run()</tt> method to:
+  <codeblock class="small">println(<strlit>"Hello class"</strlit>);</codeblock></li>
+  <li>Save it </li>
+  <li>Run it </li>
+</ul>
+</section>
+
+<section>
+<header>Lab 3 Answer</header>
+<codeblock class="small"><com>//It prints "Hello class" to the console.
+//<annot>@category</annot> Category A.Category B
+//<annot>@keybinding</annot> alt shift 6
+//<annot>@menupath</annot> Script.My Class Script
+//<annot>@toolbar</annot> Info.png</com>
+
+<kw>import</kw> ghidra.app.script.GhidraScript;
+
+<kw>public</kw> <kw>class</kw> Lab3Script <kw>extends</kw> GhidraScript {
+
+    <annot>@Override</annot>
+    <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
+        println(<strlit>"Hello class"</strlit>);
+    }
+}</codeblock>
+</section>
+
+<section>
+<header>Lab 4</header>
+<br>
+<ul>
+  <li>Create new script that will ask for an integer and print the current program&apos;s name that many times to the console</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 4 Answer</header>
+<codeblock class="reallysmall"><com>//Ask for an integer and print the current</com>
+<com>//program’s name that many times to the console</com>
+<com>//<annot>@category</annot> GADC</com>
+
+<kw>import</kw> ghidra.app.script.GhidraScript;
+
+<kw>public</kw> <kw>class</kw> Lab4Script <kw>extends</kw> GhidraScript {
+    <annot>@Override</annot>
+    <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
+        <kw>int</kw> <loc>n</loc> = askInt(<strlit>"How Many Times?"</strlit>, <strlit>"N"</strlit>);
+        <kw>for</kw> (<kw>int</kw> <loc>i</loc> = <lit>0</lit>; <loc>i</loc> &lt; <loc>n</loc>; ++<loc>i</loc>) {
+            <kw>if</kw> (<fld>monitor</fld>.isCancelled()) {
+                <kw>break</kw>;
+            } 
+            println(<loc>i</loc> + <strlit>". "</strlit> + <fld>currentProgram</fld>.getName());
+            Thread.<stat>sleep</stat>(<lit>1000</lit>);
+        }
+    }
+}</codeblock>
+</section>
+
+<section>
+<header>Lab 5</header>
+<br>
+<ul>
+  <li>Write a script that will search for instructions that move a scalar into a register</li>
+  <li>Pull the scalar from the instruction and create an EOL comment in the form:</li>
+  <ul class="bare">
+    <li><im>setting [register] = [value]</im></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Lab 5 Answer</header>
+<codeblock class="supersmall"><com>//This script searches through all instructions that are</com>
+<com>//moving a scalar into a register</com>
+<com>//and sets an EOL comment in the form "[register] = [value]"</com>
+<com>//<annot>@category</annot> GADC</com>
+
+<kw>import</kw> ghidra.app.script.GhidraScript;
+<kw>import</kw> ghidra.program.model.lang.Register;
+<kw>import</kw> ghidra.program.model.listing.Instruction;
+<kw>import</kw> ghidra.program.model.scalar.Scalar;
+
+<kw>public</kw> <kw>class</kw> Lab5Script <kw>extends</kw> GhidraScript {
+
+    <annot>@Override</annot>
+    <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
+        <if>Instruction</if> <loc>instruction</loc> = getFirstInstruction();
+        <kw>while</kw> (<loc>instruction</loc> != <kw>null</kw>) {
+            <kw>if</kw> ( <fld>monitor</fld>.isCancelled() ) {
+                <kw>break</kw>;
+            }
+            if (<loc>instruction</loc>.getNumOperands() != <lit>2</lit>) {
+                <kw>continue</kw>;
+            }
+
+            Object[] <loc>opObjects0</loc> = <loc>instruction</loc>.getOpObjects(<lit>0</lit>);
+            <kw>if</kw> (<loc>opObjects0</loc>.<fld>length</fld> != <lit>1</lit> || !(<loc>opObjects0</loc>[<lit>0</lit>] <kw>instanceof</kw> <if>Register</if>)) {
+                <kw>continue</kw>;
+            }
+
+            Object[] <loc>opObjects1</loc> = <loc>instruction</loc>.getOpObjects(<lit>1</lit>);
+            <kw>if</kw> (<loc>opObjects1</loc>.<fld>length</fld> != <lit>1</lit> || !(<loc>opObjects1</loc>[<lit>0</lit>] <kw>instanceof</kw> Scalar)) {
+                <kw>continue</kw>;
+            }
+
+            Register <loc>register</loc> = (Register) <loc>opObjects0</loc>[<lit>0</lit>];
+            Scalar <loc>scalar</loc> = (Scalar) <loc>opObjects1</loc>[<lit>0</lit>];
+            String <loc>comment</loc> = <strlit>"["</strlit> + <loc>register</loc>.getName() + <strlit>"]=["</strlit> + <loc>scalar</loc>.toString(<lit>16</lit>, <kw>false</kw>, <kw>false</kw>, <stlrit>""</strlit>, <strlit>""</strlit>) + <strlit>"]"</strlit>;
+            setEOLComment(<loc>instruction</loc>.getMinAddress(), <loc>comment</loc>);
+            <loc>instruction</loc> = getNextInstruction();
+        }
+    }
+}</codeblock>
+</section>
+
+<section>
+<h2>Headless Scripting</h2>
+</section>
+
+<section>
+<header>Headless Scripting</header>
+<br>
+<ul>
+  <li>Ghidra can be run from the command line without invoking the user interface</li>
+  <li>Can be run on one or more programs</li>
+  <li>Any script that does not invoke the GUI can be run in headless mode</li>
+  <li>See <file>analyzeHeadlessREADME.html</file></li>
+</ul>
+</section>
+
+<section>
+<h2>Plugins</h2>
+</section>
+
+<section>
+<header>Plugins</header>
+<br>
+<ul>
+  <li>Must extend <cls>Plugin</cls> class</li>
+  <li>Can provide and consume services</li>
+  <li>Can provide actions</li>
+  <ul>
+    <li>Extend <cls>DockingAction</cls></li>
+  </ul>
+  <li>Can provide GUIs</li>
+  <ul>
+    <li>Extend <cls>ComponentProvider</cls></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Plugins</header>
+<ul>
+  <li>Must provide a plugin description</li>
+  <ul>
+    <li>Use the <cls>@PluginInfo</cls> annotation</li>
+  </ul>
+  <li>In constructor</li>
+  <ul>
+    <li>Register provided service implementations</li>
+  </ul>
+  <li>In <tt>init()</tt></li>
+  <ul>
+    <li>Retrieve services consumed</li>
+    <li>Create actions</li>
+  </ul>
+  <li>In <tt>dispose()</tt></li>
+  <ul>
+    <li>Release resources</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header><cls>ProgramPlugin</cls></header>
+<br>
+<ul>
+  <li>Extends <cls>Plugin</cls> class </li>
+  <li>Adds helper methods for events</li>
+  <ul>
+    <li>Program activated/deactivated</li>
+    <li>Location changes</li>
+    <li>Selection changes</li>
+    <li>Highlight changes</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Lab 6</header>
+<br>
+<ul>
+  <li>Create a plugin: <im><cls>AdvancedGhidraClassPlugin</cls></im></li>
+  <li>Extend <cls>ProgramPlugin</cls></li>
+  <li>Apply the <cls>@PluginInfo</cls> annotation</li>
+  <li>Restart Ghidra</li>
+  <li>Verify plugin displays in the "Configure" dialog</li>
+</ul>
+</section>
+
+<section>
+<h2>Docking Windows</h2>
+</section>
+
+<section>
+<header>GUIs</header>
+<ul>
+  <li>Ghidra has custom docking window components</li>
+  <li>We recommend you use our components</li>
+  <ul>
+    <li><cls>GTable</cls>, <cls>GTree</cls>, <cls>GComboBox</cls></li>
+    <li>Provide:</li>
+    <ol class="decimal">
+      <li>Custom filtering</li>
+      <li>Event handling</li>
+      <li>Threaded models</li>
+      <li>Navigation</li>
+      <li>Look-and-feel</li>
+    </ol>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Docking Windows</header>
+<ul>
+  <li>Allow users to customize the layout of components within a tool</li>
+  <li>Title bar</li>
+  <li>Local toolbar</li>
+  <li>Menu icon</li>
+  <li>Close button</li>
+  <li>Arranging components</li>
+  <ul>
+    <li>Mouse cursor provides feedback</li>
+    <li>Components can be stacked, docked, or floating</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Actions</header>
+<br>
+<ul>
+  <li>Right mouse actions are context sensitive</li>
+  <ul>
+    <li>This is determined by the plugin author</li>
+  </ul>
+  <li>List of actions that appear will change based on where the cursor is located</li>
+  <li>User can assign/override key bindings</li>
+</ul>
+</section>
+
+<section>
+<header>Tables</header>
+<br>
+<ul>
+  <li>Use <cls>GTable</cls></li>
+  <li>Filters</li>
+  <li>Columns</li>
+  <li>Export to CSV</li>
+</ul>
+</section>
+
+<section>
+<header>Trees</header>
+<br>
+<ul>
+  <li>Use <cls>GTree</cls></li>
+  <li>Filters</li>
+  <li>Lazy loading to support large data</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 7</header>
+<br>
+<ul>
+  <li>Add a global action to the plugin</li>
+  <li>Make the action popup a dialog message</li>
+  <li>Use Ghidra’s dialog class <cls>OptionDialog</cls></li>
+</ul>  
+</section>
+
+<section>
+<h2>Component Provider</h2>
+</section>
+
+<section>
+<header><cls>ComponentProvider</cls></header>
+<br>
+<ul class="medium">
+  <li>Managed GUI component in the tool</li>
+  <li>Created and added to the tool by the plugin
+    <codeblock class="small"><fld>myComponent</fld> = <kw>new</kw> MyComponent(...);
+<fld>tool</fld>.addComponent(<kw>this</kw>, <fld>myComponent</fld>);</codeblock>
+  </li>
+  <li>Components can be <i>permanent</i> or <i>transient</i></li>
+  <ul>
+    <li><im>Permanent</im> - are always available in Window menu and closing just hides them (e.g., Listing)</li>
+    <li><im>Transient</im> - created on the fly and when closed are destroyed and removed from Window menu (e.g., Search Results) </li>
+  </ul>
+  <li>See <cls>ComponentProviderAdapter</cls> class</li>
+</ul>  
+</section>
+
+<section>
+<header>Lab 8</header>
+<br>
+<ul>
+  <li>Create a <cls>ComponentProvider</cls> that contains only a <cls>JLabel</cls></li>
+  <li>Update your previously-created plugin to add this component to the tool</li>
+  <li>Override the <tt>programActivated()</tt> method to update the label with the name of the active program</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 9</header>
+<br>
+<ul>
+  <li>Add a local action to the component provider</li>
+  <li>Make the action toogle the label's background color between red and blue</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 10 (Optional)</header>
+<br>
+<ul>
+  <li>Add a <cls>GTable</cls> to the component</li>
+  <li>Change the global action to search for instructions that move a scalar into a register</li>
+  <li>Populate the table with the search results (include an address column at minimum)</li>
+</ul>
+</section>
+
+<section>
+<h2>Handling Binary Formats</h2>
+</section>
+
+<section>
+<header>Binary Formats</header>
+<br>
+<ul>
+  <li>Included formats:</li>
+  <ul>
+    <li>ELF, PE, Mach-O, and more!</li>
+  </ul>
+  <li>What is needed for a new format?</li>
+  <ul>
+    <li>Data structure to parse the format</li>
+    <li>Analyzers to annotate the binary format</li>
+    <li>Loader for Ghidra's importer</li>
+    <li>Language, if not currently supported</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>A Toy Format</header>
+<br>
+The "Ghidra Format" (see <file>ghidra.h</file>):
+<codeblock class="verysmall"><kw>struct</kw> ghidra_header { 
+  <kw>char</kw> magic[<lit>6</lit>];            <com>// magic number identifier</com>
+  <kw>unsigned byte</kw> cputype;    <com>// cpu specifier</com>
+  <kw>unsigned short</kw> nsections; <com>// number of sections</com>
+  <kw>unsigned short</kw> nsymbols;  <com>// number of symbols</com>
+  <kw>unsigned int</kw> flags;       <com>// flags</com>
+};
+
+<kw>struct</kw> ghidra_section { <com>// for 32-bit architectures</com>
+  <kw>char</kw> name[<lit>16</lit>];            <com>// name of this section</com>
+  <kw>unsigned int</kw> addr;        <com>// memory address of this section</com>
+  <kw>unsigned int</kw> size;        <com>// size in bytes of this section</com>
+  <kw>unsigned int</kw> offset;      <com>// file offset of this section</com>
+  <kw>unsigned int</kw> flags;       <com>// flags (section type and attributes</com>
+};
+
+<kw>struct</kw> ghidra_symbol {  <com>// for 32-bit architectures</com> 
+  <kw>char</kw> name[<lit>25</lit>];            <com>// name of this symbol</com>
+  <kw>unsigned int</kw> addr;        <com>// memory address of this symbol</com>
+  <kw>unsigned short</kw> type;      <com>// type of this symbol</com>
+};</codeblock>
+</section>
+
+<section>
+<header>Lab 11</header>
+<ul class="medium">
+  <br>
+  <li>Create classes to parse Ghidra format binaries</li>
+  <li>Each class must have a constructor that takes a <cls>BinaryReader</cls> parameter</li>
+  <li>Each class must implement <cls class="if">StructConverter</cls></li>
+  <li>In this lab, you will need to create:</li>
+  <ol class="decimal small">
+    <li>class <im><cls>GhidraFormatHeader</cls></im></li>
+    <li>class <im><cls>GhidraFormatSection</cls></im></li>
+    <li>class <im><cls>GhidraFormatSymbol</cls></im></li>
+    <li>class <im><cls>GhidraFormatConstants</cls></im></li>
+    </span>
+  </ol>
+  <li>See <file>ghidra.h</file> for detailed definitions</li>
+  <li>For examples, see <cls>Img3</cls>* classes</li>
+</ul>
+</section>
+
+<section>
+<h2>Analyzers for Raw Binary Files</h2>
+</section>
+
+<section>
+<header>Analyzers</header>
+<br>
+<ul>
+  <li>Must implement the <cls class="if">Analyzer</cls> interface</li>
+</ul>
+<codeblock class="small"><com>// Display name, input type, priority</com>
+String getName();
+AnalyzerType getAnalysisType();
+AnalysisPriority getPriority();
+
+<com>// Called for changes to analyzer inputs</com>
+<kw>boolean</kw> added(...);
+<kw>boolean</kw> removed(...);
+
+<com>// Register and react to user options</com>
+<kw>void</kw> registerOptions(...);
+<kw>void</kw> optionsChanged(...);</codeblock>
+</section>
+
+<section>
+<header>Lab 12</header>
+<br>
+<ul>
+  <li>Create an analyzer to annotate a raw Ghidra format binary</li>
+  <ul>
+    <li>Place header data structures in listing</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<h2>Loaders</h2>
+</section>
+
+<section>
+<header>Loaders</header>
+<ul>
+  <li>Must implement <cls class="if">Loader</cls> interface</li>
+  <ul>
+    <li>Consider <cls>AbstractProgramLoader</cls></li>
+  </ul>
+</ul>
+<codeblock class="small"><kw>package</kw> ghidra.app.util.opinion; <com>// By convention</com>
+
+<kw>public</kw> <kw>class</kw> MyLoader <kw>implements</kw> <if>Loader</if> {
+  <if>Collection</if>&lt;LoadSpec&gt; findSupportedLoadSpecs(...);
+  <if>List</if>&lt;<if>DomainObject</if>&gt; load(...);
+  ...
+}</codeblock>
+<ul>
+  <li>Must update the <file>.opinion</file> file for each processor supported by the format</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 13</header>
+<br>
+<ul>
+  <li>Create a loader for Ghidra format binaries</li>
+  <li>Be sure to update the <file>.opinion</file> files:</li>
+  <ul>
+    <li><im><file>x86.opinion</file></im></li>
+    <li><im><file>PowerPC.opinion</file></im></li>
+    <li><im><file>ARM.opinion</file></im></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Lab 14</header>
+<br>
+<ul>
+  <li>Write an analyzer that searches for instructions that move a scalar into a register</li>
+  <li>Pull the scalar from the instruction and create an EOL comment in the form:</li>
+  <ul class="bare">
+    <li><im>setting [register] = [value]</im></li>
+  </ul>
+  <li><i>Note: you already did this in a script! </i></li>
+</ul>
+</section>
+
+<section>
+<h2>File System Loaders</h2>
+</section>
+
+<section>
+<header>File System Viewer</header>
+<br>
+<ul>
+  <li>Provides an alternative importer</li>
+  <li>Allows importing many programs from a single archive or image</li>
+  <li>Extensible using <cls class="if">GFileSystem</cls> interface</li>
+  <ul>
+    <li>Consider <cls>GFileSystemBase</cls> class</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>File System Viewer</header>
+<br>
+<ul>
+  <li>Drills down into file systems, including nested file systems</li>
+  <li>Extract files</li>
+  <li>Import binaries</li>
+  <li>Perform static analysis</li>
+  <li>View as text</li>
+  <li>View as image (i.e., picture)</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 15</header>
+<br>
+<ul>
+  <li>Create a <cls class="if">GFileSystem</cls> for OSX Universal Binary (UBI), also known as Fat Binary</li>
+  <ul>
+    <li>See <cls>FatHeader</cls></li>
+  </ul>
+  <li>Ghidra already contains code to parse this format </li>
+  <li>Use these parser classes to implement a <cls class="if">GFileSystem</cls> to open universal binary files</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 16</header>
+<br>
+<ul>
+  <li>Put several universal binaries into a <file>.zip</file> file</li>
+  <li>Verify the File System Browser plugin can handle nested universal binaries</li>
+</ul>
+</section>
+
+<section>
+<h2>Sleigh</h2>
+</section>
+
+<section>
+<header>Sleigh</header>
+<ul>
+  <li>Used to disassemble binary into assembly</li>
+  <li>Used to decompile assembly into C</li>
+  <li>Decompiler optimizes</li>
+  <li>Can be applied to any binary, assuming:</li>
+  <ul>
+    <li>Sleigh language with pCode exists</li>
+    <li>See <folder><vardir>GhidraInstall</vardir>/Ghidra/Processors</folder></li>
+  </ul>
+  <li>Performs data type propagation</li>
+  <li>Commit parameter / return types</li>
+  <li>Decompiler Parameter ID analyzer</li>
+</ul>
+</section>
+
+<section>
+<header>Lab 17</header>
+<br>
+<ul>
+  <li>Change <tt>R2</tt> in the 8051 language to <tt>R2D2</tt></li>
+  <ul class="bare">
+    <li><file class="icon"><vardir>GhidraInstall</vardir>/Ghidra/Processors/8051/data/languages/8051_main.sinc</file></li>
+  </ul>
+  <li>Restart Ghidra</li>
+  <li>Import any program as a raw binary and select 8051 as the language</li>
+  <li>Verify the register is changed</li>
+</ul>
+</section>
+
+<section>
+<h2>Making a Build of Your Extension</h2>
+</section>
+
+<section>
+<header>Making a Build</header>
+<br>
+<ul>
+  <li>From Eclipse:</li>
+  <ul class="medium">
+    <li>Select <menus><m>GhidraDev</m><m>Export</m><m>Ghidra Module Extension</m> in the menu bar</li>
+    <li>Select your module from the "Ghidra module project" drop-down</li>
+    <li>Click the "Finish" button</li>
+  </ul>
+</section>
+
+<section>
+<header>Making a Build (alt)</header>
+<ul class="medium">
+  <li>You must have a compatible version of Gradle installed</li>
+  <li>From the command line (bash):
+</ul>
+<commandblock class="small">cd <var>/path/to/extension</var>
+export GHIDRA_INSTALL_DIR=<var>/path/to/ghidra</var> 
+gradle <var>extension</var>DistZip <com>#Substitute extension name</com></commandblock>
+<ul class="medium">
+  <li>Output goes into <folder>build/distributions/</folder></li>
+  <li>Gradle supports incremental builds: It only rebuilds what has changed since last build</li>
+  <li>Use the <tt>clean</tt> task first if you want to rebuild everything</li>
+</section>
+
+<section>
+<header>Lab 18</header>
+<br>
+<ul>
+  <li>Build your extension!</li>
+</ul>
+</section>
+
+<!-- COPY THE TEXT BELOW TO START A NEW SLIDE
+<section>
+<header>Insert Title of Slide Here</header>
+<ul class="small" comment="NOTE: remove the class attribute for regular size, adjust the name if you want big, small, or tiny">
+  <li>Bullet text here</li>
+  <ul>
+    <li>Nested bullet here</li>
+  </ul>
+</ul>
+<div role="note">
+<p>Insert notes here</p>
+<p>And here, too</p>
+</div>
+</section>
+END COPY -->
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<!--link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'-->
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section { background-color: black; border-radius: 12px; color: white; }
+  /* A section is a slide. It's size is 800x600, and this will never change */
+  section, .view head > title {
+      font-family: arial, serif;
+      font-size: 35px;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: black;
+  }
+
+  .view head > title {
+    color: black;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1, h2 {
+    margin-top: 200px;
+    text-align: center;
+    font-size: 80px;
+    font-family: 'Times New Roman'
+  }
+    
+  h3 {
+    margin: 100px 0 50px 100px;
+  }
+
+/* My custom list sizes */
+
+  .big ul {
+    font-size: 45px;
+  }
+
+  .big ol {
+    font-size: 45px;
+  }
+
+  .big li {
+    font-size: 45px;
+  }
+
+  .medium ul {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium ol {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .small ul {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small ol {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .tiny ul {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny ol {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+/* end custom list sizes */
+
+/* Standard list size */    
+  ul {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  } 
+
+  ol {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  } 
+
+  ol.decimal {
+    list-style-position: inside;
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 10px 10px;
+    font-size: 35px;
+  }
+   
+  ul > li:before {
+    content:"\25a0\a0";
+    color: red;
+  }
+
+
+/* end custom list sizes */
+    
+  p {
+    margin: 75px;
+    font-size: 100px;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 60px;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 50px;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 40px;
+    text-align: right;
+    background-color: black;
+    border-top: 1px solid #CCC;
+  }
+
+  header {
+    font-family: 'Times New Roman';
+    position: relative;
+    top: 0px;
+    width: 100%;
+    padding: 0px;
+    text-align: center;
+    background-image: url(Images/GhidraLogo64.png), url(Images/GhidraLogo64.png);
+    background-repeat: no-repeat, no-repeat;
+    background-position: left top, right top;
+    background-size: contain, contain;
+    border-bottom: 1px solid red;
+    font-size: 50px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    -moz-transition: left 400ms linear 0s;
+    -webkit-transition: left 400ms linear 0s;
+    -ms-transition: left 400ms linear 0s;
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+
+  /* Incremental elements */
+
+  /* By default, visible */
+  .incremental > * { opacity: 1; }
+
+  /* The current item */
+  .incremental > *[aria-selected] { opacity: 1; }
+
+  /* The items to-be-selected */
+  .incremental > *[aria-selected] ~ * { opacity: 0; }
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 2px;
+    background: #AAA;
+  }
+  
+  /* Custom styles */
+  cls, tt, file, folder {
+    font-family: monospace;
+  }
+  cls.if {
+    font-style: italic;
+  }
+  file.icon::before {
+    content: '\1f4c4\a0';
+  }
+  folder.icon::before {
+    content: '\1f4c1\a0';
+  }
+  folder vardir, file vardir {
+    font-style: italic;
+  }
+  folder vardir:before, file vardir:before {
+    content: '<';
+  }
+  folder vardir:after, file vardir:after {
+    content: '>';
+  }
+  keys k {
+    background-color: #444;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: smaller;
+    padding: .2ex;
+  }
+  menus m::before {
+    content: '\2192';
+  }
+  menus m:first-child::before {
+    content: '';
+  }
+  menus m {
+    white-space: nowrap;
+  }
+  ul.bare > li:before {
+    content:"";
+  }
+  commandblock, codeblock {
+    vertical-align: middle;
+    margin: 2em;
+    display: block;
+    padding: 1em;
+    white-space: pre;
+    font-family: monospace;
+    color: white;
+    border-radius: 0.5em;
+    text-indent: 0;
+  }
+  commandblock {
+    background: #222;
+    color: white;
+  }
+  commandblock var {
+    font-style: italic;
+    color: #f5f580;
+  }
+  commandblock com {
+    font-style: italic;
+    color: #80ffff;
+  }
+  codeblock {
+    background: #aaa;
+    color: black;
+    border: 2px solid white;
+    box-shadow: 2px 4px 8px 8px #888 inset;
+  }
+ .smaller {
+    font-size: 70%;
+  }
+  .small {
+    font-size: 60%;
+  }
+  .reallysmall {
+    font-size: 50%;
+  }
+  .verysmall {
+    font-size: 40%;
+  }
+  .supersmall {
+    font-size: 24%;
+  }
+  codeblock kw {
+    color: #603;
+  }
+  codeblock if {
+    font-style: italic;
+  }
+  codeblock com {
+    color: #062;
+  }
+  codeblock fld {
+    color: #008;
+  }
+  codeblock loc {
+    color: #430;
+  }
+  codeblock lit {
+    color: #00a;
+  }
+  codeblock strlit {
+    color: #00c;
+  }
+  codeblock stat {
+    font-style: italic;
+  }
+  codeblock annot {
+    color: #444;
+  }
+  codeblock com annot {
+    color: #662;
+  }
+  im {
+    color: #f5f5dc;
+    font-weight: bold;
+  }
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  body {
+    width: 800px; height: 600px;
+    margin-left: -400px; margin-top: -300px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+    -moz-transform: none !important;
+    -webkit-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+    -moz-transform: scale(.4);
+    -webkit-transform: scale(.4);
+    -o-transform: scale(.4);
+    -ms-transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .incremental {visibility: hidden; }
+  .incremental[active] {visibility: visible; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    -moz-transition: width 400ms linear 0s;
+    -webkit-transition: width 400ms linear 0s;
+    -ms-transition: width 400ms linear 0s;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79) { // o
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+    db.style.MozTransform = transform;
+    db.style.WebkitTransform = transform;
+    db.style.OTransform = transform;
+    db.style.msTransform = transform;
+    db.style.transform = transform;
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1 && this.step == 0) {
+      return;
+    }
+    if (this.step == 0) {
+      this.setCursor(this.idx - 1,
+                     this.slides[this.idx - 2].$$('.incremental > *').length);
+    } else {
+      this.setCursor(this.idx, this.step - 1);
+    }
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+        return;
+    }
+    if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+      this.setCursor(this.idx + 1, 0);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      }
+      var video = next.$("video");
+      if (video && !!+this.params.autoplay) {
+        video.play();
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+    if (old) {
+      old.removeAttribute('aria-selected');
+    }
+    var incrementals = $$('.incremental');
+    if (this.step <= 0) {
+      $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+      });
+      return;
+    }
+    var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+    if (next) {
+      next.setAttribute('aria-selected', true);
+      next.parentNode.setAttribute('active', true);
+      var found = false;
+      $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+          if (found)
+            aNode.removeAttribute('active');
+          else
+            aNode.setAttribute('active', true);
+        else
+          found = true;
+      });
+    } else {
+      setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+  
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.incremental > *').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+  
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+  
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+</script>
+
+
+<script> // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function 
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

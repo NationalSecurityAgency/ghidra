@@ -1,0 +1,1967 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article>
+<info>
+  <title>Compiler Specification</title>
+</info>
+<sect1>
+<title>Overview</title>
+<para>
+The <emphasis>compiler specification</emphasis> is a required part of
+a Ghidra language module for supporting disassembly and analysis of a
+particular processor.  Its purpose is to encode information about a
+target binary which is specific to the compiler that generated that
+binary. Within Ghidra, the SLEIGH specification allows the decoding of
+machine instructions for a particular processor, like Intel x86, but
+more than one compiler can produce those instructions.  For a
+particular target binary, understanding details about the specific
+compiler used to build it is important to the reverse engineering
+process. The compiler specification fills this need, allowing concepts like parameter
+passing conventions and stack mechanisms to be formally described.
+</para>
+<para>
+A compiler specification is a single file contained in a
+module's <computeroutput>data/languages</computeroutput> directory
+with a ".cspec" suffix. There may be more than one ".cspec" file in
+the directory, if Ghidra supports multiple compilers for the same processor.  The
+compiler specification is identified by the 5th field of
+Ghidra's <emphasis>processor id</emphasis>.  The id is explicitly
+linked with the ".cspec" by adding a tag in the root ".ldefs" file for
+the processor, also in the same directory.
+<example>
+Defining the processor id <code>x86:LE:32:default:gcc</code>
+and associating it with the file <code>x86gcc.cspec</code>
+<programlisting>
+&lt;language_definitions&gt;
+  ...
+  &lt;language processor="x86"
+            endian="little"
+            size="32"
+            variant="default"
+            version="2.3"
+            slafile="x86.sla"
+            processorspec="x86.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:32:default"&gt;
+    &lt;description&gt;Intel/AMD 32-bit x86&lt;/description&gt;
+    &lt;compiler name="Visual Studio" spec="x86win.cspec" id="windows"/&gt;
+   <emphasis role="bold">&lt;compiler name="gcc" spec="x86gcc.cspec" id="gcc"/&gt;</emphasis>
+    &lt;compiler name="Borland" spec="x86borland.cspec" id="borland"/&gt;
+  &lt;/language&gt;
+  ...
+&lt;/language_definitions&gt;
+</programlisting>
+</example>
+</para>
+<para>
+A compiler specification is just an XML file, so it needs to start
+with the usual XML directive and it always
+has <code>&lt;compiler_spec&gt;</code> as the root XML tag.  All
+specific compiler features are described using subtags to this tag. In
+principle, all the subtags are optional except
+the <code>&lt;default_prototype&gt;</code> tag, but there is generally a
+minimum set of tags that are needed to create a useful specification
+(See ???).  In general, the subtags can appear in any order.  The only
+exceptions are that tags which define names,
+like <code>&lt;prototype&gt;</code>, must appear before other tags
+which use that name.
+</para>
+<para>
+The rest of this document is broken up into sections that roughly correspond with aspects of
+compiler design, and then subsections within these address particular tags.
+</para>
+<sect2 id="varnode_tag">
+<title>Varnode Tags</title>
+<para>Many parts of the compiler specification use tags that describe a single varnode. Since architectures
+frequently name many of their registers or special memory locations, it is convenient for the specification
+designer to be able to use these names. But in some cases there is no name and the designer must fall
+back on the defining triple for a varnode: an <emphasis>address space</emphasis>, an
+<emphasis>offset</emphasis> and a <emphasis>size</emphasis>. Hence there are really two different
+XML tags that are used to describe varnodes and both are referred to as a
+<emphasis role="bold">varnode tag</emphasis>.
+</para>
+<para>
+The <code>&lt;register&gt;</code> tag is used to specify formally named registers, usually defined by
+the SLEIGH specification for the processor. The name must be given in a <emphasis>name</emphasis> attribute
+for the tag.
+</para>
+<para>
+The <code>&lt;varnode&gt;</code> tag is used to generically describe any varnode. It must take
+three attributes:
+<emphasis>space</emphasis> is a formal name of the address space containing the varnode,
+<emphasis>offset</emphasis> is an unsigned integer specifying the byte offset of the varnode
+within the space, and <emphasis>size</emphasis> is an integer specifying the size of the varnode in bytes.
+The <code>&lt;varnode&gt;</code> tag can be used to describe any varnode, including named registers, global
+RAM locations, and stack locations. For stack locations, the offset is interpreted relative to the
+function that is being decompiled or is otherwise in scope.  An offset of 0, for instance typically refers
+to the memory location on the stack being pointed to by the formal stack pointer register, upon entry
+to the function being analyzed.
+</para>
+<example>
+<programlisting>
+  &lt;register name="EAX"/&gt;
+  &lt;register name="r1"/&gt;
+  &lt;varnode space="ram" offset="0x1020" size="4"/&gt;
+  &lt;varnode space="stack" offset="8" size="8"/&gt;
+  &lt;varnode space="stack" offset="0xfffffff8" size="2"/&gt;
+  &lt;varnode space="register" offset="0" size="1"/&gt;
+</programlisting>
+</example>
+</sect2>
+</sect1>
+<sect1 id="cspec_pcodeinterp">
+<title>Compiler Specific P-code Interpretation</title>
+<sect2>
+<title>&lt;context_data&gt;</title>
+<para>
+<table xml:id="context_data.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;context_set&gt;</code></td>
+  <td/>
+  <td>(0 or more) Set a context variable across a region of memory</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;tracked_set&gt;</code></td>
+  <td/>
+  <td>(0 or more) Set default value of register</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+A <code>&lt;context_data&gt;</code> tag consists of zero or more <code>&lt;context_set&gt;</code>
+and <code>&lt;tracked_set&gt;</code> subtags, which allow certain values to be assumed by analysis.
+</para>
+<sect3>
+<title>&lt;context_set&gt;</title>
+<para>
+<table xml:id="context_set.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>space</code></td>
+  <td></td>
+  <td>Name of address space</td>
+</tr>
+<tr>
+  <td align='right'><code>first</code></td>
+  <td></td>
+  <td>(Optional) Starting offset of range</td>
+</tr>
+<tr>
+  <td align='right'><code>last</code></td>
+  <td></td>
+  <td>(Optional) Ending offset of range</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;set&gt;</code></td>
+  <td/>
+  <td>Specify the context variable and the new value</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of the context variable</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>val</code></td>
+  <td>Integer value being set</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>description</code></td>
+  <td>(Optional) Description of what is set</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+A <code>&lt;context_set&gt;</code> tag sets a SLEIGH context variable over a specified address range.
+This potentially affects how instructions are disassembled within that range.  This is more
+commonly used in the <emphasis>processor specification</emphasis> file but can also be used
+here for specific compilers.
+The attributes <code>space</code>, <code>first</code>, and <code>last</code> describe the range.
+Omitting <code>first</code> and/or <code>last</code> causes the range to start at the beginning
+and/or run to the end of the address space respectively.
+The <code>&lt;set&gt;</code> subtag describes the variable and its setting.
+</para>
+<example>
+<programlisting>
+  &lt;context_data&gt;
+    &lt;context_set space="ram"&gt;
+      &lt;set name="mode16" val="1" description="Set 16-bit mode across all of ram"/&gt;
+    &lt;/context_set&gt;
+  &lt;/contextdata&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;tracked_set&gt;</title>
+<para>
+<table xml:id="tracked_set.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>space</code></td>
+  <td></td>
+  <td>Name of address space</td>
+</tr>
+<tr>
+  <td align='right'><code>first</code></td>
+  <td></td>
+  <td>(Optional) Starting offset of range</td>
+</tr>
+<tr>
+  <td align='right'><code>last</code></td>
+  <td></td>
+  <td>(Optional) Ending offset of range</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;set&gt;</code></td>
+  <td/>
+  <td>Specify the register and the new value</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of the register</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>val</code></td>
+  <td>Integer value being set</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>description</code></td>
+  <td>(Optional) Description of what is set</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+A <code>&lt;tracked_set&gt;</code> tag informs the decompiler that a register takes a specific value
+for any function whose entry point is in the indicated range.  Compilers sometimes know or assume that
+registers have specific values coming into a function it produces.  This tag allows the decompiler to
+make the same assumption and possibly use constant propagation to make further simplifications.
+</para>
+<example>
+<programlisting>
+  &lt;context_data&gt;
+    &lt;tracked_set space="ram"&gt;
+      &lt;set name="spsr" val="0"/&gt;
+    &lt;/tracked_set&gt;
+  &lt;/context_data&gt;
+</programlisting>
+</example>
+</sect3>
+</sect2>
+<sect2>
+<title>&lt;callfixup&gt;</title>
+<para>
+<table xml:id="callfixup.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>name</code></td>
+  <td></td>
+  <td>The identifier for this callfixup</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;target&gt;</code></td>
+  <td/>
+  <td>(0 or more) Map this callfixup to a specific symbol</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>name</code></td>
+  <td>The specific symbol name</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;pcode&gt;</code></td>
+  <td/>
+  <td>Description of p-code to inject.</td>
+</tr>
+</tbody>
+</table>
+</para>
+<sect3>
+<title>&lt;pcode&gt;</title>
+<para>
+<table xml:id="pcode.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>paramshift</code></td>
+  <td></td>
+  <td>(Optional) Integer for shifting parameters at the callpoint.</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;body&gt;</code></td>
+  <td/>
+  <td>P-code to inject.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code><emphasis>text</emphasis></code></td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+</para>
+</sect3>
+<para>
+Compilers frequently make use of special bookkeeping functions that are really internal to the
+compiler and not a direct reflection of functions in the original source code.  During analysis
+it can be helpful to replace a call to such a function with a snippet of p-code
+that inlines the behavior, or a portion of the behavior, so that the decompiler can use it
+during its simplification rather than displaying it as an opaque call.
+A typical use is to inline <emphasis>prologue</emphasis> functions that help set up a stack frame.
+</para>
+<para>
+The <code>name</code> attribute can be used to identify the callfixup
+within the Ghidra CodeBrowser and manually force certain functions to
+be replaced.  The <code>name</code> attribute of
+the <code>&lt;callfixup&gt;</code> tag and any
+optional <code>&lt;target&gt;</code> subtags identify function names
+which will <emphasis>automatically</emphasis> be replaced.
+</para>
+<para>
+The text of the <code>&lt;body&gt;</code> subtag is fed directly to
+the SLEIGH semantic expression parser to create the p-code snippet.
+Identifiers are interpreted as formal registers, if the register exists,
+but are otherwise interpreted as temporary registers in the <emphasis>unique</emphasis> space
+of the processor.  Its usually best to surround text with the XML &lt;![CDATA[ construct.
+</para>
+<example>
+<programlisting>
+  &lt;callfixup name="get_pc_thunk_bx"&gt;
+    &lt;target name="__i686.get_pc_thunk.bx"/&gt;
+    &lt;pcode&gt;
+      &lt;body&gt;&lt;![CDATA[
+      EBX = * ESP;
+      ESP = ESP + 4;
+      ]]&gt;&lt;/body&gt;
+    &lt;/pcode&gt;
+  &lt;/callfixup&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;callotherfixup&gt;</title>
+<para>
+<table xml:id="callotherfixup.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>targetop</code></td>
+  <td></td>
+  <td>Name of the <emphasis>CALLOTHER</emphasis> operator to inject.</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;pcode&gt;</code></td>
+  <td/>
+  <td>Description of p-code to inject.</td>
+</tr>
+</tbody>
+</table>
+</para>
+<sect3>
+<title>&lt;pcode&gt;</title>
+<para>
+<table xml:id="pcodeother.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;input&gt;</code></td>
+  <td/>
+  <td>(0 or more) Description of formal input parameter.</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of the specific input symbol.</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>size</code></td>
+  <td>Expected size of the parameter in bytes.</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;output&gt;</code></td>
+  <td/>
+  <td>(0 or more) Description of formal output parameter.</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of the specific output symbol.</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>size</code></td>
+  <td>Expected size of output in bytes.</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;body&gt;</code></td>
+  <td/>
+  <td>P-code to inject.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code><emphasis>text</emphasis></code></td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+</para>
+</sect3>
+<para>
+The <code>&lt;callotherfixup&gt;</code> is similar to a <code>&lt;callfixup&gt;</code> tag but is used to describe
+injections that replace user-defined p-code operations, rather than <code>CALL</code> operations.  User-defined
+p-code operations, referred to generically as <code>CALLOTHER</code> operations, are <emphasis>black-box</emphasis>
+operations that a SLEIGH specification can define to encapsulate complicated (or esoteric) actions performed
+by the processor. The specification must define a unique name for each such operation. The <code>targetop</code>
+attribute links the p-code described here to the specific operation via this name.
+</para>
+<para>
+As with any p-code operation,
+the <code>CALLOTHER</code> takes formal varnodes as inputs and/or outputs.  These varnodes can be referred to
+in the injection <code>&lt;body&gt;</code> by predefining them using <code>&lt;input&gt;</code> or
+<code>&lt;output&gt;</code> tags.  The sequence of <code>&lt;input&gt;</code> tags correspond in order to the
+input parameters of the <code>CALLOTHER</code>, and a <code>&lt;output&gt;</code> tag corresponds to output varnode
+if present.  The tags listed here <emphasis role="bold">must</emphasis> match the number of input and output
+parameters in the actual p-code operation, or an exception will be thrown during p-code generation. The optional
+<code>size</code> attribute in each tag will, if present, impose a size restriction on the parameter as well.
+</para>
+<para>
+As with a <code>&lt;callfixup&gt;</code>, the <code>&lt;body&gt;</code> tag is fed straight to the SLEIGH semantic
+parser.  It can refer to registers via their symbolic name defined in SLEIGH, it can refer to the operator parameters
+via their <code>&lt;input&gt;</code> or <code>&lt;output&gt;</code> names, and it can also refer to
+<code>inst_start</code> and <code>inst_next</code> as addresses describing the instruction containing the
+<code>CALLOTHER</code>.
+</para>
+<example>
+<programlisting>
+  &lt;callotherfixup targetop="saturate"&gt;
+    &lt;pcode&gt;
+      &lt;input name="in1" size="4"/&gt;
+      &lt;input name="in2" size="4"/&gt;
+      &lt;body&gt;&lt;![CDATA[
+        in1 = in1 + in2;
+        if (in1 &lt; 0x10000) goto &lt;end&gt;;
+        in1 = 0xffff;
+        &lt;end&gt;
+      ]]&gt;&lt;/body&gt;
+    &lt;/pcode&gt;
+  &lt;/callotherfixup&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;prefersplit&gt;</title>
+<para>
+<table xml:id="prefersplit.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>style</td>
+  <td></td>
+  <td>Strategy for splitting: <emphasis>inhalf</emphasis></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>(1 or more) <emphasis>varnode</emphasis> tags</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag is designed to mark specific registers as <emphasis>packed</emphasis>,
+containing multiple logical values that need to be split. The decompiler attempts
+to split up any operator that reads or writes the register into multiple
+p-code operations that operate on each logical value individually.
+</para>
+<para>
+The tag lists one or more <emphasis role="bold">varnode tags</emphasis> describing the
+registers or other storage locations that need to be split. The <emphasis>style</emphasis>
+attribute indicates how the storage locations should be split. Currently the only accepted
+style value is "inhalf", which means that each varnode should be split into two equal pieces.
+</para>
+<para>
+Splitting a varnode is only possible if the all p-code operations it is involved in don't
+mix their action across the logical pieces. If this is not possible, the p-code will
+not be altered for that particular varnode.
+</para>
+<example>
+<programlisting>
+  &lt;prefersplit style="inhalf"&gt;
+    &lt;register name="xr0"/&gt;
+    &lt;register name="xr1"/&gt;
+    &lt;register name="xr2"/&gt;
+  &lt;prefersplit&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;aggressivetrim&gt;</title>
+<para>
+<table xml:id="aggressive.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>signext</td>
+  <td></td>
+  <td>(Optional) <emphasis>true</emphasis> if sign-extension should be aggressively trimmed</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag tells the decompiler that p-code extension operations are likely to be a side-effect
+of the processor and are obscuring what is just the manipulation of the smaller logical value.
+The decompiler normally trims extensions and other operations where it can prove that the
+most significant bytes of the result are unused. This tag lets the decompiler be more
+aggressive when use of the extended bytes is more indeterminate. It can assume that extensions into
+sub-function parameters and into the return value are extraneous.
+</para>
+<para>
+The <emphasis>signext</emphasis> attribute turns the behavior on specifically for the sign-extension
+operation. Currently there is no toggle for  zero-extensions.   
+</para>
+<example>
+<programlisting>
+  &lt;aggressivetrim signext="true"/&gt;
+</programlisting>
+</example>
+</sect2>
+</sect1>
+<sect1 id="cspec_dataorg">
+<title>Compiler Datatype Organization</title>
+<sect2>
+<title>&lt;data_organization&gt;</title>
+<para>
+<table xml:id="data_org.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;absolute_max_alignment&gt;</code></td>
+  <td/>
+  <td>(Optional) Maximum alignment possible across all datatypes (0 indicates no maximum)</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;machine_alignment&gt;</code></td>
+  <td/>
+  <td>(Optional) Maximum useful alignment for the underlying architecture</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;default_alignment&gt;</code></td>
+  <td/>
+  <td>(Optional) Default alignment for any datatype that isn't structure, union, array, or pointer and whose
+      size isn't in the size/alignment map</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;default_pointer_alignment&gt;</code></td>
+  <td/>
+  <td>(Optional) Default alignment for a pointer that doesn't have a size</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;pointer_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of a pointer</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;pointer_shift&gt;</code></td>
+  <td/>
+  <td>(Optional) Left-shift amount, in bits, for shifted pointer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;wchar_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "wchar", the wide character datatype</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;short_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "short" and other short integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;integer_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "int" and other integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;long_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "long" and other long integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;long_long_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "longlong" integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;float_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "float" and other floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;double_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "double" and other double precision floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;long_double_size&gt;</code></td>
+  <td/>
+  <td>(Optional) Size of "longdouble" floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;size_alignment_map&gt;</code></td>
+  <td/>
+  <td>(Optional) Size to alignment map</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;data_organization&gt;</code> tag provides information
+about the sizes of core datatypes and how the compiler typically
+aligns datatypes.  These are required so analysis can determine the
+proper in-memory layout of datatypes, such as those described by C/C++
+style header files. Both sizes and alignments are specified
+in bytes by using the integer <code>value</code> attribute in the
+corresponding tag.  An alignment value indicates that the compiler
+chooses a byte address that is a multiple of that value as the start
+of that datatype.  A value of 1 indicates <emphasis>no
+alignment</emphasis>.  Most atomic datatypes get their alignment
+information from the
+<code>&lt;size_alignment_map&gt;</code>.  If the size of a particular datatype
+isn't listed in the map, the <code>&lt;default_alignment&gt;</code> value
+will be used. 
+</para>
+<sect3>
+<title>&lt;size_alignment_map&gt;</title>
+<para>
+<table xml:id="size_align.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;entry&gt;</code></td>
+  <td/>
+  <td>(0 or more) Alignment information for a particular size</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>size</code></td>
+  <td>Size of datatype in bytes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code>alignment</code></td>
+  <td>The alignment value</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+Each <code>&lt;entry&gt;</code> maps a specific size to a specific alignment.  Ghidra satisfies requests
+for the alignment of all atomic datatypes (except pointers) by consulting this map.  If it doesn't
+contain the particular size, Ghidra reverts to the <code>&lt;default_alignment&gt;</code> subtag
+in the parent <code>&lt;data_organization&gt;</code> tag.  Its typical to only provide alignments
+for sizes which are a power of 2.
+</para>
+</sect3>
+<example>
+<programlisting>
+  &lt;data_organization&gt;
+     &lt;absolute_max_alignment value="0" /&gt;
+     &lt;machine_alignment value="2" /&gt;
+     &lt;default_alignment value="1" /&gt;
+     &lt;default_pointer_alignment value="4" /&gt;
+     &lt;pointer_size value="4" /&gt;
+     &lt;wchar_size value="4" /&gt;
+     &lt;short_size value="2" /&gt;
+     &lt;integer_size value="4" /&gt;
+     &lt;long_size value="4" /&gt;
+     &lt;long_long_size value="8" /&gt;
+     &lt;float_size value="4" /&gt;
+     &lt;double_size value="8" /&gt;
+     &lt;long_double_size value="12" /&gt;
+     &lt;size_alignment_map&gt;
+          &lt;entry size="1" alignment="1" /&gt;
+          &lt;entry size="2" alignment="2" /&gt;
+          &lt;entry size="4" alignment="4" /&gt;
+          &lt;entry size="8" alignment="4" /&gt;
+     &lt;/size_alignment_map&gt;
+  &lt;/data_organization&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;enum&gt;</title>
+<para>
+<table xml:id="enum.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>size</code></td>
+  <td/>
+  <td>Default size of an enumerated datatype</td>
+</tr>
+<tr>
+  <td align='right'><code>signed</code></td>
+  <td/>
+  <td>(Optional) <emphasis>true</emphasis> or <emphasis>false</emphasis> : Is an enumeration viewed as a signed integer</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This is a <emphasis role="bold">deprecated</emphasis> tag.
+</para>
+</sect2>
+<sect2>
+<title>&lt;funcptr&gt;</title>
+<para>
+<table xml:id="funcptr.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>align</code></td>
+  <td/>
+  <td>Number of alignment bytes for functions</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+Some compilers rely on the alignment of code addresses to provide extra bits of space
+in function pointers where extra internal information can be stored.  On ARM chips in particular,
+the processor itself supports an ARM/THUMB transition bit in code addresses, which are always at
+least 2 byte aligned.  This tag informs the decompiler of this region of encoding in function pointers
+so that it can filter it out, allowing it to find the correct address in various situations. The
+<code>align</code> attribute should always be a power of 2 corresponding to the number of bits
+a compiler might use for additional storage.  
+</para>
+<example>
+<programlisting>
+  &lt;funcptr align="2"/&gt;
+</programlisting>
+</example>
+</sect2>
+</sect1>
+<sect1 id="cspec_scopememory">
+<title>Compiler Scoping and Memory Access</title>
+<sect2>
+<title>&lt;global&gt;</title>
+<para>
+<table xml:id="global.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;register&gt;</code></td>
+  <td/>
+  <td>(0 or more) Specific register to be marked as global</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;range&gt;</code></td>
+  <td/>
+  <td>(0 or more) Range of addresses to be marked as global</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>space</code></td>
+  <td>Address space of the global region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;global&gt;</code> tag marks specific memory regions as
+storage locations for the compiler's global variables.  The
+word <emphasis>global</emphasis> here refers to the standard scoping
+concept for variables in high-level source code, meaning that the
+variable or memory location is being used as permanent interfunction
+storage. This tag informs the decompiler's <emphasis>discovery</emphasis> 
+of the scope of particular memory locations.  Any location not marked as global
+in this way is assumed to be local/temporary storage.
+</para>
+<example>
+<programlisting>
+  &lt;global&gt;
+    &lt;range space="ram"/&gt;
+  &lt;/global&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;readonly&gt;</title>
+<para>
+<table xml:id="readonly.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;register&gt;</code></td>
+  <td/>
+  <td>(0 or more) Specific register to be marked as read-only</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;range&gt;</code></td>
+  <td/>
+  <td>(0 or more) Range of addresses to be marked as read-only</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>space</code></td>
+  <td>Address space of the read-only region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;readonly&gt;</code> tag labels a specific region as
+read-only. From the point of view of the compiler, these memory
+locations hold constant values.  This allows the decompiler to
+propagate these constants and potentially perform additional simplification.
+This tag is not very common because most read-only memory sections are determined
+dynamically from the executable header.
+</para>
+<example>
+<programlisting>
+  &lt;readonly&gt;
+    &lt;range space="ram" first="0x3000" last="0x3fff"/&gt;
+  &lt;/readonly&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;nohighptr&gt;</title>
+<para>
+<table xml:id="nohighptr.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;register&gt;</code></td>
+  <td/>
+  <td>(0 or more) Specific register to be marked as not addressable</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;range&gt;</code></td>
+  <td/>
+  <td>(0 or more) Range of addresses to be marked as not addressable</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>space</code></td>
+  <td>Address space of the unaddressable region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;nohighptr&gt;</code> tag describes a memory region into
+which the compiler does not expect to see pointers from any high-level
+source code.  This is slightly different from saying that there are
+absolutely no indirect references into the region.  This tag is really
+intended to partly address the modeling of <emphasis>memory-mapped
+registers</emphasis>.  If a common register is addressable through
+main memory, this can confound decompiler analysis because even
+basic simplifications are blocked by writes through dynamic pointers
+that might affect the register.  This tag provides an apriori guarantee
+that this is not possible for the marked registers.
+</para>
+<example>
+<programlisting>
+  &lt;nohighptr&gt;
+    &lt;range space="DATA" first="0xf80" last="0xfff"/&gt;
+  &lt;/nohighptr&gt;
+</programlisting>
+</example>
+</sect2>
+</sect1>
+<sect1 id="cspec_specialreg">
+<title>Compiler Special Purpose Registers</title>
+<sect2>
+<title>&lt;stackpointer&gt;</title>
+<para>
+<table xml:id="stackpointer.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>register</code></td>
+  <td/>
+  <td>Name of register to use as stack pointer</td>
+</tr>
+<tr>
+  <td align='right'><code>space</code></td>
+  <td/>
+  <td>Address space that will hold the <emphasis>stack</emphasis></td>
+</tr>
+<tr>
+  <td align='right'><code>growth</code></td>
+  <td/>
+  <td>(Optional) <emphasis>negative</emphasis> or <emphasis>positive</emphasis></td>
+</tr>
+<tr>
+  <td align='right'><code>reversejustify</code></td>
+  <td/>
+  <td>(Optional) <emphasis>true</emphasis> or <emphasis>false</emphasis></td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;stackpointer&gt;</code> tag informs Ghidra of the main
+stack mechanism for the compiler.  The <code>register</code> attribute
+gives the name of the register that holds the current offset into the
+stack, and the <code>space</code> attribute specifies the name of the
+address space that holds the actual data.  This tag triggers the
+creation of a formal <emphasis>stack</emphasis> space.  A separate stack
+space exists virtually for each function being analyzed where offsets
+are calculated relative to the incoming value of this register.  This provides
+a <emphasis>concrete</emphasis> storage location for a function's local variables
+even though the true location is dynamically determined.
+</para>
+<para>
+By default the stack is assumed to grow in the <emphasis>negative</emphasis> direction,
+meaning that entries which are deeper on the stack are stored at larger offsets, and each
+new entry pushed on the stack causes the stackpointer register to be decremented. But this
+can be changed by setting the <code>growth</code> attribute to <emphasis>positive</emphasis>,
+which reverses the direction that new entries are pushed on the stack.
+</para>
+</sect2>
+<sect2 id="return_address">
+<title>&lt;returnaddress&gt;</title>
+<para>
+<table xml:id="returnaddress.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>One <emphasis>varnode</emphasis> tag</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag describes how the return address is stored, upon entry to a function.
+It takes a single varnode sub-tag describing the storage location (See <xref linkend="varnode_tag"/>).
+In many cases,
+the decompiler can eliminate return value data-flow without knowing this information
+because the value is never used within the function and other parameter passing is explicitly laid out. Sometimes however,
+return values can look like part of a structure allocated on the stack or can be confused with other data-flow. In these
+cases, the <code>&lt;returnaddress&gt;</code> tag can help by making the standard storage location explicit.
+</para>
+<para>
+The storage location of the return address is actually a property of a prototype model. This tag defines
+a global default for all prototype models, but it can be overridden for individual prototype models.
+See <xref linkend="proto_returnaddress"/>.
+</para>
+<example>
+<programlisting>
+  &lt;returnaddress&gt;
+    &lt;varnode space="stack" offset="0" size="4"/&gt;
+  &lt;/returnaddress&gt;
+</programlisting>
+</example>
+</sect2>
+</sect1>
+<sect1 id="cspec_parampass">
+<title>Parameter Passing</title>
+<para>
+A <emphasis>prototype model</emphasis>, in Ghidra, is a
+set of rules for determining how parameters and return values
+are passed between a function and its subfunction.  For a high-level
+language (such as C or Java), a function prototype is the ordered list
+of parameters (each specified as a name and a datatype) that are passed to
+the function as input plus the optional value (specified as just a
+dataype) returned by the function.  A prototype model specifies how a compiler
+decides which storage locations are used to hold the actual values at run time.
+</para>
+<para>
+From a reverse engineering perspective, Ghidra also needs to solve the inverse problem:
+given a set of storage locations (registers and stack locations) that look like they
+are inputs and outputs to a function, determine a high-level function prototype that
+produces those locations when compiled.  The same prototype model is
+used to solve this problem as well, but in this case, the solution may not be unique,
+or can only be exactly derived from information that Ghidra doesn't have.
+</para>
+<sect2 id="strategy">
+<title>Describing Parameters and Allocation Strategies</title>
+<para>
+The <code>&lt;prototype&gt;</code> tag encodes details about a specific prototype model, within a compiler
+specification.  A given compiler spec
+can have multiple prototype models, which are all distinguished by the mandatory <emphasis>name</emphasis> attribute
+for the tag.  Other Ghidra tools refer to prototype model's by this name, and it must be unique
+across all models in the compiler spec.  All <code>&lt;prototype&gt;</code> tags must include the subtags,
+<code>&lt;input&gt;</code> and <code>&lt;output&gt;</code>, which list storage locations
+(registers, stack, and other varnodes) as
+the raw material for the prototype model to decide where parameters are stored for passing
+between functions.  The <code>&lt;input&gt;</code> tag holds the resources used to pass input parameters, and
+<code>&lt;output&gt;</code> describes resources for return value storage.  A resource is described by
+the <code>&lt;pentry&gt;</code> tag, which comes in two flavors.  Most <code>&lt;pentry&gt;</code>
+tags describe a storage location to be used by a single variable.  If the tag has an
+<emphasis>align</emphasis> attribute however, multiple
+variables can be allocated from the same resource, where different variables must be aligned
+relative to the start of the resource as specified by the attribute's value.
+</para>
+<para>
+How <code>&lt;pentry&gt;</code> resources are used is
+determined by the prototype model's <emphasis>strategy</emphasis>. This is specified as an optional attribute
+to the main <code>&lt;prototype&gt;</code> tag.  There are currently only two strategies:
+<emphasis>standard</emphasis> and <emphasis>register</emphasis>. If the attribute is not present,
+the prototype model defaults to the <emphasis>standard</emphasis> strategy.
+</para>
+<sect3>
+<title>Standard Strategy</title>
+<para>
+For this strategy, the <code>&lt;pentry&gt;</code> subtags under the
+<code>&lt;input&gt;</code> tag are viewed as an ordered resource list.
+When assigning storage locations from a list of datatypes, each datatype is evaluated
+in order.  The first <code>&lt;pentry&gt;</code> from the resource list that fits the datatype and hasn't
+been fully used by previous datatypes is assigned to that datatype.
+In this case, the <code>&lt;input&gt;</code> tag
+lists varnodes in the order that a compiler would dole them out when given a list of parameters to
+pass. Integer or pointer values are usually passed first in specially designated registers rather than on the
+stack if there are not enough available registers. There can one stack-based
+<code>&lt;pentry&gt;</code> at the end of the list that will typically match any number of
+parameters of any size or type. 
+</para>
+<para>
+If there are separate <code>&lt;pentry&gt;</code> tags for dedicated floating-point registers,
+the standard strategy treats them as a separate resource list, independent of the one for
+integer and pointer datatypes. 
+The <code>&lt;pentry&gt;</code> tags specifying floating-point registers are listed in the same
+<code>&lt;input&gt;</code> tag, immediately after the integer registers, and are distinguished by
+the <code>metatype="float"</code> attribute labeling the individual tags.
+</para>
+<para>
+For the inverse case, where the decompiler must infer a prototype from data-flow and liveness, the
+standard strategy expects there to be no <emphasis role="bold">gaps</emphasis> in the usage of the
+(either) resource list.
+For a putative input varnode to be considered a formal parameter, it must occur somewhere in the
+<code>&lt;pentry&gt;</code> resource list.  If there is a gap, i.e. the second
+<code>&lt;pentry&gt;</code> occurs as a varnode but not the first, then the decompiler
+will fill in the gap by creating an extra <emphasis>unused</emphasis> parameter. Or if the gap is too big,
+the original input varnode will not be considered a formal parameter.
+</para>
+</sect3>
+<sect3>
+<title>Register Strategy</title>
+<para>
+This allocation strategy is designed for software with a lot of hand-coded assembly routines
+that are not sticking to a particular parameter passing strategy.  The idea is to
+provide <code>&lt;pentry&gt;</code> tags for any register that might conceivably be considered an input
+location.  Then the input varnodes for a function that have a corresponding <code>&lt;pentry&gt;</code>
+are automatically promoted to formal parameters.  In practical terms, this strategy
+behaves in the same way as the Standard strategy, except that in the reverse case,
+the decompiler does not care about gaps in the resource list.  It will not fill in
+gaps, and it will not throw out putative inputs because of large gaps.</para>
+<para>
+When assigning storage locations from a list of datatypes, the same algorithm is applied as in
+the standard strategy.  The first <code>&lt;pentry&gt;</code> that hasn't been used and that fits the
+datatype is assigned.  Note that this may not make as much sense for hand-coded assembly.
+</para>
+</sect3>
+
+</sect2>
+<sect2>
+<title>&lt;default_proto&gt;</title>
+<para>
+<table xml:id="defaultproto.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;prototype&gt;</code></td>
+  <td/>
+  <td>Specification for the default prototype</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+There must be exactly one <code>&lt;default_proto&gt;</code> tag, which contains exactly one
+<code>&lt;prototype&gt;</code> sub-tag. Other <code>&lt;prototype&gt;</code> tags can be listed outside 
+of this tag.  The designated default prototype model.  Where users are given the option of choosing from
+among different prototype models, the name "default" is always presented as an option and refers to this
+prototype model. It is also used in some situations where the prototype model is unknown but analysis needs
+to proceed.
+</para>
+</sect2>
+<sect2>
+<title>&lt;prototype&gt;</title>
+<para>
+<table xml:id="prototype.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>name</code></td>
+  <td/>
+  <td>The name of the prototype model</td>
+</tr>
+<tr>
+  <td align='right'><code>extrapop</code></td>
+  <td/>
+  <td>Amount stack pointer changes across a call or <emphasis>unknown</emphasis></td>
+</tr>
+<tr>
+  <td align='right'><code>stackshift</code></td>
+  <td/>
+  <td>Amount stack changes due to the call mechanism</td>
+</tr>
+<tr>
+  <td align='right'><code>type</code></td>
+  <td/>
+  <td>(Optional) Generic calling convention type: <emphasis>stdcall</emphasis>, <emphasis>cdecl</emphasis>,
+  <emphasis>fastcall</emphasis>, or <emphasis>thiscall</emphasis></td>
+</tr>
+<tr>
+  <td align='right'><code>strategy</code></td>
+  <td/>
+  <td>(Optional) Allocation strategy: <emphasis>standard</emphasis> or <emphasis>register</emphasis></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;input&gt;</code></td>
+  <td/>
+  <td>Resources for input variables</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>pointermax</code></td>
+  <td>(Optional) Max size of parameter before converting to pointer</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>thisbeforeretpointer</code></td>
+  <td>(Optional) <emphasis>true</emphasis> if <emphasis>this</emphasis> pointer comes before hidden return pointer</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>killedbycall</code></td>
+  <td>(Optional) <emphasis>true</emphasis> indicates all input storage locations are considered killed by call</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>&lt;pentry&gt;</code></td>
+  <td>(1 or more) Storage resources</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;output&gt;</code></td>
+  <td/>
+  <td>Resources for return value</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>killedbycall</code></td>
+  <td>(Optional) <emphasis>true</emphasis> indicates all output storage locations are considered killed by call</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>&lt;pentry&gt;</code></td>
+  <td>(1 or more) Storage resources</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;returnaddress&gt;</code></td>
+  <td/>
+  <td>(Optional) Storage location of return value</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;unaffected&gt;</code></td>
+  <td/>
+  <td>(Optional) Registers whose value is unaffected across calls</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;killedbycall&gt;</code></td>
+  <td/>
+  <td>(Optional) Registers whose value does not persist across calls</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;likelytrash&gt;</code></td>
+  <td/>
+  <td>(Optional) Registers that may hold a trash value entering the function</td>
+</tr>
+<tr>
+  <td align='right'><code>&lt;localrange&gt;</code></td>
+  <td/>
+  <td>(Optional) Range of stack locations that may hold mapped local variables</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;prototype&gt;</code> tag specifies a prototype model. It must have a <emphasis>name</emphasis> attribute,
+which gives the name that can be used both in the Ghidra GUI and at other points within the compiler spec. The
+<emphasis>strategy</emphasis> attribute indicates the allocation strategy, as described below.
+If omitted the strategy defaults to <emphasis>standard</emphasis>. 
+</para>
+<para>
+Every <code>&lt;prototype&gt;</code> must specify the <emphasis>extrapop</emphasis> attribute. This indicates the change in
+the stack pointer to expect across a call, within the p-code model. For architectures where a call instruction pushes a
+return value on the stack, this value will usually be positive and match the size of the stack-pointer in bytes,
+indicating that a called function usually pops the return value itself and changes the stack pointer in a way not apparent
+in the (callers) p-code. For architectures that use a link register to store the return address, <emphasis>extrapop</emphasis>
+is usually zero, indicating to the decompiler that it can expect the stack pointer value not to change across a call. The
+attribute can also be specified as <emphasis>unknown</emphasis>. This turns on the fairly onerous analysis associated with the
+Microsoft <emphasis>stdcall</emphasis> calling convention, where functions, upon return, pop off their own stack parameters
+in addition to the return address.
+</para>
+<para>
+The <emphasis>stackshift</emphasis> attribute is also mandatory and indicates the amount the stack
+pointer changes just due to the call mechanism used to access a function with this prototype.
+The call instruction for many processors pushes the return address onto the stack.
+The <emphasis>stackshift</emphasis> attribute would typically be 2, 4, or 8, matching the
+code address size, in this case. For link register mechanisms, this attribute is set to zero.
+</para>
+<para>
+The <emphasis>type</emphasis> attribute can be used to associate one of Ghidra's <emphasis>generic calling convention</emphasis>
+types with the prototype. The possible values are: <emphasis>stdcall</emphasis>, <emphasis>cdecl</emphasis>,
+<emphasis>fastcall</emphasis>, and <emphasis>thiscall</emphasis>. Each of these values can be assigned to at most one
+calling convention across the compiler specification. Generic calling conventions are used to encode calling convention
+information in a Ghidra datatype, like a FunctionDefinitionDataType, which can apply to more than one program or architecture.
+</para>
+<sect3 id="input_tag">
+<title>&lt;input&gt;</title>
+<para>
+The <code>&lt;input&gt;</code> tag lists the resources used to pass input parameters to a function
+with this prototype. The varnodes used for passing are selected by an
+<emphasis>allocation strategy</emphasis> (See <xref linkend="strategy"/>)
+from among the resources specified here. The
+<code>&lt;input&gt;</code> tag contains a list of <code>&lt;pentry&gt;</code> sub-tags describing the varnodes.
+Depending on the allocation strategy, the ordering is typically important.
+</para>
+<para>
+The <emphasis>killedbycall</emphasis> attribute if true indicates that all storage locations listed in
+the <code>&lt;input&gt;</code> should be considered as killed by call (See <xref linkend="killedbycall"/>).
+This attribute is optional and defaults to false.
+</para>
+<para>
+The <emphasis>pointermax</emphasis> attribute can be used if there is an absolute limit on the size of
+datatypes passed directly using the standard resources. If present and non-zero, the attribute
+indicates the largest number of bytes for a parameter. Bigger inputs are assumed to have a pointer
+passed instead. When a user specifies a function prototype with a big parameter, Ghidra will automatically
+allocate a storage location that holds the pointer. By default, this substitution does not occur, and large
+parameters go through the normal resource allocation process and are assigned storage that holds the whole
+value directly.
+</para>
+<para>
+The <emphasis>thisbeforeretpointer</emphasis> indicates how the two hidden parameters, the
+<emphasis>this</emphasis> pointer and the hidden return pointer, are ordered on the stack,
+in the rare case where both occur in a single prototype. If
+the attribute is true, the <emphasis>this</emphasis> pointer comes first. By default,
+the hidden return will come first.
+</para>
+<para>
+The following is an example tag using the standard allocation strategy with 3 integer registers and 2
+floating-point registers. If there are more parameters of either type, the compiler allocates storage from
+the stack.
+</para>
+<example>
+<programlisting>
+  &lt;input&gt;
+    &lt;pentry minsize="1" maxsize="8" metatype="float"&gt;
+      &lt;register name="f1"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="8" metatype="float"&gt;
+      &lt;register name="f2"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a0"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a1"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a2"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="500" align="4"&gt;
+      &lt;addr offset="16" space="stack"/&gt;
+    &lt;/pentry&gt;
+  &lt;/input&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;output&gt;</title>
+<para>
+The handling of
+<code>&lt;pentry&gt;</code> subtags within the <code>&lt;output&gt;</code> tag is slightly different
+than for the input case. Technically, this tag is sensitive to the <emphasis>allocation strategy</emphasis>
+selected for the prototype. Currently however, all (both) strategies behave the same for the output parameter.
+</para>
+<para>
+When assigning a storage location for a return value of a given data-type, the
+first <code>&lt;pentry&gt;</code> within list that matches the data-type is used as the storage
+location.  If none of the <code>&lt;pentry&gt;</code> storage locations fit the data-type, a
+<emphasis>Hidden Return Parameter</emphasis>
+is triggered. An extra hidden input parameter is passed which holds a pointer to where the function
+will store the return value.
+</para>
+<para>
+In the inverse case, the decompiler examines all (possible) output varnodes that have
+a corresponding <code>&lt;pentry&gt;</code> tag in the resource list. The varnode whose corresponding
+tag occurs the earliest in the list becomes the formal return value for the function.
+If an output varnode matches no <code>&lt;pentry&gt;</code>, then it is rejected as a formal return value.
+</para>
+<example>
+<programlisting>
+  &lt;output killedbycall="true"&gt;
+    &lt;pentry minsize="4" maxsize="10" metatype="float" extension="float"&gt;
+      &lt;register name="ST0"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="EAX"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="5" maxsize="8"&gt;
+      &lt;addr space="join" piece1="EDX" piece2="EAX"/&gt;
+    &lt;/pentry&gt;
+  &lt;/output&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;pentry&gt;</title>
+<para>
+<table xml:id="pentry.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>minsize</code></td>
+  <td/>
+  <td>Size (in bytes) of smallest variable stored here</td>
+</tr>
+<tr>
+  <td align='right'><code>maxsize</code></td>
+  <td/>
+  <td>Size (in bytes) of largest variable stored here</td>
+</tr>
+<tr>
+  <td align='right'><code>align</code></td>
+  <td/>
+  <td>(Optional) Alignment of successive locations within this entry</td>
+</tr>
+<tr>
+  <td align='right'><code>metatype</code></td>
+  <td/>
+  <td>(Optional) Restriction on datatype:
+  <emphasis>unknown</emphasis>, <emphasis>float</emphasis>, <emphasis>int</emphasis>, <emphasis>uint</emphasis>,
+  or <emphasis>ptr</emphasis></td>
+</tr>
+<tr>
+  <td align='right'><code>extension</code></td>
+  <td/>
+  <td>(Optional) How small values are extended: <emphasis>sign</emphasis>, <emphasis>zero</emphasis>, <emphasis>inttype</emphasis>, <emphasis>float</emphasis>,
+  or <emphasis>none</emphasis></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;register&gt;</code></td>
+  <td/>
+  <td>Storage location of the entry</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>name</code></td>
+  <td>Name of register</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;addr&gt;</code></td>
+  <td/>
+  <td>(alternate form)</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>space</code></td>
+  <td>Address space of the location</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>offset</code></td>
+  <td>Offset (in bytes) of location</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+The <code>&lt;pentry&gt;</code> tag describes the individual memory resources that make up both
+the <code>&lt;input&gt;</code> and <code>&lt;output&gt;</code> resource lists. These
+are consumed by the allocation strategy as it assigns storage for parameters and return values.
+Attributes describe restrictions on how a particular <code>&lt;pentry&gt;</code> resource
+can be used.
+</para>
+<para>
+The storage for the entry is specified by either the <code>&lt;register&gt;</code> or the
+<code>&lt;addr&gt;</code> subtag.  The <code>minsize</code> and <code>maxsize</code> attributes
+restrict the size of the parameter to which the entry is assigned, and the <code>metatype</code>
+attribute restricts the type of the parameter.
+</para>
+<para>
+Metatype refers to the <emphasis>class</emphasis>
+of the datatype, independent of size: integer, unsigned integer, floating-point, or pointer. The
+default is <code>unknown</code> or no type restriction. The <code>&lt;metatype&gt;</code> can
+be used to split out a separate floating-point resource list for some allocation strategies.
+In the <emphasis>standard</emphasis> strategy for instance, any <code>&lt;pentry&gt;</code> that
+has the attribute <code>metatype="float"</code> is pulled out into a separate list from all the other entries.
+</para>
+<para>
+The optional <code>extension</code> attribute indicates that variables are extended to fill the
+entire location, if the datatype would otherwise occupy fewer bytes. The <emphasis>type</emphasis>
+of extension depends on this attribute's value: <code>zero</code> for zero extension,
+<code>sign</code> for sign extension, and <code>float</code> for floating-point extension.
+A value of <code>inttype</code> indicates the value is either sign or zero extended depending on
+the original datatype.  The default is <code>none</code> for no extension.
+</para>
+<para>
+The <code>align</code> attribute indicates that multiple variables can be drawn from the
+<code>pentry</code> resource.  The first variable occupies bytes starting with the address
+of the storage location specified in the tag.  Additional variables start at the next available
+aligned byte.  The attribute value must be a positive integer that specifies the alignment. This
+is typically used to model parameters pulled from a stack resource.  The example below draws
+up to 500 bytes of parameters from the stack, which are 4 byte aligned, starting at an offset
+of 16 bytes from the initial value of the stack pointer.
+</para>
+<example>
+<programlisting>
+  &lt;pentry minsize="1" maxsize="500" align="4"&gt;
+    &lt;addr space="stack" offset="16"/&gt;
+  &lt;/pentry&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3 id="proto_returnaddress">
+<title>&lt;returnaddress&gt;</title>
+<para>
+<table xml:id="proto_returnaddress.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>One <emphasis>varnode</emphasis> tag</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This is an optional tag that describes where the <emphasis>return address</emphasis> is stored, upon
+entering a function. If present, it overrides the default value for functions that use this particular
+prototype model. (See <xref linkend="return_address"/>) It takes a single
+<emphasis role="bold">varnode tag</emphasis> describing the storage location.
+</para>
+<example>
+<programlisting>
+  &lt;returnaddress&gt;
+    &lt;register name="RA" /&gt;
+  &lt;/returnaddress&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;unaffected&gt;</title>
+<para>
+<table xml:id="unaffected.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>(1 or more) <emphasis>varnode</emphasis> tags</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag lists one or more storage locations that the compiler knows will not be modified by any sub-function.
+Each storage location is specified as a <emphasis role="bold">varnode tag</emphasis>.
+</para>
+<para>
+By contract,
+sub-functions must either not touch these locations at all, or they must save off the value and then restore it
+before returning to their caller.  Many ABI documents refer to these as <emphasis>saved registers</emphasis>.
+Fundamentally, this allows the decompiler to propagate values across function calls. Without this tag,
+because it is generally looking at a single function in isolation, the decompiler doesn't have enough
+information to safely allow this kind of propagation.
+</para>
+<example>
+<programlisting>
+  &lt;unaffected&gt;
+    &lt;register name="ESP"/&gt;
+    &lt;register name="EBP"/&gt;
+  &lt;/unaffected&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3 id="killedbycall">
+<title>&lt;killedbycall&gt;</title>
+<para>
+<table xml:id="killedbycall.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>(1 or more) <emphasis>varnode</emphasis> tags</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag lists one or more storage locations, each specified as a <emphasis role="bold">varnode tag</emphasis>,
+whose value should be considered killed by call.
+</para>
+<para>
+A register or other storage location is <emphasis>killed by call</emphasis> if, from the point
+of view of the calling function, the value of the register before a sub-function call is unrelated
+to its value after the call. This is effectively the opposite of the <code>&lt;unaffected&gt;</code>
+tag which specifies that the value is unchanged across the call.
+</para>
+<para>
+A storage location marked neither <code>&lt;unaffected&gt;</code> or <code>&lt;killedbycall&gt;</code>
+is treated as if it <emphasis>may</emphasis> hold different values before and after the call. In other words,
+the storage location represents the same high-level variable before and after, but the call may
+modify the value.
+</para>
+<example>
+<programlisting>
+  &lt;killedbycall&gt;
+    &lt;register name="ECX"/&gt;
+    &lt;register name="EDX"/&gt;
+  &lt;/killedbycall&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;likelytrash&gt;</title>
+<para>
+<table xml:id="likelytrash.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><emphasis>&lt;register&gt; or &lt;varnode&gt;</emphasis></td>
+  <td></td>
+  <td>(1 or more) <emphasis>varnode</emphasis> tags</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag lists one or more storage locations specified as a <emphasis role="bold">varnode tag</emphasis>.
+In specialized cases, compilers can move around what seem like input values to functions, but the
+values are actually unused and the movement is incidental. The canonical example, is the push of a register
+on the stack, where the code is simply trying to make space on the stack.
+</para>
+<para>
+If there is movement and no other explicit manipulation of the input value in a storage location
+tagged this way, the decompiler will treat the movement as dead code.
+</para>
+<example>
+<programlisting>
+  &lt;likelytrash&gt;
+    &lt;register name="ECX"/&gt;
+  &lt;/likelytrash&gt;
+</programlisting>
+</example>
+</sect3>
+<sect3>
+<title>&lt;localrange&gt;</title>
+<para>
+<table xml:id="localrange.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'><code>&lt;range&gt;</code></td>
+  <td/>
+  <td>(1 or more) Range of bytes eligible for local variables</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>space</code></td>
+  <td>Address space containing range (Usually "stack")</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>first</code></td>
+  <td>(Optional) Starting byte offset of range, default is 0</td>
+</tr>
+<tr>
+  <td/>
+  <td><code>last</code></td>
+  <td>(Optional) Ending byte offset, default is maximal offset of space</td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag lists one or more <code>&lt;range&gt;</code> tags that explicitly describe
+all the possible ranges on the stack that can hold mapped local variables other than
+parameters. Individual functions will be assumed to use some subset of this region.
+The <emphasis>first</emphasis> and <emphasis>last</emphasis> attributes
+to the <code>&lt;range&gt;</code> tag give offsets relative to the incoming value
+of the stack pointer. This affects the decompiler's reconstruction of the stack frame
+for a function and parameter recovery. 
+</para>
+<para>
+Omitting this tag and accepting the default is often sufficient. The default sets the local
+range as all bytes not yet pushed on the stack, where the incoming
+stack pointer points to the last byte pushed. An explicit tag is useful when a specific
+region needs to be added to or
+excised from the default. The following example is for the 64-bit x86 prototype model, where
+the caller reserves extra space on the stack for register parameters that needs
+to be added to the default. The <code>&lt;localrange&gt;</code> tag replaces the default,
+so it needs to specify the default range if it wants to keep it.
+</para>
+<example>
+<programlisting>
+  &lt;localrange&gt;
+    &lt;range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/&gt;
+    &lt;range space="stack" first="8" last="39"/&gt;
+  &lt;/localrange&gt;
+</programlisting>
+</example>
+</sect3>
+</sect2>
+</sect1>
+</article>

@@ -1,0 +1,496 @@
+#---------------------------------------------------------------------
+# 8.3.5 Logic Operations
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# AND - Logical AND with optional logical shift
+# I. 	   {d, s} -> {0, 1, ..., 15}
+# II, III. {d, x, y} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# AND Format I
+# Operation: Rd <- Rd & Rs
+# Syntax:    and Rd, Rs
+# 000s sss0 0110 dddd
+
+:AND rd0, RS9A is op13_3=0x0 & op4_5=0x6 & rd0 & RS9A {
+	rd0 = rd0 & RS9A;
+	NZSTATUS(rd0);
+}
+
+:AND rd0, RS9A is op13_3=0x0 & op4_5=0x6 & rd0 & RS9A & rd0=0xf {
+	PC = inst_start & RS9A;
+	NZSTATUS(PC);
+	goto [PC];
+}
+
+# AND Format II
+# Operation: Rd <- Rx & Ry << sa5
+# Syntax:    and Rd, Rx, Ry << sa
+# 111x xxx1 1110 yyyy   0000 000t tttt dddd
+
+:AND erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0 & erd0 & shift4_5 {
+        erd0 = RX9A & (RY0A << shift4_5);
+        NZSTATUS(erd0);
+}
+
+:AND erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A & (RY0A << shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# AND Format III
+# Operation: Rd <- Rx & Ry >> sa5
+# Syntax:    and Rd, Rx, Ry >> sa
+# 111x xxx1 1110 yyyy   0000 001t tttt dddd
+
+:AND erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=1 & erd0 & shift4_5 {
+        erd0 = RX9A & (RY0A >> shift4_5);
+        NZSTATUS(erd0);
+}
+
+:AND erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=1 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A & (RY0A >> shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# AND{cond4} - Conditional And
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#    {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# AND{cond4} Format I
+# Operation: if(cond4) then
+#                Rd <- Rx & Ry
+# Syntax:    and{cond4} Rd, Rx, Ry
+# 111x xxx1 1101 yyyy   1110 cccc 0010 dddd
+
+:AND^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=2 & ECOND_8_4 & erd0)
+{
+        build ECOND_8_4;
+        erd0 = RX9A & RY0A;
+}
+
+:AND^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=2 & ECOND_8_4 & erd0 & erd0=0xf)
+{
+        build ECOND_8_4;
+        PC = RX9A & RY0A;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# ANDH, ANDL - Logical AND into high or low half of register
+# I, II, III, IV.   d -> {0, 1, ..., 15}
+#                   imm -> {0, 1, ..., 65535}
+#---------------------------------------------------------------------
+
+# ANDH Format I
+# Operation: Rd[31:16] <- Rd[31:16] & imm16
+# Syntax:    andh Rd, imm
+# 1110 01H0 0001 dddd   iiii iiii iiii iiii
+# H == 0
+
+:ANDH rd0, imm16 is op10_6=0x39 & coh=0 & op4_5=1 & rd0 ; imm16
+{
+        value:4 = (imm16 << 16) | 0xffff;
+        rd0 = rd0 & value;
+        NZSTATUS(rd0);
+}
+
+:ANDH rd0, imm16 is op10_6=0x39 & coh=0 & op4_5=1 & rd0 & rd0=0xf; imm16
+{
+        value:4 = (imm16 << 16) | 0xffff;
+        PC = inst_start & value;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# ANDH Format II
+# Operation: Rd[31:16] <- Rd[31:16] & imm16
+#            Rd[15:0] <- 0
+# Syntax:    andh Rd, imm, COH
+# 1110 01H0 0001 dddd   iiii iiii iiii iiii
+# H == 1
+
+:ANDH rd0, imm16^", COH" is op10_6=0x39 & coh=1 & op4_5=1 & rd0 ; imm16
+{
+        value:4 = imm16 << 16;
+        rd0 = rd0 & value;
+        NZSTATUS(rd0);
+}
+
+:ANDH rd0, imm16^", COH" is op10_6=0x39 & coh=1 & op4_5=1 & rd0 & rd0=0xf; imm16
+{
+        value:4 = imm16 << 16;
+        PC = inst_start & value;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# ANDL Format III
+# Operation: Rd[15:0] <- Rd[15:0] & imm16
+# Syntax:    andl Rd, imm
+# 1110 00H0 0001 dddd   iiii iiii iiii iiii
+# H == 0
+
+:ANDL rd0, imm16 is op10_6=0x38 & coh=0 & op4_5=1 & rd0 ; imm16
+{
+        value:4 = imm16 | 0xffff0000;
+        rd0 = rd0 & value;
+        NZSTATUS(rd0);
+}
+
+:ANDL rd0, imm16 is op10_6=0x38 & coh=0 & op4_5=1 & rd0 & rd0=0xf ; imm16
+{
+        value:4 = imm16 | 0xffff0000;
+        PC = inst_start & value;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# ANDL Format IV
+# Operation: Rd[15:0] <- Rd[15:0] & imm16
+#            Rd[31:16] <- 0
+# Syntax:    andl Rd, imm, COH
+# 1110 00H0 0001 dddd   iiii iiii iiii iiii
+# H == 1
+
+:ANDL rd0, imm16^", COH" is op10_6=0x38 & coh=1 & op4_5=1 & rd0 ; imm16
+{
+        value:4 = imm16;
+        rd0 = rd0 & value;
+        NZSTATUS(rd0);
+}
+
+:ANDL rd0, imm16^", COH" is op10_6=0x38 & coh=1 & op4_5=1 & rd0 & rd0=0xf; imm16
+{
+        value:4 = imm16;
+        PC = inst_start & value;
+        NZSTATUS(PC);
+}
+
+#---------------------------------------------------------------------
+# ANDN - Logical AND NOT
+# I.       {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# ANDN Format I
+# Operation: Rd <- Rd & Rs
+# Syntax:    andn Rd, Rs
+# 000s sss0 1000 dddd
+
+:ANDN rd0, RS9A is op13_3=0 & op4_5=8 & rd0 & RS9A {
+        rd0 = rd0 & ~RS9A;
+        NZSTATUS(rd0);
+}
+
+:ANDN rd0, RS9A is op13_3=0 & op4_5=8 & rd0 & RS9A & rd0=0xf {
+        PC = inst_start & ~RS9A;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# COM - One's Compliment
+# I.       d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# COM Format I
+# Operation: Rd <- ~Rd
+# Syntax:    com Rd
+# 0101 1100 1101 dddd
+
+:COM rd0 is op4_12=0x5cd & rd0
+{
+        rd0 = ~rd0;
+        ZSTATUS(rd0);
+}
+
+#---------------------------------------------------------------------
+# EOR - Logical Exclusive OR with optional logical shift
+# I.       {d, s} -> {0, 1, ..., 15}
+# II, III. {d, x, y} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# EOR Format I
+# Operation: Rd <- Rd & Rs
+# Syntax:    eor Rd, Rs
+# 000s sss0 0101 dddd
+
+:EOR rd0, RS9A is op13_3=0x0 & op4_5=0x5 & rd0 & RS9A {
+        rd0 = rd0 ^ RS9A;
+        NZSTATUS(rd0);
+}
+
+:EOR rd0, RS9A is op13_3=0x0 & op4_5=0x5 & rd0 & RS9A & rd0=0xf {
+        PC = inst_start ^ RS9A;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# EOR Format II
+# Operation: Rd <- Rx & Ry << sa5
+# Syntax:    eor Rd, Rx, Ry << sa
+# 111x xxx1 1110 yyyy   0010 000t tttt dddd
+
+:EOR erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0x10 & erd0 & shift4_5 {
+        erd0 = RX9A ^ (RY0A << shift4_5);
+        NZSTATUS(erd0);
+}
+
+:EOR erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0x10 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A ^ (RY0A << shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# EOR Format III
+# Operation: Rd <- Rx & Ry >> sa5
+# Syntax:    eor Rd, Rx, Ry >> sa
+# 111x xxx1 1110 yyyy   0010 001t tttt dddd
+
+:EOR erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0x11 & erd0 & shift4_5 {
+        erd0 = RX9A ^ (RY0A >> shift4_5);
+        NZSTATUS(erd0);
+}
+
+:EOR erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=0x11 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A ^ (RY0A >> shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# EOR{cond4} - Conditional Logical EOR
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#    {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# EOR{cond4} Format I
+# Operation: if(cond4) then
+#                Rd <- Rx ^ Ry
+# Syntax:    eor{cond4} Rd, Rx, Ry
+# 111x xxx1 1101 yyyy   1110 cccc 0100 dddd
+
+:EOR^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=4 & ECOND_8_4 & erd0)
+{
+        build ECOND_8_4;
+        erd0 = RX9A ^ RY0A;
+}
+
+:EOR^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=4 & ECOND_8_4 & erd0 & erd0=0xf)
+{
+        build ECOND_8_4;
+        PC = RX9A ^ RY0A;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# EORH, EORL - Logical EOR into high or low half of register
+# I, II.   d -> {0, 1, ..., 15}
+#          imm -> {0, 1, ..., 65535}
+#---------------------------------------------------------------------
+
+# EORH Format I
+# Operation: Rd[31:16] <- Rd[31:16] & imm16
+# Syntax:    eorh Rd, imm
+# 1110 1110 0001 dddd   iiii iiii iiii iiii
+
+:EORH rd0, imm16 is op4_12=0xee1 & rd0 ; imm16
+{
+        value:4 = imm16 << 16;
+        rd0 = rd0 ^ value;
+        NZSTATUS(rd0);
+}
+
+:EORH rd0, imm16 is op4_12=0xee1 & rd0 & rd0=0xf ; imm16
+{
+        value:4 = imm16 << 16;
+        PC = inst_start ^ value;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# EORL Format II
+# Operation: Rd[15:0] <- Rd[15:0] & imm16
+# Syntax:    eorl Rd, imm
+# 1110 1100 0001 dddd   iiii iiii iiii iiii
+
+:EORL rd0, imm16 is op4_12=0xec1 & rd0 ; imm16
+{
+        value:4 = imm16;
+        rd0 = rd0 ^ value;
+        NZSTATUS(rd0);
+}
+
+:EORL rd0, imm16 is op4_12=0xec1 & rd0 & rd0=0xf ; imm16
+{
+        value:4 = imm16;
+        PC = inst_start ^ value;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# OR - Logical OR with optional logical shift
+# I.       {d, s} -> {0, 1, ..., 15}
+# II, III. {d, x, y} -> {0, 1, ..., 15}
+#          sa -> {0, 1, ..., 31}
+#---------------------------------------------------------------------
+
+# OR Format I
+# Operation: Rd <- Rd & Rs
+# Syntax:    or Rd, Rs
+# 000s sss0 0100 dddd
+
+:OR rd0, RS9A is op13_3=0x0 & op4_5=0x4 & rd0 & RS9A {
+        rd0 = rd0 | RS9A;
+        NZSTATUS(rd0);
+}
+
+:OR rd0, RS9A is op13_3=0x0 & op4_5=0x4 & rd0 & RS9A & rd0=0xf {
+        PC = inst_start | RS9A;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# OR Format II
+# Operation: Rd <- Rx & Ry << sa5
+# Syntax:    or Rd, Rx, Ry << sa
+# 111x xxx1 1110 yyyy   0001 000t tttt dddd
+
+:OR erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=8 & erd0 & shift4_5 {
+        erd0 = RX9A | (RY0A << shift4_5);
+        NZSTATUS(erd0);
+}
+
+:OR erd0, RX9A, RY0A^" << " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=8 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A | (RY0A << shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# OR Format III
+# Operation: Rd <- Rx & Ry >> sa5
+# Syntax:    or Rd, Rx, Ry >> sa
+# 111x xxx1 1110 yyyy   0001 001t tttt dddd
+
+:OR erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=9 & erd0 & shift4_5 {
+        erd0 = RX9A | (RY0A >> shift4_5);
+        NZSTATUS(erd0);
+}
+
+:OR erd0, RX9A, RY0A^" >> " shift4_5 is op13_3=7 & op4_5=0x1e & RX9A & RY0A;
+                                             eop9_7=9 & erd0 & shift4_5 & erd0=0xf {
+        PC = RX9A | (RY0A >> shift4_5);
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# OR{cond4} - Conditional Logical OR
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+#    {d,x,y} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# OR{cond4} Format I
+# Operation: if(cond4) then
+#                Rd <- Rx | Ry
+# Syntax:    or{cond4} Rd, Rx, Ry
+# 111x xxx1 1101 yyyy   1110 cccc 0011 dddd
+
+:OR^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=3 & ECOND_8_4 & erd0)
+{
+        build ECOND_8_4;
+        erd0 = RX9A | RY0A;
+}
+
+:OR^{ECOND_8_4} erd0, RX9A, RY0A is (op13_3=0x7 & op4_5=0x1d & RX9A & RY0A;
+            eop12_4=0xe & eop4_4=3 & ECOND_8_4 & erd0 & erd0=0xf)
+{
+        build ECOND_8_4;
+        PC = RX9A | RY0A;
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# ORH, ORL - Logical OR into high or low half of register
+# I, II.   d -> {0, 1, ..., 15}
+#          imm -> {0, 1, ..., 65535}
+#---------------------------------------------------------------------
+
+# ORH Format I
+# Operation: Rd[31:16] <- Rd[31:16] | imm16
+# Syntax:    orh Rd, imm
+# 1110 1010 0001 dddd   iiii iiii iiii iiii
+
+:ORH rd0, imm16 is op4_12=0xea1 & rd0 ; imm16
+{
+        val:4 = (imm16 << 16);
+        rd0 = rd0 | val;
+        NZSTATUS(rd0);
+}
+
+:ORH rd0, imm16 is op4_12=0xea1 & rd0 & rd0=0xf ; imm16
+{
+        val:4 = (imm16 << 16);
+        PC = inst_start | val;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+# ORL Format II
+# Operation: Rd[15:0] <- Rd[15:0] | imm16
+# Syntax:    orl Rd, imm
+# 1110 1000 0001 dddd   iiii iiii iiii iiii
+
+:ORL rd0, imm16 is op4_12=0xe81 & rd0 ; imm16
+{
+        val:4 = imm16;
+        rd0 = rd0 | val;
+        NZSTATUS(rd0);
+}
+
+:ORL rd0, imm16 is op4_12=0xe81 & rd0 & rd0=0xf; imm16
+{
+        val:4 = imm16;
+        PC = inst_start | val;
+        NZSTATUS(PC);
+        goto [PC];
+}
+
+#---------------------------------------------------------------------
+# TST - Test Register
+# I.       {d, s} -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# TST Format I
+# Operation: Rd & Rs
+# Syntax:    tst Rd, Rs
+# 000s sss0 0111 dddd
+
+:TST RD0A, RS9A is op13_3=0x0 & op4_5=0x7 & RD0A & RS9A {
+        test:4 = RD0A & RS9A;
+        NZSTATUS(test);
+}

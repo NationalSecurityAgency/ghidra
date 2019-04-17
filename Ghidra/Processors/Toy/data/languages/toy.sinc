@@ -1,0 +1,25 @@
+# Main slaspec must define endianess and alignment
+
+@ifndef WORDSIZE
+@define WORDSIZE "1"
+@endif
+
+define space ram type=ram_space size=$(SIZE) wordsize=$(WORDSIZE) default;
+
+define space register type=register_space size=2;
+
+define register offset=0x1000 size=$(SIZE) [
+       r0  r1  r2  r3  r4  r5  r6  r7
+       r8  r9 r10 r11 r12  sp  lr  pc
+];
+
+# STATUS REGISTER MAP: (LOW)
+# C - CARRY
+# Z - ZERO
+# N - NEGATIVE
+# V - OVERFLOW
+
+define register offset=0x1100 size=1 [
+       C   Z   N   V
+];
+

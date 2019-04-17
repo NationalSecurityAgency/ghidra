@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+  <include href="language_common.rxg" />
+
+  <!-- processor_spec files have extension .pspec -->
+
+  <start>
+    <element name="processor_spec">
+
+      <!-- IMPORTANT NOTE:
+           If a register is renamed in the register_data section, any
+           subsequent reference to that register must use the NEW name.
+           Likewise, references before the rename must refer to the OLD
+           name.
+
+           Also, references in compiler specs to the registers must use
+           the new name, because the compiler specs for a given language
+           are loaded after the language is completely loaded.
+           -->
+
+      <interleave>
+
+        <optional>
+          <ref name="properties_type"/>
+        </optional>
+
+        <optional>
+          <element name="programcounter">
+            <attribute name="register"/>
+          </element>
+        </optional>
+        
+        <optional>
+          <element name="data_space">
+            <attribute name="space"/>
+            <optional>
+              <attribute name="ptr_wordsize"/>
+            </optional>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="segmented_address">
+            <attribute name="space"/>
+          </element>
+        </optional>
+
+        <!-- see language_common.rxg -->
+        <optional>
+          <element name="context_data">
+            <ref name="context_data_type"/>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="volatile">
+            <attribute name="inputop"/>
+            <attribute name="outputop"/>
+            <oneOrMore>
+              <ref name="memory_tags_type"/>
+            </oneOrMore>
+          </element>
+        </optional>
+
+		<optional>
+		  <element name="incidentalcopy">
+		    <oneOrMore>
+		      <ref name="varnode_tags_type"/>
+		    </oneOrMore>
+		  </element>
+		</optional>
+
+        <zeroOrMore>
+          <element name="jumpassist"><ref name="jumpassist_type"/>
+          </element>
+        </zeroOrMore>
+		
+        <optional>
+          <element name="register_data">
+            <oneOrMore>
+              <element name="register">
+                <attribute name="name"/>
+                <optional>
+                  <attribute name="rename"/>
+                </optional>
+                <optional>
+                  <attribute name="group"/>
+                </optional>
+                <optional>
+                  <attribute name="hidden">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                </optional>
+                <optional>
+                  <attribute name="unused">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                </optional>
+                <optional>
+                  <attribute name="vector_lane_sizes"/>
+                </optional>
+              </element>
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="default_symbols">
+            <oneOrMore>
+              <element name="symbol">
+                <attribute name="name"/>
+                <attribute name="address"/>
+                <optional>
+                  <attribute name="entry">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                </optional>
+                <optional>
+                  <attribute name="type">
+                    <ref name="symbol_type"/>
+                  </attribute>
+                </optional>
+              </element>
+
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="default_memory_blocks">
+            <oneOrMore>
+              <element name="memory_block">
+                <attribute name="name"/>
+                <attribute name="start_address"/>
+                <optional> <attribute name="bit_mapped_address"/> </optional>
+                <optional> <attribute name="mode"/> </optional>
+                <optional> <attribute name="length"/> </optional>
+                <optional>
+                  <attribute name="initialized">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                </optional>
+              </element>
+            </oneOrMore>
+          </element>
+        </optional>
+      </interleave>
+    </element>
+  </start>
+</grammar>

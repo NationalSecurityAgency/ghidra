@@ -1,0 +1,63 @@
+# MOVSD 4-111 PAGE 1231 LINE 63970
+:VMOVSD XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_XmmReg & vexVVVV_XmmReg_Qb; byte=0x10; (XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & YmmReg1) & (mod=0x3 & XmmReg2 & XmmReg2_Qa)
+{
+	local tmpa:8 = XmmReg2_Qa;
+	local tmpb:8 = vexVVVV_XmmReg_Qb;
+	YmmReg1 = 0;
+	XmmReg1_Qa = tmpa;
+	XmmReg1_Qb = tmpb;
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# MOVSD 4-111 PAGE 1231 LINE 63972
+:VMOVSD XmmReg1, m64 is $(VEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_WIG); byte=0x10; (XmmReg1 & YmmReg1) ... & m64
+{
+	local tmp:16 = zext(m64);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# MOVSD 4-111 PAGE 1231 LINE 63974
+:VMOVSD XmmReg2, vexVVVV_XmmReg, XmmReg1 is $(VEX_NDS) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_XmmReg & vexVVVV_XmmReg_Qb; byte=0x11; XmmReg1 & XmmReg1_Qa & (mod=0x3 & (XmmReg2 & XmmReg2_Qa & XmmReg2_Qb & YmmReg2))
+{
+	local tmpa:8 = XmmReg1_Qa;
+	local tmpb:8 = vexVVVV_XmmReg_Qb;
+	YmmReg2 = 0;
+	XmmReg2_Qa = tmpa;
+	XmmReg2_Qb = tmpb;
+	# TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVSD 4-111 PAGE 1231 LINE 63976
+:VMOVSD m64, XmmReg1 is $(VEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_WIG); byte=0x11; (XmmReg1 & XmmReg1_Qa) ... & m64
+{
+	m64 = XmmReg1_Qa;
+}
+
+# MOVUPS 4-130 PAGE 1250 LINE 64872
+:VMOVUPS XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x10; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = XmmReg2_m128;
+	YmmReg1 = zext(tmp);
+}
+
+# MOVUPS 4-130 PAGE 1250 LINE 64874
+# TODO in general, what do we do with the zext of only the register case; needs investigation
+:VMOVUPS XmmReg2_m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x11; XmmReg1 ... & XmmReg2_m128
+{
+	XmmReg2_m128 = XmmReg1;
+}
+
+# MOVUPS 4-130 PAGE 1250 LINE 64876
+:VMOVUPS YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x10; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = YmmReg2_m256;
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# MOVUPS 4-130 PAGE 1250 LINE 64878
+# TODO in general, what do we do with the zext of only the register case; needs investigation
+:VMOVUPS YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x11; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg2_m256 = YmmReg1;
+}

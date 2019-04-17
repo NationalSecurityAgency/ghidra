@@ -1,0 +1,55 @@
+#
+# PIC-17C7xx Main Section
+#   includes constants, memory space and common register space definitions
+#
+
+@define SFR_BASE 0x0F80
+@define BANK15_BASE 0x0F00
+
+# ALUSTA bit definitions
+@define STATUS_OV_BIT	3
+@define STATUS_Z_BIT	2
+@define STATUS_DC_BIT	1
+@define STATUS_C_BIT	0
+
+# ALUSTA bit masks used for clearing
+@define STATUS_OV_CLEARMASK	0xF7
+@define STATUS_Z_CLEARMASK	0xFB
+@define STATUS_DC_CLEARMASK	0xFD
+@define STATUS_C_CLEARMASK	0xFE
+
+define endian=little;
+define alignment=2;
+
+# Instruction Memory (ROM-based)
+define space CODE type=ram_space wordsize=2 size=2 default;
+
+# General Purpose Register Memory
+#  0x00 - 0x0f : Unbanked registers
+#  0x10 - 0x17 : Banked registers (9 banks controlled by lower nibble of BSR)
+#  0x18 - 0x19 : Unbanked registers
+#  0x1a - 0x1f : Unbanked GPRs
+#  0x20 - 0xff : Banked GPRs (4 banks controlled by upper nibble of BSR)
+define space DATA type=ram_space size=2; 
+
+# The HWSTACK consists of a 16_word by 16_bit RAM and a corresponding 4_bit STKPTR register (which is not readable or writable).
+# There is no means of directly accessing the stack space other than via a CALL, RETURN, RETLW or RETFIE
+define space HWSTACK type=ram_space size=1;  # implemented as independently addressable bytes (each location is 2-bytes wide)
+ 
+define space register type=register_space size=2; 
+
+# Program Counter
+define register offset=0x0000 size=2 [ PC ];
+
+# Stack Pointer (4-bits)
+define register offset=0x0004 size=1 [ STKPTR ];
+
+# ALUSTA bit registers (these do not really exist and must get reflected into the STATUS byte register)
+define register offset=0x0005 size=1 [ FS32 FS10 OV Z DC C ];
+
+# Table Latch (not visible)
+define register offset=0x0010 size=1 [ TBLATL TBLATH ];
+define register offset=0x0010 size=2 [ TBLAT ];
+
+# Mirrored registers for improved decompiler behavior
+define register offset=0x0020 size=1 [ WREG ];

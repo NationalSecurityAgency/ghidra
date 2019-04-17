@@ -1,0 +1,13 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="2"    processor="Sparc"    endian="big"    size="32" />
+        <constraint primary="18"   processor="Sparc"    endian="big"    size="32" /> <!-- V8PLUS arch, should be in V9 too -->
+        <constraint primary="43"   processor="Sparc"    endian="big"    size="64" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
+        <constraint primary="14"       processor="Sparc"   endian="big"    size="32" />
+    </constraint>
+    <constraint loader="Assembler Output (AOUT)" compilerSpecID="default">
+        <constraint primary="138"  processor="Sparc"          endian="big" size="32" />
+    </constraint>
+</opinions>

@@ -1,0 +1,145 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)" compilerSpecID="windows">
+        <constraint primary="352"   processor="MIPS"    endian="big"    size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="354"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="358"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R4000 -->
+        <constraint primary="360"   processor="MIPS"    endian="little" size="64" variant="default" /> <!-- R10000 -->
+        <constraint primary="361"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- WCE v2 -->
+        <constraint primary="614"   processor="MIPS"                              variant="default" /> <!-- MIPS16 -->
+        <constraint primary="870"   processor="MIPS"    endian="little" size="32" variant="64-32addr"/> <!-- MIPS FPU -->
+        <constraint primary="1126"  processor="MIPS"                              variant="default" /> <!-- MIPS16 FPU -->
+    </constraint>
+    <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
+        <constraint primary="352"   processor="MIPS"    endian="big"    size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="354"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="358"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R4000 -->
+        <constraint primary="360"   processor="MIPS"    endian="little" size="64" variant="default" /> <!-- R10000 -->
+        <constraint primary="361"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- WCE v2 -->
+        <constraint primary="614"   processor="MIPS"                              variant="default" /> <!-- MIPS16 -->
+        <constraint primary="870"   processor="MIPS"    endian="little" size="32" variant="64-32addr"/> <!-- MIPS FPU -->
+        <constraint primary="1126"  processor="MIPS"                              variant="default" /> <!-- MIPS16 FPU -->
+    </constraint>
+
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
+        <constraint primary="352"   processor="MIPS"    endian="big"    size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="354"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R3000 -->
+        <constraint primary="358"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R4000 -->
+        <constraint primary="360"   processor="MIPS"    endian="little" size="64" variant="default" /> <!-- R10000 -->
+        <constraint primary="870"   processor="MIPS"    endian="little" size="32" variant="64-32addr"/> <!-- MIPS FPU -->
+    </constraint>
+
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+
+        <constraint primary="8,10"    processor="MIPS" />
+
+<!--
+Elf e_flags are used for the secondary attribute, the following are pulled from binutils include/elf/mips.h
+
+0x00000001      EF_MIPS_NOREORDER       No instruction reordering was specified in the assembler, set .noreorder
+					(don't care)
+0x00000002      EF_MIPS_PIC             has pic code (don't care)
+0x00000004      EF_MIPS_CPIC            leftover from IRIX pic (don't care)
+0x00000008      EF_MIPS_XGOT            large GOT (don't care)
+
+0x00000000                              When arch is MIPS64, then 0s in bits 4-7 means n64 ABI 64-bit addresses 
+                                        When arch is MIPS32, means o32 ABI, 32-bit addresses
+0x00000010      EF_MIPS_UCODE		obsolete
+0x00000020      EF_MIPS_ABI2            n32 abi 32-bit addresses, used with MIPS64, similar to n64
+0x00000040      EF_MIPS_ABI_ON32        obsolete, should be 0
+0x00000080      EF_MIPS_OPTIONS_FIRST   loader directive (don't care)
+
+0x00000100      EF_MIPS_32BITMODE       32-bit abi2 == o32, but a 64-bit ISA
+0x00000200      E_MIPS_FP64             32-bit ISA but FP regs are 64-bits (gcc -mfp64)
+0x00000400      E_MIPS_NAN2008          Uses IEEE 754-2008 floating point NaN rules, don't care
+
+0x00001000      E_MIPS_ABI_O32          O32 ABI 32-bit addresses
+0x00002000      E_MIPS_ABI_O64          32-bit addresses, used with MIPS16e
+0x00003000      E_MIPS_ABI_EABI32       Embedded ABI - MIPS32 with 32-bit address
+0x00004000      E_MIPS_ABI_EABI64       Embedded ABI - MIPS64 with 32-bit address, similar to n32
+
+0x00FF0000	EF_MIPS_MACH		Machine variant bits, but not standard (don't care)
+
+0x02000000      EF_MIPS_ARCH_ASE_MICROMIPS      MicroMIPS
+0x04000000      EF_MIPS_ARCH_ASE_M16    MIPS-16 ISA
+0x08000000      EF_MIPS_ARCH_ASE_MDMX   MDMX extensions, deprecated in R5
+
+0x00000000      EF_MIPS_ARCH_1          MIPS I
+0x10000000      EF_MIPS_ARCH_2          MIPS II
+0x20000000      EF_MIPS_ARCH_3          MIPS III
+0x30000000      EF_MIPS_ARCH_4          MIPS IV
+0x40000000      EF_MIPS_ARCH_5          never used
+0x50000000      EF_MIPS_ARCH_32         MIPS32 R1
+0x60000000      EF_MIPS_ARCH_64         MIPS64 R1
+0x70000000      EF_MIPS_ARCH_32R2       MIPS32 R2
+0x80000000      EF_MIPS_ARCH_64R2       MIPS64 R2
+0x90000000      EF_MIPS_ARCH_32R6       MIPS32 R6
+0xa0000000      EF_MIPS_ARCH_64R6       MIPS64 R6
+-->
+
+  <!-- MIPS32 Pre-Release 6 -->
+	<!-- MIPS I,II,III,IV, don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="default"
+		secondary= "0b 00.. ..00 .... .... 00.1 0.0. 0000 ...."/>
+
+        <!-- MIPS I,II,III,IV, with microMIPS, don't cares: MDMX, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="micro"
+                secondary= "0b 00.. .010 .... .... 00.1 0.0. 0000 ...."/>
+
+	<!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, EABI, FPU -->
+	<constraint primary="8,10" processor="MIPS" size="32" variant="default"
+                secondary= "0b 01.1 ..00 .... .... 00.1 0.0. 0000 ...."/>
+
+        <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="micro"
+                secondary= "0b 0111 .010 .... .... 00.1 0.0. 0000 ...."/>
+
+  <!-- MIPS64 Pre-Release 6 -->
+        <!-- MIPS64-R1 with 32-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr"
+                secondary= "0b 0110 ..00 .... .... 0... 0.0. 00.0 ...."/>
+
+        <!-- MIPS64-R1 with 32-bit addresses and with micromips -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr-micro"
+                secondary= "0b 0110 .010 .... .... 0... 0.0. 00.0 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr"
+                secondary= "0b 1000 ..00 .... .... 0... 0.0. 00.0 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses and with micromips -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr-micro"
+                secondary= "0b 1000 .010 .... .... 0... 0.0. 00.0 ...."/>
+
+        <!-- MIPS64-R1 with 64-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="64" variant="default"
+                secondary= "0b 0110 ..00 .... .... 0000 0.00 0000 ...."/>
+
+        <!-- MIPS64-R2 with 64-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="64" variant="default"
+                secondary= "0b 1000 ..00 .... .... 0000 0.00 0000 ...."/>
+
+        <!-- MIPS64-R1 with 64-bit addresses and micromips -->
+        <constraint primary="8,10" processor="MIPS" size="64" variant="micro"
+                secondary= "0b 0110 .010 .... .... 0000 0.00 0000 ...."/>
+
+        <!-- MIPS64-R2 with 64-bit addresses and micromips -->
+        <constraint primary="8,10" processor="MIPS" size="64" variant="micro"
+                secondary= "0b 1000 .010 .... .... 0000 0.00 0000 ...."/>
+
+  <!-- MIPS32-Release 6 -->
+        <!-- MIPS32-R6, don't cares: MDMX, microMIPS, EABI, FPU (no MIPS16e)-->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="R6"
+                secondary= "0b 1001 .0.0 .... .... 00.1 0.00 0000 ...."/>
+
+  <!-- MIPS64-Release 6 -->
+	<!-- MIPS64-R6 with 32-bit addresses, don't cares: MDMX, microMIPS, EABI, FPU (no MIPS16e) -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr-R6"
+                secondary= "0b 1010 .0.0 .... .... 0... 0.0. 00.0 ...."/>
+
+	<!-- MIPS64-R6 with 64-bit addresses, don't cares: MDMX, microMIPS, EABI, FPU (no MIPS16e) -->
+        <constraint primary="8,10" processor="MIPS" size="64" variant="R6"
+                secondary= "0b 1010 00.0 .... .... 0000 0... 0000 ...."/>
+
+    </constraint>
+
+</opinions>

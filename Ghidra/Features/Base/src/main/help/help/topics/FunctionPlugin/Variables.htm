@@ -1,0 +1,569 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Variables</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Function Signature, Attributes and Variables</H1>
+    
+    <H2>Function Signature</H2>
+    
+    <P>A function's signature conveys the following information about a
+    function:<BR>
+    </P>
+
+    <OL>
+      <LI>The compiler-specific named calling convention</LI>
+
+      <LI>The function's return data type (void indicates no return value)</LI>
+
+      <LI>The function's name</LI>
+
+      <LI>Ordered list of named parameters and associated data types.</LI>
+    </OL>
+    
+    
+    
+    
+
+    <H2><A name="Function_Attributes"></A>Function Attributes</H2>
+
+    <BLOCKQUOTE>
+      <P>The following function attributes affect disassembly and semantic analysis and may be set
+      via the <A href="Variables.htm#Edit_Function">Edit Function</A> dialog.</P>
+      
+      <H3>Custom Storage</H3>
+      
+      <P>The <I>Custom Storage</I> option, if enabled, provides the ability to 
+      explicitly specify return/parameter storage.  By default, storage will be dynamically 
+      computed based upon calling convention and return/parameter data types.  When dynamic 
+      storage is computed, hidden "auto-parameters" may be injected as well as the use of 
+      "forced-indirect" storage.
+
+      <H3>Inline</H3>
+
+      <P>Any <I>Inline</I> function called by another function may be treated as inline code
+      instead of a function call during analysis.</P>
+
+      <H3>No Return</H3>
+
+      <P>While a typical function call is always assumed to return and continue flowing to the next
+      instruction, marking a function as <I>No Return</I> forces an implied return immediately
+      following a call to such a function. Depending upon the state of disassembly, marking a
+      function as <I>No Return</I> may help to prevent a call to such a function from falling-thru
+      to the next instruction during disassembly. If disassembly has already been done and the
+      fall-thru has been improperly disassembled, the <A href=
+      "../ClearPlugin/Clear.htm#Clear_Flow_and_Repair">Clear Flow and Repair</A> action
+      may be used to cleanup the bad fall-through.</P>
+
+      <H3>Varargs</H3>
+
+      <P>Designated by a trailing '...' in the function signature, indicates that a variable number
+      of parameters is allowed. Common C functions which employ Varargs are <I>printf</I> and
+      <I>scanf</I>.</P>
+
+      <H3>Call-Fixup</H3>
+
+      <P>A function may be tagged with a predefined <I>Call-Fixup</I> which can be used to
+      alter/simplify the semantic effect of calling such a function. The available set of
+      predefined call-fixups are defined within the compiler specification (*.cspec file)
+      associated with a program. This feature is typically used when the effects of calling a
+      well-known function need to be simplified so that the caller can be more easily analyzed
+      and/or understood.</P>
+    </BLOCKQUOTE>
+    
+    
+    <H2>Variables</H2>
+    
+    <P>There are two classes of function variables: Parameters and Local Variables.  The term Parameter 
+    also includes the Function return value which has an associated data type and storage but has no 
+    ordinal. </P>
+
+    <P>Many processors use a stack as part of their calling conventions and/or for local variable storage. 
+    In some cases, the return address is pushed onto the stack during the call operation. Any references to the
+    stack (e.g., references and variable storage) are relative to the stack pointer when the function is entered. For a negative growing
+    stack (like the X86 processor), the stack would look something like this:</P>
+
+    <CENTER>
+      <TABLE border="1" cellpadding="0" cellspacing="0" width="30%">
+        <TR>
+          <TD align="center">-n</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>. . .</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>Local Variables</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>. . .</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>Saved Registers</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>Return Address</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>Parameter 1</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>. . .</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>Parameters</TD>
+        </TR>
+
+        <TR align="center">
+          <TD>n</TD>
+        </TR>
+      </TABLE>
+    </CENTER>
+    
+    <P>Structures, Unions, and Arrays can be used to define variables as well as the built in
+    primitive <A href="../DataPlugin/Data.htm#DataTypes">data types</A>.&nbsp; To define
+    structures, see <A href="../DataTypeEditors/StructureEditor.htm">Data Structure
+    Editor</A></P> 
+    
+    <H3>Parameters (includes Function Return)</H3>
+    
+    <P>Storage for return/parameters can be computed dynamically based upon 
+    the associated calling convention and data types (i.e., complete function signature).  The ability
+    to properly compute the correct storage is limited by the current capabilities of the 
+    function prototype models and Decompiler within Ghidra.  In some cases it will be necessary to enable 
+    Custom Storage for a function and specify the correct storage locations for the return/parameters 
+    including the ability to join multiple storage elements (i.e., varnodes) for a single parameter.</P>
+    
+    <P>When parameter storage is determined dynamically, the calling convention may dictate the 
+    use of hidden parameters which we refer to as "<i>auto-parameters</i>" <b>(auto)</b>.
+    In addition, the "<i>forced-indirect</i>" <b>(ptr)</b> condition may be imposed on
+    parameters when large data is forced to be passed by reference.  When either of these
+    is in use for the return or parameters, the <b>(auto)</b> or <b>(ptr)</b> designation
+    will appear with the storage location displayed for each parameter.  The parameter names <b>'this'</b>
+    and <b>'__return_storage_ptr__'</b> are reserved for the two supported auto-parameter cases.
+    The <b>'this'</b> <i>auto-parameter</i> is imposed by the <i>__thiscall</i> calling convention,
+    while <i>forced-indirect</i> is imposed by certain calling conventions which limit the maximum size
+    of any parameter passed by value.  If <i>forced-indirect</i> is imposed on the return storage, the 
+    <b>'__return_storage_ptr__'</b> <i>auto-parameter</i> will be imposed to allow the function caller
+    to specify a pointer to the full return storage data location.  When using custom storage,
+    it is assumed any <i>auto-parameters</i> will be explicitly defined as normal parameters if applicable.  
+    Within the Program API, <i>auto-parameters</i> may not be directly manipulated and are immutable.
+    </P>
+    
+    <P>The <A href="#Edit_Function">Function Editor</A> is the most affective means of modifying the 
+    function signature either via the Code Browser listing or within the Decompiler</P>
+    
+    <H3>Local Variables</H3>
+    
+    <DIV style="margin-left: 40px;">
+      <P><I>&nbsp;<IMG src="../../shared/note.png">Currently, there is no specific user interface
+      action for creating Local Variables.&nbsp; Stack and register variables will be created
+      automatically when a suitable stack or register reference is created via the user
+      interface.&nbsp; Additionally, the Decompiler's commit actions will create Local Variables as
+      needed.&nbsp;&nbsp;</I> <I>They can also be created programmatically.</I></P>
+    </DIV>
+    
+    <P>In addition to register and stack locations, Local Variables
+    also have the ability to be defined by the Decompiler to reflect temporary storage identified 
+    by a hash value.  Please note that these hash type variables can sometimes not work as expected within the 
+    Decompiler.  In addition, the scope of a local register variable is determined by its <i>first-use-offset</i>
+    which reflects the instruction offset relative to the function entry point at which the variable
+    is first written.  The variable will remain in scope from that point forward until another
+    local variable comes into scope for the same storage location. Local stack variables assume a 
+    <i>first-use-offset</i> of zero (0).</P>
+    
+
+    <H2><A name="DataType"></A>Define Variable Data Type or Function Return Type</H2>
+
+    <BLOCKQUOTE>
+      <P>Variables can be annotated with one of the <A href=
+      "../DataPlugin/Data.htm#DataTypes">built in</A> or <A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">user
+      defined data types</A>. &nbsp;The undefined or previously defined variable will be redefined
+      to the new data type.&nbsp;</P>
+
+      <P>Variable data types, including parameters and return, can be defined one of four ways:</P>
+
+      <UL>
+        <LI>Using right-mouse-click on the return type or a parameter within a function signature
+        displayed within the listing.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Right mouse click on the return type or parameter within the function signature</LI>
+
+          <LI>
+            If the cursor is over the return type, Select <B>Set Data Type</B><IMG src=
+            "../../shared/arrow.gif"> ; if the cursor is over a parameter, select <B>Set Data
+            Type</B><IMG src="../../shared/arrow.gif"> 
+
+            <UL>
+              <LI>The pull right menu lists data types that you have marked as "<A href=
+              "../DataTypeManagerPlugin/data_type_manager_description.htm#Favorites">favorites</A>."</LI>
+
+              <LI>After you apply a data type, this becomes your <A href="#Recently_Used">most
+              recently used data type</A> and is shown on the menu with the 'Y' as the "hot
+              key."</LI>
+            </UL>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>Using right-mouse-click on a parameter, &lt;RETURN&gt; or local variable listed within the function
+        variable listing</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Right mouse click on a parameter, &lt;RETURN&gt; or local variable</LI>
+
+          <LI>
+            Select <B>Set Data Type</B><IMG src="../../shared/arrow.gif"> 
+
+            <UL>
+              <LI>The pull right menu lists data types that you have marked as "<A href=
+              "../DataTypeManagerPlugin/data_type_manager_description.htm#Favorites">favorites</A>."</LI>
+
+              <LI>After you apply a data type, this becomes your <A href="#Recently_Used">most
+              recently used data type</A> and is shown on the menu with the 'Y' as the "hot
+              key."</LI>
+            </UL>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>Using the <I><A href=
+        "../DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A></I> 
+        window (drag and drop)</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>From the Code Browser tool bar select Display Data Types&nbsp; <IMG src=
+          "images/dataTypes.png"> &nbsp; icon</LI>
+
+          <LI>In the <I>Data Type Manager</I> window select the appropriate data type</LI>
+
+          <LI>Drag and Drop the data type onto the target parameter, &lt;RETURN&gt; or local variable in the Code Browser</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI><A href="../DataPlugin/Data.htm#DataCycleGroups">Assigned Quick key</A>,</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <UL type="">
+          <LI>Place the cursor on the target parameter, &lt;RETURN&gt; or local variable</LI>
+
+          <LI>Press a quick key set to specify a data type&nbsp; (i.e., "<I>b"</I>-byte,
+          "<I>p</I>"-pointer, ...)&nbsp;</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_Function">Edit Function</A></H2>
+
+    <BLOCKQUOTE>
+      <P>Once a function has been created, there are many attributes of the function and its
+      parameters that can be changed. The <B>Function Editor Dialog</B> allows you to make those
+      changes. To edit a function do the following:</P>
+
+      <OL>
+        <LI>Place the cursor on a function signature</LI>
+
+        <LI>Right-mouse-click, and select <I>Edit Function</I>.</LI>
+
+        <LI>Edit any attributes of the function using the dialog.</LI>
+
+        <LI>Press <I>OK</I> to save your changes.</LI>
+      </OL>
+
+      <P align="center"><IMG src="images/FunctionEditor.png"><BR>
+      </P>
+
+      <H3>Function Signature Field</H3>
+
+      <P>The area at the top of the dialog is used to show the complete function signature. It
+      will update as you make changes to the various fields in the dialog. </P>
+      <P>You may also use this field to directly edit the signature, but <B>beware</B> that your changes
+      will have to be parsed and the current parser is severely limited.
+      Once you make a change in this field, all the
+      other fields will be disabled temporarily until you complete your changes and press either
+      &lt;TAB&gt; or &lt;RETURN&gt; to continue. You may also complete the edit by clicking outside
+      of the signature field. </P>
+      <P>If the parser fails to successfully parse your changed signature field, a dialog will appear
+      giving you the option to continue typing in the field or aborting your edits in that field. </P>
+		<BLOCKQUOTE>
+	<P><I><IMG src="../../shared/note.png">Due to limitations in the parser, there are many 
+	function signatures that Ghidra supports that you cannot directly enter by typing in the 
+	function signature field.  For example, you cannot use the signature field to enter templated types.
+	Also, the parser currently only supports common datatypes and datatypes that are currently used in your program.
+	To enter more complicated values or find datatypes from open archives, use the more precise controls that the dialog provides.</I></P>
+    </BLOCKQUOTE>
+      <H3>Function Name</H3>
+
+      <P>This text field can be used to change the name of the function.</P>
+
+      <H3>Calling Convention</H3>
+
+      <P>This field is a combobox that allows you to choose a calling convention from the list of
+      known calling conventions for this processor and compiler specification. This choice
+      will have no affect on storage if the <B>Custom Storage</B> checkbox has been selected.</P>
+
+      <H3>Function Attributes</H3>
+
+      <P>This sections contains a set of miscellaneous checkboxes that affect the function.</P>
+
+      <UL>
+        <LI><B>Varargs</B> - sets the function to have a variable number of arguments.</LI>
+
+        <LI><B>In Line</B> - indicates this functions code is placed in line with the calling
+        function.</LI>
+
+        <LI><B>No Return</B> - used to indicate if this function does not return.</LI>
+
+        <LI><B>Use Custom Storage</B> - If selected, the user can edit and change the storage of
+        the return value and the parameters. Otherwise, the storage is deteremind by the selected
+        calling convention.<BR>
+        <BR>
+        </LI>
+      </UL>
+
+      <H3>Parameters/Return Type Table</H3>
+
+      <P>The parameters/return type table allows the user to add or remove parameters as well as changing their
+      names and datatypes. It also displays the return value datatype and storage.
+      Also, if the <B>Use Custom Storage</B> checkbox is selected, the storage
+      of the parameters and return type can be changed.</P>
+
+      <H4>Table fields</H4>
+
+      <UL>
+        <LI><B>Index</B> - indicates its ordinal position in the signature (starts with 1). This field can't be edited
+        directly, but can be affected by the <B>Up</B> and <B>Down</B> buttons. Note: this field
+        is blank for the return value.</LI>
+
+        <LI><B>Datatype</B> - indicates the datatype of the parameter or return type. Clicking on this field will
+        bring up a <A href="../DataTypeEditors/DataTypeSelectionDialog.htm">DataType
+        Chooser Dialog</A>.</LI>
+
+        <LI><B>Name</B> - the name of the parameter. This field can be edited directly in the table
+        cell. Note: the name of the "return value" is &lt;RETURN&gt; and can't be changed.</LI>
+
+        <LI><B>Storage</B> - the storage for the parameter or return value. If the <B>Use Custom Storage</B>
+        checkbox is selected, this field can be edited by clicking on it and bringing up the
+        parameter editor dialog.  If not using custom storage, <i>auto-parameters</i> or <i>forced-indirect</i>
+        storage may be imposed as determined by the selected calling convention and is designated by <b>(auto)</b>
+        or <b>(ptr)</b> with the displayed computed storage.</LI>
+      </UL>
+
+      <H4>Table Buttons</H4>
+
+      <UL>
+        <LI><B>Add</B> - Adds a new parameter to the function</LI>
+
+        <LI><B>Remove</B> - Removes the selected row (parameter) from the table.</LI>
+
+        <LI><B>Up</B> - Moves the selected parameter earlier in the signature.</LI>
+
+        <LI><B>Down</B> - Moves the selected parameter later in the signature.</LI>
+      </UL>
+
+      <H3>Call Fixup</H3>
+
+      <P>This field is a combobox that allows use to use a predefined Call-Fixup. A function may be
+      tagged with a predefined Call-Fixup which can be used to alter/simplify the semantic effect
+      of calling such a function. The available set of predefined Call-Fixups are defined within
+      the compiler specification (*.cspec file) associated with a program. This feature is
+      typically used when the effects of calling a well-known function need to be simplified so
+      that the caller can be more easily analyzed and/or understood.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_Parameter_Storage"></A>Edit Parameter Storage Dialog</H2>
+	<BLOCKQUOTE>
+    <P>This dialog is invoked by clicking on the storage column in the <A href=
+    "#Edit_Function">Edit Function</A> dialog. This dialog allows your to precisely specify the
+    storage of a parameter. The parameter can even be divided amongst multiple storage locations.
+    Each row of the table specifies a storage location used by the parameter.</P>
+
+    <P align="center"><IMG src="images/EditStorage.png"><BR>
+    </P>
+
+    <H3>Size Information</H3>
+
+    <P>The top of the dialog shows two sizes. The <B>Datatype</B> size is the size required to
+    store the parameter based on its current datatype. The <B>Allocated Size</B> shows how much
+    storage as been allocated based on the rows in the table.</P>
+
+    <H3>Storage Table</H3>
+
+    <P>A table of storage locations where each row represents a storage location. You must add
+    enough storage location rows to get enough storage space for the size of the parameters
+    datatype.</P>
+	<BLOCKQUOTE>
+    <H4>Table Columns</H4>
+
+    <UL>
+      <LI><B>Type</B> - the type of storage. Can be either Stack, Register, or Memory. Clicking on
+      the field will bring up a table version of a combo-box.</LI>
+
+      <LI><B>Location</B> - Indicates the specific location for the type. For stack, it will be an
+      integer offset. For register, it will be the name of the register. For memory, it will be the
+      address. Clicking on this field will bring up an editor appropriate for the storage
+      type.</LI>
+
+      <LI><B>Size</B> - The size for this storage. For stack and memory, it will be the number of
+      consecutive bytes to use for this storage. For a register, it will the number of bytes to use
+      within the register, up to the size of the register.</LI>
+    </UL>
+
+    <H4>Table Buttons</H4>
+
+    <UL>
+      <LI><B>Add</B> - Adds a new storage location</LI>
+
+      <LI><B>Remove</B> - Removes the selected row (storage location) from the table.</LI>
+
+      <LI><B>Up</B> - Moves the selected storage location earlier in the allocation.</LI>
+
+      <LI><B>Down</B> - Moves the selected storage location later in the allocation.</LI>
+    </UL>
+	</BLOCKQUOTE>
+	</BLOCKQUOTE>
+    
+    <H2><A name="Create_Function_Definition"></A>Create Function Definition</H2>
+
+    <BLOCKQUOTE>
+      <P>Once you have defined a function, you can make a function signature definition which is a
+      new data type that can be applied to another function so that it has the same signature. The
+      data type appears under the <A href=
+      "../DataTypeManagerPlugin/data_type_manager_window.html#ProgramRootNode">program
+      node</A> in the <I><A href=
+      "../DataTypeManagerPlugin/data_type_manager_description.htm">Manage Data
+      Types</A></I> window.</P>
+
+      <P>To create a function definition, position the cursor on a function signature, right mouse
+      click and select <I>Create Function Definition</I>.</P>
+
+      <P>A new data type is created; the name of the data type is the same name as the
+      function.</P>
+
+      <P>To create a new function signature definition using the one you created, drag the data
+      type from the <I>Data Type Manager</I> window and drop it on the existing function where you
+      want the new function signature to be created.&nbsp;</P>
+
+      <P><I><IMG src="../../shared/note.png">If you attempt to create a function definition on one
+      that you have already defined, nothing happens.</I></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Rename_Variable"></A> <A name="Rename_Function_Variable"></A> Rename Variable</H2>
+
+    <BLOCKQUOTE>
+      <P>Rename Variable will change the name of a variable from its default name to a user-defined
+      name.</P>
+
+      <P>To Rename a Variable,</P>
+
+      <DIV style="margin-left: 2em" type="">
+        <OL start="1" type="1">
+          <LI>Place the cursor on the target variable within the function variable listing</LI>
+
+          <LI>Right-mouse-click, select <B>Function Variables</B><IMG src=
+          "../../shared/arrow.gif"><B>Rename Parameter...</B> or <B>Function Variables</B><IMG src=
+          "../../shared/arrow.gif"><B>Rename Local Variable...</B></LI>
+
+          <LI>Type the new variable name in the dialog and press<B>&lt;Enter&gt;</B>, OR click on
+          the <B>OK</B> button</LI>
+        </OL>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H2><A name="Delete_Function_Variable"></A>Delete Variable</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Delete Variable</I> will remove the target variable from the listing.&nbsp; There is no
+      confirmation with <I>Delete Variable</I>.&nbsp; However, the operation can be undone using
+      the <A href="../Tool/Undo_Redo.htm">Undo operation</A>.</P>
+
+      <P>To delete a variable,</P>
+
+      <DIV style="margin-left: 2em" type="">
+        <OL start="1" type="1">
+          <LI>Place the cursor on the target variable within the function variable listing</LI>
+
+          <LI>Right-mouse-click, select <B>Function Variables</B><IMG src=
+          "../../shared/arrow.gif"><B>Delete Parameter</B> or <B>Function Variables</B><IMG src=
+          "../../shared/arrow.gif"><B>Delete Local Variable</B></LI>
+        </OL>
+      </DIV>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_Variable_Comment"></A>Edit Comment</H2>
+
+    <BLOCKQUOTE>
+      <P>Stack Parameters and Local variables can have comments associated with them.&nbsp; The
+      comment is free form text.&nbsp; If a comment already exists, the comment is modified.</P>
+
+      <P>To add/edit a comment to a variable,</P>
+
+      <OL>
+        <LI>Place the cursor on the target variable</LI>
+
+        <LI>Right-mouse-click, select <I>Edit Comment</I></LI>
+
+        <LI>Enter the comment.</LI>
+
+        <LI>Select <I>OK</I></LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Delete_Function_Variable_Comment"></A>Remove Comment</H2>
+
+    <P>To remove a function variable comment,&nbsp;</P>
+
+    <OL>
+      <LI>Place the cursor on the variable comment</LI>
+
+      <LI>Hit the &lt;<B>Delete</B>&gt; key</LI>
+    </OL>
+
+    <H2><A name="Recently_Used"></A>Recently Used Data Type</H2>
+
+    <P>The data menu shows an option for the data type that was most recently used. By default, the
+    "hot key" assigned to this option is 'y,' however, you can change the key assignment through
+    the <A href="../Tool/ToolOptions_Dialog.htm#KeyBindings_Option">key bindings panel</A>
+    on the <A href="../Tool/ToolOptions_Dialog.htm">Edit Options dialog</A>.&nbsp;</P>
+
+    <P class="providedbyplugin">Provided By: <I>Function</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="../DataTypeEditors/StructureEditor.htm">Data Structure Editor</A></LI>
+
+      <LI><A href="../DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+      Manager</A></LI>
+
+      <LI><A href="Functions.htm">Functions</A></LI>
+    </UL>
+  </BODY>
+</HTML>

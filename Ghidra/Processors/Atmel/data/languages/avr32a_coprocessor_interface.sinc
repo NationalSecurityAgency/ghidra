@@ -1,0 +1,448 @@
+#---------------------------------------------------------------------
+# Coprocessor Interface
+#---------------------------------------------------------------------
+
+# COP decodes the coprocessor number for display purposes
+# because the sleigh "dec" field attribute doesn't exist
+
+COPD: "CP0" is cp13_3=0x0 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP1" is cp13_3=0x1 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP2" is cp13_3=0x2 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP3" is cp13_3=0x3 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP4" is cp13_3=0x4 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP5" is cp13_3=0x5 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP6" is cp13_3=0x6 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+COPD: "CP7" is cp13_3=0x7 & altcp13_3 { tmp:1 = altcp13_3:1; export tmp; }
+
+# CRD decodes the coprocessor number for display purposes
+# because the sleigh "dec" field attribute doesn't exist
+
+CRD: "CR0" is crd8_4=0x0 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR1" is crd8_4=0x1 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR2" is crd8_4=0x2 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR3" is crd8_4=0x3 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR4" is crd8_4=0x4 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR5" is crd8_4=0x5 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR6" is crd8_4=0x6 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR7" is crd8_4=0x7 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR8" is crd8_4=0x8 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR9" is crd8_4=0x9 & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR10" is crd8_4=0xa & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR11" is crd8_4=0xb & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR12" is crd8_4=0xc & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR13" is crd8_4=0xd & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR14" is crd8_4=0xe & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+CRD: "CR15" is crd8_4=0xf & altcrd8_4 { tmp:1 = altcrd8_4:1; export tmp; }
+
+CRX: "CR0" is crx4_4=0x0 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR1" is crx4_4=0x1 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR2" is crx4_4=0x2 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR3" is crx4_4=0x3 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR4" is crx4_4=0x4 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR5" is crx4_4=0x5 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR6" is crx4_4=0x6 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR7" is crx4_4=0x7 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR8" is crx4_4=0x8 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR9" is crx4_4=0x9 & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR10" is crx4_4=0xa & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR11" is crx4_4=0xb & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR12" is crx4_4=0xc & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR13" is crx4_4=0xd & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR14" is crx4_4=0xe & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+CRX: "CR15" is crx4_4=0xf & altcrx4_4 { tmp:1 = altcrx4_4:1; export tmp; }
+
+CRY: "CR0" is cry0_4=0x0 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR1" is cry0_4=0x1 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR2" is cry0_4=0x2 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR3" is cry0_4=0x3 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR4" is cry0_4=0x4 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR5" is cry0_4=0x5 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR6" is cry0_4=0x6 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR7" is cry0_4=0x7 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR8" is cry0_4=0x8 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR9" is cry0_4=0x9 & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR10" is cry0_4=0xa & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR11" is cry0_4=0xb & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR12" is cry0_4=0xc & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR13" is cry0_4=0xd & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR14" is cry0_4=0xe & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+CRY: "CR15" is cry0_4=0xf & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
+
+CPLoadAddress: is rp0=0xf ; eb15   { ldadd = inst_start; } # Rp=PC 
+CPLoadAddress: is rp0     ; eb15   { ldadd = rp0;        } # Rp!=PC
+
+LDCMDinc7:    ",CR14-CR15"     is eb7=1   { tmp:1 = 14; tmpa:1 = 15; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc6:    ",CR12-CR13"     is eb6=1   { tmp:1 = 12; tmpa:1 = 13; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc5:    ",CR10-CR11"     is eb5=1   { tmp:1 = 10; tmpa:1 = 11; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc4:    ",CR8-CR9"     is eb4=1   { tmp:1 = 8; tmpa:1 = 9; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc3:    ",CR6-CR7"     is eb3=1   { tmp:1 = 6; tmpa:1 = 7; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc2:    ",CR4-CR5"     is eb2=1   { tmp:1 = 4; tmpa:1 = 5; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc1:    ",CR2-CR3"     is eb1=1   { tmp:1 = 2; tmpa:1 = 3; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+LDCMDinc0:    ",CR0-CR1"     is eb0=1   { tmp:1 = 0; tmpa:1 = 1; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
+
+
+LDCMWinc15:   ",CR15"    is eb7=1   { tmp:1 = 15; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc14:   ",CR14"    is eb6=1   { tmp:1 = 14; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc13:   ",CR13"    is eb5=1   { tmp:1 = 13; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc12:   ",CR12"    is eb4=1   { tmp:1 = 12; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc11:   ",CR11"    is eb3=1   { tmp:1 = 11; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc10:   ",CR10"    is eb2=1   { tmp:1 = 10; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc9:    ",CR9"     is eb1=1   { tmp:1 = 9; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc8:    ",CR8"     is eb0=1   { tmp:1 = 8; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+
+LDCMWinc7:    ",CR7"     is eb7=1   { tmp:1 = 7; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc6:    ",CR6"     is eb6=1   { tmp:1 = 6; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc5:    ",CR5"     is eb5=1   { tmp:1 = 5; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc4:    ",CR4"     is eb4=1   { tmp:1 = 4; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc3:    ",CR3"     is eb3=1   { tmp:1 = 3; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc2:    ",CR2"     is eb2=1   { tmp:1 = 2; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc1:    ",CR1"     is eb1=1   { tmp:1 = 1; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+LDCMWinc0:    ",CR0"     is eb0=1   { tmp:1 = 0; LoadCoProcessorWord(tmp,ldadd); ldadd = ldadd + 4; }
+
+LDCMWinc15:   is eb7=0  { }
+LDCMWinc14:   is eb6=0  { }
+LDCMWinc13:   is eb5=0  { }
+LDCMWinc12:   is eb4=0  { }
+LDCMWinc11:   is eb3=0  { }
+LDCMWinc10:   is eb2=0  { }
+LDCMWinc9:    is eb1=0  { }
+LDCMWinc8:    is eb0=0  { }
+
+LDCMWinc7:    is eb7=0  { }
+LDCMWinc6:    is eb6=0  { }
+LDCMWinc5:    is eb5=0  { }
+LDCMWinc4:    is eb4=0  { }
+LDCMWinc3:    is eb3=0  { }
+LDCMWinc2:    is eb2=0  { }
+LDCMWinc1:    is eb1=0  { }
+LDCMWinc0:    is eb0=0  { }
+
+LDCMDinc7:    is eb7=0  { }
+LDCMDinc6:    is eb6=0  { }
+LDCMDinc5:    is eb5=0  { }
+LDCMDinc4:    is eb4=0  { }
+LDCMDinc3:    is eb3=0  { }
+LDCMDinc2:    is eb2=0  { }
+LDCMDinc1:    is eb1=0  { }
+LDCMDinc0:    is eb0=0  { }
+
+LDCMpp:      is rd0 ; eb12=0      { }
+LDCMpp: "++" is rd0 ; eb12=1      { rd0 = ldadd; }
+
+LDCMDcommon: LDCMDinc0^LDCMDinc1^LDCMDinc2^LDCMDinc3^LDCMDinc4^LDCMDinc5^LDCMDinc6^LDCMDinc7 is 
+	LDCMDinc0 & LDCMDinc1 & LDCMDinc2 & LDCMDinc3 & LDCMDinc4 & LDCMDinc5 & LDCMDinc6 & LDCMDinc7
+{
+        build LDCMDinc7;
+        build LDCMDinc6;
+        build LDCMDinc5;
+        build LDCMDinc4;
+        build LDCMDinc3;
+        build LDCMDinc2;
+        build LDCMDinc1;
+        build LDCMDinc0;
+}
+
+LDCMWLcommon: LDCMWinc0^LDCMWinc1^LDCMWinc2^LDCMWinc3^LDCMWinc4^LDCMWinc5^LDCMWinc6^LDCMWinc7 is 
+	LDCMWinc0 & LDCMWinc1 & LDCMWinc2 & LDCMWinc3 & LDCMWinc4 & LDCMWinc5 & LDCMWinc6 & LDCMWinc7
+{
+        build LDCMWinc7;
+        build LDCMWinc6;
+        build LDCMWinc5;
+        build LDCMWinc4;
+        build LDCMWinc3;
+        build LDCMWinc2;
+        build LDCMWinc1;
+        build LDCMWinc0;
+}
+
+LDCMWHcommon: LDCMWinc8^LDCMWinc9^LDCMWinc10^LDCMWinc11^LDCMWinc12^LDCMWinc13^LDCMWinc14^LDCMWinc15 is 
+	LDCMWinc8 & LDCMWinc9 & LDCMWinc10 & LDCMWinc11 & LDCMWinc12 & LDCMWinc13 & LDCMWinc14 & LDCMWinc15
+{
+        build LDCMWinc15;
+        build LDCMWinc14;
+        build LDCMWinc13;
+        build LDCMWinc12;
+        build LDCMWinc11;
+        build LDCMWinc10;
+        build LDCMWinc9;
+        build LDCMWinc8;
+}
+
+
+STCMDdec7:    ",CR14-CR15"     is eb7=1   { ldadd = ldadd - 8; tmp:1 = 14; tmpa:1 = 15; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec6:    ",CR12-CR13"     is eb6=1   { ldadd = ldadd - 8; tmp:1 = 12; tmpa:1 = 13; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec5:    ",CR10-CR11"     is eb5=1   { ldadd = ldadd - 8; tmp:1 = 10; tmpa:1 = 11; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec4:    ",CR8-CR9"     is eb4=1   { ldadd = ldadd - 8; tmp:1 = 8; tmpa:1 = 9; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec3:    ",CR6-CR7"     is eb3=1   { ldadd = ldadd - 8; tmp:1 = 6; tmpa:1 = 7; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec2:    ",CR4-CR5"     is eb2=1   { ldadd = ldadd - 8; tmp:1 = 4; tmpa:1 = 5; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec1:    ",CR2-CR3"     is eb1=1   { ldadd = ldadd - 8; tmp:1 = 2; tmpa:1 = 3; storeCoprocessorDword(tmp,tmpa,ldadd); }
+STCMDdec0:    ",CR0-CR1"     is eb0=1   { ldadd = ldadd - 8; tmp:1 = 0; tmpa:1 = 1; storeCoprocessorDword(tmp,tmpa,ldadd); }
+
+
+STCMWdec15:   ",CR15"    is eb7=1   { ldadd = ldadd - 4; tmp:1 = 15; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec14:   ",CR14"    is eb6=1   { ldadd = ldadd - 4; tmp:1 = 14; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec13:   ",CR13"    is eb5=1   { ldadd = ldadd - 4; tmp:1 = 13; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec12:   ",CR12"    is eb4=1   { ldadd = ldadd - 4; tmp:1 = 12; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec11:   ",CR11"    is eb3=1   { ldadd = ldadd - 4; tmp:1 = 11; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec10:   ",CR10"    is eb2=1   { ldadd = ldadd - 4; tmp:1 = 10; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec9:    ",CR9"     is eb1=1   { ldadd = ldadd - 4; tmp:1 = 9; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec8:    ",CR8"     is eb0=1   { ldadd = ldadd - 4; tmp:1 = 8; storeCoprocessorWord(tmp,ldadd); }
+
+STCMWdec7:    ",CR7"     is eb7=1   { ldadd = ldadd - 4; tmp:1 = 7; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec6:    ",CR6"     is eb6=1   { ldadd = ldadd - 4; tmp:1 = 6; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec5:    ",CR5"     is eb5=1   { ldadd = ldadd - 4; tmp:1 = 5; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec4:    ",CR4"     is eb4=1   { ldadd = ldadd - 4; tmp:1 = 4; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec3:    ",CR3"     is eb3=1   { ldadd = ldadd - 4; tmp:1 = 3; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec2:    ",CR2"     is eb2=1   { ldadd = ldadd - 4; tmp:1 = 2; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec1:    ",CR1"     is eb1=1   { ldadd = ldadd - 4; tmp:1 = 1; storeCoprocessorWord(tmp,ldadd); }
+STCMWdec0:    ",CR0"     is eb0=1   { ldadd = ldadd - 4; tmp:1 = 0; storeCoprocessorWord(tmp,ldadd); }
+
+STCMWdec15:   is eb7=0  { }
+STCMWdec14:   is eb6=0  { }
+STCMWdec13:   is eb5=0  { }
+STCMWdec12:   is eb4=0  { }
+STCMWdec11:   is eb3=0  { }
+STCMWdec10:   is eb2=0  { }
+STCMWdec9:    is eb1=0  { }
+STCMWdec8:    is eb0=0  { }
+
+STCMWdec7:    is eb7=0  { }
+STCMWdec6:    is eb6=0  { }
+STCMWdec5:    is eb5=0  { }
+STCMWdec4:    is eb4=0  { }
+STCMWdec3:    is eb3=0  { }
+STCMWdec2:    is eb2=0  { }
+STCMWdec1:    is eb1=0  { }
+STCMWdec0:    is eb0=0  { }
+
+STCMDdec7:    is eb7=0  { }
+STCMDdec6:    is eb6=0  { }
+STCMDdec5:    is eb5=0  { }
+STCMDdec4:    is eb4=0  { }
+STCMDdec3:    is eb3=0  { }
+STCMDdec2:    is eb2=0  { }
+STCMDdec1:    is eb1=0  { }
+STCMDdec0:    is eb0=0  { }
+
+STCMDcommon: STCMDdec0^STCMDdec1^STCMDdec2^STCMDdec3^STCMDdec4^STCMDdec5^STCMDdec6^STCMDdec7 is 
+	STCMDdec0 & STCMDdec1 & STCMDdec2 & STCMDdec3 & STCMDdec4 & STCMDdec5 & STCMDdec6 & STCMDdec7
+{
+        build STCMDdec0;
+        build STCMDdec1;
+        build STCMDdec2;
+        build STCMDdec3;
+        build STCMDdec4;
+        build STCMDdec5;
+        build STCMDdec6;
+        build STCMDdec7;
+}
+
+STCMWLcommon: STCMWdec0^STCMWdec1^STCMWdec2^STCMWdec3^STCMWdec4^STCMWdec5^STCMWdec6^STCMWdec7 is 
+	STCMWdec0 & STCMWdec1 & STCMWdec2 & STCMWdec3 & STCMWdec4 & STCMWdec5 & STCMWdec6 & STCMWdec7
+{
+        build STCMWdec0;
+        build STCMWdec1;
+        build STCMWdec2;
+        build STCMWdec3;
+        build STCMWdec4;
+        build STCMWdec5;
+        build STCMWdec6;
+        build STCMWdec7;
+}
+
+STCMWHcommon: STCMWdec8^STCMWdec9^STCMWdec10^STCMWdec11^STCMWdec12^STCMWdec13^STCMWdec14^STCMWdec15 is 
+	STCMWdec8 & STCMWdec9 & STCMWdec10 & STCMWdec11 & STCMWdec12 & STCMWdec13 & STCMWdec14 & STCMWdec15
+{
+        build STCMWdec8;
+        build STCMWdec9;
+        build STCMWdec10;
+        build STCMWdec11;
+        build STCMWdec12;
+        build STCMWdec13;
+        build STCMWdec14;
+        build STCMWdec15;
+}
+
+
+STCMmm:      is rd0 ; eb12=0      { }
+STCMmm: "--" is rd0 ; eb12=1      { rd0 = ldadd; }
+
+:COP COPD,CRD,CRX,CRY,ctx_coop	is op11_5=0x1c & op4_5=0x1a & op9_2 & op0_4 & ctx_coop; 
+								eop12_1 & COPD & CRD & CRX & CRY [ctx_cohi = op9_2; ctx_comid = op0_4; ctx_colow = eop12_1;] {
+	tmp:1 = ctx_coop;							
+	CoprocessorOp(COPD,CRD,CRX,CRY,tmp);
+}
+
+#---------------------------------------------------------------------
+# LDC.{D,W} - Load Coprocessor
+#---------------------------------------------------------------------
+
+# LDC.{D,W} Format I
+# 1110 1001 1010 pppp   CCC1 DDD0 nnnn nnnn
+
+:LDC.D COPD,CRD,RPwDisp8 is (op4_12=0xe9a;
+                                 eop12_1=0x1 & crd8_1=0x0 & COPD & CRD)
+                                 & RPwDisp8 { 
+	loadCoprocessorDWord(COPD, CRD, RPwDisp8);
+}
+
+# LDC.{D,W} Format II
+# 1110 1111 1010 pppp   CCC0 DDD0 0101 0000
+
+:LDC.D COPD,CRD,RPdDec0 is op4_12=0xefa & RPdDec0;
+                                eop12_1=0x0 & crd8_1=0x0 & eop0_8=0x50
+                                & COPD & CRD {
+	loadCoprocessorDWord(COPD, CRD, RPdDec0);
+}
+
+# LDC.{D,W} Format III
+# NOTE: documentation says bits 16-19 are pppp, but we assume they meant bbbb
+# 1110 1111 1010 bbbb   CCC1 DDD0 01tt iiii
+
+:LDC.D COPD,CRD,RBShift0 is (op4_12=0xefa;
+                                   eop12_1=0x1 & crd8_1=0x0 & eop6_2=0x1
+                                   & COPD & CRD) & RBShift0 {
+	loadCoprocessorDWord(COPD, CRD, RBShift0);
+}
+
+# LDC.{D,W} Format IV
+# 1110 1001 1010 pppp   CCC0 DDDD nnnn nnnn
+
+:LDC.W COPD,CRD,RPwDisp8 is (op4_12=0xe9a;
+                                  eop12_1=0x0 & COPD & CRD) & RPwDisp8 {
+	loadCoprocessorWord(COPD, CRD, RPwDisp8);
+}
+
+# LDC.{D,W} Format V
+# 1110 1111 1010 pppp   CCC1 DDDD 0100 0000
+
+:LDC.W COPD,CRD,RPwDec0 is op4_12=0xefa & RPwDec0;
+                               eop12_1=0x1 & eop0_8=0x40 & COPD & CRD {
+	loadCoprocessorWord(COPD, CRD, RPwDec0);
+}
+
+# LDC.{D,W} Format VI
+# NOTE: documentation says bits 16-19 are pppp, but we assume they meant bbbb
+# 1110 1111 1010 bbbb   CCC1 DDDD 00tt iiii
+
+:LDC.W COPD,CRD,RBShift0 is (op4_12=0xefa;
+                                  eop12_1=0x1 & eop6_2=0x0 & COPD & CRD)
+                                  & RBShift0 {
+	loadCoprocessorWord(COPD, CRD, RBShift0);
+}
+
+#---------------------------------------------------------------------
+# LDC0.{D,W} - Load Coprocessor 0
+#---------------------------------------------------------------------
+
+# LDC0.{D,W} Format I
+# 1111 0011 1010 pppp   nnnn DDD0 nnnn nnnn
+
+:LDC0.D "CP0," CRD,RPwDisp12 is (op4_12=0xf3a; crd8_1=0x0 & CRD) & RPwDisp12 {
+	cp:1 = 0;
+	loadCoprocessorDWord(cp, CRD, RPwDisp12);
+}
+
+# LDC0.{D,W} Format II
+# 1111 0001 1010 pppp   nnnn DDDD nnnn nnnn
+
+:LDC0.W "CP0," CRD,RPwDisp12 is (op4_12=0xf1a; CRD) & RPwDisp12 {
+	cp:1 = 0;
+	loadCoprocessorDWord(cp, CRD, RPwDisp12);
+}
+
+
+:LDCM.D ecop13_3,rp0^LDCMpp^LDCMDcommon  is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x4 & LDCMDcommon) & LDCMpp & CPLoadAddress {
+	build CPLoadAddress;
+	build LDCMDcommon;
+	build LDCMpp;
+}
+
+:LDCM.W ecop13_3,rp0^LDCMpp^LDCMWHcommon is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x1 & LDCMWHcommon) & LDCMpp & CPLoadAddress {
+	build CPLoadAddress;
+	build LDCMWHcommon;
+	build LDCMpp;
+}
+
+:LDCM.W ecop13_3,rp0^LDCMpp^LDCMWLcommon is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x0 & LDCMWLcommon) & LDCMpp & CPLoadAddress {
+	build CPLoadAddress;
+	build LDCMWLcommon;
+	build LDCMpp;
+}
+
+:MVCR.D COPD,rd0,CRD   	is op4_12=0xefa & b0=0x0 & rd0; COPD & eb12=0x0 & CRD & eop0_9=0x10 {
+	CoProcessorDWordToReg(COPD, CRD, rd0);
+}
+:MVCR.W COPD,rd0,CRD   	is op4_12=0xefa & b0=0x0 & rd0; COPD & eb12=0x0 & CRD & eop0_8=0x0 {
+	CoProcessorWordToReg(COPD, CRD, rd0);
+}
+
+:MVRC.D COPD,CRD,rs0   	is op4_12=0xefa & b0=0x0 & rs0; COPD & eb12=0x0 & CRD & eop0_9=0x30 {
+	RegToCoProcessorDWord(COPD, CRD, rs0);
+}
+:MVRC.W COPD,CRD,rs0   	is op4_12=0xefa & b0=0x0 & rs0; COPD & eb12=0x0 & CRD & eop0_9=0x20 {
+	RegToCoProcessorWord(COPD, CRD, rs0);
+}
+
+:STC.D COPD,RPwDisp8,CRD is (op4_12=0xeba;
+                                 eop12_1=0x1 & crd8_1=0x0 & COPD & CRD)
+                                 & RPwDisp8 { 
+	storeCoprocessorDword(COPD, CRD, RPwDisp8);
+}
+
+:STC.D COPD,RPdDec0,CRD is op4_12=0xefa & RPdDec0;
+                                eop12_1=0x0 & crd8_1=0x0 & eop0_8=0x70
+                                & COPD & CRD {
+	storeCoprocessorDword(COPD, CRD, RPdDec0);
+}
+
+:STC.D COPD,RBShift0,CRD is (op4_12=0xefa;
+                                   eop12_1=0x1 & crd8_1=0x0 & eop6_2=0x3
+                                   & COPD & CRD) & RBShift0 {
+	storeCoprocessorDword(COPD, CRD, RBShift0);
+}
+
+:STC.W COPD,RPwDisp8,CRD is (op4_12=0xeba;
+                                  eop12_1=0x0 & COPD & CRD) & RPwDisp8 {
+	storeCoprocessorWord(COPD, CRD, RPwDisp8);
+}
+
+:STC.W COPD,RPwDec0,CRD is op4_12=0xefa & RPwDec0;
+                               eop12_1=0x1 & eop0_8=0x60 & COPD & CRD {
+	storeCoprocessorWord(COPD, CRD, RPwDec0);
+}
+
+:STC.W COPD,RBShift0,CRD is (op4_12=0xefa;
+                                  eop12_1=0x1 & eop6_2=0x2 & COPD & CRD)
+                                  & RBShift0 {
+	storeCoprocessorWord(COPD, CRD, RBShift0);
+}
+
+:STC0.D "CP0," CRD,RPwDisp12 is (op4_12=0xf7a; crd8_1=0x0 & CRD) & RPwDisp12 {
+	cp:1 = 0;
+	storeCoprocessorDword(cp, CRD, RPwDisp12);
+}
+
+:STC0.W "CP0," CRD,RPwDisp12 is (op4_12=0xf5a; CRD) & RPwDisp12 {
+	cp:1 = 0;
+	storeCoprocessorWord(cp, CRD, RPwDisp12);
+}
+
+:STCM.D ecop13_3,STCMmm^rp0^STCMDcommon  is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x5 & STCMDcommon) & STCMmm & CPLoadAddress {
+	build CPLoadAddress;
+	build STCMDcommon;
+	build STCMmm;
+}
+
+:STCM.W ecop13_3,STCMmm^rp0^STCMWHcommon  is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x3 & STCMWHcommon) & STCMmm & CPLoadAddress {
+	build CPLoadAddress;
+	build STCMWHcommon;
+	build STCMmm;
+}
+
+:STCM.W ecop13_3,STCMmm^rp0^STCMWLcommon  is (op4_12=0xeda & rp0 ; ecop13_3 & eop8_4=0x2 & STCMWLcommon) & STCMmm & CPLoadAddress {
+	build CPLoadAddress;
+	build STCMWLcommon;
+	build STCMmm;
+}
+

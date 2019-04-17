@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Listing Background</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+	<META name="generator" content="Microsoft FrontPage 4.0"><STYLE type="text/css">
+
+   </STYLE>
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Listing_Background"></A>Listing Background</H1>
+
+    <BLOCKQUOTE>
+      <P>You can change the background colors of the Listing via context actions or
+      programmatically by using the <I>ColorizingService</I>. Changing specific address range
+      background colors can be useful for many reasons, such as marking areas of interest. Further,
+      coloring can be performed from a script, which allows you to color disassembly during
+      automated processing.</P>
+
+      <P><IMG border="0" src="../../shared/note.png" alt=""> Unlike program selections and
+      highlights, the background colors you set <B>will</B> be saved with the program.</P>
+
+      <H2>Changing Colors</H2>
+
+      <BLOCKQUOTE>
+        <H3>Actions</H3>
+
+        <BLOCKQUOTE>
+          <P><B>Set Color</B> - Available from the listing right-click context menu under the
+          <B>Colors</B> pull-right. This action will show a color chooser dialog that allows you to
+          pick a color to be applied over the current selection or the current address if no
+          selection exists.</P>
+
+          <P><B>Clear Color</B> - Available from the listing right-click context menu under the
+          <B>Colors</B> pull-right. This action allows you to clear the color that has been
+          previously set for the current selection or the current address if no selection
+          exists.</P>
+
+          <P><B>Clear All Colors</B> - Available from the listing right-click context menu under
+          the <B>Colors</B> pull-right. This action will clear all colors applied <B>to the entire
+          program</B>. exists.</P>
+
+          <P><IMG border="0" src="../../shared/note.png" alt="">Any of these actions can be undone
+          using the <A href="help/topics/Tool/Undo_Redo.htm">undo action</A>.</P>
+        </BLOCKQUOTE>
+
+        <H3>Service</H3>
+
+        <BLOCKQUOTE>
+          <P>From a script, using the <TT>GhidraScript</TT> API:<BR>
+          <BR>
+          </P>
+
+          <TABLE border="0">
+            <TR>
+              <TD style="background-color: #DEE3E7;">
+<PRE>
+                                                                <CODE class="code">
+                                                               
+        public void run() throws Exception {
+                setBackgroundColor(anotherAddress, Color.YELLOW);
+                
+                
+                // OR, using a range of addresses
+                
+                // create an address set with values you want to change
+                AddressSet addresses = new AddressSet(currentProgram.getAddressFactory());                     
+                addresses.add(currentAddress.add(10));
+                addresses.add(currentAddress.add(11));
+                addresses.add(currentAddress.add(12));
+
+                setBackgroundColor(addresses, new Color(100, 100, 200));
+        }
+                                                               </CODE> 
+                                                       
+</PRE>
+              </TD>
+            </TR>
+          </TABLE>
+
+          <P>From a script, using the service directly:<BR>
+          <BR>
+          </P>
+
+          <TABLE border="0">
+            <TR>
+              <TD style="background-color: #DEE3E7;">
+<PRE>
+                                                                <CODE class="code">
+                                                               
+        public void run() throws Exception {
+                ColorizingService service = state.getTool().getService(ColorizingService.class);
+                if (service == null) {
+                        println("Can't find ColorizingService service--ColorizingPlugin not installed");       
+                        return;
+                }
+
+                service.setBackgroundColor(currentAddress, currentAddress, new Color(255, 200, 200));
+        }
+                                                               </CODE> 
+                                                       
+</PRE>
+              </TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A name="Color_Navigation"></A>Navigating Colors</H2>
+
+      <BLOCKQUOTE>
+        <H3>Actions</H3>
+
+        <BLOCKQUOTE>
+          <P><B>Next Color Range</B> - Available from the menu bar at <B>Navigation <IMG src=
+          "../../shared/arrow.gif" border="0" alt="-&gt;"> Next Color Range</B> This action will
+          navigate to the next color range at an address larger than the current address. Depending
+          upon the range navigation options, either the bottom of the current range, or the top of
+          next range will be chosen.</P>
+
+          <P><B>Previous Color Range</B> - Available from the menu bar at <B>Navigation <IMG src=
+          "../../shared/arrow.gif" border="0" alt="-&gt;">Previous Color Range</B> This action will
+          navigate to the next color range at an address larger than the current address. Depending
+          upon the range navigation options, either the bottom of the previous range, or the top of
+          the previous range will be chosen.</P>
+
+          <P><IMG border="0" src="../../shared/note.png" alt="">You can change range navigation
+          behavior by editing the <B>Navigation <IMG src="../../shared/arrow.gif" border="0" alt=
+          "-&gt;">Range Navigation</B> <A href="help/topics/Tool/ToolOptions_Dialog.htm">tool
+          options</A>.</P>
+        </BLOCKQUOTE>
+
+        <H3>Markers</H3>
+
+        <BLOCKQUOTE>
+          <P>You can also navigate to color ranges via the Listing's <A href=
+          "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">navigation
+          markers</A>.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">Provided by: <I>Colorizing</I> plugin</P>
+
+      <P class="relatedtopic">Related Topics:</P>
+
+      <UL>
+        <LI><A href="CodeBrowser.htm">Listing</A></LI>
+      </UL>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

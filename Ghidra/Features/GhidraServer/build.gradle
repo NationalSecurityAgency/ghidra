@@ -1,0 +1,287 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features GhidraServer'
+
+def yajswRelease = "yajsw-stable-12.12"
+
+configurations {
+	runGhidraServer
+}
+
+dependencies {
+	compile project(":FileSystem")
+	compile project(":DB")
+	compile project(":Generic")
+	
+	runGhidraServer project
+}
+
+addExports([
+	'java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED'
+])
+
+CopySpec yajswCopySpec = copySpec {
+	from(zipTree("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")) {
+		include "${yajswRelease}/lib/core/**"
+		include "${yajswRelease}/lib/extended/**"
+		include "${yajswRelease}/templates/**"
+		include "${yajswRelease}/*.jar"
+		include "${yajswRelease}/doc/**"
+		include "${yajswRelease}/LICENSE.txt"
+		include "${yajswRelease}/yajsw.policy.txt"
+	}
+}
+// Unpack YAJSW archive into build/data for development use
+task yajswDevUnpack(type:Copy) {
+	description "Unpack YAJSW archive for development use"
+	group "Development Preparation"
+
+	with yajswCopySpec
+	destinationDir file("build/data")
+}
+/*********************************************************************************
+ * CLASSPATH FRAGMENT FILE: Production
+ *
+ * This task creates a file, 'GhidraServer/build/classpath.fragment', 
+ * which contains all classpath info necessary for running the server in 
+ * production mode.
+ *
+ * The basic conops is this:
+ *		1. Loop over each lib in the runGhidraServer configuration.
+ *		2. For each, find the location of that library in our distribution.
+ *			a. 	Search the artifacts in the parent project (GhidraServer)
+ *			b. 	If not found, loop over all dependent projects, searching their
+ *				artifacts.
+ *		3. Put the path in the output file.
+ *********************************************************************************/
+task generateGhidraServerClasspath {
+	description "Generate a configuration fragment for the Ghidra Server's classpath (release)"
+		
+	File outfile = file("${buildDir}/classpath.frag")
+	outputs.file outfile
+	
+	// Force the task to be executed every time by setting to false.
+	outputs.upToDateWhen { false }
+	
+	doLast {		
+		outfile.parentFile.mkdirs()
+		outfile.withPrintWriter { out ->
+			int idx = 0
+			configurations.runGhidraServer.each { jarFile ->	
+				if (!jarFile.path.contains("/libsForBuild/")) {			
+					def JAR_PATH = rootProject.relativePath(jarFile.absolutePath)
+					File distPath = file("/")
+					String resPath
+					for (Configuration conf : project.getConfigurations()) {
+						resPath = findJarInDistribution(project, conf, jarFile)
+						if (resPath != null) {
+							out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${resPath}")
+							break
+						}
+					}
+				}						
+			}
+		}
+	}
+}
+
+/**
+ * The classpath.frag file created below needs to be placed in the common folder under the root
+ * path of this project.
+ *
+ * Note that we use 'this.project' to reference the GhidraServer project - this is because
+ * inside the closure, 'project' refers to the root project, while 'this' refers to 
+ * GhidraServer.
+ */
+rootProject.assembleCommon { 
+	into (getZipPath(this.project)  + "/data") {
+		with yajswCopySpec
+		from generateGhidraServerClasspath
+	}
+}
+
+/*********************************************************************************
+ * CLASSPATH FRAGMENT FILE: Developer
+ *
+ * This task creates a file, 'GhidraServer/build/dev-meta/classpath.fragment', 
+ * which contains all classpath info necessary for running the server in 
+ * dev mode.
+ *
+ * All items in the classpath will have the form:
+ *		wrapper.java.classpath.1=${ghidra_home}/<path-to-jar>
+ *
+ * The items we gather are pulled exclusively from the 'runGhidraServer' configuration,
+ * which is essentially the 'runtime' config + the GhidraServer jar.
+ *
+ *********************************************************************************/
+task generateDevGhidraServerClasspath {
+	description "Generate a configuration fragment for the Ghidra Server's classpath (development)"
+
+	File outfile = file("${buildDir}/dev-meta/classpath.frag")
+	outputs.file outfile
+	
+	// Force the task to be executed every time by setting to false.
+	outputs.upToDateWhen { false }
+	
+	doLast {
+		outfile.parentFile.mkdirs()
+		outfile.withPrintWriter { out ->
+			int idx = 0
+			configurations.runGhidraServer.each { jarFile ->
+				def JAR_PATH = rootProject.relativePath(jarFile.absolutePath).replace('\\','/')
+				def index = JAR_PATH.indexOf("build/")
+				if (index != -1) {
+					JAR_PATH = JAR_PATH.substring(0, index) + "bin/main"
+				}
+				if (!jarFile.path.contains("/libsForBuild/")) {
+					out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${JAR_PATH}")
+				}
+			}
+		}
+	}
+}
+
+
+/*****************************************************************************************
+ * We want the two main tasks in this build file to be run at the appropriate time; the  
+ * dev task should be run during prepDev; the other should be run during the build       
+ *****************************************************************************************/
+prepDev.dependsOn(generateDevGhidraServerClasspath)
+prepDev.dependsOn(yajswDevUnpack)
+//compileJava.dependsOn(generateGhidraServerClasspath)
+
+
+/*********************************************************************************
+ * Searches the artifacts of a given configuration for a given jar.  If 
+ * found, constructs a path to that jar ralative to the given project.
+ *
+ * Note that we have to check both the given configuration, AND the resolved
+ * configuration to ensure we find all possible matches. 
+ *********************************************************************************/
+def String searchArtifactsForJar (proj, conf, jarFile) {
+	
+	if (conf == null) {
+		return null
+	}
+			
+	String resolution = null
+	
+	PublishArtifactSet artifacts = conf.getArtifacts()
+	artifacts.getFiles().each { f ->
+		if (jarFile.equals(f)) {
+			String path = rootProject.relativePath(proj.projectDir) + "/lib/" + f.name
+			resolution = path
+		}
+	}
+		
+	if (artifacts.isEmpty()) {
+		if (conf.isCanBeResolved()) {
+			ResolvedConfiguration resolvedConfiguration = conf.getResolvedConfiguration()
+			Set<ResolvedArtifact> resolvedArtifacts = resolvedConfiguration.getResolvedArtifacts()
+			for (ResolvedArtifact resolvedArtifact : resolvedArtifacts) {
+				if (resolvedArtifact.getFile().equals(jarFile)) {
+					Project artifactProject = getProjectForArtifact(resolvedArtifact)
+					if (artifactProject != null) {
+						String path = rootProject.relativePath(artifactProject.projectDir) + "/lib/" + resolvedArtifact.getFile().name
+						resolution = path
+					}
+					break;
+				}		
+			}
+		}
+	}
+	
+	return resolution
+}
+
+/*********************************************************************************
+ * Returns the Project associated with a given ResolvedArtifact.
+ *********************************************************************************/
+def Project getProjectForArtifact(resolvedArtifact) {
+
+	ResolvedModuleVersion moduleVersion = resolvedArtifact.getModuleVersion()
+	ModuleVersionIdentifier versionIdent = moduleVersion.getId()
+	String moduleName = versionIdent.getName()
+	Project project = rootProject.findProject(moduleName)
+	
+	return project
+}
+
+/*********************************************************************************
+ * Searches the files of the given configuration for the given jar.  If found, 
+ * constructs a path to that jar ralative to the given project.
+ * 
+ * Note that we hvae to use the resolved configuration here; if we don't have 
+ * access to this, the file is not available.
+ *********************************************************************************/
+def String searchFilesForJar (proj, conf, jar) {
+
+	if (conf == null) {
+		return null
+	}
+	
+	String resolution = null
+	
+	if (conf.isCanBeResolved()) {
+		ResolvedConfiguration rc = conf.getResolvedConfiguration()
+		rc.getFiles().each { f ->
+			if (jar.equals(f)) {
+				resolution = rootProject.relativePath(proj.projectDir) + "/lib/" + f.name		
+			}
+		}
+	}
+	
+	return resolution
+}
+
+
+/*********************************************************************************
+ * Searches all dependencies of a given configuration for a particular jar 
+ * file. 
+ *
+ * Note that there are two types of dependencies we have to check here: project
+ * dependencies and normal files. The former requires that we recursively check
+ * all the artifacts and dependencies of that project; the latter is just a check
+ * of a list of files.
+ *********************************************************************************/
+def String searchDependenciesForJar (proj, conf, jarFile) {
+		
+	String relPath = null
+	
+	Set<ProjectDependency> projectDependencies = conf.getAllDependencies().withType(ProjectDependency) 
+	for (ProjectDependency dependency : projectDependencies) {
+		Project dependencyProject = dependency.getDependencyProject()
+		Configuration depProjectConf = dependencyProject.getConfigurations().getByName(conf.getName())
+		relPath = findJarInDistribution(dependencyProject, depProjectConf, jarFile);
+		if (relPath != null) {
+			return relPath;
+		}
+	}
+		
+	relPath = searchFilesForJar(proj, conf, jarFile)
+	return relPath
+}
+
+/*********************************************************************************
+ * Finds the location of a given jar in our distribution and returns the path 
+ * (relative to the root project).
+ *
+ * To do this, first search the artifacts of the project and if it's not found, 
+ * search all dependencies. 
+ *********************************************************************************/
+def String findJarInDistribution(proj, conf, jarFile) {
+							
+	if (conf == null) {
+		return null
+	}
+	
+	String path = null
+		
+	path = searchArtifactsForJar(proj, conf, jarFile)
+	
+	if (path == null) {
+		path = searchDependenciesForJar(proj, conf, jarFile)
+	}
+	
+	return path
+}
+

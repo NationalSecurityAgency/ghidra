@@ -1,0 +1,305 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Function ID</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="next" href="FunctionIDPlugin.html" title="Function ID Plug-in">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Function ID</th></tr>
+<tr>
+<td width="20%" align="left"></td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="FunctionIDPlugin.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="FunctionID"></a>Function ID</h1></div></div></div>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/FIDmatch.png" align="middle" width="723" height="267"></td></tr></table></div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="overview"></a>Overview</h2></div></div></div>
+<p>
+Function ID is an analyzer that performs function identification analysis on a program. For each
+function, the analyzer computes a hash of its body and uses this as a key to look up matching
+functions in an indexed database of known software. The recovered function name,
+and other meta-data about the <span class="emphasis"><em>library</em></span> it is contained in, is applied to the program.
+</p>
+<p>
+Function ID is suitable for identifying statically linked libraries or other software
+where the compiled form of the functions does not change. Because of the hashing strategy,
+functions remain identifiable even if the library is relocated during linking.
+Larger changes to the compilation process of the library however
+will likely prevent successful searches.
+Function ID databases are necessarily targeted to a specific processor.
+</p>
+<p>
+Function ID generally runs as part of <span class="bold"><strong>Auto Analysis</strong></span> but can
+also be initiated at any time
+by the user from the <span class="bold"><strong>One Shot</strong></span> menu. Ghidra also comes
+with a <a class="xref" href="FunctionIDPlugin.html" title="Function ID Plug-in"><i>Function ID Plug-in</i></a>, which provides more
+control over which databases to apply, and allows users to create and populate their
+own databases.
+</p>
+<p>
+By default, Ghidra ships with databases that search for statically linked libraries
+from Microsoft Visual Studio for the x86 processor. These have been broken apart into
+separate Function ID databases, based on 32-bit or 64-code and the version of Visual Studio.
+Within each database, there are a two library variants -- one for debug versions and one for production.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472630336"></a>Hashing</h3></div></div></div>
+<p>
+Function ID works by calculating a cumulative hash over all the machine <span class="emphasis"><em>instructions</em></span>
+that make up the body of a function. For each function, two different 64-bit hashes are computed: a
+<span class="bold"><strong>full hash</strong></span> and a <span class="bold"><strong>specific hash</strong></span>.
+Both schemes hash the individual instructions of the function body in address order, but they
+differ in the amount of information they include from each instruction.
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>full hash</strong></span></span></dt>
+<dd><p>
+        This hash includes the mnemonic and some of the addressing mode information
+        from an instruction. Specific register operands are also included as
+        part of the hash, but the specific value of constant operands are not.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>specific hash</strong></span></span></dt>
+<dd><p>
+        This hash includes everything used in the full hash but may also include
+        the specific values of any constant operands. A heuristic is employed that
+        attempts to determine if the constant is not part of an address, in which
+        case the value is accumulated into the hash.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+<p>
+Both hashes are used to identify matches in a database. The <span class="bold"><strong>full hash</strong></span>
+is robust against changes due to linking; the <span class="bold"><strong>specific hash</strong></span>
+helps distinguish between closely related variants of a function.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472620992"></a>Parents and Children</h3></div></div></div>
+<p>
+When Function ID examines a function, its parent and child functions are also considered
+as a way of disambiguating multiple matches. For example, suppose two functions have identical
+sequences of instructions, except they each call to a different subfunction. In this situation,
+the full hashes of the functions will be identical, but the system will try to match the hash of one of
+the two subfunctions, allowing it to distinguish between the two.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472619376"></a>Libraries</h3></div></div></div>
+<p>
+Within a Function ID database, functions are grouped into <span class="emphasis"><em>libraries</em></span>,
+which are intended to be recognizable named software components
+that get linked into larger programs. A <span class="bold"><strong>Library</strong></span> has the following meta-data.
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Name</strong></span></span></dt>
+<dd><p>
+      This is a general descriptive name for the library.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Version</strong></span></span></dt>
+<dd><p>
+      If there is a formal version number for the library, this
+      field will hold this value as a string.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Variant</strong></span></span></dt>
+<dd><p>
+      Version information that cannot be encoded in the formal
+      <span class="emphasis"><em>Version</em></span> field
+      can be encoded in this field. This is used typically for 
+      <span class="emphasis"><em>compiler settings</em></span>, which affect Function ID
+      hashes but don't make sense in a version string describing the
+      source code.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+<p>
+Generally, the analyzer is able to report all three fields describing the
+library for any function match it finds. In the case where a
+database contains multiple versions of the same library, it's common for
+a function to match into two or more libraries that differ in their
+<span class="emphasis"><em>Version</em></span> or <span class="emphasis"><em>Variant</em></span> field. In this case,
+the analyzer will still report a single match but will leave off the fields it
+couldn't distinguish.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472607824"></a>Single Matches</h3></div></div></div>
+<p>
+A <span class="bold"><strong>Single Match</strong></span> for a function occurs under the following conditions:
+  </p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">The analyzer can narrow down potential matches to a single function name.</li>
+<li class="listitem">The function does not already have an imported or user-defined name.</li>
+<li class="listitem">The number of instructions in the function exceeds the <span class="emphasis"><em>instruction count threshold.</em></span>
+</li>
+</ul></div></div>
+<p>
+Even if there are multiple potential matches in the database, the first condition may still hold
+because they all share the same base function name.
+The second condition does not need to apply if the "Always apply FID labels" option is
+toggled on (See <a class="xref" href="FunctionID.html#analysisoptions" title="Analysis Options">&#8220;Analysis Options&#8221;</a>). The number of instructions is computed as
+the <span class="emphasis"><em>match score</em></span> and can include counts of instructions in parent or child functions.
+For details about the match score and thresholds, see <a class="xref" href="FunctionID.html#scoring" title="Scoring and Disambiguation">&#8220;Scoring and Disambiguation&#8221;</a>.
+</p>
+<p>
+If there is a Single Match, the analyzer will:
+  </p>
+<div class="informalexample"><div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem">Apply the function name as a symbol.</li>
+<li class="listitem">Insert a comment describing the matching library.</li>
+<li class="listitem">Add a <span class="emphasis"><em>Function ID Analyzer</em></span> bookmark.</li>
+</ol></div></div>
+<p>
+Both the inserted comment and bookmark will include the phrase "Single Match".
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="multiplematches"></a>Multiple Matches</h3></div></div></div>
+<p>
+If the analyzer is not able to narrow down to a single function name,
+even after applying all of its disambiguation logic, then the reporting
+behavior depends on the remaining match scores. If they are too small
+the matches are deemed to be random, and nothing is reported at all.
+Otherwise, a <span class="bold"><strong>Multiple Match</strong></span> is reported.
+In this case, multiple symbols and comments will be inserted, one for
+each remaining match, up to an arbitrary limit. All the
+comments will contain the phrase "Multiple Matches".
+</p>
+</div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="analysisoptions"></a>Analysis Options</h2></div></div></div>
+<p>
+This analyzer appears under the heading <span class="bold"><strong>Function ID</strong></span>
+in the dialog listing the standard analyzers whenever the user elects to auto-analyze
+a new program upon import, or by selecting <span class="bold"><strong>Auto Analyze</strong></span>
+under the Code Browser's <span class="bold"><strong>Analysis</strong></span> menu. From this dialog, users can
+toggle whether the analyzer is active or not, and if
+<span class="bold"><strong>Function ID</strong></span> is selected and toggled on, the dialog
+presents some configurable options for the analyzer.
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Instruction count threshold</strong></span></span></dt>
+<dd><p>
+      This is the <span class="bold"><strong>primary threshold</strong></span> a potential
+      match must exceed in order to be reported by
+      the analyzer. This defends against
+      <span class="emphasis"><em>false positives</em></span> caused by randomly matching
+      small functions. Roughly,
+      the score counts the number of instructions in the
+      function plus instructions in any matching parent or child.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Multiple match threshold</strong></span></span></dt>
+<dd><p>
+      In general for a single function, if there are multiple potential matches
+      all with different names, this is a good sign that the matches are random,
+      and the analyzer will not report a match. But if the match score exceeds
+      this threshold, the analyzer will report a <span class="emphasis"><em>Multiple Match</em></span>.
+      (See <a class="xref" href="FunctionID.html#multiplematches" title="Multiple Matches">&#8220;Multiple Matches&#8221;</a>)
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Always apply FID labels</strong></span></span></dt>
+<dd><p>
+      If this toggle is on, the analyzer will report matches even if there is
+      already an imported or user defined name for the function.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Create Analysis Bookmarks</strong></span></span></dt>
+<dd><p>
+      The analyzer will only create bookmarks for matches if this toggle is on.
+      This does not affect insertion of comments and symbols.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="scoring"></a>Scoring and Disambiguation</h2></div></div></div>
+<p>
+The Function ID analyzer assigns a <span class="bold"><strong>match score</strong></span> to
+each of the potential matches it discovers in its database. The score is used
+both to filter matches which are too small to be significant and to disambiguate
+between potential matches.
+</p>
+<p>
+The basic unit of the score is a single matching instruction with no constant
+operands, which receives a score of 1.0. Certain instructions, such as calls and
+<span class="emphasis"><em>no operation</em></span> instructions are assigned a score of zero.
+Constant operands, in the rare case that they match via the <span class="emphasis"><em>specific hash</em></span>,
+contribute an additional 0.67 units per operand.
+</p>
+<p>
+Once a potential match is discovered, it is assigned a score based on:
+  </p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">Instructions in the body of the function.</li>
+<li class="listitem">Constant operands that match in the body of the function.</li>
+<li class="listitem">Instructions in the body of any child function that also has a match.</li>
+<li class="listitem">Instructions in the body of any parent function that also has a match.</li>
+</ul></div></div>
+<p>
+Once scores are assigned, potential matches are filtered based on the
+<span class="emphasis"><em>instruction count threshold</em></span> (See <a class="xref" href="FunctionID.html#analysisoptions" title="Analysis Options">&#8220;Analysis Options&#8221;</a>).
+This helps prevent small functions that randomly match database entries
+from being reported. Note however that a small
+function can still be correctly reported if its parent or child functions also have matches,
+increasing its overall score.
+If there are still more than one potential match, the highest assigned score is
+used to filter out matches with lower scores.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472572880"></a>Matching Function Names</h3></div></div></div>
+<p>
+If there are still multiple potential matches once thresholds have been applied to the
+match scores, the remaining matches will be grouped based on function names. If
+two potential matches share the same function name, they are grouped together.
+If the remaining matches can all be placed into a group sharing a single name, the result will
+still be reported as a "Single Match".
+</p>
+<p>
+Function names are considered to match if their <span class="emphasis"><em>base</em></span> names match.
+The base name is obtained by stripping off any namespace from the symbol plus any initial underscores.
+If the name is mangled, an attempt is made to demangle it first, then namespace and
+parameter information is stripped.
+</p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left"></td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="FunctionIDPlugin.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Function ID </td>
+<td width="20%" align="center"></td>
+<td width="40%" align="right" valign="top"> Function ID Plug-in</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

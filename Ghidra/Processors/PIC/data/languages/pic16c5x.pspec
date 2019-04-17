@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <data_space space="DATA"/>
+  <volatile outputop="write_sfr" inputop="read_sfr">
+    <range space="DATA" first="0x1" last="0x1"/>
+    <range space="DATA" first="0x5" last="0x7"/>
+  </volatile>
+  <register_data>
+    <register name="STATUS" group="STATUS"/>
+    <register name="PA" group="STATUS"/>
+    <register name="PC" group="PC"/>
+    <register name="PCL" group="PC"/>
+  </register_data>
+  <default_symbols>
+    <symbol name="Reset" address="CODE:0000" entry="true"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="GPR" start_address="DATA:00" mode="rw" length="0x80" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

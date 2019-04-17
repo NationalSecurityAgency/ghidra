@@ -1,0 +1,227 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Clipboard</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="ClipboardPlugin"></A>Clipboard</H1>
+
+    <P>Ghidra includes clipboard support so that data and code can easily be transferred in and out
+    of your project. The Ghidra clipboard supports copying and pasting in a variety of formats
+    (achieved by executing the <A href="#Copy_Special"><I>Copy Special...</I></A> command). Each
+    window defines its own behavior for how the clipboard will function and what types of data will
+    be copied.</P>
+
+    <P>The Code Browser supports the following copy formats:&nbsp;</P>
+
+    <UL>
+      <LI><A href="#LabelsComments">Labels and Comments</A></LI>
+
+      <LI><A href="#FormattedCode">Formatted Code</A></LI>
+
+      <LI><A href="#ByteString">Byte String</A></LI>
+
+      <LI><A href="#ByteString_NoSpaces">Byte String (no spaces)</A></LI>
+    </UL>
+
+    <P>The default copy operation in the Code Browser (achieved by executing the <A href=
+    "#Copy"><I>Copy</I></A> command), however, will copy either selected text or the specific field
+    under the cursor, depending upon the current selection and cursor location in the browser.</P>
+
+    <UL>
+      <LI>If there is a selection, then that selection's text will be copied.</LI>
+
+      <LI>
+        If there is no selection, then a copy <B>may</B> take place, depending upon the field under
+        the cursor (this works for the Code Browser only). The following list of fields support
+        copying:
+
+        <UL>
+          <LI>Operand Field Reference</LI>
+
+          <LI>Label Field</LI>
+
+          <LI>Comment Field</LI>
+
+          <LI>Address Field</LI>
+
+          <LI>Bytes Field</LI>
+        </UL>
+      </LI>
+    </UL>
+
+    <P>To do the default copy, make a selection in the Code Browser, right mouse click and choose
+    the <B>Copy</B> option.</P>
+
+    <P>In order to copy labels and comments, right-click from within the Code Browser, Click
+    <B><I>Copy Special...</I></B>, and choose the format you would like to copy. The last selected
+    format is also available from the right-click popup menu.</P>
+
+    <P>The clipboard supports the following operations:</P>
+
+    <UL>
+      <!--
+              <li><i><b>Cut</b></i> - Cuts the currently selected items.  This is equivalent to copy, but the items will be moved when pasted.</li>
+              -->
+
+      <LI><I><B>Copy</B></I> - Copies selected items onto the clipboard.</LI>
+
+      <LI><I><B>Paste</B></I> - Pastes the clipboard contents to the current location.</LI>
+
+      <LI><I><B>Copy Special...</B></I> - Allows for a copy operation where the type/format copied
+      is specified by the user.</LI>
+      <!-- <li><i><b>Paste Special...</b></i> - Allows for a paste operation where the type/format copied is specified by the user.</li> -->
+    </UL>
+
+    <P>The clipboard allows for data to be both copied locally (within Ghidra) or onto the system
+    clipboard. Data copied onto the system clipboard may be accepted by other applications.</P>
+
+    <H2>Default Operations</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Copy"></A><IMG src="images/page_white_copy.png"> &nbsp;&nbsp;Copy</H3>
+
+      <P>Copies the currently selected items. The behavior will be dependent on the specific window
+      you copy from. Generally, copy means to place a copy of whatever is selected onto the
+      clipboard so that it can be pasted in another location within Ghidra or to another
+      application. The copy action can be triggered via the context menu that appears when you
+      right-click.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Paste"></A><IMG src="images/page_paste.png"> &nbsp;&nbsp;Paste</H3>
+
+      <P>Pastes the clipboard contents to the current location. The behavior will be dependent on
+      the specific window you paste to. Generally, paste means to insert a copy of whatever is on
+      the clipboard to the location the cursor is currently at. Unlike the cut and copy actions,
+      the paste action is always enabled because it cannot be notified of clipboard changes. If you
+      attempt to paste and the data on the clipboard is not compatible with the window you pasted
+      in, you will receive an error message. The paste action can be triggered via the context menu
+      that appears when you right-click.</P>
+    </BLOCKQUOTE>
+
+    <H2>Custom Operations</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Copy_Special"></A>Copy Special</H3>
+
+      <CENTER>
+        <IMG src="images/CopySpecial.png">
+      </CENTER>
+
+      <P>The copy special dialog allows you to copy the selected information in a specific format.
+      You can trigger the copy special dialog via the context menu that appears when you
+      right-click. When the dialog appears, it will contain a list of the currently available
+      formats. Choose the format you want and click <B>OK</B> to copy the selected information to
+      the clipboard.</P>
+
+      <P>The last selected format from the copy special dialog will appear on the popup menu along
+      with the standard copy and paste operations (it is only visible when the last selected format
+      is applicable). This feature allows you to repeatedly copy the same format quickly from
+      either the menu or by binding a key to it. To specify a key binding, select <B>Edit</B><IMG
+      border="0" src="../../shared/arrow.gif"><b>Tool Options</B>, click on <CODE>Key Bindings</CODE>,
+      and choose the action for which you want to define a key. The action for repeat copying of
+      the last format is called <CODE>Copy Special Again</CODE>. When available, the popup menu
+      appears as follows:</P>
+
+      <CENTER>
+        <IMG src="images/CopySpecialAgain.png">
+      </CENTER>
+    </BLOCKQUOTE>
+
+    <H2>Supported Windows</H2>
+
+    <BLOCKQUOTE>
+      <H3>Listing</H3>
+
+      <P>The Code Browser <B>Listing</B> window can copy the following formats:</P>
+
+      <UL>
+        <LI><B>Formatted Code<A name="FormattedCode"></A></B> - Copies text from the selected
+        blocks in the Code Browser to the clipboard. The spacing and formatting are preserved as
+        much as possible. The plain text can easily be pasted into a text processor. <B>This is the
+        default copy format</B>.</LI>
+
+        <LI><B>Labels and Comments</B> <A name="LabelsComments"></A> - Copies the labels and
+        comments from the selected blocks in the Code Browser to the clipboard. These can be pasted
+        to another part of the program or to another open Code Browser, however, there is no
+        external application that will paste the labels and comments. If you are pasting labels at
+        a location where a default label exists, then the default label will be removed. Also, a
+        default label cannot be pasted. Trying to paste a default label will result in no
+        change.</LI>
+
+        <LI><B>Byte String<A name="ByteString"></A></B> - Copies the bytes from the selected blocks
+        in the Code Browser to the clipboard as text. These can be pasted to another part of the
+        program (provided the area pasted to is undefined) or to an external application that
+        supports pasting byte strings. Often, hex editors will be able to paste this format.</LI>
+
+        <LI><B>Byte String (No Spaces)</B> <A name="ByteString_NoSpaces"></A> - This is the same as
+        the Byte String format, except there are no delimiting spaces between bytes.</LI>
+
+        <LI><B>Address</B> - Copies the address at the top of the selection.</LI>
+      </UL>
+
+      <P>The Code Browser <B>Listing</B> window can paste the following formats:</P>
+
+      <UL>
+        <LI><B>Labels and Comments</B> - Labels and comments can be pasted anywhere in the
+        program.</LI>
+
+        <LI><B>Byte String</B> - Any string of text bytes can be pasted into an undefined region of
+        the program. White space will be ignored.</LI>
+
+        <LI><B>Label String</B> - Available when a default copy was performed while there was no
+        text selection. This value can be pasted onto a label or comment.</LI>
+
+        <LI><B>Comment String</B> - Available when a default copy was performed while there was no
+        text selection. This value can be pasted onto a comment.</LI>
+
+        <LI><B>Byte String</B> - Available when a default copy was performed while there was no
+        text selection. This value can be pasted onto a comment.</LI>
+
+        <LI><B>Address String</B> - Available when a default copy was performed while there was no
+        text selection. This value can be pasted onto a comment.</LI>
+      </UL>
+
+      <P>The paste is able to determine the type of data on the clipboard and will paste the
+      appropriate type when it is triggered.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3>Bytes in Memory</H3>
+
+      <P>The Byte Viewer <B>Bytes In Memory</B> window can copy the following formats:</P>
+
+      <UL>
+        <LI><B>Byte String</B> - Copies the bytes from the selected blocks in the Code Browser to
+        the clipboard as text. These can be pasted to another part of the program (provided the
+        area pasted to is undefined) or to an external application that supports pasting byte
+        strings. Often, hex editors will be able to paste this format. <B>This is the default copy
+        format</B>.</LI>
+
+        <LI><B>Byte String (No Spaces)</B> - This is the same as the Byte String format, except
+        there are no delimiting spaces between bytes.</LI>
+      </UL>
+
+      <P>The Byte Viewer <B>Bytes In Memory</B> window can paste the following formats:</P>
+
+      <UL>
+        <LI><B>Byte String</B> - Any string of text bytes can be pasted into an undefined region of
+        the program. White space will be ignored.</LI>
+      </UL>
+
+      <P>The paste is able to determine the type of data on the clipboard and will paste the
+      appropriate type when it is triggered.</P>
+    </BLOCKQUOTE>
+
+    <P>&nbsp;</P>
+    <BR>
+  </BODY>
+</HTML>

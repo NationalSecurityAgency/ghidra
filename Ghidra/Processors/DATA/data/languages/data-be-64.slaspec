@@ -1,0 +1,5 @@
+@define ENDIAN  "big"
+
+@define RAMSIZE "8"
+
+@include "data.sinc"

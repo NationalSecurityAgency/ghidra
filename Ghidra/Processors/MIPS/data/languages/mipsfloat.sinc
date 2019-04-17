@@ -1,0 +1,1244 @@
+
+############################
+#
+# MIPS Floating Point (COP1 - coprocessor 1) instructions
+#       includes arithmetic, compares, branch on FP condition flag, conversions
+# Also Coprocessor 0 instructions
+#
+# Note a MIPS word is 32-bits, and a long is a 64-bit integer
+#
+# mipsP6float.sinc contains floating point instructions that are in pre-Release 6 but not in Release 6
+#
+# mipsR6float.sinc contains floating point instructions that are in Release 6 and later
+#
+############################
+
+define pcodeop mipsFloatPS;
+
+# 0100 01ff fff0 0000 ssss sddd dd00 0101
+:abs.S fd, fs               is $(AMODE) & prime=17 & fct=5 & fmt1 & format=0x10 & fs & fd {
+	fd[0,32] = abs( fs:4 );
+}
+:abs.D fd, fs               is $(AMODE) & prime=17 & fct=5 & fmt1 & format=0x11 & fs & fd & fsD & fdD {
+    fdD = abs(fsD);
+}
+:abs.PS fd, fs               is $(AMODE) & REL6=0 & prime=17 & fct=5 & fmt1 & fs & fd & format=0x16 & fdD & fsD {
+    fdD = mipsFloatPS(fsD);
+}
+
+# 0100 01ff ffft tttt ssss sddd dd00 0000
+:add.S fd, fs, ft           is $(AMODE) & prime=17 & fct=0 & fmt1 & format=0x10 & ft & fs & fd {
+    fd_tmp:4 = fs:4 f+ ft:4;
+    fd[0,32] = fs:4 f+ ft:4;
+}
+:add.D fd, fs, ft           is $(AMODE) & prime=17 & fct=0 & fmt1 & format=0x11 & ft & fs & fd & ftD & fsD & fdD {
+    fdD = fsD f+ ftD;
+}
+:add.PS fd, fs, ft           is $(AMODE) & REL6=0 & prime=17 & fct=0 & fmt1 & ft & fs & fd & format=0x16 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 1010
+:ceil.l.S fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0A & fmt2 & fd & fs & format=0x10 & fdD {
+    # Note this instruction is in release 2 and later
+    fd_tmp:4 = ceil(fs:4); # Note that ceil returns a float the same size as its argument
+    fdD = trunc(fd_tmp); # Note that trunc converts a float to an integer
+}
+
+:ceil.l.D fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0A & fmt2 & fd & fs & format=0x11 & fsD & fdD {
+    # Note this instruction is in release 2 and later
+    fsD_tmp:8 = ceil(fsD); # Note that ceil returns a float the same size as its argument
+    fdD = trunc(fsD_tmp); # Convert to 64-bit integer
+}
+# 0100 01ff fff0 0000 ssss sddd dd00 1110
+:ceil.w.S fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0E & fmt2 & fd & fs & format=0x10 {
+    fs_ceil_tmp:4 = ceil(fs:4); # Note that ceil returns a float the same size as its argument
+    fd[0,32] = trunc( ceil(fs:4) );
+}
+:ceil.w.D fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0E & fmt2 & fd & fs & format=0x11 & fsD {
+    fs_tmp:8 = ceil(fsD); # Note that ceil returns a float the same size as its argument
+    fd[0,32] = trunc( fs_tmp ); # Need to set only 32 bits of fd
+}
+
+# 0100 0100 010t tttt ssss s000 0000 0000
+:cfc1 RT, fs_unk                    is $(AMODE) & prime=17 & copop=2 & RT & fs_unk & bigfunct=0 {    
+    tmp:4 = getCopControlWord( 1:1, fs_unk:4 );
+    RT = sext(tmp);
+}
+:cfc1 RT, fs_fcr                is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 { 
+    RT = sext(fs_fcr);
+}
+# Since we don't track the state of the FCSR bits, no sense in introducing complex code
+#:cfc1 RT, fs_fcr               is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=25 & bigfunct=0 {  
+#    tmp1:4 = (fcsr & 0x00800000) >> 23;  
+#    tmp2:4 = (fcsr & 0xfe000000) >> 24;
+#    RT = sext(tmp2 + tmp1);
+#}
+#:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=26 & bigfunct=0 {
+#    tmp1:4 = fcsr & 0x0003f07c;   
+#    RT = sext(tmp1);
+#}
+#:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=28 & bigfunct=0 {
+#    tmp1:4 = fcsr & 0x00000f83;
+#    tmp2:4 = (fcsr & 0x01000000) >> 24;  
+#    RT = sext(tmp1 + tmp2);
+#}
+#:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=31 & bigfunct=0 {
+#    RT = sext(fcsr);
+#}
+
+# 0100 0100 110t tttt ssss s000 0000 0000
+:ctc1 RTsrc, fs_unk             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_unk & bigfunct=0 {    
+    setCopControlWord( 1:1, fs_unk:4, RTsrc );
+}
+:ctc1 RTsrc, fs_fcr             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 {    
+    fs_fcr = RTsrc:$(SIZETO4);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd10 0001
+:cvt.d.S fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x21 & fmt3 & fd & fs & format=0x10 & fdD {
+    # Convert from single float to double float
+    fdD = float2float(fs:4);
+}
+:cvt.d.W fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x21 & fmt3 & fd & fs & format=0x14 & fdD {
+    # Convert from 32-bit int word source to double float
+    fs_tmp:4 = fs:4;
+    fdD = int2float(fs_tmp);
+}
+:cvt.d.L fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x21 & fmt3 & fd & fs & format=0x15 & fdD & fsD {
+    # Note this instruction is in release 2 and later
+    # Convert from 64-bit long source to double float
+    fdD = int2float(fsD);
+}
+# 0100 01ff fff0 0000 ssss sddd dd10 0101
+:cvt.l.S fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x25 & fmt2 & fd & fs & format=0x10 & fdD {
+    # Note this instruction is in release 2 and later
+    # Convert from single float source to 64-bit long integer, using the fcsr RM rounding mode bits
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    fs_tmp:4 = fs:4; # Get the lower 32-bits as a floating point single
+    fs_cvt_tmp:4 = 0;
+    if (rm_tmp == 0) goto <do_round>;
+      fs_cvt_tmp = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fs_cvt_tmp = round(fs_tmp); # round returns a float
+    <done>
+    fdD = trunc(fs_cvt_tmp); # trunc returns an integer
+}
+:cvt.l.D fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x25 & fmt2 & fd & fs & format=0x11 & fsD & fdD {
+    # Note this instruction is in release 2 and later
+    # Convert from double float to 64-bit long integer, using fcsr RM rounding mode bits
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      fd_tmp:8 = floor(fsD); # RM is 1, no rounding
+      goto <done>;
+    <do_round>
+      fd_tmp = round(fsD);
+    <done>
+    fdD = trunc(fd_tmp);
+}
+# 0100 0110 000t tttt ssss sddd dd10 0110
+:cvt.PS.S fd, fs, ft            is $(AMODE) & REL6=0 & prime=0x11 & format=0x10 & fct=0x26 & fd & fs & ft & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd10 0000
+:cvt.s.D fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x20 & fmt4 & fd & fs & format=0x11 & fsD {
+    fd[0,32] = float2float(fsD);
+}
+:cvt.s.W fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x20 & fmt4 & fd & fs & format=0x14 {
+    fd[0,32] = int2float(fs:4);
+}
+:cvt.s.L fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x20 & fmt4 & fd & fs & format=0x15 & fsD {
+    # Note this instruction is in release 2 and later
+    fd[0,32] = int2float(fsD);
+}
+# 0100 0110 1100 0000 ssss sddd dd10 1000
+:cvt.s.pl fd, fs                is $(AMODE) & REL6=0 & prime=0x11 & format=0x16 & ft=0x0 & fct=0x28 & fd & fs & fdD & fsD {
+    fdD = mipsFloatPS(fsD);
+}
+# 0100 0110 1100 0000 ssss sddd dd10 0000
+:cvt.s.pu fd, fs                is $(AMODE) & REL6=0 & prime=0x11 & format=0x16 & ft=0x0 & fct=0x20 & fd & fs & fdD & fsD {
+    fdD = mipsFloatPS(fsD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd10 0100
+:cvt.w.S fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x24 & fmt2 & fd & fs & format=0x10 {
+    # Convert from single float source to 32-bit integer word, using the fcsr RM rounding mode bits
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    fs_tmp:4 = fs:4;
+    fs_cvt_tmp:4 = 0;
+    if (rm_tmp == 0) goto <do_round>;
+      fs_cvt_tmp = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fs_cvt_tmp = round(fs_tmp); # round returns a float
+    <done>
+    fd[0,32] = trunc(fs_cvt_tmp);	# trunc returns an integer
+}
+:cvt.w.D fd, fs             is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x24 & fmt2 & fd & fs & format=0x11 & fsD {
+    # Convert from double float source to 32-bit integer word, using the fcsr RM rounding mode bits
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      fs_tmp:8 = floor(fsD); # RM is 1, no rounding
+      goto <done>;
+    <do_round>
+      fs_tmp = round(fsD);
+    <done>
+    fd[0,32] = trunc(fs_tmp);
+}
+
+# 0100 01ff ffft tttt ssss sddd dd00 0011
+:div.S fd, fs, ft           is $(AMODE) & prime=17 & fct=3 & fmt2 & ft & fs & fd & format=0x10 {
+    fd[0,32] = fs:4 f/ ft:4;
+}
+:div.D fd, fs, ft           is $(AMODE) & prime=17 & fct=3 & fmt2 & ft & fs & fd & format=0x11 & fdD & fsD & ftD {
+    fdD = fsD f/ ftD;
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 1011
+:floor.l.S fd, fs           is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0B & fmt2 & fd & fs & format=0x10 & fdD {
+    # Note this instruction is in release 2 and later
+    # Convert floor of single float to a 64-bit long integer
+    fd_tmp:4 = floor(fs:4); # returns a float
+    fdD = trunc(fd_tmp);  # converts float to int
+}
+:floor.l.D fd, fs           is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0B & fmt2 & fd & fs & format=0x11 & fdD & fsD {
+    # Note this instruction is in release 2 and later
+    fsD_tmp:8 = floor(fsD);
+    fdD = trunc(fsD_tmp);
+}
+# 0100 01ff fff0 0000 ssss sddd dd00 1111
+:floor.w.S fd, fs           is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0F & fmt2 & fd & fs & format=0x10 {
+    # Floor of single float copied to a 32-bit integer word
+    fd_tmp:4 = floor(fs:4); # returns a float
+    fd = trunc(fd_tmp);  # converts float to int
+}
+:floor.w.D fd, fs           is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0F & fmt2 & fd & fs & format=0x11 & fsD {
+    # Floor of double float to a 32-bit integer word
+    fd[0,32] = trunc(floor(fsD));
+}
+
+# 1101 01bb bbbt tttt iiii iiii iiii iiii
+:ldc1 ft, OFF_BASE              is $(AMODE) & prime=53 & OFF_BASE & ft & ftD {
+    ftD = *[ram]:8 OFF_BASE;
+}
+
+# 1111 01bb bbbt tttt iiii iiii iiii iiii
+:sdc1 ft, OFF_BASE              is $(AMODE) & prime=61 & OFF_BASE & ft & ftD {
+    *[ram]:8 OFF_BASE = ftD;
+}
+
+# 1100 01bb bbbt tttt iiii iiii iiii iiii
+:lwc1 ft, OFF_BASE              is $(AMODE) & prime=49 & OFF_BASE & ft {        
+    ft[0,32] = *[ram]:4 OFF_BASE;
+}
+
+# 0100 0100 000t tttt ssss s000 0000 0000
+:mfc1 RT, fs                    is $(AMODE) & prime=17 & copop=0 & RT & fs & bigfunct=0 {
+    # Move just a word, 32-bits
+    RT = sext( fs:$(SIZETO4) );
+}
+
+# 0100 0100 011t tttt ssss s000 0000 0000
+:mfhc1 RT, fs                   is $(AMODE) & prime=17 & copop=3 & bigfunct=0 & RT & fs & fsD {
+    RT = sext(fsD[32,32]);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 0110
+:mov.S fd, fs               is $(AMODE) & prime=17 & fct=6 & fmt1 & fs & fd & format=0x10 {
+    fd[0,32] = fs:4;
+}
+:mov.D fd, fs               is $(AMODE) & prime=17 & fct=6 & fmt1 & fs & fd & format=0x11 & fdD & fsD {
+    fdD = fsD;
+}
+:mov.PS fd, fs               is $(AMODE) & REL6=0 & prime=17 & fct=6 & fmt1 & fs & fd & format=0x16 & fsD & fdD {
+    fdD = mipsFloatPS(fsD);
+}
+
+# 0100 0100 100t tttt dddd d000 0000 0000
+:mtc1 RTsrc, fs                 is $(AMODE) & prime=17 & copop=4 & RTsrc & fs & bigfunct=0 {
+    # Move 32-bits of RTsrc to Low Half of FPR fs
+	fs[0,32] = RTsrc:$(SIZETO4);
+}
+
+# 0100 0100 111t tttt ssss s000 0000 0000
+:mthc1 RTsrc, fs                is $(AMODE) & prime=17 & copop=0x07 & bigfunct=0x0 & RTsrc & fs & fsD {
+    # Move 32-bits of RTsrc to High Half of FPR
+    fsD[32,32] = RTsrc:4;
+}
+
+# 0100 01ff ffft tttt ssss sddd dd00 0010
+:mul.S fd, fs, ft           is $(AMODE) & prime=17 & fct=2 & fmt1 & ft & fs & fd & format=0x10 {
+    fd[0,32] = fs:4 f* ft:4; # need to only get the single float 32-bit (fs might be 64-bits)
+}
+:mul.D fd, fs, ft           is $(AMODE) & prime=17 & fct=2 & fmt1 & ft & fs & fd & format=0x11 & fdD & fsD & ftD {
+    fdD = fsD f* ftD;
+}
+:mul.PS fd, fs, ft           is $(AMODE) & REL6=0 & prime=17 & fct=2 & fmt1 & ft & fs & fd & format=0x16 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 0111
+:neg.S fd, fs               is $(AMODE) & prime=17 & fct=7 & fmt1 & fs & fd & format=0x10 {
+    fd[0,32] = f- fs:4;
+}
+:neg.D fd, fs               is $(AMODE) & prime=17 & fct=7 & fmt1 & fs & fd & format=0x11 & fdD & fsD {
+    fdD = f- fsD;
+}
+:neg.PS fd, fs               is $(AMODE) & REL6=0 & prime=17 & fct=7 & fmt1 & fs & fd & format=0x16 & fsD & fdD {
+    fdD = mipsFloatPS(fsD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd01 0101
+:recip.S fd, fs             is $(AMODE) & prime=17 & ft=0 & fct=21 & fmt2 & fd & fs  & format=0x10 {
+    fd[0,32] = 1:4 f/ fs:4;
+}
+:recip.D fd, fs             is $(AMODE) & prime=17 & ft=0 & fct=21 & fmt2 & fd & fs  & format=0x11 & fdD & fsD {
+    fdD = 1:8 f/ fsD;
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 1000
+:round.l.S fd, fs           is $(AMODE) & prime=17 & ft=0 & fct=8 & fmt2 & fd & fs & format=0x10 & fdD {
+    # Note this instruction is in release 2 and later
+    fd_tmp:4 = round(fs:4);  # round returns a float of the same size are the arg
+    fdD = trunc(fd_tmp);     # trunc converts to any size integer
+}
+:round.l.D fd, fs           is $(AMODE) & prime=17 & ft=0 & fct=8 & fmt2 & fd & fs &format=0x11 & fsD & fdD {
+    # Note this instruction is in release 2 and later
+    fsD_tmp:8 = round(fsD);
+    fdD = trunc(fsD_tmp);
+}
+# 0100 01ff fff0 0000 ssss sddd dd00 1100
+:round.w.S fd, fs           is $(AMODE) & prime=17 & ft=0 & fct=12 & fmt2 & fd & fs & format=0x10 {
+    fd_tmp:4 = round(fs:4);
+    fd = trunc(fd_tmp);
+}
+:round.w.D fd, fs           is $(AMODE) & prime=17 & ft=0 & fct=12 & fmt2 & fd & fs & format=0x11 & fsD {
+    fdD_tmp:8 = round(fsD); # round returns a float, not an int
+    fd[0,32] = trunc(fdD_tmp); # We need only a 32-bit integer
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd01 0110
+:rsqrt.S fd, fs             is $(AMODE) & prime=17 & ft=0 & fct=22 & fmt2 & fd & fs & format=0x10 {
+    fd[0,32] = 1:4 f/ sqrt(fs:4);
+}
+:rsqrt.D fd, fs             is $(AMODE) & prime=17 & ft=0 & fct=22 & fmt2 & fd & fs & format=0x11 & fdD & fsD {
+    fdD = 1:8 f/ sqrt(fsD);
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 0100
+:sqrt.S fd, fs              is $(AMODE) & prime=17 & ft=0 & fct=4 & fmt2 & fd & fs & format=0x10 {
+    fd[0,32] = sqrt(fs:4);
+}
+:sqrt.D fd, fs              is $(AMODE) & prime=17 & ft=0 & fct=4 & fmt2 & fd & fs & format=0x11 & fsD & fdD {
+    fdD = sqrt(fsD);
+}
+
+# 0100 01ff ffft tttt ssss sddd dd00 0001
+:sub.S fmt1 fd, fs, ft           is $(AMODE) & prime=17 & fct=1 & fmt1 & ft & fs & fd & format=0x10 {
+    fd[0,32] = fs:4 f- ft:4;
+}
+:sub.D fmt1 fd, fs, ft           is $(AMODE) & prime=17 & fct=1 & fmt1 & ft & fs & fd & format=0x11 & fdD & fsD & ftD {
+    fdD = fsD f- ftD;
+}
+:sub.PS fmt1 fd, fs, ft           is $(AMODE) & REL6=0 & prime=17 & fct=1 & fmt1 & ft & fs & fd & format=0x16 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 1110 01bb bbbt tttt iiii iiii iiii iiii
+:swc1 ft, OFF_BASE              is $(AMODE) & prime=57 & OFF_BASE & ft { 
+    *[ram]:4 OFF_BASE = ft:$(SIZETO4); 
+}
+
+# 0100 01ff fff0 0000 ssss sddd dd00 1001
+:trunc.l.S fd, fs           is $(AMODE) & prime=17 & cop1code=0 & fmt2 & fs & fd & fct=9 & format=0x10 & fdD {
+    # Note this instruction is in release 2 and later
+    fd = trunc(fs:4);
+}
+:trunc.l.D fd, fs           is $(AMODE) & prime=17 & cop1code=0 & fmt2 & fs & fd & fct=9 & format=0x11 & fdD & fsD {
+    # Note this instruction is in release 2 and later
+    fdD = trunc(fsD);
+}
+# 0100 01ff fff0 0000 ssss sddd dd00 1101
+:trunc.w.S fd, fs           is $(AMODE) & prime=17 & cop1code=0 & fmt2 & fs & fd & fct=13 & format=0x10 {
+    fd[0,32] = trunc(fs:4);
+}
+:trunc.w.D fd, fs           is $(AMODE) & prime=17 & cop1code=0 & fmt2 & fs & fd & fct=13 & format=0x11 & fsD {
+    fd[0,32] = trunc(fsD);
+}
+
+############################
+#
+# COP1X (Extended FP)
+#
+############################
+
+# 0100 11ss ssst tttt ssss sddd dd01 1110
+:alnv.PS fd, fs, ft, rs         is $(AMODE) & REL6=0 & prime=0x13 & fct=0x1E & rs & ft & fs & fd & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 11bb bbbi iiii 0000 0ddd dd00 0001
+:ldxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x01 & INDEX_BASE & fd & fdD {   
+    fdD = *[ram]:8 INDEX_BASE;
+}
+
+# 0100 11bb bbbi iiii 0000 0ddd dd00 0101
+:luxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x05 & INDEX_BASE & fd & fdD {
+    ptr:$(ADDRSIZE) = INDEX_BASE & -16:$(ADDRSIZE);          
+    fdD = *[ram]:8 ptr;
+}
+
+# 0100 11bb bbbi iiii 0000 0ddd dd00 0000
+:lwxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x0  & INDEX_BASE & fd {
+    fd[0,32] = *[ram]:4 INDEX_BASE;
+}
+
+# 0100 11rr rrrt tttt ssss sddd dd10 0fff
+:madd.S fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x04 & fmt5 & fd & fr & fs & ft & format1X=0x0 {
+    fd[0,32] = (fs:4 f* ft:4) f+ fr:4; # must do floating arithmetic in 32 bit
+}
+:madd.D fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x04 & fmt5 & fd & fr & fs & ft &
+				format1X=0x1 & fdD & fsD & frD & ftD {
+    fdD = (fsD f* ftD) f+ frD;
+}
+:madd.PS fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x04 & fmt5 & fd & fr & fs & ft & format1X=0x6 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 11rr rrrt tttt ssss sddd dd10 1fff
+:msub.S fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x05 & fmt5 & fd & fr & fs & ft & format1X=0x0 {
+    fd[0,32] = (fs:4 f* ft:4) f- fr:4; # must do floating arithmetic in 32 bit
+}
+:msub.D fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x05 & fmt5 & fd & fr & fs & ft &
+				format1X=0x1 & fdD & fsD & ftD & frD {
+    fdD = (fsD f* ftD) f- frD;
+}
+:msub.PS fd, fr, fs, ft      is $(AMODE) & REL6=0 & prime=0x13 & op4=0x05 & fmt5 & fd & fr & fs & ft & format1X=0x6 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 11rr rrrt tttt ssss sddd dd11 0fff
+:nmadd.S fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x06 & fmt5 & fd & fr & fs & ft & format1X=0x0 {
+    fd[0,32] = f- (fs:4 f* ft:4) f+ fr:4; # must do floating arithmetic in 32 bit
+}
+:nmadd.D fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x06 & fmt5 & fd & fr & fs & ft &
+				format1X=0x1 & fdD & fsD & ftD & frD {
+    fdD = f- ((fsD f* ftD) f+ frD);
+}
+:nmadd.PS fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x06 & fmt5 & fd & fr & fs & ft & format1X=0x6 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 11rr rrrt tttt ssss sddd dd11 1fff
+:nmsub.S fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x07 & fmt5 & fd & fr & fs & ft & format1X=0x0 {
+    fd[0,32] = f- (fs:4 f* ft:4) f- fr:4; # must do floating arithmetic in 32 bit
+}
+:nmsub.D fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x07 & fmt5 & fd & fr & fs & ft &
+				format1X=0x1 & fdD & fsD & ftD & frD {
+    fdD = f- ((fsD f* ftD) f- frD);
+}
+:nmsub.PS fd, fr, fs, ft     is $(AMODE) & REL6=0 & prime=0x13 & op4=0x07 & fmt5 & fd & fr & fs & ft & format1X=0x6 & ftD & fsD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 11bb bbbi iiii hhhh h000 0000 1111
+:prefx hint, INDEX_BASE         is $(AMODE) & REL6=0 & prime=0x13 & zero5=0x0 & fct=0x0F & hint & INDEX_BASE {
+    prefetch(INDEX_BASE, hint:1); 
+}
+# 0100 11bb bbbi iiii ssss s000 0000 1001
+:sdxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero5=0x0 & fct=0x09 & fs & fsD & INDEX_BASE {
+    *[ram]:8 INDEX_BASE = fsD;
+}
+# 0100 11bb bbbi iiii ssss s000 0000 1101
+:suxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=19 & fct=13 & INDEX_BASE & fs & fsD {
+    INDEX_BASE = INDEX_BASE & 0xfffffffffffffff0;          
+    *[ram]:8 INDEX_BASE = fsD;    
+}
+# 0100 11bb bbbi iiii ssss s000 0000 1000
+:swxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=19 & INDEX_BASE & fs & fd=0 & fct=8  {
+    *[ram]:4 INDEX_BASE = fs:$(SIZETO4);    
+}
+####
+#
+# Pre-6 semantics
+#
+####
+# 0100 0101 000c cc00 iiii iiii iiii iiii
+:bc1f Rel16                     is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc=0 & nd=0 & tf=0 & Rel16 {
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    delayslot(1);
+    if (tmp != 0) goto inst_next;
+    goto Rel16;
+}
+:bc1f cc,Rel16                  is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc & nd=0 & tf=0 & Rel16 {
+    # tmp:1 = getFpCondition(cc:1);  # Note that other cc conditions are not implemented
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    delayslot(1);
+    if (tmp != 0) goto inst_next;
+    goto Rel16;
+}
+# 0100 0101 000c cc10 iiii iiii iiii iiii
+:bc1fl Rel16                    is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc=0 & nd=1 & tf=0 & Rel16 {
+    tmp:1 = fcsr[23,1];
+    if (tmp != 0) goto inst_next;
+    delayslot(1);
+    goto Rel16;
+}
+:bc1fl cc,Rel16                 is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc & nd=1 & tf=0 & Rel16 {
+    # tmp:1 = getFpCondition(cc:1);
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    if (tmp != 0) goto inst_next;
+    delayslot(1);
+    goto Rel16;
+}
+
+# 0100 0101 000c cc01 iiii iiii iiii iiii
+:bc1t Rel16                     is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc=0 & nd=0 & tf=1 & Rel16 {
+    tmp:1 = fcsr[23,1];
+    delayslot(1);
+    if (tmp == 0) goto inst_next;
+    goto Rel16;
+}
+:bc1t cc,Rel16                  is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc & nd=0 & tf=1 & Rel16 {
+    # tmp:1 = getFpCondition(cc:1);
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    delayslot(1);
+    if (tmp == 0) goto inst_next;
+    goto Rel16;
+}
+# 0100 0101 000c cc11 iiii iiii iiii iiii
+:bc1tl Rel16                    is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc=0 & nd=1 & tf=1 & Rel16 {
+    tmp:1 = fcsr[23,1];
+    if (tmp == 0) goto inst_next;
+    delayslot(1);
+    goto Rel16;
+}
+:bc1tl cc,Rel16                 is $(AMODE) & REL6=0 & prime=17 & copop=8 & cc & nd=1 & tf=1 & Rel16 {
+    # tmp:1 = getFpCondition(cc:1);
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    if (tmp == 0) goto inst_next;
+    delayslot(1);
+    goto Rel16;
+}
+
+# The pre-release 6 floating point compare instructions, c.condn.S or .D, set the fcsr bit 23
+
+macro trapIfNaN(x1, x2) { }
+macro trapIfSNaN(x1, x2) { }
+
+:c.f.S fs, ft               is $(AMODE) & REL6=0 & prime=17 & fct=48 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = 0; # Always false
+}
+:c.f.D fs, ft               is $(AMODE) & REL6=0 & prime=17 & fct=48 & fmt1 & format=0x11 & fs & ft & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = 0;
+}
+:c.f.PS fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=48 & fmt1 & fs & ft & format=0x16 & ftD & fsD & fdD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.un.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=49 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = nan(fs:4) || nan(ft:4); # True if operands are NaN
+}
+:c.un.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=49 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = nan(fsD) || nan(ftD);
+}
+:c.un.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=49 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.eq.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=50 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f== ft:4);
+}
+:c.eq.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=50 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f== ftD);
+}
+:c.eq.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=50 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ueq.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=51 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f== ft:4);
+}
+:c.ueq.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=51 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f== ftD);
+}
+:c.ueq.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=51 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.olt.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=52 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f< ft:4);
+}
+:c.olt.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=52 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f< ftD);
+}
+:c.olt.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=52 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ult.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=53 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f< ft:4) || nan(fs:4) || nan(ft:4); # Less than or NaN
+}
+:c.ult.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=53 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f< ftD) || nan(fsD) || nan(ftD);
+}
+:c.ult.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=53 & fmt1 & fs & ft & format=0x16  & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ole.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=54 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f<= ft:4);
+}
+:c.ole.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=54 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f<= ftD);
+}
+:c.ole.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=54 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ule.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=55 & fmt1 & format=0x10 & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f<= ft:4) || nan(fs:4) || nan(ft:4); # Less than or equal or NaN
+}
+:c.ule.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=55 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f<= ftD) || nan(fsD) || nan(ftD);
+}
+:c.ule.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=55 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+# The pre-release 6 floating point compare instructions that trap if either operand is NaN (either QNaN or SNaN)
+
+:c.sf.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=56 & fmt1 & fs & ft & format=0x10 {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = 0; # Always false
+}
+:c.sf.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=56 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = 0;
+}
+:c.sf.PS fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=56 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ngle.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=57 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = nan(fs:4) || nan(ft:4);
+}
+:c.ngle.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=57 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = nan(fsD) || nan(ftD);
+}
+:c.ngle.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=57 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.seq.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=58 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f== ft:4);
+}
+:c.seq.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=58 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f== ftD);
+}
+:c.seq.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=58 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ngl.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=59 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f== ft:4) || nan(fs:4) || nan(ft:4);
+}
+:c.ngl.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=59 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f== ftD) || nan(fsD) || nan(ftD);
+}
+:c.ngl.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=59 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.lt.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=60 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f< ft:4);
+}
+:c.lt.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=60 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f< ftD);
+}
+:c.lt.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=60 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.nge.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=61 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f< ft:4) || nan(fs:4) || nan(ft:4);
+}
+:c.nge.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=61 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f< ftD) || nan(fsD) || nan(ftD);
+}
+:c.nge.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=61 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.le.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=62 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f<= ft:4);
+}
+:c.le.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=62 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f<= ftD);
+}
+:c.le.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=62 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+:c.ngt.S fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=63 & fmt1 & format=0x10 & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fcsr[23,1] = (fs:4 f<= ft:4) || nan(fs:4) || nan(ft:4); # Less than or equal or NaN
+}
+:c.ngt.D fs, ft              is $(AMODE) & REL6=0 & prime=17 & fct=63 & fmt1 & fs & ft & format=0x11 & fsD & ftD {
+    trapIfNaN(fsD, ftD);
+    fcsr[23,1] = (fsD f<= ftD) || nan(fsD) || nan(ftD);
+}
+:c.ngt.PS fs, ft             is $(AMODE) & REL6=0 & prime=17 & fct=63 & fmt1 & fs & ft & format=0x16 & ftD & fsD {
+    fcsr[23,1] = mipsFloatPS(fsD, ftD);
+}
+
+# 0000 00ss sssc cc00 dddd d000 0000 0001
+:movf RD, RSsrc, cc             is $(AMODE) & REL6=0 & prime=0 & nd=0 & tf=0 & zero5=0 & fct=1 & RD & RSsrc & cc  {
+    # Move if FP condition flag is false
+    tmp:1 = fcsr[23,1];
+    if (tmp != 0) goto <done>;
+    RD = RSsrc;
+    <done>
+}
+
+# 0100 01ff fffc cc00 ssss sddd dd01 0001
+:movf.S fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=0 & fct=17 & fmt1 & fd & fs & cc & format=0x10 {
+    # Move if FP condition flag is false
+    tmp:1 = fcsr[23,1];
+    if (tmp != 0) goto <done>;
+    fd[0,32] = fs:4;
+    <done>
+}
+:movf.D fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=0 & fct=17 & fmt1 & fd & fs & cc & format=0x11 & fdD & fsD {
+    # Move if FP condition flag is false
+    tmp:1 = fcsr[23,1];
+    if (tmp != 0) goto <done>;
+    fdD = fsD;
+    <done>
+}
+:movf.PS fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=0 & fct=17 & fmt1 & fd & fs & cc & format=0x16 & fsD & fdD {
+    fdD = mipsFloatPS(fcsr[23,1], fsD);
+}
+
+# 0100 01ff ffft tttt ssss sddd dd01 0011
+:movn.S fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=19 & fmt1 & fd & fs & RTsrc & format=0x10 {
+    if (RTsrc == 0) goto <done>;
+    fd[0,32] = fs:4;
+    <done>
+}
+:movn.D fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=19 & fmt1 & fd & fs & RTsrc & format=0x11 & fdD & fsD {
+    if (RTsrc == 0) goto <done>;
+    fdD = fsD;
+    <done>
+}
+:movn.PS fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=19 & fmt1 & fd & fs & RTsrc & format=0x16 & fsD & fdD {
+    fdD = mipsFloatPS(fcsr[23,1], fsD);
+}
+
+# 0000 00ss sssc cc01 dddd d000 0000 0001
+:movt RD, RSsrc, cc             is $(AMODE) & REL6=0 & prime=0 & nd=0 & tf=1 & zero5=0 & fct=1 & RD & RSsrc & cc  {
+    # Move if FP condition flag is true
+    tmp:1 = fcsr[23,1];
+    if (tmp != 1) goto <done>;
+    RD = RSsrc;
+    <done>
+}
+
+# 0100 01ff fffc cc01 ssss sddd dd01 0001
+:movt.S fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=1 & fct=17 & fmt1 & fd & fs & cc & format=0x10 {
+    # Move if FP condition flag is true
+    tmp:1 = fcsr[23,1];
+    if (tmp != 1) goto <done>;
+    fd[0,32] = fs:4;
+    <done>
+}
+:movt.D fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=1 & fct=17 & fmt1 & fd & fs & cc & format=0x11 & fdD & fsD {
+    # Move if FP condition flag is true
+    tmp:1 = fcsr[23,1];
+    if (tmp != 1) goto <done>;
+    fdD = fsD;
+    <done>
+}
+:movt.PS fd, fs, cc          is $(AMODE) & REL6=0 & prime=17 & nd=0 & tf=1 & fct=17 & fmt1 & fd & fs & cc & format=0x16 & fsD & ftD & fdD {
+    fdD = mipsFloatPS(fsD, ftD);
+}
+
+# 0100 01ff ffft tttt ssss sddd dd01 0010
+:movz.S fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=18 & fmt1 & fd & fs & RTsrc & format=0x10 {
+    if (RTsrc != 0) goto <done>;
+    fd[0,32] = fs:4;
+    <done>
+}
+:movz.D fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=18 & fmt1 & fd & fs & RTsrc & format=0x11 & fdD & fsD {
+    if (RTsrc != 0) goto <done>;
+    fdD = fsD;
+    <done>
+}
+:movz.PS fd, fs, RTsrc       is $(AMODE) & REL6=0 & prime=17 & fct=18 & fmt1 & fd & fs & RTsrc & format=0x16 & fsD & fdD {
+    fdD = mipsFloatPS(RTsrc, fsD);
+}
+
+####
+#
+# Release 6 semantics
+#
+####
+:bc1eqz ft,Rel16	is $(AMODE) & REL6=1 & prime=0x11 & format=0x09 & Rel16 & ft {
+    # Branch if FPR ft LSB equals 0 (false) (This insn replaces bc1f)
+    tmp:1 = ft[0,8] & 0x01; # Only need to check the LSB
+    delayslot(1);
+    if (tmp == 0x00) goto Rel16;
+}
+
+:bc1nez ft,Rel16        is $(AMODE) & REL6=1 & prime=0x11 & format=0x0d & Rel16 & ft & ftD {
+    # Branch if FPR ft LSB equals 1 (true) (This insn replaces bc1t)
+    tmp:1 = ft[0,8] & 0x01; # Only need to check the LSB
+    delayslot(1);
+    if (tmp == 0x01) goto Rel16;
+}
+
+:class.S fd,fs	is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & op=0x00 & fct=0x1b & fd & fs {
+    # Set fd to the 10-bit mask that is the IEEE floating point class of the value in fs
+    # Bit 0: signaling SNaN
+    # Bit 1: quiet QNaN
+    # Bit 2: negative infinity
+
+    # Bit 3: negative normalized number
+    # Bit 4: negative subnormal, ie denormalized
+    # Bit 5: negative zero
+    # Bit 6: positive infinity
+    # Bit 7: positive normal
+    # Bit 8: positive subnormal
+    # Bit 9: positive zero
+    # Bits 31-10 are set to 0
+
+    tmp_fs:4 = fs:4; # Get just the 4 byte single floating point value
+    tmp_exponent:4 = zext(tmp_fs[23,8]);
+    tmp_fraction:4 = zext(tmp_fs[0,23]);
+    tmp_sign:4 = zext(tmp_fs[31,1]);
+    tmp_b1:4 = zext(tmp_fs[22,1]); # High order bit of fraction, used for NaN
+
+    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0)); 
+    tmp_QNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
+    tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
+    tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
+    tmp_Neg_Subnormal:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Neg_Zero:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+    tmp_Pos_Infinity:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
+    tmp_Pos_Normal:4 = zext((tmp_sign == 0x0) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
+    tmp_Pos_Subnormal:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Pos_Zero:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+
+    tmp_fd:4 = 0;
+    tmp_fd = tmp_SNaN | (tmp_QNaN << 1) | (tmp_Neg_Infinity << 2) | (tmp_Neg_Normal << 3) |
+		(tmp_Neg_Subnormal << 4) | (tmp_Neg_Zero << 5) | (tmp_Pos_Infinity << 6) |
+		(tmp_Pos_Normal << 7) | (tmp_Pos_Subnormal << 8) | (tmp_Pos_Zero << 9);
+
+    fd = zext(tmp_fd);
+}
+
+:class.D fd,fs  is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & op=0x00 & fct=0x1b & fd & fs & fdD & fsD {
+    # Set fd to the 10-bit mask that is the IEEE floating point class of the value in fs
+    # Bit 0: signaling SNaN
+    # Bit 1: quiet QNaN
+    # Bit 2: negative infinity
+    # Bit 3: negative normalized number
+    # Bit 4: negative subnormal, ie denormalized
+    # Bit 5: negative zero
+    # Bit 6: positive infinity
+    # Bit 7: positive normal
+    # Bit 8: positive subnormal
+    # Bit 9: positive zero
+    # Bits 31-10 are set to 0
+
+    tmp_fs:8 = fsD;
+    tmp_sign:4 = zext(tmp_fs[63,1]);
+    tmp_exponent:4 = zext(tmp_fs[52,11]);
+    tmp_fraction:8 = zext(tmp_fs[0,51]);
+    tmp_b1:4 = zext(tmp_fs[51,1]); # High order bit of fraction, used for NaN
+
+    tmp_SNaN:4 = zext((tmp_exponent == 0x07ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0));
+    tmp_QNaN:4 = zext((tmp_exponent == 0x07ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
+    tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x07ff)  && (tmp_fraction == 0x0));
+    tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x07ff));
+    tmp_Neg_Subnormal:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Neg_Zero:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+    tmp_Pos_Infinity:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x07ff)  && (tmp_fraction == 0x0));
+    tmp_Pos_Normal:4 = zext((tmp_sign == 0x0) && (tmp_exponent != 0x0) && (tmp_exponent != 0x07ff));
+    tmp_Pos_Subnormal:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Pos_Zero:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+
+    tmp_fd:4 = 0;
+    tmp_fd = tmp_SNaN | (tmp_QNaN << 1) | (tmp_Neg_Infinity << 2) | (tmp_Neg_Normal << 3) |
+                (tmp_Neg_Subnormal << 4) | (tmp_Neg_Zero << 5) | (tmp_Pos_Infinity << 6) |
+                (tmp_Pos_Normal << 7) | (tmp_Pos_Subnormal << 8) | (tmp_Pos_Zero << 9);
+
+    fdD = zext(tmp_fd);
+}
+
+:sel.S fd,fs,ft                is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & fct=0x10 & fd & fs & ft {
+    # Floating point select, if LSB of fd == 1 then fd = ft, else fd = fs
+    # Note that the data in the FPRs might be 32-bit ints, ie there's no interpretation of the values
+    tmp:1 = (fd[0,1] == 0x01);
+    fd = (zext(tmp) * ft) | (zext(tmp == 0x0) * fs);
+}
+:sel.D fd,fs,ft         is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & fct=0x10 & fd & fs & ft & fdD & fsD & ftD {
+    # Floating point select, if LSB of fd == 1 then fd = ft, else fd = fs
+    # Note that the data in the FPRs might be 64-bit ints, ie there's no interpretation of the values
+    tmp:1 = (fdD[0,1] == 0x01);
+    fdD = (zext(tmp) * ftD) | (zext(tmp == 0x0) * fsD);
+}
+
+#
+# The R6 floating point compare cmp instruction is described on page 146 of the
+# MIPS64 Architecture Volume II ISA manual
+#
+# Note that when the condition is true the target FPR is set to all ones, and to 0 if false.
+# If the target is 32-bit and you have 64-bit FPRs, then setting the top word is optional
+#
+# Note that when the format is Single and you have 64-bit FPRS,
+# then you need to first pull out the 32-bit float word and then pass that to the correct p-code
+#
+# TBD: Note that when fct bits 5 and 4 (left most 2 bits) are 01 then the condition is negated
+#
+
+:cmp.af.S fd, fs, ft	is $(AMODE) & REL6=1 & prime=0x11 & fct=0x00 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfSNaN(fs:4, ft:4); # Trap if either operand is a Signaling NaN
+    fd = 0x0; # Always false
+}
+:cmp.af.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x00 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & ft & fsD & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = 0x0;
+}
+
+:cmp.un.S fd, fs, ft	is $(AMODE) & REL6=1 & prime=0x11 & fct=0x01 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext((nan(fs:4) || nan(ft:4)) * 0xff); # True if operands are NaN
+}
+:cmp.un.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x01 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD { 
+    trapIfSNaN(fsD, ftD);
+    fdD = sext((nan(fsD) || nan(ftD)) * 0xff);
+}
+
+:cmp.or.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x11 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext( (!(nan(fs:4) || nan(ft:4))) * 0xff); # The negated predicate of "c.un"
+}
+:cmp.or.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x11 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext( (!(nan(fsD) || nan(ftD))) * 0xff);
+}
+
+:cmp.eq.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x02 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f== ft:4) * 0xff);
+}
+:cmp.eq.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x02 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext((fsD f== ftD) * 0xff);
+}
+
+:cmp.une.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x12 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # The negated predicate of cmp.eq
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f!= ft:4) * 0xff);
+}
+:cmp.une.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x12 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext((fsD f!= ftD) * 0xff);
+}
+
+:cmp.ueq.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x03 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # NaN or equal
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f== ft:4) ) * 0xff);
+}
+:cmp.ueq.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x03 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f== ftD) ) * 0xff);
+}
+
+:cmp.ne.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x13 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # The negated predicate of cmp.ueq
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext( (!( ( nan(fs:4) || nan(ft:4) || (fs:4 f== ft:4) ))) * 0xff);
+}
+:cmp.ne.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x13 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext( (!( ( nan(fsD) || nan(ftD) || (fsD f== ftD) ))) * 0xff);
+}
+
+:cmp.lt.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x04 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f< ft:4) * 0xff);
+}
+:cmp.lt.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x04 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext((fsD f< ftD) * 0xff);
+}
+
+:cmp.ult.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x05 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # NaN or less than
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f< ft:4) ) * 0xff);
+}
+:cmp.ult.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x05 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f< ftD) ) * 0xff);
+}
+
+:cmp.le.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x06 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # Less than or equal
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f<= ft:4) * 0xff);
+}
+:cmp.le.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x06 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext((fsD f<= ftD) * 0xff);
+}
+
+:cmp.ule.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x07 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # NaN or less than or equal
+    trapIfSNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f<= ft:4) ) * 0xff);
+}
+:cmp.ule.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x07 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfSNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f<= ftD) ) * 0xff);
+}
+
+# The cmp instructions that signal (ie trap) if either of the operands are NaN
+
+:cmp.saf.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x08 & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd = 0x0; # Always false
+}
+:cmp.saf.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x08 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = 0x0;
+}
+
+:cmp.sun.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x09 & bit5=0 & fmt6 & format=0x14 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext((nan(fs:4) || nan(ft:4)) * 0xff);
+}
+:cmp.sun.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x09 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext((nan(fsD) || nan(ftD)) * 0xff);
+}
+
+:cmp.sor.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x19 & bit5=0 & fmt6 & format=0x14 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( (!(nan(fs:4) || nan(ft:4))) * 0xff); # negate of cmp.sun
+}
+:cmp.sor.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x19 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( (!(nan(fsD) || nan(ftD))) * 0xff);
+}
+
+:cmp.seq.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0a & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f== ft:4) * 0xff);
+}
+:cmp.seq.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0a & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext((fsD f== ftD) * 0xff);
+}
+
+:cmp.sune.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x1a & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext((fs:4 f!= ft:4) * 0xff);
+}
+:cmp.sune.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x1a & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext((fsD f!= ftD) * 0xff);
+}
+
+:cmp.sueq.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0b & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    # NaN or equal
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f== ft:4) ) * 0xff);
+}
+:cmp.sueq.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0b & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f== ftD) ) * 0xff);
+}
+
+:cmp.sne.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x1b & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4); # negate of cmp.sueq
+    fd[0,32] = sext( (! ( nan(fs:4) || nan(ft:4) || (fs:4 f== ft:4) )) * 0xff);
+}
+:cmp.sne.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x1b & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( (! ( nan(fsD) || nan(ftD) || (fsD f== ftD) )) * 0xff);
+}
+
+:cmp.slt.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0c & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( (fs:4 f< ft:4) * 0xff);
+}
+:cmp.slt.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0c & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( (fsD f< ftD) * 0xff);
+}
+
+:cmp.sult.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0d & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f< ft:4) ) * 0xff);
+}
+:cmp.sult.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0d & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f< ftD) ) * 0xff);
+}
+
+:cmp.sle.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0e & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( (fs:4 f<= ft:4) * 0xff);
+}
+:cmp.sle.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0e & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( (fsD f<= ftD) * 0xff);
+}
+
+:cmp.sule.S fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0f & bit5=0 & fmt6 & format=0x14 & fd & fs & ft {
+    trapIfNaN(fs:4, ft:4);
+    fd[0,32] = sext( ( nan(fs:4) || nan(ft:4) || (fs:4 f<= ft:4) ) * 0xff);
+}
+:cmp.sule.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x0f & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
+    trapIfNaN(fsD, ftD);
+    fdD = sext( ( nan(fsD) || nan(ftD) || (fsD f<= ftD) ) * 0xff);
+}
+
+:rint.S fd, fs		is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & fct=0x1a {
+    # floating point round to integral floating point
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    fs_tmp:4 = fs:4;
+    if (rm_tmp == 0) goto <do_round>;
+      fd[0,32] = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fd[0,32] = round(fs_tmp); # round returns a float
+    <done>
+}
+
+:rint.D fd, fs          is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & fsD & fdD & fct=0x1a {
+    # floating point round to integral floating point
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      fdD = floor(fsD); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fdD = round(fsD); # round returns a float
+    <done>
+}
+
+:min.S fd, fs, ft	is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x1c {
+    # set floating point fd to the min of fs and ft, TBD special case for NaN
+    tmp_cond:1 = fs:4 f< ft:4;
+    fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
+}
+:min.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1c 
+				& fsD & fdD & ftD {
+    tmp_cond:1 = fsD f< ftD;
+    fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
+}
+
+:max.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x1d {
+    # set floating point fd to the max of fs and ft, TBD special case for NaN
+    tmp_cond:1 = fs:4 f> ft:4;
+    fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
+}
+:max.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1d
+                                & fsD & fdD & ftD {
+    tmp_cond:1 = fsD f> ftD;
+    fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
+}
+
+:mina.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x1e {
+    # set floating point fd to the min of absolute values of fs and ft, TBD special case for NaN
+    tmp_cond:1 = abs(fs:4) f< abs(ft:4);
+    fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
+}
+:mina.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1e 
+                                & fsD & fdD & ftD {
+    tmp_cond:1 = abs(fsD) f< abs(ftD);
+    fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
+}
+
+:maxa.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x1f {
+    # set floating point fd to the max of absolute values of fs and ft, TBD special case for NaN
+    tmp_cond:1 = abs(fs:4) f> abs(ft:4);
+    fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
+}
+:maxa.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1f
+                                & fsD & fdD & ftD {
+    tmp_cond:1 = abs(fsD) f> abs(ftD);
+    fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
+}
+
+:maddf.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x18 {
+    # set floating point fd = fd + fs * ft, using 32-bit floating values
+    fd[0,32] = fd:4 f+ (fs:4 f* ft:4);
+}
+:maddf.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x18
+                                & fsD & fdD & ftD {
+    fdD = fdD f+ (fsD f* ftD);
+}
+
+:msubf.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x19 {
+    # set floating point fd = fd - fs * ft, using 32-bit floating values
+    fd[0,32] = fd:4 f- (fs:4 f* ft:4);
+}
+:msubf.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x19 
+                                & fsD & fdD & ftD {
+    fdD = fdD f- (fsD f* ftD);
+}
+
+:seleqz.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x14 {
+    # Set floating point register fd to fs if ft[0] == 0, else if == 1 then set fd to 0, TBD special case for NaN
+    # Note that the description of these select instructions in the MIPS manual does not properly use the C conditional operator
+    fd = zext(fs * zext(ft[0,1] == 0));
+}
+:seleqz.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x14
+                                & fsD & fdD & ftD {
+    fdD = zext(fsD * zext(ftD[0,1] == 0));
+}
+
+:selnez.S fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x10 & cop1code=0x0 & fs & fd & ft & fct=0x17 {
+    # set floating point register fd to fs if ft[0] == 1, else if == 0 then set fd to 0, TBD special case for NaN
+    fd = zext(fs * zext(ft[0,1] == 1));
+}
+:selnez.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x17
+                                & fsD & fdD & ftD {
+    fdD = zext(fsD * zext(ftD[0,1] == 1));
+}

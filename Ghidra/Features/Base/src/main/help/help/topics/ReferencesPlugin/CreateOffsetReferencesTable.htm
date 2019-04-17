@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Create Offset References Table</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Create_Offset_References"></A>Create Offset References Table</H1>
+
+    <P>&nbsp;</P>
+
+    <P>The "Create Offset References" option allows you to create offset tables based on a
+    selection of one or more data code units within the listing. A&nbsp;dialog as shown below is
+    displayed so that you can enter a base address, the offset size to be used for each data
+    unit(s) to be created within the selection, and whether each offset data value should be
+    interpreted as signed or unsigned. The <I>value</I> of the data at an address is added to the
+    <I>base address</I> to create a new <I>memory reference</I> address. The reference is placed on
+    the new data.</P>
+
+    <P>&nbsp;</P>
+
+    <CENTER>
+      <IMG border="0" src="images/CreateOffsetTable.png" alt="">
+    </CENTER>
+
+    <P>To create an offset table,</P>
+
+    <OL>
+      <LI>Make a <A href="help/topics/Selection/Selecting.htm">selection</A> in the Code Browser;
+      the selection should not contain instructions.</LI>
+
+      <LI>
+        Right mouse click and choose the <B>References<IMG src="../../shared/arrow.gif" alt="">
+        Create Offset Reference</B> option. 
+
+        <BLOCKQUOTE>
+          <P><I><IMG border="0" src="../../shared/note.png"> If the selection contains
+          instructions, then a warning message is displayed in the tool status area.</I></P>
+        </BLOCKQUOTE>
+      </LI>
+
+      <LI>The "Enter Base Address" field in the dialog is filled in with the first address in the
+      selection. You can enter a different address as the base address.</LI>
+
+      <LI>
+        The "Select Data Size" combo box has an entry for sizes 1, 2, 4, and 8. The size you select
+        determines the type of data that is created: 
+
+        <UL>
+          <LI>1 ==&gt; Byte (db)</LI>
+
+          <LI>2 ==&gt; Word (dw)</LI>
+
+          <LI>4 ==&gt; Double word (ddw)</LI>
+
+          <LI>8 ==&gt; Quad word (dq)</LI>
+        </UL>
+      </LI>
+
+      <LI>The "Signed Data Value(s)" checkbox indicates whether the <I>value</I> of the data at the
+      address should be interpreted as a signed or unsigned number. When the box contains a check
+      mark, the data will be added to the <I>base address</I> as a signed <I>value</I>.<BR>
+      </LI>
+
+      <LI>
+        Click the <B>OK</B> button. 
+
+        <BLOCKQUOTE>
+          <P>Any defined data in the selection is cleared. For each resulting data type in the
+          selection, the <I>value</I> of the data type is added to the base address to create a
+          reference address. This reference address is placed on the data; the reference is set to
+          be the primary reference so that the operand field shows up as a "DAT," if no other
+          symbol exists for this reference address.</P>
+        </BLOCKQUOTE>
+      </LI>
+    </OL>
+
+    <BLOCKQUOTE>
+      <P><I><IMG border="0" src="../../shared/note.png"> If the value of the data type being used
+      as the offset does not result in a valid address for the reference, then a message is
+      displayed in the status area of the tool. The data type will have been created, but not the
+      reference.</I></P>
+
+      <P>The image below shows the result of creating an offset reference table; the base address
+      for the references is 004f5000. Value references were created on the double word data
+      types.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <IMG border="0" src="images/OffsetRefsExample.png">&gt;
+    </CENTER>
+
+    <P class="providedbyplugin">&nbsp;</P>
+
+    <P class="providedbyplugin">Provided by: <I>Create</I> <I>Offset References</I> Plugin</P>
+
+    <P class="relatedtopic">&nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Selection/Selecting.htm">Selection</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A></P>
+      </LI>
+    </UL><BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

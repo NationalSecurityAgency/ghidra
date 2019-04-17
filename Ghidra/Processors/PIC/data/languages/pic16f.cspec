@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE"/>
+    <range space="DATA" first="0x20" last="0x7f"/>
+    <range space="DATA" first="0xa0" last="0xff"/>
+    <range space="DATA" first="0x120" last="0x17f"/>
+    <range space="DATA" first="0x1a0" last="0x1ff"/>
+  </global>
+  <nohighptr>
+    <range space="DATA" first="0x0" last="0x1f"/>
+    <range space="DATA" first="0x80" last="0x9f"/>
+    <range space="DATA" first="0x100" last="0x11f"/>
+    <range space="DATA" first="0x180" last="0x19f"/>
+  </nohighptr>
+  <stackpointer register="STKPTR" space="HWSTACK" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="STATUS"/>
+        <register name="IRP"/>
+        <register name="RP"/>
+        <register name="PC"/>
+        <register name="PCL"/>
+        <register name="PCLATH"/>
+        <register name="STKPTR"/>
+        <register name="BSR"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

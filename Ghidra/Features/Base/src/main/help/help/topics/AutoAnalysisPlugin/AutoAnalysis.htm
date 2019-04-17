@@ -1,0 +1,523 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Auto-analysis</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="AutoAnalysisPlugin"></A>Auto Analysis</H1>
+
+    <P>Auto Analysis watches for changes to the program, such as <A href=
+    "help/topics/DisassemblerPlugin/Disassembly.htm">disassembling</A> a new area of memory or
+    definition of a function. When a change is noticed, it kicks off Auto Analyzer plugins
+    interested in the change. Auto Analyzer plugins evaluate the changes and may decide to make
+    further changes to the program. Any changes an Analyzer makes to the program may cause
+    additional Analyzers to run. An example chain of auto analysis might be:</P>
+
+    <P align="center"><IMG alt="" src="images/AutoAnalysis.png"></P>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>User Disassembles</LI>
+
+        <LI>Function Analyzer - looks at all calls and creates Functions</LI>
+
+        <LI>Stack Analyzer - looks at all new functions and builds a stack based on stack
+        references</LI>
+
+        <LI>Operand Analyzer - looks at scalar operands for possible address references</LI>
+
+        <LI>Data Reference Analyzer - looks at references for possible strings or pointers to
+        code.<BR>
+         References to code are disassembled.<BR>
+         ..... Cycle repeats with 2) as additional code is disassembled.</LI>
+      </OL>
+
+      <P>One program change might cause several Analyzers to become active, however only one
+      Analyzer is run at a time. Each Analyzer has a run priority. For instance, the Operand
+      Analyzer will always run before the Data Reference Analyzer because the operand analyzer
+      could create new references that the Data Reference Analyzer would need to analyze.</P>
+
+      <P>Auto Analyzers normally change the program only if the Analyzer can be certain the change
+      is correct. For instance creating a function at the destination of a call is a fairly safe
+      bet. Randomly looking for undefined data that could be disassembled where there are no actual
+      code references would not be a good idea.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Auto_Analyze"></A>Auto Analysis</H3>
+
+    <BLOCKQUOTE>
+      <P>A program imported through Front End will have no initial analysis applied to it. To force
+      analysis, use the <B>Analysis<IMG alt="" src="images/arrow.gif"> Auto Analysis</B> menu
+      item. The Auto Analysis Options dialog is displayed to allow changes to the analysis options
+      before beginning analysis.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/AutoAnalysisOptions.png"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P><IMG alt="" src="images/note.png">The display of this dialog may be controlled
+          from the Auto Analysis Tool Options. Select the <I>Auto Analysis</I> node in the
+          <B>Edit</B><IMG alt="" src="images/arrow.gif"> <B>Tool Options</B> menu and check
+          or uncheck <I>Show Analysis Options</I>. When unchecked, the next time Auto Analysis is
+          chosen, the options dialog is skipped, and analysis begins immediately.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P>Without a selection in the Code Browser, the entire program's memory space is analyzed. To
+      restrict the analysis to certain areas of the program, select the area in the code browser
+      before choosing <I>Auto Analysis</I>. If there is a current selection, <I>Auto Analysis</I>
+      will be restricted to only to those areas of the program within the selection. Areas outside
+      the selection may be changed by analysis. For example, if the OperandReferenceAnalyzer finds
+      a reference within the selected area, a string or a function could be created at the
+      referenced location.<BR>
+      </P>
+
+      <P>When the Analyze button is pressed, the Options dialog will disappear. At the bottom of
+      the Code Browser window, the background task bar will display. Any Analyzer activity status
+      messages are within the task bar.</P>
+
+      <P align="center"><IMG alt="" src="images/BackgroundAnalysisTasks.png" border="1"></P>
+
+      <P>To Cancel the analysis, press the <IMG alt="" src="Icons.STOP_ICON"> button.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Analyze_All_Open"></A>Analyze All Open</H3>
+
+    <BLOCKQUOTE>
+      <P>This action will auto-analyze all open programs. The <A href=
+      "#Auto_Analysis_Option">options</A> will be displayed only one time and re-used for each
+      program.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="images/warning.help.png">
+         <FONT color="red">When you choose options to use for analyzing a program, they are based
+        upon the architecture of the <B>current</B> program. When analyzing all open programs, any
+        programs besides the current program will only be analyzed if their architecture (language
+        ID and compiler spec ID) match that of the current program. Any other open programs with an
+        architecture differing from the current program will <B>not</B> be analyzed using this
+        action.</FONT></P>
+
+        <P><IMG alt="" src="images/note.png">
+         If the option to show the analysis dialog is disabled, then using this action <B>will</B>
+        analyze all open programs <B>using their current analysis settings</B>. To disable the
+        analysis dialog go to <B>Edit <IMG alt="" src="images/arrow.gif"> Tool Options...</B>
+        to show the options dialog upon which, select the <B>Auto Analysis</B> options and
+        de-select <B>Show Analysis Options</B>.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="Analyze_One_Shot"></A>One Shot Analysis</H3>
+
+    <BLOCKQUOTE>
+      <P>Those specific analyzers which support on-demand analysis are available as One Shot
+      Analyzers in the Analysis menu. Only those analyzers which support one-shot use and are
+      applicable to the current program will be available within the One Shot sub-menu.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Auto_Analysis_Option"></A> <A name=
+    "ghidra_app_plugin_analysis_AutoAnalysisPlugin_AnalysisOptionsDialog"></A> <A name=
+    "AnalysisOptions"></A> Auto Analysis Options Panel</H2>
+
+    <BLOCKQUOTE>
+      <P>Each Analyzer can be turned off using the <I>Analysis</I> panel in the <B>Edit<IMG alt=""
+      src="images/arrow.gif"> ProgramOptions</B> dialog.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>The <I>Analysis</I> panel configures Analyzer specific options and which Analyzers are
+      enabled to run. To view these options, choose <B>Edit<IMG alt="" src=
+      "images/arrow.gif"> Program Options...</B>; then open the Analysis node in the Options
+      tree. Each analyzer is represented as a leaf under the Analysis folder node.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="images/note.png"> An analyzer may be marked as (Prototype). These
+        analyzers can be very useful on certain programs, but have not been exercised on a large
+        number of programs. Use them with caution.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG alt="" src="images/ProgramOptions.png"></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="images/note.png"> A separate dialog showing the <I>Analysis</I>
+        options is also displayed after a new program has been imported, or the <B>Analysis<IMG
+        alt="" src="images/arrow.gif"> Auto Analysis</B> menu item is chosen.</P>
+
+        <P><IMG alt="" src="images/warning.help.png"> <FONT color="red">Some analyzers only work
+        on certain processors. For example, the MIPS Instruction Analyzer only works on MIPS
+        processors. Their options will only show up if the currently open program can be analyzed
+        with the analyzer.</FONT></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Auto_Analyzers"></A>Auto Analyzers</H2>
+
+    <BLOCKQUOTE>
+      <P>The following is a description of the Auto Analyzers that have been implemented. Please
+      note that this list may not be complete since additional Analyzers are continuously being
+      added to Ghidra and can be supplied by add-on modules/contribs.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Auto_Analysis_Option_Address_Table"></A>Address Table Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Looks at all undefined data locations to find possible <A href=
+        "help/topics/Glossary/glossary.htm#AddressTable">address tables</A>.</P>
+
+        <P>You can also find and create address tables manually via the <A href=
+        "help/topics/Search/Search_for_AddressTables.htm">Search for Address Tables</A></P>
+
+        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="ARM_Analyzer"></A>ARM Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer works only against the ARM processor. It looks at multiple instructions to
+        discover references that are put together by multiple instructions. Since the ARM is a RISC
+        processor and each instruction is only 32 bits wide, many references must be created by
+        multiple instructions.</P>
+
+        <P><U>Started By:</U> New disassembled code</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Auto_Analysis_Option_Create_Strings"></A>ASCII Strings Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer searches for valid ASCII strings and automatically creates them in the
+        binary. Candidate strings are found using the same method (and most of the same associated
+        options) as <A href="help/topics/Search/Search_for_Strings.htm">Search for Strings</A>. Of
+        the candidate strings found, valid strings are identified using a model trained on
+        pre-identified valid strings. This analyzer runs at a very low priority.</P>
+
+        <P>Set options for this analyzer by selecting <B>ASCII Strings</B> on the options panel.
+        Some options such as <B>Require null termination for string</B> and <B>String start
+        alignment</B> work the same way as in <A href=
+        "help/topics/Search/Search_for_Strings.htm">Search for Strings</A>.</P>
+
+        <H4><B>Options</B></H4>
+
+        <UL>
+          <LI><B>Create strings containing existing strings</B> - if checked, strings will be
+          created even if they contain existing substrings (existing strings will be cleared). The
+          string will be created only if existing strings (a) are wholly contained within the
+          potential string, (b) do not share the same starting address as the potential string, (c)
+          share the same ending address as the potential string, and (d) are the same datatype as
+          the potential string to be created).</LI>
+
+          <LI><B>Create strings containing references</B> - if checked, strings that contain, but
+          do not start with, one or more references will be created.</LI>
+
+          <LI><B>Force model reload</B> - if checked, forces the model to be reloaded every time
+          the analyzer is run (in cases where the user wishes to see the effect of changing a model
+          without restarting Ghidra).</LI>
+
+          <LI><B>Minimum string length</B> - specifies the smallest number of characters in a
+          string for it to be considered a valid string. For this analyzer, null termination
+          characters are ignored for the purposes of counting characters. Note that smaller numbers
+          will result in a larger number of false positives. String length must be at least 4.</LI>
+
+          <LI><B>Model file</B> - Specifies the model file built using the BuildStringModels class
+          (default is 'StringModel.sng'). Note that the location of the model file does not need to
+          be specified, as models should always be placed in the
+          'Ghidra/Features/Base/data/stringngrams' directory.</LI>
+
+          <LI><B>Require null termination for string</B> - if checked, only null-terminated strings
+          are created.</LI>
+
+          <LI><B>Search only in accessible memory blocks</B> - if checked, searches only in memory
+          blocks that have at least one of the Read (R), Write (W), or Execute (X) permissions set
+          to true. Enabling this option ensures strings are not created in areas such as overlays
+          or debug sections.</LI>
+
+          <LI><B>String end alignment</B> - specifies the byte alignment requirement for the end of
+          the string. An alignment of 1 means the string can end at any address. Alignments greater
+          than 1 require that (a) the 'require null termination' option be enabled, and (b) if the
+          null-terminated string does not end at an aligned boundary, that there exist enough
+          trailing '0' bytes following the string to allow alignment. If neither (a) nor (b) apply,
+          end alignment is not enforced.</LI>
+
+          <LI><B>String start alignment</B> - specifies the byte alignment requirement for the
+          start of the string. An alignment of 1 means that strings can start at any address. An
+          alignment of 2 means that strings must start on an even address. An alignment of 4 means
+          that strings must start on an address that is a multiple of 4.</LI>
+        </UL>
+
+        <P><U>Started By:</U> Auto Analyze command<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="DataArchive_Analyzer"></A>Data Archive Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer looks at all the labels defined in the program and applies function
+        signatures from standard data type libraries. For programs identified as "Microsoft
+        Windows" executables, the data archive applied were parsed from the standard windows header
+        files. All other executables will have function signatures applied from the standard "C"
+        header files (stdio, fcntl, ...). For example, if a label exists for strcmp upon import,
+        the analyzer will assume this is the standard C-library strcmp and apply a function
+        signature of "int strcmp(char *, char *)".</P>
+
+        <P><U>Started By</U>: Importing or adding to a program, Auto Analyze command</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Auto_Analysis_Option_Instructions"></A>Data Reference Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Looks at all data references within newly disassembled code for Unicode/Ascii strings
+        and functions. When a valid function is found, the code is disassembled starting at the
+        referenced location. When a valid string is found, a string data type is created.</P>
+
+        <P>Enable this option by selecting <B>Ascii String References</B>, <B>Unicode String
+        References, or Subroutine References</B> on the options panel for <B>Instructions</B>.</P>
+
+        <P><U>Started By:</U> New disassembled code<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Decompiler_Parameter_ID_Analyzer"></A><A name=
+      "Decompiler_Parameter_ID"></A>Decompiler Parameter ID Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>For each function created, run the decompiler and import the information recovered about
+        the given function. The information includes:<BR>
+        </P>
+
+        <UL>
+          <LI>passed parameters<BR>
+          </LI>
+
+          <LI>local variables defined on the stack</LI>
+
+          <LI>local variables defined in registers<BR>
+          </LI>
+
+          <LI>return value</LI>
+
+          <LI>the prototype or calling convention (stdcall, cdecl, thiscall, fastcall, ...)<BR>
+          </LI>
+
+          <LI>switch tables recovered by data flow analysis</LI>
+        </UL>
+
+        <P>Applying type information recovered by the decompiler can be extremely useful if you
+        have type information for library functions. You can apply function signatures to your
+        library functions, and as code is disassembled, type information will be propogated from
+        the library functions up into the parameters and local variables of the functions calling
+        them.<BR>
+        </P>
+
+        <P>Switch tables recovered by the decompiler can be applied to improve the disassembly of
+        code. At times the basic switch table analysis cannot recover complex jump tables. The
+        decompiler can also recover the value used to "switch" on for each case in the switch
+        table. The label created at each switch case is created based on the recovered switch
+        value.<BR>
+        </P>
+
+        <P>This analyzer is being enhanced to pull more information gleaned from running the
+        decompiler.</P>
+
+        <P>Enable this option by selecting <B>Decompiler Parameter ID</B> on the options panel for
+        <B>Functions</B>.</P>
+
+        <P><U>Started By:</U> Creating a function, or Re-Analyzing a program with functions already
+        defined.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Demangler_Analyzer"></A>Demangler Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer examines the name of the newly created function. If the name appears to be
+        a <I>GCC v3</I> or <I>Microsoft Visual Studio</I> mangled symbol, then it will demangle the
+        name and create a new primary symbol for the demangled name. It will also assign the
+        appropriate datatypes to the parameters and return type.</P>
+
+        <P><U>Started By:</U> New defined functions</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Auto_Analysis_Option_Byte"></A>Entry Point Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Disassembles code starting at all Symbols in the symbol table marked as <I>External
+        Entry Points</I>.</P>
+
+        <P>Enable this option by selecting <B>Disassemble Entry Points</B> on the options panel for
+        <B>Byte</B>.</P>
+
+        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Image"></A>Image Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer searches the program for images. If a valid image is found an appropriate
+        image data type is applied at that location with the corresponding visual representation of
+        the image. Also, a bookmark is added to indicate an image.</P>
+
+        <P><U>Started By</U>: Importing or adding to a program, Auto Analyze command</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Mips_Address_Markup"></A>MIPS address markup Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer works only against the MIPS R4000 processor. It looks at multiple
+        instructions to discover references that are put together by multiple instructions. Since
+        the R4000 is a RISC processor and each instruction is only 32 bits wide, many references
+        must be created by multiple instructions.</P>
+
+        <P>It will also look for certain types of switch or jump tables and automatically create a
+        jump table.</P>
+
+        <P><U>Started By:</U> New disassembled code</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="PowerPC_Address_Markup_Analyzer"></A>PowerPC address markup Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer works only against the PowerPC processor. It looks at multiple
+        instructions to discover references that are put together by multiple instructions. Since
+        the PowerPC is a RISC processor and each instruction is only 32 bits wide, many references
+        must be created by multiple instructions.</P>
+
+        <P>It will also look for "bcctr" type switch statements and automatically create a switch
+        table including references.</P>
+
+        <P><U>Started By:</U> New disassembled code</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Propagate_External_Parameters_Analyzer"></A>Propagate External Parameters
+      Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer uses external Windows function call parameter information to populate
+        comments next to pushed parameters. In some cases, data is labeled and commented as
+        well</P>
+
+        <P><U>Started By:</U> Auto Analyze command</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Scalar_Operand_Analyzer"></A>Scalar Operand Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Looks for scalar operands that are actually address references at each instruction
+        operand within newly disassembled code.</P>
+
+        <P>Enable this option by selecting <B>Scalar Operand References</B> on the options panel
+        for <B>Instructions</B>.</P>
+
+        <P><U>Started By:</U> New disassembled code</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Stack_Analyzer"></A>Stack Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Creates a stack frame (parameters and local variables) based on references to the stack
+        found in newly defined functions.</P>
+
+        <P>Enable this option by selecting <B>Stack References</B> on the options panel for
+        <B>Function</B>.</P>
+
+        <P><U>Started By:</U> New defined functions</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FunctionAnalyzer"></A> <A name="Function"></A>Subroutine Reference Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>Creates a function at each destination of a call instruction. If the destination would
+        create a complex function, the function is not created. A complex function is one with
+        multiple entry points, or shared code with function.</P>
+
+        <P>Enable this option by selecting <B>Create Functions</B> on the options panel for
+        <B>Function</B>.</P>
+
+        <P><U>Started By:</U> New disassembled code</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Windows_X86_PE_Analyzer"></A>Windows x86 PE Analyzers</H3>
+
+      <BLOCKQUOTE>
+        <P>The Windows x86 PE Analyzers analyze a Windows PE program for MS Visual Studio data
+        structures and code. They currently attempt to identify RTTI structures, virtual function
+        tables, and exception handling code. One also analyzes the external functions and attempts
+        to propagate the data types associated with the parameters.<BR>
+        </P>
+
+        <P>These analyzers only run on PE programs.<BR>
+        </P>
+
+        <P><U>Started By:</U> Analyzing the program or creating instructions or defined data with a
+        Windows x86 PE Analyzer analysis option selected.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>(Prototype) Auto Analysis Plugins</H2>
+
+    <BLOCKQUOTE>
+      <P>The following is a description of the prototype Auto Analyzers that have been
+      implemented.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="Aggressive_Instruction_Finder"></A>Aggressive Instruction Finder</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer runs at the lowest priority after there are no other analyzers needing to
+        run. It looks at undefined bytes to see if code were disassembled at the start of an area
+        it would form a valid subroutine. There can be no invalid instructions, and the subroutine
+        must not "flow" into any existing code.</P>
+
+        <P>Needless to say this analyzer will not work well on every program, but on some it finds
+        all code with no mistakes. Your mileage may vary. There's always undo...</P>
+
+        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Condense_Filler_Bytes_Analyzer"></A>Condense Filler Bytes Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer searches the program for all specified filler bytes and collapses them.
+        Some examples of filler bytes are: 0, 00, 90, cc. If you do not specify a certain byte
+        pattern to search for then the default will be used. The default is the word <I>Auto</I>
+        and it will allow the program to determine the best value to use based on the greatest
+        count. You also have the option to change the minimum number of bytes to collapse. The
+        default for this is 1.</P>
+
+        <P><U>Started By</U>: Auto Analyze command</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>AutoAnalysisPlugin</I><BR>
+    </P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/DisassemblerPlugin/Disassembly.htm">Disassembly</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/FunctionPlugin/Functions.htm">Functions</A></P>
+      </LI>
+    </UL><BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

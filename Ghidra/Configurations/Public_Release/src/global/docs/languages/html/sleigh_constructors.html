@@ -1,0 +1,2278 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>7. Constructors</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_tokens.html" title="6. Tokens and Fields">
+<link rel="next" href="sleigh_context.html" title="8. Using Context">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">7. Constructors</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_tokens.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_context.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_constructors"></a>7. Constructors</h2></div></div></div>
+<p>
+Fields are the basic building block for family symbols. The mechanisms
+for building up from fields to the
+root <span class="emphasis"><em>instruction</em></span> symbol are
+the <span class="emphasis"><em>constructor</em></span> and <span class="emphasis"><em>table</em></span>.
+</p>
+<p>
+A <span class="emphasis"><em>constructor</em></span> is the unit of syntax for building
+new symbols. In essence a constructor describes how to build a new
+family symbol, by describing, in turn, how to build a new display
+meaning, how to build a new semantic meaning, and how encodings map to
+these new meanings. A <span class="emphasis"><em>table</em></span> is a set of one or
+more constructors and is the final step in creating a new family
+symbol identifier associated with the pieces defined by
+constructors. The name of the table is this new identifier, and it is
+this identifier which can be used in the syntax for subsequent
+constructors.
+</p>
+<p>
+The difference between a constructor and table is slightly confusing
+at first. In short, the syntactical elements described in this
+chapter, for combining existing symbols into new symbols, are all used
+to describe a single constructor. Specifications for multiple
+constructors are combined to describe a single table. Since many
+tables are built with only one constructor, it is natural and correct
+to think of a constructor as a kind of table in and of itself. But it
+is only the table that has an actual family symbol identifier
+associated with it. Most of this chapter is devoted to describing how
+to define a single constructor. The issues involved in combining
+multiple constructors into a single table are addressed in <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, &#8220;Tables&#8221;</a>.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875336416"></a>7.1. The Five Sections of a Constructor</h3></div></div></div>
+<p>
+A single complex statement in the specification file describes a
+constructor. This statement is always made up of five distinct
+sections that are listed below in the order in which the must occur.
+</p>
+<div class="informalexample"><div class="orderedlist"><ol class="orderedlist compact" type="1">
+<li class="listitem">
+    Table Header
+  </li>
+<li class="listitem">
+    Display Section
+  </li>
+<li class="listitem">
+    Bit Pattern Sections
+  </li>
+<li class="listitem">
+    Disassembly Actions Section
+  </li>
+<li class="listitem">
+    Semantics Actions Section
+  </li>
+</ol></div></div>
+<p>
+The full set of rules for correctly writing each section is long and
+involved, but for any given constructor in a real specification file,
+the syntax typically fits on a single line. We describe each section
+in turn.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875331696"></a>7.2. The Table Header</h3></div></div></div>
+<p>
+Every constructor must be part of a table, which is the element with
+an actual family symbol identifier associated with it. So each
+constructor starts with the identifier of the table it belongs to
+followed by a colon &#8216;:&#8217;.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode1:           <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+The above line starts the definition of a constructor that is part of
+the table identified as <span class="emphasis"><em>mode1</em></span>. If the identifier
+has not appeared before, a new table is created. If other constructors
+have used the identifier, the new constructor becomes an additional
+part of that same table. A constructor in the
+root <span class="emphasis"><em>instruction</em></span> table is defined by omitting the
+identifier.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:                <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+The identifier <span class="emphasis"><em>instruction</em></span> is actually reserved
+for the root table, but should not be used in the table header as the
+SLEIGH parser uses the blank identifier to help distinguish assembly
+mnemonics from operands (see <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, &#8220;Mnemonic&#8221;</a>).
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_display_section"></a>7.3. The Display Section</h3></div></div></div>
+<p>
+The <span class="emphasis"><em>display section</em></span> consists of all characters
+after the table header &#8216;:&#8217; up to the SLEIGH
+keyword <span class="bold"><strong>is</strong></span>. The section&#8217;s primary
+purpose is to assign disassembly display meaning to the
+constructor. The section&#8217;s secondary purpose is to define local
+identifiers for the pieces out of which the constructor is being
+built. Characters in the display section are treated as literals with
+the following exceptions.
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+    Legal identifiers are not treated literally unless
+      <div class="orderedlist"><ol class="orderedlist compact" type="a">
+<li class="listitem">
+          The identifier is surrounded by double quotes.
+        </li>
+<li class="listitem">
+          The identifier is considered a mnemonic (see below).
+        </li>
+</ol></div>
+</li>
+<li class="listitem" style="list-style-type: disc">
+    The character &#8216;^&#8217; has special meaning.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    White space is trimmed from the beginning and end of the section.
+  </li>
+<li class="listitem" style="list-style-type: disc">
+    Other sequences of white space characters are condensed into a single space.
+  </li>
+</ul></div></div>
+<p>
+</p>
+<p>
+In particular, all punctuation except &#8216;^&#8217; loses its special
+meaning. Those identifiers that are not treated as literals are
+considered to be new, initially undefined, family symbols. We refer to
+these new symbols as the <span class="emphasis"><em>operands</em></span> of the constructor. And for root
+constructors, these operands frequently correspond to the natural
+assembly operands. Thinking of it as a family symbol, the
+constructor&#8217;s display meaning becomes the string of literals itself,
+with each identifier replaced with the display meaning of the symbol
+corresponding to that identifier.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode1: ( op1 ),op2 is          <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+In the above example, a constructor for
+table <span class="emphasis"><em>mode1</em></span> is being built out of two pieces,
+symbol <span class="emphasis"><em>op1</em></span> and
+symbol <span class="emphasis"><em>op2</em></span>. The characters &#8216;(&#8216;, &#8217;)&#8217;, and &#8216;,&#8217;
+become literal parts of the disassembly display for symbol
+mode1. After the display strings for <span class="emphasis"><em>op1</em></span>
+and <span class="emphasis"><em>op2</em></span> are found, they are inserted into the
+string of literals, forming the constructor&#8217;s display string. The
+white space characters surrounding the <span class="emphasis"><em>op1</em></span>
+identifier are preserved as part of this string.
+</p>
+<p>
+The identifiers <span class="emphasis"><em>op1</em></span> and <span class="emphasis"><em>op2</em></span>
+are local to the constructor and can mask global symbols with the same
+names. The symbols will (must) be defined in the following sections,
+but only their identifiers are established in the display section.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_mnemonic"></a>7.3.1. Mnemonic</h4></div></div></div>
+<p>
+If the constructor is part of the root instruction table, the first
+string of characters in the display section that does not contain
+white space is treated as the <span class="emphasis"><em>literal mnemonic</em></span> of
+the instruction and is not considered a local symbol identifier even
+if it is legal.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:and (var1) is                 <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+In the above example, the string &#8220;var1&#8221; is treated as a symbol
+identifier, but the string &#8220;and&#8221; is considered to be the mnemonic of
+the instruction.
+</p>
+<p>
+There is nothing that special about the mnemonic. As far as the
+display meaning of the constructor is concerned, it is just a sequence
+of literal characters. Although the current parser does not concern
+itself with this, the mnemonic of any assembly language instruction in
+general is used to guarantee the uniqueness of the assembly
+representation. It is conceivable that a forward engineering engine
+built on SLEIGH would place additional requirements on the mnemonic to
+assure uniqueness, but for reverse engineering applications there is
+no such requirement.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875301664"></a>7.3.2. The '^' character</h4></div></div></div>
+<p>
+The &#8216;^&#8217; character in the display section is used to separate
+identifiers from other characters where there shouldn&#8217;t be white space
+in the disassembly display. This can be used in any manner but is
+usually used to attach display characters from a local symbol to the
+literal characters of the mnemonic.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:bra^cc op1,op2 is             <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+In the above example, &#8220;bra&#8221; is treated as literal characters in the
+resulting display string followed immediately, with no intervening
+spaces, by the display string of the local
+symbol <span class="emphasis"><em>cc</em></span>. Thus the whole constructor actually
+has three operands, denoted by the three
+identifiers <span class="emphasis"><em>cc</em></span>, <span class="emphasis"><em>op1</em></span>,
+and <span class="emphasis"><em>op2</em></span>.
+</p>
+<p>
+If the &#8216;^&#8217; is used as the first (non-whitespace) character in the
+display section of a base constructor, this inhibits the first
+identifier in the display from being considered the mnemonic, as
+described in <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, &#8220;Mnemonic&#8221;</a>. This allows
+specification of less common situations, where the first part of the
+mnemonic, rather than perhaps a later part, needs to be considered as
+an operand. An initial &#8216;^&#8217; character can also facilitate certain
+recursive constructions.
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_bit_pattern"></a>7.4. The Bit Pattern Section</h3></div></div></div>
+<p>
+Syntactically, this section comes between the
+keyword <span class="bold"><strong>is</strong></span> and the delimiter for the
+following section, either an &#8216;{&#8216; or an &#8216;[&#8216;. The <span class="emphasis"><em>bit pattern
+section</em></span> describes a
+constructor&#8217;s <span class="emphasis"><em>pattern</em></span>, the subset of possible
+instruction encodings that the designer wants
+to <span class="emphasis"><em>match</em></span> the constructor being defined.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875290224"></a>7.4.1. Constraints</h4></div></div></div>
+<p>
+The patterns required for processor specifications can almost always
+be described as a mask and value pair. Given a specific instruction
+encoding, we can decide if the encoding matches our pattern by looking
+at just the bits specified by the <span class="emphasis"><em>mask</em></span> and seeing
+if they match a specific <span class="emphasis"><em>value</em></span>. The fields, as
+defined in <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, &#8220;Defining Tokens and Fields&#8221;</a>, typically give us
+our masks. So to construct a pattern, we can simply require that the
+field take on a specific value, as in the example below.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:halt is opcode=0x15 {         <span class="weak">...</span>
+</pre></div>
+<p>
+Assuming the symbol <span class="emphasis"><em>opcode</em></span> was defined as a field, this says that a
+root constructor with mnemonic &#8220;halt&#8221; matches any instruction where
+the bits defining this field have the value 0x15. The equation
+&#8220;opcode=0x15&#8221; is called a <span class="emphasis"><em>constraint</em></span>.
+</p>
+<p>
+The standard bit encoding of the integer is used when restricting the
+value of a field. This encoding is used even if
+an <span class="bold"><strong>attach</strong></span> statement has assigned a
+different meaning to the field. The alternate meaning does not apply
+within the pattern. This can be slightly confusing, particularly in
+the case of an <span class="bold"><strong>attach values</strong></span>
+statement, which provides an alternate integer interpretation of the
+field.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_ampandor"></a>7.4.2. The '&amp;' and '|' Operators</h4></div></div></div>
+<p>
+More complicated patterns are built out of logical operators. The
+meaning of these are fairly straightforward. We can force two or more
+constraints to be true at the same time, a <span class="emphasis"><em>logical
+and</em></span> &#8216;&amp;&#8217;, or we can require that either one constraint or
+another must be true, a <span class="emphasis"><em>logical or</em></span> &#8216;|&#8217;. By using these with
+constraints and parentheses for grouping, arbitrarily complicated
+patterns can be constructed.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:nop is (opcode=0 &amp; mode=0) | (opcode=15) { <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+Of the two operators, the <span class="emphasis"><em>logical and</em></span> is much
+more common. The SLEIGH compiler typically can group together several
+constraints that are combined with this operator into a single
+efficient mask/value check, so this operator is to be preferred if at
+all possible. The <span class="emphasis"><em>logical or</em></span> operator usually
+requires two or more mask/value style checks to correctly implement.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875276048"></a>7.4.3. Defining Operands and Invoking Subtables</h4></div></div></div>
+<p>
+The principle way of defining a constructor operand, left undefined
+from the display section, is done in the bit pattern section. If an
+operand&#8217;s identifier is used by itself, not as part of a constraint,
+then the operand takes on both the display and semantic definition of
+the global symbol with the same identifier. The syntax is slightly
+confusing at first. The identifier must appear in the pattern as if it
+were a term in a sequence of constraints but without the operator and
+right-hand side of the constraint.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define token instr(32)
+    opcode = (0,5)
+    r1 = (6,10)
+    r2 = (11,15);
+attach variables [ r1 r2 ] [ reg0 reg1 reg2 reg3 ];
+
+:add r1,r2 is opcode=7 &amp; r1 &amp; r2 { <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+This is a typical example. The <span class="emphasis"><em>add</em></span> instruction
+must have the bits in the <span class="emphasis"><em>opcode</em></span> field set
+specifically. But it also uses two fields in the instruction which
+specify registers. The <span class="emphasis"><em>r1</em></span>
+and <span class="emphasis"><em>r2</em></span> identifiers are defined to be local
+because they appear in the display section, but their use in the
+pattern section of the definition links the local symbols with the
+global register symbols defined as fields with attached registers. The
+constructor is essentially saying that it is building the
+full <span class="emphasis"><em>add</em></span> instruction encoding out of the register
+fields <span class="emphasis"><em>r1</em></span> and <span class="emphasis"><em>r2</em></span> but is not
+specifying their value.
+</p>
+<p>
+The syntax makes a little more sense keeping in mind this principle:
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">
+  The pattern must somehow specify all the bits and symbols
+  being used by the constructor, even if the bits are not restricted
+  to specific values.
+  </li></ul></div></div>
+<p>
+The linkage from local symbol to global symbol will happen for any
+global identifier which represents a family symbol, including table
+symbols. This is in fact the principle mechanism for recursively
+building new symbols from old symbols. For those familiar with grammar
+parsers, a SLEIGH specification is in part a grammar
+specification. The terminal symbols, or tokens, are the bits of an
+instruction, and the constructors and tables are the non-terminating
+symbols. These all build up to the root instruction table, the
+grammar&#8217;s start symbol. So this link from local to global is simply a
+statement of the grouping of old symbols into the new constructor.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875264640"></a>7.4.4. Variable Length Instructions</h4></div></div></div>
+<p>
+There are some additional complexities to designing a specification
+for a processor with variable length instructions. Some initial
+portion of an instruction must always be parsed. But depending on the
+fields in this first portion, additional portions of varying lengths
+may need to be read. The key to incorporating this behavior into a
+SLEIGH specification is the token. Recall that all fields are built on
+top of a token which is defined to be a specific number of bytes. If a
+processor has fixed length instructions, the specification needs to
+define only a single token representing the entire instruction, and
+all fields are built on top of this one token. For processors with
+variable length instructions however, more than one token needs to be
+defined. Each token has different fields defined upon it, and the
+SLEIGH compiler can distinguish which tokens are involved in a
+particular constructor by examining the fields it uses. The tokens
+that are actually used by any matching constructors determine the
+final length of the instruction. SLEIGH has two operators that are
+specific to variable length instruction sets and that give the
+designer control over how tokens fit together.
+</p>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875261168"></a>7.4.4.1. The ';' Operator</h5></div></div></div>
+<p>
+The most important operator for patterns defining variable length
+instructions is the concatenation operator &#8216;;&#8217;. When building a
+constructor with fields from two or more tokens, the pattern must
+explicitly define the order of the tokens. In terms of the logic of
+the pattern expressions themselves, the &#8216;;&#8217; operator has the same
+meaning as the &#8216;&amp;&#8217; operator. The combined expression matches only if
+both subexpressions are true. However, it also requires that the
+subexpressions involve multiple tokens and explicitly indicates an
+order for them.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define token base(8)
+    op=(0,3)
+    mode=(4,4)
+    reg=(5,7);
+define token immtoken(16)
+    imm16 = (0,15);
+
+:inc reg       is op=2 &amp; reg        { <span class="weak">...</span>
+:add reg,imm16 is op=3 &amp; reg; imm16 { <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+In the above example, we see the definitions of two different
+tokens, <span class="emphasis"><em>base</em></span>
+and <span class="emphasis"><em>immtoken</em></span>. For the first
+instruction, <span class="emphasis"><em>inc</em></span>, the constructor uses
+fields <span class="emphasis"><em>op</em></span> and <span class="emphasis"><em>reg</em></span>, both
+defined on <span class="emphasis"><em>base</em></span>. Thus, the pattern applies
+constraints to just a single byte, the size of base, in the
+corresponding encoding. The second
+instruction, <span class="emphasis"><em>add</em></span>, uses
+fields <span class="emphasis"><em>op</em></span> and <span class="emphasis"><em>reg</em></span>, but it
+also uses field <span class="emphasis"><em>imm16</em></span> contained
+in <span class="emphasis"><em>immtoken</em></span>. The &#8216;;&#8217; operator indicates that
+token <span class="emphasis"><em>base</em></span> (via its fields) comes first in the
+encoding, followed by <span class="emphasis"><em>immtoken</em></span>. The constraints
+on <span class="emphasis"><em>base</em></span> will therefore correspond to constraints
+on the first byte of the encoding, and the constraints
+on <span class="emphasis"><em>immtoken</em></span> will apply to the second and third
+bytes. The length of the final encoding for <span class="emphasis"><em>add</em></span>
+will be 3 bytes, the sum of the lengths of the two tokens.
+</p>
+<p>
+If two pattern expressions are combined with the &#8216;&amp;&#8217; or &#8216;|&#8217; operator,
+where the concatenation operator &#8216;;&#8217; is also being used, the designer
+must make sure that the tokens underlying each expression are the same
+and come in the same order. In the example <span class="emphasis"><em>add</em></span>
+instruction for instance, the &#8216;&amp;&#8217; operator combines the &#8220;op=3&#8221; and
+&#8220;reg&#8221; expressions. Both of these expressions involve only the
+token <span class="emphasis"><em>base</em></span>, so the matching requirement is
+satisfied. The &#8216;&amp;&#8217; and &#8216;|&#8217; operators can combine expressions built out
+of more than one token, but the tokens must come in the same
+order. Also these operators have higher precedence than the &#8216;;&#8217;
+operator, so parentheses may be necessary to get the intended meaning.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875245856"></a>7.4.4.2. The '...' Operator</h5></div></div></div>
+<p>
+The ellipsis operator &#8216;...&#8217; is used to satisfy the token matching
+requirements of the &#8216;&amp;&#8217; and &#8216;|&#8217; operators (described in the previous
+section), when the operands are of different lengths. The ellipsis is
+a unary operator applied to a pattern expression that extends its
+token length before it is combined with another expression. Depending
+on what side of the expression the ellipsis is applied, the
+expression's tokens are either right or left justified within the
+extension.
+</p>
+<div class="informalexample"><pre class="programlisting">
+addrmode: reg is reg &amp; mode=0    {     <span class="weak">...</span>
+addrmode: #imm16 is mode=1; imm16    {  <span class="weak">...</span>
+
+:xor &#8220;A&#8221;,addrmode is op=4 ... &amp; addrmode {	<span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+Extending the example from the previous section, we add a
+subtable <span class="emphasis"><em>addrmode</em></span>, representing an operand that
+can be encoded either as a register, if <span class="emphasis"><em>mode</em></span> is
+set to zero, or as an immediate value, if
+the <span class="emphasis"><em>mode</em></span> bit is one. If the immediate value mode
+is selected, the operand is built by reading an additional two bytes
+directly from the instruction encoding. So
+the <span class="emphasis"><em>addrmode</em></span> table can represent a 1 byte or a 3
+byte encoding depending on the mode. In the
+following <span class="emphasis"><em>xor</em></span>
+instruction, <span class="emphasis"><em>addrmode</em></span> is used as an operand. The
+particular instruction is selected by encoding a 4 in
+the <span class="emphasis"><em>op</em></span> field, so it requires a constraint on that
+field in the pattern expression. Since the instruction uses
+the <span class="emphasis"><em>addrmode</em></span> operand, it must combine the
+constraint on <span class="emphasis"><em>op</em></span> with the pattern
+for <span class="emphasis"><em>addrmode</em></span>. But <span class="emphasis"><em>op</em></span>
+involves only the token <span class="emphasis"><em>base</em></span>,
+while <span class="emphasis"><em>addrmode</em></span> may also
+involve <span class="emphasis"><em>immtoken</em></span>. The ellipsis operator resolves
+the conflict by extending the <span class="emphasis"><em>op</em></span> constraint to be
+whatever the length of <span class="emphasis"><em>addrmode</em></span> turns out to be.
+</p>
+<p>
+Since the <span class="emphasis"><em>op</em></span> constraint occurs to the left of the
+ellipsis, it is considered left justified, and the matching
+requirement for &#8216;&amp;&#8217; will insist that <span class="emphasis"><em>base</em></span> is the
+first token in all forms of <span class="emphasis"><em>addrmode</em></span>. This allows
+the <span class="emphasis"><em>xor</em></span> instruction's constraint
+on <span class="emphasis"><em>op</em></span> and the <span class="emphasis"><em>addrmode</em></span>
+constraint on <span class="emphasis"><em>mode</em></span> to be combined into
+constraints on a single byte in the final encoding.
+</p>
+</div>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_invisible_operands"></a>7.4.5. Invisible Operands</h4></div></div></div>
+<p>
+It is not necessary for a global symbol, which is needed by a
+constructor, to appear in the display section of the definition. If
+the global identifier is used in the pattern section as it would be
+for a normal operand definition but the identifier was not used in the
+display section, then the constructor defines an <span class="emphasis"><em>invisible
+operand</em></span>. Such an operand behaves and is parsed exactly like
+any other operand but there is absolutely no visible indication of the
+operand in the final display of the assembly instruction. The one
+common type of instruction that uses this is the relative branch (see
+<a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1. Relative Branches">Section 7.5.1, &#8220;Relative Branches&#8221;</a>) but it is otherwise needed
+only in more esoteric instructions. It is useful in situations where
+you need to break up the parsing of an instruction along lines that
+don&#8217;t quite match the assembly.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875225296"></a>7.4.6. Empty Patterns</h4></div></div></div>
+<p>
+Occasionally there is a need for an empty pattern when building
+tables. An empty pattern matches everything. There is a predefined
+symbol <span class="emphasis"><em>epsilon</em></span> which has been traditionally used
+to indicate an empty pattern.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875223456"></a>7.4.7. Advanced Constraints</h4></div></div></div>
+<p>
+A constraint does not have to be of the form &#8220;field = constant&#8221;,
+although this is almost always what is needed. In certain situations,
+it may be more convenient to use a different kind of
+constraint. Special care should be taken when designing these
+constraints because they can substantially deviate from the mask/value
+model used to implement most constraints. These more general
+constraints are implemented by splitting it up into smaller states
+which can be modeled as a mask/value pair. This is all done
+automatically, and the designer may inadvertently create huge numbers
+of parsing states for a single constraint.
+</p>
+<p>
+A constraint can actually be built out of arbitrary
+expressions. These <span class="emphasis"><em>pattern expressions</em></span> are more
+commonly used in disassembly actions and are defined in
+<a class="xref" href="sleigh_constructors.html#sleigh_general_actions" title="7.5.2. General Actions and Pattern Expressions">Section 7.5.2, &#8220;General Actions and Pattern Expressions&#8221;</a>, but they can also be used in
+constraints. So in general, a constraint is any equation where the
+left-hand side is a single family symbol, the right-hand side is an
+arbitrary pattern expression, and the constraint operator is one of
+the following:
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="constraints.htmltable"></a><p class="title"><b>Table 3. Constraint Operators</b></p>
+<div class="table-contents"><table width="50%" frame="box" rules="all">
+<col width="50%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>Operator Name</strong></span></td>
+  <td><span class="bold"><strong>Syntax</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Integer equality</td>
+  <td>=</td>
+</tr>
+<tr>
+  <td>Integer inequality</td>
+  <td>!=</td>
+</tr>
+<tr>
+  <td>Integer less-than</td>
+  <td>&lt;</td>
+</tr>
+<tr>
+  <td>Integer greater-than</td>
+  <td>&gt;</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+For a particular instruction encoding, each variable evaluates to a
+specific integer depending on the encoding. A constraint is <span class="emphasis"><em>satisfied</em></span>
+if, when all the variables are evaluated, the equation is true.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:xor r1,r2 is opcode=0xcd &amp; r1 &amp; r2 { r1 = r1 ^ r2; }
+:clr r1    is opcode=0xcd &amp; r1 &amp; r2=r1 { r1 = 0; }
+</pre></div>
+<p>
+</p>
+<p>
+The above example illustrates a situation that does come up
+occasionally. A processor uses an exclusive-or instruction to clear a
+register by setting both operands of the instruction to the same
+register. The first line in the example illustrates such an
+instruction. However, processor documentation stipulates, and analysts
+prefer, that, in this case, the disassembler should print a
+pseudo-instruction <span class="emphasis"><em>clr</em></span>. The distinguishing
+feature of <span class="emphasis"><em>clr</em></span> from <span class="emphasis"><em>xor</em></span> is
+that the two fields, specifying the two register inputs
+to <span class="emphasis"><em>xor</em></span>, are equal. The easiest way to specify
+this special case is with the general constraint,
+&#8220;<span class="emphasis"><em>r2</em></span> = <span class="emphasis"><em>r1</em></span>&#8221;, as in the second
+line of the example. The SLEIGH compiler will implement this by
+enumerating all the cases where <span class="emphasis"><em>r2</em></span>
+equals <span class="emphasis"><em>r1</em></span>, creating as many states as there are
+registers. But the specification itself, at least, remains compact.
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_disassembly_actions"></a>7.5. Disassembly Actions Section</h3></div></div></div>
+<p>
+After the bit pattern section, there can optionally be a section for
+doing dynamic calculations, which must be between square brackets. For
+certain kinds of instructions, there is a need to calculate values
+that depend on the specific bits of the instruction, but which cannot
+be obtained as an integer interpretation of a field or by building
+with an <span class="bold"><strong>attach values</strong></span> statement. So
+SLEIGH provides a mechanism to build values of arbitrary
+complexity. This section is not intended to emulate the execution of
+the processor (this is the job of the semantic section) but is
+intended to produce only those values that are needed at disassembly
+time, usually for part of the disassembly display.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_relative_branches"></a>7.5.1. Relative Branches</h4></div></div></div>
+<p>
+The canonical example of an action at disassembly time is a branch
+relocation. A jump instruction encodes the address of where it jumps
+to as a relative offset to the instruction&#8217;s address, for
+instance. But when we display the assembly, we want to show the
+absolute address of the jump destination. The correct way to specify
+this is to reserve an identifier in the display section which
+represents the absolute address, but then, instead of defining it in
+the pattern section, we define it in the disassembly action section as
+a function of the current address and the relative offset.
+</p>
+<div class="informalexample"><pre class="programlisting">
+jmpdest: reloc is simm8 [ reloc=inst_next + simm8*4; ] { <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+The identifier <span class="emphasis"><em>reloc</em></span> is reserved in the display
+section for this constructor, but the identifier is not defined in the
+pattern section. Instead, an invisible
+operand <span class="emphasis"><em>simm8</em></span> is defined which is attached to a
+global field definition. The <span class="emphasis"><em>reloc</em></span> identifier is
+defined in the action section as the integer obtained by adding a
+multiple of <span class="emphasis"><em>simm8</em></span>
+to <span class="emphasis"><em>inst_next</em></span>, a symbol predefined to be equal to
+the address of the following instruction (see
+<a class="xref" href="sleigh_symbols.html#sleigh_predefined_symbols" title="5.2. Predefined Symbols">Section 5.2, &#8220;Predefined Symbols&#8221;</a>). Now <span class="emphasis"><em>reloc</em></span>
+is a specific symbol with both semantic and display meaning equal to
+the desired absolute address. This address is calculated separately,
+at disassembly time, for every instruction that this constructor
+matches.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_general_actions"></a>7.5.2. General Actions and Pattern Expressions</h4></div></div></div>
+<p>
+In general, the disassembly actions are encoded as a sequence of
+assignments separated by semicolons. The left-hand side of each
+statement must be a single operand identifier, and the right-hand side
+must be a <span class="emphasis"><em>pattern expression</em></span>. A <span class="emphasis"><em>pattern
+expression</em></span> is made up of both integer constants and family
+symbols that have retained their semantic meaning as integers, and it
+is built up out of the following typical operators:
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="patexp.htmltable"></a><p class="title"><b>Table 4. Pattern Expression Operators</b></p>
+<div class="table-contents"><table width="50%" frame="box" rules="all">
+<col width="50%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>Operator Name</strong></span></td>
+  <td><span class="bold"><strong>Syntax</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Integer addition</td>
+  <td>+</td>
+</tr>
+<tr>
+  <td>Integer subtraction</td>
+  <td>-</td>
+</tr>
+<tr>
+  <td>Integer multiplication</td>
+  <td>*</td>
+</tr>
+<tr>
+  <td>Integer division</td>
+  <td>/</td>
+</tr>
+<tr>
+  <td>Left-shift</td>
+  <td>&lt;&lt;</td>
+</tr>
+<tr>
+  <td>Arithmetic right-shift</td>
+  <td>&gt;&gt;</td>
+</tr>
+<tr>
+  <td>Bitwise and</td>
+  <td>
+    <div class="informaltable">
+<a name="bitwiseand.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td>$and</td>
+      </tr>
+<tr>
+        <td>&amp; (within square brackets)</td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+</tr>
+<tr>
+  <td>Bitwise or</td>
+  <td>
+    <div class="informaltable">
+<a name="bitwiseor.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td>$or</td>
+      </tr>
+<tr>
+        <td>| (within square brackets)</td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+</tr>
+<tr>
+  <td>Bitwise xor</td>
+  <td>
+    <div class="informaltable">
+<a name="bitwisexor.htmltable"></a><table frame="none"><tbody>
+<tr>
+        <td>$xor</td>
+      </tr>
+<tr>
+        <td>^</td>
+      </tr>
+</tbody></table>
+</div>
+  </td>
+</tr>
+<tr>
+  <td>Bitwise negation</td>
+  <td>~</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+For the sake of these expressions, integers are considered signed
+values of arbitrary precision. Expressions can also make use of
+parentheses. A family symbol can be used in an expression, only if it
+can be resolved to a particular specific symbol. This generally means
+that a global family symbol, such as a field, must be attached to a
+local identifier before it can be used.
+</p>
+<p>
+The left-hand side of an assignment statement can be a context
+variable (see <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4. Context Variables">Section 6.4, &#8220;Context Variables&#8221;</a>). An
+assignment to such a variable changes the context in which the current
+instruction is being disassembled and can potentially have a drastic
+effect on how the rest of the instruction is disassembled. An
+assignment of this form is considered local to the instruction and
+will not effect how other instructions are parsed. The context
+variable is reset to its original value before parsing other
+instructions. The disassembly action may also contain one or
+more <span class="bold"><strong>globalset</strong></span> directives, which
+cause changes to context variables to become more permanent. This
+directive is distinct from the operators in a pattern expression and
+must be invoked as a separate statement. See
+<a class="xref" href="sleigh_context.html" title="8. Using Context">Section 8, &#8220;Using Context&#8221;</a>, for a discussion of how to
+effectively use context variables and
+<a class="xref" href="sleigh_context.html#sleigh_global_change" title="8.3. Global Context Change">Section 8.3, &#8220;Global Context Change&#8221;</a>, for details of
+the <span class="bold"><strong>globalset</strong></span> directive.
+</p>
+<p>
+Note that there are two syntax forms for the logical operators in a
+pattern expression. When an expression is used as part of a
+constraint, the &#8220;$and&#8221; and &#8220;$or&#8221; forms of the operators must be used
+in order to distinguish the bitwise operators from the special pattern
+combining operators, &#8216;&amp;&#8217; and &#8216;|&#8217; (as described in
+<a class="xref" href="sleigh_constructors.html#sleigh_ampandor" title="7.4.2. The '&amp;' and '|' Operators">Section 7.4.2, &#8220;The '&amp;' and '|' Operators&#8221;</a>). However inside the square braces
+of the disassembly action section, &#8216;&amp;&#8217; and &#8216;|&#8217; are interpreted as
+the usual logical operators.
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_with_block"></a>7.6. The With Block</h3></div></div></div>
+<p>
+To avoid tedious repetition and to ease the maintenance of specifications
+already having many, many constructors and tables, the <span class="emphasis"><em>with
+block</em></span> is provided. It is a syntactic construct that allows a
+designer to apply a table header, bit pattern constraints, and/or disassembly
+actions to a group of constructors. The block starts at the
+<span class="bold"><strong>with</strong></span> directive and ends with a closing brace.
+All constructors within the block are affected:
+</p>
+<div class="informalexample"><pre class="programlisting">
+with op1 : mode=1 [ mode=2; ] {
+  :reg   is reg &amp; ind=0 [ mode=1; ] { <span class="weak">...</span> }
+  :[reg] is reg &amp; ind=1             { <span class="weak">...</span> }
+}
+</pre></div>
+<p>
+In the example, both constructors are added to the table identified by
+<span class="emphasis"><em>op1</em></span>. Both require the context field
+<span class="emphasis"><em>mode</em></span> to be equal to 1. The listed constraints take the
+form described in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4. The Bit Pattern Section">Section 7.4, &#8220;The Bit Pattern Section&#8221;</a>, and they are joined to
+those given in the constructor statement as if prepended using &#8216;&amp;&#8217;. Similarly,
+the actions take the form described in <a class="xref" href="sleigh_constructors.html#sleigh_disassembly_actions" title="7.5. Disassembly Actions Section">Section 7.5, &#8220;Disassembly Actions Section&#8221;</a>
+and are prepended to the actions given in the constructor statement. Prepending
+the actions allows the statement to override actions in the with block. Both
+technically occur, but only the last one has a noticeable effect. The above
+example could have been equivalently specified:
+</p>
+<div class="informalexample"><pre class="programlisting">
+op1:reg   is mode=1 &amp; reg &amp; ind=0 [ mode=2; mode=1; ] { <span class="weak">...</span> }
+op1:[ref] is mode=1 &amp; reg &amp; ind=1 [ mode=2; ]         { <span class="weak">...</span> }
+</pre></div>
+<p>
+</p>
+<p>
+The three parts (table header, bit pattern section, and disassembly actions
+section) of the with block are all optional. Any of them may be omitted,
+though omitting all of them is rather pointless. With blocks may also be nested.
+The innermost with block having a table header specifies the default header of
+the constructors it contains. The constraints and actions are combined outermost
+to innermost, left to right.
+
+Note that when a with block has a table header specifying a table that does not
+yet exist, the table is created immediately. Inside a with block that has a
+table header, a nested with block may specify the <span class="emphasis"><em>instruction</em></span>
+table by name, as in "with instruction : {<span class="weak">...</span>}".
+Inside such a block, the rule regarding mnemonic literals is restored (see
+<a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, &#8220;Mnemonic&#8221;</a>).
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_semantic_section"></a>7.7. The Semantic Section</h3></div></div></div>
+<p>
+The final section of a constructor definition is the <span class="emphasis"><em>semantic
+section</em></span>. This is a description of how the processor would manipulate
+data if it actually executed an instruction that matched the
+constructor. From the perspective of a single constructor, the basic
+idea is that all the operands for the constructor have been defined in
+the bit pattern or disassembly action sections as either specific or
+family symbols. In context, all the family symbols map to specific
+symbols, and the semantic section uses these and possibly other global
+specific symbols in statements that describe the action of the
+constructor. All specific symbols have a varnode associated with them,
+so within the semantic section, symbols are manipulated as if they
+were varnodes.
+</p>
+<p>
+The semantic section for one constructor is surrounded by curly braces
+&#8216;{&#8216; and &#8216;}&#8217; and consists of zero or more statements separated by
+semicolons &#8216;;&#8217;. Most statements are built up out of C-like syntax,
+where the variables are the symbols visible to the constructor. There
+is a direct correspondence between each type of operator used in the
+statements and a p-code operation. The SLEIGH compiler generates
+p-code operations and varnodes corresponding to the SLEIGH operators
+and symbols by collapsing the syntax trees represented by the
+statements and creating temporary storage within
+the <span class="emphasis"><em>unique</em></span> space when it needs to.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:add r1,r2 is opcode=0x26 &amp; r1 &amp; r2 { r1 = r1 + r2; }
+</pre></div>
+<p>
+</p>
+<p>
+The above example generates exactly one integer addition
+operation, <span class="emphasis"><em>INT_ADD</em></span>, where the input varnodes
+are <span class="emphasis"><em>r1</em></span> and <span class="emphasis"><em>r2</em></span> and the output
+varnode is <span class="emphasis"><em>r1</em></span>.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875112560"></a>7.7.1. Expressions</h4></div></div></div>
+<p>
+Expressions are built out of symbols and the binary and unary
+operators listed in <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table 5. Semantic Expression Operators and Syntax">Table 5, &#8220;Semantic Expression Operators and Syntax&#8221;</a> in the
+Appendix. All expressions evaluate to an integer, floating point, or
+boolean value, depending on the final operation of the expression. The
+value is then used depending on the kind of statement. Most of the
+operators require that their input and output varnodes all be the same
+size (see <a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, &#8220;Varnode Sizes&#8221;</a>). The operators all
+have a precedence, which is used by the SLEIGH compiler to determine
+the ordering of the final p-code operations. Parentheses can be used
+within expressions to affect this order.
+</p>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875109808"></a>7.7.1.1. Arithmetic, Logical and Boolean Operators</h5></div></div></div>
+<p>
+For the most part these operators should be familiar to software
+developers. The only real differences arise from the fact that
+varnodes are typeless. So for instance, there has to be separate
+operators to distinguish between dividing unsigned numbers &#8216;/&#8217;,
+dividing signed numbers &#8216;s/&#8217;, and dividing floating point numbers
+&#8216;f/&#8217;.
+</p>
+<p>
+Carry, borrow, and overflow calculations are implemented with separate
+operations, rather than having indirect effects with the arithmetic
+operations. Thus
+the <span class="emphasis"><em>INT_CARRY</em></span>, <span class="emphasis"><em>INT_SCARRY</em></span>,
+and <span class="emphasis"><em>INT_SBORROW</em></span> operations may be unfamiliar to
+some people in this form (see the descriptions in the Appendix).
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_star_operator"></a>7.7.1.2. The '*' Operator</h5></div></div></div>
+<p>
+The dereference operator, which generates <span class="emphasis"><em>LOAD</em></span>
+operations (and <span class="emphasis"><em>STORE</em></span> operations), has slightly
+unfamiliar syntax. The &#8216;*&#8217; operator, as is usual in many programming
+languages, indicates that the affected variable is a pointer and that
+the expression is <span class="emphasis"><em>dereferencing</em></span> the data being
+pointed to. Unlike most languages, in SLEIGH, it is not immediately
+clear what address space the variable is pointing into because there
+may be multiple address spaces defined. In the absence of any other
+information, SLEIGH assumes that the variable points into
+the <span class="emphasis"><em>default</em></span> space, as labeled in the definition
+of one of the address spaces with
+the <span class="bold"><strong>default</strong></span> attribute. If that is not
+the space desired, the default can be overridden by putting the
+identifier for the space in square brackets immediately after the &#8216;*&#8217;.
+</p>
+<p>
+It is also frequently not clear what the size of the dereferenced data
+is because the pointer variable is typeless. The SLEIGH compiler can
+frequently deduce what the size must be by looking at the operation in
+the context of the entire statement (see
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, &#8220;Varnode Sizes&#8221;</a>). But in some situations, this
+may not be possible, so there is a way to specify the size
+explicitly. The operator can be followed by a colon &#8216;:&#8217; and an integer
+indicating the number of bytes being dereferenced. This can be used
+with or without the address space override. We give an example of each
+kind of override in the example below.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:load  r1,[r2] is opcode=0x99 &amp; r1 &amp; r2 { r1 = * r2; }
+:load2 r1,[r2] is opcode=0x9a &amp; r1 &amp; r2 { r1 = *[other] r2; }
+:load3 r1,[r2] is opcode=0x9b &amp; r1 &amp; r2 { r1 = *:2 r2; }
+:load4 r1,[r2] is opcode=0x9c &amp; r1 &amp; r2 { r1 = *[other]:2 r2; }
+</pre></div>
+<p>
+Keep in mind that the address represented by the pointer is not a byte
+address if the <span class="bold"><strong>wordsize</strong></span> attribute is
+set to something other than one.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875097040"></a>7.7.1.3. Extension</h5></div></div></div>
+<p>
+Most processors have instructions that extend small values into big
+values, and many instructions do these minor data manipulations
+implicitly. In keeping with the p-code philosophy, these operations
+must be specified explicitly with the <span class="emphasis"><em>INT_ZEXT</em></span>
+and <span class="emphasis"><em>INT_SEXT</em></span> operators in the semantic
+section. The <span class="emphasis"><em>INT_ZEXT</em></span>, does a
+so-called <span class="emphasis"><em>zero extension</em></span>. The low-order bits are
+copied from the input, and any remaining high-order bits in the result
+are set to zero. The <span class="emphasis"><em>INT_SEXT</em></span>, does
+a <span class="emphasis"><em>signed extension</em></span>. The low-order bits are copied
+from the input, but any remaining high-order bits in the result are
+set to the value of the high-order bit of the
+input. The <span class="emphasis"><em>INT_ZEXT</em></span> operation is invoked with
+the <span class="bold"><strong>zext</strong></span> operator, and
+the <span class="emphasis"><em>INT_SEXT</em></span> operation is invoked with
+the <span class="bold"><strong>sext</strong></span> operator.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875090432"></a>7.7.1.4. Truncation</h5></div></div></div>
+<p>
+There are two forms of syntax indicating a truncation of the input
+varnode. In one the varnode is followed by a colon &#8216;:&#8217; and an integer
+indicating the number of bytes to copy into the output, starting with
+the least significant byte. In the second form, the varnode is
+followed by an integer, surrounded by parentheses, indicating the
+number of least significant bytes to truncate from the input. This
+second form doesn&#8217;t directly specify the size of the output, which
+must be inferred from context.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:split r1,lo,hi is opcode=0x81 &amp; r1 &amp; lo &amp; hi {
+    lo = r1:4;
+    hi = r1(4);
+}
+</pre></div>
+<p>
+This is an example using both forms of truncation to split a large
+value <span class="emphasis"><em>r1</em></span> into two smaller
+pieces, <span class="emphasis"><em>lo</em></span>
+and <span class="emphasis"><em>hi</em></span>. Assuming <span class="emphasis"><em>r1</em></span> is an 8
+byte value, <span class="emphasis"><em>lo</em></span> receives the least significant
+half and <span class="emphasis"><em>hi</em></span> receives the most significant half.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_bitrange_operator"></a>7.7.1.5. Bit Range Operator</h5></div></div></div>
+<p>
+A specific subrange of bits within a varnode can be explicitly
+referenced. Depending on the range, this may amount to just a
+variation on the truncation syntax described earlier. But for this
+operator, the size and boundaries of the range do not have to be
+restricted to byte alignment.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:bit3 r1,r2 is op=0x7e &amp; r1 &amp; r2 { r1 = zext(r2[3,1]); }
+</pre></div>
+<p>
+</p>
+<p>
+A varnode, <span class="emphasis"><em>r2</em></span> in this example, is immediately
+followed by square brackets &#8216;[&#8217; and &#8216;]&#8217; indicating a bit range, and
+within the brackets, there are two parameters separated by a
+comma. The first parameter is an integer indicating the least
+significant bit of the resulting bit range. The bits of the varnode
+are labeled in order of significance, with the least significant bit
+of the varnode being 0. The second parameter is an integer indicating
+the number of bits in the range. In the example, a single bit is
+extracted from <span class="emphasis"><em>r2</em></span>, and its value is extended to
+fill <span class="emphasis"><em>r1</em></span>. Thus <span class="emphasis"><em>r1</em></span> takes
+either the value 0 or 1, depending on bit 3
+of <span class="emphasis"><em>r2</em></span>.
+</p>
+<p>
+There are some caveats associated with using this operator. Bit range
+extraction is really a pseudo operator, as real p-code can only work
+with memory down to byte resolution. The bit range operator will
+generate some combination
+of <span class="emphasis"><em>INT_RIGHT</em></span>, <span class="emphasis"><em>INT_AND</em></span>,
+and <span class="emphasis"><em>SUBPIECE</em></span> to simulate the extraction of
+smaller or unaligned pieces. The &#8220;r2[3,1]&#8221; from the example generates
+the following p-code, for instance.
+</p>
+<div class="informalexample"><pre class="programlisting">
+u1 = INT_RIGHT r2,#3
+u2 = SUBPIECE u1,0
+u3 = INT_AND u2,#0x1
+</pre></div>
+<p>
+</p>
+<p>
+The result of any bit range operator still has a size in bytes. This
+size is always the minimum number of bytes needed to contain the
+resulting bit range, and if there are any extra bits in the result
+these are automatically set to zero.
+</p>
+<p>
+This operator can also be used on the left-hand side of assignments
+with similar behavior and caveats (see <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_assign" title="7.7.2.7. Bit Range Assignments">Section 7.7.2.7, &#8220;Bit Range Assignments&#8221;</a>).
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_addressof"></a>7.7.1.6. Address-of Operator</h5></div></div></div>
+<p>
+There is an <span class="emphasis"><em>address-of</em></span> operator for generating
+the address offset of a selected varnode as an integer value for use
+in expressions. Use of this operator is a little subtle because it
+does <span class="emphasis"><em>not</em></span> generate a p-code operation that
+calculates the desired value. The address is only calculated at
+disassembly time and not during execution. The operator can only be
+used if the symbol referenced has a static address.
+</p>
+<div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
+<h3 class="title">Warning</h3>
+<p> The current SLEIGH compiler cannot distinguish when
+the symbol has an address that can always be resolved during
+disassembly. So improper use may not be flagged as an error, and the
+specification may produce unexpected results.
+</p>
+</div>
+<p>
+There &#8216;&amp;&#8217; operator in front of a symbol invokes this function. The
+ampersand can also be followed by a colon &#8216;:&#8217; and an integer
+explicitly indicating the size of the resulting constant as a varnode.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:copyr r1 is op=0x3b &amp; r1 { tmp:4 = &amp;r1 + 4; r1 = *[register]tmp;}
+</pre></div>
+<p>
+</p>
+<p>
+The above is a contrived example of using the address-of operator to
+copy from a register that is not explicitly indicated by the
+instruction. This example constructs the address of the register
+following <span class="emphasis"><em>r1</em></span> within
+the <span class="emphasis"><em>register</em></span> space, and then
+loads <span class="emphasis"><em>r1</em></span> with data from that address. The net
+effect of all this is that the register
+following <span class="emphasis"><em>r1</em></span> is copied
+into <span class="emphasis"><em>r1</em></span>, even though it is not mentioned directly
+in the instruction. Notice that the address-of operator only produces
+the offset portion of the address, and to copy the desired value, the
+&#8216;*&#8217; operator must have a <span class="emphasis"><em>register</em></span> space override.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875065552"></a>7.7.1.7. Managed Code Operations</h5></div></div></div>
+<p>
+SLEIGH provides basic support for instructions where encoding and context
+don't provide a complete description of the semantics. This is the case
+typically for <span class="emphasis"><em>managed code</em></span> instruction sets where generation
+of the semantic details of an instruction may be deferred until run-time. Support for
+these operators is architecture dependent, otherwise they just act as black-box
+functions.
+</p>
+<p>
+The constant pool operator, <span class="bold"><strong>cpool</strong></span>,
+returns sizes, offsets, addresses, and other structural constants.  It behaves like a
+<span class="emphasis"><em>query</em></span> to the architecture about these constants. The first
+parameter is generally an <span class="emphasis"><em>object reference</em></span>, and additional parameters
+are constants describing the particular query. The operator returns the requested value.
+In the following example, an object reference
+<span class="emphasis"><em>regParamC</em></span> and the encoded constant <span class="emphasis"><em>METHOD_INDEX</em></span>
+are sent as part of a query to obtain the final destination address of an object method.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:invoke_direct METHOD_INDEX,regParamC
+               is inst0=0x70 ; N_PARAMS=1 &amp; METHOD_INDEX &amp; regParamC
+{
+	iv0 = regParamC;
+	destination:4 = cpool( regParamC, METHOD_INDEX, $(CPOOL_METHOD));
+	call [ destination ];
+}
+</pre></div>
+<p>
+</p>
+<p>
+If object memory allocation is an atomic feature of the instruction set, the specification
+designer can use the <span class="bold"><strong>newobject</strong></span> functional operator to
+implement it in SLEIGH. It takes one
+or two parameters. The first parameter is a <span class="emphasis"><em>class reference</em></span> or other value
+describing the object to be allocated, and the second parameter is an optional count of the number
+of objects to allocate. It returns a pointer to the allocated object.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_userdef_op"></a>7.7.1.8. User-Defined Operations</h5></div></div></div>
+<p>
+Any identifier that has been defined as a new p-code operation, using
+the <span class="bold"><strong>define pcodeop</strong></span> statement, can be
+invoked as an operator using functional syntax. The SLEIGH compiler
+assumes that the operator can take an arbitrary number of inputs, and
+if used in an expression, the compiler assumes the operation returns
+an output. Using this syntax of course generates the particular p-code
+operation reserved for the identifier.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define pcodeop arctan;
+  <span class="weak">...</span>
+:atan r1,r2 is opcode=0xa3 &amp; r1 &amp; r2 { r1 = arctan(r2); }
+</pre></div>
+<p>
+</p>
+</div>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875053152"></a>7.7.2. Statements</h4></div></div></div>
+<p>
+We describe the types of semantic statements that are allowed in SLEIGH.
+</p>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_assign_statements"></a>7.7.2.1. Assignment Statements and Temporary Variables</h5></div></div></div>
+<p>
+Of course SLEIGH allows assignment statements with the &#8216;=&#8217; operator,
+where the right-hand side is an arbitrary expression and the left-hand
+side is the varnode being assigned. The assigned varnode can be any
+specific symbol in the scope of the constructor, either a global
+symbol or a local operand.
+</p>
+<p>
+In SLEIGH, the keyword <span class="bold"><strong>local</strong></span>
+is used to allocate temporary variables. If an assignment
+statement is prepended with <span class="bold"><strong>local</strong></span>,
+and the identifier on the left-hand side of an assignment does not match
+any symbol in the scope of the constructor, a named temporary varnode is
+created in the <span class="emphasis"><em>unique</em></span> address space to hold the
+result of the expression. The new symbol becomes part of the local
+scope of the constructor, and can be referred to in the following
+semantic statements. The size of the new varnode is calculated by
+examining the statement in context (see
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, &#8220;Varnode Sizes&#8221;</a>). It is also possible to
+explicitly indicate the size by using the colon &#8216;:&#8217; operator followed
+by an integer size in bytes. The following examples demonstrate the
+temporary variable <span class="emphasis"><em>tmp</em></span> being defined using both
+forms.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:swap r1,r2 is opcode=0x41 &amp; r1 &amp; r2 {
+    local tmp = r1;
+    r1 = r2;
+    r2 = tmp;
+}
+:store r1,imm is opcode=0x42 &amp; r1 &amp; imm {
+    local tmp:4 = imm+0x20;
+    *r1 = tmp;
+}
+</pre></div>
+<p>
+</p>
+<p>
+The <span class="bold"><strong>local</strong></span> keyword can also be used
+to declare a named temporary varnode, without an assignment statement.
+This is useful for temporaries that are immediately passed into a macro.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:pushflags r1 is opcode=0x43 &amp; r1 {
+    local tmp:4;
+    packflags(tmp);
+    * r1 = tmp;
+    r1 = r1 - 4;
+}
+</pre></div>
+<p>
+</p>
+<div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
+<h3 class="title">Warning</h3>
+<p>Currently, the SLEIGH compiler does not need the
+<span class="bold"><strong>local</strong></span> keyword to create a temporary
+variable. For any assignment statement, if the left-hand side has a new
+identifier, a new temporary symbol will be created using this identifier.
+Unfortunately, this can cause SLEIGH to blindly accept assignment statements
+where the left-hand side identifier is a misspelling of an existing symbol.
+Use of the <span class="bold"><strong>local</strong></span> keyword is preferred
+and may be enforced in future compiler versions.
+</p>
+</div>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875039872"></a>7.7.2.2. Storage Statements</h5></div></div></div>
+<p>
+SLEIGH supports fairly standard <span class="emphasis"><em>storage statement</em></span>
+syntax to complement the load operator. The left-hand side of an
+assignment statement uses the &#8216;*&#8217; operator to indicate a dynamic
+storage location, followed by an arbitrary expression to calculate the
+location. This syntax of course generates the
+p-code <span class="emphasis"><em>STORE</em></span> operator as the final step of the
+statement.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:sta [r1],r2 is opcode=0x20 &amp; r1 &amp; r2 { *r1 = r2; }
+:stx [r1],r2 is opcode=0x21 &amp; r1 &amp; r2 { *[other] r1 = r2; }
+:sti [r1],imm is opcode=0x22 &amp; r1 &amp; imm { *:4 r1 = imm; }
+</pre></div>
+<p>
+</p>
+<p>
+The same size and address space considerations that apply to the &#8216;*&#8217;
+operator when it is used as a load operator also apply when it is used
+as a store operator, see
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, &#8220;The '*' Operator&#8221;</a>. Unless explicit modifiers are
+given, the default address space is assumed as the storage
+destination, and the size of the data being stored is calculated from
+context. Keep in mind that the address represented by the pointer is
+not a byte address if the <span class="bold"><strong>wordsize</strong></span>
+attribute is set to something other than one.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875033936"></a>7.7.2.3. Exports</h5></div></div></div>
+<p>
+The semantic section doesn&#8217;t just specify how to generate p-code for a
+constructor. Except for those constructors in the root table, this
+section also associates a semantic meaning to the table symbol the
+constructor is part of, allowing the table to be used as an operand in
+other tables. The mechanism for making this association is
+the <span class="emphasis"><em>export</em></span> statement. This must be the last
+statement in the section and consists of
+the <span class="bold"><strong>export</strong></span> keyword followed by the
+specific symbol to be associated with the constructor. In general, the
+constructor will have a sequence of assignment statements building a
+final value, and then the varnode containing the value will be
+exported. However, anything can be exported.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode: reg++ is addrmode=0x2 &amp; reg { tmp=reg; reg=reg+1; export tmp; }
+</pre></div>
+<p>
+</p>
+<p>
+This is an example of a post-increment addressing mode that would be
+used to build more complicated instructions. The constructor
+increments a register <span class="emphasis"><em>reg</em></span> but stores a copy of its
+original value in <span class="emphasis"><em>tmp</em></span>. The
+varnode <span class="emphasis"><em>tmp</em></span> is then exported, associating it with
+the table symbol <span class="emphasis"><em>mode</em></span>. When this constructor is
+matched, as part of a more complicated instruction, the
+symbol <span class="emphasis"><em>mode</em></span> will represent the original semantic
+value of <span class="emphasis"><em>reg</em></span> but with the standard post-increment
+side effect.
+</p>
+<p>
+The table symbol associated with the constructor becomes
+a <span class="emphasis"><em>reference</em></span> to the varnode being exported, not a
+copy of the value. If the table symbol is written to, as the left-hand
+side of an assignment statement, in some other constructor, the
+exported varnode is affected. A constant can be exported if its size
+as a varnode is given explicitly with the &#8216;:&#8217; operator.
+</p>
+<p>
+It is not legal to put a full expression in
+an <span class="bold"><strong>export</strong></span> statement, any expression
+must appear in an earlier statement. However, a single &#8216;&amp;&#8217;
+operator is allowed as part of the statement and it behaves as it
+would in a normal expression (see
+<a class="xref" href="sleigh_constructors.html#sleigh_addressof" title="7.7.1.6. Address-of Operator">Section 7.7.1.6, &#8220;Address-of Operator&#8221;</a>). It causes the address of the
+varnode being modified to be exported as an integer constant.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875022416"></a>7.7.2.4. Dynamic References</h5></div></div></div>
+<p>
+The only other operator allowed as part of
+an <span class="bold"><strong>export</strong></span> statement, is the &#8216;*&#8217;
+operator. The semantic meaning of this operator is the same as if it
+were used in an expression (see
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, &#8220;The '*' Operator&#8221;</a>), but it is worth examining the
+effects of this form of export in detail. Bearing in mind that
+an <span class="bold"><strong>export</strong></span> statement exports
+a <span class="emphasis"><em>reference</em></span>, using the &#8216;*&#8217; operator in the
+statement exports a <span class="emphasis"><em>dynamic reference</em></span>. The
+varnode being modified by the &#8216;*&#8217; is interpreted as a pointer to
+another varnode. It is this varnode being pointed to which is
+exported, even though the address may be dynamic and cannot be
+determined at disassembly time. This is not the same as dereferencing
+the pointer into a temporary variable that is then exported. The
+dynamic reference can be both read
+and <span class="emphasis"><em>written</em></span>. Internally, the SLEIGH compiler
+keeps track of the pointer and inserts a <span class="emphasis"><em>LOAD</em></span>
+or <span class="emphasis"><em>STORE</em></span> operation when the symbol associated
+with the dynamic reference is referred to in other constructors.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode: reg[off] is addr=1 &amp; reg &amp; off {
+    ea = reg + off;
+    export *:4 ea;
+}
+dest: reloc    is abs [ reloc = abs * 4; ] {
+    export *[ram]:4 reloc;
+}
+</pre></div>
+<p>
+</p>
+<p>
+In the first example, the effective address of an operand is
+calculated from a register <span class="emphasis"><em>reg</em></span> and a field of the
+instruction <span class="emphasis"><em>off</em></span>. The constructor does not export
+the resulting pointer <span class="emphasis"><em>ea</em></span>, it exports the location
+being pointed to by <span class="emphasis"><em>ea</em></span>. Notice the size of this
+location (4) is given explicitly with the &#8216;:&#8217; modifier. The &#8216;*&#8217;
+operator can also be used on constant pointers. In the second example,
+the constant operand <span class="emphasis"><em>reloc</em></span> is used as the offset
+portion of an address into the <span class="emphasis"><em>ram</em></span> address
+space. The constant <span class="emphasis"><em>reloc</em></span> is calculated at
+disassembly time from the instruction
+field <span class="emphasis"><em>abs</em></span>. This is a very common construction for
+jump destinations (see <a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1. Relative Branches">Section 7.5.1, &#8220;Relative Branches&#8221;</a>) but
+can be used in general. This particular combination of a disassembly
+time action and a dynamic export is a very general way to construct a
+family of varnodes.
+</p>
+<p>
+Dynamic references are a key construction for effectively separating
+addressing mode implementations from instruction semantics at higher
+levels.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310875008816"></a>7.7.2.5. Branching Statements</h5></div></div></div>
+<p>
+This section discusses statements that generate p-code branching
+operations. These are listed in <a class="xref" href="sleigh_ref.html#branchref.htmltable" title="Table 7. Branching Statements">Table 7, &#8220;Branching Statements&#8221;</a>, in the Appendix.
+</p>
+<p>
+There are six forms covering the gamut of typical assembly language
+branches, but in terms of actual semantics there are really only
+three. With p-code,
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="emphasis"><em>CALL</em></span> is semantically equivalent to <span class="emphasis"><em>BRANCH</em></span>,
+  </li>
+<li class="listitem" style="list-style-type: disc">
+<span class="emphasis"><em>CALLIND</em></span> is semantically equivalent to <span class="emphasis"><em>BRANCHIND</em></span>, and
+  </li>
+<li class="listitem" style="list-style-type: disc">
+<span class="emphasis"><em>RETURN</em></span> is semantically equivalent to <span class="emphasis"><em>BRANCHIND</em></span>.
+  </li>
+</ul></div></div>
+<p>
+The reason for this is that calls and returns imply the presence of
+some sort of a stack. Typically an assembly language call instruction
+does several separate actions, manipulating a stack pointer, storing a
+return value, and so on. When translating the call instruction into
+p-code, these actions must be implemented with explicit
+operations. The final step of the instruction, the actual jump to the
+destination of the call is now just a branch, stripped of its implied
+meaning. The <span class="emphasis"><em>CALL</em></span>, <span class="emphasis"><em>CALLIND</em></span>,
+and <span class="emphasis"><em>RETURN</em></span> operations, are kept as distinct from
+their <span class="emphasis"><em>BRANCH</em></span> counterparts in order to provide
+analysis software a hint as to the higher level meaning of the branch.
+</p>
+<p>
+There are actually two fundamentally different ways of indicating a
+destination for these branch operations. By far the most common way to
+specify a destination is to give the <span class="emphasis"><em>address</em></span> of a
+machine instruction. It bears repeating here that there is typically
+more than one p-code operation per machine instruction. So specifying
+a <span class="emphasis"><em>destination address</em></span> really means that the
+destination is the first p-code operation for the (translated) machine
+instruction at that address. For most cases, this is the only kind of
+branching needed. The rarer case of <span class="emphasis"><em>p-code
+relative</em></span> branching is discussed in the following section
+(<a class="xref" href="sleigh_constructors.html#sleigh_pcode_relative" title="7.7.2.6. P-code Relative Branching">Section 7.7.2.6, &#8220;P-code Relative Branching&#8221;</a>), but for the remainder of
+this section, we assume the destination is ultimately given as an
+address.
+</p>
+<p>
+There are two ways to specify a branching operation&#8217;s destination
+address; directly and indirectly. Where a direct address is needed, as
+for the <span class="emphasis"><em>BRANCH</em></span>, <span class="emphasis"><em>CBRANCH</em></span>,
+and <span class="emphasis"><em>CALL</em></span> instructions, The specification can give
+the integer offset of the jump destination within the address space of
+the current instruction. Optionally, the offset can be followed by the
+name of another address space in square brackets, if the destination
+is in another address space.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:reset is opcode=0x0 { goto 0x1000; }
+:modeshift is opcode=0x1 { goto 0x0[codespace]; }
+</pre></div>
+<p>
+</p>
+<p>
+Of course, most branching instructions encode the destination of the
+jump within the instruction somehow. So the jump destination is almost
+always represented by an operand symbol and its associated
+varnode. For a direct branch, the destination is given by the address
+space and the offset defining the varnode. In this case, the varnode
+itself is really just an annotation of the jump destination and not
+used as a variable. The best way to define varnodes which annotate
+jump destinations in this way is with a dynamic export.
+</p>
+<div class="informalexample"><pre class="programlisting">
+dest: rel is simm8 [ rel = inst_next + simm8*4; ] {
+    export *[ram]:4 rel;
+}
+</pre></div>
+<p>
+</p>
+<p>
+In this example, the operand <span class="emphasis"><em>rel</em></span> is defined with
+a disassembly action in terms of the address of the following
+instruction, <span class="emphasis"><em>inst_next</em></span>, and a field specifying a
+relative relocation, <span class="emphasis"><em>simm8</em></span>. The resulting
+exported varnode has <span class="emphasis"><em>rel</em></span> as its offset
+and <span class="emphasis"><em>ram</em></span> as its address space, by virtue of the
+dynamic form of the export. The symbol associated with this
+varnode, <span class="emphasis"><em>dest</em></span>, can now be used in branch
+operations.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:jmp dest is opcode=3 &amp; dest {
+    goto dest;
+}
+:call dest is opcode=4 &amp; dest {
+    *:4 sp = inst_next;
+    sp=sp-4;
+    call dest;
+}
+</pre></div>
+<p>
+</p>
+<p>
+The above examples illustrate the direct forms of
+the <span class="bold"><strong>goto</strong></span>
+and <span class="bold"><strong>call</strong></span> operators, which generate
+the p- code <span class="emphasis"><em>BRANCH</em></span> and <span class="emphasis"><em>CALL</em></span>
+operations respectively. Both these operations take a single
+annotation varnode as input, indicating the destination address of the
+jump. Notice the explicit manipulation of a stack
+pointer <span class="emphasis"><em>sp</em></span>, for the call
+instruction. The <span class="emphasis"><em>CBRANCH</em></span> operation takes two
+inputs, a boolean value indicating whether or not the branch should be
+taken, and a destination annotation.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:bcc dest is opcode=5 &amp; dest { if (carryflag==0) goto dest; }
+</pre></div>
+<p>
+</p>
+<p>
+As in the above example, the <span class="emphasis"><em>CBRANCH</em></span> operation
+takes two inputs, a boolean value indicating whether or operation is
+invoked with the <span class="bold"><strong>if goto</strong></span> operation
+takes two inputs, a boolean value indicating whether or syntax. The
+condition of the <span class="bold"><strong>if</strong></span> operation takes
+two inputs, a boolean value indicating whether or can be any semantic
+expression that results in a boolean value. The destination must be an
+annotation varnode.
+</p>
+<p>
+The
+operators <span class="emphasis"><em>BRANCHIND</em></span>, <span class="emphasis"><em>CALLIND</em></span>,
+and <span class="emphasis"><em>RETURN</em></span> all have the same semantic meaning and
+all use the same syntax to specify an indirect address.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:b [reg] is opcode=6 &amp; reg {
+    goto [reg];
+}
+:call (reg) is opcode=7 &amp; reg {
+    *:4 sp = inst_next;
+    sp=sp-4;
+    call [reg];
+}
+:ret is opcode=8 {
+    sp=sp+4;
+    tmp:4 = * sp;
+    return [tmp];
+}
+</pre></div>
+<p>
+</p>
+<p>
+Square brackets surround the varnode containing the
+address. Currently, any indirect address must be in the address space
+containing the branch instruction. The offset of the destination
+address is taken dynamically from the varnode. The size of the varnode
+must match the size of the destination space.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_pcode_relative"></a>7.7.2.6. P-code Relative Branching</h5></div></div></div>
+<p>
+In some cases, the semantics of an instruction may require
+branching <span class="emphasis"><em>within</em></span> the semantics of a single
+instruction, so specifying a destination address is too course. In
+this case, SLEIGH is capable of <span class="emphasis"><em>p-code relative</em></span>
+branching. Individual p-code operations can be identified by
+a <span class="emphasis"><em>label</em></span>, and this label can be used as the
+destination specifier, after the <span class="bold"><strong>goto</strong></span>
+keyword. A <span class="emphasis"><em>label</em></span>, within the semantic section, is
+any identifier surrounded by the &#8216;&lt;&#8217; and &#8216;&gt;&#8217; characters. If this
+construction occurs at the beginning of a statement, we say the label
+is <span class="emphasis"><em>defined</em></span>, and that identifier is now associated
+with the first p-code operation corresponding to the following
+statement. Any label must be defined exactly once in this way. When
+the construction is used as a destination, immediately after
+a <span class="bold"><strong>goto</strong></span>
+or <span class="bold"><strong>call</strong></span>, this is referred to as a
+label reference. Of course the p-code destination meant by a label
+reference is the operation at the point where the label was
+defined. Multiple references to the same label are allowed.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:sum r1,r2,r3 is opcode=7 &amp; r1 &amp; r2 &amp; r3 {
+     tmp:4 = 0;
+     r1 = 0;
+   &lt;loopstart&gt;
+     r1 = r1 + *r2;
+     r2 = r2 + 4;
+     tmp = tmp + 1;
+     if (tmp &lt; r3) goto &lt;loopstart&gt;;
+}
+</pre></div>
+<p>
+</p>
+<p>
+In the example above, the string &#8220;loopstart&#8221; is the label identifier
+which appears twice; once at the point where the label is defined at
+the top of the loop, after the initialization, and once as a reference
+where the conditional branch is made for the loop.
+</p>
+<p>
+References to labels can refer to p-code that occurs either before or
+after the branching statement.  But label references can only be used
+in a branching statement, they cannot be used as a varnode in other
+expressions. The label identifiers are local symbols and can only be
+referred to within the semantic section of the constructor that
+defines them. Branching into the middle of some completely different
+instruction is not possible.
+</p>
+<p>
+Internally, branches to labels are encoded as a relative index. Each
+p-code operation is assigned an index corresponding to the operation&#8217;s
+position within the entire translation of the instruction. Then the
+branch can be expressed as a relative offset between the branch
+operation&#8217;s index and the destination operation&#8217;s index. The SLEIGH
+compiler encodes this offset as a constant varnode that is used as
+input to
+the <span class="emphasis"><em>BRANCH</em></span>, <span class="emphasis"><em>CBRANCH</em></span>,
+or <span class="emphasis"><em>CALL</em></span> operation.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="sleigh_bitrange_assign"></a>7.7.2.7. Bit Range Assignments</h5></div></div></div>
+<p>
+The bit range operator can appear on the left-hand side of an
+assignment. But as with the &#8216;*&#8217; operator, its meaning is slightly
+different when used on this side. The bit range is specified in square
+brackets, as before, by giving the integer specifying the least
+significant bit of the range, followed by the number of bits in the
+range. In contrast with its use on the right however (see
+<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, &#8220;Bit Range Operator&#8221;</a>), the indicated bit range
+is filled rather than extracted. Bits obtained from evaluating the
+expression on the right are extracted and spliced into the result at
+the indicated bit offset.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:bitset3 r1 is op=0x7d &amp; r1 { r1[3,1] = 1; }
+</pre></div>
+<p>
+In this example, bit 3 of varnode <span class="emphasis"><em>r1</em></span> is set to 1,
+leaving all other bits unaffected.
+</p>
+<p>
+As in the right-hand case, the desired insertion is achieved by
+piecing together some combination of the p-code
+operations <span class="emphasis"><em>INT_LEFT</em></span>, <span class="emphasis"><em>INT_ZEXT</em></span>, <span class="emphasis"><em>INT_AND</em></span>,
+and <span class="emphasis"><em>INT_OR</em></span>.
+</p>
+<p>
+In terms of the rest of the assignment expression, the bit range
+operator is again assumed to have a size equal to the minimum number
+of bytes needed to hold the bit range. In particular, in order to
+satisfy size restrictions (see
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, &#8220;Varnode Sizes&#8221;</a>), the right-hand side must
+match this size. Furthermore, it is assumed that any extra bits in the
+right-hand side expression are already set to zero.
+</p>
+</div>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_varnode_sizes"></a>7.7.3. Varnode Sizes</h4></div></div></div>
+<p>
+All statements within the semantic section must be specified up to the
+point where the sizes of all varnodes are unambiguously
+determined. Most specific symbols, like registers, must have their
+size defined by definition, but there are two sources of size
+ambiguity.
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+  Constants
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Temporary Variables
+  </li>
+</ul></div></div>
+<p>
+</p>
+<p>
+The SLEIGH compiler does not make assumptions about the size of a
+constant variable based on the constant value itself. This is true of
+values occurring explicitly in the specification and of values that
+are calculated dynamically in a disassembly action. As described in
+<a class="xref" href="sleigh_constructors.html#sleigh_assign_statements" title="7.7.2.1. Assignment Statements and Temporary Variables">Section 7.7.2.1, &#8220;Assignment Statements and Temporary Variables&#8221;</a>, temporary variables do not
+need to have their size given explicitly.
+</p>
+<p>
+The SLEIGH compiler can usually fill in the required size by examining
+these situations in the context of the entire semantic section. Most
+p-code operations have size restrictions on their inputs and outputs,
+which when put together can uniquely determine the unspecified
+sizes. Referring to <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table 5. Semantic Expression Operators and Syntax">Table 5, &#8220;Semantic Expression Operators and Syntax&#8221;</a> in the
+Appendix, all arithmetic and logical operations, both integer and
+floating point, must have inputs and outputs all of the same size. The
+only exceptions are as follows. The overflow
+operators, <span class="emphasis"><em>INT_CARRY</em></span>, <span class="emphasis"><em>INT_SCARRY</em></span>, <span class="emphasis"><em>INT_SBORROW</em></span>,
+and <span class="emphasis"><em>FLOAT_NAN</em></span> have a boolean output.  The shift
+operators, <span class="emphasis"><em>INT_LEFT</em></span>, <span class="emphasis"><em>INT_RIGHT</em></span>,
+and <span class="emphasis"><em>INT_SRIGHT</em></span>, currently place no restrictions
+on the <span class="emphasis"><em>shift amount</em></span> operand. All the comparison
+operators, both integer and floating point, insist that their inputs
+are all the same size, and the output must be a boolean variable, with
+a size of 1 byte.
+</p>
+<p>
+The operators without a size constraint are the load and store
+operators, the extension and truncation operators, and the conversion
+operators. As discussed in <a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, &#8220;The '*' Operator&#8221;</a>, the
+&#8216;*&#8217; operator cannot get size information for the dynamic (pointed-to)
+object from the pointer itself. The other operators by definition
+involve a change of size from input to output.
+</p>
+<p>
+If the SLEIGH compiler cannot discover the sizes of constants and
+temporaries, it will report an error stating that it could not resolve
+variable sizes for that constructor. This can usually be fixed rapidly
+by appending the size &#8216;:&#8217; modifier to either the &#8216;*&#8217; operator, the
+temporary variable definition, or to an explicit integer. Here are
+three examples of statements that generate a size resolution error,
+each followed by a variation which corrects the error.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:sta [r1],imm is opcode=0x3a &amp; r1 &amp; imm {
+    *r1 = imm;                                      #Error
+}
+:sta [r1],imm is opcode=0x3a &amp; r1 &amp; imm {
+    *:4 r1 = imm;                                   #Correct
+}
+:inc [r1]     is opcode=0x3b &amp; r1       {
+    tmp = *r1 + 1; *r1 = tmp;                       # Error
+}
+:inc [r1]     is opcode=0x3b &amp; r1       {
+    tmp:4 = *r1 + 1; *r1 = tmp;                     # Correct
+}
+:clr [r1]     is opcode=0x3c &amp; r1       {
+    * r1 = 0;                                       # Error
+}
+:clr [r1]     is opcode=0x3c &amp; r1       {
+    * r1 = 0:4;                                     # Correct
+}
+</pre></div>
+<p>
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310874940000"></a>7.7.4. Unimplemented Semantics</h4></div></div></div>
+<p>
+The semantic section must be present for every constructor in the
+specification. But the designer can leave the semantics explicitly
+unimplemented if the keyword <span class="bold"><strong>unimpl</strong></span>
+is put in the constructor definition in place of the curly
+braces. This serves as a placeholder if a specification is still in
+development or if the designer does not intend to model data flow for
+portions of the instruction set.  Any instruction involving a
+constructor that is unimplemented in this way will still be
+disassembled properly, but the basic data flow routines will report an
+error when analyzing the instruction.  Analysis routines then can
+choose whether or not to intentionally ignore the error, effectively
+treating the unimplemented portion of the instruction as if it does
+nothing.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:cache r1 is opcode=0x45 &amp; r1  unimpl
+:nop      is opcode=0x0        { }
+</pre></div>
+<p>
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_tables"></a>7.8. Tables</h3></div></div></div>
+<p>
+A single constructor does not form a new specific
+symbol. The <span class="emphasis"><em>table</em></span> that the constructor is
+associated with via its table header is the actual symbol that can be
+reused to build up more complicated elements. With all the basic
+building blocks now in place, we outline the final elements for
+building symbols that represent larger and larger portions of the
+disassembly and p- code translation process.
+</p>
+<p>
+The best analogy here is with grammar specifications and Regular
+Language parsers. Those who have
+used <span class="emphasis"><em>yacc</em></span>, <span class="emphasis"><em>bison</em></span>, or
+otherwise looked at BNF grammars should find the concepts here
+familiar.
+</p>
+<p>
+With SLEIGH, there are in some sense two separate grammars being
+parsed at the same time. A display grammar and a semantic grammar. To
+the extent that the two grammars breakdown in the same way, SLEIGH can
+exploit the similarity to produce an extremely concise description.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="sleigh_matching"></a>7.8.1. Matching</h4></div></div></div>
+<p>
+If a table contains exactly one constructor, the meaning of the table
+as a specific symbol is straightforward. The display meaning of the
+symbol comes from the <span class="emphasis"><em>display section</em></span> of the
+constructor, and the symbol&#8217;s semantic meaning comes from the
+constructor&#8217;s <span class="emphasis"><em>semantic section</em></span>.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode1: (r1) is addrmode=1 &amp; r1 { export r1; }
+</pre></div>
+<p>
+</p>
+<p>
+The table symbol in this example
+is <span class="emphasis"><em>mode1</em></span>. Assuming this is the only constructor,
+the display meaning of the symbol are the literal characters &#8216;(&#8216;, and
+&#8216;)&#8217; concatenated with the display meaning of <span class="emphasis"><em>r1</em></span>,
+presumably a register name that has been attached. The semantic
+meaning of <span class="emphasis"><em>mode1</em></span>, because of the export
+statement, becomes whatever register is matched by
+the <span class="emphasis"><em>r1</em></span>.
+</p>
+<div class="informalexample"><pre class="programlisting">
+mode1: (r1) is addrmode=1 &amp; r1 { export r1; }
+mode1: [r2] is addrmode=2 &amp; r2 { export r2; }
+</pre></div>
+<p>
+</p>
+<p>
+If there are two or more constructors defined for the same table,
+the <span class="emphasis"><em>bit pattern section</em></span> is used to select between
+the constructors in context. In the above example,
+the <span class="emphasis"><em>mode1</em></span> table is now defined with two
+constructors and the distinguishing feature of their bit patterns is
+that in one the <span class="emphasis"><em>addrmode</em></span> field must be 1 and in
+the other it must be 2. In the context of a particular instruction,
+the matching constructor can be determined uniquely based on this
+field, and the <span class="emphasis"><em>mode1</em></span> symbol takes on the display
+and semantic characteristics of the matching constructor.
+</p>
+<p>
+The bit patterns for constructors under a single table must be built
+so that a constructor can be uniquely determined in context. The above
+example shows the easiest way to accomplish this. The two sets of
+instruction encodings, which match one or the other of the
+two <span class="emphasis"><em>addrmode</em></span> constraints, are disjoint. In
+general, if each constructor has a set of instruction encodings
+associated with it, and if the sets for any two constructors are
+disjoint, then no two constructors can match at the same time.
+</p>
+<p>
+It is possible for two sets to intersect, if one of the two sets
+properly contains the other. In this situation, the constructor
+corresponding to the smaller (contained) set is considered
+a <span class="emphasis"><em>special case</em></span> of the other constructor. If an
+instruction encoding matches the special case, that constructor is
+used to define the symbol, even though the other constructor will also
+match. If the special case does not match but the other more general
+constructor does, then the general constructor is used to define the
+symbol.
+</p>
+<div class="informalexample"><pre class="programlisting">
+zA: r1  is addrmode=3 &amp; r1   { export r1; }
+zA: &#8220;0&#8221; is addrmode=3 &amp; r1=0 { export 0:4; } # Special case
+</pre></div>
+<p>
+</p>
+<p>
+In this example, the symbol <span class="emphasis"><em>zA</em></span> takes on the same
+display and semantic meaning as <span class="emphasis"><em>r1</em></span>, except in the
+special case when the field <span class="emphasis"><em>r1</em></span> equals 0. In this
+case, <span class="emphasis"><em>zA</em></span> takes on the display and semantic
+meaning of the constant zero. Notice that the first constructor has
+only the one constraint on <span class="emphasis"><em>addrmode</em></span>, which is
+also a constraint for the second constructor. So any instruction that
+matches the second must also match the first.
+</p>
+<p>
+The same exact rules apply when there are more than two
+constructors. Any two sets defined by the bit patterns must be either
+disjoint or one contained in the other. It is entirely possible to
+have one general case with many special cases, or a special case of a
+special case, and so on.
+</p>
+<p>
+If the patterns for two constructors intersect, but one pattern does
+not properly contain the other, this is generally an error in the
+specification. Depending on the flags given to the SLEIGH compiler, it
+may be more or less lenient with this kind of situation however. In
+the case where an intersection is not flagged as an error,
+the <span class="emphasis"><em>first</em></span> constructor that matches, in the order
+that the constructors appear in the specification, is used.
+</p>
+<p>
+If two constructors intersect, but there is a third constructor whose
+pattern is exactly equal to the intersection, then the third pattern
+is said to <span class="emphasis"><em>resolve</em></span> the conflict produced by the
+first two constructors. An instruction in the intersection will match
+the third constructor, as a specialization, and the remaining pieces
+in the patterns of the first two constructors are disjoint. A resolved
+conflict like this is not flagged as an error even with the strictest
+checking. Other types of intersections, in combination with lenient
+checking, can be used for various tricks in the specification but
+should generally be avoided.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310874912352"></a>7.8.2. Specific Symbol Trees</h4></div></div></div>
+<p>
+When the SLEIGH parser analyzes an instruction, it starts with the
+root symbol <span class="emphasis"><em>instruction</em></span>, and decides which of the
+constructors defined under it match. This particular constructor is
+likely to be defined in terms of one or more other family symbols. The
+parsing process recurses at this point.  Each of the unresolved family
+symbols is analyzed in the same way to find the matching specific
+symbol. The matching is accomplished either with a table lookup, as
+with a field with attached registers, or with the matching algorithm
+described in <a class="xref" href="sleigh_constructors.html#sleigh_matching" title="7.8.1. Matching">Section 7.8.1, &#8220;Matching&#8221;</a>. By the end of the
+parsing process, we have a tree of specific symbols representing the
+parsed instruction. We present a small but complete SLEIGH
+specification to illustrate this hierarchy.
+</p>
+<p>
+</p>
+<div class="informalexample"><pre class="programlisting">
+define endian=big;
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+define register offset=0 size=4 [ r0 r1 r2 r3 r4 r5 r6 r7 ];
+
+define token instr(16)
+  op=(10,15) mode=(6,9) reg1=(3,5) reg2=(0,2) imm=(0,2)
+;
+attach variables [ reg1 reg2 ] [ r0 r1 r2 r3 r4 r5 r6 r7 ];
+
+op2: reg2 is mode=0 &amp; reg2   { export reg2; }
+op2: imm is mode=1 &amp; imm     { export *[const]:4 imm; }
+op2: [reg2] is mode=2 &amp; reg2 { tmp = *:4 reg2; export tmp;}
+
+:and reg1,op2 is op=0x10 &amp; reg1 &amp; op2 { reg1 = reg1 &amp; op2; }
+:xor reg1,op2 is op=0x11 &amp; reg1 &amp; op2 { reg1 = reg1 ^ op2; }
+:or  reg1,op2 is op=0x12 &amp; reg1 &amp; op2 { reg1 = reg1 | op2; }
+</pre></div>
+<p>
+</p>
+<p>
+This processor has 16 bit instructions. The high order 6 bits are the
+main <span class="emphasis"><em>opcode</em></span> field, selecting between logical
+operations, <span class="emphasis"><em>and</em></span>, <span class="emphasis"><em>or</em></span>,
+and <span class="emphasis"><em>xor</em></span>. The logical operations each take two
+operands, <span class="emphasis"><em>reg1</em></span> and <span class="emphasis"><em>op2</em></span>. The
+operand <span class="emphasis"><em>reg1</em></span> selects between the 8 registers of
+the processor, <span class="emphasis"><em>r0</em></span>
+through <span class="emphasis"><em>r7</em></span>. The operand <span class="emphasis"><em>op2</em></span>
+is a table built out of more complicated addressing modes, determined
+by the field <span class="emphasis"><em>mode</em></span>. The addressing mode can either
+be direct, in which <span class="emphasis"><em>op2</em></span> is really just the
+register selected by <span class="emphasis"><em>reg2</em></span>, it can be immediate,
+in which case the same bits are interpreted as a constant
+value <span class="emphasis"><em>imm</em></span>, or it can be an indirect mode, where
+the register <span class="emphasis"><em>reg2</em></span> is interpreted as a pointer to
+the actual operand. In any case, the two operands are combined by the
+logical operation and the result is stored back
+in <span class="emphasis"><em>reg1</em></span>.
+</p>
+<p>
+The parsing proceeds from the root symbol down. Once a particular
+matching constructor is found, any disassembly action associated with
+that constructor is executed. After that, each operand of the
+constructor is resolved in turn.
+</p>
+<div class="figure">
+<a name="sleigh_encoding_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram1.png" align="middle" width="540" height="225" alt="Two Encodings and the Resulting Specific Symbol Trees"></td></tr></table></div></div>
+<p class="title"><b>Figure 1. Two Encodings and the Resulting Specific Symbol Trees</b></p>
+</div>
+<br class="figure-break"><p>
+In <a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure 1. Two Encodings and the Resulting Specific Symbol Trees">Figure 1, &#8220;Two Encodings and the Resulting Specific Symbol Trees&#8221;</a>, we can see the break down
+of two typical instructions in the example instruction set. For each
+instruction, we see the how the encodings split into the relevant
+fields and the resulting tree of specific symbols. Each node in the
+trees are labeled with the base family symbol, the portion of the bit
+pattern that matches, and then the resulting specific symbol or
+constructor.  Notice that the use of the overlapping
+fields, <span class="emphasis"><em>reg2</em></span> and <span class="emphasis"><em>imm</em></span>, is
+determined by the matching constructor for
+the <span class="emphasis"><em>op2</em></span> table. SLEIGH generates the disassembly
+and p-code for these encodings by walking the trees.
+</p>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310874892992"></a>7.8.2.1. Disassembly Trees</h5></div></div></div>
+<p>
+If the nodes of each tree are replaced with the display information of
+the corresponding specific symbol, we see how the disassembly
+statement is built.
+</p>
+<div class="figure">
+<a name="sleigh_disassembly_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram2.png" align="middle" width="310" height="151" alt="Two Disassembly Trees"></td></tr></table></div></div>
+<p class="title"><b>Figure 2. Two Disassembly Trees</b></p>
+</div>
+<br class="figure-break"><p>
+<a class="xref" href="sleigh_constructors.html#sleigh_disassembly_image" title="Figure 2. Two Disassembly Trees">Figure 2, &#8220;Two Disassembly Trees&#8221;</a>, shows the resulting
+disassembly trees corresponding to the specific symbol trees in
+<a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure 1. Two Encodings and the Resulting Specific Symbol Trees">Figure 1, &#8220;Two Encodings and the Resulting Specific Symbol Trees&#8221;</a>. The display information comes
+from constructor display sections, the names of attached registers, or
+the integer interpretation of fields. The identifiers in a constructor
+display section serves as placeholders for the subtrees below them. By
+walking the tree, SLEIGH obtains the final illustrated assembly
+statements corresponding to the original instruction encodings.
+</p>
+</div>
+<div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="idm140310874886224"></a>7.8.2.2. P-code Trees</h5></div></div></div>
+<p>
+A similar procedure produces the resulting p-code translation of the
+instruction. If each node in the specific symbol tree is replaced with
+the corresponding p-code, we see how the final translation is built.
+</p>
+<div class="figure">
+<a name="sleigh_pcode_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram3.png" align="middle" width="405" height="149" alt="Two P-code Trees"></td></tr></table></div></div>
+<p class="title"><b>Figure 3. Two P-code Trees</b></p>
+</div>
+<br class="figure-break"><p>
+<a class="xref" href="sleigh_constructors.html#sleigh_pcode_image" title="Figure 3. Two P-code Trees">Figure 3, &#8220;Two P-code Trees&#8221;</a> lists the final p-code
+translation for our example instructions and shows the trees from
+which the translation is derived. Symbol names within the p-code for a
+particular node, as with the disassembly tree, are placeholders for
+the subtree below them. The final translation is put together by
+concatenating the p-code from each node, traversing the nodes in a
+depth-first order. Thus the p-code of a child tends to come before the
+p-code of the parent node (but see
+<a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9. P-code Macros">Section 7.9, &#8220;P-code Macros&#8221;</a>). Placeholders are filled in with the
+appropriate varnode, as determined by the export statement of the root
+of the corresponding subtree.
+</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_macros"></a>7.9. P-code Macros</h3></div></div></div>
+<p>
+SLEIGH supports a macro facility for encapsulating semantic
+actions. The syntax, in effect, allows the designer to define p-code
+subroutines which can be invoked as part of a constructor&#8217;s semantic
+action. The subroutine is expanded automatically at compile time.
+</p>
+<p>
+A macro definition is started with
+the <span class="bold"><strong>macro</strong></span> keyword, which can occur
+anywhere in the file before its first use. This is followed by the
+global identifier for the new macro and a parameter list, comma
+separated and in parentheses. The body of the definition comes next,
+surrounded by curly braces.  The body is a sequence of semantic
+statements with the same syntax as a constructor&#8217;s semantic
+section. The identifiers in the macro&#8217;s parameter list are local in
+scope. The macro can refer to these and any global specific symbol.
+</p>
+<div class="informalexample"><pre class="programlisting">
+macro resultflags(op) {
+  zeroflag = (op == 0);
+  signflag = (op1 s&lt; 0);
+}
+
+:add r1,r2 is opcode=0xba &amp; r1 &amp; r2 { r1 = r1 + r2; resultflags(r1); }
+</pre></div>
+<p>
+</p>
+<p>
+The macro is invoked in the semantic section of a constructor by using
+the identifier with a functional syntax, listing the varnodes which
+are to be passed into the macro. In the example above, the
+macro <span class="emphasis"><em>resultflags</em></span> calculates the value of two
+global flags by comparing its parameter to zero.
+The <span class="emphasis"><em>add</em></span> constructor invokes the macro so that
+the <span class="emphasis"><em>r1</em></span> is used in the comparisons. Parameters are
+passed by <span class="emphasis"><em>reference</em></span>, so the value of varnodes
+passed into the macro can be changed. Currently, there is no syntax
+for returning a value from the macro, except by writing to a parameter
+or global symbol.
+</p>
+<p>
+Almost any statement that can be used in a constructor can also be
+used in a macro. This includes assignment statements, branching
+statements, <span class="bold"><strong>delayslot</strong></span> directives, and
+calls to other macros. A <span class="bold"><strong>build</strong></span>
+directive however should not be used in a macro.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310874869072"></a>7.10. Build Directives</h3></div></div></div>
+<p>
+Because the nodes of a specific symbol tree are traversed in a
+depth-first order, the p-code for a child node in general comes before
+the p-code of the parent. Furthermore, without special intervention,
+the specification designer has no control over the order in which the
+children of a particular node are
+traversed. The <span class="bold"><strong>build</strong></span> directive is
+used to affect these issues in the rare cases where it is
+necessary. The <span class="bold"><strong>build</strong></span> directive occurs
+as another form of statement in the semantic section of a
+constructor. The keyword <span class="bold"><strong>build</strong></span> is
+followed by one of the constructor&#8217;s operand identifiers. Then,
+instead of filling in the operand&#8217;s associated p-code based on an
+arbitrary traversal of the symbol tree, the directive specifies that
+the operand&#8217;s p-code must occur at that point in the p-code for the
+parent constructor.
+</p>
+<p>
+This directive is useful in situations where an instruction supports
+prefixes or addressing modes with side-effects that must occur in a
+particular order. Suppose for example that many instructions support a
+condition bit in their encoding. If the bit is set, then the
+instruction is executed only if a status flag is set. Otherwise, the
+instruction always executes. This situation can be implemented by
+treating the instruction variations as distinct constructors. However,
+if many instructions support the same variation, it is probably more
+efficient to treat the condition bit which distinguishes the variants
+as a special operand.
+</p>
+<div class="informalexample"><pre class="programlisting">
+cc: &#8220;c&#8221; is condition=1 { if (flag==1) goto inst_next; }
+cc:     is condition=0 { }
+
+:and^cc  r1,r2 is opcode=0x67 &amp; cc &amp; r1 &amp; r2 {
+    build cc;
+    r1 = r1 &amp; r2;
+}
+</pre></div>
+<p>
+</p>
+<p>
+In this example, the conditional variant is distinguished by a &#8216;c&#8217;
+appended to the assembly mnemonic. The <span class="emphasis"><em>cc</em></span> operand
+performs the conditional side-effect, checking a flag in one case, or
+doing nothing in the other. The two forms of the instruction can now
+be implemented with a single constructor. To make sure that the flag
+is checked first, before the action of the instruction,
+the <span class="emphasis"><em>cc</em></span> operand is forced to evaluate first with
+a <span class="bold"><strong>build</strong></span> directive, followed by the
+normal action of the instruction.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310874860096"></a>7.11. Delay Slot Directives</h3></div></div></div>
+<p>
+For processors with a pipe-lined architecture, multiple instructions
+are typically executing simultaneously. This can lead to processor
+conventions where certain pairs of instructions do not seem to execute
+sequentially. The standard examples are branching instructions that
+execute the instruction in the <span class="emphasis"><em>delay
+slot</em></span>. Despite the fact that execution of the branch
+instruction does not fall through, the following instruction is
+executed anyway. Such semantics can be implemented in SLEIGH with
+the <span class="bold"><strong>delayslot</strong></span> directive.
+</p>
+<p>
+This directive appears as a standalone statement in the semantic
+section of a constructor. When p- code is generated for a matching
+instruction, at the point where the directive occurs, p-code for the
+following instruction(s) will be generated and inserted. The directive
+takes a single integer argument, indicating the minimum number of
+bytes in the delay slot. Additional machine instructions will be
+parsed and p-code generated, until at least that many bytes have been
+disassembled. Typically the value of 1 is used to indicate that there
+is exactly one more instruction in the delay slot.
+</p>
+<div class="informalexample"><pre class="programlisting">
+:beq r1,r2,dest is op=0xbc &amp; r1 &amp; r2 &amp; dest { flag=(r1==r2);
+                                              delayslot(1);
+                                              if flag goto dest; }
+</pre></div>
+<p>
+</p>
+<p>
+This is an example of a conditional branching instruction with a delay
+slot. The p-code for the following instruction is inserted before the
+final <span class="emphasis"><em>CBRANCH</em></span>. Notice that
+the <span class="bold"><strong>delayslot</strong></span> directive can appear
+anywhere in the semantic section. In this example, the condition
+governing the branch is evaluated before the directive because the
+following instruction could conceivably affect the registers checked
+by the condition.
+</p>
+<p>
+Because the <span class="bold"><strong>delayslot</strong></span> directive
+combines two or more instructions into one, the meaning of the
+symbol <span class="emphasis"><em>inst_next</em></span> becomes ambiguous. It is not
+clear anymore what exactly the &#8220;next instruction&#8221; is. SLEIGH uses the
+following conventions for interpreting
+an <span class="emphasis"><em>inst_next</em></span> symbol. If it is used in the
+semantic section, the symbol refers to the address of the instruction
+after any instructions in the delay slot. However, if it is used in a
+disassembly action, the <span class="emphasis"><em>inst_next</em></span> symbol refers
+to the address of the instruction immediately after the first
+instruction, even if there is a delay slot.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_tokens.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_context.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">6. Tokens and Fields </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 8. Using Context</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

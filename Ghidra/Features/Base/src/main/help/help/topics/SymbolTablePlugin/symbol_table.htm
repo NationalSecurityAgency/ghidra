@@ -1,0 +1,611 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Symbol Table</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1 align="center"><A name="Symbol_Table"></A>Symbol Table</H1>
+
+    <P>The <I>Symbol Table</I> displays a tabular view of each symbol currently defined in the
+    program.</P>
+
+    <P>A symbol, also known as a label, is an association between a name and an address.</P>
+
+    <H2><A name="View_Symbol_Table"></A><B>Displaying the Symbol Table component</B></H2>
+
+    <UL type="disc">
+      <LI>From the menu-bar of a tool, select <B>Window <IMG src="../../shared/arrow.gif"> Symbol
+      Table</B></LI>
+
+      <LI>From the tool-bar of a tool, click on the <IMG src="images/table.png"> button</LI>
+    </UL>
+
+    <P align="center"><IMG src="images/Symbol_Table.png"><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The columns in the table are:</P>
+
+        <CENTER>
+          <TABLE border="1" width="73%" height="159">
+            <TBODY>
+              <TR>
+                <TD width="11%" height="22"><B>Label</B></TD>
+
+                <TD width="89%" height="22">Name of symbol.</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="22"><B>Location</B></TD>
+
+                <TD width="89%" height="22">Address where the symbol is defined.</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="22"><B>Type</B></TD>
+
+                <TD width="89%" height="22">Symbol type (Function, External, Class, etc).</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="15"><B>Datatype</B></TD>
+
+                <TD width="89%" height="15">Datatype (i.e., byte, float, etc.) applied at symbol
+                address.</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="21"><B>Namespace</B></TD>
+
+                <TD width="89%" height="21">Namespace of the symbol; i.e., the scope.</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="21"><B>Source</B></TD>
+
+                <TD width="89%" height="21">Indicates where the symbol name came from.</TD>
+              </TR>
+
+              <TR>
+                <TD width="11%" height="21"><B>Reference Count</B></TD>
+
+                <TD width="89%" height="21">Total number of references made to this symbol.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><I><IMG src="../../shared/note.png"> You can sort the table on any column by clicking on
+        the column header. The column can be sorted in ascending or descending order.</I></P>
+
+        <P><I><IMG src="../../shared/tip.png"></I> The colors for <B><FONT color="#ff0000">bad
+        references</FONT></B>, <B><FONT color="#ff00ff">entry points</FONT></B>, <B>dead code</B>,
+        <B><FONT color="#c0c0c0">offcut code</FONT></B>, <B><FONT color="#0000ff">function
+        names</FONT></B>, <B><FONT color="#008040">local symbols</FONT></B>, <B><FONT color=
+        "#000080">primary</FONT></B> and <B><FONT color="#9B9632">non-primary</FONT></B> symbols
+        correspond to the colors used in the Code Browser. Any changes you make to these colors
+        through the <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Listing_Display">Code Browser
+        Display</A> options will be reflected in the Symbol Table.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Filter_Text_Field"></A>Filter Text Field</H2>
+
+    <BLOCKQUOTE>
+      <P>The filter text field allows you to filter the list of symbols. By default it will do a
+      <B>"Contains"</B> filter, but you can change that behavior to be <B>"Starts With"</B>,
+      <B>"Matches Exactly"</B>, or <B>"Regular Expression"</B>. See <A href=
+      "help/topics/Trees/GhidraTreeFilter.html#Filters">Filter Options</A> for more details on the
+      various filter text strategies.</P>
+
+      <P>The <I>Name Only</I> checkbox allows you to toggle whether to filter on only the name
+      column or all the columns in the table.</P>
+
+      <P>The filter text field will accept basic globbing characters such as '<B>*</B>' and
+      '<B>?</B>' within the filter text unless the "Regular Expression" filter strategy is
+      selected, in which case you should use standard regular expression syntax.</P>
+    </BLOCKQUOTE>
+
+    <H2>Viewing Symbol References <IMG src="images/table_go.png"></H2>
+
+    <BLOCKQUOTE>
+      <P>See <A href="symbol_references.htm">Symbol References</A></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Delete_Symbols"></A>Deleting Symbols&nbsp;<IMG src="images/edit-delete.png"></H2>
+
+    <BLOCKQUOTE>
+      <P>You can use the <I>Symbol Table</I> to delete symbols from the program.</P>
+
+      <P>To delete symbols:</P>
+
+      <OL>
+        <LI>Select the symbols in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
+        selection) to be deleted.</LI>
+
+        <LI>Right-mouse-click and select "Delete" from the popup menu, or click the <IMG src=
+        "images/edit-delete.png"> button in the <I>Symbol Table</I> toolbar.</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P><I><IMG src="../../shared/note.png"> Notes on deleting a symbol:</I></P>
+
+        <OL>
+          <LI><I>You can only delete a default symbol when it has zero (0) references.</I></LI>
+
+          <LI><I>If you delete a user-defined symbol with references, then a default symbol will
+          automatically be created and assigned those references.</I></LI>
+
+          <LI><I>You can delete a non-primary symbol with references, but those references will be
+          reassigned to the primary the symbol.</I></LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Renaming a Symbol</H2>
+
+    <BLOCKQUOTE>
+      <P>You can use the <I>Symbol Table</I> to rename a symbol.</P>
+
+      <P>To rename a symbol:</P>
+
+      <OL>
+        <LI>In the Symbol Table, double-click in the "Label" field on the row of the symbol to be
+        renamed</LI>
+
+        <LI>The field will become editable</LI>
+
+        <LI>Enter a new name and press return</LI>
+
+        <LI>The new name for the symbol should display in the table and Code Browser</LI>
+
+        <LI>If the table is being sorted on the "Label" field, then the new name should be sorted
+        into the table and the selection should move accordingly</LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Edit_External_Location"></A>Edit External Location</H2>
+
+    <BLOCKQUOTE>
+      <P>You can edit the external location and associated library details for any <I>External Data</I> or 
+      <I>External Function</I>
+      symbol within the symbol table. 
+      Right mouse click on 
+      the symbol table row and choose the <B>Edit External
+      Location</B> action from the popup menu (see Symbol Tree - 
+      <A href="help/topics/SymbolTreePlugin/SymbolTree.htm#Edit_External_Location">Edit External Location</A>
+      for more discussion on the use of the edit dialog). 
+    </BLOCKQUOTE>
+
+    <H2><A name="Make_Selection"></A>Making a Selection&nbsp;<IMG src="images/text_align_justify.png"></H2>
+
+    <BLOCKQUOTE>
+      <P>You can make a selection that corresponds to the symbol addresses that are selected in the
+      <I>Symbol Table</I>.</P>
+
+      <P>To make a selection:</P>
+
+      <OL>
+        <LI>Select the symbols in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
+        selection) to be added to the selection.</LI>
+
+        <LI>
+          Right-mouse-click and select "Make Selection" from the popup menu. 
+
+          <UL>
+            <LI>Or, click the&nbsp;<IMG src="images/text_align_justify.png"> &nbsp;button in the <I>Symbol
+            Table</I> toolbar.</LI>
+          </UL>
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Pinning a Symbol"></A>Pinning a Symbol</H2>
+
+    <BLOCKQUOTE>
+      <P>Code, data, or function labels may be pinned which keeps then from moving to a new address in the
+      event of a memory block move or an image base change.</P>
+
+      <P>To pin a label:</P>
+
+      <OL>
+        <LI>Select the symbols to be pinned in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
+        selection) to be added to the selection.</LI>
+
+        <LI>
+          Right-mouse-click and select "Set Pinned" from the popup menu. 
+        </LI>
+      </OL>
+
+      <P>To unpin a label:</P>
+
+      <OL>
+        <LI>Select the symbols to be unpinned in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
+        selection) to be added to the selection.</LI>
+
+        <LI>
+          Right-mouse-click and select "Clear Pinned Symbol(s)" from the popup menu. 
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+    <H2><A name="Set_Filter"></A>Filtering&nbsp;<IMG src="images/view-filter.png"></H2>
+
+    <BLOCKQUOTE>
+      <P>The list of displayed symbols is determined by the current symbol table settings. These
+      settings can be adjusted by clicking the <I>Filter</I> <IMG src="images/view-filter.png">
+      button in the toolbar of the <I>Symbol Table</I> window or from the right-mouse popup menu..
+      The displayed symbols will correspond to the selected checkboxes in the <I>Symbol Table
+      Filter</I> dialog.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/view-filter.png"></P>
+
+    <P align="center"><I>Symbol Table Filter</I> Dialog</P>
+
+    <P align="center"><IMG src="images/Filter.png"></P>
+
+    <P align="center">&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <P align="left">The Symbol Table Filter dialog consists of three sets of filters - Symbol
+      Source, Symbol Types, and miscellaneous <I><A href="#AdvancedFilters">Advanced
+      filters</A></I> which are not initially shown.&nbsp; The Symbol Types are further divided
+      into label symbols and non-label symbols.&nbsp; This grouping is for informational purposes
+      only. For most situations, only the Source and Type filters need to be set.&nbsp; This will
+      generate a query that will include all symbols that have one of the selected sources AND have
+      one of the selected types.&nbsp;&nbsp;</P>
+
+      <P align="left"><B>Symbol Source Filters</B>- this group determines which symbols (based on
+      how they originated) should be included in the query.&nbsp; At least one of the source
+      filters must be selected.</P>
+
+      <UL>
+        <LI>
+          <P align="left"><B>User Defined</B> - &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;
+          &nbsp;This filter includes all symbols named by the user in the query.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Imported -&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+          &nbsp;&nbsp;&nbsp; &nbsp;</B> &nbsp;This filter includes all symbols named by some
+          imported information.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Analysis</B> -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+          &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; This filter includes all symbols created by
+          auto-analysis that do not have default names.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Default</B> <B>(Function)</B> -&nbsp; &nbsp; This filter includes all
+          function symbols that have default names.</P>
+        </LI>
+
+        <LI><B>Default (Labels)</B> - &nbsp; &nbsp; &nbsp;&nbsp; This filter includesl all
+        non-function symbols that have default names (Ghidra generally creates default-named
+        symbols at any address that is referenced by some other location.)<BR>
+        </LI>
+      </UL>
+
+      <P align="left"><B>Symbol Type Filters -</B> This group of filters determines which types of
+      symbols to include in the query.&nbsp; All symbols in Ghidra are one of the following types.
+      At least one of these type filters must be selected.</P>
+
+      <UL>
+        <LI>
+          <P align="left"><B>Instruction Labels -</B> labels at addresses with instructions .&nbsp;
+          Note these do NOT include labels where functions exist.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Data Labels -</B> labels at addresses with data or external labels.
+          Note these do NOT include labels where functions exists.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Functions -</B> labels at addresses where functions have been defined
+          (includes external functions).&nbsp;</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Namespaces -</B> Namespace name symbols.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Classes -</B> C++ class names symbols.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>External Library -</B> External library name symbols.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Parameters -</B> Function parameter name symbols.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Local Variables -</B> Function local variable name symbols.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Global Register Variable -</B> global register variable name
+          symbols.</P>
+        </LI>
+      </UL>
+
+      <P align="left">Use the <I><B>Select All</B></I> button to select all symbol types and the
+      <B><I>Clear All</I></B> to de-select all types.&nbsp;&nbsp;</P>
+
+      <P align="left"><A name="AdvancedFilters"></A><B>Advanced Symbol Filters -</B> Advanced
+      filters are used to further refine a query to only include symbols that meet various specific
+      criteria.&nbsp; Each of the advanced filters only applies to a subset of the symbol types, so
+      to use one of these filters, the appropriate symbol type filter must also be selected.&nbsp;
+      Advanced filters that do not have any of their associated type filters set, are
+      disabled.&nbsp; Advanced filters can be tricky to use because each filter only applies to a
+      subset of the types and has no effect on the other selected types during the
+      query.&nbsp;&nbsp;See the <A href="#examples">examples</A> below for more information.</P>
+
+      <UL>
+        <LI>
+          <P align="left"><B>Externals -</B> Accepts only those symbols which are external.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Non-Externals -</B> Accepts only those symbols which are not
+          external.</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Primary Labels -</B> Accepts only labels that are the primary label at
+          an address.&nbsp; Applies to <I>Labels and Functions.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Non-Primary Labels -</B> Accepts only labels that are not the primary
+          label at an address. Applies to <I>Labels and Functions.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Globals -</B> Accepts the symbol if it is in the global
+          namespace.&nbsp; Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Locals -</B> Accepts the symbol if it is NOT in the global
+          namespace.&nbsp; Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Register Variables -</B> Accepts function parameters or local
+          variables that are register based. Applies to <I>Parameters</I> and <I>local
+          variables.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Stack Variables -</B> Accepts function parameters or local variables
+          that are stack based. Applies to <I>Parameters</I> and <I>local variables.</I>&nbsp;</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Entry Points -</B> Accepts labels or functions at external entry
+          points.&nbsp; Applies to&nbsp; <I>Labels</I> and <I>Functions.</I>&nbsp;</P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Subroutines -</B> Accepts labels that are "called" by some
+          instruction. (Does not include labels where functions are defined.) Applies to
+          <I>Labels.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Not In Memory -</B> Accepts labels that are at an address not
+          contained in memory. Applies to&nbsp; <I>Labels.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Unreferenced -&nbsp;</B> Accepts labels or functions that have no
+          references to them (also known as "dead code").&nbsp; Applies to <I>Labels</I> and
+          <I>functions.</I></P>
+        </LI>
+
+        <LI>
+          <P align="left"><B>Offcut Labels -</B> Accepts labels that are at an address that is not
+          the start of an instruction or data.&nbsp; Applies to <I>Labels.</I></P>
+        </LI>
+      </UL>
+
+      <P align="left"><I>Advanced Filters</I> affect the query using the following algorithm.&nbsp;
+      For each symbol that matches the selected source(s) and symbol type(s):</P>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>
+            <P align="left">Find all selected advanced filters that are appropriate for the
+            symbol's type.</P>
+          </LI>
+
+          <LI>
+            <P align="left">If no selected advanced filters are appropriate, include the
+            symbol.</P>
+          </LI>
+
+          <LI>
+            <P align="left">If at least one advanced filter is appropriate, then the symbol is
+            included if at least one of those filters accepts the symbol.</P>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P align="left">Select the <I>Use Advanced Filters</I> checkbox to see the advanced
+      filters.</P>
+
+      <P align="center"><IMG src="images/Filter2.png"></P>
+
+      <P align="left">The <I><B>Reset Filters</B></I> button sets all checkboxes back to their
+      default states.</P>
+
+      <H3 align="left"><A name="examples"></A><B>Sample Queries</B></H3>
+
+      <BLOCKQUOTE>
+        <H4 align="left">Example 1:&nbsp;&nbsp;</H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Setup - the following checkboxes are selected:</P>
+
+          <UL>
+            <LI>
+              <P align="left">Symbol Source:&nbsp; User Defined</P>
+            </LI>
+
+            <LI>
+              <P align="left">Symbol Types:&nbsp; Instruction Labels, Data Labels,&nbsp; and
+              Function Labels</P>
+            </LI>
+
+            <LI>
+              <P align="left">Advanced Filter: none</P>
+            </LI>
+          </UL>
+
+          <P align="left">Result:&nbsp;&nbsp;</P>
+
+          <UL>
+            <LI>
+              <P align="left">All labels and functions that are "user defined" will be shown in the
+              symbol table.</P>
+            </LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H4 align="left">Example 2:&nbsp;</H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Setup:</P>
+
+          <UL>
+            <LI>
+              <P align="left">Symbol Source: User Defined, Imported, Analysis, and Default</P>
+            </LI>
+
+            <LI>
+              <P align="left">Symbol Types: Instruction Labels and Data Labels</P>
+            </LI>
+
+            <LI>
+              <P align="left">Advanced Filter: Subroutines</P>
+            </LI>
+          </UL>
+
+          <P align="left">Result:</P>
+
+          <UL>
+            <LI>
+              <P align="left">All labels that are the start of a subroutine (not including
+              functions) are displayed.&nbsp;</P>
+            </LI>
+          </UL>
+
+          <BLOCKQUOTE>
+            <P align="left">If you want to see all subroutines including those that have been
+            defined as functions, also select the Functions type filter.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H4 align="left">Example 3:&nbsp;</H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Setup:</P>
+
+          <UL>
+            <LI>
+              <P align="left">Symbol Source: User Defined, Imported, Analysis, and Default</P>
+            </LI>
+
+            <LI>
+              <P align="left">Symbol Types: Functions Labels and Parameters</P>
+            </LI>
+
+            <LI>
+              <P align="left">Advanced Filter: Stack Variables.</P>
+            </LI>
+          </UL>
+
+          <P align="left">Result:</P>
+
+          <UL>
+            <LI>
+              <P align="left">All functions are displayed</P>
+            </LI>
+
+            <LI>
+              <P align="left">All parameters that are stack based are displayed. (Register
+              parameters have been filtered out.)</P>
+            </LI>
+          </UL>
+
+          <P align="left">Note that the advanced filter <I>Stack Variables</I> is applicable only
+          to Parameters, and&nbsp; therefore did not affect the display of functions.</P>
+        </BLOCKQUOTE>
+
+        <H4 align="left">Example 4:&nbsp;</H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Setup:</P>
+
+          <UL>
+            <LI>
+              <P align="left">Symbol Source: User Defined, Imported, Analysis, and Default</P>
+            </LI>
+
+            <LI>
+              <P align="left">Symbol Types: Instruction Labels, Data Labels, and Function
+              Labels</P>
+            </LI>
+
+            <LI>
+              <P align="left">Advanced Filter: Primary Labels and Non-primary Labels.</P>
+            </LI>
+          </UL>
+
+          <P align="left">Result:</P>
+
+          <UL>
+            <LI>
+              <P align="left">All labels are displayed</P>
+            </LI>
+          </UL>
+
+          <P align="left">Note that since all labels are either Primary labels or Non-primary
+          Labels, selecting both of these advanced filters accomplished nothing.&nbsp; The results
+          would have been the same if neither was selected.</P>
+
+          <P align="left">&nbsp;</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Symbol Table Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="help/topics/LabelMgrPlugin/Labels.htm">Labels</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Listing_Display">Listing
+      Display Options</A></LI>
+    </UL>
+  </BODY>
+</HTML>

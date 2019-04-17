@@ -1,0 +1,34 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)">
+        <constraint compilerSpecID="windows">
+            <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
+            <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- THUMB -->
+            <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- THUMB -->
+        </constraint>
+        <constraint compilerSpecID="default">
+            <constraint primary="2560"  processor="ARM"     endian="big"    size="32" variant="v8" />
+        </constraint>
+    </constraint>
+    <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
+        <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
+        <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- THUMB -->
+        <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- THUMB -->
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="40"   processor="ARM"                      size="32" variant="v8" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
+        <constraint primary="12.0"     processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM all -->
+        <constraint primary="12.5"     processor="ARM"     endian="little" size="32" variant="v4t" /><!-- ARM v4T -->
+        <constraint primary="12.6"     processor="ARM"     endian="little" size="32" variant="v6"  /><!-- ARM v6  -->
+        <constraint primary="12.9"     processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8  -->
+        <constraint primary="12.10"    processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8f -->
+        <constraint primary="12.11"    processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8s -->
+        <constraint primary="12.12"    processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8k -->
+    </constraint>
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
+        <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
+        <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />
+        <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8" />
+    </constraint>
+</opinions>

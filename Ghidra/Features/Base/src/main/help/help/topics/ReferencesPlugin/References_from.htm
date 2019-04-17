@@ -1,0 +1,1320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Forward References</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Forward References</H1>
+
+    <P>This page covers the follow topics relating to explicit forward references and the specific
+    functionality provided by the ReferencesPlugin:<BR>
+    </P>
+
+    <UL>
+      <LI><A href="#intro">Introduction</A></LI>
+
+      <LI><A href="#typesOfRefs">Types of References</A></LI>
+
+      <LI><A href="#refSymbols">Reference Destination Symbols</A></LI>
+
+      <LI><A href="#refTypes">Ref-Types</A></LI>
+
+      <LI><A href="#actions">Actions for Creating and Deleting References from a Code Unit</A></LI>
+
+      <LI><A href="#View_Edit_References_From">Viewing and Editing References</A></LI>
+
+      <LI><A href="#addRef">Adding a Reference</A></LI>
+
+      <LI><A href="#editRef">Editing a Reference</A></LI>
+
+      <LI><A href="#memRefPanel">Memory Reference Panel</A></LI>
+
+      <LI><A href="#extRefPanel">External Reference Panel</A></LI>
+
+      <LI><A href="#stackRefPanel">Stack Reference Panel</A></LI>
+
+      <LI><A href="#regRefPanel">Register Reference Panel</A></LI>
+
+      <LI><A href="#dragNDrop">Adding Memory References from a Selection</A></LI>
+    </UL>
+
+    <H2><A name="intro"></A>Introduction</H2>
+
+    <P>Explicit forward references exist within a program to identify execution flow or a data
+    relationship between a '<I>source</I>' referent and a '<I>destination</I>'. &nbsp;Inferred
+    forward references are sometimes rendered automatically within the Listing to aid the user
+    (e.g., inferred function variable references). &nbsp; This page only covers the management of
+    "explicit" forward references which are stored within the Program file.<BR>
+    </P>
+
+    <P>A forward reference <I>source</I> is either an instruction or data code unit within the
+    program identified by a memory address.&nbsp; In addition, the source is qualified by an
+    <I>operand-index</I> which identifies the mnemonic or operand of an instruction which is making
+    the reference. &nbsp;Associating a reference to the correct operand allows the Listing to
+    render the data or instruction in a more friendly fashion and also facilitates navigation
+    within the program when you double click on an operand field within the Listing.<BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>When a reference is placed on an operand, it
+    will only change the rendering of that operand within the program listing if the reference is
+    marked as 'primary'.</I></P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>If a reference is placed on an instruction
+    mnemonic within the Listing, the instruction mnemonic will be <U>underlined</U>.</I></P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>If a non-primary reference exists for an operand
+    (i.e., not reflected in the instruction markup), the corresponding instruction operand within
+    the Listing will be <U>underlined</U>.</I><BR>
+    </P>
+
+    <H2><A name="typesOfRefs"></A>Types of References<BR>
+    </H2>
+
+    <P>The following types of explicit forward references may be defined from a mnemonic or operand
+    of an instruction or data code unit:<BR>
+    </P>
+
+    <UL>
+      <LI><A href="#memRefs">Memory Reference</A> (<I>includes Offset and Offcut
+      references</I>)<BR>
+      </LI>
+
+      <LI><A href="#extRefs">External Reference</A></LI>
+
+      <LI><A href="#stackRefs">Stack Reference</A></LI>
+
+      <LI><A href="#regRefs">Register Reference</A></LI>
+    </UL>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Ghidra does not permit mixing "types of
+    references" for a given mnemonic or operand.</I></P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>With the exception of Memory References, only a
+    single reference may be placed on a given mnemonic/operand.</I><BR>
+    </P>
+
+    <H3><A name="memRefs"></A> Memory
+    References</H3>
+
+	<A name="offsetRefs"></A>
+    <P>All <I>Memory Reference</I> have a destination defined by a memory address within the
+    current program. &nbsp;A variation of the typical memory reference is the <I>Offset
+    Reference</I> which permits the destination address to be specified as some base memory address
+    plus a 64-bit signed offset. &nbsp;<BR>
+    </P>
+
+    <P><I>Memory References</I> are used to specify either a data access or execution flow within
+    the Program. &nbsp;This distinction is made by specifying an appropriate <A href=
+    "#refTypes">Ref-Type</A> on the reference. &nbsp;Adding and removing certain flow references
+    may change the set of instructions which make up subroutine and code blocks. &nbsp;Since
+    function bodies are established based upon the&nbsp;<A href=
+    "help/topics/BlockModel/Block_Model.htm">Block Models</A>, it may be necessary to redefine the
+    body of &nbsp;<A href="help/topics/FunctionPlugin/Functions.htm">Functions</A> affected by a
+    new flow reference.<BR>
+    </P>
+
+	<A NAME="Offcut_References"></A><A name="offcutRefs"></A>
+    <P>Any <I>Memory Reference</I> can be characterized as an <I>Offcut Reference</I> if its
+    destination address is contained within a data or instruction code unit and does not correspond
+    to the minimum address of that code unit. &nbsp;Such <I>Offcut References</I> produce an offcut
+    label which uses a special label color. &nbsp;In addition, since the corresponding label is
+    hidden within a code unit, a special <B><FONT color=
+    "#999999"><TT>OFF_&lt;<I>address</I>&gt;</TT></FONT></B> label appears on the containing code
+    unit within the Listing. &nbsp;Double-clicking the similarly colored XRefs within the Listing
+    will allow you to quickly identify the <I>source</I> of the memory reference (see <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">Code Browser Navigation</A>).
+    &nbsp;In general, the presence of an Offcut Reference may indicate an error within the
+    disassembly.</P>
+
+    <H3><A name="extRefs"></A>External References</H3>
+
+    <P>External References are used to define either a data access or execution flow to a memory
+    destination located within a different Program file. &nbsp;This type of reference is typically
+    used when linking to a library module. &nbsp;An External Reference destination is defined by a
+    <I>External Program Name</I> and memory location which may be identified by a label or address
+    contained within the <I>External Program File</I>. &nbsp; The resulting destination symbol
+    takes on the name of the external label or <FONT color=
+    "#336666"><B><TT>EXT_<I>&lt;address&gt;</I></TT></B></FONT> if only an external address was
+    specified. &nbsp;All external destination symbols have a namespace which corresponds to the
+    associated <I>External Program Name</I> (e.g., &nbsp;<FONT color=
+    "#336666"><B><TT>MSVCRT.DLL::_controlfp</TT></B></FONT> &nbsp;). &nbsp;<BR>
+    </P>
+
+    <P>An <I>External Program Name</I> is considered to be "resolved" when it has been linked to a
+    Program file contained within the same project. &nbsp; All external symbol names, corresponding
+    to unresolved <I>External Program Names,</I> will be displayed in red. &nbsp;The <A href=
+    "external_program_names.htm">External Program Names...</A> action/dialog can be used to set or
+    modifying these external Program file linkages.<BR>
+    </P>
+
+    <P>External References currently utilize the single RefType of EXTERNAL. &nbsp;</P>
+
+    <H3><A name="stackRefs"></A>Stack References</H3>
+
+    <P><I>Stack References</I> define data access to a function parameter or local variable located
+    on the stack. &nbsp;All <I>Stack References</I> have a destination defined by a stack offset
+    within the containing function's stack frame. &nbsp;If a real frame-pointer is not used, the
+    Function analysis will track the stack pointer usage and establish a virtual stack frame for
+    the purpose of defining stack parameters and local variables. &nbsp;When creating a <I>Stack
+    Reference</I>, a corresponding stack parameter/variable may be explcitly bound to the reference
+    (see <A href="help/topics/FunctionPlugin/Variables.htm">Function Variables</A>), although this
+    is generally unnecessary since this relationship can generally be determined from the stack
+    offset. &nbsp; The sign of the stack frame offset makes the distinction between a parameter or
+    local variable assignment. &nbsp;Stack usage conventions are established by the Language module
+    in use.<BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Stack References should be placed on all stack
+    parameter/variable data access operands.</I><BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Stack References may only be specified for
+    source code units contained within a function.</I><BR>
+    </P>
+
+    <H3><A name="regRefs"></A>Register References</H3>
+
+    <P><I>Register References</I> define data access to a function parameter or local variable
+    located within a register. &nbsp;All <I>Register References</I> have a destination defined by a
+    register within the context of a containing function. &nbsp;When creating a <I>Register
+    Reference</I> a corresponding register variable may be explcitly bound to the reference (see <A
+    href="help/topics/FunctionPlugin/Variables.htm">Function Variables</A>),&nbsp;although this is
+    generally unnecessary since this relationship can generally be determined from the register
+    used.<BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Register References should be placed only on
+    register variable data assignment operands.</I><BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Register References may only be specified for
+    source code units contained within a function.</I></P>
+
+    <H2><A name="refSymbols"></A>Reference Destination Symbols</H2>
+
+    <P>An important characteristic of all references is that a symbol is created for all
+    destinations. &nbsp;These symbols generally appear within the listing and can always be found
+    within the <A href="help/topics/SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or <A
+    href="help/topics/SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>. &nbsp;The following default
+    symbol names are produced by the creation of a reference.<BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <TABLE border="1" cellpadding="2" cellspacing="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD bgcolor="#CCCCCC" nowrap="nowrap" valign="top">
+            <B>Symbol</B>&nbsp;<B>Name</B>&nbsp;<B>Format</B><BR>
+            </TD>
+
+            <TD align="center" bgcolor="#CCCCCC" valign="top"><B>Type</B><BR>
+            </TD>
+
+            <TD align="center" bgcolor="#CCCCCC" valign="top"><B>Namespace</B><BR>
+            </TD>
+
+            <TD bgcolor="#CCCCCC" valign="top"><B>Description</B><BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color="#3333FF"><B><TT>LAB_</TT></B></FONT><FONT
+            color="#3333FF"><FONT color="#3333FF">&lt;</FONT></FONT><FONT color="#3333FF"><FONT
+            color="#3333FF"><I>address</I></FONT></FONT><FONT color="#3333FF"><FONT color=
+            "#3333FF">&gt;</FONT></FONT><BR>
+            </TD>
+
+            <TD align="center" valign="top">Memory<BR>
+            </TD>
+
+            <TD align="center" valign="top">Global<BR>
+            </TD>
+
+            <TD valign="top" width="100%">A memory address&nbsp; "label" identifying a branch flow
+            memory reference destination.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color=
+            "#3333FF"><B><TT>SUB_</TT></B></FONT><I><FONT color="#3333FF">&lt;</FONT><FONT color=
+            "#3333FF">address</FONT><FONT color="#3333FF">&gt;</FONT></I><BR>
+            </TD>
+
+            <TD align="center" valign="top">Memory<BR>
+            </TD>
+
+            <TD align="center" valign="top">Global<BR>
+            </TD>
+
+            <TD valign="top">A memory address&nbsp; "label" identifying a call flow memory
+            reference destination.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color="#3333FF"><B><TT>DAT_</TT></B></FONT><FONT
+            color="#3333FF">&lt;</FONT><FONT color="#3333FF"><I>address</I></FONT><FONT color=
+            "#3333FF">&gt;</FONT><BR>
+            </TD>
+
+            <TD align="center" valign="top">Memory<BR>
+            </TD>
+
+            <TD align="center" valign="top">Global<BR>
+            </TD>
+
+            <TD valign="top">A memory address&nbsp; "label" identifying a data memory reference
+            destination.&nbsp;&nbsp; If the <SPAN style="font-style: italic;">address</SPAN>
+            correspnds to defined data, the <SPAN style="font-weight: bold;">DAT</SPAN> prefix will
+            be replaced by the corresponding data-type (e.g., <SPAN style=
+            "font-weight: bold;">BYTE_</SPAN>&lt;<SPAN style=
+            "font-style: italic;">address</SPAN>&gt;, <SPAN style=
+            "font-weight: bold;">DWORD_</SPAN>&lt;<SPAN style=
+            "font-style: italic;">address</SPAN>&gt;).<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color=
+            "#999999"><B><TT>OFF_</TT></B></FONT><I><FONT color="#999999">&lt;</FONT><FONT color=
+            "#999999">address</FONT><FONT color="#999999">&gt;</FONT></I><BR>
+            </TD>
+
+            <TD align="center" valign="top">Memory<BR>
+            </TD>
+
+            <TD align="center" valign="top">Global<BR>
+            </TD>
+
+            <TD valign="top">A memory address "label" identifying a memory reference destination
+            which is located at an offcut address within a code unit. &nbsp;These labels only
+            appears within the listing to flag the existance of a hidden offcut label.
+            &nbsp;Double-clicking the corresponding offcut XRef will take you to the code unit
+            which has the offcut reference,<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><B><FONT color=
+            "#993399"><TT>param_</TT></FONT></B><I><FONT color=
+            "#993399">&lt;ordinal&gt;</FONT></I><BR>
+            </TD>
+
+            <TD align="center" valign="top">Stack/Register/<BR>
+             Memory<BR>
+            </TD>
+
+            <TD align="center" valign="top">Function Name<BR>
+            </TD>
+
+            <TD valign="top">A function parameter associated with stack, register or memory&nbsp;
+            location.&nbsp; Parameter references identified by a parameter name which by default
+            includes its ordinal position.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color=
+            "#993399"><B><TT>local_</TT></B></FONT><I><FONT color=
+            "#993399"><B>&lt;</B></FONT></I><I><FONT color="#993399">reg-name</FONT><FONT color=
+            "#993399"><B>&gt;</B></FONT>[<B><FONT color="#993399">_&lt;</FONT></B></I><I><FONT
+            color="#993399">firstUseOffset</FONT><B><FONT color="#993399">&gt;</FONT></B>]</I><BR>
+            </TD>
+
+            <TD align="center" valign="top">Register<BR>
+            </TD>
+
+            <TD align="center" valign="top">Function Name<BR>
+            </TD>
+
+            <TD valign="top">A local function variable associated with register references.
+            &nbsp;In addition, the first-use-offset within the function is included if
+            non-zero.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color=
+            "#993399"><B><TT>local_</TT></B></FONT><FONT color="#993399"><I><FONT color=
+            "#993399">&lt;offset</FONT></I><I><FONT color="#993399">&gt;</FONT>[<FONT color=
+            "#993399">_&lt;</FONT></I><I><FONT color="#993399">firstUseOffset</FONT><FONT color=
+            "#993399">&gt;</FONT>]</I></FONT><BR>
+            </TD>
+
+            <TD align="center" valign="top">Stack<BR>
+            </TD>
+
+            <TD align="center" valign="top">Function Name<BR>
+            </TD>
+
+            <TD valign="top">A local function variable associated with stack references identified
+            by an absolute offset within the stack frame. &nbsp;In addition, the first-use-offset
+            within the function is included if non-zero.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD nowrap="nowrap" valign="top"><FONT color=
+            "#336666"><B><TT>&lt;<I>ext-label</I>&gt;</TT></B></FONT><BR>
+            </TD>
+
+            <TD align="center" valign="top">External<BR>
+            </TD>
+
+            <TD align="center" valign="top"><TT><I>EXTERNAL_NAME</I></TT><BR>
+            </TD>
+
+            <TD valign="top">A external program location associated with external references and
+            identified by a label name or address within the external program file. &nbsp;Each
+            <I>EXTERNAL_NAME</I> can be associated with a specific program file within your Ghidra
+            project (see <A href="external_program_names.htm">External Program Names</A>). &nbsp;If
+            only an address is specified when creating an external reference, a label format of
+            <TT>EXT_&lt;<I>addr</I>&gt;</TT> is used.<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </BLOCKQUOTE>
+
+    <P>The above symbol name colors correspond to the default color scheme (see <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm">Code Browser Options</A>). &nbsp;Memory
+    Reference destinations outside the Program's memory map, and unresolved External Reference
+    destinations utilize the "Bad Reference Address" color (e.g., <TT><B><FONT color=
+    "#ff0000">DAT_00010000</FONT></B></TT>) in place of the normal color shown.<BR>
+    </P>
+
+    <P>The presence of<BR>
+    </P>
+
+    <P>The actual default label utilized for a memory location can change dynamically and is
+    produced by considering the following naming precendence (listed highest to lowest). &nbsp;Note
+    that some of the following label types are not a result of a reference, but are considered
+    &nbsp;when producing the default label name.<BR>
+    </P>
+
+    <OL>
+      <LI><TT>FUN_&lt;<I>addr</I>&gt;</TT> : Function entry point</LI>
+
+      <LI><TT>EXT_&lt;<I>addr</I>&gt;</TT>&nbsp;: External entry point</LI>
+
+      <LI><TT>SUB_&lt;<I>addr</I>&gt;</TT> : Call flow reference destination</LI>
+
+      <LI><TT>LAB_&lt;<I>addr</I>&gt;</TT> : Branch flow reference destination</LI>
+
+      <LI><TT>DAT_&lt;<I>addr</I>&gt;</TT> : Data reference destination<BR>
+      </LI>
+    </OL>
+
+    <H2><A name="refTypes"></A>Ref-Types<BR>
+    </H2>
+
+    <P>The term <B>Ref-Type</B>, as used within Ghidra, is rather ambiguous - and will hopefully be
+    changed in a future release of Ghidra. &nbsp;While the following "<I>types of references</I>"
+    are supported in Ghidra: memory, stack, register and external. &nbsp;We define <B>Ref-Type</B>
+    as the "<I>type of data access</I>" or "<I>type of flow</I>" associated with a reference.
+    &nbsp;The following table attempts to clarify the various <B>Ref-Types</B> and when they can be
+    used.<BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <TABLE border="1" cellpadding="2" cellspacing="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD bgcolor="#CCCCCC" valign="top"><B>Ref-Type</B><BR>
+            </TD>
+
+            <TD align="center" bgcolor="#CCCCCC" valign="top"><B>*Reference</B><BR>
+            </TD>
+
+            <TD align="center" bgcolor="#CCCCCC" valign="top"><B>Flow/Data</B><BR>
+            </TD>
+
+            <TD bgcolor="#CCCCCC" valign="top" width="100%"><B>Description</B><BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">DATA<BR>
+            </TD>
+
+            <TD align="center" valign="top">MSR<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top" width="100%">General data/pointer reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">DATA_IND<BR>
+            </TD>
+
+            <TD align="center" valign="top">M<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top" width="100%">General indirect data reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">READ<BR>
+            </TD>
+
+            <TD align="center" valign="top">MSR<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top" width="100%">Direct data read reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">READ_IND<BR>
+            </TD>
+
+            <TD align="center" valign="top">M<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top">Indirect data read reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">WRITE<BR>
+            </TD>
+
+            <TD align="center" valign="top">MSR<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top" width="100%">Direct data write reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">WRITE_IND<BR>
+            </TD>
+
+            <TD align="center" valign="top">M<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top">Indirect data write reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">READ_WRITE<BR>
+            </TD>
+
+            <TD align="center" valign="top">MSR<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top" width="100%">Direct data read/write reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top">READ_WRITE_IND<BR>
+            </TD>
+
+            <TD align="center" valign="top">M<BR>
+            </TD>
+
+            <TD align="center" valign="top">Data<BR>
+            </TD>
+
+            <TD valign="top">Indirect data read/write reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#999999">STACK_READ (<I>Note 1</I>)<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">S<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">Data<BR>
+            </FONT></TD>
+
+            <TD valign="top" width="100%">Direct stack read reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#999999">STACK_WRITE (<I>Note 1</I>)<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">S<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">Data<BR>
+            </FONT></TD>
+
+            <TD valign="top" width="100%">Direct stack write reference<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#999999">EXTERNAL_REF <I>(Note 2)</I><BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">E<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#999999">-<BR>
+            </FONT></TD>
+
+            <TD valign="top" width="100%">External program reference (flow or data access
+            unspecified)<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">INDIRECTION<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Indirect flow via a pointer (reference should be from an instruction
+            to a pointer). &nbsp;Alternatively, a COMPUTED CALL or JUMP reference could be placed
+            from an instruction to one or more indirect destination instructions.<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">COMPUTED_CALL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Computed call flow from an instruction<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">COMPUTED_JUMP<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Computed jump flow from an instruction<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">UNCONDITIONAL_CALL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Unconditional call flow from an instruction<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">UNCONDITIONAL_JUMP<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Unconditional jump flow from an instruction<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CONDITIONAL_CALL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Conditional call flow from an instruction<BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CONDITIONAL_JUMP<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Conditional jump flow from an instruction<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </BLOCKQUOTE>
+
+    <P>*In the above table, the <B><I>Reference</I></B> column indicates the "<I>type of
+    reference</I>" for which the <B><I>Ref-Type</I></B> is applicable: <U>M</U>emory, <U>S</U>tack,
+    <U>R</U>egister and <U>E</U>xternal.</P>
+
+    <P>NOTES:</P>
+
+    <OL>
+      <LI>The use of STACK_READ and STACK_WRITE Ref-Types will likely be replaced with READ and
+      WRITE Ref-Types in a future release of Ghidra.</LI>
+
+      <LI>The EXTERNAL_REF is a general purpose Ref-Type used for all External references. &nbsp;At
+      this time, the type of flow or data access for an external reference is unspecified.</LI>
+
+      <LI>If you need to alter the FALL_THROUGH flow behavior of an instruction, modify the&nbsp;<A
+      href="help/topics/FallThroughPlugin/Override_Fallthrough.htm">Fallthrough Address</A> instead
+      of adding a memory reference.</LI>
+    </OL>
+
+    <H2><A name="actions"></A>Actions for Creating and Deleting References From a Code Unit</H2>
+
+    <P>There are three actions provided by the ReferencesPlugin which are accessible from the
+    CodeBrowser Listing while the current cursor location is on the mnemonic or operand of an
+    instruction or data code unit. &nbsp;The create and delete reference actions may be disabled
+    under certain conditions.<BR>
+    </P>
+
+    <UL>
+      <LI><A href="#View_Edit_References_From">References from</A></LI>
+
+      <LI><A href="#Add_Reference_From">Add Reference from...</A><BR>
+      </LI>
+
+      <LI><A href="#Create_Default_Reference">Create Default Reference</A> (menu item varies based
+      upon current operand)</LI>
+
+      <LI><A href="#Delete_References_From">Delete References</A> (menu item varies based upon
+      mnemonic/operand current references)</LI>
+    </UL>
+
+    <P>&nbsp;<IMG src="../../shared/note.png" alt=""> <I>Default key-bindings for actions are
+    indicated with {}'s.<BR>
+    </I></P>
+
+    <H3><A name="Add_Reference_From"></A>Add Reference From</H3>
+
+    <P>While there is a separate action for creating a default reference on an operand (see <A
+    href="#Create_Default_Reference">Creating a Default Reference</A> below), an arbitrary
+    reference may be also be added directly to a mnemonic or operand by using the popup menu action
+    <I><B>References<IMG src="../../shared/arrow.gif" alt=""> Add Reference from...</B></I> .
+    &nbsp;This will cause the <A href="#addRefDialog"><I>Add Reference Dialog</I></A> to be
+    displayed, allowing the user to specify any of the permitted reference types.<BR>
+    </P>
+
+    <H3><A name="Create_Default_Reference"></A>Creating a Default Reference {Alt-R}</H3>
+
+    <P>While the current cursor location is on the operand of an instruction or data code unit
+    within the CodeBrowser Listing, the popup menu item <I><B>References<IMG src=
+    "../../shared/arrow.gif" alt=""> Create Default Reference</B></I>* may be selected to create
+    the default primary reference for an operand. &nbsp;This action will be disabled if the current
+    location does not correspond to an operand field or a default reference can not be determined.
+    &nbsp;<BR>
+    </P>
+
+    <P>When creating a default <I>Memory</I> reference on a scalar operand, for programs with
+    multiple memory spaces, repeatedly invoking this action will cycle the default reference
+    through all suitable memory spaces. &nbsp;If the wrong memory space was used in creating the
+    <I>Memory</I> reference, simply repeat the action. &nbsp;<BR>
+    </P>
+
+    <P>When adding a <I>Stack</I> or <I>Register</I> reference, a corresponding parameter or
+    variable may be created. &nbsp;If a local variable is created, the first-use-offset of the
+    variable will correspond to the source instruction location. &nbsp;For this reason, it is
+    recommended that the first reference to a variable be created on the the first "assignment"
+    instruction. &nbsp;If a newly created variable is unwanted, it may be deleted by clicking on it
+    within the Listing and hitting the "<I>Delete</I>" key. &nbsp;Keep in mind that when a variable
+    is deleted, any explicit bindings to that variable will be cleared.<BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>*The popup menu item name Create Default
+    Reference may differ based upon the type of reference which will get created:&nbsp; Create
+    Memory Reference, Create Stack Reference, Create Register Reference.</I><BR>
+    </P>
+
+    <H3><A name="Delete_References_From"></A>Deleting References from a Code Unit {Delete}</H3>
+
+    <P>While the current cursor location is on the mnemonic/operand of an instruction or data code
+    unit within the CodeBrowser Listing, the popup menu item <I><B>References<IMG src=
+    "../../shared/arrow.gif" alt=""> Delete Reference</B></I>s* may be selected to delete all
+    references on the current mnemonic/operand. &nbsp;This action will be disabled if the current
+    location does not correspond to a mnemonic/operand field or references do not exist on the
+    current mnemonic/operand.&nbsp;<BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>*The popup menu item name Delete References may
+    differ based upon the existing reference(s):&nbsp; Delete Memory References, Delete Stack
+    Reference, Delete Register Reference, Delete External Reference.</I><BR>
+    </P>
+
+    <H2><A name="referencesFrom"></A><A name="References_from_"></A><A name=
+    "View_Edit_References_From"></A>Viewing and Editing References (<I>Add/Edit...</I>)
+    {'R'}</H2>
+
+    <P>All references "from" a data or instruction code unit can be edited and/or viewed by
+    clicking on the code unit (or a specific operand) within the Listing and activating the
+    <I><B>Add/Edit...</B></I> action via the popup menu item <I><B>References<IMG src=
+    "../../shared/arrow.gif" alt=""> Add/Edit...</B></I> {'R'}. &nbsp; Each time this action is
+    invoked a new instance of the <B><I>References Editor</I></B> panel will be displayed. &nbsp;Once the panel is
+    displayed, the <IMG src="images/locationIn.gif" alt=""> &nbsp;toggle button may be pushed-in to
+    have the <I>source</I> location follow the current location within the&nbsp;<A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> display.<BR>
+    </P>
+
+    <P align="center"><IMG src="images/RefProvider.png" alt=""><BR>
+    </P>
+
+    <BLOCKQUOTE>
+      <H3>Source</H3>
+
+      <BLOCKQUOTE>
+        <P>The references displayed and managed within this panel are all "from" a single
+        <I>source</I> instruction or data code unit. &nbsp;The current <I>source</I> code
+        unit&nbsp; is displayed at the top of the <I><B>References Editor</B></I> panel as it would
+        appear in the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.
+        &nbsp;Using this display, you can click on either the code unit Mnemonic or an individual
+        operand to highlight the corresponding references within the table below and to set the
+        operand target when adding additional references. &nbsp;The selected Source operand will be
+        treated as the "active source operand" used for Add actions. &nbsp;These operand labels
+        will also act as drag-n-drop target zones for code unit selections dragged from the <A
+        href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> (see <A href=
+        "#dragNDrop">Adding Memory References from a Selection</A>).<BR>
+        </P>
+
+		<P><IMG src="../../shared/note.png" alt="">
+			The table entries that match the selected source element will be gray in color.
+    	</P>
+
+        <P>The Home Button <IMG src="images/go-home.png" alt=""> &nbsp;can be used to set the
+        current Listing location to the Source code unit address.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>References Table</H3>
+
+      <BLOCKQUOTE>
+        <P>All references "from" the current <I>source</I> code unit are listed within the table
+        with the following columns:<BR>
+        </P>
+
+        <UL>
+          <LI><B><I>Operand</I></B> - Indicates on which portion of the code unit the reference has
+          been placed (<TT>MNEMONIC,OP-0,OP-1,OP-2,...</TT>).</LI>
+
+          <LI>
+            <B><I>Destination</I></B> - Indicates the destination location associated with the
+            reference. &nbsp;The destination displayed for each type of reference utilizes a
+            different format:<BR>
+             
+
+            <BLOCKQUOTE>
+              <TT>&lt;</TT><I>address</I><TT>&gt;</TT> : indicates a memory destination<BR>
+               <I>&lt;address&gt;</I><I>&lt;signed-offset&gt;</I> : indicates an offset memory
+              reference relative to a base address.<BR>
+               <TT>Stack[</TT><I>&lt;signed-</I><I>offset</I><I>&gt;</I><TT>]</TT> : indicates a
+              stack reference with a specified stack frame offset.<BR>
+               <TT>&lt;</TT><I>register</I>&gt; : indicates a register reference for the specified
+              register.<BR>
+               <TT>External</TT> : indicates an external reference<BR>
+            </BLOCKQUOTE>
+          </LI>
+
+          <LI><B><I>Label</I></B> - Indicates the namespace-qualified symbol name associated with
+          the destination (See <A href="#refSymbols">Reference Destination Symbols</A>).</LI>
+
+          <LI><B><I>*Ref-Type</I></B> - Identifies the type of data access or instruction flow
+          associated with a reference.<BR>
+          </LI>
+
+          <LI><B><I>*Primary?</I></B> - Allows the user to choose a single memory reference which
+          will be reflected in the rendering of a code unit operand.</LI>
+
+          <LI><B><I>User Ref?</I></B> - References which were manually added by the user or by
+          means of auto-analysis will have a check displayed.<BR>
+          </LI>
+        </UL>
+
+        <P><IMG src="../../shared/note.png" alt=""> <I>*With the exception of External references,
+        both the Ref-Type and</I> <I>Primary? choices may be changed directly within this
+        table.</I></P>
+
+        <P><IMG src="../../shared/note.png" alt=""> <I>References and symbol names corresponding to
+        memory references outside of the program's defined memory blocks will be displayed in red
+        (e.g., <FONT color="#ff0000"><TT>DAT_00000000</TT></FONT>). &nbsp; These red references
+        frequently correspond to well-known memory locations, although they could point out a bad
+        reference. &nbsp;<A href="help/topics/MemoryMapPlugin/Memory_Map.htm">Creating memory
+        blocks</A> for valid fixed memory locations (e.g., memory mapped I/O regions) will help to
+        resolve some of these apparent "<FONT color="#ff0000">BAD</FONT>" references.</I><BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Actions</H3>
+
+      <BLOCKQUOTE>
+        <P>The following actions are available from the <I><B>References Editor</B></I> panel.
+        &nbsp;For those actions with a default key-binding or mouse-click-binding, this has been
+        indicated with {}'s.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P><A name="Add_Reference"></A><IMG src="images/Plus.png" alt=""> <I><B>Add
+        Reference</B></I> {Insert-key} - Invoking this action will launch the Add Reference Dialog
+        for the current code unit (see <A href="#addRef">Adding a Reference</A>).<BR>
+        </P>
+
+        <P><A name="Delete_References"></A><IMG src="images/edit-delete.png" alt=""> <I><B>Delete
+        References</B></I> {Delete-key} - Invoking this action will delete all selected
+        references.<BR>
+        </P>
+
+        <P><A name="Edit_Reference"></A><IMG src="images/editbytes.gif" alt=""> <I><B>Edit
+        Reference</B></I> {Enter-key or double-click a row} - Invoking this action will popup the
+        <I><B>Edit Reference Dialog</B></I> for the selected reference (see <A href=
+        "#editRef">Editing a Reference</A>). &nbsp;This action is &nbsp;only available when a
+        single reference row is selected.<BR>
+        </P>
+
+        <P><A name="Select_Destinations"></A><IMG src="images/text_align_justify.png" alt=""> <I><B>Select
+        Memory Reference Destination</B></I> - With one or more memory references selected in the
+        table, invoking this action will cause the corresponding locations within the&nbsp;<A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> to become selected.<BR>
+        </P>
+
+        <P><A name="Follow_location_changes"></A><IMG src="images/locationIn.gif" alt="">
+        <I><B>Follow Tool Location Changes</B></I> - Once enabled (i.e., button pushed-in), any
+        location change within the tool (e.g., Listing panel) &nbsp;will cause the currently
+        displayed &nbsp;<I>source</I> code unit and associated references to reflect the new
+        location.<BR>
+        </P>
+
+        <P><A name="GoTo_selected_destination"></A><IMG src="images/locationOut.gif" alt="">
+        <I><B>Send Location Change for Selected Reference Destination</B></I> - Once enabled (i.e.,
+        button pushed-in), selecting a single row within the references table will send a location
+        change to the tool corresponding to the selected <I>destination</I>. &nbsp;This will have
+        the effect of &nbsp;scrolling the <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> to selected <I>destination</I>.
+        &nbsp;In the case of an external location, an attempt will be made to open the
+        corresponding program and scrolling to the corresponding external label within that
+        program.<BR>
+        </P>
+
+        <P><I><B><A name="GoTo_source_location"></A><IMG src="images/go-home.png" alt=""> GoTo
+        Reference Source Location</B></I> - Invoking this action will send a location change to the
+        tool corresponding to the <I>source</I> code unit. &nbsp;This will have the effect of
+        &nbsp;scrolling the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> to
+        the current <I>source</I> code unit.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="addRef"></A>Adding a Reference&nbsp;<IMG src="images/Plus.png" alt=""></H2>
+
+    <P>Invoking the <I><B>Add...</B></I> action from the <B><I>References Editor</I></B> window will
+    cause the <I><B>Add Reference Dialog</B></I> to be displayed for the current <I>Source</I> code
+    unit. &nbsp;Once displayed, the <I>Source</I> code unit mnemonic or operand may be selected by
+    clicking on it, as well as the <I>Type of Reference</I>. &nbsp;The available choices for Type
+    of Reference may be constrained based upon the choosen operand.</P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>In general, only flow references should be set
+    on an instruction mnemonic, unless of course the instruction has no operands. &nbsp;References
+    from data code units (e.g., addr/pointer) should always specify the scalar operand as the
+    source, not the mnemonic (i.e., data-type).</I><BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>Stack and register references may only be
+    specified for source code units contained within a function.</I> &nbsp;<I>Register references
+    may only be set on operands containing a single register and in general should correspond to a
+    WRITE <A href="../../topics/ReferencesPlugin/References_from.htm#refTypes">Ref-Type</A>.
+    &nbsp;</I><BR>
+    </P>
+
+    <P><IMG src="../../shared/note.png" alt=""> <I>With the exception of memory references, only a
+    single reference may be set for a given operand or mnemonic.</I><BR>
+    </P>
+
+    <P><A name="addRefDialog"></A><IMG src="../../shared/note.png" alt=""> <I>An External reference
+    may not be set on a mnemonic.</I></P>
+
+    <P align="center"><IMG src="images/AddReferenceDialog.png" alt=""></P>
+
+    <P>Based upon the choosen <I>Type of Reference</I>, the lower portion of the dialog will
+    change. &nbsp;The following sections discuss the input panels for each of the four possible
+    choices:<BR>
+    </P>
+
+    <OL>
+      <LI><A href="#memRefPanel">Memory Reference Panel</A> <I>(includes Offset and Offcut
+      references)</I></LI>
+
+      <LI><A href="#extRefPanel">External Reference Panel</A></LI>
+
+      <LI><A href="#stackRefPanel">Stack Reference Panel</A></LI>
+
+      <LI><A href="#regRefPanel">Register Reference Panel</A><BR>
+      </LI>
+    </OL>
+
+    <P>Once the appropriate reference panel has been filled-in as required, the <B><I>Add</I></B>
+    button may be clicked to complete the operation.<BR>
+    </P>
+
+    <P>When adding a <I>Stack</I> or <I>Register</I> reference, a corresponding parameter or
+    variable may be created. &nbsp;If a local variable is created, the first-use-offset of the
+    variable will correspond to the source instruction location. &nbsp;For this reason, it is
+    recommended that the first reference to a variable be created on the the first "assignment"
+    instruction. &nbsp;If a newly created variable is unwanted, it may be deleted by clicking on it
+    within the Listing and hitting the "<I>Delete</I>" key. &nbsp;Keep in mind that when a variable
+    is deleted, any explicit bindings to that variable will be cleared.<BR>
+    </P>
+
+    <H2><A name="editRef"></A>Editing a Reference&nbsp;<IMG src="images/editbytes.gif" alt=""></H2>
+
+    <P>Invoking the <I><B>Edit...</B></I> action from the <B><I>References Editor</I></B> window will
+    cause the <I><B>Edit Reference Dialog</B></I> to be displayed for the current <I>Source</I>
+    code unit. &nbsp;Once displayed, the <I>Source</I> code unit mnemonic or operand corresponding
+    to the edited reference will be selected, as well as the <I>Type of Reference</I>.
+    &nbsp;Neither the <I>Source</I> operand nor the <I>Type of Reference</I> may be changed when
+    editing a reference. &nbsp;If you wish to change either of these settings you must delete the
+    reference and <A href="help/topics/ReferencesPlugin/References_from.htm#addRef">add a new
+    reference</A>.</P>
+
+    <P>The <I>Edit Reference Dialog</I> uses the same layout as the <A href="#addRefDialog">Add
+    References Dailog</A> with the only exception being the dialog title and the <I>Add</I> button
+    which is named <B><I>Update</I></B> in the Edit mode. &nbsp;Similarly, the lower portion of the
+    dialog will vary based upon the <I>Type of Reference</I>. &nbsp;The following sections discuss
+    the input panels for each of the four possible choices:<BR>
+    </P>
+
+    <OL>
+      <LI><A href="help/topics/ReferencesPlugin/References_from.htm#memRefPanel">Memory Reference
+      Panel</A> <I>(includes Offset and Offcut references)</I></LI>
+
+      <LI><A href="help/topics/ReferencesPlugin/References_from.htm#extRefPanel">External Reference
+      Panel</A></LI>
+
+      <LI><A href="help/topics/ReferencesPlugin/References_from.htm#stackRefPanel">Stack Reference
+      Panel</A></LI>
+
+      <LI><A href="help/topics/ReferencesPlugin/References_from.htm#regRefPanel">Register Reference
+      Panel</A></LI>
+    </OL>
+
+    <P>Once the specific reference panel settings have been modified, the <B><I>Update</I></B>
+    button may be clicked to complete the operation.<BR>
+    </P>
+
+    <H2><A name="memRefPanel"></A>Memory Reference Panel</H2>
+
+    <DIV align="left">
+      <P>A <A href="#memRefs">Memory Reference</A> identifies a data access or instruction flow to
+      another memory location within the same program space. &nbsp; &nbsp;A memory reference may
+      optionally be specified as an <A href="#offsetRefs">Offset Reference</A> relative to a
+      specified <I>Base Address</I>. &nbsp;The term Offcut is used to characterize a memory
+      reference or its resulting label whose destination address does not correspond to the start
+      of a data or instruction code unit (see <A href="#offcutRefs">Offcut References</A>).</P>
+
+      <P>Below is an image of the <I>Memory Reference Panel</I> as it might appear in the <I>Add
+      Reference</I> or <I>Edit Reference Dialog. &nbsp;</I>The two views reflect a &nbsp;regular
+      memory reference and an <I>Offset</I> reference (<I>Note the Address label change based upon
+      the Offset selection state</I>).<BR>
+      </P>
+    </DIV>
+
+    <DIV align="center">
+      <IMG src="images/MemRefPanel.png" alt=""><BR>
+       
+
+      <BLOCKQUOTE>
+        <DIV align="left">
+          <H3>Offset</H3>
+
+          <BLOCKQUOTE>
+            <P>If the <I>Offset</I> checkbox is "checked", this memory reference will be treated as
+            an Offset Reference relative to the specified <I>Base Address</I>. &nbsp;The actual
+            "to" address will be computed by adding the specified signed <I>Offset</I> value to the
+            <I>Base Address</I>. &nbsp;The number format is assumed to be decimal unless the "0x"
+            prefix is used when entering a Hex value.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H3>To Address</H3>
+
+          <BLOCKQUOTE>
+            <P>[<I><B><IMG src="images/unchecked.png" alt="" valign="middle" align="middle">
+            Offset</B></I>] The <I>To Address</I> entry is required for normal memory references
+            and specifies the reference destination as a memory offset. &nbsp;This entry is always
+            interpretted as a unsigned hex value &nbsp;(i.e., the "0x" entry prefix is assumed).
+            &nbsp;For those processors with multiple address-spaces, a pull-down is also provided
+            allowing the address-space to be selected.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H3>Base Address&nbsp;</H3>
+
+          <BLOCKQUOTE>
+            <P>[<B><I><IMG src="images/checked.png" alt="" valign="middle" align="middle">
+            Offset</I></B>] The <I>Base Address</I> entry is required for offset memory references
+            and specifies the offset base location as a memory offset. &nbsp;This entry is always
+            interpretted as a unsigned hex value &nbsp;(i.e., the 0x entry prefix is assumed).
+            &nbsp;For those processors with multiple address-spaces, a pull-down is also provided
+            allowing the address-space to be selected.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H3>Address History Button<BR>
+          </H3>
+
+          <BLOCKQUOTE>
+            <P>The <I>Address History</I> pulldown button may be used to recall a previously
+            applied <I>To Address</I> or <I>Base Address</I> entry. &nbsp;Only the last ten (10)
+            address entries are maintained for each open Program.<BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H3>Ref-Type</H3>
+
+          <BLOCKQUOTE>
+            <P>Allows selection of the data access or instruction flow type associated with this
+            reference (see <A href="#refTypes">Ref-Types</A>).</P>
+          </BLOCKQUOTE>
+        </DIV>
+      </BLOCKQUOTE>
+    </DIV>
+
+    <H2><A name="extRefPanel"></A>External Reference Panel</H2>
+
+    <P>An <A href="#extRefs">External Reference</A> identifies a memory destination within another
+    Program file. &nbsp;Such references are generally used to indicate a library module linkage.
+    &nbsp;The memory location within the <I>External Program</I> is identified by either a
+    <I>Label</I> or an <I>Address.</I><BR>
+    </P>
+
+    <P>Below is &nbsp;an image of the <I>External Reference Panel</I> as it might appear in the
+    <I>Add Reference</I> or <I>Edit Reference Dialogs</I>:<BR>
+    </P>
+
+    <DIV align="center">
+      <IMG src="images/ExtRefPanel.png" alt=""> &nbsp;<BR>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H3>Name</H3>
+
+      <BLOCKQUOTE>
+        <P>This field identifies a namespace name corresponding to the <I>External Program</I> and
+        may be typed-in or choosen from the pull-down list of those previously defined. &nbsp; This
+        is a required input.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Path (Clear/Edit)</H3>
+
+      <BLOCKQUOTE>
+        <P>This field identifies the Program file within the Ghidra Project which corresponds to
+        the selected Name. &nbsp;Associating the <I>External Program Name</I> with a Program file
+        <I>Path</I> is optional, but can be useful to facilitate navigation to an associated
+        library if it is contained within the same project. &nbsp;This <I>Name/Path</I> association
+        can easily be "resolved" at a later time via the <A href=
+        "external_program_names.htm">External Program Names Dialog</A>.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Label / Address</H3>
+
+      <BLOCKQUOTE>
+        <P>The specific memory location within the External Program is identified by either a Label
+        defined within the corresponding Program file, or via a specific Address. &nbsp;If both a
+        Label and Address are specified, the Label will take precendence during navigation. &nbsp;
+        The <I>Address</I> field is always interpretted as a hex value &nbsp;(i.e., the 0x entry
+        prefix is assumed) offset within the default address space.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="stackRefPanel"></A>Stack Reference Panel</H2>
+
+    <DIV align="center">
+      <DIV align="left">
+        <P>A <A href="#stackRefs">Stack Reference</A> identifies a data access to a function
+        parameter or local variable within the containing function's stack frame<I>.</I><BR>
+        </P>
+
+        <P>Below is &nbsp;an image of the <I>Stack Reference Panel</I> as it might appear in the
+        <I>Add Reference</I> or <I>Edit Reference Dialogs</I>:<BR>
+        </P>
+      </DIV><IMG src="images/StackRefPanel.png" alt=""> &nbsp;<BR>
+       
+
+      <DIV align="left">
+        <BLOCKQUOTE>
+          <H3>Stack Offset</H3>
+
+          <BLOCKQUOTE>
+            <P>Specifies a signed offset within the containing function's stack frame. &nbsp;The
+            number format is assumed to be decimal unless the "0x" prefix is used when entering a
+            Hex value.</P>
+          </BLOCKQUOTE>
+
+          <H3>Ref-Type</H3>
+
+          <BLOCKQUOTE>
+            <P>Allows selection of the data access or instruction flow type associated with this
+            reference (see <A href="#refTypes">Ref-Types</A>).</P>
+          </BLOCKQUOTE>
+
+          <H3>Variable Name</H3>
+
+          <BLOCKQUOTE>
+            <P>An <U>optional</U> entry which identifies the variable name to be associated with
+            this reference. &nbsp;Selecting an existing variable will automatically change the
+            Stack Offset to match the selected variable. &nbsp;Entering a new name which does not
+            exist will cause a new stack parameter or variable to be created with the reference.
+            &nbsp;Clearing this field will have the same effect as keeping the initial default
+            variable choice.<BR>
+            </P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </DIV>
+    </DIV>
+
+    <H2><A name="regRefPanel"></A>Register Reference Panel</H2>
+
+    <DIV align="left">
+      <P>A <A href="#regRefs">Register Reference</A> identifies a data access (i.e., value
+      assignment) to a function local variable within the containing function's stack
+      frame<I>.</I><BR>
+      </P>
+
+      <P>Below is &nbsp;an image of the <I>Register Reference Panel</I> as it might appear in the
+      <I>Add Reference</I> or <I>Edit Reference Dialogs</I>:</P>
+    </DIV>
+
+    <P align="center"><BR>
+     <IMG src="images/RegRefPanel.png" alt=""> &nbsp;<BR>
+    </P>
+
+    <H3>Register</H3>
+
+    <BLOCKQUOTE>
+      <P>Indicates the selected operand's register to which a local register variable reference
+      will be established.</P>
+    </BLOCKQUOTE>
+
+    <H3>Ref-Type</H3>
+
+    <BLOCKQUOTE>
+      <P>Allows selection of the data access or instruction flow type associated with this
+      reference (see <A href="#refTypes">Ref-Types</A>).</P>
+    </BLOCKQUOTE>
+
+    <H3>Variable Name</H3>
+
+    <BLOCKQUOTE>
+      <P>An <U>optional</U> entry which identifies the variable name to be associated with this
+      reference. &nbsp;Entering a new name which does not exist will attempt to create a new local
+      register variable with the reference. &nbsp;Clearing this field will have the same effect as
+      keeping the initial default variable choice.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="dragNDrop"></A>Adding Memory References from a Selection</H2>
+
+    <P>A code unit selection from the CodeBrowser Listing may be dragged and dropped onto the
+    <B><I>References Editor</I></B> panel to create <A href="#memRefs">Memory References</A> in bulk
+    for the current Source. &nbsp;This capability must be used carefully since a seperate reference
+    will be created "to" every code unit contained within the selection. &nbsp;<BR>
+    </P>
+
+    <P>The specific mnemonic/operand which will be used as the source for the new memory references
+    depends on where the selection is "dropped" within the <B><I>References Editor</I></B> panel (see
+    figure below). &nbsp;The preferred method is to "drop" the selection on the correct
+    monc/operand within the <I><B>Source</B></I> code unit area (i.e., <I>Operand-specific Drop
+    Zone</I>). &nbsp;Alternatively, the selection may be "dropped" on the reference table (i.e.,
+    <I>Active-operand Drop Zone</I>) to utilize the current mnemonic/operand choice from the
+    <B><I>Source</I></B> code unit area. &nbsp;When "dropping" on the table, be careful "dragging"
+    the selection across te <I><B>Source</B></I> code unit area since this could change the active
+    Source mnemonic/operand for the panel.<BR>
+    </P>
+
+    <DIV align="center">
+      <IMG src="images/DropZones.png" alt=""><BR>
+    </DIV>
+
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+
+    <P class="providedbyplugin">Provided By: &nbsp;<I>ReferencesPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    	<UL>
+      		<LI>
+      	<P class="relatedtopic"><A href="external_program_names.htm">Resolving External Names</A></P>
+      		</LI>
+
+		<LI>
+      <P class="relatedtopic"><A href="help/topics/LocationReferencesPlugin/Location_References.html">Show References to
+      a location<BR>
+      </A></P>
+      </LI>
+
+		<LI>
+      <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">Code Browser
+      Navigation</A></P>
+      </LI>
+      </UL>
+      
+     <BR>
+  </BODY>
+</HTML>

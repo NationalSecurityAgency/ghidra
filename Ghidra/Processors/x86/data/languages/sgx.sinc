@@ -1,0 +1,257 @@
+define pcodeop encls_ecreate;
+define pcodeop encls_eadd;
+define pcodeop encls_einit;
+define pcodeop encls_einit_ZF;
+define pcodeop encls_eremove;
+define pcodeop encls_eremove_ZF;
+define pcodeop encls_edbgrd;
+define pcodeop encls_edbgrd_RBX;
+define pcodeop encls_edbgwr;
+define pcodeop encls_eextend;
+define pcodeop encls_eldb;
+define pcodeop encls_eldb_ZF;
+define pcodeop encls_eldu;
+define pcodeop encls_eldu_ZF;
+define pcodeop encls_eblock;
+define pcodeop encls_eblock_ZF;
+define pcodeop encls_epa;
+define pcodeop encls_ewb;
+define pcodeop encls_ewb_ZF;
+define pcodeop encls_ewb_CF;
+define pcodeop encls_etrack;
+define pcodeop encls_etrack_ZF;
+define pcodeop encls_eaug;
+define pcodeop encls_emodpr;
+define pcodeop encls_emodpr_ZF;
+define pcodeop encls_emodt;
+define pcodeop encls_emodt_ZF;
+define pcodeop encls_unknown;
+
+:ENCLS          is vexMode=0 & byte=0x0f; byte=0x01; byte=0xcf {
+
+	if ( EAX != 0x0 ) goto <leaf_1>;
+		encls_ecreate( RBX, RCX );
+		goto <done>;
+		
+	<leaf_1>
+	if ( EAX != 0x1 ) goto <leaf_2>;
+		encls_eadd( RBX, RCX );
+		goto <done>;
+
+	<leaf_2>
+	if ( EAX != 0x2 ) goto <leaf_3>;
+		RAX = encls_einit( RBX, RCX, RDX );
+		ZF = encls_einit_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_3>
+	if ( EAX != 0x3 ) goto <leaf_4>;
+		RAX = encls_eremove( RCX );
+		ZF = encls_eremove_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_4>
+	if ( EAX != 0x4 ) goto <leaf_5>;
+		RAX = encls_edbgrd( RCX );
+		RBX = encls_edbgrd_RBX( RCX );
+		goto <done>;
+
+	<leaf_5>
+	if ( EAX != 0x5 ) goto <leaf_6>;
+		RAX = encls_edbgwr( RBX, RCX );
+		goto <done>;
+
+	<leaf_6>
+	if ( EAX != 0x6 ) goto <leaf_7>;
+		encls_eextend( RBX, RCX );
+		goto <done>;
+
+	<leaf_7>
+	if ( EAX != 0x7 ) goto <leaf_8>;
+		RAX = encls_eldb( RBX, RCX, RDX );
+		ZF = encls_eldb_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_8>
+	if ( EAX != 0x8 ) goto <leaf_9>;
+		RAX = encls_eldu( RBX, RCX, RDX );
+		ZF = encls_eldu_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_9>
+	if ( EAX != 0x9 ) goto <leaf_A>;
+		RAX = encls_eblock( RCX );
+		ZF = encls_eblock_ZF( RCX );
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_A>
+	if ( EAX != 0xA ) goto <leaf_B>;
+		encls_epa( RBX, RCX );
+		goto <done>;
+
+	<leaf_B>
+	if ( EAX != 0xB ) goto <leaf_C>;
+		RAX = encls_ewb( RBX, RCX, RDX );
+		ZF = encls_ewb_ZF( RBX, RCX, RDX );
+		CF = encls_ewb_CF( RBX, RCX, RDX );
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_C>
+	if ( EAX != 0xC ) goto <leaf_D>;
+		RAX = encls_etrack( RCX );
+		ZF = encls_etrack_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_D>
+	if ( EAX != 0xD ) goto <leaf_E>;
+		encls_eaug( RBX, RCX, RDX );
+		goto <done>;
+
+	<leaf_E>
+	if ( EAX != 0xE ) goto <leaf_F>;
+		RAX = encls_emodpr( RBX, RCX );
+		ZF = encls_emodpr_ZF( RCX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_F>
+	if ( EAX != 0xF ) goto <unknown>;
+		RAX = encls_emodt( RBX, RCX );
+		ZF = encls_emodt_ZF( RCX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<unknown>
+		encls_unknown();
+
+	<done>		
+}
+
+
+define pcodeop enclu_ereport;
+define pcodeop enclu_egetkey;
+define pcodeop enclu_egetkey_ZF;
+define pcodeop enclu_eenter_EAX;
+define pcodeop enclu_eenter_RCX;
+define pcodeop enclu_eenter_TF;
+define pcodeop enclu_eresume;
+define pcodeop enclu_eexit;
+define pcodeop enclu_eexit_TF;
+define pcodeop enclu_eaccept;
+define pcodeop enclu_eaccept_ZF;
+define pcodeop enclu_emodpe;
+define pcodeop enclu_eacceptcopy;
+define pcodeop enclu_eacceptcopy_ZF;
+define pcodeop enclu_unknown;
+
+:ENCLU          is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd7 {
+
+	if ( EAX != 0x0 ) goto <leaf_1>;
+		enclu_ereport( RBX, RCX, RDX );
+		goto <done>;
+		
+	<leaf_1>
+	if ( EAX != 0x1 ) goto <leaf_2>;
+		RAX = enclu_egetkey( RBX, RCX );
+		ZF = enclu_egetkey_ZF( RBX, RCX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_2>
+	if ( EAX != 0x2 ) goto <leaf_3>;
+		tempBX:8 = RBX;
+		tempCX:8 = RCX;
+		
+		EAX = enclu_eenter_EAX( tempBX, tempCX );
+		RCX = enclu_eenter_RCX( tempBX, tempCX );
+		TF = enclu_eenter_TF( tempBX, tempCX );
+		goto <done>;
+
+	<leaf_3>
+	if ( EAX != 0x3 ) goto <leaf_4>;
+		TF = enclu_eresume( RBX, RCX );
+		goto <done>;
+
+	<leaf_4>
+	if ( EAX != 0x4 ) goto <leaf_5>;
+		RCX = enclu_eexit( RBX );
+		TF = enclu_eexit_TF( RBX );
+		goto <done>;
+
+	<leaf_5>
+	if ( EAX != 0x5 ) goto <leaf_6>;
+		RAX = enclu_eaccept( RBX, RCX );
+		ZF = enclu_eaccept_ZF( RBX, RCX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_6>
+	if ( EAX != 0x6 ) goto <leaf_7>;
+		enclu_emodpe( RBX, RCX );
+		goto <done>;
+
+	<leaf_7>
+	if ( EAX != 0x7 ) goto <unknown>;
+		RAX = enclu_eacceptcopy( RBX, RCX, RDX );
+		ZF = enclu_eacceptcopy_ZF( RBX, RCX, RDX );
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<unknown>
+		enclu_unknown();
+
+	<done>		
+}

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="sp" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8">
+          <register name="o0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="8" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8">
+          <register name="o0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="g0"/>
+        <register name="g1"/>
+        <register name="g2"/>
+        <register name="g3"/>
+        <register name="g4"/>
+        <register name="g5"/>
+        <register name="g6"/>
+        <register name="g7"/>
+        <register name="l0"/>
+        <register name="l1"/>
+        <register name="l2"/>
+        <register name="l3"/>
+        <register name="l4"/>
+        <register name="l5"/>
+        <register name="l6"/>
+        <register name="l7"/>
+        <register name="i0"/>
+        <register name="i1"/>
+        <register name="i2"/>
+        <register name="i3"/>
+        <register name="i4"/>
+        <register name="i5"/>
+        <register name="fp"/>
+        <register name="i7"/>
+        <register name="sp"/>
+        <register name="didrestore"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  
+      <prototype name="__nonwindowcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8">
+          <register name="g1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="g2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="g3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="g4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="g5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="g6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="8" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8">
+          <register name="g0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="g0"/>
+        <register name="g1"/>
+        <register name="g2"/>
+        <register name="g3"/>
+        <register name="g4"/>
+        <register name="g5"/>
+        <register name="g6"/>
+        <register name="g7"/>
+        <register name="l0"/>
+        <register name="l1"/>
+        <register name="l2"/>
+        <register name="l3"/>
+        <register name="l4"/>
+        <register name="l5"/>
+        <register name="l6"/>
+        <register name="l7"/> 
+        <register name="i0"/>
+        <register name="i1"/>
+        <register name="i2"/>
+        <register name="i3"/>
+        <register name="i4"/>
+        <register name="i5"/>
+        <register name="fp"/>
+        <register name="i7"/>
+        <register name="sp"/>
+        <register name="didrestore"/>
+      </unaffected>
+    </prototype>
+</compiler_spec>

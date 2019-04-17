@@ -1,0 +1,86 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Ghidra Script Manager</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="EclipseIntegration"></A>Eclipse Integration</H1>
+    
+    <P>Ghidra is capable of integrating with an existing Eclipse installation that has the 
+    GhidraDev Eclipse plugin installed.  The GhidraDev Eclipse plugin listens for socket connections
+    from Ghidra on configurable ports.  Ghidra does not have to know the installation location of 
+    Eclipse for this communication to succeed.  However, in order for Ghidra to launch Eclipse if
+    it has not been opened already, Ghidra must know the installation location of Eclipse.</P>
+    <P>The Eclipse installation location and communication ports can be configured in the Front End 
+    tool's <i><b>Eclipse Integration</b></i> options.  If an attempt is made to launch Eclipse from 
+    Ghidra and these things are not configured correctly, the user will be taken to Eclipse 
+    Integration options automatically./P>
+    
+    <H2>Eclipse Integration Tool Options</H2>   
+    <CENTER>
+    <TABLE border="1" width="80%">
+      <TBODY>
+        <TR valign="middle">
+          <TD colspan="2" bgcolor="#c0c0c0" valign="top" align="left">
+            <P align="center"><B>Tool Options</B></P>
+          </TD>
+        </TR>
+
+        <TR>
+          <TD bgcolor="#DDDDDD" align="left"><B>Option</B></TD>
+          <TD bgcolor="#DDDDDD" align="left"><B>Description</B></TD>
+        </TR>
+
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Automatically install GhidraDev</TD>
+          <TD valign="top" align="left">Automatically install the GhidraDev plugin into the 
+          "dropins" directory of the specified Eclipse if it has not yet been installed.  If this 
+          option is not set, you will be prompted to perform the installation when launching an 
+          Eclipse that does not have GhidraDev installed.</TD>
+        </TR>
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Eclipse Installation Directory</TD>
+          <TD valign="top" align="left">Path to an Eclipse installation directory.  This is only
+          necessary if you want to launch Eclipse from Ghidra.  Ghidra will still be capable of
+          communicating with an open Eclipse as long as the GhidraDev plugin is installed and the
+          communication ports are configured correctly on both ends.</TD>
+        </TR>
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Eclipse Workspace Directory (optional)</TD>
+          <TD valign="top" align="left">Optional path to an Eclipse workspace directory.  If defined
+          and the directory does not exist, Eclipse will create it.  If undefined, Eclipse will be 
+          responsible for selecting the workspace directory.</TD>
+        </TR>
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Script Editor Port</TD>
+          <TD valign="top" align="left">The port number used to communicate with Eclipse for 
+          script editing.  It must match the port number set in the Eclipse GhidraDev plugin 
+          preference page in order for them to communicate.
+          </TD>
+        </TR>
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Symbol Lookup Port</TD>
+          <TD valign="top" align="left">The port number used to communicate with Eclipse for 
+          symbol lookup.  It must match the port number set in the Eclipse GhidraDev plugin 
+          preference page in order for them to communicate.</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+   </CENTER>
+   
+   <H2>GhidraDev Eclipse Plugin</H2>
+   <BLOCKQUOTE>
+     <P>For more information on installing and using the GhidraDev Eclipse plugin, see 
+     <I><B>Extensions/Eclipse/GhidraDev/GhidraDev_README.html</B></I></P>
+   </BLOCKQUOTE>
+    
+  </BODY>
+</HTML>

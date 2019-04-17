@@ -15,42 +15,6 @@ there are many ways you can contribute. For example, you can:
 - Package and distribute the software in a downstream community (such as your
   preferred Linux distribution)
 
-## Legal
-
-The project maintainer for this project will only accept contributions using the [Developer's Certificate of Origin 1.1][dco] located at https://developercertificate.org ("DCO").
-The DCO is a legally binding statement asserting that the contributor is the creator of the contribution, or otherwise has the authority to distribute the contribution, and that they are intentionally making the contribution available under the license(s) associated with the project ("License").
-
-This is an open source project.
-Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
-When you submit a pull request, you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
-Furthermore, your contributing to this project does not create an employer-employee relationship between the United States ("U.S.") Government and the contributor.
-
-### Developer Certificate of Origin (DCO) Process
-
-This project implements a Lite version of the DCO process.
-When you submit a pull request to this repository for the first time, you need to sign the DCO.
-To indicate you have read and agree to the DCO, you need to add the following information to the [contributors] file:
-
-- Name
-- Email address or other contact (required)
-- Copyright year(s) (required)
-
-This essentially affirms that you have the right to submit the work you are contributing in your pull requests and that you consent to us treating the contribution in a way consistent with the License.
-Please see the [licensing intent][intent] for details.
-The primary License for this project is the Apache License, Version 2.0 ("Apache 2.0").
-The project composes a number of software modules with documentation ("Modules").
-Each module may have additional licensing restrictions imposed by its dependencies, or because some portion of it was derived from software requiring the application of these restrictions.
-In most cases, these licenses do not introduce any restrictions beyond those already required by Apache 2.0, e.g., BSD-style licenses.
-In general, we intend to indicate within each Module the applicable license(s), whether or not they are more restrictive than the project's License.
-When you sign the DCO and submit a pull request containing contributions to such a module, please keep in mind you are asserting you have the authority to submit the work, and that the work will be made available under those license(s).
-
-### Important Points
-
-You are not required to provide your name, but you must provide a valid and functional means to contact you.
-If you are a U.S. Federal Government employee and use a .mil or .gov email address to agree to the DCO, or you otherwise indicate that you are a U.S. Federal Government employee, we interpret your signed DCO to mean that the contribution was created in whole or in part by you in your official capacity as a U.S. Federal Government Employee.
-This implies your contribution is not subject to copyright protections within the United States.
-If you wish to contribute in your own capacity, that is, on your own personal time, you must sign the DCO in that capacity, using an appropriate email address or other means of contact.
-
 ## Bugs and Feature Requests
 
 If you believe that you have found a bug or wish to propose a new feature,
@@ -65,7 +29,7 @@ Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
 smooth process when submitting a patch:
 
-- Ensure that the patch compiles and does not break any build-time tests
+- Ensure that the patch compiles and does not break any build-time tests.
 - Be understanding, patient, and friendly; developers may need time to review
   your submissions before they can take action or respond. This does not mean
   your contribution is not valued. If your contribution has not received a
@@ -103,9 +67,42 @@ smooth process when submitting a patch:
 
 Once available, please see the [developer's guide][devguide] for instructions to set up a suitable development environment.
 
+## Timeline and Managing Expectations
+
+As we continue to engage contributors and learn best practices for running a successful open source project, our processes 
+and guidance will likely evolve. We will try to communicate expectations as we are able and to always be responsive. We 
+hope that the community will share their suggestions for improving this engagement.  Based on the level of initial interest 
+we receive and the availability of resources to evaluate contributions, we anticipate the following:
+
+- We will initially prioritize pull requests that include small bug fixes and code that addresses potential vulnerabilities   
+  as well as pull requests that include improvements for processor language specifications because these require a 
+  reasonable amount of effort to evaluate and will help us exercise and revise our process for accepting contributions.  In 
+  other words, we are going to start small in order to work out the kinks first.
+- We are committed to maintaining the integrity and security of our code base.  In addition to the careful review the 
+  maintainers will give to code contributions to make sure they do not introduce new bugs or vulnerabilities, we will be 
+  trying to identify best practices to incorporate with our open source project so that contributors can have more control 
+  over whether their contributions are accepted. These might include things like style guides and requirements for tests and 
+  documentation to accompany some code contributions.  As a result, it may take a long time for some contributions to be 
+  accepted.  This does not mean we are ignoring them.
+- We are committed to integrating this GitHub project with our team's regular development work flow so that the open source 
+  project remains dynamic and relevant.  This may  affect our responsiveness and ability to accept pull requests 
+  quickly.  This does not mean we are ignoring them.
+- Not all innovative ideas need to be accepted as pull requests into this GitHub project to be valuable to the community.        
+  There may be times when we recommend that you just share your code for some enhancement to Ghidra from your own 
+  repository. As we identify and recognize extensions that are of general interest to the reverse engineering community, we 
+  may seek to incorporate them with our baseline.
+
+## Legal
+
+Consistent with Section D.6. of the GitHub Terms of Service as of 2019, and Section 5. of the Apache License, Version 2.0, the project maintainer for this project accepts contributions using the inbound=outbound model.
+When you submit a pull request to this repository (inbound), you are agreeing to license your contribution under the same terms as specified in [LICENSE] (outbound).
+
+This is an open source project.
+Contributions you make to this public U.S. Government ("USG") repository are completely voluntary.
+When you submit an issue, bug report, question, enhancement, pull request, etc., you are offering your contribution without expectation of payment, you expressly waive any future pay claims against the USG related to your contribution, and you acknowledge that this does not create an obligation on the part of the USG of any kind.
+Furthermore, your contributing to this project does not create an employer-employee relationship between the United States ("U.S.") Government and the contributor.
+
 [issues]: https://github.com/NationalSecurityAgency/ghidra/issues
 [repository]: https://github.com/NationalSecurityAgency/ghidra/
-[dco]: https://developercertificate.org
-[intent]: INTENT.md
-[contributors]: Contributors.md
 [devguide]: DevGuide.md
+[LICENSE]: LICENSE

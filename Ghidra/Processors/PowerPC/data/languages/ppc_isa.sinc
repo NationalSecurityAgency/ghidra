@@ -1,0 +1,2771 @@
+# SLA specification file for Power ISA Version 2.06 Revision B (July 23, 2010) 
+# ISA (Instruction Set Architecture) a trademarked name for PowerPC specfications from IBM.
+
+# version 1.0
+
+# ===========================================================================
+
+# PowerISA II: 4.3.2 Data Cache Instructions
+# CMT: Data Cache Block set to Zero
+# FORM: X-form
+# binutils: 476.d: 16c: 7c 01 17 ec     dcbz    r1,r2
+# binutils: 476.d: 170: 7c 05 37 ec     dcbz    r5,r6
+# binutils: a2.d: 194:  7c 0a 5f ec     dcbz    r10,r11
+# binutils: power4_32.d:  7c:   7c 01 17 ec     dcbz    r1,r2
+# binutils: power4_32.d:  84:   7c 05 37 ec     dcbz    r5,r6
+# binutils: power4.d: +b8:      7c 01 17 ec     dcbz    r1,r2
+# binutils: power4.d: +c0:      7c 05 37 ec     dcbz    r5,r6
+# binutils: power6.d:  a8:      7c 01 17 ec     dcbz    r1,r2
+# binutils: power6.d:  b0:      7c 05 37 ec     dcbz    r5,r6
+# name	 dcbz	 code	 7c0007ec	 mask	 ff07e0ff00000000	 flags	 @PPC 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCaseBlockSetToZero;
+:dcbz A,B is $(NOTVLE) & OP=31 & A & B & XOP_1_10=1014 { DataCaseBlockSetToZero(A,B); } # 
+
+# PowerISA II: 4.3.2 Data Cache Instructions
+# CMT: Data Cache Block Flush
+# FORM: X-form
+# binutils: 476.d: 138: 7c 06 38 ac     dcbf    r6,r7
+# binutils: 476.d: 13c: 7c 06 38 ac     dcbf    r6,r7
+# binutils: a2.d: 14c:  7c 0a 58 ac     dcbf    r10,r11
+# pg 686
+# name	 dcbf	 code	 7c0000ac	 mask	 ff0780ff00000000	 flags	 @PPC 	 operands	31	38	25	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockFlush;
+:dcbf A,B is $(NOTVLE) & OP=31 & CRFD=0 & BITS_21_22 & A & B & XOP_1_10=86 & BIT_0=0 { DataCacheBlockFlush(A,B); }  # 
+
+
+# PowerISA II: 4.3.2 Data Cache Instructions
+# CMT: Data Cache Block Touch by External PID
+# CMT: dcbtst RA,RB,TH [Category: Server]
+# CMT: dcbtst TH,RA,RB [Category: Embedded]
+# FORM: X-form
+# binutils: 476.d: 15c: 7c e0 31 ec     dcbtst  r0,r6,7
+# binutils: 476.d: 160: 7c 06 39 ec     dcbtst  r6,r7
+# binutils: 476.d: 164: 7c e9 31 ec     dcbtst  r9,r6,7
+# binutils: a2.d: 180:  7c 0a 59 ec     dcbtst  r10,r11
+# binutils: a2.d: 184:  7c 2a 59 ec     dcbtst  r10,r11,1
+# name	 dcbtst	 code	 7c0001ec	 mask	 ff0700fc00000000	 flags	 @POWER4 	 operands	31	38	16	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockTouchByExternalPID;
+:dcbtst A,B,TH is $(NOTVLE) & OP=31 & TH & A & B & XOP_1_10=246 & BIT_0=0 { DataCacheBlockTouchByExternalPID(A,B);  } # 
+
+
+# PowerISA II: 4.3.2 Data Cache Instructions
+# CMT: Data Cache Block Touch
+# FORM: X-form
+# binutils: 476.d: 14c: 7c c0 2a 2c     dcbt    r0,r5,6
+# binutils: 476.d: 150: 7c 05 32 2c     dcbt    r5,r6
+# binutils: 476.d: 154: 7c c8 2a 2c     dcbt    r8,r5,6
+# binutils: a2.d: 16c:  7c 0a 5a 2c     dcbt    r10,r11
+# binutils: a2.d: 170:  7c 2a 5a 2c     dcbt    r10,r11,1
+# binutils: booke.d:  74:       7c 05 32 2c     dcbt    r5,r6
+# binutils: booke.d:  78:       7c 05 32 2c     dcbt    r5,r6
+# binutils: booke.d:  7c:       7d 05 32 2c     dcbt    8,r5,r6
+# binutils: power4_32.d:  88:   7c 05 32 2c     dcbt    r5,r6
+# binutils: power4_32.d:  8c:   7c 05 32 2c     dcbt    r5,r6
+# binutils: power4_32.d:  90:   7d 05 32 2c     dcbt    r5,r6,8
+# name	 dcbt	 code	 7c00022c	 mask	 ff0700fc00000000	 flags	 @POWER4 	 operands	31	38	16	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockTouch2;
+:dcbt A,B,TO is $(NOTVLE) & OP=31 & TO & A & B & XOP_1_10=278 & BIT_0=0 { DataCacheBlockTouch2(A,B); } # 
+
+
+# ===========================================================================
+
+# PowerISA II: 3.3.2 Power-Saving Mode Instructions
+# FORM: XL-form
+# binutils: power6.d:   0:      4c 00 03 24     doze
+# binutils: power7.d:  70:      4c 00 03 24     doze
+# name	 doze	 code	 4c000324	 mask	 ffffffff00000000	 flags	 @POWER6 	 operands	0	0	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop dozeOp;
+:doze is $(NOTVLE) & OP=19 & XOP_1_10=402 &        BITS_11_25=0 & BIT_0=0 { dozeOp(); } # 
+
+# PowerISA II: 3.3.2 Power-Saving Mode Instructions
+# FORM: XL-form
+# binutils: power6.d:   4:      4c 00 03 64     nap
+# binutils: power7.d:  74:      4c 00 03 64     nap
+# name	 nap	 code	 4c000364	 mask	 ffffffff00000000	 flags	 @POWER6 	 operands	0	0	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop napOp;
+:nap is $(NOTVLE) & OP=19 & XOP_1_10=434 &          BITS_11_25=0 & BIT_0=0 { napOp(); } # 
+
+# PowerISA II: 3.3.2 Power-Saving Mode Instructions
+# FORM: XL-form# 
+# binutils: power6.d:   8:      4c 00 03 a4     sleep
+# binutils: power7.d:  78:      4c 00 03 a4     sleep
+# name	 sleep	 code	 4c0003a4	 mask	 ffffffff00000000	 flags	 @POWER6 	 operands	0	0	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop sleepOp;
+:sleep is $(NOTVLE) & OP=19 & XOP_1_10=466 &           BITS_11_25=0 & BIT_0=0 { sleepOp(); } # 
+
+# PowerISA II: 3.3.2 Power-Saving Mode Instructions
+# FORM: XL-form
+# binutils: power6.d:   c:      4c 00 03 e4     rvwinkle
+# binutils: power7.d:  7c:      4c 00 03 e4     rvwinkle
+define pcodeop rvwinkleOp;
+# name	 rvwinkle	 code	 4c0003e4	 mask	 ffffffff00000000	 flags	 @POWER6 	 operands	0	0	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:rvwinkle is $(NOTVLE) & OP=19 & XOP_1_10=498 &           BITS_11_25=0 & BIT_0=0 { rvwinkleOp(); } # 
+
+# ==========================================================================
+
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Parity Doubleword [Category: 64-bit]
+# FORM: X-form
+# binutils: a2.d: 650:  7d 6a 01 74     prtyd   r10,r11
+# binutils: power6.d:  14:      7d cd 01 74     prtyd   r13,r14
+# binutils: power7.d:  84:      7d cd 01 74     prtyd   r13,r14
+# name	 prtyd	 code	 7c000174	 mask	 ffff00fc00000000	 flags	 @POWER6 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:prtyd A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=186 &		BITS_11_15=0 & BIT_0=0 { #  PCODE-YES
+	s:8 = 0;
+	i:8 = 0;
+    b:8 = 0;
+    tmp:8 = 0;
+    <loop>
+         b = (64 - (i*8+7));
+         tmp = (S >> (64 - (i*8+7))); b = tmp & 1;  # GetBit
+         s = s ^ b;
+   	    i = i + 1;
+    if (i < 7) goto <loop>;
+    A =  s;
+} 
+
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Compare Bytes
+# FORM: X-form
+# binutils: 476.d:  dc: 7c 83 2b f8     cmpb    r3,r4,r5
+# binutils: 476.d:  e0: 7c 83 2b f8     cmpb    r3,r4,r5
+# binutils: a2.d: 104:  7d 6a 63 f8     cmpb    r10,r11,r12
+# binutils: power6.d:  20:      7c 83 2b f8     cmpb    r3,r4,r5
+# binutils: power7.d:  90:      7c 83 2b f8     cmpb    r3,r4,r5
+# name	 cmpb	 code	 7c0003f8	 mask	 ff0700fc00000000	 flags	 @POWER6 @476 @A2 	 operands	31	 3b	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:cmpb S,A,B is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=508 &		BIT_0=0 { #  PCODE-YES
+    i:8 = 0;
+    tmpS:8 = 0;
+    tmpB:8 = 0;
+    val:8  = 0;
+    <loop>
+        tmpS = (S << (i*8)) & 0xFF; # get next S byte
+        tmpB = (S << (i*8)) & 0xFF; # get next B byte
+        if (tmpS == tmpB) goto <equal>;
+            val = (val << (i*8));  # set low byte to 0x00
+        goto <contLoop>;
+        <equal>
+            val = (val << (i*8));  # set low byte to 0xFF
+            val = val | 0xFF;
+        <contLoop>
+        i = i + 1;
+    if (i < 7) goto <loop>;
+    A = val;
+} 
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Bit Permute Doubleword [Category: Embedded.Phased-in, Server]
+# FORM: X-form
+# binutils: a2.d:  fc:  7d 6a 61 f8     bpermd  r10,r11,r12
+# binutils: power7.d:  d8:      7e 27 d9 f8     bpermd  r7,r17,r27
+# name	 bpermd	 code	 7c0001f8	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	31	 3b	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop BitPermuteDoubleword;
+:bpermd A,S,B is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=252 &  BIT_0=0 { 
+	BitPermuteDoubleword(A,S,B);
+} 
+
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Population Count Words [Category: Server] [Category: Embedded.Phased-In]
+# FORM: X-form
+# binutils: a2.d: 64c:  7d 6a 02 f4     popcntw r10,r11
+# binutils: power7.d:  dc:      7e 8a 02 f4     popcntw r10,r20
+# name	 popcntw	 code	 7c0002f4	 mask	 ffff00fc00000000	 flags	 @POWER7 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:popcntw A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=378 & Rc & BITS_11_15=0 { 
+	i:8 = 0;
+	j:8 = 0;
+	n:8 = 0;
+	x:8 = 0;
+    tmp:8 = 0;
+	<loop> 
+		n = 0;
+		<loop1>
+            tmp = (S >> (64 - (j*8+7))); x = tmp & 1; # Get bit
+			n = n + x;
+		if (j < 31) goto <loop1>;
+		A = n;		
+	if (i < 1) goto <loop>;
+} 
+
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Population Count Bytes
+# FORM: X-form
+# binutils: 476.d: 618: 7c 83 00 f4     popcntb r3,r4
+# binutils: a2.d: 644:  7d 6a 00 f4     popcntb r10,r11
+# name	 popcntb	 code	 7c0000f4	 mask	 ffff00fc00000000	 flags	 @POWER5 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:popcntb A,S is OP=31 & S  & A & BITS_11_15=0 & XOP_1_10=122 & BIT_0=0 { 
+	i:8 = 0;
+	j:8 = 0;
+	n:8 = 0;
+	x:8 = 0;
+	tmp:8 = 0;
+	<loop_i>
+       n = 0;
+       <loop_j>
+          tmp = (S >> (64 - (i*8+j))); x = tmp & 1; # Get bit
+          if (x != 1) goto <cont_loop_j>;
+             n = n + 1;
+          <cont_loop_j>
+          j = j + 1;
+       if (j < 7) goto <loop_j>;
+       i = i + 1;
+	if (i < 7) goto <loop_i>;
+    A = n;
+} 
+
+
+# PowerISA II: 3.3.12 Fixed-Point Logical Instructions
+# CMT: Parity Word
+# FORM: X-form
+# binutils: 476.d: 61c: 7c 83 01 34     prtyw   r3,r4
+# binutils: a2.d: 654:  7d 6a 01 34     prtyw   r10,r11
+# binutils: power6.d:  10:      7c 83 01 34     prtyw   r3,r4
+# binutils: power7.d:  80:      7c 83 01 34     prtyw   r3,r4
+# name	 prtyw	 code	 7c000134	 mask	 ffff00fc00000000	 flags	 @POWER6 @476 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:prtyw A,S is $(NOTVLE) & OP=31 & S & A & BITS_11_15=0 & XOP_1_10=154 & BIT_0=0 { 
+	s:8 = 0;
+	t:8 = 0;
+	i:8 = 0;
+	x:8 = 0;
+    tmp:8 = 0;
+	<loop1>
+        tmp = (S >> (64 - (i*8+7))); x = tmp & 1; # get bit
+		s = s ^ x;
+	if (i < 3) goto <loop1>;
+	i = 4;
+	<loop2>
+        tmp = (S >> (64 - (i*8+7))); x = tmp & 1; # get bit
+		t = t ^ x;
+	if (i < 7) goto <loop2>;
+    tmp = t;             # upper 4 bytes has t value
+    tmp = (tmp << 32);
+    tmp = tmp & s;       # lower 4 bytes has s value
+    S = tmp;
+} 
+
+# =======================================================================
+
+# PowerISA II: 4.4.1 Fixed-Point Load and Store Caching Inhibited Instructions
+# CMT: Load Word and Zero Caching Inhibited Indexed
+# binutils: power6.d:  2c:      7d 4b 66 2a     lwzcix  r10,r11,r12
+# binutils: power7.d:  94:      7d 4b 66 2a     lwzcix  r10,r11,r12
+# name	 lwzcix	 code	 7c00062a	 mask	 ff0700fc00000000	 flags	 @POWER6 	 operands	 3b	32	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop LoadWordAndZeroCachingInhibited;
+:lwzcix TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & XOP_1_10=789 & 	BIT_0=0 {  #   PCODE-YES
+    tmp:8 = *(A + B);
+    tmp = tmp << 32;
+    TH = tmp;
+}
+
+# =======================================================================
+
+# PowerISA II: 3.3.14 Binary Coded Decimal (BCD) Assist Instructions [Category: Embedded.Phased-in, Server]
+# CMT: Convert Declets To Binary Coded Decimal
+# FORM: X-form
+# binutils: power6.d:  f0:      7d 6a 02 34     cdtbcd  r10,r11
+# name	 cdtbcd	 code	 7c000234	 mask	 ffff00fc00000000	 flags	 @POWER6 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop ConvertDecletsToBinaryCodedDecimal;
+:cdtbcd A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=282 & 		BITS_11_15=0 & BIT_0=0 { ConvertDecletsToBinaryCodedDecimal(S,A); } 
+
+# PowerISA II: 3.3.14 Binary Coded Decimal (BCD) Assist Instructions [Category: Embedded.Phased-in, Server]
+# CMT: Add and Generate Sixes
+# FORM: XO-form
+# binutils: power6.d:  f4:      7d 4b 60 94     addg6s  r10,r11,r12
+# name	 addg6s	 code	 7c000094	 mask	 ff0700fc00000000	 flags	 @POWER6 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop AddAndGenerateSixes;
+:addg6s TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & XOP_1_9=74 &			BIT_10=0 & BIT_0=0 { #  PCODE-YES
+	AddAndGenerateSixes(TH,A,B);
+}
+
+# ==========================================================================
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  b8:      7d 4b 63 56     divwe   r10,r11,r12
+# name	 divwe	 code	 7c000356	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divwe   TH,A,B is $(NOTVLE) & OP=31 & TH & A  & B & OE=0 & XOP_1_9=427 & Rc=0 {
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a s/ b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+}
+
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  bc:      7d 6c 6b 57     divwe.  r11,r12,r13
+# name	 divwe.	 code	 7c000357	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divwe.  TH,A,B is $(NOTVLE) & OP=31 & TH & A  & B & OE=0 & XOP_1_9=427 & Rc=1 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a s/ b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    cr0flags(TH);
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  c0:      7d 8d 77 56     divweo  r12,r13,r14
+# name	 divweo	 code	 7c000756	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divweo  TH,A,B is $(NOTVLE) & OP=31 & TH & A  & B & OE=1 & XOP_1_9=427 & Rc=0 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a s/ b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    divOverflow(A,B);
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  c4:      7d ae 7f 57     divweo. r13,r14,r15
+# name	 divweo.	 code	 7c000757	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DivideWordExtended4;
+:divweo. TH,A,B is $(NOTVLE) & OP=31 & TH & A  & B & OE=1 & XOP_1_9=427 & Rc=1 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a s/ b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    divOverflow(A,B);
+    cr0flags(TH);
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  c8:      7d 4b 63 16     divweu  r10,r11,r12
+# name	 divweu	 code	 7c000316	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divweu TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & OE=0 & Rc=0 & XOP_1_9=395 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a / b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  cc:      7d 6c 6b 17     divweu. r11,r12,r13
+# name	 divweu.	 code	 7c000317	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divweu. TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & OE=0 & Rc=1 & XOP_1_9=395 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a / b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    cr0flags(TH);
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended Unsigned [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  d0:      7d 8d 77 16     divweuo r12,r13,r14
+# name	 divweuo	 code	 7c000716	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divweuo TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & OE=1 & Rc=0 & XOP_1_9=395 {  
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a / b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    divOverflow(A,B);
+}
+
+# PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
+# CMT: Divide Word Extended Unsigned [Category: Server] [Category: Embedded.Phased-In]
+# FORM: XO-form
+# binutils: power7.d:  d4:      7d ae 7f 17     divweuo. r13,r14,r15
+# name	 divweuo.	 code	 7c000717	 mask	 ff0700fc00000000	 flags	 @POWER7 @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:divweuo. TH,A,B is $(NOTVLE) & OP=31 & TH & A & B & OE=1 & Rc=1 & XOP_1_9=395 { 
+    tmp:8 = 0;
+
+	# A high 4 bytes to a
+	tmp = tmp >> 32;
+	a:4 = tmp:4;
+
+    # B high 4 bytes to b
+	tmp = tmp >> 32;
+	b:4 = tmp:4;
+
+    # C 
+    c:4 = (a / b);
+
+    # C low 4 bytes to TH high 4 bytes
+    tmp = zext(c);
+    tmp = tmp << 32;
+    TH = tmp;
+
+    divOverflow(A,B);
+    cr0flags(TH);
+}
+
+# =======================================================================
+
+# PowerISA II: 3.3.12.1 64-bit Fixed-Point Logical Instructions [Category: 64-Bit]
+# CMT: Population Count Doubleword [Category: Server.64-bit] [Category: Embedded.64-bit.Phased-In]
+# FORM: X-form
+# binutils: a2.d: 648:  7d 6a 03 f4     popcntd r10,r11
+# binutils: power7.d:  e0:      7e 8a 03 f4     popcntd r10,r20
+# name	 popcntd	 code	 7c0003f4	 mask	 ffff00fc00000000	 flags	 @POWER7 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:popcntd A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=506 & Rc & BITS_11_15=0 { 
+	n:8 = 0;
+    i:8 = 0;
+    tmp:8 = 0;
+	<loop>
+       tmp = (S >> (64 - (i*8+7))); b:8 = tmp & 1; 
+       n = n + b;
+    if (i < 63) goto <loop>;
+    A = n;
+} 
+
+# =======================================================================
+
+# PowerISA II: 3.3.4.1 64-Bit Load and Store with Byte Reversal Instructions [Category: 64-bit]
+# CMT: Load Doubleword Byte-Reverse Indexed
+# FORM: X-form
+# Category: 64
+# binutils: a2.d: 418:  7d 4b 64 28     ldbrx   r10,r11,r12
+# binutils: cell.d:  40:        7c 00 0c 28     ldbrx   r0,0,r1
+# binutils: cell.d:  44:        7c 01 14 28     ldbrx   r0,r1,r2
+# binutils: power7.d:  e4:      7e 95 b4 28     ldbrx   r20,r21,r22
+# name	 ldbrx	 code	 7c000428	 mask	 ff0700fc00000000	 flags	 @POWER7 @CELL @A2 	 operands	 3b	32	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop LoadDoublewordByteReverseIndexed;
+:ldbrx D,A,B is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=532 & Rc { D = LoadDoublewordByteReverseIndexed(D,A,B); }
+
+# ======================================================================
+
+# PowerISA II: 4.4.2 Load and Reserve and Store Conditional Instructions
+# CMT: Store Byte Conditional Indexed
+# FORM: X-form
+# binutils: power7.d: 164:      7d 4b 65 6d     stbcx.  r10,r11,r12
+# name	 stbcx.	 code	 7c00056d	 mask	 ff0700fc00000000	 flags	 @POWER7 	 operands	 3b	32	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreByteConditionalIndexed;
+:stbcx. S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=694 & Rc=1 { 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:1 EA = StoreByteConditionalIndexed(S,RA_OR_ZERO,B);
+	setCrBit(cr0, 2, 1);		
+}
+
+# ======================================================================
+
+# PowerISA II: 5.4.1 Move To/From System Register Instructions
+# CMT: Move From Device Control Register Indexed [Category: Embedded.Device Control]
+# FORM: X-form
+# binutils: 476.d: 49c: 7c 85 02 06     mfdcrx  r4,r5
+# binutils: a2.d: 520:  7d 4b 02 06     mfdcrx  r10,r11
+# binutils: booke.d:  28:       7c 85 02 06     mfdcrx  r4,r5
+# binutils: booke_xcoff.d:  24: 7c 85 02 06     mfdcrx  r4,r5
+# name	 mfdcrx	 code	 7c000206	 mask	 ff0700fc00000000	 flags	 @476 @BOOKE @A2 	 operands	 3b	31	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop MoveFromDeviceControlRegisterIndexed;
+:mfdcrx D,A is OP=31 & D & A & XOP_1_9=259 & Rc=0 { # 
+	MoveFromDeviceControlRegisterIndexed(D,A);
+}
+
+
+# PowerISA II: 5.4.1 Move To/From System Register Instructions
+# CMT: Move To Device Control Register Indexed [Category: Embedded.Device Control]
+# FORM: X-form
+# binutils: 476.d: 4cc: 7c e6 03 06     mtdcrx  r6,r7
+# binutils: a2.d: 568:  7d 6a 03 06     mtdcrx  r10,r11
+# binutils: booke.d:  30:       7c e6 03 06     mtdcrx  r6,r7
+# binutils: booke_xcoff.d:  2c: 7c e6 03 06     mtdcrx  r6,r7
+# binutils:  4cc:	7c e6 03 06 	mtdcrx  r6,r7
+# name	 mtdcrx	 code	 7c000306	 mask	 ff0700fc00000000	 flags	 @476 @BOOKE @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop MoveToDeviceControlRegisterIndexed;
+:mtdcrx A,S is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=387 & BIT_0=0 { MoveToDeviceControlRegisterIndexed(S,A); } # 
+
+# ========================================================================
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Data Cache Block Flush by External PID
+# FORM: X-form
+# binutils: a2.d: 154:  7c 0a 58 fe     dcbfep  r10,r11
+# binutils: e500mc.d:  9c:      7c 01 10 fe     dcbfep  r1,r2
+# name	 dcbfep	 code	 7c0000fe	 mask	 ff07e0ff00000000	 flags	 @E500MC @A2 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockFlushByExternalPID;
+:dcbfep A,B is OP=31 & A & B & XOP_1_10=127 & BIT_0=0 & BITS_21_25=0 { # 
+	DataCacheBlockFlushByExternalPID(A,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Data Cache Block Store by External PID
+# FORM: X-form
+# binutils: a2.d: 168:  7c 0a 58 7e     dcbstep r10,r11
+# binutils: e500mc.d:  98:      7c 1f 00 7e     dcbstep r31,r0
+# name	 dcbstep	 code	 7c00007e	 mask	 ff07e0ff00000000	 flags	 @E500MC @A2 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockStoreByExternalPID;
+:dcbstep A,B is OP=31 & BITS_21_25=0 & A & B & XOP_1_10=63 & BIT_0=0 {  # 
+	DataCacheBlockStoreByExternalPID(A,B);
+}
+
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Data Cache Block set to Zero by External PID
+# FORM: X-form
+# binutils: a2.d: 198:  7c 0a 5f fe     dcbzep  r10,r11
+# binutils: e500mc.d:  a8:      7c 0b 67 fe     dcbzep  r11,r12
+# name	 dcbzep	 code	 7c0007fe	 mask	 ff07e0ff00000000	 flags	 @E500MC @A2 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop DataCacheBlockSetToZeroByExternalPID;
+:dcbzep A,B is OP=31 & BITS_21_25=0 & A & B & XOP_1_10=1023 & BIT_0=0 {  
+	DataCacheBlockSetToZeroByExternalPID(A,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Instruction Cache Block Invalidate by External PID
+# FORM: X-form
+# binutils: a2.d: 3b8:  7c 0a 5f be     icbiep  r10,r11
+# binutils: e500mc.d:  10:      7c 09 57 be     icbiep  r9,r10
+# name	 icbiep	 code	 7c0007be	 mask	 ff07e0ff00000000	 flags	 @E500MC @A2 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop InstructionCacheBlockInvalidateByExternalPID;
+:icbiep A,B is OP=31 & BITS_21_25=0 & A & B & XOP_1_10=991 & BIT_0=0 { 
+	InstructionCacheBlockInvalidateByExternalPID(A,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Load Floating-Point Double by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 438:  7e 8a 5c be     lfdepx  f20,r10,r11
+# binutils: e500mc.d:  50:      7d ae 7c be     lfdepx  f13,r14,r15
+# name	 lfdepx	 code	 7c0004be	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	22	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+:lfdepx fT,RA_OR_ZERO,B is OP=31 & fT & B & RA_OR_ZERO & XOP_1_10=607 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	fT = *:8(ea);
+}
+
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Byte by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 700:  7d 4b 61 be     stbepx  r10,r11,r12
+# binutils: e500mc.d:  54:      7e 11 91 be     stbepx  r16,r17,r18
+# name	 stbepx	 code	 7c0001be	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreByteByExternalProcessIDIndexed;
+:stbepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=223 & BIT_0=0 { # 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:1 EA = StoreByteByExternalProcessIDIndexed(S,RA_OR_ZERO,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Halfword by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 784:  7d 4b 63 3e     sthepx  r10,r11,r12
+# binutils: e500mc.d:  58:      7e 74 ab 3e     sthepx  r19,r20,r21
+# name	 sthepx	 code	 7c00033e	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreHalfwordByExternalProcessIDIndexed;
+:sthepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=415 & BIT_0=0 { # 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:2 EA = StoreHalfwordByExternalProcessIDIndexed(S,RA_OR_ZERO,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Word by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 7b0:  7d 4b 61 3e     stwepx  r10,r11,r12
+# binutils: e500mc.d:  5c:      7e d7 c1 3e     stwepx  r22,r23,r24
+# name	 stwepx	 code	 7c00013e	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreWordByExternalProcessIDIndexed;
+:stwepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=159 & BIT_0=0 { # 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:4 EA = StoreWordByExternalProcessIDIndexed(S,RA_OR_ZERO,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Doubleword Byte-Reverse Indexed
+# FORM: X-form
+# binutils: a2.d: 71c:  7d 4b 65 28     stdbrx  r10,r11,r12
+# binutils: cell.d:  48:        7c 00 0d 28     stdbrx  r0,0,r1
+# binutils: cell.d:  4c:        7c 01 15 28     stdbrx  r0,r1,r2
+# binutils: power7.d:  e8:      7e 95 b5 28     stdbrx  r20,r21,r22
+# name	 stdbrx	 code	 7c000528	 mask	 ff0700fc00000000	 flags	 @POWER7 @CELL @A2 	 operands	 3b	32	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreDoublewordByteReverseIndexed;
+:stdbrx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=660 & BIT_0=0 {  # 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:8 EA = StoreDoublewordByteReverseIndexed(S,RA_OR_ZERO,B);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Doubleword Byte-Reverse Indexed
+# FORM: X-form
+# binutils: a2.d: 724:  7d 4b 61 3a     stdepx  r10,r11,r12
+# binutils: e500mc.d:  60:      7f 3a d9 3a     stdepx  r25,r26,r27
+# name	 stdepx	 code	 7c00013a	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+define pcodeop StoreDoublewordByteReverseIndexed1;
+:stdepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=157 & BIT_0=0 { # 
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:8 EA = StoreDoublewordByteReverseIndexed1(S,RA_OR_ZERO,B);
+}
+
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Load Byte by External Process ID Indexed
+# FORM: X-form
+# binutils:  a2.d  3ec: 7d 4b 60 be     lbepx   r10,r11,r12
+# binutils:  e500mc.d   40:     7c 22 18 be     lbepx   r1,r2,r3
+# name	 lbepx	 code	 7c0000be	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+# Note: no support for context modeling here
+:lbepx	D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=95 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = zext(*:1(ea));
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Data Cache Block Touch by External PID
+# FORM: X-form
+# binutils: a2.d: 174:  7d 4b 62 7e     dcbtep  r10,r11,r12
+# binutils: e500mc.d:  a4:      7c c7 42 7e     dcbtep  r6,r7,r8
+# NOTE: BITS_21_25 => TH (register)
+# name	 dcbtep	 code	 7c00027e	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+# No PCODE necessary
+define pcodeop DataCacheBlockTouchByExternalPID2;
+:dcbtep TH,RA_OR_ZERO,B is OP=31 & TH & RA_OR_ZERO & B & XOP_1_10=319 & BIT_0=0 { 
+	DataCacheBlockTouchByExternalPID2(TH,RA_OR_ZERO,B);
+}
+
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Load Doubleword by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 41c:  7d 4b 60 3a     ldepx   r10,r11,r12
+# binutils: e500mc.d:  4c:      7d 4b 60 3a     ldepx   r10,r11,r12
+# name	 ldepx	 code	 7c00003a	 mask	 ff0700fc00000000	 flags	 @E500MC @A2 	 operands	 3b	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+# Note: no support for context modeling here
+:ldepx	D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=29 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = *:8(ea);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Load Word by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 4c8:  7d 4b 60 3e     lwepx   r10,r11,r12
+# binutils: e500mc.d:  48:      7c e8 48 3e     lwepx   r7,r8,r9
+# Note: no support for context modeling here
+:lwepx	D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=31 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = *:4(ea);
+}
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Store Floating-Point Double by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 740:  7e 8a 5d be     stfdepx f20,r10,r11
+# binutils: e500mc.d:  64:      7f 9d f5 be     stfdepx f28,r29,r30
+# NOTE: BITS_21_25 => FRS (float register) => fS
+# Note: no support for context modeling here
+:stfdepx fS,RA_OR_ZERO,B is OP=31 & fS & B & RA_OR_ZERO & XOP_1_10=735 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	*:8(ea) = fS;
+}
+
+
+# PowerISA II: 5.4.3 External Process ID Instructions [Category: Embedded.External PID]
+# CMT: Load Halfword by External Process ID Indexed
+# FORM: X-form
+# binutils: a2.d: 480:  7d 4b 62 3e     lhepx   r10,r11,r12
+# binutils: e500mc.d:  44:      7c 85 32 3e     lhepx   r4,r5,r6
+# Note: no support for context modeling here
+:lhepx	D,RA_OR_ZERO,B is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=287 & BIT_0=0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = zext(*:2(ea));
+}
+
+# ========================================================================
+
+# PowerISA II: 3.3.15.2 Move To/From System Registers [Category: Embedded]
+# CMT: Move From Device Control Register User-mode Indexed [Category: Embedded.Device Control]
+# FORM: X-form
+# binutils: 476.d: 498: 7c 64 02 46     mfdcrux r3,r4
+define pcodeop MoveFromDeviceControlRegisterUserModeIndexed;
+:mfdcrux RT,A is OP=31 & RT & A & BITS_11_15=0 & XOP_1_10=291 & BIT_0=0 
+{
+
+@ifdef BIT_64
+	tmp:8 = dcr000 + (A * $(REGISTER_SIZE));
+	RT = *[register]:8 (tmp:4);
+@else
+	tmp = dcr000 + (A * $(REGISTER_SIZE));
+	RT = *[register]:4 (tmp);
+@endif
+
+}
+
+# PowerISA II: 3.3.15.2 Move To/From System Registers [Category: Embedded]
+# CMT: Move To Device Control Register User-mode Indexed [Category: Embedded.Device Control]
+# FORM: X-form
+# binutils: 476.d: 4c8: 7c 83 03 46     mtdcrux r3,r4
+:mtdcrux S,A is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=419 & BIT_0=0 
+{ 
+@ifdef BIT_64
+	tmp:8 = dcr000 + (A * $(REGISTER_SIZE));
+	*[register]:8 (tmp:4) = S;
+@else
+	tmp = dcr000 + (A * $(REGISTER_SIZE));
+	*[register]:4 (tmp) = S;
+@endif
+
+}
+
+
+# ========================================================================
+
+# PowerISA II: Chapter 10. Legacy Move Assist Instruction [Category: Legacy Move Assist]
+# CMT: Determine Leftmost Zero Byte
+# FORM: X-form
+# binutils: 476.d: 1a4: 7c 83 28 9c     dlmzb   r3,r4,r5
+# binutils: titan.d: 158:       7c 22 00 9c     dlmzb   r2,r1,r0
+define pcodeop DetermineLeftmostZeroByte;
+:dlmzb  S,A,B is OP=31 & S & A & B & XOP_1_10=78 & Rc=0 
+{
+   # search from left for the first occurrence of null byte
+
+   # low 32 bits of RS concatenated with low 32 bits of RB
+@ifdef BIT_64
+   tmpD:8 = zext( S:4 );
+@else
+   tmpD:8 = zext( S );
+@endif
+
+   tmpD = tmpD << 32;
+
+@ifdef BIT_64
+   tmpD = tmpD | zext( B:4 );
+@else
+   tmpD = tmpD | zext( B );
+@endif
+
+   tmpX:8 = 0;
+   tmpY:8 = 0;
+
+   <unmatched>
+
+   if ( tmpX == 8 ) goto <done_searching>;
+      tmpX = tmpX + 1;
+
+   if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
+
+      # matched
+      tmpY = 1;
+
+   <done_searching>
+
+   # place byte number in register A and low 7 bits of XER
+@ifdef BIT_64
+   A = tmpX;
+   XER = ( XER & 0xFFFFFFFFFFFFFF80 ) | tmpX;
+@else
+   A = tmpX:4;
+   XER = ( XER & 0xFFFFFF80 ) | tmpX:4;
+@endif
+
+}
+
+# PowerISA II: Chapter 10. Legacy Move Assist Instruction [Category: Legacy Move Assist]
+# CMT: Determine Leftmost Zero Byte
+# FORM: X-form
+# binutils: 476.d: 1a8:     7c 83 28 9d     dlmzb\.  r3,r4,r5
+# binutils: titan.d: 15c:   7c 22 00 9d     dlmzb\.  r2,r1,r0
+define pcodeop  DetermineLeftmostZeroByte1;
+:dlmzb. S,A,B is OP=31 & S & A & B & XOP_1_10=78 & Rc=1 
+{
+   # search from left for the first occurrence of null byte
+
+   # low 32 bits of RS concatenated with low 32 bits of RB
+@ifdef BIT_64
+   tmpD:8 = zext( S:4 );
+@else
+   tmpD:8 = zext( S );
+@endif
+
+   tmpD = tmpD << 32;
+
+@ifdef BIT_64
+   tmpD = tmpD | zext( B:4 );
+@else
+   tmpD = tmpD | zext( B );
+@endif
+
+   tmpX:8 = 0;
+   tmpY:8 = 0;
+
+   <unmatched>
+
+   if ( tmpX == 8 ) goto <done_searching>;
+      tmpX = tmpX + 1;
+
+   if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
+
+      # matched
+      tmpY = 1;
+
+   <done_searching>
+
+   # place byte number in register A and low 7 bits of XER
+@ifdef BIT_64
+   A = tmpX;
+   XER = ( XER & 0xFFFFFFFFFFFFFF80 ) | tmpX;
+@else
+   A = tmpX:4;
+   XER = ( XER & 0xFFFFFF80 ) | tmpX:4;
+@endif
+
+   # Rc section
+
+   # Set bit 35 of CR to SO
+@ifdef BIT_64
+   cr0 = ( cr0 & 0xFFFFFFFFEFFFFFFF ) | ( xer_so << 28 );
+@else
+   cr0 = ( cr0 & 0xEFFFFFFF ) | ( xer_so << 28 );
+@endif
+
+   # Set bits 32:34 of CR
+   if ( tmpY != 1 ) goto <no_match>;
+
+   if ( tmpX >= 5 ) goto <high_bytes>;
+@ifdef BIT_64
+      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000040000000;
+@else
+      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x40000000;
+@endif
+      goto <finished>;
+
+   <high_bytes>
+@ifdef BIT_64
+      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000080000000;
+@else
+      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x80000000;
+@endif
+      goto <finished>;
+
+   <no_match>
+@ifdef BIT_64
+      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000020000000;
+@else
+      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x20000000;
+@endif
+
+   <finished>
+}
+
+# ========================================================================
+
+# PowerISA II: 4.6.5 Floating-Point Move Instructions
+# CMT: Floating Copy Sign
+# FORM: X-form
+# binutils: 476.d: 1f0: fd 4b 60 10     fcpsgn  f10,f11,f12
+# binutils: a2.d: 268:  fe 95 b0 10     fcpsgn  f20,f21,f22
+:fcpsgn  fT,fA,fB is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=8 & Rc=0 
+{
+   fT = ( fB & 0x7FFFFFFFFFFFFFFF ) | ( fA & 0x8000000000000000 );
+}
+
+# PowerISA II: 4.6.5 Floating-Point Move Instructions
+# CMT: Floating Copy Sign
+# FORM: X-form
+# binutils: 476.d: 1f4:     fd 4b 60 11     fcpsgn\. f10,f11,f12
+# binutils: a2.d: 264:      fe 95 b0 11     fcpsgn\. f20,f21,f22
+:fcpsgn. fT,fA,fB is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=8 & Rc=1 
+{
+   fT = ( fB & 0x7FFFFFFFFFFFFFFF ) | ( fA & 0x8000000000000000 );
+   cr1flags();
+}
+# ========================================================================
+
+# PowerISA II: 4.6.2 Floating-Point Load Instructions
+# CMT: Load Floating-Point as Integer Word Algebraic Indexed 
+# FORM: X-form
+# binutils: 476.d: 350: 7d 43 26 ae     lfiwax  f10,r3,r4
+# binutils: a2.d: 44c:  7e 8a 5e ae     lfiwax  f20,r10,r11
+define pcodeop LoadFloatingPointAsIntegerWordAlgebraicIndexed;
+:lfiwax fT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & fT & RA_OR_ZERO & B & XOP_1_10=855 & BIT_0=0 
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+   fT = sext( *:4(ea) );
+}
+
+# PowerISA II: 4.6.2 Floating-Point Load Instructions
+# CMT: Load Floating-Point as Integer Word and Zero Indexed [Category: Floating-Point.Phased-in]
+# FORM: X-form
+# bintutils: a2.d: 450:      7e 8a 5e ee     lfiwzx  f20,r10,r11
+# bintutils: power7.d:  ec:  7d 40 56 ee     lfiwzx  f10,0,r10
+# bintutils: power7.d:  f0:  7d 49 56 ee     lfiwzx  f10,r9,r10
+define pcodeop LoadFloatingPointAsIntegerWordAndZeroIndexed;
+:lfiwzx fT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & fT & RA_OR_ZERO & B & XOP_1_10=887 & BIT_0=0 
+{
+   ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+   fT = zext( *:4(ea) );
+}
+
+# =======================================================================
+
+# PowerISA II: A.1 Embedded Cache Initialization [Category: Embedded.Cache Initialization]
+# CMT: Instruction Cache Invalidate
+# FORM: X-form
+# binutils: 476.d: 31c: 7c 20 07 8c     ici     1
+# binutils: a2.d: 3d8:  7d 40 07 8c     ici     10
+# Note: Using CT, but limited to 4 bits, not 5 (PPC bit 6 is 0 and is a don't care anyhow as CT is unused)
+# No PCODE for this function
+define pcodeop InstructionCacheInvalidate;
+:ici CT is OP=31 & CT & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=966 & BIT_0=0 
+{
+   InstructionCacheInvalidate();
+}
+
+# PowerISA II: A.1 Embedded Cache Initialization [Category: Embedded.Cache Initialization]
+# CMT: Data Cache Invalidate
+# FORM: X-form
+# Note: Using CT, but limited to 4 bits, not 5 (PPC bit 6 is 0 and is a don't care anyhow as CT is unused)
+# No PCODE for this function
+# binutils: 476.d: 180:     7c 20 03 8c     dci     1
+# binutils: a2.d: 1a8:      7d 40 03 8c     dci     10
+define pcodeop DataCacheInvalidate;
+:dci CT is OP=31 & CT & BITS_11_20=0 & BITS_11_15=0 & XOP_1_10=454 & BIT_0=0 
+{
+   DataCacheInvalidate();
+}
+
+# =======================================================================
+
+# PowerISA II: 4.3.1 Instruction Cache Instructions
+# CMT: Instruction Cache Block Touch [Category: Embedded]
+# FORM: X-form
+# binutils: 476.d: 308: 7c a8 48 2c     icbt    5,r8,r9
+# binutils: a2.d: 3bc:  7c 0a 58 2c     icbt    r10,r11
+# binutils: a2.d: 3c0:  7c ea 58 2c     icbt    7,r10,r11
+# binutils: booke.d:   0:       7c a8 48 2c     icbt    5,r8,r9
+# binutils: booke_xcoff.d:   8: 7c a8 48 2c     icbt    5,r8,r9
+# Note: Using CT, but limited to 4 bits, not 5 (PPC bit 6 is 0 and is a don't care anyhow as CT is unused)
+# No PCODE for this function
+define pcodeop InstructionCacheBlockTouch;
+:icbt CT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & CT & RA_OR_ZERO & B & XOP_1_10=22 & BIT_0=0 
+{
+   InstructionCacheBlockTouch(RA_OR_ZERO,B);
+}
+
+# ======================================================================
+
+# PowerISA II: 4.6.6.1 Floating-Point Elementary Arithmetic Instructions
+# CMT: Floating Reciprocal Square Root Estimate [Single]
+# FORM: A-form
+# binutils: 476.d: 2d0: ed c0 78 34     frsqrtes f14,f15
+# binutils: a2.d: 374:  ee 80 a8 34     frsqrtes f20,f21
+# binutils: a2.d: 37c:  ee 80 a8 34     frsqrtes f20,f21
+# binutils: a2.d: 384:  ee 81 a8 34     frsqrtes f20,f21,1
+# binutils: power7.d: 184:      ed c0 78 34     frsqrtes f14,f15
+# NOTE: binutils allows BITS_16_20=1 but manual says BITS_16_20=0.  We take the manuals side. (pg 136)
+:frsqrtes fT,fB is $(NOTVLE) & OP=59 & fT & fB & BITS_16_20=0 & BITS_6_10=0 & XOP_1_5=26 & Rc=0 
+{
+   # divide 1 by square root of fB to create reciprocal
+   tmp1:8 = 0x3FF0000000000000;
+   fT = tmp1 f/ sqrt( fB );
+   setFPDivFlags(tmp1,fB,fT);
+}
+
+# PowerISA II: 4.6.6.1 Floating-Point Elementary Arithmetic Instructions
+# CMT: Floating Reciprocal Square Root Estimate [Single]
+# FORM: A-form
+# binutils: 476.d: 2d4: ed c0 78 35     frsqrtes. f14,f15
+# binutils: a2.d: 378:  ee 80 a8 35     frsqrtes. f20,f21
+# binutils: a2.d: 380:  ee 80 a8 35     frsqrtes. f20,f21
+# binutils: a2.d: 388:  ee 81 a8 35     frsqrtes. f20,f21,1
+# binutils: power7.d: 188:      ed c0 78 35     frsqrtes. f14,f15
+# NOTE: binutils allows BITS_16_20=1 but manual says BITS_16_20=0.  We take the manuals side. (pg 136)
+define pcodeop FloatingReciprocalSquareRootEstimate1;
+:frsqrtes. fT,fB is $(NOTVLE) & OP=59 & fT & fB & BITS_16_20=0 & BITS_6_10=0 & XOP_1_5=26 & Rc=1 
+{
+   # divide 1 by square root of fB to create reciprocal 
+   tmp1:8 = 0x3FF0000000000000;
+   fT = tmp1 f/ sqrt( fB );
+   setFPDivFlags(tmp1,fB,fT);
+   cr1flags();
+}
+
+# PowerISA II: 4.6.6.1 Floating-Point Elementary Arithmetic Instructions
+# CMT: Floating Reciprocal Estimate [Single]
+# FORM: A-form
+# binutils: 476.d: 290: fd c0 78 30     fre     f14,f15
+# binutils: a2.d: 308:  fe 80 a8 30     fre     f20,f21
+# binutils: a2.d: 310:  fe 80 a8 30     fre     f20,f21
+# binutils: a2.d: 318:  fe 81 a8 30     fre     f20,f21,1
+# binutils: power7.d: 16c:      fd c0 78 30     fre     f14,f15
+# NOTE: binutils allows BITS_16_20!=0 but manual says BITS_16_20=0.  We take the manuals side. (pg 135)
+:fre  fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=0 
+{
+   # divide 1 by fB to create reciprocal
+   tmp1:8 = 0x3FF0000000000000;
+   fT = tmp1 f/ fB;
+   setFPDivFlags(tmp1,fB,fT);
+}
+
+# PowerISA II: 4.6.6.1 Floating-Point Elementary Arithmetic Instructions
+# CMT: Floating Reciprocal Estimate [Single]
+# FORM: A-form
+# binutils: 476.d: 294: fd c0 78 31     fre.    f14,f15
+# binutils: a2.d: 304:  fe 80 a8 31     fre.    f20,f21
+# binutils: a2.d: 30c:  fe 80 a8 31     fre.    f20,f21
+# binutils: a2.d: 314:  fe 81 a8 31     fre.    f20,f21,1
+# binutils: power7.d: 170:      fd c0 78 31     fre.    f14,f15
+# NOTE: binutils allows BITS_16_20!=0 but manual says BITS_16_20=0.  We take the manuals side.  (pg 135)
+:fre. fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=1 
+{
+   # divide 1 by fB to create reciprocal
+   tmp1:8 = 0x3FF0000000000000;
+   fT = tmp1 f/ fB;
+   setFPDivFlags(tmp1,fB,fT);
+   cr1flags();
+}
+# ======================================================================
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Minus
+# FORM: X-form
+# binutils: 476.d: 2a0: fd 40 5b d0     frim    f10,f11
+# binutils: a2.d: 338:  fe 80 ab d0     frim    f20,f21
+:frim fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=488 & Rc=0 
+{
+   fT = floor( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Minus
+# FORM: X-form
+# binutils: 476.d: 2a4: fd 40 5b d1     frim.   f10,f11
+# binutils: a2.d: 334:  fe 80 ab d1     frim.   f20,f21
+:frim. fT,fB is $(NOTVLE) & OP=63 & fT & BITS_16_20=0 & fB & XOP_1_10=488 & Rc=1 
+{
+   fT = floor( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+   cr1flags();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Nearest
+# FORM: X-form
+# binutils: 476.d: 2a8: fd 40 5b 10     frin    f10,f11
+# binutils: a2.d: 340:  fe 80 ab 10     frin    f20,f21
+:frin fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=392 & Rc=0 
+{
+   fT = round( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Nearest
+# FORM: X-form
+# binutils: 476.d: 2ac: fd 40 5b 11     frin.   f10,f11
+# binutils: a2.d: 33c:  fe 80 ab 11     frin.   f20,f21
+:frin. fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=392 & Rc=1 
+{
+   fT = round( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+   cr1flags();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Plus
+# FORM: X-form
+# binutils: 476.d: 2b0: fd 40 5b 90     frip    f10,f11
+# binutils: a2.d: 348:  fe 80 ab 90     frip    f20,f21
+:frip fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=456 & Rc=0 
+{
+   fT = ceil( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Plus
+# FORM: X-form
+# binutils: 476.d: 2b4: fd 40 5b 91     frip.   f10,f11
+# binutils: a2.d: 344:  fe 80 ab 91     frip.   f20,f21
+:frip. fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=456 & Rc=1 
+{
+   fT = ceil( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+   cr1flags();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Toward Zero
+# FORM: X-form
+# binutils: 476.d: 2b8: fd 40 5b 50     friz    f10,f11
+# binutils: a2.d: 350:  fe 80 ab 50     friz    f20,f21
+:friz fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=424 & Rc=0 
+{
+   fT = trunc( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+}
+
+# PowerISA II: 4.6.7.3 Floating Round to Integer Instructions
+# CMT: Floating Round to Integer Toward Zero
+# FORM: X-form
+# binutils: 476.d: 2bc: fd 40 5b 51     friz.   f10,f11
+# binutils: a2.d: 34c:  fe 80 ab 51     friz.   f20,f21
+define pcodeop FloatingRoundToIntegerTowardZero1;
+:friz. fT,fB is $(NOTVLE) & OP=63 & fT &  BITS_16_20=0 & fB & XOP_1_10=424 & Rc=1 
+{
+   fT = trunc( fB );
+   setFPRF(fT);
+   setSummaryFPSCR();
+   cr1flags();
+}
+
+# =======================================================================
+
+# PowerISA II: 4.4.4 Wait Instruction
+# CMT: Wait
+# FORM: X-form
+# binutils: a2.d: 86c:  7c 00 00 7c     wait    
+# binutils: a2.d: 870:  7c 00 00 7c     wait    
+# binutils: e500mc.d:  1c:      7c 00 00 7c     wait    
+# binutils: e500mc.d:  20:      7c 00 00 7c     wait    
+# binutils: power7.d:  58:      7c 00 00 7c     wait    
+# binutils: power7.d:  5c:      7c 00 00 7c     wait    
+define pcodeop waitOp;
+:wait BITS_21_22 is OP=31 & crfD=0 & BITS_21_22 & BITS_11_20=0 & XOP_1_10=62 & BIT_0=0 { waitOp(); }
+
+# =======================================================================
+
+# PowerISA II: 4.3.1 System Linkage Instructions
+# CMT: Return From Guest Interrupt [Category:Embedded.Hypervisor]
+# FORM: XL-form
+# binutils: e500mc.d:   0:      4c 00 00 4e     rfdi
+define pcodeop ReturnFromGuestInterrupt;
+:rfgi is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=102 & BIT_0=0 { MSR = ReturnFromGuestInterrupt(); }
+
+# =======================================================================
+
+# PowerISA II: 4.4.2.1 64-Bit Load and Reserve and Store Conditional Instructions [Category: 64-Bit]
+# CMT: Load Doubleword And Reserve Indexed
+# FORM: X-form
+# binutils: a2.d: 410:  7d 4b 60 a8     ldarx   r10,r11,r12
+# binutils: a2.d: 414:  7d 4b 60 a9     ldarx   r10,r11,r12,1
+:ldarx TH,RA_OR_ZERO,B,BIT_0 is OP=31 & TH & RA_OR_ZERO & B & XOP_1_10=84 & BIT_0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	RESERVE = 1;
+	RESERVE_LENGTH = 8;
+	RESERVE_ADDRESS = ea;
+	TH = *:8 (ea);
+}
+
+# =======================================================================
+
+# PowerISA II: 4.4.1 Instruction Synchronize Instruction
+# CMT: Load Word And Reserve Indexed
+# FORM: X-form
+# binutils: 476.d: 394: 7c 64 28 28     lwarx   r3,r4,r5
+# binutils: 476.d: 398: 7c 64 28 28     lwarx   r3,r4,r5
+# binutils: 476.d: 39c: 7c 64 28 29     lwarx   r3,r4,r5,1
+# binutils: a2.d: 4b4:  7d 4b 60 28     lwarx   r10,r11,r12
+# binutils: a2.d: 4b8:  7d 4b 60 29     lwarx   r10,r11,r12,1
+:lwarx TH,RA_OR_ZERO,B,BIT_0 is OP=31 & TH & RA_OR_ZERO & B & XOP_1_10=20 & BIT_0 
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	RESERVE = 1;
+	RESERVE_LENGTH = 4;
+	RESERVE_ADDRESS = ea;
+	TH = zext( *:4 (ea) );
+}
+
+# =======================================================================
+
+# PowerISA II: 11.3 Processor Control Instructions
+# CMT: Message Clear
+# FORM: X-form
+# binutils: a2.d: 544:  7c 00 51 dc     msgclr  r10
+# binutils: e500mc.d:  14:      7c 00 69 dc     msgclr  r13
+define pcodeop MessageClear;
+:msgclr B is OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=238 & BIT_0=0  { MessageClear(B); }
+
+# PowerISA II: 11.3 Processor Control Instructions
+# CMT: Message Send
+# FORM: X-form
+# binutils: a2.d: 548:  7c 00 51 9c     msgsnd  r10
+# binutils: e500mc.d:  18:      7c 00 71 9c     msgsnd  r14
+define pcodeop MessageSend;
+:msgsnd B is OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=206 & BIT_0=0  { MessageSend(); }
+
+# =======================================================================
+
+
+# PowerISA III: TLB Management Instructions (expanded by ISA 3.0)
+# CMT: TLB Invalidate Entry (expands on form in ppc_instructions.sinc)
+# FORM: X-form
+:tlbie RB_OR_ZERO,RS_OR_ZERO,"2",BIT_17,BIT_16 is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BIT_20=0 & BITS_18_19=2 & BIT_17 & BIT_16 & XOP_1_10=306 & BIT_0=0 { # RIC=2
+	# RIC = 2
+	# PRS = BIT_17
+	# R = BIT_16	
+	TLBInvalidateEntry(RB_OR_ZERO,RS_OR_ZERO,2:1,BIT_17:1,BIT_16:1);
+}
+:tlbie RB_OR_ZERO,RS_OR_ZERO,BIT_18,BIT_17,"1" is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BIT_20=0 & (BITS_18_19=0 | BITS_18_19=1) & BIT_18 & BIT_17 & BIT_16=1 & XOP_1_10=306 & BIT_0=0 { # RIC=0|1 & R=1
+	# RIC = BITS_18_19 (0 or 1)
+	# PRS = BIT_17
+	# R = 1
+	TLBInvalidateEntry(RB_OR_ZERO,RS_OR_ZERO,BIT_18:1,BIT_17:1,1:1);
+}
+:tlbie RB_OR_ZERO,RS_OR_ZERO,"3","0","0" is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BIT_20=0 & BITS_18_19=3 & BIT_17=0 & BIT_16=0 & XOP_1_10=306 & BIT_0=0 { # RIC=3 & PRS=0 & R=0
+	# RIC = 3
+	# PRS = 0
+	# R = 0
+	TLBInvalidateEntry(RB_OR_ZERO,RS_OR_ZERO,3:1,0:1,0:1);
+}
+
+# PowerISA III: TLB Management Instructions (expanded by ISA 3.0)
+# CMT: TLB Invalidate Entry Local (expands on form in ppc_instructions.sinc)
+# FORM: X-form
+:tlbiel RB_OR_ZERO,RS_OR_ZERO,"0","0","0" is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BITS_16_20=0 & XOP_1_10=274 & BIT_0=0 { # RIC=0 & PRS=0 & R=0
+	# RIC = 0
+	# PRS = 0
+	# R = 0	
+	TLBInvalidateEntryLocal(RB_OR_ZERO,RS_OR_ZERO,0:1,0:1,0:1);
+}
+:tlbiel RB_OR_ZERO,RS_OR_ZERO,"2",BIT_17,BIT_16 is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BIT_20=0 & BITS_18_19=2 & BIT_17 & BIT_16 & XOP_1_10=274 & BIT_0=0 { # RIC=2
+	# RIC = 2
+	# PRS = BIT_17
+	# R = BIT_16	
+	TLBInvalidateEntryLocal(RB_OR_ZERO,RS_OR_ZERO,2:1,BIT_17:1,BIT_16:1);
+}
+:tlbiel RB_OR_ZERO,RS_OR_ZERO,BIT_18,BIT_17,"1" is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BIT_20=0 & (BITS_18_19=0 | BITS_18_19=1) & BIT_18 & BIT_17 & BIT_16=1 & XOP_1_10=274 & BIT_0=0 { # RIC=0|1 & R=1
+	# RIC = BITS_18_19 (0 or 1)
+	# PRS = BIT_17
+	# R = 1
+	TLBInvalidateEntryLocal(RB_OR_ZERO,RS_OR_ZERO,BIT_18:1,BIT_17:1,1:1);
+}
+
+
+# PowerISA II: 6.11.4.9 TLB Management Instructions
+# CMT: TLB Search and Reserve Indexed Category: Embedded.TLB Write Conditional]
+# FORM: X-form
+# binutils: a2.d: 848:      7c 0a 5e a5     tlbsrx\. r10,r11
+define pcodeop TLBSearchAndReserveIndexedCategory;
+:tlbsrx. A,B is OP=31 & BITS_21_25=0 & A & B & XOP_1_10=850 & BIT_0=1 { TLBSearchAndReserveIndexedCategory(A,B,cr0); }
+
+# =======================================================================
+
+# PowerISA II: 4.6.10 Floating-Point Status and Control Register Instructions
+# CMT: Move To FPSCR Fields
+# FORM: X-form
+# binutils: 476.d: 4e0: fc 0c 55 8e     mtfsf   6,f10
+# binutils: 476.d: 4e4: fc 0c 55 8e     mtfsf   6,f10
+# binutils: 476.d: 4e8: fc 0d 55 8e     mtfsf   6,f10,0,1
+# binutils: 476.d: 4ec: fe 0c 55 8e     mtfsf   6,f10,1,0
+# binutils: a2.d: 580:  fc 0c a5 8e     mtfsf   6,f20
+# binutils: a2.d: 588:  fc 0c a5 8e     mtfsf   6,f20
+# binutils: a2.d: 590:  fe 0d a5 8e     mtfsf   6,f20,1,1
+# binutils: common.d: 210:      fc 0c 55 8e     mtfsf   6,f10
+# binutils: power6.d:  b4:      fc 0c 55 8e     mtfsf   6,f10
+# binutils: power6.d:  bc:      fc 0c 55 8e     mtfsf   6,f10
+# binutils: power6.d:  c4:      fc 0d 55 8e     mtfsf   6,f10,0,1
+# binutils: power6.d:  cc:      fe 0c 55 8e     mtfsf   6,f10,1,0
+define pcodeop MoveToFPSCRFields;
+:mtfsf BITS_17_24,fB,BIT_25,BIT_16 is $(NOTVLE) & OP=63 & BIT_25 & BITS_17_24 & BIT_16 & fB & XOP_1_10=711 & Rc=0 { # PCODE
+	MoveToFPSCRFields(fB); 
+}
+
+# PowerISA II: 4.6.10 Floating-Point Status and Control Register Instructions
+# CMT: Move To FPSCR Fields
+# FORM: X-form
+# binutils: 476.d: 4f0: fc 0c 5d 8f     mtfsf.  6,f11
+# binutils: 476.d: 4f4: fc 0c 5d 8f     mtfsf.  6,f11
+# binutils: 476.d: 4f8: fc 0d 5d 8f     mtfsf.  6,f11,0,1
+# binutils: 476.d: 4fc: fe 0c 5d 8f     mtfsf.  6,f11,1,0
+# binutils: a2.d: 57c:  fc 0c a5 8f     mtfsf.  6,f20
+# binutils: a2.d: 584:  fc 0c a5 8f     mtfsf.  6,f20
+# binutils: a2.d: 58c:  fe 0d a5 8f     mtfsf.  6,f20,1,1
+define pcodeop MoveToFPSCRFields1;
+:mtfsf. BITS_17_24,fB,BIT_25,BIT_16 is $(NOTVLE) & OP=63 & BIT_25 & BITS_17_24 & BIT_16 & fB & XOP_1_10=711 & Rc=1 { # PCODE
+	MoveToFPSCRFields1(fB); 
+}
+
+# PowerISA II: 4.6.10 Floating-Point Status and Control Register Instructions
+# CMT: Move To FPSCR Field Immediate
+# FORM: X-form
+# binutils: 476.d: 500: ff 00 01 0c     mtfsfi  6,0
+# binutils: 476.d: 504: ff 00 01 0c     mtfsfi  6,0
+# binutils: 476.d: 508: ff 00 01 0c     mtfsfi  6,0
+# binutils: 476.d: 50c: ff 01 01 0c     mtfsfi  6,0,1
+# binutils: a2.d: 598:  ff 00 01 0c     mtfsfi  6,0
+# binutils: a2.d: 5a0:  ff 00 d1 0c     mtfsfi  6,13
+# binutils: a2.d: 5a8:  ff 01 d1 0c     mtfsfi  6,13,1
+# binutils: common.d: 218:      ff 00 01 0c     mtfsfi  6,0
+# binutils: power6.d:  d4:      ff 00 01 0c     mtfsfi  6,0
+# binutils: power6.d:  dc:      ff 00 01 0c     mtfsfi  6,0
+# binutils: power6.d:  e4:      ff 01 01 0c     mtfsfi  6,0,1
+define pcodeop MoveToFPSCRFieldImmediate;
+:mtfsfi BF2,BITS_12_15,BIT_16 is $(NOTVLE) & OP=63 & BF2 & BITS_21_22=0 & BITS_17_20=0 & BIT_16 & BITS_12_15 & BIT_11=0 & XOP_1_10=134 & Rc=0 { 
+	MoveToFPSCRFieldImmediate(); 
+}
+
+# PowerISA II: 4.6.10 Floating-Point Status and Control Register Instructions
+# CMT: Move To FPSCR Field Immediate
+# FORM: X-form
+# binutils: 476.d: 510: ff 00 f1 0d     mtfsfi. 6,15
+# binutils: 476.d: 514: ff 00 f1 0d     mtfsfi. 6,15
+# binutils: 476.d: 518: ff 00 f1 0d     mtfsfi. 6,15
+# binutils: 476.d: 51c: ff 01 f1 0d     mtfsfi. 6,15,1
+# binutils: a2.d: 594:  ff 00 01 0d     mtfsfi. 6,0
+# binutils: a2.d: 59c:  ff 00 d1 0d     mtfsfi. 6,13
+# binutils: a2.d: 5a4:  ff 01 d1 0d     mtfsfi. 6,13,1
+define pcodeop MoveToFPSCRFieldImmediate1;
+:mtfsfi. BITS_23_25,BITS_12_15,BIT_16 is $(NOTVLE) & OP=63 & BITS_23_25 & BITS_21_22=0 & BITS_17_20=0 & BIT_16 & BITS_12_15 & BIT_11=0 & XOP_1_10=134 & Rc=1 { 
+	MoveToFPSCRFieldImmediate1(); 
+}
+
+# =======================================================================
+
+# PowerISA II: 3.3.15 Move To/From System Register Instructions
+# CMT: Move To Condition Register Fields
+# FORM: XFX-form
+# binutils: 476.d: 48c:     7c 60 00 26     mfcr    r3
+define pcodeop mfcrOp;
+:mfcr TO is OP=31 & TO & BIT_20=0 & BITS_12_19=0 & XOP_1_10=190 & BIT_0=0 { mfcrOp(); }
+
+# =======================================================================
+
+# PowerISA II: 5.6.1 DFP Arithmetic Instructions
+# CMT: DFP Add [Quad]
+# FORM: X-form
+# binutils: power6.d:  38:  fe 96 c0 04     daddq   f20,f22,f24
+# binutils: power7.d:  9c:  fe 96 c0 04     daddq   f20,f22,f24
+define pcodeop daddqOp;
+:daddq  fT,fA,fB is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=2 & Rc=0 { daddqOp(fA,fB); }
+
+# PowerISA II: 5.6.1 DFP Arithmetic Instructions
+# CMT: DFP Add [Quad]
+# FORM: X-form
+define pcodeop daddqDotOp;
+:daddq. fT,fA,fB is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=2 & Rc=1 { daddqDotOp(fA); }
+
+# =======================================================================
+
+# =======================================================================
+# binutils: 476.d: 30c:     7d ae 7b cc     icbtls  13,r14,r15
+# binutils: a2.d: 3c4:      7c 0a 5b cc     icbtls  r10,r11
+# binutils: a2.d: 3c8:      7c ea 5b cc     icbtls  7,r10,r11
+# binutils: e500.d:  10:    7d ae 7b cc     icbtls  13,r14,r15
+# binutils: titan.d: 198:   7c 02 0b cc     icbtls  r2,r1
+# binutils: titan.d: 19c:   7c 02 0b cc     icbtls  r2,r1
+# binutils: titan.d: 1a0:   7c 22 0b cc     icbtls  1,r2,r1
+# :icbtls BITS_21_24,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & BIT_25=0 & BITS_21_24 & B & XOP_1_10=486 & BIT_0=0 & RA_OR_ZERO
+# {
+#         ea = RA_OR_ZERO + B;
+# 	# prefetchInstructionCacheBlockLockSetX(ea);
+# }
+# Source for information on instructions:
+# PowerISA_V2.06B_PUBLIC.pdf (dated: July 23, 2010)
+# and binutils-2.21.1
+# Have test case for about 200 of these instructions
+
+# Extended Mnemonic
+# xvmovdp XT,XB		=>		xvcpsgndp XT,XB,XB
+# xvmovsp XT,XB 	=>		xvcpsgnsp XT,XB,XB
+# xxmrghd T,A,B 	=> 		xxpermdi T,A,B,0b00
+# xxmrgld T,A,B 	=>		xxpermdi T,A,B,0b11
+# xxspltd T,A,0 	=>		xxpermdi T,A,A,0b00
+# xxswapd T,A 		=>		xxpermdi T,A,A,0b10
+
+@include "vsx.sinc"
+
+# binutils-descr: "brinc",	VX (4, 527),	VX_MASK,     PPCSPE,	PPCNONE,	{RS, RA, RB}
+define pcodeop brincOp;
+# ISA-cmt: brinc - Bit Reversed Increment
+# ISA-info: brinc - Form "EVX" Page 510 Category "SP"
+# binutils: mytest.d:  1d0:	10 22 1a 0f 	brinc   r1,r2,r3
+:brinc S,A,B is OP=4 & XOP_0_10=527 & S & A & B  { brincOp(S,A,B); } 
+
+# binutils-descr: "hrfid",	XL(19,274),	0xffffffff, POWER5|CELL, PPC476,	{0}
+define pcodeop hrfidOp;
+# ISA-info: hrfid - Form "XL" Page 739 Category "S"
+# binutils: mytest.d:    0:	4c 00 02 24 	hrfid
+:hrfid  is $(NOTVLE) & OP=19 & XOP_1_10=274  & BITS_11_25=0 & BIT_0=0  { hrfidOp(); } 
+
+define pcodeop bcctrOp;
+# ZZZ NO-PARSE XLLK - "bcctr",   XLLK(19,528,0),		XLBH_MASK,     PPCCOM,	 PPCNONE,	{BO, BI, BH}
+:bcctr BO,BI_BITS,BH is $(NOTVLE) & OP=19 & BO & BI_BITS & BITS_13_15=0 & BH & XOP_1_10=528 & LK=0 { bcctrOp(); }
+
+define pcodeop bcctrlOp;
+# ZZZ NO-PARSE XLLK - "bcctrl",  XLLK(19,528,1),		XLBH_MASK,     PPCCOM,	 PPCNONE,	{BO, BI, BH}
+:bcctrl BO,BI_BITS,BH is $(NOTVLE) & OP=19 & BO & BI_BITS & BITS_13_15=0 & BH & XOP_1_10=528 & LK=1 { bcctrlOp(); }
+
+# binutils-descr: "lbarx",	X(31,52),	XEH_MASK,    POWER7,	PPCNONE,	{RT, RA0, RB, EH}
+define pcodeop lbarxOp;
+# ISA-cmt: lbarx - Load Byte and Reserve Indexed
+# ISA-info: lbarx - Form "X" Page 689 Category "B"
+# binutils: power7.d:  14c:	7d 4b 60 68 	lbarx   r10,r11,r12
+# binutils: power7.d:  150:	7d 4b 60 68 	lbarx   r10,r11,r12
+# binutils: power7.d:  154:	7d 4b 60 69 	lbarx   r10,r11,r12,1
+:lbarx RT,A,B,BIT_0 is OP=31 & XOP_1_10=52 & RT & A & B & BIT_0  { 
+	A = A + B;
+	RT = *:1 A;
+} 
+
+# binutils-descr: "lharx",	X(31,116),	XEH_MASK,    POWER7,	PPCNONE,	{RT, RA0, RB, EH}
+define pcodeop lharxOp;
+# ISA-cmt: lharx - Load Halfword and Reserve Indexed
+# ISA-info: lharx - Form "X" Page 690 Category "B"
+# binutils: power7.d:  158:	7e 95 b0 e8 	lharx   r20,r21,r22
+# binutils: power7.d:  15c:	7e 95 b0 e8 	lharx   r20,r21,r22
+# binutils: power7.d:  160:	7e 95 b0 e9 	lharx   r20,r21,r22,1
+:lharx RT,A,B,BIT_0 is OP=31 & XOP_1_10=116 & RT & A & B & BIT_0  { 
+	A = A + B;
+	RT = *:2 A;
+} 
+
+# binutils-descr: "ehpriv",	X(31,270),	0xffffffff, E500MC|PPCA2, PPCNONE,	{0}
+define pcodeop ehprivOp;
+# ISA-info: ehpriv - Form "XL" Page 889 Category "E.HV"
+# binutils: NO-EXAMPLE - ehpriv
+:ehpriv BITS_11_25 is OP=31 & BITS_11_25 & XOP_1_10=270 & BIT_0=0  { ehprivOp(); } 
+
+# binutils-descr: "cbcdtd",	X(31,314),	XRB_MASK,    POWER6,	PPCNONE,	{RA, RS}
+define pcodeop cbcdtdOp;
+# ISA-info: cbcdtd - Form "X" Page 97 Category "BCDA"
+# binutils: power6.d:   ec:	7d 6a 02 74 	cbcdtd  r10,r11
+:cbcdtd S,A is $(NOTVLE) & OP=31 & S & A & BITS_11_15=0 & XOP_1_10=314 & BIT_0=0  { cbcdtdOp(S,A); } 
+
+# binutils-descr: "divdeu",	XO(31,393,0,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeuOp;
+# binutils: mytest.d:    4:	7c 64 2b 12 	divdeu  r3,r4,r5
+:divdeu RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=0 & Rc=0 & RT & A & B  { 
+	RT = A/B;
+} 
+
+# binutils-descr: "divdeu.",	XO(31,393,0,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeuDotOp;
+# binutils: mytest.d:    8:	7c 64 2b 13 	divdeu. r3,r4,r5
+:divdeu. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=0 & Rc=1 & RT & A & B  { 
+	RT = A/B;
+	cr0flags(RT);
+} 
+
+# binutils-descr: "divde",	XO(31,425,0,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeOp;
+# binutils: mytest.d:    c:	7c 64 2b 52 	divde   r3,r4,r5
+:divde RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=0 & Rc=0 & RT & A & B  { 
+	RT = A s/ B;
+} 
+
+# binutils-descr: "divde.",	XO(31,425,0,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeDotOp;
+# binutils: mytest.d:   10:	7c 64 2b 53 	divde.  r3,r4,r5
+:divde. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=0 & Rc=1 & RT & A & B  { 
+	RT = A s/ B;
+	cr0flags(RT);
+} 
+
+# binutils-descr: "dsn", 	X(31,483),	XRT_MASK,    E500MC,	PPCNONE,	{RA, RB}
+define pcodeop dsnOp;
+# ISA-info: dsn - Form "X" Page 710 Category "DS"
+# binutils: e500mc.d:   3c:	7c 18 cb c6 	dsn     r24,r25
+:dsn A,B is OP=31 & XOP_1_10=483 & A & B & BITS_21_25=0 & BIT_0=0  { dsnOp(A,B); } 
+
+# binutils-descr: "lbdx",	X(31,515),	X_MASK,      E500MC,	PPCNONE,	{RT, RA, RB}
+define pcodeop lbdxOp;
+# ISA-info: lbdx - Form "X" Page 708 Category "DS"
+# binutils: e500mc.d:   68:	7c 01 14 06 	lbdx    r0,r1,r2
+:lbdx RT,A,B is OP=31 & XOP_1_10=515 & RT & A & B & BIT_0=0  { RT = lbdxOp(RT,A,B); } 
+
+# binutils-descr: "lhdx",	X(31,547),	X_MASK,      E500MC,	PPCNONE,	{RT, RA, RB}
+define pcodeop lhdxOp;
+# ISA-info: lhdx - Form "X" Page 708 Category "DS"
+# binutils: e500mc.d:   6c:	7d 8d 74 46 	lhdx    r12,r13,r14
+:lhdx RT,A,B is OP=31 & XOP_1_10=547 & RT & A & B & BIT_0=0  { RT = lhdxOp(RT,A,B); } 
+
+# binutils-descr: "lwdx",	X(31,579),	X_MASK,      E500MC,	PPCNONE,	{RT, RA, RB}
+define pcodeop lwdxOp;
+# ISA-info: lwdx - Form "X" Page 708 Category "DS"
+# binutils: e500mc.d:   70:	7c 64 2c 86 	lwdx    r3,r4,r5
+:lwdx RT,A,B is OP=31 & XOP_1_10=579 & RT & A & B & BIT_0=0  { RT = lwdxOp(RT,A,B); } 
+
+# binutils-descr: "lddx",	X(31,611),	X_MASK,      E500MC,	PPCNONE,	{RT, RA, RB}
+define pcodeop lddxOp;
+# ISA-info: lddx - Form "X" Page 708 Category "DS"
+# binutils: e500mc.d:   78:	7d f0 8c c6 	lddx    r15,r16,r17
+:lddx RT,A,B is OP=31 & XOP_1_10=611 & RT & A & B & BIT_0=0  { RT = lddxOp(RT,A,B); } 
+
+# ISA-info: lddx - Form "X" Page 50 Category "DS"
+:ldx RT,RA_OR_ZERO,B is OP=31 & XOP_1_10=21 & RT & RA_OR_ZERO & B & BIT_0=0  { 
+	RT = *:8 (RA_OR_ZERO + B);
+} 
+
+# binutils-descr: "stbdx",	X(31,643),	X_MASK,      E500MC,	PPCNONE,	{RS, RA, RB}
+define pcodeop stbdxOp;
+# ISA-info: stbdx - Form "X" Page 709 Category "DS"
+# binutils: e500mc.d:   7c:	7c c7 45 06 	stbdx   r6,r7,r8
+:stbdx S,A,B is OP=31 & XOP_1_10=643 & S & A & B & BIT_0=0  { *[ram]:1 B =stbdxOp(S,A,B); } 
+
+# binutils-descr: "sthdx",	X(31,675),	X_MASK,      E500MC,	PPCNONE,	{RS, RA, RB}
+define pcodeop sthdxOp;
+# ISA-info: sthdx - Form "X" Page 709 Category "DS"
+# binutils: e500mc.d:   80:	7e 53 a5 46 	sthdx   r18,r19,r20
+:sthdx S,A,B is OP=31 & XOP_1_10=675 & S & A & B & BIT_0=0  { *[ram]:2 B = sthdxOp(S,A,B); } 
+
+# binutils-descr: "stwdx",	X(31,707),	X_MASK,      E500MC,	PPCNONE,	{RS, RA, RB}
+define pcodeop stwdxOp;
+# ISA-info: stwdx - Form "X" Page 709 Category "DS"
+# binutils: e500mc.d:   84:	7d 2a 5d 86 	stwdx   r9,r10,r11
+:stwdx S,A,B is OP=31 & XOP_1_10=707 & S & A & B & BIT_0=0  { *[ram]:4 B = stwdxOp(S,A,B); } 
+
+# binutils-descr: "sthcx.",	XRC(31,726,1),	X_MASK,      POWER7,	PPCNONE,	{RS, RA0, RB}
+define pcodeop sthcxDotOp;
+# ISA-info: sthcx. - Form "X" Page 692 Category "B"
+# binutils: mytest.d:   14:	7c 64 2d ad 	sthcx.  r3,r4,r5
+:sthcx. S,RA_OR_ZERO,B is OP=31 & XOP_1_10=726 &  Rc=1 & S & RA_OR_ZERO & B  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:2 EA = sthcxDotOp(S,RA_OR_ZERO,B);
+	setCrBit(cr0, 2, 1);		
+}
+
+# binutils-descr: "stddx",	X(31,739),	X_MASK,      E500MC,	PPCNONE,	{RS, RA, RB}
+define pcodeop stddxOp;
+# ISA-cmt: stddx - Store Doubleword with Decoration Indexed
+# ISA-info: stddx - Form "X" Page 709 Category "DS"
+# binutils: e500mc.d:   8c:	7e b6 bd c6 	stddx   r21,r22,r23
+:stddx S,A,B is OP=31 & XOP_1_10=739 & S & A & B & BIT_0=0  { *[ram]:8 B = stddxOp(S,A,B); } 
+
+# binutils-descr: "lfdpx",	X(31,791),	X_MASK,      POWER6,	POWER7,		{FRT, RA, RB}
+define pcodeop lfdpxOp;
+# ISA-cmt: lfdpx - Load Floating-Point Double Pair Indexed
+# ISA-info: lfdpx - Form "X" Page 131 Category "FP.out"
+# binutils: power6.d:   30:	7d ae 7e 2e 	lfdpx   f13,r14,r15
+:lfdpx fT,A,B is $(NOTVLE) & OP=31 & XOP_1_10=791 & fT & A & B & BIT_0=0  { fT = lfdpxOp(fT,A,B); } 
+
+# binutils-descr: "lfddx",	X(31,803),	X_MASK,      E500MC,	PPCNONE,	{FRT, RA, RB}
+define pcodeop lfddxOp;
+# ISA-cmt: lfddx - Load Floating Doubleword with Decoration Indexed
+# ISA-info: lfddx - Form "X" Page 708 Category "DS"
+# binutils: e500mc.d:   74:	7f 5b e6 46 	lfddx   f26,r27,r28
+:lfddx fT,A,B is OP=31 & XOP_1_10=803 & fT & A & B & BIT_0=0  { fT = lfddxOp(fT,A,B); } 
+
+# binutils-descr: "lhzcix",	X(31,821),	X_MASK,      POWER6,	PPCNONE,	{RT, RA0, RB}
+define pcodeop lhzcixOp;
+# ISA-cmt: lhzcix - Load Halfword and Zero Caching Inhibited Indexed
+# ISA-info: lhzcix - Form "X" Page 749 Category "S"
+# binutils: mytest.d:   18:	7c 64 2e 6a 	lhzcix  r3,r4,r5
+:lhzcix RT,A,B is $(NOTVLE) & OP=31 & XOP_1_10=821 & RT & A & B & BIT_0=0  { 
+	A = A + B;
+	RT = *:2 A;
+} 
+
+# binutils-descr: "lbzcix",	X(31,853),	X_MASK,      POWER6,	PPCNONE,	{RT, RA0, RB}
+define pcodeop lbzcixOp;
+# ISA-cmt: lbzcix - Load Byte and Zero Caching Inhibited Indexed
+# ISA-info: lbzcix - Form "X" Page 749 Category "S"
+# binutils: mytest.d:   1c:	7c 64 2e aa 	lbzcix  r3,r4,r5
+:lbzcix RT,A,B is $(NOTVLE) & OP=31 & XOP_1_10=853 & RT & A & B & BIT_0=0  { 
+	A = A + B;
+	RT = *:1 A;
+} 
+
+# binutils-descr: "eieio",	X(31,854),	0xffffffff,  PPC,   BOOKE|PPCA2|PPC476,	{0}
+define pcodeop eieioOp;
+# ISA-cmt: eieio - Enforce In-order Execution of I/O
+# ISA-info: eieio - Form "X" Page 698 Category "S"
+# binutils: mytest.d:   20:	7c 00 06 ac 	eieio
+:eieio  is $(NOTVLE) & OP=31 & XOP_1_10=854 & BITS_11_25=0 & BIT_0=0   { eieioOp(); } 
+
+
+# binutils-descr: "ldcix",	X(31,885),	X_MASK,      POWER6,	PPCNONE,	{RT, RA0, RB}
+# ISA-cmt: ldcix - Load Doubleword Caching Inhibited Indexed
+# ISA-info: ldcix - Form "X" Page 749 Category "S"
+# binutils: mytest.d:   24:	7c 64 2e ea 	ldcix   r3,r4,r5
+:ldcix RT,A,B is $(NOTVLE) & OP=31 & XOP_1_10=885 & RT & A & B & BIT_0=0  { 
+	A = A + B;
+	RT = *:8 A;
+} 
+
+# binutils-descr: "divdeuo",	XO(31,393,1,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+# binutils: mytest.d:   28:	7c 64 2f 12 	divdeuo r3,r4,r5
+:divdeuo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=0 & RT & A & B  { 
+	RT = A/B;
+	divOverflow(A,B);
+} 
+
+# binutils-descr: "divdeuo.",	XO(31,393,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeuoDotOp;
+# binutils: mytest.d:   2c:	7c 64 2f 13 	divdeuo. r3,r4,r5
+:divdeuo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=1 & RT & A & B  { 
+	RT = A/B;
+	divOverflow(A,B);
+	cr0flags(RT);
+} 
+
+# binutils-descr: "stwcix",	X(31,917),	X_MASK,      POWER6,	PPCNONE,	{RS, RA0, RB}
+define pcodeop stwcixOp;
+# ISA-cmt: stwcix - Store Word Caching Inhibited Indexed
+# ISA-info: stwcix - Form "X" Page 750 Category "S"
+# binutils: mytest.d:   30:	7c 64 2f 2a 	stwcix  r3,r4,r5
+:stwcix S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=917 & S & A & B & BIT_0=0  { 
+	A = A + B;
+	*:4 A = S;
+} 
+
+# binutils-descr: "stfdpx",	X(31,919),	X_MASK,      POWER6,	PPCNONE,	{FRS, RA, RB}
+define pcodeop stfdpxOp;
+# ISA-cmt: stfdpx - Store Floating-Point Double Pair Indexed
+# ISA-info: stfdpx - Form "X" Page 131 Category "FP.out"
+# binutils: mytest.d:   34:	7c 64 2f 2e 	stfdpx  f3,r4,r5
+:stfdpx fS,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XOP_1_10=919 & fS & RA_OR_ZERO & B & BIT_0=0  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:8 EA = stfdpxOp(fS,RA_OR_ZERO,B);
+} 
+
+# binutils-descr: "stfddx",	X(31,931),	X_MASK,      E500MC,	PPCNONE,	{FRS, RA, RB}
+define pcodeop stfddxOp;
+# ISA-info: stfddx - Form "X" Page 709 Category "DS"
+# binutils: e500mc.d:   88:	7f be ff 46 	stfddx  f29,r30,r31
+:stfddx fS,A,B is OP=31 & XOP_1_10=931 & fS & A & B & BIT_0=0  { *[ram]:8 B = stfddxOp(fS,A,B); } 
+
+# binutils-descr: "divdeo",	XO(31,425,1,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeoOp;
+# binutils: mytest.d:   38:	7c 64 2f 52 	divdeo  r3,r4,r5
+:divdeo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=0 & RT & A & B  { 
+	RT = A s/ B;
+	divOverflow(A,B);
+} 
+
+# binutils-descr: "divdeo.",	XO(31,425,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
+define pcodeop divdeoDotOp;
+# binutils: mytest.d:   3c:	7c 64 2f 53 	divdeo. r3,r4,r5
+:divdeo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=1 & RT & A & B  { 
+	RT = A s/ B;
+	divOverflow(A,B);
+	cr0flags(RT);
+} 
+
+# binutils-descr: "sthcix",	X(31,949),	X_MASK,      POWER6,	PPCNONE,	{RS, RA0, RB}
+define pcodeop sthcixOp;
+# ISA-info: sthcix - Form "X" Page 750 Category "S"
+# binutils: mytest.d:   40:	7c 64 2f 6a 	sthcix  r3,r4,r5
+:sthcix S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=949 & S & A & B & BIT_0=0  { 
+	A = A + B;
+	*:2 A = S;
+} 
+
+define pcodeop slbfeeDotOp;
+# ISA-info: slbfee - Form "X" Page 794 Category "?"
+:slbfee. RT,B is $(NOTVLE) & OP=31 & RT & BITS_16_20=0 & B & XOP_1_10=979 & BIT_0=1  { slbfeeDotOp(RT,B); }
+
+# binutils-descr: "stbcix",	X(31,981),	X_MASK,      POWER6,	PPCNONE,	{RS, RA0, RB}
+define pcodeop stbcixOp;
+# ISA-info: stbcix - Form "X" Page 750 Category "S"
+# binutils: mytest.d:   44:	7c 64 2f aa 	stbcix  r3,r4,r5
+:stbcix S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=981 & S & A & B & BIT_0=0  { 
+	A = A + B;
+	*:1 A = A;
+} 
+
+# binutils-descr: "stdcix",	X(31,1013),	X_MASK,      POWER6,	PPCNONE,	{RS, RA0, RB}
+define pcodeop stdcixOp;
+# ISA-info: stdcix - Form "X" Page 750 Category "S"
+# binutils: mytest.d:   48:	7c 64 2f ea 	stdcix  r3,r4,r5
+:stdcix S,A,B is $(NOTVLE) & OP=31 & XOP_1_10=1013 & S & A & B & BIT_0=0  { 
+	A = A + B;
+	*:8 A = S;
+} 
+
+# binutils-descr: "lq",		OP(56),		OP_MASK,     POWER4,	PPC476,		{RTQ, DQ, RAQ}
+define pcodeop lqOp;
+# ISA-cmt: lq - Load Quadword
+# ISA-info: lq - Form "DQ" Page 751 Category "LSQ"
+# binutils: power4.d:  +0:	e0 83 00 00 	lq      r4,0\(r3\)
+# binutils: power4.d:  +4:	e0 83 00 00 	lq      r4,0\(r3\)
+:lq RT,A,DQ is $(NOTVLE) & OP=56 & RT & A & DQ & BITS_0_3=0  { RT = lqOp(RT,A); } 
+
+define pcodeop lvepxOp;
+:lvepx RT,A,B is OP=31 & RT & A & B & XOP_1_10=295 & BIT_0=0  { RT = lvepxOp(RT,A,B); } 
+
+define pcodeop lvepxlOp;
+:lvepxl RT,A,B is OP=31 & RT & A & B & XOP_1_10=263 & BIT_0=0  { RT = lvepxlOp(RT,A,B); } 
+
+# binutils-descr: "lfdp",	OP(57),		OP_MASK,     POWER6,	POWER7,		{FRT, D, RA0}
+define pcodeop lfdpOp;
+# ISA-cmt: lfdp - Load Floating-Point Double Pair
+# ISA-info: lfdp - Form "DS" Page 131 Category "FP.out"
+# binutils: NO-EXAMPLE - lfdp
+:lfdp fT,A,DS is $(NOTVLE) & OP=57 & fT & A & DS & BITS_0_1=0  { fT = lfdpOp(fT,A,DS:2); } 
+
+# binutils-descr: "dadd",	XRC(59,2,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop daddOp;
+# ISA-cmt: dadd - DFP Add
+# binutils: power6.d:   34:	ee 11 90 04 	dadd    f16,f17,f18
+# binutils: power7.d:   98:	ee 11 90 04 	dadd    f16,f17,f18
+:dadd fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=2 &  Rc=0 & fT & fA & fB  { daddOp(fT,fA,fB); } 
+
+# binutils-descr: "dadd.",	XRC(59,2,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop daddDotOp;
+# ISA-cmt: dadd. - DFP Add Rc
+# binutils: mytest.d:   50:	ec 43 20 05 	dadd.   f2,f3,f4
+:dadd. fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=2 &  Rc=1 & fT & fA & fB  { daddDotOp(fT,fA,fB); } 
+
+# binutils-descr: "dqua",	ZRC(59,3,0),	Z2_MASK,     POWER6,	PPCNONE,	{FRT,FRA,FRB,RMC}
+define pcodeop dquaOp;
+# ISA-cmt: dqua - DFP Quantize
+# binutils: mytest.d:   54:	ec 22 18 06 	dqua    f1,f2,f3,0
+:dqua fT,fA,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=3 &  Rc=0 & fT & fA & fB & RMC  { dquaOp(fT,fA,fB); } 
+
+# binutils-descr: "dqua.",	ZRC(59,3,1),	Z2_MASK,     POWER6,	PPCNONE,	{FRT,FRA,FRB,RMC}
+define pcodeop dquaDotOp;
+# ISA-cmt: dqua. - DFP Quantize Rc
+# binutils: mytest.d:   58:	ec 22 18 07 	dqua.   f1,f2,f3,0
+:dqua. fT,fA,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=3 &  Rc=1 & fT & fA & fB & RMC  { dquaDotOp(fT,fA,fB); } 
+
+# binutils-descr: "dmul",	XRC(59,34,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dmulOp;
+# ISA-cmt: dmul - DFP Multiply
+# binutils: mytest.d:   5c:	ec 43 20 44 	dmul    f2,f3,f4
+:dmul fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=34 &  Rc=0 & fT & fA & fB  { dmulOp(fT,fA,fB); } 
+
+# binutils-descr: "dmul.",	XRC(59,34,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dmulDotOp;
+# ISA-cmt: dmul. - DFP Multiply Rc
+# binutils: mytest.d:   60:	ec 43 20 45 	dmul.   f2,f3,f4
+:dmul. fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=34 &  Rc=1 & fT & fA & fB  { dmulDotOp(fT,fA,fB); } 
+
+# binutils-descr: "drrnd",	ZRC(59,35,0),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop drrndOp;
+# ISA-cmt: drrnd - DFP Reround
+# binutils: mytest.d:   64:	ec 43 20 46 	drrnd   f2,f3,f4,0
+:drrnd fT,fA,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=35 &  Rc=0 & fT & fA & fB & RMC  { drrndOp(fT,fA,fB); } 
+
+# binutils-descr: "drrnd.",	ZRC(59,35,1),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop drrndDotOp;
+# ISA-cmt: drrnd. - DFP Reround Rc
+# binutils: mytest.d:   68:	ec 43 20 47 	drrnd.  f2,f3,f4,0
+:drrnd. fT,fA,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=35 &  Rc=1 & fT & fA & fB & RMC  { drrndDotOp(fT,fA,fB); } 
+
+# binutils-descr: "dscli",	ZRC(59,66,0),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscliOp;
+# ISA-cmt: dscli - DFP Shift Significand Left Immediate
+# binutils: mytest.d:   6c:	ec 43 10 84 	dscli   f2,f3,4
+# Y {OP 0 5 {}} {fT 6 10 {}} {fA 11 15 {}} {SH16 16 21 {}} {XOP_1_9 22 30 {}} {Rc 31 31 {}}
+# X 00--------------------------05 06---------------------10 11---------------------15 16--------------------------21 22-----------------------------------------30 31-31 
+# X --------OP=111011(59)---------|-----------fT------------|-----------fA------------|-------------SH16-------------|-------------XOP_1_9=1000010(66)-------------|Rc=0-|
+:dscli fT,fA,SH16 is $(NOTVLE) & OP=59 & XOP_1_9=66 &  Rc=0 & fT & fA & SH16   { dscliOp(fT,fA); } 
+
+# binutils-descr: "dscli.",	ZRC(59,66,1),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscliDotOp;
+# ISA-cmt: dscli. - DFP Shift Significand Left Immediate Rc
+# binutils: mytest.d:   70:	ec 43 10 85 	dscli.  f2,f3,4
+:dscli. fT,fA,SH16 is $(NOTVLE) & OP=59 & XOP_1_9=66 &  Rc=1 & fT & fA & SH16   { dscliDotOp(fT,fA); } 
+
+# binutils-descr: "dquai",	ZRC(59,67,0),	Z2_MASK,     POWER6,	PPCNONE,	{TE, FRT,FRB,RMC}
+define pcodeop dquaiOp;
+# ISA-cmt: dquai - DFP Quantize Immediate
+# binutils: mytest.d:   74:	ec 62 20 86 	dquai   2,f3,f4,0
+:dquai fT,BITS_16_20,fB,RMC is $(NOTVLE) & OP=59 & fT & BITS_16_20 & fB & RMC & XOP_1_8=67 & Rc=0  { dquaiOp(fT,fB); } 
+
+# binutils-descr: "dquai.",	ZRC(59,67,1),	Z2_MASK,     POWER6,	PPCNONE,	{TE, FRT,FRB,RMC}
+define pcodeop dquaiDotOp;
+# ISA-cmt: dquai. - DFP Quantize Immediate Rc
+# binutils: mytest.d:   78:	ec 62 20 87 	dquai.  2,f3,f4,0
+:dquai. fT,BITS_16_20,fB,RMC is $(NOTVLE) & OP=59 & fT & BITS_16_20 & fB & RMC & XOP_1_8=67 & Rc=1  { dquaiDotOp(fT,fB); } 
+
+# binutils-descr: "dscri",	ZRC(59,98,0),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscriOp;
+# ISA-cmt: dscri - DFP Shift Significand Right Immediate
+# binutils: mytest.d:   7c:	ec 43 10 c4 	dscri   f2,f3,4
+:dscri fT,fA,SH16 is $(NOTVLE) & OP=59 & XOP_1_9=98 &  Rc=0 & fT & fA & SH16   { dscriOp(fT,fA); } 
+
+# binutils-descr: "dscri.",	ZRC(59,98,1),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscriDotOp;
+# ISA-cmt: dscri. - DFP Shift Significand Right Immediate Rc
+# binutils: mytest.d:   80:	ec 43 10 c5 	dscri.  f2,f3,4
+:dscri. fT,fA,SH16 is $(NOTVLE) & OP=59 & XOP_1_9=98 &  Rc=1 & fT & fA & SH16   { dscriDotOp(fT,fA); } 
+
+# binutils-descr: "drintx",	ZRC(59,99,0),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintxOp;
+# ISA-cmt: drintx - DFP Round To FP Integer With Inexact
+# binutils: mytest.d:   84:	ec 61 20 c6 	drintx  1,f3,f4,0
+:drintx fT,fB,RMC is $(NOTVLE) & OP=59 & fT & BITS_17_20=0 & BIT_16 & fB & RMC & XOP_1_8=99 & Rc=0 { drintxOp(fT,fB); } 
+
+# binutils-descr: "drintx.",	ZRC(59,99,1),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintxDotOp;
+# ISA-cmt: drintx - DFP Round To FP Integer With Inexact
+# binutils: mytest.d:   84:	ec 61 20 c6 	drintx  1,f3,f4,0
+:drintx. fT,fB,RMC is $(NOTVLE) & OP=59 & fT & BITS_17_20=0 & BIT_16 & fB & RMC & XOP_1_8=99 & Rc=1 { drintxDotOp(fT,fB); } 
+
+# binutils-descr: "dcmpo",	X(59,130),	X_MASK,      POWER6,	PPCNONE,	{BF,  FRA, FRB}
+define pcodeop dcmpoOp;
+# ISA-cmt: dcmpo - DFP Compare Ordered
+# ISA-info: dcmpo - Form "X" Page 179 Category "DFP"
+# binutils: mytest.d:   8c:	ed 03 21 04 	dcmpo   cr2,f3,f4
+:dcmpo CRFD,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=130 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dcmpoOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstex",	X(59,162),	X_MASK,      POWER6,	PPCNONE,	{BF,  FRA, FRB}
+define pcodeop dtstexOp;
+# ISA-cmt: dtstex - DFP Test Exponent
+# ISA-info: dtstex - Form "X" Page 181 Category "DFP"
+# binutils: mytest.d:   90:	ed 03 21 44 	dtstex  cr2,f3,f4
+:dtstex CRFD,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=162 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dtstexOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstdc",	Z(59,194),	Z_MASK,      POWER6,	PPCNONE,	{BF,  FRA, DCM}
+define pcodeop dtstdcOp;
+# ISA-cmt: dtstdc - DFP Test Data Class
+# ISA-info: dtstdc - Form "Z23" Page 180 Category "DFP"
+# binutils: mytest.d:   94:	ed 03 11 84 	dtstdc  cr2,f3,4
+:dtstdc CRFD,fA,DCM is $(NOTVLE) & OP=59 & XOP_1_9=194 & CRFD & fA & DCM & BITS_21_22=0 & BIT_0=0  { dtstdcOp(CRFD,fA); } 
+
+# binutils-descr: "dtstdg",	Z(59,226),	Z_MASK,      POWER6,	PPCNONE,	{BF,  FRA, DGM}
+define pcodeop dtstdgOp;
+# ISA-cmt: dtstdg - DFP Test Data Group
+# ISA-info: dtstdg - Form "Z23" Page 180 Category "DFP"
+# binutils: mytest.d:   98:	ed 03 11 c4 	dtstdg  cr2,f3,4
+:dtstdg CRFD,fA,DGM is $(NOTVLE) & OP=59 & XOP_1_9=226 & CRFD & fA & DGM & BITS_21_22=0 & BIT_0=0  { dtstdgOp(CRFD,fA); } 
+
+# binutils-descr: "drintn",	ZRC(59,227,0),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintnOp;
+# ISA-cmt: drintn - DFP Round To FP Integer Without Inexact
+# binutils: mytest.d:   9c:	ec 61 21 c6 	drintn  1,f3,f4,0
+:drintn fT,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=227 &  Rc=0 & BIT_16 & fT & fB & RMC & BITS_17_20=0  { drintnOp(fT,fB); } 
+
+# binutils-descr: "drintn.",	ZRC(59,227,1),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintnDotOp;
+# ISA-cmt: drintn. - DFP Round To FP Integer Without Inexact Rc
+# binutils: mytest.d:   a0:	ec 61 21 c7 	drintn. 1,f3,f4,0
+:drintn. fT,fB,RMC is $(NOTVLE) & OP=59 & XOP_1_8=227 &  Rc=1 & BIT_16 & fT & fB & RMC & BITS_17_20=0 { drintnDotOp(fT,fB); } 
+
+# binutils-descr: "dctdp",	XRC(59,258,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctdpOp;
+# ISA-cmt: dctdp - DFP Convert To DFP Long
+# binutils: mytest.d:   a4:	ec 40 1a 04 	dctdp   f2,f3
+:dctdp fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=258 &  Rc=0 & fT & fB & BITS_16_20=0  { dctdpOp(fT,fB); } 
+
+# binutils-descr: "dctdp.",	XRC(59,258,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctdpDotOp;
+# ISA-cmt: dctdp. - DFP Convert To DFP Long Rc
+# binutils: mytest.d:   a8:	ec 40 1a 05 	dctdp.  f2,f3
+:dctdp. fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=258 &  Rc=1 & fT & fB & BITS_16_20=0  { dctdpDotOp(fT,fB); } 
+
+# binutils-descr: "dctfix",	XRC(59,290,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctfixOp;
+# ISA-cmt: dctfix - DFP Convert To Fixed
+# binutils: mytest.d:   ac:	ec 40 1a 44 	dctfix  f2,f3
+:dctfix fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=290 &  Rc=0 & fT & fB & BITS_16_20=0  { dctfixOp(fT,fB); } 
+
+# binutils-descr: "dctfix.",	XRC(59,290,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctfixDotOp;
+# ISA-cmt: dctfix. - DFP Convert To Fixed Rc
+# binutils: mytest.d:   b0:	ec 40 1a 45 	dctfix. f2,f3
+:dctfix. fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=290 &  Rc=1 & fT & fB & BITS_16_20=0  { dctfixDotOp(fT,fB); } 
+
+# binutils-descr: "ddedpd",	XRC(59,322,0),	X_MASK,      POWER6,	PPCNONE,	{SP, FRT, FRB}
+define pcodeop ddedpdOp;
+# ISA-cmt: ddedpd - DFP Decode DPD To BCD
+# binutils: mytest.d:   b4:	ec 70 22 84 	ddedpd  2,f3,f4
+:ddedpd fT,SP,fB is $(NOTVLE) & OP=59 & fT & SP & BITS_16_18=0 & fB & XOP_1_10=322 & Rc=0 { ddedpdOp(fT,fB); }   # & BITS_16_18=0
+
+# binutils-descr: "ddedpd.",	XRC(59,322,1),	X_MASK,      POWER6,	PPCNONE,	{SP, FRT, FRB}
+define pcodeop ddedpdDotOp;
+# ISA-cmt: ddedpd. - DFP Decode DPD To BCD Rc
+# binutils: mytest.d:   b8:	ec 70 22 85 	ddedpd. 2,f3,f4
+:ddedpd. fT,SP,fB is $(NOTVLE) & OP=59 & fT & SP & BITS_16_18=0 & fB & XOP_1_10=322 & Rc=1 { ddedpdDotOp(fT,fB); }  #  & BITS_16_18=0
+
+# binutils-descr: "dxex",	XRC(59,354,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dxexOp;
+# ISA-cmt: dxex - DFP Extract Biased Exponent
+# binutils: mytest.d:   bc:	ec 40 1a c4 	dxex    f2,f3
+:dxex fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=354 &  Rc=0 & fT & fB & BITS_16_20=0  { dxexOp(fT,fB); } 
+
+# binutils-descr: "dxex.",	XRC(59,354,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dxexDotOp;
+# ISA-cmt: dxex. - DFP Extract Biased Exponent Rc
+# binutils: mytest.d:   c0:	ec 40 1a c5 	dxex.   f2,f3
+:dxex. fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=354 &  Rc=1 & fT & fB & BITS_16_20=0  { dxexDotOp(fT,fB); } 
+
+# binutils-descr: "dsub",	XRC(59,514,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dsubOp;
+# ISA-cmt: dsub - DFP Subtract
+# binutils: mytest.d:   c4:	ec 43 24 04 	dsub    f2,f3,f4
+:dsub fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=514 &  Rc=0 & fT & fA & fB  { dsubOp(fT,fA,fB); } 
+
+# binutils-descr: "dsub.",	XRC(59,514,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dsubDotOp;
+# ISA-cmt: dsub. - DFP Subtract Rc
+# binutils: mytest.d:   c8:	ec 43 24 05 	dsub.   f2,f3,f4
+:dsub. fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=514 &  Rc=1 & fT & fA & fB  { dsubDotOp(fT,fA,fB); } 
+
+# binutils-descr: "ddiv",	XRC(59,546,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop ddivOp;
+# ISA-cmt: ddiv - DFP Divide
+# binutils: mytest.d:   cc:	ec 43 24 44 	ddiv    f2,f3,f4
+:ddiv fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=546 &  Rc=0 & fT & fA & fB  { ddivOp(fT,fA,fB); } 
+
+# binutils-descr: "ddiv.",	XRC(59,546,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop ddivDotOp;
+# ISA-cmt: ddiv. - DFP Divide Rc
+# binutils: mytest.d:   d0:	ec 43 24 45 	ddiv.   f2,f3,f4
+:ddiv. fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=546 &  Rc=1 & fT & fA & fB  { ddivDotOp(fT,fA,fB); } 
+
+# binutils-descr: "dcmpu",	X(59,642),	X_MASK,      POWER6,	PPCNONE,	{BF,  FRA, FRB}
+define pcodeop dcmpuOp;
+# ISA-cmt: dcmpu - DFP Compare Unordered
+# ISA-info: dcmpu - Form "X" Page 178 Category "DFP"
+# binutils: mytest.d:   d4:	ed 03 25 04 	dcmpu   cr2,f3,f4
+:dcmpu CRFD,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=642 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dcmpuOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstsf",	X(59,674),	X_MASK,      POWER6,	PPCNONE,	{BF,  FRA, FRB}
+define pcodeop dtstsfOp;
+# ISA-cmt: dtstsf - DFP Test Significance
+# ISA-info: dtstsf - Form "X" Page 182 Category "DFP"
+# binutils: mytest.d:   d8:	ed 03 25 44 	dtstsf  cr2,f3,f4
+:dtstsf CRFD,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=674 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dtstsfOp(CRFD,fA,fB); } 
+
+# binutils-descr: "drsp",	XRC(59,770,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop drspOp;
+# ISA-cmt: drsp - DFP Round To DFP Short
+# binutils: mytest.d:   dc:	ec 40 1e 04 	drsp    f2,f3
+:drsp fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=770 &  Rc=0 & fT & fB & BITS_16_20=0  { drspOp(fT,fB); } 
+
+# binutils-descr: "drsp.",	XRC(59,770,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop drspDotOp;
+# ISA-cmt: drsp. - DFP Round To DFP Short Rc
+# binutils: mytest.d:   e0:	ec 40 1e 05 	drsp.   f2,f3
+:drsp. fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=770 &  Rc=1 & fT & fB & BITS_16_20=0  { drspDotOp(fT,fB); } 
+
+# binutils-descr: "dcffix",	XRC(59,802,0), X_MASK|FRA_MASK, POWER7,	PPCNONE,	{FRT, FRB}
+define pcodeop dcffixOp;
+# ISA-cmt: dcffix - DFP Convert From Fixed
+# binutils: power7.d:  144:	ed 40 66 44 	dcffix  f10,f12
+:dcffix fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=802 &  Rc=0 & fT & fB & BITS_16_20=0  { dcffixOp(fT,fB); } 
+
+# binutils-descr: "dcffix.",	XRC(59,802,1), X_MASK|FRA_MASK, POWER7,	PPCNONE,	{FRT, FRB}
+define pcodeop dcffixDotOp;
+# ISA-cmt: dcffix. - DFP Convert From Fixed Rc
+# binutils: mytest.d:   e4:	ec 40 1e 45 	dcffix. f2,f3
+:dcffix. fT,fB is $(NOTVLE) & OP=59 & XOP_1_10=802 &  Rc=1 & fT & fB & BITS_16_20=0  { dcffixDotOp(fT,fB); } 
+
+# binutils-descr: "denbcd",	XRC(59,834,0),	X_MASK,      POWER6,	PPCNONE,	{S, FRT, FRB}
+define pcodeop denbcdOp;
+# ISA-cmt: denbcd - DFP Encode BCD To DPD
+# binutils: mytest.d:   e8:	ec 70 26 84 	denbcd  1,f3,f4
+:denbcd fT,fB is $(NOTVLE) & OP=59 & fT & BIT_20 & BITS_16_19=0 & fB & XOP_1_10=834 & Rc=0 { denbcdOp(fT,fB); } # & BITS_16_19=0 
+
+# binutils-descr: "denbcd.",	XRC(59,834,1),	X_MASK,      POWER6,	PPCNONE,	{S, FRT, FRB}
+define pcodeop denbcdDotOp;
+# ISA-cmt: denbcd. - DFP Encode BCD To DPD Rc
+# binutils: mytest.d:   ec:	ec 70 26 85 	denbcd. 1,f3,f4
+:denbcd. fT,fB is $(NOTVLE) & OP=59 & fT & BIT_20 & BITS_16_19=0 & fB & XOP_1_10=834 & Rc=1  { denbcdDotOp(fT,fB); } # & BITS_16_19=0
+
+# binutils-descr: "diex",	XRC(59,866,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop diexOp;
+# ISA-cmt: diex - DFP Insert Biased Exponent
+# binutils: mytest.d:   f4:	ec 43 26 c4 	diex    f2,f3,f4
+:diex fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=866 &  Rc=0 & fT & fA & fB  { diexOp(fT,fA,fB); } 
+
+# binutils-descr: "diex.",	XRC(59,866,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop diexDotOp;
+# ISA-cmt: diex. - DFP Insert Biased Exponent Rc
+# binutils: mytest.d:   f8:	ec 43 26 c5 	diex.   f2,f3,f4
+:diex. fT,fA,fB is $(NOTVLE) & OP=59 & XOP_1_10=866 &  Rc=1 & fT & fA & fB  { diexDotOp(fT,fA,fB); } 
+
+# binutils-descr: "stfdp",	OP(61),		OP_MASK,     POWER6,	PPCNONE,	{FRT, D, RA0}
+define pcodeop stfdpOp;
+# ISA-cmt: stfdp - Store Floating-Point Double Pair
+# ISA-info: stfdp - Form "DS" Page 131 Category "FP.out"
+# binutils: NO-EXAMPLE - stfdp
+:stfdp fS,RA_OR_ZERO,DS is $(NOTVLE) & OP=61 & fS & RA_OR_ZERO & DS & BITS_0_1=0  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + sext(DS:2 << 2);
+	*[ram]:8 EA = stfdpOp(fS,RA_OR_ZERO,DS:2);
+} 
+
+# binutils-descr: "stq",		DSO(62,2),	DS_MASK,     POWER4,	PPC476,		{RSQ, DS, RA0}
+define pcodeop stqOp;
+# ISA-cmt: stq - Store Quadword
+# ISA-info: stq - Form "DS" Page 751 Category "LSQ"
+# binutils: power4.d:  +50:	f8 c7 00 02 	stq     r6,0\(r7\)
+# binutils: power4.d:  +54:	f8 c7 00 12 	stq     r6,16\(r7\)
+# binutils: power4.d:  +58:	f8 c7 ff f2 	stq     r6,-16\(r7\)
+# binutils: power4.d:  +5c:	f8 c7 80 02 	stq     r6,-32768\(r7\)
+# binutils: power4.d:  +60:	f8 c7 7f f2 	stq     r6,32752\(r7\)
+:stq S,RA_OR_ZERO,DS is $(NOTVLE) & OP=62 & S & RA_OR_ZERO & DS & BITS_0_1=2  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + sext(DS:2 << 2);
+	*:16 EA = stqOp(S,RA_OR_ZERO,DS:2);
+} 
+
+define pcodeop stvepxOp;
+:stvepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=807 & BIT_0=0  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:16 EA = stvepxOp(S, RA_OR_ZERO, B);
+} 
+
+define pcodeop stvepxlOp;
+:stvepxl S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=775 & BIT_0=0  {
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:16 EA = stvepxlOp(S, RA_OR_ZERO, B);
+} 
+
+# binutils-descr: "dquaq",	ZRC(63,3,0),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop dquaqOp;
+# ISA-cmt: dquaq - DFP Quantize Quad
+# binutils: mytest.d:  100:	fc 43 24 06 	dquaq   f2,f3,f4,2
+:dquaq  fT,fA,fB,RMC is $(NOTVLE) & OP=63 & fT & fA & fB & RMC & XOP_1_8=3 & Rc=0   { dquaqOp(); } 
+
+# binutils-descr: "dquaq.",	ZRC(63,3,1),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop dquaqDotOp;
+# ISA-cmt: dquaq. - DFP Quantize Quad Rc
+# binutils: mytest.d:  104:	fc 43 24 07 	dquaq.  f2,f3,f4,2
+:dquaq. fT,fA,fB,RMC is $(NOTVLE) & OP=63 & fT & fA & fB & RMC & XOP_1_8=3 & Rc=1   { dquaqDotOp(); } 
+
+# binutils-descr: "dmulq",	XRC(63,34,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dmulqOp;
+# ISA-cmt: dmulq - DFP Multiply Quad
+# binutils: mytest.d:  108:	fc 43 20 44 	dmulq   f2,f3,f4
+:dmulq fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=34 &  Rc=0 & fT & fA & fB  { dmulqOp(fT,fA,fB); } 
+
+# binutils-descr: "dmulq.",	XRC(63,34,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dmulqDotOp;
+# ISA-cmt: dmulq. - DFP Multiply Quad Rc
+# binutils: mytest.d:  10c:	fc 43 20 45 	dmulq.  f2,f3,f4
+:dmulq. fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=34 &  Rc=1 & fT & fA & fB  { dmulqDotOp(fT,fA,fB); } 
+
+# binutils-descr: "drrndq",	ZRC(63,35,0),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop drrndqOp;
+# ISA-cmt: drrndq - DFP Reround Quad
+# binutils: mytest.d:  110:	fc 43 22 46 	drrndq  f2,f3,f4,1
+:drrndq fT,fA,fB,RMC is $(NOTVLE) & OP=63 & fT & fA & fB & RMC & XOP_1_8=35 & Rc=0  { drrndqOp(fT,fA,fB); } 
+
+# binutils-descr: "drrndq.",	ZRC(63,35,1),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
+define pcodeop drrndqDotOp;
+# ISA-cmt: drrndq - DFP Reround Quad
+# binutils: mytest.d:  110:	fc 43 22 46 	drrndq  f2,f3,f4,1
+:drrndq. fT,fA,fB,RMC is $(NOTVLE) & OP=63 & fT & fA & fB & RMC & XOP_1_8=35 & Rc=1  { drrndqDotOp(fT,fA,fB); } 
+
+
+# binutils-descr: "dscliq",	ZRC(63,66,0),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscliqOp;
+# ISA-cmt: dscliq - DFP Shift Significand Left Immediate Quad
+# binutils: mytest.d:  118:	fc 43 10 84 	dscliq  f2,f3,4
+:dscliq  fT,fA,SH16 is $(NOTVLE) & OP=63 & fT & fA & SH16 & XOP_1_9=66 & Rc=0  { dscliqOp(fT,fA); } 
+
+# binutils-descr: "dscliq.",	ZRC(63,66,1),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscliqDotOp;
+# ISA-cmt: dscliq. - DFP Shift Significand Left Immediate Quad Rc
+# binutils: mytest.d:  11c:	fc 43 10 85 	dscliq. f2,f3,4
+:dscliq. fT,fA,SH16 is $(NOTVLE) & OP=63 & fT & fA & SH16 & XOP_1_9=66 & Rc=1  { dscliqDotOp(fT,fA); } 
+
+# binutils-descr: "dquaiq",	ZRC(63,67,0),	Z2_MASK,     POWER6,	PPCNONE,	{TE, FRT, FRB, RMC}
+define pcodeop dquaiqOp;
+# ISA-cmt: dquaiq - DFP Quantize Immediate Quad
+# binutils: mytest.d:  120:	fc 62 24 86 	dquaiq  2,f3,f4,2
+:dquaiq fT,A_BITS,fB,RMC is $(NOTVLE) & OP=63 & fT & A_BITS & fB & RMC & XOP_1_8=67 & Rc=0 { dquaiqOp(fT,fB); } 
+
+# binutils-descr: "dquaiq.",	ZRC(63,67,1),	Z2_MASK,     POWER6,	PPCNONE,	{TE, FRT, FRB, RMC}
+define pcodeop dquaiqDotOp;
+# ISA-cmt: dquaiq. - DFP Quantize Immediate Quad Rc
+# binutils: mytest.d:  124:	fc 62 24 87 	dquaiq. 2,f3,f4,2
+:dquaiq. fT,A_BITS,fB,RMC is $(NOTVLE) & OP=63 & fT & A_BITS & fB & RMC & XOP_1_8=67 & Rc=1 { dquaiqDotOp(fT,fB); } 
+
+# binutils-descr: "dscriq",	ZRC(63,98,0),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscriqOp;
+# ISA-cmt: dscriq - DFP Shift Significand Right Immediate Quad
+# binutils: mytest.d:  128:	fc 43 10 c4 	dscriq  f2,f3,4
+:dscriq  fT,fA,SH16 is $(NOTVLE) & OP=63 & fT & fA & SH16 & XOP_1_9=98 & Rc=0 { dscriqOp(); } 
+
+# binutils-descr: "dscriq.",	ZRC(63,98,1),	Z_MASK,      POWER6,	PPCNONE,	{FRT, FRA, SH16}
+define pcodeop dscriqDotOp;
+# ISA-cmt: dscriq. - DFP Shift Significand Right Immediate Quad Rc
+# binutils: mytest.d:  12c:	fc 43 10 c5 	dscriq. f2,f3,4
+:dscriq. fT,fA,SH16 is $(NOTVLE) & OP=63 & fT & fA & SH16 & XOP_1_9=98 & Rc=1 { dscriqDotOp(); } 
+
+# binutils-descr: "drintxq",	ZRC(63,99,0),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintxqOp;
+# ISA-cmt: drintxq - DFP Round To FP Integer With Inexact Quad
+# binutils: mytest.d:  130:	fc 61 22 c6 	drintxq 1,f3,f4,1
+:drintxq fT,fB,RMC is $(NOTVLE) & OP=63 & fT & BITS_17_20=0 & BIT_16 & fB & RMC & XOP_1_8=99 & Rc=0 { drintxqOp(); } 
+
+# binutils-descr: "drintxq.",	ZRC(63,99,1),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintxqDotOp;
+# ISA-cmt: drintxq. - DFP Round To FP Integer With Inexact Quad Rc
+# binutils: mytest.d:  134:	fc 61 22 c7 	drintxq. 1,f3,f4,1
+:drintxq. fT,fB,RMC is $(NOTVLE) & OP=63 & fT & BITS_17_20=0 & BIT_16 & fB & RMC & XOP_1_8=99 & Rc=1 { drintxqDotOp(); } 
+
+# binutils-descr: "dcmpoq",	X(63,130),	X_MASK,      POWER6,	PPCNONE,	{BF, FRA, FRB}
+define pcodeop dcmpoqOp;
+# ISA-cmt: dcmpoq - DFP Compare Ordered Quad
+# ISA-info: dcmpoq - Form "X" Page 179 Category "DFP"
+# binutils: mytest.d:  138:	fd 03 21 04 	dcmpoq  cr2,f3,f4
+:dcmpoq CRFD,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=130 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dcmpoqOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstexq",	X(63,162),	X_MASK,      POWER6,	PPCNONE,	{BF, FRA, FRB}
+define pcodeop dtstexqOp;
+# ISA-cmt: dtstexq - DFP Test Exponent Quad
+# ISA-info: dtstexq - Form "X" Page 181 Category "DFP"
+# binutils: mytest.d:  144:	fd 03 21 44 	dtstexq cr2,f3,f4
+:dtstexq CRFD,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=162 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dtstexqOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstdcq",	Z(63,194),	Z_MASK,      POWER6,	PPCNONE,	{BF, FRA, DCM}
+define pcodeop dtstdcqOp;
+# ISA-cmt: dtstdcq - DFP Test Data Class Quad
+# ISA-info: dtstdcq - Form "Z22" Page 180 Category "DFP"
+# binutils: mytest.d:  26c:	fc 82 0d 84 	dtstdcq cr1,f2,3
+:dtstdcq  BF2,fA,DCM is $(NOTVLE) & OP=63 & BF2 & BITS_21_22=0 & fA & DCM & XOP_1_9=194 & BIT_0=0  { dtstdcqOp(fA); } 
+
+
+# binutils-descr: "dtstdgq",	Z(63,226),	Z_MASK,      POWER6,	PPCNONE,	{BF, FRA, DGM}
+define pcodeop dtstdgqOp;
+# ISA-cmt: dtstdgq - DFP Test Data Group Quad
+# ISA-info: dtstdgq - Form "Z22" Page 180 Category "DFP"
+# binutils: mytest.d:  148:	fd 03 11 c4 	dtstdgq cr2,f3,4
+:dtstdgq BF2,fA,DGM is $(NOTVLE) & OP=63 & BF2 & BITS_21_22=0 & fA & DGM & XOP_1_9=226 & BIT_0=0  { dtstdgqOp(); } 
+
+# binutils-descr: "drintnq",	ZRC(63,227,0),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintnqOp;
+# ISA-cmt: drintnq - DFP Round To FP Integer Without Inexact Quad
+# binutils: mytest.d:  14c:	fc 61 23 c6 	drintnq 1,f3,f4,1
+:drintnq fT,fB,RMC is $(NOTVLE) & OP=63 & fT & BITS_17_20=0 & MSR_L & fB & RMC & XOP_1_8=227 & Rc=0 { drintnqOp(); } 
+
+# binutils-descr: "drintnq.",	ZRC(63,227,1),	Z2_MASK,     POWER6,	PPCNONE,	{R, FRT, FRB, RMC}
+define pcodeop drintnqDotOp;
+# ISA-cmt: drintnq. - DFP Round To FP Integer Without Inexact Quad Rc
+# binutils: mytest.d:  150:	fc 61 23 c7 	drintnq. 1,f3,f4,1
+:drintnq. fT,fB,RMC  is $(NOTVLE) & OP=63 & fT & BITS_17_20=0 & MSR_L & fB & RMC & XOP_1_8=227 & Rc=1 { drintnqDotOp(); } 
+
+# binutils-descr: "dctqpq",	XRC(63,258,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctqpqOp;
+# ISA-cmt: dctqpq - DFP Convert To DFP Extended
+# binutils: mytest.d:  154:	fc 40 1a 04 	dctqpq  f2,f3
+:dctqpq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=258 &  Rc=0 & fT & fB & BITS_16_20=0  { dctqpqOp(fT,fB); } 
+
+# binutils-descr: "dctqpq.",	XRC(63,258,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctqpqDotOp;
+# ISA-cmt: dctqpq. - DFP Convert To DFP Extended Rc
+# binutils: mytest.d:  158:	fc 40 1a 05 	dctqpq. f2,f3
+:dctqpq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=258 &  Rc=1 & fT & fB & BITS_16_20=0  { dctqpqDotOp(fT,fB); } 
+
+# binutils-descr: "dctfixq",	XRC(63,290,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctfixqOp;
+# ISA-cmt: dctfixq - DFP Convert To Fixed Quad
+# binutils: mytest.d:  15c:	fc 40 1a 44 	dctfixq f2,f3
+:dctfixq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=290 &  Rc=0 & fT & fB & BITS_16_20=0  { dctfixqOp(fT,fB); } 
+
+# binutils-descr: "dctfixq.",	XRC(63,290,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dctfixqDotOp;
+# ISA-cmt: dctfixq. - DFP Convert To Fixed Quad Rc
+# binutils: mytest.d:  160:	fc 40 1a 45 	dctfixq. f2,f3
+:dctfixq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=290 &  Rc=1 & fT & fB & BITS_16_20=0  { dctfixqDotOp(fT,fB); } 
+
+# binutils-descr: "ddedpdq",	XRC(63,322,0),	X_MASK,      POWER6,	PPCNONE,	{SP, FRT, FRB}
+define pcodeop ddedpdqOp;
+# ISA-cmt: ddedpdq - DFP Decode DPD To BCD Quad
+# binutils: mytest.d:  164:	fc 70 22 84 	ddedpdq 2,f3,f4
+:ddedpdq fT,SP,fB is $(NOTVLE) & OP=63 & XOP_1_10=322 &  Rc=0 & fT & fB & SP & BITS_16_18=0 { ddedpdqOp(fT,fB); } 
+
+# binutils-descr: "ddedpdq.",	XRC(63,322,1),	X_MASK,      POWER6,	PPCNONE,	{SP, FRT, FRB}
+define pcodeop ddedpdqDotOp;
+# ISA-cmt: ddedpdq. - DFP Decode DPD To BCD Quad Rc
+# binutils: mytest.d:  168:	fc 70 22 85 	ddedpdq. 2,f3,f4
+:ddedpdq. fT,SP,fB is $(NOTVLE) & OP=63 & XOP_1_10=322 &  Rc=1 & fT & fB & SP & BITS_16_18=0 { ddedpdqDotOp(fT,fB); } 
+
+# binutils-descr: "dxexq",	XRC(63,354,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dxexqOp;
+# ISA-cmt: dxexq - DFP Extract Biased Exponent Quad
+# binutils: mytest.d:  16c:	fc 40 1a c4 	dxexq   f2,f3
+:dxexq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=354 &  Rc=0 & fT & fB & BITS_16_20=0  { dxexqOp(fT,fB); } 
+
+# binutils-descr: "dxexq.",	XRC(63,354,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dxexqDotOp;
+# ISA-cmt: dxexq. - DFP Extract Biased Exponent Quad Rc
+# binutils: mytest.d:  170:	fc 40 1a c5 	dxexq.  f2,f3
+:dxexq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=354 &  Rc=1 & fT & fB & BITS_16_20=0  { dxexqDotOp(fT,fB); } 
+
+# binutils-descr: "dsubq",	XRC(63,514,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dsubqOp;
+# ISA-cmt: dsubq - DFP Subtract Quad
+# binutils: mytest.d:  174:	fc 43 24 04 	dsubq   f2,f3,f4
+:dsubq fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=514 &  Rc=0 & fT & fA & fB  { dsubqOp(fT,fA,fB); } 
+
+# binutils-descr: "dsubq.",	XRC(63,514,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop dsubqDotOp;
+# ISA-cmt: dsubq. - DFP Subtract Quad Rc
+# binutils: mytest.d:  178:	fc 43 24 05 	dsubq.  f2,f3,f4
+:dsubq. fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=514 &  Rc=1 & fT & fA & fB  { dsubqDotOp(fT,fA,fB); } 
+
+# binutils-descr: "ddivq",	XRC(63,546,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop ddivqOp;
+# ISA-cmt: ddivq - DFP Divide Quad
+# binutils: mytest.d:  17c:	fc 43 24 44 	ddivq   f2,f3,f4
+:ddivq fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=546 &  Rc=0 & fT & fA & fB  { ddivqOp(fT,fA,fB); } 
+
+# binutils-descr: "ddivq.",	XRC(63,546,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop ddivqDotOp;
+# ISA-cmt: ddivq. - DFP Divide Quad Rc
+# binutils: mytest.d:  180:	fc 43 24 45 	ddivq.  f2,f3,f4
+:ddivq. fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=546 &  Rc=1 & fT & fA & fB  { ddivqDotOp(fT,fA,fB); } 
+
+# binutils-descr: "dcmpuq",	X(63,642),	X_MASK,      POWER6,	PPCNONE,	{BF, FRA, FRB}
+define pcodeop dcmpuqOp;
+# ISA-cmt: dcmpuq - DFP Compare Unordered Quad
+# ISA-info: dcmpuq - Form "X" Page 179 Category "DFP"
+# binutils: mytest.d:  184:	fd 03 25 04 	dcmpuq  cr2,f3,f4
+:dcmpuq CRFD,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=642 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dcmpuqOp(CRFD,fA,fB); } 
+
+# binutils-descr: "dtstsfq",	X(63,674),	X_MASK,      POWER6,	PPCNONE,	{BF, FRA, FRB}
+define pcodeop dtstsfqOp;
+# ISA-cmt: dtstsfq - DFP Test Significance Quad
+# ISA-info: dtstsfq - Form "X" Page 182 Category "DFP"
+# binutils: mytest.d:  188:	fd 03 25 44 	dtstsfq cr2,f3,f4
+:dtstsfq CRFD,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=674 & CRFD & fA & fB & BITS_21_22=0 & BIT_0=0  { dtstsfqOp(CRFD,fA,fB); } 
+
+# binutils-descr: "drdpq",	XRC(63,770,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop drdpqOp;
+# ISA-cmt: drdpq - DFP Round To DFP Long
+# binutils: mytest.d:  18c:	fc 40 1e 04 	drdpq   f2,f3
+:drdpq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=770 &  Rc=0 & fT & fB & BITS_16_20=0  { drdpqOp(fT,fB); } 
+
+# binutils-descr: "drdpq.",	XRC(63,770,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop drdpqDotOp;
+# ISA-cmt: drdpq. - DFP Round To DFP Long Rc
+# binutils: mytest.d:  190:	fc 40 1e 05 	drdpq.  f2,f3
+:drdpq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=770 &  Rc=1 & fT & fB & BITS_16_20=0  { drdpqDotOp(fT,fB); } 
+
+# binutils-descr: "dcffixq",	XRC(63,802,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dcffixqOp;
+# ISA-cmt: dcffixq - DFP Convert From Fixed Quad
+# binutils: mytest.d:  194:	fc 40 1e 44 	dcffixq f2,f3
+:dcffixq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=802 &  Rc=0 & fT & fB & BITS_16_20=0  { dcffixqOp(fT,fB); } 
+
+# binutils-descr: "dcffixq.",	XRC(63,802,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRB}
+define pcodeop dcffixqDotOp;
+# ISA-cmt: dcffixq. - DFP Convert From Fixed Quad Rc
+# binutils: mytest.d:  198:	fc 40 1e 45 	dcffixq. f2,f3
+:dcffixq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=802 &  Rc=1 & fT & fB & BITS_16_20=0  { dcffixqDotOp(fT,fB); } 
+
+# binutils-descr: "denbcdq",	XRC(63,834,0),	X_MASK,      POWER6,	PPCNONE,	{S, FRT, FRB}
+define pcodeop denbcdqOp;
+# ISA-cmt: denbcdq - DFP Encode BCD To DPD Quad
+# binutils: mytest.d:  19c:	fc 70 26 84 	denbcdq 1,f3,f4
+:denbcdq fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=834 & Rc=0 & BIT_20 & fT & fB & SR=0 { denbcdqOp(fT,fB); } 
+
+# binutils-descr: "denbcdq.",	XRC(63,834,1),	X_MASK,      POWER6,	PPCNONE,	{S, FRT, FRB}
+define pcodeop denbcdqDotOp;
+# ISA-cmt: denbcdq. - DFP Encode BCD To DPD Quad Rc
+# binutils: mytest.d:  1a0:	fc 70 26 85 	denbcdq. 1,f3,f4
+:denbcdq. fT,fB is $(NOTVLE) & OP=63 & XOP_1_10=834 &  Rc=1 & BIT_20 & fT & fB & SR=0 { denbcdqDotOp(fT,fB); } 
+
+# binutils-descr: "diexq",	XRC(63,866,0),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop diexqOp;
+# ISA-cmt: diexq - DFP Insert Biased Exponent Quad
+# binutils: mytest.d:  1a4:	fc 43 26 c4 	diexq   f2,f3,f4
+:diexq fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=866 &  Rc=0 & fT & fA & fB  { diexqOp(fT,fA,fB); } 
+
+# binutils-descr: "diexq.",	XRC(63,866,1),	X_MASK,      POWER6,	PPCNONE,	{FRT, FRA, FRB}
+define pcodeop diexqDotOp;
+# ISA-cmt: diexq. - DFP Insert Biased Exponent Quad Rc
+# binutils: mytest.d:  1a8:	fc 43 26 c5 	diexq.  f2,f3,f4
+:diexq. fT,fA,fB is $(NOTVLE) & OP=63 & XOP_1_10=866 &  Rc=1 & fT & fA & fB  { diexqDotOp(fT,fA,fB); } 
+
+# icbtls ct,ra,rb
+# 31  /  CT  RA  RB  486  /
+# 0   6  7   11  16  21   31
+# 31  25 24  20  15  10    0
+#define pcodeop icbtlsOp;
+#:icbtls CT2,A,B is $(NOTVLE) & OP=31 & BIT_25=0 & CT2 & A & B & XOP_1_10=486 & BIT_0=0 { icbtlsOp(A,B); }
+define pcodeop InstructionCacheBlockLockSetX;
+:icbtls CT,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & BIT_25=0 & CT & RA_OR_ZERO & B & XOP_1_10=486 & BIT_0=0
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	InstructionCacheBlockLockSetX(ea);
+}
+
+######################################
+# v2.07 non vsx additions. 
+
+#===========================================================
+#                         Branch Conditional TAR(op=19, xop=560)
+#===========================================================
+
+
+:bctar 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH=0 & XOP_1_10=560
+{
+	goto [TAR];
+}
+
+:bctar 		is linkreg=1 & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH=0 & XOP_1_10=560
+        [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+    # don't do this anymore, detect another way
+	# call [CTR];
+	# return [LR];
+	goto [TAR];
+}
+
+:bctar BH 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH & XOP_1_10=560
+{
+	goto [TAR];
+}
+
+:bctarl		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH=0 & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	call [TAR];
+}
+:bctarl BH		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	call [TAR];
+}
+
+:b^CC^"ctar" 	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=560
+{
+	if (!CC) goto inst_next; 
+	goto [TAR];
+}
+:b^CC^"ctar" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=560
+{
+	if (!CC) goto inst_next; 
+	goto [TAR];
+}
+
+:b^CC^"ctarl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [TAR];
+}
+:b^CC^"ctarl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [TAR];
+}
+
+:b^CC^"ctar" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=560
+{
+	if (!CC) goto inst_next; 
+	goto [TAR];
+}
+
+:b^CC^"ctar" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=560
+{
+	if (!CC) goto inst_next; 
+	goto [TAR];
+}
+
+:b^CC^"ctarl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [TAR];
+}
+
+:b^CC^"ctarl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=560
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [TAR];
+}
+
+:clrbhrb				is $(NOTVLE) & OP=31 & XOP_1_10=430 & BITS_11_25=0 & BIT_0=0 {
+	clearHistory();	
+}
+
+:fmrgew  fT,fA,fB 		is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=966 & Rc=0 {
+	fT[0,32] = fA:4;
+	fT[32,32] = fB:4;
+}
+
+:fmrgow  fT,fA,fB 		is $(NOTVLE) & OP=63 & fT & fA & fB & XOP_1_10=838 & Rc=0 {
+	fT[0,32] = fA(4);
+	fT[32,32] = fB(4);	
+}
+
+:lqarx D,RA_OR_ZERO,B,EX 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=276 & EX & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+@if ENDIAN == "big"
+	D = *:$(REGISTER_SIZE) ea;
+	regp = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+@else
+	D = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+	regp = *:$(REGISTER_SIZE) ea;
+@endif	
+}
+
+:mfbhrbe D,BH_RBE		is $(NOTVLE) & OP=31 & XOP_1_10=302 & BIT_0=0 & D & BH_RBE {
+	D = movebuffer(BH_RBE:2);
+}
+
+:msgclrp B				is OP=31 & XOP_1_10=174 & BITS_16_25=0 & BIT_0=0 & B {
+	message(B);
+}
+
+:msgsndp B				is OP=31 & XOP_1_10=142 & BITS_16_25=0 & BIT_0=0 & B {
+	message(B);
+}
+
+:rfebb SBE				is $(NOTVLE) & OP=19 & XOP_1_10=146 & BITS_12_25=0 & BIT_0=0 & SBE {
+	eventInterrupt(SBE:1);
+}
+
+:stqcx. S,RA_OR_ZERO,B 	is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=182 & BIT_0=1 & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+@if ENDIAN == "big"
+	*:$(REGISTER_SIZE) ea = S;
+	*:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE)) = regp;
+@else
+	*:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE)) = S;
+	*:$(REGISTER_SIZE) ea = regp;
+@endif
+	setCrBit(cr0, 2, 1);		
+}
+
+:tabort. A 				is $(NOTVLE) & OP=31 & XOP_1_10=910 & BIT_0=1 & BITS_11_15=0 & BITS_21_25=0 & A {
+	transaction(A);
+} 
+
+:tabortdc. TOA,A,B 		is $(NOTVLE) & OP=31 & XOP_1_10=814 & BIT_0=1 & A & B & TOA {
+	transaction(TOA:1,A,B);
+} 
+
+:tabortdci. TOA,A,S5IMM is $(NOTVLE) & OP=31 & XOP_1_10=878 & BIT_0=1 & A & S5IMM & TOA {
+	transaction(TOA:1,A,S5IMM:1);	
+} 
+
+:tabortwc. TOA,A,B 		is $(NOTVLE) & OP=31 & XOP_1_10=782 & BIT_0=1 & A & B & TOA {
+	transaction(TOA:1,A,B);	
+} 
+
+:tabortwci. TOA,A,S5IMM is $(NOTVLE) & OP=31 & XOP_1_10=846 & BIT_0=1 & A & S5IMM & TOA {
+	transaction(TOA:1,A,S5IMM:1);		
+} 
+
+:tbegin. BIT_R 			is $(NOTVLE) & OP=31 & XOP_1_10=654 & BIT_0=1 & BITS_11_20=0 & BITS_22_24=0 & BIT_R {
+	transaction(BIT_R:1);		
+} 
+
+:tcheck BF2 			is $(NOTVLE) & OP=31 & XOP_1_10=718 & BIT_0=0 & BITS_11_22=0 & BF2 {
+	transaction(BF2:1);			
+} 
+
+:tend. BIT_A 			is $(NOTVLE) & OP=31 & XOP_1_10=686 & BIT_0=1 & BITS_11_24=0 & BIT_A {
+	transaction(BIT_A:1);			
+} 
+
+:trechkpt.  			is $(NOTVLE) & OP=31 & XOP_1_10=1006 & BIT_0=1 & BITS_11_25=0 {
+	transaction();			
+} 
+
+:treclaim. A 			is $(NOTVLE) & OP=31 & XOP_1_10=942 & BIT_0=1 & BITS_11_15=0 & BITS_21_25=0 & A {
+	transaction(A);			
+} 
+
+:tsr. BIT_L 			is $(NOTVLE) & OP=31 & XOP_1_10=750 & BIT_0=1 & BITS_11_20=0 & BITS_22_25=0 & BIT_L {
+	transaction(BIT_L:1);				
+} 
+
+#######################
+# v3.0
+
+:addpcis D,OFF16SH		is $(NOTVLE) & OP=19 & XOP_1_5=2 & D & OFF16SH {
+	D = inst_next + sext(OFF16SH);
+}
+
+:cmpeqb BF2,A,B			is $(NOTVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=224 & A & B & BF2 {
+	tmpa:1 = A:1;
+	tmps:1 = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
+@if REGISTER_SIZE == "8"
+	tmps = tmps | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
+@endif
+	tmpc:8 = zext(tmps);
+	crall = crall | (tmpc << ((BF2*8) + 2));	
+}
+
+:cmprb BF2,L2,A,B		is $(NOTVLE) & OP=31 & BIT_22=0 & BIT_0=0 & XOP_1_10=192 & A & B & BF2 & L2 {
+	tmpin:1 = A:1;
+	tmp1lo:1 = B[16,8];
+	tmp1hi:1 = B[24,8];
+	tmp2lo:1 = B[0,8];
+	tmp2hi:1 = B[8,8];
+	tmps:1 = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+}
+
+:cnttzw A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=0 {
+	A = countTrailingZeros(S);	
+}
+
+:cnttzw. A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=1 {
+	A = countTrailingZeros(S);	
+	cr0flags(A); 					
+}
+
+:cnttzd A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=570 & Rc=0 {
+	A = countTrailingZeros(S);		
+}
+
+:cnttzd. A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=570 & Rc=1 {
+	A = countTrailingZeros(S);	
+	cr0flags(A); 						
+}
+
+:copy RA_OR_ZERO,B,L2	is $(NOTVLE) & OP=31 & BITS_22_25=0 & BIT_0=0 & XOP_1_10=774 & RA_OR_ZERO & B & L2 {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	copytrans(ea,L2:1);
+}
+
+:cp_abort 				is $(NOTVLE) & OP=31 & BITS_11_25=0 & BIT_0=0 & XOP_1_10=838{
+	copytrans();
+}
+
+:darn D,L16				is $(NOTVLE) & OP=31 & BITS_18_20=0 & BITS_11_15=0 & BIT_0=0 & XOP_1_10=755 & D & L16 {
+	D = random(L16:1);
+}
+
+:dtstsfi CRFD,UIMT,fB 	is $(NOTVLE) & OP=59 & XOP_1_10=675 & CRFD & UIMT & fB & BIT_22=0 & BIT_0=0  {
+	dtstsfOp(CRFD,UIMT:1,fB);	
+} 
+
+:dtstsfiq CRFD,UIMT,fB 	is $(NOTVLE) & OP=63 & XOP_1_10=675 & CRFD & UIMT & fB & BIT_22=0 & BIT_0=0  {
+	dtstsfOp(CRFD,UIMT:1,fB);		
+}
+
+:extswsli A,S,SH		is OP=31 & A & S & SH & XOP_2_10=445 & Rc=0 {
+	tmp:8 = sext(S:4);
+	A = tmp << SH;
+}
+
+:extswsli. A,S,SH		is OP=31 & A & S & SH & XOP_2_10=445 & Rc=1 {
+	tmp:8 = sext(S:4);
+	A = tmp << SH;
+	cr0flags(A); 							
+}
+
+:ldat D,RA_OR_ZERO,FNC	is $(NOTVLE) & OP=31 & D & RA_OR_ZERO & FNC & XOP_1_10=614 & BIT_0=0 & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+	tmp:$(REGISTER_SIZE) = *:8 ea;
+	mematom(ea,tmp,D,regp,FNC:1);
+	D = tmp;	
+}
+
+:ldmx D,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & D & RA_OR_ZERO & B & XOP_1_10=309 & BIT_0=0 {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	D = *:8 ea;
+}
+
+:lwat D,RA_OR_ZERO,FNC	is $(NOTVLE) & OP=31 & D & RA_OR_ZERO & FNC & XOP_1_10=582 & BIT_0=0 & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+	tmp:$(REGISTER_SIZE) = zext(*:4 ea);
+	mematom(ea,tmp,D,regp,FNC:1);
+	D = tmp;
+}
+
+:maddhd D,A,B,C			is $(NOTVLE) & OP=4 & D & A & B & C & XOP_0_5=48 {
+	tmpa:16 = sext(A);
+	tmpb:16 = sext(B);
+	tmpc:16 = sext(C);
+	tmpp:16 = (tmpa * tmpb) + tmpc;
+	D = tmpp(8);
+}
+
+:maddhdu D,A,B,C		is $(NOTVLE) & OP=4 & D & A & B & C & XOP_0_5=49 {
+	tmpa:16 = zext(A);
+	tmpb:16 = zext(B);
+	tmpc:16 = zext(C);
+	tmpp:16 = (tmpa * tmpb) + tmpc;
+	D = tmpp(8);	
+}
+
+:maddld D,A,B,C			is $(NOTVLE) & OP=4 & D & A & B & C & XOP_0_5=51 {
+	tmpa:16 = sext(A);
+	tmpb:16 = sext(B);
+	tmpc:16 = sext(C);
+	tmpp:16 = (tmpa * tmpb) + tmpc;
+	D = tmpp:8;
+}
+
+:mcrxrx BF2				is $(NOTVLE) & OP=31 & BITS_11_22=0 & BIT_0=0 & XOP_1_10=576 & BF2 {
+	tmp:1 = (xer_ov << 3) | (xer_ov32 << 2) | (xer_ca << 1) | (xer_ca32);
+	tmp2:8 = zext(tmp);
+	crall = crall | (tmp2 << (8*BF2:1));
+}
+
+:modsd D,A,B			is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=777 & BIT_0=0 {
+	tmpa:16 = sext(A);
+	tmpb:16 = sext(B);
+	tmpd:16 = tmpa s% tmpb;
+	D = tmpd:$(REGISTER_SIZE);
+}
+
+:modsw D,A,B			is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=779 & BIT_0=0 {
+	tmpa:16 = sext(A:4);
+	tmpb:16 = sext(B:4);
+	tmpd:16 = tmpa s% tmpb;
+	D = tmpd:$(REGISTER_SIZE);	
+}
+
+:modud D,A,B			is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=265 & BIT_0=0 {
+	tmpa:16 = zext(A);
+	tmpb:16 = zext(B);
+	tmpd:16 = tmpa % tmpb;
+	D = tmpd:$(REGISTER_SIZE);	
+}
+
+:moduw D,A,B			is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=267 & BIT_0=0 {
+	tmpa:4 = zext(A:4);
+	tmpb:4 = zext(B:4);
+	tmpd:4 = tmpa % tmpb;
+	D = zext(tmpd);		
+}
+
+:msgsync 				is $(NOTVLE) & OP=31 & BITS_11_25=0 & BIT_0=0 & XOP_1_10=886 {
+	message();
+}
+
+:paste RA_OR_ZERO,B,0	is $(NOTVLE) & OP=31 & BITS_22_25=0 & XOP_1_10=902 & RA_OR_ZERO & B & L2=0 & Rc=0 {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	pastetrans(ea);
+}
+
+:paste. RA_OR_ZERO,B,1	is $(NOTVLE) & OP=31 & BITS_22_25=0 & XOP_1_10=902 & RA_OR_ZERO & B & L2=1 & Rc=1 {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	pastetrans(ea);
+	setCrBit(cr0, 2, 1);		
+}
+
+:setb D,BFA				is $(NOTVLE) & OP=31 & BITS_11_17=0 & BIT_0=0 & XOP_1_10=128 & D & BFA {
+	tmpcr:8 = 1 << (8 * BFA:1);
+	tmpr0:1 = (crall & tmpcr) != 0;
+	tmpr1:1 = (crall & (tmpcr << 1)) != 0;
+	
+	D = (-1 * zext(tmpr0)) + (1 * zext(tmpr0 == 0) * zext(tmpr1));
+}
+
+:slbieg S,B				is $(NOTVLE) & OP=31 & BITS_16_20=0 & BIT_0=0 & XOP_1_10=466 & S & B {
+	slbInvalidateEntry(S,B);
+}
+
+:slbsync 				is $(NOTVLE) & OP=31 & BITS_11_25=0 & BIT_0=0 & XOP_1_10=338 {
+	sync();
+}
+
+:stdat S,RA_OR_ZERO,FNC	is $(NOTVLE) & OP=31 & S & RA_OR_ZERO & FNC & XOP_1_10=742 & BIT_0=0 & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+	tmp:$(REGISTER_SIZE) = *:8 ea;
+	mematom(ea,tmp,S,regp,FNC:1);
+}
+
+:stop 					is $(NOTVLE) & OP=19 & BITS_11_25=0 & BIT_0=0 & XOP_1_10=370 {
+	stopT();
+}
+
+:stwat S,RA_OR_ZERO,FNC	is $(NOTVLE) & OP=31 & S & RA_OR_ZERO & FNC & XOP_1_10=710 & BIT_0=0 & Dp & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO;
+	tmp:$(REGISTER_SIZE) = zext(*:4 ea);
+	mematom(ea,tmp,S,regp,FNC:1);	
+}
+
+:wait WC				is $(NOTVLE) & OP=31 & BITS_23_25=0 & BITS_11_20=0 & BIT_0=0 & XOP_1_10=30 & WC {
+	waitT(WC:1);
+}

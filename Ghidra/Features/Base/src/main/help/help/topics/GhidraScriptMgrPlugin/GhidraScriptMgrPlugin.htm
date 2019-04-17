@@ -1,0 +1,314 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Ghidra Script Manager</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Script_Manager"></A>Ghidra Script Manager</H1>
+
+    <P>The Ghidra Script Manager allows for rapid development of extended Ghidra functionality.
+    Unlike conventional Ghidra plugins that require a full IDE for development, Ghidra scripts can
+    be developed right inside of Ghidra while it is running. You can interactively change your
+    script and immediately re-run it.</P>
+
+    <P>See <A href="ScriptDevelopment.htm">Ghidra Script Development</A> for details on how to
+    write a script.</P>
+
+    <P align="center"><IMG src="images/Script_Manager.png" alt="Ghidra Script Manager"></P>
+
+    <BLOCKQUOTE>
+      <H3 align="left"><A name="Script_Category_Tree"></A>Script Category Tree</H3>
+
+      <BLOCKQUOTE>
+        <P align="left">The script category tree will organize scripts by category. If you click on
+        a node of the tree it will only display scripts in the table that are in that category or
+        any sub-categories. Each script defines its own category, which is arbitrary and optional.
+        Scripts without explicitly defined categories will appear in the root "Scripts"
+        category.</P>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Script_Table"></A>Script Table</H3>
+
+      <BLOCKQUOTE>
+        <P align="left">The script table displays information about the scripts.<BR>
+        </P>
+
+        <P align="left">The <I>first column</I>n indicates if an action should be created for the
+        script.&nbsp; If a script has a menu path or default key binding, then selecting this
+        column will cause an action to be created with that menu path and/or key binding.&nbsp;
+        Selecting this column for a script that has no menu path or key binding set will have no
+        effect until the script is modified to have a menu path or key binding.&nbsp; Deselecting
+        this column will also remove any key bindings that were defined via the script manager
+        gui.</P>
+
+        <P align="left">The <I>second column</I>n indicates the status of the script. A blank field
+        is a happy field. If the column contains <IMG src="Icons.ERROR_ICON" border="0"> , then
+        that script contains an error.</P>
+
+        <P align="left">The <I>Filename</I> column indicates the filename of the script.</P>
+
+        <P align="left">The <I>Description</I> column indicates the description as defined in the
+        meta-data comment of the script.</P>
+
+        <P align="left">The <I>Key Binding</I> column indicates the key binding associated to that
+        script. If the field is blank, then a key binding has not been assigned to the
+        script.&nbsp; Setting a key binding will cause an action to get created and therefore the
+        first column will become checked.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="SearchFilter"></A> Filter</H3>
+
+      <BLOCKQUOTE>
+        <P>The <I>Search Filter</I> allows you to narrow the list of scripts displayed in the
+        table. Only those scripts, whose name or description contains the string that you enter as
+        the filter, will be displayed. As you type, the table is updated to reflect the filter.</P>
+      </BLOCKQUOTE>
+      
+      
+      <H3><A name="DescriptionPanel"></A> Description Panel</H3>
+
+      <BLOCKQUOTE>
+        <P>The <I>Description Panel</I> allows you to view meta data about the <b>selected</b>
+        script in the <i>Script Table</i>, including such things as author, description, 
+        key binding, etc.</P>
+      </BLOCKQUOTE>
+      
+    </BLOCKQUOTE>
+
+    <H2 align="left"><A name="Script_Manager_Actions"></A>Script Manager Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Run"></A>Run Script <IMG src="images/play.png" border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Runs the selected script.&nbsp;If the script source file is out of date,
+        then it will first be compiled. If the compilation is successful, then the script will be
+        run. If the script does not compile, the compilation errors will be displayed in the <A
+        href="help/topics/ConsolePlugin/console.html">Console</A> and an error icon <IMG src=
+        "Icons.ERROR_ICON" border="0"> will be displayed in the first column of the table.</P>
+
+        <P align="center"><IMG src="images/Console.png" border="0"></P>
+      </BLOCKQUOTE>
+      
+      <H3><A name="Run_Last"></A>Run Last Script <IMG src="images/play_again.png" border="0"></H3>
+
+      <BLOCKQUOTE>
+              <P align="left">Runs the last run script.  This action is available as a keybinding 
+        from within anywhere in the tool, whether or not the Script Manager is showing.  To
+        see the current keybinding for this action, hover over its icon in the toolbar of
+        the Script Manager.
+        </P>
+
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Edit"></A>Edit Script <IMG src="images/accessories-text-editor.png" border=
+      "0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Edits the selected script.  For more information on script meta data, see 
+        <A href="ScriptDevelopment.htm#meta_data">Ghidra Script Development</A></P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/Edit_Script.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <H4 align="left"><A name="Refresh_Script"></A>Refresh <IMG src="Icons.REFRESH_ICON" border=
+        "0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Will load the contents of the current script from the file on the
+          filesystem.  This action is useful if you have edited the script outside of Ghidra
+          and would like to have the editor update to show those changes.</P>
+        </BLOCKQUOTE>
+        
+        
+        <H4 align="left"><A name="Save_Script"></A>Save <IMG src="images/disk.png" border=
+        "0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Saves the changed script back to the original file. The <I>Save</I>
+          option is only enabled when changes have been made.</P>
+        </BLOCKQUOTE>
+
+        <H4 align="left"><A name="Save_Script_As"></A>Save As... <IMG src="images/disk_save_as.png"
+        border="0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Saves the script (with any changes) to a new script file. The default
+          directory is your home directory, however if additional script directories exist, then
+          you will be prompted to select a directory. This new script file becomes the active
+          script in the editor. When selecting <I>Save As...</I>, Ghidra will prompt for a
+          filename.</P>
+
+          <P align="center"><IMG src="images/SaveAs.png" border="0"></P>
+        </BLOCKQUOTE>
+
+        <H4 align="left"><A name="Undo"></A>Undo <IMG src="images/undo.png" border="0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Undo reverts the editor to the state prior to the last edit. You can undo
+          up to 50 edits.</P>
+        </BLOCKQUOTE>
+
+        <H4 align="left"><A name="Redo"></A> Redo <IMG src="images/redo.png" border="0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Redo returns the last edit back into the editor.</P>
+        </BLOCKQUOTE>
+
+        <H4 align="left"><A name="Select_Font"></A> Select Font <IMG src="images/text_lowercase.png" border=
+        "0"></H4>
+
+        <BLOCKQUOTE>
+          <P align="left">Changes the font for all open editors. It will also set the default font
+          that will be used for all future editors. The dialog allows you to specify the font type,
+          size, and style.</P>
+
+          <P align="center"><IMG src="images/Select_Font.png" border="0"></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+      
+      <H3 align="left"><A name="EditEclipse"></A>Edit Script with Eclipse <IMG src="images/eclipse.png" border="0"></H3>
+      <BLOCKQUOTE>
+        <P align="left">Edits the selected script in Eclipse using the GhidraDev plugin.
+        <BLOCKQUOTE>
+          <P align="left"><I><IMG src="../../shared/note.png" border="0">Before a script can be edited in
+          Eclipse, an Eclipse installation and workspace directory must be defined in the Tool's 
+          <A href="help/topics/EclipseIntegration/EclipseIntegration.htm"> Eclipse Integration</A> 
+          options.</I></P>
+        </BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left"><I><IMG src="../../shared/note.png" border="0">For more information on developing 
+          Ghidra scripts in Eclipse, see Extensions/Eclipse/GhidraDev/GhidraDev_README.html.</I></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Key_Binding"></A>Assign Key Binding <IMG src="images/key.png"
+      border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Allows you to assign a key binding the selected script.&nbsp;</P>
+
+        <BLOCKQUOTE>
+          <OL>
+            <LI>Click in the text field and type the key or keystroke combination that you wish to
+            assign to the script.</LI>
+          </OL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/Assign_Key_Binding.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P align="left"><I><IMG src="../../shared/note.png" border="0">The script key bindings
+          are stored in the Tool's <A href=
+          "help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Binding</A>
+          options.</I></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Delete"></A>Delete Script <IMG src="images/table_row_delete.png"
+      border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Deletes the selected script. You will receive a confirmation
+        dialog.&nbsp;</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/Delete_Script_Confirm.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <P align="left"><I><IMG src="../../shared/note.png" border="0"> <B>This is a <FONT color=
+        "#ff0000">permanent</FONT> operation.</B></I></P>
+
+        <P align="left">You cannot delete scripts in the <A href="#Script_Directories">system
+        directory</A>, as this may affect other users. If you attempt to delete a system script,
+        you will receive a warning dialog.
+        </P>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Rename"></A>Rename Script <IMG src="images/textfield_rename.png" border=
+      "0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Renames the selected script. When selecting <I>Rename</I>, Ghidra will
+        prompt for a new filename.</P>
+
+        <P align="center"><IMG src="images/Rename.png" border="0"></P>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="New"></A>Create New Script <IMG src="images/script_add.png"
+      border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Creates a new empty script and displays it in a Script Editor.</P>
+
+        <P align="left">If more than one <CODE><A href=
+        "../../docs/api/ghidra/app/script/GhidraScriptProvider.html">GhidraScriptProvider</A></CODE>
+        exists, then you will have to choose what type of script to create.</P>
+
+        <P align="center"><IMG src="images/Pick.png" border="0"></P>
+
+        <P align="left">See <CODE><A href="ScriptDevelopment.htm">Ghidra Script
+        Development</A></CODE> for details on how to write a script.</P>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Refresh"></A>Refresh Script List <IMG src="Icons.REFRESH_ICON"
+      border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Refreshes the script list by re-scanning the script directories.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Script_Directories"></A>Script Directories&nbsp;<IMG src=
+      "images/text_list_bullets.png" alt=""></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Allows you to add and remove directories to search for scripts. The default
+        directories are your home directory and the various system directories (e.g., 
+        <tt>$GHIDRA_HOME/Features/Base/ghidra_scripts</tt>). You
+        can save directories, but ignore them in the Script Manager dialog by selecting/deselecting
+        the "Use" column checkbox.<BR>
+        </P>
+
+        <DIV align="center">
+          <IMG src="images/Script_Dirs.png" alt="">
+        </DIV>
+      </BLOCKQUOTE>
+
+      <H3 align="left"><A name="Help"></A>Help <IMG src="images/red-cross.png" border="0"></H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Opens the Ghidra help viewer on the GhidraScript API.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin"><BR>
+     Provided by: <I>Ghidra Script Manager Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings</A></P>
+      </LI>
+    </UL>
+
+    <P>&nbsp;</P>
+    <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

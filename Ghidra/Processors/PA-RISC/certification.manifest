@@ -1,0 +1,16 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/pa-risc.ldefs||GHIDRA||||END|
+data/languages/pa-risc.opinion||GHIDRA||||END|
+data/languages/pa-risc.sinc||GHIDRA||||END|
+data/languages/pa-risc32.cspec||GHIDRA||||END|
+data/languages/pa-risc32.pspec||GHIDRA||||END|
+data/languages/pa-risc32be.slaspec||GHIDRA||reviewed||END|
+data/languages/pa-riscInstructions.sinc||GHIDRA||||END|
+data/manuals/pa11_acd.idx||GHIDRA||reviewed||END|
+data/patterns/pa-risc_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

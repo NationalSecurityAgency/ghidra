@@ -1,0 +1,10 @@
+define endian=little;
+define alignment=2;
+
+@define SIZE "4"
+@define WORDSIZE "2"
+
+@define INSTR_PHASE "" # not used by basic toy language
+
+@include "toy.sinc"
+@include "toyInstructions.sinc"

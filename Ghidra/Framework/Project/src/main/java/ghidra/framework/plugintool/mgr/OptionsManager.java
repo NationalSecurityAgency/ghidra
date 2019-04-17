@@ -1,0 +1,344 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.framework.plugintool.mgr;
+
+import java.beans.PropertyChangeListener;
+import java.util.*;
+
+import javax.swing.JComponent;
+import javax.swing.tree.TreePath;
+
+import org.jdom.Element;
+
+import docking.options.editor.OptionsDialog;
+import ghidra.framework.options.*;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
+import ghidra.framework.plugintool.util.OptionsService;
+import ghidra.framework.plugintool.util.ToolConstants;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+
+/**
+ * Created by PluginTool to manage the set of Options for each category.
+ */
+public class OptionsManager implements OptionsService, OptionsChangeListener {
+	private OptionsDialog optionsDialog;
+	private PluginTool tool;
+	private Map<String, ToolOptions> optionsMap;
+
+	/**
+	 * Constructor
+	 * @param tool associated with this OptionsManager
+	 */
+	public OptionsManager(PluginTool tool) {
+		this.tool = tool;
+		optionsMap = new HashMap<>();
+	}
+
+	public void dispose() {
+		if (optionsDialog != null) {
+			optionsDialog.dispose();
+		}
+		optionsMap.values().forEach(options -> options.dispose());
+	}
+
+	/**
+	 * Get the options for the given category name.
+	 * @param category name of category
+	 */
+	@Override
+	public ToolOptions getOptions(String category) {
+		ToolOptions opt = optionsMap.get(category);
+		if (opt == null) {
+			opt = new ToolOptions(category);
+			opt.addOptionsChangeListener(this);
+			optionsMap.put(category, opt);
+		}
+		return opt;
+	}
+
+	/**
+	 * Updates saved options from an old name to a new name.  NOTE: this must be called before
+	 * any calls to register or get options.
+	 * @param oldName the old name of the options.
+	 * @param newName the new name of the options.
+	 */
+	public void registerOptionNameChanged(String oldName, String newName) {
+		if (optionsMap.containsKey(oldName)) {
+			ToolOptions toolOptions = optionsMap.remove(oldName);
+			toolOptions.setName(newName);
+			optionsMap.put(newName, toolOptions);
+		}
+	}
+
+	/**
+	 * Return whether an Options object exists for the given category.
+	 * @param category name of the category
+	 * @return true if an Options object exists
+	 */
+	@Override
+	public boolean hasOptions(String category) {
+		return optionsMap.containsKey(category);
+	}
+
+	/**
+	 * Shows Options Dialog with the section called 'category' being displayed
+	 * @param category The category of options to have displayed
+	 */
+	@Override
+	public void showOptionsDialog(String category, String filterText) {
+		if (optionsDialog != null && optionsDialog.isVisible()) {
+			optionsDialog.toFront();
+			return;
+		}
+		optionsDialog = createOptionsDialog();
+		optionsDialog.displayCategory(category, filterText);
+		tool.showDialog(optionsDialog);
+	}
+
+	/**
+	 * Get the list of options for all categories.
+	 */
+	@Override
+	public ToolOptions[] getOptions() {
+		ToolOptions[] opt = new ToolOptions[optionsMap.size()];
+		int idx = 0;
+		Iterator<String> iter = optionsMap.keySet().iterator();
+		while (iter.hasNext()) {
+			String key = iter.next();
+			opt[idx] = optionsMap.get(key);
+			++idx;
+		}
+		Arrays.sort(opt, new OptionsComparator());
+		return opt;
+	}
+
+	/**
+	 * Deregister the owner from the options; if options are empty, then
+	 * remove the options from the map.
+	 * @param owner owner name
+	 */
+	//TODO anyone using this Or should they be?
+	public void deregisterOwner(Plugin ownerPlugin) {
+		List<String> deleteList = new ArrayList<>();
+		Iterator<String> iter = optionsMap.keySet().iterator();
+		while (iter.hasNext()) {
+			String key = iter.next();
+			ToolOptions opt = optionsMap.get(key);
+			if (opt.getOptionNames().isEmpty()) {
+				deleteList.add(opt.getName());
+			}
+		}
+		removeUnusedOptions(deleteList);
+	}
+
+	/**
+	 * Write this object out; first remove any unused options so they
+	 * do not hang around.
+	 * @return XML element containing the state of all the options
+	 */
+	public Element getConfigState() {
+		Element root = new Element("OPTIONS");
+		Iterator<String> iter = optionsMap.keySet().iterator();
+		while (iter.hasNext()) {
+			String key = iter.next();
+			ToolOptions opt = optionsMap.get(key);
+			if (hasNonDefaultValues(opt)) {
+				root.addContent(opt.getXmlRoot(false));
+			}
+		}
+		return root;
+	}
+
+	private boolean hasNonDefaultValues(Options options) {
+		List<String> optionNames = options.getOptionNames();
+		for (String string : optionNames) {
+			if (!options.isDefaultValue(string)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void removeUnusedOptions() {
+		// 1st clean up any unused options before saving...
+		List<String> deleteList = new ArrayList<>();
+		Iterator<String> iter = optionsMap.keySet().iterator();
+		while (iter.hasNext()) {
+			String key = iter.next();
+			ToolOptions opt = optionsMap.get(key);
+			opt.removeUnusedOptions();
+			if (opt.getOptionNames().isEmpty()) {
+				deleteList.add(opt.getName());
+			}
+		}
+		removeUnusedOptions(deleteList);
+	}
+
+	/**
+	 * Restore Options objects using the given XML Element.
+	 * @param root element to use to restore the Options objects
+	 */
+	public void setConfigState(Element root) {
+		Iterator<?> iter = root.getChildren().iterator();
+		while (iter.hasNext()) {
+			ToolOptions opt = new ToolOptions((Element) iter.next());
+			ToolOptions oldOptions = optionsMap.get(opt.getName());
+			if (oldOptions == null) {
+				opt.addOptionsChangeListener(this);
+			}
+			else {
+				opt.takeListeners(oldOptions);
+				opt.registerOptions(oldOptions);
+			}
+			optionsMap.put(opt.getName(), opt);
+		}
+	}
+
+	/**
+	 * Show the dialog to edit options.
+	 */
+	public void editOptions() {
+		if (optionsMap.isEmpty()) {
+			Msg.showInfo(getClass(), tool.getToolFrame(), "No Options",
+				"No Options set in this tool");
+			return;
+		}
+		if (optionsDialog != null && optionsDialog.isVisible()) {
+			optionsDialog.toFront();
+			return;
+		}
+		optionsDialog = createOptionsDialog();
+		tool.showDialog(optionsDialog);
+	}
+
+	public void validateOptions() {
+		for (ToolOptions options : optionsMap.values()) {
+			options.validateOptions();
+		}
+	}
+
+	/**
+	 * Create the options dialog.
+	 */
+	private OptionsDialog createOptionsDialog() {
+		OptionsDialog dialog = null;
+		if (optionsMap.size() == 0) {
+			return null;
+		}
+
+		TreePath path = null;
+		if (optionsDialog != null) {
+			path = optionsDialog.getSelectedPath();
+		}
+
+		Options keyBindingOptions = getOptions(ToolConstants.KEY_BINDINGS);
+		keyBindingOptions.registerOptionsEditor(new KeyBindingOptionsEditor());
+		dialog = new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
+			null, true);
+		dialog.setSelectedPath(path);
+		dialog.setHelpLocation(new HelpLocation("Tool", "ToolOptions_Dialog"));
+		return dialog;
+	}
+
+	private Options[] getEditableOptions() {
+		return tool.getOptions();
+	}
+
+	private void removeUnusedOptions(List<String> deleteList) {
+		for (int i = 0; i < deleteList.size(); i++) {
+			String name = deleteList.get(i);
+			ToolOptions options = optionsMap.remove(name);
+			options.removeOptionsChangeListener(this);
+		}
+	}
+
+	private class OptionsComparator implements Comparator<ToolOptions> {
+		/**
+		 * Compares its two arguments for order.  Returns a negative integer,
+		 * zero, or a positive integer as the first argument is less than, equal
+		 * to, or greater than the second.<p>
+		 *
+		 * @param o1 the first object to be compared.
+		 * @param o2 the second object to be compared.
+		 * @return a negative integer, zero, or a positive integer as the
+		 * 	       first argument is less than, equal to, or greater than the
+		 *	       second.
+		 * @throws ClassCastException if the arguments' types prevent them from
+		 * 	       being compared by this Comparator.
+		 */
+		@Override
+		public int compare(ToolOptions o1, ToolOptions o2) {
+			return o1.getName().compareTo(o2.getName());
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	private class KeyBindingOptionsEditor implements OptionsEditor {
+
+		private KeyBindingsPanel panel;
+
+		KeyBindingOptionsEditor() {
+			panel = new KeyBindingsPanel(tool, getOptions(ToolConstants.KEY_BINDINGS));
+		}
+
+		/**
+		 * Apply the changes.
+		 */
+		@Override
+		public void apply() {
+			panel.apply();
+		}
+
+		@Override
+		public void cancel() {
+			panel.cancel();
+		}
+
+		@Override
+		public void reload() {
+			panel.reload();
+		}
+
+		@Override
+		public void dispose() {
+			panel.dispose();
+		}
+
+		/**
+		 * Get the editor component.
+		 */
+		@Override
+		public JComponent getEditorComponent(Options options,
+				EditorStateFactory editorStateFactory) {
+			return panel;
+		}
+
+		@Override
+		public void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
+			panel.setOptionsPropertyChangeListener(listener);
+		}
+
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
+		tool.setConfigChanged(true);
+	}
+
+}

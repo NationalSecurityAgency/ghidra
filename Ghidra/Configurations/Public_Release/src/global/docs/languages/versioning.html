@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Language Versioning and Migration</title>
+  <style type="text/css">
+	li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
+	h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+	h2 { color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+	h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; }
+	h4 { font-family:times new roman; font-size:14pt; font-style:italic; font-family:times new roman; font-size:14pt; font-style:italic; }
+	p { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
+	td { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
+	th { font-family:times new roman; font-size:14pt; font-weight:bold; font-family:times new roman; font-size:14pt; font-weight:bold; }
+	code { color:black; font-family:courier new font-size: 14pt; }
+	span.code { font-family:courier new\000d\000a font-size: 14pt; color:#000000; }
+  </style>
+</head>
+<body>
+<h1>Language Versioning and
+Migration</h1>
+<p>This document discusses the mechanisms within Ghidra which mitigate
+the impact of language modifications to existing user program
+files.&nbsp; There are two general classes of language modifications
+which can be supported by the language translation capabilities within
+Ghidra :<br>
+</p>
+<ol>
+  <li><a href="#versioning"><span style="font-weight: bold;">Version
+Change</span></a> - caused by modifications to a specific
+language implementation which necessitates a re-disassembly of a programs
+instructions.</li>
+  <li><a href="#forcedMigration"><span style="font-weight: bold;">Forced
+Language Migration</span></a> - caused when an existing language
+implementation is completely replaced by a new implementation (language
+name must be different).&nbsp; It is important that an "old" language
+file (<span style="font-style: italic;">*.lang</span>) be generated for
+a language before it is eliminated.&nbsp;&nbsp; A simple or custom
+language translator is required to facilitate the forced migration.<br>
+  </li>
+</ol>
+<p>Any program opened within Ghidra whose language has had a version
+change or has been replaced by a new implementation will be forced to
+upgrade.&nbsp; This will prevent such a program file from being opened
+as immutable and will impose a delay due to the necessary
+re-disassembly of all instructions.</p>
+<p>In addition to a forced upgrade, Ghidra's <span
+ style="font-style: italic;">Set Language</span> capability will allow
+a user to make certain transitions between similar language
+implementations.&nbsp; Such transitions are generally facilitated via a
+default translator, although certain limitations are imposed based upon
+address space sizes and register mappings.<br>
+</p>
+<h2><a name="versioning"></a>Language Versioning</h2>
+<p>A language's version is specified as a<span
+ style="font-style: italic;"> &lt;major&gt;</span><span
+ style="font-weight: bold; font-style: italic;">.</span><span
+ style="font-style: italic;">&lt;minor&gt;</span> number pair (e.g.,
+1.0).&nbsp; The decision to advance the major or minor version number
+should be based upon the following criteria:<br>
+</p>
+<ol>
+  <li><span style="font-weight: bold;">Major Version Change</span> -
+caused by modifications to a specific
+language implementation which changes register addressing or context
+register schema.&nbsp; Addition of registers alone does not constitute
+a major or minor change.<br>
+  </li>
+  <li><span style="font-weight: bold;">Minor Version Change</span> -
+caused by modifications to a specific
+language implementation which changes existing instruction or
+subconstructor pattern matching.&nbsp; Pcode changes and addition of
+new instructions alone does not constitute a major or minor change.</li>
+</ol>
+<p>Anytime the major version number is advanced, the minor version
+number should be reset to zero. <br>
+</p>
+<p>Only major version changes utilize a <a href="#translators">Language
+Translator</a> to facilitate the language transition.<br>
+</p>
+<h2><a name="forcedMigration"></a>Forced Language Migration<br>
+</h2>
+<p>When eliminating an old language the following must be accomplished:<br>
+</p>
+<ol>
+  <li>Establish a replacement language</li>
+  <li>Generate <a href="#oldlang">old-language specification</a> file (<span
+ style="font-style: italic;">*.lang</span>)<br>
+  </li>
+  <li>Establish one and only one <a href="#translators">Language
+Translator </a>from the final version of the eliminated language to
+its replacement language.<br>
+  </li>
+</ol>
+<p>Before eliminating a language a corresponding "old" language file
+must be generated and stored somewhere within Ghidra's languages
+directory (<span style="font-style: italic;">core/languages/old</span>
+directory has been established for this purpose).&nbsp;&nbsp; In
+addition, a simple or custom <a href="#translators">Language Translator</a>
+must be established to facilitate the language migration to the
+replacement language.&nbsp; <br>
+</p>
+<p>An old-language file may be generated automatically while the
+language still exists using the <span
+ style="font-style: italic; font-weight: bold;">GenerateOldLanguagePlugin
+</span>configured into Ghidra's project window.&nbsp; In addition, if
+appropriate, a draft simple Language Translator specification can
+generated provided the replacement language is also available.<br>
+</p>
+<p>To generate an old-language file and optionally a draft simple
+translator specification:<br>
+</p>
+<ul>
+  <li>Choose the menu item File&gt;Generate Old Language File...</li>
+  <li>Select the language to be eliminated from the languages list and
+click <span style="font-weight: bold;">Generate...</span></li>
+  <li>From the file chooser select the output directory, enter a
+suitable name for the file and click <span style="font-weight: bold;">Create</span></li>
+  <li>Once the old-language file is generated you will be asked if you
+would like to <span style="font-weight: bold; font-style: italic;">Create
+a Simple Translator?</span>&nbsp; If the replacement language is
+complete and available you can click <span style="font-weight: bold;">Yes
+    </span>and specify an output file with the file chooser.</li>
+</ul>
+<h2><a name="oldlang"></a>Old Language Specification (<span
+ style="font-style: italic;">*.lang</span>)</h2>
+<p>An old-language specification file is used to describe the essential
+elements of a language needed to instantiate an old program using that
+language and to facilitate translation to a replacement language.<br>
+</p>
+<p>The specification file is an XML file which identifies a language's
+description, address spaces and named registers.&nbsp;&nbsp; Since it
+should be generated using the <span
+ style="font-style: italic; font-weight: bold;">GenerateOldLanguagePlugin</span>,
+its syntax is not defined here.
+</p>
+<p><span style="font-style: italic; font-weight: bold;">Sample
+Old-Language Specification File:</span><br>
+</p>
+<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;<br>&lt;language version="1" endian="big"&gt;<br>    &lt;description&gt;<br>        &lt;name&gt;MyOldProcessorLanguage&lt;/name&gt;<br>        &lt;processor&gt;MyOldProcessor&lt;/processor&gt;<br>        &lt;family&gt;Motorola&lt;/family&gt;<br>        &lt;alias&gt;MyOldProcessorLanguageAlias1&lt;/alias&gt;<br>	&lt;alias&gt;MyOldProcessorLanguageAlias2&lt;/alias&gt;<br>    &lt;/description&gt;<br>    &lt;spaces&gt;<br>        &lt;space name="ram" type="ram" size="4" default="yes" /&gt;<br>        &lt;space name="register" type="register" size="4" /&gt;<br>        &lt;space name="data" type="code" size="4" /&gt;<br>    &lt;/spaces&gt;<br>    &lt;registers&gt;<br>	&lt;context_register name="contextreg" offset="0x40" bitsize="8"&gt;<br>            &lt;field name="ctxbit1" range="1,1" /&gt;<br>            &lt;field name="ctxbit0" range="0,0" /&gt;<br>        &lt;/context_register&gt;<br>        &lt;register name="r0" offset="0x0" bitsize="32" /&gt;<br>        &lt;register name="r1" offset="0x4" bitsize="32" /&gt;<br>        &lt;register name="r2" offset="0x8" bitsize="32" /&gt;<br>        &lt;register name="r3" offset="0xc" bitsize="32" /&gt;<br>        &lt;register name="r4" offset="0x10" bitsize="32" /&gt;<br>    &lt;/registers&gt;<br>&lt;/language&gt;<br><br></pre>
+<h2><a name="translators"></a>Language Translators</h2>
+<p>A language translator facilitates the renaming of address spaces,
+and relocation/renaming of registers.&nbsp; In addition, stored
+register values can be transformed - although limited knowledge is
+available for decision making.&nbsp; Through the process of
+re-disassembly, language changes in instruction and subconstructor
+pattern matching is handled.&nbsp; Three forms of&nbsp; translators are
+supported:<br>
+</p>
+<ol>
+  <li><span style="font-weight: bold;">Default Translator</span> - in
+the absence of a simple or custom translator, an attempt will be made
+to map all address spaces and registers.&nbsp; Stored register values
+for unmapped registers will be discarded.&nbsp; Forced language
+migration can not use a default translator since it is the presence of
+a translator with an old-language which specifies the migration path.<br>
+  </li>
+  <li><span style="font-weight: bold;">Simple Translator</span> -
+extends the behavior of the default translator allowing specific
+address space and register mappings to be specified via an XML file (<span
+ style="font-style: italic;">*.trans</span>).&nbsp; See sample <a
+ href="#transfile">Simple Translator Specification</a>.<br>
+  </li>
+  <li><span style="font-weight: bold;">Custom Translator</span> -
+custom translators can be written as a Java class which extends <span
+ style="font-weight: bold; font-style: italic;">LanguageTranslatorAdapter</span>
+or implements <span style="font-weight: bold; font-style: italic;">LanguageTranslator</span>.&nbsp;
+This should generally be unnecessary but can provided additional
+flexibility.&nbsp; The default constructor must be public and will be used
+for instantiation.&nbsp; Extending <span
+ style="font-weight: bold; font-style: italic;">LanguageTranslatorAdapter
+    </span>will allow the default translator capabilities to be
+leveraged with minimal coding.</li>
+</ol>
+<span style="font-family: times new roman;"><span
+ style="font-weight: bold;"></span></span>
+<p style="font-weight: bold; font-style: italic;"><a name="transfile"></a>Sample
+Simple Translator Specification File:</p>
+<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;language_translation&gt;
+
+    &lt;from_language version="1"&gt;MyOldProcessorLanguage&lt;/from_language&gt;  
+    &lt;to_language version="1"&gt;MyNewProcessorLanguage&lt;/to_language&gt;
+
+    &lt;!--
+        Obsolete space will be deleted with all code units in that space.
+    --&gt;
+    &lt;delete_space name="data" /&gt;
+
+    &lt;!--
+        Spaces whose name has changed can be mapped over
+    --&gt;
+    &lt;map_space from="ram" to="ram" /&gt;
+
+    &lt;!--
+        Registers whose name has changed can be mapped (size and offset changes are allowed)
+        The map_register may include a size attribute although it is ignored. 
+    --&gt; 
+    &lt;map_register from="r0" to="cr0" /&gt;
+    &lt;map_register from="r1" to="cr1" /&gt;
+
+    &lt;!--
+        All existing processor context can be cleared
+    --&gt;
+    &lt;clear_all_context/&gt;
+
+    &lt;!--
+        A specific context value can be painted across all of program memory
+        NOTE: sets occur after clear_all_context
+    --&gt;
+    &lt;set_context name="ctxbit0" value="1"/&gt;
+    
+    &lt;!--
+        Force a specific Java class which extends
+          <i>ghidra.program.util.LanguagePostUpgradeInstructionHandler</i>
+        to be invoked following translation and re-disassembly to allow for more
+        complex instruction context transformations/repair.
+    --&gt;
+    &lt;post_upgrade_handler class="ghidra.program.language.MyOldNewProcessorInstructionRepair" /&gt;
+
+&lt;/language_translation&gt;
+
+</pre>
+<p style="font-weight: bold; font-style: italic;">Translator Limitations<br>
+</p>
+<p>The current translation mechanism does not handle the potential need
+for complete re-disassembly and associated auto-analysis. <br>
+</p>
+</body>
+</html>

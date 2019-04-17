@@ -1,0 +1,497 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Functions</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Functions</H1>
+
+    <P>Functions store information about locations within a program that may be referenced by a call
+    instruction, although no direct reference to a function is required. External Functions 
+    may also be defined and associated with a Library
+    Namespace.  A function definition consists of:</P>
+
+	<BLOCKQUOTE>
+    <UL>
+      <LI>An entry point address or external location symbol</LI>
+
+      <LI>A body of instructions (<i>does not apply to External Functions</i>)</LI>
+
+      <LI>A function signature/prototype specification, consisting of:</LI>
+      
+      <OL>
+      	<LI>Function Name (<i>same as primary label at entry point</i>)</LI>
+        <LI>Calling Convention (<i>available conventions defined by active compiler-spec</i>)</LI>
+        <LI>Return data type (<i>with storage</i>)</LI>
+        <LI>Parameter arguments (<i>with storage</i>)</LI>
+      </OL>
+      
+      <LI>Optional function attributes, including:</LI>
+      
+      <OL>
+      	<LI>Varargs enablement</LI>
+        <LI>No-Return enablement (<i>if enabled, calls to function will not return and can prevent fallthrough from call</i>)</LI>
+        <LI>Inline enablement (<i>if enabled, callers will inline function code</i>)</LI>
+        <LI>Custom Storage enablement (<i>if enabled, return and parameter storage to be explicitly defined</i>)</LI>
+        <LI>Call Fixup</LI>
+      </OL>
+      
+      <LI>Additional function listing markup (<i>does not apply to External Functions</i>):</LI>
+      
+       <OL>
+      	<LI>Local variables (<i>with storage</i>)</LI>
+      	<LI>Parameter and local variable references from instructions</LI>
+        <LI>Code and data references from instructions</LI>
+        <LI>Comments</LI>
+        <LI>Optional function repeatable comment</LI>
+        <LI><A href="../FunctionTagPlugin/function_tag_window.htm">Function Tags</A></LI>
+      </OL>
+
+    </UL>
+    
+    <P>When displayed in the browser, a function includes:</P>
+
+    <UL>
+      <LI>The entry point is usually called by another instruction, although there may be no direct
+      reference to the function within the program. The entry point of a function must be an
+      instruction.</LI>
+
+      <LI>The body of the function is under user control, but can be automatically calculated when
+      the function is defined. The body can be a contiguous range of addresses or may be multiple
+      address ranges. Data may also be included within the body.</LI>
+
+      <LI>The complete function signature and optional attributes are displayed within the listing at 
+      the function entry point.
+      This information may also be displayed at pointers which reference a function
+      provided the appropriate tool option for displaying function headers
+      is enabled (see <A href="../CodeBrowserPlugin/CodeBrowserOptions.htm/#Function_Pointers">Listing Fields options / Function Pointers</A>).</LI>  
+
+    </UL>
+    </BLOCKQUOTE>
+    
+    <H2>Function Signature, Attributes and Variables</H2>
+    
+    <P>Please refer to <A href="Variables.htm">Function Signature and Variables</A> for details
+    on this subject and how to modify a function signature/prototype specification, including function 
+    attributes and variable storage.</A> 
+
+    <H2><A name="Create_Function"></A>Create Function</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Create Function</I> creates a function with an entry point and a body of
+      instructions.</P>
+
+      <P>To Create a Function,</P>
+
+      <OL start="1" type="1">
+        <LI>Place the cursor in the Code Browser at the address with a defined instruction.</LI>
+
+        <LI>Right-mouse-click, select the <B>Create Function</B> popup menu item</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P><I><IMG src="../../shared/tip.png"> As part of creating a function, function parameters
+        and local variables may also be created. See <A href="Variables.htm">Variables</A> for the
+        operations on variables.</I></P>
+
+        <P><I><IMG src="../../shared/tip.png"> Functions may be automatically created via <A href=
+        "../AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A>.</I></P>
+
+        <P><I><IMG src="../../shared/note.png"> If a function starts with an unconditional jump
+        instruction, the function will be created as a <A href="#ThunkFunctions">Thunk Function</A>
+        if possible.</I></P>
+      </BLOCKQUOTE>
+
+      <P>The entry point for the function is the address at the current cursor location when there
+      is no selection. With a selection, the entry point is the minimum address in the
+      selection.</P>
+
+      <P>The current code browser selection is used as the function body. In the absence of a
+      selection, <I>Create Function</I> will follow the control flow from the entry point to
+      determine the function body. The resulting code may not be contiguous.</P>
+
+      <BLOCKQUOTE>
+        <P><I><IMG src="../../shared/tip.png"> To see the body of the function that has been
+        defined, place the cursor on the first instruction within the function and choose
+        <B>Select</B><IMG src="../../shared/arrow.gif"> <B>Functions</B> from the Code Browser's
+        main menu.</I></P>
+      </BLOCKQUOTE>
+
+      <P><A name="New_Function_Name"></A>The symbol at the entry point is used as the name of the
+      function. If no symbol exists at the entry point a default label starting with <FONT color=
+      "#008000"><B>FUN_</B></FONT> is created. Prior to creating the function, the symbol may have
+      started with <FONT color="#008000"><B>SUB_</B></FONT> if it was a default symbol and there
+      were call references to it. If a symbol does exist at the entry, a dialog is displayed so
+      that you can change the suggested function name, <B><FONT color="#008000">FUN_</FONT></B>
+      <FONT color="#008000"><B>&lt;address&gt;</B></FONT>. After the function is created, a symbol
+      is created with the name from the dialog.</P>
+
+      <P>If the symbol name is changed, the function name displayed will also change. <A href=
+      "#CBAnnotationFunctionsRename">Rename Function</A> can be used to rename the function.</P>
+
+      <P>In stack-based processors, <I>Create Function</I> will try to identify parameters and
+      local variables used by the function. By default, the variables data type will be
+      <I>Undefined<B>N</B></I> where <I><B>N</B></I> is the size (in bytes) of the stack reference.
+      See <A href="Variables.htm">Function Signature and Variables</A> on how to modify the stack
+      variables. See <A href="../ReferencesPlugin/References_from.htm#stackRefs"><FONT
+      color="#ff0000">Stack References</FONT></A> on how to add stack variables.</P>
+
+      <P><B>Select</B><IMG src="../../shared/arrow.gif"> <B>Subroutines</B> will display the scope
+      of a subroutine from any address within the scope of the subroutine. It is helpful to use the
+      <B>Subroutines</B> option to determine what the potential scope of a function would be if you
+      create it.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Re_create_Function"></A>Re-Create Function</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Re Create Function</I> rebuilds a function's body of addresses without destroying any
+      parameters or stack references that may have already been created.&nbsp; This action is
+      useful when additional code has been found, for example from a computed jump (or switch),
+      that was not know when the original function was created.  Most likely auto-analysis
+      will have fixed the function's body already and re-creating the function won't be
+      necessary.
+      </P>
+      <P>
+      With no selection, the function's body is
+      re-calculated based on the flow of the instructions from the function's entry point address.
+      With a selection, the body of the function is set to the current selection.</P>
+
+      <P>To Re Create a Function,</P>
+
+      <OL start="1" type="1">
+        <LI>Place the cursor in the Code Browser at the top of an already defined function.<BR>
+         The cursor can be on any field at the entry point of the function.</LI>
+
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src=
+        "../../shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
+      </OL>
+
+      <P>To Re Create a Function, with a forced new body</P>
+            
+      <OL start="1" type="1">
+        <LI>Create a selection in the Code Browser that should be the body of the function.
+         The cursor should be at the top of the already defined function.<BR>
+         The cursor can be on any field at the entry point of the function.</LI>
+
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src=
+        "../../shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
+      </OL>
+      
+      <BLOCKQUOTE>
+        <P><I><IMG src="../../shared/tip.png"> Recreating a function will kick off auto-analysis
+        on the function if there are any changes to the function's body.  New parameters or
+        locals may be created since more code may now be part of the function's body. See <A href=
+        "Variables.htm">Variables</A> for the operations on variables.</I></P>
+      </BLOCKQUOTE>
+
+    </BLOCKQUOTE>
+
+    <H2><A name="ThunkFunctions"></A>Thunk Functions</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Thunk Functions</I> are a common artifact of compiled code and are frequently used to
+      facilitate access to external functions, functions located far from the caller, and other
+      relocation scenarios. Ghidra has the ability to specify a function as being a <I>thunk</I>
+      for another function. A <I>thunk</I> has the same function signature and parameter storage as
+      the real function (also referred to as the <I>thunked-function</I>), although its name may differ. 
+      A <I>thunk</I> function
+      within Ghidra acts as a proxy to the real/thunked-function where all parameter and attribute
+      changes to one are reflected onto the other. One exception to this is the name. If a <I>thunk</I> 
+      is created without a name, its name will reflect the name of the <I>thunked</I> function. 
+      Renaming the <I>thunk</I> allows the thunk to have a name which
+      differs from the thunked-function. Local variables are not supported for <I>thunk</I> functions.
+      
+      <p><IMG src="../../shared/note.png"> Within the Code Browser, double-clicking on a <I>thunk</I> 
+      function name will navigate to the associated <I>thunked</i> function, while
+       <I>thunked</I> functions will display back-references (i.e., XREFs) to
+      the associated <I>thunk</I> functions with a Ref-Type of 'T'.</p>
+
+      <P>To Create a Thunk-Function:</P>
+
+      <OL start="1" type="1">
+        <LI>Select the instructions which corresponds to the body of the new thunk function, or
+        place your cursor on a single unconditional jump instruction which jumps to the
+        thunked-function.</LI>
+
+        <LI>Right-mouse-click, select the <B>Create Thunk Function</B> popup menu item</LI>
+
+        <LI>If unable to determine the thunked-function, the user will be prompted to specify the
+        thunked-function by label or address. The specified location must correspond to an existing
+        function.</LI>
+      </OL>
+
+      <P>To Edit a Thunk Function (i.e., set the associated <I>thunked</I> function) or 
+      Convert a normal Function to a Thunk Function:</P>
+
+      <OL start="1" type="1">
+        <LI>Place the cursor in the Code Browser at the top of an already defined <I>thunk</I>
+        function.<BR>
+         The cursor can be on any field at the entry point of the function.</LI>
+
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Set
+        Thunked Function...</B> popup menu item</LI>
+
+        <LI>The user will be prompted to specify the <I>thunked</I> function by label or address. The
+        specified location must correspond to an existing function.</LI>
+      </OL>
+      
+      <P>To Revert a Thunk Function (i.e., revert a Thunk Function to a normal Function):</P>
+
+      <OL start="1" type="1">
+        <LI>Place the cursor in the Code Browser at the top of an already defined <I>thunk</I>
+        function.<BR>
+         The cursor can be on any field at the entry point of the function.</LI>
+
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Revert
+        Thunk Function...</B> popup menu item</LI>
+
+        <LI>The user will be prompted to confirm the action.</LI>
+      </OL>
+
+    </BLOCKQUOTE>
+    
+    <H2><A name="ExternalFunctions"></A>External Functions</H2>
+    
+    <BLOCKQUOTE>
+      <P>Defining an <I>External Function</I> allows a function to be defined which does not reside within
+      the current program listing or whose actual memory address is unknown.  Similar to a simple <I>External Location</I>,
+      these external symbols are associated with named <i>Library</i> namespaces and are most easily 
+      managed via the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A> under the <i>Imports</i> category.  
+      If the actual <i>Library</i>
+      name is unknown, the "&lt;EXTERNAL&gt;" <i>Library</i> (or any other named Library) may be used as a 
+      parent namespace.  </p>
+      
+      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Location</I> 
+      may be converted to a function using the <I>Create External Function</I> popup action 
+      on the selected node.  The resulting <I>External Function</I> may be converted back to a 
+      simple <I>External Location</I> by deleting the function node.  To really remove the function 
+      and its location will require a second delete on the <I>External Location</I>.</P>
+      
+      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Function</I> 
+      may be modified using the <B>Function</B><IMG src=
+            "../../shared/arrow.gif"><A href="Variables.htm#Edit_Function">Edit 
+            Function...</A> popup action on the selected function node.</P>
+      
+      <P>Creating an <A href="../ReferencesPlugin/References_from.htm#extRefPanel">External Reference</A> 
+      is currently the only mechanism within the Ghidra GUI
+      to establish an <I>External Location</I>.  Once an <I>External Location</I> has been established, it can be
+      converted to a function (see above).  This limitation should hopefully be resolved in
+      a future release of Ghidra.</P>
+
+	</BLOCKQUOTE>
+
+    <H2><A name="Create_Multiple_Functions"></A>Create Multiple Functions</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Create Multiple Functions</I> creates functions from a selection in the listing. It
+      works from the minimum address to the maximum address in the selection trying to create
+      functions if possible. Any addresses that are already part of a function are discarded and
+      not used to determine new functions. Also whenever a function is created by this action, all
+      the addresses in the body of the created function are also discarded from being possible
+      addresses for starting a new function.</P>
+
+      <P>A common use of this action is on a selection containing the entry point addresses of the
+      functions you want to create.</P>
+    </BLOCKQUOTE>
+
+    <H2>Edit Function</H2>
+
+    <BLOCKQUOTE>
+      <P>For information on editing functions, see <A href="Variables.htm#Edit_Function">Function
+      Signature Help.</A></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="CBAnnotationFunctionsRename"></A><A name="Rename_Function"></A>Rename
+    Function</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Rename Function</I> renames an existing function. As discussed in <A href=
+      "#Create_Function">Create Function</A>, the function name is the same as the primary label at
+      the functions entry point.</P>
+
+      <P>To rename a function,</P>
+
+      <OL start="1" type="1">
+        <LI>Right-mouse-click on the function header in the Code Browser</LI>
+
+        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Rename Function</B>
+        popup menu item</LI>
+
+        <LI>Enter the new function name and/or namespace, click OK. The name may also be entered
+        with a fully qualified namespace (e.g., mynamespace::myfunction). The '::' is used as a
+        namespace delimiter.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Delete_Function"></A>Delete Function</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Delete Function</I> removes a function. There is no confirmation for the Delete
+      Function operation. However, the results can be undone using the <A href=
+      "../Tool/Undo_Redo.htm">Undo operation</A>.</P>
+      
+          <P>When a function is deleted all stack variable definitions are removed, along with all
+	    references to those variables from instructions within the function's body. If a stack
+	    reference refers to a stack variable that is deleted, any references will be replaced with
+	    <FONT color="#800080">Stack [offset]</FONT>, where offset is the relative offset to the
+	    stack.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>To Delete a Function,</P>
+
+      <OL>
+        <LI>Right mouse-click on the function header</LI>
+
+        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Delete Function</B>
+        popup menu item</LI>
+      </OL>
+
+      <P>When a function is deleted, all stack and register references from instructions within the
+      function body are removed. The function comment (which is really the <A href=
+      "../Glossary/glossary.htm#PlateComment">plate comment</A> for that address) remains
+      intact if you had made changes to it, or if the plate comment existed before the function was
+      created.</P>
+
+      <P>If there are still <I>call</I> references to this address, the label changes from <FONT
+      color="#008000"><B>FUN_</B></FONT> to <FONT color="#008000"><B>SUB_</B></FONT> .</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Function_Purge"></A>Function Purge</H2>
+
+    <BLOCKQUOTE>
+      <P>A <B>function purge</B> is the number of additional bytes (not including the return value) a function pops
+      from the stack when it returns. The value is calculated as the difference between the stack pointer's value exiting
+      the function and its value coming into the function but excludes the final pop of the return address.  </P>
+
+      <P>For most calling conventions, the function purge is always zero. A major exception is the 32-bit x86 <I>stdcall</I>
+      calling convention, where the function may pop off its own stack parameters in addition to the return value.
+      The function purge in this situation can be positive indicating that more values are popped from the stack.
+      For other unusual situations, a negative function purge can be set indicating that the function <I>pushes</I> additional
+      values.</P>
+      
+      <P>For architectures where the stack grows in the <I>positive</I> direction, the meaning of the function purge sign
+      is reversed.  A positive function purge indicates additional bytes are <I>pushed</I> to the stack, and a negative
+      function purge indicates bytes are <I>popped</I> from the stack.</P>
+
+      <P>To change the function purge:</P>
+
+      <UL>
+        <LI>Right mouse-click on the function header</LI>
+
+        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Edit Function
+        Purge...</B> popup menu item</LI>
+
+        <LI>Enter the new function purge size in the dialog that appears</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_Function_Repeatable_Comment"></A>Function Repeatable Comment</H2>
+
+    <BLOCKQUOTE>
+      <P>When a repeatable comment exists at the entry point of a function, the repeatable comment
+      is displayed in the <I>Function Repeatable Comment</I> field rather than the <I>EOL
+      Comment</I> field. See <A href="../CommentsPlugin/Comments.htm#Edit_Comments">Edit
+      Comments</A> for more information on comments.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Remove_Stack_Depth_Change"></A><A name="Set_Stack_Depth_Change"></A>Stack Depth
+    Change</H2>
+
+    <BLOCKQUOTE>
+      <P>You can specify a relative change in the stack depth at the address of the current
+      location in the program.</P>
+
+      <H3>Set Stack Depth Change<BR>
+      </H3>
+
+      <P>To set a change in stack depth:</P>
+
+      <UL>
+        <LI>Right mouse-click on the Listing.</LI>
+
+        <LI>Select <B>Set Stack Depth Change...</B> from the popup menu.</LI>
+
+        <LI>The <I>Set Stack Depth Change</I> dialog is displayed. The Stack Depth Change textfield
+        initially contains the current stack depth change value. If the stack depth change is not
+        explicitly set at this address, the default value will be based on the instruction. For a
+        call instruction, the default stack depth change will be based on the function purge value
+        of the called function.<BR>
+        </LI>
+      </UL>
+
+      <DIV align="center">
+        <IMG src="images/SetStackDepthChange.png"><BR>
+      </DIV>
+
+      <UL>
+        <LI>Enter the desired change in stack depth. This can be either decimal or hexadecimal.
+        Hexadecimal is indicated by a "0x". For example, <TT>-0x1a</TT>.</LI>
+
+        <LI>Press the Return key or the <B>OK</B> button to set the stack depth change.</LI>
+
+        <LI>If &nbsp;you are not on a Call instruction, the stack depth change will be set.<BR>
+         Otherwise, you will you will see a dialog allowing you to choose whether the value should
+        be applied as a stack depth change at the current address (<B>Local</B>) or as a function
+        purge at the called function (<B>Global</B>). Choose <B>Local</B> to set the stack depth
+        change or <B>Global</B> to set the function purge.<BR>
+        </LI>
+      </UL>
+
+      <P align="center"><IMG src="images/StackDepthChangeOrFunctionPurge.png"> &nbsp;<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3>Remove Stack Depth Change<BR>
+      </H3>
+
+      <P>To remove a change in stack depth where it is currently set:</P>
+
+      <UL>
+        <LI>Put the cursor location on the <I>StackDepth = StackDepth + ...</I> line in the
+        Listing.</LI>
+
+        <LI>Press the <B>Delete</B> key.</LI>
+      </UL>
+
+      <DIV align="left">
+        <P>or</P>
+      </DIV>
+
+      <UL>
+        <LI>Right mouse-click on the <I>StackDepth = StackDepth + ...</I> line in the Listing.</LI>
+
+        <LI>Select <I>Remove Stack Depth Change</I> from the popup menu.</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>Functions</I> plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Variables.htm">Function Signature and Variables</A></LI>
+
+      <LI><A href="../AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A></LI>
+
+      <LI><A href="../ReferencesPlugin/References_from.htm#stackRefs">Stack
+      References</A></LI>
+
+      <LI><A href="../CommentsPlugin/Comments.htm">Comments</A></LI>
+    </UL>
+  </BODY>
+</HTML>

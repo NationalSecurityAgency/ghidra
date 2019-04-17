@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This cspec describes the 32-bit ABI for PowerPC as it is implemented for 64-bit code.
+     Presumably this ABI allows binary compatibility of 64-bit code with existing 32-bit code.
+     The ABI assumes 32-bit registers and addresses, in particular the maximum sized integer value
+     that can be passed in a single register is 4 bytes (even though the register is 8 bytes long).
+     The cspec currently has a limited ability to model this: the maxsize attribute must still be
+     set to 8 for parameter passing registers r3 - r10.
+-->
+<compiler_spec>
+  <global>
+    <range space="ram"/>
+  </global>
+  <data_organization>
+	<pointer_size value="4"/>
+  </data_organization>
+  <aggressivetrim signext="true"/>  <!-- Pointers are 4-bytes but are held in 8-byte registers -->
+  <stackpointer register="r1" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="8" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="sign">
+          <register name="r3"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r14"/>
+        <register name="r15"/>
+        <register name="r16"/>
+        <register name="r17"/>
+        <register name="r18"/>
+        <register name="r19"/>
+        <register name="r20"/>
+        <register name="r21"/>
+        <register name="r22"/>
+        <register name="r23"/>
+        <register name="r24"/>
+        <register name="r25"/>
+        <register name="r26"/>
+        <register name="r27"/>
+        <register name="r28"/>
+        <register name="r29"/>
+        <register name="r30"/>
+        <register name="r31"/>
+        <register name="r1"/>
+        <register name="cr4"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+
+  <callfixup name="get_pc_thunk_lr">
+    <pcode>
+      <body><![CDATA[
+      LR = inst_dest + 4;
+      ]]></body>
+    </pcode>
+  </callfixup>
+
+</compiler_spec>

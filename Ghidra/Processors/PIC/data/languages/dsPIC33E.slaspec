@@ -1,0 +1,9 @@
+# This module defines Microchip PIC-24. 
+
+# Based on "Microchip 16-bit MCU and DSC Programmer's Reference Manual (c)2005-2011 (i.e. PIC24_InstructionSet.pdf)
+
+define endian=little; # little endian only
+
+@define dsPIC33E "1"     
+
+@include "PIC24.sinc"

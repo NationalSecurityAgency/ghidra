@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset = "utf-8">
+		<title>Ghidra Java Coding Standards</title>
+		<style media="screen" type="text/css">
+			li { margin-left: 90px; font-family:times new roman; font-size:14pt; }
+			h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+			h2 { margin: 10px; margin-top: 40px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+			h3 { margin-left: 37px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; }
+			h4 { margin-left: 70px; margin-top: 10px; font-family:times new roman; font-size:14pt; font-weight:normal; }
+			h5 { margin-left: 70px; margin-top: 10px; font-family:times new roman; font-size:14pt; font-weight:normal; }
+			h6 { color:#000080; font-family:times new roman; font-size:18pt; font-style:italic; font-weight:bold; text-align:center; }
+			p { margin-left: 90px; font-family:times new roman; font-size:14pt; }
+			body {
+				counter-reset: section;
+			}
+			h2 {
+				counter-reset: topic;
+			}
+			h3 {
+				counter-reset: rule;
+			}
+			h2::before {
+				counter-increment: section;
+				content: counter(section) ": ";
+			}
+			h3::before {
+				counter-increment: topic;
+				content: counter(section) "." counter(topic) " ";
+			}
+			h4::before {
+				counter-increment: rule;
+				content: counter(section) "." counter(topic) "." counter(rule) " ";
+			}
+
+			div.info {
+				margin-left: 10px; margin-top: 80px; font-family:times new roman; font-size:18pt; font-weight:bold;
+			}
+
+		</style>
+	</head>
+	<body>
+		<H1> Ghidra's Java Style Guide </H1>
+		<H6> Ver 1.1 - 20190307 </H6>
+		<H2> Introduction </H2>
+			<P> The purpose of this document is to record the Ghidra team's accepted rules for code formatting, naming
+			conventions, code complexity, and other best practices.  Many of the rules listed in this document
+			are not universal absolutes and many blur into areas of personal preferences.  The purpose of these
+			types of rules is not to definitely state that one way is better than another, but that we
+			are consistent throughout the team.</P>
+			<P> Most of these rules came from one or more of the listed references at the end of this document. Many of
+			these rules were listed in just about every guide. Where they disagreed, We generally went with the majority.
+			Some rules seem arbitrary as to the actual value used, but that a value was needed seemed universal.
+			For example, just about every reference stated a maximum character line length. We think all were either
+			80 or 100. So everyone seems to think it is important to have some limit, but they don't agree to the actual number.</P>
+			<H3> Most Important Rules of All </H3>
+				<H4> Any of the rules or suggestions in this document can be broken, but you must document why breaking
+				the rule makes the code better. </H4>
+				<H4> Program for people, not machines. The primary goal of your development efforts should be that
+				your code is easy for other people to understand. </H4>
+		<H2> Naming Conventions </H2>
+			<H3> General Naming Rules </H3>
+				<H4> Names for classes, interfaces, methods, parameters, instance variables and long-lived local
+				variables should not contain abbreviations or acronyms except for well known ones (the abbreviation
+				is more commonly used than the full name) like URL and HTML. </H4>
+				<P> The following exceptions are allowed (The list can be expanded with majority approval) </P>
+					<UL>
+					<LI> Utils - can be used as a suffix for the name of a class of static utility methods (e.g., StringUtils) </LI>
+					</UL>
+				<H4> If an abbreviation or acronym is used, only the first letter should be capitalized. (Unless it
+				is the beginning of a method or variable name, in which case the first letter is also lower case.) </H4>
+				<P> For example, use fooUrl, not fooURL. </P>
+			<H3> Package Naming </H3>
+				<H4> Package names should start with ghidra.&lt;module group&gt;.&lt;module name&gt;. (e.g., ghidra.framework.docking.)</H4>
+				<H4> Package names should be all lower case, preferably one word and no abbreviations. </H4>
+
+			<H3> Class Naming </H3>
+				<H4> Class names should be nouns.</H4>
+				<H4> Class names should use upper CamelCase where the first letter of each word is capitalized.</H4>
+					<P> Examples: Table, FoldingTable, WoodTable </P>
+				<H4> Classes that extend other classes should use the base class name as a base and prepend it with what is more
+					specific about the extended class. </H4>  
+					<P>For example, if the base class is "Truck", the subclasses would have names
+					like "DumpTruck", "DeliveryTruck", or "FlyingTruck". </P>
+				<H4> The design pattern of an interface with one or more implementations should use the following naming conventions:</H4>
+					<UL>
+					<LI> Foo - The interface should be named the fundamental thing.	</LI>
+					<LI> AbstractFoo - An abstract implementation intended to be used as the base of a hierarchy of classes. </LI>
+					<LI> DefaultFoo - A "default" implementation that would be appropriate for the majority of use cases. </LI>
+					<LI> {descriptive}Foo - Other implementations should describe what makes them unique. </LI>  
+					</UL>
+				<H4> Test class names should end with "Test" (e.g., FooTest).</H4>
+				<H4> Test doubles or stub objects should use the following naming rules: </H4>
+					<UL>
+					<LI> DummyFoo - a stub that returns empty or null values because they are irrelevant to the test. </LI>
+					<LI> SpyFoo - may provide values to the environment, but also records statistics. </LI>
+					<LI> MockFoo - provides values to the environment and usually has some form of expectations. </LI>
+					<LI> FakeFoo - replaces real functionality with a simplified version (like replacing Database access with in-memory data). </LI>
+					</UL>
+			<H3> Interface Naming </H3>
+				<H4> Interface names should be nouns, or adjectives ending with "able" such as Runnable or Serializable.</H4>
+				<H4> Interface names should use upper CamelCase where the first letter of each word is capitalized.</H4>
+			<H3> Method Naming </H3>
+				<H4> Method names should use lower CamelCase where the first letter of each word is capitalized except for the first word.</H4>
+				<H4> Method names should generally be verbs or other descriptions of actions. </H4>
+				<H4> Specific naming conventions: </H4>
+					<UL>
+					<LI> Methods that access a class's attributes should start with "get" or "set". </LI>
+					<LI> Methods that return a boolean should start with "is". Sometimes "has", "can", or "should" are more appropriate. </LI>
+					<LI> Methods that look something up should start with "find" </LI>
+					</UL>
+				<H4> Methods that return a value should be named based on what they return.  Void methods should be named based on what they do. </H4>
+				<PRE>
+		public Foo buildFoo() {     // returns a Foo so method name is based on Foo
+		    ...
+		}
+		public int getSize() {      // returns a primitive, which is the size, so name is based on "size"
+		    ...
+		}
+		public void startServer() { // doesn't return anything so name it based on what it does
+		    ...
+		}
+		public boolean installHandler(Handler handler) { // even though it returns a boolean, its not about returning  
+		    ...                                          // a boolean, so name it based on what it does
+		}
+			</PRE>
+
+			<H3> Instance Variable Naming </H3>
+				<H4> Instance Variable names should use lower CamelCase where the first letter of each word is capitalized except for the first word.</H4>
+
+			<H3> Local Variable and Parameter Naming </H3>
+				<H4> Local Variable names should use lower CamelCase where the first letter of each word is capitalized except for the first word.</H4>
+				<H4> Variable names should be proportional in length to their scope. </H4>
+					<UL>
+					<LI> Names that live throughout large blocks or methods should have very descriptive names and avoid abbreviations. </LI>
+					<LI> Names that exist in small blocks can use short or abbreviated names. </LI>
+					<LI> Names that exist in tiny blocks can use one letter names (e.g., lambdas). </LI>
+					</UL>
+				<H4> Variable names should generally have the same name as their class (e.g., Person person or Button button). </H4>
+					<UL>
+					<LI> If for some reason, this rule doesn't seem to fit, then that is a strong indication that the type is badly named. </LI>
+					<LI> Some variables have a role.  These variables can often be named {role}Type.  For example, Button openButton or
+					Point startPoint, endPoint. </LI>
+					</UL>
+				<H4> Collections should be named the plural form of the type without the collection type name.  For example, use List<Dog> dogs, not List<Dog> dogList. </H4>
+			<H3> Enum Naming </H3>
+				<H4> Enum class names should be like any other class (UpperCamelCase). </H4>
+				<H4> Enum value names should be all upper case.</H4>
+				<PRE>
+		public enum AnalyzerStatus {
+			ENABLED, DELAYED, DISABLED
+		}
+				</PRE>
+			<H3> Loop Counters </H3>
+				<H4> Use of i, j, k, etc. is acceptable as generic loop counters, unless a more descriptive name would greatly enhance the readability. </H4>
+			<H3> Constants (static final fields) </H3>
+				<H4> Constants should be all upper case with words separated by "_" (underscore char). </H4>
+					<P> Examples:  MAXIMUM_VELOCITY, or DEFAULT_COLOR </P>
+			<H3> Generic Types </H3>
+				<H4> Generic type names should be named in one of two styles: </H4>
+					<UL>
+					<LI> A single Capital Letter, optionally followed by a single number (e.g., T, X, V, T2) </LI>
+						<UL>
+						<LI> T is used most often for single parameter types. </LI>
+						<LI> R is commonly used for return type. </LI>
+						<LI> K,V is commonly used for key,value types. </LI>
+						</UL> 
+					<LI> A name in the form used for classes followed by the capital letter T (e.g., ActionT, RowT, ColumnT). Try to 
+					avoid using this full name form unless it greatly enhances readability. </LI>
+					</UL>
+			<H3> Utility Classes </H3>
+				<H4>Utility class names should end in "Utils".</H4>
+
+		<H2> Source File Structure </H2>
+			<H3> File Order </H3>
+				<H4> A Java File should be organized in the following order </H4>
+					<UL>
+					<LI> Header </LI>
+					<LI> Package statement </LI>
+					<LI> Import statements </LI>
+					<LI> Class Javadocs </LI>
+					<LI> Class declaration </LI>
+					<LI> Static Variables </LI>
+					<LI> Static factory methods </LI>
+					<LI> Instance Variables </LI>
+					<LI> Constructors </LI>
+					<LI> methods </LI>
+					<LI> Private classes </LI>
+					</UL>
+				<H4> Local variables should be declared when first needed and not at the top of the method and should be
+				initialized as close to the declaration as possible (preferably at the same time). </H4>
+				<H4> Overloaded methods should be next to each other. </H4>
+				<H4> Modifiers should appear in the following order: </H4>
+					<UL>
+					<LI> access modifier (public/private/protected) </LI>
+					<LI> abstract </LI>
+					<LI> static </LI>
+					<LI> final </LI>
+					<LI> transient </LI>
+					<LI> volatile </LI>
+					<LI> default </LI>
+					<LI> synchronized </LI>
+					<LI> native </LI>
+					<LI> strictfp </LI>
+					</UL>
+
+		<H2> Formatting </H2>
+		<P> Most of these are handled by the eclipse formatter and are here to document the Ghidra formatting style.
+			<H3> Line Length </H3>
+				<H4> Java code will have a character limit of 100 characters per line. </H4>
+			<H3> Indenting </H3>
+				<H4> New blocks are indented using a tab character (the tab should be 4 spaces wide).</H4>
+				<H4> Line continuation should be indented the same as a new block. </H4>
+			<H3> Braces </H3>
+				<H4> Braces should always be used where optional.
+				<H4> Braces should follow the Kernighan and Ritchie style for nonempty blocks and block-like structures. </H4>
+					<UL>
+					<LI> No line break before the opening brace. </LI>
+					<LI> Line break after the opening brace. </LI>
+					<LI> Line break before the closing brace. </LI>
+					<LI> Line break after the closing brace. </LI>
+					</UL>
+				<H4> Empty blocks should look as follows. </H4>
+				<PRE>
+		void doNothing() {
+			// comment as to why we are doing nothing
+		}
+				</PRE>
+			<H3> White Space </H3>
+				<H4> A single blank line should be used to separate the following sections: </H4>
+					<UL>
+					<LI> Copyright notice</LI>
+					<LI> Package statement </LI>
+					<LI> Import section </LI>
+					<LI> Class declarations </LI>
+					<LI> Methods </LI>
+					<LI> Constructors </LI>
+					</UL>
+				<H4> A single blank line should be used: </H4>
+					<UL>
+					<LI> Between statements as needed to break code into logical sections. </LI>
+					<LI> Between import statements as needed to break into logical groups. </LI>
+					<LI> Between fields as needed to break into logical groups. </LI>
+					<LI> Between the javadoc description and the javadoc tag section. </LI>
+					</UL>
+				<H4> A single space should be used: </H4>
+					<UL>
+					<LI> To separate keywords from neighboring opening or closing brackets and braces. </LI>
+					<LI> Before and after all binary operators </LI>
+					<LI> After a // that starts a comment </LI>
+					<LI> Before a // that starts an end of line comment </LI>
+					<LI> After semicolons separating parts of a "for" loop </LI>
+					</UL>
+					
+			<H3> Variable Assignment </H3>
+				<H4> Each variable should be declared on its own line. </H4>
+				<PRE>
+		don't: 
+			int i,j;
+
+		do:
+			int i;
+			int j;
+				</PRE>
+			
+		<H2> Comments </H2>
+			<H3> Javadoc </H3>
+				<H4> Javadoc blocks are normally of the form </H4>
+				<PRE>
+		/**
+		 * Some description with normal
+		 * wrapping.
+		 */
+				</PRE>
+
+				<H4> Javadoc paragraphs should be separated by a single blank line (Starts with an aligned *) and
+					each paragraph other than the initial description should start with &ltp&gt. </H4>
+				<H4> When referencing other methods, use links (e.g., {@link #method(type1, type2, ...} or {@link Classname#method(type1, type2, ...}). </H4>
+				<H4> Block tags should never appear without a description. </H4>
+				<H4> Descriptions in block tags should not end in a period, unless followed by another sentence. </H4>
+				<H4> Block tags that are used should appear in the following order: </H4>
+					<UL>
+					<LI> @param </LI>
+					<LI> @return </LI>
+					<LI> @throws </LI>
+					<LI> @see </LI>
+					<LI> @deprecated </LI>
+					</UL>
+				<H4> The Javadoc block should begin with a brief summary fragment.  This fragment should be
+					a noun phrase or a verb phrase and not a complete sentence.  However, the fragment is
+					capitalized and punctuated as if it were a complete sentence. </H4>
+				<PRE>
+		For example, do
+
+			/**
+			 * Sets the warning level for the messaging system.
+			 */
+		not
+
+			/**
+			 * This method sets the warning level for the messaging system.
+			 */
+		
+				</PRE>
+				<H4> Javadoc should be present for every public class and every public or protected method with
+					the following exceptions: </H4>
+					<UL>
+					<LI> Methods that override a super method. </LI>
+					</UL>
+			<H3> Code Comments </H3>
+				<H4>Block comments are indented at the same level as the surrounding code.</H4>
+				<H4>Block comments should be preceded by a blank line unless it is the first line of the block.</H4>
+				<H4>Block comments should be one of the following forms: </H4>
+				<PRE>
+		/*						
+		 * This is          // I like this
+		 * nice.            // also.
+		 */
+				</PRE>
+				<H4> Any empty code block should have a comment so that the reader will know it was intentional. Also,
+				the comment should not be something like "// empty" or "don't care", but instead should state why it
+				is empty or why you don't care.</H4>
+				<H4> Comments should indicate the 'why' you are doing something, not just 'what' you are doing.  The code
+				tells us what it is doing. Comments should not be pseudo code.</H4>
+				<H4> Prefer creating a descriptive method to using a block comment. So if you feel that a block
+					comment is needed to explain the next block of code, then it probably would be better off moved
+					to a method with a name that says what the code does.</H4>
+				<H4> Use of comments in code should be minimized by making the code self-documenting by appropriate name choices
+					and an explicit logical structure. </H4>
+				<H4> Tricky code should not be commented.  Instead, it should be rewritten. </H4>
+
+		<H2> Complexity </H2>
+			<H3> Method Size </H3>
+				<H4> Avoid long methods. </H4>
+					<UL>
+					<LI> Methods should perform one clearly defined task. </LI>
+					<LI> Methods should generally fit on one page (approximately 30 lines). </LI>
+					</UL>
+			<H3> Method Complexity </H3>
+				<H4>A method should be completely understandable (what, how, why) in about 30 seconds. </H4>
+				<H4> Method Complexity should be kept low, according to the following scale:</H4>
+
+					<UL> 
+					<LI><TT>0-5</TT>: The method is *probably* fine</LI>
+					<LI><TT>6-10</TT>: The method is questionable; seek to simplify</LI>
+					<LI><TT>11+</TT>: OMG!  Unacceptable!</LI>
+					</UL>
+
+				<P>Calculating Complexity:</P>
+					<UL>
+					<LI> Start with one. </LI>
+					<LI> Add one for each of the following. </LI>
+						<UL>
+						<LI> Returns: Each return other than a simple early guard condition or the last statement in the method. </LI>
+						<LI> Selection: if, else if, case, default. </LI>
+						<LI> Loops: for, while, do-while, break, and continue. </LI>
+						<LI> Operators: &&, ||, ? </LI>
+						<LI> Exceptions: catch, finally, throw. </LI>
+						</UL>
+					</UL>
+
+				<H4>Methods should avoid deep nesting. </H4>
+					<UL>
+					<LI> 2 or less - good </LI>
+					<LI> 3 or 4 - questionable </LI>
+					<LI> 5 or more - unacceptable </LI>
+					</UL>
+				<H4>Methods and constructors should avoid large numbers of parameters.</H4>
+					<UL>
+					<LI> 3 or less - good </LI>
+					<LI> 4 or 5 - questionable </LI>
+					<LI> 6 or 7 - bad, should consider redesign </LI>
+					<LI> 8 or more - unacceptable </LI>
+					</UL>
+				<H4>All blocks of code in a method should be at the same level of abstraction </H4>
+				<PRE>
+		// example of mixed levels:
+		void doDailyChores() {
+			dust();
+			vacuum();
+			mopFloor();
+			addDirtyClothesToWashingMachine();
+			placeDetergentInWashingMachine();
+			closeWashingMachineDoor();
+			startWashingMachine();
+			cleanToilet();
+		}
+
+		// fixed
+		void doDailyChores() {
+			dust();
+			vacuum();
+			mopFloor();
+			washClothes();
+			cleanToilet();
+		}
+				</PRE>
+				<H4>Methods and constructors should generally avoid multiple parameters of the same type, unless the method's purpose
+				is to process multiple instances of the same type (e.g., comparator, math functions). This is especially egregious
+				for boolean parameters.</H4>
+				<H4>Tips for lowering complexity </H4>
+					<UL>
+					<LI> Keep the number of nesting levels low </LI>
+					<LI> Keep the number of variables used low </LI>
+					<LI> Keep the lines of code low </LI>
+					<LI> Keep 'span' low (the number of lines between successive references to variables) </LI>
+					<LI> Keep 'live time' low (the number of lines that a variable is in use) </LI>
+					</UL>
+
+		<H2> Testing </H2>
+			<H3> Unit testing </H3>
+				<H4>A single test case should only test one result.  If there are more than 2 or 3 asserts in
+				a single test, consider breaking into multiple tests. </H4>
+				<H4>Unit tests should run fast (a single test case (method) should be less than a second) </H4>
+
+		<H2> Miscellaneous </H2>
+			<H3> @Override </H3>
+				<H4> Methods that override a method in a parent class should use the @Override tag. </H4>
+				<H4> Methods that implement an interface method should use the @Override tag. </H4>
+				<H4> Methods that use the @Override tag do not need a Javadoc comment. </H4>
+			<H3> Use of Tuple Objects<A,B> </H3>
+				<H4> Use of Pair<A,B>, Triple<A,B,C>, etc. should be avoided.  If the multiple values being returned
+				are related, then the method is conceptually returning a higher level object and so should return that.
+				Otherwise, the method should be redesigned. </H4>
+			<H3> Exception Handling </H3>
+				<H4> Exceptions should never have empty code blocks. There should at least be a comment explaining
+					why there is no code for the exception. </H4>
+				<H4> If the caught exception is believed to be impossible to happen, the correct action is to throw an AssertException
+					with a message explaining that it should never happen. </H4>
+			<H3> Final </H3>
+				<H4> Instance variables that are immutable should be declared final unless there is a compelling reason not to. </H4>
+			<H3> Shadowing </H3>
+				<H4> Avoid hiding/shadowing methods, variables, and type variables in outer scopes. </H4>
+			<H3> Access modifiers </H3>
+				<H4> Class instance fields should not be public. They should be private whenever possible, but protected and package are acceptable.</H4>
+			<H3> Java-specific constructs</H3>
+				<H4> Use the try-with-resources pattern whenever possible. </H4>
+				<H4> Always parameterize types when possible (e.g., JComboBox&lt;String&gt; vs. JComboBox). </H4>
+				<H4> If an object has an isEmpty() method, use it instead of checking its size == 0. </H4>
+			<H3> Miscellaneous </H3>
+				<H4> Mutating method parameters is discouraged. </H4>
+				<H4> Magic numbers should not appear in the code. Other than 0, or 1, the number should be declared as a constant. </H4>
+				<H4> Avoid creating a new Utilities class <B>*every time you need to share code*</B>. Try to add to
+				an existing utilities class OR take advantage of code re-use via inheritance. </H4>
+			<H3> Rules that shouldn't need to be stated, but do</H3>
+				<H4> Test your feature yourself before submitting for review and make sure the tests pass. </H4>
+
+	<div class="info">
+	Notes:
+	</div>
+
+	<H5>Complexity</H5>
+	<P>
+		'The McCabe measure of complexity isn't the only sound measure, but it's the measure most 
+		discussed in computing literature and it's especially helpful when you're thinking about control flow. 
+		Other measures include the amount of data used, the number of nesting levels in control 
+		constructs, the number of lines of code, the number of lines between successive references 
+		to variables ("span"), the number of lines that a variable is in use ("live time"), and the 
+		amount of input and output. Some researchers have developed composite metrics based on 
+		combinations of these simpler ones.' (McCabe)
+	</P>
+	<P>
+		'Moving part of a routine into another routine doesn't reduce the overall complexity of the 
+		program; it just moves the decision points around. But it reduces the amount of complexity 
+		you have to deal with at any one time. Since the important goal is to minimize the number of 
+		items you have to juggle mentally, reducing the complexity of a given routine is worthwhile.' (McCabe)
+	</P>
+	<P>
+		'Excessive indentation, or "nesting," has been pilloried in computing literature for 25 years and is 
+		still one of the chief culprits in confusing code. Studies by Noam Chomsky and Gerald 
+		Weinberg suggest that few people can understand more than three levels of nested ifs 
+		(Yourdon 1986a), and many researchers recommend avoiding nesting to more than three or four 
+		levels (Myers 1976, Marca 1981, and Ledgard and Tauer 1987a). Deep nesting works against what 
+		Chapter 5, describes as Software's Primary Technical Imperative: Managing Complexity. That is reason 
+		enough to avoid deep nesting.' (McCabe)
+	</P>
+	<P>
+	'There is no code so big, twisted, or complex that maintenance can't make it worse.'<BR>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Gerald Weinberg
+	</P>
+
+	<div class="info">
+		References:
+	</div> 
+		<UL>
+		<LI> Google Java Style Guide </LI>
+		<LI> OpenJDK Style Guide </LI>
+		<LI> Java Programming Style Guidelines - Geotechnical Software Services </LI>
+		<LI> Code Complete, Steve McConnell </LI>
+		<LI> Java Code Conventions </LI>
+		<LI> Netscapes Software Coding Standards for Java </LI>
+		<LI> C / C++ / Java Coding Standards from NASA </LI>
+		<LI> Coding Standards for Java from AmbySoft </LI>
+		<LI> Clean Code, Robert Martin (Uncle Bob) </LI>
+		</UL>
+	</body>
+</html>

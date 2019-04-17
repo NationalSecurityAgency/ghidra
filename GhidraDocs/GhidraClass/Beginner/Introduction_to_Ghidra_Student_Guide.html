@@ -1,0 +1,3325 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>Introduction to Ghidra</title>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+<section>
+<h1>Introduction to Ghidra</h1>
+<div role="note">
+  <p><b>STUDENT GUIDE</b></p>
+
+</div>
+</section>
+
+<section>
+<header>How to Use Slides</header>
+<br>
+<ul class="medium">
+  <li>Use Arrow keys to go to next/previous slide</li>
+  <li>Double click page number to edit/jump to specific page</li>
+  <li>"withNotes" slide deck contains detailed notes below slides and can be used as a tutorial.</li>
+  <li>Click "Pop-up" to launch presentation slides</li>
+<li>Should display correctly in modern versions of all browsers. </li>
+  <li>Microsoft Edge displays incorrectly at first. To fix, go to Edge options (...) and click zoom once. </li>
+
+</ul>
+</section>
+
+
+<section>
+<header>Installing Ghidra</header>
+<br>
+<ul class="medium">
+  <li>Unzip the Ghidra installation file: </li>
+  <ul>
+    <li>ghidra_&lt;version&gt;_&lt;release&gt;_&lt;date&gt;.zip</li>
+</ul>
+<ul>
+<ul>
+      <li>&lt;version&gt;  is the version number of the release</li>
+      <li>&lt;release&gt; is the name of the release</li>
+      <li>&lt;date&gt; is the date the release was built</li>
+	</ul>
+    </ul>
+<br>
+<li>Platforms Supported:</li>
+<ul>
+  <li>Microsoft Windows 7 or 10 (64-bit)</li>
+  <li>Linux (64-bit, CentOS 7 is preferred)</li>
+  <li>macOS (OS X) 10.8.3+ (Mountain Lion or later)</li>
+</ul>
+
+
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise Files</header>
+<br>
+<ul class="medium">
+<li>Go through these slides with your choice of program. The exercises were written to work with any program.</li>
+<br>
+</ul>
+
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Course Objectives</header>
+<br>
+<ul class="medium">
+  <li>By the end of this course you will be able to:</li>
+  <ul>
+    <li>Create, setup, and customize Ghidra projects</li>
+    <li>Perform code analysis, markup, navigation, searching, selections, and basic data creation to support the reverse engineering process</li>
+    <li>Use the byte viewer, decompiler, program tree, symbol table, symbol tree, function graph, and function call tree to support the reverse engineering process</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes:</b></u>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Course Topics</header>
+<table style="width:100%; border-spacing:0px;">
+  <tr>
+    <td style="vertical-align:top">
+      <br>
+      <ul class="medium">
+	<li>Install and Introduction</li>
+	<li>Creating Projects</li>
+	<li>Importing/Exporting programs</li>
+	<li>Customizing tools</li>
+	<li>Basic Code Analysis</li>
+	<li>Selections</li>
+	<li>Basic code Markup</li>
+	<li>Basic Decompiler</li>
+      </ul>
+    </td>
+    <td style="vertical-align:top">
+      <ul class="medium ">
+	<br>
+	<li>Applying Data Types</li>
+	<li>Navigation</li>
+	<li>Searching</li>
+	<li>ByteViewer</li>
+	<li>Basic Program Tree</li>
+	<li>Symbol Table/Tree</li>
+	<li>Function Graph</li>
+	<li>Function Call Tree</li>
+
+	</ul>
+      </ul>
+    </td>
+  </tr>
+</table>
+<div role="note">
+  <p>
+  <br>
+  <u><b>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>What is Ghidra?</header>
+<ul>
+  <li>Integrated development environment (IDE) for Reverse Engineering (RE) tasks</li>
+  <li>Written in Java - mostly platform independent</li>
+  <li>Five major parts:</li>
+  <ul>
+    <li>Programs</li>
+    <li>Plugins</li>
+    <li>Tools</li>
+    <li>Project Manager</li>
+    <li>Server </li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Ghidra is a highly extensible application for performing software reverse engineering.</li>
+    <li>Ghidra is built upon a completely generic application framework. Each Application-specific capability is provided by small software bundles called plugins, and each one provides one or more features.</li>
+    <li>There are five major parts of Ghidra including: Programs, Plugins, Tools, Project Manager, and the Server . Each of these parts will be discussed in more detail later on in the course.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Programs</header>
+<br>
+<ul class="medium">
+  <li>All data is stored using Ghidra&apos;s custom database</li>
+  <li>All data added by the user also gets added to the Ghidra program database:</li>
+  <ul>
+    <li>Symbols</li>
+    <li>Bytes</li>
+    <li>References</li>
+    <li>Instructions</li>
+    <li>Data</li>
+    <li>Comments</li>
+    <li>Etc...</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Plugins</header>
+<br>
+<ul>
+  <li>Ghidra is a library of plugins. Each plugin provides specific functionality.</li>
+  <li>All plugins communicate with each other within the tool that they are docked in.</li>
+  <li>Plugins can be added or removed without restarting Ghidra so that users can customize the tool however they like.</li>
+  <li>Users can write their own plugins.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Tools</header>
+<br>
+<ul class="medium">
+  <li>Collections of plugins and their configurations</li>
+  <li>Ghidra has several preconfigured tools which can be customized to suit individual requirements</li>
+  <li>All tools can be customized</li>
+  <li>New tools can be created by adding plugins to an empty tool</li>
+  <li>Tool configurations are saved for the next use</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Project Manager</header>
+<br>
+<ul>
+  <li>Manages projects, tools, and data for a particular group of programs</li>
+  <li>Programs must be imported into a project before work can be done</li>
+  <li>Project configurations are saved for the next use</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Ghidra Server</header>
+<br>
+<ul class="medium">
+  <li>Ghidra projects can share project data by connecting to a Ghidra Server</li>
+  <li>The Ghidra server:</li>
+  <ul>
+    <li>Is used when multiple users want to work together on the same program or set of programs</li>
+    <li>Is a simple service running on any computer that a group of users has access to.</li>
+    <li>Provides network storage for the shared project.</li>
+    <li>Controls user access</li>
+    <li>Allows files to be versioned</li>
+    <li>Supports check out, check in, version history</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Why use Ghidra?</header>
+<br>
+<ul>
+  <li>Tools can dynamically share data.</li>
+  <li>Supports teaming.</li>
+  <li>Highly configurable environment</li>
+  <li>Very extensible.</li>
+  <li>Runs on multiple platforms</li>
+  <li>Has undo!</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Starting Ghidra</header>
+<br>
+<ul>
+  
+  <li>Run the following from the Ghidra installation directory, ie. .../ghidra_&lt;version&gt;</li>
+	<ul>
+	<li>ghidraRun.bat (Windows)</li>
+	<li>ghidraRun.sh (Linux or macOS)</li>
+	</ul>
+
+
+<br><br>
+<li>The first time you run Ghidra you may be asked for the path to your Java installation.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li><b>Starting Ghidra</b></li>
+    <ul>
+      <li>To run Ghidra, double-click the <b>ghidra.bat</b> file (or run the ghidra.sh file for Linux or Mac) that is located in the Ghidra install directory</li>
+      <li>The first time Ghidra runs, it may take a few minutes while it searches for plugins and other dynamic extensions. After the first time, it should start much faster. Also, the first time you launch Ghidra, a HELP window will appear displaying the &quot;What&apos;s New&quot; page in Ghidra. If this window appears, you can dismiss it for now. You can always get it back using the HELP subsystem which will be explained later</li>
+      <li>An empty Ghidra Project window should now be displayed. This window will allow you to manage your tools, data, and projects.</li>
+    </ul>
+  </ul>
+  <br>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Program Manager Layout</header>
+<br>
+<ul class="medium">
+  <li>The Program Manager is a place to:</li>
+  <ul>
+    <li>Create, open, or archive projects</li>
+    <li>Import new programs into a project</li>
+    <li>Open programs in tools.</li>
+    <li>Create subfolders</li> 
+	<li>View other project contents (read only)</li>
+    <li>Manage your tools</li>
+    <li>Store your project data archives</li>
+    <li>Store version tracking sessions</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>The Project Manager is the place to:</li>
+    <ul>
+      <li>Create, open, or archive projects</li>
+      <ul>
+	<li>Non-Shared: project for individual users</li>
+	<li>Shared: project for a team of users</li>
+      </ul>
+      <li>Import new programs into a project</li>
+      <ul>
+	<li>Project can contain multiple programs</li>
+      </ul>
+      <li>View the content of other projects</li>
+	<li>Open programs in existing tools by dragging and dropping program onto tool in Tool Chest.</li>
+      <li>View and open the contents of other projects (read-only)</li>
+      <li>Manage your tools</li>
+      <ul>
+	<li>Can have multiple tools</li>
+	<li>Shows which tools are available and running</li>
+	<li>Can open the tools and create new tools</li>
+	<li>Import default or user-created tools</li>
+      </ul>
+      <li>Store your project data archives</li>
+      <li>Store your version tracking sessions</li>
+      <li>View information about programs using tree or table view</li>
+      <li>Create and switch Ghidra workspaces</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:45px">Program Manager<br>Creating a New Project</span></header>
+<ul class="medium">
+  <li>Select File->New Project from the Ghidra Project Window</li>
+  <li>Select Project type:</li>
+  <ul>
+    <li>Non-Shared for people working alone</li>
+    <li>Shared for people working in a group (discussed in intermediate course)</li>
+  </ul>
+  <li>Select Project Directory and name</li>
+  <ul>
+    <li>Directory should be on local drive (not over network) for best performance.</li>
+  </ul>
+  <li>Enter a name for your project, select Finish</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+Before you can do anything else, you must first create a project. Projects are used to store all the programs and related information together in one place. This helps Ghidra locate the files, making them easily accessible to the user. Projects are populated with data using the import process, which will be explained in the next step.
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 1<br>Create a New Project</header>
+<br>
+<ul>
+  <li>Non-shared project</li>
+  <li>Use default project directory</li>
+  <li>Name it MyProject</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>When you complete your exercise you will have created a new Ghidra project. At this point you should see tools in the tool chest and should see a folder named MyProject.</li>
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Project Manager<br>Import Program</header>
+<br>
+<ul class="medium">
+  <li>To import a file, select File->Import File... and browse to the program you want to import</li>
+  <li>OR Drag and drop from file system onto a Project Manager folder</li>
+  <li>Use default or choose correct File Format and Language</li>
+  <li>If necessary, edit the program name and choose subfolder</li>
+ <li>If necessary, edit options such as the Library Search Path and/or import External Libraries using Options button.</li>
+</ul>
+<div role="note">
+  <p>
+
+  <br>
+  <b><u>Notes:</u></b>
+  <br>
+  
+  Below are steps for importing a file in the Program Manager.
+  <ol>
+    <li>Go to <b>File->Import File...</b></li>
+    <li>Browse to the program you want to import. Click on &quot;supported formats&quot; if you want to see a list of formats Ghidra supports. Ghidra can import (PE, ELF, raw binary, intel hex, gzf (ghidra zip file), etc.)</li>
+    <li><b>Recognized type</b>: If recognizable, Ghidra will fill in the correct file format otherwise it will show "raw binary" and you must choose the correct language/compiler pair.</li>
+      <li><b>Raw Binary</b>: You may always choose raw binary if you do not want any imported information and you must choose the correct language/compiler pair. </li>
+    <li>Choose a new project folder if you want the loading programs in a subfolder.</li>
+<li>Options:</li>
+  <ul>
+    <li>The Library Search Path is a list of folders that Ghidra checks for dynamically linked library (DLL) files. If your folder is not on the list, add it using the green plus button.</li>
+    <li>There is an option to attempt to load all related dynamically linked library files into your project at the same time as the loading program. This option also links all DLL calls to their external program location so that you can navigate to them. <b>NOTE: This option only works for programs containing enough metadata to determine which DLL(s) to load.</b></li>
+</ul>
+  </ol>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 2<br>Import Program</header>
+<br>
+<ul>
+  <li>Import a program of your choice</span></li>
+    <li>Use Auto-Detected Format and Language</li>
+    <li>Turn on the Load External Libraries option and see if any DLLs are loaded with your program</li>
+ 
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Open Program in Tool</header>
+<br>
+<ul class="medium">
+  <li>There are different ways to open programs in a tool, including:</li>
+  <ul>
+    <li>Click and Drag program onto tool</li>
+    <li>Click on tool to bring up empty tool, then choose File->Open from the tool&apos;s menu</li>
+    <li>Drag program from file system onto empty tool will start Import Wizard and open in the tool</li>
+    <li>You can open more than one program in a tool. They will be tabbed in the tool</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>How to Start Auto-Analysis</header>
+<br>
+<ul class="medium">
+  <li>When a program first opens in tool, it automatically kicks off Auto-Analysis and asks the user if they want to analyze the program</li>
+  <li>There are numerous auto analysis options that can be chosen</li>
+ <li>User can kick off auto-analysis later using the Analysis->Auto Analyze menu</li>
+  <li>Certain analyzers are also kicked off whenever certain actions are performed such as code disassembly, function creation, and data creation.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>When a program first opens in a tool, it automatically kicks off Auto-Analysis and asks the user if they wants to analyze the program.</li>
+    <li>If you choose not to start Auto-Analysis right away, you can start it later by doing <b>Analysis->Auto-Analyze</b>.</li>
+    <li>There are numerous analysis options that can be chosen. The default options change depending on what type of binary has been imported. See Help for more information.</li>
+      </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>What happens during<br>Auto-Analysis?</header>
+<br>
+<ul class="medium">
+  <li>At a minimum:</li>
+  <ul>
+    <li>Starts at Entry Points</li>
+    <li>Disassembles by following flows</li>
+    <li>Creates functions at called locations</li>
+    <li>Creates Cross References</li>
+    </ul>
+    <li>Depending on what options you have selected, Auto- Analysis will do other things as well</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>During Auto-Analysis, Ghidra:</li>
+    <ul>
+      <li>Starts at Entry Points</li>
+      <li>Disassembles by following flows</li>
+      <li>Creates Functions at called locations</li>
+      <li>Creates Cross References</li>
+    </ul>
+    <li>Depending on what options you have selected, Auto-Analysis will perform other functions such as:</li>
+    <ul>
+      <li>Using operand references to create code or data where operand points to</li>
+      <li>Make switch statements using decompiler information</li>
+      <li>Make function signatures based on decompiler information</li>
+      <li>Demangle mangled names</li>
+      <li>Recognize and name library functions</li>
+      <li>Perform specific functions depending on the binary type</li>
+      <li>Look for images</li>
+    </ul>
+    <li>If you would like to cancel Auto-Analysis at any time, you can click on the little red square at the bottom of the listing.</li>
+    <li>Look at the log in the bottom right of the Program Manager to see which analyzers were run and how long they took.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Auto-Analysis</header>
+<ul>
+  <li>Useful to take a layered approach by running analysis with basic options first and run one-shots later</li>
+  <ul>
+    <li>Focus on options that will get function starts and data first</li>
+    <li>Turn off stack analysis if you have a large binary, can run it individually by function</li>
+  </ul>
+  <li>Learn how to recognize and fix problems</li>
+  <ul>
+    <li>Many useful scripts for this</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <u><b>Notes:</b></u><br>
+  <ul>
+    <li>For many binaries, analysis gives better results with a layered approach. This means the user should run analysis with basic options first, then rerun with other options later.</li>
+    <li><b>Initial analysis:</b></li>
+    <ul>
+      <li>Turn off anything speculative or extra, such as stack analysis, especially if you have a large binary. You can turn these options back on after an initial analysis and rerun analysis on selected functions or the whole program.</li>
+      <li>In general, you should leave on reference analyzers, data analyzers, and function analyzers in order to determine what is code and what is data.</li>
+    </ul>
+    <li><b>Follow-on analysis:</b></li>
+    <ul>
+      <li>Can rerun analysis with different options <b>OR</b> turn on one-shot analyzers, which are analyzers that run one type of analysis at a time</li>
+    </ul>
+    <li>One-shot analyzers can be run from the <b>Analysis->One-Shot</b> menu. Some common ones are:</li>
+    <ul>
+      <li>Decompiler Parameter ID</li>
+      <li>Decompiler Switch Analysis</li>
+      <li>Stack</li>
+    </ul>
+    <li><b>Recognize and fix problems:</b></li>
+    <ul>
+      <li>Red x&apos;s indicate bad flow. The error bookmarks might indicate what analyzer caused the problem so the user can rerun with better options.</li>
+      <li>Analysis may not completely determine all code and data in a program, especially if certain analyzers are turned off.</li>
+      <li>Use analysis scripts to recognize and fix problems. Here are some examples:</li>
+      <ul>
+	<li><b>FixupNoReturnFunction.java</b> fixes functions that do not return and the resulting bad flow from the call to the function</li>
+	<li><b>FindPotentialDecompilerProblems.java</b> runs decompiler and indicates potential issues like unaffected registers and input values that might be global</li>
+	<li><b>FindSharedReturnFunctions.java</b> finds potential places where the function is jumping to another function to share a return. If you do not fix these, the function analyzer and decompiler will merge the two functions</li>
+	<li><b>FindInstructionsNotInsideFunctionScript.java</b> identifies code that is not in functions yet</li>
+	<li><b>CreateFunctionsFromSelection.java</b> allows user to quickly make functions recognized by user when analysis does not find them all, etc.</li>
+      </ul>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 3<br>Auto-Analysis</header>
+<br>
+<br>
+<ul>
+  <li>Open your program in the Code Browser</li>
+  <li>Auto-analyze using defaults</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>CodeBrowser Layout</header>
+<br>
+<ul class="medium">
+  <li>By default CodeBrowser is configured with:</li>
+  <ul>
+    <li>Program Tree</li>
+    <li>Symbol Tree</li>
+    <li>Data Type manager</li>
+    <li>Listing</li>
+    <li>Console</li>
+    <li>Decompiler</li>
+  </ul>
+  <li>Extra Windows are located in the Windows menu</li>
+  <li>The CodeBrowser tool also consists of preconfigured plugins.</li>
+  <li>Users can add additional actions with the File->Configure... action</li>
+  </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+<ul>
+  <li>The CodeBrowser is the default tool, created by configuring Ghidra plugins in a way that makes it useful for disassembling, navigating, and documenting assembly code. It has been configured to provide all the basic functionality needed to reverse-engineer a program.</li>
+  <li>To configure more plugins into a particular tool, such as the CodeBrowser, use the <b>File->Configure...</b> action.</li>
+  <ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Useful Info</header>
+<br>
+<ul class="medium">
+  <li>F1 help</li>
+  <li>F4 set key binding</li>
+  <li>Undo/Redo</li>
+  <li>Main menus vs. Context-sensitive menus</li>
+  <li>Commonly used features placed on icon bar</li>
+  <li>Hover on icons to see their function</li>
+  <li>Closing a tool vs. exiting Ghidra</li>
+  <li>Cursor vs. Selection driven actions</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  <ul>
+    <li><b>F1 Help</b> There is extensive help that explains each action in Ghidra which can be obtained by hovering on an action and pressing the F1 key. F1 also works on any open window. The entire searchable HELP document can be obtained in Ghidra by clicking on <b>Help->Contents</b></li>
+    <li><b>F4 Set Key bindings</b> Within a tool, you can give each lowest level action a key binding or change the default key binding. In order to do this, hover on an action and hit the F4 key. An alternative method is to go to <b>Edit->Tool Options</b> to find a list of all key bindings and then edit from there</li>
+    <li><b>Undo</b> Within the CodeBrowser and other similarly configured tools, each action, no matter how big or small, can be undone or redone by clicking on the curvy arrows at the top of a tool. Hover on the arrows first to see what action you are undoing/redoing. The Undo history is cleared after a save</li>
+    <li>To close a tool either click the X at the top right of the tool or use the <b>File->Close Tool</b> action. </li>
+<li>To exit Ghidra, choose <b>File->Exit Ghidra</b> from any tool or the Project Manager or click the X at the top right of the Project Manager. </li>
+<ul>
+<li>NOTE: You do not need to close your tools before exiting Ghidra. In fact if you want to pick up where you left off, do not close your tools. Simply exit Ghidra and your state will be saved and when you reopen your tools, cursor location, etc.. will be as you left them.</li>
+</ul>
+    <li>Main menus and sub-menus in general are used for global actions. The right-click menu is context-sensitive, which means that different actions are available on the right-click menu depending on what item your mouse is on.</li>
+    <li>If there is no selection, many actions act only on the current cursor location. When there is a selection, these actions will act on an entire selection.</li>
+    <li><b>Common Windows Menu icons</b> The last several icons on the icon bar correspond to some of the common items in the Windows menu: Bookmark manager, ByteViewer, Function Call Tree, Data Type Manager, Decompiler, Function Graph, Script manager, Memory Map, Register Manager, Symbol Table, Symbol References, Symbol Tree. These will be covered separately later.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Selections and Highlights</header>
+<br>
+<ul class="medium">
+  <li><span style="color:#00FF00">Selections</span></li>
+  <ul>
+    <li>Are temporary, ie. go away when user clicks in Listing </li>
+    <li>Can be created manually by click and drag </li>
+    <li>Can be created using Select menu</li>
+    <li>Can be created from tables</li>
+    <li>Selections/Searches by use current selection by default</li>
+  </ul>
+  <li><span style="color:#FFFF00">Highlights</span></li>
+  <ul>
+    <li>Are semi-permanent, ie. do not go away until user clears using menu</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <br>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li><b>Selections:</b></li>
+    <ul>
+      <li>Show up in green in the tool</li>
+      <li>Are temporary. If you click in Listing, they go away.</li>
+      <li>Searches and selections act on current selection unless changed</li>
+      <li>Can be created manually by click and drag, click and shift-click for a range, click and ctrl-click and drag for disjoint ranges</li>
+      <li>Can be created using Select menu. (All undefines, all data, all instructions, current function, flow, etc.)</li>
+      <li>Can be created using any table by selecting row(s) and doing <b>right-click->Make Selection</b></li>
+
+    </ul>
+    <li><b>Highlights:</b></li>
+    <ul>
+      <li>Show up in yellow in the tool</li>
+      <li>Are semi-permanent selections. The selection stays until you clear it using <b>Select->Program Highlight-&gt;Clear</b></li>
+      <li>If you want to create Highlights use <b>Select->Program highlight->Entire Selection, Add Selection, or Remove selection</b></li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Listing</header>
+<ul>
+  <li>Consists of typical assembly code fields:</li>
+  <ul>
+    <li>Address</li>
+    <li>Bytes</li>
+    <li>Mnemonics</li>
+    <li>Operands</li>
+    <li>Comments</li>
+    <li>Labels</li>
+    <li>Etc.</li>
+  </ul>
+  <li>Listing fields can be customized using the Field Editor</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Field Editor</header>
+
+<ul>
+<br>
+  <li>Used to customize the Listing fields</li>
+	<ul>
+  	<li>Add</li>
+	<li>Remove</li>
+	<li>Enable</li>
+	<li>Disable</li>
+	<li>Move</li>
+	<li>Resize</li>
+	</ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  Below are directions for using the Field Editor.
+  <ol>
+    <li>Use the <b>Edit the Listing Fields</b> icon in the top right of the Listing to toggle open or to close the field editor.</li>
+    <li>Field groupings are different depending on what area of the program your cursor is on. Examples of different fields include: Code/Data, Open Array or Structure, and Function Signature.</li>
+    <li>When the cursor is on the current field, the field will be highlighted in the field editor.</li>
+    <li>Use the mouse to move or resize the fields. Notice their counterparts in the Listing also move and resize at the same time.</li>
+    <li>Use the right click menu to choose from a variety of options including: enable, disable, add, or remove fields.</li>
+    <li>Disabling a field will leave the space but remove the content from the listing view.</li>
+    <li>Removing a field will remove the space and the content from the listing view.</li>
+    <li>You can add new rows, spacers, and other field types.</li>
+    <li>You can reset back to the default if you wish.</li>
+  </ol>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Docking Windows</header>
+<br>
+<ul class="medium">
+  <li>Most windows can be docked, undocked, or resized.</li>
+<li>To dock a window:</li>
+	<ul>
+ 	 <li>Click on the title bar of the window so that it turns 	blue.</li>
+  	<li>Drag and drop the window to the top, bottom, right, or left edge of another window.</li>
+	<li>Drag and drop the window so that it is overlapping another window. </li>	
+	</ul>
+<li>To undock a window:</li>
+	<ul>
+	<li>Drag and drop the window outside of the tool.</li>
+	</ul>
+<li>To resize a window:</li>
+	<ul>
+	<li>Click and drag window edges or corners.</li>
+	</ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Most windows are considered docking windows which means they can be relocated to other parts of the tool.</li>    
+    <li>If you want to dock window, click on the title bar of window so that it turns blue.</li>    
+    <ul>  	
+	<li>Drag the window to the top, bottom, right, or left edge of another window. When you see a black arrow then drop the window and it will now be located above, below, to the right or to the left of the other window. </li>
+	<li>Drag the window so that it is overlapping another window. When you see overlapping boxes, drop the window and it will be tabbed on top of other window. Clicking on the tabs below the window will determine which window is visible.</li>
+	<li>You will see a circle with a slash if you cannot drop the window.</li>
+      <li>You can drop the window outside the tool and it will still be functionally connected to the tool.</li>
+    </ul>
+<li><b>NOTE:</b>If you want to dock a window that is not already docked, you need to click and drag using the inner bar that contains the title of the window. It will turn blue when you click on it. The reason disconnected windows have extra items on the top is so that users can easily access menus and icons. </li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Edit Tool Options</header>
+<br>
+<ul>
+  <li>All tools have different options depending on what plugins have been added to them.</li>
+  <li>Tool can be saved with new name and/or icon.</li>
+  <li>Tool can be exported.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To edit options in any tool use the <b>Edit->Tool Options</b> menu item in that tool. This will open the <b>Edit Options Dialog</b></li>
+	<li>There are hundreds of options within the Edit Options dialog. Users can use the filter option or folder tree to find the option needed within the dialog's subwindows. For more information about a particular subset of options, hit <b>F1</b> while in that particular Edit Options subwindow.</li>
+    <li>Ghidra does not need to be restarted for edit options to take effect. Users can just hit apply in the Edit Options Dialog to have them take effect.</li>    
+    <li>The modified tool state can be saved to the current tool or to a new tool with a new name and/or icon. To save the tool state, go to <b>File->Save Tool</b> or <b>File->Save Tool As...</b> Another alternative method to save your tool state is to exit Ghidra and your tool state will be automatically saved to the current tool.</li>
+    <li>Tool can be exported then imported for others to use. In order to export a tool, go to <b>File->Export Tool...</b> from any tool and <b>Tools->Import Tool...</b> to import any tool from the Project Manager.</li>
+    <li>Tool states are saved in your project and will come back the same way when you reopen Ghidra.</li>   
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Exercise 4<br>Customize the CodeBrowser</header>
+<ul class="small">
+  <li>Change your instruction fields</li>
+  <ul>
+    <li>Enable the PCode field</li>
+    <li>Add the Stack Depth Field to the right of the Operands Field</li>
+  </ul>
+  <li>Look at the resulting changes to your Listing fields. If you like the changes keep them, or if not, disable or remove the fields you do not want</li>
+  <li>Open the Function Graph window and dock it so that it is tabbed on top of the Decompiler window.</li>
+  <li>Change the CodeBrowser's <b>Edit->Tool Options...</b> key binding to <span style="color:#FFFF00">Shift-O</span>.</li>
+  <li>Change the Codebrowsers Tool Options so that Docking Windows are on top (to find the option easily use the filter).</li>
+  <li>Hover on <b>File->Save Tool As...</b> and use F1 to bring up help describing how to save a tool.</li>
+  <li>Save your new tool with a new name and new icon.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:45px">Basic CodeBrowser Navigation</span></header>
+<br>
+<ul>
+  <li>Basic Navigation</li>
+  <ul>
+    <li>Scroll</li>
+    <li>Page up / Page down</li>
+    <li>Double-click on anything with a reference</li>
+    <li>Goto (Navigation menu or &apos;G&apos; key)</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:45px">More CodeBrowser Navigation</span></header>
+<br>
+<ul class="medium">
+    <li>Navigation history (arrow and list)</li>
+    <li>Selection/Highlight Arrows</li>
+    <li>Navigation buttons (arrow,I,D,U,L,F,notF,notV,B)</li>
+    <li>Navigation markers in right margin</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Below are notes about different ways to navigate.</li>
+    <ul>
+      <li><b>Navigation History arrows and pull down list</b> - users can navigate in order to addresses visited before or use the pull down lists to choose one.</li>
+      <li><b>Selection/Highlight Arrows</b></li>If there is a selection (green) or highlight (yellow) these arrows will allow navigation to different ranges of the selection or highlight.</li>
+      <li><b>Navigation Buttons</b> The blue up/down arrow toggles direction forward/backward for all of the following buttons:</li>
+      <ul>
+	<li><b>I</b> navigate to the next range of instructions</li>
+	<li><b>D</b> navigate to the next range of data</li>
+	<li><b>U</b> navigate to the next range of undefined bytes</li>
+	<li><b>L</b> navigate to the next label</li>
+	<li><b>F</b> navigate to the next function</li>
+	<li><b>notF</b> navigate to the next range of instructions not in a function</li>
+	<li><b>notV</b> navigate to the next range of bytes not equal to the current byte value</li>
+	<li><b>B</b> navigate to the next bookmark (pull down arrow to change to a specific bookmark type)</li>
+      </ul>
+        <li><b>Navigation Markers</b></li>
+  <ul>
+    <li>The markers show up in the right margin for the current overall view. The view is determined in the Program Tree window by the small red flag.</li>
+    <li>Click on a marker to navigate to that location in the program.</li>
+    <li>Right click on the margin to see the various types of navigation markers. You can select/deselect what is shown in the margin from the right mouse menu.</li>
+    <li>Below, are a few examples of the different types of Navigation Markers.</li>
+    <ul>
+      <li><b>Orange</b> Analysis Bookmarks</li>
+      <li><b>Black</b> Changes since last save</li>
+      <li><b>Purple</b> User Bookmarks</li>
+      <li><b>Green</b> Current Selection</li>
+      <li><b>Yellow</b> Current Highlight</li>
+      <li><b>Red</b> Error Bookmarks</li>
+    </ul>
+</ul>
+<li><b>More Navigation Marker Panels</b></li>	
+	<ul>
+	<li>There are two more panels that have navigation markers. When opened, they appear as new marker bars to the right of the main navigation bar. To open them, click on the pull down arrow in the Listing icon bar and choose:</li>
+	<ul>
+	<li><b>Show Overview</b></li> This navigation bar shows different colors for the following items: Functions, Uninitialized memory, External References, Instructions, Data, Undefined bytes. <b>Right-click->Show Legend</b> on the bar to see the colors mapped to the various items.
+	<li><b>Show Entropy</b></li> This navigation bar shows different colors corresponding to entropy scores which can indicate areas of uniform byte values, ASCII, UTF16, code, or compression.<b>Right-click->Show Legend</b> on the bar to see the colors mapped to the various items</li>
+	</ul>
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>External Program Navigation</header>
+<br>
+<ul>
+  <li>Can navigate to other programs by clicking on an external reference:</li>
+  <ul>
+    <li>Must have external references created.</li>    
+    <li>Load External Libraries Importer option will do this automatically for some formats.</li>
+    <li>Can use reference manager to create manually.</li>
+  </ul>
+</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>If you have the external program imported into your project and the external references have been created, you can click on the external reference and navigate to the external program. If the program is not open, it will be opened and tabbed in the Listing next to the current program.</li>
+    <li>To create external references:</li>
+	<ul>
+	<li><b>Automatically:</b> Choose <b>Load External Libraries</b> in the <b>File->Import File... Options</b> dialog.</li>
+	<li><b>Manually:</b> Right-click on the place you want to create the reference in the Listing and choose <b>References->Add/Edit</b> then click on the green plus button then choose the <b>External</b> button. All references from one external library will be created if you do this for one of them.</li>
+	</ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Basics of a Table</header>
+<br>
+<ul class="medium">
+  <li>Navigation</li>
+  <li>Sorting</li>
+  <li>Filtering</li>
+  <li>Add/remove columns</li>
+  <li>Move columns</li>
+  <li>Column settings</li>
+  <li>Selections</li>
+  <li>Filter options</li>
+  <li>Copy</li>
+  <li>Export to CSV Text file</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>All tables have the following basic features:</li>
+    <ul>
+      
+      <li><b>Navigation</b> You can navigate by address or label column. Just click on the value in the column to start navigation.</li>
+      <li><b>Sorting</b> You can sort by any column, ascending or descending. To sort, click on the top of the column and you will see a stair step indicating ascending or descending. Then click to reverse. You can sub-sort by doing <b>Ctrl-click</b> on the other secondary columns</li>
+      <li><b>Filtering/Filter Options</b> You can type the filter value in the bottom text box and press enter. The filter option has a default setting that will filter out any row that does not contain the text in the filter unless you change the default option using the button to the right of the filter. Other filter options include: <b>Starts With</b>, Matches Exactly</b>, <b>Regular Expressions</b>, <b>Case Sensitive</b>, Inverting the filter</b>, and <b>Multi-Term Filtering</b>.</li>
+      <li><b>Add/remove columns</b> You can right-click on any column and choose to remove it or add a new column next to it. </li>
+      <li><b>Move columns</b> You can move columns by clicking, dragging, and letting go of the click where you want the column to end up.</li>
+      <li><b>Column settings</b> Some columns have special settings you can change using the right-click menu.</li>
+      <li><b>Selections</b> You can make selections in the listing by selecting row(s) from the table and choosing <b>Right-click->Make Selection</b>.</b></li>
+      <li><b>Copy</b> You can select rows and copy text to paste in any editor (notepad, Ghidra comment, etc.).</li>
+      <li><b>Export to CSV Text file</b> You can export a table selection to a Comma Separated Value text file.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Exercise 5<br>Navigation and Tables</header>
+<ul class="medium">
+  <li>Use the "goto" feature to bring up a table of labels starting with "FUN".</li>
+  <li>Dock your table over the Decompiler.</li>
+  <li>How many entries are in your table?</li>
+  <li>Add the "Function Size" field to the table.</li>
+  <li>Sort the table by function size so that the smallest function is at the top.</li>
+  <li>Navigate to the smallest function in your table.</li>
+  <li>Use the filter to show a subset of items in your table.</li>
+<li>Optional If your program is a Windows GUI program: Use the "goto" feature to bring up a table of all labels that start with "Rsrc" to see the resources used in your program</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header><span style="font-size:35px">Code Browser<br>Features for Understanding Code</span></header>
+<ul>
+  <li>Instruction Manual</li>
+  <li>Info Fields at bottom of Browser</li>
+  <li>Hover</li>
+  <li>Cursor text highlight</li>
+  <li>Snapshots</li>
+  <li>References</li>
+  <li>Decompiler</li>
+ </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>    
+    <li><b>Instruction Manual</b> Right-click on any instruction and choose <b>Processor Manual...</b> from the menu. If the manual is in your installation, your default web browser will open the manual to the first page containing that instruction if it allows page numbers. If not, the first page of the manual will open. If the manual is not in your installation, a window will open with a link to the manual and tell you where to put the manual in the installation.</li>
+    <li><b>Info Fields at bottom of Browser</b>: The Little window with basic assembly shows what the original assembly looked like before Ghidra marked it up. The current address window shows the address of the cursor and the function name.</li>
+    <li><b>Hover</b>: Use hover by placing the mouse over all items with references and all data types to bring up a temporary window with a referenced item or data definition. The hover window stays visible as long as the cursor is in the window.</li>
+        <li><b>Cursor text highlight</b>: Click on any text in a Listing field with the middle mouse button. All matching text in the listing will be highlighted in yellow. By default, there is different behavior when middle-mousing on a register. Every matching register or sub-register in the current scope of the register will be highlighted in green. The register's initialization within the current scope will be highlighted mustard yellow. Every matching register or subregister outside the current scope of the register will be highlighted in yellow.  You can change the colors or the default behavior of this feature by going to the <b>Edit->Tool Options...</b></li>
+    <li><b>Snapshots</b>: You can make as many snapshots of the Listing and other windows as you would like. Snapshots have a yellow ring around them and you can dock them anywhere just like any docking window. Snapshots have full functionality of the original window, but are different because Snapshots don&apos;t track with the Listing. Snapshots are valuable because you can see more than one view of different  areas of code at the same time.</li>
+	<li>References and Decompiler are described more fully in future slides.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>References</header>
+<br>
+<ul class="medium">
+  <li>References</li>
+  <ul>
+    <li>XRef Field</li>
+  </ul>
+  <li>For code:</li>
+  <ul>
+    <li>(c) Call, (j) - Jump</li>
+  </ul>
+  <li>For data:</li>
+  <ul>
+    <li>(*) Pointer, (W) Write, (R) Read</li>
+  </ul>
+  <li>Show references to </li>
+  <ul>
+    <li>Code</li>
+    <li>Data</li>
+  </ul>
+  <li>Can edit and create references anywhere</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>    
+    <li><b>XRef Field</b> This Listing field contains a list of all addresses that reference the current address/item. Each item in the XREF field has a type indicator next to it. </li>
+    <li><b>XREF Header</b> This is located above the XRef Field and shows how many references there are to the current address/item. You can double click the XREF Header to bring up a table of all of them.</li>    
+    <li><b>References->Show References To</b> Another way to bring up a table of references is to click on the item and choose <b>References->Show References To</b>. </li>
+        <li><b>Edit/Create References</b> To edit/create references, right-click on an operand or instruction and choose <b>References->Add/Edit</b>. Use the green + to add a reference. Choose the type of reference you wish to create: memory, external, stack, or register. Fill in the appropriate text boxes with address, offset, and external location. The text boxes may vary depending on the type of reference you pick.</li>
+ </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px">CodeBrowser Basic Markup</span></header>
+<br><br>
+<ul>
+  <li>Basic Label</li>
+  <li>Basic Comment</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Labels and Comments are ways for a user to annotate what is happening in the code or data.</li>
+    <li>Below are basic steps for editing/creating labels and creating comments. We will discuss more after the next exercise.</li>
+    <ul>
+      <li>To create a label, click on an <b>address</b> and choose the <b>L</b> key or right-click the address and choose <b>Add Label...</b>.</li>
+	<li>To edit an existing label, click on the <b>label</b> and choose the <b>L</b> key or right-click the label and choose <b>Edit Label...</b>.</li>
+
+      <li>To create a comment, click on any field in a code unit and choose the <b>;</b> key or right-click and choose <b>Comment-></b> then choose the type of comment you wish to create.</li>
+    </ul>
+    <li><b>There are five types of comments:</b></li>
+    <ul>
+      <li><b>EOL comment</b> Shows up at end of current line.</li>
+	<li><b>Plate comment</b> Shows up above current line surrounded by box.</li>
+      <li><b>Post comment</b> Shows up below current line.</li>
+      <li><b>Pre comment</b> Shows up above current line.</li>      
+      <li><b>Repeatable comment</b> Shows up anywhere the current address is referenced.</li>
+	</ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 6<br>Listing Understand/Markup</header>
+<ul class="medium">
+ <br>
+  <li>In your current program, navigate to a small function with a default function name. </li>
+  <li>Use only the Listing features, ie cursor text highlight, instruction manual, references, etc., to figure out what the function is doing. Give the function and its parameters descriptive labels and use comments to annotate what is happening in the function.</li>
+  </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Decompiler Overview</header>
+<br>
+<ul class="medium">
+  <li>Converts Assembly to PCode to C code</li>
+  <li>Assembly and C code not one-to-one match</li>
+  <li>Decompiler output may change due to program changes</li>
+  <ul>
+    <li>Changes to data or functions called by the current function</li>
+    <li>Changes to data mutability (read-only/constant or volatile)</li>
+  </ul>
+<li>Selections and navigation made in Listing and Decompiler track one another</li>
+
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Basic Decompiler Features</header>
+<br>
+<ul>
+  <li>Editing using the Decompiler</li>
+  <ul>
+    <li>Data Types</li>
+    <li>Labels</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open a Decompiler Window go to <b>Window->Decompiler</b> or use the appropriate icon on the CodeBrowser icon bar.</li>
+  </ul>
+  <br>
+  <b>Editing using the decompiler</b>
+  <ul>
+    
+    <li>The decompiler usually gets things right but if necessary, you can edit parameter, local variable, and return types and names, function signature options, structure members and names, etc.</li>
+    <li>Edits to these items in the Listing or Decompiler will also be reflected in the other window.</li>
+    <li>You can edit these items individually by clicking on them in the Decompiler or Listing and choosing the appropriate action from the right mouse menu.</li>
+    <li>OR you can edit several at once by editing the function signature. To do this right-click on the function signature and choose <b>Edit->Function...</b> from the Listing or <b>Edit->Function Signature...</b> from the Decompiler.  In general, users should change function signatures called by multiple places instead of changing local variables in each individual function that is called. The local variable types will automatically update when related function signatures are changed.</li>
+    <li>The more information you can fill in about data types, especially structure information, the better the decompiler output will be. It is most important to get the correct number of parameters even if you do not know the types yet. If you have associated header files that you can pull in information from, it will allow the decompiler to propagate that information into the calling functions.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Basic Decompiler Features</header>
+<br>
+<ul>
+  <li>Automatically Create Structures</li>
+  <li>Decompiler Parameter ID</li>
+  <li>Committing Parameters/Return and Locals</li>
+  <li>Follow Variable Use</li>
+  <li>Export current function</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br>
+  <b>Decompiler Parameter ID</b>
+  <ul>
+    <li>This is an auto-analysis option that runs through the program and locks what the decompiler figures out throughout the program. Any future changes to other functions or data that would have affected that function will not be considered. Use this option only if you have rich data type information first, such as Windows known library calls and known DLL calls with parameter and return types applied during the import process or before running analysis with this option.</li>
+  </ul>
+  <br>
+  <b>Automatically Create Structures</b>
+  <ul>
+	<li>If you suspect a variable is an undefined structure, you can have the decompiler try to figure out the structure definition for you by right-clicking on the variable and choosing <b>Auto Create Structure</b>.</li>
+	</ul>
+  <b>Commit Parameters and Locals</b>
+  <ul>
+    <li>This options does the same thing as Decompiler parameter ID but is done individually and manually by the user</li>
+    <li>Can do separately to parameters/returns or local variables</li>
+    <li><b>CAUTION:</b> Only use this feature if you want to lock the decompiler output instead of adjusting to program changes.</li>
+  </ul>
+  <br>
+  <b>Following Variable Usage</b>
+  <ul>
+	<li><b>Middle-mouse click simple-text-match highlighting</b> similar to Listing Cursor Text Highlight on non-registers</li>
+    <li><b>Highlight Def-use</b> highlights where the current variable is used and defined, similar to Listing Cursor Text Highlight for registers</li>
+    <li><b>Forward Slice</b> highlights each variable whose value may be affected by the value in the current variable</li>
+    <li><b>Backward Slice</b> highlights all variables in the function that contain a value involved in the creation of the current variable.</li>
+
+  </ul>
+  <br>
+  <b>Export current function</b>
+  <ul>
+    <li>This feature allows the user to export the current function to a text file.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header style="font-size:40px">Recommended Decompiler Techniques</header>
+<ul>
+  <br>
+  <li>Change function signatures to cause global improvements</li>
+  <li>Make function signature changes to handle specialized types of functions</li>
+  <li>Apply read-only memory and volatile memory settings correctly</li>
+</ul>
+<div role="note">
+  <br>
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>If you see a function that isn&apos;t getting the correct number of parameters or types, you can fix it by applying specific data types to the parameters or adding/removing  the parameters. However, adding/removing the parameters forces the decompiler to use your information everywhere that the function is called. Be careful because this can be good if you get it right or bad if you get it wrong.</li>
+    <br>
+    <li>Users should change function signatures called by multiple places instead of locals in each individual function that is called. However, in some special cases, such as functions with variable numbers of arguments, you can override a signature from the call. Use the Override Signature action from the right mouse menu in this case only.</li>
+    <br>
+    <li>Examples of read-only memory include indirect pointers to data and global values in memory used as constants.</li>
+    <br>
+    <li>If the decompiler thinks the pointers are not constant, then it won’t follow them to the data they are referencing.</li>
+  </ul>
+  </p>
+</div>
+</section>
+<section>
+<header>Exercise 7<br>Decompiler Understand/Markup</header>
+<ul class="medium">
+  <li>Navigate to a function that calls the function you annotated in the previous exercise. Using your understanding of that function, use the decompiler and its features to start understanding the calling function. Start by using what you know about the previous function's parameters and what it returns, to start labeling variables in the calling function with descriptive names. Once you see the descriptive names used elsewhere in the function, it may help you understand more about the function. Continue labeling variables and parameters as you figure out their purposes until you have a good understanding of at least part of the function.</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>CodeBrowser Markup<br>More About Labels</header>
+<br>
+<ul>
+  <li>Labeling</li>
+  <ul>
+    <li>Multiple labels</li>
+    <li>Primary label</li>
+    <li>Locals and Globals</li>
+    <li>Function signature</li>
+    <li>Show History</li>
+    <li>Search Label History</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>More information about labels:</li>
+    <ul>
+      <li>Labels can have more than one label at an address.</li>
+      <li>Primary labels show up in references by default, you can change which label is primary using <b>Edit Label...</b> action. </li>
+      <li>To add another label, right-click on the address and choose <b>Add Label...</b>.</li>
+      <li>Global variables exist in the whole program and can only have one unique name</li>
+      <li>Local variables exist in a namespace and can have more than one of the same name. Labels inside a function are, by default, in that function's namespace. The namespace can be changed using the <b>right-click->Edit Label...</b> action.</li>
+      <li>The function name in the function signature is the same as the primary label at that address. You can add secondary labels at the function entry point address but only the primary label is reflected in the function signature name.</li>
+      <li>Use <b>right-click->Show Label History</b> to see how the label has changed and who changed it. </li>
+      <li>Use <b>Search->Label History</b> to find an old label name that does not exist in your program anymore.</li>
+
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:45px">CodeBrowser Markup<br>More About Comments</span></header>
+<br>
+<ul class="medium">
+    <li>Comment annotations embed display markup in Ghidra comments.</li>
+  <li>Comment annotations appear as a hyperlinks to the items.</li>
+  <li>Double-click to navigate to the item.</li>
+  <li>Types of annotations:</li>
+  <ul>
+	<li>Address</li>
+	<li>Execute</li>
+    	<li>Program</li>
+    	<li>Symbol</li>    
+    	<li>URL</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li><b>Annotations</b> To add comment annotations using the comment editor, use the pull-down menu, choose an annotation type, and then click the <b>Add Annotation</b> button.</li>
+	<ul>
+    <li><b>Address</b> Fill in the interesting address. The comment will display the given address as a hyperlink. Double-click the link to navigate to that address.</li>
+    <li><b>Execute</b> Fill in path to an executable. Double-click the resulting link to launch the specified executable in your OS with given optional parameters.</li>
+<li><b>Program</b> Fill in existing Ghidra program name (case-sensitive) to displays a hyperlink to the given Ghidra program name. Double-click the link to open the program in a new Listing tab. Optionally use the @symbol name after the program name to go to a specific symbol in the program.</li>
+    <li><b>Symbol</b> Fill in the address of the interesting symbol. The comment will display the given symbol as a hyperlink. Double-click to navigate to the symbol. Changes to the symbol in the Listing will automatically change the comment to display the new symbol.</li>
+    <li><b>URL</b> Displays the given URL as a hyperlink. Double-click to open what the link is pointing to. References to ghidra://, which refer to a program within a Ghidra Server repository, will be opened within the Listing display, while all other URL protocols (e.g., http://, https://, file://, etc.) will be launched via an external web browser. See HELP  command configuration for Processor Manuals for more information.</li>
+</ul>
+
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:45px">Applying Data Types</span></header>
+<br>
+<ul class="medium">
+  <li>Can apply data type at:</li>
+  <ul>
+    <li>Single address</li>
+    <li>Selection of addresses</li>
+    <li>Parameter/Local variable</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>This course only covers the basics of data types. More information is covered in the intermediate class.</li>
+    <br>
+    <b>Applying Data Types:</b>
+    <li>You can apply a data type to a single address or a selected range of addresses. If you apply a data type to a selection, that data type will be applied contiguously until it reaches the end of the selection. You can also apply a data type to a parameter or a local variable.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Applying Data Types<br>Data Type Manager</header>
+<br>
+<ul class="medium">
+  <li>Data Type Manager Folders</li>
+  <ul>
+    <li>BuiltInTypes</li>
+    <li>Program Data Types</li>
+    <li>Prebuilt Data Types</li>
+    <li>Your Own Data Archives</li>
+  </ul>
+  <li>To Find Data Type</li>
+  <ul>
+    <li>Filter/Find by name</li>
+    <li>Open Folders</li>
+    <li>Find by Size</li>
+  </ul>
+  <li>Drag to apply</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>The Data Type Manager normally resides in the lower left corner of the CodeBrowser. If it is not there, open it using Window-&gt;Data Type Manger.</li>
+    <li><b>There are different folders for each of the following Data Types:</b></li>
+    <ul>
+      <li>BuiltInTypes</li>
+      <ul>
+	<li>Contains Data Types created by the Ghidra development team</li>
+      </ul>
+      <li>Program Data Types</li>
+      <ul>
+	<li>Contains Data Types that have been applied to the current program</li>
+	<li>Contains Data Types created by the user</li>
+      </ul>
+      <li>Prebuilt Data Types</li>
+      <ul>
+	<li>There may be more than one folder of this type</li>
+	<li>Contains data types parsed from data definition files</li>
+      </ul>
+      <li>Your Own Data Archives</li>
+      <ul>
+	<li>Users can create their own data archives so they can use their data in multiple programs or projects</li>
+	<li>These Archives can be stored on the File System (File Archive) and shared by multiple projects or they can be stored in the current project (Project Archive) and be shared by all programs in the current project</li>
+      </ul>
+    </ul>
+    <li><b>To find the data types you are looking for, you can:</b></li>
+    <ul>
+      <li>Filter</li>
+      <li>Open Folders</li>
+      <li>Pull down menu to find by size or name</li>
+    </ul>
+    <li><b>To apply data, click on the data type and drag it to a:</b></li>
+    <ul>
+      <li>Single address</li>
+      <li>Selection</li>
+      <li>Parameter/local/return types</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Applying Data Types<br>Right Mouse Menu</header>
+<br>
+<ul>
+  <li>Data-&gt;Choose Data Type</li>
+  <ul>
+    <li>Browse</li>
+    OR
+    <li>Start typing name of data type</li>
+  </ul>
+  <li>Data menu favorite list</li>
+  <ul>
+    <li>Can be customized in Data Type Manager</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>There are two ways to apply a data type from the right-click menu.</li>
+    <li>First, click on an address or select a range of address where you want to apply the data type.</li>
+    <li>Then choose either:</li>
+    <ul>
+      <li><b>Right-click menu Data->Choose Data Type...</b> then browse or start typing the name of the data type you want to apply.</li>
+      <li><b>Right-click menu-><Favorite List></b> then choose a data type from the list of your "favorite" data types which can be customized in the Data Type Manager by toggling the <b>Right-click->Favorite</b> action.</li>
+      </ul>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Applying Data Types<br>Cycle Groups</header>
+<br>
+<ul>
+  <li>Right-click->Data->Cycle Groups</li>
+  <li>Key bindings</li>
+  <ul>
+    <li>B (byte, word, dword, qword)</li>
+    <li>" (char, ascii string, unicode string)</li>
+    <li>F (float, double)</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>When applying data in cycle groups, click on an address or select a range where you want to apply the data type.</li>
+    <li>Use the <b>Right-click->Data->Cycle Groups</b> or the following shortcut keys to cycle through the following data types:</li>
+    <ul>
+      <li>B (byte, word, dword, qword)</li>
+    <li>" (char, ascii string, unicode string)</li>
+    <li>F (float, double)</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Functions</header>
+<br>
+<ul>
+  <li>Functions are well formed subroutines.</li>
+  <li>Create by disassembling first (D key) then hitting F key at top of function.</li>
+  <li>Can edit each individual piece of function signature in Listing or Decompiler.</li>
+  <li>Can also use the Edit Function... action to bring up dialog to edit multiple items at once.</li>
+ </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>CodeBrowser Markup<br>Clearing</header>
+<br>
+<ul>
+  <li>Clear Code Bytes</li>
+  <li>Clear with Options</li>
+  <li>Clear Flow and Repair</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>In order to use Markup Clearing, you need to select the item(s) you want to clear and choose one of the following Markup Clearing options from the right-click menu:</li>
+    <ul>
+      <li><b>Clear Code Bytes</b> This option clears the defined code or data and leaves labels, comments, etc. alone</li>
+      <li><b>Clear with Options...</b> This allows you to choose which items you want to clear (symbols, comments, code, functions, references, bookmarks, etc.)</li>
+      <li><b>Clear Flow and Repair...</b> This allows you to clear and repair code which was produced in error. Click on the first bad instruction, and then invoke the action./li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>CodeBrowser Markup<br>Constants</header>
+<ul class="small">
+<li>Convert</li>
+  <ul>
+    <li>Can display a constant in different formats</li>
+    <ul>
+      <li>Binary, decimal, characters, etc.</li>
+  </ul>
+  </ul>
+  <li>Equates</li>
+  <ul>
+    <li>Can replace a constant with a descriptive name</li>
+    <li>Some are predefined from parsed header files</li>
+    <li>OR User can make their own</li>
+  </ul>
+  <li>Enums</li>
+  <ul>
+	<li>Can group Equates into an Enum</li>
+	<li>Can apply to Codebrowser individually or to selection</li>
+     <li>Can apply to Decompiler by changing a variable data type</li>
+	<li>NOTE: Applying to the Listing will apply names to most matching scalars in Decompiler. However, the best way is to use Decompiler and get the data types correct. Currently, applying to Decompiler will not apply to Listing.</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    
+    <li>The <b>Convert</b> action only appears on the right mouse menu if the cursor is on a constant operand. It only works on the current scalar.</li>
+    <li>The <b>Set Equate...</b> action only appears on right mouse menu if the cursor is on a constant operand. It works on the current scalar and if there is a selection on all matching scalars in the selection.</li>
+    <li>To group Equates or Enums into a single Enum in the Data Type Manager, use the filter to group them (if possible), select them using click and drag, then do <b>right-click->Create Enum from Selection</b>.</li>
+    <li>The <b>Apply Enum...</b> action allows users to apply the enum names to multiple matching values in an instruction or selection of instructions. It only appears on the right mouse menu if the cursor is on a constant operand (no selection) or there are are constant operands in the current selection.</li>
+    <li>Applying Equates and Enums to the Listing will rename most in the decompiler, however...</li> 
+    <li><b>PREFERRED METHOD:</b> To apply Enum names to the decompiler view, find a variable being assigned or compared to the constants then do <b>right-click->Retype variable</b> or <b>right-click->Retype global</b>. Make sure that the Enum size (1,2,4,or 8 bytes) matches the size of the variable in the decompiler or it will not display the names.</li>
+ </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 8<br>Constants</header>
+<br>
+<ul class="small">
+
+<li>Find a scalar operand and use the "Convert..." action to convert it to a different format.</li>
+
+<li>Find a scalar operand and use the "Set Equate..." action to rename it either a name of your choosing or from the given list.
+
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>CodeBrowser Markup<br>Bookmarks</header>
+<br>
+<ul class="medium">
+  <li>Bookmarks</li>
+  <ul>
+    <li>Show up in left margin for currently displayed code</li>
+    <li>Types</li>
+    <ul>
+      <li>User Notes</li>
+      <li>Analysis</li>
+      <li>Info</li>
+      <li>Error</li>
+      <li>Warning</li>
+    </ul>
+    <li>Can use Bookmark Manager to see them all</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <br><br>
+  <ul>
+    <li><b>Bookmarks</b></li>
+    <ul>
+      <li>To create a bookmark, right-click on an address and choose Bookmark from  the right-click menu. Then fill in a Category (optional) and description.  If there is a current selection, bookmarks will be made at the top of each selected range. A purple checkmark will be placed at each bookmark location.</li>      
+	<li>Bookmarks show up in individually in left margin if in your current visible portion of Listing or in right margin as marker margin color if in the current Listing view. </li>
+
+      <li>If you would like to see a list of  bookmarks, open the Bookmark manager in <b>Window->Bookmarks</b>. The bookmark table you will see allows filtering by text and/or by bookmark type.</li>
+    </ul>
+    <li><b>Types of bookmarks:</b></li>
+    <ul>
+      <li>User notes (purple check symbol) shows bookmarks the user has added</li>
+      <li>Analysis (blue bolt symbol) shows bookmarks that auto-analysis added to describe what analyzer created the code/data at that location</li>
+      <li>Information (white circle with I in the middle) is added by importer to describe what items the importer identified in the import process</li>
+      <li>Error (red x symbol) shows bookmarks used to indicate an unknown opcode, can be caused by bad auto analysis disassembly or bad user disassembly</li>
+<li>Warning (yellow triangle) shows bookmarks used to indicate a possible problem</li>
+
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Exercise 9<br>Bookmarks</header>
+<ul class="medium">
+  <li>Create bookmarks at the tops of the functions you chose to annotate in Exercises 5 and 6.</li>
+  <li>Bring up the Bookmark Manager and use it to display only user created bookmarks. Try this two different ways.</li>
+  <li>Use navigation markers and the left margin markers to inspect some of the Analysis and Info bookmarks.</li>
+  <li>Toggle-off the Analysis markers in the right margin.</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Export Formats</header>
+<br>
+<ul class="medium">  
+  <li>GZF (Ghidra Zip File)</li>
+  <li>XML</li>
+  <li>HTML</li>
+  <li>Binary</li>
+  <li>Intel Hex</li>
+  <li>C code (.c and .h files)</li>
+  <li>Ascii</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Ghidra allows users to export a selection or an entire program to the following formats:</li>
+    <ul>
+      <li><b>Ghidra Zip file (GZF)</b> uses custom format to compress all information contained in a Ghidra program so that users can share program information. </li>
+      <li><b>XML</b> Used to export information about the current program, to other tools if an importer has been written to recognize it in the other tool. There is potential loss of information due to inconsistencies between tools. NOTE: An exemplar IdaPro set of plugins/loaders are included in ghidra_<version>/Extensions/IDAPro. Also included is an IdaPro export plugin that creates XML that Ghidra can import.</li>
+      <li><b>HTML</b> exports selection or entire program as navigable html</li>
+      <li><b>Binary</b> exports selection or entire program as binary</li>
+      <li><b>Intel Hex</b> exports selection or entire program as Intel hex format</li>
+      <li><b>C</b> exports selection or entire program as C code (Including corresponding .h file)</li>
+      <li><b>Ascii</b> exports selection or entire program as printable Ascii file</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Program Tree Basics</header>
+<br>
+<ul>
+  <li>Can use to see basic structure of program</li>
+  <li>Can use to organize program</li>
+  <li>Can use it to select whole memory blocks</li>
+  <li>Can use to change current view in the Listing</li>
+  <li>Can use to determine what part of program your cursor is located in</li>
+  <li>Can have multiple trees with different organizations</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>The Program Tree is normally open in top left of the default Codebrowser OR to open go to <b>Window->Program Trees</b>.</li>
+    <li><b><u>Program Tree Basics:</u></b></li>
+    <ul>
+      <li><b>Structure of Program</b>:</li>
+      <ul>
+	<li>Program Tree can either be created by the import process&apos;s read of the program header <b>OR</b> by the user when he/she imports and splits the program into different code/memory blocks.</li>
+      </ul>
+      <li><b>In the Program Tree you can:</b></li>
+      <ul>
+	<li>Create folders and fragments </li>
+	<li>Select code/data/undefined selection and drag it onto a folder or fragment.</li>
+	<ul>
+	<li>Items can only exist in one fragment but the same fragment can exist in multiple folders</li>
+	<li>Program still exists in same address order but your visualization of it is rearranged in this tree</li>
+	</ul>
+	<li>Make multiple program trees each with different organizations of the program. Create a new tree by clicking on the new tree icon in top right of the Program Tree</li>
+      </ul>
+      <li><b>Changing Current View</b></li>
+      <ul>
+	<li>Red flag indicates the view currently contained in the Codebrowser Listing</li>
+	<li>Double-click on fragment/folder changes view to that fragment/folder</li>
+      </ul>
+      <li><b>Track the Listing</b></li>
+      <ul>
+	<li>Click on the icon with a green arrow in the top right of the Program Tree and the segment containing the current location in your Listing will be selected.</li>
+      </ul>
+       <li><b>Multiple Trees:</b></li>
+    <ul>
+      <li>To make a new Program Tree, click on the icon with a '+' on it in the top right of the Program Tree window.</li>
+      <li>To rename a tree, right-click on its tab and choose Rename from the right mouse menu.</li>
+    </ul>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Program Tree Modularization</header>
+<ul>
+  <br>
+  <li>Can modularize CODE ONLY programmatically:</li>
+  <ul>
+    <li>Subroutine</li>
+    <li>Complexity Depth</li>
+    <li>Dominance</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes</u></b>
+  <br>
+  <ul>
+
+    <br>
+   
+    <li><b>NOTE:</b>Create a new Program Tree every time you modularize. The Modularization actions do not work effectively on already modularized trees.</li>
+ <li>In the Program Tree, right-click on a <b>CODE</b> segment and choose <b>Modularize By->:</b>
+        <ul>
+      <li><b>Subroutine-></b> This breaks code into segments by a chosen subroutine model.</li>
+	<li><b>Complexity Depth</b> This groups functions into folders Level 0 to n, where Level 0 contains the entry function(s), Level 1 contains functions called by entry functin(s), and so on. Level n contains functions that do not call any other functions within the current program but may call external functions.</li>
+	<li><b>Dominance</b> This groups functions in folders according to which functions dominate other functions. Function A dominates Function B if every path from the entry to Function B must go through Function A.</li>
+        </ul>
+  </ul>
+</p>
+</div>
+</section>
+
+
+<section>
+<header>Exercise 10<br>Program Tree</header>
+<br>
+<ul class="medium">
+  <li>Make the Program Tree follow the Listing</li>
+  <li>Make a new Program Tree</li>
+  <ul>
+    <li>Rename it <span style="color:#FFFF00">MyTree</span></li>
+    <li>Make a folder called <span style="color:#FFFF00">MyInterestingFunctions</span></li>
+    <li>Make a folder called <span style="color:#FFFF00">MyInterestingData</span></li>
+    <li>Select any functions and/or data you think are interesting and drag and drop them into the appropriate folders.</li>
+    <li>Make one or more new program trees and modularize each one with a different modularization technique. </li>
+  </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+<section>
+<header>Byte Viewer Basics</header>
+<br>
+<ul>
+  <li>Can View and Edit bytes in various formats</li>
+  <li>Selection and Navigation follow the Code Browser and vice versa</li>
+  <li>Can add various format fields</li>
+  <li>Can change bytes per group, bytes per line, line alignment</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the ByteViewer window go to <b>Window->Bytes:<program></b></li>
+    <li>Byte Viewer allows you to view and edit program bytes in various formats. Byte Viewer navigation tracks the Listing and vice versa.</li>
+    <li><b><u>Byte Viewer Basics Information:</u></b></li>
+    <ul>
+      <li><b>To Edit:</b></li>
+      <ul>
+	<li>Enable editing using pencil icon.</li>
+	<li>If editing code bytes, clear them in the Listing before editing then redisassemble. No need to clear if editing data bytes.</li>
+	<li>Edit in whatever Byte Viewer field makes most sense (i.e., if you want to change ascii, type in the ASCII field, hex in the hex field, etc.)</li>
+      </ul>
+      <li><b>Fields can be added using the wrench icon:</b></li>
+      <ul>
+	<li>Choose from Hex, Binary, ASCII, Octal, HexInteger, Address, Integer, or Disassembled</li>
+	<li><b>ASCII</b> Shows ASCII or '.'; if non-ASCII value.</li>
+	<li><b>Disassembled</b> Shows '.' if disassembled code or defined data. Shows box if undefined.</li>
+	<li><b>Address</b> Shows a black circle if bytes at a specific location represent a valid address in the current program space. Shows '.' if bytes do not represent a valid address.</li>
+      </ul>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Searching<br>Search Program Text</header>
+<br>
+<ul>
+  <li>Allows users to search for any markup text put there by Ghidra or the user: comments, labels, fields, etc.</li>
+  <li>Works on whole program or selection</li>
+  <li>Search next or previous</li>
+  &nbsp;&nbsp;&nbsp;&nbsp;OR
+  <li>Search All instances to bring up a table</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Search Program Text dialog go to <b>Search->Program Text</b></li>
+    <ul>
+    <li>Allows users to search for any markup text put there by Ghidra or the user including: comments, labels, fields, etc.</li>
+    <li>Can search all fields or narrow to specific field(s). </li>
+	<li>Can use <b>Next/Previous</b> buttons to navigate to one found instance at a time or use the <b>Search All</b> button to bring up a table of all found instances. </li>
+	</ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Searching<br>Search Memory</header>
+<br>
+<ul class="medium">
+  <li>Allows users to search for byte(s) contained in all or selected portion program memory</li>
+  <li>Ways to enter search value</li>
+  <ul>
+    <li>Various formats (hex, strings, unicode...)</li>
+    <li>Regular Expressions</li>
+  </ul>
+  <li>Search next or previous</li>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:30px">OR</span>
+  <li>Search All instances to bring up a table</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Search Memory dialog go to <b>Search->Memory...</b></li>
+    <ul>
+      <li>Allows users to search for byte(s) contained in program memory</li>
+      <li>Can limit to a selection</li>
+      <li>Can enter search value as hex, string, decimal, binary or regular expression. Choosing these options brings up other sub-options if applicable (i.e., if you pick <b>String</b> you will see a sub-menu allowing you to choose case-sensitive or unicode)</li>
+      <li>Using regular expressions in search memory allow a more flexible byte pattern search such as searching for two numerical digits followed by three ASCII characters without knowing the exact values.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Searching<br>Search for Strings</header>
+<br>
+<ul>
+  <li>Allows users to search for potential strings found in all or selected portion of memory</li>
+  <ul>
+    <li>ASCII, Unicode, Pascal</li>
+  </ul>
+  <li>User can create strings and labels directly from the resulting table</li>
+  <li>Can filter the resulting table to narrow list of results</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    
+    <li>To open the Search for Strings dialog go to <b>Search->Search for Strings...</b></li>
+    <ul>
+      <li>Allows users to search for potential strings found in all or selected portion of memory.</li>
+      <li>By default searches for null terminated ASCII and unicode.</li>
+      <li>Can choose to search for Pascal instead.</li>
+      <li>Can change the minimum length of found strings.</li>
+      <li>Can have it report only strings found on certain alignment.</li>
+    </ul>
+    <li><b>Result Table has following columns:</b>:</li>
+    <ul>
+      <li>Address of found potential string.</li>
+      <li>Label if there is a label there.</li>
+      <li>Code Unit to shows what is already defined at that location (data/instruction).</li>
+      <li>ASCII to show what the string would look like if it were created.</li>
+      <li>String Type to show what kind of string was found.</li>
+    </ul>
+    <li><b>Make Strings Panel</b>:</li>
+    <ul>
+	<li>Can be toggled open or closed</li>
+      <li>Can select multiple rows in the table.</li>
+      <li>Allows user to choose whether to auto-label the string (s_stringname, u_ for unicode, p_ for Pascal).</li>
+      <li>Creates the correct type of string.</li>
+      <li>Can change the offset of the beginning of the string if there are ASCII chars at the beginning that do not belong in your string.</li>
+      <li>Can have it include alignment nulls at the end of the string. The number of nulls included is based on the alignment value chosen.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px">Searching<br>Search for Direct References</span></header>
+<br>
+<ul>
+  <li>Allows users to find places in program where bytes represent current cursor address or selected addresses</li>
+</ul>
+<div role="note">
+  <p>
+  <br>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Search for Direct References dialog use <b>Search->For Direct References</b></li>
+    <ul>
+      <li>Allows users to find places in memory where the bytes form the current cursor address or selected addresses </li>
+      <li>Can run search for direct references on one address or a selection of addresses</li>
+      <li>In Ghidra, a direct reference is considered to be a reference that uses bytes representing an address to reference that address. For example, in the instruction <b>CALL 12345678</b>, if you look in the bytes field for that instruction you can see the bytes 12 34 56 and 78 (or 78 56 34 and 12 in little endian code), that would be a direct reference to address 12345678 </li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px">Searching<br>Search for Address Tables</span></header>
+<br>
+<ul>
+  <li>Allows users to find runs of direct references</li>
+  <li>Can specify gaps between these direct references</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>    
+    <li>To open the Search for Address Tables dialog go to <b>Search->For Address Tables...</b></li>
+    <ul><li>Allows users to find runs of direct references to addresses</li>
+      <li>Can run this on one address or a selection of addresses</li>
+      <li>Can change the minimum length of the found table</li>
+      <li>Can have it report only tables found on certain alignment</li>
+      <li>Can specify a length to skip between valid direct references</li>
+      <li>Can create Address tables directly from the table using the <b>Make Table</b> button which will create a label and address data type for each item in the table</li>
+      <li>If it is determined that the table values all point to code, you can kick off disassembly at each address referenced by the table with the <b>Disassemble</b> button.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px">Searching<br>Search for Instructions</span></header>
+<br>
+<ul>
+  <li>Allows users to find matching instruction patterns</li>
+  <li>Can specify whether to include or exclude operands</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>There are two actions that allow you to search for Instruction patterns. Both work on either the current instruction or a selection:</li>
+	<ul>
+	<li><b>Search->For Matching Instructions->&ltoption&gt</b> where option indicates whether to:</li>
+	<ul>
+	<li>Exclude Operands</li>
+	<li>Include Operands</li>
+	<li>Include Operands(except constants)</li>
+	</ul>
+	<li><b>Search->For Instruction Patterns...</b> which brings up a dialog that allows you to choose the exact instruction pieces to look for and which to omit</li>
+	</ul>
+	</li>
+    </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:40px">Searching<br>Search for Scalars</span></header>
+<br>
+<ul>
+  <li>Allows users to find all operands that are scalars and defined data used as scalars</li>
+  <li>Can specify a range of interesting scalars or a specific scalar</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To use Search for Scalars:</li>
+	<nl>
+	<li><b>Search->for Scalars...</b> then fill in range or specific scalar in hex or decimal (use 0x prefix for hex)</li>
+	</nl>
+	</li>
+    </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Exercise 11<br>Search</span></header>
+<br>
+<ul>
+  <li>Search your program for interesting strings and scalars.</li>
+  </ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Symbol Table Basics</span></header>
+<br>
+<ul class="medium">
+  <li>Symbol Table displays information about every symbol in the program</li>
+  <ul>
+    <li>Type of Symbol</li>
+    <li>Number of References</li>
+    <li>Number of Off-cut References</li>
+    <li>Namespace</li>
+    <li>Source of Symbol</li>
+  </ul>
+  <li>Can filter by any symbol property</li>
+  <ul>
+    <li>Type</li>
+    <li>Source</li>
+    <li>Etc.</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Symbol Table window go to <b>Window->Symbol Table</b></li>
+    <li>Fields in the Symbol Table contain the following  information about symbols:</li>
+    <ul>
+      <li><b>Type of Symbol:</b></li>
+      <ul>
+	<li>Function label</li>
+	<li>Data label</li>
+	<li>Instruction label</li>
+	<li>Parameter name</li>
+	<li>Local Variable name</li>
+      </ul>
+      <li><b>Number of references:</b></li>
+      <ul>
+	<li>Number of references to the symbol</li>
+      </ul>
+      <li><b>Number of off-cut references:</b></li>
+      <ul>
+	<li>Number of references in the middle of the code or data at the location of the symbol</li>
+      </ul>
+      <li><b>Namespace:</b></li>
+      <ul>
+	<li>Displays the namespace that the symbol belongs to or Global if it is defined in the whole program</li>
+      </ul>
+      <li><b>Source of Symbol:</b></li>
+      <ul>
+	<li><b>Default</b> FUN_, LAB_, DWORD_etc.</li>
+	<li><b>User Defined</b> User names it</li>
+	<li><b>Imported</b> Named by importer</li>
+	<li><b>Analysis</b> Named by auto-analysis</li>
+      </ul>
+      <li>The Filter Dialog allows filtering on numerous items such as symbol source, symbol type, etc.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Symbol Table<br>Reference Window</span></header>
+<br>
+<ul>
+  <li>List of references to a selected item in the Symbol Table</li>
+  <li>Different modes</li>
+  <ul>
+    <li>S</li>
+    <li>I</li>
+    <li>D</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>You can bring up the Symbol Table Reference Window using <b>Window->Symbol References</b>. This window lists and shows information about the currently selected symbol in the Symbol Table.</li>
+    <li><b>Different modes in Symbol Table Reference Window include</b>:</li>
+    <ul>
+      <li><b>S</b> (default mode) Shows all references to the selected symbol, a preview of the reference and the type of reference</li>
+      <li><b>I</b> Only works if the selected symbol is a function. Shows a preview of all navigation instructions  contained in the selected function.</li>
+      <li><b>D</b> Only works if the selected symbol is a function. Shows preview of all data references contained in the selected function.</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Symbol Tree Basics</header>
+<br>
+<ul>
+  <li>Organizes Symbols according to type in a tree view</li>
+  <li>Nests symbols belonging to other items under that item's folder</li>
+  <li>Can have it track the Listing</li>
+  <li>Can create classes and namespaces</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Symbol Tree Window go to <b>Window-&gt;Symbol Tree</b></li>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+
+<section>
+<header>Windows Menu<br>Previews</header>
+<br>
+<ul>
+  <li>Used to help determine what an undefined area is</li>
+  <ul>
+    <li>Data Type Preview</li>
+	<ul>
+	 <li>Shows bytes as various data formats</li>
+	</ul>
+    <li>Disassembled View</li>
+	<ul>
+	<li>Shows bytes as disassembled code </li>
+	</ul>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Data Type Preview Window go to <b>Window-&gt;Data Type Preview</b></li>
+    <ul>
+      <li>The window changes what is displayed based on where you click in the Listing</li>
+      <li>The bytes at the address are displayed in the various formats in the table</li>
+      <li>You can add or remove data types using the + or the X</li>
+    </ul>
+    <li>To open the Disassembled View Window go to <b>Window-&gt;Disassembled View</b></li>
+    <ul>
+      <li>The window changes what is displayed based on where you click in the Listing</li>
+      <li>The bytes at the clicked address are displayed as they would look if they were disassembled code</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Windows Menu<br>Defined Tables</header>
+<br>
+<ul>
+  <li>Shows all defined items of the following types</li>
+  <ul>
+    <li>Data</li>
+    <li>Function</li>
+    <li>Strings</li>
+    <li>Equates</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Defined Data Window go to <b>Window->Defined Data</b></li>
+    <ul>
+      <li>This table lists all defined data in the current program</li>
+    </ul>
+    <li>To open the Defined Functions Window go to <b>Window->Functions</b></li>
+    <ul>
+      <li>This table lists all functions in the current program</li>
+    </ul>
+    <li>To open the Defined Strings Window go to <b>Window->Defined Strings</b></li>
+    <ul>
+      <li>This table lists all defined strings  in the current program</li>
+    </ul>
+    <li>To open the Defined Equates Window go to <b>Window->Equates Table</b></li>
+    <ul>
+      <li>This table lists all applied equates in the current program</li>
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Windows Menu<br>Script Manager</header>
+<br>
+<ul>
+  <li>Meant to be one-shot actions</li>
+  <li>Smart Console</li>
+  <ul>
+    <li>Displays script messages</li>
+    <li>Enables navigation to valid locations</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>To open the Script Manager go to <b>Window->Script Manager</b></li>
+    <li>Unlike plugins that stay around once they are configured, scripts are meant to be one-shot actions.</li>
+    <li>To run a script, select it in the script manager and either double-click the table entry or click the green circle icon.</li>
+    <li>Script messages appear in the console.</li>
+    <li>The console is "smart". If it recognizes a label or address, you can click on it in the console to navigate in the Listing.</li>
+    <li>The Intermediate Ghidra class covers detailed information about scripts such as how to:</li>
+    <ul>
+      <li>Customize your script directories</li>
+      <li>Add scripts to menus</li>
+      <li>Make key bindings for scripts</li>
+      <li>Edit existing or develop new scripts</li>      
+    </ul>
+  </ul>
+  </p>
+</div>
+</section>
+
+
+<section>
+<header>Function Graph</header>
+<ul>
+  <li>Represents function as a directed cyclic graph</li>
+  <li>Edges (branching or jumps) represent flow control</li>
+  <ul>
+    <li>Conditional positive (success): <span style="color:#00FF00">green</span></li>
+    <li>Conditional negative (failure, pass through): <span style="color:#FF0000">red</span></li>
+    <li>Unconditional: <span style="color:#1E90FF">blue</span></li>
+    <li>Switch: also <span style="color:#1E90FF">blue</span></li>
+  </ul>
+  <li>Nodes (blocks) represent a unit of code</li>
+  <li>Note: Calls do not break block</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+  <li>To open the Function Graph window go to <b>Window->Function Graph</b>.</li>
+    <li>There is a Satellite View inset window at the bottom right of the window.  If it gets in your way, you can right-click on the Function Graph canvas window and deselect its option.</li>
+    <li>If you hover on an edge, it will present a popup window showing you the branch/jump statement, and the code at the target destination.  This can obscure a large portion of your window. If you would like to turn it off you may from the right-click menu.</li>
+    <li>If you desire, the edge colors can be changed on the tool options screen.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Basic Controls</header>
+<ul>
+  <li>Click-drag on whitespace moves the &quot;canvas&quot;</li>
+  <li>Click on block navigates in listing (and focuses)</li>
+  <li>Double-click on edge navigates to jump target destination</li>
+  <ul>
+    <li>Double-click again and it will navigate to jump source (branch statement)</li>
+  </ul>
+  <li>Double-click on block centers, zooms to 1:1</li>
+  <li>Mouse wheel zooms in and out</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>The <b>focused</b> block is the block containing the current cursor location in the listing. The block (node) in the graph surrounded by a yellow highlighted oval is the focused block.</li>
+    <li>The focused block always contains the current cursor location in the program; however, it does not mean the cursor location is at the top of the block.  If you click on a block, the cursor is placed at the top.  But if you navigate using the listing or decompiler or other window, your current location can move to a place within the block (but not at the top).  If you navigate the current location outside the current block, the focus will follow and the new block containing the current location will be highlighted.</li>
+    <li>You will learn more about what focus is useful for (besides a visual indicator of location) in a few slides.</li>
+    <li>The <b>hovered</b> block is the block that your mouse is currently over. You will also learn more about this in a few slides.</li>
+    <br>
+    <li><b>NOTE</b>: When double-clicking on an edge to navigate blocks, note that you are actually taken to the block furthest away from your current canvas position.  Usually that results in the behavior described in the slide; you double-click on an edge coming out of a block, and you are taken to the destination of the jump.  But if you see an edge &quot;out in space&quot; (i.e., you don&apos;t see its source or its destination block), remember it will take you to the block that is furthest away, which might not be the destination block the first time you double-click it.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph<br>Basic Controls (cont.)</header>
+<br>
+<ul class="medium">
+  <li>Zoomed out too far: Block contents blank</li>
+  <ul>
+    <li>No block interaction possible</li>
+  </ul>
+  <li>Zoomed out and Satellite View: Entry point green, return blocks red</li>
+  <li>Zoomed medium: 3-D drop shadow</li>
+  <ul>
+    <li>Still no block interaction!  Only preview rendering</li>
+  </ul>
+  <li>Zoomed in: Fully capable listing</li>
+  <ul>
+    <li>Selection works, navigation, right-click menu</li>
+  </ul>
+  <li>Selection, highlight operate PER BLOCK!</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>Your monitor might report strange values for its actual resolution, which will confuse Java as to the point when preview rendering should occur.  Your preview rendering then might just look like little dots you cannot read!  This is not very useful, so zoom in a little more.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Node Buttons</header>
+<br>
+<ul class="medium">
+  <li>Paintbrush: Background color for block</li>
+  <li>Window: Expand block to window (like mini-listing)</li>
+  <li>Chain: Jump to one of this function's XRefs (callers)</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph<br>Window Buttons</header>
+<ul>
+  <li>Home: Move to entry point block</li>
+  <li>Layout: Select layout</li>
+  <li>Field Editor: Change block field layout</li>
+  <ul>
+    <li>Independent of main listing field layout</li>
+  </ul>
+  <li>Hover/focus (discussed next slide)</li>
+  <li>Camera: Make a snapshot window </li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Hover/Focus</header>
+<br>
+<ul>
+  <li>Hover mode</li>
+  <ul>
+    <li>Enabled when placing the cursor over a block without clicking</li>
+    <li>Shows "ants marching" on links</li>
+  </ul>
+  <li>Focus mode</li>
+  <ul>
+    <li>Enabled when clicking on a block</li>
+    <li>Shows bold links</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+<li>There are two pull-down menus in the Graph Window Icon Bar. Each mode contains almost the same set of options that are explained in the next several slides. The difference is in  how they are enabled and displayed in the graph:</li>
+	<ul>
+	<li>Hover mode</li>
+<ul>
+    <li>Enabled when placing the cursor over a block without clicking</li>
+    <li>Shows "ants marching" on links</li>
+  </ul>
+
+      <li>Focus mode</li>
+
+  <ul>
+    <li>Enabled when clicking on a block</li>
+    <li>Shows bold links</li>
+  </ul>
+
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Hover/Focus</header>
+<ul>
+  <li>Scoped Flow To/From Block</li>
+  <ul>
+    <li>Blocks after "From" must have passed through hover/focus</li>
+    <li>Blocks before "To" must eventually pass through hover/focus</li>
+  </ul>
+  <li>Paths To/From Block go from entry block to return block(s)</li>
+  <li>Loops Containing Block shows local loop neighborhood</li>
+</ul>
+
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>For those unfamiliar with dominance in graph theory, the basic idea is that some nodes are more &quot;important&quot; than others because they act as dispersing or condensing &quot;gateways&quot; for flow.</li>
+    <li>Show Scoped Flow From Block will encompass all blocks in the flow after the principal block that can ONLY execute if the principal block executes. In other words, if control never makes it to the principal block, none of the neighborhood blocks will execute.</li>
+    <li>Show Scoped Flow To Block will encompass all blocks in the flow before the principal block, such that all blocks in the neighborhood MUST have executed if the principle block executes.</li>
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:48px">Function Graph Hover (Special)</span></header>
+<br>
+<ul>
+  <li>Paths from Focus to Hover</li>
+  <ul>
+    <li>Focus on "From" block</li>
+    <li>Hover over "To" block</li>
+  </ul>
+  <li>Shows you the possible flows from Focus to Hover</li>
+  <ul>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header><span style="font-size:48px">Function Graph Focus (Special)</span></header>
+<br>
+<ul>
+  <li>Show All Loops in Function</li>
+  <ul>
+    <li>Independent of currently focused block</li>
+    <li>Can be computationally expensive</li>
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    <li>In a function graph focus, you are presented with a normal task dialog when all loops are being computed.  If you cancel, it will ask for confirmation and then display the results as far as it was able to get. For most functions, this is pretty close to the right answer but it still might have missed one or two small loops, depending on the complexity of the function.</li>
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph<br>Right-Click Menu</header>
+<br>
+<ul class="medium">
+  <li>Highlight: Same as listing highlight menu</li>
+  <li>Selection: Create from hovered or focused edges</li>
+  <li>Pop-up windows on/off (block, edge)</li>
+  <li>Satellite View</li>
+  <ul>
+    <li>Entry point is green and return blocks are red, just like &quot;zoomed way out&quot;</li>
+    <li>Click or drag to navigate in Satellite</li>
+  </ul>
+  <li>Zoom to vertex, window</li>
+  <li>Properties</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Tool Buttons</header>
+<br><br>
+<ul>
+  <li>Disk: Save program</li>
+  <li>Navigation arrows</li>
+  <li>Undo/Redo</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Graph Group Vertices</header>
+<br><br>
+<ul>
+  <li>Can collapse nodes into one node</li>
+  <li>Give new node new name to represent group</li>
+  <li>Can expand node back into previous grouping</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+	<ul>
+	<li>To group vertices use Ctrl button with right-click and drag to make a box around group of vertices then right-click and choose <b>Group Selected Vertices</b>. Enter new name and hit ok to collapse into one node.</li>
+<li>To expand back into original vertices, right-click on the grouping and choose <b>Ungroup Selected Vertices</b>.</li>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Function Call Trees</header>
+<br>
+<ul>
+  <li>Tree view of current function&apos;s incoming and outgoing calls</li>
+  <ul>
+    <li>Left window - incoming calls to current function</li>
+    <li>Right window - outgoing calls from the current function</li>
+  </ul>
+  <li>Folders expand and collapse until there are no more function callers or calls to follow</li>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  <ul>
+    
+    <li>To open the Function Call Tree either right-click in a function and choose <b>References->Show Call Trees</b> or choose the corresponding icon in the CodeBrowser icon bar.</li>
+    <li>By default the Function Call Trees show all calls in address order to or from the current function. There is an option to collapse any duplicates and show each call once.</li>
+    <li>Optionally toggle whether Listing navigates to currently selected function.</li>
+    <li>Optionally toggle whether Function Call Trees updates when navigating to new function in Listing.</li>
+
+
+  </ul>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Course Summary</header>
+<br>
+<ul class="medium">
+  <li>You should now be able to:</li>
+  <ul>
+    <li>Create, setup, and customize Ghidra projects</li>
+    <li>Perform code analysis, markup, navigation, searching, selections, and basic data creation to support the reverse engineering process</li>
+    <li>Use the hex editor, decompiler, program tree, symbol table, symbol tree, function graph, and function call trees  to support the reverse engineering process</li>
+    
+  </ul>
+</ul>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+<section>
+<header>Preview of Intermediate<br>Ghidra course</header>
+<table style="width:100%; border-spacing:0px;">
+  <tr>
+    <td style="vertical-align:top">
+      <ul class="medium">
+	<li>Advanced data types</li>
+	<li>Memory Map</li>
+	<li>Multi-user projects</li>
+	<li>Comparing programs</li>
+	<li>Version tracking</li>
+      </ul>
+    </td>
+    <td style="vertical-align:top">
+      <ul class="medium ">
+	<li>Scripting Development</li>
+	<li>Running Ghidra in headless mode</li>	
+      </ul>
+      </ul>
+    </td>
+  </tr>
+</table>
+<div role="note">
+  <p>
+  <b><u>Notes:</u></b>
+  </p>
+</div>
+</section>
+
+
+
+<!-- COPY THE TEXT BELOW TO START A NEW SLIDE
+<section>
+<header>Insert Title of Slide Here</header>
+<ul class="small" comment="NOTE: remove the class attribute for regular size, adjust the name if you want big, small, or tiny">
+  <li>Bullet text here</li>
+  <ul>
+    <li>Nested bullet here</li>
+  </ul>
+</ul>
+<div role="note">
+<p>Insert notes here</p>
+<p>And here, too</p>
+</div>
+</section>
+END COPY -->
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<!--link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'-->
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section { background-color: black; border-radius: 12px; color: white; }
+  /* A section is a slide. It's size is 800x600, and this will never change */
+  section, .view head > title {
+      font-family: arial, serif;
+      font-size: 35px;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: black;
+  }
+
+  .view head > title {
+    color: black;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1, h2 {
+    margin-top: 200px;
+    text-align: center;
+    font-size: 80px;
+    font-family: 'Times New Roman'
+  }
+
+  h3 {
+    margin: 100px 0 50px 100px;
+  }
+
+/* My custom list sizes */
+
+  .big ul {
+    font-size: 45px;
+  }
+
+  .big ol {
+    font-size: 45px;
+  }
+
+  .big li {
+    font-size: 45px;
+  }
+
+  .big li:before {
+      font-size: 200px;
+  }
+
+  .medium ul {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium ol {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li:before {
+      font-size: 120px;
+  }
+
+  .small ul {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small ol {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li:before {
+      font-size: 80px;
+  }
+
+  .tiny ul {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny ol {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li:before {
+      font-size: 70px;
+  }
+/* end custom list sizes */
+
+/* Standard list size */
+  ul {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol.decimal {
+    list-style-position: inside;
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 10px 10px;
+    font-size: 35px;
+  }
+
+  ul > li:before {
+    content:"·";
+    font-size:160px;
+    vertical-align:middle;
+    line-height: 20px;
+    color: red;
+  }
+
+
+/* end custom list sizes */
+
+  p {
+    margin: 75px;
+    font-size: 100px;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 60px;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 50px;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 40px;
+    text-align: right;
+    background-color: black;
+    border-top: 1px solid #CCC;
+  }
+
+  header {
+    font-family: 'Times New Roman';
+    position: relative;
+    top: 0px;
+    width: 100%;
+    padding: 0px;
+    text-align: center;
+    background-image: url(Images/GhidraLogo64.png), url(Images/GhidraLogo64.png);
+    background-repeat: no-repeat, no-repeat;
+    background-position: left top, right top;
+    background-size: contain, contain;
+    border-bottom: 1px solid red;
+    font-size: 50px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    -moz-transition: left 400ms linear 0s;
+    -webkit-transition: left 400ms linear 0s;
+    -ms-transition: left 400ms linear 0s;
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+
+  /* Incremental elements */
+
+  /* By default, visible */
+  .incremental > * { opacity: 1; }
+
+  /* The current item */
+  .incremental > *[aria-selected] { opacity: 1; }
+
+  /* The items to-be-selected */
+  .incremental > *[aria-selected] ~ * { opacity: 0; }
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 2px;
+    background: #AAA;
+  }
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  body {
+    width: 800px; height: 600px;
+    margin-left: -400px; margin-top: -300px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+    -moz-transform: none !important;
+    -webkit-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+    -moz-transform: scale(.4);
+    -webkit-transform: scale(.4);
+    -o-transform: scale(.4);
+    -ms-transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .incremental {visibility: hidden; }
+  .incremental[active] {visibility: visible; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    -moz-transition: width 400ms linear 0s;
+    -webkit-transition: width 400ms linear 0s;
+    -ms-transition: width 400ms linear 0s;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79) { // o
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+    db.style.MozTransform = transform;
+    db.style.WebkitTransform = transform;
+    db.style.OTransform = transform;
+    db.style.msTransform = transform;
+    db.style.transform = transform;
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1 && this.step == 0) {
+      return;
+    }
+    if (this.step == 0) {
+      this.setCursor(this.idx - 1,
+                     this.slides[this.idx - 2].$$('.incremental > *').length);
+    } else {
+      this.setCursor(this.idx, this.step - 1);
+    }
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+        return;
+    }
+    if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+      this.setCursor(this.idx + 1, 0);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      }
+      var video = next.$("video");
+      if (video && !!+this.params.autoplay) {
+        video.play();
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+    if (old) {
+      old.removeAttribute('aria-selected');
+    }
+    var incrementals = $$('.incremental');
+    if (this.step <= 0) {
+      $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+      });
+      return;
+    }
+    var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+    if (next) {
+      next.setAttribute('aria-selected', true);
+      next.parentNode.setAttribute('active', true);
+      var found = false;
+      $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+          if (found)
+            aNode.removeAttribute('active');
+          else
+            aNode.setAttribute('active', true);
+        else
+          found = true;
+      });
+    } else {
+      setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.incremental > *').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+</script>
+
+
+<script> // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

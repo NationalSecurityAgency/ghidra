@@ -1,0 +1,11 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors 68000'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
+dependencies {
+	compile project(':Base')
+}

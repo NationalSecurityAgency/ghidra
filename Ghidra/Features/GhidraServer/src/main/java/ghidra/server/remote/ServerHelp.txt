@@ -1,0 +1,35 @@
+Ghidra server startup parameters.
+Command line parameters: [-ip###.###.###.###] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-n] <repository_path>
+ 
+   -ip###.###.###.### : ip address to bound to (by default, uses IP address bound to hostname)  
+ 	
+   -p# : base TCP port to be used (default: 13100) [see Note 1]
+   
+   -a# : an optional authentication mode where # is a value 0 or 2
+         0 - Private user password
+         2 - PKI Authentication
+ 
+   -anonymous : enables anonymous repository access (see svrREADME.html for details)
+ 
+   -ssh : enables SSH authentication for headless clients
+
+   -e<days> : specifies default password expiration time in days (-a0 mode only, default is 1-day)
+
+   -u   : enable users to be prompted for user ID (does not apply to -a2 PKI mode)
+
+   -n   : enable reverse name lookup for IP addresses when logging (requires proper configuration 
+          of reverse lookup by your DNS server)
+
+   <repository_path> : directory used to store repositories. This directory must be dedicated to this 
+                       Ghidra Server instance and may not contain files or folders not produced
+                       by the Ghidra Server or its administrative scripts.
+                       Relative paths originate from the installation directory
+                       
+The following VM arguments may be required:
+
+	-Dghidra.cacerts=<cacerts-path>     (required for PKI mode only)
+	
+NOTES:
+1. The server utilizes a total of 3 consecutive TCP ports starting with the 
+   base port (default: 13100).  The wrapper.log can be examined for server 
+   console output which will indicate the startup port assignments.                       

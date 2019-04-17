@@ -1,0 +1,95 @@
+Ghidra provides context sensitive help on menu items, dialogs, buttons, and tool windows.  To access the help, press F1 or Help on any menu item or dialog.  If specific help is not available for an item, this page will be displayed.
+In sortable tables you can sort on multiple columns by clicking on a column and then Control-clicking additional columns.
+You can add and remove table columns as desired by right-clicking on a table header.
+You can change the look and feel of your tools by using the "Edit->Options" command.
+You can UNDO and REDO using the curved arrows on the menu bar.
+You can have more than one program open in the same tool. Click on the tabs to switch between them.
+
+You can bring a new program into Ghidra by selecting File->Import File from either the front end manager or any tool.
+You can import programs by dragging them onto the Ghidra Front End Manager.
+
+You can assign keybindings to actions, highlight an action and click the F4 key.
+
+The Program Tree is an organizational view of the program that is initialized with the same organization as the memory map. Changes to the Program Tree only change your view of the program, not the Memory Map.
+
+The Program Tree allows a program to be organized into a hierarchy of folders and fragments. You can have multiple Program Trees.
+You can add memory overlays to your program using the Memory Map dialog.
+Did you know that you can create and edit structures from the Decompiler?
+Did you know that you can apply the local variables, parameters, and return values that the Decompiler figures out? Just right click on them and choose Apply Locals or Apply Params/Return to get them all for a particular function. You can also run the Decompiler Parameter ID analysis option to apply the Decompiler parameters when the program is initially being analyzed or choose Analyis-One Shot->Decompiler Parameter ID to do it after analysis.
+Did you know that you can run various analyzers separately and after the initial analysis run? See Analysis->One Shot for a list of them. 
+
+Did you know that you can right-click on the marker margin to learn the meaning of each color.
+
+The largest diamond that was ever found was 3106.75 carats.
+
+You can edit program bytes using the byte viewer provided those bytes are not disassembled.
+
+You can add URL's to your comments to link to other documents. Hit F1 while making a comment to learn how.
+You can embed links to other program locations in your comments.
+
+A cubic yard of air weighs about 2 pounds.
+
+You can create structures, unions, and enums using the Ghidra data type manager.
+Use enums (not equates) to get constant names to appear in the decompiler. Enums are also listed in the Equates menu if you want to make one an equate in the Listing.   
+To edit a row in the datatype (eg structure) editor, double-click on the "DataType" column.
+Ghidra can extract datatype and function signatures from C header files using the CParser.
+You can drag datatypes from the datatype manager and drop it into the browser to apply at address.
+You can apply multiple copies of a data type by making a selection and then dragging that data type from the Data Type Manager onto the selection.
+
+You can find view information about your current program by selecting "Help -> About {program name}...".
+You can edit program information and analysis options by selecting "Edit->Options for {program name}".
+You can compare any two Ghidra programs (or Ghidra versions of a program) using the "Open Diff View" action from the Listing's toolbar.
+Did you know that Ghidra does version tracking? It includes data version tracking as well as function version tracking. It also has numerous algorithms for finding matches. Use the "Footprint" tool to get started. 
+
+Did you know that you don't have to remember a whole label to navigate to it? Simply type 'g' to bring up the Goto dialog and type in a partial label then a '*'. If there are more than one matches it will bring up a navigable list of matches.
+New processor languages can be added to Ghidra using the Sleigh language syntax and compiler.
+You can bring up an online processor manual (for most processors) by right mousing on an instruction and choosing Processor Manual.
+You can have snapshot (disconnected) views of the Listing, Byte Viewer, and Decompiler.  Click the camera icon to create a snapshot.
+
+Windows within a Ghidra tool can be moved, stacked, resized, and undocked to suit your layout preferences.
+
+Did you know there is a Call Tree Window that shows calls to and from a given function? Click on the green arrow in the icon bar or choose References->Show Call Trees.
+A jiffy is an actual unit of time for 1/100th of a second. Thus the saying, I will be there in a jiffy.
+Did you know that all searches and selections work on the current selection? 
+Did you know that you can restore your last Selection if you accidentally clear it by choosing Select->Restore Selection?
+Did you know you can make a table from a selection? See Select->Create Table from Selection.
+Did you know that you can make a selection from a table? Simply highlight one or more rows in the table and right mouse choose Make Selection. 
+Ghidra provides many customizable tool options, see Edit->Tool Options. 
+
+You can add symbol information to your comments that automatically update when your symbols change. Hit F1 while making a comment to learn how.
+
+Bamboo plants can grow up to 36 inches in a day.
+
+To change direction of the "Next/Previous Code Unit" buttons, use the UP or DOWN arrow in the toolbar.
+You can use the Byte Viewer to display bytes not just in hex, but also octal, decimal, ascii, etc.
+You can use the Byte Viewer to edit bytes. If you want to edit in hex use the hex view. If you want to edit in ascii, use the ascii view, etc...
+You can have more than one label at the same location.
+
+In 1890, there was no sunshine for the whole month of December in Westminster, London.
+
+You can change the representation of scalars (hex, char, decimal, octal, etc) by using the right mouse Convert command.
+You can clean up those pesky runs of cc's, ff's, 90's, and/or 00's by placing the cursor on the byte value you wish to condense and running the CondenseAllRepeatingBytes script.
+
+In 1992, the Antarctic Ozone hole was larger than the continent of North America.
+Did you know you can see where a register is initialized in its current scope by clicking on it with the middle mouse button? All instances of the register in the current scope will highlight in bright yellow. The mustard yellow one is where it is initialized in the current scope. 
+You can perform a program memory search using a regular expression (regex).
+If a Windows executable contains Icons or Bitmap Resources, they are displayed in the CodeBrowser. Do a Search -> Program Text on Labels for "Rsrc_Icon*" and "Rsrc_Bitmap*" to find them.
+
+The average temperature on Earth is 15 degrees celsius.
+
+If you hover on a reference in the XREF or operand fields, a popup with the reference code or data will appear.
+If you hover on a data type in the CodeBrowser or Data Type Manager, a popup with the data type definition will appear.
+You can add your own references just about anywhere and you can have more than one of them on an item. See the right mouse References options.
+
+You can write Ghidra scripts using Java or Python.
+You can open Ghidra scripts in Eclipse from the Script Manager. Install the GhidraDev plugin for Eclipse to get started!
+
+Double-clicking on addresses and labels in the console will navigate to them.
+Double-clicking on the "function" area of the tool status bar will navigate to the function signature.
+Selection by flow can be configured to follow computed and conditional calls and jumps.
+
+You can reconfigure the browser display by adding / removing / moving / resizing fields. (Be sure to save your tool!)
+
+Did you know that you can run Ghidra from the command line without invoking the user interface?  (See analyzeHeadlessREADME.html in the {Install Dir}/support folder.
+
+This is the last tip.  You can turn them off now.

@@ -1,0 +1,182 @@
+/****************************************************************************
+ * nativeBuildProperties.gradle
+ *
+ * This script contains global settings used by all projects that have
+ * native build requirements.  
+ *
+ * This is NOT a complete build script for those
+ * projects; it is only meant to capture items that are common to all so 
+ * we don't need to define them over and over again.
+ ****************************************************************************/
+
+/****************************************************************************
+ * Always apply the cpp and c plugin, for obvious reasons
+ ****************************************************************************/
+apply plugin: 'cpp'
+apply plugin: 'c'
+
+project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
+
+// Ok, this is stupid, but mac and linux can't handle files paths that start with c:
+// These paths are actually only used when running on windows, but the paths gets evaulated
+// as a file no matter what platform you run gradle on.  So the best solution I can think of is as
+// follows.
+if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+	
+	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
+	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
+	}
+
+	// TODO: Use of this will require coping with VC version in path
+	project.ext.WINDOWS_KITS_DIR = "C:/Program Files (x86)/Windows Kits/10.0"
+	
+	project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
+	
+	// TODO: force VisualCpp installDir and windowsSdkDir
+	
+	// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
+	// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
+	// If using a VS Solution this must be specified within the project file(s).
+	project.ext.WINVER = "0x0601"
+}
+else {
+	project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
+	project.ext.WINDOWS_KITS_DIR = "/"
+	project.ext.VISUAL_STUDIO_VCVARS_CMD = "NA"
+}
+
+
+/****************************************************************************
+ * Defines the platforms we have to support in Ghidra.  This model is used 
+ * for all native builds and should be extended by each module as-needed.
+ ****************************************************************************/
+model {
+
+	// define the platforms that we support in ghidra
+	platforms {
+		win32 {
+			architecture 'x86'
+			operatingSystem 'windows'
+		}
+		win64 {
+			architecture 'x86_64'
+			operatingSystem 'windows'
+		}
+		linux64 {
+			architecture 'x86_64'
+			operatingSystem 'linux'
+		}
+		osx64 {
+			architecture 'x86_64'
+			operatingSystem 'osx'
+		}
+	}	
+}
+
+/*******************************************************************************************
+ * If task1 contains the given platform name, then it needs to be executed before 
+ * task2.  The task1 must be of type LinkExecutable or LinkSharedLibrary so that the
+ * targetPlatform may be inspected.
+ *
+ ******************************************************************************************/
+def addTaskDependencyForMyPlatform(task1, task2, platform) {
+	if (platform.equals(task1.targetPlatform.get().name)) {
+		task2.dependsOn task1.path
+	}
+}
+
+/*******************************************************************************************
+ * Returns true if the given task is a custom Make task (starts with the platform name and
+ * ends with "Make"). 
+ *
+ * Note that this is a Ghidra-specific task and is not one created dynamically by Gradle.
+ *
+ ******************************************************************************************/
+def isNativeBinaryMakeTask(Task task, String platform) {
+	if (task.name.startsWith(platform) && task.name.endsWith("Make")) {
+		return true
+	}
+	return false
+}
+
+/*******************************************************************************************
+ * Task Rule : builds all the natives in this module for a given platform.
+ *
+ * Example : gradle buildNatives_win64 will build all win64 native executables and shared libraries.
+ *	
+ *		NOTE: you must be on the appropriate platform for this to work.
+ *
+ ******************************************************************************************/
+tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for given platform") { String taskName ->
+
+	if (taskName.startsWith("buildNatives_") && !project.hasProperty('EXCLUDE_FROM_NATIVE_BUILD')) {
+		String platform = taskName - "buildNatives_"
+		
+		task(taskName)  { myTask ->
+			project.tasks.withType(LinkExecutable) { t ->
+				addTaskDependencyForMyPlatform(t, myTask, platform)
+			}
+			project.tasks.withType(LinkSharedLibrary) { t ->
+				addTaskDependencyForMyPlatform(t, myTask, platform)
+			}
+			project.tasks.each { t -> 
+				if (isNativeBinaryMakeTask(t, platform)) {
+					myTask.dependsOn t.path
+				}
+			}
+			
+			// add callbacks to look for native build tasks when new tasks are added later
+			project.tasks.withType(LinkExecutable).whenTaskAdded { t ->
+				addTaskDependencyForMyPlatform(t, myTask, platform)
+			}
+			project.tasks.withType(LinkSharedLibrary).whenTaskAdded { t ->
+				addTaskDependencyForMyPlatform(t, myTask, platform)
+			}
+			project.tasks.whenTaskAdded { t -> 
+				if (isNativeBinaryMakeTask(t, platform)) {
+					myTask.dependsOn t.path
+				}
+			}
+			doFirst {
+				if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+					// ensure that required MS Visual Studio is installed where expected
+					String msg = "Microsoft Visual Studio install not found: ${project.ext.VISUAL_STUDIO_BASE_DIR}\n" + 
+						"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
+					assert file(project.ext.VISUAL_STUDIO_BASE_DIR).exists() : msg
+					assert file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists() : msg
+				}
+			}
+		}
+	}
+}
+
+/*******************************************************************************************
+ * Task Rule : builds all the natives in this module for a given platform and copies the 
+ *             results to the bin repo.
+ *
+ * Example : gradle prebuildNatives_win64 will build all win64 native executables and shared 
+ *           libraries and copy the results to the appropriate project/os directory in the bin
+ *           repo.
+ *			
+ *		NOTE: you must be on the appropriate platform for this to work.
+ *
+ ******************************************************************************************/
+tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for given platform") { String taskName ->
+	if (taskName.startsWith("prebuildNatives_")) {
+		String platform = taskName - "prebuildNatives_"
+		
+		task(taskName)  { myTask ->		
+			dependsOn "buildNatives_$platform"
+
+			doLast {
+				copy  {
+					from "${projectDir}/build/os/${platform}"
+					into "${getProjectLocationInBinRepo(project)}/os/${platform}"
+					exclude "*.exp"
+					exclude "*.lib"
+				}
+			}	
+		}
+	}
+}

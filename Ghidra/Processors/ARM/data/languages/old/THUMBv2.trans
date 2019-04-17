@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_translation>
+    <from_language version="1">Sleigh-THUMBv2</from_language>
+    <to_language version="1">ARM:LE:32:v5t</to_language>
+    
+    <!--
+    	Set THUMB mode context everywhere
+    -->
+    <set_context name="TMode" value="1" />
+    
+</language_translation>

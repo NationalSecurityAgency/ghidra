@@ -1,0 +1,413 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Function ID Plug-in</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="prev" href="FunctionID.html" title="Function ID">
+<link rel="next" href="FunctionIDDebug.html" title="Function ID Debug Plug-in">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Function ID Plug-in</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="FunctionID.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="FunctionIDDebug.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="FunctionIDPlugin"></a>Function ID Plug-in</h1></div></div></div>
+<p>
+The Function ID Plug-in allows users to create new (.fidb) databases.
+A Function ID database is a collection of meta-data describing software libraries
+and the functions they contain. It is searchable via a hash computed over the
+body of unknown functions (See <a class="xref" href="FunctionID.html" title="Function ID"><i>Function ID</i></a>). The databases are self-contained
+and can be shared among different users.
+Using this plug-in, databases can be created, attached, and detached
+from an active Code Browser, and a database
+can be populated with function hashes from programs in the current Ghidra project.
+</p>
+<p>
+A Function ID database may hold many distinct libraries. Within a single library, all
+functions must come from the same <span class="emphasis"><em>processor model</em></span> as determined
+by Ghidra's Language ID. Ideally, functions should come from a single software component,
+all compiled using the same compiler and settings.
+</p>
+<p>
+Functions for a single library can be ingested from multiple files, usually from a series
+of <span class="emphasis"><em>object</em></span> files analyzed within a Ghidra repository. If the library
+is spread across multiple files, accurate symbol information is necessary
+to properly compute parent/child relationships.
+</p>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="enableplugin"></a>Enabling the Plug-in</h2></div></div></div>
+<p>
+All plug-in functionality is accessible from the <span class="bold"><strong>Function ID</strong></span>
+menu, under the main <span class="bold"><strong>Tools</strong></span> menu.
+In order to access this menu, the tool must be configured to include the
+Function ID plugin. To do this, from the Code Browser select
+  </p>
+<div class="informalexample"><span class="bold"><strong>File -&gt; Configure</strong></span></div>
+<p>
+Then click on the <span class="emphasis"><em>Configure</em></span> link under the
+<span class="bold"><strong>Function ID</strong></span> section and check the box
+next to "FidPlugin".
+</p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="pluginfunctionality"></a>Plug-in Functionality</h2></div></div></div>
+<p>
+The Function ID plug-in provides the following actions under <span class="bold"><strong>Tools -&gt; Function ID</strong></span>.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="chooseactivemenu"></a>Choose active FidDbs...</h3></div></div></div>
+<p>
+This brings up a dialog that allows the user to select which Function ID databases
+are active. By default, Ghidra ships with a set of databases and they are all initially
+active.
+</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/ChooseActiveFidDbs.png" align="middle" width="400" height="400"></td></tr></table></div>
+<p>
+Once a database has been deactivated, it will no longer be used for matches in
+subsequent analysis. The selections for which databases are active are saved
+as a preference on a per-user basis.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="createemptyfid"></a>Create new empty FidDb...</h3></div></div></div>
+<p>
+This brings up a file chooser dialog that allows the user to create a new
+Function ID database. This cannot be located under the Ghidra install directory
+root, because Ghidra considers files under the root read-only. We recommend
+ending this database with the extension .fidb for consistency, although not
+strictly necessary. Newly created databases are attached
+(which means "known" for the purposes of tracking) and initially active,
+even though they contain no match entries.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="attachfid"></a>Attach existing FidDb...</h3></div></div></div>
+<p>
+This brings up a file chooser dialog that allows the user to attach an
+existing Function ID database. This cannot be located under the Ghidra
+install directory root, because Ghidra considers files under the root
+read-only. Attached databases are saved in the user preference system,
+and retain their active status across sessions of Ghidra.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="detachfid"></a>Detach attached FidDb...</h3></div></div></div>
+<p>
+This brings up a dialog that allows the user to detach an already-attached
+Function ID database. None of the databases delivered with Ghidra can be detached;
+they can only be deactivated (see <a class="xref" href="FunctionIDPlugin.html#chooseactivemenu" title="Choose active FidDbs...">&#8220;Choose active FidDbs...&#8221;</a>). Detaching a
+database removes it from use in searching, and also causes the user preference
+system to forget about the existence of this database.
+</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/DetachAttachedFidDb.png" align="middle" width="409" height="131"></td></tr></table></div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="populatedialog"></a>Populate FidDb from programs...</h3></div></div></div>
+<p>
+Once a database has been created (or attached), the user may populate it
+with hash values from a set of programs in the current project. Choosing
+this option brings up a dialog where users enter the information needed
+to populate the database.
+</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/PopulateFidDbFromPrograms1.png" align="middle" width="422" height="320"></td></tr></table></div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140323472541088"></a>Dialog Fields</h4></div></div></div>
+<p>
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Fid Database</strong></span></span></dt>
+<dd><p>
+      Pick the database to populate. Users must select from attached databases that are writable.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Library Family Name</strong></span></span></dt>
+<dd><p>
+      The name of the library being ingested. This is the identifier that will be inserted
+      as part of the comment when a match is found for functions in this library. 
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Library Version</strong></span></span></dt>
+<dd><p>
+      The formal version string for the library.  This is frequently the
+      <span class="emphasis"><em>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</em></span>
+      syntax but can be anything provided to distinguish between different versions of the same library.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Library Variant</strong></span></span></dt>
+<dd><p>
+      Any other string for distinguishing libraries that doesn't fit in the formal
+      <span class="emphasis"><em>Version</em></span> string.  This frequently holds compiler settings.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Base Library</strong></span></span></dt>
+<dd><p>
+      This is an optional setting for cross-linking with an existing library already
+      ingested in the database.  In the event that the user wants to incorporate parent/child
+      relationships into this library from another related library, they can set this option
+      to point at the other library. The library must already be ingested (from a previous use
+      of this command) into the same database. The Function ID ingest process will match parents
+      and children across the libraries via function symbols.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Root Folder</strong></span></span></dt>
+<dd><p>
+      This specifies the set of programs from which the new library
+      will be populated. The user can select any subfolder in the current Ghidra project. The
+      ingest process will recursively search through all programs beneath this folder and,
+      for each program, will collect any functions it contains.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Language</strong></span></span></dt>
+<dd><p>
+      This is the required 4-field Ghidra Language ID (i.e. <span class="emphasis"><em>x86:LE:64:default</em></span>)
+      specifying exactly what processor the new language will contain. While scanning during ingest,
+      any program that does not match this program model will be automatically skipped.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Common Symbol File</strong></span></span></dt>
+<dd><p>
+      This is an optional parameter that provides a list of common function symbols to
+      the ingest process. The parameter, if present, is a path to a text file that contains
+      the list of function symbols, one per line. The ingest process excludes these functions
+      from consideration as disambiguating child functions. (See <a class="xref" href="FunctionIDPlugin.html#falsepositives" title="False Positives">&#8220;False Positives&#8221;</a>)
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+</div>
+<p>
+Once all fields have been filled, clicking <span class="bold"><strong>OK</strong></span> causes all selected
+functions to be ingested for the new library. Depending on the number of programs and
+functions selected, this process may take some time. Upon completion, the process will present
+a summary window, containing ingest statistics and an ordered list of functions that were
+most commonly called within the library. This list can be used to create a
+<span class="emphasis"><em>Common Symbol File</em></span> tailored for the library.
+</p>
+</div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="preparelibraries"></a>Preparing Libraries for a Function ID Database</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472516592"></a>Location of Programs</h3></div></div></div>
+<p>
+All functions going into a single Function ID <span class="emphasis"><em>Library</em></span> must already be imported and analyzed
+somewhere within a single Ghidra repository (shared or non-shared). Multiple libraries contained within
+the same database can be ingested in different phases, but a single library must be written to the database
+in a single pass. The ingest dialog (see <a class="xref" href="FunctionIDPlugin.html#populatedialog" title="Populate FidDb from programs...">&#8220;Populate FidDb from programs...&#8221;</a>) specifies a single subfolder as
+the root for the library. The process acts recursively, so there can be additional directory hierarchy under the root,
+but all programs to be included in the library must be under the one root.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472513952"></a>Analysis</h3></div></div></div>
+<p>
+All programs must be analyzed enough to have recovered the bodies of all the functions that are to be included
+in the library. Generally, the easiest way to accomplish this is to run Ghidra's default auto-analysis.
+If functions are spread across multiple programs, as is typically the case, users can run the
+Ghidra's <code class="code">analyzeHeadless</code> command to analyze across the whole set. However, take note below of some
+of the modifications to the default analysis that may be necessary to get good Function ID results.
+</p>
+<p>
+Every function to be included must have a <span class="emphasis"><em>non-default</em></span> function name assigned. 
+Function ID uses a function's <span class="emphasis"><em>primary symbol</em></span> for the name.
+Symbols are typically imported from debug information, but any method for assigning
+names, script based or manual, will work.  Any function that still has its default name,
+<code class="code">FUN_00....</code>, currently will not be ingested. 
+</p>
+<p>
+When performing auto-analysis in preparation for ingest, its best to disable the
+<span class="bold"><strong>Function ID</strong></span> analyzer (and the
+<span class="bold"><strong>Library Identification</strong></span> analyzer as well)
+in order to avoid cross contamination from different databases. If the function symbols
+are <span class="emphasis"><em>mangled</em></span>, be sure to turn off the <span class="bold"><strong>Demangler</strong></span>
+analyzer. This lets the future database apply the raw mangled symbol to new programs during analysis, which
+lets their <span class="bold"><strong>Demangler</strong></span> analyzer pass run with complete information. 
+</p>
+<p>
+For an example of these sorts of modifications to the analysis process, see the file:
+</p>
+<div class="informalexample"><code class="filename">Features/FunctionID/ghidra_scripts/FunctionIDHeadlessPrescript.java</code></div>
+<p>
+This is designed to be passed to the <code class="code">analyzeHeadless</code> command as a pre-script option.
+</p>
+</div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="falsepositives"></a>False Positives</h2></div></div></div>
+<p>
+A <span class="bold"><strong>false positive</strong></span> in the context of Function ID is a
+function that is declared as a match by the analyzer but has the incorrect symbol applied.
+As with any classification algorithm, it is generally not possible to eliminate this kind
+of error completely, but with Function ID there are some mitigation strategies.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472502064"></a>Causes</h3></div></div></div>
+<p>
+False positives for the most part only happen with small functions.
+There are two related causes with Function ID:
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Tiny Functions</strong></span></span></dt>
+<dd><p>
+      If a function consists of only a few instructions, it can be
+      matched <span class="emphasis"><em>randomly</em></span> if there are enough entries
+      in the database. The fewer operations a function performs, the
+      more likely an unrelated function is to do those exact same things.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Code Idioms</strong></span></span></dt>
+<dd><p>
+      A set of functions that are effectively
+      identical can have different names and be used in unrelated contexts.
+      Functions such as <span class="emphasis"><em>destructors</em></span> are typical: one might
+      check that a particular structure field is non-zero, and then pass that
+      field to <code class="code">free</code>.  Another destructor may
+      perform the exact same sequence, but was designed for a completely unrelated structure.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+<p>
+In either case, Function ID can apply a symbol that is misleading for the analyst.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140323472493552"></a>Mitigation via Threshold</h3></div></div></div>
+<p>
+All mitigation strategies, to some extent, trade-off false positives for
+<span class="bold"><strong>false negatives</strong></span>, which are functions that should have
+been reported by the Function ID analyzer, but aren't (because of some threshold or strategy).
+</p>
+<p>
+Most false positives by far are due to tiny functions. Function ID minimizes these via the
+<span class="emphasis"><em>instruction count threshold</em></span>.  Potentially matching functions with
+too few instructions that don't exceed this threshold will simply not be reported by the analyzer.
+</p>
+<p>
+For users experiencing too many false positives, the instruction count threshold
+is the easiest thing to adjust. It is fully controllable
+by the user as an Analysis option (See <a class="xref" href="FunctionID.html#analysisoptions" title="Analysis Options">&#8220;Analysis Options&#8221;</a>), and increasing
+it will directly reduce the false positive rate, at the expense of missing some <span class="emphasis"><em>true</em></span>
+matches whose scores now fall below the threshold.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="specialmitigate"></a>Specialized Mitigation</h3></div></div></div>
+<p>
+The default instruction count threshold is a good starting point for any new database,
+generally striking a reasonable balance limiting false positives without
+eliminating too many true matches. But even for an optimal threshold,
+there may be a small handful of functions in the new database (usually <span class="emphasis"><em>Code Idioms</em></span>)
+that exceed the threshold and repeatedly cause the wrong label to be placed. Instead of increasing
+the threshold to filter out <span class="emphasis"><em>all</em></span> functions with these higher scores, it is
+possible to turn on one of several mitigation strategies that target the offending database entries
+directly. These strategies include:
+  </p>
+<div class="informalexample"><div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Force Specific</strong></span></span></dt>
+<dd><p>
+      If this is set on an entry, the specific hash must match before the
+      system will consider the entry as a potential match. This is useful when
+      a code idiom contains a known constant that the full hash would usually miss.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Force Relation</strong></span></span></dt>
+<dd><p>
+      This is probably the most useful specialized strategy. It forces
+      at least one parent or child match to be present before the system considers the base
+      function as a potential match. So even if an idiom is big, this forces a search
+      for an additional confirmation.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Auto Fail</strong></span></span></dt>
+<dd><p>
+      This is a strategy of last resort. If an obnoxious code idiom can't be
+      eliminated any other way, this forces the particular database entry to
+      never be considered as a match.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Auto Pass</strong></span></span></dt>
+<dd><p>
+      This strategy is different from the others, in that it applies to function
+      entries whose scores are slightly too <span class="emphasis"><em>low</em></span>.  
+      If a low scoring function has an instruction sequence that is deemed unique enough,
+      this strategy causes any potential match to automatically pass the threshold. 
+      This provides an alternative to lowering the instruction count threshold to include
+      a particular function.
+      </p></dd>
+</dl></div></div>
+<p>
+</p>
+<p>
+These strategies can all be toggled for <span class="emphasis"><em>individual function records</em></span> in the database.
+To do this manually from the Code Browser, the user needs to search for the specific records they want to
+change using the <span class="emphasis"><em>Debug Search Window</em></span> and then make changes from its
+<span class="emphasis"><em>Result Window</em></span>. For details see <a class="xref" href="FunctionIDDebug.html#debugsearch" title="Debug Search Window">&#8220;Debug Search Window&#8221;</a>.
+</p>
+<p>
+Strategies can also be toggled by running a Ghidra script.
+Within a script the basic instruction sequence looks like:
+  </p>
+<div class="informalexample"><pre class="programlisting">
+FidFileManager fidFileManager = FidFileManager.getInstance();
+List&lt;FidFile&gt; allKnownFidFiles = fidFileManager.getFidFiles();
+// Choose a modifiable database from the list
+...
+// Open a specific database
+FidDB modifiableFidDB = fidFile.getFidDB(true);
+
+// Toggle strategies based on the full hash of the function(s)
+modifiableFidDB.setAutoFailByFullHash(0x84d01243dfb8b9cbL, true);
+modifiableFidDB.setForceRelationByFullHash(0x4e0920960b48ae7eL, true);
+modifiableFidDB.setForceSpecificByFullHash(0x5ef2f47ee7151243L, true);
+modifiableFidDB.setAutoPassByFullHash(0x96a4a6fd5694523bL, true);
+...
+// Save and close the database
+modifiableFidDB.saveDatabase("comment", monitor);
+modifiableFidDB.close();
+  </pre></div>
+<p>
+</p>
+<p>
+FunctionID hashes for specific functions can be obtained with the <code class="code">FIDHashCurrentFunction</code>
+script.
+</p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="FunctionID.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="FunctionIDDebug.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Function ID </td>
+<td width="20%" align="center"></td>
+<td width="40%" align="right" valign="top"> Function ID Debug Plug-in</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

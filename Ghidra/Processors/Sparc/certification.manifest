@@ -1,0 +1,18 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/Sparc.opinion||GHIDRA||||END|
+data/languages/SparcV9.ldefs||GHIDRA||||END|
+data/languages/SparcV9.pspec||GHIDRA||||END|
+data/languages/SparcV9.sinc||GHIDRA||||END|
+data/languages/SparcV9_32.cspec||GHIDRA||||END|
+data/languages/SparcV9_32.slaspec||GHIDRA||||END|
+data/languages/SparcV9_64.cspec||GHIDRA||||END|
+data/languages/SparcV9_64.slaspec||GHIDRA||||END|
+data/languages/SparcVIS.sinc||GHIDRA||||END|
+data/manuals/Sparc.idx||GHIDRA||reviewed||END|
+data/patterns/SPARC_patterns.xml||GHIDRA||reviewed||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

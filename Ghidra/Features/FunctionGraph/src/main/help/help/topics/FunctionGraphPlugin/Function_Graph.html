@@ -1,0 +1,1020 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Function Graph Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Function_Graph_Plugin"></A> <A name="FunctionGraphPlugin"></A>Function Graph
+    Plugin</H1>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG border="1" src=
+          "images/FunctionGraphWindow.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>The Function Graph Plugin is a simple graph display that shows the code blocks of the
+      function containing the cursor in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.</P>
+
+      <P>The display consists of the <A href="#Primary_View">Primary View</A> and the <A href=
+      "#Satellite_View">Satellite View</A>. There is also a group of <A href=
+      "#Function_Graph_Actions">actions</A> that apply to the entire graph.</P>
+    </BLOCKQUOTE>
+
+    <H2><IMG src="images/get-hot-new-stuff.png" alt="Note" border="0">What's New</H2>
+
+    <UL>
+      <li>
+    			Added the Nested Code Layout.  This layout shows the code blocks
+    			in a structure that more closely resembles the flow of C code.
+    		</li>
+      <LI>
+        Small tweaks (6.0) 
+
+        <UL>		    
+    		<li>
+    			<a href="#Satellite_View_Dock">Detachable Satellite View</a>
+    		</li>
+          <LI>Function signature now included by default</LI>
+
+          <LI>Added a <A href="#Vertex_Action_Regroup">regroup action</A> to allow for regrouping
+          vertices after ungrouping.</LI>
+
+          <LI>Articulated edges will now disappear if the connected vertices are dragged outside of
+          the original angles.</LI>
+
+          <LI>
+            Moved <A href="#Popup_Vertex_Actions">some actions</A> to the context popup menu,
+            specifically: 
+
+            <UL>
+              <LI>Edit Label</LI>
+
+              <LI>Fullscreen Mode</LI>
+
+              <LI>Jump to XRef</LI>
+            </UL>
+          </LI>
+        </UL>
+      </LI>
+
+      <LI><A href="#Layout_Compressing">Layout Compressing (5.6)</A></LI>
+
+      <LI><A href="#Zoom">Keyboard zooming</A> and <A href="#Pan">panning (5.6)</A></LI>
+
+      <LI><A href="#Vertex_Grouping">Vertex Grouping (5.5)</A></LI>
+    </UL><BR>
+    <BR>
+     
+
+    <H2><A name="Primary_View"></A>Primary View</H2>
+
+    <BLOCKQUOTE>
+      <P>The Primary View displays the <A href="#Vertices">Vertices (or Blocks)</A> and <A href=
+      "#Edges">Edges (or Control Flow)</A> of the graph. From this view you can interact with
+      blocks, both for editing and arrangement.</P>
+
+      <P>The graph rendered in the Primary View may represent an undefined function, such as a
+      subroutine. If this is the case, then the background of the Primary View will be a gray
+      color, such in the following image:</P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Provider_Undefined.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE><BR>
+      <BR>
+       
+
+      <P><A name="Stale_Graph"></A> By default, as changes to the program are detected, the graph
+      will <B>not</B> relayout to account for these changes. The image below shows the bottom of
+      the Primary View when the graph has detected changes and is considered <B>stale</B></P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Stale_Graph.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE><BR>
+      <BR>
+       
+
+      <P>Once a graph is stale, you can press the refresh button at any time to have the graph
+      re-create itself <B>without performing a relayout</B>. The green box in the image above
+      contains the refresh button. Alternatively, you can press the <A href=
+      "#Function_Graph_Action_Layout">relayout action</A> to refresh the stale graph <B>and</B>
+      perform a relayout, which we reposition the vertices of the graph to their preferred
+      locations.</P>
+
+      <P>If you would like to change the default behavior on program changes to perform a full
+      graph update, then you can change this value via the tool options. You can access these
+      options by right-clicking in graph and selecting the <B>Properties</B> action. Alternatively,
+      you can click on the tool's menu bar <B>Edit-&gt;Tool Options...</B> to launch
+      the options.   From there you can find the option at <B>Function Graph-&gt;
+      Automatic Graph Relayout</B></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Satellite_View"></A>Satellite View</H2>
+
+    <BLOCKQUOTE>
+      <P>The Satellite View provides an overview of the graph. From this view you may also perform
+      basic adjustment of the overall graph location. In addition to the complete graph, the
+      satellite view contains a <B>lens</B> (the white rectangle) that indicates how much of the
+      current graph fits into the primary view.</P>
+
+      <P>When you single left mouse click in the satellite view the graph is centered around the
+      corresponding point in the primary view. Alternatively, you may drag the lens of the
+      satellite view to the desired location by performing a mouse drag operation on the lens.</P>
+
+      <P>You may hide the satellite view by right-clicking anywhere in the Primary View and
+      deselecting the <B>Display Satellite View</B> toggle button from the popup menu.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/tip.png" alt="" border="0"> If the Primary View is painting
+        sluggishly, then hiding the Satellite View cause the Primary View to be more
+        responsive.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Satellite_View_Dock"></A>Detached Satellite</H3>
+
+      <BLOCKQUOTE>
+        <P>The Satellite View is attached, or <B>docked</B>, to the Primary View by default.
+        However, you can detach, or undock, the Satellite View, which will put the view into a
+        Component Provider, which itself can be moved, resized and docked anywhere in the Tool you
+        wish.</P>
+
+        <P>To undock the Satellite View, right-click in the graph and deselect the <B>Dock
+        Satellite View</B> menu item.</P>
+
+        <P>To re-dock the Satellite View, right-click in the graph and select the <B>Dock Satellite
+        View</B> menu item.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/tip.png" alt="" border="0"> To reshow the Satellite View if it is
+        hidden, whether docked or undocked, you can press the <IMG src=
+        "images/network-wireless.png" alt="" border="1"> button. This button is in the lower-right
+        hand corner of the graph and is only visible if the Satellite View is hidden or
+        undocked.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Vertices"></A>Vertices (Blocks)</H2>
+
+    <BLOCKQUOTE>
+      <P>Each vertex in the displayed graph represents a code block within the graphed function.
+      The term <B>block</B> is used synonymously with the term vertex. The block display consists
+      of a header and a code listing. The fields contained in the listing are a subset of the
+      available fields. You may change the fields displayed from the <A href=
+      "#Function_Graph_Action_Format">Edit Code Block Fields</A> action.</P>
+
+      <P>The header contains the name of the block, as defined by the label at that location, or
+      that address if no label exists. The header also contains buttons that allow you to perform
+      some common operations on the block.</P>
+
+      <P>As long as you are within the <A href="#Interaction_Threshold">interaction threshold</A>,
+      you may interact with the block's listing just as you would with Ghidra's primary <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.</P>
+
+      <BLOCKQUOTE>
+        <P>The following actions are available from the primary view.</P>
+
+        <H3>Selecting Blocks</H3>
+
+		<BLOCKQUOTE>
+        <P>Left-clicking a block will select that block. To select multiple blocks, hold down the
+        <B><TT>Ctrl</TT></B> key (or the equivalent for your OS) while clicking. To deselect a
+        block, hold the <TT>Ctrl</TT> key while clicking the block. To clear all selected blocks,
+        click in an empty area of the primary view. When selected, a block is adorned with a
+        halo.</P>        
+
+        <P>You may also select multiple blocks in one action by holding the <TT>Ctrl</TT> key while
+        performing a drag operation. Press the <TT>Ctrl</TT> key and start the drag in an empty
+        area of the primary view (not over a code block). This will create a bounding rectangle on
+        the screen that will select any blocks contained therein when the action is finished.</P>
+		</BLOCKQUOTE>
+		
+        <H3>Navigating Blocks</H3>
+
+		<BLOCKQUOTE>
+        <P>If you double-click a block header, then the <A href="#Zoom">Zoom Level</A> of the
+        Primary View will change. If the block is not at full zoom (1:1), then the zoom level will
+        be changed to full zoom. Otherwise, the zoom level will be changed to fully zoomed out. If
+        you are zoomed past the <A href="#Interaction_Threshold">interaction threshold</A>, then
+        you can double-click anywhere in the block to trigger a full zoom.</P>
+
+        <P>Assuming you are <B>not</B> zoomed past the interaction threshold, then double-clicking
+        a field inside the block's listing will perform a navigation <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">as determined by that
+        listing</A>. If you <B>are</B> zoomed past the interaction threshold, then double-clicking
+        anywhere in the block will trigger navigation in the same way as double-clicking the block
+        header.</P>
+        </BLOCKQUOTE>
+
+        <H3>Block Information</H3>
+	
+		<BLOCKQUOTE>
+        <P>You can hover over a block to get descriptive information. Depending upon the <A href=
+        "#Zoom">Zoom Level</A> of the primary view, you will get different hovers. When zoomed past
+        the interaction threshold, the hover action will trigger a popup window showing a preview
+        of the block. At full zoom, you will only receive popup windows <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#MouseHover">as determined by the listing</A>
+        inside of the block. You may disable <A href="#Popups">popups</A> as desired.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Vertex Actions</H3>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Vertex_Header.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <BLOCKQUOTE>
+        <P align="left"><A name="Vertex_Action_Color"></A>The <IMG src=
+        "images/FunctionGraph_Vertex_Action_Color.png" width="36" height="21" border="1"> button
+        allows you to set the background color for the vertex. You may press the button to choose
+        the color currently displayed in the icon, or you may use the drop-down menu to pick a
+        previously used color. Additionally, from the drop-down menu you can clear the color or
+        choose a new color to set.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.yellow.png" alt="Note" border="0"> By default, colors
+          applied to a vertex are also applied to the primary disassembly Listing.</P>
+        </BLOCKQUOTE><BR>
+         
+
+        <P align="left"><A name="Vertex_Action_Group"></A>The <IMG src="images/shape_handles.png">
+        button will <A href="#Vertex_Grouping">group</A> all selected vertices.</P>
+        <BR>
+        <BR>         
+
+        <BLOCKQUOTE>
+          <H3><A name="Popup_Vertex_Actions"></A>Popup Menu Vertex Actions</H3>
+
+          <BLOCKQUOTE>
+            <P align="left"><A name="Vertex_Action_Label"></A>The <IMG src=
+            "images/FunctionGraph_Vertex_Action_Label.png" width="23" height="21" border="1">
+            button allows you to set the label for the code block (this will also change the block
+            header).</P>
+
+            <P align="left"><A name="Vertex_Action_Full_View"></A>The <IMG src=
+            "images/fullscreen_view.png" width="24" height="18" border="1">
+            toggle button allows you to quickly view the contents of the block in a full window
+            view, which uses the same format as Ghidra's primary <A href=
+            "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. To restore the graph view
+            from the full window view, click this action again, which will then have this icon:
+            <IMG src="images/FunctionGraph_Vertex_Action_Full_View_Alt.png"
+            border="1">.</P>
+
+            <P align="left"><A name="Vertex_Action_XRefs"></A>The <IMG src=
+            "images/FunctionGraph_Vertex_Action_XRefs.png" width="22" height="20" border="1">
+            button will show a table of xrefs to the entry point of the currently graphed
+            function.</P>
+
+            <BLOCKQUOTE>
+              <P><IMG src="../../shared/note.png" alt="Note" border="0"> This action will also
+              appear in the vertex containing the function entry point, for convenience.</P>
+            </BLOCKQUOTE><BR>
+            <BR>
+          </BLOCKQUOTE><BR>
+          <BR>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Grouped Vertex Actions</H3>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Grouped_Vertex_Header.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png" alt="Note" border="0"> This section describes vertex
+          grouping, which is covered <A href="#Vertex_Grouping">later in this document</A>.</P>
+        </BLOCKQUOTE>
+
+        <P align="left"><A name="Group_Vertex_Action_Color"></A>The <IMG src=
+        "images/FunctionGraph_Vertex_Action_Color.png" width="36" height="21" border="1"> button
+        allows you to set the background color for the vertex. You may press the button to choose
+        the color currently displayed in the icon, or you may use the drop-down menu to pick a
+        previously used color. Additionally, from the drop-down menu you can clear the color or
+        choose a new color to set.</P>
+
+        <H4>Group Vertex Coloring Algorithm</H4>
+
+        <BLOCKQUOTE>
+          <P>This group color feature allows you to easily color large numbers of vertices after
+          you have grouped them and to keep already set user-defined colors as you are grouping
+          vertices.</P>
+
+          <P>The Function Graph will automatically color your group vertex, depending on the color
+          state of the vertices being grouped:</P>
+
+          <UL>
+            <LI>If none, or some but not all, of the vertices being grouped have a user-defined
+            color, then the group vertex will be made the default color (which you can change from
+            the options).</LI>
+
+            <LI>If all of the vertices being grouped have a user-defined color, but that color is
+            not the same, then the group vertex will be made the default color.</LI>
+
+            <LI>If all of the vertices being grouped have <B>the same</B> user-defined color, then
+            the new group vertex <B>will be made the color of the vertices</B>.</LI>
+          </UL>
+
+          <P>When a group vertex has a user-defined color, then all vertices grouped therein will
+          take on that color.</P>
+
+          <BLOCKQUOTE>
+            <P><IMG src="../../shared/tip.png" alt="Note" border="0"> <I>Via the options you can
+            disable this feature.</I></P>
+          </BLOCKQUOTE><BR>
+          <BR>
+        </BLOCKQUOTE>
+
+        <P align="left"><A name="Group_Vertex_Action_Label"></A>The <IMG src=
+        "images/FunctionGraph_Vertex_Action_Label.png" width="23" height="21" border="1"> button
+        allows you to set the text displayed in the group vertex. Unlike the action when used in a
+        non-grouped vertex, this action will not edit the label at the start address of the
+        vertex.</P>
+
+        <P align="left"><A name="Vertex_Action_Ungroup"></A>The <IMG src=
+        "images/shape_ungroup.png"> button will <A href="#Vertex_Grouping_Ungroup">ungroup</A> the
+        given vertex.</P>
+
+        <P align="left"><A name="Group_Vertex_Action_Group"></A>The <IMG src=
+        "images/shape_handles.png"> button will <A href="#Vertex_Grouping">group</A> all selected
+        vertices.</P>
+
+        <P align="left"><A name="Vertex_Action_Group_Add"></A>The <IMG src=
+        "images/shape_square_add.png"> button will add to the given group vertex all other selected
+        vertices.</P>
+
+        <BLOCKQUOTE>
+          <P>The difference between <B>group</B> and <B>add to group</B> is somewhat subtle. The
+          <B>group</B> action creates a <I>new</I> group vertex with each selected vertex as a
+          child, contained inside of the new grouped vertex. Alternatively, the <B>add to group</B>
+          action adds to the <I>existing</I> group node chosen all other selected vertices.</P>
+        </BLOCKQUOTE>
+
+        <P align="left"><A name="Vertex_Action_Regroup"></A>The regroup <IMG src=
+        "images/edit-redo.png"> button is included in the header of any <B>uncollapsed</B> vertex,
+        which is a vertex that is the member of a group, where that group has been <A href=
+        "#Vertex_Grouping_Ungroup">ungrouped</A>. This action will <B>regroup</B> (or collapse) all
+        vertices in the same group as the vertex containing the action. To regroup is to convert
+        all members of a given group back into a single grouped vertex.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="Note" border="0"> To remove an uncollapsed vertex
+          from group membership, right-click on that vertex and select <B>Ungroup Selected
+          Vertices</B>.</P>
+        </BLOCKQUOTE><BR>
+        <BR>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edges"></A>Edges</H2>
+
+    <BLOCKQUOTE>
+      <P>The Edges of the vertices represent a flow from one code block to another. One end of each
+      edge has an arrowhead that represents the direction of the flow. Furthermore, the color of
+      the edge provides a visual indication as to the type of the flow. The default flow colors
+      are:</P>
+
+      <TABLE border="1">
+        <TR>
+          <TD bgcolor="red" width="%25">
+          </TD>
+
+          <TD>Fallthrough - the negative case of a conditional check</TD>
+        </TR>
+
+        <TR>
+          <TD bgcolor="green" width="%25">
+          </TD>
+
+          <TD>Conditional - the positive case of a conditional check</TD>
+        </TR>
+
+        <TR>
+          <TD bgcolor="blue" width="%25">
+          </TD>
+
+          <TD>Unconditional - An unconditional flow</TD>
+        </TR>
+      </TABLE>
+
+      <P>The following actions are available from the primary view.</P>
+
+      <H3>Selecting Edges</H3>
+
+		<BLOCKQUOTE>
+      <P>You may select an edge by left-clicking it. To select multiple edges, hold down the
+      <B><TT>Ctrl</TT></B> (or the equivalent for your OS) while clicking. To deselect an edge,
+      hold the <TT>Ctrl</TT> key while clicking the edge. To clear all selected edges, click in an
+      empty area of the primary view.</P>
+      </BLOCKQUOTE>
+
+      <H3>Navigating Edges</H3>
+
+		<BLOCKQUOTE>
+      <P>Double-clicking an edge will navigate to the one of the incident blocks. The navigation
+      will first take you to the destination block if it is not already selected. Otherwise, the
+      navigation will take you to the source block.</P>
+      </BLOCKQUOTE>
+
+      <H3>Edge Information</H3>
+
+		<BLOCKQUOTE>
+      <P>You can hover over an edge to get descriptive information. When you hover over an edge you
+      will be presented with a popup window showing a preview for the source and destination blocks
+      for the hovered edge. You may disable <A href="#Popups">popups</A> as desired.</P>
+      </BLOCKQUOTE>
+
+      <H3>Articulated Edges</H3>
+
+	<BLOCKQUOTE>
+      <P>Some graph layouts create articulated edges, which are edges that contain bends in them to
+      route around vertices. As you drag vertices around the graph the bends in the articulations
+      in the dragged edge may disappear if the articulation causes the edge to contain awkward
+      angles.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Vertex_Grouping"></A>Vertex Grouping</H2>
+
+			<table x-use-null-cells="" width="100%">
+			     <tbody>
+			        <tr>
+				     <td align="center" width="100%"><img border="1" src="images/FunctionGraph_Pre_Group.png">
+				     <center>
+				     <font size="2"><i>Selected Vertices - Before Grouping</i></font>
+				     </center>
+				          </td>				     
+			        </tr>
+			      </tbody>
+			  </table>
+			  	<BR>
+    			<BR>
+    			
+    		<table x-use-null-cells="" width="100%">
+			     <tbody>
+			        <tr>
+				     <td align="center" width="100%"><img border="1" src="images/FunctionGraph_Post_Group.png">
+				     <center>
+				     <font size="2"><i>Grouped Vertices</i></font>
+				     </center>
+			          </td>
+			        </tr>
+			      </tbody>
+			  </table>
+
+	<BR>
+    <BR>
+     
+
+    <BLOCKQUOTE>
+      <P>You may select 2 or more vertices to be turned into a single grouped vertex. This allows
+      you to organize vertices to reduce the amount of information displayed in the graph. As an
+      example, you may wish to place all branches of a switch statement into a single grouped
+      vertex.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/tip.png" alt="Note" border="0"> <I>You can select a single vertex
+        to group. This allows you to annotate a given vertex with text, without editing the label
+        at the vertex address, which is the default behavior of the <A href=
+        "#Vertex_Action_Label">edit label action</A>. In addition to setting the text for the
+        grouped vertex, it will remove the disassembly. In this regard, grouping a single vertex is
+        a form of information hiding.</I></P>
+      </BLOCKQUOTE>
+
+      <P>Before a group vertex is created you are prompted to enter text that will be displayed in
+      the body of the group vertex. By default, the titles of each grouped vertex will be listed as
+      the text of the grouped vertex.</P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%">
+              <IMG border="1" src="images/FunctionGraph_Group_Text_Dialog.png"> 
+
+              <CENTER>
+                <FONT size="2"><I>Grouped Vertex Text Input Dialog</I></FONT>
+              </CENTER>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <BLOCKQUOTE>
+        <P><I>The default contents of the group vertex text entry dialog are generated from the
+        titles of each vertex being grouped. When grouping a vertex which is itself a group, the
+        text of that group vertex will be used in the text entry dialog in addition to its
+        title.</I></P>
+      </BLOCKQUOTE>
+
+      <P><IMG src="../../shared/tip.png" alt="Note" border="0"> Grouped vertices may contain other
+      grouped vertices.</P>
+
+      <P><IMG src="../../shared/warning.png" alt="Note" border="0"> As you group vertices, the
+      graph may perform a relayout of the vertices, depending upon the Function Graph Options, as
+      described <A href="#AUTO_RELAYOUT">below</A>.</P>
+
+      <H3><A name="Vertex_Grouping_Ungroup"></A>The Ungrouping Process</H3>
+
+      <BLOCKQUOTE>
+        <P>Ungrouping a grouped vertex will restore to the graph all vertices contained in the
+        grouped vertex. The layout behavior of the graph after performing an ungroup operation is
+        dependent upon the graph options; specifically, the <B>Automatic Graph Relayout</B> option.
+        The default setting for automatic relayout is <B>Vertex Grouping Changes Only</B>. This
+        means that as you group and ungroup vertices, the graph will relayout its vertices, which
+        may be a drastic layout change. To prevent the graph from performing a relayout during
+        grouping or ungrouping, set the option listed above to be <B>Block Mode Changes Only</B> or
+        <B>Never</B>.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="Note" border="0"> You can access the Function
+          Graph Options by right-clicking in an empty area of the graph and clicking the
+          <B>Properties</B> menu item.</P>
+        </BLOCKQUOTE>
+
+        <P>You can ungroup all group vertices in the graph via the right-click popup menu by
+        selecting <A href="#Vertex_Grouping_Ungroup_All_Popup">Ungroup All Vertices</A>. Warning:
+        this will ungroup all groups, which is an operation that cannot be undone.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="Note" border="0"> Ungrouped vertices can be
+          regrouped by executing the <A href="#Vertex_Action_Regroup">regroup action</A>. This
+          action is executed from an individual vertex, but will apply to all vertices in its
+          group.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Function_Graph_Actions"></A>Graph Actions</H2>
+
+    <BLOCKQUOTE>
+      <P>The following actions are buttons in the Function Graph Plugin header.</P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Provider_Header.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE><BR>
+      <BR>
+       
+
+      <BLOCKQUOTE>
+        <P align="left"><A name="Function_Graph_Action_Copy"></A>The <IMG src=
+        "images/page_white_copy.png" border="1"> button will perform a copy action in one or more vertex
+        listings. See the <A href="help/topics/ClipboardPlugin/Clipboard.htm">Clipboard</A> help
+        for more information on using copy in the Listing and Listing-based views.</P>
+
+        <P align="left"><A name="Function_Graph_Action_Paste"></A>The <IMG src=
+        "images/page_paste.png" border="1"> button will perform a paste action in one or more
+        vertex listings. See the <A href="help/topics/ClipboardPlugin/Clipboard.htm">Clipboard</A>
+        help for more information on using paste in the Listing and Listing-based views.</P>
+
+        <P align="left"><A name="Function_Graph_Action_Home"></A>The <IMG src=
+        "images/house.png" width="20" height="21" border="1"> button will
+        navigate to and select the entry point block.</P>
+
+        <P align="left"><A name="Function_Graph_Reload_Graph"></A>The <IMG src="Icons.REFRESH_ICON"
+        border="1"> button clear all <B>position and grouping</B> changes made to the graph and
+        then perform a reload and relayout of the graph.</P>
+
+        <P align="left"><A name="Function_Graph_Action_Layout"></A>The <IMG src=
+        "images/FunctionGraph_Action_Layout.png" width="37" height="20" border="1"> button allows
+        you to both change the layout used to arrange the graph and to perform a relayout of the
+        graph using the current layout. Simply pressing the button will trigger a relayout, whereas
+        clicking on the drop-down arrow will allow you to choose a new layout.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/tip.png" alt="Note" border="0"> <I>This action allows you to
+          perform a graph relayout <B>without losing grouping information</B></I></P>
+        </BLOCKQUOTE><BR>
+        <BR>
+         
+
+        <P align="left"><A name="Function_Graph_Action_Format"></A>The <IMG src=
+        "images/field.header.png" width="23" height="19" border="0"> button allows
+        you to change the fields of the blocks' listing.</P>
+
+        <BLOCKQUOTE>
+          <P>By default, the format configuration of the vertices is greatly condensed. This is
+          done to fit as many vertices on the screen as is possible. You can make the vertices
+          larger or smaller as you see fit. Form more information about adding and removing fields,
+          as well as adjusting the size of the fields in the vertex listing display, see the <A
+          href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">Listing Panel's format
+          help</A>.</P>
+        </BLOCKQUOTE>
+
+        <P align="left"><A name="Function_Graph_Action_Snapshot"></A>The <IMG src=
+        "images/camera-photo.png" width="22" height="20" border="0"> button will create a <A href=
+        "help/topics/Snapshots/Snapshots.html">Snapshot</A> of the current graph.</P>
+
+        <H2><A name="Path_Highlight_Actions"></A>Path Highlight Actions</H2>
+
+        <BLOCKQUOTE>
+          <P>The focus and hover path highlighting modes are designed to help show the flow of
+          execution through the code blocks in a function, as well as illustrate some of the
+          structure. Hover highlights are triggered when you move the mouse over a block. Focus
+          highlights are triggered by selecting a block and only work from one selected block, not
+          with multiple selected blocks.</P>
+
+          <P>The <B>focus highlight</B> paints the edges between certain code blocks with a bold
+          stroke, thicker than the regular edges. The <B>hover highlight</B> paints a dashed,
+          thicker stroke that also moves in the direction of flow for a limited period of time.</P>
+
+          <P>The path highlighting modes (described in the table below) are available for both
+          focus and hover, except in special cases, as noted.</P>
+
+          <TABLE border="1">
+            <TR>
+              <TH>Icon</TH>
+
+              <TH>Name</TH>
+
+              <TH>Description</TH>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Scoped_Flow_From_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Scoped_Flow_From_Block.png" width="18" height="18"
+              border="0">&nbsp;</TD>
+
+              <TD nowrap>Show Scoped Flow From Block</TD>
+
+              <TD>Highlights control flow to code blocks that are only reachable if the current
+              code block is executed. This is useful to see a local neighborhood of blocks that
+              follow the current block.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Scoped_Flow_To_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Scoped_Flow_To_Block.png" width="20" height="18"
+              border="0">&nbsp;</TD>
+
+              <TD>Show Scoped Flow To Block</TD>
+
+              <TD>Highlights control flow from code blocks that must eventually reach the current
+              code block. This is useful to see a local neighborhood of blocks that precede the
+              current block.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Paths_To_From_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Paths_To_From_Block.png" width="20" height="20"
+              border="0">&nbsp;</TD>
+
+              <TD>Show Paths To/From Block</TD>
+
+              <TD>Highlights control flow from codes blocks that can reach the current code block,
+              as well as control flow to code blocks that can be reached from the current block.
+              This is useful to show all possible flows before and after the current block.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Paths_From_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Paths_From_Block.png" width="18" height="18"
+              border="0">&nbsp;</TD>
+
+              <TD>Show Paths From Block</TD>
+
+              <TD>Highlights control flow to code blocks that can be reached from the current code block.
+              This is useful to show all possible flows after the current block.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Paths_To_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Paths_To_Block.png" width="19" height="18" border=
+              "0">&nbsp;</TD>
+
+              <TD>Show Paths To Block</TD>
+              <TD>Highlights control flow from codes blocks that can reach the current code block.
+               This is useful to show all possible flows before the current block.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Loops_Containing_Block"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Loops_Containing_Block.png" width="19" height="18"
+              border="0">&nbsp;</TD>
+
+              <TD>Show Loops Containing Block</TD>
+
+              <TD>Highlights the control flow between all possible looped blocks (cycles) that pass
+              through the current block. If a function has multiple non-intersecting loops, this
+              helps resolve the loops from each other in the case that the graph layout has placed
+              them too close to differentiate.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="Paths_From_Focus_To_Hover"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_Paths_From_Focus_To_Hover.png" width="20" height=
+              "18" border="0">&nbsp;</TD>
+
+              <TD>Show Paths From Focus to Hover (hover mode only)</TD>
+
+              <TD>Highlights the control flow from the currently focused code block to the
+              currently hovered code block. If there are no paths possible, no edges will be
+              highlighted. This is useful to see reachability between two sections of the
+              function.</TD>
+            </TR>
+
+            <TR>
+              <TD align="center"><A name="All_Loops_In_Function"></A> <IMG src=
+              "images/FunctionGraph_Action_Show_All_Loops_In_Function.png" width="20" height="18"
+              border="0">&nbsp;</TD>
+
+              <TD>Show All Loops In Function (focus mode only)</TD>
+
+              <TD>Highlights the control flow between all possible looped blocks (cycles) in the
+              current function. This mode doesn't actually depend on a focused code block; instead,
+              selecting it highlights all loops immediately.</TD>
+            </TR>
+          </TABLE><BR>
+          <BR>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Options"></A>Function Graph Options</H2>
+
+    <BLOCKQUOTE>
+      <P>The <A name="AUTO_RELAYOUT"></A><B>Automatic Graph Relayout</B> option describes when the
+      graph will perform an automatic relayout of the vertices as the graph changes. The available
+      values are:</P>
+
+      <UL>
+        <LI><B>Always</B> - always perform a graph relayout anytime the code blocks change or when
+        graph groups change</LI>
+
+        <LI><B>Block Mode Changes Only</B> - only performs a relayout when the code blocks of the
+        graph change (e.g., from an external edit)</LI>
+
+        <LI><B>Vertex Grouping Changes Only</B> - only performs a relayout when the state of the
+        graph groups changes (during a group or ungroup operation)</LI>
+
+        <LI><B>Never</B> - never perform a relayout of the graph automatically</LI>
+      </UL><BR>
+      <BR>
+       
+
+      <P>The <B>Scroll Wheel Pans</B> option signals to move the graph vertical when scrolling the
+      mouse scroll wheel. Disabling this option restores the original function graph scroll wheel
+      behavior of zooming when scrolled.</P>
+
+      <P>The <B>Start Fully Zoomed Out</B> option causes the initial graph to zoom out far enough
+      that the entire graph is displayed. When this option is off a new graph rendering will zoom
+      all the way in (no scaling) to the active vertex.</P>
+
+      <P>The <B>Update Vertex Colors When Grouping</B> option signals to the graph to make the
+      color of the grouped vertex be that of the vertices being grouped.</P>
+
+      <P>The <B>Use Animation</B> option signals to the graph whether to animate mutative graph
+      operations and navigations.</P>
+
+      <P><A name="Layout_Compressing"></A>The <B>Use Condensed Layout</B> option signals to the
+      graph to bring vertices as close together as possible when laying out the graph. Using this
+      option to fit as many vertices on the screen as possible. Disable this option to make the
+      overall layout of the graph more aesthetic.</P>
+
+      <P>The <B>Use Mouse-relative Zoom</B> option signals zoom the graph to and from the mouse
+      location when zooming from the middle-mouse. The default for this option is off, which
+      triggers zoom to work from the center of the graph, regardless of the mouse location.</P>
+
+      <P>There are various edge color and highlight color options available to change. The
+      highlight colors are those to be used when the flow animations take place.</P>
+    </BLOCKQUOTE>
+
+    <H2>Creating Program Selections</H2>
+
+    <BLOCKQUOTE>
+      <H3>From Paths</H3>
+
+	<BLOCKQUOTE>
+      <P><A name="Path_Selection"></A> You may create Program Selections from the <B>current path
+      highlights</B> by clicking <B>Program Selection<IMG src="../../shared/arrow.gif" border="0"
+      alt=""> From Hovered Edges</B> and <B>From Focused Edges</B> from the popup menu of a block.
+      If not paths are highlighted, then these actions will be disabled.</P>
+      </BLOCKQUOTE>
+
+      <H3>From Code Blocks</H3>
+
+		<BLOCKQUOTE>
+      <P><A name="Code_Unit_Selection"></A> You may select all Code Units in a Code Block by
+      clicking <B>Program Selection<IMG src="../../shared/arrow.gif" border="0" alt=""> Select All
+      Code Units</B> from the popup menu (or by using the default keybinding, <B>Ctrl-A</B>). This
+      action will select all Code Units in all selected Code Blocks in the graph. <B>If no Code
+      Blocks are selected, then a Program Selection will be created for all Code Units in all Code
+      Blocks in the graph.</B></P>
+      </BLOCKQUOTE>
+
+      <H3>Clearing Selections</H3>
+
+		<BLOCKQUOTE>
+      <P>You may clear the current Program Selection by clicking <B>Program Selection<IMG src=
+      "../../shared/arrow.gif" border="0" alt=""> Clear Selection</B> from the popup menu.</P>
+      </BLOCKQUOTE>	
+    </BLOCKQUOTE>
+
+    <H2><A name="Popups"></A>Popups</H2>
+
+    <BLOCKQUOTE>
+      <P>The primary view provides various popup windows to provide information as you hover over
+      the blocks and edges in the graph. To enable and disable popups in the primary view,
+      right-click anywhere in the primary view and select the <B>Display Popup Windows</B> toggle
+      button from the popup menu.</P>
+    </BLOCKQUOTE>
+
+    <H2>Grouping</H2>
+
+    <BLOCKQUOTE>
+      <P>The following popup menu items provide additional <A href="#Vertex_Grouping">grouping</A>
+      functionality.</P>
+
+      <UL>
+        <LI><A name="Vertex_Grouping_Group_Selected_Popup"></A> <B>Group Selected Vertices</B> -
+        Groups all selected vertices</LI>
+
+        <LI><A name="Vertex_Grouping_Add_Selected_Vertices_To_Group"></A> <B>Group Selected
+        Vertices - Add to Group</B> - Adds the selected vertices to group vertex in the selection.
+        This action will not be enabled if there is not one, and only one, group vertex in the
+        selection.</LI>
+
+        <LI><A name="Vertex_Grouping_Remove_From_Group"></A> <B>Remove From Group</B> - Removes the
+        <A href="#Vertex_Action_Regroup">uncollapsed vertex</A> from its group.</LI>
+
+        <LI><A name="Vertex_Grouping_Ungroup_All_Popup"></A> <B>Ungroup All Vertices</B> - Ungroups
+        <B>all</B> vertices in the graph, not just those selected or visible. This operation cannot
+        be undone!</LI>
+
+        <LI><A name="Vertex_Grouping_Ungroup_Selected_Popup"></A> <B>Ungroup Selected Vertices</B>
+        - Ungroups the selected group vertices</LI>
+      </UL><BR>
+      <BR>
+    </BLOCKQUOTE>
+
+    <H2><A name="Pan"></A>Panning</H2>
+
+    <BLOCKQUOTE>
+      <P>There are various ways to move the graph. To move the graph in any direction you can drag
+      from the whitespace of the graph.</P>
+
+      <P>By default, to move the graph vertically you can use the mouse wheel. In previous releases
+      the scroll wheel was used to zoom. Now there is an option to restore that behavior, the
+      <B>Scroll Wheel Pans</B> option. When this option is on, you can zoom by holding the
+      <TT><B>Control</B></TT> key (<TT><B>Command</B></TT> key on the Mac) while using the scroll
+      wheel. Alternatively, you can move the graph left to right using the mouse while while
+      holding <TT><B>Control-Alt</B></TT>.</P>
+
+      <P>The satellite viewer may also be used to move the primary graphs view by dragging and
+      clicking inside of the satellite viewer.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Zoom"></A>Zooming</H2>
+
+    <BLOCKQUOTE>
+      <P>At <B>full zoom</B>, or <B>block level zoom</B>, each block is rendered at its natural
+      size, which is the same scale as Ghidra's primary <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. From that point, which is a 1:1
+      zoom level, you can zoom out in order to fit more of the graph into the display.</P>
+
+      <BLOCKQUOTE>
+        <P>To change the zoom you may use the mouse scroll wheel while holding the
+        <TT><B>Control</B></TT> key (<TT><B>Command</B></TT> key on the Mac). This works whether
+        the mouse is over the primary viewer or the satellite viewer. Also, you may use the context
+        popup menu from the primary viewer in order to quickly zoom to the block level (1:1) or to
+        the window level (zoomed out far enough to fit the entire graph in the window). These
+        actions are <B>Zoom to Vertex</B> and <B>Zoom to Window</B>, respectively.</P>
+
+        <P><IMG src="../../shared/note.png" alt="Note" border="0"> To have the scroll wheel zoom
+        without holding the <TT><B>Control</B></TT> key, you can disable the <B>Scroll Wheel
+        Pans</B> option.</P>
+
+        <P><IMG src="../../shared/note.png" alt="Note" border="0"> To zoom the graph incrementally
+        using the keyboard you can use the <B>Zoom In</B> and <B>Zoom Out</B> actions. These
+        actions have default keybindings of <TT><B>Control-Minus</B></TT> and
+        <TT><B>Control-Equals</B></TT>.</P>
+      </BLOCKQUOTE>
+
+      <P>The <A href="#Satellite_View">satellite viewer</A> is always zoomed out far enough to fit
+      the entire graph into its window.</P>
+      </BLOCKQUOTE>
+
+      
+        <H3>Vertex Quick Zoom</H3>
+
+        <P>If you double-click a block header, then the <A href="#Zoom">Zoom Level</A> of the
+        Primary View will change. If the block is not at full zoom (1:1), then the zoom level will
+        be changed to full zoom. Otherwise, the zoom level will be changed to fully zoomed out. If
+        you are zoomed past the <A href="#Interaction_Threshold">interaction threshold</A>, then
+        you can double-click anywhere in the block to trigger a full zoom.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Interaction_Threshold"></A>Interaction Threshold</H3>
+
+		<BLOCKQUOTE>
+      <P>While zooming out (away from the blocks) you will eventually reach a point where you can
+      no longer interact with the listing inside of the block. The blocks provide a subtle visual
+      indication when they are zoomed past this level, in the form of a drop-shadow. The image
+      below shows this drop-shadow. The block on the left is not past the interaction threshold,
+      but the block on the right is, and thus has a drop-shadow. This example is for illustrative
+      purposes only and during normal usage all blocks will share the save zoom level. So, if one
+      block is zoomed past the interaction threshold, all other blocks will be as well.</P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG border="1" src=
+            "images/FunctionGraph_Vertex_Drop_Shadow.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+      
+      <p>
+      Interaction with blocks that are past the interaction threshold is simplified; for
+      example, when scaled past the interaction threshold, dragging in the listing area of a block
+      will drag the block, instead of making a selection in the listing, as would happen when not
+      scaled past the interaction threshold. 
+      </p>
+      </BLOCKQUOTE>
+      <BR>
+      <BR>
+       
+
+      <H3>Painting Threshold</H3>
+		<BLOCKQUOTE>
+      <P>While zooming out (away from the blocks) you will eventually reach a point where contents
+      each block will not be painted. Instead, each block will be painted by a rectangle that is
+      painted with the current background color of the block.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/tip.png" alt="Note" border="0"> Zooming past the painting
+        threshold will improve the rendering speed of the Primary View.</P>
+      </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Saving"></A>Saving View Information</H2>
+    
+    <BLOCKQUOTE>
+    <P>
+    	The <I>Function Graph Plugin</I> will automatically save your changes to the graph, 
+    	specifically, coloring nodes, grouping nodes, zooming and panning.   This happens as your
+    	change the function displayed in the graph and when you close the graph window. 
+    </P>
+    
+     <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.yellow.png" alt="Note" border="0">Changes made to 
+        <A HREF="#Function_Graph_Action_Snapshot">Snapshots</A> will not be saved.  This is 
+        done to avoid conflict between
+        changes made to the connected view and any of the snapshots</P>
+      </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
+    
+    
+
+    <P class="providedbyplugin">Provided by: <I>Function Graph Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+
+      <LI><A href="help/topics/Snapshots/Snapshots.html">Snapshots</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

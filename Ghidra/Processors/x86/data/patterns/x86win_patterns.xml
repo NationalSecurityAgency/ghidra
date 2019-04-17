@@ -1,0 +1,181 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16"> <!-- Main patterns -->
+    <prepatterns>
+      <data>0xcc</data> <!-- CC debug filler -->
+      <data>0xcccc</data> <!-- multiple CC filler bytes -->
+      <data>0x90</data> <!-- NOP filler -->
+      <data>0xc3</data> <!-- RET filler -->
+      <data>0xc9c3</data> <!-- LEAVE RET -->
+      <data>0xc2 ......00 0x00</data>  <!-- RET longform -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x83ec 0.....00 </data> <!-- SUBESP#small -->
+      <data>0x6aff68........64a100000000 </data> <!-- PUSH-1 PUSHFUNC MOVEAXFS[0] -->
+      <data>0x568bf1 </data> <!-- PUSHESI MOVESIECX -->
+      <data>0xb8........e8........ 100000.1 0xec</data>  <!-- MOVEAX CALL SUB ESP -->
+      <data>0xb8........e8</data>  <!-- MOVEAX CALL -->
+      <data>0x8bff558bec</data>  <!-- MOV EDI,EDI : PUSH EBP : MOV EBP,ESP -->
+
+      <data>0x538b 110110..</data> <!-- PUSH EBX : MOV EBX,E*X -->
+      <data>0x535657</data> <!-- PUSH EBX : PUSH ESI : PUSH EDI -->
+      <data>0x535556</data> <!-- PUSH EBX : PUSH EBP : PUSH ESI -->
+      <data>0x535651</data> <!-- PUSH EBX : PUSH ESI : PUSH ECX -->
+
+      <data>0x53568bf2</data> <!-- PUSH EBX : PUSH ESI : MOV ESI,EDX -->
+      <data>0x53568bd8</data> <!-- PUSH EBX : PUSH ESI : MOV EBX,EAX -->
+      <data>0x53568bf1</data> <!-- PUSH EBX : PUSH ESI : MOV ESI,ECX -->
+      <data>0x53568bda</data> <!-- PUSH EBX : PUSH ESI : MOV EBX,EDX -->
+      <data>0x53568bf0</data> <!-- PUSH EBX : PUSH ESI : MOV ESI,EAX -->
+      <data>0x56578bf9</data> <!-- PUSH ESI : PUSH EDI : MOV EDI,ECX -->
+      <data>0x56578bf1</data> <!-- PUSH ESI : PUSH EDI : MOV ESI,ECX -->
+
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+
+  <patternpairs totalbits="32" postbits="16"> <!-- Starts we trust to come after jump instructions -->
+    <prepatterns>
+      <data>0xe9........</data> <!-- JMP big -->
+      <data>0xeb..</data> <!-- JMP small -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x568bf1 </data> <!-- PUSHESI MOVESIECX -->
+      <data>0xb8........e8........ 100000.1 0xec</data>  <!-- MOVEAX CALL SUB ESP -->
+      <data>0xb8........e8</data>  <!-- MOVEAX CALL -->
+      <data>0x8bff558bec</data>  <!-- MOV EDI,EDI : PUSH EBP : MOV EBP,ESP -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  <pattern>
+     <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+  
+  <pattern>
+     <data>0x8bff558bec</data>  <!-- MOV EDI,EDI : PUSH EBP : MOV EBP,ESP -->
+     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+  
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0xcccc</data> <!-- CC debug filler -->
+      <data>0xcccccc</data> <!-- multiple CC filler bytes -->
+      <data>0xcccccccc</data> <!-- CC debug filler -->
+      <data>0xcccccc</data> <!-- multiple CC filler bytes -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x6a.. 0x68........ 0xe8 </data>  <!-- PUSH, PUSH, CALL -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+    <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0xcc</data> <!-- CC debug filler -->
+      <data>0xcccc</data> <!-- multiple CC filler bytes -->
+      <data>0x90</data> <!-- NOP filler -->
+      <data>0xc3</data> <!-- RET filler -->
+      <data>0xc9c3</data> <!-- LEAVE RET -->
+      <data>0xc2 ......00 0x00</data>  <!-- RET longform -->
+      <data>0xe9........</data> <!-- JMP big -->
+      <data>0xeb..</data> <!-- JMP small -->
+    </prepatterns>
+    <postpatterns>
+      <data>01010... 0x8b 01...100 ..100100 000...00 </data> <!-- PUSH MOV-[ESP,#] With small offset-->
+      <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
+    </postpatterns>
+  </patternpairs>
+  
+  <pattern>
+     <data> 0x518d4c24042bc81bc0f7d023c88bc42500f0ffff3bc8720a8bc159948b00890424c32d001000008500ebe9 </data> <!-- alloca_probe -->
+      <funcstart label="__alloca_probe"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x518d4c24082bc883e10f03c11bc90bc159e9........ </data> <!-- alloca_probe_16 -->
+      <funcstart label="__alloca_probe_16"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x518d4c24082bc883e10703c11bc90bc159e9........ </data> <!-- alloca_probe_8 -->
+      <funcstart label="__alloca_probe_8"/>
+  </pattern>
+  
+  <pattern>
+     <data> 
+            0x8bff
+            0x55
+            0x8bec
+            0x83ec20
+            0x8b4508
+            0x56
+            0x57
+            0x6a08
+            0x59
+            0xbe........
+            0x8d7de0
+            0xf3a5
+            0x8945f8
+            0x8b450c
+            0x5f
+            0x8945fc
+            0x5e
+            0x85c0
+            0x740c
+            0xf60008
+            0x7407
+            0xc745f4........
+            0x8d45f4
+            0x50
+            0xff75f0
+            0xff75e4
+            0xff75e0
+            0xff15........
+            0xc9
+            0xc20800  </data> <!-- __CxxThrowException@8 -->
+     <funcstart label="__CxxThrowException@8" noreturn="true"/>
+  </pattern>
+  
+  <pattern>
+     <data>
+        0x8b4df4                         <!-- MOV        ECX,[EBP + -0xC] -->
+        0x64890d 0x00000000              <!-- MOV        FS:[0x0],ECX -->
+        0x59                             <!-- POP        ECX -->
+        0x5f                             <!-- POP        EDI -->
+        0x5f                             <!-- POP        EDI -->
+        0x5e                             <!-- POP        ESI -->
+        0x5b                             <!-- POP        EBX -->
+        0x8be5                           <!-- MOV        ESP,EBP -->
+        0x5d                             <!-- POP        EBP -->
+        0x51                             <!-- PUSH       ECX -->
+        0xc3                             <!-- RET -->
+  </data> <!-- __EH_epilog3 -->
+     <funcstart label="__EH_epilog3"/>
+  </pattern>
+
+  <pattern>
+     <data>
+        0x8b4df0                         <!-- MOV        ECX,[EBP + -0x10] -->
+        0x64890d 0x00000000              <!-- MOV        FS:[0x0],ECX -->
+        0x59                             <!-- POP        ECX -->
+        0x5f                             <!-- POP        EDI -->
+        0x5f                             <!-- POP        EDI -->
+        0x5e                             <!-- POP        ESI -->
+        0x5b                             <!-- POP        EBX -->
+        0x8be5                           <!-- MOV        ESP,EBP -->
+        0x5d                             <!-- POP        EBP -->
+        0x51                             <!-- PUSH       ECX -->
+        0xc3                             <!-- RET -->
+  </data> <!-- __SEH_epilog4 -->
+     <funcstart label="__SEH_epilog4"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0xcc  </data>  <!-- int 3 function break -->
+     <funcstart label="__break" validcode="function" noreturn="true"/>  <!-- must be defined at an existing function -->
+  </pattern>
+  
+</patternlist>

@@ -1,0 +1,13 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors PowerPC'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
+dependencies {
+	compile project(':Base')
+	compile project(':BytePatterns')
+}
+

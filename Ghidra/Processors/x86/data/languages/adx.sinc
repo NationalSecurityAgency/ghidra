@@ -1,0 +1,33 @@
+:ADCX Reg32, rm32      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xF6; rm32 & Reg32 ... & check_Reg32_dest ... {
+	tmp:5 = zext(Reg32) + zext(rm32) + zext(CF);
+	tmpCF:1 = tmp(4); # just the carry byte 
+	CF = tmpCF != 0;
+	Reg32 = tmp:4;
+	build check_Reg32_dest;
+}
+
+@ifdef IA64
+:ADCX Reg64, rm64      is vexMode=0 & opsize=2 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xF6; Reg64 ... & rm64 {
+	tmp:9 = zext(Reg64) + zext(rm64) + zext(CF);
+	tmpCF:1 = tmp(8); # just the carry byte 
+	CF = tmpCF != 0;
+	Reg64 = tmp:8;
+}
+@endif
+
+:ADOX Reg32, rm32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xF6; rm32 & Reg32 ... & check_Reg32_dest ... {
+	tmp:5 = zext(Reg32) + zext(rm32) + zext(OF);
+	tmpOF:1 = tmp(4); # just the carry byte 
+	OF = tmpOF != 0;
+	Reg32 = tmp:4;
+	build check_Reg32_dest;
+}
+
+@ifdef IA64
+:ADOX Reg64, rm64      is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xF6; Reg64 ... & rm64 {
+	tmp:9 = zext(Reg64) + zext(rm64) + zext(OF);
+	tmpOF:1 = tmp(8); # just the carry byte 
+	OF = tmpOF != 0;
+	Reg64 = tmp:8;
+}
+@endif

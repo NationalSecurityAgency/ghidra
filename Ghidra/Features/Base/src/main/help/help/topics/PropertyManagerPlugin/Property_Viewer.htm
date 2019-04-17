@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Property Viewer</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Display_Property_Viewer"></A>
+        <A name="PropertyViewerPlugin"></A>Property Viewer</H1>
+
+    <P>&nbsp;</P>
+
+    <P>The Property Viewer window shows all of the properties in a Program. Properties<A name=
+    "Property"></A> are assigned to a code unit and can store values at addresses. <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">Plugins</A> can define their own
+    properties for storing plugin specific information at an address. The display provides a
+    convenient way to see all the properties that exist in the Program. When you select a property,
+    the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">navigation
+    margin</A> in <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A> shows a
+    pink marker for each location of that property. The window provides a quick way to remove all
+    properties at once.&nbsp;&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TR>
+            <TD width="100%" align="center"><IMG border="0" src="images/PropertyViewer.png"></TD>
+          </TR>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <P>&nbsp;</P>
+
+    <P>To display the Property Viewer window, select <B>Window<IMG border="0" src=
+    "../../shared/arrow.gif">Manage Properties...</B> from the tool menu.</P>
+
+    <P>In this example, a plugin has placed several source related properties on code units. Select
+    the row for "Source File" to see all the locations in the Code Browser where a "Source File"
+    property is defined, as shown in the image below. The <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">left margin</A> on the shows
+    marker for the "Source File" property; the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">right margin</A> shows the
+    other locations where the Space properties exist; click on the right margin to navigate to that
+    location.</P>
+
+    <P align="center"><IMG border="0" src="images/Markers.png"></P>
+
+    <P class="relatedtopic">&nbsp;</P>
+
+    <P><A name="DeleteProperties"></A>To delete all properties in the Program,</P>
+
+    <OL>
+      <LI>Select a property to delete.</LI>
+
+      <LI>
+        Right mouse-click and select <B>Delete</B>. 
+
+        <UL>
+          <LI>The property will be removed from the list of properties in the dialog.</LI>
+
+          <LI>To undo the delete, select the <IMG border="0" src="../../shared/undo.png" >button on the tool.</LI>
+        </UL>
+      </LI>
+    </OL>
+
+    <P class="providedbyplugin">&nbsp;</P>
+
+    <P class="providedbyplugin">Provided by: <I>PropertyManagerPlugin</I></P>
+
+    <P class="relatedtopic">&nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">Navigation
+        Margin</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">Marker Margin</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

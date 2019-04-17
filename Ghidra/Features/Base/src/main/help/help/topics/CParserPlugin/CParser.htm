@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>C-Parser</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Parse_C_Source"></A>C-Parser</H1>
+
+    <BLOCKQUOTE>
+      <P>The C-Parser plugin can be used to extract data type information from C-Header
+      files.&nbsp; Data type definitions such as structures, enums, typedefs, and function
+      signatures are all extracted.&nbsp; The extracted data types can be added to a currently open
+      program, or saved to a data type archive for re-use in multiple programs.&nbsp; An archive
+      file can also be imported into an open project as a shared data type archive.<BR>
+      </P>
+
+      <P>Why would you want to do this?<BR>
+      </P>
+
+      <UL>
+        <LI>The more data type information you have the better the decompiler output</LI>
+
+        <LI>It is much easier, even with the initial frustration when setting up the parsing, than
+        entering data type information by hand</LI>
+
+        <LI>Define values can be used as equates</LI>
+
+        <LI>If you have symbol names for functions (debug information, name table, etc...) you can
+        <B><A href=
+        "help/topics/DataTypeManagerPlugin/data_type_manager_window.html#Apply_All">Apply
+        Function DataTypes</A></B> from the data archive manager to any program.<BR>
+        </LI>
+      </UL>
+
+      <P>One benefit of using the C-Parser over other methods of data type extraction (ie. debug
+      information embedded in a program), is all defines that have an integer value defined are
+      added to the archive as an <B>Equate</B> value.&nbsp; For example, <B><TT>#define</TT></B>s
+      are sometimes used to setup error return codes.&nbsp; These can be very useful to have when
+      annotating a program undergoing reverse engineering.<BR>
+      </P>
+
+      <P style="text-align: center;"><IMG alt="Dialog: C Parser" src="images/ParseCSource.png"><BR>
+      </P>
+
+      <P>The C-Parser has a C-Preprocessor(CPP) phase and a parsing phase.&nbsp; During the CPP
+      phase, traditional CPP directives (<TT>#define</TT>, <TT>#ifdef</TT>, etc...) are used to
+      build up a single file that has all CPP <TT>#define</TT> macro directives expanded just as in
+      a normal compilation process.&nbsp; The second phase actually parses the output of the CPP
+      process according to C syntax, extracting the actual data type definitions.<BR>
+      </P>
+
+      <P><IMG src="../../shared/note.png" border="0">The CPP macro expanded file is placed in the
+      user's home directory and called CParserPlugin.out.&nbsp; This file is VERY useful for
+      debugging parsing problems, include order, and necessary "-D" directives.&nbsp; Every attempt
+      is made to include line number information for each included file as part of this larger
+      file.<BR>
+      </P>
+
+      <P>The C-Parser has been successfully used on Visual Studio, GCC, and Objective-C header
+      files.&nbsp; The include files for GCC, Windows, MacOS, and ANSI C were all parsed with the
+      C-Parser plugin.&nbsp; Most vanilla C-Header files can be parsed using the C-Parser.&nbsp;
+      However, just as in C software development the correct include order and "-D" pre-defines
+      must be specified.&nbsp; Getting this correct can be much like porting an application from
+      one platform to another (linux program to visual studio).&nbsp; The first time you compile
+      the ported program you will get all sorts of data type undefined errors, because the new
+      platform has some data type defined in a different header file or include location than the
+      original platform.<BR>
+      </P>
+
+      <H3>Setting up to Parse</H3>
+
+      <P>The C-Parser dialog has three sections:<BR>
+      </P>
+
+      <UL>
+        <LI>The Parse Configuration<BR>
+        <BR>
+         The parse configuration selects an existing parser configuration.&nbsp; The pre-defined
+        parse configurations can be used to re-parse a set of C-Header files, or as an example for
+        a new parsing configuration.&nbsp; Sample configuration files that were used in parsing the
+        data type archives that are included with Ghidra distributions are available in the Parse
+        Configuration list.&nbsp; These pre-parsed archives are applied automatically when programs
+        are imported.&nbsp; If you are going to parse a new set of C-Header files, try using one of
+        the included .prf parse configuration files and replace the source files to parse with the
+        names of C-Header file to be parsed.<BR>
+         New configuration files can be created using the <IMG alt="Save As" src=
+        "images/disk_save_as.png"> button, and are added to the list.<BR>
+        <BR>
+        </LI>
+
+        <LI>
+          List of Source Files<BR>
+          <BR>
+           The source file parse section is an ordered list of files that are parsed one after
+          another.&nbsp; Data type definitions and C-Preprocessor <TT>#define</TT> definitions from
+          each file are available to each subsequent file in the list.<BR>
+           
+
+          <P><IMG src="../../shared/warning.png" border="0">&nbsp; Order of files in the list is
+          very important, just as the order of #include directives at the top of C-Source files are
+          important.<BR>
+          </P>
+          Files included using <TT>#include</TT> directives within C-Header files being parsed are
+          included as if the files were part of the compilation process.&nbsp; If a file is
+          <TT>#include</TT>d by a file already part of the list of source files, it is not
+          necessary to add it to the list.&nbsp; However the correct path to the included file must
+          be in the parse options section using the "-I" option.<BR>
+          <BR>
+           <IMG alt="Add Button" src="images/Plus.png"> The add button is used to add files to
+          the list of source files to parse.&nbsp; If you add a directory, all files in the
+          directory are parsed in the order they appear in the directory.<BR>
+          <BR>
+           <IMG alt="UpDown Button" src="images/up.png"><IMG alt="UpDown Button" src="images/down.png"> The up/down arrows allows the re-order
+          the order the files in the source file list are parsed.&nbsp; Each file is parsed before
+          files below it on the list.<BR>
+          <BR>
+           <IMG alt="Delete Button" src="images/edit-delete.png">&nbsp; Removes all selected files from
+          the source file list.<BR>
+          <BR>
+          <BR>
+        </LI>
+
+        <LI>Parse Options<BR>
+        <BR>
+         Parse options are exactly the same options that would be passed to a compiler when
+        building source.&nbsp; Only the "-I" include path and the "-D&lt;name&gt;=&lt;value&gt;"
+        directives are supported.&nbsp; Each directive should be on its own line.&nbsp; "-D"
+        options can have an un-defined value, which means the definition simply exists and are
+        usually tested with an <TT>#ifdef</TT> type directive in the CPP phase of parsing.<BR>
+        </LI>
+      </UL>
+
+      <P><IMG src="../../shared/warning.png" border="0">&nbsp;The newly created data type archive
+      will become dependent on any data type archives currently open in the Data Type
+      Manager.&nbsp; For example, the <SPAN style=
+      "font-weight: bold; font-style: italic;">Cocoa</SPAN> data type archive is dependent on the
+      <SPAN style="font-weight: bold; font-style: italic;">mac_osx</SPAN> data type archive.<BR>
+      </P>
+
+      <DIV style="text-align: center;">
+        <IMG alt="Dialog: Use Open Archives?" src="images/UseOpenArchives.png"><BR>
+      </DIV>
+
+      <P><IMG src="../../shared/note.png" border="0">It is strongly suggested that the basic data
+      type archive for the particular platform be open in the data type manager.&nbsp; When parsing
+      C-Header files, undefined types will be used from the archives.&nbsp; If you are unsure of
+      your target platforms core data types, it is suggested that the "<B>generic_C_lib</B>"
+      archive, which defines ANSI-C functions and data types, be open.<BR>
+      </P>
+
+      <H3>C++ Header files<BR>
+      </H3>
+
+      <P>There currently is no support for parsing the information from C++ header files.&nbsp; It
+      is possible to import information from C++ header files by compiling a program with the
+      desired header files included and the Debug option turned on for the compiler.&nbsp; After
+      successful compilation and linking, import the program into Ghidra.&nbsp; If the debug format
+      is supported fully, all function signatures and data types information that is used in the
+      program should be preserved.&nbsp; Extracting data type information and function signatures
+      in this way does not recover as much information as parsing full C-Header files, however, it
+      can more accurately layout structure definitions.</P>
+    </BLOCKQUOTE>
+
+    <H2>Tips:</H2>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>Getting a new set of header files to parse can be frustrating.&nbsp; Make use of the
+        CParserPlugin.out file produced in your home directory.<BR>
+        </P>
+
+        <P>Use the Line numbers to determine where in the file the parse error occured.<BR>
+        </P>
+
+        <P>The <SPAN style="font-style: italic; font-weight: bold;">last valid data parsed</SPAN>
+        displayed in the parse error dialog can be useful as well.&nbsp; Search for it in the
+        CParserPlugin.out file and then look at the next defined data type for a parse error.<BR>
+        </P>
+
+        <P style="text-align: center;"><IMG alt="Parse Error dialog" src=
+        "images/ParseError.png"><BR>
+        </P>
+
+        <P>You can use the "-D&lt;name&gt;=&lt;value&gt;" directive to "define" away or redefine
+        nasty compiler specific directives like "__builtin_va_list" to "void"<BR>
+         "-D__builtin_va_list=void".<BR>
+        </P>
+
+        <P>When adding a file to the source files to parse list, you can specify a directory.&nbsp;
+        Every file in the directory will be added to the list of source files.&nbsp; This is very
+        useful if the original programmers did a good job protecting against double inclusion of
+        header files.&nbsp; This is the norm in most modern day source code, but was definitely not
+        always the case.<BR>
+        </P>
+        <BR>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><BR>
+     <BR>
+  </BODY>
+</HTML>

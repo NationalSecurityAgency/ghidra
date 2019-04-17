@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-12"
+            endian="little"
+            size="16"
+            variant="PIC-12C5xx"
+            version="1.0"
+            slafile="pic12c5xx.sla"
+            processorspec="pic12c5xx.pspec"
+            manualindexfile="../manuals/PIC-12.idx"
+            id="PIC-12:LE:16:PIC-12C5xx">
+    <description>PIC-12C5xx</description>
+    <compiler name="default" spec="pic12c5xx.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="pic12cxx"/>
+  </language>
+</language_definitions>

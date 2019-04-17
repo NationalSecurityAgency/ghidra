@@ -1,0 +1,29 @@
+Using Oxygen Icons Outwith KDE
+
+Like KDE itself, Oxygen Icons have a liberal copying policy. Anyone may, and is encouraged to, use Oxygen Icons in their applications, websites and physical artwork. Modification is also allowed. The only restriction is that you can not restrict what others then do with the artwork.
+
+The copying licence is the GNU LGPL 3, see Policies/Licensing_Policy and LGPL licence text for the full legal details.
+Use in Applications
+
+Oxygen Icons can be used with computer programmes, including proprietry applications or ones covered by non-GPL licences.
+
+In your source code you must include a copy of the LGPLv3 licence text making it clear which files it applies to and point to http://www.kde.org/. You must also include the SVG of the relevant icons even if they are not used by the application (this is the preferred modifiable form).
+
+With your application binary you must also include a copy of the LGPLv3 licence text making it clear which files it applies to and point to http://www.kde.org/. If you do not include the icon SVGs you must make it clear how the user can get them (for a free software application this will be as part of the source code).
+
+There is one license issue to watch for with proprietary applications, you should not embed the icon into the application binary. This happens if you use Qt resource files or .net linking. This would mean the whole application is now LGPL. Instead you should keep the .png as a separate file and load it at runtime. (There are provisions in the LGPL for allowing this if you have a mechanism to relink to a modified version but most applications do not have such a mechanism).
+Use on Websites
+
+Oxygen Icons can be used on websites, they are excellent for making even the most boring website pretty (look at this one).
+
+You should include a link to http://www.kde.org/ in a prominant and relevant part of your website (e.g. a credits page) and make it clear that the icons may be freely copied under the LGPLv3 (either by linking to the LGPL on the GNU website or by including a full copy). If you have modified the icon SVGs you should include a link to where they can be downloaded.
+Use on Physical Media
+
+You can include Oxygen Icons in leaflets or any printed work.
+
+You should include a text pointing readers at the Oxygen website http://www.kde.org/ and note that they can be copied under the GNU LGPLv3 with a pointer to http://www.gnu.org/copyleft/lesser.html
+Notes
+
+The GNU LGPLv3 is a two part document made up of the GPLv3 and the LGPL addon. Both should be included.
+
+Some Oxygen Icons include the KDE logo. The copying licence is just the same but it is also restricted by the separate laws of trademark and may not be used for any branding without licence from KDE e.V.
