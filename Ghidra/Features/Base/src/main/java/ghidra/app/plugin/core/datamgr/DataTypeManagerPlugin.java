@@ -106,7 +106,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	protected void init() {
-		recentlyOpenedArchiveMap = new LRUMap<String, DockingAction>(RECENTLY_USED_CACHE_SIZE) {
+		recentlyOpenedArchiveMap = new LRUMap<>(RECENTLY_USED_CACHE_SIZE) {
 			@Override
 			protected void eldestEntryRemoved(Entry<String, DockingAction> eldest) {
 				DockingAction action = eldest.getValue();
@@ -718,30 +718,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	public AddressSetView getCurrentSelection() {
 		return currentSelection;
 	}
-
-//	public DataOrganization promptToChangeDataOrganization(DataTypeManager dataTypeManagerToCheck)
-//			throws CancelledException {
-//		DataOrganization dataOrganization = promptUserForDataOrganization(dataTypeManagerToCheck);
-//		dataTypeManagerToCheck.setDataOrganization(dataOrganization);
-//		return dataOrganization;
-//	}
-
-//	public DataOrganization promptUserForDataOrganization(DataTypeManager dataTypeManagerToAlign)
-//			throws CancelledException {
-//		DataOrganization currentDataOrganization = dataTypeManagerToAlign.getDataOrganization();
-//		if (currentDataOrganization == null) {
-//			currentDataOrganization = DataOrganizationImpl.getDefaultOrganization();
-//		}
-//		DataOrganizationDialog dataOrgDialog =
-//			new DataOrganizationDialog(dataTypeManagerToAlign, currentDataOrganization);
-//		dataOrgDialog.setHelpLocation(new HelpLocation(this.getName(),
-//			"Align_Data_Types_In_Archive"));
-//		tool.showDialog(dataOrgDialog);
-//		if (dataOrgDialog.userCanceled()) {
-//			throw new CancelledException();
-//		}
-//		return dataOrgDialog.getDataOrganization();
-//	}
 
 	@Override
 	public List<DockingActionIf> getPopupActions(ActionContext context) {

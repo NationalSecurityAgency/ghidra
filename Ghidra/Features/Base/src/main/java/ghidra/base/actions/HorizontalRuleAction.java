@@ -39,19 +39,16 @@ public class HorizontalRuleAction extends DockingAction {
 		setEnabled(false);
 
 		// The menu name is both names, one over the other, in a small, light grayish font.
-		// If the original topName or bottomName contain html text that needs escaping, the first 
-		// '&' of the replacement html entity (like '&lt;') will be consumed by the menudata deity
-		// and lost forever.
-		setMenuBarData(new MenuData(new String[] {
-			"<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" + HTMLUtilities.escapeHTML(topName) +
-				"<BR>" + HTMLUtilities.escapeHTML(bottomName) + "</FONT></CENTER>" }));
+		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" +
+			fixupFirstAmp(
+				HTMLUtilities.escapeHTML(topName) + "<BR>" + HTMLUtilities.escapeHTML(bottomName)) +
+			"</FONT></CENTER>" }));
 
 		// the description is meant to be used for the tooltip and is larger
 		String padding = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-		setDescription("<HTML><CENTER><B>" + padding +
-			fixupFirstAmp(HTMLUtilities.escapeHTML(topName) + padding + "<B><HR><B>" + padding +
-				HTMLUtilities.escapeHTML(bottomName)) +
-			padding + "</B></CENTER>");
+		setDescription("<HTML><CENTER><B>" + padding + HTMLUtilities.escapeHTML(topName) + padding +
+			"<B><HR><B>" + padding + HTMLUtilities.escapeHTML(bottomName) + padding +
+			"</B></CENTER>");
 	}
 
 	private String fixupFirstAmp(String text) {
