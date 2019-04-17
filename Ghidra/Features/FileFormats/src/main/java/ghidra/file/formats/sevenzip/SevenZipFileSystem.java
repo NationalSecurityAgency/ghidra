@@ -180,7 +180,7 @@ public class SevenZipFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		ISimpleInArchiveItem entry = map.get(file);
 		StringBuffer buffer = new StringBuffer();
 		try {

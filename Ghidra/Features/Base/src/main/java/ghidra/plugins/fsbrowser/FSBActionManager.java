@@ -472,40 +472,48 @@ class FSBActionManager {
 	 * @param monitor {@link TaskMonitor} to monitor and update when accessing the filesystems.
 	 */
 	private void showInfoForFile(FSRL fsrl, TaskMonitor monitor) {
-		String title = "  no title  ";
-		String info = "  no information available  ";
-		String fileSystemName = " unknown ";
+		String title;
+		String info;
 
 		if (fsrl != null) {
+			info = "";
+			title = "Info about " + fsrl.getName();
 			if (fsrl instanceof FSRLRoot && ((FSRLRoot) fsrl).hasContainer()) {
-				fsrl = ((FSRLRoot) fsrl).getContainer();
+				FSRL containerFSRL = ((FSRLRoot) fsrl).getContainer();
+				title = containerFSRL.getName();
+				info = getInfoStringFor(containerFSRL, monitor);
+				info += "------------------------------------\n";
 			}
-			try (RefdFile refdFile = FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
-
-				title = fsrl.getName();
-
-				GFileSystem fs = refdFile.fsRef.getFilesystem();
-				fileSystemName = fs.getDescription();
-				info = "FSRL: " + fsrl + "\n";
-				DomainFile associatedDomainFile =
-					ProgramMappingService.getCachedDomainFileFor(fsrl);
-				if (associatedDomainFile != null) {
-					info = info + "Project file: " + associatedDomainFile.getPathname() + "\n";
-				}
-				String nodeInfo = fs.getInfo(refdFile.file, monitor);
-				if (nodeInfo != null) {
-					info += nodeInfo;
-				}
-			}
-			catch (IOException | CancelledException e) {
-				info = "Error retrieving information: " + e.getMessage();
-			}
+			info += getInfoStringFor(fsrl, monitor);
+		}
+		else {
+			title = "Missing File";
+			info = "Unable to retrieve information";
 		}
 
-		MultiLineMessageDialog.showMessageDialog(plugin.getTool().getActiveWindow(),
-			"Info about " + title, null, "File system: " + fileSystemName + '\n' + info,
-			MultiLineMessageDialog.INFORMATION_MESSAGE);
+		MultiLineMessageDialog.showMessageDialog(plugin.getTool().getActiveWindow(), title, null,
+			info, MultiLineMessageDialog.INFORMATION_MESSAGE);
 
+	}
+
+	private String getInfoStringFor(FSRL fsrl, TaskMonitor monitor) {
+		try (RefdFile refdFile = FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
+			GFileSystem fs = refdFile.fsRef.getFilesystem();
+			String result = "File system: " + fs.getDescription() + "\n";
+			result += "FSRL: " + fsrl + "\n";
+			DomainFile associatedDomainFile = ProgramMappingService.getCachedDomainFileFor(fsrl);
+			if (associatedDomainFile != null) {
+				result += "Project file: " + associatedDomainFile.getPathname() + "\n";
+			}
+			String nodeInfo = fs.getInfo(refdFile.file, monitor);
+			if (nodeInfo != null) {
+				result += nodeInfo;
+			}
+			return result;
+		}
+		catch (IOException | CancelledException e) {
+			return "Error retrieving information: " + e.getMessage() + "\n";
+		}
 	}
 
 	/**

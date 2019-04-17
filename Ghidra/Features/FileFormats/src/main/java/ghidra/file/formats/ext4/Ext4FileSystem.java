@@ -43,221 +43,219 @@ public class Ext4FileSystem implements GFileSystem {
 		this.provider = provider;
 	}
 
-	public void mountFS( TaskMonitor monitor ) throws IOException, CancelledException {
-		BinaryReader reader = new BinaryReader( provider, true );
-		reader.setPointerIndex( 0x400 );
+	public void mountFS(TaskMonitor monitor) throws IOException, CancelledException {
+		BinaryReader reader = new BinaryReader(provider, true);
+		reader.setPointerIndex(0x400);
 
-		Ext4SuperBlock superBlock = new Ext4SuperBlock( reader );
+		Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
 
-		this.volumeName = superBlock.getVolumeName( );
+		this.volumeName = superBlock.getVolumeName();
 
-		this.uuid = NumericUtilities.convertBytesToString( superBlock.getS_uuid( ) );
+		this.uuid = NumericUtilities.convertBytesToString(superBlock.getS_uuid());
 
-		int s_log_block_size = superBlock.getS_log_block_size( );
-		blockSize = ( int ) Math.pow( 2, ( 10 + s_log_block_size ) );
+		int s_log_block_size = superBlock.getS_log_block_size();
+		blockSize = (int) Math.pow(2, (10 + s_log_block_size));
 
-		int groupSize = blockSize * superBlock.getS_blocks_per_group( );
-		int numGroups = ( int ) ( provider.length( ) / groupSize );
-		if ( provider.length( ) % groupSize != 0 ) {
+		int groupSize = blockSize * superBlock.getS_blocks_per_group();
+		int numGroups = (int) (provider.length() / groupSize);
+		if (provider.length() % groupSize != 0) {
 			numGroups++;
 		}
 
-		boolean is64Bit = ( superBlock.getS_desc_size( ) > 32 ) && ( ( superBlock.getS_feature_incompat( ) & 0x80 ) > 0 );
+		boolean is64Bit =
+			(superBlock.getS_desc_size() > 32) && ((superBlock.getS_feature_incompat() & 0x80) > 0);
 
 		int groupDescriptorOffset = blockSize;
-		reader.setPointerIndex( groupDescriptorOffset );
-		Ext4GroupDescriptor [] groupDescriptors = new Ext4GroupDescriptor [ numGroups ];
-		for ( int i = 0; i < numGroups; i++ ) {
-			monitor.checkCanceled( );
-			groupDescriptors[ i ] = new Ext4GroupDescriptor( reader, is64Bit );
-			monitor.incrementProgress( 1 );
+		reader.setPointerIndex(groupDescriptorOffset);
+		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
+		for (int i = 0; i < numGroups; i++) {
+			monitor.checkCanceled();
+			groupDescriptors[i] = new Ext4GroupDescriptor(reader, is64Bit);
+			monitor.incrementProgress(1);
 		}
 
-		Ext4Inode [] inodes = getInodes( reader, superBlock, groupDescriptors, is64Bit, monitor );
+		Ext4Inode[] inodes = getInodes(reader, superBlock, groupDescriptors, is64Bit, monitor);
 
-		int s_inodes_count = superBlock.getS_inodes_count( );
-		for ( int i = 0; i < s_inodes_count; i++ ) {
-			Ext4Inode inode = inodes[ i ];
-			if ( inode == null ) {
+		int s_inodes_count = superBlock.getS_inodes_count();
+		for (int i = 0; i < s_inodes_count; i++) {
+			Ext4Inode inode = inodes[i];
+			if (inode == null) {
 				continue;
 			}
-			if ( ( inode.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFDIR ) {
-				processDirectory( reader, superBlock, inodes, i, null, null, monitor );
+			if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
+				processDirectory(reader, superBlock, inodes, i, null, null, monitor);
 			}
-			else if ( ( inode.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFREG ) {
-				processFile( reader, superBlock, inode, monitor );
+			else if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFREG) {
+				processFile(reader, superBlock, inode, monitor);
 			}
 		}
 	}
 
-	private void processDirectory( BinaryReader reader,
-									Ext4SuperBlock superBlock,
-									Ext4Inode[] inodes, 
-									int index, 
-									String name, 
-									GFile parent, 
-									TaskMonitor monitor ) throws IOException, CancelledException {
+	private void processDirectory(BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4Inode[] inodes, int index, String name, GFile parent, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
-		if ( name != null && ( name.equals( "." ) || name.equals( ".." ) ) ) {
+		if (name != null && (name.equals(".") || name.equals(".."))) {
 			return;
 		}
-		Ext4Inode inode = inodes[ index ];
-		if ( name == null && parent == null ) {
-			parent = fsih.getRootDir( );
+		Ext4Inode inode = inodes[index];
+		if (name == null && parent == null) {
+			parent = fsih.getRootDir();
 		}
 		else {
-			if ( parent == null ) {
-				parent = fsih.getRootDir( );
+			if (parent == null) {
+				parent = fsih.getRootDir();
 			}
-			parent = fsih.storeFileWithParent( name, parent, -1, true, ( inode.getI_size_high( ) << 32 ) | inode.getI_size_lo( ), new Ext4File( name, inode ) );
+			parent = fsih.storeFileWithParent(name, parent, -1, true,
+				(inode.getI_size_high() << 32) | inode.getI_size_lo(), new Ext4File(name, inode));
 		}
-		if ( ( inode.getI_flags( ) & Ext4Constants.EXT4_EXTENTS_FL ) == 0 ) {
+		if ((inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) == 0) {
 			return;
 		}
-		boolean isDirEntry2 = ( superBlock.getS_feature_incompat( ) & Ext4Constants.INCOMPAT_FILETYPE ) != 0;
+		boolean isDirEntry2 =
+			(superBlock.getS_feature_incompat() & Ext4Constants.INCOMPAT_FILETYPE) != 0;
 		// if uses extents
-		if ( ( inode.getI_flags( ) & Ext4Constants.EXT4_EXTENTS_FL ) != 0 ) {
-			Ext4IBlock i_block = inode.getI_block( );
-			processIBlock( reader, superBlock, inodes, parent, isDirEntry2, i_block, monitor );
+		if ((inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0) {
+			Ext4IBlock i_block = inode.getI_block();
+			processIBlock(reader, superBlock, inodes, parent, isDirEntry2, i_block, monitor);
 		}
 		else {
-			throw new IOException( "File system fails to use extents." );
+			throw new IOException("File system fails to use extents.");
 		}
-		inodes[ index ] = null;
+		inodes[index] = null;
 	}
 
-	private void processIBlock( BinaryReader reader, 
-								Ext4SuperBlock superBlock, 
-								Ext4Inode[] inodes, 
-								GFile parent,
-								boolean isDirEntry2, 
-								Ext4IBlock i_block, 
-								TaskMonitor monitor ) throws CancelledException, IOException {
-		Ext4ExtentHeader header = i_block.getHeader( );
-		if ( header.getEh_depth( ) == 0 ) {
-			short numEntries = header.getEh_entries( );
-			List< Ext4Extent > entries = i_block.getExtentEntries( );
-			for ( int i = 0; i < numEntries; i++ ) {
-				monitor.checkCanceled( );
-				Ext4Extent extent = entries.get( i );
-				long low = extent.getEe_start_lo( ) & 0xffffffffL;
-				long high = extent.getEe_start_hi( ) & 0xffffffffL;
-				long blockNumber = ( high << 16 ) | low;
+	private void processIBlock(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode[] inodes,
+			GFile parent, boolean isDirEntry2, Ext4IBlock i_block, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		Ext4ExtentHeader header = i_block.getHeader();
+		if (header.getEh_depth() == 0) {
+			short numEntries = header.getEh_entries();
+			List<Ext4Extent> entries = i_block.getExtentEntries();
+			for (int i = 0; i < numEntries; i++) {
+				monitor.checkCanceled();
+				Ext4Extent extent = entries.get(i);
+				long low = extent.getEe_start_lo() & 0xffffffffL;
+				long high = extent.getEe_start_hi() & 0xffffffffL;
+				long blockNumber = (high << 16) | low;
 				long offset = blockNumber * blockSize;
-				reader.setPointerIndex( offset );
-				if ( isDirEntry2 ) {
-					processDirEntry2( reader, superBlock, inodes, parent, monitor, extent, offset );
+				reader.setPointerIndex(offset);
+				if (isDirEntry2) {
+					processDirEntry2(reader, superBlock, inodes, parent, monitor, extent, offset);
 				}
 				else {
-					processDirEntry( reader, superBlock, inodes, parent, monitor, extent, offset );
+					processDirEntry(reader, superBlock, inodes, parent, monitor, extent, offset);
 				}
 			}
 		}
 		else {
 			//throw new IOException( "Unhandled extent tree depth > 0 for inode " + index );
-			short numEntries = header.getEh_entries( );
+			short numEntries = header.getEh_entries();
 			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
-			for ( int i = 0; i < numEntries; i++ ) {
-				monitor.checkCanceled( );
+			for (int i = 0; i < numEntries; i++) {
+				monitor.checkCanceled();
 
-				Ext4ExtentIdx extentIndex = entries.get( i );
+				Ext4ExtentIdx extentIndex = entries.get(i);
 				long lo = extentIndex.getEi_leaf_lo();
 				long hi = extentIndex.getEi_leaf_hi();
-				long physicalBlockOfNextLevel = ( hi << 16 ) | lo;
+				long physicalBlockOfNextLevel = (hi << 16) | lo;
 				long offset = physicalBlockOfNextLevel * blockSize;
 
 //				System.out.println( ""+physicalBlockOfNextLevel );
 //				System.out.println( "" );
 
-				reader.setPointerIndex( offset );
-				Ext4IBlock intermediateBlock = new Ext4IBlock( reader, true );
-				processIBlock( reader, superBlock, inodes, parent, isDirEntry2, intermediateBlock, monitor );
+				reader.setPointerIndex(offset);
+				Ext4IBlock intermediateBlock = new Ext4IBlock(reader, true);
+				processIBlock(reader, superBlock, inodes, parent, isDirEntry2, intermediateBlock,
+					monitor);
 			}
 		}
 	}
 
-	private void processDirEntry( BinaryReader reader, 
-									Ext4SuperBlock superBlock, 
-									Ext4Inode [] inodes, 
-									GFile parent, 
-									TaskMonitor monitor, 
-									Ext4Extent extent, 
-									long offset ) throws CancelledException, IOException {
+	private void processDirEntry(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode[] inodes,
+			GFile parent, TaskMonitor monitor, Ext4Extent extent, long offset)
+			throws CancelledException, IOException {
 
-		while ( ( reader.getPointerIndex( ) - offset ) < ( ( long ) extent.getEe_len( ) * blockSize ) ) {
-			monitor.checkCanceled( );
-			if ( reader.peekNextInt( ) == 0 ) {
+		while ((reader.getPointerIndex() - offset) < ((long) extent.getEe_len() * blockSize)) {
+			monitor.checkCanceled();
+			if (reader.peekNextInt() == 0) {
 				return;
 			}
-			Ext4DirEntry dirEnt = new Ext4DirEntry( reader );
-			int childIndex = dirEnt.getInode( );
-			Ext4Inode child = inodes[ childIndex ];
-			if ( ( child.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFDIR ) {
-				String childName = dirEnt.getName( );
-				long readerOffset = reader.getPointerIndex( );
-				processDirectory( reader, superBlock, inodes, childIndex, childName, parent, monitor );
-				reader.setPointerIndex( readerOffset );
+			Ext4DirEntry dirEnt = new Ext4DirEntry(reader);
+			int childIndex = dirEnt.getInode();
+			Ext4Inode child = inodes[childIndex];
+			if ((child.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
+				String childName = dirEnt.getName();
+				long readerOffset = reader.getPointerIndex();
+				processDirectory(reader, superBlock, inodes, childIndex, childName, parent,
+					monitor);
+				reader.setPointerIndex(readerOffset);
 			}
-			else if ( ( child.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFREG || ( child.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFLNK ) {
-				storeFile( inodes, dirEnt, parent );
+			else if ((child.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFREG ||
+				(child.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFLNK) {
+				storeFile(inodes, dirEnt, parent);
 			}
 			else {
-				throw new IOException( "Inode " + dirEnt.getInode( ) + " has unhandled file type: " + ( child.getI_mode( ) & 0xF000 ) );
+				throw new IOException("Inode " + dirEnt.getInode() + " has unhandled file type: " +
+					(child.getI_mode() & 0xF000));
 			}
 		}
 	}
 
-	private void processDirEntry2( BinaryReader reader, 
-									Ext4SuperBlock superBlock,
-									Ext4Inode [] inodes, 
-									GFile parent, 
-									TaskMonitor monitor, 
-									Ext4Extent extent, 
-									long offset ) throws CancelledException, IOException {
+	private void processDirEntry2(BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4Inode[] inodes, GFile parent, TaskMonitor monitor, Ext4Extent extent, long offset)
+			throws CancelledException, IOException {
 
-		while ( ( reader.getPointerIndex( ) - offset ) < ( ( long ) extent.getEe_len( ) * blockSize ) ) {
-			monitor.checkCanceled( );
-			if ( reader.peekNextInt( ) == 0 ) {
+		while ((reader.getPointerIndex() - offset) < ((long) extent.getEe_len() * blockSize)) {
+			monitor.checkCanceled();
+			if (reader.peekNextInt() == 0) {
 				return;
 			}
-			Ext4DirEntry2 dirEnt2 = new Ext4DirEntry2( reader );
-			if ( dirEnt2.getFile_type( ) == Ext4Constants.FILE_TYPE_DIRECTORY ) {
-				int childInode = dirEnt2.getInode( );
-				String childName = dirEnt2.getName( );
-				long readerOffset = reader.getPointerIndex( );
-				processDirectory( reader, superBlock, inodes, childInode, childName, parent, monitor );
-				reader.setPointerIndex( readerOffset );
+			Ext4DirEntry2 dirEnt2 = new Ext4DirEntry2(reader);
+			if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY) {
+				int childInode = dirEnt2.getInode();
+				String childName = dirEnt2.getName();
+				long readerOffset = reader.getPointerIndex();
+				processDirectory(reader, superBlock, inodes, childInode, childName, parent,
+					monitor);
+				reader.setPointerIndex(readerOffset);
 			}
-			else if ( dirEnt2.getFile_type( ) == Ext4Constants.FILE_TYPE_REGULAR_FILE || dirEnt2.getFile_type( ) == Ext4Constants.FILE_TYPE_SYMBOLIC_LINK ) {
-				storeFile( inodes, dirEnt2, parent );
+			else if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_REGULAR_FILE ||
+				dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_SYMBOLIC_LINK) {
+				storeFile(inodes, dirEnt2, parent);
 			}
 			else {
-				throw new IOException( "Inode " + dirEnt2.getInode( ) + " has unhandled file type: " + dirEnt2.getFile_type( ) );
+				throw new IOException("Inode " + dirEnt2.getInode() + " has unhandled file type: " +
+					dirEnt2.getFile_type());
 			}
 		}
 	}
 
-	private void storeFile( Ext4Inode [] inodes, Ext4DirEntry dirEnt, GFile parent ) {
-		int fileInodeNum = dirEnt.getInode( );
-		Ext4Inode fileInode = inodes[ fileInodeNum ];
-		long fileSize = ( fileInode.getI_size_high( ) << 32 ) | fileInode.getI_size_lo( );
-		fsih.storeFileWithParent( dirEnt.getName( ), parent, -1, ( fileInode.getI_mode( ) & Ext4Constants.I_MODE_MASK ) == Ext4Constants.S_IFDIR, fileSize,
-				new Ext4File( dirEnt.getName( ), fileInode ) );
-		inodes[ fileInodeNum ] = null;
+	private void storeFile(Ext4Inode[] inodes, Ext4DirEntry dirEnt, GFile parent) {
+		int fileInodeNum = dirEnt.getInode();
+		Ext4Inode fileInode = inodes[fileInodeNum];
+		long fileSize = (fileInode.getI_size_high() << 32) | fileInode.getI_size_lo();
+		fsih.storeFileWithParent(dirEnt.getName(), parent, -1,
+			(fileInode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR, fileSize,
+			new Ext4File(dirEnt.getName(), fileInode));
+		inodes[fileInodeNum] = null;
 	}
 
-	private void storeFile( Ext4Inode [] inodes, Ext4DirEntry2 dirEnt2, GFile parent ) {
-		int fileInodeNum = dirEnt2.getInode( );
-		Ext4Inode fileInode = inodes[ fileInodeNum ];
-		if ( fileInode == null ) {
+	private void storeFile(Ext4Inode[] inodes, Ext4DirEntry2 dirEnt2, GFile parent) {
+		int fileInodeNum = dirEnt2.getInode();
+		Ext4Inode fileInode = inodes[fileInodeNum];
+		if (fileInode == null) {
 			return;//TODO
 		}
-		long fileSize = ( fileInode.getI_size_high( ) << 32 ) | fileInode.getI_size_lo( );
-		fsih.storeFileWithParent( dirEnt2.getName( ), parent, -1, dirEnt2.getFile_type( ) == Ext4Constants.FILE_TYPE_DIRECTORY, fileSize, new Ext4File( dirEnt2.getName( ), fileInode ) );
-		inodes[ fileInodeNum ] = null;
+		long fileSize = (fileInode.getI_size_high() << 32) | fileInode.getI_size_lo();
+		fsih.storeFileWithParent(dirEnt2.getName(), parent, -1,
+			dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY, fileSize,
+			new Ext4File(dirEnt2.getName(), fileInode));
+		inodes[fileInodeNum] = null;
 	}
 
-	private void processFile( BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode inode, TaskMonitor monitor ) {
+	private void processFile(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode inode,
+			TaskMonitor monitor) {
 
 	}
 
@@ -272,7 +270,7 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		Ext4File ext4File = fsih.getMetadata(file);
 		if (ext4File == null) {
 			return null;
@@ -337,7 +335,7 @@ public class Ext4FileSystem implements GFileSystem {
 					throw new IOException("Not parent file for " + file);
 				}
 				symlinkDestPath =
-						FSUtilities.appendPath(file.getParentFile().getPath(), symlinkDestPath);
+					FSUtilities.appendPath(file.getParentFile().getPath(), symlinkDestPath);
 			}
 
 			file = lookup(symlinkDestPath);
@@ -347,17 +345,17 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	private InputStream getInputStream(Ext4Inode inode) throws IOException {
-		int i_size_lo = inode.getI_size_lo( );
-		int i_size_high = inode.getI_size_high( );
-		long size = ( i_size_high << 32 ) | i_size_lo;
+		int i_size_lo = inode.getI_size_lo();
+		int i_size_high = inode.getI_size_high();
+		long size = (i_size_high << 32) | i_size_lo;
 
-		boolean usesExtents = ( inode.getI_flags( ) & Ext4Constants.EXT4_EXTENTS_FL ) != 0;
-		if ( usesExtents ) {
-			Ext4IBlock i_block = inode.getI_block( );
-			Ext4ExtentHeader header = i_block.getHeader( );
-			if ( header.getEh_depth( ) == 0 ) {
-				List< Ext4Extent > entries = i_block.getExtentEntries( );
-				return concatenateExtents( entries, size );
+		boolean usesExtents = (inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0;
+		if (usesExtents) {
+			Ext4IBlock i_block = inode.getI_block();
+			Ext4ExtentHeader header = i_block.getHeader();
+			if (header.getEh_depth() == 0) {
+				List<Ext4Extent> entries = i_block.getExtentEntries();
+				return concatenateExtents(entries, size);
 			}
 		}
 		return null;
@@ -369,65 +367,67 @@ public class Ext4FileSystem implements GFileSystem {
 	 * 
 	 * TODO better memory management? currently loads entire file into memory.
 	 */
-	private InputStream concatenateExtents( List< Ext4Extent > entries, long actualSize ) throws IOException {
-		if ( actualSize > Integer.MAX_VALUE ) {
-			throw new IOException( "File is >2GB, too large to extract.  Please report to Ghidra team." );
+	private InputStream concatenateExtents(List<Ext4Extent> entries, long actualSize)
+			throws IOException {
+		if (actualSize > Integer.MAX_VALUE) {
+			throw new IOException(
+				"File is >2GB, too large to extract.  Please report to Ghidra team.");
 		}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream( );
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		for ( int i = 0 ; i < entries.size( ) ; ++i ) {
-			Ext4Extent extent = entries.get( i );
+		for (int i = 0; i < entries.size(); ++i) {
+			Ext4Extent extent = entries.get(i);
 
-			long low = extent.getEe_start_lo( ) & 0xffffffffL;
-			long high = extent.getEe_start_hi( ) & 0xffffffffL;
-			long blockNumber = ( high << 16 ) | low;
+			long low = extent.getEe_start_lo() & 0xffffffffL;
+			long high = extent.getEe_start_hi() & 0xffffffffL;
+			long blockNumber = (high << 16) | low;
 			long extentOffset = blockNumber * blockSize;
-			long extentSize = ( extent.getEe_len( ) & 0xffffL ) * blockSize;
+			long extentSize = (extent.getEe_len() & 0xffffL) * blockSize;
 
 			try {
-				byte [] extentBytes = provider.readBytes( extentOffset, extentSize );
-				baos.write( extentBytes );
+				byte[] extentBytes = provider.readBytes(extentOffset, extentSize);
+				baos.write(extentBytes);
 			}
-			catch ( IOException e ) {
+			catch (IOException e) {
 				// ignore
 			}
 		}
 
-		return new ByteArrayInputStream( baos.toByteArray( ), 0, (int) actualSize );
+		return new ByteArrayInputStream(baos.toByteArray(), 0, (int) actualSize);
 	}
 
-	private Ext4Inode [] getInodes( BinaryReader reader, 
-									Ext4SuperBlock superBlock, 
-									Ext4GroupDescriptor [] groupDescriptors, 
-									boolean is64Bit, 
-									TaskMonitor monitor ) throws IOException, CancelledException {
+	private Ext4Inode[] getInodes(BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
-		int inodeCount = superBlock.getS_inodes_count( );
-		Ext4Inode [] inodes = new Ext4Inode [ inodeCount + 1 ];
+		int inodeCount = superBlock.getS_inodes_count();
+		Ext4Inode[] inodes = new Ext4Inode[inodeCount + 1];
 		int inodeIndex = 1;
 
-		for ( int i = 0; i < groupDescriptors.length; i++ ) {
-			monitor.checkCanceled( );
-			long inodeTableBlockOffset = groupDescriptors[ i ].getBg_inode_table_lo( ) & 0xffffffffL;
-			if ( is64Bit ) {
-				inodeTableBlockOffset = ( groupDescriptors[ i ].getBg_inode_table_hi( ) << 32 ) | inodeTableBlockOffset;
+		for (int i = 0; i < groupDescriptors.length; i++) {
+			monitor.checkCanceled();
+			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table_lo() & 0xffffffffL;
+			if (is64Bit) {
+				inodeTableBlockOffset =
+					(groupDescriptors[i].getBg_inode_table_hi() << 32) | inodeTableBlockOffset;
 			}
 			long offset = inodeTableBlockOffset * blockSize;
-			reader.setPointerIndex( offset );
-			int inodesPerGroup = superBlock.getS_inodes_per_group( );
-			monitor.setMessage( "Reading inode table " + i + " of " + ( groupDescriptors.length - 1 ) + "..." );
-			monitor.setMaximum( inodesPerGroup );
-			monitor.setProgress( 0 );
-			for ( int j = 0; j < inodesPerGroup; j++ ) {
-				monitor.checkCanceled( );
-				monitor.incrementProgress( 1 );
+			reader.setPointerIndex(offset);
+			int inodesPerGroup = superBlock.getS_inodes_per_group();
+			monitor.setMessage(
+				"Reading inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
+			monitor.setMaximum(inodesPerGroup);
+			monitor.setProgress(0);
+			for (int j = 0; j < inodesPerGroup; j++) {
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
 
-				Ext4Inode inode = new Ext4Inode( reader );
-				offset = offset + superBlock.getS_inode_size( );
-				reader.setPointerIndex( offset );
+				Ext4Inode inode = new Ext4Inode(reader);
+				offset = offset + superBlock.getS_inode_size();
+				reader.setPointerIndex(offset);
 
-				inodes[ inodeIndex++ ] = inode; //inodes[ inodesPerGroup * i + j ] = inode;
+				inodes[inodeIndex++] = inode; //inodes[ inodesPerGroup * i + j ] = inode;
 			}
 		}
 		return inodes;

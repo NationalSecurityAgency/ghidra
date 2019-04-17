@@ -64,7 +64,7 @@ public class OdexFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Magic:       " + odexHeader.getMagic()).append("\n");
 		builder.append("Dex Offset:  " + Integer.toHexString(odexHeader.getDexOffset())).append(

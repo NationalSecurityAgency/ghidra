@@ -15,15 +15,15 @@
  */
 package ghidra.file.formats.ios.dmg;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A {@link GFileSystem} that uses an external DMG server process to parse DMG files
@@ -200,7 +200,7 @@ public class DmgClientFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile gFile, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile gFile, TaskMonitor monitor) {
 		monitor.addCancelledListener(listener);
 
 		StringBuffer buffer = new StringBuffer();
