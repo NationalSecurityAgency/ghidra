@@ -306,6 +306,8 @@ define pcodeop saveFPUStateFrame;
 define pcodeop restoreFPUStateFrame;
 define pcodeop pushInvalidateCaches;
 
+define pcodeop bcdAdjust;
+
 define pcodeop sin;
 define pcodeop cos;
 define pcodeop tan;
@@ -638,12 +640,15 @@ macro clearflags_fp() {
  $(NAN_FP) = 0;
 }
 
-# SCR 10997:
+macro bcdflags(result) {
+ XF = CF;
+ ZF = (result == 0) * ZF + (result != 0);
+}
+
 macro getbit(res,in,bitnum) {
   res = ((in >> bitnum) & 1) != 0;
 }
 
-# SCR 10997:
 macro bitmask(res, width) {
   res = (1 << width) - 1;
 }
@@ -656,7 +661,6 @@ macro getbitfield(res, off, width) {
   res = (res << off) >> (32 - width);
 }
 
-# SCR 10997:
 macro resbitflags(result, bitnum) {
   NF = ((result >> bitnum) & 1) != 0;
   ZF = result == 0;
@@ -687,7 +691,7 @@ macro extendedResultFlags(result) {
 
 with : extGUARD=1 {
 
-:abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb					unimpl
+:abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb					{ CF = carry(Tyb,carry(Txb,XF)); Tyb = Tyb + Txb + XF; Tyb = bcdAdjust(Tyb); bcdflags(Tyb); }
 
 :add.b eab,reg9dnb		is (op=13 & reg9dnb & op68=0)... & eab				{ addflags(eab,reg9dnb); reg9dnb = reg9dnb + eab; resflags(reg9dnb); }
 :add.w eaw,reg9dnw		is (op=13 & reg9dnw & op68=1)... & eaw				{ addflags(eaw,reg9dnw); reg9dnw = reg9dnw + eaw; resflags(reg9dnw); }
@@ -1391,7 +1395,8 @@ submul: regdr-regdq		is regdq & divsgn=0 & divsz=1 & regdr			{ tmp1:8 = zext(glb
 											  regdr=res(4); resflags(res); CF=0; VF=0; }
 :mul^mulsize e2l,submul		is opbig=0x4c & op67=0 & $(DAT_ALTER_ADDR_MODES); submul & mulsize; e2l [ savmod2=savmod1; regtsan=regtfan; ] { glbdenom=e2l; build submul; }
 
-:nbcd eab			is (opbig=0x48 & op67=0 & $(DAT_ALTER_ADDR_MODES))... & eab			unimpl
+:nbcd eab			is (opbig=0x48 & op67=0 & $(DAT_ALTER_ADDR_MODES))... & eab
+                   {  tmp:1 = eab; CF = (tmp != 0) || (XF == 1);  tmp = 0 - tmp - XF; eab = bcdAdjust(tmp); bcdflags(tmp); }
 
 
 # NB: For the neg insn the CF carry flag is not set like other insns, from the manual:
@@ -1600,7 +1605,8 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :rts				is opbig=0x4e & op37=14 & op02=5				{ PC = *SP; SP = SP+4; return [PC]; }
 
-:sbcd Tyb,Txb			is op=8 & op48=16 & Txb & Tyb					unimpl
+:sbcd Tyb,Txb			is op=8 & op48=16 & Txb & Tyb
+                    {  CF = (Tyb < Txb) || ( (XF == 1) && (Tyb == Txb) );  Tyb = Tyb - Txb - XF; Tyb = bcdAdjust(Tyb); bcdflags(Tyb); }
 
 :s^cc eab			is (op=5 & cc & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ eab = -cc; }
 
