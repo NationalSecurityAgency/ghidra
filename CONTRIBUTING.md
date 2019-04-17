@@ -67,6 +67,31 @@ smooth process when submitting a patch:
 
 Once available, please see the [developer's guide][devguide] for instructions to set up a suitable development environment.
 
+## Timeline and Managing Expectations
+
+As we continue to engage contributors and learn best practices for running a successful open source project, our processes 
+and guidance will likely evolve. We will try to communicate expectations as we are able and to always be responsive. We 
+hope that the community will share their suggestions for improving this engagement.  Based on the level of initial interest 
+we receive and the availability of resources to evaluate contributions, we anticipate the following:
+
+- We will initially prioritize pull requests that include small bug fixes and code that addresses potential vulnerabilities   
+  as well as pull requests that include improvements for processor language specifications because these require a 
+  reasonable amount of effort to evaluate and will help us exercise and revise our process for accepting contributions.  In 
+  other words, we are going to start small in order to work out the kinks first.
+- We are committed to maintaining the integrity and security of our code base.  In addition to the careful review the 
+  maintainers will give to code contributions to make sure they do not introduce new bugs or vulnerabilities, we will be 
+  trying to identify best practices to incorporate with our open source project so that contributors can have more control 
+  over whether their contributions are accepted. These might include things like style guides and requirements for tests and 
+  documentation to accompany some code contributions.  As a result, it may take a long time for some contributions to be 
+  accepted.  This does not mean we are ignoring them.
+- We are committed to integrating this GitHub project with our team's regular development work flow so that the open source 
+  project remains dynamic and relevant.  This may  affect our responsiveness and ability to accept pull requests 
+  quickly.  This does not mean we are ignoring them.
+- Not all innovative ideas need to be accepted as pull requests into this GitHub project to be valuable to the community.        
+  There may be times when we recommend that you just share your code for some enhancement to Ghidra from your own 
+  repository. As we identify and recognize extensions that are of general interest to the reverse engineering community, we 
+  may seek to incorporate them with our baseline.
+
 ## Legal
 
 Consistent with Section D.6. of the GitHub Terms of Service as of 2019, and Section 5. of the Apache License, Version 2.0, the project maintainer for this project accepts contributions using the inbound=outbound model.

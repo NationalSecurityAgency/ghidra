@@ -56,8 +56,9 @@ public class ConstantPoolDex extends ConstantPool {
 			String classString =
 				DexUtil.convertTypeIndexToString(dexHeader, fieldIDItem.getClassIndex());
 			String[] pathArray = DexUtil.convertClassStringToPathArray("", classString);
-			if (pathArray != null)
+			if (pathArray != null) {
 				res.token = pathArray[pathArray.length - 1] + '.' + res.token;
+			}
 		}
 
 		DataType fieldDT = dexHeader.getDataType(program, fieldIDItem.getTypeIndex());
@@ -72,13 +73,16 @@ public class ConstantPoolDex extends ConstantPool {
 
 	private String removeUniquifier(String name) {
 		int len = name.length();
-		if (len < 10 || name.charAt(len - 9) != '_')
+		if (len < 10 || name.charAt(len - 9) != '_') {
 			return name;
+		}
 		char matchChar = name.charAt(len - 8);
-		if (matchChar != '5' && matchChar != 'e')
+		if (matchChar != '5' && matchChar != 'e') {
 			return name;
-		if (name.charAt(len - 7) != '0')
+		}
+		if (name.charAt(len - 7) != '0') {
 			return name;
+		}
 		return name.substring(0, len - 9);
 	}
 
@@ -103,14 +107,19 @@ public class ConstantPoolDex extends ConstantPool {
 				String classString =
 					DexUtil.convertTypeIndexToString(dexHeader, methodIDItem.getClassIndex());
 				String[] pathArray = DexUtil.convertClassStringToPathArray("", classString);
-				if (pathArray != null)
+				if (pathArray != null) {
 					namespaceString = pathArray[pathArray.length - 1];
+				}
 			}
-			if (namespaceString != null)
+			if (namespaceString != null) {
 				res.token = namespaceString + '.' + res.token;
+			}
 		}
 		res.tag = ConstantPool.POINTER_METHOD;
-		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(res.token, dtManager);
+		// The FunctionDefinition is constructed on the fly, essentially as an anonymous type
+		// We use an internal naming scheme involding the the methodID to avoid name collisions
+		String defName = res.token + '_' + Integer.toHexString(methodID);
+		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(defName, dtManager);
 		res.type = new PointerDataType(funcDef);
 		res.hasThisPtr = !isStatic;
 
