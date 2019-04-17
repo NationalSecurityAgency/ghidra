@@ -18,9 +18,10 @@ package ghidra.program.model.pcode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.listing.FlowOverride;
+import ghidra.program.model.symbol.SourceType;
 
 public interface PcodeOverride {
-	
+
 	/**
 	 * @return current instruction address
 	 */
@@ -34,10 +35,11 @@ public interface PcodeOverride {
 	FlowOverride getFlowOverride();
 
 	/**
-	 * Get the primary call reference address from the current instruction
+	 * Get the primary call reference address (whose {@link SourceType} must be {@link SourceType#USER_DEFINED})
+	 * from the current instruction
 	 * @return call reference address or null
 	 */
-	Address getPrimaryCallReference();
+	Address getOverridingCallReference();
 
 	/**
 	 * Get the fall-through override address which may have been 
@@ -45,23 +47,23 @@ public interface PcodeOverride {
 	 * @return fall-through override address or null
 	 */
 	Address getFallThroughOverride();
-	
+
 	/**
-     * Returns the call-fixup for a specified call destination.
-     * @param callDestAddr call destination address.  This address is used to 
-     * identify a function which may have been tagged with a CallFixup.  
-     * @return true if call destination function has been tagged with a call-fixup
-     */
+	 * Returns the call-fixup for a specified call destination.
+	 * @param callDestAddr call destination address.  This address is used to 
+	 * identify a function which may have been tagged with a CallFixup.  
+	 * @return true if call destination function has been tagged with a call-fixup
+	 */
 	boolean hasCallFixup(Address callDestAddr);
-	
+
 	/**
-     * Returns the call-fixup for a specified call destination.
-     * If the destination function has not be tagged or was tagged 
-     * with an unknown CallFixup name this method will return null.
-     * @param callDestAddr call destination address.  This address is used to 
-     * identify a function which may have been tagged with a CallFixup.  
-     * @return call fixup object or null
-     */
+	 * Returns the call-fixup for a specified call destination.
+	 * If the destination function has not be tagged or was tagged 
+	 * with an unknown CallFixup name this method will return null.
+	 * @param callDestAddr call destination address.  This address is used to 
+	 * identify a function which may have been tagged with a CallFixup.  
+	 * @return call fixup object or null
+	 */
 	InjectPayload getCallFixup(Address callDestAddr);
 
 }
