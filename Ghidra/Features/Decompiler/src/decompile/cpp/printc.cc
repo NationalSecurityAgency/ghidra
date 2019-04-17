@@ -1250,7 +1250,7 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
 /// \brief Push a single character constant to the RPN stack
 ///
 /// For C, a character constant is usually emitted as the character in single quotes.
-/// Handle unicode, wide characters, etc.
+/// Handle unicode, wide characters, etc. Characters come in with the compiler's raw encoding.
 /// \param val is the constant value
 /// \param ct is data-type attached to the value
 /// \param vn is the Varnode holding the value
@@ -1259,10 +1259,17 @@ void PrintC::pushCharConstant(uintb val,const TypeChar *ct,const Varnode *vn,con
 
 {
   ostringstream t;
-  if ((ct->getSize()==1)&&
-      ((val<7)||(val>0x7e)||((val>13)&&(val<0x20)))) // not a good character constant
+  if ((ct->getSize()==1)&&(val >= 0x80)) {
+    // For byte characters, the encoding is assumed to be ASCII, UTF-8, or some other
+    // code-page that extends ASCII. At 0x80 and above, we cannot treat the value as a
+    // unicode code-point. Its either part of a multi-byte UTF-8 encoding or an unknown
+    // code-page value. In either case, we print it as an integer.
     push_integer(val,1,true,vn,op);
+  }
   else {
+    // From here we assume, the constant value is a direct unicode code-point.
+    // The value could be an illegal code-point (surrogates or beyond the max code-point),
+    // but this will just be emitted as an escape sequence.
     if (doEmitWideCharPrefix() && ct->getSize() > 1)
       t << 'L';			// Print symbol indicating wide character
     t << '\'';			// char is surrounded with single quotes
