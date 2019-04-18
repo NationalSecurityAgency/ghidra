@@ -45,7 +45,8 @@ public class DatabaseInterfaceParser {
 	 * Parses information to determine the version of Database Interface to create.
 	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return {@link AbstractDatabaseInterface} of the appropriate Database Interface. 
+	 * @return {@link AbstractDatabaseInterface} of the appropriate Database Interface or null if
+	 *  the stream does not have enough information to be parsed.  
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
 	 * @throws PdbException Upon error in processing components.
