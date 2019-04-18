@@ -1428,7 +1428,16 @@ public class FieldPanel extends JPanel
 			}
 			else {
 				hoverHandler.stopHover();
-				scrollView(scrollAmount);
+
+				if (e.isShiftDown()) {
+					// horizontal scroll (only move viewport)
+                    if (viewport != null) {
+						Point pos = viewport.getViewPosition();
+						viewport.setViewPosition(new Point(Math.max(0, pos.x + scrollAmount), pos.y));
+					}
+				} else {
+					scrollView(scrollAmount);
+				}
 			}
 			e.consume();
 		}
