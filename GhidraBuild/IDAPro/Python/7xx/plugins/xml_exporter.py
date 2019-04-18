@@ -12,6 +12,7 @@ import ida_idaapi
 import ida_kernwin
 import idaxml
 import idc
+import sys
 
 
 class XmlExporterPlugin(ida_idaapi.plugin_t):
