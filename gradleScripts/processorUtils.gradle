@@ -50,7 +50,7 @@ task writeSleighDevBuild {
 			into "data"
 			from (templateFilePath) {
 				rename { "build.xml" }
-				expand ( [ 'gradleSleighDevClasspath': project(':SoftwareModeling').sleighDevClasspath ] )
+				expand ( [ 'gradleSleighDevClasspath': project(':SoftwareModeling').sleighDevClasspath.get() ] )
 			}
 		}
 	}

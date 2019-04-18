@@ -25,7 +25,7 @@ dependencies {
 
 // Define classpath needed to execute sleigh compiler during development
 // (see gradleScripts/processorUtils.gradle)
-ext.sleighDevClasspath = project.sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
+ext.sleighDevClasspath = project.provider { project.sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':') }
 
 def genSrcDir = 'generated-src/antlr/main'
 generateGrammarSource {
