@@ -25,9 +25,9 @@ Primary gradle tasks for Ghidra
     compileSleigh                   Builds the sleigh languages                             [processorUtils.gradle]
 
 Task rules:
-    buildNative_[platform]           builds the native executables and libraries for the
+    buildNatives_[platform]          builds the native executables and libraries for the
                                      specified platform (win64, linux64, osx64, etc.)       [nativeBuildProperties.gradle] 
-    prebuildNative_[platform]        builds the native executables and libraries for the
+    prebuildNatives_[platform]       builds the native executables and libraries for the
                                      specified platform and copies results to bin repo.     [nativeBuildProperties.gradle]
     	 
 """
