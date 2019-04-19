@@ -281,7 +281,7 @@ public class NavigationHistoryPlugin extends Plugin
 		} else if (isNext) {
 			return false;
 		} else {
-		    return historyList.previousFunction(functionManager, currentFunction, false) == null;
+		    return historyList.previousFunction(functionManager, currentFunction, false) != null;
 		}
 	}
 
