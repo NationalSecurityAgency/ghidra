@@ -31,6 +31,22 @@ import java.util.List;
 public interface NavigationHistoryService {
 
     /**
+     * Positions the "current" location to the next location which is in a different function
+     * from current one or previous non-code location.
+     * If we are not inside any function, performs like "next".
+     * @param navigatable the Navigatable we perform history looking up in
+     */
+    void nextFunction(Navigatable navigatable);
+
+    /**
+     * Positions the "previous" location to the next location which is in a different function
+     * from current one or previous non-code location.
+     * If we are not inside any function, performs like "next".
+     * @param navigatable the Navigatable we perform history looking up in
+     */
+    void previousFunction(Navigatable navigatable);
+
+    /**
      * Positions the "current" location to the next location in the history list.
      * If there is no "next" location, the history list remains unchanged.
      */
@@ -49,8 +65,8 @@ public interface NavigationHistoryService {
      * @param location The location within the "next" list to which to go. 
      */
     public void next(Navigatable navigatable, LocationMemento location );
-    
-    /** 
+
+    /**
      * Navigates to the given location in the "previous" list.  If the location is not in 
      * the list, then nothing will happen.
      * @param location The location within the "previous" list to which to go. 
@@ -73,6 +89,20 @@ public interface NavigationHistoryService {
      * Returns true if there is a valid "next" location in the history list.
      */
     boolean hasNext(Navigatable navigatable);
+
+    /**
+     * tells if there is a valid "next" function location in the history list
+     * @param navigatable Navigatable object we are looking at
+     * @return true if there is a valid "next" function location in the history list
+     */
+    boolean hasNextFunction(Navigatable navigatable);
+
+    /**
+     * tells if there is a valid "next" function location in the history list
+     * @param navigatable Navigatable object we are looking at
+     * @return true if there is a valid "next" function location in the history list
+     */
+    boolean hasPreviousFunction(Navigatable navigatable);
 
     /**
      * Returns true if there is a valid "previous" location in the history list.
