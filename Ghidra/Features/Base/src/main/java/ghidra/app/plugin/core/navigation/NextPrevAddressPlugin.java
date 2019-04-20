@@ -67,11 +67,15 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	private static final String PREVIOUS_ACTION_NAME = "Previous in History Buffer";
 	private static final String NEXT_ACTION_NAME = "Next in History Buffer";
+	private static final String PREVIOUS_FUNCTION_ACTION_NAME = "Previous Function in History Buffer";
+	private static final String NEXT_FUNCTION_ACTION_NAME = "Next Function in History Buffer";
 	private static final String[] CLEAR_MENUPATH = { "Navigation", "Clear History" };
 
 	private NavigationHistoryService historyService;
 	private MultiActionDockingAction nextAction;
 	private MultiActionDockingAction previousAction;
+	private MultiActionDockingAction nextFunctionAction;
+	private MultiActionDockingAction previousFunctionAction;
 	private DockingAction clearAction;
 	private BrowserCodeUnitFormat codeUnitFormatter;
 
@@ -172,6 +176,8 @@ public class NextPrevAddressPlugin extends Plugin {
 	private void createActions() {
 		nextAction = new NextPreviousAction(NEXT_ACTION_NAME, getName(), true);
 		previousAction = new NextPreviousAction(PREVIOUS_ACTION_NAME, getName(), false);
+		nextFunctionAction = new NextPreviousFunctionAction(NEXT_FUNCTION_ACTION_NAME, getName(), true);
+		previousFunctionAction = new NextPreviousFunctionAction(PREVIOUS_FUNCTION_ACTION_NAME, getName(), false);
 
 		clearAction = new DockingAction("Clear History Buffer", getName()) {
 			@Override
@@ -208,6 +214,8 @@ public class NextPrevAddressPlugin extends Plugin {
 
 		tool.addAction(previousAction);
 		tool.addAction(nextAction);
+		tool.addAction(previousFunctionAction);
+		tool.addAction(nextFunctionAction);
 		tool.addAction(clearAction);
 	}
 
@@ -394,6 +402,68 @@ public class NextPrevAddressPlugin extends Plugin {
 				service.previous(navigatable, location);
 			}
 		}
+	}
+
+	private class NextPreviousFunctionAction extends MultiActionDockingAction {
+
+		private final boolean isNext;
+
+		NextPreviousFunctionAction(String name, String owner, boolean isNext) {
+			super(name, owner);
+			this.isNext = isNext;
+			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
+			int keycode = isNext ? KeyEvent.VK_RIGHT : KeyEvent.VK_LEFT;
+			setKeyBindingData(new KeyBindingData(keycode, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+			setDescription(isNext ? "Go to next function location" : "Go to previous function location");
+		}
+
+		@Override
+		public boolean isValidContext(ActionContext context) {
+			return (context instanceof NavigatableActionContext);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			Navigatable navigatable = getNavigatable(context);
+			if (navigatable == null) {
+				return false;
+			}
+			if (isNext) {
+				return historyService.hasNextFunction(navigatable);
+			}
+			return historyService.hasPreviousFunction(navigatable);
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			Navigatable navigatable = getNavigatable(context);
+			if (isNext) {
+				historyService.nextFunction(navigatable);
+			}
+			else {
+				historyService.previousFunction(navigatable);
+			}
+		}
+
+		@Override
+		public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
+			for (Class<?> class1 : contextTypes) {
+				if (NavigationActionContext.class.isAssignableFrom(class1)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public List<DockingActionIf> getActionList(ActionContext context) {
+			Navigatable navigatable = getNavigatable(context);
+			if (isNext) {
+				return getNextActions(navigatable);
+			}
+			return getPreviousActions(navigatable);
+		}
+
 	}
 
 }
