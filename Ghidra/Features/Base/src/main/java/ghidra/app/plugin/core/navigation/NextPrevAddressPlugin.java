@@ -135,7 +135,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			}
 			lastProgram = program;
 			actionList.add(new NavigationAction(navigatable, locationMomento, false, historyService,
-				codeUnitFormatter));
+					codeUnitFormatter));
 		}
 		return actionList;
 	}
@@ -155,7 +155,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			lastProgram = program;
 
 			actionList.add(new NavigationAction(navigatable, locationMomento, true, historyService,
-				codeUnitFormatter));
+					codeUnitFormatter));
 		}
 		return actionList;
 	}
@@ -203,7 +203,7 @@ public class NextPrevAddressPlugin extends Plugin {
 
 				Navigatable navigatable = getNavigatable(context);
 				return historyService.hasNext(navigatable) ||
-					historyService.hasPrevious(navigatable);
+						historyService.hasPrevious(navigatable);
 			}
 		};
 		clearAction.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, clearAction.getName()));
@@ -265,7 +265,7 @@ public class NextPrevAddressPlugin extends Plugin {
 	}
 
 	private static String getAddressRepresentation(Program program, Address address,
-			CodeUnitFormat formatter) {
+												   CodeUnitFormat formatter) {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol symbol = symbolTable.getPrimarySymbol(address);
 		if (symbol != null) { // try label first
@@ -376,7 +376,7 @@ public class NextPrevAddressPlugin extends Plugin {
 		private final boolean isNext;
 
 		private NavigationAction(Navigatable navigatable, LocationMemento location, boolean isNext,
-				NavigationHistoryService service, CodeUnitFormat formatter) {
+								 NavigationHistoryService service, CodeUnitFormat formatter) {
 			super("NavigationAction: " + ++idCount, NextPrevAddressPlugin.this.getName(), false);
 			this.location = location;
 			this.isNext = isNext;
@@ -384,7 +384,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			this.navigatable = navigatable;
 
 			setMenuBarData(new MenuData(new String[] { buildActionName(location, formatter) },
-				navigatable.getNavigatableIcon()));
+					navigatable.getNavigatableIcon()));
 			setEnabled(true);
 		}
 

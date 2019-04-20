@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  * address. As viewer plugins are directed to one or more addresses it maintains
  * information about where the viewers have been to support ability for the
  * viewers to go back to a previous "focus" point.
- * 
+ *
  * Services Provided: NavigationHistoryService
  * Events Consumed: ProgramLocationPluginEvent, ProgramPluginEvent 
  * Event Produced: HistoryChangePluginEvent Actions: None.
@@ -211,11 +211,11 @@ public class NavigationHistoryPlugin extends Plugin
 		}
 	}
 	/**
-     * Positions the "current" location to the next location which is in a different function
-     * from current one or previous non-code location.
-     * If we are not inside any function, performs like "next".
-     * @param navigatable the Navigatable we perform history looking up in
-     */
+	 * Positions the "current" location to the next location which is in a different function
+	 * from current one or previous non-code location.
+	 * If we are not inside any function, performs like "next".
+	 * @param navigatable the Navigatable we perform history looking up in
+	 */
 	@Override
 	public void nextFunction(Navigatable navigatable) {
 		HistoryList historyList = historyListMap.get(navigatable);
@@ -223,41 +223,41 @@ public class NavigationHistoryPlugin extends Plugin
 			return;
 		}
 		ProgramLocation current = navigatable.getLocation();
-	    Program program = current.getProgram();
-	    FunctionManager functionManager = program.getFunctionManager();
-	    Function currentFunction = functionManager.getFunctionContaining(current.getByteAddress());
-	    LocationMemento memento = historyList.nextFunction(functionManager, currentFunction, true);
-	    if (memento != null) {
+		Program program = current.getProgram();
+		FunctionManager functionManager = program.getFunctionManager();
+		Function currentFunction = functionManager.getFunctionContaining(current.getByteAddress());
+		LocationMemento memento = historyList.nextFunction(functionManager, currentFunction, true);
+		if (memento != null) {
 			navigate(navigatable, memento);
 		}
 	}
 
-    /**
-     * Positions the "current" location to the next location which is in a different function
-     * from current one or previous non-code location.
-     * If we are not inside any function, performs like "previous".
-     * @param navigatable the Navigatable we perform history looking up in
-     */
+	/**
+	 * Positions the "current" location to the next location which is in a different function
+	 * from current one or previous non-code location.
+	 * If we are not inside any function, performs like "previous".
+	 * @param navigatable the Navigatable we perform history looking up in
+	 */
 	@Override
 	public void previousFunction(Navigatable navigatable) {
-	    HistoryList historyList = historyListMap.get(navigatable);
-	    if (historyList == null) {
-	    	return;
+		HistoryList historyList = historyListMap.get(navigatable);
+		if (historyList == null) {
+			return;
 		}
-	    addCurrentLocationToHistoryIfAppropriate(navigatable, historyList.getCurrentLocation());
+		addCurrentLocationToHistoryIfAppropriate(navigatable, historyList.getCurrentLocation());
 
-	    ProgramLocation current = navigatable.getLocation();
-	    Program program = current.getProgram();
-	    FunctionManager functionManager = program.getFunctionManager();
-	    Function currentFunction = functionManager.getFunctionContaining(current.getByteAddress());
-	    LocationMemento memento = historyList.previousFunction(functionManager, currentFunction, true);
-	    if (memento != null) {
-	    	navigate(navigatable, memento);
+		ProgramLocation current = navigatable.getLocation();
+		Program program = current.getProgram();
+		FunctionManager functionManager = program.getFunctionManager();
+		Function currentFunction = functionManager.getFunctionContaining(current.getByteAddress());
+		LocationMemento memento = historyList.previousFunction(functionManager, currentFunction, true);
+		if (memento != null) {
+			navigate(navigatable, memento);
 		}
 	}
 
 	@Override
-    public boolean hasNextFunction(Navigatable navigatable) {
+	public boolean hasNextFunction(Navigatable navigatable) {
 		return hasNextPreviousFunction(navigatable, true);
 	}
 
@@ -269,7 +269,7 @@ public class NavigationHistoryPlugin extends Plugin
 	private boolean hasNextPreviousFunction(Navigatable navigatable, boolean isNext) {
 		HistoryList historyList = historyListMap.get(navigatable);
 		if (historyList == null) {
-		    return false;
+			return false;
 		}
 
 		ProgramLocation current = navigatable.getLocation();
@@ -281,7 +281,7 @@ public class NavigationHistoryPlugin extends Plugin
 		} else if (isNext) {
 			return false;
 		} else {
-		    return historyList.previousFunction(functionManager, currentFunction, false) != null;
+			return historyList.previousFunction(functionManager, currentFunction, false) != null;
 		}
 	}
 
@@ -316,7 +316,7 @@ public class NavigationHistoryPlugin extends Plugin
 	}
 
 	private void addCurrentLocationToHistoryIfAppropriate(Navigatable navigatable,
-			LocationMemento location) {
+														  LocationMemento location) {
 		if (!hasNext(navigatable)) {
 			HistoryList historyList = historyListMap.get(navigatable);
 			LocationMemento currentLocation = navigatable.getMemento();
@@ -506,7 +506,7 @@ public class NavigationHistoryPlugin extends Plugin
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================    
+//==================================================================================================
 
 	private static class HistoryList {
 		private List<LocationMemento> list = new ArrayList<>();
@@ -608,26 +608,26 @@ public class NavigationHistoryPlugin extends Plugin
 		 * LocationMemento not found, null is returned
 		 * @param functionManager function manager that has all function information
 		 * @param currentFunction current function that we are at
-         * @param moveTo true means after finding, get current location to it. false to just find and do nothing
+		 * @param moveTo true means after finding, get current location to it. false to just find and do nothing
 		 * @return found next LocationMemento, or null if not found
 		 */
 		LocationMemento nextFunction(FunctionManager functionManager, Function currentFunction, boolean moveTo) {
-		    if (list.isEmpty()) {
-		    	return null;
+			if (list.isEmpty()) {
+				return null;
 			}
 
-		    for (int i = currentLocation + 1; i < list.size(); ++i) {
-		    	LocationMemento memento = list.get(i);
-		    	Function historyFunction = functionManager.getFunctionContaining(memento.getProgramLocation().getByteAddress());
-		    	if (historyFunction == null || historyFunction != currentFunction) {
-		    	    if (moveTo) {
+			for (int i = currentLocation + 1; i < list.size(); ++i) {
+				LocationMemento memento = list.get(i);
+				Function historyFunction = functionManager.getFunctionContaining(memento.getProgramLocation().getByteAddress());
+				if (historyFunction == null || historyFunction != currentFunction) {
+					if (moveTo) {
 						currentLocation = i;
 					}
-		    		return memento;
+					return memento;
 				}
 			}
 
-		    return null;
+			return null;
 		}
 
 		/**
@@ -639,22 +639,22 @@ public class NavigationHistoryPlugin extends Plugin
 		 * @return found next LocationMemento, or null if not found
 		 */
 		LocationMemento previousFunction(FunctionManager functionManager, Function currentFunction, boolean moveTo) {
-		    if (list.isEmpty()) {
-		    	return null;
+			if (list.isEmpty()) {
+				return null;
 			}
 
-		    for (int i = currentLocation - 1; i >= 0; --i) {
-		    	LocationMemento memento = list.get(i);
-		    	Function historyFunction = functionManager.getFunctionContaining(memento.getProgramLocation().getByteAddress());
-		    	if (historyFunction == null || historyFunction != currentFunction) {
-		    		if (moveTo) {
+			for (int i = currentLocation - 1; i >= 0; --i) {
+				LocationMemento memento = list.get(i);
+				Function historyFunction = functionManager.getFunctionContaining(memento.getProgramLocation().getByteAddress());
+				if (historyFunction == null || historyFunction != currentFunction) {
+					if (moveTo) {
 						currentLocation = i;
 					}
-		    		return memento;
+					return memento;
 				}
 			}
 
-		    return null;
+			return null;
 		}
 
 		void remove(LocationMemento location) {

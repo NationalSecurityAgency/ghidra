@@ -54,12 +54,12 @@ public interface NavigationHistoryService {
 
     /**
      * Positions the "current" location to the previous location in the history list.
-	 * If there is no "previous" location, the
+     * If there is no "previous" location, the
      * history list remains unchanged.
      */
     void previous(Navigatable navigatable);
 
-    /** 
+    /**
      * Navigates to the given location in the "next" list.  If the location is not in the list, then
      * nothing will happen.
      * @param location The location within the "next" list to which to go. 
@@ -72,19 +72,19 @@ public interface NavigationHistoryService {
      * @param location The location within the "previous" list to which to go. 
      */
     public void previous(Navigatable navigatable, LocationMemento location );
-    
+
     /**
      * Returns the LocationMemento objects in the "previous" list.
      * @return the LocationMemento objects in the "previous" list.
      */
     public List<LocationMemento> getPreviousLocations(Navigatable navigatable);
-    
+
     /**
      * Returns the LocationMemento objects in the "next" list.
      * @return the LocationMemento objects in the "next" list.
      */
     public List<LocationMemento> getNextLocations(Navigatable navigatable);
-    
+
     /**
      * Returns true if there is a valid "next" location in the history list.
      */
