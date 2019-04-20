@@ -1431,11 +1431,13 @@ public class FieldPanel extends JPanel
 
 				if (e.isShiftDown()) {
 					// horizontal scroll (only move viewport)
-                    if (viewport != null) {
+					if (viewport != null) {
 						Point pos = viewport.getViewPosition();
-						viewport.setViewPosition(new Point(Math.max(0, pos.x + scrollAmount), pos.y));
+						viewport.setViewPosition(
+							new Point(Math.max(0, pos.x + scrollAmount), pos.y));
 					}
-				} else {
+				}
+				else {
 					scrollView(scrollAmount);
 				}
 			}
