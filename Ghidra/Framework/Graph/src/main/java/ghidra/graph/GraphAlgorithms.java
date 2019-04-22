@@ -388,6 +388,7 @@ public class GraphAlgorithms {
 	 * @param monitor the timeout task monitor
 	 * @return the circuits
 	 * @throws CancelledException if the monitor is cancelled
+	 * @throws TimeoutException if the algorithm times-out, as defined by the monitor
 	 */
 	public static <V, E extends GEdge<V>> List<List<V>> findCircuits(GDirectedGraph<V, E> g,
 			boolean uniqueCircuits, TimeoutTaskMonitor monitor)
@@ -405,10 +406,6 @@ public class GraphAlgorithms {
 	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected 
 	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to 
 	 * run out of memory.
-	 *  
-	 * <P><B><U>Warning:</U></B> This is a recursive algorithm.  As such, it is limited in how 
-	 * deep it can recurse.  Any path that exceeds the {@link #JAVA_STACK_DEPTH_LIMIT} will 
-	 * not be found.
 	 * 
 	 * <P>You are encouraged to call this method with a monitor that will limit the work to 
 	 * be done, such as the {@link TimeoutTaskMonitor}.
@@ -423,8 +420,8 @@ public class GraphAlgorithms {
 	public static <V, E extends GEdge<V>> void findPaths(GDirectedGraph<V, E> g, V start, V end,
 			Accumulator<List<V>> accumulator, TaskMonitor monitor) throws CancelledException {
 
-		// the algorithm gets run at construction; the results are sent to the accumulator
-		new FindPathsAlgorithm<>(g, start, end, accumulator, monitor);
+		IterativeFindPathsAlgorithm<V, E> algo = new IterativeFindPathsAlgorithm<>();
+		algo.findPaths(g, start, end, accumulator, monitor);
 	}
 
 	/**
@@ -436,10 +433,6 @@ public class GraphAlgorithms {
 	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected 
 	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to 
 	 * run out of memory.
-	 *  
-	 * <P><B><U>Warning:</U></B> This is a recursive algorithm.  As such, it is limited in how 
-	 * deep it can recurse.  Any path that exceeds the {@link #JAVA_STACK_DEPTH_LIMIT} will 
-	 * not be found.
 	 *
 	 * @param g the graph
 	 * @param start the start vertex
@@ -453,8 +446,8 @@ public class GraphAlgorithms {
 			Accumulator<List<V>> accumulator, TimeoutTaskMonitor monitor)
 			throws CancelledException, TimeoutException {
 
-		// the algorithm gets run at construction; the results are sent to the accumulator
-		new FindPathsAlgorithm<>(g, start, end, accumulator, monitor);
+		FindPathsAlgorithm<V, E> algo = new IterativeFindPathsAlgorithm<>();
+		algo.findPaths(g, start, end, accumulator, monitor);
 	}
 
 	/**
@@ -549,6 +542,7 @@ public class GraphAlgorithms {
 	 * A method to debug the given graph by printing it.
 	 * 
 	 * @param g the graph to print
+	 * @param ps the output stream
 	 */
 	public static <V, E extends GEdge<V>> void printGraph(GDirectedGraph<V, E> g, PrintStream ps) {
 		Set<V> sources = getSources(g);

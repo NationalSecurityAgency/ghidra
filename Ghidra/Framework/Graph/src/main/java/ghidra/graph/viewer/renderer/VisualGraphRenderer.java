@@ -118,6 +118,7 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 
 	private void paintLayoutGridCells(RenderContext<V, E> renderContext, Layout<V, E> layout) {
 
+		// to enable this debug, search java files for commented-out uses of 'DEBUG_ROW_COL_MAP'
 		Graph<V, E> graph = layout.getGraph();
 		LayoutLocationMap<?, ?> locationMap = DEBUG_ROW_COL_MAP.get(graph);
 		if (locationMap == null) {

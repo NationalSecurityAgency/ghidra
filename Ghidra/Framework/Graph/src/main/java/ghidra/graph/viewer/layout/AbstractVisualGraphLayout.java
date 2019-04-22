@@ -33,6 +33,7 @@ import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.renderer.ArticulatedEdgeRenderer;
+import ghidra.graph.viewer.renderer.VisualGraphRenderer;
 import ghidra.graph.viewer.shape.ArticulatedEdgeTransformer;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -308,8 +309,8 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 				layoutLocations);
 
 		// DEGUG triggers grid lines to be printed; useful for debugging
-		// VisualGraphRenderer.DEBUG_ROW_COL_MAP.put((Graph<?, ?>) visualGraph,
-		// 	layoutLocations.copy());
+//		VisualGraphRenderer.DEBUG_ROW_COL_MAP.put((Graph<?, ?>) visualGraph,
+//			layoutLocations.copy());
 
 		Rectangle graphBounds =
 			getTotalGraphSize(vertexLayoutLocations, edgeLayoutArticulationLocations, transformer);
