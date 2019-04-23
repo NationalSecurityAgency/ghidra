@@ -1,29 +1,32 @@
 apply plugin: 'java'
-/* Requires Eclipse PDE
-apply plugin: 'eclipse'
-eclipse {
-	project {
-		name = 'Eclipse GhidraDevPlugin'
-		buildCommand 'org.eclipse.pde.ManifestBuilder'
-		buildCommand 'org.eclipse.pde.SchemaBuilder'
-		natures 'org.eclipse.pde.PluginNature'
-		classpath.file {
-			def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
-			beforeMerged { classpath ->
-				classpath.entries.removeAll { entry ->
-					entry.path == requiredPlugins
+
+//This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
+//	"gradle eclipse -PeclipsePDE" 
+if (hasProperty("eclipsePDE")) {
+	apply plugin: 'eclipse'
+	eclipse {
+		project {
+			name = 'Eclipse GhidraDevPlugin'
+			buildCommand 'org.eclipse.pde.ManifestBuilder'
+			buildCommand 'org.eclipse.pde.SchemaBuilder'
+			natures 'org.eclipse.pde.PluginNature'
+			classpath.file {
+				def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
+				beforeMerged { classpath ->
+					classpath.entries.removeAll { entry ->
+						entry.path == requiredPlugins
+					}
 				}
-			}
-			whenMerged { classpath ->
-				withXml {
-					def node = it.asNode()
-					node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+				whenMerged { classpath ->
+					withXml {
+						def node = it.asNode()
+						node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+					}
 				}
 			}
 		}
 	}
 }
-*/
 
 // We want GhidraDev to run with Eclipses launched with Java 8
 sourceCompatibility = 1.8
