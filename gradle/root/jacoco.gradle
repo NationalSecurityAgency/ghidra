@@ -2,6 +2,14 @@
 def jacoco_origin = project.hasProperty('jacoco.origin') ? project.getProperty('jacoco.origin') : "master"
 
 import groovy.io.FileType;
+// 'jacocoEnabled' will enable jacocoMerge, jacocoBranchReport and jacocoReport if these tasks are 
+// specified on the cmd line.
+// Applying jacoco plugin will create coverage files for each java Test task. This extra analysis 
+// slows down the overall Test task, so only enable jacoco when specified on the cmd line.
+rootProject.ext.jacocoEnabled = (rootProject.gradle.startParameter.taskNames.contains('jacocoMerge') ||
+								rootProject.gradle.startParameter.taskNames.contains('jacocoBranchReport') ||
+								rootProject.gradle.startParameter.taskNames.contains('jacocoReport'))
+
 
 if (project.jacocoEnabled) {
 
@@ -172,13 +180,13 @@ List excludesList = generateExcludesList()
  * Generate the Jacoco excludes list from file (this will strip out comments and
  * whitespace).
  *
- * This uses 'gradleScripts/jacoco.excludes.src.txt' to generate list of 
+ * This uses 'gradle/support/jacoco.excludes.src.txt' to generate list of 
  * class exclusions for the 'jacocoReport' task.
  * 
  *********************************************************************************/
 def String[] generateExcludesList() {
 
-	File inputFile = new File(rootProject.projectDir, "gradleScripts/jacoco.excludes.src.txt")
+	File inputFile = new File(rootProject.projectDir, "gradle/support/jacoco.excludes.src.txt")
 
 	def lines = inputFile.readLines()
 					 .findAll({ line -> 

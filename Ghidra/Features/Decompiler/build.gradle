@@ -1,16 +1,21 @@
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features Decompiler'
 
-apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
 
 dependencies {
 	compile project(':Base')
 	compile project(':SoftwareModeling')
 	
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
-	integrationTestRuntime project(':Base').sourceSets.test.output
+	integrationTestRuntime project(path: ':Base', configuration: 'testArtifacts')
 	testCompile "org.jmockit:jmockit:1.44"
 	
     helpPath project(path: ":Base", configuration: 'helpPath')
@@ -510,4 +515,24 @@ Task createLexTask(String filename, String binaryName) {
 	}
 }
 
+rootProject.createInstallationZip {
+	dependsOn buildDecompilerDocumentationPdfs
+	
+	
+	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
+	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
+	// (if there was an error or wrong platform), the zip task will move on.
+	buildDecompilerDocumentationPdfs.outputs.each { output ->
+		output.files.each { file ->
+			if (file.name.endsWith("pdf")) {
+				logger.debug("$project.name: Adding Decompiler documentation (if it exists) $file.name to $decompilerPdfZipPath")
+				rootProject.createInstallationZip.from (file) {
+					into {
+						decompilerPdfZipPath
+					}
+				}
+			}
+		}
+	}
+}

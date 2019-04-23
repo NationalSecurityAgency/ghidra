@@ -1,5 +1,0 @@
-
-// These same settings are needed in the GPL native, so rather than duplicating this file, we will just call the other file
-
-def projectRootDir = rootProject.projectDir.path
-apply from: "$projectRootDir/GPL/nativeBuildProperties.gradle"

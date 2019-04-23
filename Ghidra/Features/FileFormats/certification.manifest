@@ -6,14 +6,11 @@
 ##MODULE IP: Jython License
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Public Domain
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/android/eclipse-classpath||GHIDRA||reviewed||END|
 data/android/eclipse-project||GHIDRA||reviewed||END|
-data/build.xml||GHIDRA||||END|
 data/crypto/README.txt||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/FileFormatsPlugin/FileFormats.html||GHIDRA||||END|

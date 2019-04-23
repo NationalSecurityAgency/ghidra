@@ -15,7 +15,7 @@
  * aren't set by a calling script, we default them.
  *
  *********************************************************************************/
-apply from: "gradleScripts/testUtils.gradle"
+apply from: "gradle/support/testUtils.gradle"
 
 configurations {
 	jmockitAgent
@@ -91,9 +91,12 @@ project.ext.parallelMode = project.gradle.startParameter.taskNames.contains('par
 
 // 'parallelCombinedTestReport' task will parse a JUnit test report for test duration.
 // Specify the location of the report via cmd line using "-PtestTimeParserInputDir=<location>".
-// Otherwise, the default is to look for the latest test report in <reportDir>/../reportsArchive/reports_<date>
-project.ext.testTimeParserInputDir = project.hasProperty('testTimeParserInputDir') ?
-	project.getProperty('testTimeParserInputDir') + "/reports/classes" : getLastArchivedReport("$reportArchivesDir") + "/classes"
+// If the location is not specified via cmd line, it will look for the latest test report 
+// in <reportDir>/../reportsArchive/reports_<date>
+// If a reportsArchive path does not exist, it will assume all tests have the same duration and 
+// continue with test task creation. 
+ project.ext.testTimeParserInputDir = project.hasProperty('testTimeParserInputDir') ?
+        project.getProperty('testTimeParserInputDir') + "/reports/classes" : getLastArchivedReport("$reportArchivesDir") + "/classes"
 
 // A port of 0 will allow the kernel to give a free port number in the set of "User"
 // or "Registered" Ports (usually 1024 - 49151). This will prevent port collisions among
@@ -171,30 +174,7 @@ def loadApplicationProperties() {
 	}
 }
 
-/*********************************************************************************
- * Record and Print test task start time
- *********************************************************************************/
-def startTestTimer(Task task) {
-	project.ext.testStartTime = new Date()
-	println ":" + task.project.name + ":" + task.name + " started: " + testStartTime;
-}
 
-/*********************************************************************************
- * Print test task end time and elapsed time
- *********************************************************************************/
-def endTestTimer(Task task) {
-	Date endTime = new Date();
-	println ":" + task.project.name + ":" + task.name + " ended: " + endTime;
-	
-	long elapsedMS = endTime.getTime() - testStartTime.getTime();
-	long msPerMin = 60 * 1000;
-	long msPerHour = 60 * msPerMin;
-	long hrs = elapsedMS / msPerHour;
-	long mins = (elapsedMS - (hrs * msPerHour)) / msPerMin;
-	long secs = (elapsedMS - (hrs * msPerHour) - (mins * msPerMin)) / 1000;
-	println ":" + task.project.name + ":" + task.name + " elapsed time: " +
-		String.format("%d:%02d:%02d", hrs, mins, secs);
-}
 
 /*********************************************************************************
  * Loads any machine specific property file that contains info we need.
@@ -341,45 +321,8 @@ task parallelCombinedTestReport(type: TestReport) { t ->
 		logger.debug("parallelCombinedTestReport: Using destinationDir = $reportDir")
 		dependsOn ":deleteTestTempAndReportDirs"
 		mustRunAfter ":deleteTestTempAndReportDirs"
-
-		doFirst {
-			startTestTimer(t)
-		}
-		doLast {
-			endTestTimer(t)
-		}
 }
 
-/*********************************************************************************
- * GRADLE TEST PROPERTIES
- *
- * This is where we add the test task to each subproject, and set generic test
- * properties.  These will apply to both unit and integration tests.
- *********************************************************************************/
-subprojects {
-
-	test { t ->
-
-		forkEvery 1
-		initTestJVM(t, testRootDirName)
-
-		// WARNING! WATCH OUT !!
-		// WARNING! Since a single shared JVM instance is used, the first
-		// test and its ApplicationConfiguration will be used to initialize
-		// the class searching environment.  This can have a negative impact
-		// on test results due to the inconsistent Application environment
-		// which may exist when all tests are run versus a single test.
-		// Based on this limitation we should only use the Integration base
-		// test classes within integrationTest regions (e.g., test.slow).
-
-		doFirst {
-			startTestTimer(t)
-		}
-		doLast {
-			endTestTimer(t)
-		}
-	}
-}
 
 /*********************************************************************************
  * UNIT TEST REPORT
@@ -390,52 +333,10 @@ subprojects {
 task unitTestReport(type: TestReport) { t ->
 	group "test"
 	destinationDir = file("$reportDir/unitTests")
-	reportOn subprojects.test
 	outputs.upToDateWhen {false}
 }
 
-/*********************************************************************************
- * PREPARE FOR TESTS
- *
- * Summary:	Setup for testing.
- *********************************************************************************/
-task prepareForTests {
-		dependsOn { project(":FunctionID").unpackFidDatabases }	
-}
 
-/*********************************************************************************
- * INTEGRATION TEST
- *
- * Summary:	Applies a task to each subproject that will run all integration
- *  		tests for that project.
- *
- *********************************************************************************/
-subprojects { sub ->
-
-	task integrationTest (type: Test) { t ->
-		group "test"
-		dependsOn ':prepareForTests'
-		testClassesDirs = files sub.sourceSets.integrationTest.output.classesDirs
-
-		classpath = sub.sourceSets.integrationTest.runtimeClasspath
-
-		// Do not include suite classes; they trigger the tests in the suite to get run twice
-		// (once by normal jUnit and again when the suite runs).
-		excludes = ['**/*Suite*']
-
-		// Enable if you want to force Gradle to launch a new JVM for each test.
-		forkEvery 1
-
-		initTestJVM(t, testRootDirName)
-
-		doFirst {
-			startTestTimer(t)
-		}
-		doLast {
-			endTestTimer(t)
-		}
-	}
-}
 
 /*********************************************************************************
  *  Create a task of type: Test for a subproject.
@@ -481,13 +382,6 @@ def createTestTask(Project subproject, String testType, int taskNameCounter, Arr
 			events "started", "passed", "skipped", "failed"
 		}
 
-		doFirst {
-			startTestTimer(t)
-		}
-		doLast {
-			endTestTimer(t)
-		}
-
 		// Current task mustRunAfter previous task (test_1 before test_2,etc.)
 		if (taskNameCounter > 1) {
 			def prevTaskName = "$testType" + "_" + (taskNameCounter -1)
@@ -511,7 +405,7 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 		// "subprojects { afterEvaluate { evaluate()"
 		// forces evaluation of subproject configuration. Needed for inheriting excludes
 		// from non-parallel counterpart.
-		subproject.evaluate() 
+//		subproject.evaluate() 
 
 		if (!shouldSkipTestTaskCreation(subproject)) {
 			logger.info("parallelCombinedTestReport: Creating 'test' tasks for " + subproject.name + " subproject.")
@@ -549,38 +443,6 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 	} // end afterEvaluate
 }// end subprojects
 
-/*********************************************************************************
- * NON-BASE INTEGRATION TEST REPORT
- *
- * Summary:	Runs integration tests for all modules except "Base"
- * and generates a single report.
- *
- *********************************************************************************/
-task integrationTestReportNoBase(type: TestReport) { t ->
-	group "test"
-	destinationDir = file("$reportDir/integrationTests")
-	subprojects.each {
-		if (!it.name.equals("Base")) { // excludes Base module tests
-			reportOn it.integrationTest
-		}
-	}
-}
-/*********************************************************************************
- * INTEGRATION TEST REPORT BASE ONLY
- *
- * Summary:	Runs the integration tests for just the "Base" module and generates a
- * report.
- *
- *********************************************************************************/
-task integrationTestReportBaseOnly(type: TestReport) { t ->
-	group "test"
-	destinationDir = file("$reportDir/integrationTests")
-	subprojects.each {
-		if (it.name.equals("Base")) { // excludes Base module tests
-			reportOn it.integrationTest
-		}
-	}
-}
 
 /*********************************************************************************
  * COMBINED TEST REPORT
@@ -594,57 +456,6 @@ task combinedTestReport(type: TestReport) { t ->
 
 	dependsOn ":deleteTestTempAndReportDirs"
 	mustRunAfter ":deleteTestTempAndReportDirs"
-
-	subprojects { project ->
-		afterEvaluate{
-			if (isTestable(project)) {
-				reportOn project.test
-				reportOn project.integrationTest
-			}
-		}
-	}
-}
-
-/*********************************************************************************
- * ALL TESTS
- *
- * Summary:	Applies a task to each subproject that will run all unit tests and all
- *          integration tests for that project.
- *
- *********************************************************************************/
-subprojects { sub ->
-	task allTests {
-		dependsOn 'integrationTest'
-		dependsOn 'test'
-	}
-}
-
-/*********************************************************************************
- * CUNIT TEST
- *
- * Summary:	Applies a task to each "Processor Test" subproject that will run all
- *  		CUNIT tests for that project.
- *
- *********************************************************************************/
-subprojects { sub ->
-	task cunitTest (type: Test) { t ->	
-	    group "cunit"	
-	    dependsOn ':prepareForTests'
-	    testClassesDirs = files sub.sourceSets.cunitTest.output.classesDirs
-		classpath = sub.sourceSets.cunitTest.runtimeClasspath
-		
-		// Enable if you want to force Gradle to launch a new JVM for each test.
-	    forkEvery 1	
-	    	
-		initTestJVM(t, cunitTestRootDirName)
-		
-		doFirst {
-			startTestTimer(t)
-		}
-		doLast {
-			endTestTimer(t)
-		}		
-	}
 }
 
 /*********************************************************************************
@@ -656,7 +467,6 @@ subprojects { sub ->
 task cunitTestReport(type: TestReport) { t ->
 	group "cunit"
 	destinationDir = file("$cunitTestShareDir" + "/reports")
-	reportOn subprojects.cunitTest
 }	
 	
 /*********************************************************************************

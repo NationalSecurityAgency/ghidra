@@ -1,8 +1,7 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Processors 6502'
 
-/*********************************************************************************
- * Imports
- *********************************************************************************/
-apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
 

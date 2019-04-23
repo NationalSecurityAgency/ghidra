@@ -1,0 +1,27 @@
+
+
+/******************************************************************************************
+ * PrepDev - task to prepare a development environment for Ghidra.  It needs to be run
+ * 			 whenever the Ghidra git repos are first cloned or after a 'clean'.  It also
+ *           needs to be run after a change to the sleigh ANTLR grammar files.
+ *******************************************************************************************/
+
+task prepDev {
+	group rootProject.GHIDRA_GROUP
+	description "        Prepares a fresh clone of Ghidra for developing in eclipse.  [gradle/root/prepDev.gradle]\n"
+		
+	// the GhidraLauncher depends on this file to build the classpath in dev mode
+	dependsOn { generateLibraryDependencyMapping }
+}
+
+	
+/******************************************************************************************
+ * TASK generateLibraryDependencyMapping
+ *
+ * Summary: Creates a file that lists the libraries used by each module.  
+ ******************************************************************************************/
+task generateLibraryDependencyMapping {
+	doFirst{
+		generateLibraryDependencyMapping()
+	}
+}

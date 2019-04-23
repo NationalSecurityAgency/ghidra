@@ -17,34 +17,26 @@
 /*********************************************************************************
  * Defines the main ip task for each subproject
  *********************************************************************************/
-subprojects {
-	ext.isPureEclipseProject = false;
-	ext.excludeFromBuild = false;
-	task ip { 
-		doLast {
-			if (isPureEclipseProject || excludeFromBuild) {
-				// If the build.gradle file exists only to establish an
-				// eclipse project or is a support project, don't verify IP.
-				return;
-			}
-			
-			// scans all the files in the module, reads ip from header, verifies ip, and creates mapping
-			def ipToFileMap = getIpForModule(project)
-			
-			// reads the ip info from the Module.manifest file and verifies each ip
-			def moduleManifestIpMap = getModuleManifestIp(project)
-			
-			// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
-			checkExternalLibsInMap(moduleManifestIpMap, project)
-			
-			// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
-			addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
-			
-			// writes the LICENSE.txt file for the module
-			writeLicenseInfo(project, ipToFileMap)
-		}
+task ip { 
+	doLast {
+		
+		// scans all the files in the module, reads ip from header, verifies ip, and creates mapping
+		def ipToFileMap = getIpForModule(project)
+		
+		// reads the ip info from the Module.manifest file and verifies each ip
+		def moduleManifestIpMap = getModuleManifestIp(project)
+		
+		// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
+		checkExternalLibsInMap(moduleManifestIpMap, project)
+		
+		// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
+		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
+		
+		// writes the LICENSE.txt file for the module
+		writeLicenseInfo(project, ipToFileMap)
 	}
 }
+
 
 
 /*********************************************************************************
@@ -89,11 +81,13 @@ def Map<String, String> getModuleManifestIp(Project project) {
  * the map from the Module.manifest file
  *********************************************************************************/
 def checkExternalLibsInMap(Map<String, String> map, Project project) {
-	List<String> libs = getExternalDependencies(project)
-	libs.each { lib ->
-		String libName = new File(lib).getName()  // get just the filename without the path
-		String relativePath = "lib/"+libName;
-		assert map.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
+	if (project.plugins.withType(JavaPlugin)) {
+		List<String> libs = getExternalDependencies(project)
+		libs.each { lib ->
+			String libName = new File(lib).getName()  // get just the filename without the path
+			String relativePath = "lib/"+libName;
+			assert map.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
+		}
 	}
 }
 
@@ -120,9 +114,9 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "build.gradle"
 		exclude "**/Misc/Tips.htm"
 		exclude "**/*.sla"
-		exclude "**/data/build.xml" // language build file (generated for dev only)
 		exclude "**/.gradle/**"
 		exclude "**/.settings/**"
+		exclude "**/data/build.xml" // language build file (generated for dev only)
 		exclude "**/.vs/**"
 		exclude "**/*.vcxproj.user"
 	}

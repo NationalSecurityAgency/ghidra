@@ -1,3 +1,5 @@
+apply plugin: 'java'
+/* Requires Eclipse PDE
 apply plugin: 'eclipse'
 eclipse {
 	project {
@@ -21,6 +23,7 @@ eclipse {
 		}
 	}
 }
+*/
 
 // We want GhidraDev to run with Eclipses launched with Java 8
 sourceCompatibility = 1.8
@@ -45,13 +48,17 @@ File pyDevDestDir = file("build/data/buildDependencies/pydev")
 File cdtDestDir = file("build/data/buildDependencies/cdt")
 
 task utilityJar(type:Copy) {
-	from (project(':Utility').jar)
+	doFirst {
+		from (project(':Utility').jar)
+	}
 
 	destinationDir libraryJarDestDir
 }
 
 task launchSupportJar(type:Copy) {
-	from (project(':LaunchSupport').jar)
+	doFirst {
+		from (project(':LaunchSupport').jar)
+	}
 
 	destinationDir libraryJarDestDir
 }
@@ -85,8 +92,18 @@ task cdtUnpack(type:Copy) {
 	destinationDir cdtDestDir
 }
 
+rootProject.assembleDistribution {
+	from ("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev") {
+		include 'GhidraDev*.zip'
+		into "Extensions/Eclipse/GhidraDev/"
+	}
+	from ("${this.projectDir}/GhidraDev_README.html") {
+		into "Extensions/Eclipse/GhidraDev/"
+	}
+} 
+
 // PrepDev dependencies
-prepDev.dependsOn utilityJar
-prepDev.dependsOn launchSupportJar
-prepDev.dependsOn pyDevUnpack
-prepDev.dependsOn cdtUnpack
+rootProject.prepDev.dependsOn utilityJar
+rootProject.prepDev.dependsOn launchSupportJar
+rootProject.prepDev.dependsOn pyDevUnpack
+rootProject.prepDev.dependsOn cdtUnpack

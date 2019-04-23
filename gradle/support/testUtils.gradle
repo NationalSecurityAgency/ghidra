@@ -53,14 +53,15 @@ def HashMap<String, Long> getTestReport() {
 	if (project.testReport == null) {
 		logger.debug("getTestReport: Populating 'testReport' using '$testTimeParserInputDir'")
 
-		assert (testTimeParserInputDir != null && testTimeParserInputDir.contains("classes")) :
-			"""getTestReport: The value of 'testTimeParserInputDir' does not exist.
-			Specify this value via cmd line -PtestTimeParserInputDir=<value>"""
+		testReport = new HashMap<String, Long>();
 
 		File classesReportDir = new File(testTimeParserInputDir)
-		assert classesReportDir.exists() : "getTestReport: The path '$testTimeParserInputDir' does not exist on the file system"
+		if(!classesReportDir.exists()) {
+			logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
+				" Returning empty testReport map.")
+			return project.testReport 
+		}
 
-		testReport = new HashMap<String, Long>();
 		int excludedHtmlFiles = 0 // counter
 		int totalHtmlFiles = 0
 		String excludedHtmlFileNames = "" // for log.info summary message
@@ -142,7 +143,7 @@ String constructFullyQualifiedClassName(String fileContents, String fileName) {
  */
 def ArrayList getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
-	assert (getTestReport() != null && getTestReport().size() > 0) : "getTestsForSubProject: Problem parsing test report located at: " + testTimeParserInputDir
+	assert (getTestReport() != null) : "getTestsForSubProject: testReport should not be null"
 
 	def testsForSubProject =  new LinkedHashMap<>();
 	
@@ -226,12 +227,13 @@ def boolean shouldSkipTestTaskCreation(Project subproject) {
 		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. Not in parallel mode.")
 		return true
 	}
-	if (subproject.sourceSets.test.java.files.isEmpty()) {
-		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. No test sources.")
+	if (!subproject.hasProperty("sourceSets")) {
+		logger.debug("shouldSkipTestTaskCreation: subproject $subproject.name has no sourceSet property.")
 		return true
 	}
-	if (!isTestable(subproject)) {
-		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. isTestable == false")
+	if (subproject.sourceSets.findByName("test") == null || 
+			subproject.sourceSets.test.java.files.isEmpty()) {
+		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. No test sources.")
 		return true
 	}
 	if (subproject.findProperty("excludeFromParallelTests") ?: false) {
@@ -252,14 +254,14 @@ def boolean shouldSkipIntegrationTestTaskCreation(Project subproject) {
 			+ " Not in parallel mode.")
 		return true
 	}
-	if (subproject.sourceSets.integrationTest.java.files.isEmpty()) {
-		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
-			+ " No integrationTest sources.")
+	if (!subproject.hasProperty("sourceSets")) {
+		logger.debug("shouldSkipIntegrationTestTaskCreation: subproject $subproject.name has no sourceSet property.")
 		return true
 	}
-	if (!isTestable(subproject)) {
+	if (subproject.sourceSets.findByName("integrationTest") == null || 
+			subproject.sourceSets.integrationTest.java.files.isEmpty()) {
 		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
-			+ " isTestable == false")
+			+ " No integrationTest sources.")
 		return true
 	}
 	if (subproject.findProperty("excludeFromParallelIntegrationTests") ?: false) {
@@ -287,9 +289,10 @@ def String getLastArchivedReport(String reportArchivesPath) {
 	File reportArchiveDir = new File(reportArchivesPath);
 	logger.info("getLastArchivedReport: searching for test report to parse in " + reportArchivesPath)
 
-	assert (reportArchiveDir.exists()) :
-		"""Tried to parse test report durations from archive location ' $reportArchiveDir '
-		because no -PtestTimeParserInputDir=<path/to/report> supplied via cmd line"""
+	if(!reportArchiveDir.exists()) {
+		logger.info("getLastArchivedReport: '$reportArchiveDir' does not exist.")
+		return ""
+	}
 
 	// filter for report archive directories.
 	File[] files = reportArchiveDir.listFiles(new FilenameFilter() {
@@ -310,18 +313,9 @@ def String getLastArchivedReport(String reportArchivesPath) {
 	return files[0].getAbsolutePath()
 }
 
-/*********************************************************************************
- * Returns true if subproject is not a support module. 
- * These modules are commonly excluded in type:TestReport tasks.
-*********************************************************************************/
-def isTestable(Project p) {
-	return !(p.findProperty("isSupportProject") ?: false)
-}
-
 ext {
 	getTestsForSubProject = this.&getTestsForSubProject // export this utility method to project
 	shouldSkipTestTaskCreation = this.&shouldSkipTestTaskCreation
 	shouldSkipIntegrationTestTaskCreation = this.&shouldSkipIntegrationTestTaskCreation
 	getLastArchivedReport = this.&getLastArchivedReport
-	isTestable = this.&isTestable
 }
