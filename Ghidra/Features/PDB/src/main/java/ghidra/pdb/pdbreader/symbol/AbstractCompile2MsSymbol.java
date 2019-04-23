@@ -75,7 +75,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 		while (reader.hasMore()) {
 			AbstractString string = new StringUtf8Nt();
 			string.parse(reader);
-			if (string.get().length() == 0) {
+			if (string.get().isEmpty()) {
 				break;
 			}
 			stringList.add(string);
@@ -298,7 +298,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	 * @param flagsIn {@code long} containing unsigned int value.
 	 */
 	protected void processFlags(long flagsIn) {
-		language = new LanguageName((int) (flagsIn & 0xff));
+		language = LanguageName.fromValue((int) (flagsIn & 0xff));
 		flagsIn >>= 8;
 
 		compiledForEditAndContinue = ((flagsIn & 0x0001) == 0x0001);

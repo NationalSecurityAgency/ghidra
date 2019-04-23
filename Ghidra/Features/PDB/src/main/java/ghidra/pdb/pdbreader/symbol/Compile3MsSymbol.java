@@ -329,7 +329,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	 * @param flagsIn {@code long} containing unsigned int value.
 	 */
 	protected void processFlags(long flagsIn) {
-		language = new LanguageName((int) (flagsIn & 0xff));
+		language = LanguageName.fromValue((int) (flagsIn & 0xff));
 		flagsIn >>= 8;
 
 		compiledForEditAndContinue = ((flagsIn & 0x0001) == 0x0001);

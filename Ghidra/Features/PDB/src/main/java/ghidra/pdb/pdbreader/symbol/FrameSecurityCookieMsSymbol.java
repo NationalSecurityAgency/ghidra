@@ -15,6 +15,9 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
@@ -29,12 +32,43 @@ public class FrameSecurityCookieMsSymbol extends AbstractMsSymbol {
 
 	public static final int PDB_ID = 0x113a;
 
-	private String[] cookieTypeString = { "COPY", "XOR_SP", "XOR_BP", "XOR_R13" };
+	public enum CookieType {
+
+		INVALID("invalid", -1),
+		COPY("COPY", 0),
+		XOR_SP("XOR_SP", 1),
+		XOR_BP("XOR_BP", 2),
+		XOR_R13("XOR_R13", 3);
+
+		private static final Map<Integer, CookieType> BY_VALUE = new HashMap<>();
+		static {
+			for (CookieType val : values()) {
+				BY_VALUE.put(val.value, val);
+			}
+		}
+
+		public final String label;
+		public final int value;
+
+		@Override
+		public String toString() {
+			return label;
+		}
+
+		public static CookieType fromValue(int val) {
+			return BY_VALUE.getOrDefault(val, INVALID);
+		}
+
+		private CookieType(String label, int value) {
+			this.label = label;
+			this.value = value;
+		}
+	}
 
 	protected long offset;
 	protected int registerIndex;
 	protected RegisterName registerName;
-	protected int cookieTypeIndex; // cookie type (valid values seem to be 0, 1, 2, 3)
+	protected CookieType cookieType;
 	protected int flags;
 
 	/**
@@ -49,10 +83,7 @@ public class FrameSecurityCookieMsSymbol extends AbstractMsSymbol {
 		registerIndex = reader.parseUnsignedShortVal();
 		registerName = new RegisterName(pdb, registerIndex);
 		// One example seems to show only room for a byte here, leaving the last byte for flags.
-		cookieTypeIndex = reader.parseUnsignedByteVal();
-		if (cookieTypeIndex >= cookieTypeString.length) {
-			cookieTypeIndex = 0;
-		}
+		cookieType = CookieType.fromValue(reader.parseUnsignedByteVal());
 		flags = reader.parseUnsignedByteVal();
 	}
 
@@ -86,19 +117,11 @@ public class FrameSecurityCookieMsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Returns the cookie type index.
+	 * Returns the {@link CookieType}.
 	 * @return Cookie type index.
 	 */
-	public int getCookieTypeIndex() {
-		return cookieTypeIndex;
-	}
-
-	/**
-	 * Returns the cookie string.
-	 * @return Cookie string.
-	 */
-	public String getCookie() {
-		return cookieTypeString[cookieTypeIndex];
+	public CookieType getCookieType() {
+		return cookieType;
 	}
 
 	/**
@@ -112,7 +135,7 @@ public class FrameSecurityCookieMsSymbol extends AbstractMsSymbol {
 	@Override
 	public void emit(StringBuilder builder) {
 		builder.append(String.format("%s: %s+%08X, Type: %s, %02X", getSymbolTypeName(),
-			registerName.toString(), offset, cookieTypeString[cookieTypeIndex], flags));
+			registerName.toString(), offset, cookieType.toString(), flags));
 	}
 
 	@Override

@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
 
@@ -35,12 +35,13 @@ public class SymbolsTest extends AbstractGenericTest {
 	//  ensure consistency across the tests.  We are setting it int the pdb here (in the static
 	//  assignment block), but we do not know the order that any tests are run, so having the
 	//  same value  will ensure consistent results.
-	private static final int processorIndex = 0x0000;
-	//private static TypeProgramInterface tpi;
-	private static SymbolParser symbolParser;
-	static {
+	private int processorIndex;
+	private SymbolParser symbolParser;
+
+	public SymbolsTest() {
 		try (DummyPdb700 dummyPdb700 = new DummyPdb700(4096, 4096, 4096, 4096)) {
 			pdb = dummyPdb700;
+			processorIndex = 0x0000;
 			pdb.setTargetProcessorIndexNumber(processorIndex);
 
 			symbolParser = pdb.getSymbolParser();
@@ -60,7 +61,7 @@ public class SymbolsTest extends AbstractGenericTest {
 			dummyPdb700.setItemRecord(4096, item);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
+			Msg.error(null, "Error in initialization of test", e);
 			assert false;
 		}
 	}

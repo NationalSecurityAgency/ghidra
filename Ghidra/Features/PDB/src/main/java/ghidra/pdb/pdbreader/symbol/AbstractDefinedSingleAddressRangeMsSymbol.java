@@ -112,7 +112,7 @@ public abstract class AbstractDefinedSingleAddressRangeMsSymbol extends Abstract
 	protected void emitRangeAndGaps(StringBuilder builder) {
 		builder.append(addressRange);
 		builder.append(String.format(", %d Gaps", addressGapList.size()));
-		if (addressGapList.size() == 0) {
+		if (addressGapList.isEmpty()) {
 			return;
 		}
 		builder.append(" (startOffset, length):");

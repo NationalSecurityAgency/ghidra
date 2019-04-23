@@ -46,8 +46,8 @@ public class DataHighLevelShaderLanguageSymbolInternals
 
 	@Override
 	public void emit(StringBuilder builder) {
-		builder.append(
-			String.format(": Type: %s. %s\n", pdb.getTypeRecord(typeIndex), getRegisterType()));
+		builder.append(String.format(": Type: %s. %s\n", pdb.getTypeRecord(typeIndex),
+			getRegisterType().toString()));
 		builder.append(String.format(
 			"   base data: slot = %d offset = %d, texture slot = %d, sampler slot = %d, UAV slot = %d\n",
 			dataSlot, dataOffset, textureSlotStart, samplerSlotStart, uavSlotStart));
@@ -59,7 +59,8 @@ public class DataHighLevelShaderLanguageSymbolInternals
 		typeIndex = reader.parseInt();
 		pdb.pushDependencyStack(new CategoryIndex(CategoryIndex.Category.DATA, typeIndex));
 		pdb.popDependencyStack();
-		registerType = reader.parseUnsignedShortVal();
+		registerType = HLSLRegisterType.fromValue(
+			reader.parseUnsignedShortVal());
 		dataSlot = reader.parseUnsignedShortVal();
 		dataOffset = reader.parseUnsignedShortVal();
 		textureSlotStart = reader.parseUnsignedShortVal();

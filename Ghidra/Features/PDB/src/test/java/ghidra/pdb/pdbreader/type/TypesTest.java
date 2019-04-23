@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
 
@@ -36,18 +36,20 @@ public class TypesTest extends AbstractGenericTest {
 	//  ensure consistency across the tests.  We are setting it int the pdb here (in the static
 	//  assignment block), but we do not know the order that any tests are run, so having the
 	//  same value  will ensure consistent results.
-	private static final int processorIndex = 0x0000;
-	private static int stringIdMsType1;
-	private static int stringIdMsType2;
-	private static int substringListMsType1;
-	private static int referencedSymbolMsType1;
-	private static int methodList16MsType1;
-	private static int methodListMsType1;
-	private static int vtShapeMsType1;
-	private static TypeParser typeParser;
-	static {
+	private int processorIndex;
+	private int stringIdMsType1;
+	private int stringIdMsType2;
+	private int substringListMsType1;
+	private int referencedSymbolMsType1;
+	private int methodList16MsType1;
+	private int methodListMsType1;
+	private int vtShapeMsType1;
+	private TypeParser typeParser;
+
+	public TypesTest() {
 		try (DummyPdb700 dummyPdb700 = new DummyPdb700(4096, 4096, 4096, 4096)) {
 			pdb = dummyPdb700;
+			processorIndex = 0x0000;
 			pdb.setTargetProcessorIndexNumber(processorIndex);
 
 			typeParser = pdb.getTypeParser();

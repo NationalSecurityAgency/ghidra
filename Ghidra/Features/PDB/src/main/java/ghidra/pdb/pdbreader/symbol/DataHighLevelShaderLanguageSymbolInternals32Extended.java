@@ -45,8 +45,8 @@ public class DataHighLevelShaderLanguageSymbolInternals32Extended
 
 	@Override
 	public void emit(StringBuilder builder) {
-		builder.append(
-			String.format(": Type: %s. %s\n", pdb.getTypeRecord(typeIndex), getRegisterType()));
+		builder.append(String.format(": Type: %s. %s\n", pdb.getTypeRecord(typeIndex),
+			getRegisterType().toString()));
 		builder.append(String.format(
 			"   register index = %d, base data offset start = %d, bind space = %d, bind slot = %d\n",
 			registerIndex, dataOffset, bindSpace, bindSlot));
@@ -62,7 +62,8 @@ public class DataHighLevelShaderLanguageSymbolInternals32Extended
 		dataOffset = reader.parseUnsignedIntVal();
 		bindSpace = reader.parseUnsignedIntVal();
 		bindSlot = reader.parseUnsignedIntVal();
-		registerType = reader.parseUnsignedShortVal();
+		registerType = HLSLRegisterType.fromValue(
+			reader.parseUnsignedShortVal());
 		name.parse(reader);
 	}
 

@@ -35,6 +35,13 @@ public class EnvironmentBlockMsSymbol extends AbstractMsSymbol {
 	private int flags;
 	// TODO: MSFT API struct shows rev; usage shows fEC somewhere (not in struct)
 	private boolean rev;
+	/**
+	 * These appear to be pairs of strings that we then output as
+	 * <P>
+	 * string1 = string2
+	 * <P>
+	 * string3 = string4...
+	 */
 	private List<AbstractString> stringList = new ArrayList<>();
 
 	/**
@@ -49,7 +56,7 @@ public class EnvironmentBlockMsSymbol extends AbstractMsSymbol {
 		while (reader.hasMore()) {
 			AbstractString string = new StringUtf8Nt();
 			string.parse(reader);
-			if (string.get().length() == 0) {
+			if (string.get().isEmpty()) {
 				break;
 			}
 			stringList.add(string);

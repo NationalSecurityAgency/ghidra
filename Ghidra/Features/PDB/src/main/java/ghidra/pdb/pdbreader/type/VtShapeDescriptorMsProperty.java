@@ -20,9 +20,6 @@ import java.util.Map;
 
 /**
  * VTShape Descriptor Property used on VtShapeMsType PDB data type.
- * <P>
- * Note: we do not necessarily understand each of these data type classes.  Refer to the
- *  base class for more information.
  */
 public enum VtShapeDescriptorMsProperty {
 

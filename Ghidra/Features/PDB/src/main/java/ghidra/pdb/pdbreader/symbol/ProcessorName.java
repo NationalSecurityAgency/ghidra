@@ -133,11 +133,7 @@ public class ProcessorName extends AbstractParsableItem {
 	}
 
 	private String getProcessorName() {
-		String val = processorStringMap.get(processorIndex);
-		if (val != null) {
-			return val;
-		}
-		return badProcessor;
+		return processorStringMap.getOrDefault(processorIndex, badProcessor);
 	}
 
 }

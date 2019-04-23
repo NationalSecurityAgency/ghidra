@@ -93,7 +93,7 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	 */
 	protected void processFlags(byte[] flagsIn) {
 		int flagsByte = flagsIn[0];
-		language = new LanguageName(flagsByte);
+		language = LanguageName.fromValue(flagsByte);
 
 		flagsByte = flagsIn[1];
 		pcodePresent = ((flagsByte & 0x0001) == 0x0001);

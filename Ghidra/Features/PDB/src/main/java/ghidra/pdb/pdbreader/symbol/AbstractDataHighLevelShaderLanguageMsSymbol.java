@@ -53,10 +53,10 @@ public abstract class AbstractDataHighLevelShaderLanguageMsSymbol extends Abstra
 	}
 
 	/**
-	 * Returns the register type.
-	 * @return Register type.
+	 * Returns the {@link HLSLRegisterType}.
+	 * @return The {@link HLSLRegisterType}.
 	 */
-	public String getRegisterType() {
+	public HLSLRegisterType getRegisterType() {
 		return internals.getRegisterType();
 	}
 

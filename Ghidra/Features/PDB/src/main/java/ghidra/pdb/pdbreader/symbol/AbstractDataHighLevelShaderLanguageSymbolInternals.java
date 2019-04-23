@@ -15,6 +15,7 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
+import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.pdbreader.*;
 
 /**
@@ -28,22 +29,14 @@ import ghidra.pdb.pdbreader.*;
 public abstract class AbstractDataHighLevelShaderLanguageSymbolInternals
 		extends AbstractSymbolInternals {
 
-	protected static final String regTypeHLSL[] = { "TEMP", "INPUT", "OUTPUT", "INDEXABLE_TEMP",
-		"IMMEDIATE32", "IMMEDIATE64", "SAMPLER", "RESOURCE", "CONSTANT_BUFFER",
-		"IMMEDIATE_CONSTANT_BUFFER", "LABEL", "INPUT_PRIMITIVEID", "OUTPUT_DEPTH", "NULL",
-		"RASTERIZER", "OUTPUT_COVERAGE_MASK", "STREAM", "FUNCTION_BODY", "FUNCTION_TABLE",
-		"INTERFACE", "FUNCTION_INPUT", "FUNCTION_OUTPUT", "OUTPUT_CONTROL_POINT_ID",
-		"INPUT_FORK_INSTANCE_ID", "INPUT_JOIN_INSTANCE_ID", "INPUT_CONTROL_POINT",
-		"OUTPUT_CONTROL_POINT", "INPUT_PATCH_CONSTANT", "INPUT_DOMAIN_POINT", "THIS_POINTER",
-		"UNORDERED_ACCESS_VIEW", "THREAD_GROUP_SHARED_MEMORY", "INPUT_THREAD_ID",
-		"INPUT_THREAD_GROUP_ID", "INPUT_THREAD_ID_IN_GROUP", "INPUT_COVERAGE_MASK",
-		"INPUT_THREAD_ID_IN_GROUP_FLATTENED", "INPUT_GS_INSTANCE_ID", "OUTPUT_DEPTH_GREATER_EQUAL",
-		"OUTPUT_DEPTH_LESS_EQUAL", "CYCLE_COUNTER" };
-
 	//==============================================================================================
+	/**
+	 * Implementing class is required to parse these four fields in the
+	 * {@link #parse(PdbByteReader)} method.
+	 */
 	protected int typeIndex;
 	protected long dataOffset;
-	protected int registerType;
+	protected HLSLRegisterType registerType;
 	protected AbstractString name;
 
 	//==============================================================================================
@@ -59,11 +52,8 @@ public abstract class AbstractDataHighLevelShaderLanguageSymbolInternals
 		return dataOffset;
 	}
 
-	public String getRegisterType() {
-		if (registerType >= 0 && registerType < regTypeHLSL.length) {
-			return regTypeHLSL[registerType];
-		}
-		return "INVALID_REG";
+	public HLSLRegisterType getRegisterType() {
+		return registerType;
 	}
 
 	public int getTypeIndex() {

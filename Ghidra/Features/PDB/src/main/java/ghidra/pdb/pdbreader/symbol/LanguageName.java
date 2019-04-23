@@ -15,7 +15,8 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
-import ghidra.pdb.AbstractParsableItem;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Language name used by certain PDB symbols.
@@ -23,29 +24,49 @@ import ghidra.pdb.AbstractParsableItem;
  * @see Compile3MsSymbol
  * @see CompileFlagsMsSymbol
  */
-public class LanguageName extends AbstractParsableItem {
+public enum LanguageName {
 
-	private static final String idString[] =
-		{ "C", "C++", "FORTRAN", "MASM", "Pascal", "Basic", "COBOL", "LINK", "CVTRES", "CVTPGD",
-			"C#", "VisualBasic", "ILASM", "Java", "JScript", "MSIL", "HLSL", "???" };
+	INVALID("???", -1),
+	C("C", 0),
+	CPP("C++", 1),
+	FORTRAN("FORTRAN", 2),
+	MASM("MASM", 3),
+	PASCAL("Pascal", 4),
+	BASIC("Basic", 5),
+	COBOL("COBOL", 6),
+	LINK("LINK", 7),
+	CVTRES("CVTRES", 8),
+	CVTPGD("CVTPGD", 9),
+	CSHARP("C#", 10),
+	VISUALBASIC("VisualBasic", 11),
+	ILASM("ILASM", 12),
+	JAVA("Java", 13),
+	JSCRIPT("JScript", 14),
+	MSIL("MSIL", 15),
+	HLSL("HLSL", 16);
 
-	//==============================================================================================
-	private int languageIndex;
-
-	//==============================================================================================
-	/**
-	 * Constructor for this symbol component.  Takes an int language index argument.
-	 * @param languageIndexIn Language index.
-	 */
-	public LanguageName(int languageIndexIn) {
-		this.languageIndex =
-			(languageIndexIn >= 0 && languageIndex < idString.length) ? languageIndexIn
-					: idString.length - 1;
+	private static final Map<Integer, LanguageName> BY_VALUE = new HashMap<>();
+	static {
+		for (LanguageName val : values()) {
+			BY_VALUE.put(val.value, val);
+		}
 	}
 
+	public final String label;
+	public final int value;
+
 	@Override
-	public void emit(StringBuilder builder) {
-		builder.append(idString[languageIndex]);
+	public String toString() {
+		return label;
+	}
+
+	public static LanguageName fromValue(int val) {
+		return BY_VALUE.getOrDefault(val, INVALID);
+	}
+
+	private LanguageName(String label, int value) {
+		this.label = label;
+		this.value = value;
 	}
 
 }

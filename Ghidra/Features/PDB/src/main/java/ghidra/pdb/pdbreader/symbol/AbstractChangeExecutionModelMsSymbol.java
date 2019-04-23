@@ -152,11 +152,12 @@ public abstract class AbstractChangeExecutionModelMsSymbol extends AbstractMsSym
 	/**
 	 * Parses some specific values for this version of symbol.
 	 * <P>
-	 * Implementing class must, in the appropriate order pertinent to itself, parse
-	 * {@link #subtype} and {@link #flag} if
-	 * {@link #model}=={@link #AbstractChangeExecutionModelMsSymbol.Model.COBOL} or
-	 * {@link #offsetToPcodeFunctionTable} and {@link #offsetToSegmentPcodeInformation} if
-	 * {@link #model}=={@link #AbstractChangeExecutionModelMsSymbol.Model.PCODE}.
+	 * Implementing class must, in the appropriate order pertinent to itself, do the following:
+	 * <PRE>
+	 * if {@link #model}=={@link #AbstractChangeExecutionModelMsSymbol.Model.COBOL}, then parse
+	 *    {@link #subtype} and {@link #flag}
+	 * else if {@link #model}=={@link #AbstractChangeExecutionModelMsSymbol.Model.PCODE}, then parse
+	 *    {@link #offsetToPcodeFunctionTable} and {@link #offsetToSegmentPcodeInformation}. </PRE>
 	 * @param reader {@link PdbByteReader} from which to parse the information.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

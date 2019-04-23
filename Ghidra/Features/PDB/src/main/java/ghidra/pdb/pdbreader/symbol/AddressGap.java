@@ -18,7 +18,9 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.*;
 
 /**
- * Address Gap property used by a number of specific PDB symbol types.
+ * Address Gap property used by a number of specific PDB symbol types.  This seems to specify
+ *  one of potentially many address gaps in an address range.
+ *  @see AbstractDefinedSingleAddressRangeMsSymbol
  */
 public class AddressGap extends AbstractParsableItem {
 
