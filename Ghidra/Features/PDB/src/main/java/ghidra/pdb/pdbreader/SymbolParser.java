@@ -557,12 +557,12 @@ public class SymbolParser {
 			case GlobalProcedureStartIa64StMsSymbol.PDB_ID:
 				symbol = new GlobalProcedureStartIa64StMsSymbol(pdb, reader);
 				break;
-			case LocalIntermediateLanguageSymbolWithLocalSlotIndexFieldStMsSymbol.PDB_ID:
-				symbol = new LocalIntermediateLanguageSymbolWithLocalSlotIndexFieldStMsSymbol(pdb,
+			case LocalSlotIndexFieldedLILStMsSymbol.PDB_ID:
+				symbol = new LocalSlotIndexFieldedLILStMsSymbol(pdb,
 					reader);
 				break;
-			case LocalIntermediateLanguageSymbolWithParameterSlotIndexFieldStMsSymbol.PDB_ID:
-				symbol = new LocalIntermediateLanguageSymbolWithParameterSlotIndexFieldStMsSymbol(
+			case ParameterSlotIndexFieldedLILStMsSymbol.PDB_ID:
+				symbol = new ParameterSlotIndexFieldedLILStMsSymbol(
 					pdb, reader);
 				break;
 			case AnnotationMsSymbol.PDB_ID:
@@ -592,25 +592,25 @@ public class SymbolParser {
 			case GlobalManagedDataStMsSymbol.PDB_ID:
 				symbol = new GlobalManagedDataStMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterRelativeToVirtualFramePointerStMsSymbol.PDB_ID:
+			case ManLocOrParamReltoVFPStMsSymbol.PDB_ID:
 				symbol =
-					new ManagedLocalOrParameterRelativeToVirtualFramePointerStMsSymbol(pdb, reader);
+					new ManLocOrParamReltoVFPStMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterStoredInRegisterStMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInRegisterStMsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIRStMsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIRStMsSymbol(pdb, reader);
 				break;
 			case ManagedSymbolWithSlotIndexFieldStMsSymbol.PDB_ID:
 				symbol = new ManagedSymbolWithSlotIndexFieldStMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterStoredInManyRegisterStMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInManyRegisterStMsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIMRStMsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIMRStMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterRelativeToAlternateFramePointerStMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterRelativeToAlternateFramePointerStMsSymbol(pdb,
+			case ManLocOrParamReltoAMPStMsSymbol.PDB_ID:
+				symbol = new ManLocOrParamReltoAMPStMsSymbol(pdb,
 					reader);
 				break;
-			case ManagedLocalOrParameterStoredInManyRegister2StMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInManyRegister2StMsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIMR2StMsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIMR2StMsSymbol(pdb, reader);
 				break;
 			case IndexForTypeReferencedByNameFromMetadataMsSymbol.PDB_ID:
 				symbol = new IndexForTypeReferencedByNameFromMetadataMsSymbol(pdb, reader);
@@ -695,12 +695,12 @@ public class SymbolParser {
 			case GlobalProcedureStartIa64MsSymbol.PDB_ID:
 				symbol = new GlobalProcedureStartIa64MsSymbol(pdb, reader);
 				break;
-			case LocalIntermediateLanguageSymbolWithLocalSlotIndexFieldMsSymbol.PDB_ID:
+			case LocalSlotIndexFieldedLILMsSymbol.PDB_ID:
 				symbol =
-					new LocalIntermediateLanguageSymbolWithLocalSlotIndexFieldMsSymbol(pdb, reader);
+					new LocalSlotIndexFieldedLILMsSymbol(pdb, reader);
 				break;
-			case LocalIntermediateLanguageSymbolWithParameterSlotIndexFieldMsSymbol.PDB_ID:
-				symbol = new LocalIntermediateLanguageSymbolWithParameterSlotIndexFieldMsSymbol(pdb,
+			case ParameterSlotIndexFieldedLILMsSymbol.PDB_ID:
+				symbol = new ParameterSlotIndexFieldedLILMsSymbol(pdb,
 					reader);
 				break;
 			case LocalManagedDataMsSymbol.PDB_ID:
@@ -709,25 +709,25 @@ public class SymbolParser {
 			case GlobalManagedDataMsSymbol.PDB_ID:
 				symbol = new GlobalManagedDataMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterRelativeToVirtualFramePointerMsSymbol.PDB_ID:
+			case ManLocOrParamReltoVFPMsSymbol.PDB_ID:
 				symbol =
-					new ManagedLocalOrParameterRelativeToVirtualFramePointerMsSymbol(pdb, reader);
+					new ManLocOrParamReltoVFPMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterStoredInRegisterMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInRegisterMsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIRMsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIRMsSymbol(pdb, reader);
 				break;
 			case ManagedSymbolWithSlotIndexFieldMsSymbol.PDB_ID:
 				symbol = new ManagedSymbolWithSlotIndexFieldMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterStoredInManyRegisterMsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInManyRegisterMsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIMRMsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIMRMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterRelativeToAlternateFramePointerMsSymbol.PDB_ID:
+			case ManLocOrParamReltoAMPMsSymbol.PDB_ID:
 				symbol =
-					new ManagedLocalOrParameterRelativeToAlternateFramePointerMsSymbol(pdb, reader);
+					new ManLocOrParamReltoAMPMsSymbol(pdb, reader);
 				break;
-			case ManagedLocalOrParameterStoredInManyRegister2MsSymbol.PDB_ID:
-				symbol = new ManagedLocalOrParameterStoredInManyRegister2MsSymbol(pdb, reader);
+			case ManagedLocalOrParameterSIMR2MsSymbol.PDB_ID:
+				symbol = new ManagedLocalOrParameterSIMR2MsSymbol(pdb, reader);
 				break;
 			case UsingNamespaceMsSymbol.PDB_ID:
 				symbol = new UsingNamespaceMsSymbol(pdb, reader);
@@ -759,19 +759,19 @@ public class SymbolParser {
 			case ManagedConstantMsSymbol.PDB_ID:
 				symbol = new ManagedConstantMsSymbol(pdb, reader);
 				break;
-			case AttributedLocalOrParameterRelativeToVirtualFramePointerMsSymbol.PDB_ID:
-				symbol = new AttributedLocalOrParameterRelativeToVirtualFramePointerMsSymbol(pdb,
+			case AttribLocOrParamReltoVFPMsSymbol.PDB_ID:
+				symbol = new AttribLocOrParamReltoVFPMsSymbol(pdb,
 					reader);
 				break;
-			case AttributedLocalOrParameterStoredInRegisterMsSymbol.PDB_ID:
-				symbol = new AttributedLocalOrParameterStoredInRegisterMsSymbol(pdb, reader);
+			case AttributedLocalOrParameterSIRMsSymbol.PDB_ID:
+				symbol = new AttributedLocalOrParameterSIRMsSymbol(pdb, reader);
 				break;
-			case AttributedLocalOrParameterRelativeToAlternateFramePointerMsSymbol.PDB_ID:
-				symbol = new AttributedLocalOrParameterRelativeToAlternateFramePointerMsSymbol(pdb,
+			case AttribLocOrParamReltoAMPMsSymbol.PDB_ID:
+				symbol = new AttribLocOrParamReltoAMPMsSymbol(pdb,
 					reader);
 				break;
-			case AttributedLocalOrParameterStoredInManyRegisterMsSymbol.PDB_ID:
-				symbol = new AttributedLocalOrParameterStoredInManyRegisterMsSymbol(pdb, reader);
+			case AttributedLocalOrParameterSIMRMsSymbol.PDB_ID:
+				symbol = new AttributedLocalOrParameterSIMRMsSymbol(pdb, reader);
 				break;
 			case SeparatedCodeFromCompilerSupportMsSymbol.PDB_ID:
 				symbol = new SeparatedCodeFromCompilerSupportMsSymbol(pdb, reader);
@@ -815,26 +815,26 @@ public class SymbolParser {
 			case DefinedSingleAddressRangeMsSymbol.PDB_ID:
 				symbol = new DefinedSingleAddressRangeMsSymbol(pdb, reader);
 				break;
-			case DefinedSingleAddressRangeForSubfieldMsSymbol.PDB_ID:
-				symbol = new DefinedSingleAddressRangeForSubfieldMsSymbol(pdb, reader);
+			case SubfieldDARMsSymbol.PDB_ID:
+				symbol = new SubfieldDARMsSymbol(pdb, reader);
 				break;
-			case DefinedSingleAddressRangeForEnregisteredSymbolMsSymbol.PDB_ID:
-				symbol = new DefinedSingleAddressRangeForEnregisteredSymbolMsSymbol(pdb, reader);
+			case EnregisteredSymbolDARMsSymbol.PDB_ID:
+				symbol = new EnregisteredSymbolDARMsSymbol(pdb, reader);
 				break;
-			case DefinedSingleAddressRangeForFramePointerRelativeMsSymbol.PDB_ID:
-				symbol = new DefinedSingleAddressRangeForFramePointerRelativeMsSymbol(pdb, reader);
+			case FramePointerRelativeDARMsSymbol.PDB_ID:
+				symbol = new FramePointerRelativeDARMsSymbol(pdb, reader);
 				break;
-			case DefinedSingleAddressRangeForEnregisteredFieldOfSymbolMsSymbol.PDB_ID:
+			case EnregisteredFieldOfSymbolDARMsSymbol.PDB_ID:
 				symbol =
-					new DefinedSingleAddressRangeForEnregisteredFieldOfSymbolMsSymbol(pdb, reader);
+					new EnregisteredFieldOfSymbolDARMsSymbol(pdb, reader);
 				break;
-			case DefinedSingleAddressRangeForFramePointerRelativeFullScopeMsSymbol.PDB_ID:
-				symbol = new DefinedSingleAddressRangeForFramePointerRelativeFullScopeMsSymbol(pdb,
+			case FramePointerRelativeFullScopeDARMsSymbol.PDB_ID:
+				symbol = new FramePointerRelativeFullScopeDARMsSymbol(pdb,
 					reader);
 				break;
-			case DefinedSingleAddressRangeForEnregisteredSymbolRelativeMsSymbol.PDB_ID:
+			case EnregisteredSymbolRelativeDARMsSymbol.PDB_ID:
 				symbol =
-					new DefinedSingleAddressRangeForEnregisteredSymbolRelativeMsSymbol(pdb, reader);
+					new EnregisteredSymbolRelativeDARMsSymbol(pdb, reader);
 				break;
 			case LocalProcedure32IdMsSymbol.PDB_ID:
 				symbol = new LocalProcedure32IdMsSymbol(pdb, reader);
@@ -866,14 +866,14 @@ public class SymbolParser {
 			case ProcedureIdEndMsSymbol.PDB_ID:
 				symbol = new ProcedureIdEndMsSymbol(pdb, reader);
 				break;
-			case DefinedAddressRangeHighLevelShaderLanguageMsSymbol.PDB_ID:
-				symbol = new DefinedAddressRangeHighLevelShaderLanguageMsSymbol(pdb, reader);
+			case HighLevelShaderLanguageRegDimDARMsSymbol.PDB_ID:
+				symbol = new HighLevelShaderLanguageRegDimDARMsSymbol(pdb, reader);
 				break;
-			case GlobalDataHighLevelShaderLanguageMsSymbol.PDB_ID:
-				symbol = new GlobalDataHighLevelShaderLanguageMsSymbol(pdb, reader);
+			case GlobalDataHLSLMsSymbol.PDB_ID:
+				symbol = new GlobalDataHLSLMsSymbol(pdb, reader);
 				break;
-			case LocalDataHighLevelShaderLanguageMsSymbol.PDB_ID:
-				symbol = new LocalDataHighLevelShaderLanguageMsSymbol(pdb, reader);
+			case LocalDataHLSLMsSymbol.PDB_ID:
+				symbol = new LocalDataHLSLMsSymbol(pdb, reader);
 				break;
 			case FileStaticMsSymbol.PDB_ID:
 				symbol = new FileStaticMsSymbol(pdb, reader);
@@ -887,9 +887,9 @@ public class SymbolParser {
 			case LocalProcedure32DeferredProcedureCallIdMsSymbol.PDB_ID:
 				symbol = new LocalProcedure32DeferredProcedureCallIdMsSymbol(pdb, reader);
 				break;
-			case DefinedAddressRangeDeferredProcedureCallPointerTagMsSymbol.PDB_ID:
+			case DeferredProcedureCallPointerTagRegDimDARMsSymbol.PDB_ID:
 				symbol =
-					new DefinedAddressRangeDeferredProcedureCallPointerTagMsSymbol(pdb, reader);
+					new DeferredProcedureCallPointerTagRegDimDARMsSymbol(pdb, reader);
 				break;
 			case DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol.PDB_ID:
 				symbol = new DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol(pdb, reader);
@@ -921,17 +921,17 @@ public class SymbolParser {
 			case MapToMiniPdbMsSymbol.PDB_ID:
 				symbol = new MapToMiniPdbMsSymbol(pdb, reader);
 				break;
-			case GlobalDataHighLevelShaderLanguage32MsSymbol.PDB_ID:
-				symbol = new GlobalDataHighLevelShaderLanguage32MsSymbol(pdb, reader);
+			case GlobalDataHLSL32MsSymbol.PDB_ID:
+				symbol = new GlobalDataHLSL32MsSymbol(pdb, reader);
 				break;
-			case LocalDataHighLevelShaderLanguage32MsSymbol.PDB_ID:
-				symbol = new LocalDataHighLevelShaderLanguage32MsSymbol(pdb, reader);
+			case LocalDataHLSL32MsSymbol.PDB_ID:
+				symbol = new LocalDataHLSL32MsSymbol(pdb, reader);
 				break;
-			case GlobalDataHighLevelShaderLanguage32ExtendedMsSymbol.PDB_ID:
-				symbol = new GlobalDataHighLevelShaderLanguage32ExtendedMsSymbol(pdb, reader);
+			case GlobalDataHLSL32ExtMsSymbol.PDB_ID:
+				symbol = new GlobalDataHLSL32ExtMsSymbol(pdb, reader);
 				break;
-			case LocalDataHighLevelShaderLanguage32ExtendedMsSymbol.PDB_ID:
-				symbol = new LocalDataHighLevelShaderLanguage32ExtendedMsSymbol(pdb, reader);
+			case LocalDataHLSL32ExtMsSymbol.PDB_ID:
+				symbol = new LocalDataHLSL32ExtMsSymbol(pdb, reader);
 				break;
 
 			// These should never happen (unless we missed something
