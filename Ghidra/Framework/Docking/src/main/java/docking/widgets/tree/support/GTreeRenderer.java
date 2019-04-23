@@ -21,11 +21,11 @@ import javax.swing.Icon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 
-public class GTreeRenderer extends DefaultTreeCellRenderer {
+public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 	private static final long serialVersionUID = 1L;
 	private static final Color VALID_DROP_TARGET_COLOR = new Color(200, 200, 255);
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
@@ -38,7 +38,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer {
 	private int minIconWidth = DEFAULT_MIN_ICON_WIDTH;
 
 	public GTreeRenderer() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 	/**

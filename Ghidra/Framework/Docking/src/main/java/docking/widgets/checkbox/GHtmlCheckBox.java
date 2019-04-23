@@ -17,6 +17,8 @@ package docking.widgets.checkbox;
 
 import javax.swing.*;
 
+import docking.widgets.GComponent;
+
 /**
  * A {@link JCheckBox} that allows HTML rendering.
  * <p>
@@ -27,7 +29,7 @@ import javax.swing.*;
  *  <tr><td>{@link GHtmlCheckBox}</td><td>YES</td><td>HTML allowed JCheckBox</td></tr>
  * </table>
 */
-public class GHtmlCheckBox extends JCheckBox {
+public class GHtmlCheckBox extends JCheckBox implements GComponent {
 
 	/**
 	 * Creates a check box with no text or icon, with HTML rendering allowed.

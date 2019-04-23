@@ -20,14 +20,14 @@ import java.util.Vector;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 
 /**
  * A {@link JComboBox} that disables HTML rendering.
  * 
  * @param <E> the type of the elements of this combo box
  */
-public class GComboBox<E> extends JComboBox<E> {
+public class GComboBox<E> extends JComboBox<E> implements GComponent {
 
 	/**
 	 * Creates an empty combobox with a default data model.
@@ -77,7 +77,7 @@ public class GComboBox<E> extends JComboBox<E> {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 }

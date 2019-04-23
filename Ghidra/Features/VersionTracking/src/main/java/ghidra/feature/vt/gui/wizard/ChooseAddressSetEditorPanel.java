@@ -24,9 +24,9 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.DockingUtils;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
+import docking.widgets.list.GList;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -61,7 +61,7 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 	private JButton removeRangeButton;
 	private JPanel bottomButtons;
 	private AddressSetListModel listModel;
-	private JList<AddressRange> list;
+	private GList<AddressRange> list;
 	private Set<ChangeListener> listeners = new HashSet<>();
 
 	public ChooseAddressSetEditorPanel(final PluginTool tool, final String name,
@@ -235,8 +235,7 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		headerPanel.add(buttonPanel, BorderLayout.EAST);
 
 		listModel = new AddressSetListModel(myCurrentAddressSet.toList());
-		list = new JList<>(listModel);
-		DockingUtils.turnOffHTMLRendering(list);
+		list = new GList<>(listModel);
 		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override

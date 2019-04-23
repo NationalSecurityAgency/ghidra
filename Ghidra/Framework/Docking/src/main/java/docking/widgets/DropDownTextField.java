@@ -26,7 +26,6 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingUtils;
 import docking.widgets.label.GDLabel;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
@@ -132,7 +131,7 @@ public class DropDownTextField<T> extends JTextField {
 	}
 
 	private void init(int updateMinDelay) {
-		DockingUtils.turnOffHTMLRendering(list);
+		GComponent.turnOffHTMLRendering(list);
 		updateManager = new SwingUpdateManager(updateMinDelay, DEFAULT_MAX_UPDATE_DELAY,
 			"Drop Down Selection Text Field Update Manager", () -> {
 				if (pendingTextUpdate == null) {

@@ -17,7 +17,7 @@ package docking.widgets.checkbox;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 
 /**
  * A {@link JCheckBox} that has HTML rendering disabled.
@@ -29,7 +29,7 @@ import docking.DockingUtils;
  *  <tr><td>{@link GHtmlCheckBox}</td><td>YES</td><td>HTML allowed JCheckBox</td></tr>
  * </table>
  */
-public class GCheckBox extends JCheckBox {
+public class GCheckBox extends JCheckBox implements GComponent {
 
 	/**
 	 * Creates a check box with no text or icon, with HTML rendering disabled.
@@ -133,7 +133,7 @@ public class GCheckBox extends JCheckBox {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class GCheckBox extends JCheckBox {
 	 */
 	@Override
 	public void setText(String text) {
-		DockingUtils.warnAboutHtmlText(text);
+		GComponent.warnAboutHtmlText(text);
 		super.setText(text);
 	}
 }

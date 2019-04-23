@@ -17,6 +17,7 @@ package docking.widgets.label;
 
 import javax.swing.*;
 
+import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 
@@ -36,7 +37,7 @@ import docking.widgets.checkbox.GHtmlCheckBox;
  *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
-public class GDHtmlLabel extends JLabel {
+public class GDHtmlLabel extends JLabel implements GComponent {
 
 	/**
 	 * Creates a label with no image and no text, with {@link SwingConstants#LEADING} horizontal

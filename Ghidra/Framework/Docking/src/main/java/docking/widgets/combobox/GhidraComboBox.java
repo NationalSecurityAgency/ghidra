@@ -26,7 +26,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.text.*;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 
 /**
  * GhidraComboBox adds the following features:
@@ -56,7 +56,7 @@ import docking.DockingUtils;
  * focus) in that you end up changing the button's internal state(by calling
  * setEnabled(true or false)) in the middle of the button press.
  */
-public class GhidraComboBox<E> extends JComboBox<E> {
+public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	private ArrayList<ActionListener> listeners = new ArrayList<>();
 	private ArrayList<DocumentListener> docListeners = new ArrayList<>();
 	private boolean setSelectedFlag = false;
@@ -102,7 +102,7 @@ public class GhidraComboBox<E> extends JComboBox<E> {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 	@Override

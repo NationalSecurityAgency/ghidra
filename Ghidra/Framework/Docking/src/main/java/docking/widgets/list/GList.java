@@ -22,7 +22,7 @@ import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 import docking.widgets.table.GTable;
 
 /**
@@ -35,7 +35,7 @@ import docking.widgets.table.GTable;
  * <p>
  * 
  */
-public class GList<T> extends JList<T> {
+public class GList<T> extends JList<T> implements GComponent {
 	private static final long serialVersionUID = 1L;
 
 	/**The timeout for the auto-lookup feature*/
@@ -84,7 +84,7 @@ public class GList<T> extends JList<T> {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 		addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {

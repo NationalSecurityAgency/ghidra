@@ -21,7 +21,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 
-import docking.DockingUtils;
 import docking.widgets.label.GDHtmlLabel;
 
 /**
@@ -82,7 +81,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	 * @param enable true to enable HTML rendering; false to disable it
 	 */
 	public void setHTMLRenderingEnabled(boolean enable) {
-		putClientProperty(DockingUtils.HTML_DISABLE_STRING, !enable);
+		putClientProperty(GComponent.HTML_DISABLE_STRING, !enable);
 	}
 
 	public void setShouldAlternateRowBackgroundColors(boolean alternate) {

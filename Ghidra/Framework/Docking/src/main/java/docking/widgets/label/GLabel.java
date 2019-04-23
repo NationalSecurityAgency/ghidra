@@ -19,7 +19,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 import ghidra.util.Msg;
@@ -41,7 +41,7 @@ import utilities.util.reflection.ReflectionUtilities;
  *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
-public class GLabel extends JLabel {
+public class GLabel extends JLabel implements GComponent {
 
 	/**
 	 * Creates a immutable label with no image and no text, with {@link SwingConstants#LEADING} horizontal
@@ -132,7 +132,7 @@ public class GLabel extends JLabel {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class GLabel extends JLabel {
 				ReflectionUtilities.createJavaFilteredThrowable());
 			return;
 		}
-		DockingUtils.warnAboutHtmlText(text);
+		GComponent.warnAboutHtmlText(text);
 		super.setText(text);
 	}
 

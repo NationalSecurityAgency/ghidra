@@ -17,7 +17,7 @@ package docking.widgets.label;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 
@@ -37,7 +37,7 @@ import docking.widgets.checkbox.GHtmlCheckBox;
  *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
-public class GDLabel extends JLabel {
+public class GDLabel extends JLabel implements GComponent {
 
 	/**
 	 * Creates a label with no image and no text, with {@link SwingConstants#LEADING} horizontal
@@ -106,12 +106,12 @@ public class GDLabel extends JLabel {
 
 	@Override
 	public void setText(String text) {
-		DockingUtils.warnAboutHtmlText(text);
+		GComponent.warnAboutHtmlText(text);
 		super.setText(text);
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 
 }

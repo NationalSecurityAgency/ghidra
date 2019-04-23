@@ -17,13 +17,13 @@ package docking.widgets.button;
 
 import javax.swing.*;
 
-import docking.DockingUtils;
+import docking.widgets.GComponent;
 
 /**
  * A {@link JRadioButton} that disables HTML rendering.
  * 
  */
-public class GRadioButton extends JRadioButton {
+public class GRadioButton extends JRadioButton implements GComponent {
 
 	/**
 	 * Creates a blank radio button with HTML rendering disabled.
@@ -113,6 +113,6 @@ public class GRadioButton extends JRadioButton {
 	}
 
 	private void init() {
-		DockingUtils.turnOffHTMLRendering(this);
+		GComponent.turnOffHTMLRendering(this);
 	}
 }

@@ -27,8 +27,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.undo.UndoableEdit;
 
-import org.apache.commons.lang3.StringUtils;
-
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
@@ -41,9 +39,7 @@ import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
 import resources.ResourceManager;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * <h1>Notes about how to use HTML safely:</h1>
@@ -97,9 +93,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * </table>
  */
 public class DockingUtils {
-	// taken from BasicHTML.htmlDisable, which is private
-	public static final String HTML_DISABLE_STRING = "html.disable";
-
 	private static final int ICON_SIZE = 16;
 
 	/** System dependent mask for the Ctrl key */
@@ -137,55 +130,6 @@ public class DockingUtils {
 		}
 		separator.setPreferredSize(sepDim); // ugly work around to force height of separator
 		return separator;
-	}
-
-	/**
-	 * Helper function that logs a warning about a string text that looks like it has HTML text.
-	 * <p>
-	 * Use this when working with a string in a label that has already disabled HTML rendering.
-	 * <p>
-	 * @param text string to test for HTML and warn about
-	 */
-	public static void warnAboutHtmlText(String text) {
-		// #ifdef still_finding_html_labels_in_our_huge_codebase
-		if (StringUtils.startsWithIgnoreCase(text, "<html>")) {
-			Msg.warn(GLabel.class, "HTML text detected in non-HTML component: " + text,
-				ReflectionUtilities.createJavaFilteredThrowable());
-		}
-		// #endif
-	}
-
-	/**
-	 * Turns off the HTML rendering in the specified component.
-	 * 
-	 * @param comp the thing
-	 */
-	public static void turnOffHTMLRendering(JComponent comp) {
-		comp.putClientProperty(HTML_DISABLE_STRING, true);
-	}
-
-	/**
-	 * Turns off the HTML rendering in the specified component and its current cell renderer.
-	 * 
-	 * @param list the list
-	 */
-	public static void turnOffHTMLRendering(JList<?> list) {
-		turnOffHTMLRendering((JComponent) list);
-		if (list.getCellRenderer() instanceof JComponent) {
-			turnOffHTMLRendering((JComponent) list.getCellRenderer());
-		}
-	}
-
-	/**
-	 * Turns off the HTML rendering in the specified component and its current renderer.
-	 * 
-	 * @param cb the combobox
-	 */
-	public static void turnOffHTMLRendering(JComboBox<?> cb) {
-		turnOffHTMLRendering((JComponent) cb);
-		if (cb.getRenderer() instanceof JComponent) {
-			turnOffHTMLRendering((JComponent) cb.getRenderer());
-		}
 	}
 
 	public static Icon scaleIconAsNeeded(Icon icon) {

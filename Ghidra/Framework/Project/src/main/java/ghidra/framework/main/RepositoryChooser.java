@@ -26,10 +26,10 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.list.GList;
 import ghidra.framework.client.*;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.protocol.ghidra.GhidraURL;
@@ -55,7 +55,7 @@ class RepositoryChooser extends DialogComponentProvider {
 
 	private ServerInfoComponent serverInfoComponent;
 	private JButton queryButton;
-	private JList<String> nameList;
+	private GList<String> nameList;
 	private DefaultListModel<String> listModel;
 
 	private JTextField urlTextField;
@@ -104,8 +104,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		lowerPanel.add(label, BorderLayout.NORTH);
 
 		listModel = new DefaultListModel<>();
-		nameList = new JList<>(listModel);
-		DockingUtils.turnOffHTMLRendering(nameList);
+		nameList = new GList<>(listModel);
 		nameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		nameList.addListSelectionListener(new ListSelectionListener() {
 			@Override

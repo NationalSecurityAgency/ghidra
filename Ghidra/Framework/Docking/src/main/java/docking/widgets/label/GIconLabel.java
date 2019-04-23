@@ -19,6 +19,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 import ghidra.util.Msg;
@@ -40,7 +41,7 @@ import utilities.util.reflection.ReflectionUtilities;
  *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
-public class GIconLabel extends GLabel {
+public class GIconLabel extends GLabel implements GComponent {
 
 	/**
 	 * Creates a immutable label with no image and no text, with {@link SwingConstants#LEADING} horizontal

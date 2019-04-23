@@ -22,9 +22,9 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.DockingUtils;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
+import docking.widgets.list.GList;
 import docking.wizard.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.util.HelpLocation;
@@ -42,7 +42,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 	private JRadioButton existingRepButton;
 	private JRadioButton createRepButton;
 	private ButtonGroup buttonGroup;
-	private JList<String> nameList;
+	private GList<String> nameList;
 	private DefaultListModel<String> listModel;
 	private JTextField nameField;
 	private JLabel nameLabel;
@@ -161,8 +161,7 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		for (String repositoryName : repositoryNames) {
 			listModel.addElement(repositoryName);
 		}
-		nameList = new JList<>(listModel);
-		DockingUtils.turnOffHTMLRendering(nameList);
+		nameList = new GList<>(listModel);
 		nameList.setEnabled(existingRepButton.isSelected());
 		JScrollPane sp = new JScrollPane(nameList);
 		innerPanel.add(sp);
