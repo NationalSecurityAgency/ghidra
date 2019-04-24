@@ -27,6 +27,7 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
+import generic.util.image.ImageUtils;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphAlgorithmStatusListener;
 import ghidra.graph.graphs.DefaultVisualGraph;
@@ -40,7 +41,6 @@ import ghidra.graph.viewer.vertex.VisualVertexRenderer;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 public class TestGraphAlgorithmSteppingViewerPanel<V, E extends GEdge<V>> extends JPanel {
 
@@ -212,8 +212,8 @@ public class TestGraphAlgorithmSteppingViewerPanel<V, E extends GEdge<V>> extend
 			int h = image.getHeight();
 			double sw = w * scale;
 			double sh = h * scale;
-			Image scaledImage = ResourceManager.createScaledImage(image, (int) sw, (int) sh,
-				Image.SCALE_AREA_AVERAGING);
+			Image scaledImage =
+				ImageUtils.createScaledImage(image, (int) sw, (int) sh, Image.SCALE_AREA_AVERAGING);
 			JLabel label = new JLabel(new ImageIcon(scaledImage));
 			phasesPanel.add(label);
 		});
