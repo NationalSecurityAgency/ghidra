@@ -92,7 +92,7 @@ public class CrushedPNGFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		return png.toString();
 	}
 

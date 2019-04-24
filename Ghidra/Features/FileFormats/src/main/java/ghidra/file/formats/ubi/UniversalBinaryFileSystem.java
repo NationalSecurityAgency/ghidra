@@ -45,12 +45,9 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		int index = list.indexOf(file);
-		if (index == -1) {
-			return null;
-		}
-		return header.getArchitectures().get(index).toString();
+		return (index != -1) ? header.getArchitectures().get(index).toString() : null;
 	}
 
 	@Override
@@ -79,7 +76,8 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 				Processor processor =
 					CpuTypes.getProcessor(architecture.getCpuType(), architecture.getCpuSubType());
 				int bitSize = CpuTypes.getProcessorBitSize(architecture.getCpuType());
-				String name = processor + "-" + bitSize + "-cpu0x" + Integer.toHexString(architecture.getCpuSubType());
+				String name = processor + "-" + bitSize + "-cpu0x" +
+					Integer.toHexString(architecture.getCpuSubType());
 				GFileImpl file =
 					GFileImpl.fromFilename(this, root, name, false, architecture.getSize(), null);
 				list.add(file);
@@ -100,7 +98,8 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 
 		FatArch architecture = architectures.get(index);
 
-		return new BoundedInputStream(provider.getInputStream(architecture.getOffset()), architecture.getSize());
+		return new BoundedInputStream(provider.getInputStream(architecture.getOffset()),
+			architecture.getSize());
 	}
 
 	@Override
