@@ -45,8 +45,12 @@ task saveSleighArgs {
 		}
 	}
 }
-
 rootProject.prepDev.dependsOn(saveSleighArgs)
+
+apply plugin: 'base'
+clean {
+	delete file("build/data/sleighArgs.txt")
+}
 
 /*****************************************************************************************
  *
