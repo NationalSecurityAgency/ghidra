@@ -153,15 +153,12 @@ task findUnusedHelp(type: JavaExec) {
 	dependsOn configurations.helpPath
 
 	inputs.dir helpRootDir
-	
-	classpath = sourceSets.helpIndex.runtimeClasspath
 
 	main = 'help.validator.UnusedHelpImageFileFinder'		
 
-	args '-debug' // print debug info
+	// args '-debug' // print debug info
 
 	doFirst {		
-		// this modules runtime classpath (contains jhall.jar)
 		classpath project(':Help').sourceSets.main.runtimeClasspath		
 	
 		// the current help dir to process
