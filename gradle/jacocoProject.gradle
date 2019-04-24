@@ -5,16 +5,12 @@
 	A gradle project can add itself to the jacoco run by adding the following to its build.gradle
 	file:
 
-		apply from: "$rootProject.projectDir/gradle/support/jacocoProject.gradle"
+		apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
  *****************************************************************************************/
 								
-// Apply jacoco plugin to root and subprojects. This will create coverage files for each java Test task.
+// Apply jacoco plugin to subprojects. This will create coverage files for each java Test task.
 if (rootProject.ext.jacocoEnabled) {
 	apply plugin:'jacoco'
-	dependencies {
-		jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.2'
-		jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.2'
-	}
 }
 
 // Clean any jacoco files that may have been left behind previously.

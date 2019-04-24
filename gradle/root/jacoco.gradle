@@ -10,8 +10,17 @@ rootProject.ext.jacocoEnabled = (rootProject.gradle.startParameter.taskNames.con
 								rootProject.gradle.startParameter.taskNames.contains('jacocoBranchReport') ||
 								rootProject.gradle.startParameter.taskNames.contains('jacocoReport'))
 
-
 if (project.jacocoEnabled) {
+
+	// jacoco plugin needs to be in the root-level to get the jacocoAnt and jacocoAgent dependencies below
+	//  and any subproject (via jacocoProject.gradle)
+	apply plugin:'jacoco'
+
+	// set classpath dependency for root-level tasks defined in this file.
+    dependencies {
+        jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.2'
+        jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.2'
+    }
 
 	def String jacocoRootExecPath = "$buildDir/jacoco/jacocoMerge.exec"
 	def numFoundExecutionFiles = 0 // number of jacoco data files found in subprojects
@@ -105,8 +114,25 @@ List excludesList = generateExcludesList()
 			}
 		}
 
-		sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-		classDirectories = files(subprojects.sourceSets.main.output)
+		// Turn on html reports, 'doFirst' may disable this later on.
+		reports {
+			html.enabled = true
+			xml.enabled = false
+		}
+
+		// Output info before execution.
+		doFirst {
+
+			// Only report on subprojects with Java sourceSets
+			def subprojectsWithJava = []
+				subprojects { p ->
+					p.plugins.withType(JavaPlugin) {
+						subprojectsWithJava += p
+					}
+				}
+
+		sourceDirectories = files(subprojectsWithJava.sourceSets.main.allSource.srcDirs)
+		classDirectories = files(subprojectsWithJava.sourceSets.main.output)
 
 		logger.debug("jacocoBranchReport: Files to include: " + filesToInclude)
 
@@ -118,14 +144,6 @@ List excludesList = generateExcludesList()
 				})
 		}
 
-		// Turn on html reports, 'doFirst' may disable this later on.
-		reports {
-			html.enabled = true
-			xml.enabled = false
-		}
-
-		// Output info before execution.
-		doFirst {
 			println "jacocoBranchReport: Found $filesToInclude.size Java files to filter on branch '$branchName' and revision $lastRevision from origin '$jacoco_origin'"
 			println "jacocoBranchReport: Number of jacoco execution data files found from jacocoMerge: $numFoundExecutionFiles"
 			// Turn off reports if no files to report or no jacoco data files found. Otherwise the jacoco task will create empty report.
@@ -142,15 +160,24 @@ List excludesList = generateExcludesList()
 	}
 
 /*********************************************************************************
- * Task to generate an aggregate jacoco report from all subprojects
+ * Task to generate an aggregate jacoco report from subprojects with Java sourceSets.
  *********************************************************************************/
 	task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
 		description = 'Generates an aggregate Jacoco report from all subprojects'
 		dependsOn ":jacocoMerge"
 		executionData new File(jacocoRootExecPath)
 
-		sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-		classDirectories = files(subprojects.sourceSets.main.output)
+		// Only report on subprojects with Java sourceSets
+		def subprojectsWithJava = []
+		subprojects { p ->
+			p.plugins.withType(JavaPlugin) {
+				subprojectsWithJava += p
+			}
+		}
+
+		sourceDirectories = files(subprojectsWithJava.sourceSets.main.allSource.srcDirs)
+		classDirectories = files(subprojectsWithJava.sourceSets.main.output)
+
 		classDirectories = files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: excludesList)
 		})
