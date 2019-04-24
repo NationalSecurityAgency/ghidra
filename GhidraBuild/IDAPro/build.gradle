@@ -1,4 +1,5 @@
 apply plugin: 'eclipse'
+eclipse.project.name = '_IDAPro'
 
 rootProject.assembleDistribution {
 	from (this.project.projectDir) {
@@ -6,6 +7,7 @@ rootProject.assembleDistribution {
 		exclude "certification.manifest"
 		exclude ".classpath"
 		exclude ".project"
+		exclude "build.gradle"
 	}
 
 	// Special Case: The xmlldr.py file needs to be in two places in the distribution, so 
