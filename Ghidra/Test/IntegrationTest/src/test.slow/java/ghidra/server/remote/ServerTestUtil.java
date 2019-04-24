@@ -786,7 +786,7 @@ public class ServerTestUtil {
 				funcAddr += 2;
 			}
 
-			setProgramMd5(program);
+			setProgramHashes(program);
 
 			ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
 			long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
@@ -856,15 +856,17 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Sets a dummy MD5 value for the given program.
-	 * 
+	 * Sets dummy hash values for the given program.
+	 *
 	 * @param program the current program
 	 */
-	private static void setProgramMd5(Program program) {
-		int id = program.startTransaction("setmd5");
+	private static void setProgramHashes(Program program) {
+		int id = program.startTransaction("sethashes");
 		try {
 			String md5 = RandomStringUtils.randomNumeric(32);
 			program.setExecutableMD5(md5);
+			String sha256 = RandomStringUtils.randomNumeric(64);
+			program.setExecutableSHA256(sha256);
 		}
 		finally {
 			program.endTransaction(id, true);

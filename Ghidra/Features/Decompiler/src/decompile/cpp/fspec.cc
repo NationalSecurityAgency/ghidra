@@ -2282,7 +2282,7 @@ ProtoStoreSymbol::ProtoStoreSymbol(Scope *sc,const Address &usepoint)
   ParameterPieces pieces;
   pieces.type = scope->getArch()->types->getTypeVoid();
   pieces.flags = 0;
-  setOutput(pieces);
+  ProtoStoreSymbol::setOutput(pieces);
 }
 
 ProtoStoreSymbol::~ProtoStoreSymbol(void)
@@ -2465,7 +2465,7 @@ ProtoStoreInternal::ProtoStoreInternal(Datatype *vt)
   ParameterPieces pieces;
   pieces.type = voidtype;
   pieces.flags = 0;
-  setOutput(pieces);
+  ProtoStoreInternal::setOutput(pieces);
 }
 
 ProtoStoreInternal::~ProtoStoreInternal(void)
