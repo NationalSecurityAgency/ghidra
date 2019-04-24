@@ -301,8 +301,7 @@ attach values quick [ 8 1 2 3 4 5 6 7 ];
 
 define pcodeop kfactor;
 define pcodeop ftrap;
-define pcodeop trap;
-define pcodeop trapv;
+define pcodeop __m68k_trap;
 define pcodeop reset;
 define pcodeop saveFPUStateFrame;
 define pcodeop restoreFPUStateFrame;
@@ -1678,11 +1677,11 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tas eab			is (opbig=0x4a & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
-:trap "#"^op03			is opbig=0x4e & op67=1 & op45=0 & op03			{ vectoraddr:1 = (32 + op03)*4; trap(vectoraddr); }
-:trap^cc			is op=5 & cc & op37=31 & op02=4					{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vectoraddr:1 = (7*4); trapv(vectoraddr); }
-:trap^cc^".w" "#"^d16		is op=5 & cc & op37=31 & op02=2; d16		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vectoraddr:1 = (7*4); trap(vectoraddr); }
-:trap^cc^".l" "#"^d32		is op=5 & cc & op37=31 & op02=3; d32		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vectoraddr:1 = (7*4); trap(vectoraddr); }
-:trapv				is opbig=0x4e & op37=14 & op02=6				{ if (!VF) goto inst_next; vectoraddr:1 = (7*4); trap(vectoraddr); }
+:trap "#"^op03			is opbig=0x4e & op67=1 & op45=0 & op03			{ vector:1 = op03; __m68k_trap(vector); }
+:trap^cc			is op=5 & cc & op37=31 & op02=4					{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; __m68k_trap(vector); }
+:trap^cc^".w" "#"^d16		is op=5 & cc & op37=31 & op02=2; d16		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; __m68k_trap(vector); }
+:trap^cc^".l" "#"^d32		is op=5 & cc & op37=31 & op02=3; d32		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; __m68k_trap(vector); }
+:trapv				is opbig=0x4e & op37=14 & op02=6				{ if (!VF) goto inst_next; vector:1 = 7; __m68k_trap(vector); }
 
 :tst.b eab			is (opbig=0x4a & op67=0)... & eab				{ logflags(); resflags(eab); }
 :tst.w eaw			is (opbig=0x4a & op67=1)... & eaw				{ logflags(); resflags(eaw); }
