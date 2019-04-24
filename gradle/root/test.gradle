@@ -121,21 +121,16 @@ def createDir(dirPath) {
 }	
 
 /*********************************************************************************
- * Finds the log4j properties file and returns its path.
+ * Retrieves log4j properties file and returns its path.
  *********************************************************************************/
 def getLogFileUrl() {
-	String rootDir = System.properties.get("user.dir")
-	String foundFile
-	new File(rootDir).eachFileRecurse(groovy.io.FileType.FILES) {
-		if (it.path.endsWith('src/main/resources/generic.log4jtest.xml')) {
-			foundFile = "file:" + it.path.toString()
-			return "file:" + it.path.toString()
-		}
+	String logFilePath = "$rootDir/Ghidra/Framework/Generic/src/main/resources/generic.log4jtest.xml"
+	File logFile = new File(logFilePath)	
+	if (logFile.exists()) {
+		return logFile.toURI().toString()
 	}
-	
-	return foundFile
+	throw new GradleException("Cannot find log4j properties file using path '$logFilePath'")
 }
-
 
 /*********************************************************************************
  * Creates a new debug port randomly.
