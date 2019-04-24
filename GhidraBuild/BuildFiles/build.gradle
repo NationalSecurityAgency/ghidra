@@ -1,4 +1,16 @@
-apply plugin: 'eclipse'
 apply plugin: 'java'
-eclipse.project.name = '_BuildFiles'
+apply plugin: 'eclipse'
 
+eclipse {
+	project {
+		name  = '_BuildFiles'
+		resourceFilter {
+			appliesTo = 'FOLDERS'
+			type = 'EXCLUDE_ALL'
+			matcher {
+				id = 'org.eclipse.ui.ide.multiFilter'
+				arguments = '1.0-name-matches-true-false-JsonDoclet'
+			}
+		} 
+	}
+}
