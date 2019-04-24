@@ -51,11 +51,14 @@ File pyDevDestDir = file("build/data/buildDependencies/pydev")
 File cdtDestDir = file("build/data/buildDependencies/cdt")
 
 task utilityJar(type:Copy) {
-	doFirst {
-		from (project(':Utility').jar)
-	}
-
 	destinationDir libraryJarDestDir
+
+	// Explicitly add output from Utility:jar task.
+	// Using "project(':Utility').jar" will not compile here, and 
+	// adding configuration in doFirst would result in task always 
+	// up-to-date.
+	from tasks.getByPath(':Utility:jar').outputs
+		into destinationDir
 }
 
 task launchSupportJar(type:Copy) {
