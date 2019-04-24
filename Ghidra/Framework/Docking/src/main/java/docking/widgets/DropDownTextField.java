@@ -26,7 +26,7 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.widgets.label.GDLabel;
+import docking.widgets.label.GDHtmlLabel;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;
@@ -156,7 +156,7 @@ public class DropDownTextField<T> extends JTextField {
 	}
 
 	protected void setPreviewPaneAttributes() {
-		previewLabel = new GDLabel();
+		previewLabel = new GDHtmlLabel();
 		previewLabel.setOpaque(true);
 		previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);
