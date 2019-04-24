@@ -15,13 +15,13 @@
  */
 package resources;
 
-import java.awt.*;
+import java.awt.Image;
+import java.awt.MediaTracker;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -311,7 +311,7 @@ public class ResourceManager {
 	}
 
 //==================================================================================================
-// Image Related Methods
+// Icon Related Methods
 //==================================================================================================	
 
 	/**
@@ -338,57 +338,6 @@ public class ResourceManager {
 	 */
 	public static ImageIcon getScaledIcon(Icon icon, int width, int height) {
 		return new ScaledImageIconWrapper(icon, width, height);
-	}
-
-	/**
-	 * This is really a package-level method.  From outside of this package you should instead
-	 * be calling {@link ResourceManager#getScaledIcon(Icon, int, int, int)}.
-	 * 
-	 * @param icon the icon to scale 
-	 * @param width the new width
-	 * @param height the new height
-	 * @param hints any hints to apply to the scaling operation
-	 * @return the new icon
-	 * @deprecated use {@link #getScaledIcon(Icon, int, int, int)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createScaledIcon(Icon icon, int width, int height, int hints) {
-		return getScaledIcon(icon, width, height, hints);
-	}
-
-	/**
-	 * This is really a package-level method.  From outside of this package you should instead
-	 * be calling {@link ResourceManager#getScaledIcon(Icon, int, int)}.
-	 * 
-	 * @param icon the icon to scale 
-	 * @param width the new width
-	 * @param height the new height
-	 * @return the new icon
-	 * @deprecated use {@link #getScaledIcon(Icon, int, int, int)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createScaledIcon(Icon icon, int width, int height) {
-		return getScaledIcon(icon, width, height, Image.SCALE_AREA_AVERAGING);
-	}
-
-	/**
-	 * Creates a scaled image based upon the given image.
-	 * NOTE: Avoid invocation by a static initializer.
-	 * @param image the image to scale
-	 * @param width the new width
-	 * @param height the new height
-	 * @param hints {@link RenderingHints} used by {@link Graphics2D}
-	 * @return a scaled version of the given image
-	 */
-	public static Image createScaledImage(Image image, int width, int height, int hints) {
-		BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics graphics = scaledImage.getGraphics();
-		Graphics2D g2 = (Graphics2D) graphics;
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-			RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-		graphics.drawImage(image, 0, 0, width, height, null);
-		graphics.dispose();
-		return scaledImage;
 	}
 
 	/**
@@ -419,24 +368,6 @@ public class ResourceManager {
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon, int brightnessPercent) {
 		return new DisabledImageIconWrapper(icon, brightnessPercent);
-	}
-
-	/** 
-	 * Algorithm for filtering an image to make it appear disabled
-	 * 
-	 * <P>Note: you should use one of the {@link #getDisabledIcon(Icon)} methods, as this is 
-	 *          an internal API method.
-	 * 
-	 * @param icon the icon
-	 * @param brightnessPercent the percentage of brightness, 0-100, with 100 being the 
-	 *        brightest possible value
-	 * @return the new icon
-	 * @see #getDisabledIcon(Icon)
-	 * @deprecated use {@link #getDisabledIcon(Icon)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createDisabledIcon(Icon icon, final int brightnessPercent) {
-		return getDisabledIcon(icon, brightnessPercent);
 	}
 
 	/**
