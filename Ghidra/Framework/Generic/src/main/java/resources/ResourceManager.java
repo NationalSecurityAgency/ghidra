@@ -400,14 +400,18 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Get the name of this icon. If icon is an ImageIcon, its getDescription() is called to 
-	 * get the name
+	 * Get the name of this icon.  The value is usually going to be the URL from which the icon 
+	 * was loaded
 	 * 
 	 * @param icon the icon for which the name is desired
-	 * @return  the name
+	 * @return the name
 	 */
 	public static String getIconName(Icon icon) {
 		String iconName = icon.toString();
+
+		if (icon instanceof FileBasedIcon) {
+			return ((FileBasedIcon) icon).getFilename();
+		}
 		if (icon instanceof ImageIcon) {
 			iconName = ((ImageIcon) icon).getDescription();
 		}

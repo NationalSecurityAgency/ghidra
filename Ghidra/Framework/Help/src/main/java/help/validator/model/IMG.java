@@ -79,6 +79,10 @@ public class IMG implements Comparable<IMG> {
 		return imageLocation.isRuntime();
 	}
 
+	public boolean isInvalid() {
+		return imageLocation.isInvalidRuntimeImage();
+	}
+
 	public Path getImageFile() {
 		return imgFile;
 	}

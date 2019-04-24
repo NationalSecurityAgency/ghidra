@@ -21,6 +21,9 @@ import java.nio.file.Path;
 /**
  * A class that represents the original location of an IMG tag along with its location 
  * resolution within the help system.
+ * 
+ * <p>Some images are represented by 'in memory' or 'runtime' values that do not have a valid
+ * url.
  */
 public class ImageLocation {
 
@@ -30,7 +33,12 @@ public class ImageLocation {
 	private Path resolvedPath;
 	private URI resolvedUri;
 	private boolean isRemote;
+
+	/** An image that is taken from an image loaded by a Java class (e.g., Icons.XYZ_ICON) */
 	private boolean isRuntime;
+
+	/** A 'runtime' image that could not be located */
+	private boolean invalidRuntimeImage;
 
 	public static ImageLocation createLocalLocation(Path sourceFile, String imageSrc,
 			URI resolvedUri, Path resolvedPath) {
@@ -61,6 +69,7 @@ public class ImageLocation {
 		l.resolvedPath = null;
 		l.isRemote = false;
 		l.isRuntime = true;
+		l.invalidRuntimeImage = true;
 		return l;
 	}
 
@@ -84,48 +93,28 @@ public class ImageLocation {
 		return sourceFile;
 	}
 
-	public void setSourceFile(Path sourceFile) {
-		this.sourceFile = sourceFile;
-	}
-
 	public String getImageSrc() {
 		return imageSrc;
-	}
-
-	public void setImageSrc(String imageSrc) {
-		this.imageSrc = imageSrc;
 	}
 
 	public Path getResolvedPath() {
 		return resolvedPath;
 	}
 
-	public void setResolvedPath(Path resolvedPath) {
-		this.resolvedPath = resolvedPath;
-	}
-
 	public URI getResolvedUri() {
 		return resolvedUri;
-	}
-
-	public void setResolvedUri(URI resolvedUri) {
-		this.resolvedUri = resolvedUri;
 	}
 
 	public boolean isRemote() {
 		return isRemote;
 	}
 
-	public void setRemote(boolean isRemote) {
-		this.isRemote = isRemote;
-	}
-
 	public boolean isRuntime() {
 		return isRuntime;
 	}
 
-	public void setRuntime(boolean isRuntime) {
-		this.isRuntime = isRuntime;
+	public boolean isInvalidRuntimeImage() {
+		return invalidRuntimeImage;
 	}
 
 	@Override

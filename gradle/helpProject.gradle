@@ -141,10 +141,42 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 
 }
 
+
+// Task for finding unused images that are not referenced from Ghidra help files 
+task findUnusedHelp(type: JavaExec) {
+	group rootProject.GHIDRA_GROUP
+	description "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
+
+	File helpRootDir = file('src/main/help/help')	
+	File outputDir = file('build/help/main/help')
+
+	dependsOn configurations.helpPath
+
+	inputs.dir helpRootDir
+	
+	classpath = sourceSets.helpIndex.runtimeClasspath
+
+	main = 'help.validator.UnusedHelpImageFileFinder'		
+
+	args '-debug' // print debug info
+
+	doFirst {		
+		// this modules runtime classpath (contains jhall.jar)
+		classpath project(':Help').sourceSets.main.runtimeClasspath		
+	
+		// the current help dir to process
+		args "-hp"
+		args "${helpRootDir.absolutePath}"	
+	}
+
+}
+
+
+
 // include the help into the module's jar
 jar {
 	from "build/help/main"		// include the generated help index files
-	from "src/main/help"			// include the help source files
+	from "src/main/help"		// include the help source files
 }
 
 // build the help whenever this module's jar file is built
