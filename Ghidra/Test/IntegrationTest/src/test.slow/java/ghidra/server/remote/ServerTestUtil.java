@@ -40,7 +40,7 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.net.*;
 import ghidra.program.model.listing.Program;
-import ghidra.server.UserAdmin;
+import ghidra.server.ServerAdmin;
 import ghidra.server.UserManager;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.*;
@@ -940,11 +940,12 @@ public class ServerTestUtil {
 	 * @throws Exception
 	 */
 	public static void addPKIUser(File serverRoot, String userName, String dn) throws Exception {
+		ServerAdmin serverAdmin = new ServerAdmin();
 		if (dn != null) {
-			UserAdmin.main(new String[] { serverRoot.getAbsolutePath(), "-dn", userName, dn });
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-dn", userName, dn });
 		}
 		else {
-			UserAdmin.main(new String[] { serverRoot.getAbsolutePath(), "-add", userName });
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-add", userName });
 		}
 	}
 

@@ -50,7 +50,7 @@ public class ServerAdmin implements GhidraLaunchable {
 	private boolean propertyUsed = false;
 
 	/**
-	 * Main method for running the UserAdmin Application.
+	 * Main method for launching the ServerAdmin Application via GhidraLauncher.
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
@@ -68,6 +68,20 @@ public class ServerAdmin implements GhidraLaunchable {
 			configuration.setInitializeLogging(false);
 			Application.initializeApplication(layout, configuration);
 		}
+
+		execute(args);
+	}
+
+	/**
+	 * Main method for processing ServerAdmin command line arguments.
+	 * The following properties may be set:
+	 * <pre>
+	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
+	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 * </pre>
+	 * @param args command line arguments
+	 */
+	public void execute(String[] args) {
 
 		File serverDir = null;
 
