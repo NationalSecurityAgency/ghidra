@@ -22,7 +22,7 @@ import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-public class SringDiffTest {
+public class StringDiffTest {
 
 	/*
 	 	A line match is if the given line to match is contained in the source string and:
