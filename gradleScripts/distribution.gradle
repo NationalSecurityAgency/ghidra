@@ -501,7 +501,7 @@ project.OS_NAMES.each { platform ->
 			// GHIDRA PROJECTS
 			/////////////////
 			subprojects { p ->		
-				if (isGhidra(p)) {
+				if (isGhidra(p) && !isExtension(p)) {
 									
 					// the getZipPath calls here are not in closures because we are already in a taskGraph.whenReady closure
 					from (p.projectDir.toString() + "/build/os/$platform") {
