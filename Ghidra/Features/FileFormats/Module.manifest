@@ -1,4 +1,5 @@
 MODULE FILE LICENSE: lib/dex-ir-2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dexlib-1.4.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/dex-reader-2.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/dex-reader-api-2.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/dex-translator-2.0.jar Apache License 2.0
