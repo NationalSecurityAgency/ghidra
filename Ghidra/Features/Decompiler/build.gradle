@@ -65,9 +65,9 @@ task yaccSleigh {
 	ext.headerDir = file("build/generated/sleighlex")  
 }
 
-// Relative to the 'workingDir' Exec task property.
-def installPoint = "../../../../../Configurations/Public_Release/src/global/docs/languages" 
-def buildDir = "../../../build"
+def buildDir = "../../../build" // Relative to the 'workingDir' Exec task property.
+
+def installPoint = "$rootDir/GhidraDocs/languages/html"
 
 /**
  * Build the pdfs docs for the decompiler and place them in the '$buildDir' directory.
@@ -77,7 +77,6 @@ def buildDir = "../../../build"
  * There is an associated, auto-generated clean task.
  */
 task buildDecompilerDocumentationPdfs(type: Exec) {
-
 	// Check the OS before enabling task.
 	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
 		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
@@ -107,7 +106,7 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 		which fop 2>&1
 		which xsltproc 2>&1
 		mkdir -p $buildDir 2>&1
-		cp $installPoint/html/Diagram*.png $buildDir 2>&1
+		cp $installPoint/Diagram*.png $buildDir 2>&1
 
 		echo '** Building sleigh.fo **'
 		xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
@@ -179,11 +178,11 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		echo '** Building html/sleigh.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/sleigh*.html
-		cp $installPoint/html/Frontpage.css $buildDir/html 2>&1
-		cp $installPoint/html/languages.css $buildDir/html
-		cp $installPoint/html/Diagram1.png $buildDir/html
-		cp $installPoint/html/Diagram2.png $buildDir/html
-		cp $installPoint/html/Diagram3.png $buildDir/html
+		cp $installPoint/Frontpage.css $buildDir/html 2>&1
+		cp $installPoint/languages.css $buildDir/html
+		cp $installPoint/Diagram1.png $buildDir/html
+		cp $installPoint/Diagram2.png $buildDir/html
+		cp $installPoint/Diagram3.png $buildDir/html
 
 		echo '** Building html/pcoderef.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
@@ -191,13 +190,13 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcodedescription.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pseudo-ops.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
-		cp $installPoint/html/Frontpage.css $buildDir/html
-		cp $installPoint/html/languages.css $buildDir/html
+		cp $installPoint/Frontpage.css $buildDir/html
+		cp $installPoint/languages.css $buildDir/html
 
 		echo '** Installing html documentation. **'
 		cp $buildDir/index.html $installPoint/index.html
-		rm $installPoint/html/*.html $installPoint/html/*.png
-		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/html
+		rm $installPoint/*.html $installPoint/*.png
+		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/
 		echo '** Done. **'
 		"""
 
