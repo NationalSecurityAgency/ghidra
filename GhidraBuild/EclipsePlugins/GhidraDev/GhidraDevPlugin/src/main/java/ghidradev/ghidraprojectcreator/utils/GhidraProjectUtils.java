@@ -352,7 +352,7 @@ public class GhidraProjectUtils {
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
 		IPath oldGhidraInstallPath = ghidraFolder.exists()
-				? new Path(ghidraFolder.getRawLocation().toFile().getAbsolutePath())
+				? new Path(ghidraFolder.getLocation().toFile().getAbsolutePath())
 				: null;
 
 		// Loop through the project's existing classpath to decide what to keep (things that aren't

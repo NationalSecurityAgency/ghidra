@@ -20,7 +20,11 @@ dependencies {
 	compile ':dex-translator:2.0'
 
 	compile 'org.ow2.asm:asm-debug-all:4.1'
-	compile 'org.smali:baksmali:1.4.0' // TODO: Would like 1.4.2
+
+	compile 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
+	compile 'org.smali:dexlib:1.4.0'
+	compile 'org.smali:util:1.4.0'
+
 	compile 'net.sf.sevenzipjbinding:sevenzipjbinding:9.20-2.00beta'
 	compile ':AXMLPrinter2'
 	
