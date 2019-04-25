@@ -857,6 +857,27 @@ void Merge::findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist)
   }
 }
 
+/// \brief Compare COPY ops first by Varnode input, then by block containing the op
+///
+/// A sort designed to group COPY ops from the same Varnode together. Then within a group,
+/// COPYs are sorted by their containing basic block (so that dominating ops come first).
+/// \param op1 is the first PcodeOp being compared
+/// \param op2 is the second PcodeOp being compared
+/// \return \b true if the first PcodeOp should be ordered before the second
+bool Merge::compareCopyByInVarnode(PcodeOp *op1,PcodeOp *op2)
+
+{
+  Varnode *inVn1 = op1->getIn(0);
+  Varnode *inVn2 = op2->getIn(0);
+  if (inVn1 != inVn2)		// First compare by Varnode inputs
+    return (inVn1->getCreateIndex() < inVn2->getCreateIndex());
+  int4 index1 = op1->getParent()->getIndex();
+  int4 index2 = op2->getParent()->getIndex();
+  if (index1 != index2)
+    return (index1 < index2);
+  return (op1->getSeqNum().getOrder() < op2->getSeqNum().getOrder());
+}
+
 /// \brief Hide \e shadow Varnodes related to the given HighVariable by consolidating COPY chains
 ///
 /// If two Varnodes are copied from the same common ancestor then they will always contain the
@@ -898,6 +919,108 @@ bool Merge::hideShadows(HighVariable *high)
     }
   }
   return res;
+}
+
+/// \brief Check if the given PcodeOp COPYs are redundant
+///
+/// Both the given COPYs assign to the same HighVariable. One is redundant if there is no other
+/// assignment to the HighVariable between the first COPY and the second COPY.
+/// The first COPY must come from a block with a smaller or equal index to the second COPY.
+/// If the indices are equal, the first COPY must come before the second within the block.
+/// \param high is the HighVariable being assigned to
+/// \param domOp is the first COPY
+/// \param subOp is the second COPY
+/// \return \b true if the second COPY is redundant
+bool Merge::checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp)
+
+{
+  FlowBlock *domBlock = domOp->getParent();
+  FlowBlock *subBlock = subOp->getParent();
+  if (!domBlock->dominates(subBlock))
+    return false;
+  int4 domId = domBlock->getIndex();
+  int4 subId = subBlock->getIndex();
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op == domOp) continue;
+    if (op == subOp) continue;
+    int4 index = op->getParent()->getIndex();
+    if (index == domId) {	// Assignment same block as domOp
+      if (op->getSeqNum().getOrder() > domOp->getSeqNum().getOrder())
+	return false;
+    }
+    if (index == subId) {	// Assignment same block as subOp
+      if (op->getSeqNum().getOrder() < subOp->getSeqNum().getOrder())
+	return false;
+    }
+  }
+  // All cover blocks in between domOp and subOp must be empty
+  if (subBlock != domBlock) {
+    high->updateCover();
+    subBlock = subBlock->getImmedDom();	// Don't need to check first block
+    while(subBlock != domBlock) {	// Don't need to check last block
+      if (!high->wholecover.getCoverBlock(subBlock->getIndex()).empty())
+	return false;
+      subBlock = subBlock->getImmedDom();
+    }
+  }
+  return true;
+}
+
+/// \brief Search for and mark redundant COPY ops into the given high as \e non-printing
+///
+/// Trimming during the merge process can insert multiple COPYs from the same source. In some
+/// cases, one or more COPYs may be redundant and shouldn't be printed. This method searches
+/// for redundancy among COPY ops that assign to the given HighVariable.
+/// \param high is the given HighVariable
+/// \return \b true if any redundant COPYs were discovered
+bool Merge::markRedundantCopies(HighVariable *high)
+
+{
+  bool hasRedundant = false;
+  vector<PcodeOp *> copyIns;
+
+  high->setCopyProcessed();
+  // Find all the COPY ops into this HighVariable from a different HighVariable
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() != CPUI_COPY) continue;
+    if (op->getIn(0)->getHigh() != high)
+      copyIns.push_back(op);
+  }
+
+  // Group COPYs based on the incoming Varnode
+  sort(copyIns.begin(),copyIns.end(),compareCopyByInVarnode);
+  int4 pos = 0;
+  while(pos < copyIns.size()) {
+    // Find a group of COPYs coming from the same Varnode
+    Varnode *inVn = copyIns[pos]->getIn(0);
+    int4 sz = 1;
+    while(pos + sz < copyIns.size()) {
+      Varnode *nextVn = copyIns[pos+sz]->getIn(0);
+      if (nextVn != inVn) break;
+      sz += 1;
+    }
+    if (sz > 1) {	// If there is more than one COPY in a group
+      for(int4 i=sz-1;i>0;--i) {
+	PcodeOp *subOp = copyIns[pos+i];
+	for(int4 j=i-1;j>=0;--j) {
+	  // Make sure earlier index provides dominant op
+	  if (checkCopyPair(high,copyIns[pos+j],subOp)) {
+	    data.opSetFlag(subOp, PcodeOp::nonprinting);
+	    hasRedundant = true;
+	    break;
+	  }
+	}
+      }
+    }
+    pos += sz;
+  }
+  return hasRedundant;
 }
 
 /// \brief Perform low-level details of merging two HighVariables if possible

@@ -45,7 +45,9 @@ public:
   enum {
     flagsdirty = 1,		///< Boolean properties for the HighVariable are dirty
     typedirty = 2,		///< The data-type for the HighVariable is dirty
-    coverdirty = 4		///< The cover for the HighVariable is dirty
+    coverdirty = 4,		///< The cover for the HighVariable is dirty
+    copy_in = 8,		///< There exist COPY ops into \b this HighVariable from other HighVariables
+    copy_processed = 16		///< COPY ops into \b this HighVariable have been analyzed
   };
 private:
   friend class Merge;
@@ -61,6 +63,7 @@ private:
   void updateFlags(void) const;		///< (Re)derive boolean properties of \b this from the member Varnodes
   void updateCover(void) const;		///< (Re)derive the cover of \b this from the member Varnodes
   void updateType(void) const;		///< (Re)derive the data-type for \b this from the member Varnodes
+  void setCopyProcessed(void) const { highflags |= copy_processed; }	///< Mark that \b this has had its COPY ins processed
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
@@ -108,6 +111,9 @@ public:
   void setMark(void) const { flags |= Varnode::mark; }		///< Set the mark on this variable
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
+  void setCopyIn(void) const { highflags |= copy_in; }	///< Mark the existence of COPY ops into \b this
+  bool hasCopyIn(void) const { return ((highflags&copy_in)!=0); }	///< Are there COPY ops into \b this
+  bool isCopyProcessed(void) const { return ((highflags&copy_processed)!=0); }	///< Have COPY ops into \b this been processed
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///

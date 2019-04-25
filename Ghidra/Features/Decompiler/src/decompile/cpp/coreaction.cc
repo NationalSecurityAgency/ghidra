@@ -3589,14 +3589,24 @@ int4 ActionCopyMarker::apply(Funcdata &data)
     op = *iter;
     switch(op->code()) {
     case CPUI_COPY:
-      if (op->getOut()->getHigh() == op->getIn(0)->getHigh()) {
-	data.opSetFlag(op,PcodeOp::nonprinting);
+      v1 = op->getOut();
+      h1 = v1->getHigh();
+      if (h1 == op->getIn(0)->getHigh()) {
+	data.opSetFlag(op, PcodeOp::nonprinting);
 	count += 1;
       }
-      else if (op->getOut()->hasNoDescend()) {	// Don't print shadow assignments
-	if (shadowedVarnode(op->getOut())) {
-	  data.opSetFlag(op,PcodeOp::nonprinting);
-	  count += 1;
+      else {	// COPY between different HighVariables
+	if (h1->hasCopyIn()) {		// If we've seen other COPYs into this high
+	  if (!h1->isCopyProcessed())	// and we haven't searched before,
+	    data.getMerge().markRedundantCopies(h1);	// search for redundant COPYs
+	}
+	else
+	  h1->setCopyIn();
+	if (v1->hasNoDescend()) {	// Don't print shadow assignments
+	  if (shadowedVarnode(v1)) {
+	    data.opSetFlag(op, PcodeOp::nonprinting);
+	    count += 1;
+	  }
 	}
       }
       break;

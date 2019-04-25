@@ -89,6 +89,7 @@ class Merge {
   static bool mergeTestBasic(Varnode *vn);
   static void findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist);
   static bool compareHighByBlock(const HighVariable *a,const HighVariable *b);
+  static bool compareCopyByInVarnode(PcodeOp *op1,PcodeOp *op2);
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
@@ -103,6 +104,7 @@ class Merge {
   void mergeIndirect(PcodeOp *indop);
   void mergeLinear(vector<HighVariable *> &highvec);
   bool merge(HighVariable *high1,HighVariable *high2,bool isspeculative);
+  bool checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
   bool intersection(HighVariable *a,HighVariable *b);
@@ -116,6 +118,7 @@ public:
   void mergeMarker(void);
   void mergeAdjacent(void);
   bool hideShadows(HighVariable *high);
+  bool markRedundantCopies(HighVariable *high);
 };
 
 /// \brief Compare HighVariables by the blocks they cover

@@ -354,6 +354,21 @@ int4 FlowBlock::calcDepth(const FlowBlock *leaf) const
   return depth;
 }
 
+/// Return \b true if \b this block \e dominates the given block (or is equal to it).
+/// This assumes that block indices have been set with a reverse post order so that having a
+/// smaller index is a necessary condition for dominance.
+/// \param subBlock is the given block to test against \b this for dominance
+/// \return \b true if \b this dominates
+bool FlowBlock::dominates(const FlowBlock *subBlock) const
+
+{
+  while(subBlock != (const FlowBlock *)0 && index <= subBlock->index) {
+    if (subBlock == this) return true;
+    subBlock = subBlock->getImmedDom();
+  }
+  return false;
+}
+
 /// \return \b true if \b this is the top of a loop
 bool FlowBlock::hasLoopIn(void) const
 
