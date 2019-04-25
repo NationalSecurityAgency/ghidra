@@ -281,6 +281,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 		props.setInt("SectionAlignment", optionalHeader.getSectionAlignment());
 		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME,
 			prog.getRelocationTable().getSize() > 0);
+		int subsystem = optionalHeader.getSubsystem();
+		if (subsystem >= PeSubsystem.IMAGE_SUBSYSTEM_EFI_APPLICATION.ordinal() &&
+			subsystem <= PeSubsystem.IMAGE_SUBSYSTEM_EFI_ROM.ordinal()) {
+			props.setBoolean("UEFI", true);
+		}
 	}
 
 	private void processRelocations(OptionalHeader optionalHeader, Program prog,

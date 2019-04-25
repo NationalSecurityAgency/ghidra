@@ -117,17 +117,30 @@ public class DataTypeArchiveUtility {
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		String format = props.getString("Executable Format", "");
+		boolean uefi = props.getBoolean("UEFI", false);
 
 		int size = program.getAddressFactory().getDefaultAddressSpace().getSize();
 
 		if (format.equals(PeLoader.PE_NAME) ||
 			(format.equals(CoffLoader.COFF_NAME) && isVisualStudio(program))) {
-			// TODO: add in win7/win10
-			if (size == 64) {
-				list.add("windows_vs12_64");
+
+			if (uefi) {
+				if (size == 64) {
+					list.add("uefi_64");
+				}
+				else {
+					list.add("uefi_32");
+				}
+
 			}
 			else {
-				list.add("windows_vs12_32");
+				// TODO: add in win7/win10
+				if (size == 64) {
+					list.add("windows_vs12_64");
+				}
+				else {
+					list.add("windows_vs12_32");
+				}
 			}
 		}
 		else if (format.equals(MachoLoader.MACH_O_NAME)) {
