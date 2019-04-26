@@ -938,32 +938,20 @@ bool Merge::checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp)
   FlowBlock *subBlock = subOp->getParent();
   if (!domBlock->dominates(subBlock))
     return false;
-  int4 domId = domBlock->getIndex();
-  int4 subId = subBlock->getIndex();
+  Cover range;
+  range.addDefPoint(domOp->getOut());
+  range.addRefPoint(subOp,subOp->getIn(0));
+  Varnode *inVn = domOp->getIn(0);
+  // Look for high Varnodes in the range
   for(int4 i=0;i<high->numInstances();++i) {
     Varnode *vn = high->getInstance(i);
     if (!vn->isWritten()) continue;
     PcodeOp *op = vn->getDef();
-    if (op == domOp) continue;
-    if (op == subOp) continue;
-    int4 index = op->getParent()->getIndex();
-    if (index == domId) {	// Assignment same block as domOp
-      if (op->getSeqNum().getOrder() > domOp->getSeqNum().getOrder())
-	return false;
+    if (op->code() == CPUI_COPY) {		// If the write is not a COPY
+      if (op->getIn(0) == inVn) continue;	// from the same Varnode as domOp and subOp
     }
-    if (index == subId) {	// Assignment same block as subOp
-      if (op->getSeqNum().getOrder() < subOp->getSeqNum().getOrder())
-	return false;
-    }
-  }
-  // All cover blocks in between domOp and subOp must be empty
-  if (subBlock != domBlock) {
-    high->updateCover();
-    subBlock = subBlock->getImmedDom();	// Don't need to check first block
-    while(subBlock != domBlock) {	// Don't need to check last block
-      if (!high->wholecover.getCoverBlock(subBlock->getIndex()).empty())
-	return false;
-      subBlock = subBlock->getImmedDom();
+    if (range.contain(op, 1)) {			// and if write is contained in range between domOp and subOp
+      return false;				// it is intervening and subOp is not redundant
     }
   }
   return true;
