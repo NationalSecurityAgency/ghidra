@@ -3192,7 +3192,13 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
       (zexthiop->code()!= CPUI_INT_SEXT))
     return 0;
   vn1 = zexthiop->getIn(0);
-  if (vn1->isFree()) return 0;
+  if (vn1->isConstant()) {
+    if (vn1->getSize() < sizeof(uintb))
+      return 0;		// Normally we let ZEXT of a constant collapse naturally
+    // But if the ZEXTed constant is too big, this won't happen
+  }
+  else if (vn1->isFree())
+    return 0;
   int4 sa = shiftop->getIn(1)->getOffset();
   int4 concatsize = sa + 8*vn1->getSize();
   if (op->getOut()->getSize() * 8 < concatsize) return 0;
