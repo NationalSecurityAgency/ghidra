@@ -313,7 +313,11 @@ public class FileHeader implements StructConverter {
 	            int sizeOfRawData = sectionHeaders[i].getSizeOfRawData();
 	    		sizeOfRawData  = PortableExecutable.computeAlignment(sizeOfRawData, optHeader.getFileAlignment());
 	    		sectionHeaders[i].setSizeOfRawData(sizeOfRawData);
-	    		
+
+	            int virtualSize = sectionHeaders[i].getVirtualSize();
+    			virtualSize  = PortableExecutable.computeAlignment(virtualSize, optHeader.getSectionAlignment());
+	    		sectionHeaders[i].setVirtualSize(virtualSize);
+
 	            tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 	        }
         }
