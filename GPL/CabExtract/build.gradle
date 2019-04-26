@@ -1,4 +1,3 @@
-apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'GPL CabExtract'

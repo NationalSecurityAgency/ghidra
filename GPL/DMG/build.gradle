@@ -1,7 +1,4 @@
-apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
-apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
-apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'java'
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'GPL DMG'

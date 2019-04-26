@@ -50,6 +50,12 @@ task zipExtensions (type: Zip) {
 		into { getBaseProjectName(p) }
 	}
 	
+	from (p.file('build/os')) {
+		into { getBaseProjectName(p) + "/os" }
+		exclude "**/*.exp"
+		exclude "**/*.lib"
+	}
+	
 	/////////////////
 	// EXTERNAL LIBS
 	/////////////////
