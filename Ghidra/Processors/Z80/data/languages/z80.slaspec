@@ -17,7 +17,7 @@ define space register type=register_space size=1;
 
 define register offset=0x00 size=1 [ F A C B E D L H I R ];
 define register offset=0x00 size=2 [ AF  BC  DE  HL ];
-define register offset=0x20 size=1 [ A_ F_ B_ C_ D_ E_ H_ L_ ]; # Alternate registers
+define register offset=0x20 size=1 [ F_ A_ C_ B_ E_ D_ L_ H_ ]; # Alternate registers
 define register offset=0x20 size=2 [ AF_   BC_   DE_   HL_ ]; # Alternate registers
 define register offset=0x40 size=2 [ _  PC SP IX IY ];
 
