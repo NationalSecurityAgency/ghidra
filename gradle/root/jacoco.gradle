@@ -120,10 +120,10 @@ List excludesList = generateExcludesList()
 			xml.enabled = false
 		}
 
-		// Output info before execution.
 		doFirst {
 
 			// Only report on subprojects with Java sourceSets
+			// This configuration in doFirst to let all subprojects configuration to evaluate.
 			def subprojectsWithJava = []
 				subprojects { p ->
 					p.plugins.withType(JavaPlugin) {
@@ -167,7 +167,16 @@ List excludesList = generateExcludesList()
 		dependsOn ":jacocoMerge"
 		executionData new File(jacocoRootExecPath)
 
+		reports {
+			html.enabled = true
+			xml.enabled = false
+			html.destination = new File(project.ext.reportDir + "/jacocoReport")
+		}
+
+		doFirst {
+
 		// Only report on subprojects with Java sourceSets
+		// This configuration in doFirst to let all subprojects configuration to evaluate.
 		def subprojectsWithJava = []
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
@@ -177,18 +186,11 @@ List excludesList = generateExcludesList()
 
 		sourceDirectories = files(subprojectsWithJava.sourceSets.main.allSource.srcDirs)
 		classDirectories = files(subprojectsWithJava.sourceSets.main.output)
-
 		classDirectories = files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: excludesList)
 		})
 
-		reports {
-			html.enabled = true
-			xml.enabled = false
-			html.destination = new File(project.ext.reportDir + "/jacocoReport")
-		}
 
-		doFirst {
 			if (numFoundExecutionFiles == 0) {
 				println "jacocoReport: No execution data files found."
 				println "jacocoReport: No report written to  $reports.html.destination.absolutePath."
