@@ -91,6 +91,8 @@ task cdtUnpack(type:Copy) {
 	destinationDir cdtDestDir
 }
 
+// We do not currently build GhidraDev plugin at Ghidra build time so we must 
+// copy the prebuilt zip file from the BIN_REPO
 rootProject.assembleDistribution {
 	from ("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev") {
 		include 'GhidraDev*.zip'
