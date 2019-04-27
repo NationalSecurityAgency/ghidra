@@ -1537,7 +1537,7 @@ public class SleighCompile extends SleighBase {
 		entry("buildMacro", sym, rtl);
 		String errstring = checkSymbols(symtab.getCurrentScope());
 		if (errstring.length() != 0) {
-			reportError(sym.getLocation(), " in definition of macro " + sym.getName() + ":");
+			reportError(sym.getLocation(), " in definition of macro " + sym.getName() + ":" + errstring);
 			return;
 		}
 		if (!expandMacros(rtl)) {
