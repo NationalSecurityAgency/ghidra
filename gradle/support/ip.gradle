@@ -36,7 +36,7 @@ task ip {
 		writeLicenseInfo(project, ipToFileMap)
 	}
 }
-
+rootProject.assembleDistribution.dependsOn ip
 
 
 /*********************************************************************************

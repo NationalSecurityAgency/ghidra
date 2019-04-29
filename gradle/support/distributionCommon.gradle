@@ -1,14 +1,9 @@
 apply from: "$rootProject.projectDir/gradle/support/ip.gradle"
 
-rootProject.assembleDistribution.dependsOn ip
-
-
 // all application tests depend on all the sleigh processors to be built
 tasks.withType(Test).all {		
 	it.dependsOn ":allSleighCompile"
 }
-
-
 
 plugins.withType(JavaPlugin) {
 	task zipSourceSubproject (type: Zip) { t ->
