@@ -156,12 +156,3 @@ ext.addExports = { List<String> exports ->
 		}
 	}
 }
-
-afterEvaluate {
-	eclipse.classpath.file.whenMerged { classpath ->
-		classpath.entries.removeAll { ent ->
-			ent instanceof Library && !ent.path.endsWith('.jar')
-		}
-		classpath.entries.findAll { entry  -> entry.kind == 'lib' }*.exported = true
-	}
-}
