@@ -18,7 +18,7 @@ apply plugin: 'c'
 // Unclear if we can rely on the VisualCpp plugin to identify the correct Visual Studio paths
 
 project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
-project.ext.WINDOWS_KITS_DIR = "C:/Program Files (x86)/Windows Kits/10"
+project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 
 /****************************************************************************
  * Method for extracting value from <name>=<value> pairs
@@ -44,11 +44,6 @@ project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 project.ext.MSVC_SDK_VERSION = "UNKNOWN"
 project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
 
-// Ok, this is stupid, but mac and linux can't handle files paths that start with c:
-// These paths are actually only used when running on windows, but the paths gets evaulated
-// as a file no matter what platform you run gradle on.  So the best solution I can think of is as
-// follows.
-/*
 if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 
 	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
@@ -108,13 +103,16 @@ model {
  * Task: verify presence of correct tool chain version for current platform
  ******************************************************************************************/
 task CheckToolChain {
+	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 			// ensure that required MS Visual Studio is installed where expected
-			String msg = "Microsoft Visual Studio install not found: ${project.ext.VISUAL_STUDIO_BASE_DIR}\n" + 
+			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
 				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
-			assert file(project.ext.VISUAL_STUDIO_BASE_DIR).exists() : msg
-			assert file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists() : msg	
+			if (!file(VISUAL_STUDIO_BASE_DIR).exists() || 
+					!file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
+				throw new GradleException(msg);
+			}	
 		}
 	}
 }
