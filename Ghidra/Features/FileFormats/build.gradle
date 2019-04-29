@@ -33,5 +33,5 @@ dependencies {
 	helpPath project(path: ":Base", configuration: 'helpPath')
 
 	// include code from src/test/slow in Base
-	testCompile project(':Base').sourceSets.integrationTest.output	
+	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
 }
