@@ -17,8 +17,7 @@ package docking.widgets.combobox;
 
 import java.util.Vector;
 
-import javax.swing.ComboBoxModel;
-import javax.swing.JComboBox;
+import javax.swing.*;
 
 import docking.widgets.GComponent;
 
@@ -77,7 +76,10 @@ public class GComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
+		if (getRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
+		}
 	}
 
 }

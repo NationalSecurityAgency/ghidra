@@ -38,7 +38,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 	private int minIconWidth = DEFAULT_MIN_ICON_WIDTH;
 
 	public GTreeRenderer() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
 	}
 
 	/**

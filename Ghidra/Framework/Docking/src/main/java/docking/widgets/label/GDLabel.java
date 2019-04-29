@@ -111,7 +111,7 @@ public class GDLabel extends JLabel implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
 	}
 
 }

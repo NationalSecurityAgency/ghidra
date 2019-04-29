@@ -113,6 +113,6 @@ public class GRadioButton extends JRadioButton implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
 	}
 }

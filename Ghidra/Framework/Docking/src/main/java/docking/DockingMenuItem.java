@@ -23,11 +23,11 @@ import javax.swing.KeyStroke;
 import docking.menu.DockingMenuItemUI;
 import docking.widgets.GComponent;
 
-public class DockingMenuItem extends JMenuItem {
+public class DockingMenuItem extends JMenuItem implements GComponent {
 
 	public DockingMenuItem() {
 		setUI(DockingMenuItemUI.createUI(this));
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
 	}
 
 	@Override

@@ -73,17 +73,6 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		setOpaque(true); // mimic the default table & list cell renderer
 	}
 
-	/**
-	 * Enables and disables the rendering of HTML content in this renderer.  If enabled, this
-	 * renderer will interpret HTML content when the text this renderer is showing begins with
-	 * <tt>&lt;html&gt;</tt>
-	 *
-	 * @param enable true to enable HTML rendering; false to disable it
-	 */
-	public void setHTMLRenderingEnabled(boolean enable) {
-		putClientProperty(GComponent.HTML_DISABLE_STRING, !enable);
-	}
-
 	public void setShouldAlternateRowBackgroundColors(boolean alternate) {
 		this.instanceAlternateRowColors = alternate;
 	}

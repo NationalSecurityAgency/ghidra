@@ -15,7 +15,7 @@
  */
 package docking.widgets;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,6 +26,27 @@ import utilities.util.reflection.ReflectionUtilities;
 public interface GComponent {
 	// taken from BasicHTML.htmlDisable, which is private
 	public static final String HTML_DISABLE_STRING = "html.disable";
+
+	/**
+	 * Enables and disables the rendering of HTML content in this component.  If enabled, this
+	 * component will interpret HTML content when the text this component is showing begins with
+	 * <tt>&lt;html&gt;</tt>
+	 *
+	 * @param enable true to enable HTML rendering; false to disable it
+	 */
+	public default void setHTMLRenderingEnabled(boolean enabled) {
+		setHTMLRenderingFlag((JComponent) this, enabled);
+	}
+
+	/**
+	 * Returns the current HTML rendering 'enable-ment' of this component.
+	 * 
+	 * @return boolean, true if HTML rendering is allowed
+	 */
+	public default boolean getHTMLRenderingEnabled() {
+		Object prop = ((JComponent) this).getClientProperty(HTML_DISABLE_STRING);
+		return prop == null || prop != Boolean.TRUE;
+	}
 
 	/**
 	 * Helper function that logs a warning about a string text that looks like it has HTML text.
@@ -44,36 +65,13 @@ public interface GComponent {
 	}
 
 	/**
-	 * Turns off the HTML rendering in the specified component.
+	 * Sets the HTML rendering flag for the specified component.
 	 * 
 	 * @param comp the thing
+	 * @param enabled boolean, if true html rendering will be allowed
 	 */
-	public static void turnOffHTMLRendering(JComponent comp) {
-		comp.putClientProperty(HTML_DISABLE_STRING, true);
-	}
-
-	/**
-	 * Turns off the HTML rendering in the specified component and its current cell renderer.
-	 * 
-	 * @param list the list
-	 */
-	public static void turnOffHTMLRendering(JList<?> list) {
-		turnOffHTMLRendering((JComponent) list);
-		if (list.getCellRenderer() instanceof JComponent) {
-			turnOffHTMLRendering((JComponent) list.getCellRenderer());
-		}
-	}
-
-	/**
-	 * Turns off the HTML rendering in the specified component and its current renderer.
-	 * 
-	 * @param cb the combobox
-	 */
-	public static void turnOffHTMLRendering(JComboBox<?> cb) {
-		turnOffHTMLRendering((JComponent) cb);
-		if (cb.getRenderer() instanceof JComponent) {
-			turnOffHTMLRendering((JComponent) cb.getRenderer());
-		}
+	public static void setHTMLRenderingFlag(JComponent comp, boolean enabled) {
+		comp.putClientProperty(HTML_DISABLE_STRING, enabled ? null : true);
 	}
 
 }

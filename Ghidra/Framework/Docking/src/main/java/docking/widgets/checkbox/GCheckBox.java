@@ -133,7 +133,7 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
 	}
 
 	/**

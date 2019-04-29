@@ -17,8 +17,7 @@ package docking.widgets.list;
 
 import java.util.Vector;
 
-import javax.swing.JList;
-import javax.swing.ListModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -84,7 +83,10 @@ public class GList<T> extends JList<T> implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
+		if (getCellRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getCellRenderer(), false);
+		}
 		addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
@@ -92,5 +94,17 @@ public class GList<T> extends JList<T> implements GComponent {
 			}
 		});
 	}
+
+//	/**
+//	 * Turns off the HTML rendering in the specified component and its current cell renderer.
+//	 * 
+//	 * @param list the list
+//	 */
+//	public static void turnOffHTMLRendering(JList<?> list) {
+//		turnOffHTMLRendering((JComponent) list);
+//		if (list.getCellRenderer() instanceof JComponent) {
+//			turnOffHTMLRendering((JComponent) list.getCellRenderer());
+//		}
+//	}
 
 }

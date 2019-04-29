@@ -102,7 +102,10 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	private void init() {
-		GComponent.turnOffHTMLRendering(this);
+		setHTMLRenderingEnabled(false);
+		if (getRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
+		}
 	}
 
 	@Override
