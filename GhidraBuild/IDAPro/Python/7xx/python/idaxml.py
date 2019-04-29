@@ -231,6 +231,7 @@ class XmlExporter(IdaXml):
         IdaXml.__init__(self, arg)
         self.indent_level = 0
         self.seg_addr = False
+        self.bitness = 1
         self.has_overlays = False
         self.hexrays = False
         
@@ -1192,7 +1193,9 @@ class XmlExporter(IdaXml):
             elif idc.is_code(f) == True:
                 insn = ida_ua.insn_t()
                 ida_ua.decode_insn(insn, addr)
-                target = insn.ops[op].value - ri.tdelta + ri.base
+                opnd = insn.ops[op]
+                value = opnd.addr if opnd.type == idc.o_displ else opnd.value
+                target = value - ri.tdelta + ri.base
             elif idc.is_data(f) == True:
                 target = self.get_data_value(addr) - ri.tdelta + ri.base;
             else:
@@ -1201,6 +1204,14 @@ class XmlExporter(IdaXml):
             return
         if ida_bytes.is_mapped(target) == False:
             return
+
+        if self.bitness == 0:
+            target &= 0xFFFF
+        elif self.bitness == 2:
+            target &= 0xFFFFFFFFFFFFFFFF
+        else:
+            target &= 0xFFFFFFFF
+
         self.start_element(MEMORY_REFERENCE)
         self.write_address_attribute(ADDRESS, addr)
         self.write_numeric_attribute(OPERAND_INDEX, op, 10)
@@ -1219,10 +1230,9 @@ class XmlExporter(IdaXml):
         f = idc.get_full_flags(addr)
         for op in range(ida_ida.UA_MAXOP):
             if ida_bytes.is_off(f, op) == True and (idc.is_data(f) == True or
-                    (idc.is_code(f) == True and
-                    self.is_imm_op(addr, op) == True)):
+               (idc.is_code(f) == True and self.is_imm_or_displ_op(addr, op) == True)):
                 self.export_memory_reference(addr, op)
-    
+
 
     def export_memory_section(self, seg, binfilename):
         """
@@ -1304,28 +1314,28 @@ class XmlExporter(IdaXml):
             byte_order ="little"
         self.write_attribute(ENDIAN, byte_order)
         self.seg_addr = False
-        bitness = 1
+        self.bitness = 1
         model_warning = False
         nsegs = ida_segment.get_segm_qty()
         if (nsegs > 0):
-            bitness = ida_segment.getnseg(0).bitness
+            self.bitness = ida_segment.getnseg(0).bitness
             for i in range(1,nsegs):
                 seg = ida_segment.getnseg(i)
-                if (seg.bitness != bitness):
+                if (seg.bitness != self.bitness):
                     model_warning = True
-                if (seg.bitness > bitness):
-                    bitness = seg.bitness
+                if (seg.bitness > self.bitness):
+                    self.bitness = seg.bitness
         addr_model = "32-bit"
-        if (bitness == 0):
+        if (self.bitness == 0):
             addr_model = "16-bit"
-        elif (bitness == 2):
+        elif (self.bitness == 2):
             addr_model = "64-bit"
         self.write_attribute(ADDRESS_MODEL, addr_model)
         self.close_tag()
         if (model_warning):
             idc.msg("WARNING: Segments do not have same " +
                        "addressing model!\n")
-        if (ida_idp.ph.id == ida_idp.PLFM_386 and bitness == 0):
+        if (ida_idp.ph.id == ida_idp.PLFM_386 and self.bitness == 0):
             self.seg_addr = True
         # find any overlayed memory before processing addressable items
         self.find_overlay_memory()
@@ -1973,21 +1983,23 @@ class XmlExporter(IdaXml):
         return "unknown"
 
 
-    def is_imm_op(self, addr, op):
+    def is_imm_or_displ_op(self, addr, op):
         """
-        Returns true if instruction operand at address is an immediate value.
+        Returns true if instruction operand at address is an immediate or
+        displaced (with base address) value.
         
         Args:
             addr: Integer representing instruction address.
             op: Integer representing operand index (0-based).
             
         Returns:
-            True if instruction operand at address is an immediate value.
+            True if instruction operand at address is an immediate or
+            displaced (with base address) value.
             False otherwise.
         """
         insn = ida_ua.insn_t()
         ida_ua.decode_insn(insn, addr)
-        if (insn.ops[op].type == idc.o_imm):
+        if (insn.ops[op].type in [idc.o_imm, idc.o_displ]):
             return True
         return False
         
