@@ -1,11 +1,11 @@
 ##VERSION: 2.0
 ##MODULE IP: Creative Commons Attribution 2.5
-##MODULE IP: LGPL 2.1
-##MODULE IP: Nuvola Icons - LGPL 2.1
-##MODULE IP: Modified Nuvola Icons - LGPL 2.1
-##MODULE IP: Tango Icons - Public Domain
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: LGPL 2.1
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Public Domain
+##MODULE IP: Tango Icons - Public Domain
 .classpath||GHIDRA||||END|
 .project||GHIDRA||||END|
 CheatSheet.html||GHIDRA||||END|
