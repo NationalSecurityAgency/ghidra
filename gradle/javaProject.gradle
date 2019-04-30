@@ -110,12 +110,12 @@ configurations {
 }
 
 task testJar(type: Jar) {
-	classifier "test"
+	classifier "test" // value part of file name
 	from sourceSets.test.output
 }
 
 task integrationTestJar(type: Jar) {
-	classifier "test"
+	classifier "integrationTest" // value part of file name
 	from sourceSets.integrationTest.output
 }
 artifacts {
