@@ -63,7 +63,6 @@ private:
   void updateFlags(void) const;		///< (Re)derive boolean properties of \b this from the member Varnodes
   void updateCover(void) const;		///< (Re)derive the cover of \b this from the member Varnodes
   void updateType(void) const;		///< (Re)derive the data-type for \b this from the member Varnodes
-  void setCopyProcessed(void) const { highflags |= copy_processed; }	///< Mark that \b this has had its COPY ins processed
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
@@ -114,6 +113,7 @@ public:
   void setCopyIn(void) const { highflags |= copy_in; }	///< Mark the existence of COPY ops into \b this
   bool hasCopyIn(void) const { return ((highflags&copy_in)!=0); }	///< Are there COPY ops into \b this
   bool isCopyProcessed(void) const { return ((highflags&copy_processed)!=0); }	///< Have COPY ops into \b this been processed
+  void setCopyProcessed(void) const { highflags |= copy_processed; }	///< Mark that \b this has had its COPY ins processed
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///

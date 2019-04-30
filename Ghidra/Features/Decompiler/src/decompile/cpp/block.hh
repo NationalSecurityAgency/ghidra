@@ -257,6 +257,7 @@ public:
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
   static bool compareFinalOrder(const FlowBlock *bl1,const FlowBlock *bl2);	///< Final FlowBlock comparison
   static FlowBlock *findCommonBlock(FlowBlock *bl1,FlowBlock *bl2);	///< Find the common dominator of two FlowBlocks
+  static FlowBlock *findCommonBlock(const vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
 };
 
 /// \brief A control-flow block built out of sub-components

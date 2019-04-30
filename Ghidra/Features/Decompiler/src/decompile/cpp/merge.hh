@@ -105,6 +105,8 @@ class Merge {
   void mergeLinear(vector<HighVariable *> &highvec);
   bool merge(HighVariable *high1,HighVariable *high2,bool isspeculative);
   bool checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp);
+  void buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
   bool intersection(HighVariable *a,HighVariable *b);
@@ -118,7 +120,7 @@ public:
   void mergeMarker(void);
   void mergeAdjacent(void);
   bool hideShadows(HighVariable *high);
-  bool markRedundantCopies(HighVariable *high);
+  void processCopyTrims(HighVariable *high);
 };
 
 /// \brief Compare HighVariables by the blocks they cover

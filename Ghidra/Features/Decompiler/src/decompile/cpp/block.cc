@@ -720,6 +720,39 @@ FlowBlock *FlowBlock::findCommonBlock(FlowBlock *bl1,FlowBlock *bl2)
   return common;
 }
 
+/// Find the most immediate dominating FlowBlock of all blocks in the given set.
+/// The container must not be empty.
+/// \param blockSet is the given set of blocks
+/// \return the most immediate dominating FlowBlock
+FlowBlock *FlowBlock::findCommonBlock(const vector<FlowBlock *> &blockSet)
+
+{
+  vector<FlowBlock *> markedSet;
+  FlowBlock *res = blockSet[0];
+  int4 bestIndex = res->getIndex();
+  res->setMark();
+  markedSet.push_back(res);
+  for(int4 i=0;i<blockSet.size();++i) {
+    if (bestIndex == 0)
+      break;
+    FlowBlock *bl = blockSet[i];
+    while(bl->getIndex() > bestIndex) {
+      if (bl->isMark()) break;
+      bl->setMark();
+      markedSet.push_back(bl);
+      bl = bl->getImmedDom();
+    }
+    if (bl->isMark()) continue;
+    res = bl;
+    bestIndex = res->getIndex();
+    res->setMark();
+    markedSet.push_back(res);
+  }
+  for(int4 i=0;i<markedSet.size();++i)
+    markedSet[i]->clearMark();
+  return res;
+}
+
 /// Add the given FlowBlock to the list and make \b this the parent
 /// Update \b index so that it has the minimum over all components
 /// \param bl is the given FlowBlock
