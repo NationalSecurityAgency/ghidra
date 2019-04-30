@@ -765,6 +765,11 @@ subprojects { p ->
 			from (p.projectDir.toString() + "/build/data") {
 				into { getBaseProjectName(p) + "/data" }
 			}
+
+			// copy the LICENSE.txt file into the extension zip
+			from (p.projectDir.toString() + "/build/LICENSE.txt") {
+				into { getBaseProjectName(p) }
+			}
 			
 			/////////////////
 			// NATIVES
