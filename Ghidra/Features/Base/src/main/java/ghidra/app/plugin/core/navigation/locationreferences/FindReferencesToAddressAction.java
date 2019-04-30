@@ -16,8 +16,8 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import docking.action.MenuData;
-import ghidra.app.context.ListingActionContext;
-import ghidra.app.context.ListingContextAction;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.AddressFieldLocation;
@@ -30,12 +30,12 @@ import ghidra.util.HelpLocation;
  * context for more information, potentially searching for more than just direct references to 
  * the code unit at the current address.
  */
-public class FindReferencesToAddressAction extends ListingContextAction {
+public class FindReferencesToAddressAction extends NavigatableContextAction {
 
 	private LocationReferencesPlugin plugin;
 
 	public FindReferencesToAddressAction(LocationReferencesPlugin plugin, int subGroupPosition) {
-		super("Show References to Address", plugin.getName(), false);
+		super("Show References to Address", plugin.getName());
 
 		this.plugin = plugin;
 
@@ -47,7 +47,7 @@ public class FindReferencesToAddressAction extends ListingContextAction {
 	}
 
 	@Override
-	public void actionPerformed(ListingActionContext context) {
+	public void actionPerformed(NavigatableActionContext context) {
 
 		Program program = context.getProgram();
 		ProgramLocation location = context.getLocation();
@@ -68,7 +68,7 @@ public class FindReferencesToAddressAction extends ListingContextAction {
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ListingActionContext context) {
+	protected boolean isEnabledForContext(NavigatableActionContext context) {
 		Program program = context.getProgram();
 		ProgramLocation location = context.getLocation();
 		Address address = location.getAddress();
