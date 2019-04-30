@@ -728,25 +728,28 @@ FlowBlock *FlowBlock::findCommonBlock(const vector<FlowBlock *> &blockSet)
 
 {
   vector<FlowBlock *> markedSet;
+  FlowBlock *bl;
   FlowBlock *res = blockSet[0];
   int4 bestIndex = res->getIndex();
-  res->setMark();
-  markedSet.push_back(res);
-  for(int4 i=0;i<blockSet.size();++i) {
+  bl = res;
+  do {
+    bl->setMark();
+    markedSet.push_back(bl);
+    bl = bl->getImmedDom();
+  } while (bl != (FlowBlock *)0);
+  for(int4 i=1;i<blockSet.size();++i) {
     if (bestIndex == 0)
       break;
-    FlowBlock *bl = blockSet[i];
-    while(bl->getIndex() > bestIndex) {
-      if (bl->isMark()) break;
+    bl = blockSet[i];
+    while(!bl->isMark()) {
       bl->setMark();
       markedSet.push_back(bl);
       bl = bl->getImmedDom();
     }
-    if (bl->isMark()) continue;
-    res = bl;
-    bestIndex = res->getIndex();
-    res->setMark();
-    markedSet.push_back(res);
+    if (bl->getIndex() < bestIndex) {	// If first meeting with old paths is higher than ever before
+      res = bl;				// we have a new best
+      bestIndex = res->getIndex();
+    }
   }
   for(int4 i=0;i<markedSet.size();++i)
     markedSet[i]->clearMark();

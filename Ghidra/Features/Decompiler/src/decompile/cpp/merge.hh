@@ -80,6 +80,7 @@ class Funcdata;
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
   map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
@@ -93,6 +94,7 @@ class Merge {
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
+  PcodeOp *allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr);
   void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
   void eliminateIntersect(Varnode *vn,const vector<BlockVarnode> &blocksort);
@@ -107,6 +109,7 @@ class Merge {
   bool checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp);
   void buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
   void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void processCopyTrimsForHigh(HighVariable *high);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
   bool intersection(HighVariable *a,HighVariable *b);
@@ -120,7 +123,7 @@ public:
   void mergeMarker(void);
   void mergeAdjacent(void);
   bool hideShadows(HighVariable *high);
-  void processCopyTrims(HighVariable *high);
+  void processCopyTrims(void);
 };
 
 /// \brief Compare HighVariables by the blocks they cover

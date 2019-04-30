@@ -272,6 +272,7 @@ void Merge::mergeOpcode(OpCode opc)
       }
     }
   }
+  processCopyTrims();	// TODO: move this into its own action
 }
 
 /// \brief Try to merge all HighVariables in the given range that have the same data-type
@@ -325,6 +326,26 @@ void Merge::mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSe
   }
 }
 
+/// \brief Allocate COPY PcodeOp designed to trim an overextended Cover
+///
+/// A COPY is allocated with the given input and data-type.  A \e unique space
+/// output is created.
+/// \param inVn is the given input Varnode for the new COPY
+/// \param ct is the data-type to assign to the new unique output
+/// \param addr is the address associated with the new COPY
+/// \return the newly allocated COPY
+PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr)
+
+{
+  PcodeOp *copyOp = data.newOp(1,addr);
+  data.opSetOpcode(copyOp,CPUI_COPY);
+  Varnode *outVn = data.newUnique(inVn->getSize(),ct);
+  data.opSetOutput(copyOp,outVn);
+  data.opSetInput(copyOp,inVn,0);
+  copyTrims.push_back(copyOp);
+  return copyOp;
+}
+
 /// \brief Snip off set of \e read p-code ops for a given Varnode
 ///
 /// The data-flow for the given Varnode is truncated by creating a COPY p-code from the Varnode
@@ -337,7 +358,6 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
 {
   if (markedop.empty()) return;
 
-  Varnode *uniq;
   PcodeOp *copyop,*op;
   BlockBasic *bl;
   Address pc;
@@ -359,11 +379,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     else
       afterop = vn->getDef();
   }
-  copyop = data.newOp(1,pc);
-  data.opSetOpcode(copyop,CPUI_COPY);
-  uniq = data.newUnique(vn->getSize(),vn->getType());
-  data.opSetOutput(copyop,uniq);
-  data.opSetInput(copyop,vn,0);
+  copyop = allocateCopyTrim(vn, vn->getType(), pc);
   if (afterop == (PcodeOp *)0)
     data.opInsertBegin(copyop,bl);
   else
@@ -374,7 +390,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     op = *iter;
     for(slot=0;slot<op->numInput();++slot)
       if (op->getIn(slot)==vn) break; // Find the correct slot
-    data.opSetInput(op,uniq,slot);
+    data.opSetInput(op,copyop->getOut(),slot);
   }
 }
 
@@ -553,7 +569,7 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
 
 {
   PcodeOp *copyop;
-  Varnode *uniq,*vn;
+  Varnode *vn;
   Address pc;
   
   if (op->code() == CPUI_MULTIEQUAL) {
@@ -563,12 +579,8 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
   else
     pc = op->getAddr();
   vn = op->getIn(slot);
-  copyop = data.newOp(1,pc);
-  data.opSetOpcode(copyop,CPUI_COPY);
-  uniq = data.newUnique(vn->getSize(),vn->getType());
-  data.opSetOutput(copyop,uniq);
-  data.opSetInput(copyop,vn,0);
-  data.opSetInput(op,uniq,slot);
+  copyop = allocateCopyTrim(vn, vn->getType(), pc);
+  data.opSetInput(op,copyop->getOut(),slot);
   if (op->code() == CPUI_MULTIEQUAL)
     data.opInsertEnd(copyop,(BlockBasic *)op->getParent()->getIn(slot));
   else
@@ -717,25 +729,20 @@ void Merge::snipIndirect(PcodeOp *indop)
 
   if (correctable.empty()) return;
   Varnode *refvn = correctable.front()->getIn(correctslot[0]);
-  Varnode *snipvn;
   PcodeOp *snipop,*insertop;
 
 				// NOTE: the covers for any input to op which is
 				// an instance of the output high must
 				// all intersect so the varnodes must all be
 				// traceable via COPY to the same root
-  snipop = data.newOp(1,op->getAddr());
-  data.opSetOpcode(snipop,CPUI_COPY);
-  snipvn = data.newUnique(refvn->getSize(),refvn->getType());
-  data.opSetOutput(snipop,snipvn);
-  data.opSetInput(snipop,refvn,0);
+  snipop = allocateCopyTrim(refvn, refvn->getType(), op->getAddr());
   data.opInsertBefore(snipop,op);
   list<PcodeOp *>::iterator oiter;
   int4 i,slot;
   for(oiter=correctable.begin(),i=0;i<correctslot.size();++oiter,++i) {
     insertop = *oiter;
     slot = correctslot[i];
-    data.opSetInput(insertop,snipvn,slot);
+    data.opSetInput(insertop,snipop->getOut(),slot);
   }
 }
 
@@ -762,14 +769,9 @@ void Merge::mergeIndirect(PcodeOp *indop)
 				// the indirect effect. So fix this
 
   PcodeOp *newop;
-  Varnode *trimvn;
 
-  newop = data.newOp(1,indop->getAddr());
-  trimvn = data.newUnique(outvn->getSize(),outvn->getType());
-  data.opSetOutput(newop,trimvn);
-  data.opSetOpcode(newop,CPUI_COPY);
-  data.opSetInput(newop,indop->getIn(0),0);
-  data.opSetInput(indop,trimvn,0);
+  newop = allocateCopyTrim(invn0, outvn->getType(), indop->getAddr());
+  data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);
   if (!mergeTestRequired(outvn->getHigh(),indop->getIn(0)->getHigh()) ||
       (!merge(indop->getIn(0)->getHigh(),outvn->getHigh(),false))) // Try merge again
@@ -1065,7 +1067,7 @@ void Merge::markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 
   }
 }
 
-void Merge::processCopyTrims(HighVariable *high)
+void Merge::processCopyTrimsForHigh(HighVariable *high)
 
 {
   vector<PcodeOp *> copyIns;
@@ -1076,8 +1078,9 @@ void Merge::processCopyTrims(HighVariable *high)
     if (!vn->isWritten()) continue;
     PcodeOp *op = vn->getDef();
     if (op->code() != CPUI_COPY) continue;
-    if (op->getIn(0)->getHigh() != high)
-      copyIns.push_back(op);
+    if (op->getIn(0)->getHigh() == high) continue;
+    if (op->getOut()->getSpace()->getType() != IPTR_INTERNAL) continue;
+    copyIns.push_back(op);
   }
 
   // Group COPYs based on the incoming Varnode
@@ -1098,6 +1101,27 @@ void Merge::processCopyTrims(HighVariable *high)
     }
     pos += sz;
   }
+}
+
+void Merge::processCopyTrims(void)
+
+{
+  vector<HighVariable *> multiCopy;
+
+  for(int4 i=0;i<copyTrims.size();++i) {
+    HighVariable *high = copyTrims[i]->getOut()->getHigh();
+    if (high->hasCopyIn()) {	// If we've seen COPYs into this high before
+      if (!high->isCopyProcessed()) {	// and we haven't processed it before,
+	multiCopy.push_back(high);	// slate the high for copy trim processing
+	high->setCopyProcessed();
+      }
+    }
+    else
+      high->setCopyIn();
+  }
+  copyTrims.clear();
+  for(int4 i=0;i<multiCopy.size();++i)
+    processCopyTrimsForHigh(multiCopy[i]);
 }
 
 /// \brief Perform low-level details of merging two HighVariables if possible
