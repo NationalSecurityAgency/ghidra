@@ -15,7 +15,7 @@
  */
 #include "util.h"
 
-void zero_out(const char * str, int len) {
+void zero_out(const char * str, size_t len) {
 	char * tmp = (char *)str;
 	for (int i = 0 ; i < len ; ++i) {
 		tmp[i] = '\0';
@@ -39,14 +39,18 @@ int find_char(const char * str, char c) {
  */
 int atog(GUID * guid, const char * szGUID) {
 	char * tmp = (char *)szGUID;
-	char buff[256];
+	size_t sz = 256;
+	char * buff = (char *) calloc(sz, sizeof(char));
+	if (buff == NULL) {
+		return -1;
+	}
 	/*****************************************/
 	int index = find_char(tmp, '-');
 	if (index == -1) {
 		return -1;
 	}
-	zero_out(buff, 256);
-	strncpy(buff, tmp, index);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, index);
 
 	//the value could be too large and cause overflow. eg, "9b8c55da"
 	if (strlen(buff) == 8 && buff[0] >= '8') {
@@ -72,8 +76,8 @@ int atog(GUID * guid, const char * szGUID) {
 	if (index == -1) {
 		return -1;
 	}
-	zero_out(buff, 256);
-	strncpy(buff, tmp, index);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, index);
 	guid->Data2 = (unsigned short)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+index+1;
@@ -81,50 +85,52 @@ int atog(GUID * guid, const char * szGUID) {
 	if (index == -1) {
 		return -1;
 	}
-	zero_out(buff, 256);
-	strncpy(buff, tmp, index);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, index);
 	guid->Data3 = (unsigned short)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+index+1;
 	index = find_char(tmp, '-');
-	if (index == -1) {
+	if (index == -1 || index >= sz) {
+		free(buff);
 		return -1;
 	}
-	zero_out(buff, 256);
-	strncpy(buff, tmp, index);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, index);
 	int ivalue = strtol(buff, NULL, 16);
 	guid->Data4[0] = ivalue >> 8;
 	guid->Data4[1] = ivalue & 0xff;
 	/*****************************************/
 	tmp = tmp+index+1;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[2] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+2;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[3] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+2;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[4] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+2;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[5] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+2;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[6] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
 	tmp = tmp+2;
-	zero_out(buff, 256);
-	strncpy(buff, tmp, 2);
+	zero_out(buff, sz);
+	strncpy_s(buff, sz, tmp, 2);
 	guid->Data4[7] = (unsigned char)strtol(buff, NULL, 16);
 	/*****************************************/
+	free(buff);
 	return 0;
 }
