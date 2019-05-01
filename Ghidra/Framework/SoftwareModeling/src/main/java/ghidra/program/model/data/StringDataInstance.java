@@ -187,11 +187,10 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// TODO: determine padding of char data type from the dataOrg()
-		this.paddedCharSize = charSize; // stringDataType.getPaddedCharSize(charSize);
-
+		// NOTE: for now only handle padding for charSize == 1 
+		this.paddedCharSize =
+			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
 		this.stringLayout = getLayoutFromDataType(dataType);
-
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
 		this.renderSetting = RENDER.getEnumValue(settings);
@@ -212,6 +211,17 @@ public class StringDataInstance {
 		this.length = newLen;
 		this.buf = newBuf;
 		this.endianSetting = copyFrom.endianSetting;
+	}
+
+	private static DataOrganization getDataOrganization(DataType dataType) {
+		// The dataType should be correspond to the target program
+		if (dataType != null) {
+			DataTypeManager dtm = dataType.getDataTypeManager();
+			if (dtm != null) {
+				return dtm.getDataOrganization();
+			}
+		}
+		return DataOrganizationImpl.getDefaultOrganization();
 	}
 
 	private static StringLayoutEnum getLayoutFromDataType(DataType dataType) {
