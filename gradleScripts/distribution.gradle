@@ -302,11 +302,11 @@ task assembleCommon (type: Copy) {
 	// LICENSE SUPPORT
 	//////////////////////////////
 	with getMultiRepoCopySpec( "licenses", "licenses" ) 
+	
 	from (ROOT_PROJECT_DIR) {
-		include "LICENSE.txt"
+		include "LICENSE"
 	}
 
-	
 	//////////////////////////////
 	// LAUNCH SUPPORT
 	//////////////////////////////
