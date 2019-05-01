@@ -196,7 +196,7 @@ task assembleDistribution (type: Copy) {
 	}
 
 	from (ROOT_PROJECT_DIR) {
-		include "LICENSE.txt"
+		include "LICENSE"
 	}
 	
 	/////////////////
