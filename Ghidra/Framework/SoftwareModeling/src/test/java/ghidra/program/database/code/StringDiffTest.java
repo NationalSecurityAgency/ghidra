@@ -17,106 +17,14 @@ package ghidra.program.database.code;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
+
 public class StringDiffTest {
-
-	/*
-	 	A line match is if the given line to match is contained in the source string and:
-	 	
-	 		1) a) matches in the source string with a '\n' char at the index before the match OR
-	 		   b) is at the beginning *and* the match contains a newline
-	 		2) is at the exact end of the source string
-	 		
-	 		*The empty string matches at the current position
-	 	
-	 	Source String:	 "abcd\nefghi\n"
-	 	Line to Match:	 	
-	 */
-
-	@Test
-	public void testFindLine_FromStart_EmptyLine() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(0, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_NoMatch() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "coconuts";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(-1, result);
-	}
-
-	@Test
-	public void testFindLine_FromMiddle_NoMatch() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "coconuts";
-		int result = StringDiffer.findLine(source, 15, line);
-		assertEquals(-1, result);
-	}
-
-	@Test
-	public void testFindLine_FromEnd_NoMatch() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "coconuts";
-		int result = StringDiffer.findLine(source, source.length(), line);
-		assertEquals(-1, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_MatchWithNewline_AtStart() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "this is a really\n";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(0, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_MatchWithNewline_AtMiddle() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "lone line with\n";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(17, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_MatchWithNewline_AtEnd_FailWithoutPrecedingNewline() {
-
-		String source = "this is a really\nlone line with\n newlines\n";
-		String line = "lines\n";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(-1, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_MatchWithNewline_AtEnd_PassWithPrecedingNewline() {
-
-		String source = "this is a really\nlone line with\n new\nlines\n";
-		String line = "lines\n";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(37, result);
-	}
-
-	@Test
-	public void testFindLine_FromStart_MatchWithoutNewline_AtStart() {
-
-		String source = "this is a really\nlone line with\n newlines";
-		String line = "this is a really";
-		int result = StringDiffer.findLine(source, 0, line);
-		assertEquals(-1, result); // match at start must contain a newline
-	}
 
 	@Test
 	public void testGetDiffLines_Insert_AtFront() {
@@ -126,8 +34,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -139,8 +47,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -152,8 +60,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -165,8 +73,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -178,8 +86,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -191,8 +99,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -204,8 +112,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -220,8 +128,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -233,8 +141,8 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
@@ -246,9 +154,50 @@ public class StringDiffTest {
 		String v1 = StringUtils.join(a1, '\n');
 		String v2 = StringUtils.join(a2, '\n');
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(v1, v2, 1);
-		String restoredV2 = StringDiffer.applyDiffs(v1, Arrays.asList(diffs));
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
 		assertEquals(v2, restoredV2);
 	}
 
+	@Test
+	public void testReplace() {
+		String[] a1 = new String[] { "In", "the", "beginning" };
+		String[] a2 = new String[] { "There", "was", "vastness" };
+		String v1 = StringUtils.join(a1, '\n');
+		String v2 = StringUtils.join(a2, '\n');
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
+		assertEquals(v2, restoredV2);
+	}
+
+	@Test
+	public void testTheBiggness_NoOptimization() throws Exception {
+
+		List<String> bigLines = generateLines(1200);
+		List<String> bigLines2 = new ArrayList<>(bigLines);
+
+		bigLines2.set(0, "a new line at 0");
+		bigLines2.set(bigLines2.size() - 1, "a new line at length");
+
+		String v1 = StringUtils.join(bigLines, '\n');
+		String v2 = StringUtils.join(bigLines2, '\n');
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 1);
+		assertEquals(1, diffs.length); // 1 diff--completely different, due to size restriction on Lcs
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
+		assertEquals(v2, restoredV2);
+	}
+
+	private List<String> generateLines(int size) {
+
+		List<String> results = new ArrayList<>();
+		for (int i = 0; i < size; i++) {
+			String random = AbstractGTest.getRandomString(0, 50);
+			random = random.replaceAll("\n", "");
+			results.add("Line " + (i + 1) + ": " + random);
+		}
+
+		return results;
+	}
 }

@@ -3366,7 +3366,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			newComment = "";
 		}
 
-		StringDiff[] diffs = StringDiffer.getLineDiffs(newComment, oldComment);
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(newComment, oldComment);
 
 		long date = System.currentTimeMillis();
 		long addr = addrMap.getKey(address, true);
@@ -3402,11 +3402,11 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				Record rec = allRecords.get(allRecords.size() - 1);
 				long date = rec.getLongValue(CommentHistoryAdapter.HISTORY_DATE_COL);
 				List<Record> records = subListByDate(allRecords, date);
+
 				List<StringDiff> diffs = new ArrayList<>(records.size());
 
 				String user = null;
-				for (int i = 0; i < records.size(); i++) {
-					Record r = records.get(i);
+				for (Record r : records) {
 					user = r.getString(CommentHistoryAdapter.HISTORY_USER_COL);
 					int pos1 = r.getIntValue(CommentHistoryAdapter.HISTORY_POS1_COL);
 					int pos2 = r.getIntValue(CommentHistoryAdapter.HISTORY_POS2_COL);
@@ -3415,7 +3415,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				}
 
 				results.add(new CommentHistory(addr, commentType, user, comment, new Date(date)));
-				comment = StringDiffer.applyDiffs(comment, diffs);
+				comment = StringDiffUtils.applyDiffs(comment, diffs);
 
 				records.clear(); // remove the subList elements from the list
 			}
