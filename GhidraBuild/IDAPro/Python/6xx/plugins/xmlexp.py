@@ -108,6 +108,7 @@ class XmlExporter:
         self.state = idaapi.setStat(idaapi.st_Work)
         self.indent_level = 0
         self.seg_addr = False
+        self.bitness = 1
         self.has_overlays = False
         self.hexrays = False
         self.options = None
@@ -1280,7 +1281,9 @@ class XmlExporter:
                 target = ri.target
             elif idaapi.isCode(f) == True:
                 idaapi.decode_insn(addr)
-                target = idaapi.cmd.Operands[op].value - ri.tdelta + ri.base
+                opnd = idaapi.cmd.Operands[op]
+                value = opnd.addr if opnd.type == idaapi.o_displ else opnd.value
+                target = value - ri.tdelta + ri.base
             elif idaapi.isData(f) == True:
                 target = self.get_data_value(addr) - ri.tdelta + ri.base;
             else:
@@ -1289,6 +1292,14 @@ class XmlExporter:
             return
         if idaapi.isEnabled(target) == False:
             return
+
+        if self.bitness == 0:
+            target &= 0xFFFF
+        elif self.bitness == 2:
+            target &= 0xFFFFFFFFFFFFFFFF
+        else:
+            target &= 0xFFFFFFFF
+
         self.start_element(MEMORY_REFERENCE)
         self.write_address_attribute(ADDRESS, addr)
         self.write_numeric_attribute(OPERAND_INDEX, op, 10)
@@ -1307,10 +1318,9 @@ class XmlExporter:
         f = idaapi.getFlags(addr)
         for op in range(idaapi.UA_MAXOP):
             if idaapi.isOff(f, op) == True and (idaapi.isData(f) == True or
-                    (idaapi.isCode(f) == True and
-                    self.is_imm_op(addr, op) == True)):
+               (idaapi.isCode(f) == True and self.is_imm_or_displ_op(addr, op) == True)):
                 self.export_memory_reference(addr, op)
-    
+
 
     def export_memory_section(self, seg, binfilename):
         """
@@ -1396,28 +1406,28 @@ class XmlExporter:
             byte_order ="little"
         self.write_attribute(ENDIAN, byte_order)
         self.seg_addr = False
-        bitness = 1
+        self.bitness = 1
         model_warning = False
         nsegs = idaapi.get_segm_qty()
         if (nsegs > 0):
-            bitness = idaapi.getnseg(0).bitness
+            self.bitness = idaapi.getnseg(0).bitness
             for i in range(1,nsegs):
                 seg = idaapi.getnseg(i)
-                if (seg.bitness != bitness):
+                if (seg.bitness != self.bitness):
                     model_warning = True
-                if (seg.bitness > bitness):
-                    bitness = seg.bitness
+                if (seg.bitness > self.bitness):
+                    self.bitness = seg.bitness
         addr_model = "32-bit"
-        if (bitness == 0):
+        if (self.bitness == 0):
             addr_model = "16-bit"
-        elif (bitness == 2):
+        elif (self.bitness == 2):
             addr_model = "64-bit"
         self.write_attribute(ADDRESS_MODEL, addr_model)
         self.close_tag()
         if (model_warning):
             idaapi.msg("WARNING: Segments do not have same " +
                        "addressing model!\n")
-        if (idaapi.ph.id == idaapi.PLFM_386 and bitness == 0):
+        if (idaapi.ph.id == idaapi.PLFM_386 and self.bitness == 0):
             self.seg_addr = True
         # find any overlayed memory before processing addressable items
         self.find_overlay_memory()
@@ -2130,20 +2140,22 @@ class XmlExporter:
         return "unknown"
 
 
-    def is_imm_op(self, addr, op):
+    def is_imm_or_displ_op(self, addr, op):
         """
-        Returns true if instruction operand at address is an immediate value.
+        Returns true if instruction operand at address is an immediate or
+        displaced (with base address) value.
         
         Args:
             addr: Integer representing instruction address.
             op: Integer representing operand index (0-based).
             
         Returns:
-            True if instruction operand at address is an immediate value.
+            True if instruction operand at address is an immediate or
+            displaced (with base address) value.
             False otherwise.
         """
         idaapi.decode_insn(addr)
-        if (idaapi.cmd.Operands[op].type == idaapi.o_imm):
+        if (idaapi.cmd.Operands[op].type in [idaapi.o_imm, idaapi.o_displ]):
             return True
         return False
         
