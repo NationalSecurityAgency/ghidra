@@ -211,7 +211,9 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 		String newline = HTMLUtilities.HTML_NEW_LINE;
 		StringBuilder buffy = new StringBuilder(HTML);
 		buffy.append("Address: ");
-		buffy.append(location.getAddress().toString(true, false));
+		String addressString = location.getAddress().toString(true, false);
+		addressString = HTMLUtilities.friendlyEncodeHTML(addressString);
+		buffy.append(addressString);
 		buffy.append(newline);
 
 		Program p = location.getProgram();
@@ -224,7 +226,9 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			SymbolInspector inspector = new SymbolInspector(tool, null);
 			for (Symbol s : symbols) {
 				ColorAndStyle style = inspector.getColorAndStyle(s);
-				String html = style.toHtml(s.getName(true));
+				String name = s.getName(true);
+				name = HTMLUtilities.friendlyEncodeHTML(pad);
+				String html = style.toHtml(name);
 				buffy.append(pad).append(html).append(newline);
 			}
 		}
