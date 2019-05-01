@@ -20,25 +20,6 @@ apply plugin: 'c'
 project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
 project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 
-/****************************************************************************
- * Method for extracting value from <name>=<value> pairs
- ****************************************************************************/
-ext.getEnvironmentValue = { envLines, name ->
-	String assignment = name + "="
-	for (String line : envLines) {
-		if (line.startsWith(assignment)) {
-			String[] parts = line.split("=")
-			String value = parts[1].trim()
-			// remove trailing \ if present
-			if (value.endsWith("\\")) {
-				value = value.substring(0, value.length()-1)
-			}
-			return value
-		}
-	}
-	return null
-}
-
 project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
 project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 project.ext.MSVC_SDK_VERSION = "UNKNOWN"
@@ -62,12 +43,10 @@ if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 		project.ext.WINVER = "0x0601"
 	
 		// Rely on vcvars script to supply SDK versions
-		def c = VISUAL_STUDIO_VCVARS_CMD + " && env"
-		String envText = c.execute().text
-		String[] envLines = c.execute().text.split("\n")
-		project.ext.MSVC_SDK_VERSION = getEnvironmentValue(envLines, "WINDOWSSDKVERSION")
+		def COMMAND = "cmd /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
+		project.ext.MSVC_SDK_VERSION = "${COMMAND} %WINDOWSSDKVERSION%".execute().text.trim().replace('\\', '')
 		println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
-		project.ext.MSVC_TOOLS_VERSION = getEnvironmentValue(envLines, "VCTOOLSVERSION")
+		project.ext.MSVC_TOOLS_VERSION = "${COMMAND} %VCTOOLSVERSION%".execute().text.trim().replace('\\', '')
 		println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
 	}
 }
