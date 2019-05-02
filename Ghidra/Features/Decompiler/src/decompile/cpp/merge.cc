@@ -959,6 +959,19 @@ bool Merge::checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp)
   return true;
 }
 
+/// \brief Try to replace a set of COPYs from the same Varnode with a single dominant COPY
+///
+/// All the COPY outputs must be instances of the same HighVariable (not the same Varnode).
+/// Either an existing COPY dominates all the others, or a new dominating COPY is constructed.
+/// The read locations of all other COPY outputs are replaced with the output of the dominating
+/// COPY, if it does not cause intersections in the HighVariable's Cover. Because of
+/// intersections, replacement may fail or partially succeed. Replacement only happens with
+/// COPY outputs that are temporary registers. The cover of the HighVariable may be extended
+/// because of a new COPY output instance.
+/// \param high is the HighVariable being copied to
+/// \param copy is the list of COPY ops into the HighVariable
+/// \param pos is the index of the first COPY from the specific input Varnode
+/// \param size is the number of COPYs (in sequence) from the same specific Varnode
 void Merge::buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size)
 
 {
@@ -1067,24 +1080,60 @@ void Merge::markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 
   }
 }
 
-void Merge::processCopyTrimsForHigh(HighVariable *high)
+/// \brief  Find all the COPY ops into the given HighVariable
+///
+/// Collect all the COPYs whose output is the given HighVariable but
+/// the input is from a different HighVariable. Returned COPYs are sorted
+/// first by the input Varnode then by block order.
+/// \param high is the given HighVariable
+/// \param copyIns will hold the list of COPYs
+/// \param filterTemps is \b true if COPYs must have a temporary output
+void Merge::findAllIntoCopies(HighVariable *high,vector<PcodeOp *> &copyIns,bool filterTemps)
 
 {
-  vector<PcodeOp *> copyIns;
-
-  // Find all the COPY ops into this HighVariable from a different HighVariable
   for(int4 i=0;i<high->numInstances();++i) {
     Varnode *vn = high->getInstance(i);
     if (!vn->isWritten()) continue;
     PcodeOp *op = vn->getDef();
     if (op->code() != CPUI_COPY) continue;
     if (op->getIn(0)->getHigh() == high) continue;
-    if (op->getOut()->getSpace()->getType() != IPTR_INTERNAL) continue;
+    if (filterTemps && op->getOut()->getSpace()->getType() != IPTR_INTERNAL) continue;
     copyIns.push_back(op);
   }
-
-  // Group COPYs based on the incoming Varnode
+  // Group COPYs based on the incoming Varnode then block order
   sort(copyIns.begin(),copyIns.end(),compareCopyByInVarnode);
+}
+
+void Merge::processHighDominantCopy(HighVariable *high)
+
+{
+  vector<PcodeOp *> copyIns;
+
+  findAllIntoCopies(high,copyIns,true);	// Get all COPYs into this with temporary output
+  if (copyIns.size() < 2) return;
+  int4 pos = 0;
+  while(pos < copyIns.size()) {
+    // Find a group of COPYs coming from the same Varnode
+    Varnode *inVn = copyIns[pos]->getIn(0);
+    int4 sz = 1;
+    while(pos + sz < copyIns.size()) {
+      Varnode *nextVn = copyIns[pos+sz]->getIn(0);
+      if (nextVn != inVn) break;
+      sz += 1;
+    }
+    if (sz > 1)		// If there is more than one COPY in a group
+      buildDominantCopy(high, copyIns, pos, sz);	// Try to construct a dominant COPY
+    pos += sz;
+  }
+}
+
+void Merge::processHighRedundantCopy(HighVariable *high)
+
+{
+  vector<PcodeOp *> copyIns;
+
+  findAllIntoCopies(high,copyIns,false);
+  if (copyIns.size() < 2) return;
   int4 pos = 0;
   while(pos < copyIns.size()) {
     // Find a group of COPYs coming from the same Varnode
@@ -1096,7 +1145,6 @@ void Merge::processCopyTrimsForHigh(HighVariable *high)
       sz += 1;
     }
     if (sz > 1) {	// If there is more than one COPY in a group
-      buildDominantCopy(high, copyIns, pos, sz);
       markRedundantCopies(high, copyIns, pos, sz);
     }
     pos += sz;
@@ -1110,18 +1158,20 @@ void Merge::processCopyTrims(void)
 
   for(int4 i=0;i<copyTrims.size();++i) {
     HighVariable *high = copyTrims[i]->getOut()->getHigh();
-    if (high->hasCopyIn()) {	// If we've seen COPYs into this high before
-      if (!high->isCopyProcessed()) {	// and we haven't processed it before,
-	multiCopy.push_back(high);	// slate the high for copy trim processing
-	high->setCopyProcessed();
-      }
+    if (!high->hasCopyIn1()) {
+      multiCopy.push_back(high);
+      high->setCopyIn1();
     }
     else
-      high->setCopyIn();
+      high->setCopyIn2();
   }
   copyTrims.clear();
-  for(int4 i=0;i<multiCopy.size();++i)
-    processCopyTrimsForHigh(multiCopy[i]);
+  for(int4 i=0;i<multiCopy.size();++i) {
+    HighVariable *high = multiCopy[i];
+    if (high->hasCopyIn2())		// If the high has at least 2 COPYs into it
+      processHighDominantCopy(high);	// Try to replace with a dominant copy
+    high->clearCopyIns();
+  }
 }
 
 /// \brief Perform low-level details of merging two HighVariables if possible

@@ -3579,6 +3579,7 @@ bool ActionCopyMarker::shadowedVarnode(const Varnode *vn)
 int4 ActionCopyMarker::apply(Funcdata &data)
 
 {
+  vector<HighVariable *> multiCopy;
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *op;
   HighVariable *h1,*h2,*h3;
@@ -3596,6 +3597,12 @@ int4 ActionCopyMarker::apply(Funcdata &data)
 	count += 1;
       }
       else {	// COPY between different HighVariables
+	if (!h1->hasCopyIn1()) {	// If this is the first COPY we've seen for this high
+	  h1->setCopyIn1();		// Mark it
+	  multiCopy.push_back(h1);
+	}
+	else
+	  h1->setCopyIn2();		// This is at least the second COPY we've seen
 	if (v1->hasNoDescend()) {	// Don't print shadow assignments
 	  if (shadowedVarnode(v1)) {
 	    data.opSetFlag(op, PcodeOp::nonprinting);
@@ -3634,6 +3641,12 @@ int4 ActionCopyMarker::apply(Funcdata &data)
     default:
       break;
     }
+  }
+  for(int4 i=0;i<multiCopy.size();++i) {
+    HighVariable *high = multiCopy[i];
+    if (high->hasCopyIn2())
+      data.getMerge().processHighRedundantCopy(high);
+    high->clearCopyIns();
   }
   return 0;
 }
