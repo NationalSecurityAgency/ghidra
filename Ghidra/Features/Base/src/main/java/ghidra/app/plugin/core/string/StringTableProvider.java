@@ -134,7 +134,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		StringBuilder builder = new StringBuilder();
 
 		int rowCount = stringModel.getRowCount();
-		int unfilteredCount = stringModel.getUnfilteredCount();
+		int unfilteredCount = stringModel.getUnfilteredRowCount();
 
 		builder.append(rowCount);
 		builder.append(" items");

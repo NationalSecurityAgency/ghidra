@@ -297,7 +297,8 @@ class ThreadedTableModelUpdateMgr<T> {
 
 	/**
 	 * Sets the delay for the swing update manager.
-	 * @param updateDelayMillis the new delay for the swing update manager.
+	 * @param updateDelayMillis the new delay for the swing update manager
+	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time
 	 */
 	void setUpdateDelay(int updateDelayMillis, int maxUpdateDelayMillis) {
 		updateManager.dispose();

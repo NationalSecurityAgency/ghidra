@@ -498,6 +498,11 @@ public class TableUpdateJob<T> {
 	}
 
 	private void doSortData(List<T> data) {
+
+		if (newSortContext.isUnsorted()) {
+			return;
+		}
+
 		int size = data.size();
 		monitor.setMessage("Sorting " + model.getName() + " (" + size + " rows)" + "...");
 		monitor.initialize(size);
@@ -512,7 +517,7 @@ public class TableUpdateJob<T> {
 		//
 		// Usually the source data is sorted before any filter is applied.  However, this is not
 		// the case when a load of new data is followed directly by a filter action.  We rely on 
-		// the source data being filtered in order to perform fast translations from the table's 
+		// the source data being sorted in order to perform fast translations from the table's 
 		// view to the table's model when it is filtered.  Thus, make sure that any time we are 
 		// sorting the filtered data, that the source data too is sorted.
 		//

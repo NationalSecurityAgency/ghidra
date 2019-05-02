@@ -43,18 +43,27 @@ public class SpyEventRecorder {
 		events.add(event);
 	}
 
-	// synchronized because we spy on multiple threads (like Test and Swing)
-	public synchronized void dumpEvents() {
+	private synchronized String eventsToString() {
 		StringBuilder buffy = new StringBuilder("Recorded Events - " + recorderName + '\n');
 		for (SpyEvent event : events) {
 			buffy.append(event.toString()).append('\n');
 		}
-		Msg.debug(this, buffy.toString());
+		return buffy.toString();
+	}
+
+	// synchronized because we spy on multiple threads (like Test and Swing)
+	public void dumpEvents() {
+		Msg.debug(this, eventsToString());
+	}
+
+	@Override
+	public String toString() {
+		return eventsToString();
 	}
 
 	private class SpyEvent {
 
-		private FastDateFormat dateFormat = FastDateFormat.getInstance("'T'HH:mm:ssZZ");
+		private FastDateFormat dateFormat = FastDateFormat.getInstance("'T'HH:mm:ss:SSS");
 
 		private int id;
 		private String message;

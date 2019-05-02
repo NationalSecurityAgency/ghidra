@@ -118,7 +118,7 @@ class DataWindowProvider extends ComponentProviderAdapter {
 
 		dataModel.addTableModelListener(e -> {
 			int rowCount = dataModel.getRowCount();
-			int unfilteredCount = dataModel.getUnfilteredCount();
+			int unfilteredCount = dataModel.getUnfilteredRowCount();
 
 			StringBuilder buffy = new StringBuilder();
 

@@ -152,7 +152,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 	private String generateSubTitle() {
 		SymbolFilter filter = symbolKeyModel.getFilter();
 		int rowCount = symbolKeyModel.getRowCount();
-		int unfilteredCount = symbolKeyModel.getUnfilteredCount();
+		int unfilteredCount = symbolKeyModel.getUnfilteredRowCount();
 
 		if (rowCount != unfilteredCount) {
 			return " (Text filter matched " + rowCount + " of " + unfilteredCount + " symbols)";

@@ -32,7 +32,7 @@ import ghidra.docking.spy.SpyEventRecorder;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.task.TaskMonitor;
 
-public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
+public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 	private SpyEventRecorder recorder = new SpyEventRecorder(getClass().getSimpleName());
 	private SpyTaskMonitor monitor = new SpyTaskMonitor();
@@ -98,7 +98,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterAddItem_ItemAddedPassesFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		filterOnRawColumnValue(newRowIndex);
 		resetSpies();
@@ -114,7 +114,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterRemoveAddItem_ItemAddedPassesFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		filterOnRawColumnValue(newRowIndex);
 		resetSpies();
@@ -137,7 +137,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterAdd_ItemAddedFailsFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		long nonMatchingFilter = 1;
 		filterOnRawColumnValue(nonMatchingFilter);
@@ -380,18 +380,18 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	}
 
 	private void assertFilteredEntireModel() {
-		int allCount = model.getUnfilteredCount();
+		int allCount = getUnfilteredRowCount();
 		assertNumberOfItemsPassedThroughFilter(allCount);
 	}
 
 	private void assertTableContainsValue(long expected) {
-		List<Long> modelValues = model.getModelData();
+		List<Long> modelValues = getModelData();
 		assertTrue("Value not in the model--filtered out? - Expected " + expected + "; found " +
 			modelValues, modelValues.contains(expected));
 	}
 
 	private void assertTableDoesNotContainValue(long expected) {
-		List<Long> modelValues = model.getModelData();
+		List<Long> modelValues = getModelData();
 		assertFalse("Value in the model--should not be there - Value " + expected + "; found " +
 			modelValues, modelValues.contains(expected));
 	}
@@ -464,9 +464,11 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 		spyFilter = new SpyTextFilter<>(textFilter, transformer, recorder);
 
 		CombinedTableFilter<Long> combinedFilter =
-			new CombinedTableFilter<Long>(spyFilter, secondFilter, null);
+			new CombinedTableFilter<>(spyFilter, secondFilter, null);
 
+		recorder.record("Before setting the new filter");
 		runSwing(() -> model.setTableFilter(combinedFilter));
+		recorder.record("\tafter setting filter");
 
 		waitForNotBusy();
 		waitForTableModel(model);
