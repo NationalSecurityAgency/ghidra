@@ -763,7 +763,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (forward range of unique index values)
 			minIx = indexFields.size() / 10;
@@ -775,7 +775,19 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
+
+			// Index field iterator (forward over all indexed fields)
+			minIx = 0;
+			maxIx = indexFields.size() - 1;
+			fiter = table.indexFieldIterator(null, null, true, colIx);
+			ix = minIx;
+			assertTrue("Failed to position before min field", fiter.hasNext());
+			while (fiter.hasNext()) {
+				Field f = fiter.next();
+				assertEquals(indexFields.get(ix++), f);
+			}
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -787,7 +799,19 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.previous();
 				assertEquals(indexFields.get(ix--), f);
 			}
-			assertEquals(ix, minIx - 1);
+			assertEquals(minIx - 1, ix);
+
+			// Index field iterator (reverse over all indexed fields)
+			minIx = 0;
+			maxIx = indexFields.size() - 1;
+			fiter = table.indexFieldIterator(null, null, false, colIx);
+			ix = maxIx;
+			assertTrue("Failed to position after max field", fiter.hasPrevious());
+			while (fiter.hasPrevious()) {
+				Field f = fiter.previous();
+				assertEquals(indexFields.get(ix--), f);
+			}
+			assertEquals(-1, ix);
 
 			// Index field iterator (forward range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -800,7 +824,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -813,7 +837,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.previous();
 				assertEquals(indexFields.get(ix--), f);
 			}
-			assertEquals(ix, minIx - 1);
+			assertEquals(minIx - 1, ix);
 		}
 
 	}
