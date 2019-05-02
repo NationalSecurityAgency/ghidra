@@ -3987,6 +3987,16 @@ define pcodeop ptwrite;
 :RCR rm64,imm8      is vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
 @endif
 
+@ifdef IA64
+define pcodeop readfsbase;
+:RDFSBASE r32 is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=0 & r32 { r32 = readfsbase(); }
+:RDFSBASE r64 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=0 & r64 { r64 = readfsbase(); }
+
+define pcodeop readgsbase;
+:RDGSBASE r32 is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=1 & r32 { r32 = readgsbase(); }
+:RDGSBASE r64 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=1 & r64 { r64 = readgsbase(); }
+@endif
+
 define pcodeop rdmsr;
 :RDMSR          is vexMode=0 & byte=0xf; byte=0x32                  { tmp:8 = rdmsr(ECX); EDX = tmp(4); EAX = tmp(0); }
 
@@ -4459,6 +4469,16 @@ define pcodeop invalidInstructionException;
 
 :WAIT           is vexMode=0 & byte=0x9b                        { }
 :WBINVD         is vexMode=0 & byte=0xf; byte=0x9                   { }
+
+@ifdef IA64
+define pcodeop writefsbase;
+:WRFSBASE r32 is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=2 & r32 { tmp:8 = zext(r32); writefsbase(tmp); }
+:WRFSBASE r64 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=2 & r64 { writefsbase(r64); }
+
+define pcodeop writegsbase;
+:WRGSBASE r32 is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=3 & r32 { tmp:8 = zext(r32); writegsbase(tmp); }
+:WRGSBASE r64 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=3 & r64 { writegsbase(r64); }
+@endif
 
 define pcodeop wrpkru;
 :WRPKRU         is byte=0x0F; byte=0x01; byte=0xEF              { wrpkru(EAX); }
