@@ -916,16 +916,26 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+/// \brief Replace COPYs from the same source with a single dominant COPY
+class ActionDominantCopy : public Action {
+public:
+  ActionDominantCopy(const string &g) : Action(rule_onceperfunc,"dominantcopy",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionDominantCopy(getGroup());
+  }
+  virtual int4 apply(Funcdata &data) { data.getMerge().processCopyTrims(); return 0; }
+};
+
 /// \brief Mark COPY operations between Varnodes representing the object as \e non-printing
 class ActionCopyMarker : public Action {
-  static bool shadowedVarnode(const Varnode *vn);
 public:
   ActionCopyMarker(const string &g) : Action(rule_onceperfunc,"copymarker",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionCopyMarker(getGroup());
   }
-  virtual int4 apply(Funcdata &data);
+  virtual int4 apply(Funcdata &data) { data.getMerge().markInternalCopies(); return 0; }
 };
 
 /// \brief Attach \e dynamically mapped symbols to Varnodes in time for data-type propagation

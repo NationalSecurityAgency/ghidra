@@ -67,7 +67,7 @@ public:
 /// Internally this is implemented as a map from basic block to their non-empty CoverBlock
 class Cover {
   map<int4,CoverBlock> cover; 			///< block index -> CoverBlock
-  CoverBlock emptyblock;			///< Template CoverBlock for blocks not covered by \b this
+  static const CoverBlock emptyBlock;		///< Global empty CoverBlock for blocks not covered by \b this
   void addRefRecurse(const FlowBlock *bl);	///< Fill-in \b this recursively from the given block
 public:
   void clear(void) { cover.clear(); }		///< Clear \b this to an empty Cover

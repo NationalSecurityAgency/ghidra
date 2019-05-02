@@ -3539,114 +3539,20 @@ int4 ActionUnjustifiedParams::apply(Funcdata &data)
 int4 ActionHideShadow::apply(Funcdata &data)
 
 {
-  VarnodeDefSet::const_iterator iter;
+  VarnodeDefSet::const_iterator iter,enditer;
   HighVariable *high;
 
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  enditer = data.endDef(Varnode::written);
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     if (high->isMark()) continue;
     if (data.getMerge().hideShadows(high))
       count += 1;
     high->setMark();
   }
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     high->clearMark();
-  }
-  return 0;
-}
-
-/// \brief Determine if given Varnode is shadowed by another Varnode in the same HighVariable
-///
-/// \param vn is the Varnode to check for shadowing
-/// \return \b true if \b vn is shadowed by another Varnode in its high-level variable
-bool ActionCopyMarker::shadowedVarnode(const Varnode *vn)
-
-{
-  const Varnode *othervn;
-  const HighVariable *high = vn->getHigh();
-  int4 num,i;
-
-  num = high->numInstances();
-  for(i=0;i<num;++i) {
-    othervn = high->getInstance(i);
-    if (othervn == vn) continue;
-    if (vn->getCover()->intersect(*othervn->getCover()) == 2) return true;
-  }
-  return false;
-}
-
-int4 ActionCopyMarker::apply(Funcdata &data)
-
-{
-  vector<HighVariable *> multiCopy;
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *op;
-  HighVariable *h1,*h2,*h3;
-  Varnode *v1,*v2,*v3;
-  int4 val;
-
-  for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
-    op = *iter;
-    switch(op->code()) {
-    case CPUI_COPY:
-      v1 = op->getOut();
-      h1 = v1->getHigh();
-      if (h1 == op->getIn(0)->getHigh()) {
-	data.opSetFlag(op, PcodeOp::nonprinting);
-	count += 1;
-      }
-      else {	// COPY between different HighVariables
-	if (!h1->hasCopyIn1()) {	// If this is the first COPY we've seen for this high
-	  h1->setCopyIn1();		// Mark it
-	  multiCopy.push_back(h1);
-	}
-	else
-	  h1->setCopyIn2();		// This is at least the second COPY we've seen
-	if (v1->hasNoDescend()) {	// Don't print shadow assignments
-	  if (shadowedVarnode(v1)) {
-	    data.opSetFlag(op, PcodeOp::nonprinting);
-	    count += 1;
-	  }
-	}
-      }
-      break;
-    case CPUI_PIECE:		// Check if output is built out of pieces of itself
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      h3 = op->getIn(1)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      if (!h3->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      v3 = h3->getTiedVarnode();
-      if (v3->overlap(*v1) != 0) break;
-      if (v2->overlap(*v1) != v3->getSize()) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    case CPUI_SUBPIECE:
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      val = op->getIn(1)->getOffset();
-      if (v1->overlap(*v2) != val) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    default:
-      break;
-    }
-  }
-  for(int4 i=0;i<multiCopy.size();++i) {
-    HighVariable *high = multiCopy[i];
-    if (high->hasCopyIn2())
-      data.getMerge().processHighRedundantCopy(high);
-    high->clearCopyIns();
   }
   return 0;
 }
@@ -4706,6 +4612,7 @@ void universal_action(Architecture *conf)
   act->addAction( new ActionMarkExplicit("merge") );
   act->addAction( new ActionMarkImplied("merge") ); // This must come BEFORE general merging
   act->addAction( new ActionMergeCopy("merge") );
+  act->addAction( new ActionDominantCopy("merge") );
   act->addAction( new ActionMarkIndirectOnly("merge") ); // Must come after required merges but before speculative
   act->addAction( new ActionMergeAdjacent("merge") );
   act->addAction( new ActionMergeType("merge") );

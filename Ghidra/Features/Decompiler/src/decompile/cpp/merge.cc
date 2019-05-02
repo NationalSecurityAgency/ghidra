@@ -272,7 +272,6 @@ void Merge::mergeOpcode(OpCode opc)
       }
     }
   }
-  processCopyTrims();	// TODO: move this into its own action
 }
 
 /// \brief Try to merge all HighVariables in the given range that have the same data-type
@@ -1080,6 +1079,26 @@ void Merge::markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 
   }
 }
 
+/// \brief Determine if given Varnode is shadowed by another Varnode in the same HighVariable
+///
+/// \param vn is the Varnode to check for shadowing
+/// \return \b true if \b vn is shadowed by another Varnode in its high-level variable
+bool Merge::shadowedVarnode(const Varnode *vn)
+
+{
+  const Varnode *othervn;
+  const HighVariable *high = vn->getHigh();
+  int4 num,i;
+
+  num = high->numInstances();
+  for(i=0;i<num;++i) {
+    othervn = high->getInstance(i);
+    if (othervn == vn) continue;
+    if (vn->getCover()->intersect(*othervn->getCover()) == 2) return true;
+  }
+  return false;
+}
+
 /// \brief  Find all the COPY ops into the given HighVariable
 ///
 /// Collect all the COPYs whose output is the given HighVariable but
@@ -1104,6 +1123,11 @@ void Merge::findAllIntoCopies(HighVariable *high,vector<PcodeOp *> &copyIns,bool
   sort(copyIns.begin(),copyIns.end(),compareCopyByInVarnode);
 }
 
+/// \brief Try to replace COPYs into the given HighVariable with a single dominant COPY
+///
+/// Find groups of COPYs into the given HighVariable that come from a single source Varnode,
+/// then try to replace them with a COPY.
+/// \param high is the given HighVariable
 void Merge::processHighDominantCopy(HighVariable *high)
 
 {
@@ -1127,6 +1151,12 @@ void Merge::processHighDominantCopy(HighVariable *high)
   }
 }
 
+/// \brief Mark COPY ops into the given HighVariable that are redundant
+///
+/// A COPY is redundant if another COPY performs the same action and has
+/// dominant control flow. The redundant COPY is not removed but is marked so that
+/// it doesn't print in the final source output.
+/// \param high is the given HighVariable
 void Merge::processHighRedundantCopy(HighVariable *high)
 
 {
@@ -1151,6 +1181,12 @@ void Merge::processHighRedundantCopy(HighVariable *high)
   }
 }
 
+/// \brief Try to reduce/eliminate COPYs produced by the merge trimming process
+///
+/// In order to force merging of certain Varnodes, extra COPY operations may be inserted
+/// to reduce their Cover ranges, and multiple COPYs from the same Varnode can be created this way.
+/// This method collects sets of COPYs generated in this way that have the same input Varnode
+/// and then tries to replace the COPYs with fewer or a single COPY.
 void Merge::processCopyTrims(void)
 
 {
@@ -1172,6 +1208,85 @@ void Merge::processCopyTrims(void)
       processHighDominantCopy(high);	// Try to replace with a dominant copy
     high->clearCopyIns();
   }
+}
+
+/// \brief Mark redundant/internal COPY PcodeOps
+///
+/// Run through all COPY, SUBPIECE, and PIECE operations (PcodeOps that copy data) and
+/// characterize those that are \e internal (copy data between storage locations representing
+/// the same variable) or \e redundant (perform the same copy as an earlier operation).
+/// These, as a result, are not printed in the final source code representation.
+void Merge::markInternalCopies(void)
+
+{
+  vector<HighVariable *> multiCopy;
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *op;
+  HighVariable *h1,*h2,*h3;
+  Varnode *v1,*v2,*v3;
+  int4 val;
+
+  for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
+    op = *iter;
+    switch(op->code()) {
+    case CPUI_COPY:
+      v1 = op->getOut();
+      h1 = v1->getHigh();
+      if (h1 == op->getIn(0)->getHigh()) {
+	data.opSetFlag(op, PcodeOp::nonprinting);
+      }
+      else {	// COPY between different HighVariables
+	if (!h1->hasCopyIn1()) {	// If this is the first COPY we've seen for this high
+	  h1->setCopyIn1();		// Mark it
+	  multiCopy.push_back(h1);
+	}
+	else
+	  h1->setCopyIn2();		// This is at least the second COPY we've seen
+	if (v1->hasNoDescend()) {	// Don't print shadow assignments
+	  if (shadowedVarnode(v1)) {
+	    data.opSetFlag(op, PcodeOp::nonprinting);
+	  }
+	}
+      }
+      break;
+    case CPUI_PIECE:		// Check if output is built out of pieces of itself
+      h1 = op->getOut()->getHigh();
+      h2 = op->getIn(0)->getHigh();
+      h3 = op->getIn(1)->getHigh();
+      if (!h1->isAddrTied()) break;
+      if (!h2->isAddrTied()) break;
+      if (!h3->isAddrTied()) break;
+      v1 = h1->getTiedVarnode();
+      v2 = h2->getTiedVarnode();
+      v3 = h3->getTiedVarnode();
+      if (v3->overlap(*v1) != 0) break;
+      if (v2->overlap(*v1) != v3->getSize()) break;
+      data.opSetFlag(op,PcodeOp::nonprinting);
+      break;
+    case CPUI_SUBPIECE:
+      h1 = op->getOut()->getHigh();
+      h2 = op->getIn(0)->getHigh();
+      if (!h1->isAddrTied()) break;
+      if (!h2->isAddrTied()) break;
+      v1 = h1->getTiedVarnode();
+      v2 = h2->getTiedVarnode();
+      val = op->getIn(1)->getOffset();
+      if (v1->overlap(*v2) != val) break;
+      data.opSetFlag(op,PcodeOp::nonprinting);
+      break;
+    default:
+      break;
+    }
+  }
+  for(int4 i=0;i<multiCopy.size();++i) {
+    HighVariable *high = multiCopy[i];
+    if (high->hasCopyIn2())
+      data.getMerge().processHighRedundantCopy(high);
+    high->clearCopyIns();
+  }
+#ifdef MERGEMULTI_DEBUG
+  verifyHighCovers();
+#endif
 }
 
 /// \brief Perform low-level details of merging two HighVariables if possible
@@ -1414,3 +1529,27 @@ bool Merge::mergeTest(HighVariable *high,vector<HighVariable *> &tmplist)
   tmplist.push_back(high);
   return true;
 }
+
+#ifdef MERGEMULTI_DEBUG
+/// \brief Check that all HighVariable covers are consistent
+///
+/// For each HighVariable make sure there are no internal intersections between
+/// its instance Varnodes (unless one is a COPY shadow of the other).
+void Merge::verifyHighCovers(void)
+
+{
+  VarnodeLocSet::const_iterator iter,enditer;
+
+  enditer = data.endLoc();
+  for(iter=data.beginLoc();iter!=enditer;++iter) {
+    Varnode *vn = *iter;
+    if (vn->hasCover()) {
+      HighVariable *high = vn->getHigh();
+      if (!high->hasCopyIn1()) {
+	high->setCopyIn1();
+	high->verifyCover();
+      }
+    }
+  }
+}
+#endif
