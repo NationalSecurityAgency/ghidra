@@ -59,10 +59,10 @@ public class ColorAndStyle {
 	public String toHtml(String text) {
 
 		String html = text;
-		if (style == Font.BOLD) {
+		if (isBold()) {
 			html = HTMLUtilities.bold(html);
 		}
-		if (style == Font.ITALIC) {
+		if (isItalic()) {
 			html = HTMLUtilities.italic(html);
 		}
 
