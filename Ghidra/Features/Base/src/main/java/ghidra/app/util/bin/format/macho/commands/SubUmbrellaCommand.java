@@ -55,8 +55,8 @@ public class SubUmbrellaCommand extends LoadCommand {
 		sub_umbrella = LoadCommandString.createLoadCommandString(reader, this);
 	}
 
-	public String getSubUmbrellaFrameworkName() {
-		return sub_umbrella.getString();
+	public LoadCommandString getSubUmbrellaFrameworkName() {
+		return sub_umbrella;
 	}
 
 	@Override

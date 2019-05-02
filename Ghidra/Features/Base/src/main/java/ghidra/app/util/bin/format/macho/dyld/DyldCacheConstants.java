@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.ios.dyldcache;
+package ghidra.app.util.bin.format.macho.dyld;
 
-public class DyldCacheLibrary {
+public final class DyldCacheConstants {
 
-		
 }
