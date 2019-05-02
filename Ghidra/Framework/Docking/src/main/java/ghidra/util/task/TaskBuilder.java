@@ -23,6 +23,7 @@ import java.util.Objects;
 import javax.swing.SwingConstants;
 
 import ghidra.util.SystemUtilities;
+import util.CollectionUtils;
 
 /**
  * A builder object that allows clients to launch tasks in the background, with a progress
@@ -137,7 +138,7 @@ public class TaskBuilder {
 	 * @return this builder
 	 */
 	public TaskBuilder setStatusTextAlignment(int alignment) {
-		boolean isValid = SystemUtilities.isOneOf(alignment, LEADING, CENTER, TRAILING);
+		boolean isValid = CollectionUtils.isOneOf(alignment, LEADING, CENTER, TRAILING);
 		SystemUtilities.assertTrue(isValid, "Illegal alignment argument: " + alignment);
 
 		this.statusTextAlignment = alignment;
