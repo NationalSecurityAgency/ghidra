@@ -27,6 +27,9 @@ import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.ToolTipManager;
 import docking.action.*;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
@@ -148,7 +151,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel searchOptionsPanel = new JPanel(new BorderLayout());
 		searchOptionsPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
-		JLabel minLengthLabel = new JLabel("Minimum Length: ");
+		JLabel minLengthLabel = new GLabel("Minimum Length: ");
 		ToolTipManager.setToolTipText(minLengthLabel,
 			"The minimum number of consecutive addresses that will make an address table.");
 		minLengthField = new JTextField(5);
@@ -159,7 +162,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		minLengthPanel.add(minLengthLabel);
 		minLengthPanel.add(minLengthField);
 
-		alignLabel = new JLabel("Alignment: ");
+		alignLabel = new GDLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
 		ToolTipManager.setToolTipText(alignLabel,
@@ -170,7 +173,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		}
 		alignField.setText("" + align);
 
-		skipLabel = new JLabel("Skip Length: ");
+		skipLabel = new GDLabel("Skip Length: ");
 		skipField = new JTextField(5);
 		skipField.setName("Skip");
 		ToolTipManager.setToolTipText(skipLabel,
@@ -190,14 +193,14 @@ public class AddressTableDialog extends DialogComponentProvider {
 		optPanel.add(alignPanel);
 		optPanel.add(skipPanel);
 
-		selectionButton = new JCheckBox("Search Selection");
+		selectionButton = new GCheckBox("Search Selection");
 		selectionButton.setSelected(false);
 		ToolTipManager.setToolTipText(selectionButton,
 			"If checked, search only the current selection.");
 		JPanel searchOptionsWestPanel = new JPanel(new GridLayout(2, 1));
 		searchOptionsWestPanel.add(selectionButton);
 
-		shiftedAddressButton = new JCheckBox("Shifted Addresses");
+		shiftedAddressButton = new GCheckBox("Shifted Addresses");
 
 		boolean allowShiftedAddresses =
 			plugin.getProgram().getDataTypeManager().getDataOrganization().getPointerShift() != 0;
@@ -224,18 +227,18 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel makeOptionsPanel = new JPanel(new BorderLayout());
 		makeOptionsPanel.setBorder(BorderFactory.createTitledBorder("Make Table Options"));
 
-		autoLabelCB = new JCheckBox("Auto Label");
+		autoLabelCB = new GCheckBox("Auto Label");
 		autoLabelCB.setSelected(true);
 		autoLabelCB.setEnabled(false);
 		ToolTipManager.setToolTipText(autoLabelCB,
 			"Label the top of the address table and all members of the table.");
 
-		offsetLabel = new JLabel("Offset: ");
+		offsetLabel = new GDLabel("Offset: ");
 		ToolTipManager.setToolTipText(offsetLabel,
 			"Offset from the beginning of the selected table(s)");
 		offsetLabel.setEnabled(false);
 
-		JLabel viewOffsetLabel = new JLabel("  ");
+		JLabel viewOffsetLabel = new GDLabel("  ");
 		viewOffsetLabel.setEnabled(false);
 
 		viewOffset = new HintTextField(20);

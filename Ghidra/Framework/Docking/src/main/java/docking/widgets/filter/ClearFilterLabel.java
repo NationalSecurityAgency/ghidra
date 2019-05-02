@@ -28,6 +28,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.util.AnimationUtils;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.SystemUtilities;
 import resources.Icons;
 import resources.ResourceManager;
@@ -36,7 +37,7 @@ import resources.ResourceManager;
  * A label that displays an icon that, when clicked, will clear the contents of the 
  * associated filter.
  */
-public class ClearFilterLabel extends JLabel {
+public class ClearFilterLabel extends GIconLabel {
 
 	private Icon RAW_ICON = Icons.DELETE_ICON;
 	private Icon ICON = ResourceManager.getScaledIcon(RAW_ICON, 10, 10);

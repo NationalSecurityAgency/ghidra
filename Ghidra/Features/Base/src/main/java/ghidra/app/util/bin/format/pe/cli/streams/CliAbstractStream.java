@@ -42,14 +42,14 @@ import ghidra.util.task.TaskMonitor;
  * with calling them streams because using both terms can get confusing. 
  */
 public abstract class CliAbstractStream implements StructConverter, PeMarkupable {
-	
+
 	public static final String PATH = "/PE/CLI/Streams";
-	
+
 	protected CliStreamHeader header;
 	protected long offset;
 	protected int rva;
 	protected BinaryReader reader;
-	
+
 	/**
 	 * Creates a new generic CLI stream type.  This is intended to be called by a subclass
 	 * stream during its creation.
@@ -90,13 +90,13 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, IOException {
-		
-		monitor.setMessage(program.getName() + ": CLI stream...");
+
+		monitor.setMessage("[" + program.getName() + "]: CLI stream...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, rva);
-		
+
 		program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "CLI Stream",
 			header.getName());
-		
+
 		try {
 			program.getSymbolTable().createLabel(addr, "CLI_Stream_" + header.getName(),
 				SourceType.ANALYSIS);
@@ -114,7 +114,7 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 		dt.setCategoryPath(new CategoryPath(PATH));
 		PeUtils.createData(program, addr, dt, log);
 	}
-	
+
 	/**
 	 * Gets this stream's header.
 	 * 

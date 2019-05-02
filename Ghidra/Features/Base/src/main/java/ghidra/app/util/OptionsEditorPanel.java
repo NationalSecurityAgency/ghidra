@@ -28,6 +28,9 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
 import ghidra.app.util.opinion.LibraryPathsDialog;
@@ -70,7 +73,7 @@ public class OptionsEditorPanel extends JPanel {
 
 		panel.setBorder(createBorder(group));
 		for (Option option : optionGroup) {
-			panel.add(new JLabel(option.getName(), SwingConstants.RIGHT));
+			panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
 			Component editorComponent = getEditorComponent(option);
 			editorComponent.setName(option.getName()); // set the component name to the option name
 			panel.add(editorComponent);
@@ -220,7 +223,7 @@ public class OptionsEditorPanel extends JPanel {
 			e -> DockingWindowManager.showDialog(panel, new LibraryPathsDialog()));
 		Boolean value = (Boolean) option.getValue();
 		boolean initialState = value != null ? value : false;
-		JCheckBox jCheckBox = new JCheckBox("", initialState);
+		GCheckBox jCheckBox = new GCheckBox("", initialState);
 		button.setEnabled(initialState);
 		jCheckBox.addActionListener(e -> {
 			boolean b = jCheckBox.isSelected();
@@ -233,7 +236,7 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getAddressSpaceEditorComponent(Option option) {
-		JComboBox<AddressSpace> combo = new JComboBox<>();
+		JComboBox<AddressSpace> combo = new GComboBox<>();
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressSpace[] spaces =
 			addressFactory == null ? new AddressSpace[0] : addressFactory.getAddressSpaces();
@@ -244,6 +247,11 @@ public class OptionsEditorPanel extends JPanel {
 		if (space != null) {
 			combo.setSelectedItem(space);
 		}
+		combo.addActionListener(e -> {
+			// called whenever the combobox changes to push the value back to the Option that is
+			// our 'model'
+			option.setValue(combo.getSelectedItem());
+		});
 		return combo;
 	}
 
@@ -285,7 +293,7 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getBooleanEditorComponent(Option option) {
-		JCheckBox cb = new JCheckBox();
+		GCheckBox cb = new GCheckBox();
 		cb.setName(option.getName());
 		Boolean b = (Boolean) option.getValue();
 		boolean initialState = b != null ? b : false;

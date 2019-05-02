@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,15 @@
  */
 package ghidra.app.merge.tree;
 
-import ghidra.app.merge.MergeConstants;
-
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.button.GRadioButton;
+import ghidra.app.merge.MergeConstants;
 
 /**
  * Panel for resolving name conflicts among program trees when private
@@ -88,10 +88,10 @@ class NamePanel extends JPanel {
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		keepOtherRB = new JRadioButton("Keep 'Other' Name");
-		keepMyRB = new JRadioButton("Keep 'My' Name");
-		newTreeRB = new JRadioButton("Add New Tree");
-		originalRB = new JRadioButton("Use Original Name");
+		keepOtherRB = new GRadioButton("Keep 'Other' Name");
+		keepMyRB = new GRadioButton("Keep 'My' Name");
+		newTreeRB = new GRadioButton("Add New Tree");
+		originalRB = new GRadioButton("Use Original Name");
 
 		keepOtherRB.setName(ProgramTreeMergePanel.KEEP_OTHER_BUTTON_NAME);
 		keepMyRB.setName(ProgramTreeMergePanel.KEEP_PRIVATE_BUTTON_NAME);
@@ -112,6 +112,7 @@ class NamePanel extends JPanel {
 
 		add(panel);
 		ItemListener itemListener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (listener != null) {
 					listener.stateChanged(null);

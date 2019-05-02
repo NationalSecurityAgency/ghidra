@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 
 import org.junit.Test;
 
+import docking.widgets.label.GDLabel;
 import generic.test.AbstractGenericTest;
 
 public class PlaceholderSetTest extends AbstractGenericTest {
@@ -160,7 +161,7 @@ public class PlaceholderSetTest extends AbstractGenericTest {
 	}
 
 	private class TestProvider extends ComponentProvider {
-		JLabel label = new JLabel();
+		JLabel label = new GDLabel();
 
 		public TestProvider() {
 			super(null, null, null);

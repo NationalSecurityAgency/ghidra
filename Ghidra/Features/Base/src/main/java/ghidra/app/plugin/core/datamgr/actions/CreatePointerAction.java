@@ -62,7 +62,7 @@ public class CreatePointerAction extends DockingAction {
 			Msg.showInfo(getClass(), gTree, "Pointers Filter Enabled",
 				"<html>Newly created pointer is filtered out of view.<br><br>Toggle the " +
 					"<b>Filter Pointers " + "Action</b> to view the pointer<br>Pointer: " +
-					newManager.getName() + newPath);
+					HTMLUtilities.escapeHTML(newManager.getName() + newPath));
 			return;
 		}
 

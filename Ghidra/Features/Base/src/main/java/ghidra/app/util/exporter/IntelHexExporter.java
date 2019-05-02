@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.util.*;
 import ghidra.app.util.opinion.IntelHexRecord;
@@ -47,12 +48,12 @@ public class IntelHexExporter extends Exporter {
 
 	/** Option allowing the user to select the address space */
 	protected Option addressSpaceOption;
-	
+
 	/** Option allowing the user to select the number of bytes in each line of output */
 	protected RecordSizeOption recordSizeOption;
-	
+
 	private static final int DEFAULT_RECORD_SIZE = 0x10;
-	
+
 	/**
 	 * Constructs a new Intel Hex exporter. This will use a record size of 16 (the default)
 	 * and will export ALL bytes in the program or selection (even if the total length
@@ -61,7 +62,7 @@ public class IntelHexExporter extends Exporter {
 	public IntelHexExporter() {
 		this("Intel Hex", "hex", new HelpLocation("ExporterPlugin", "intel_hex"));
 	}
-	
+
 	/**
 	 * Constructs a new Intel Hex exporter with a custom record size. 
 	 * 
@@ -75,7 +76,7 @@ public class IntelHexExporter extends Exporter {
 		recordSizeOption.setRecordSize(recordSize);
 		recordSizeOption.setDropBytes(dropBytes);
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -97,8 +98,8 @@ public class IntelHexExporter extends Exporter {
 		}
 		Program program = (Program) domainObject;
 
-		addressSpaceOption =
-			new Option("Address Space", program.getAddressFactory().getDefaultAddressSpace());
+		addressSpaceOption = new Option("Address Space",
+			program.getAddressFactory().getDefaultAddressSpace(), AddressSpace.class, null);
 
 		if (recordSizeOption == null) {
 			recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
@@ -114,10 +115,10 @@ public class IntelHexExporter extends Exporter {
 	public void setOptions(List<Option> options) throws OptionException {
 		if (!options.isEmpty()) {
 			addressSpaceOption = options.get(0);
-			recordSizeOption = (RecordSizeOption) options.get(1); 
+			recordSizeOption = (RecordSizeOption) options.get(1);
 		}
 	}
-	
+
 	/**
 	 * Verifier for a {@link HintTextField} that ensures input is a numeric value between
 	 * 0 and 0xFF.
@@ -225,7 +226,7 @@ public class IntelHexExporter extends Exporter {
 		}
 		return writer.finish(entryPoint);
 	}
-	
+
 	/**
 	 * Option for exporting Intel Hex records that allows users to specify a record size for the
 	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
@@ -270,11 +271,11 @@ public class IntelHexExporter extends Exporter {
 		public boolean dropExtraBytes() {
 			return comp.dropExtraBytes();
 		}
-		
+
 		public void setRecordSize(int recordSize) {
 			comp.setRecordSize(recordSize);
 		}
-		
+
 		public void setDropBytes(boolean dropBytes) {
 			comp.setDropBytes(dropBytes);
 		}
@@ -296,16 +297,17 @@ public class IntelHexExporter extends Exporter {
 	private class RecordSizeComponent extends JPanel {
 
 		private HintTextField input;
-		private JCheckBox dropCb;
+		private GCheckBox dropCb;
 
 		public RecordSizeComponent(int recordSize) {
 			setLayout(new BorderLayout());
-			
-			input = new HintTextField(Integer.toString(recordSize), false, new BoundedIntegerVerifier());
-			dropCb = new JCheckBox("Align To Record Size");
-			
+
+			input = new HintTextField(Integer.toString(recordSize), false,
+				new BoundedIntegerVerifier());
+			dropCb = new GCheckBox("Align To Record Size");
+
 			input.setText(Integer.toString(recordSize));
-			
+
 			add(input, BorderLayout.CENTER);
 			add(dropCb, BorderLayout.EAST);
 		}
@@ -313,7 +315,7 @@ public class IntelHexExporter extends Exporter {
 		public int getValue() {
 			String val = input.getText();
 			if (!input.isFieldValid()) {
-				
+
 				// If the user clears the input field, revert to the default 
 				// record size (16).
 				return DEFAULT_RECORD_SIZE;
@@ -325,11 +327,11 @@ public class IntelHexExporter extends Exporter {
 		public boolean dropExtraBytes() {
 			return dropCb.isSelected();
 		}
-		
+
 		public void setRecordSize(int recordSize) {
 			input.setText(Integer.toString(recordSize));
 		}
-		
+
 		public void setDropBytes(boolean dropBytes) {
 			dropCb.setSelected(dropBytes);
 		}

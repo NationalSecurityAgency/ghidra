@@ -20,6 +20,8 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.*;
 
+import docking.widgets.button.GRadioButton;
+
 /**
  * Allows the user to define a custom search range for the {@link InstructionSearchDialog}.
  *
@@ -126,7 +128,7 @@ public class SearchDirectionWidget extends ControlPanelWidget {
 	 * @return
 	 */
 	private JRadioButton createSearchRB(AbstractAction action, String name, String tooltip) {
-		JRadioButton button = new JRadioButton(action);
+		GRadioButton button = new GRadioButton(action);
 		button.setText(name);
 		button.setToolTipText(tooltip);
 		button.setAlignmentX(Component.LEFT_ALIGNMENT);

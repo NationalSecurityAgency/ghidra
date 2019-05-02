@@ -20,6 +20,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import docking.WindowPosition;
+import docking.widgets.label.GLabel;
 import ghidra.app.services.GoToService;
 import ghidra.bitpatterns.info.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -109,16 +110,16 @@ public class PatternEvalTableProvider extends ComponentProviderAdapter {
 
 	private JPanel buildInfoPanel(PatternEvaluationStats stats) {
 		JPanel evalPanel = new JPanel(new GridLayout(2, 8));
-		evalPanel.add(new JLabel("Match Type"));
-		evalPanel.add(new JLabel(PatternMatchType.TRUE_POSITIVE.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_WRONG_FLOW.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_MISALIGNED.name()));
-		evalPanel.add(new JLabel(PatternMatchType.FP_DATA.name()));
-		evalPanel.add(new JLabel(PatternMatchType.POSSIBLE_START_CODE.name()));
-		evalPanel.add(new JLabel(PatternMatchType.POSSIBLE_START_UNDEFINED.name()));
-		evalPanel.add(new JLabel(PatternMatchType.CONTEXT_CONFLICT.name()));
-		evalPanel.add(new JLabel(PatternMatchType.PRE_PATTERN_HIT.name()));
-		evalPanel.add(new JLabel("Number"));
+		evalPanel.add(new GLabel("Match Type"));
+		evalPanel.add(new GLabel(PatternMatchType.TRUE_POSITIVE.name()));
+		evalPanel.add(new GLabel(PatternMatchType.FP_WRONG_FLOW.name()));
+		evalPanel.add(new GLabel(PatternMatchType.FP_MISALIGNED.name()));
+		evalPanel.add(new GLabel(PatternMatchType.FP_DATA.name()));
+		evalPanel.add(new GLabel(PatternMatchType.POSSIBLE_START_CODE.name()));
+		evalPanel.add(new GLabel(PatternMatchType.POSSIBLE_START_UNDEFINED.name()));
+		evalPanel.add(new GLabel(PatternMatchType.CONTEXT_CONFLICT.name()));
+		evalPanel.add(new GLabel(PatternMatchType.PRE_PATTERN_HIT.name()));
+		evalPanel.add(new GLabel("Number"));
 		JTextField truePositivesField = new JTextField(8);
 		truePositivesField.setEditable(false);
 		truePositivesField.setText(Integer.toString(stats.getNumTruePositives()));

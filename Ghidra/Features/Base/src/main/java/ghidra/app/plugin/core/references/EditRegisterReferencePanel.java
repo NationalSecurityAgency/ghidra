@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.references;
 
 import java.util.*;
 
-import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -29,47 +29,42 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.layout.PairLayout;
 
 class EditRegisterReferencePanel extends EditReferencePanel {
-	
+
 	private static final RefType[] REGISTER_REF_TYPES = RefTypeFactory.getDataRefTypes();
 
 	private ReferencesPlugin plugin;
-	
+
 	// Fields required for ADD
 	private CodeUnit fromCodeUnit;
 	private GhidraComboBox<Register> regList;
 	private GhidraComboBox<RefType> refTypes;
 	private int opIndex;
-	
+
 	// Fields required for EDIT
 	private Reference editRef;
 
 	private boolean isValidState;
-	
+
 	EditRegisterReferencePanel(ReferencesPlugin plugin) {
 		super("REG");
 		this.plugin = plugin;
 		buildPanel();
 	}
-	
+
 	private void buildPanel() {
-		setLayout(new PairLayout(10,10,160));
+		setLayout(new PairLayout(10, 10, 160));
 		setBorder(new EmptyBorder(0, 5, 5, 5));
-		
+
 		regList = new GhidraComboBox<>();
-		
+
 		refTypes = new GhidraComboBox<>(REGISTER_REF_TYPES);
-		
-		JLabel label = new JLabel("Register:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+
+		add(new GLabel("Register:", SwingConstants.RIGHT));
 		add(regList);
-		
-		label = new JLabel("Ref-Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
 	}
-	
+
 	private void populateRefTypes(RefType adhocType) {
 		refTypes.clearModel();
 		for (int i = 0; i < REGISTER_REF_TYPES.length; i++) {
@@ -82,7 +77,7 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 			refTypes.addItem(adhocType);
 		}
 	}
-	
+
 	private void populateRegisterList(Collection<Register> registers, Register selectedRegister) {
 		regList.clearModel();
 		for (Register reg : registers) {
@@ -92,7 +87,7 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 			regList.setSelectedItem(selectedRegister);
 		}
 	}
-	
+
 	private TreeSet<Register> getAllowedRegisters(Instruction instr, Register requiredReg) {
 		Program program = instr.getProgram();
 		Register stackPointer = program.getCompilerSpec().getStackPointer();
@@ -103,12 +98,12 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 				reg = (Register) obj;
 			}
 			else if (obj instanceof Address) {
-				reg = program.getRegister((Address)obj);
+				reg = program.getRegister((Address) obj);
 			}
 			if (reg != null) {
 				reg = reg.getBaseRegister();
-				if (!reg.isHidden() && !reg.isProcessorContext() && !reg.isProgramCounter() && 
-						(stackPointer == null || !stackPointer.equals(reg))) {
+				if (!reg.isHidden() && !reg.isProcessorContext() && !reg.isProgramCounter() &&
+					(stackPointer == null || !stackPointer.equals(reg))) {
 					regSet.add(reg);
 					addChildRegisters(reg, regSet);
 				}
@@ -119,16 +114,16 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 		}
 		return regSet;
 	}
-	
+
 	private void addChildRegisters(Register reg, Set<Register> regSet) {
 		for (Register child : reg.getChildRegisters()) {
 			regSet.add(child);
 			addChildRegisters(child, regSet);
 		}
 	}
-	
+
 	@Override
-    public void initialize(CodeUnit fromCu, Reference editReference) {
+	public void initialize(CodeUnit fromCu, Reference editReference) {
 		isValidState = false;
 		if (!(fromCu instanceof Instruction)) {
 			throw new IllegalArgumentException("Valid instruction required");
@@ -139,57 +134,58 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 		}
 		this.fromCodeUnit = fromCu;
 		this.editRef = editReference;
-		
-		populateRegisterList(getAllowedRegisters((Instruction)fromCu, toReg), toReg);
-		
+
+		populateRegisterList(getAllowedRegisters((Instruction) fromCu, toReg), toReg);
+
 		RefType rt = editRef.getReferenceType();
 		populateRefTypes(rt);
 		refTypes.setSelectedItem(rt);
-		
+
 		isValidState = true;
 	}
 
 	@Override
-    public boolean initialize(CodeUnit fromCu, int fromOpIndex, int fromSubIndex) {
+	public boolean initialize(CodeUnit fromCu, int fromOpIndex, int fromSubIndex) {
 		isValidState = false;
 		this.editRef = null;
 		this.fromCodeUnit = fromCu;
 
 		return setOpIndex(fromOpIndex);
 	}
-	
+
 	private static Register findOperandRegister(Instruction instr, int opIndex) {
 		Object[] objs = instr.getOpObjects(opIndex);
 		if (objs.length == 1) {
 			if (objs[0] instanceof Register) {
-				return (Register)objs[0];
+				return (Register) objs[0];
 			}
 			if (objs[0] instanceof Address) {
-				return instr.getProgram().getRegister((Address)objs[0]);
+				return instr.getProgram().getRegister((Address) objs[0]);
 			}
 		}
 		return null;
 	}
-	
+
 	@Override
-    public boolean setOpIndex(int fromOpIndex) {
-		
+	public boolean setOpIndex(int fromOpIndex) {
+
 		if (editRef != null) {
 			throw new IllegalStateException("setOpIndex only permitted for ADD case");
 		}
-		
+
 		isValidState = false;
 		this.opIndex = fromOpIndex;
-		
+
 		if (!(fromCodeUnit instanceof Instruction)) {
 			return false;
 		}
-		
-		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(fromCodeUnit.getMinAddress());
+
+		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(
+			fromCodeUnit.getMinAddress());
 		if (f == null) {
 			return false;
 		}
-		
+
 		Instruction instr = (Instruction) fromCodeUnit;
 		TreeSet<Register> allowedRegisters = getAllowedRegisters(instr, null);
 		if (allowedRegisters.isEmpty()) {
@@ -197,39 +193,41 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 		}
 		Register preferredReg = findOperandRegister(instr, fromOpIndex);
 		populateRegisterList(allowedRegisters, preferredReg);
-		
+
 		populateRefTypes(null);
 		refTypes.setSelectedItem(RefType.WRITE);
-		
+
 		isValidState = true;
 		return true;
 	}
 
 	@Override
-    public boolean applyReference() {
+	public boolean applyReference() {
 		if (!isValidState) {
 			throw new IllegalStateException();
 		}
-		
-		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(fromCodeUnit.getMinAddress());
+
+		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(
+			fromCodeUnit.getMinAddress());
 		if (f == null) {
 			// Function no longer exists
-			showInputErr("Register reference not permitted!\nAddress " + fromCodeUnit.getMinAddress() + " is no longer contained within a function.");
+			showInputErr("Register reference not permitted!\nAddress " +
+				fromCodeUnit.getMinAddress() + " is no longer contained within a function.");
 			return false;
 		}
-		
+
 		RefType refType = (RefType) refTypes.getSelectedItem();
 		if (refType == null) {
 			showInputErr("A 'Ref-Type' must be selected.");
 			return false;
 		}
-		
+
 		Register toReg = (Register) regList.getSelectedItem();
 		if (toReg == null) {
 			showInputErr("A 'Register' must be selected.");
 			return false;
 		}
-		
+
 		if (editRef != null) {
 			return plugin.updateReference(editRef, fromCodeUnit, toReg, refType);
 		}
@@ -237,15 +235,14 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 	}
 
 	@Override
-    public void cleanup() {
+	public void cleanup() {
 		isValidState = false;
 		fromCodeUnit = null;
 		editRef = null;
 	}
 
 	@Override
-    public boolean isValidContext() {
+	public boolean isValidContext() {
 		return isValidState;
 	}
 }
-

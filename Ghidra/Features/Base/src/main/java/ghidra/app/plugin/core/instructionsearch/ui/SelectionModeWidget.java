@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.button.GRadioButton;
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
 
 /**
@@ -59,8 +60,8 @@ public class SelectionModeWidget extends ControlPanelWidget {
 	@Override
 	protected JPanel createContent() {
 		JPanel rbPanel = new JPanel();
-		hexRB = new JRadioButton("hex");
-		binaryRB = new JRadioButton("binary");
+		hexRB = new GRadioButton("hex");
+		binaryRB = new GRadioButton("binary");
 		ButtonGroup inputGroup = new ButtonGroup();
 		inputGroup.add(hexRB);
 		inputGroup.add(binaryRB);
@@ -93,15 +94,17 @@ public class SelectionModeWidget extends ControlPanelWidget {
 				// 1. Get the whitespace map so we can restore it after conversion.
 				// 2. Get the group map so we can group bytes just as in the hex display.
 				// 3. Convert and display.
-				List<String> whitespaces = InstructionSearchUtils.getWhitespace(parent.getInputString().trim());
+				List<String> whitespaces =
+					InstructionSearchUtils.getWhitespace(parent.getInputString().trim());
 
 				List<Integer> groups;
 				try {
-					groups =
-						InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(), InputMode.BINARY);
+					groups = InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(),
+						InputMode.BINARY);
 
 					// Now convert whatever is in the input box to binary.				
-					String hexStr = InstructionSearchUtils.toHex(parent.getInputString().trim(), true);
+					String hexStr =
+						InstructionSearchUtils.toHex(parent.getInputString().trim(), true);
 
 					// Restore grouping.
 					hexStr =
@@ -139,15 +142,17 @@ public class SelectionModeWidget extends ControlPanelWidget {
 				// 1. Get the whitespace map so we can restore it after conversion.
 				// 2. Get the group map so we can group bytes just as in the hex display.
 				// 3. Convert and display.
-				List<String> whitespaces = InstructionSearchUtils.getWhitespace(parent.getInputString().trim());
+				List<String> whitespaces =
+					InstructionSearchUtils.getWhitespace(parent.getInputString().trim());
 
 				List<Integer> groups;
 				try {
-					groups =
-						InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(), InputMode.HEX);
+					groups = InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(),
+						InputMode.HEX);
 
 					// Now convert whatever is in the input box to binary.				
-					String binaryStr = InstructionSearchUtils.toBinary(parent.getInputString().trim());
+					String binaryStr =
+						InstructionSearchUtils.toBinary(parent.getInputString().trim());
 
 					// Restore grouping.
 					binaryStr = restoreGroupingAndWhitespace(binaryStr, groups, whitespaces,
@@ -176,9 +181,9 @@ public class SelectionModeWidget extends ControlPanelWidget {
 			inputMode = InputMode.HEX;
 		}
 		else if (binaryRB.isSelected()) {
-			inputMode = InputMode.BINARY; 
+			inputMode = InputMode.BINARY;
 		}
-		
+
 		return inputMode;
 	}
 

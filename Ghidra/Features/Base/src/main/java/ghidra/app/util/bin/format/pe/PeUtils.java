@@ -54,8 +54,8 @@ public class PeUtils {
 			return program.getListing().getDefinedDataAt(addr);
 		}
 		catch (CodeUnitInsertionException e) {
-			log.appendMsg(program.getName() + ": failed to create " + datatype.getDisplayName() +
-				" at " + addr + ": " + e.getMessage());
+			log.appendMsg("[" + program.getName() + "]: failed to create " +
+				datatype.getDisplayName() + " at " + addr + ": " + e.getMessage());
 		}
 		catch (Exception e) {
 			log.appendMsg(e.getMessage());

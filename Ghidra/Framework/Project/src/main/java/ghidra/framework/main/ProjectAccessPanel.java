@@ -24,6 +24,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTable;
 import docking.wizard.AbstractWizardJPanel;
 import ghidra.app.util.GenericHelpTopics;
@@ -191,8 +193,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		add(mainPanel, BorderLayout.CENTER);
 
 		if (anonymousServerAccessAllowed) {
-			anonymousAccessCB = new JCheckBox("Allow Anonymous Access");
-			anonymousAccessCB.setSelected(origAnonymousAccessEnabled);
+			anonymousAccessCB = new GCheckBox("Allow Anonymous Access", origAnonymousAccessEnabled);
 			anonymousAccessCB.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
 			add(anonymousAccessCB, BorderLayout.SOUTH);
 		}
@@ -554,9 +555,9 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 
 		/**
 		 * Renderer for the {@link KnownUsersPanel}. This is to ensure that we render the
-		 * correct icon for each user in the list, and that the text is colored properly.
+		 * correct icon for each user in the list
 		 */
-		private class UserListCellRenderer extends JLabel implements ListCellRenderer {
+		private class UserListCellRenderer extends GListCellRenderer<String> {
 
 			private Icon icon;
 			private Icon inProjectIcon;
@@ -566,30 +567,18 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 				inProjectIcon = ResourceManager.loadImage("images/user.png");
 				icon = ResourceManager.getScaledIcon(icon, inProjectIcon.getIconWidth(),
 					inProjectIcon.getIconHeight());
-				setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-				setOpaque(true);
 			}
 
 			@Override
-			public Component getListCellRendererComponent(JList list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
+			public Component getListCellRendererComponent(JList<? extends String> list,
+					String username, int index, boolean isSelected, boolean cellHasFocus) {
 
-				String name = (String) value;
+				super.getListCellRendererComponent(list, username, index, isSelected, cellHasFocus);
 
 				if (userAccessPanel != null) {
-					setIcon(userAccessPanel.isInProjectAccessList(name) ? inProjectIcon : icon);
+					setIcon(userAccessPanel.isInProjectAccessList(username) ? inProjectIcon : icon);
 				}
 
-				setText(name);
-
-				if (isSelected) {
-					setBackground(list.getSelectionBackground());
-					setForeground(list.getSelectionForeground());
-				}
-				else {
-					setBackground(list.getBackground());
-					setForeground(list.getForeground());
-				}
 				return this;
 			}
 		}

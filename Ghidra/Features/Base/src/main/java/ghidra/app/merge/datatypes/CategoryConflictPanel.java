@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +22,9 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.merge.MergeConstants;
 
 /**
@@ -31,10 +33,10 @@ import ghidra.app.merge.MergeConstants;
  * 
  */
 class CategoryConflictPanel extends JPanel {
-	
-	public static final String LATEST_BUTTON_NAME         = "LatestVersionRB";
-	public static final String CHECKED_OUT_BUTTON_NAME    = "CheckedOutVersionRB";
-	public static final String ORIGINAL_BUTTON_NAME       = "OriginalVersionRB";
+
+	public static final String LATEST_BUTTON_NAME = "LatestVersionRB";
+	public static final String CHECKED_OUT_BUTTON_NAME = "CheckedOutVersionRB";
+	public static final String ORIGINAL_BUTTON_NAME = "OriginalVersionRB";
 	private ChangeListener listener;
 	private JRadioButton latestRB;
 	private JRadioButton myRB;
@@ -42,7 +44,6 @@ class CategoryConflictPanel extends JPanel {
 	private ButtonGroup group;
 	private JPanel rbPanel;
 	private JLabel categoryLabel;
-	
 
 	CategoryConflictPanel(String title, ChangeListener listener) {
 		super(new BorderLayout());
@@ -50,24 +51,24 @@ class CategoryConflictPanel extends JPanel {
 		create();
 		this.listener = listener;
 	}
-	void setConflictInfo(String categoryName,
-			String latestStr, String myStr, String origStr) {
+
+	void setConflictInfo(String categoryName, String latestStr, String myStr, String origStr) {
 		categoryLabel.setText(categoryName);
 		group.remove(latestRB);
 		group.remove(myRB);
 		group.remove(originalRB);
-		
-		latestRB.setText(latestStr);  
-		
+
+		latestRB.setText(latestStr);
+
 		myRB.setText(myStr);
 		originalRB.setText(origStr);
-		
+
 		latestRB.setSelected(false);
 		myRB.setSelected(false);
 		originalRB.setSelected(false);
 		addToButtonGroup();
 	}
-	
+
 	int getSelectedOption() {
 		if (latestRB.isSelected()) {
 			return DataTypeMergeManager.OPTION_LATEST;
@@ -85,39 +86,39 @@ class CategoryConflictPanel extends JPanel {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		
-		JLabel clabel = new JLabel("Category: ");
-		categoryLabel = new JLabel("CategoryName");
+
+		categoryLabel = new GDLabel("CategoryName");
 		categoryLabel.setForeground(MergeConstants.CONFLICT_COLOR);
-		
+
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-		labelPanel.add(clabel);
+		labelPanel.add(new GLabel("Category: "));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(categoryLabel);
-		
-		latestRB = new JRadioButton("Use Latest");
-		myRB = new JRadioButton("Use My Version");
-		originalRB = new JRadioButton("Use Original");
+
+		latestRB = new GRadioButton("Use Latest");
+		myRB = new GRadioButton("Use My Version");
+		originalRB = new GRadioButton("Use Original");
 		latestRB.setName(LATEST_BUTTON_NAME);
 		myRB.setName(CHECKED_OUT_BUTTON_NAME);
 		originalRB.setName(ORIGINAL_BUTTON_NAME);
-		
+
 		group = new ButtonGroup();
 		addToButtonGroup();
-		
+
 		rbPanel = new JPanel();
 		rbPanel.setLayout(new BoxLayout(rbPanel, BoxLayout.Y_AXIS));
-		
+
 		rbPanel.add(latestRB);
 		rbPanel.add(myRB);
 		rbPanel.add(originalRB);
 		panel.add(labelPanel, BorderLayout.NORTH);
 		panel.add(rbPanel, BorderLayout.CENTER);
-		
+
 		add(panel);
 		ItemListener itemListener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (listener != null) {
 					listener.stateChanged(null);
@@ -129,9 +130,10 @@ class CategoryConflictPanel extends JPanel {
 		originalRB.addItemListener(itemListener);
 
 	}
+
 	private void addToButtonGroup() {
 		group.add(latestRB);
 		group.add(myRB);
 		group.add(originalRB);
-	}	
+	}
 }

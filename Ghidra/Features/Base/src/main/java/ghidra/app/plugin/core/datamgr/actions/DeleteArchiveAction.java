@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
-import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.util.Msg;
-
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 
@@ -31,6 +24,12 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.archive.FileArchive;
+import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 
 public class DeleteArchiveAction extends DockingAction {
 
@@ -92,10 +91,13 @@ public class DeleteArchiveAction extends DockingAction {
 		TreePath[] selectionPaths = gTree.getSelectionPaths();
 		FileArchiveNode node = (FileArchiveNode) selectionPaths[0].getLastPathComponent();
 
-		if (OptionDialog.showOptionDialogWithCancelAsDefaultButton(gTree, "Confirm Delete Operation",
-			"<html><b>Are you sure you want to delete archive: " + node.getName() + "?<br><br>" +
+		if (OptionDialog.showOptionDialogWithCancelAsDefaultButton(gTree,
+			"Confirm Delete Operation",
+			"<html><b>Are you sure you want to delete archive: " +
+				HTMLUtilities.escapeHTML(node.getName()) + "?<br><br>" +
 				"<font color=\"red\">(WARNING: This action will permanently " +
-				"delete the file from disk.)</font></b>", "Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+				"delete the file from disk.)</font></b>",
+			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 			return;
 		}
 

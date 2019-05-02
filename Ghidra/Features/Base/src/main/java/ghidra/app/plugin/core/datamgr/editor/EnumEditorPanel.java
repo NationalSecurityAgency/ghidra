@@ -26,6 +26,8 @@ import javax.swing.table.TableModel;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableTextCellEditor;
 import docking.widgets.textfield.GValidatedTextField;
@@ -381,7 +383,7 @@ class EnumEditorPanel extends JPanel {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel label = new JLabel("Name:", SwingConstants.RIGHT);
+		JLabel label = new GLabel("Name:", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(descLabel.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
@@ -397,7 +399,7 @@ class EnumEditorPanel extends JPanel {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		descLabel = new JLabel("Description:", SwingConstants.RIGHT);
+		descLabel = new GDLabel("Description:", SwingConstants.RIGHT);
 
 		panel.add(descLabel);
 		panel.add(Box.createHorizontalStrut(2));
@@ -430,13 +432,13 @@ class EnumEditorPanel extends JPanel {
 			}
 		});
 
-		JLabel label = new JLabel("Category:", SwingConstants.RIGHT);
+		JLabel label = new GLabel("Category:", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(descLabel.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
 		panel.add(categoryField);
 		panel.add(Box.createHorizontalStrut(20));
-		panel.add(new JLabel("Size:"));
+		panel.add(new GLabel("Size:"));
 		panel.add(Box.createHorizontalStrut(5));
 		panel.add(sizeComboBox);
 

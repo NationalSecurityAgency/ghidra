@@ -24,6 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.main.DataTreeDialog;
@@ -61,7 +62,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		this.tool = tool;
 		setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-		JLabel folderLabel = new JLabel("Project folder ");
+		JLabel folderLabel = new GDLabel("Project folder ");
 		folderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		folderLabel.setToolTipText("The folder to store the new Version Tracking Session");
 		folderNameField = new JTextField();
@@ -79,7 +80,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		Font font = browseFolderButton.getFont();
 		browseFolderButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
-		JLabel newSessionLabel = new JLabel("New Session Name: ");
+		JLabel newSessionLabel = new GDLabel("New Session Name: ");
 		newSessionLabel.setToolTipText("The name for the new Version Tracking Session");
 		newSessionLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -101,12 +102,12 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			}
 		});
 
-		JLabel sourceLabel = new JLabel("Source Program: ");
+		JLabel sourceLabel = new GDLabel("Source Program: ");
 		sourceLabel.setIcon(INFO_ICON);
 		sourceLabel.setToolTipText("Analyzed program with markup to transfer");
 		sourceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		JLabel destinationLabel = new JLabel("Destination Program: ");
+		JLabel destinationLabel = new GDLabel("Destination Program: ");
 		destinationLabel.setIcon(INFO_ICON);
 		destinationLabel.setToolTipText("New program that receives the transferred markup");
 		destinationLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -427,24 +428,24 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		}
 		DomainFile file = folder.getFile(name);
 		if (file != null) {
-			notifyListenersOfStatusMessage("'" + file.getPathname() +
-				"' is the name of an existing domain file");
+			notifyListenersOfStatusMessage(
+				"'" + file.getPathname() + "' is the name of an existing domain file");
 			return false;
 		}
 
 		sourceProgram = updateProgram(sourceProgramFile, sourceProgram);
 
 		if (sourceProgram == null) {
-			notifyListenersOfStatusMessage("Can't open source program " +
-				sourceProgramFile.getName());
+			notifyListenersOfStatusMessage(
+				"Can't open source program " + sourceProgramFile.getName());
 			return false;
 		}
 
 		destinationProgram = updateProgram(destinationProgramFile, destinationProgram);
 
 		if (destinationProgram == null) {
-			notifyListenersOfStatusMessage("Can't open destination program " +
-				destinationProgramFile.getName());
+			notifyListenersOfStatusMessage(
+				"Can't open destination program " + destinationProgramFile.getName());
 			return false;
 		}
 
@@ -463,9 +464,8 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		button.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				DomainFile programFile =
-					VTWizardUtils.chooseDomainFile(NewSessionPanel.this, "a source program",
-						VTWizardUtils.PROGRAM_FILTER, null);
+				DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
+					"a source program", VTWizardUtils.PROGRAM_FILTER, null);
 				if (programFile != null) {
 					setSourceProgram(programFile);
 				}
@@ -480,9 +480,8 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		button.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				DomainFile programFile =
-					VTWizardUtils.chooseDomainFile(NewSessionPanel.this, "a destination program",
-						VTWizardUtils.PROGRAM_FILTER, null);
+				DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
+					"a destination program", VTWizardUtils.PROGRAM_FILTER, null);
 				if (programFile != null) {
 					setDestinationProgram(programFile);
 				}

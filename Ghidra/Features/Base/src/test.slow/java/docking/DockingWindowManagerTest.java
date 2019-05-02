@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
+import docking.widgets.label.GDLabel;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 
 public class DockingWindowManagerTest extends AbstractDockingTest {
@@ -493,7 +494,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	}
 
 	class MyProvider extends ComponentProviderAdapter {
-		JLabel label = new JLabel();
+		JLabel label = new GDLabel();
 
 		public MyProvider(String owner, String name, String group,
 				WindowPosition defaultWindowPosition) {

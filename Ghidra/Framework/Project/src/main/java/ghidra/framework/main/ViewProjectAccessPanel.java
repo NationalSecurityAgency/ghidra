@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.remote.User;
@@ -79,7 +80,7 @@ public class ViewProjectAccessPanel extends ProjectAccessPanel {
 		mainPanel.add(userAccessPanel, BorderLayout.CENTER);
 
 		if (anonymousServerAccessAllowed && origAnonymousAccessEnabled) {
-			JLabel anonymousAccessLabel = new JLabel("Anonymous Read-Only Access Enabled");
+			JLabel anonymousAccessLabel = new GDLabel("Anonymous Read-Only Access Enabled");
 			anonymousAccessLabel.setBorder(BorderFactory.createEmptyBorder(5, 2, 0, 0));
 			Font f = anonymousAccessLabel.getFont().deriveFont(Font.ITALIC);
 			anonymousAccessLabel.setFont(f);

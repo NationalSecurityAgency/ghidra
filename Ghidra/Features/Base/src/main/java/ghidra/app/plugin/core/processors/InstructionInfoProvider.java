@@ -20,6 +20,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.framework.model.DomainObjectChangedEvent;
@@ -115,7 +116,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		pane.setResizeWeight(.25);
 		mainPanel.add(pane, BorderLayout.CENTER);
 
-		dynamicUpdateCB = new JCheckBox("Dynamic Update", isDynamic);
+		dynamicUpdateCB = new GCheckBox("Dynamic Update", isDynamic);
 		dynamicUpdateCB.setAlignmentX(Component.CENTER_ALIGNMENT);
 		dynamicUpdateCB.addItemListener(e -> dynamicStateChanged());
 

@@ -25,6 +25,8 @@ import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.docking.settings.*;
@@ -223,15 +225,15 @@ public class SettingsDialog extends DialogComponentProvider {
 
 	}
 
-	private class SettingsEditor extends AbstractCellEditor implements TableCellEditor,
-			PopupMenuListener {
+	private class SettingsEditor extends AbstractCellEditor
+			implements TableCellEditor, PopupMenuListener {
 
 		final static int ENUM = 0;
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox comboBox = new JComboBox();
-		private JCheckBox checkBox = new JCheckBox();
+		private GComboBox<String> comboBox = new GComboBox<>();
+		private GCheckBox checkBox = new GCheckBox();
 
 		private final Runnable editStopped = new Runnable() {
 			@Override
@@ -254,7 +256,7 @@ public class SettingsDialog extends DialogComponentProvider {
 				case ENUM:
 					return getComboBoxEnum();
 				case BOOLEAN:
-					return new Boolean(checkBox.isSelected());
+					return Boolean.valueOf(checkBox.isSelected());
 			}
 			throw new AssertException();
 		}
@@ -262,7 +264,7 @@ public class SettingsDialog extends DialogComponentProvider {
 		private StringChoices getComboBoxEnum() {
 			String[] items = new String[comboBox.getItemCount()];
 			for (int i = 0; i < items.length; i++) {
-				items[i] = (String) comboBox.getItemAt(i);
+				items[i] = comboBox.getItemAt(i);
 			}
 			StringChoices choices = new StringChoices(items);
 			choices.setSelectedValue(comboBox.getSelectedIndex());
@@ -273,8 +275,8 @@ public class SettingsDialog extends DialogComponentProvider {
 		 * @see javax.swing.table.TableCellEditor#getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)
 		 */
 		@Override
-		public Component getTableCellEditorComponent(JTable table, Object value,
-				boolean isSelected, int row, int column) {
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+				int row, int column) {
 			if (value instanceof StringChoices) {
 				initComboBox((StringChoices) value);
 				return comboBox;
@@ -283,8 +285,8 @@ public class SettingsDialog extends DialogComponentProvider {
 				initCheckBox((Boolean) value);
 				return checkBox;
 			}
-			throw new AssertException("SettingsEditor: " + value.getClass().getName() +
-				" not supported");
+			throw new AssertException(
+				"SettingsEditor: " + value.getClass().getName() + " not supported");
 		}
 
 		private void initCheckBox(Boolean b) {

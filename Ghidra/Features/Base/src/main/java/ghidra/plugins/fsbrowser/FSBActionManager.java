@@ -31,6 +31,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
@@ -700,7 +701,7 @@ class FSBActionManager {
 					}
 					else {
 						SystemUtilities.runSwingLater(() -> {
-							JLabel label = new JLabel(icon);
+							JLabel label = new GIconLabel(icon);
 							JOptionPane.showMessageDialog(null, label,
 								"Image Viewer: " + fsrl.getName(), JOptionPane.INFORMATION_MESSAGE);
 						});
@@ -752,7 +753,7 @@ class FSBActionManager {
 					}
 					if (file.length() == 0) {
 						Msg.showInfo(this, parent, "View As Text Failed",
-							fsrl.getName() + " is empty (0 bytes).");
+							"File " + fsrl.getName() + " is empty (0 bytes).");
 						return;
 					}
 					try {

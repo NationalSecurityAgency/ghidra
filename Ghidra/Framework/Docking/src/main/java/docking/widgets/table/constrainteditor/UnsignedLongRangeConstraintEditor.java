@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
@@ -68,7 +69,7 @@ public class UnsignedLongRangeConstraintEditor extends AbstractColumnConstraintE
 
 		panel.add(rangeControlPanel);
 
-		infoLabel = new JLabel();
+		infoLabel = new GDHtmlLabel();
 		infoLabel.setForeground(Color.GRAY);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);

@@ -25,6 +25,7 @@ import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.widgets.combobox.GComboBox;
 import ghidra.program.model.address.*;
 
 /**
@@ -41,9 +42,9 @@ public class AddressInput extends JPanel {
 	private boolean updateSpaceField;
 	private boolean stateChanging;
 	private JTextField spaceField;
-	
+
 	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		new Comparator<AddressSpace>() {
+		new Comparator<>() {
 			@Override
 			public int compare(AddressSpace s1, AddressSpace s2) {
 				if (s1.isOverlaySpace()) {
@@ -66,7 +67,7 @@ public class AddressInput extends JPanel {
 		setLayout(new BorderLayout());
 		textField = new JTextField(10);
 		textField.setName("JTextField");//for JUnits...
-		combo = new JComboBox<>();
+		combo = new GComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);

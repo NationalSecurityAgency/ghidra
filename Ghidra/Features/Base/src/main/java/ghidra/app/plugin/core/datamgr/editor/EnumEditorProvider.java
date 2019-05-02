@@ -398,7 +398,8 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 				newVal = "Missing";
 			}
 			msg.append(String.format("<li>%s: 0x%s \u2192 <font color=#ff0000>%s</font></li>",
-				field, Long.toHexString(originalEnum.getValue(field)), newVal));
+				HTMLUtilities.escapeHTML(field), Long.toHexString(originalEnum.getValue(field)),
+				newVal));
 		}
 		msg.append("</ul>");
 		msg.append(

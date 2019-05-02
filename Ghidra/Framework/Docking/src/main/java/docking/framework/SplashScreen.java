@@ -23,6 +23,8 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.*;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
@@ -313,7 +315,7 @@ public class SplashScreen extends JWindow {
 		titlePanel.setLayout(new BorderLayout());
 
 		JLabel titleLabel =
-			new JLabel(ApplicationInformationDisplayFactory.createSplashScreenTitle());
+			new GLabel(ApplicationInformationDisplayFactory.createSplashScreenTitle());
 		Font font = titleLabel.getFont();
 		font = new Font(font.getName(), Font.BOLD, 11);
 		titleLabel.setFont(font);
@@ -328,7 +330,7 @@ public class SplashScreen extends JWindow {
 
 	private Component createStatusComponent() {
 		Font f = new Font("serif", Font.BOLD, 12);
-		statusLabel = new JLabel(" Loading...");
+		statusLabel = new GDLabel(" Loading...");
 		statusLabel.setFont(f);
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));

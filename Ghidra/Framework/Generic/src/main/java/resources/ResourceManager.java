@@ -474,7 +474,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Load the image specified by filename; returns null if problems occur trying to load the file
+	 * Load the image specified by filename; returns the default bomb icon
+	 * if problems occur trying to load the file.
+	 * <p>
 	 * 
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
@@ -507,6 +509,22 @@ public class ResourceManager {
 		}
 
 		return getDefaultIcon();
+	}
+
+	/**
+	 * Load the images specified by filenames; substitutes the default bomb icon
+	 * if problems occur trying to load an individual file.
+	 * <p>
+	 * @param filenames vararg list of string filenames (ie. "images/home.gif")
+	 * @return list of ImageIcons with each image, problem / missing images replaced with
+	 * the default icon.
+	 */
+	public static List<ImageIcon> loadImages(String... filenames) {
+		List<ImageIcon> results = new ArrayList<>(filenames.length);
+		for (String filename : filenames) {
+			results.add(loadImage(filename));
+		}
+		return results;
 	}
 
 	/**

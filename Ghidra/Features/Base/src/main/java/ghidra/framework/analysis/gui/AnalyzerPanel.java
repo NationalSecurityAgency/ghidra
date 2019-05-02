@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,20 @@
  */
 package ghidra.framework.analysis.gui;
 
-import ghidra.app.services.Analyzer;
-import ghidra.app.services.AnalyzerType;
-import ghidra.framework.analysis.AnalysisPhase;
-import ghidra.framework.analysis.AnalysisRecipe;
-import ghidra.util.layout.MiddleLayout;
-
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
+import ghidra.app.services.Analyzer;
+import ghidra.app.services.AnalyzerType;
+import ghidra.framework.analysis.AnalysisPhase;
+import ghidra.framework.analysis.AnalysisRecipe;
+import ghidra.util.layout.MiddleLayout;
 import resources.ResourceManager;
 
 public class AnalyzerPanel extends JPanel {
@@ -92,18 +90,14 @@ public class AnalyzerPanel extends JPanel {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setOpaque(false);
 		panel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
-		enabledCheckbox = new JCheckBox();
-		enabledCheckbox.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				recipe.setAnalyzerEnablement(analyzer, enabledCheckbox.isSelected());
-			}
-		});
+		enabledCheckbox = new GCheckBox();
+		enabledCheckbox.addActionListener(
+			e -> recipe.setAnalyzerEnablement(analyzer, enabledCheckbox.isSelected()));
 
 		enabledCheckbox.setSelected(recipe.isAnalyzerEnabled(analyzer));
 		panel.add(enabledCheckbox, BorderLayout.WEST);
 
-		iconLabel = new JLabel();
+		iconLabel = new GDLabel();
 		updateIconLabel();
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(2, 15, 2, 5));
 		panel.add(iconLabel, BorderLayout.EAST);
@@ -117,11 +111,11 @@ public class AnalyzerPanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 10, 2, 5));
 		panel.setOpaque(false);
 
-		analyzerNameLabel = new JLabel(analyzer.getName());
+		analyzerNameLabel = new GDLabel(analyzer.getName());
 		analyzerNameLabel.setFont(analyzerNameLabel.getFont().deriveFont(18f));
 		panel.add(analyzerNameLabel, BorderLayout.CENTER);
 
-		priorityLabel = new JLabel(analyzer.getPriority().toString());
+		priorityLabel = new GDLabel(analyzer.getPriority().toString());
 		priorityLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		priorityLabel.setFont(priorityLabel.getFont().deriveFont(10f));
 		priorityLabel.setForeground(Color.GRAY);
@@ -142,7 +136,7 @@ public class AnalyzerPanel extends JPanel {
 		phasePanel.setBorder(BorderFactory.createCompoundBorder(etched, empty));
 		phasePanel.setOpaque(false);
 		phasePanel.setPreferredSize(new Dimension(60, 0));
-		phaseLabel = new JLabel("");
+		phaseLabel = new GDLabel("");
 
 		//@formatter:off
 		String text = analyzer.getAnalysisType() == AnalyzerType.ONE_SHOT_ANALYZER ? 

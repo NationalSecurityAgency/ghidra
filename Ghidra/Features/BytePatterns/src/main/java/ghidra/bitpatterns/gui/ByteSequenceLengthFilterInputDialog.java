@@ -17,10 +17,10 @@ package ghidra.bitpatterns.gui;
 
 import java.awt.Component;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import docking.DockingWindowManager;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.bitpatterns.info.ByteSequenceLengthFilter;
 import ghidra.util.HelpLocation;
@@ -65,10 +65,10 @@ public class ByteSequenceLengthFilterInputDialog extends InputDialogComponentPro
 		JPanel mainPanel = new JPanel();
 		PairLayout pairLayout = new PairLayout();
 		mainPanel.setLayout(pairLayout);
-		mainPanel.add(new JLabel(INDEX_BOX_TITLE_TEXT));
+		mainPanel.add(new GLabel(INDEX_BOX_TITLE_TEXT));
 		indexBox = new IntegerTextField();
 		mainPanel.add(indexBox.getComponent());
-		mainPanel.add(new JLabel(LENGTH_BOX_TITLE_TEXT));
+		mainPanel.add(new GLabel(LENGTH_BOX_TITLE_TEXT));
 		minLengthBox = new IntegerTextField();
 		mainPanel.add(minLengthBox.getComponent());
 		return mainPanel;

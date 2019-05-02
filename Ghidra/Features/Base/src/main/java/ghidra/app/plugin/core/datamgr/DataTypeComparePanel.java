@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,17 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
-import ghidra.app.util.ToolTipUtils;
-import ghidra.app.util.html.HTMLDataTypeRepresentation;
-import ghidra.program.model.data.DataType;
-import ghidra.util.HTMLUtilities;
-
 import java.awt.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.label.GDHtmlLabel;
+import ghidra.app.util.ToolTipUtils;
+import ghidra.app.util.html.HTMLDataTypeRepresentation;
+import ghidra.program.model.data.DataType;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Panel that displays two data types side by side.
@@ -60,22 +60,22 @@ class DataTypeComparePanel extends JPanel {
 		leftPanel = new JPanel(new BorderLayout());
 		rightPanel = new JPanel(new BorderLayout());
 
-		leftPanelLabel = new JLabel();
-		rightPanelLabel = new JLabel();
+		leftPanelLabel = new GDHtmlLabel();
+		rightPanelLabel = new GDHtmlLabel();
 		leftPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 		rightPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
 
-		setLabelText(leftPanelLabel, clientName + ":");
-		setLabelText(rightPanelLabel, sourceName + ":");
+		setLabelText(leftPanelLabel, HTMLUtilities.escapeHTML(clientName) + ":");
+		setLabelText(rightPanelLabel, HTMLUtilities.escapeHTML(sourceName) + ":");
 
 		add(leftPanel);
 		add(rightPanel);
-		dtLabel1 = new JLabel();
+		dtLabel1 = new GDHtmlLabel();
 		dtLabel1.setOpaque(true);
 		dtLabel1.setBackground(Color.WHITE);
 		dtLabel1.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
 		dtLabel1.setVerticalAlignment(SwingConstants.TOP);
-		dtLabel2 = new JLabel();
+		dtLabel2 = new GDHtmlLabel();
 		dtLabel2.setOpaque(true);
 		dtLabel2.setBackground(Color.WHITE);
 		dtLabel2.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
@@ -97,12 +97,14 @@ class DataTypeComparePanel extends JPanel {
 		final JViewport viewport1 = leftScrollPane.getViewport();
 		final JViewport viewport2 = rightScrollPane.getViewport();
 		viewport1.addChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				int y = viewport1.getViewPosition().y;
 				viewport2.setViewPosition(new Point(0, y));
 			}
 		});
 		viewport2.addChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				int y = viewport2.getViewPosition().y;
 				viewport1.setViewPosition(new Point(0, y));

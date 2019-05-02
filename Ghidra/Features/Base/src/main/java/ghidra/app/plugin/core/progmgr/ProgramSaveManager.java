@@ -76,8 +76,8 @@ class ProgramSaveManager {
 
 	boolean canCloseAll() {
 		Program[] programs = programMgr.getAllOpenPrograms();
-		List<Program> saveList = new ArrayList<Program>();
-		List<Program> lockList = new ArrayList<Program>();
+		List<Program> saveList = new ArrayList<>();
+		List<Program> lockList = new ArrayList<>();
 		try {
 			for (int i = 0; i < programs.length; i++) {
 //				if (programs[i].isTemporary()) {
@@ -144,12 +144,12 @@ class ProgramSaveManager {
 			}
 		}
 		if (saveCnt != 0) {
-			Msg.showInfo(getClass(), tool.getToolFrame(), "Save All...", "Saved " + saveCnt +
-				" modified programs.");
+			Msg.showInfo(getClass(), tool.getToolFrame(), "Save All...",
+				"Saved " + saveCnt + " modified programs.");
 		}
 		if (unsavedCnt != 0) {
-			Msg.showWarn(getClass(), tool.getToolFrame(), "Save All...", "Unable to save " +
-				unsavedCnt + " read-only programs!");
+			Msg.showWarn(getClass(), tool.getToolFrame(), "Save All...",
+				"Unable to save " + unsavedCnt + " read-only programs!");
 		}
 	}
 
@@ -162,10 +162,10 @@ class ProgramSaveManager {
 		SaveDataDialog saveDataDialog = new SaveDataDialog(tool);
 
 		// don't modify the original list, as it is used by the caller to perform cleanup
-		List<Program> saveProgramsList = new ArrayList<Program>(openProgramList);
+		List<Program> saveProgramsList = new ArrayList<>(openProgramList);
 
 		// make sure we have some files to save
-		List<DomainFile> domainFilesToSaveList = new ArrayList<DomainFile>();
+		List<DomainFile> domainFilesToSaveList = new ArrayList<>();
 		Iterator<Program> iter = saveProgramsList.iterator();
 		while (iter.hasNext()) {
 			Program program = iter.next();
@@ -265,23 +265,25 @@ class ProgramSaveManager {
 
 		if (!df.isInWritableProject()) {
 			return OptionDialog.showOptionDialog(tool.getToolFrame(), "Program Changed",
-				"Viewed file '" + filename + "' has been changed.  \n" +
-					"If you continue, your changes will be lost!", "Continue",
-				OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
+				HTMLUtilities.lineWrapWithHTMLLineBreaks(
+					"<html>Viewed file '" + HTMLUtilities.escapeHTML(filename) +
+						"' has been changed.  \n" + "If you continue, your changes will be lost!"),
+				"Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 		}
 
 		if (df.isReadOnly()) {
 			return OptionDialog.showOptionDialog(tool.getToolFrame(), "Program Changed",
-				"Read-only file '" + filename + "' has been changed.  \n" +
-					"If you continue, your changes will be lost!", "Continue",
-				OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
+				HTMLUtilities.lineWrapWithHTMLLineBreaks(
+					"<html>Read-only file '" + HTMLUtilities.escapeHTML(filename) +
+						"' has been changed.  \n" + "If you continue, your changes will be lost!"),
+				"Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 
 		}
 
-		int result =
-			OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?", filename +
-				" has changed. Do you want to save it?", "&Save", "Do&n't Save",
-				OptionDialog.QUESTION_MESSAGE);
+		int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
+			HTMLUtilities.lineWrapWithHTMLLineBreaks("<html>" + HTMLUtilities.escapeHTML(filename) +
+				" has changed.\nDo you want to save it?"),
+			"&Save", "Do&n't Save", OptionDialog.QUESTION_MESSAGE);
 
 		if (result == OptionDialog.CANCEL_OPTION) {
 			return false;
@@ -366,8 +368,9 @@ class ProgramSaveManager {
 	private boolean acquireSaveLock(Program program, String actionName) {
 		if (!program.lock(null)) {
 			String title = actionName + " Program" + " (Busy)";
-			StringBuffer buf = new StringBuffer();
-			buf.append("The Program is currently being modified by the following actions/tasks:\n ");
+			StringBuilder buf = new StringBuilder();
+			buf.append(
+				"The Program is currently being modified by the following actions/tasks:\n ");
 			Transaction t = program.getCurrentTransaction();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
@@ -379,12 +382,13 @@ class ProgramSaveManager {
 			buf.append("WARNING! The above task(s) should be cancelled before attempting a " +
 				actionName + ".\n");
 			buf.append("Only proceed if unable to cancel them.\n \n");
-			buf.append("If you continue, all changes made by these tasks, as well as any other overlapping task,\n");
-			buf.append("will be LOST and subsequent transaction errors may occur while these tasks remain active.\n \n");
+			buf.append(
+				"If you continue, all changes made by these tasks, as well as any other overlapping task,\n");
+			buf.append(
+				"will be LOST and subsequent transaction errors may occur while these tasks remain active.\n \n");
 
-			int result =
-				OptionDialog.showOptionDialog(tool.getToolFrame(), title, buf.toString(),
-					actionName + "!", OptionDialog.WARNING_MESSAGE);
+			int result = OptionDialog.showOptionDialog(tool.getToolFrame(), title, buf.toString(),
+				actionName + "!", OptionDialog.WARNING_MESSAGE);
 
 			if (result == OptionDialog.OPTION_ONE) {
 				program.forceLock(true, "Save Program");
@@ -399,7 +403,8 @@ class ProgramSaveManager {
 		if (!program.lock(null)) {
 			String title = "Save Program As (Busy)";
 			StringBuffer buf = new StringBuffer();
-			buf.append("The Program is currently being modified by the following actions/tasks:\n ");
+			buf.append(
+				"The Program is currently being modified by the following actions/tasks:\n ");
 			Transaction t = program.getCurrentTransaction();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
@@ -408,18 +413,19 @@ class ProgramSaveManager {
 				buf.append(it.next());
 			}
 			buf.append("\n \n");
-			buf.append("WARNING! The above task(s) should be cancelled before attempting a Save As...\n");
+			buf.append(
+				"WARNING! The above task(s) should be cancelled before attempting a Save As...\n");
 			buf.append("Only proceed if unable to cancel them.\n \n");
 			buf.append("If you click 'Save As (Rollback)' {recommended}, all changes made\n");
 			buf.append("by these tasks, as well as any other overlapping task, will be LOST!\n");
-			buf.append("If you click 'Save As (As Is)', the program will be saved in its current\n");
+			buf.append(
+				"If you click 'Save As (As Is)', the program will be saved in its current\n");
 			buf.append("state which may contain some incomplete data.\n");
 			buf.append("Any forced save may also result in subsequent transaction errors while\n");
 			buf.append("the above tasks remain active.\n ");
 
-			int result =
-				OptionDialog.showOptionDialog(tool.getToolFrame(), title, buf.toString(),
-					"Save As (Rollback)!", "Save As (As Is)!", OptionDialog.WARNING_MESSAGE);
+			int result = OptionDialog.showOptionDialog(tool.getToolFrame(), title, buf.toString(),
+				"Save As (Rollback)!", "Save As (As Is)!", OptionDialog.WARNING_MESSAGE);
 
 			if (result == OptionDialog.OPTION_ONE) {
 				program.forceLock(true, "Save Program As");
@@ -462,7 +468,8 @@ class ProgramSaveManager {
 				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
 
 			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+			dataTreeSaveDialog.setHelpLocation(
+				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
 		}
 		return dataTreeSaveDialog;
 	}

@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.ToolTipUtils;
@@ -324,7 +325,7 @@ public class DataTypeSynchronizer {
 		// this string allows us to force both tables to be the same width, which is 
 		// aesthetically pleasing
 		String spacerString = createHTMLSpacerString(htmlContent, otherContent);
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		buffy.append("<HTML>");
 
 		// -we use CELLPADDING here to allow us to create a narrow column within the table
@@ -333,7 +334,8 @@ public class DataTypeSynchronizer {
 
 		buffy.append("<TR BORDER=LEFT>");
 		buffy.append("<TD VALIGN=\"TOP\">");
-		buffy.append("<B>").append(dataTypeManager.getName()).append("</B><HR NOSHADE>");
+		buffy.append("<B>").append(HTMLUtilities.escapeHTML(dataTypeManager.getName())).append(
+			"</B><HR NOSHADE>");
 		buffy.append(htmlContent);
 
 		// horizontal spacer below the inner table in order to force a minimum width
@@ -345,7 +347,8 @@ public class DataTypeSynchronizer {
 		buffy.append("</TD>");
 
 		buffy.append("<TD VALIGN=\"TOP\">");
-		buffy.append("<B>").append(sourceArchive.getName()).append("</B><HR NOSHADE>");
+		buffy.append("<B>").append(HTMLUtilities.escapeHTML(sourceArchive.getName())).append(
+			"</B><HR NOSHADE>");
 
 		buffy.append(otherContent);
 
@@ -372,17 +375,15 @@ public class DataTypeSynchronizer {
 	 * an HTML string of spaces that is wide enough to represent that width.
 	 */
 	private static String createHTMLSpacerString(String htmlContent, String otherHTMLContent) {
-		StringBuffer buffy = new StringBuffer();
-
 		// unfortunately, to get the displayed widths, we have to have rendered content, which 
 		// is what the JLabels below are doing for us
-		JLabel label1 = new JLabel("<HTML>" + htmlContent);
-		JLabel label2 = new JLabel("<HTML>" + otherHTMLContent);
+		JLabel label1 = new GDHtmlLabel("<HTML>" + htmlContent);
+		JLabel label2 = new GDHtmlLabel("<HTML>" + otherHTMLContent);
 
 		int maxPixelWidth =
 			Math.max(label1.getPreferredSize().width, label2.getPreferredSize().width);
 		FontMetrics fontMetrics = label1.getFontMetrics(label1.getFont());
-		StringBuffer bigBuffy = new StringBuffer();
+		StringBuilder bigBuffy = new StringBuilder();
 		String HTMLSpace = "&nbsp";
 		int invisibleCharCount = HTMLSpace.length();
 		for (int i = 0; i < 150; i++) {
@@ -396,7 +397,7 @@ public class DataTypeSynchronizer {
 			}
 		}
 
-		return buffy.toString();
+		return bigBuffy.toString();
 	}
 
 	public String getClientName() {

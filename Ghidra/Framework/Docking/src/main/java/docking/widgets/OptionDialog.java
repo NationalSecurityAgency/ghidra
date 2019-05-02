@@ -24,7 +24,10 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.dialogs.*;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -262,11 +265,11 @@ public class OptionDialog extends DialogComponentProvider {
 	private JPanel buildRememberOptionChoicePanel(DialogRememberOption rememberOptionChoice) {
 		if (rememberOptionChoice == null) {
 			this.rememberOption = new DoNothingDialogRememberOption();
-			rememberOptionCheckBox = new JCheckBox(); // to prevent null checks, create dummy checkbox
+			rememberOptionCheckBox = new GCheckBox(); // to prevent null checks, create dummy checkbox
 			return null;
 		}
 		this.rememberOption = rememberOptionChoice;
-		rememberOptionCheckBox = new JCheckBox(rememberOptionChoice.getDescription());
+		rememberOptionCheckBox = new GCheckBox(rememberOptionChoice.getDescription());
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -276,14 +279,10 @@ public class OptionDialog extends DialogComponentProvider {
 
 	private JPanel buildMessagePanel(String message, int messageType, Icon icon) {
 		JPanel panel = new JPanel(new BorderLayout());
-		JLabel iconLabel = new JLabel();
-		if (icon == null) {
-			icon = getIconForMessageType(messageType);
-		}
-		iconLabel.setIcon(icon);
 		JPanel textPanel = createTextPanel(message);
 		textPanel.setMaximumSize(textPanel.getPreferredSize());
-		panel.add(iconLabel, BorderLayout.WEST);
+		panel.add(new GIconLabel((icon == null) ? getIconForMessageType(messageType) : icon),
+			BorderLayout.WEST);
 		panel.add(textPanel, BorderLayout.CENTER);
 		return panel;
 	}
@@ -364,7 +363,7 @@ public class OptionDialog extends DialogComponentProvider {
 
 		this.dialogMessage = message;
 		if (HTMLUtilities.isHTML(dialogMessage)) {
-			JLabel messageLabel = new JLabel(dialogMessage);
+			JLabel messageLabel = new GHtmlLabel(dialogMessage);
 			messageLabel.setName(MESSAGE_COMPONENT_NAME);
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

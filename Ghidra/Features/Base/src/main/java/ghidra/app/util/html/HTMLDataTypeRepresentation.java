@@ -94,8 +94,8 @@ public abstract class HTMLDataTypeRepresentation {
 		return buffer.toString();
 	}
 
-	protected static StringBuffer addDataTypeLength(String dataTypeLengthString,
-			StringBuffer buffer) {
+	protected static StringBuilder addDataTypeLength(String dataTypeLengthString,
+			StringBuilder buffer) {
 
 		buffer.append(BR);
 		buffer.append(LENGTH_PREFIX);
@@ -127,6 +127,14 @@ public abstract class HTMLDataTypeRepresentation {
 		return buffer;
 	}
 
+	/**
+	 * Returns the plain-text value of the data type's description.
+	 * <p>
+	 * If there were html tags in the string, they are escaped.
+	 * 
+	 * @param dataType the type to get the description / comment for
+	 * @return plain-text string, w/html escaped
+	 */
 	protected static String getCommentForDataType(DataType dataType) {
 		String comment = null;
 		if (dataType instanceof DataTypeComponent) {
@@ -135,7 +143,7 @@ public abstract class HTMLDataTypeRepresentation {
 		if (comment == null) {
 			comment = dataType.getDescription();
 		}
-		return comment == null ? "" : comment;
+		return comment == null ? "" : HTMLUtilities.escapeHTML(comment);
 	}
 
 	protected static String truncateAsNecessary(String string) {
@@ -153,18 +161,20 @@ public abstract class HTMLDataTypeRepresentation {
 		return string;
 	}
 
+	/**
+	 * Formats a multi-line plain-text comment string into a HTML string where the text has been
+	 * wrapped at MAX_LINE_LENGTH.
+	 *   
+	 * @param string plain-text string
+	 * @return list of html strings
+	 */
 	private static List<String> breakCommentAsNecessary(String string) {
-		boolean isCommentAlreadyHTML = HTMLUtilities.isHTML(string);
-
 		List<String> list = new ArrayList<>();
 		for (String nativeCommentLine : string.split("\n")) {
 			List<String> wrappedLines = breakLongLineAtWordBoundaries(nativeCommentLine,
 				MAX_LINE_LENGTH - MIDDLE_COMMENT.length());
 			for (int i = 0; i < wrappedLines.size(); i++) {
 				String wrappedLine = wrappedLines.get(i);
-				if (!isCommentAlreadyHTML) {
-					wrappedLine = HTMLUtilities.friendlyEncodeHTML(wrappedLine);
-				}
 				list.add(MIDDLE_COMMENT + wrappedLine + BR);
 			}
 		}
@@ -187,7 +197,7 @@ public abstract class HTMLDataTypeRepresentation {
 	/* package */ static List<String> breakLongLineAtWordBoundaries(String lineStr,
 			int maxLineLen) {
 		List<String> result = new ArrayList<>();
-		StringBuffer lineBuffer = new StringBuffer();
+		StringBuilder lineBuffer = new StringBuilder();
 
 		StringTokenizer tokenizer = new StringTokenizer(lineStr, CHARACTER_SPACE, true);
 		while (tokenizer.hasMoreTokens()) {
@@ -226,10 +236,16 @@ public abstract class HTMLDataTypeRepresentation {
 		return HTMLUtilities.colorString(color, string);
 	}
 
+	/**
+	 * Formats a multi-line plain-text comment as a list of HTML marked-up lines.
+	 *  
+	 * @param comment multi-line plain-text string
+	 * @param maxLines max number of formatted lines to return
+	 * @return list of html marked-up {@link TextLine}s
+	 */
 	protected static List<TextLine> createCommentLines(String comment, int maxLines) {
-		List<TextLine> newList = new ArrayList<>();
 		if (comment == null || comment.length() == 0) {
-			return newList;
+			return Collections.emptyList();
 		}
 
 		List<String> commentLines = breakCommentAsNecessary(comment);
@@ -241,6 +257,7 @@ public abstract class HTMLDataTypeRepresentation {
 				" lines ommitted...</i>" + BR);
 		}
 
+		List<TextLine> newList = new ArrayList<>();
 		newList.add(new TextLine(START_COMMENT));
 		for (String commentLine : commentLines) {
 			newList.add(new TextLine(commentLine));
@@ -327,7 +344,7 @@ public abstract class HTMLDataTypeRepresentation {
 
 		// put the path info in
 		CategoryPath path = dataType.getCategoryPath();
-		headerLines.add(new TextLine(path.toString()));
+		headerLines.add(new TextLine(HTMLUtilities.escapeHTML(path.getPath())));
 		headerLines.add(new TextLine(BR));
 
 		return headerLines;
@@ -335,10 +352,7 @@ public abstract class HTMLDataTypeRepresentation {
 
 	protected TextLine buildFooterText(DataType dataType) {
 		int length = dataType.getLength();
-		if (length >= 0) {
-			return new TextLine(Integer.toString(length));
-		}
-		return new TextLine(" <i>Unsized</i>");
+		return new TextLine((length >= 0) ? Integer.toString(length) : " <i>Unsized</i>");
 	}
 
 //==================================================================================================

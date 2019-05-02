@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.bitpatterns.info.FileBitPatternInfoReader;
@@ -68,7 +69,7 @@ public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder
 		JPanel modulusPanel = new JPanel();
 		PairLayout modulusLayout = new PairLayout();
 		modulusPanel.setLayout(modulusLayout);
-		modulusPanel.add(new JLabel(MODULUS_FIELD_TEXT));
+		modulusPanel.add(new GLabel(MODULUS_FIELD_TEXT));
 		modulusField = new IntegerTextField();
 		modulusField.setValue(DEFAULT_MODULUS);
 		modulusPanel.add(modulusField.getComponent());

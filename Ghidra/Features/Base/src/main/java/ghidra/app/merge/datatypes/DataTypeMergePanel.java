@@ -23,6 +23,9 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.MultiLineLabel;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
 import ghidra.framework.data.DomainObjectMergeManager;
@@ -112,15 +115,15 @@ class DataTypeMergePanel extends JPanel {
 			}
 		};
 
-		latestRB = new JRadioButton(MergeConstants.LATEST_TITLE);
+		latestRB = new GRadioButton(MergeConstants.LATEST_TITLE);
 		latestRB.setName(LATEST_BUTTON_NAME);
 		latestRB.addItemListener(listener);
 
-		myRB = new JRadioButton(MergeConstants.MY_TITLE);
+		myRB = new GRadioButton(MergeConstants.MY_TITLE);
 		myRB.setName(CHECKED_OUT_BUTTON_NAME);
 		myRB.addItemListener(listener);
 
-		originalRB = new JRadioButton(MergeConstants.ORIGINAL_TITLE);
+		originalRB = new GRadioButton(MergeConstants.ORIGINAL_TITLE);
 		originalRB.setName(ORIGINAL_BUTTON_NAME);
 		originalRB.addItemListener(listener);
 
@@ -178,13 +181,13 @@ class DataTypeMergePanel extends JPanel {
 	private JPanel createInfoPanel() {
 
 		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = new GIconLabel(icon);
 
 		MultiLineLabel label =
-			new MultiLineLabel("A data type change in your checked out version conflicts with a "
-				+ "data type change in the latest version.\n"
-				+ "Select the data type change you want included in the version "
-				+ "that will result from this check-in.");
+			new MultiLineLabel("A data type change in your checked out version conflicts with a " +
+				"data type change in the latest version.\n" +
+				"Select the data type change you want included in the version " +
+				"that will result from this check-in.");
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
@@ -199,7 +202,7 @@ class DataTypeMergePanel extends JPanel {
 	}
 
 	private JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Data Type"));
+		useForAllCB = new GCheckBox(getUseAllString("Data Type"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

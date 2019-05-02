@@ -22,7 +22,9 @@ import java.math.BigInteger;
 import javax.swing.*;
 
 import docking.ToolTipManager;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.HTMLUtilities;
@@ -74,22 +76,22 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		// we want to have a panel with our options so that we may group them together
 		JPanel panel = new JPanel(new PairLayout(6, 10));
 
-		JLabel label = new JLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
+		JLabel label = new GDLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(label);
-		showBlocknameCheckbox = new JCheckBox();
+		showBlocknameCheckbox = new GCheckBox();
 		ToolTipManager.setToolTipText(showBlocknameCheckbox, SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(showBlocknameCheckbox);
 
 		// the namespace checkbox will disable the text field options when it is not used
-		label = new JLabel(PADDING_LABEL, SwingConstants.RIGHT);
+		label = new GDLabel(PADDING_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, ADDRESS_PADDING_TOOLTIP);
 		panel.add(label);
-		padCheckBox = new JCheckBox();
+		padCheckBox = new GCheckBox();
 		panel.add(padCheckBox);
 		padCheckBox.setSelected(false);
 		ToolTipManager.setToolTipText(padCheckBox, ADDRESS_PADDING_TOOLTIP);
-		label = new JLabel(ADDRESS_DIGITS_LABEL, SwingConstants.RIGHT);
+		label = new GDLabel(ADDRESS_DIGITS_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, MIN_HEX_DIGITS_TOOLTIP);
 		panel.add(label);
 
@@ -101,7 +103,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 
 		panel.add(minDigitsField.getComponent());
 
-		label = new JLabel(JUSTIFICATION_LABEL, SwingConstants.RIGHT);
+		label = new GDLabel(JUSTIFICATION_LABEL, SwingConstants.RIGHT);
 		ToolTipManager.setToolTipText(label, RIGHT_JUSTIFY_TOOLTIP);
 		panel.add(label);
 		justificationCombobox = new GhidraComboBox<>(new String[] { "Left", "Right" });

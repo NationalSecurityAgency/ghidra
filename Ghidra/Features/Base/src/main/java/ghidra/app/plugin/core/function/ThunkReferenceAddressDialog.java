@@ -21,6 +21,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -357,7 +358,7 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 
 		JPanel mainPanel = new JPanel(new PairLayout(5, 5));
 		refFunctionField = new JTextField(20);
-		mainPanel.add(new JLabel("Destination Function/Address:"));
+		mainPanel.add(new GLabel("Destination Function/Address:"));
 		mainPanel.add(refFunctionField);
 
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));

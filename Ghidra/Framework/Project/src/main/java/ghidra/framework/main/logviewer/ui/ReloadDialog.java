@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.framework.main.logviewer.event.FVEvent;
 import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.event.FVEventListener;
@@ -74,7 +75,7 @@ public class ReloadDialog extends JDialog {
 		buttonPanel.add(noBtn);
 		contentPane.add(buttonPanel, BorderLayout.CENTER);
 
-		JCheckBox checkbox = new JCheckBox("Do not show this message again.");
+		JCheckBox checkbox = new GCheckBox("Do not show this message again.");
 		contentPane.add(checkbox, BorderLayout.SOUTH);
 
 		// When the user selects the YES button they're indicating they want to reload the file, so

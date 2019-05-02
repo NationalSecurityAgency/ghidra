@@ -28,6 +28,7 @@ import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -172,9 +173,10 @@ class DiffActionManager {
 		String secondName = secondProgram.getName();
 
 		//@formatter:off
-		openCloseProgram2Action.setDescription("<html><center>Close Diff View</center><br>" +
-											   "Current diff: " +
-											   "<b>"+firstName+"</b> to <b>" +secondName+"</b>");
+		openCloseProgram2Action.setDescription(
+			"<html><center>Close Diff View</center><br>" +
+			"Current diff: " +
+			"<b>"+HTMLUtilities.escapeHTML(firstName)+"</b> to <b>" +HTMLUtilities.escapeHTML(secondName)+"</b>");
 		//@formatter:on
 	}
 
@@ -280,9 +282,8 @@ class DiffActionManager {
 			}
 		};
 		icon = ResourceManager.loadImage("images/eraser_arrow16.png");
-		ignoreDiffsAction.setPopupMenuData(
-			new MenuData(new String[] { "Ignore Selection and Goto Next Difference" }, icon,
-				GROUP));
+		ignoreDiffsAction.setPopupMenuData(new MenuData(
+			new String[] { "Ignore Selection and Goto Next Difference" }, icon, GROUP));
 		ignoreDiffsAction.setDescription(
 			"Ignores the selected program differences and moves the cursor to the next difference.");
 		ignoreDiffsAction.setToolBarData(new ToolBarData(icon, GROUP));

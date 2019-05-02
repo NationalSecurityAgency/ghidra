@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,17 @@
  */
 package ghidra.app.merge.memory;
 
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
-import ghidra.app.merge.util.ConflictCountPanel;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.util.ConflictCountPanel;
 
 /**
  *
@@ -111,6 +111,7 @@ class MemoryMergePanel extends JPanel {
 		cardPanel = new JPanel(cardLayout);
 		cardPanel.setBorder(BorderFactory.createTitledBorder("Resolve Block Conflict"));
 		ChangeListener listener = new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				mergeManager.setApplyEnabled(true);
 			}
@@ -133,7 +134,7 @@ class MemoryMergePanel extends JPanel {
 	}
 
 	private JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Memory Block"));
+		useForAllCB = new GCheckBox(getUseAllString("Memory Block"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

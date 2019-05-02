@@ -27,6 +27,9 @@ import javax.swing.text.Document;
 
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Composite.AlignmentType;
@@ -185,7 +188,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupName() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		nameLabel = new JLabel("Name:");
+		nameLabel = new GDLabel("Name:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -216,7 +219,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupDescription() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		descriptionLabel = new JLabel("Description:");
+		descriptionLabel = new GDLabel("Description:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -247,7 +250,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupCategory() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		categoryLabel = new JLabel("Category:");
+		categoryLabel = new GDLabel("Category:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -274,7 +277,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupInternallyAligned() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		internalAlignmentCheckBox = new JCheckBox("Align");
+		internalAlignmentCheckBox = new GCheckBox("Align");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 4;
@@ -330,9 +333,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupMinimumAlignment() {
-		defaultMinAlignButton = new JRadioButton("none           ");
-		machineMinAlignButton = new JRadioButton("machine      ");
-		byValueMinAlignButton = new JRadioButton();
+		defaultMinAlignButton = new GRadioButton("none           ");
+		machineMinAlignButton = new GRadioButton("machine      ");
+		byValueMinAlignButton = new GRadioButton();
 		minAlignValueTextField = new JTextField();
 		setupDefaultMinAlignButton();
 		setupMachineMinAlignButton();
@@ -486,7 +489,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"aligning this data type inside another data type." + "</HTML>";
 
 		JPanel actualAlignmentPanel = new JPanel(new BorderLayout());
-		actualAlignmentLabel = new JLabel("Alignment:");
+		actualAlignmentLabel = new GDLabel("Alignment:");
 		gridBagConstraints.insets = new Insets(2, 7, 2, 2);
 		gridBagConstraints.anchor = GridBagConstraints.EAST;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -517,8 +520,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupPacking() {
-		noPackingButton = new JRadioButton("none           ");
-		byValuePackingButton = new JRadioButton();
+		noPackingButton = new GRadioButton("none           ");
+		byValuePackingButton = new GRadioButton();
 		packingValueTextField = new JTextField();
 		setupNoPackingButton();
 		setupByValuePackingButton();
@@ -718,7 +721,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	protected void setupSize() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		sizeLabel = new JLabel("Size:");
+		sizeLabel = new GDLabel("Size:");
 		ToolTipManager.setToolTipText(sizeLabel, "The current size in bytes.");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;

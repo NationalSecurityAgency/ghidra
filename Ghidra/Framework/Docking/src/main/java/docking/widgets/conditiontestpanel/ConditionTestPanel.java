@@ -27,6 +27,9 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.label.GDLabel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
@@ -200,11 +203,11 @@ public class ConditionTestPanel extends JPanel {
 	private Component createSummaryPanel() {
 		JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		runsLabel = new JLabel("Tests: 0/" + conditionTestModel.getTestCount());
+		runsLabel = new GDLabel("Tests: 0/" + conditionTestModel.getTestCount());
 		panel.add(runsLabel);
-		errorsLabel = new JLabel("Errors: 0");
+		errorsLabel = new GDLabel("Errors: 0");
 		panel.add(errorsLabel);
-		warningsLabel = new JLabel("Warnings: 0");
+		warningsLabel = new GDLabel("Warnings: 0");
 		panel.add(warningsLabel);
 
 		return panel;
@@ -267,7 +270,7 @@ public class ConditionTestPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class ScrollableLabel extends JLabel implements Scrollable {
+	private class ScrollableLabel extends GDHtmlLabel implements Scrollable {
 
 		@Override
 		public Dimension getPreferredScrollableViewportSize() {
@@ -363,10 +366,10 @@ public class ConditionTestPanel extends JPanel {
 			backgroundColor = getBackground();
 			selectedColor = Color.LIGHT_GRAY;
 			this.test = conditionTest;
-			checkbox = new JCheckBox();
+			checkbox = new GCheckBox();
 			checkbox.setSelected(true);
 			add(checkbox);
-			label = new JLabel(test.getName());
+			label = new GDLabel(test.getName());
 			add(label);
 			label.setToolTipText(test.getDescription());
 			checkbox.addChangeListener(e -> {
@@ -404,7 +407,7 @@ public class ConditionTestPanel extends JPanel {
 		public TestStatusPanel(ConditionTester test) {
 			super(new BorderLayout());
 			this.test = test;
-			label = new JLabel();
+			label = new GDLabel();
 			label.setHorizontalAlignment(SwingConstants.LEFT);
 			add(label);
 		}

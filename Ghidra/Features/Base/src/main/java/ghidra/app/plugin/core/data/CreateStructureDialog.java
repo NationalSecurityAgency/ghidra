@@ -29,14 +29,14 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.table.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.InvalidNameException;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -174,7 +174,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		structurePanel.setBorder(structureBorder);
 
 		GTable table = buildMatchingStructuresTable();
-		filterPanel = new GhidraTableFilterPanel<StructureWrapper>(table, structureTableModel) {
+		filterPanel = new GhidraTableFilterPanel<>(table, structureTableModel) {
 			// make sure our height doesn't stretch
 			@Override
 			public Dimension getMaximumSize() {
@@ -246,8 +246,8 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		matchingStylePanel.setBorder(
 			new TitledBorder(BorderFactory.createEmptyBorder(), "Matching: "));
 
-		exactMatchButton = new JRadioButton("Exact");
-		sizeMatchButton = new JRadioButton("Size");
+		exactMatchButton = new GRadioButton("Exact");
+		sizeMatchButton = new GRadioButton("Size");
 
 		exactMatchButton.setToolTipText(
 			"Match structures with the same " + "number and type of data elements");
@@ -570,7 +570,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 			message = EXISITING_STRUCTURE_STATUS_PREFIX;
 		}
 
-		setStatusText("<HTML>" + message + "<BR>\"" + name + "\"");
+		setStatusText("<HTML>" + message + "<BR>\"" + HTMLUtilities.escapeHTML(name) + "\"");
 	}
 
 	// this class is used instead of a cell renderer so that sorting will

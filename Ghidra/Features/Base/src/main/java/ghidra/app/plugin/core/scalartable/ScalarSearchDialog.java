@@ -24,6 +24,8 @@ import javax.swing.border.TitledBorder;
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.help.HelpService;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.framework.plugintool.PluginTool;
@@ -142,8 +144,8 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(new TitledBorder("Search Scope"));
 
-		searchSelectionRadioButton = new JRadioButton("Search Selection");
-		searchAllRadioButton = new JRadioButton("Search All");
+		searchSelectionRadioButton = new GRadioButton("Search Selection");
+		searchAllRadioButton = new GRadioButton("Search All");
 
 		searchSelectionRadioButton.setToolTipText("Search only the current selection");
 		searchAllRadioButton.setToolTipText("Search the entire program");
@@ -257,8 +259,8 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 			setLayout(new BorderLayout());
 			setBorder(new TitledBorder("Search Type"));
 
-			searchAllScalars = new JRadioButton("Scalars in Range:");
-			searchAScalar = new JRadioButton("Specific Scalar:");
+			searchAllScalars = new GRadioButton("Scalars in Range:");
+			searchAScalar = new GRadioButton("Specific Scalar:");
 
 			searchAllScalars.setToolTipText(
 				"Search program (or selection) for scalar operands or defined scalar data types with values in the following range:");
@@ -326,13 +328,13 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
 			add(Box.createHorizontalStrut(4));
-			add(new JLabel("Min:"));
+			add(new GLabel("Min:"));
 			add(Box.createHorizontalStrut(5));
 			add(createMinFilterWidget());
 
 			add(Box.createHorizontalStrut(10));
 
-			add(new JLabel("Max:"));
+			add(new GLabel("Max:"));
 			add(Box.createHorizontalStrut(5));
 			add(createMaxFilterWidget());
 		}

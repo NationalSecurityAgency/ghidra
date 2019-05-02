@@ -136,7 +136,7 @@ public class CpioFileSystem extends GFileSystemBase {
 			throws IOException, CancelledException, CryptoException {
 		CpioArchiveEntry fileEntry = map.get(file);
 		if (!fileEntry.isRegularFile()) {
-			throw new IOException(file.getName() + " is not a regular file.");
+			throw new IOException("CPIO entry " + file.getName() + " is not a regular file.");
 		}
 		byte[] bytes = provider.readBytes(0, provider.length());
 		InputStream inputStream = new ByteArrayInputStream(bytes);

@@ -24,6 +24,9 @@ import javax.swing.text.StyleConstants;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDHtmlLabel;
+import ghidra.util.HTMLUtilities;
+
 /**
  * Abstract class that defines a panel for displaying name/value pairs with html-formatting. 
  * <p>
@@ -61,7 +64,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 
 		SimpleAttributeSet attrSet = new SimpleAttributeSet();
 		attrSet.addAttribute(StyleConstants.FontFamily, fontFamily);
-		attrSet.addAttribute(StyleConstants.FontSize, new Integer(fontSize));
+		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(fontSize));
 		attrSet.addAttribute(StyleConstants.Bold, bold);
 		attrSet.addAttribute(StyleConstants.Foreground, color);
 
@@ -83,7 +86,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 
 		SimpleAttributeSet attrSet = new SimpleAttributeSet();
 		attrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		attrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		attrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		attrSet.addAttribute(StyleConstants.Foreground, color);
 
@@ -102,7 +105,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 */
 	protected void createMainPanel() {
 		setLayout(new BorderLayout());
-		textLabel = new JLabel("");
+		textLabel = new GDHtmlLabel("");
 		textLabel.setVerticalAlignment(SwingConstants.TOP);
 		textLabel.setOpaque(true);
 		textLabel.setBackground(Color.WHITE);
@@ -172,7 +175,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 			buffer.append("<B>");
 		}
 
-		buffer.append(string);
+		buffer.append(HTMLUtilities.escapeHTML(string));
 
 		if (isBold) {
 			buffer.append("</B>");

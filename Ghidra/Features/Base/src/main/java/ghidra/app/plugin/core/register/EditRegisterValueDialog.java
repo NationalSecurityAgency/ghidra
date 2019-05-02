@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,6 @@
  */
 package ghidra.app.plugin.core.register;
 
-import ghidra.app.util.AddressInput;
-import ghidra.app.util.bean.FixedBitSizeValueField;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Register;
-import ghidra.util.HelpLocation;
-import ghidra.util.MessageType;
-import ghidra.util.layout.PairLayout;
-
 import java.math.BigInteger;
 
 import javax.swing.*;
@@ -31,6 +22,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GLabel;
+import ghidra.app.util.AddressInput;
+import ghidra.app.util.bean.FixedBitSizeValueField;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.util.HelpLocation;
+import ghidra.util.MessageType;
+import ghidra.util.layout.PairLayout;
 
 class EditRegisterValueDialog extends DialogComponentProvider {
 
@@ -51,10 +50,6 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 
 	private JComponent buildWorkPanel(Register register, Address start, Address end,
 			BigInteger value, AddressFactory factory) {
-		JLabel regLabel = new JLabel("Register:");
-		JLabel startAddrLabel = new JLabel("Start Address:");
-		JLabel endAddrLabel = new JLabel("End Address:");
-		JLabel valueLabel = new JLabel("Value:");
 
 		JTextField registerField =
 			new JTextField(register.getName() + " (" + register.getBitLength() + ")");
@@ -81,13 +76,13 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout(5, 1));
 
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(regLabel);
+		panel.add(new GLabel("Register:"));
 		panel.add(registerField);
-		panel.add(startAddrLabel);
+		panel.add(new GLabel("Start Address:"));
 		panel.add(startAddrField);
-		panel.add(endAddrLabel);
+		panel.add(new GLabel("End Address:"));
 		panel.add(endAddrField);
-		panel.add(valueLabel);
+		panel.add(new GLabel("Value:"));
 		panel.add(registerValueField);
 
 		return panel;

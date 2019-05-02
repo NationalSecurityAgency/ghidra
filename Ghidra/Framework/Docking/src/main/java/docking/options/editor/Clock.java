@@ -27,6 +27,8 @@ import javax.swing.text.*;
 
 import com.toedter.calendar.JCalendar;
 
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.util.layout.HorizontalLayout;
 
 /**
@@ -34,7 +36,7 @@ import ghidra.util.layout.HorizontalLayout;
  */
 class Clock extends JPanel implements CaretListener {
 
-	private JLabel dateLabel = new JLabel("Apr 18, 2006");
+	private JLabel dateLabel = new GDLabel("Apr 18, 2006");
 	private JTextField hoursField;
 	private JTextField minutesField;
 	private JTextField secondsField;
@@ -132,9 +134,9 @@ class Clock extends JPanel implements CaretListener {
 
 		add(dateLabel);
 		add(hoursField);
-		add(new JLabel(":"));
+		add(new GLabel(":"));
 		add(minutesField);
-		add(new JLabel(":"));
+		add(new GLabel(":"));
 		add(secondsField);
 
 		formatter = new SimpleDateFormat("HH:mm:ss MMM dd, yyyy");

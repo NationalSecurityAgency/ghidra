@@ -27,6 +27,8 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
 
 /**
  * This Bean FontEditor displays a String with the current selected font name,
@@ -34,26 +36,22 @@ import docking.DockingWindowManager;
  */
 public class FontPropertyEditor extends PropertyEditorSupport {
 	private Font font;
-//    private JLabel previewLabel = new JLabel();
-	private JButton previewButton = new JButton();
+//    private JLabel previewLabel = new GDLabel();
 	private final static String SAMPLE_STRING = "ABCabc \u00a9\u00ab\u00a7\u0429\u05d1\u062c\u4eb9";
+	private JButton previewButton = new JButton(SAMPLE_STRING);
 
 	/**
 	 * The default constructor.
 	 *
 	 */
 	public FontPropertyEditor() {
-		previewButton.setText(SAMPLE_STRING);
 
-		previewButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// show the editor to get the user value
-				showDialog();
+		previewButton.addActionListener(e -> {
+			// show the editor to get the user value
+			showDialog();
 
-				// now set the new value
-				previewButton.setFont(font);
-			}
+			// now set the new value
+			previewButton.setFont(font);
 		});
 
 //        previewLabel.addMouseListener( new MouseAdapter() {
@@ -134,7 +132,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			sizeAndStylePanel.add(BorderLayout.CENTER, stylePanel);
 			topPanel.add(BorderLayout.CENTER, sizeAndStylePanel);
 
-			fontStringLabel = new JLabel(FontPropertyEditor.SAMPLE_STRING);
+			fontStringLabel = new GDLabel(FontPropertyEditor.SAMPLE_STRING);
 			fontStringLabel.setPreferredSize(new Dimension(350, 50));
 			fontStringLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			fontStringLabel.setFont(font);
@@ -142,21 +140,18 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 
 			add(BorderLayout.NORTH, topPanel);
 
-			fontLabel = new JLabel();
-			fontLabel.setText("Fonts");
+			fontLabel = new GDLabel("Fonts");
 			Font newFont = getFont().deriveFont(1);
 			fontLabel.setFont(newFont);
 			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			fontPanel.add(fontLabel);
 
-			sizeLabel = new JLabel();
-			sizeLabel.setText("Sizes");
+			sizeLabel = new GDLabel("Sizes");
 			sizeLabel.setFont(newFont);
 			sizeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			sizePanel.add(sizeLabel);
 
-			styleLabel = new JLabel();
-			styleLabel.setText("Styles");
+			styleLabel = new GDLabel("Styles");
 			styleLabel.setFont(newFont);
 			styleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			stylePanel.add(styleLabel);
@@ -164,27 +159,26 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
 			String envfonts[] = gEnv.getAvailableFontFamilyNames();
-			List<FontWrapper> list = new ArrayList<FontWrapper>(envfonts.length);
+			List<FontWrapper> list = new ArrayList<>(envfonts.length);
 			for (String envfont : envfonts) {
 				list.add(new FontWrapper(envfont));
 			}
 			Collections.sort(list);
-			fonts = new JComboBox<>(list.toArray(new FontWrapper[envfonts.length]));
+			fonts = new GComboBox<>(list.toArray(new FontWrapper[envfonts.length]));
 			fonts.setMaximumRowCount(9);
 			FontWrapper fontWrapper = new FontWrapper(font.getName());
 			fontPanel.add(fonts);
 			fonts.setSelectedItem(fontWrapper);
 
-			sizes =
-				new JComboBox<>(
-					new String[] { "8", "10", "12", "14", "16", "18", "24", "28", "32" });
+			sizes = new GComboBox<>(
+				new String[] { "8", "10", "12", "14", "16", "18", "24", "28", "32" });
 			sizes.setMaximumRowCount(9);
 			sizePanel.add(sizes);
 			sizeChoice = font.getSize();
 			sizes.setSelectedItem("" + sizeChoice);
 			sizes.setMaximumRowCount(9);
 
-			styles = new JComboBox<>(new String[] { "PLAIN", "BOLD", "ITALIC", "BOLD & ITALIC" });
+			styles = new GComboBox<>(new String[] { "PLAIN", "BOLD", "ITALIC", "BOLD & ITALIC" });
 			styles.setMaximumRowCount(9);
 			stylePanel.add(styles);
 			styleChoice = font.getStyle();
