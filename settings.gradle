@@ -4,7 +4,6 @@ apply from: "gradle/support/settingsUtil.gradle"
  * Include all the standard Ghidra modules.  See documentation below for more information
  * about includeProjects and includeProcessProjects.
  *******************************************************************************************/
-
 includeProjects('Ghidra/Dev')
 includeProjects('Ghidra/Extensions')
 includeProjects('Ghidra/Framework')
