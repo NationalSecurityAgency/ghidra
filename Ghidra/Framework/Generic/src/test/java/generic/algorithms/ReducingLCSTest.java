@@ -24,9 +24,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
-
-public class LCSTest extends AbstractGenericTest {
+public class ReducingLCSTest {
 
 	@Test
 	public void testIdentical() {
@@ -54,25 +52,43 @@ public class LCSTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testInsertOnly() {
+
+		String x = "Line not modified";
+		String y = "Line not not modified";
+		compareStrings(x, y, x);
+	}
+
+	@Test
+	public void testRemovalOnly() {
+
+		String x = "Line not modified";
+		String y = "Line modified";
+		compareStrings(x, y, y);
+	}
+
+	@Test
 	public void testSizeLimit() {
 
-		String input = "This is more than 5 characters";
-		StringLcs slcs = new StringLcs(input, input);
+		String x = "This is a line that has not been modified";
+		String y = "This is a line that has been modified";
+
+		StringLcs slcs = new StringLcs(x, y);
+		slcs.setSizeLimit(10);
 		List<Character> lcs = slcs.getLcs();
 		String result = StringUtils.join(lcs, "");
-		assertEquals(input, result);
+		assertEquals(y, result); // 'y' is common, since it is 'x', with only a delete
 
-		slcs = new StringLcs(input, input);
+		String z = "Start Mod " + x + " End Mod"; // same as 'x', but with different start/end
+		slcs = new StringLcs(x, z);
 		slcs.setSizeLimit(10);
 		List<Character> actual = slcs.getLcs();
 		assertTrue(actual.isEmpty());
 	}
 
 	private void compareStrings(String x, String y, String expected) {
-
 		StringLcs slcs = new StringLcs(x, y);
 		List<Character> actual = slcs.getLcs();
-
 		assertEquals(convertString(expected), actual);
 	}
 
@@ -84,40 +100,25 @@ public class LCSTest extends AbstractGenericTest {
 		return charList;
 	}
 
-	private class StringLcs extends Lcs<Character> {
-
-		private String x;
-		private String y;
+	private class StringLcs extends ReducingLcs<String, Character> {
 
 		public StringLcs(String x, String y) {
-			super();
-			this.x = x;
-			this.y = y;
+			super(x, y);
 		}
 
 		@Override
-		protected int lengthOfX() {
-			return x.length();
+		protected String reduce(String input, int start, int end) {
+			return input.substring(start, end);
 		}
 
 		@Override
-		protected int lengthOfY() {
-			return y.length();
+		protected int lengthOf(String s) {
+			return s.length();
 		}
 
 		@Override
-		protected boolean matches(Character myX, Character myY) {
-			return myX.equals(myY);
-		}
-
-		@Override
-		protected Character valueOfX(int index) {
-			return x.charAt(index - 1);
-		}
-
-		@Override
-		protected Character valueOfY(int index) {
-			return y.charAt(index - 1);
+		protected Character valueOf(String s, int offset) {
+			return s.charAt(offset);
 		}
 	}
 }

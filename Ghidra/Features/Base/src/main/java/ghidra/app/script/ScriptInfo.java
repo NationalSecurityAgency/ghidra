@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,12 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DockingKeyBindingAction;
 import generic.jar.ResourceFile;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
@@ -305,7 +308,7 @@ public class ScriptInfo {
 			String token = tokenizer.nextToken();
 
 			if (i == tokenCount - 1) { // the key char value is the last element 
-				// ...all key character values must be upper case 
+				// ...all key character values must be upper case
 				buildy.append(token.toUpperCase());
 			}
 			else {
@@ -439,11 +442,12 @@ public class ScriptInfo {
 		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE +
 			HTMLUtilities.escapeHTML(toToolTip(author));
 		String htmlCategory = HTMLUtilities.bold("Category:") + HTML_SPACE +
-			HTMLUtilities.escapeHTML(toToolTip(StringUtilities.convertStringArray(category, ".")));
+			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(category, DELIMITTER)));
+
 		String htmlKeyBinding =
 			HTMLUtilities.bold("Key Binding:") + HTML_SPACE + getKeybindingToolTip();
 		String htmlMenuPath = HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
-			HTMLUtilities.escapeHTML(toToolTip(StringUtilities.convertStringArray(menupath, ".")));
+			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(menupath, DELIMITTER)));
 
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("<h3>").append(HTML_SPACE).append(HTMLUtilities.escapeHTML(getName())).append(

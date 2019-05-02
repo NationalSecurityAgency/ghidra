@@ -20,6 +20,8 @@ import java.math.BigInteger;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.Record;
 import ghidra.program.database.*;
 import ghidra.program.model.address.Address;
@@ -512,7 +514,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void setCommentAsArray(int commentType, String[] comment) {
-		setComment(commentType, StringUtilities.convertStringArray(comment));
+		setComment(commentType, StringUtils.join(comment, '\n'));
 	}
 
 	@Override

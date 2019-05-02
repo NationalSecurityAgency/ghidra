@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.program.util;
 
-import generic.algorithms.LCS;
+import generic.algorithms.Lcs;
 
 import java.util.List;
 
-public class CodeUnitLCS extends LCS<CodeUnitContainer> {
+public class CodeUnitLCS extends Lcs<CodeUnitContainer> {
 
 	private List<CodeUnitContainer> xList;
 	private List<CodeUnitContainer> yList;
