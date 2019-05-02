@@ -2819,6 +2819,11 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			Runnable r = () -> dtd.showComponent();
 			SystemUtilities.runSwingNow(r);
+
+			if (dtd.wasCancelled()) {
+				throw new CancelledException();
+			}
+
 			return ref.get();
 		});
 
