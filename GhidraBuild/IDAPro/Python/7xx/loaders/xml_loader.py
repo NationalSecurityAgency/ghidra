@@ -13,6 +13,7 @@ import ida_kernwin
 import ida_pro
 import idaxml
 import idc
+import sys
 
 
 """

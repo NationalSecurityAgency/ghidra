@@ -33,6 +33,7 @@ import idautils
 import idc
 import datetime
 import os
+import sys
 import time
 from xml.etree import cElementTree
 
