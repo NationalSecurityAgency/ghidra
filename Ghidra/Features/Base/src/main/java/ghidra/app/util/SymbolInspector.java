@@ -46,8 +46,9 @@ public class SymbolInspector implements OptionsChangeListener {
 	private Map<String, Object> cache = new HashMap<>();
 
 	/**
-	 * Constructs a new symbol inspector.
-	 * It uses the tool to get the CATEGORY_BROWSER_DISPLAY options.
+	 * Constructs a new symbol inspector
+	 * It uses the tool to get the CATEGORY_BROWSER_DISPLAY options
+	 * 
 	 * @param serviceProvider a service provider for getting services
 	 * @param repaintComp the component to repaint when the options change
 	 */
@@ -56,8 +57,8 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Constructs a new symbol inspector.
-	 * @param ownerPlugin the plugin which owns this instance (may be null)
+	 * Constructs a new symbol inspector
+	 * 
 	 * @param options the options from which to get colors
 	 * @param repaintComp the component to repaint when the options change
 	 */
@@ -338,8 +339,9 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Get the ScreenElement corresponding to the type of the symbol.
+	 * Get the ScreenElement corresponding to the type of the symbol 
 	 * @param s symbol to inspect
+	 * @return the screen element
 	 */
 	public ScreenElement getScreenElement(Symbol s) {
 
@@ -447,7 +449,7 @@ public class SymbolInspector implements OptionsChangeListener {
 		String optionName = se.getStyleOptionName();
 		Integer style = (Integer) cache.get(optionName);
 		if (style == null) {
-			style = new Integer(optionsObject.getInt(se.getStyleOptionName(), -1));
+			style = Integer.valueOf(optionsObject.getInt(se.getStyleOptionName(), -1));
 			cache.put(optionName, style);
 		}
 		return style.intValue();

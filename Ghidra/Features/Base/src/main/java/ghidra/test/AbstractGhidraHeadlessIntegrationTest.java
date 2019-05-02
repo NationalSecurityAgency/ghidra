@@ -15,6 +15,8 @@
  */
 package ghidra.test;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -30,6 +32,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.generic.function.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -102,7 +105,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * If the language no longer exists, and suitable replacement language will be returned
 	 * if found.  If no language is found, an exception will be thrown.
 	 * @param oldLanguageName old language name string
-	 * @return
+	 * @return the language compiler and spec
+	 * @throws LanguageNotFoundException 
 	 */
 	public static LanguageCompilerSpecPair getLanguageCompilerSpecPair(String oldLanguageName)
 			throws LanguageNotFoundException {
@@ -142,6 +146,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * Creates an in-memory program with the given language
 	 * @param name the program name
 	 * @param languageString a language string of the format <tt>x86:LE:32:default</tt>
+	 * @param compilerSpecID the ID
 	 * @param consumer a consumer for the program
 	 * @return a new program
 	 * @throws Exception if there is any issue creating the language
@@ -174,8 +179,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 			waitForSwing();
 
 			if (!status) {
-				Msg.error(AbstractGhidraHeadedIntegrationTest.class,
-					"Could not apply command: " + cmd.getStatusMsg());
+				Msg.error(null, "Could not apply command: " + cmd.getStatusMsg());
 			}
 
 			return status;
@@ -187,6 +191,76 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		finally {
 			program.endTransaction(txId, commit);
 		}
+	}
+
+	public static <E extends Exception> void tx(Program p, ExceptionalCallback<E> c) throws E {
+		int txId = p.startTransaction("Test - Function in Transaction");
+		boolean commit = true;
+		try {
+			c.call();
+			p.flushEvents();
+			waitForSwing();
+		}
+		catch (RollbackException e) {
+			commit = false;
+			throw e;
+		}
+		finally {
+			p.endTransaction(txId, commit);
+		}
+	}
+
+	/**
+	 * Provides a convenient method for modifying the current program, handling the transaction
+	 * logic 
+	 * 
+	 * @param program the program
+	 * @param callback the code to execute
+	 */
+	public <E extends Exception> void modifyProgram(Program program,
+			ExceptionalConsumer<Program, E> callback) {
+		assertNotNull("Program cannot be null", program);
+
+		boolean commit = false;
+		int tx = program.startTransaction("Test");
+		try {
+			callback.accept(program);
+			commit = true;
+		}
+		catch (Exception e) {
+			failWithException("Exception modifying program '" + program.getName() + "'", e);
+		}
+		finally {
+			program.endTransaction(tx, commit);
+		}
+	}
+
+	/**
+	 * Provides a convenient method for modifying the current program, handling the transaction
+	 * logic and returning a new item as a result
+	 * 
+	 * @param program the program
+	 * @param f the function for modifying the program and creating the desired result
+	 * @return the result
+	 */
+	public <R, E extends Exception> R createInProgram(Program program,
+			ExceptionalFunction<Program, R, E> f) {
+		assertNotNull("Program cannot be null", program);
+
+		R result = null;
+		boolean commit = false;
+		int tx = program.startTransaction("Test");
+		try {
+			result = f.apply(program);
+			commit = true;
+		}
+		catch (Exception e) {
+			failWithException("Exception modifying program '" + program.getName() + "'", e);
+		}
+		finally {
+			program.endTransaction(tx, commit);
+		}
+		return result;
 	}
 
 	/**
@@ -371,6 +445,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * 
 	 * @param program the program to search.
 	 * @param name the name of the symbol to find.
+	 * @param namespace the parent namespace; may be null
 	 * @return  the symbol with the given name if and only if it is the only one in that namespace
 	 */
 	public Symbol getUniqueSymbol(Program program, String name, Namespace namespace) {
@@ -389,6 +464,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * sleeping. 
 	 * 
 	 * <P><B>Do not leave this call in your test when committing changes.</B>
+	 * @param p the program
+	 * @param address the address
 	 * 
 	 * @throws Exception if there is an issue create a {@link TestEnv}
 	 */
