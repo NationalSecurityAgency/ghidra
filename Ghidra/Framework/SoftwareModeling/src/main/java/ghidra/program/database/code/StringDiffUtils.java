@@ -208,9 +208,12 @@ class StringDiffUtils {
 			start += l.text.length();
 		}
 
-		// strip off the trailing newline that we added above
+		if (result.isEmpty()) {
+			result.add(new Line("", 0));
+		}
+
 		Line last = result.peekLast();
-		last.markAsLast();
+		last.markAsLast(); // this will signal to remove the trailing newline for the last line
 
 		return result;
 	}

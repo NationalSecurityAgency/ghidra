@@ -1344,6 +1344,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private void setFocusedComponent(ComponentPlaceholder placeholder) {
 
+		RootNode rootNode = root;
+		if (rootNode == null) {
+			return; // we have been disposed 
+		}
+
 		if (focusedPlaceholder != null) {
 			if (focusedPlaceholder == placeholder) {
 				return; // ignore if we are already focused
@@ -1362,8 +1367,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (topLevelNode == null) {
 			return;
 		}
+
 		topLevelNode.setLastFocusedProviderInWindow(focusedPlaceholder);
-		root.notifyWindowFocusChanged(topLevelNode);
+		rootNode.notifyWindowFocusChanged(topLevelNode);
 	}
 
 	private ComponentPlaceholder findNextFocusedComponent() {
