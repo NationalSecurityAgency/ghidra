@@ -111,8 +111,6 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	private void formatCharTypes(Program program, Address addr, Scalar scalar,
 			StringBuilder htmlText) {
 
-		StringBuilder char_sb = new StringBuilder();
-
 		// The CharDataType can change depending on the DataOrg of the current program, so this
 		// can't be a static array like INTEGER_DISPLAY_TYPES
 		List<DataType> charDataTypes = Arrays.asList(new CharDataType(program.getDataTypeManager()),
@@ -120,44 +118,59 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 			new WideChar32DataType(program.getDataTypeManager()));
 
 		String prevCharVal = "";
+		StringBuilder localHTMLText = new StringBuilder();
 
 		Endian progEndian = program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE;
 		for (DataType charDt : charDataTypes) {
+			// for each char data type, append its representation to the buffer, if it is
+			// a new way to display the scalar
 			ByteMemBufferImpl charMemBuffer =
 				getScalarOperandAsMemBuffer(addr, scalar, charDt.getLength(), progEndian);
-
-			if (charMemBuffer.getLength() >= charDt.getLength()) {
-				StringDataInstance sdi = StringDataInstance.getStringDataInstance(charDt,
-					charMemBuffer, SettingsImpl.NO_SETTINGS, charMemBuffer.getLength());
-				boolean isArray = (charMemBuffer.getLength() >= charDt.getLength() * 2);
-				String charVal = sdi.getStringValue();
-				String charRep =
-					isArray ? sdi.getStringRepresentation() : sdi.getCharRepresentation();
-
-				// if the string-ified char data is the same as the previous instance, or if it
-				// doesn't have a quote mark in it (ie. all bytes sequences), skip it
-				boolean shouldSkip = prevCharVal.equals(charVal)  // 
-					|| !charRep.contains(isArray ? "\"" : "'") //
-					|| hasEncodingError(charVal);
-				if (!shouldSkip) {
-					char_sb.append("<tr><td>") // 
-						.append(charDt.getName()) //
-						.append(isArray ? "[]" : "") //
-						.append(" <b>" + progEndian.toShortString() + "</b>") //
-						.append("</td><td>") //
-						.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
-						.append("</td></tr>");
-					prevCharVal = charVal;
-				}
-			}
+			prevCharVal =
+				appendCharDataTypeFormattedHTML(prevCharVal, charDt, charMemBuffer, localHTMLText);
 		}
 
-		if (char_sb.length() > 0) {
+		if (localHTMLText.length() > 0) {
 			htmlText.append("<hr>");
 			htmlText.append("<table width=\"100%\">") //
-				.append(char_sb) //
+				.append(localHTMLText) //
 				.append("</table>");
 		}
+	}
+
+	private String appendCharDataTypeFormattedHTML(String prevCharVal, DataType charDt,
+			ByteMemBufferImpl charMemBuffer, StringBuilder htmlText) {
+		// appends a HTML table row to the stringbuilder with the scalar displayed as the
+		// specified data type, only if its a value that hasn't already been added to the buffer.
+
+		if (charMemBuffer.getLength() >= charDt.getLength()) {
+			StringDataInstance sdi = StringDataInstance.getStringDataInstance(charDt, charMemBuffer,
+				SettingsImpl.NO_SETTINGS, charMemBuffer.getLength());
+			boolean isArray = (charMemBuffer.getLength() >= charDt.getLength() * 2);
+			String charVal = sdi.getStringValue();
+			String charRep = isArray ? sdi.getStringRepresentation() : sdi.getCharRepresentation();
+
+			// if the string-ified char data is the same as the previous instance, or if it
+			// doesn't have a quote mark in it (ie. all bytes sequences), skip it
+			boolean shouldSkip = prevCharVal.equals(charVal)  // 
+				|| !charRep.contains(isArray ? "\"" : "'") //
+				|| hasEncodingError(charVal);
+			if (!shouldSkip) {
+				htmlText.append("<tr><td>") // 
+					.append(charDt.getName()) //
+					.append(isArray ? "[]" : "");
+				if (charMemBuffer.getLength() > 1) {
+					htmlText.append(" <b>" +
+						(charMemBuffer.isBigEndian() ? Endian.BIG : Endian.LITTLE).toShortString() +
+						"</b>");
+				}
+				htmlText.append("</td><td>") //
+					.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
+					.append("</td></tr>");
+				prevCharVal = charVal;
+			}
+		}
+		return prevCharVal;
 	}
 
 	private void formatAsAddressVal(Program program, Address addr, Scalar scalar,
