@@ -491,11 +491,12 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		if (indexBefore == null) {
 			indexBefore = BigInteger.ZERO;
 		}
-		if (indexAfter.subtract(indexBefore)
-			.compareTo(addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
+		if (indexAfter.subtract(indexBefore).compareTo(
+			addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
 			Address start = addressToIndexMap.getAddress(indexBefore.add(BigInteger.ONE));
 			Address end = addressToIndexMap.getAddress(indexAfter.subtract(BigInteger.ONE));
-			if (start != null && end != null) {
+			if (start != null && end != null &&
+				start.getAddressSpace().equals(end.getAddressSpace())) {
 				addressSet.add(start, end);
 			}
 		}
@@ -619,7 +620,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 
 	/**
 	 * Sets the addresses displayed by this model's listing.
-	 * @param view the addresses. These must already be compatible with the program 
+	 * @param view the addresses. These must already be compatible with the program
 	 * associated with this model.
 	 */
 	public void setAddressSet(AddressSetView view) {
