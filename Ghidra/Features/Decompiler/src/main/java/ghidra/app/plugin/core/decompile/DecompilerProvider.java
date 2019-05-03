@@ -201,10 +201,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public ProgramLocation getLocation() {
-		if (currentLocation == null) {
-			return plugin.getCurrentLocation(); // avoid returning null
+		if (currentLocation instanceof DecompilerLocation) {
+			return currentLocation;
 		}
-		return currentLocation;
+		return controller.getDecompilerPanel().getCurrentLocation();
 	}
 
 	@Override
