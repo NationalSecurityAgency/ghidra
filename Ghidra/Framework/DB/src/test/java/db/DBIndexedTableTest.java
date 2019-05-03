@@ -26,7 +26,6 @@ import org.junit.*;
 
 import db.buffers.*;
 import generic.test.AbstractGenericTest;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import utilities.util.FileUtilities;
 
@@ -616,7 +615,16 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Record rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
-			assertEquals(recIx, maxIx + 1);
+			assertEquals(maxIx + 1, recIx);
+
+			// Full forward record iterator
+			recIx = 0;
+			iter = table.indexIterator(colIx, null, null, true);
+			while (iter.hasNext()) {
+				Record rec = iter.next();
+				assertEquals(recs[recIx++], rec);
+			}
+			assertEquals(recordCnt, recIx);
 
 			// Backward Range iterator
 			minIx = findStart(recs, recordCnt / 10, colIx);
@@ -628,7 +636,16 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Record rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
-			assertEquals(recIx, minIx - 1);
+			assertEquals(minIx - 1, recIx);
+
+			// Full reverse record iterator
+			recIx = recordCnt - 1;
+			iter = table.indexIterator(colIx, null, null, false);
+			while (iter.hasPrevious()) {
+				Record rec = iter.previous();
+				assertEquals(recs[recIx--], rec);
+			}
+			assertEquals(-1, recIx);
 
 			if (recs[0].getField(colIx) instanceof LongField) {
 
@@ -1076,7 +1093,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testRandomRecordIterator() throws IOException {
-		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, 1, false);
+		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, -1, false);
 	}
 
 	@Test
@@ -1136,7 +1153,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testRandomRecordIteratorUndoRedo() throws IOException {
-		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, 1, true);
+		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, -1, true);
 	}
 
 	@Test
@@ -1203,53 +1220,4 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		}
 	}
 
-	@Test
-	public void testReverseIndexRecordIterator() throws IOException {
-		long txId = dbh.startTransaction();
-		Table table =
-			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.SINGLE_BINARY, true);
-
-		while (table.getRecordCount() < 10) {
-			try {
-				DBTestUtils.createLongKeyRecord(table, true, 16, true);
-			}
-			catch (DuplicateKeyException e) {
-				Msg.info(this, "What are the odds?:" + e);
-			}
-		}
-		dbh.endTransaction(txId, true);
-
-		// Check my sanity. Does it work in the forward direction?
-		RecordIterator fit = table.indexIterator(0, null, null, false);
-		ArrayList<byte[]> fCol = new ArrayList<>(10);
-		while (fit.hasNext()) {
-			Record rec = fit.next();
-			fCol.add(rec.getBinaryData(0));
-		}
-		assertEquals(10, fCol.size()); // Did I get everyone?
-
-		byte[] last = null;
-		for (byte[] bin : fCol) { // Is each greater than or equal to the last?
-			if (last != null) {
-				assertTrue(new BinaryField(bin).compareTo(new BinaryField(last)) >= 0);
-			}
-			last = bin;
-		}
-
-		RecordIterator rit = table.indexIterator(0, null, null, false);
-		ArrayList<byte[]> rCol = new ArrayList<>(10);
-		while (rit.hasPrevious()) {
-			Record rec = rit.previous();
-			rCol.add(rec.getBinaryData(0));
-		}
-		assertEquals(10, rCol.size()); // Did I get everyone?
-
-		last = null;
-		for (byte[] bin : rCol) {
-			if (last != null) { // Is each less than or equal to the last?
-				assertTrue(new BinaryField(bin).compareTo(new BinaryField(last)) <= 0);
-			}
-			last = bin;
-		}
-	}
 }

@@ -497,7 +497,7 @@ public class FieldIndexTable extends IndexTable {
 		 * @param minValue minimum index value or null if no minimum
 		 * @param maxValue maximum index value or null if no maximum
 		 * @param startValue starting index value.
-		 * @param primaryKey starting primary key value.
+		 * @param primaryKey starting primary key value (ignored if startValue is null).
 		 * @param after if true iterator is positioned immediately after 
 		 * the startValue/primaryKey,
 		 * otherwise immediately before.
@@ -505,17 +505,26 @@ public class FieldIndexTable extends IndexTable {
 		 */
 		PrimaryKeyIterator(Field minValue, Field maxValue, Field startValue, long primaryKey,
 				boolean after) throws IOException {
+
 			min = minValue != null ? IndexField.getIndexField(minValue, Long.MIN_VALUE) : null;
 			max = maxValue != null ? IndexField.getIndexField(maxValue, Long.MAX_VALUE) : null;
-			IndexField start =
-				startValue != null ? IndexField.getIndexField(startValue, primaryKey) : null;
 
-			indexIterator = indexTable.fieldKeyIterator(min, max, start);
-
-			if (indexIterator.hasNext()) {
-				Field f = indexIterator.next();
-				if (!after || !f.equals(start)) {
-					indexIterator.previous();
+			IndexField start = null;
+			if (after && startValue == null && maxValue == null) {
+				indexIterator = indexTable.fieldKeyIterator(min, max, !after);
+				if (indexIterator.hasNext()) {
+					indexIterator.next(); // must step beyond max indexed value
+				}
+			}
+			else {
+				start =
+					startValue != null ? IndexField.getIndexField(startValue, primaryKey) : null;
+				indexIterator = indexTable.fieldKeyIterator(min, max, start);
+				if (indexIterator.hasNext()) {
+					Field f = indexIterator.next();
+					if (!after || !f.equals(start)) {
+						indexIterator.previous();
+					}
 				}
 			}
 		}

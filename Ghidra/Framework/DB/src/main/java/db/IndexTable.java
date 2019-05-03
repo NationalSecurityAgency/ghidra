@@ -300,9 +300,9 @@ abstract class IndexTable {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * If atMin is true, the iterator is initially positioned before the first index 
+	 * If before is true, the iterator is initially positioned before the first index 
 	 * buffer whose index key is greater than or equal to the specified minField value. 
-	 * If atMin is false, the iterator is initially positioned after the first index 
+	 * If before is false, the iterator is initially positioned after the first index 
 	 * buffer whose index key is less than or equal to the specified maxField value. 
 	 * @param minField minimum index key value
 	 * @param maxField maximum index key value
@@ -312,6 +312,13 @@ abstract class IndexTable {
 	 * @throws IOException thrown if IO error occurs
 	 */
 	DBLongIterator keyIterator(Field minField, Field maxField, boolean before) throws IOException {
+
+		Field startField = before ? minField : maxField;
+
+		if (startField == null && !before) {
+
+		}
+
 		return new PrimaryKeyIterator(minField, maxField, before ? minField : maxField,
 			before ? Long.MIN_VALUE : Long.MAX_VALUE, !before);
 	}
