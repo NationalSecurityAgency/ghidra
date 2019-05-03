@@ -1904,7 +1904,17 @@ macro subCarryFlags ( op1, op2 ) {
 macro resultflags(result) {
  SF = result s< 0;
  ZF = result == 0;
- # PF, AF not implemented
+ local ext1:8 = zext(result);
+ local ext2 = ext1 >> 4;
+ local ext3 = ext1 ^ ext2;
+ local ext4 = ext3 >> 2;
+ local ext5 = ext3 ^ ext4;
+ local ext6 = ext5 >> 1;
+ local ext7 = ext5 ^ ext6;
+ local ext8:8 = 1;
+ local ext9 = ext7 & ext8;
+ PF = (ext9 == 0);
+ # AF not implemented
 }
 
 macro shiftresultflags(result,count) {
@@ -1916,7 +1926,18 @@ macro shiftresultflags(result,count) {
 
  local newZF = (result == 0);
  ZF = (!notzero & ZF) | (notzero & newZF);
- # PF, AF not implemented
+ local ext1:8 = zext(result);
+ local ext2 = ext1 >> 4;
+ local ext3 = ext1 ^ ext2;
+ local ext4 = ext3 >> 2;
+ local ext5 = ext3 ^ ext4;
+ local ext6 = ext5 >> 1;
+ local ext7 = ext5 ^ ext6;
+ local ext8:8 = 1;
+ local ext9 = ext7 & ext8;
+ local newPF = (ext9 == 0);
+ PF = (!notzero & PF) | (notzero & newPF);
+ # AF not implemented
 }
 
 macro subflags(op1,op2) {
