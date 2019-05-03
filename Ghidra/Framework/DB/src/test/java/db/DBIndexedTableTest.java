@@ -26,6 +26,7 @@ import org.junit.*;
 
 import db.buffers.*;
 import generic.test.AbstractGenericTest;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import utilities.util.FileUtilities;
 
@@ -81,6 +82,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
+	 * 
 	 * @param table table instance, if null one will be created
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
@@ -105,6 +107,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
+	 * 
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
@@ -304,7 +307,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		assertEquals(table.getSchema().getFieldClasses().length, indexedColumns.length);
 		for (int colIx : indexedColumns) {
 
-			Arrays.sort(recs, new RecColumnComparitor(colIx));
+			Arrays.sort(recs, new RecColumnComparator(colIx));
 
 			// Forward iteration (no start)
 			int recIx = 0;
@@ -403,7 +406,9 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -436,7 +441,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		int[] indexedColumns = table.getIndexedColumns();
 		assertEquals(table.getSchema().getFieldClasses().length, indexedColumns.length);
 		for (int colIx : indexedColumns) {
-			Arrays.sort(recs, new RecColumnComparitor(colIx));
+			Arrays.sort(recs, new RecColumnComparator(colIx));
 
 			int recIx;
 			RecordIterator iter;
@@ -844,7 +849,9 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -864,7 +871,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		Table table = dbh.getTable(table1Name);
 
-		Arrays.sort(recs, new RecColumnComparitor(testColIx));
+		Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 		// Forward - delete all records
 		long txId = dbh.startTransaction();
@@ -890,7 +897,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		table = dbh.getTable(table1Name);
 
-		Arrays.sort(recs, new RecColumnComparitor(testColIx));
+		Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 		// Reverse - delete all records
 		txId = dbh.startTransaction();
@@ -910,7 +917,9 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -931,7 +940,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		try {
 			Table table = dbh.getTable(table1Name);
 
-			Arrays.sort(recs, new RecColumnComparitor(testColIx));
+			Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 			// Count unique index values
 			int fieldCnt = 0;
@@ -980,7 +989,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		try {
 			Table table = dbh.getTable(table1Name);
 
-			Arrays.sort(recs, new RecColumnComparitor(testColIx));
+			Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 			// Count unique index values
 			int fieldCnt = 0;
@@ -1038,11 +1047,11 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		return --startIx;
 	}
 
-	private class RecColumnComparitor implements Comparator<Record> {
+	private class RecColumnComparator implements Comparator<Record> {
 
 		int columnIx;
 
-		RecColumnComparitor(int columnIx) {
+		RecColumnComparator(int columnIx) {
 			this.columnIx = columnIx;
 		}
 
@@ -1143,7 +1152,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		// Backward Range iterator
 		int colIx = 0;
-		Arrays.sort(recs, new RecColumnComparitor(colIx));
+		Arrays.sort(recs, new RecColumnComparator(colIx));
 		int recIx = recs.length - 1;
 //		RecordIterator iter = table.indexIterator(colIx, recs[minIx].getField(colIx),
 //								   recs[maxIx].getField(colIx), false);
@@ -1191,6 +1200,56 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		}
 		for (int colIx = 0; colIx < 6; colIx++) {
 			deleteIteratedIndexFields(ITER_REC_CNT, colIx, 0, 1);
+		}
+	}
+
+	@Test
+	public void testReverseIndexRecordIterator() throws IOException {
+		long txId = dbh.startTransaction();
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.SINGLE_BINARY, true);
+
+		while (table.getRecordCount() < 10) {
+			try {
+				DBTestUtils.createLongKeyRecord(table, true, 16, true);
+			}
+			catch (DuplicateKeyException e) {
+				Msg.info(this, "What are the odds?:" + e);
+			}
+		}
+		dbh.endTransaction(txId, true);
+
+		// Check my sanity. Does it work in the forward direction?
+		RecordIterator fit = table.indexIterator(0, null, null, false);
+		ArrayList<byte[]> fCol = new ArrayList<>(10);
+		while (fit.hasNext()) {
+			Record rec = fit.next();
+			fCol.add(rec.getBinaryData(0));
+		}
+		assertEquals(10, fCol.size()); // Did I get everyone?
+
+		byte[] last = null;
+		for (byte[] bin : fCol) { // Is each greater than or equal to the last?
+			if (last != null) {
+				assertTrue(new BinaryField(bin).compareTo(new BinaryField(last)) >= 0);
+			}
+			last = bin;
+		}
+
+		RecordIterator rit = table.indexIterator(0, null, null, false);
+		ArrayList<byte[]> rCol = new ArrayList<>(10);
+		while (rit.hasPrevious()) {
+			Record rec = rit.previous();
+			rCol.add(rec.getBinaryData(0));
+		}
+		assertEquals(10, rCol.size()); // Did I get everyone?
+
+		last = null;
+		for (byte[] bin : rCol) {
+			if (last != null) { // Is each less than or equal to the last?
+				assertTrue(new BinaryField(bin).compareTo(new BinaryField(last)) <= 0);
+			}
+			last = bin;
 		}
 	}
 }
