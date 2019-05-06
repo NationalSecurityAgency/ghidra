@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,48 +28,50 @@ import javax.swing.JCheckBox;
  */
 public class PropertyBoolean extends JCheckBox implements ItemListener {
 
-    private PropertyEditor editor;
-    private boolean notifyEditorOfChanges = true;
+	private PropertyEditor editor;
+	private boolean notifyEditorOfChanges = true;
 
 	/**
 	 * Constructor new PropertyText.
 	 * @param pe bean property editor that is used to get the value
 	 * to show in the text field
 	 */
-    public PropertyBoolean(PropertyEditor pe) {
-    	super();
-    	setSelected((Boolean)pe.getValue());
-    	
-    	editor = pe;
-    	addItemListener( this);
-    	
-    	editor.addPropertyChangeListener(new PropertyChangeListener() {
+	public PropertyBoolean(PropertyEditor pe) {
+		super();
+		setSelected((Boolean) pe.getValue());
+
+		editor = pe;
+		addItemListener(this);
+
+		editor.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
 				Object value = editor.getValue();
 				if ((value instanceof Boolean) && !value.equals(getText())) {
 					notifyEditorOfChanges = false;
 					try {
-						setSelected((Boolean)value);
+						setSelected((Boolean) value);
 					}
 					finally {
 						notifyEditorOfChanges = true;
 					}
 				}
 			}
-        });
-    }
+		});
+	}
 
-
-    //----------------------------------------------------------------------
-    // Change listener methods.
-    public void itemStateChanged(ItemEvent e) {
-    	if (notifyEditorOfChanges) {
-	        try {
-	        	editor.setValue(isSelected() ? Boolean.TRUE : Boolean.FALSE);
-			} catch (IllegalArgumentException ex) {
-			    // Quietly ignore.
+	//----------------------------------------------------------------------
+	// Change listener methods.
+	@Override
+	public void itemStateChanged(ItemEvent e) {
+		if (notifyEditorOfChanges) {
+			try {
+				editor.setValue(isSelected() ? Boolean.TRUE : Boolean.FALSE);
 			}
-    	}
-    } 
-	
+			catch (IllegalArgumentException ex) {
+				// Quietly ignore.
+			}
+		}
+	}
+
 }

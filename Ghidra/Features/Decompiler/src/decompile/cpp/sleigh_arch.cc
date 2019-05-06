@@ -125,6 +125,12 @@ SleighArchitecture::~SleighArchitecture(void)
   translate = (const Translate *)0;
 }
 
+string SleighArchitecture::getDescription(void) const
+
+{
+  return description[languageindex].getDescription();
+}
+
 /// If the current \b languageindex matches the \b last_languageindex,
 /// try to reuse the previous Sleigh object, so we don't reload
 /// the .sla file.
@@ -198,8 +204,6 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
 { // Given a specific language, make sure relevant spec files are loaded
   bool language_reuse = isTranslateReused();
   const LanguageDescription &language(description[languageindex]);
-  Architecture::description = language.getDescription();
-  version = language.getVersion();
   string compiler = archid.substr(archid.rfind(':')+1);
   const CompilerTag &compilertag( language.getCompiler(compiler));
   

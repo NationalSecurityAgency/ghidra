@@ -1,4 +1,6 @@
+apply plugin: 'java'
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'GPL DMG'
 
 /*********************************************************************************

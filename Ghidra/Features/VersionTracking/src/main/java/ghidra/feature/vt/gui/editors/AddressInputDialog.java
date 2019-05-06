@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,6 @@
  */
 package ghidra.feature.vt.gui.editors;
 
-import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.feature.vt.api.main.VTMarkupItemDestinationAddressEditStatus;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.program.model.address.Address;
-import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
-
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -32,6 +24,13 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GDLabel;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMarkupItemDestinationAddressEditStatus;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.program.model.address.Address;
+import ghidra.util.Msg;
+import ghidra.util.exception.InvalidInputException;
 
 public class AddressInputDialog extends AbstractCellEditor implements TableCellEditor {
 
@@ -44,6 +43,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		this.controller = controller;
 	}
 
+	@Override
 	public Component getTableCellEditorComponent(JTable theTable, Object value, boolean isSelected,
 			int row, int column) {
 
@@ -51,7 +51,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		EditableAddress editableAddress = (EditableAddress) value;
 		address = editableAddress.getAddress();
 
-		final JLabel label = new JLabel();
+		JLabel label = new GDLabel();
 		label.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		label.setText(editableAddress.getDisplayString());
 
@@ -61,10 +61,10 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		if (status != VTMarkupItemDestinationAddressEditStatus.EDITABLE) {
 			final String description = status.getDescription();
 			SwingUtilities.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					fireEditingCanceled();
-					Msg.showInfo(getClass(), table,
-						"Cannot Edit Destination Address", description);
+					Msg.showInfo(getClass(), table, "Cannot Edit Destination Address", description);
 				}
 			});
 			return label;
@@ -73,6 +73,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		dialog = new DialogProvider(editableAddress);
 		dialog.setRememberSize(false);
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				controller.getTool().showDialog(dialog, label);
 				stopCellEditing();
@@ -89,6 +90,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		}
 	}
 
+	@Override
 	public Object getCellEditorValue() {
 		return ((DialogProvider) dialog).getAddress();
 	}
@@ -140,8 +142,8 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 // Inner Classes    
 //==================================================================================================
 
-	private class DialogProvider extends DialogComponentProvider implements
-			AddressEditorPanelListener {
+	private class DialogProvider extends DialogComponentProvider
+			implements AddressEditorPanelListener {
 
 		private EditableAddress editableAddress;
 		private Address editedAddress;
@@ -186,6 +188,7 @@ public class AddressInputDialog extends AbstractCellEditor implements TableCellE
 		/**
 		 * An address edit action occurred in the panel so handle it as if ok button were pressed.
 		 */
+		@Override
 		public void addressEdited() {
 			okCallback();
 		}

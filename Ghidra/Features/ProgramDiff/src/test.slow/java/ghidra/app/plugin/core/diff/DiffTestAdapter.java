@@ -730,14 +730,14 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		performAction(action);
 	}
 
-	Component getComponentOfType(Container container, Class<?> componentClass) {
+	<T extends Component> T getComponentOfType(Container container, Class<T> componentClass) {
 		Component[] comps = container.getComponents();
 		for (Component element : comps) {
-			if (element.getClass().isAssignableFrom(componentClass)) {
-				return element;
+			if (componentClass.isInstance(element)) {
+				return componentClass.cast(element);
 			}
 			else if (element instanceof Container) {
-				Component subComp = getComponentOfType((Container) element, componentClass);
+				T subComp = getComponentOfType((Container) element, componentClass);
 				if (subComp != null) {
 					return subComp;
 				}

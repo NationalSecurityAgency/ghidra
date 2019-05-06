@@ -28,6 +28,7 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterSaveManager;
 import ghidra.util.HTMLUtilities;
@@ -152,7 +153,7 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createTitledBorder(
 			BorderFactory.createEmptyBorder(19, 0, 26, 5), "Preview"));
 
-		previewLabel = new JLabel();
+		previewLabel = new GDHtmlLabel();
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);
 		panel.add(new JScrollPane(previewLabel));
 		return panel;

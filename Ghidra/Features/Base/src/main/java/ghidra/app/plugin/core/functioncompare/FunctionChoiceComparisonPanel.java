@@ -26,6 +26,7 @@ import docking.ComponentProvider;
 import docking.action.*;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
@@ -160,7 +161,7 @@ public abstract class FunctionChoiceComparisonPanel extends FunctionComparisonPa
 
 	private Component createLeftChoicePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		leftComboBox = new JComboBox<>(leftWrappedFunctions);
+		leftComboBox = new GComboBox<>(leftWrappedFunctions);
 		adjustSelectedLeftFunction();
 		leftComboBox.addItemListener(e -> {
 			WrappedFunction wrappedFunction = (WrappedFunction) leftComboBox.getSelectedItem();
@@ -173,7 +174,7 @@ public abstract class FunctionChoiceComparisonPanel extends FunctionComparisonPa
 
 	private Component createRightChoicePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		rightComboBox = new JComboBox<>(rightWrappedFunctions);
+		rightComboBox = new GComboBox<>(rightWrappedFunctions);
 		adjustSelectedRightFunction();
 		rightComboBox.addItemListener(e -> {
 			WrappedFunction wrappedFunction = (WrappedFunction) rightComboBox.getSelectedItem();

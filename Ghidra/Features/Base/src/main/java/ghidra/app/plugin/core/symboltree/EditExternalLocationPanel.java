@@ -28,7 +28,10 @@ import javax.swing.event.DocumentListener;
 import docking.DockingWindowManager;
 import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.main.AppInfo;
@@ -119,9 +122,7 @@ class EditExternalLocationPanel extends JPanel {
 		topPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Program"), new EmptyBorder(0, 5, 5, 5)));
 
-		JLabel label = new JLabel("Name:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		extLibNameComboBox = new GhidraComboBox<>();
 		extLibNameComboBox.setEditable(true);
 		nameDocumentListener = new DocumentListener() {
@@ -169,38 +170,28 @@ class EditExternalLocationPanel extends JPanel {
 		buttonPanel.add(editButton);
 		pathPanel.add(buttonPanel, BorderLayout.EAST);
 
-		label = new JLabel("Path:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		topPanel.add(label);
+		topPanel.add(new GLabel("Path:", SwingConstants.RIGHT));
 		topPanel.add(pathPanel);
 
 		JPanel bottomPanel = new JPanel(new PairLayout(10, 10, 160));
 		bottomPanel.setBorder(
 			new CompoundBorder(new TitledBorder("External Location"), new EmptyBorder(0, 5, 5, 5)));
 
-		label = new JLabel("Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Type:", SwingConstants.RIGHT));
 
-		extTypeLabel = new JLabel("Function");
+		extTypeLabel = new GDLabel("Function");
 		bottomPanel.add(extTypeLabel);
 
-		label = new JLabel("Label:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GDLabel("Label:", SwingConstants.RIGHT));
 		extLabelTextField = new JTextField();
 		bottomPanel.add(extLabelTextField);
 
-		label = new JLabel("Address:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		bottomPanel.add(label);
+		bottomPanel.add(new GLabel("Address:", SwingConstants.RIGHT));
 		extAddressInputWidget = new AddressInput();
 		bottomPanel.add(extAddressInputWidget);
 
 		if (startingOriginalName != null) {
-			label = new JLabel("Original Label:");
-			label.setHorizontalAlignment(SwingConstants.RIGHT);
-			bottomPanel.add(label);
+			bottomPanel.add(new GLabel("Original Label:", SwingConstants.RIGHT));
 			bottomPanel.add(buildOriginalLableFieldAndRestoreButton());
 		}
 
@@ -209,7 +200,7 @@ class EditExternalLocationPanel extends JPanel {
 		add(bottomPanel);
 
 		if (externalLocation == null) {
-			functionCheckBox = new JCheckBox("Make External Function");
+			functionCheckBox = new GCheckBox("Make External Function");
 			add(functionCheckBox);
 		}
 	}

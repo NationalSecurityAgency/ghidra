@@ -60,10 +60,12 @@ public class ImportDataDirectory extends DataDirectory {
 			throws IOException {
 		processDataDirectory(ntHeader, reader);
 
-		if (imports == null)
+		if (imports == null) {
 			imports = new ImportInfo[0];
-		if (descriptors == null)
+		}
+		if (descriptors == null) {
 			descriptors = new ImportDescriptor[0];
+		}
 	}
 
 	/**
@@ -95,7 +97,7 @@ public class ImportDataDirectory extends DataDirectory {
 		if (imports == null || descriptors == null) {
 			return;
 		}
-		monitor.setMessage(program.getName() + ": import(s)...");
+		monitor.setMessage("[" + program.getName() + "]: import(s)...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
@@ -122,11 +124,13 @@ public class ImportDataDirectory extends DataDirectory {
 
 			String dll = descriptor.getDLL();
 			if (dll != null && dll.startsWith(program.getName())) {
-				Msg.warn(this, program.getName()+" potentially modified via import of local exports");
+				Msg.warn(this,
+					program.getName() + " potentially modified via import of local exports");
 				DataDirectory[] dataDirectories = ntHeader.getOptionalHeader().getDataDirectories();
-				exportDirectory = (ExportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_EXPORT];
+				exportDirectory =
+					(ExportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_EXPORT];
 			}
-			
+
 			long nameAddr = va(descriptor.getName(), isBinary);
 
 			Address nameAddress = space.getAddress(nameAddr);
@@ -148,8 +152,10 @@ public class ImportDataDirectory extends DataDirectory {
 				try {
 					markupINT(intptr, iatptr, isBinary, program, thunks[j], log);
 					markupIAT(iatptr, isBinary, program, log);
-				} catch (MemoryAccessException mae) {
-					Msg.error(this, "Invalid memory access for iaptr "+Integer.toHexString(iatptr));
+				}
+				catch (MemoryAccessException mae) {
+					Msg.error(this,
+						"Invalid memory access for iaptr " + Integer.toHexString(iatptr));
 					break;
 				}
 
@@ -158,14 +164,17 @@ public class ImportDataDirectory extends DataDirectory {
 					ExportInfo exportInfo = exportDirectory.getExports()[j];
 					long address = exportInfo.getAddress();
 					long thunkAddr = va(intptr, isBinary);
-					byte[] bytes = ntHeader.getOptionalHeader().is64bit() ? conv.getBytes(address) : conv.getBytes((int)address);
+					byte[] bytes = ntHeader.getOptionalHeader().is64bit() ? conv.getBytes(address)
+							: conv.getBytes((int) address);
 					try {
-						program.getMemory().setBytes(program.getImageBase().getAddress(Long.toHexString(thunkAddr)), bytes);
-					} catch (AddressFormatException e) {
-						Msg.warn(this, "Unable to convert "+thunkAddr);
+						program.getMemory().setBytes(
+							program.getImageBase().getAddress(Long.toHexString(thunkAddr)), bytes);
+					}
+					catch (AddressFormatException e) {
+						Msg.warn(this, "Unable to convert " + thunkAddr);
 					}
 				}
-				
+
 				intptr += thunks[j].getStructSize();
 				iatptr += thunks[j].getStructSize();
 
@@ -178,7 +187,7 @@ public class ImportDataDirectory extends DataDirectory {
 					Address ibnNameAddress = ibnAddress.add(WORD.getLength());
 					PeUtils.createData(program, ibnNameAddress, tsdt, log);
 				}
-				
+
 			}
 		}
 	}
@@ -220,8 +229,8 @@ public class ImportDataDirectory extends DataDirectory {
 
 	@Override
 	public boolean parse() throws IOException {
-		List<ImportInfo> importList = new ArrayList<ImportInfo>();
-		List<ImportDescriptor> descriptorsList = new ArrayList<ImportDescriptor>();
+		List<ImportInfo> importList = new ArrayList<>();
+		List<ImportDescriptor> descriptorsList = new ArrayList<>();
 
 		int ptr = getPointer();
 		if (ptr < 0) {
@@ -238,54 +247,55 @@ public class ImportDataDirectory extends DataDirectory {
 			}
 			descriptorsList.add(id);
 
-			if (id.getName() == 0 && id.getTimeDateStamp() == 0)
+			if (id.getName() == 0 && id.getTimeDateStamp() == 0) {
 				break;
+			}
 
 			int tmpPtr = ntHeader.rvaToPointer(id.getName());
-	        if (tmpPtr < 0) {
-	        	//Msg.error(this, "Invalid RVA "+id.getName());
+			if (tmpPtr < 0) {
+				//Msg.error(this, "Invalid RVA "+id.getName());
 				id = ImportDescriptor.createImportDescriptor(reader, ptr);
-	        	continue;
-	        }
+				continue;
+			}
 			String dllName = reader.readAsciiString(tmpPtr);
 			id.setDLL(dllName);
 
-			if (id.getOriginalFirstThunk() == 0 && id.getFirstThunk() == 0)
+			if (id.getOriginalFirstThunk() == 0 && id.getFirstThunk() == 0) {
 				return false;
+			}
 
 			int intptr = -1;
-			if (id.getOriginalFirstThunk() != 0)  {
+			if (id.getOriginalFirstThunk() != 0) {
 				intptr = ntHeader.rvaToPointer(id.getOriginalFirstThunk());
 			}
 			if (intptr < 0) {
 				intptr = ntHeader.rvaToPointer(id.getFirstThunk());
 			}
-	        if (intptr < 0) {
-	        	Msg.error(this, "Invalid RVA "+Integer.toHexString(id.getOriginalFirstThunk())+" : "+Integer.toHexString(id.getFirstThunk()));
+			if (intptr < 0) {
+				Msg.error(this, "Invalid RVA " + Integer.toHexString(id.getOriginalFirstThunk()) +
+					" : " + Integer.toHexString(id.getFirstThunk()));
 				id = ImportDescriptor.createImportDescriptor(reader, ptr);
-	        	return false;
-	        }
+				return false;
+			}
 			int iatptr = ntHeader.rvaToPointer(id.getFirstThunk());
 
 			int nextPosToCreateExternalRef = 0;
 			while (true) {
-	        	if (!ntHeader.checkPointer(intptr)) { 
-	            	Msg.error(this, "Invalid file index "+Integer.toHexString(intptr));
-	            	break;
-	        	}
-	        	if (!ntHeader.checkPointer(iatptr)) { 
-	            	Msg.error(this, "Invalid file index "+Integer.toHexString(iatptr));
-	            	break;
-	        	}
-	        	
-				ThunkData intThunk =
-					ThunkData.createThunkData(reader, intptr,
-						ntHeader.getOptionalHeader().is64bit());
+				if (!ntHeader.checkPointer(intptr)) {
+					Msg.error(this, "Invalid file index " + Integer.toHexString(intptr));
+					break;
+				}
+				if (!ntHeader.checkPointer(iatptr)) {
+					Msg.error(this, "Invalid file index " + Integer.toHexString(iatptr));
+					break;
+				}
+
+				ThunkData intThunk = ThunkData.createThunkData(reader, intptr,
+					ntHeader.getOptionalHeader().is64bit());
 				intptr += intThunk.getStructSize();
 
-				ThunkData iatThunk =
-					ThunkData.createThunkData(reader, iatptr,
-						ntHeader.getOptionalHeader().is64bit());
+				ThunkData iatThunk = ThunkData.createThunkData(reader, iatptr,
+					ntHeader.getOptionalHeader().is64bit());
 				iatptr += iatThunk.getStructSize();
 
 				if (intThunk.getAddressOfData() == 0) {
@@ -308,10 +318,11 @@ public class ImportDataDirectory extends DataDirectory {
 				else {
 					// retrieve the IMAGE_IMPORT_BY_NAME struct, but do so in pieces
 					int ptrToData = ntHeader.rvaToPointer((int) intThunk.getAddressOfData());
-			        if (ptrToData < 0) {
-			        	Msg.error(this, "Invalid RVA "+Long.toHexString(intThunk.getAddressOfData()));
-			        	break;
-			        }
+					if (ptrToData < 0) {
+						Msg.error(this,
+							"Invalid RVA " + Long.toHexString(intThunk.getAddressOfData()));
+						break;
+					}
 					ImportByName ibn = ImportByName.createImportByName(reader, ptrToData);
 
 					intThunk.setImportByName(ibn);
@@ -338,8 +349,8 @@ public class ImportDataDirectory extends DataDirectory {
 					Msg.error(this, "Too many imports");
 					return false;
 				}
-				importList.add(new ImportInfo(addr, cmt.toString(), dllName, boundName,
-					id.isBound()));
+				importList.add(
+					new ImportInfo(addr, cmt.toString(), dllName, boundName, id.isBound()));
 			}
 			id = ImportDescriptor.createImportDescriptor(reader, ptr);
 		}

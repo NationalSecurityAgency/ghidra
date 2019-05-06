@@ -45,7 +45,8 @@ import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.protocol.ghidra.*;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.*;
@@ -557,7 +558,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				Program program = context.getProgram();
 				String programName = "'" + program.getDomainFile().getName() + "'";
 				getMenuBarData().setMenuItemName("&Close " + programName);
-				setDescription("Close " + programName);
+				setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
 				return true;
 			}
 		};

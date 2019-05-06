@@ -222,7 +222,7 @@ public class GhidraModuleUtils {
 		}
 
 		File ghidraInstallDir = ghidraLayout.getApplicationInstallationDir().getFile(false);
-		File antFile = new File(project.getRawLocation().toFile(), ".antProperties.xml"); // hidden
+		File antFile = new File(project.getLocation().toFile(), ".antProperties.xml"); // hidden
 
 		try (PrintWriter writer = new PrintWriter(new FileWriter(antFile))) {
 			writer.println(

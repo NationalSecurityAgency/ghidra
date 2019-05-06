@@ -490,11 +490,11 @@ public class DataTypeUtils {
 //	    JFrame frame = new JFrame();
 //	    JPanel panel = new JPanel();
 //	    
-//	    JLabel label1 = new JLabel();
+//	    JLabel label1 = new GDLabel();
 //	    Icon icon = getOpenFolderIcon( false );
 //	    label1.setIcon( icon );
 //	    
-//	    JLabel label2 = new JLabel();
+//	    JLabel label2 = new GDLabel();
 //	    Icon icon2 = ResourceManager.getDisabledIcon( (ImageIcon) icon );
 //	    label2.setIcon( icon2 );	    	    
 //	        

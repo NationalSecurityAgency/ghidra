@@ -15,6 +15,13 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import java.awt.BorderLayout;
+import java.awt.event.*;
+import java.util.*;
+
+import javax.swing.*;
+
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
@@ -24,12 +31,6 @@ import ghidra.feature.vt.api.util.VTAbstractProgramCorrelatorFactory;
 import ghidra.feature.vt.gui.filters.CheckBoxBasedAncillaryFilter;
 import ghidra.feature.vt.gui.filters.CheckBoxInfo;
 import ghidra.util.classfinder.ClassSearcher;
-
-import java.awt.BorderLayout;
-import java.awt.event.*;
-import java.util.*;
-
-import javax.swing.*;
 
 public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 
@@ -83,8 +84,7 @@ public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 		};
 
 		for (String name : algorithmNames) {
-			JCheckBox checkBox = new JCheckBox(name);
-			checkBox.setSelected(true);
+			GCheckBox checkBox = new GCheckBox(name, true);
 			checkBox.addItemListener(listener);
 			CheckBoxInfo<VTMatch> info = new AlgorithmNameCheckBoxInfo(checkBox, name);
 			checkBoxInfos.add(info);
@@ -92,7 +92,7 @@ public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 	}
 
 	private List<String> getKnowAlgorithms() {
-		List<String> list = new ArrayList<String>();
+		List<String> list = new ArrayList<>();
 
 		// add the manual match correlator, which doesn't have a factory, since it is only through an action.
 		list.add(ManualMatchProgramCorrelator.NAME);

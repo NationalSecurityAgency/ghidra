@@ -120,14 +120,22 @@ public class JavaHelpValidator {
 			return; // don't even try to verify a remote URL
 		}
 
-		Path imagePath = img.getImageFile();
-		if (imagePath == null) {
-			unresolvedLinks.add(new NonExistentIMGFileInvalidLink(img));
+		if (img.isRuntime()) {
+
+			//
+			// The tool will load this image at runtime--don't perform normal validation
+			// (runtime means an icon to be loaded from a Java file)
+			// 
+			if (img.isInvalid()) {
+				unresolvedLinks.add(new InvalidRuntimeIMGFileInvalidLink(img));
+				return;
+			}
 			return;
 		}
 
-		if (img.isRuntime()) {
-			// the tool will load this image at runtime--don't perform normal validate
+		Path imagePath = img.getImageFile();
+		if (imagePath == null) {
+			unresolvedLinks.add(new NonExistentIMGFileInvalidLink(img));
 			return;
 		}
 

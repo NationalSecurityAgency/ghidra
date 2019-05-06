@@ -313,7 +313,8 @@ public class CParserUtils {
 			// -wrap on the given length
 			// -remove newlines because the line wrapping utility always breaks on those
 			parseMessage = errorMessage.replaceAll("\n", " ");
-			parseMessage = HTMLUtilities.lineWrapWithHTMLLineBreaks(parseMessage, 80);
+			parseMessage = HTMLUtilities.lineWrapWithHTMLLineBreaks(
+				HTMLUtilities.escapeHTML(parseMessage), 80);
 			parseMessage = "<br><br>" + parseMessage + "<br>";
 		}
 

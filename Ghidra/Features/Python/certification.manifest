@@ -1,8 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Jython License
 ##MODULE IP: LGPL 2.1
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 ghidra_scripts/AddCommentToProgramScriptPy.py||GHIDRA||||END|

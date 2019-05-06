@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
@@ -341,7 +342,7 @@ public class VisualGraphView<V extends VisualVertex,
 
 		viewContentPanel.removeAll();
 		viewContentPanel.paintImmediately(viewContentPanel.getBounds());
-		JLabel messageLabel = new JLabel(errorMessage);
+		JLabel messageLabel = new GDLabel(errorMessage);
 		Font font = messageLabel.getFont();
 		messageLabel.setFont(font.deriveFont(22f)); // make a bit bigger for readability
 		messageLabel.setHorizontalAlignment(SwingConstants.CENTER);

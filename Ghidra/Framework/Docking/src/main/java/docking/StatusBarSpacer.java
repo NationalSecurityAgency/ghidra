@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +15,24 @@
  */
 package docking;
 
+import javax.swing.Icon;
+
+import docking.widgets.label.GIconLabel;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
-
-import javax.swing.Icon;
-import javax.swing.JLabel;
-
 import resources.ResourceManager;
-
 
 /**
  * A class to handle the space requirements on the status bar that vary for different OSes.  For 
  * example, the Mac requires extra space on the status bar, due to the drag icon the Mac uses.
  */
-public class StatusBarSpacer extends JLabel {
-    private static Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon.gif");
-    
-    public StatusBarSpacer() {
-        if ( Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.MAC_OS_X ) {
-            setIcon( EMPTY_ICON );
-        }
-    }
+public class StatusBarSpacer extends GIconLabel {
+	private static Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon.gif");
+
+	public StatusBarSpacer() {
+		super(
+			Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.MAC_OS_X ? EMPTY_ICON
+					: (Icon) null);
+	}
 
 }

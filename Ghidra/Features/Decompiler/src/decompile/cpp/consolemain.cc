@@ -100,7 +100,7 @@ void IfcLoadFile::execute(istream &s)
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->optr);
 #endif
-  *status->optr << filename << " successfully loaded: " << dcp->conf->description << endl;
+  *status->optr << filename << " successfully loaded: " << dcp->conf->getDescription() << endl;
 }
 
 void IfcAddpath::execute(istream &s)
@@ -162,7 +162,7 @@ void IfcRestore::execute(istream &s)
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->optr);
 #endif
-  *status->optr << savefile << " successfully loaded: " << dcp->conf->description << endl;
+  *status->optr << savefile << " successfully loaded: " << dcp->conf->getDescription() << endl;
 }
 
 int main(int argc,char **argv)

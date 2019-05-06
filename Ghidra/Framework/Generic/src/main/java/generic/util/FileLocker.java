@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import ghidra.util.HTMLUtilities;
 import ghidra.util.SystemUtilities;
 
 public class FileLocker {
@@ -120,14 +121,14 @@ public class FileLocker {
 			return "no properties in lock file";
 		}
 
-		StringBuffer buf = new StringBuffer("<p><table border=0>");
+		StringBuilder buf = new StringBuilder("<p><table border=0>");
 		for (String name : PROPERTY_KEYS) {
 			buf.append("<tr><td>");
 			buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-			buf.append(name);
+			buf.append(HTMLUtilities.escapeHTML(name));
 			buf.append(": ");
 			buf.append("</td><td>");
-			buf.append(existingLockProperties.get(name));
+			buf.append(HTMLUtilities.escapeHTML(existingLockProperties.get(name).toString()));
 			buf.append("</td></tr>");
 		}
 		buf.append("</table>");

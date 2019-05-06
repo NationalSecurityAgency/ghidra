@@ -16,6 +16,9 @@
 package ghidra.app.util;
 
 import java.awt.Color;
+import java.awt.Font;
+
+import ghidra.util.HTMLUtilities;
 
 /**
  * A container class to hold a color and a style value.
@@ -36,5 +39,37 @@ public class ColorAndStyle {
 
 	public int getStyle() {
 		return style;
+	}
+
+	public boolean isBold() {
+		return (style & Font.BOLD) != 0;
+	}
+
+	public boolean isItalic() {
+		return (style & Font.ITALIC) != 0;
+	}
+
+	/**
+	 * Wraps the given text with HTML markup for each attribute and color defined by this 
+	 * class.  The returned result will <b>not</b> be prepended with <code>&lt;HTML&gt;</code>.
+	 * 
+	 * @param text the text to wrap
+	 * @return the wrapped text
+	 */
+	public String toHtml(String text) {
+
+		String html = text;
+		if (isBold()) {
+			html = HTMLUtilities.bold(html);
+		}
+		if (isItalic()) {
+			html = HTMLUtilities.italic(html);
+		}
+
+		if (color != null) {
+			html = HTMLUtilities.colorString(color, html);
+		}
+
+		return html;
 	}
 }

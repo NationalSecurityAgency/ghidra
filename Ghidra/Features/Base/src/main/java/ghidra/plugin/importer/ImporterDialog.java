@@ -35,6 +35,8 @@ import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
+import docking.widgets.label.GLabel;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -154,13 +156,13 @@ public class ImporterDialog extends DialogComponentProvider {
 	private Component buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(new JLabel("Format: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Format: ", SwingConstants.RIGHT));
 		panel.add(buildLoaderChooser());
-		panel.add(new JLabel("Language: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguagePanel());
-		panel.add(new JLabel("Destination Folder: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Destination Folder: ", SwingConstants.RIGHT));
 		panel.add(buildFolderPanel());
-		panel.add(new JLabel("Program Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
 		panel.add(buildFilenameTextField());
 		return panel;
 	}
@@ -260,22 +262,8 @@ public class ImporterDialog extends DialogComponentProvider {
 		loaderComboBox = new GhidraComboBox<>(new Vector<>(set));
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
-		loaderComboBox.setRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-				Component renderer = super.getListCellRendererComponent(list, value, index,
-					isSelected, cellHasFocus);
-				if (renderer instanceof JLabel) {
-					if (value instanceof Loader) {
-						Loader loader = (Loader) value;
-						JLabel label = (JLabel) renderer;
-						label.setText(loader.getName());
-					}
-				}
-				return renderer;
-			}
-		});
+		loaderComboBox.setRenderer(
+			GListCellRenderer.createDefaultCellTextRenderer(loader -> loader.getName()));
 
 		if (!set.isEmpty()) {
 			loaderComboBox.setSelectedIndex(0);

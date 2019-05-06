@@ -233,8 +233,8 @@ public interface Symbol {
 	public boolean isPrimary();
 
 	/**
-	 * Sets this symbol to be primary. All other symbols
-	 * at the same address will be set to !primary.
+	 * Sets this symbol to be primary. All other symbols at the same address will be set to 
+	 * !primary.  Only applies to non-function symbols.
 	 * @return returns true if the symbol was not primary and now it is, otherwise false
 	 */
 	public boolean setPrimary();

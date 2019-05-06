@@ -15,9 +15,6 @@
  */
 package docking.widgets.filechooser;
 
-import ghidra.util.Msg;
-import ghidra.util.filechooser.GhidraFileChooserModel;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -25,6 +22,10 @@ import java.io.File;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
+
+import docking.widgets.label.GDLabel;
+import ghidra.util.Msg;
+import ghidra.util.filechooser.GhidraFileChooserModel;
 
 class FileEditor extends AbstractCellEditor implements TableCellEditor {
 
@@ -43,7 +44,7 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 		this.directoryTable = table;
 		this.model = model;
 
-		iconLabel = new JLabel();
+		iconLabel = new GDLabel();
 		iconLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -97,8 +98,9 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 		editor.add(nameField, BorderLayout.CENTER);
 
 		// match the spacing of non-editing cells
-		editor.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEmptyBorder(0, 5, 0, 0), BorderFactory.createLineBorder(Color.GRAY)));
+		editor.setBorder(
+			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0),
+				BorderFactory.createLineBorder(Color.GRAY)));
 	}
 
 	private void handleDoubleClick(Point p) {
@@ -144,15 +146,14 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 
 	private File getNewFile() {
 		GhidraFileChooserModel fileChooserModel = chooser.getModel();
-		File newFile =
-			new GhidraFile(originalFile.getParentFile(), nameField.getText(),
-				fileChooserModel.getSeparator());
+		File newFile = new GhidraFile(originalFile.getParentFile(), nameField.getText(),
+			fileChooserModel.getSeparator());
 		if (fileChooserModel.renameFile(originalFile, newFile)) {
 			return newFile;
 		}
 
-		Msg.showError(this, chooser.getComponent(), "Rename Failed", "Unable to rename file: " +
-			originalFile);
+		Msg.showError(this, chooser.getComponent(), "Rename Failed",
+			"Unable to rename file: " + originalFile);
 		return null;
 	}
 }

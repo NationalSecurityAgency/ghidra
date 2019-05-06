@@ -2,11 +2,8 @@
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-src/decompile/.classpath||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
 src/decompile/.project||GHIDRA||||END|
 src/decompile/.settings/org.eclipse.jdt.core.prefs||GHIDRA||||END|

@@ -23,8 +23,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.lang.InsufficientBytesException;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 
 public abstract class CompEditorModel extends CompositeEditorModel {
@@ -1417,8 +1416,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	@Override
 	public boolean isMoveUpAllowed() {
-		if (!isContiguousSelection())
+		if (!isContiguousSelection()) {
 			return false;
+		}
 		int start = selection.getFieldRange(0).getStart().getIndex().intValue();
 		return ((start > 0) && (start < getNumComponents()));
 	}
@@ -1466,7 +1466,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 					originalIsChanging = true;
 					try {
 						if (hadChanges) {
-							String message = oldName + " has changed outside the editor.\n" +
+							String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
+								" has changed outside the editor.<br>" +
 								"Discard edits & reload the " + getTypeName() + "?";
 							String title = "Reload " + getTypeName() + " Editor?";
 							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
@@ -1569,7 +1570,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 							consideringReplacedDataType = true;
 							try {
 								String message =
-									oldPath.getPath() + " has changed outside the editor.\n" +
+									"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+										" has changed outside the editor.<br>" +
 										"Discard edits & reload the " + getTypeName() + "?";
 								String title = "Reload " + getTypeName() + " Editor?";
 								int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(

@@ -24,6 +24,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.widgets.label.GDLabel;
 import ghidra.program.model.address.*;
 import ghidra.util.layout.MiddleLayout;
 import resources.ResourceManager;
@@ -39,7 +40,7 @@ public class AddressSetEditorPanel extends JPanel {
 	private JButton removeRangeButton;
 	private AddressSetListModel listModel;
 	private JList<AddressRange> list;
-	private HashSet<ChangeListener> listeners = new HashSet<ChangeListener>();
+	private HashSet<ChangeListener> listeners = new HashSet<>();
 	private JButton subtractRangeButton;
 	private final AddressSet addressSet;
 	private final AddressFactory addressFactory;
@@ -62,7 +63,7 @@ public class AddressSetEditorPanel extends JPanel {
 	private JPanel createAddRangePanel() {
 		JPanel minAddressPanel = new JPanel();
 		minAddressPanel.setLayout(new BorderLayout());
-		JLabel minLabel = new JLabel("Min:");
+		JLabel minLabel = new GDLabel("Min:");
 		minLabel.setToolTipText("Enter minimum address to add or remove");
 		minAddressPanel.add(minLabel, BorderLayout.WEST);
 		minAddressField = new AddressInput();
@@ -78,7 +79,7 @@ public class AddressSetEditorPanel extends JPanel {
 
 		JPanel maxAddressPanel = new JPanel();
 		maxAddressPanel.setLayout(new BorderLayout());
-		JLabel maxLabel = new JLabel("Max:");
+		JLabel maxLabel = new GDLabel("Max:");
 		maxLabel.setToolTipText("Enter maximum address to add or remove");
 		maxAddressPanel.add(maxLabel, BorderLayout.WEST);
 		maxAddressField = new AddressInput();

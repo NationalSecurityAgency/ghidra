@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,18 @@
  */
 package ghidra.app.merge.tree;
 
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
-import ghidra.app.merge.util.ConflictCountPanel;
-import ghidra.program.model.listing.Program;
-
 import java.awt.CardLayout;
 import java.awt.Dimension;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.util.ConflictCountPanel;
+import ghidra.program.model.listing.Program;
 
 /**
  * Panel for getting user input to resolve tree conflicts.
@@ -95,8 +95,8 @@ class ProgramTreeMergePanel extends JPanel {
 		}
 		else {
 			currentPanel = conflictsPanel;
-			conflictsPanel.setNames(resultProgram, name1, name2, origName, !structure1Changed &&
-				!structure2Changed);
+			conflictsPanel.setNames(resultProgram, name1, name2, origName,
+				!structure1Changed && !structure2Changed);
 		}
 		countPanel.updateCount(conflictIndex, totalConflicts);
 
@@ -137,6 +137,7 @@ class ProgramTreeMergePanel extends JPanel {
 
 	private JPanel createConflictPanel() {
 		ChangeListener changeListener = new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				mergeManager.clearStatusText();
 				mergeManager.setApplyEnabled(true);
@@ -155,7 +156,7 @@ class ProgramTreeMergePanel extends JPanel {
 	}
 
 	private JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString(""));
+		useForAllCB = new GCheckBox(getUseAllString(""));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

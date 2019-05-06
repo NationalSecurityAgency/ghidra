@@ -21,6 +21,9 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
@@ -56,14 +59,14 @@ public class PasswordDialog extends DialogComponentProvider {
 			int defaultChoice, boolean includeAnonymousOption) {
 		this(title, serverType, serverName, passPrompt, namePrompt, defaultUserID);
 		if (choicePrompt != null) {
-			workPanel.add(new JLabel(choicePrompt));
-			choiceCB = new JComboBox<>(choices);
+			workPanel.add(new GLabel(choicePrompt));
+			choiceCB = new GComboBox<>(choices);
 			choiceCB.setName("CHOICES-COMPONENT");
 			choiceCB.setSelectedIndex(defaultChoice);
 			workPanel.add(choiceCB);
 		}
 		if (includeAnonymousOption) {
-			anonymousAccess = new JCheckBox("Request Anonymous Access");
+			anonymousAccess = new GCheckBox("Request Anonymous Access");
 			anonymousAccess.setName("ANONYMOUS-COMPONENT");
 			anonymousAccess.addChangeListener(e -> {
 				boolean anonymousAccessRequested = anonymousAccess.isSelected();
@@ -79,7 +82,7 @@ public class PasswordDialog extends DialogComponentProvider {
 					choiceCB.setEnabled(enableOtherFields);
 				}
 			});
-			workPanel.add(new JLabel(""));
+			workPanel.add(new GLabel(""));
 			workPanel.add(anonymousAccess);
 		}
 	}
@@ -124,24 +127,24 @@ public class PasswordDialog extends DialogComponentProvider {
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
 
 		if (serverName != null) {
-			workPanel.add(new JLabel(serverType + ":"));
-			workPanel.add(new JLabel(serverName));
+			workPanel.add(new GLabel(serverType + ":"));
+			workPanel.add(new GLabel(serverName));
 		}
 
 		if (namePrompt != null) {
-			workPanel.add(new JLabel(namePrompt));
+			workPanel.add(new GLabel(namePrompt));
 			nameField = new JTextField(defaultUserID, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
 			workPanel.add(nameField);
 		}
 		else if (defaultUserID != null) {
-			workPanel.add(new JLabel("User ID:"));
-			JLabel nameLabel = new JLabel(defaultUserID);
+			workPanel.add(new GLabel("User ID:"));
+			JLabel nameLabel = new GLabel(defaultUserID);
 			nameLabel.setName("NAME-COMPONENT");
 			workPanel.add(nameLabel);
 		}
 
-		workPanel.add(new JLabel(passPrompt != null ? passPrompt : "Password:"));
+		workPanel.add(new GLabel(passPrompt != null ? passPrompt : "Password:"));
 		passwordField = new JPasswordField(16);
 		passwordField.setName("PASSWORD-ENTRY-COMPONENT");
 		workPanel.add(passwordField);

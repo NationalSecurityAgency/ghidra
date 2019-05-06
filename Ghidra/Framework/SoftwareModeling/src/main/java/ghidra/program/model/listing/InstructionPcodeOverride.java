@@ -19,6 +19,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.pcode.PcodeOverride;
 import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 
 public class InstructionPcodeOverride implements PcodeOverride {
@@ -50,9 +51,10 @@ public class InstructionPcodeOverride implements PcodeOverride {
 	}
 
 	@Override
-	public Address getPrimaryCallReference() {
+	public Address getOverridingCallReference() {
 		for (Reference ref : instr.getReferencesFrom()) {
-			if (ref.isPrimary() && ref.getReferenceType().isCall()) {
+			if (ref.getSource().equals(SourceType.USER_DEFINED) && ref.isPrimary() &&
+				ref.getReferenceType().isCall()) {
 				return ref.getToAddress();
 			}
 		}

@@ -29,6 +29,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
@@ -136,13 +137,14 @@ class PluginInstallerTableModel
 				model.getDependencies(targetPluginDescription);
 			String dependenciesToUnloadHtmlList =
 				pluginsThatUseTarget.stream().map(PluginDescription::getName).sorted().collect(
-				Collectors.joining("<li>", "<ul><li>", "</ul>"));
+					Collectors.joining("<li>", "<ul><li>", "</ul>"));
 
 			if (pluginsThatUseTarget.isEmpty() ||
 				OptionDialog.showYesNoDialog(parentComponent, "Confirm plugin removal",
-					"<html>Other plugins depend on " + targetPluginDescription.getName() + "<p><p>" +
-						"Removing it will also remove:" + dependenciesToUnloadHtmlList +
-						"<p><p>" + "Continue?") == OptionDialog.YES_OPTION) {
+					"<html>Other plugins depend on " +
+						HTMLUtilities.escapeHTML(targetPluginDescription.getName()) + "<p><p>" +
+						"Removing it will also remove:" + dependenciesToUnloadHtmlList + "<p><p>" +
+						"Continue?") == OptionDialog.YES_OPTION) {
 				model.removePlugin(targetPluginDescription);
 			}
 

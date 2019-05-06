@@ -26,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.util.GraphicsUtils;
+import docking.widgets.label.GLabel;
 
 /**
  * Class used by the entropy legend panel to show known entropy ranges.
@@ -133,7 +134,7 @@ public class KnotPanel extends JPanel implements ComponentListener {
 
 		ArrayList<KnotRecord> knots = palette.getKnots();
 		for (KnotRecord record : knots) {
-			JLabel label = new JLabel(record.name);
+			JLabel label = new GLabel(record.name);
 			label.setFont(FONT);
 			label.setBorder(new ToplessLineBorder(Color.BLACK));
 			label.setHorizontalAlignment(SwingConstants.CENTER);

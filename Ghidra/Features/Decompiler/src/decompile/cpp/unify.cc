@@ -91,7 +91,7 @@ UnifyDatatype::~UnifyDatatype(void)
     delete storespot.cn;
     break;
   default:
-    throw LowlevelError("Bad unify datatype");
+    break;
   }
 }
 

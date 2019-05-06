@@ -22,6 +22,8 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -77,9 +79,9 @@ public class CheckoutDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
-		JLabel warnIcon =
-			new JLabel(OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE));
-		msgPanel.add(warnIcon, BorderLayout.WEST);
+		msgPanel.add(
+			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE)),
+			BorderLayout.WEST);
 
 		MultiLineLabel msgText = new MultiLineLabel("Check out selected file(s)?");
 		msgText.setMaximumSize(msgText.getPreferredSize());
@@ -87,7 +89,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 
 		innerPanel.add(msgPanel, BorderLayout.CENTER);
 
-		exclusiveCB = new JCheckBox("Request exclusive check out");
+		exclusiveCB = new GCheckBox("Request exclusive check out");
 
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));

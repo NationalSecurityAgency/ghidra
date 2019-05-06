@@ -25,6 +25,8 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.textfield.IntegerTextField;
@@ -377,18 +379,16 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 	}
 
 	private Component buildOffsetPanel() {
-		JLabel offsetLabel = new JLabel("Offset: ");
 		offsetField = new IntegerTextField(4, 0L);
 		offsetField.setAllowNegativeValues(false);
 		offsetField.addChangeListener(e -> updatePreview());
 
-		JLabel previewLabel = new JLabel("Preview: ");
 		preview = new JTextField(5);
 		preview.setEditable(false);
 		preview.setEnabled(false);
-		autoLabelCheckbox = new JCheckBox("Auto Label");
-		addAlignmentBytesCheckbox = new JCheckBox("Include Alignment Nulls");
-		allowTruncationCheckbox = new JCheckBox("Truncate If Needed");
+		autoLabelCheckbox = new GCheckBox("Auto Label");
+		addAlignmentBytesCheckbox = new GCheckBox("Include Alignment Nulls");
+		allowTruncationCheckbox = new GCheckBox("Truncate If Needed");
 		autoLabelCheckbox.setSelected(false); // discourage labeling since dynamic labels are preferred
 
 		JPanel panel = new JPanel(new GridBagLayout());
@@ -402,7 +402,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		panel.add(Box.createHorizontalStrut(60), gbc);
 
 		gbc.gridx = 2;
-		panel.add(offsetLabel, gbc);
+		panel.add(new GLabel("Offset: "), gbc);
 
 		gbc.gridx = 3;
 		panel.add(offsetField.getComponent(), gbc);
@@ -411,7 +411,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		panel.add(Box.createHorizontalStrut(20), gbc);
 
 		gbc.gridx = 5;
-		panel.add(previewLabel, gbc);
+		panel.add(new GLabel("Preview: "), gbc);
 
 		gbc.weightx = 1;
 		gbc.gridx = 6;
@@ -552,7 +552,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 	private JComponent buildTablePanel() {
 		stringModel = new StringTableModel(tool, options);
 
-		threadedTablePanel = new GhidraThreadedTablePanel<FoundString>(stringModel, 1000) {
+		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000) {
 			@Override
 			protected GTable createTable(ThreadedTableModel<FoundString, ?> model) {
 				return new StringTable(model);

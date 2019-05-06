@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.SingleValueColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
@@ -57,7 +58,7 @@ public class UnsignedLongConstraintEditor extends AbstractColumnConstraintEditor
 		field.addChangeListener(e -> valueChanged());
 
 		panel.add(field.getComponent(), BorderLayout.CENTER);
-		statusLabel = new JLabel();
+		statusLabel = new GDHtmlLabel();
 		panel.add(statusLabel, BorderLayout.SOUTH);
 		statusLabel.setForeground(Color.RED);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);

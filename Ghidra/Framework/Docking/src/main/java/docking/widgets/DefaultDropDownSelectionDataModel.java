@@ -15,11 +15,11 @@
  */
 package docking.widgets;
 
-import java.awt.Component;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 
+import docking.widgets.list.GListCellRenderer;
 import ghidra.util.datastruct.CaseInsensitiveDuplicateStringComparator;
 
 public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDataModel<T> {
@@ -29,19 +29,21 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 	private ObjectStringComparator comparator;
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
-	private ListCellRenderer<T> renderer = new TDropDownRenderer();
+	private ListCellRenderer<T> renderer =
+		GListCellRenderer.createDefaultCellTextRenderer(value -> searchConverter.getString(value));
 
 	public static DefaultDropDownSelectionDataModel<String> getStringModel(List<String> strings) {
-		return new DefaultDropDownSelectionDataModel<String>(strings,
+		return new DefaultDropDownSelectionDataModel<>(strings,
 			DataToStringConverter.stringDataToStringConverter);
 	}
 
-	public DefaultDropDownSelectionDataModel(List<T> data, DataToStringConverter<T> searchConverter) {
+	public DefaultDropDownSelectionDataModel(List<T> data,
+			DataToStringConverter<T> searchConverter) {
 		this(data, searchConverter, null);
 	}
 
-	public DefaultDropDownSelectionDataModel(List<T> data,
-			DataToStringConverter<T> searchConverter, DataToStringConverter<T> descriptionConverter) {
+	public DefaultDropDownSelectionDataModel(List<T> data, DataToStringConverter<T> searchConverter,
+			DataToStringConverter<T> descriptionConverter) {
 		this.data = data;
 		this.searchConverter = searchConverter;
 		this.descriptionConverter =
@@ -136,23 +138,4 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 		}
 	}
 
-	/**
-	 * Renderer for data types.  It uses delegation instead of inheritance, due typing issues
-	 * (DefaultListCellRenderer is already typed on Object).
-	 */
-	private class TDropDownRenderer implements ListCellRenderer<T> {
-
-		private DefaultListCellRenderer delegate = new DefaultListCellRenderer();
-
-		@Override
-		public Component getListCellRendererComponent(JList<? extends T> list, T value, int index,
-				boolean isSelected, boolean cellHasFocus) {
-
-			JLabel label =
-				(JLabel) delegate.getListCellRendererComponent(list, value, index, isSelected,
-					cellHasFocus);
-			label.setText(searchConverter.getString(value));
-			return label;
-		}
-	}
 }

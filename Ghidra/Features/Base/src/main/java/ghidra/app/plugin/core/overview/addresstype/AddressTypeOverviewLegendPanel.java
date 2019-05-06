@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
+import docking.widgets.label.GLabel;
 import ghidra.util.layout.PairLayout;
 
 /**
@@ -50,7 +51,7 @@ public class AddressTypeOverviewLegendPanel extends JPanel {
 		for (AddressType addressType : values) {
 			JPanel panel = new ColorPanel(addressType);
 			add(panel);
-			add(new JLabel(addressType.getDescription()));
+			add(new GLabel(addressType.getDescription()));
 		}
 	}
 

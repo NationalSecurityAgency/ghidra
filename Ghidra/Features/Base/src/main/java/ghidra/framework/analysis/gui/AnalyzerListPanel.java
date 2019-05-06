@@ -24,6 +24,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.analysis.*;
 
@@ -35,7 +37,8 @@ public class AnalyzerListPanel extends JPanel {
 	private AnalysisRecipeEditor editor;
 	private AnalyzerListModel model;
 
-	public AnalyzerListPanel(AnalysisRecipeEditor editor, AnalysisRecipe recipe, AnalysisPhase phase) {
+	public AnalyzerListPanel(AnalysisRecipeEditor editor, AnalysisRecipe recipe,
+			AnalysisPhase phase) {
 		super(new BorderLayout());
 		this.editor = editor;
 		this.recipe = recipe;
@@ -49,15 +52,9 @@ public class AnalyzerListPanel extends JPanel {
 		//		jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		add(jScrollPane, BorderLayout.CENTER);
 		if (phase != null) {
-			final JCheckBox checkbox = new JCheckBox("Create Checkpoint When Phase Completed");
-			checkbox.setSelected(phase.isCheckPoint());
-			checkbox.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					relevantPhase.setIsCheckPoint(checkbox.isSelected());
-				}
-			});
+			GCheckBox checkbox =
+				new GCheckBox("Create Checkpoint When Phase Completed", phase.isCheckPoint());
+			checkbox.addActionListener(e -> relevantPhase.setIsCheckPoint(checkbox.isSelected()));
 			add(checkbox, BorderLayout.SOUTH);
 			if (phase == recipe.getLastPhase()) {
 				checkbox.setEnabled(false);
@@ -67,7 +64,7 @@ public class AnalyzerListPanel extends JPanel {
 
 	public List<Analyzer> getSelectedAnalyzers() {
 		int[] selectedIndices = jList.getSelectedIndices();
-		List<Analyzer> analyzers = new ArrayList<Analyzer>();
+		List<Analyzer> analyzers = new ArrayList<>();
 		for (int i : selectedIndices) {
 			analyzers.add(model.getElementAt(i));
 		}
@@ -77,7 +74,7 @@ public class AnalyzerListPanel extends JPanel {
 	private JList<Analyzer> buildAnalyzerList() {
 
 		model = new AnalyzerListModel(recipe.getAnalyzers(relevantPhase));
-		jList = new JList<Analyzer>(model) {
+		jList = new JList<>(model) {
 			@Override
 			public String getToolTipText(MouseEvent e) {
 				Point p = e.getPoint();
@@ -88,9 +85,8 @@ public class AnalyzerListPanel extends JPanel {
 
 				ListCellRenderer<? super Analyzer> cellRenderer = jList.getCellRenderer();
 				Analyzer analyzer = jList.getModel().getElementAt(row);
-				JComponent comp =
-					(JComponent) cellRenderer.getListCellRendererComponent(jList, analyzer, row,
-						true, true);
+				JComponent comp = (JComponent) cellRenderer.getListCellRendererComponent(jList,
+					analyzer, row, true, true);
 				comp.setBounds(b.x, b.y, b.width, b.height);
 				JComponent c = (JComponent) SwingUtilities.getDeepestComponentAt(comp, p.x, p.y);
 				return c.getToolTipText();
@@ -139,7 +135,7 @@ public class AnalyzerListPanel extends JPanel {
 		//	panel.setBackground(HEADER_COLOR);
 		//panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		panel.add(new JLabel("ANALYZERS", SwingConstants.CENTER), BorderLayout.CENTER);
+		panel.add(new GLabel("ANALYZERS", SwingConstants.CENTER), BorderLayout.CENTER);
 		panel.add(buildPhaseHeader(), BorderLayout.EAST);
 		return panel;
 	}
@@ -147,8 +143,8 @@ public class AnalyzerListPanel extends JPanel {
 	private Component buildPhaseHeader() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
-//		panel.add(new JLabel("START", SwingConstants.CENTER), BorderLayout.NORTH);
-		panel.add(new JLabel("PHASE", SwingConstants.CENTER), BorderLayout.SOUTH);
+//		panel.add(new GLabel("START", SwingConstants.CENTER), BorderLayout.NORTH);
+		panel.add(new GLabel("PHASE", SwingConstants.CENTER), BorderLayout.SOUTH);
 		Dimension dim = panel.getPreferredSize();
 		dim.width = getAnalysisPanelPhaseWidth();
 		panel.setPreferredSize(dim);

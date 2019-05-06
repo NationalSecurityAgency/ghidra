@@ -6,6 +6,7 @@ Loader and plugin for IDA to import a XML PROGRAM file to a database.
 """
 
 import idaapi
+import sys
 import time
 from xml.etree import cElementTree
 

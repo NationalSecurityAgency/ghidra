@@ -16,6 +16,7 @@
 package docking.widgets.list;
 
 import java.awt.*;
+import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -23,10 +24,31 @@ import docking.widgets.AbstractGCellRenderer;
 
 /**
  * Provides a common implementation of a list renderer, for use in both JList and JComboBox.
+ * <p>
+ * HTML rendering defaults to disabled.  See {@link #setHTMLRenderingEnabled(boolean)}.
  *
  * @param <E> the element-type this list models.
  */
 public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListCellRenderer<E> {
+
+	/**
+	 * Returns a new ListCellRenderer that maps the list's data instance to a string used in the cell.
+	 * <p>
+	 * Use this if you only need to provide a way to get the string value from the type being shown
+	 * in the list.
+	 * 
+	 * @param cellToTextMappingFunction a function that maps your custom type to a string value
+	 * @return new GListCellRenderer instance
+	 */
+	public static <E> GListCellRenderer<E> createDefaultCellTextRenderer(
+			Function<E, String> cellToTextMappingFunction) {
+		return new GListCellRenderer<>() {
+			@Override
+			protected String getItemText(E value) {
+				return cellToTextMappingFunction.apply(value);
+			}
+		};
+	}
 
 	/**
 	 * Constructs a new GListCellRenderer.

@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 #---------------------------------------------------------------------------------------
 # Ghidra Server Script (see svrREADME.html for usage details)

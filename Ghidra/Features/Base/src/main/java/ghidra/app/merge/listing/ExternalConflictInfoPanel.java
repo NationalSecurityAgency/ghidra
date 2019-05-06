@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,13 @@
  */
 package ghidra.app.merge.listing;
 
-import ghidra.app.merge.util.ConflictUtility;
-
 import java.awt.BorderLayout;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+
+import docking.widgets.label.GDHtmlLabel;
+import ghidra.app.merge.util.ConflictUtility;
 
 /**
  * <code>ExternalConflictInfoPanel</code> appears above the 4 listings in the ListingMergeWindow.
@@ -54,8 +54,8 @@ public class ExternalConflictInfoPanel extends JPanel {
 		setLayout(new BorderLayout());
 		setBorder(BorderFactory.createTitledBorder("Resolve External Location Conflict"));
 
-		westLabel = new JLabel("<html></html>");
-		eastLabel = new JLabel("<html></html>");
+		westLabel = new GDHtmlLabel("<html></html>");
+		eastLabel = new GDHtmlLabel("<html></html>");
 		add(westLabel, BorderLayout.WEST);
 		add(eastLabel, BorderLayout.EAST);
 	}

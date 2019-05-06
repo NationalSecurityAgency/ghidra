@@ -87,7 +87,6 @@ public:
 };
 
 class PcodeInjectLibrarySleigh : public PcodeInjectLibrary {
-  Architecture *glb;
   const SleighBase *slgh;
   vector<OpBehavior *> inst;
   InjectContextSleigh contextCache;

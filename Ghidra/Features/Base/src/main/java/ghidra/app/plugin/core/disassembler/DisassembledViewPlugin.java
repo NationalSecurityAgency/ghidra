@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 import docking.WindowPosition;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -42,8 +43,7 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 
 /**
@@ -421,23 +421,26 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			initializeDisplay();
 
 			// we need to do some custom rendering
-			contentList.setCellRenderer(new DefaultListCellRenderer() {
+			contentList.setCellRenderer(new GListCellRenderer<DisassembledAddressInfo>() {
+
 				@Override
-				public Component getListCellRendererComponent(JList<?> list, Object value,
-						int index, boolean isSelected, boolean cellHasFocus) {
-					JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value,
-						index, isSelected, cellHasFocus);
+				protected String getItemText(DisassembledAddressInfo value) {
+					return value.getAddressPreview(addressPreviewFormat);
+				}
 
-					renderer.setFont(font);
+				@Override
+				public Component getListCellRendererComponent(
+						JList<? extends DisassembledAddressInfo> list,
+						DisassembledAddressInfo value, int index, boolean isSelected,
+						boolean cellHasFocus) {
 
-					renderer.setToolTipText(TOOLTIP_TEXT_PREPEND + currentLocation.getAddress());
+					super.getListCellRendererComponent(list, value, index, isSelected,
+						cellHasFocus);
 
-					// first let's set the text to the user-defined option, if
-					// we have the correct type of class
-					if (value instanceof DisassembledAddressInfo) {
-						renderer.setText(((DisassembledAddressInfo) value).getAddressPreview(
-							addressPreviewFormat));
-					}
+					setFont(font);
+
+					setToolTipText(TOOLTIP_TEXT_PREPEND +
+						HTMLUtilities.escapeHTML(currentLocation.getAddress().toString()));
 
 					// make sure the first value is highlighted to indicate
 					// that it is the selected program location
@@ -450,13 +453,12 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 							background = background.darker();
 						}
 
-						renderer.setForeground(foreground);
-						renderer.setBackground(background);
+						setForeground(foreground);
+						setBackground(background);
 					}
 
-					return renderer;
+					return this;
 				}
-
 			});
 		}
 

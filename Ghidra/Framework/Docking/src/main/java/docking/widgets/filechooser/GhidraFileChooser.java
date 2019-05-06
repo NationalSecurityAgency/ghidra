@@ -32,6 +32,10 @@ import javax.swing.filechooser.FileSystemView;
 import docking.*;
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.*;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.*;
 import ghidra.framework.preferences.Preferences;
@@ -354,7 +358,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	private JPanel buildFileNamePanel() {
-		JLabel filenameLabel = new JLabel("File name:");
+		JLabel filenameLabel = new GDLabel("File name:");
 		FileDropDownSelectionDataModel model = new FileDropDownSelectionDataModel(this);
 		filenameTextField = new DropDownSelectionTextField<>(model);
 		filenameTextField.setMatchingWindowHeight(200);
@@ -383,28 +387,10 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 		filenameTextField.setName("filenameTextField");
 
-		JLabel filterLabel = new JLabel("Type:");
-		filterCombo = new JComboBox<>();
-		filterCombo.setRenderer(new DefaultListCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-
-				JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
-					isSelected, cellHasFocus);
-				GhidraFileFilter filter = (GhidraFileFilter) value;
-
-				// we can have null filters in the case that the combo box has
-				// no selected item
-				if (filter != null) {
-					label.setText(filter.getDescription());
-				}
-
-				return label;
-			}
-		});
+		JLabel filterLabel = new GLabel("Type:");
+		filterCombo = new GComboBox<>();
+		filterCombo.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
+			gff -> gff != null ? gff.getDescription() : ""));
 		filterCombo.addItemListener(e -> rescanCurrentDirectory());
 
 		filterModel = (DefaultComboBoxModel<GhidraFileFilter>) filterCombo.getModel();

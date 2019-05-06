@@ -1,7 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: Copyright Distribution Permitted
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.app.plugin.core.script;
 
-import generic.jar.ResourceFile;
-import ghidra.util.table.GhidraTable;
-
 import java.awt.Point;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.util.ArrayList;
 
 import docking.dnd.*;
+import generic.jar.ResourceFile;
+import ghidra.util.table.GhidraTable;
 
 public class DraggableScriptTable extends GhidraTable implements Draggable {
 	private DragSrcAdapter dragSourceAdapter;
@@ -40,8 +38,6 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 		super(provider.getTableModel());
 		this.provider = provider;
 
-		// we want to render the descriptions with newline characters
-		setHTMLRenderingEnabled(true);
 		initDragNDrop();
 	}
 
@@ -85,7 +81,7 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 	 */
 	@Override
 	public Transferable getTransferable(Point p) {
-		ArrayList<ResourceFile> arrayList = new ArrayList<ResourceFile>();
+		ArrayList<ResourceFile> arrayList = new ArrayList<>();
 		int[] selectedRows = getSelectedRows();
 		for (int element : selectedRows) {
 			arrayList.add(provider.getScriptAt(element));

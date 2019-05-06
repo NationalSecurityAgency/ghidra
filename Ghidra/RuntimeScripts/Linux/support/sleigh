@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #----------------------------------------
 # Ghidra Sleigh language compiler launch

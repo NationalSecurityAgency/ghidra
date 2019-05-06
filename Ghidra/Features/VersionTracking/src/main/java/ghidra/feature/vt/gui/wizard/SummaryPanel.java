@@ -15,19 +15,20 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
-import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
-import ghidra.feature.vt.gui.wizard.ChooseAddressSetEditorPanel.AddressSetChoice;
-import ghidra.framework.model.DomainFile;
-import ghidra.util.HelpLocation;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.BorderLayout;
 import java.util.List;
 
 import javax.swing.*;
 
-import util.CollectionUtils;
+import docking.widgets.label.GDHtmlLabel;
 import docking.wizard.*;
+import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
+import ghidra.feature.vt.gui.wizard.ChooseAddressSetEditorPanel.AddressSetChoice;
+import ghidra.framework.model.DomainFile;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
+import ghidra.util.layout.PairLayout;
+import util.CollectionUtils;
 
 public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	private JLabel labelLabel;
@@ -38,8 +39,8 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	SummaryPanel() {
 
-		labelLabel = new JLabel();
-		summaryLabel = new JLabel();
+		labelLabel = new GDHtmlLabel();
+		summaryLabel = new GDHtmlLabel();
 
 		JPanel mainPanel = new JPanel(new PairLayout(5, 10));
 		mainPanel.add(labelLabel);
@@ -72,9 +73,8 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 		label.append("Operation:");
 		String opDescription = (String) state.get(VTWizardStateKey.WIZARD_OP_DESCRIPTION);
-		helpName =
-			((opDescription != null) && opDescription.startsWith("New")) ? NEW_SUMMARY_PANEL
-					: ADD_SUMMARY_PANEL;
+		helpName = ((opDescription != null) && opDescription.startsWith("New")) ? NEW_SUMMARY_PANEL
+				: ADD_SUMMARY_PANEL;
 		summary.append(opDescription);
 		label.append("<br>");
 		summary.append("<br>");
@@ -99,14 +99,16 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		// source program
 
 		label.append("Source Program:");
-		summary.append(sourceProgramName == null ? "(null)" : sourceProgramName);
+		summary.append(
+			sourceProgramName == null ? "(null)" : HTMLUtilities.escapeHTML(sourceProgramName));
 		label.append("<br>");
 		summary.append("<br>");
 
 		// destination program
 
 		label.append("Destination Program:");
-		summary.append(destinationProgramName == null ? "(null)" : destinationProgramName);
+		summary.append(destinationProgramName == null ? "(null)"
+				: HTMLUtilities.escapeHTML(destinationProgramName));
 		label.append("<br>");
 		summary.append("<br>");
 
@@ -145,11 +147,14 @@ public class SummaryPanel extends AbstractMageJPanel<VTWizardStateKey> {
 				(AddressSetChoice) state.get(VTWizardStateKey.DESTINATION_ADDRESS_SET_CHOICE);
 			String sourceAddressesInfo =
 				(sourceAddressSetChoice == AddressSetChoice.MANUALLY_DEFINED) ? "Manually Defined"
-						: ((sourceAddressSetChoice == AddressSetChoice.SELECTION)) ? "Source Tool Selection"
+						: ((sourceAddressSetChoice == AddressSetChoice.SELECTION))
+								? "Source Tool Selection"
 								: "Entire Source Program";
 			String destinationAddressesInfo =
-				(destinationAddressSetChoice == AddressSetChoice.MANUALLY_DEFINED) ? "Manually Defined"
-						: ((destinationAddressSetChoice == AddressSetChoice.SELECTION)) ? "Destination Tool Selection"
+				(destinationAddressSetChoice == AddressSetChoice.MANUALLY_DEFINED)
+						? "Manually Defined"
+						: ((destinationAddressSetChoice == AddressSetChoice.SELECTION))
+								? "Destination Tool Selection"
 								: "Entire Destination Program";
 
 			label.append("Source Address Set:");

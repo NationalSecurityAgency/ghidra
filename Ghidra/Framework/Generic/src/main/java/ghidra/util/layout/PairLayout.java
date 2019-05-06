@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +17,6 @@ package ghidra.util.layout;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 /**
  * LayoutManger for arranging components into exactly two columns.  The right column and the 
  * left column may have differing widths.  Also, each row is the same height, 
@@ -29,15 +26,15 @@ public class PairLayout implements LayoutManager {
 	private static final int MINIMUM_RIGHT_COLUMN_WIDTH = 80;
 	private int vgap;
 	private int hgap;
-	
-	private int preferredRightColumnWidth;	
+
+	private int preferredRightColumnWidth;
 	private int leftColumnWidth;
 	private int rowHeight;
-	
+
 	public PairLayout() {
-		this(0,0,MINIMUM_RIGHT_COLUMN_WIDTH);
+		this(0, 0, MINIMUM_RIGHT_COLUMN_WIDTH);
 	}
-	
+
 	/**
 	 * Constructs a new PairLayout.
 	 * @param vgap the gap (in pixels) between rows.
@@ -46,7 +43,7 @@ public class PairLayout implements LayoutManager {
 	public PairLayout(int vgap, int hgap) {
 		this(vgap, hgap, MINIMUM_RIGHT_COLUMN_WIDTH);
 	}
-	
+
 	/**
 	 * Constructs a new PairLayout.
 	 * @param vgap the gap (in pixels) between rows.
@@ -58,51 +55,59 @@ public class PairLayout implements LayoutManager {
 		this.hgap = hgap;
 		this.preferredRightColumnWidth = minimumRightColumnWidth;
 	}
-	
+
 	/**
 	 * @see LayoutManager#addLayoutComponent(String, Component)
 	 */
-	public void addLayoutComponent(String name, Component comp) {}
+	@Override
+	public void addLayoutComponent(String name, Component comp) {
+	}
 
 	/**
 	 * @see LayoutManager#removeLayoutComponent(Component)
 	 */
-	public void removeLayoutComponent(Component comp) {}
+	@Override
+	public void removeLayoutComponent(Component comp) {
+	}
 
 	/**
 	 * @see LayoutManager#preferredLayoutSize(Container)
 	 */
+	@Override
 	public Dimension preferredLayoutSize(Container parent) {
 		computeSizes(parent);
 		int rowCount = (parent.getComponentCount() + 1) / 2;
 		Insets insets = parent.getInsets();
-		Dimension d = new Dimension(0,0);
+		Dimension d = new Dimension(0, 0);
 		d.width = leftColumnWidth + hgap + preferredRightColumnWidth + insets.left + insets.right;
-		d.height = rowHeight * rowCount + vgap * (rowCount-1) + insets.top + insets.bottom;
+		d.height = rowHeight * rowCount + vgap * (rowCount - 1) + insets.top + insets.bottom;
 		return d;
-	} 
-	
+	}
+
+	@Override
 	public Dimension minimumLayoutSize(Container parent) {
 		return preferredLayoutSize(parent);
 	}
 
+	@Override
 	public void layoutContainer(Container parent) {
 		computeSizes(parent);
 		int componentCount = parent.getComponentCount();
-        int rowCount = (componentCount+1) / 2;
+		int rowCount = (componentCount + 1) / 2;
 		Dimension d = parent.getSize();
 		Insets insets = parent.getInsets();
 		int width = d.width - (insets.left + insets.right);
 		int x = insets.left;
 		int y = insets.top;
-		int rightColumnWidth = width - (leftColumnWidth + hgap); 
+		int rightColumnWidth = width - (leftColumnWidth + hgap);
 
-		for(int i=0;i<rowCount;i++) {
-			Component leftColumnComponent = parent.getComponent(i*2);
-			leftColumnComponent.setBounds(x,y,leftColumnWidth,rowHeight);
-			if (componentCount > i*2+1) {
-				Component rightColumnComponent = parent.getComponent(i*2+1);
-				rightColumnComponent.setBounds(x+leftColumnWidth+hgap, y, rightColumnWidth, rowHeight);
+		for (int i = 0; i < rowCount; i++) {
+			Component leftColumnComponent = parent.getComponent(i * 2);
+			leftColumnComponent.setBounds(x, y, leftColumnWidth, rowHeight);
+			if (componentCount > i * 2 + 1) {
+				Component rightColumnComponent = parent.getComponent(i * 2 + 1);
+				rightColumnComponent.setBounds(x + leftColumnWidth + hgap, y, rightColumnWidth,
+					rowHeight);
 				y += rowHeight + vgap;
 			}
 		}
@@ -110,52 +115,25 @@ public class PairLayout implements LayoutManager {
 
 	private void computeSizes(Container parent) {
 		int componentCount = parent.getComponentCount();
-        int rowCount = (componentCount+1) / 2;
+		int rowCount = (componentCount + 1) / 2;
 
 		leftColumnWidth = 0;
-		rowHeight = 0;		
+		rowHeight = 0;
 
-		for( int i = 0; i < rowCount; i++ ) {
-			Component leftColumnComponent = parent.getComponent(i*2);
+		for (int i = 0; i < rowCount; i++) {
+			Component leftColumnComponent = parent.getComponent(i * 2);
 			Dimension d = leftColumnComponent.getPreferredSize();
 			leftColumnWidth = Math.max(leftColumnWidth, d.width);
 			rowHeight = Math.max(rowHeight, d.height);
-			
-			if ( componentCount > i*2+1 ) {
-				Component rightColumnComponent = parent.getComponent(i*2+1);
+
+			if (componentCount > i * 2 + 1) {
+				Component rightColumnComponent = parent.getComponent(i * 2 + 1);
 				d = rightColumnComponent.getPreferredSize();
 				rowHeight = Math.max(rowHeight, d.height);
 				preferredRightColumnWidth = Math.max(preferredRightColumnWidth, d.width);
 			}
-		}				
-		
+		}
+
 	}
 
-	/**
-	 * Test main
-	 * @param args
-	 */
-	public static void main(String[] args) {
-			try {
-			UIManager.setLookAndFeel(
-									UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception exc) {
-			System.out.println("Error loading L&F: " + exc);
-		}
-	
-		JFrame frame = new JFrame("Test");
-		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-		JPanel panel = new JPanel(new PairLayout(10,20,100));
-		panel.add(new JLabel("One",SwingConstants.RIGHT));
-		panel.add(new JTextField());
-		panel.add(new JLabel("Two",SwingConstants.RIGHT));
-		panel.add(new JTextField());
-		panel.add(new JLabel("Three",SwingConstants.RIGHT));
-		panel.add(new JTextField());
-		panel.setBorder(BorderFactory.createEmptyBorder(8,25,10,10));
-		frame.getContentPane().add(panel);
-		frame.pack();
-		frame.setVisible(true);
-	}		
 }

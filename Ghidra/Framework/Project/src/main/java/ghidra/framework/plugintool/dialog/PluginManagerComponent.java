@@ -27,6 +27,8 @@ import javax.swing.event.HyperlinkEvent.EventType;
 
 import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginPackage;
@@ -86,7 +88,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			this.pluginPackage = pluginPackage;
 			JPanel panel = new JPanel(new HorizontalLayout(0));
 			panel.setBackground(BG);
-			jCheckBox = new JCheckBox();
+			jCheckBox = new GCheckBox();
 			jCheckBox.addActionListener(e -> checkBoxClicked());
 			if (!pluginPackage.isfullyAddable()) {
 				jCheckBox.setEnabled(false);
@@ -96,7 +98,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			panel.add(jCheckBox);
 			panel.add(Box.createHorizontalStrut(10));
 			JLabel label =
-				new JLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
+				new GIconLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
 			label.setBackground(BG);
 			panel.add(label);
 			panel.add(Box.createHorizontalStrut(10));
@@ -105,7 +107,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			JPanel labelPanel = new JPanel(new VerticalLayout(3));
 			labelPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
 			labelPanel.setBackground(BG);
-			label = new JLabel(pluginPackage.getName());
+			label = new GLabel(pluginPackage.getName());
 			//label.setVerticalAlignment(SwingConstants.TOP);
 			label.setFont(label.getFont().deriveFont(18f));
 			label.setForeground(Color.BLACK);
@@ -123,7 +125,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 
 			add(labelPanel);
 			String htmlDescription = getHTMLDescription();
-			JLabel descriptionlabel = new JLabel(htmlDescription);
+			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
 			descriptionlabel.setForeground(Color.GRAY);
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);

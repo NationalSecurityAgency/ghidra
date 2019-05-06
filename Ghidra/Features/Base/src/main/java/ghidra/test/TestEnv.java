@@ -58,7 +58,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 import utilities.util.FileUtilities;
 
 public class TestEnv {
@@ -496,13 +495,13 @@ public class TestEnv {
 	protected PluginTool launchDefaultToolByName(final String toolName) {
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 		AbstractGenericTest.runSwing(() -> {
-			// first try the tools in the classpath
-			File toolFile = ResourceManager.getResourceFile("defaultTools/" + toolName + ".tool");
-			if (!toolFile.exists()) {
+
+			ToolTemplate toolTemplate =
+				ToolUtils.readToolTemplate("defaultTools/" + toolName + ".tool");
+			if (toolTemplate == null) {
+				Msg.debug(this, "Unable to find tool: " + toolName);
 				return;
 			}
-
-			ToolTemplate toolTemplate = ToolUtils.readToolTemplate(toolFile);
 
 			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
 			AbstractDockingTest.setErrorGUIEnabled(false); // disable the error GUI while launching the tool
@@ -1074,8 +1073,7 @@ public class TestEnv {
 			// so that the tests may limp along if this is not a serious issue--throwing the
 			// exception my prevent other cleanup from taking place.
 			Msg.error(TestEnv.class, "Unable to delete project: " + projectName +
-				" in directory: " + AbstractGTest.getTestDirectoryPath(),
-				new RuntimeException());
+				" in directory: " + AbstractGTest.getTestDirectoryPath(), new RuntimeException());
 		}
 	}
 

@@ -118,12 +118,9 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		PrelinkMap info = fileToPrelinkInfoMap.get(file);
-		if (info != null) {
-			return info.toString();
-		}
-		return null;
+		return (info != null) ? info.toString() : null;
 	}
 
 	@Override

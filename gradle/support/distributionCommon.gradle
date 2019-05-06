@@ -1,0 +1,61 @@
+apply from: "$rootProject.projectDir/gradle/support/ip.gradle"
+
+// all application tests depend on all the sleigh processors to be built
+tasks.withType(Test).all {		
+	it.dependsOn ":allSleighCompile"
+}
+
+plugins.withType(JavaPlugin) {
+	task zipSourceSubproject (type: Zip) { t ->
+							
+		// Define some metadata about the zip (name, location, version, etc....)
+		t.group 'private'
+		t.description "Creates the source zips for java modules"
+		t.archiveName project.name + "-src.zip"
+		t.destinationDir file(projectDir.path + "/build/tmp/src")
+		// Without this we get duplicate files but it's unclear why. It doesn't seem that this
+		// task is being executed multiple times, and sourceSets.main.java contains the 
+		// correct elements. Whatever the cause, this fixes the problem.
+		duplicatesStrategy 'exclude'
+		
+		from sourceSets.main.java
+	}
+}
+/*********************************************************************************
+ *  Takes the given file and returns a string representing the file path with everything
+ *	up-to and including 'src/global' removed, as well as the filename. 
+ *	
+ *	eg: 	If the file path is '/Ghidra/Configurations/Common/src/global/docs/hello.html', 
+ *			the returned string will be at /docs
+ *
+ *	Note: 	We have to use 'File.separator' instead of a slash ('/') because of how 
+ * 			windows/unix handle slashes ('/' vs. '\'). We only need to do this in cases where we're
+ *			using java string manipulation libraries (eg String.replace); Gradle already
+ *			understands how to use the proper slash.
+*********************************************************************************/
+String getGlobalFilePathSubDirName(File file) {
+
+	// First strip off everything before 'src/global/ in the file path.
+	def slashIndex = file.path.indexOf('src' + File.separator + 'global')
+	String filePath = file.path.substring(slashIndex);
+					
+	// Now remove 'src/global/' from the string.
+	filePath = filePath.replace('src' + File.separator + 'global' + File.separator, "");
+					
+	// Now we need to strip off the filename itself, which we do by finding the last
+	// instance of a slash ('/') in the string.  
+	//
+	// Note that it's possible there is no slash (all we have is a filename), meaning 
+	// this file will be placed at the root level.
+	//
+	slashIndex = filePath.lastIndexOf(File.separator)
+	if (slashIndex != -1) {
+		filePath = filePath.substring(0, slashIndex+1) // +1 for the slash
+	}	
+	else {
+		filePath = ""
+	}
+	
+	return filePath 
+}
+ext.getGlobalFilePathSubDirName = this.&getGlobalFilePathSubDirName

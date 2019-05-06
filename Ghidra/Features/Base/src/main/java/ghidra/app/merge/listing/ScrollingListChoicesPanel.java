@@ -25,6 +25,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.merge.util.ConflictUtility;
@@ -69,7 +71,7 @@ public class ScrollingListChoicesPanel extends ConflictPanel {
 		gbl = new GridBagLayout();
 		rowPanel = new JPanel(gbl);
 		setLayout(new BorderLayout());
-		headerLabel = new JLabel(" ");
+		headerLabel = new GDLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);
@@ -252,12 +254,12 @@ class ListChoice extends JPanel {
 
 		setLayout(new BorderLayout());
 
-		rb = new JRadioButton("UNKNOWN");
+		rb = new GRadioButton("UNKNOWN");
 		rb.addItemListener(radioButtonListener);
 		group.add(rb);
 		add(rb, BorderLayout.NORTH);
 
-		model = new AbstractSortedTableModel<String[]>() {
+		model = new AbstractSortedTableModel<>() {
 			@Override
 			public Object getColumnValueForRow(String[] t, int columnIndex) {
 				return t[columnIndex];

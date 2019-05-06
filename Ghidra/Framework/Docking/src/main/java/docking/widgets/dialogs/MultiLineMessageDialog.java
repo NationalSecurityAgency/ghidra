@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.util.HTMLUtilities;
 
 public class MultiLineMessageDialog extends DialogComponentProvider {
@@ -87,7 +89,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		if (!StringUtils.isBlank(shortMessage)) {
-			JLabel shortMessageLabel = new JLabel(shortMessage);
+			JLabel shortMessageLabel = new GLabel(shortMessage);
 			shortMessageLabel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
 			workPanel.add(shortMessageLabel, BorderLayout.NORTH);
 		}
@@ -134,7 +136,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 
 		Icon icon = OptionDialog.getIconForMessageType(messageType);
 		if (icon != null) {
-			JLabel iconLabel = new JLabel(icon);
+			JLabel iconLabel = new GIconLabel(icon);
 			iconLabel.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
 			workPanel.add(iconLabel, BorderLayout.WEST);
 		}

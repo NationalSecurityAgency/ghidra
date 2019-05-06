@@ -36,7 +36,6 @@ import edu.uci.ics.jung.visualization.util.Caching;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.*;
@@ -670,8 +669,9 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		// we must 'fake out' the listing to generate a location event from within the listing
 		pressRightArrowKey(otherVertex);
+		waitForSwing();
 
-		ProgramLocation codeBrowserLocation = codeBrowser.getCurrentLocation();
+		ProgramLocation codeBrowserLocation = runSwing(() -> codeBrowser.getCurrentLocation());
 		ProgramLocation actualVertexLocation = otherVertex.getProgramLocation();
 		assertEquals(newVertexLocation.getAddress(), actualVertexLocation.getAddress());
 		assertEquals(actualVertexLocation.getAddress(), codeBrowserLocation.getAddress());
@@ -784,8 +784,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertNotNull(newGraphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", newGraphData.hasResults());
 
-		graph = newGraphData.getFunctionGraph();
-		FGVertex newRootVertex = graph.getRootVertex();
+		FunctionGraph newGraph = newGraphData.getFunctionGraph();
+		FGVertex newRootVertex = newGraph.getRootVertex();
 		assertNotNull(newRootVertex);
 
 		waitForSwing();
@@ -800,10 +800,10 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 			pointsAreSimilar(originalPoint, reloadedPoint));
 
 		// make sure the CodeBrowser's location matches ours
-		FGVertex focusedVertex = graph.getFocusedVertex();
+
+		FGVertex focusedVertex = runSwing(() -> newGraph.getFocusedVertex());
 		ProgramLocation graphLocation = focusedVertex.getProgramLocation();
-		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		ProgramLocation codeBrowserLocation = codeBrowserPlugin.getCurrentLocation();
+		ProgramLocation codeBrowserLocation = runSwing(() -> codeBrowser.getCurrentLocation());
 		assertEquals(graphLocation.getAddress(), codeBrowserLocation.getAddress());
 	}
 }

@@ -25,6 +25,7 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
 import docking.widgets.table.RowObjectTableModel;
 
@@ -60,7 +61,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		this.data = data;
 		this.searchConverter = searchConverter;
 		this.descriptionConverter = descriptionConverter;
-		DefaultDropDownSelectionDataModel<T> model = new DefaultDropDownSelectionDataModel<T>(
+		DefaultDropDownSelectionDataModel<T> model = new DefaultDropDownSelectionDataModel<>(
 			new ArrayList<>(data), searchConverter, descriptionConverter) {
 
 			// overridden to return all data for an empty search; this lets the down-arrow
@@ -112,7 +113,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 30, 40));
 
-		field = new DropDownSelectionTextField<T>(model) {
+		field = new DropDownSelectionTextField<>(model) {
 
 			// overridden to return all data for an empty search; this lets the down-arrow
 			// show the full list
@@ -128,7 +129,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		selectionListener = new SelectionListener<>();
 		field.addDropDownSelectionChoiceListener(selectionListener);
 
-		JLabel jLabel = new JLabel(label);
+		JLabel jLabel = new GLabel(label);
 		jLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);

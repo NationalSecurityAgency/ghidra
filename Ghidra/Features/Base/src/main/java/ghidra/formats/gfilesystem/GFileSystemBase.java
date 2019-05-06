@@ -129,9 +129,6 @@ public abstract class GFileSystemBase implements GFileSystem {
 	@Override
 	abstract public List<GFile> getListing(GFile directory) throws IOException;
 
-	@Override
-	abstract public String getInfo(GFile file, TaskMonitor monitor) throws IOException;
-
 	/**
 	 * Legacy implementation of {@link #getInputStream(GFile, TaskMonitor)}.
 	 *

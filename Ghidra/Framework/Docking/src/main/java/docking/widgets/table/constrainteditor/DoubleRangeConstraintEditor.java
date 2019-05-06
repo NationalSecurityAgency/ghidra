@@ -25,6 +25,7 @@ import javax.swing.JSpinner.NumberEditor;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.numberformat.BoundedRangeDecimalFormatterFactory;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
@@ -75,7 +76,7 @@ public class DoubleRangeConstraintEditor extends AbstractColumnConstraintEditor<
 
 		infoLabelNumberFormat = new DecimalFormat(DISPLAY_FORMAT);
 
-		infoLabel = new JLabel();
+		infoLabel = new GDHtmlLabel();
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);
 

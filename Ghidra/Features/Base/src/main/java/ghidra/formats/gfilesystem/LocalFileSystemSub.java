@@ -130,14 +130,19 @@ public class LocalFileSystemSub implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		File localFile = getFileFromGFile(file);
-
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("Name: " + localFile.getName() + "\n");
-		buffer.append("Size: " + localFile.length() + "\n");
-		buffer.append("Date: " + new Date(localFile.lastModified()).toString() + "\n");
-		return buffer.toString();
+	public String getInfo(GFile file, TaskMonitor monitor) {
+		try {
+			File localFile = getFileFromGFile(file);
+			StringBuilder buffer = new StringBuilder();
+			buffer.append("Name: " + localFile.getName() + "\n");
+			buffer.append("Size: " + localFile.length() + "\n");
+			buffer.append("Date: " + new Date(localFile.lastModified()).toString() + "\n");
+			return buffer.toString();
+		}
+		catch (IOException e) {
+			// fail and return null
+		}
+		return null;
 	}
 
 	@Override

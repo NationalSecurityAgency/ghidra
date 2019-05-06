@@ -26,6 +26,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -34,7 +36,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 
 public class SetRegisterValueDialog extends DialogComponentProvider {
-	private JComboBox registerComboBox;
+	private JComboBox<RegisterWrapper> registerComboBox;
 	private FixedBitSizeValueField registerValueField;
 	private JList addressRangeList;
 	private BigInteger registerValue;
@@ -61,8 +63,8 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 		registerChanged();
 		updateOkEnablement();
 		setDefaultButton(okButton);
-		setHelpLocation(new HelpLocation("RegisterPlugin", useValueField ? "SetRegisterValues"
-				: "ClearRegisterValues"));
+		setHelpLocation(new HelpLocation("RegisterPlugin",
+			useValueField ? "SetRegisterValues" : "ClearRegisterValues"));
 		setRememberSize(false);
 	}
 
@@ -73,12 +75,7 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel(Register[] registers) {
-		JLabel regLabel = new JLabel("Register:");
-		JLabel valueLabel = new JLabel("Value:");
-		JLabel addressLabel = new JLabel("Address(es):");
-		addressLabel.setVerticalAlignment(SwingConstants.TOP);
-
-		registerComboBox = new JComboBox(wrapRegisters(registers));
+		registerComboBox = new GComboBox<>(wrapRegisters(registers));
 		Font f = registerComboBox.getFont().deriveFont(13f);
 		registerComboBox.setFont(f);
 		registerValueField = new FixedBitSizeValueField(32, true, false);
@@ -113,15 +110,17 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 		gbc.insets = new Insets(5, 5, 1, 5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		panel.add(regLabel, gbc);
+		panel.add(new GLabel("Register:"), gbc);
 		gbc.gridy = 1;
 		if (useValueField) {
-			panel.add(valueLabel, gbc);
+			panel.add(new GLabel("Value:"), gbc);
 		}
 		gbc.gridy = 2;
 
 		gbc.anchor = GridBagConstraints.NORTHWEST;
 		gbc.insets = new Insets(10, 5, 1, 5);
+		GLabel addressLabel = new GLabel("Address(es):");
+		addressLabel.setVerticalAlignment(SwingConstants.TOP);
 		panel.add(addressLabel, gbc);
 
 		gbc.insets = new Insets(5, 5, 1, 5);
@@ -159,7 +158,7 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 	void setSelectedRegister(Register register) {
 		int n = registerComboBox.getItemCount();
 		for (int i = 0; i < n; i++) {
-			RegisterWrapper rw = (RegisterWrapper) registerComboBox.getItemAt(i);
+			RegisterWrapper rw = registerComboBox.getItemAt(i);
 			if (rw.register == register) {
 				registerComboBox.setSelectedIndex(i);
 				return;
@@ -185,11 +184,8 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 
 	}
 
-	Object[] wrapRegisters(Register[] registers) {
-		if (registers.length == 0) {
-			return registers;
-		}
-		Object[] registerWrappers = new Object[registers.length];
+	RegisterWrapper[] wrapRegisters(Register[] registers) {
+		RegisterWrapper[] registerWrappers = new RegisterWrapper[registers.length];
 		for (int i = 0; i < registers.length; i++) {
 			registerWrappers[i] = new RegisterWrapper(registers[i]);
 		}

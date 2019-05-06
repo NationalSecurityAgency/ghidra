@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.spinner.IntegerSpinner;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
@@ -103,7 +104,7 @@ public class IntegerRangeConstraintEditor<T extends Number>
 
 		panel.add(rangeControlPanel);
 
-		infoLabel = new JLabel();
+		infoLabel = new GDHtmlLabel();
 		infoLabel.setForeground(Color.GRAY);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);

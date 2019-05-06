@@ -128,6 +128,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final String EXECUTABLE_PATH = "Executable Location";
 	private static final String EXECUTABLE_FORMAT = "Executable Format";
 	private static final String EXECUTABLE_MD5 = "Executable MD5";
+	private static final String EXECUTABLE_SHA256 = "Executable SHA256";
 	private static final String TABLE_NAME = "Program";
 	private static final String EXECUTE_PATH = "Execute Path";
 	private static final String EXECUTE_FORMAT = "Execute Format";
@@ -716,7 +717,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * 
 	 * @see ghidra.program.model.listing.Program#setExecutableFormat(java.lang.String)
 	 */
 	@Override
@@ -742,13 +742,37 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * 
 	 * @see ghidra.program.model.listing.Program#setExecutableMD5(java.lang.String)
 	 */
 	@Override
 	public void setExecutableMD5(String md5) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_MD5, md5);
+		changed = true;
+	}
+
+	/**
+	 * @see ghidra.program.model.listing.Program#getExecutableSHA256()
+	 */
+	@Override
+	public String getExecutableSHA256() {
+		String format = null;
+		try {
+			Options pl = getOptions(PROGRAM_INFO);
+			format = pl.getString(EXECUTABLE_SHA256, (String) null);
+		}
+		catch (Exception e) {
+		}
+		return format == null ? UNKNOWN : format;
+	}
+
+	/**
+	 * @see ghidra.program.model.listing.Program#setExecutableSHA256(java.lang.String)
+	 */
+	@Override
+	public void setExecutableSHA256(String sha256) {
+		Options pl = getOptions(PROGRAM_INFO);
+		pl.setString(EXECUTABLE_SHA256, sha256);
 		changed = true;
 	}
 

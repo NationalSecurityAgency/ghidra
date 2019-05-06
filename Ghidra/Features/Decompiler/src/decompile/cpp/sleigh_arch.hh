@@ -112,6 +112,7 @@ public:
   void restoreXmlHeader(const Element *el);			///< Restore from XML basic attributes of an executable
   virtual void printMessage(const string &message) const { *errorstream << message << endl; }
   virtual ~SleighArchitecture(void);
+  virtual string getDescription(void) const;
   
   static string normalizeProcessor(const string &nm);		///< Try to recover a \e language \e id processor field
   static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianess field

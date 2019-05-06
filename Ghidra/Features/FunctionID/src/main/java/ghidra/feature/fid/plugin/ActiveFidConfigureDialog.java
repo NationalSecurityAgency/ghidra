@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.feature.fid.db.FidFile;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;
@@ -39,7 +40,7 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 	public ActiveFidConfigureDialog(List<FidFile> fidFiles) {
 		super("Select Active Fid Databases", true, false, true, false);
 
-		this.fidFiles = new ArrayList<FidFile>(fidFiles);
+		this.fidFiles = new ArrayList<>(fidFiles);
 		Collections.sort(fidFiles);
 
 		addWorkPanel(buildMainPanel());
@@ -91,10 +92,9 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 		panel.setBackground(Color.WHITE);
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		for (FidFile fidFile : fidFiles) {
-			JCheckBox checkbox = new JCheckBox(fidFile.getName());
+			GCheckBox checkbox = new GCheckBox(fidFile.getName(), fidFile.isActive());
 			checkbox.setToolTipText(fidFile.getPath());
 			checkboxes.add(checkbox);
-			checkbox.setSelected(fidFile.isActive());
 			checkbox.addItemListener(e -> fidFile.setActive(checkbox.isSelected()));
 			panel.add(checkbox);
 		}

@@ -2062,10 +2062,10 @@ int4 DecisionNode::getNumFixed(int4 low,int4 size,bool context)
 double DecisionNode::getScore(int4 low,int4 size,bool context)
 
 {
-  int4 numBins = 1 << size;
+  int4 numBins = 1 << size;		// size is between 1 and 8
   int4 i;
   uintm val,mask;
-  uintm m = (size==8*sizeof(uintm)) ? 0 : (((uintm)1)<<size);
+  uintm m = ((uintm)1)<<size;
   m = m-1;
 
   int4 total = 0;

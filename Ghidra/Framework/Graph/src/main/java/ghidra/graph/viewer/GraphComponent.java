@@ -29,6 +29,7 @@ import docking.ToolTipManager;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.PopupWindow;
+import docking.widgets.label.GIconLabel;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
@@ -417,7 +418,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		String tooltip = "Bring satellite view to the front";
 
 		Icon icon = ResourceManager.loadImage("images/network-wireless.png");
-		JLabel iconLabel = new JLabel(icon);
+		JLabel iconLabel = new GIconLabel(icon);
 		iconLabel.setOpaque(false);
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		iconLabel.setToolTipText(tooltip);
@@ -457,7 +458,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			"options to have the graph update automatically.";
 
 		Icon icon = Icons.REFRESH_ICON;
-		JLabel iconLabel = new JLabel(icon);
+		JLabel iconLabel = new GIconLabel(icon);
 		iconLabel.setOpaque(false);
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		iconLabel.setToolTipText(tooltip);

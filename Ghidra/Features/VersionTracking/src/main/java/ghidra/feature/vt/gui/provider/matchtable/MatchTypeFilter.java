@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,16 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.gui.filters.CheckBoxBasedAncillaryFilter;
-import ghidra.feature.vt.gui.filters.CheckBoxInfo;
-
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JCheckBox;
+
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.gui.filters.CheckBoxBasedAncillaryFilter;
+import ghidra.feature.vt.gui.filters.CheckBoxInfo;
 
 public class MatchTypeFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 
@@ -35,6 +35,7 @@ public class MatchTypeFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 	@Override
 	protected void createCheckBoxInfos() {
 		ItemListener listener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				fireStatusChanged(getFilterStatus());
 			}
@@ -42,8 +43,7 @@ public class MatchTypeFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 
 		VTAssociationType[] values = VTAssociationType.values();
 		for (VTAssociationType status : values) {
-			JCheckBox checkBox = new JCheckBox(status.toString());
-			checkBox.setSelected(true);
+			GCheckBox checkBox = new GCheckBox(status.toString(), true);
 			checkBox.addItemListener(listener);
 			CheckBoxInfo<VTMatch> info = new AssociationTypeCheckBoxInfo(checkBox, status);
 			checkBoxInfos.add(info);

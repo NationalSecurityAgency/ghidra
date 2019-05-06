@@ -1,0 +1,13 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if they
+	have native code (C or C++).
+	
+	A gradle project can add native code support by including the following it its build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+ *****************************************************************************************/
+
+// These same settings are needed in the GPL native, so rather than duplicating this file, we will just call the other file
+
+def projectRootDir = rootProject.projectDir.path
+apply from: "$projectRootDir/GPL/nativeBuildProperties.gradle"

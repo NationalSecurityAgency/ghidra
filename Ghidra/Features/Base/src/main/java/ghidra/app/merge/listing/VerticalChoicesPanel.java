@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package ghidra.app.merge.listing;
 
-import ghidra.app.merge.util.ConflictUtility;
-import ghidra.util.datastruct.LongArrayList;
-import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -28,6 +23,15 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
+import ghidra.app.merge.util.ConflictUtility;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.datastruct.LongArrayList;
+import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
 
 /**
  * <CODE>VerticalChoicesPanel</CODE> is a conflict panel for the Listing Merge.
@@ -88,12 +92,12 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		setBorder(BorderFactory.createTitledBorder("Resolve Conflict"));
 		setLayout(new BorderLayout());
 
-		headerLabel = new JLabel(" ");
+		headerLabel = new GDLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 
-		rowComps = new ArrayList<ArrayList<JComponent>>();
-		rows = new ArrayList<String[]>();
+		rowComps = new ArrayList<>();
+		rows = new ArrayList<>();
 		rowTypes = new LongArrayList();
 		group = new ButtonGroup();
 		layout = new MaximizeSpecificColumnGridLayout(5, 5, columnCount);
@@ -102,31 +106,29 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		add(rowPanel, BorderLayout.CENTER);
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		JRadioButton rb = new JRadioButton();
-		JCheckBox cb = new JCheckBox();
+		GRadioButton rb = new GRadioButton();
+		JCheckBox cb = new GCheckBox();
 		indent = Math.max(rb.getPreferredSize().width, cb.getPreferredSize().width);
 
 		defaultInsets = new Insets(DEFAULT_TOP, DEFAULT_LEFT, DEFAULT_BOTTOM, DEFAULT_RIGHT);
-		int labelHeight = (int) new JLabel("A").getPreferredSize().getHeight();
-		double buttonHeight =
-			new MyRadioButton("A", ListingMergeConstants.KEEP_LATEST).getPreferredSize().getHeight();
+		int labelHeight = (int) new GDLabel("A").getPreferredSize().getHeight();
+		double buttonHeight = new MyRadioButton("A",
+			ListingMergeConstants.KEEP_LATEST).getPreferredSize().getHeight();
 		int borderHeight;
 		borderHeight = (int) ((buttonHeight - labelHeight) / 2);
 		if (borderHeight < 0) {
 			borderHeight = 0;
 		}
-		textVsButtonInsets =
-			new Insets(DEFAULT_TOP + borderHeight, DEFAULT_LEFT, DEFAULT_BOTTOM + borderHeight,
-				DEFAULT_RIGHT);
+		textVsButtonInsets = new Insets(DEFAULT_TOP + borderHeight, DEFAULT_LEFT,
+			DEFAULT_BOTTOM + borderHeight, DEFAULT_RIGHT);
 		double checkBoxHeight =
 			new MyCheckBox("A", ListingMergeConstants.KEEP_LATEST).getPreferredSize().getHeight();
 		borderHeight = (int) ((checkBoxHeight - labelHeight) / 2);
 		if (borderHeight < 0) {
 			borderHeight = 0;
 		}
-		textVsCheckBoxInsets =
-			new Insets(DEFAULT_TOP + borderHeight, DEFAULT_LEFT, DEFAULT_BOTTOM + borderHeight,
-				DEFAULT_RIGHT);
+		textVsCheckBoxInsets = new Insets(DEFAULT_TOP + borderHeight, DEFAULT_LEFT,
+			DEFAULT_BOTTOM + borderHeight, DEFAULT_RIGHT);
 
 		add(createUseForAllCheckBox(), BorderLayout.SOUTH);
 	}
@@ -453,8 +455,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		return allChoicesAreResolved();
 	}
 
-	private class MyLabel extends JLabel {
-		private final static long serialVersionUID = 1;
+	private class MyLabel extends GLabel {
 
 		/**
 		 * @param text the text of this label.
@@ -481,7 +482,9 @@ public class VerticalChoicesPanel extends ConflictPanel {
 						(displayedFont != null) ? getFontMetrics(displayedFont) : null;
 					int stringWidth =
 						(fontMetrics != null) ? fontMetrics.stringWidth(displayedText) : 0;
-					setToolTipText((stringWidth > displayedWidth) ? text : null);
+					setToolTipText(
+						(stringWidth > displayedWidth) ? "<html>" + HTMLUtilities.escapeHTML(text)
+								: null);
 				}
 
 				@Override
@@ -502,7 +505,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		}
 	}
 
-	private class MyRadioButton extends JRadioButton {
+	private class MyRadioButton extends GRadioButton {
 		private final static long serialVersionUID = 1;
 		private int option;
 
@@ -558,7 +561,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 
 	}
 
-	private class MyCheckBox extends JCheckBox {
+	private class MyCheckBox extends GCheckBox {
 		private final static long serialVersionUID = 1;
 		private int option;
 
@@ -622,7 +625,8 @@ public class VerticalChoicesPanel extends ConflictPanel {
 			JComponent[] comps = getRowComponents(row);
 			for (int i = 0; i < comps.length; i++) {
 				JComponent component = comps[i];
-				if (component instanceof MyRadioButton && ((MyRadioButton) component).isSelected()) {
+				if (component instanceof MyRadioButton &&
+					((MyRadioButton) component).isSelected()) {
 					conflictOption |= ((MyRadioButton) component).option;
 				}
 				else if (component instanceof MyCheckBox && ((MyCheckBox) component).isSelected()) {
