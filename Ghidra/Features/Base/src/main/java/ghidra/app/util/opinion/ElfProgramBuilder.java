@@ -2879,9 +2879,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			throw new IOException(msg);
 		}
 
-		int maxSectionSizeGBytes = initialized ? Memory.MAX_INITIALIZED_BLOCK_SIZE_GB
-				: Memory.MAX_UNINITIALIZED_BLOCK_SIZE_GB;
-		long maxSectionSizeBytes = (long) maxSectionSizeGBytes << Memory.GBYTE_SHIFT_FACTOR;
+		int maxSectionSizeGBytes = Memory.MAX_BLOCK_SIZE_GB;
+		long maxSectionSizeBytes = Memory.MAX_BLOCK_SIZE;
 
 		if (dataLength < 0 || dataLength > maxSectionSizeBytes) {
 			float sizeGB = (float) dataLength / (float) Memory.GBYTE;

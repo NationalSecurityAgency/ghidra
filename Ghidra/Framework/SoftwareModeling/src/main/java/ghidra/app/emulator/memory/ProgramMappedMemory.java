@@ -20,10 +20,12 @@ import java.util.Arrays;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryPage;
+import ghidra.program.database.mem.SourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 public class ProgramMappedMemory {
 
@@ -39,8 +41,8 @@ public class ProgramMappedMemory {
 
 		initializedAddressSet = memory.getLoadedAndInitializedAddressSet();
 		for (MemoryBlock block : memory.getBlocks()) {
-			if (!block.isInitialized() && (block instanceof MappedMemoryBlock)) {
-				initializedAddressSet = addMappedInitializedMemory((MappedMemoryBlock) block);
+			if (!block.isInitialized() && block.isMapped()) {
+				initializedAddressSet = addMappedInitializedMemory(block);
 			}
 		}
 
@@ -48,15 +50,15 @@ public class ProgramMappedMemory {
 		this.faultHandler = faultHandler;
 	}
 
-	private AddressSetView addMappedInitializedMemory(MappedMemoryBlock mappedBlock) {
-		long size = mappedBlock.getSize();
-		if (size <= 0) {
-			// TODO: can't handle massive mapped blocks
-			return initializedAddressSet;
-		}
+	private AddressSetView addMappedInitializedMemory(MemoryBlock mappedBlock) {
 		AddressSet modifiedSet = new AddressSet(initializedAddressSet);
-		Address mapStart = mappedBlock.getOverlayedMinAddress();
-		Address mapEnd = mapStart.add(size - 1);
+		SourceInfo sourceInfo = mappedBlock.getSourceInfos().get(0); // mapped block has exactly 1 mapped source
+		if (!sourceInfo.getMappedRange().isPresent()) {
+			throw new AssertException("Mapped block did not have mapped range!");
+		}
+		AddressRange mappedRange = sourceInfo.getMappedRange().get();
+		Address mapStart = mappedRange.getMinAddress();
+		Address mapEnd = mappedRange.getMaxAddress();
 		AddressSet mappedAreas = initializedAddressSet.intersectRange(mapStart, mapEnd);
 		for (AddressRange range : mappedAreas) {
 			Address start = mappedBlock.getStart().add(range.getMinAddress().subtract(mapStart));

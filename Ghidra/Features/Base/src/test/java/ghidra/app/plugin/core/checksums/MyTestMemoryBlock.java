@@ -16,7 +16,9 @@
 package ghidra.app.plugin.core.checksums;
 
 import java.io.InputStream;
+import java.util.List;
 
+import ghidra.program.database.mem.SourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.*;
 
@@ -105,6 +107,11 @@ class MyTestMemoryBlock implements MemoryBlock {
 	}
 
 	@Override
+	public void setPermissions(boolean read, boolean write, boolean execute) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void setExecute(boolean e) {
 		throw new UnsupportedOperationException();
 	}
@@ -185,5 +192,10 @@ class MyTestMemoryBlock implements MemoryBlock {
 	@Override
 	public boolean isLoaded() {
 		return start.getAddressSpace().isLoadedMemorySpace();
+	}
+
+	@Override
+	public List<SourceInfo> getSourceInfos() {
+		throw new UnsupportedOperationException();
 	}
 }

@@ -15,10 +15,12 @@
  */
 package ghidra.program.model.mem;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
-import db.ChainedBuffer;
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.*;
@@ -41,23 +43,10 @@ public interface Memory extends AddressSetView {
 	public static final long MAX_BINARY_SIZE = (long) MAX_BINARY_SIZE_GB << GBYTE_SHIFT_FACTOR;
 
 	/**
-	 * Initialized blocks must be addressable by an int, 1-GByte.
-	 * This value has been established due to limitations of the 
-	 * {@link ChainedBuffer} implementation use positive integers
-	 * to convey length.
+	 * The current max size of a memory block. 
 	 */
-	public static final int MAX_INITIALIZED_BLOCK_SIZE_GB = 1;
-	public static final long MAX_INITIALIZED_BLOCK_SIZE =
-		(long) MAX_INITIALIZED_BLOCK_SIZE_GB << GBYTE_SHIFT_FACTOR;
-
-	/**
-	 * Uninitialized blocks size limit, 12-GByte (limit number of 32-bit segments).
-	 * This restriction is somewhat arbitrary but is established to prevent an excessive
-	 * number of memory map segments ({@link #MAX_BINARY_SIZE_GB}).
-	 */
-	public static final int MAX_UNINITIALIZED_BLOCK_SIZE_GB = 12;
-	public static final long MAX_UNINITIALIZED_BLOCK_SIZE =
-		(long) MAX_UNINITIALIZED_BLOCK_SIZE_GB << GBYTE_SHIFT_FACTOR;
+	public static final int MAX_BLOCK_SIZE_GB = 16;  // set to 16 because anything larger, ghidra bogs down
+	public static final long MAX_BLOCK_SIZE = (long) MAX_BLOCK_SIZE_GB << GBYTE_SHIFT_FACTOR;
 
 	/**
 	 * Returns the program that this memory belongs to.
@@ -123,9 +112,10 @@ public interface Memory extends AddressSetView {
 	 * @param start start address of the block
 	 * @param is source of the data used to fill the block.
 	 * @param length the size of the block
+	 * @param monitor task monitor
 	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
 	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address paramaeter, but in the new address space.
+	 * offset as the given start address parameter, but in the new address space.
 	 * @return new Initialized Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -133,6 +123,8 @@ public interface Memory extends AddressSetView {
 	 * @throws AddressOverflowException if the start is beyond the
 	 * address space
 	 * @throws CancelledException user cancelled operation
+	 * @throws DuplicateNameException if overlay is true and there is already an overlay address
+	 * space with the same name as this memory block 
 	 */
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
 			long length, TaskMonitor monitor, boolean overlay)
@@ -150,6 +142,8 @@ public interface Memory extends AddressSetView {
 	 * overlay address space will be created and the block will have a starting address at the same
 	 * offset as the given start address paramaeter, but in the new address space.
 	 * @return new Initialized Memory Block
+	 * @throws DuplicateNameException if overlay is true and there is already an overlay address
+	 * space with the same name as this memory block 
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
@@ -161,6 +155,30 @@ public interface Memory extends AddressSetView {
 			byte initialValue, TaskMonitor monitor, boolean overlay)
 			throws LockException, DuplicateNameException, MemoryConflictException,
 			AddressOverflowException, CancelledException;
+
+	/**
+	 * Create an initialized memory block using bytes from a {@link FileBytes} object.
+	 * 
+	 * @param name block name 
+	 * @param start starting address of the block
+	 * @param fileBytes the {@link FileBytes} object to use as the underlying source of bytes.
+	 * @param offset the offset into the FileBytes for the first byte of this memory block.
+	 * @param size block length
+	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
+	 * overlay address space will be created and the block will have a starting address at the same
+	 * offset as the given start address parameter, but in the new address space.
+	 * @return new Initialized Memory Block
+	 * @throws LockException if exclusive lock not in place (see haveLock())
+	 * @throws DuplicateNameException if overlay is true and there is already an overlay address
+	 * space with the same name as this memory block 
+	 * @throws MemoryConflictException if the new block overlaps with a
+	 * previous block
+	 * @throws AddressOverflowException if the start is beyond the
+	 * address space
+	 */
+	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
+			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
+			MemoryConflictException, AddressOverflowException;
 
 	/**
 	 * Create an uninitialized memory block and add it to this Memory.
@@ -176,6 +194,8 @@ public interface Memory extends AddressSetView {
 	 * previous block
 	 * @throws AddressOverflowException if the start is beyond the
 	 * address space
+	 * @throws DuplicateNameException if overlay is true and there is already an overlay address
+	 * space with the same name as this memory block 
 	 */
 	public MemoryBlock createUninitializedBlock(String name, Address start, long size,
 			boolean overlay) throws LockException, DuplicateNameException, MemoryConflictException,
@@ -192,6 +212,10 @@ public interface Memory extends AddressSetView {
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
+	 * @throws MemoryConflictException if the new block overlaps with a
+	 * previous block
+	 * @throws AddressOverflowException if the start is beyond the
+	 * address space
 	 */
 	public MemoryBlock createBitMappedBlock(String name, Address start, Address mappedAddress,
 			long length) throws LockException, MemoryConflictException, AddressOverflowException;
@@ -695,4 +719,33 @@ public interface Memory extends AddressSetView {
 	 */
 	public void setLong(Address addr, long value, boolean bigEndian) throws MemoryAccessException;
 
+	/**
+	 * Stores a sequence of bytes into the program.  Typically, this method is used by importers
+	 * to store the original raw program bytes.
+	 *
+	 * @param filename the name of the file from where the bytes originated
+	 * @param offset the offset into the file for the first byte in the input stream.
+	 * @param size the number of bytes to store from the input stream.
+	 * @param is the input stream that will supply the bytes to store in the program.
+	 * @return a FileBytes that was created to access the bytes.
+	 * @throws IOException if there was an IOException saving the bytes to the program database.
+	 */
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is)
+			throws IOException;
+
+	/**
+	 * Returns a list of all the stored original file bytes objects
+	 * @return a list of all the stored original file bytes objects
+	 */
+	public List<FileBytes> getAllFileBytes();
+
+	/**
+	 * Deletes a stored sequence of file bytes.  The file bytes can only be deleted if there
+	 * are no memory block references to the file bytes.
+	 * @param fileBytes the FileBytes for the file bytes to be deleted.
+	 * @return true if the FileBytes was deleted.  If any memory blNoocks are reference this FileBytes,
+	 * then it will not be deleted and false will be returned.
+	 * @throws IOException if there was an error updating the database.
+	 */
+	public boolean deleteFileBytes(FileBytes fileBytes) throws IOException;
 }

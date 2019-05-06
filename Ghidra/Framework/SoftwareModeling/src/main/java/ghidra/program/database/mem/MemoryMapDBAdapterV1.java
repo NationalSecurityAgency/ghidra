@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,14 @@
  */
 package ghidra.program.database.mem;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.DBHandle;
+import ghidra.util.exception.VersionException;
 
+/**
+ * Adapter for version 1
+ */
 class MemoryMapDBAdapterV1 extends MemoryMapDBAdapterV0 {
 	private final static int VERSION = 1;
 
