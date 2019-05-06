@@ -36,6 +36,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
+import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskMonitor;
 
 public class ProgramBigListingModel implements ListingModel, FormatModelListener,
@@ -50,6 +51,9 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	private final Listing listing;
 	private DummyFieldFactory dummyFactory;
 	private List<ListingModelListener> listeners = new ArrayList<>();
+
+	// Use a cache so that simple arrowing to-and-fro with the keyboard will respond quickly
+	private LRUMap<Address, Layout> layoutCache = new LRUMap<>(10);
 
 	public ProgramBigListingModel(Program program, FormatManager formatMgr) {
 		this.program = program;
@@ -115,6 +119,16 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	@Override
 	public Layout getLayout(Address addr, boolean isGapAddress) {
+
+		Layout layout = layoutCache.get(addr);
+		if (layout == null) {
+			layout = doGetLayout(addr, isGapAddress);
+			layoutCache.put(addr, layout);
+		}
+		return layout;
+	}
+
+	public Layout doGetLayout(Address addr, boolean isGapAddress) {
 		List<RowLayout> list = new ArrayList<>();
 		FieldFormatModel format;
 		CodeUnit cu = listing.getCodeUnitAt(addr);
@@ -523,15 +537,16 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		return program.isClosed();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!program.isClosed()) {
-			boolean updateImmediately = ev.numRecords() <= 5;
-			notifyDataChanged(updateImmediately);
+		if (program.isClosed()) {
+			return;
 		}
+
+		layoutCache.clear();
+
+		boolean updateImmediately = ev.numRecords() <= 5;
+		notifyDataChanged(updateImmediately);
 	}
 
 	@Override
