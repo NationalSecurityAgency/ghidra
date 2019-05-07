@@ -17,20 +17,25 @@ package ghidra.util.graph;
 
 import java.util.*;
 
+import org.apache.commons.collections4.set.ListOrderedSet;
+
 /**
- * Original Dependency Graph implementation that uses {@link HashMap}s and {@link HashSet}s.
- * Side affect of these is that data pulled from the graph ({@link #pop()}) is not performed
- * in a deterministic order.  However, load time for the graph is O(1).
+ * Dependency Graph that uses {@link TreeMap}s and {@link ListOrderedSet}s to provide
+ * determinism in pulling ({@link #pop()}) from the graph.  This class seems to consume more
+ * memory than {@link DependencyGraph}, and if memory is not an issue, it also seems to be
+ * slightly faster as well.
+ * <P>
+ * This class was implemented to provide determinism while doing
+ * developmental debugging.
  *
- * @param <T> the type of value.  This class uses the values as keys in HashSets, so the value
- * type must be meet the equals() and hashCode() requirements for hashing.
+ * @param <T> the type of value.
  * 
  * @see AbstractDependencyGraph
- * @see DeterministicDependencyGraph
+ * @see DependencyGraph
  */
-public class DependencyGraph<T> extends AbstractDependencyGraph<T> {
+public class DeterministicDependencyGraph<T> extends AbstractDependencyGraph<T> {
 
-	public DependencyGraph() {
+	public DeterministicDependencyGraph() {
 		super();
 	}
 
@@ -38,7 +43,7 @@ public class DependencyGraph<T> extends AbstractDependencyGraph<T> {
 	 * Copy constructor
 	 * @param other the other DependencyGraph to copy
 	 */
-	public DependencyGraph(DependencyGraph<T> other) {
+	public DeterministicDependencyGraph(DeterministicDependencyGraph<T> other) {
 		synchronized (other) {
 			for (DependencyNode node : other.nodeMap.values()) {
 				addValue(node.getValue());
@@ -53,27 +58,27 @@ public class DependencyGraph<T> extends AbstractDependencyGraph<T> {
 
 	@Override
 	public AbstractDependencyGraph<T> copy() {
-		return new DependencyGraph<>(this);
+		return new DeterministicDependencyGraph<>(this);
 	}
 
 	@Override
 	protected Map<T, DependencyNode> createNodeMap() {
-		return new HashMap<>();
+		return new TreeMap<>();
 	}
 
 	@Override
 	protected Set<T> createNodeSet() {
-		return new HashSet<>();
+		return new ListOrderedSet<>();
 	}
 
 	@Override
 	protected Set<DependencyNode> createDependencyNodeSet() {
-		return new HashSet<>();
+		return new ListOrderedSet<>();
 	}
 
 	@Override
 	public synchronized Set<T> getNodeMapValues() {
-		return new HashSet<>(nodeMap.keySet());
+		return ListOrderedSet.listOrderedSet(nodeMap.keySet());
 	}
 
 }

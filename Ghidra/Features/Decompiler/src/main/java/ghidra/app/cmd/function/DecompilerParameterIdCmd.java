@@ -37,7 +37,7 @@ import ghidra.program.model.util.AcyclicCallGraphBuilder;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.graph.DependencyGraph;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerParameterIdCmd extends BackgroundCommand {
@@ -74,7 +74,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 			monitor.setMessage("Analyzing Call Hierarchy...");
 			AcyclicCallGraphBuilder builder =
 				new AcyclicCallGraphBuilder(program, entryPoints, true);
-			DependencyGraph<Address> graph = builder.getDependencyGraph(monitor);
+			AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(monitor);
 			if (graph.isEmpty()) {
 				return true;
 			}
