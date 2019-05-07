@@ -20,8 +20,8 @@ import java.util.List;
 
 import docking.widgets.filter.*;
 
-public class DefaultTableTextFilterFactory<ROW_OBJECT> implements
-		TableTextFilterFactory<ROW_OBJECT> {
+public class DefaultTableTextFilterFactory<ROW_OBJECT>
+		implements TableTextFilterFactory<ROW_OBJECT> {
 
 	private final TextFilterFactory textFilterFactory;
 	private final boolean inverted;
@@ -40,7 +40,7 @@ public class DefaultTableTextFilterFactory<ROW_OBJECT> implements
 		TableFilter<ROW_OBJECT> tableFilter = getBaseFilter(text, transformer);
 
 		if (inverted && tableFilter != null) {
-			tableFilter = new InvertedTableFilter<ROW_OBJECT>(tableFilter);
+			tableFilter = new InvertedTableFilter<>(tableFilter);
 		}
 		return tableFilter;
 	}
@@ -55,14 +55,14 @@ public class DefaultTableTextFilterFactory<ROW_OBJECT> implements
 		if (textFilter == null) {
 			return null;
 		}
-		return new TableTextFilter<ROW_OBJECT>(textFilter, transformer);
+		return new TableTextFilter<>(textFilter, transformer);
 
 	}
 
 	private TableFilter<ROW_OBJECT> getMultiWordTableFilter(String text,
 			RowFilterTransformer<ROW_OBJECT> transformer) {
 
-		List<TextFilter> filters = new ArrayList<TextFilter>();
+		List<TextFilter> filters = new ArrayList<>();
 		TermSplitter splitter = filterOptions.getTermSplitter();
 		for (String term : splitter.split(text)) {
 			TextFilter textFilter = textFilterFactory.getTextFilter(term);
@@ -70,7 +70,7 @@ public class DefaultTableTextFilterFactory<ROW_OBJECT> implements
 				filters.add(textFilter);
 			}
 		}
-		return new MultiTextFilterTableFilter<ROW_OBJECT>(text, filters, transformer,
+		return new MultiTextFilterTableFilter<>(filters, transformer,
 			filterOptions.getMultitermEvaluationMode());
 	}
 }

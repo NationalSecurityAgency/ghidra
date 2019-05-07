@@ -243,6 +243,43 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 			}
 			return true;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getEnclosingInstance().hashCode();
+			result = prime * result + ((appliedFilters == null) ? 0 : appliedFilters.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			MarkupTablePassthroughFilter other = (MarkupTablePassthroughFilter) obj;
+			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
+				return false;
+			}
+
+			if (!Objects.equals(appliedFilters, other.appliedFilters)) {
+				return false;
+			}
+			return true;
+		}
+
+		private VTMarkupItemsTableModel getEnclosingInstance() {
+			return VTMarkupItemsTableModel.this;
+		}
+
 	}
 
 	// column for selecting/editing?
@@ -478,7 +515,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 
 		private static final String NO_SOURCE_TEXT = "None";
 
-		private GColumnRenderer<String> sourceCellRenderer = new AbstractGColumnRenderer<String>() {
+		private GColumnRenderer<String> sourceCellRenderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -543,30 +580,28 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 	static class IsInDBTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<VTMarkupItem, Boolean> {
 
-		private GColumnRenderer<Boolean> isInDBCellRenderer =
-			new AbstractGColumnRenderer<Boolean>() {
-				@Override
-				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+		private GColumnRenderer<Boolean> isInDBCellRenderer = new AbstractGColumnRenderer<>() {
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-					Object value = data.getValue();
+				Object value = data.getValue();
 
-					boolean isInDB = ((Boolean) value).booleanValue();
+				boolean isInDB = ((Boolean) value).booleanValue();
 
-					GTableCellRenderingData renderData =
-						data.copyWithNewValue(isInDB ? "yes" : null);
+				GTableCellRenderingData renderData = data.copyWithNewValue(isInDB ? "yes" : null);
 
-					JLabel renderer = (JLabel) super.getTableCellRendererComponent(renderData);
-					renderer.setOpaque(true);
+				JLabel renderer = (JLabel) super.getTableCellRendererComponent(renderData);
+				renderer.setOpaque(true);
 
-					return renderer;
-				}
+				return renderer;
+			}
 
-				@Override
-				public String getFilterString(Boolean t, Settings settings) {
-					boolean isInDB = t.booleanValue();
-					return isInDB ? "yes" : "";
-				}
-			};
+			@Override
+			public String getFilterString(Boolean t, Settings settings) {
+				boolean isInDB = t.booleanValue();
+				return isInDB ? "yes" : "";
+			}
+		};
 
 		@Override
 		public String getColumnName() {

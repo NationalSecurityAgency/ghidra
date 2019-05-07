@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.symtable;
 
 import java.awt.BorderLayout;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.TableModelListener;
@@ -212,6 +211,42 @@ class SymbolPanel extends JPanel {
 				list.add(symbol.getName());
 			}
 			return list;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getEnclosingInstance().hashCode();
+			result = prime * result + ((list == null) ? 0 : list.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			NameOnlyRowTransformer other = (NameOnlyRowTransformer) obj;
+			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
+				return false;
+			}
+
+			if (!Objects.equals(list, other.list)) {
+				return false;
+			}
+			return true;
+		}
+
+		private SymbolPanel getEnclosingInstance() {
+			return SymbolPanel.this;
 		}
 	}
 }

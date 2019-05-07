@@ -296,8 +296,8 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 	@Test
 	public void testAddSendsEvent() {
 		waitForTableModel(model);
-		final AtomicReference<TableModelEvent> ref = new AtomicReference<>();
-		model.addTableModelListener(e -> ref.set(e));
+		AtomicReference<TableModelEvent> ref = new AtomicReference<>();
+		runSwing(() -> model.addTableModelListener(e -> ref.set(e)));
 
 		int newValue = model.getRowCount() + 1;
 		addItemToModel(newValue);

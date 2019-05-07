@@ -203,6 +203,41 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 
 			return true;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getEnclosingInstance().hashCode();
+			result = prime * result + ((appliedFilters == null) ? 0 : appliedFilters.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			MatchTablePassthroughFilter other = (MatchTablePassthroughFilter) obj;
+			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
+				return false;
+			}
+			if (!Objects.equals(appliedFilters, other.appliedFilters)) {
+				return false;
+			}
+			return true;
+		}
+
+		private AbstractVTMatchTableModel getEnclosingInstance() {
+			return AbstractVTMatchTableModel.this;
+		}
 	}
 
 	static class MarkupStatusColumnComparator implements Comparator<VTMatch> {
@@ -397,7 +432,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			return 55;
 		}
 
-		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<VTScore>() {
+		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -457,7 +492,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			return 55;
 		}
 
-		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<VTScore>() {
+		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -550,7 +585,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableLabel> labelCellRenderer =
-			new AbstractGColumnRenderer<DisplayableLabel>() {
+			new AbstractGColumnRenderer<>() {
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -681,7 +716,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableAddress> addressCellRenderer =
-			new AbstractGColumnRenderer<DisplayableAddress>() {
+			new AbstractGColumnRenderer<>() {
 
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -788,7 +823,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableLabel> labelCellRenderer =
-			new AbstractGColumnRenderer<DisplayableLabel>() {
+			new AbstractGColumnRenderer<>() {
 
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -921,7 +956,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableAddress> addressCellRenderer =
-			new AbstractGColumnRenderer<DisplayableAddress>() {
+			new AbstractGColumnRenderer<>() {
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 

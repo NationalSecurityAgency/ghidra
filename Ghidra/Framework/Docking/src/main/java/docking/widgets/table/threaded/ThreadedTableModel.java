@@ -486,7 +486,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 		SystemUtilities.assertThisIsTheSwingThread("Must be called on the Swing thread");
 
-		boolean dataChanged = (this.filteredData.size() != filteredData.size());
+		//@formatter:off
+		// The data is changed when it is filtered OR when an item has been added or removed
+		boolean dataChanged = this.filteredData.getId() != filteredData.getId() || 
+							  this.filteredData.size() != filteredData.size();
+		//@formatter:on
 		this.allData = allData;
 		this.filteredData = filteredData;
 

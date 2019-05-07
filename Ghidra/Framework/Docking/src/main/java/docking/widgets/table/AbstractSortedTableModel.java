@@ -232,9 +232,6 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 * fact that the data searched is retrieved from {@link #getModelData()}, which may be 
 	 * filtered.  
 	 * 
-	 * <p>Warning: if the this model has no sort applied, then -1 will be returned.  You can call
-	 * {@link #isSorted()} to know when this will happen.
-	 * 
 	 * @param rowObject The object for which to search.
 	 * @return the index of the item in the data returned by 
 	 */

@@ -121,7 +121,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 	@Override
 	protected TestThreadedTableModelListener createListener() {
-		return new TestIncrementalThreadedTableModelListener(spy);
+		return new TestIncrementalThreadedTableModelListener(model, spy);
 	}
 
 //==================================================================================================

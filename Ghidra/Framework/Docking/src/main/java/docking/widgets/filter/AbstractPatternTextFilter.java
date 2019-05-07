@@ -15,12 +15,13 @@
  */
 package docking.widgets.filter;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public abstract class AbstractPatternTextFilter implements TextFilter {
 
 	protected final String filterText;
-	private Pattern filterPattern;
+	protected Pattern filterPattern;
 
 	protected AbstractPatternTextFilter(String filterText) {
 		this.filterText = filterText;
@@ -65,6 +66,45 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 			filterPattern = createPattern();
 		}
 		return filterPattern;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((filterPattern == null) ? 0 : filterPattern.hashCode());
+		result = prime * result + ((filterText == null) ? 0 : filterText.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		AbstractPatternTextFilter other = (AbstractPatternTextFilter) obj;
+
+		String myPattern = getPatternString();
+		String otherPattern = other.getPatternString();
+		if (!myPattern.equals(otherPattern)) {
+			return false;
+		}
+		if (!Objects.equals(filterText, other.filterText)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private String getPatternString() {
+		return filterPattern == null ? "" : filterPattern.pattern();
 	}
 
 	@Override

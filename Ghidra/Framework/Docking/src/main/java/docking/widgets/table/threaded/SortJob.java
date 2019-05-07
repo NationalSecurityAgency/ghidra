@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,8 @@
  */
 package docking.widgets.table.threaded;
 
-import ghidra.util.task.TaskMonitor;
 import docking.widgets.table.TableSortingContext;
+import ghidra.util.task.TaskMonitor;
 
 public class SortJob<T> extends TableUpdateJob<T> {
 
@@ -30,10 +29,15 @@ public class SortJob<T> extends TableUpdateJob<T> {
 
 	@Override
 	public synchronized boolean filter() {
-		boolean canFilter = super.filter();
-		if (canFilter) {
+		//
+		// This is a request to fully filter the table's data (like when the filter changes).
+		// In this case, we had disabled 'force filter', as the sorting did not need it. 
+		// However, when the client asks to filter, make sure we filter.
+		//
+		boolean jobIsStillRunning = super.filter();
+		if (jobIsStillRunning) {
 			setForceFilter(true); // reset, since we had turned it off above; now we have to filter
 		}
-		return canFilter;
+		return jobIsStillRunning;
 	}
 }

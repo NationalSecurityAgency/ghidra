@@ -15,6 +15,8 @@
  */
 package docking.widgets.filter;
 
+import java.util.Objects;
+
 public class InvertedTextFilter implements TextFilter {
 
 	private final TextFilter filter;
@@ -39,4 +41,30 @@ public class InvertedTextFilter implements TextFilter {
 		return filter.getFilterText();
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((filter == null) ? 0 : filter.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		InvertedTextFilter other = (InvertedTextFilter) obj;
+		if (!Objects.equals(filter, other.filter)) {
+			return false;
+		}
+		return true;
+	}
 }

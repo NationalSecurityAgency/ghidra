@@ -83,9 +83,13 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	TableData<ROW_OBJECT> copy() {
+		return copy(source);
+	}
+
+	TableData<ROW_OBJECT> copy(TableData<ROW_OBJECT> newSource) {
 		List<ROW_OBJECT> dataCopy = new ArrayList<>(data);
 		TableData<ROW_OBJECT> newData = new TableData<>(dataCopy, sortContext);
-		newData.source = source;
+		newData.source = newSource;
 		newData.tableFilter = tableFilter;
 		newData.ID = ID; // it is a copy, but represents the same data
 		return newData;
@@ -128,7 +132,8 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * Uses the current sort to perform a fast lookup of the given item in the given list  
+	 * Uses the current sort to perform a fast lookup of the given item in the given list when 
+	 * sorted; a brute-force lookup when not sorted
 	 * @param t the item
 	 * @return the index
 	 */
@@ -258,9 +263,11 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * @return true if the source data nor the filter are different that what is used by this object.
 	 */
 	boolean matchesFilter(TableFilter<ROW_OBJECT> filter) {
-
 		// O.K., we are derived from the same source data, if the filter is the same, then there
-		// is no need to refilter
+		// is no need to refilter.  
+		// 
+		// Note: if a given filter does not override equals(), then this really means that they 
+		//       must be the same filter for this method to return true
 		return SystemUtilities.isEqual(tableFilter, filter);
 	}
 
@@ -285,6 +292,16 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
 		// see if our parent is the different
 		return source.isUnrelatedTo(other);
+	}
+
+	/**
+	 * Returns the ID of this table data.   It is possible that two data instances of this class
+	 * that have the same ID are considered to be the same data.
+	 * 
+	 * @return the ID
+	 */
+	int getId() {
+		return ID;
 	}
 
 	/**

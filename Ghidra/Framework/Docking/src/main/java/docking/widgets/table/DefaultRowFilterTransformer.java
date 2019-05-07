@@ -15,8 +15,7 @@
  */
 package docking.widgets.table;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.JLabel;
 import javax.swing.table.TableColumnModel;
@@ -27,7 +26,7 @@ import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
 public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransformer<ROW_OBJECT> {
 
-	private List<String> columnData = new ArrayList<String>();
+	private List<String> columnData = new ArrayList<>();
 	private TableColumnModel columnModel;
 	private final RowObjectTableModel<ROW_OBJECT> model;
 
@@ -128,5 +127,42 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 		GColumnRenderer<Object> columnRenderer =
 			(GColumnRenderer<Object>) column.getColumnRenderer();
 		return columnRenderer;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((columnData == null) ? 0 : columnData.hashCode());
+		result = prime * result + ((columnModel == null) ? 0 : columnModel.hashCode());
+		result = prime * result + ((model == null) ? 0 : model.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		DefaultRowFilterTransformer<?> other = (DefaultRowFilterTransformer<?>) obj;
+		if (!Objects.equals(columnData, other.columnData)) {
+			return false;
+		}
+
+		if (!Objects.equals(columnModel, other.columnModel)) {
+			return false;
+		}
+
+		if (!Objects.equals(model, other.model)) {
+			return false;
+		}
+		return true;
 	}
 }

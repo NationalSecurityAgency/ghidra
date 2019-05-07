@@ -59,13 +59,12 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 
 			buildFrame();
 		});
-
 	}
 
 	protected abstract TestDataKeyModel createTestModel();
 
 	protected TestThreadedTableModelListener createListener() {
-		return new TestThreadedTableModelListener();
+		return new TestThreadedTableModelListener(model);
 	}
 
 	@After
@@ -257,8 +256,8 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 
 	protected void assertRowCount(int expectedCount) {
 		int rowCount = model.getRowCount();
-		assertThat("Have different number of table rows than expected after filtering",
-			expectedCount, is(rowCount));
+		assertThat("Have different number of table rows than expected after filtering", rowCount,
+			is(expectedCount));
 	}
 
 	protected void assertNoRowsFilteredOut() {

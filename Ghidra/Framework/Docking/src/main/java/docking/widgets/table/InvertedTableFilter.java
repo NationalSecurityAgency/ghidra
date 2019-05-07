@@ -15,6 +15,8 @@
  */
 package docking.widgets.table;
 
+import java.util.Objects;
+
 public class InvertedTableFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> {
 
 	private final TableFilter<ROW_OBJECT> filter;
@@ -32,6 +34,33 @@ public class InvertedTableFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> 
 	@Override
 	public boolean acceptsRow(ROW_OBJECT rowObject) {
 		return !filter.acceptsRow(rowObject);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((filter == null) ? 0 : filter.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		InvertedTableFilter<?> other = (InvertedTableFilter<?>) obj;
+		if (!Objects.equals(filter, other.filter)) {
+			return false;
+		}
+		return true;
 	}
 
 }

@@ -64,9 +64,6 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
 	 * operation is O(log n), as it uses a binary search.
 	 * 
-	 * <p>Note: if a sorted implementation is moved to an unsorted state, then -1 will be returned
-	 * from this method.
-	 * 
 	 * @param t the item 
 	 * @return the view index
 	 */
@@ -79,9 +76,6 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 	 * 
 	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
 	 * operation is O(log n), as it uses a binary search.
-	 * 
-	 * <p>Note: if a sorted implementation is moved to an unsorted state, then -1 will be returned
-	 * from this method.
 	 * 
 	 * @param t the item 
 	 * @return the model index
