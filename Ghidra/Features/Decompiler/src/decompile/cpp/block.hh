@@ -326,7 +326,7 @@ public:
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
-  BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs);			///< Build a new BlockSwitch
+  BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit);	///< Build a new BlockSwitch
 
   void orderBlocks(void) {	///< Sort blocks using the final ordering
     if (list.size()!=1) sort(list.begin(),list.end(),compareFinalOrder); }
