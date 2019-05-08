@@ -32,9 +32,13 @@ import docking.widgets.list.GList;
 import ghidra.util.exception.AssertException;
 
 class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryModelIf {
+	private static final int DEFAULT_ICON_SIZE = 16;
+	private static final int WIDTH_PADDING = 14;
+	private static final int HEIGHT_PADDING = 5;
 
 	private GhidraFileChooser chooser;
 	private DirectoryListModel model;
+	private FileListCellRenderer cellRenderer;
 	private JLabel listEditorLabel;
 	private JTextField listEditorField;
 	private JPanel listEditor;
@@ -52,7 +56,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	private void build() {
 
 		setLayoutOrientation(JList.VERTICAL_WRAP);
-		setCellRenderer(new FileListCellRenderer(chooser));
+		setCellRenderer((cellRenderer = new FileListCellRenderer(getFont(), chooser)));
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -281,36 +285,6 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		setSelectedIndices(indices);
 	}
 
-	// overridden to account for the renderers insets, to avoid clipping
-	@Override
-	public void setFixedCellWidth(int width) {
-
-		int fullWidth = width;
-		ListCellRenderer<? super File> renderer = getCellRenderer();
-		if (renderer instanceof JComponent) {
-			JComponent c = (JComponent) renderer;
-			Insets insets = c.getInsets();
-			fullWidth += insets.left + insets.right;
-		}
-
-		super.setFixedCellWidth(fullWidth);
-	}
-
-	// overridden to account for the renderers insets, to avoid clipping
-	@Override
-	public void setFixedCellHeight(int height) {
-
-		int fullHeight = height;
-		ListCellRenderer<? super File> renderer = getCellRenderer();
-		if (renderer instanceof JComponent) {
-			JComponent c = (JComponent) renderer;
-			Insets insets = c.getInsets();
-			fullHeight += insets.top + insets.bottom;
-		}
-
-		super.setFixedCellHeight(fullHeight);
-	}
-
 	private boolean isEditing() {
 		return (editedFile != null);
 	}
@@ -365,6 +339,37 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		else {
 			chooser.setStatusText("Unable to rename " + editedFileCopy);
 		}
+	}
+
+	/**
+	 * Resizes this list's cell dimensions based on the string widths found in the supplied
+	 * list of files.
+	 * <p>
+	 * If there there are no files, uses the JScrollPane that contains us for the cellwidth.
+	 *  
+	 * @param files list of files to use to resize the list's fixed cell dimensions.  If null, uses
+	 * the model's current set of files.
+	 */
+	void recomputeListCellDimensions(List<File> files) {
+		files = (files != null) ? files : model.getAllFiles();
+		Dimension cellDims =
+			cellRenderer.computePlainTextListCellDimensions(this, files, 0, DEFAULT_ICON_SIZE);
+		if (cellDims.width == 0 && getParent() != null) {
+			// special case: if there were no files to measure, use the containing JScrollPane's
+			// width
+			if (getParent().getParent() instanceof JScrollPane) {
+				JScrollPane parent = (JScrollPane) getParent().getParent();
+				Dimension parentSize = parent.getSize();
+				Insets insets = parent.getInsets();
+				cellDims.width =
+					parentSize.width - (insets != null ? insets.right + insets.left : 0);
+			}
+		}
+		else {
+			cellDims.width += DEFAULT_ICON_SIZE + WIDTH_PADDING;
+		}
+		setFixedCellWidth(cellDims.width);
+		setFixedCellHeight(cellDims.height + HEIGHT_PADDING);
 	}
 
 	/*junit*/ JTextField getListEditorText() {
