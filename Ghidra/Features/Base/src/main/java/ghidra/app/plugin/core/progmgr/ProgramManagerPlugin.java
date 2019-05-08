@@ -1018,7 +1018,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			return;
 		}
 
-		// restore state should not ask about checking out
+		// Restore state should not ask about checking out since
+		// hopefully it is in the same state it was in when project
+		// was closed and state was saved.
 		openTask.setNoCheckout();
 
 		try {
