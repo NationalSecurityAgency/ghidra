@@ -29,16 +29,16 @@ public class AddRemoveJob<T> extends TableUpdateJob<T> {
 	}
 
 	@Override
-	public synchronized boolean filter() {
+	public synchronized boolean requestFilter() {
 		//
 		// This is a request to fully filter the table's data (like when the filter changes).
 		// In this case, we had disabled 'force filter', as the sorting did not need it. 
 		// However, when the client asks to filter, make sure we filter.
 		//
-		boolean jobIsStillRunning = super.filter();
-		if (jobIsStillRunning) {
+		boolean canFilter = super.requestFilter();
+		if (canFilter) {
 			setForceFilter(true); // reset, since we had turned it off above; now we have to filter
 		}
-		return jobIsStillRunning;
+		return canFilter;
 	}
 }

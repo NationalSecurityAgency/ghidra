@@ -38,10 +38,8 @@ public class InvertedTableFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> 
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((filter == null) ? 0 : filter.hashCode());
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

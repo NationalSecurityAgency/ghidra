@@ -177,7 +177,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 // Inner Classes
 //==================================================================================================   
 
-	private class MarkupTablePassthroughFilter implements TableFilter<VTMarkupItem> {
+	private static class MarkupTablePassthroughFilter implements TableFilter<VTMarkupItem> {
 
 		private List<Filter<VTMarkupItem>> appliedFilters;
 
@@ -246,40 +246,17 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getEnclosingInstance().hashCode();
-			result = prime * result + ((appliedFilters == null) ? 0 : appliedFilters.hashCode());
-			return result;
+			// not meant to put in hashing structures; the data for equals changes
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-
-			MarkupTablePassthroughFilter other = (MarkupTablePassthroughFilter) obj;
-			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
-				return false;
-			}
-
-			if (!Objects.equals(appliedFilters, other.appliedFilters)) {
-				return false;
-			}
-			return true;
+			// For now we don't support equals(); if this filter gets re-created, 
+			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// we must also implement equals() on the filters used by this filter.
+			return this == obj;
 		}
-
-		private VTMarkupItemsTableModel getEnclosingInstance() {
-			return VTMarkupItemsTableModel.this;
-		}
-
 	}
 
 	// column for selecting/editing?

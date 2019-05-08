@@ -70,11 +70,8 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((filterPattern == null) ? 0 : filterPattern.hashCode());
-		result = prime * result + ((filterText == null) ? 0 : filterText.hashCode());
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -90,12 +87,10 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 		}
 
 		AbstractPatternTextFilter other = (AbstractPatternTextFilter) obj;
-
-		String myPattern = getPatternString();
-		String otherPattern = other.getPatternString();
-		if (!myPattern.equals(otherPattern)) {
+		if (!patternsEqual(createPattern(), other.createPattern())) {
 			return false;
 		}
+
 		if (!Objects.equals(filterText, other.filterText)) {
 			return false;
 		}
@@ -103,8 +98,24 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 		return true;
 	}
 
-	private String getPatternString() {
-		return filterPattern == null ? "" : filterPattern.pattern();
+	private boolean patternsEqual(Pattern p1, Pattern p2) {
+		String myPattern = getPatternString(p1);
+		String otherPattern = getPatternString(p2);
+		if (!myPattern.equals(otherPattern)) {
+			return false;
+		}
+
+		int f1 = getPatternFlags(p1);
+		int f2 = getPatternFlags(p2);
+		return f1 == f2;
+	}
+
+	private String getPatternString(Pattern p) {
+		return p == null ? "" : p.pattern();
+	}
+
+	private int getPatternFlags(Pattern p) {
+		return p == null ? -1 : p.flags();
 	}
 
 	@Override

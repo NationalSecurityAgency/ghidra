@@ -40,11 +40,8 @@ public abstract class MatchesPatternTextFilter extends AbstractPatternTextFilter
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + (allowGlobbing ? 1231 : 1237);
-		result = prime * result + (caseSensitive ? 1231 : 1237);
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

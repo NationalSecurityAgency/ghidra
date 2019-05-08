@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +25,6 @@ public class LoadSpecificDataJob<T> extends TableUpdateJob<T> {
 
 		// set the comparator so the data will be sorted; always force a sort, since we just 
 		// loaded the data
-		sort(model.getSortingContext(), true);
+		requestSort(model.getSortingContext(), true);
 	}
 }

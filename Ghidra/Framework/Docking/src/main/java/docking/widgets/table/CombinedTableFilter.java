@@ -103,10 +103,8 @@ public class CombinedTableFilter<T> implements TableFilter<T> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((filters == null) ? 0 : filters.hashCode());
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

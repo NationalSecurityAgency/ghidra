@@ -211,12 +211,12 @@ class ThreadedTableModelUpdateMgr<T> {
 	void sort(TableSortingContext<T> sortingContext, boolean forceSort) {
 		synchronized (updateManager) {
 			if (currentJob != null && pendingJob == null &&
-				currentJob.sort(sortingContext, forceSort)) {
+				currentJob.requestSort(sortingContext, forceSort)) {
 				return;
 			}
 
 			if (pendingJob != null) {
-				pendingJob.sort(sortingContext, forceSort);
+				pendingJob.requestSort(sortingContext, forceSort);
 			}
 			else {
 				pendingJob = new SortJob<>(model, monitor, sortingContext, forceSort);
@@ -240,11 +240,11 @@ class ThreadedTableModelUpdateMgr<T> {
 	 */
 	void filter() {
 		synchronized (updateManager) {
-			if (currentJob != null && pendingJob == null && currentJob.filter()) {
+			if (currentJob != null && pendingJob == null && currentJob.requestFilter()) {
 				return;
 			}
 			if (pendingJob != null) {
-				pendingJob.filter();
+				pendingJob.requestFilter();
 			}
 			else {
 				pendingJob = new FilterJob<>(model, monitor);

@@ -137,7 +137,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-	private class MatchTablePassthroughFilter implements TableFilter<VTMatch> {
+	private static class MatchTablePassthroughFilter implements TableFilter<VTMatch> {
 
 		private List<Filter<VTMatch>> appliedFilters;
 
@@ -206,37 +206,16 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getEnclosingInstance().hashCode();
-			result = prime * result + ((appliedFilters == null) ? 0 : appliedFilters.hashCode());
-			return result;
+			// not meant to put in hashing structures; the data for equals changes
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-
-			MatchTablePassthroughFilter other = (MatchTablePassthroughFilter) obj;
-			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
-				return false;
-			}
-			if (!Objects.equals(appliedFilters, other.appliedFilters)) {
-				return false;
-			}
-			return true;
-		}
-
-		private AbstractVTMatchTableModel getEnclosingInstance() {
-			return AbstractVTMatchTableModel.this;
+			// For now we don't support equals(); if this filter gets re-created, 
+			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// we must also implement equals() on the filters used by this filter.
+			return this == obj;
 		}
 	}
 

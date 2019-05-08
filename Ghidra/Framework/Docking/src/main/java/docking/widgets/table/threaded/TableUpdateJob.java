@@ -204,7 +204,7 @@ public class TableUpdateJob<T> {
 	 * @return true if the sort can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the sort job.
 	 */
-	public synchronized boolean sort(TableSortingContext<T> newSortingContext, boolean forceSort) {
+	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext, boolean forceSort) {
 		if (currentState == DONE) {
 			return false;
 		}
@@ -235,7 +235,7 @@ public class TableUpdateJob<T> {
 	 * @return true if the filter can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the filter job.
 	 */
-	public synchronized boolean filter() {
+	public synchronized boolean requestFilter() {
 		if (currentState == DONE) {
 			return false;
 		}

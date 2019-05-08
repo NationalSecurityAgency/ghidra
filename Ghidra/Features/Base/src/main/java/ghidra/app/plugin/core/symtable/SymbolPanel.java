@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.symtable;
 
 import java.awt.BorderLayout;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.TableModelListener;
@@ -118,7 +119,7 @@ class SymbolPanel extends JPanel {
 
 	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
 		if (nameOnly) {
-			return new NameOnlyRowTransformer();
+			return new NameOnlyRowTransformer(tableModel);
 		}
 
 		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
@@ -200,13 +201,18 @@ class SymbolPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
 		private List<String> list = new ArrayList<>();
+		private SymbolTableModel model;
+
+		NameOnlyRowTransformer(SymbolTableModel model) {
+			this.model = model;
+		}
 
 		@Override
 		public List<String> transform(SymbolRowObject rowObject) {
 			list.clear();
-			Symbol symbol = tableModel.getSymbolForRowObject(rowObject);
+			Symbol symbol = model.getSymbolForRowObject(rowObject);
 			if (symbol != null) {
 				list.add(symbol.getName());
 			}
@@ -215,11 +221,8 @@ class SymbolPanel extends JPanel {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getEnclosingInstance().hashCode();
-			result = prime * result + ((list == null) ? 0 : list.hashCode());
-			return result;
+			// not meant to put in hashing structures; the data for equals may change over time
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -233,20 +236,7 @@ class SymbolPanel extends JPanel {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-
-			NameOnlyRowTransformer other = (NameOnlyRowTransformer) obj;
-			if (!getEnclosingInstance().equals(other.getEnclosingInstance())) {
-				return false;
-			}
-
-			if (!Objects.equals(list, other.list)) {
-				return false;
-			}
 			return true;
-		}
-
-		private SymbolPanel getEnclosingInstance() {
-			return SymbolPanel.this;
 		}
 	}
 }

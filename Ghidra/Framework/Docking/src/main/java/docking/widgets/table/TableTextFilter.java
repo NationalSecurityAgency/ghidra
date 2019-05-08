@@ -59,11 +59,8 @@ public class TableTextFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((textFilter == null) ? 0 : textFilter.hashCode());
-		result = prime * result + ((transformer == null) ? 0 : transformer.hashCode());
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

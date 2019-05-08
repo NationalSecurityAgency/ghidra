@@ -131,12 +131,8 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((columnData == null) ? 0 : columnData.hashCode());
-		result = prime * result + ((columnModel == null) ? 0 : columnModel.hashCode());
-		result = prime * result + ((model == null) ? 0 : model.hashCode());
-		return result;
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -160,7 +156,8 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 			return false;
 		}
 
-		if (!Objects.equals(model, other.model)) {
+		// use '==' so that we don't end up comparing all table data
+		if (model != other.model) {
 			return false;
 		}
 		return true;
