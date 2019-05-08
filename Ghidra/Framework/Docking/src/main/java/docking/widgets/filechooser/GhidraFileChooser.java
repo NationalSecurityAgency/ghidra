@@ -22,22 +22,23 @@ import java.io.FileFilter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
 
 import docking.*;
-import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
-import ghidra.GhidraApplicationLayout;
-import ghidra.framework.*;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -86,6 +87,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	static final String DOT = ".";
 	static final String DOTDOT = "..";
 	static final String NEW_FOLDER = "New Folder";
+	static final Pattern INVALID_FILENAME_PATTERN = Pattern.compile("[/\\\\*?]");
 
 	private static final int PAD = 5;
 
@@ -551,24 +553,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 	private JScrollPane buildDirectoryList() {
 		directoryListModel = new DirectoryListModel();
-
-		directoryListModel.addListDataListener(new ListDataListener() {
-			@Override
-			public void contentsChanged(ListDataEvent e) {
-				// called when the list changes because a new file is inserted (ie. create new folder action)
-				directoryList.recomputeListCellDimensions(null);
-			}
-
-			@Override
-			public void intervalAdded(ListDataEvent e) {
-				// don't care
-			}
-
-			@Override
-			public void intervalRemoved(ListDataEvent e) {
-				// don't care
-			}
-		});
 		directoryList = new DirectoryList(this, directoryListModel);
 		directoryList.setName("LIST");
 
@@ -863,7 +847,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 		// if the visible listing is still the same directory as this incoming list of files
 		if (currentDirectory().equals(directory)) {
 			// recompute list cell dims before causing an update to the model
-			directoryList.recomputeListCellDimensions(files);
 			directoryTableModel.setFiles(files);
 			directoryTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 			directoryListModel.setFiles(files);
@@ -2130,12 +2113,17 @@ public class GhidraFileChooser extends DialogComponentProvider
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		GhidraApplicationLayout layout = new GhidraApplicationLayout();
-		Application.initializeApplication(layout, new DockingApplicationConfiguration());
-		GhidraFileChooser chooser = new GhidraFileChooser(null);
-		chooser.show();
-		System.exit(0);
+	String getInvalidFilenameMessage(String filename) {
+		switch (filename) {
+			case ".":
+			case "..":
+				return "Reserved name '" + filename + "'";
+			default:
+				Matcher m = GhidraFileChooser.INVALID_FILENAME_PATTERN.matcher(filename);
+				if (m.find()) {
+					return "Invalid characters: " + m.group();
+				}
+		}
+		return null;
 	}
 }

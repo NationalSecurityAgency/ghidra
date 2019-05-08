@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.label.GDLabel;
@@ -57,6 +59,23 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 
 		setLayoutOrientation(JList.VERTICAL_WRAP);
 		setCellRenderer((cellRenderer = new FileListCellRenderer(getFont(), chooser)));
+		model.addListDataListener(new ListDataListener() {
+			@Override
+			public void contentsChanged(ListDataEvent e) {
+				// called when the list changes because a new file is inserted (ie. create new folder action)
+				recomputeListCellDimensions(null);
+			}
+
+			@Override
+			public void intervalAdded(ListDataEvent e) {
+				recomputeListCellDimensions(null);
+			}
+
+			@Override
+			public void intervalRemoved(ListDataEvent e) {
+				// don't care
+			}
+		});
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -160,7 +179,15 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 					e.consume();
 				}
 				else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					stopListEdit();
+					String invalidFilenameMessage =
+						chooser.getInvalidFilenameMessage(listEditorField.getText());
+					if (invalidFilenameMessage != null) {
+						chooser.setStatusText(invalidFilenameMessage);
+						// keep the user in the field
+					}
+					else {
+						stopListEdit();
+					}
 					e.consume();
 				}
 			}
@@ -324,6 +351,13 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			return;
 		}
 
+		String invalidFilenameMessage =
+			chooser.getInvalidFilenameMessage(listEditorField.getText());
+		if (invalidFilenameMessage != null) {
+			chooser.setStatusText("Rename aborted - " + invalidFilenameMessage);
+			return;
+		}
+
 		File editedFileCopy = editedFile;
 		int index = model.indexOfFile(editedFileCopy);
 		if (index < 0) {
@@ -332,6 +366,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		File dest = new File(editedFileCopy.getParentFile(), listEditorField.getText());
 		cancelListEdit();
 		if (chooser.getModel().renameFile(editedFileCopy, dest)) {
+			chooser.setStatusText("");
 			model.set(index, dest);
 			//chooser.updateFiles(chooser.getCurrentDirectory(), true);
 			chooser.setSelectedFileAndUpdateDisplay(dest);
@@ -350,26 +385,25 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	 * @param files list of files to use to resize the list's fixed cell dimensions.  If null, uses
 	 * the model's current set of files.
 	 */
-	void recomputeListCellDimensions(List<File> files) {
+	private void recomputeListCellDimensions(List<File> files) {
 		files = (files != null) ? files : model.getAllFiles();
-		Dimension cellDims =
+		Dimension d =
 			cellRenderer.computePlainTextListCellDimensions(this, files, 0, DEFAULT_ICON_SIZE);
-		if (cellDims.width == 0 && getParent() != null) {
+		if (d.width == 0 && getParent() != null) {
 			// special case: if there were no files to measure, use the containing JScrollPane's
 			// width
 			if (getParent().getParent() instanceof JScrollPane) {
 				JScrollPane parent = (JScrollPane) getParent().getParent();
 				Dimension parentSize = parent.getSize();
 				Insets insets = parent.getInsets();
-				cellDims.width =
-					parentSize.width - (insets != null ? insets.right + insets.left : 0);
+				d.width = parentSize.width - (insets != null ? insets.right + insets.left : 0);
 			}
 		}
 		else {
-			cellDims.width += DEFAULT_ICON_SIZE + WIDTH_PADDING;
+			d.width += DEFAULT_ICON_SIZE + WIDTH_PADDING;
 		}
-		setFixedCellWidth(cellDims.width);
-		setFixedCellHeight(cellDims.height + HEIGHT_PADDING);
+		setFixedCellWidth(d.width);
+		setFixedCellHeight(d.height + HEIGHT_PADDING);
 	}
 
 	/*junit*/ JTextField getListEditorText() {
