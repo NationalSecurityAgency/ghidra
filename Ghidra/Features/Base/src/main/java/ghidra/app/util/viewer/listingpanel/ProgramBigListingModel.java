@@ -91,6 +91,10 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			showNonExternalFunctionPointerFormat = (Boolean) newValue;
 			formatModelChanged(null);
 		}
+
+		// There are quite a few options that affect the display of the the layouts.  Flush
+		// the cache on any change, as it is simpler than tracking individual options.
+		layoutCache.clear();
 	}
 
 	@Override
