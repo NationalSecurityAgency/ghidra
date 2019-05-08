@@ -42,7 +42,8 @@ public class OpenProgramTask extends Task {
 	private List<Program> programList = new ArrayList<>();
 	private TaskMonitor monitor;
 	private final Object consumer;
-	private boolean silent;
+	private boolean silent; // if true operation does not permit interaction
+	private boolean noCheckout; // if true operation should not perform optional checkout
 
 	private String openPromptText = "Open";
 
@@ -91,8 +92,23 @@ public class OpenProgramTask extends Task {
 		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
 	}
 
+	/**
+	 * Invoking this method prior to task execution will prevent
+	 * any confirmation interaction with the user (e.g., 
+	 * optional checkout, snapshot recovery, etc.).  Errors
+	 * may still be displayed if they occur.
+	 */
 	public void setSilent() {
 		this.silent = true;
+	}
+
+	/**
+	 * Invoking this method prior to task execution will prevent
+	 * the use of optional checkout which require prompting the
+	 * user.
+	 */
+	public void setNoCheckout() {
+		this.noCheckout = true;
 	}
 
 	public List<Program> getOpenPrograms() {
@@ -189,10 +205,7 @@ public class OpenProgramTask extends Task {
 	private void openUnversionedFile(DomainFile domainFile) {
 		String filename = domainFile.getName();
 		monitor.setMessage("Opening " + filename);
-		if (!silent && domainFile.canCheckout() && domainFile.isInWritableProject()) {
-			checkout(domainFile);
-		}
-
+		performOptionalCheckout(domainFile);
 		try {
 			openFileMaybeUgrade(domainFile);
 		}
@@ -260,15 +273,20 @@ public class OpenProgramTask extends Task {
 		return result.get();
 	}
 
-	private boolean checkout(DomainFile domainFile) {
-		User user = AppInfo.getActiveProject().getProjectData().getUser();
+	private void performOptionalCheckout(DomainFile domainFile) {
+
+		if (silent || noCheckout || !domainFile.canCheckout()) {
+			return;
+		}
+
+		User user = domainFile.getParent().getProjectData().getUser();
 
 		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
 				monitor.setMessage("Checking Out " + domainFile.getName());
 				if (domainFile.checkout(dialog.exclusiveCheckout(), monitor)) {
-					return true;
+					return;
 				}
 				Msg.showError(this, null, "Checkout Failed", "Exclusive checkout failed for: " +
 					domainFile.getName() + "\nOne or more users have file checked out!");
@@ -283,7 +301,6 @@ public class OpenProgramTask extends Task {
 				Msg.showError(this, null, "Error on Check Out", e.getMessage(), e);
 			}
 		}
-		return false;
 	}
 
 	static class DomainFileInfo {
