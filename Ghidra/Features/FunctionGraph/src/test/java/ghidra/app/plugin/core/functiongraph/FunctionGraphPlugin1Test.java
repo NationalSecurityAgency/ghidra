@@ -799,11 +799,23 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 				"original point: " + originalPoint + " - reloaded point: " + reloadedPoint,
 			pointsAreSimilar(originalPoint, reloadedPoint));
 
-		// make sure the CodeBrowser's location matches ours
+		//
+		// Make sure the CodeBrowser's location matches ours after the relayout (the location should
+		// get broadcast to the CodeBrowser)
+		//
 
-		FGVertex focusedVertex = runSwing(() -> newGraph.getFocusedVertex());
+		// Note: there is a timing failure that happens for this check; the event broadcast 
+		//       only happens if the FG provider has focus; in parallel batch mode focus is 
+		//       unreliable
+		if (!BATCH_MODE) {
+			assertTrue(graphAddressMatchesCodeBrowser(newGraph));
+		}
+	}
+
+	private boolean graphAddressMatchesCodeBrowser(FunctionGraph graph) {
+		FGVertex focusedVertex = runSwing(() -> graph.getFocusedVertex());
 		ProgramLocation graphLocation = focusedVertex.getProgramLocation();
 		ProgramLocation codeBrowserLocation = runSwing(() -> codeBrowser.getCurrentLocation());
-		assertEquals(graphLocation.getAddress(), codeBrowserLocation.getAddress());
+		return graphLocation.getAddress().equals(codeBrowserLocation.getAddress());
 	}
 }
