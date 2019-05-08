@@ -36,7 +36,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	private GhidraFileChooser chooser;
 	private DirectoryListModel model;
 	private JLabel listEditorLabel;
-	private JTextField listEditorText;
+	private JTextField listEditorField;
 	private JPanel listEditor;
 
 	/** The file being edited */
@@ -50,6 +50,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	}
 
 	private void build() {
+
 		setLayoutOrientation(JList.VERTICAL_WRAP);
 		setCellRenderer(new FileListCellRenderer(chooser));
 
@@ -137,9 +138,9 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			}
 		});
 
-		listEditorText = new JTextField();
-		listEditorText.setName("LIST_EDITOR_FIELD");
-		listEditorText.addKeyListener(new KeyAdapter() {
+		listEditorField = new JTextField();
+		listEditorField.setName("LIST_EDITOR_FIELD");
+		listEditorField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -161,7 +162,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			}
 		});
 
-		listEditorText.addFocusListener(new FocusAdapter() {
+		listEditorField.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				// Tracker SCR 3358 - Keep changes on focus lost
@@ -173,10 +174,10 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		listEditor.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
 		listEditor.add(listEditorLabel, BorderLayout.WEST);
-		listEditor.add(listEditorText, BorderLayout.CENTER);
+		listEditor.add(listEditorField, BorderLayout.CENTER);
 
 		listEditor.setBackground(Color.WHITE);
-		listEditorText.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		listEditorField.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
 		add(listEditor);
 	}
@@ -280,6 +281,36 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		setSelectedIndices(indices);
 	}
 
+	// overridden to account for the renderers insets, to avoid clipping
+	@Override
+	public void setFixedCellWidth(int width) {
+
+		int fullWidth = width;
+		ListCellRenderer<? super File> renderer = getCellRenderer();
+		if (renderer instanceof JComponent) {
+			JComponent c = (JComponent) renderer;
+			Insets insets = c.getInsets();
+			fullWidth += insets.left + insets.right;
+		}
+
+		super.setFixedCellWidth(fullWidth);
+	}
+
+	// overridden to account for the renderers insets, to avoid clipping
+	@Override
+	public void setFixedCellHeight(int height) {
+
+		int fullHeight = height;
+		ListCellRenderer<? super File> renderer = getCellRenderer();
+		if (renderer instanceof JComponent) {
+			JComponent c = (JComponent) renderer;
+			Insets insets = c.getInsets();
+			fullHeight += insets.top + insets.bottom;
+		}
+
+		super.setFixedCellHeight(fullHeight);
+	}
+
 	private boolean isEditing() {
 		return (editedFile != null);
 	}
@@ -299,9 +330,9 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		listEditor.setBounds(r.x, r.y, r.width, r.height);
 		listEditor.setVisible(true);
 		listEditorLabel.setIcon(chooser.getModel().getIcon(editedFile));
-		listEditorText.setText(editedFile.getName());
-		listEditorText.requestFocus();
-		listEditorText.selectAll();
+		listEditorField.setText(editedFile.getName());
+		listEditorField.requestFocus();
+		listEditorField.selectAll();
 	}
 
 	void cancelListEdit() {
@@ -309,7 +340,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		remove(listEditor);
 		listEditor.setVisible(false);
 		listEditorLabel.setIcon(null);
-		listEditorText.setText("");
+		listEditorField.setText("");
 		repaint();
 	}
 
@@ -324,7 +355,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		if (index < 0) {
 			throw new AssertException("Somehow editing file not in our model.");
 		}
-		File dest = new File(editedFileCopy.getParentFile(), listEditorText.getText());
+		File dest = new File(editedFileCopy.getParentFile(), listEditorField.getText());
 		cancelListEdit();
 		if (chooser.getModel().renameFile(editedFileCopy, dest)) {
 			model.set(index, dest);
@@ -337,6 +368,6 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	}
 
 	/*junit*/ JTextField getListEditorText() {
-		return listEditorText;
+		return listEditorField;
 	}
 }

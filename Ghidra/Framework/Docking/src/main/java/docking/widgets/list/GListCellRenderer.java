@@ -54,6 +54,9 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * Constructs a new GListCellRenderer.
 	 */
 	public GListCellRenderer() {
+
+		// lists don't need alternation for rows, as they don't use long columnar data
+		setShouldAlternateRowBackgroundColors(false);
 	}
 
 	/**
