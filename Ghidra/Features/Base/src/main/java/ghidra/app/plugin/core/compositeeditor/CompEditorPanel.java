@@ -25,7 +25,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
@@ -198,7 +197,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(nameLabel, gridBagConstraints);
 
 		nameTextField = new JTextField("");
-		ToolTipManager.setToolTipText(nameTextField, "Structure Name");
+		nameTextField.setToolTipText("Structure Name");
 		nameTextField.setEditable(true);
 		nameTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
@@ -230,7 +229,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		descriptionTextField = new JTextField("");
 		descriptionTextField.setMargin(TEXTFIELD_INSETS);
-		ToolTipManager.setToolTipText(descriptionTextField, "Structure Description");
+		descriptionTextField.setToolTipText("Structure Description");
 		descriptionTextField.setEditable(true);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
@@ -261,7 +260,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		categoryStatusTextField = new JTextField(" ");
 		categoryStatusTextField.setEditable(false);
-		ToolTipManager.setToolTipText(categoryStatusTextField,
+		categoryStatusTextField.setToolTipText(
 			"Category of this composite data type.");
 		categoryStatusTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
@@ -283,7 +282,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		gridBagConstraints.gridx = 4;
 		gridBagConstraints.gridy = 3;
 		internalAlignmentCheckBox.setSelected(model.viewComposite.isInternallyAligned());
-		ToolTipManager.setToolTipText(internalAlignmentCheckBox,
+		internalAlignmentCheckBox.setToolTipText(
 			"Whether or not the internal components of this structure are aligned.");
 		internalAlignmentCheckBox.setEnabled(true);
 		if (helpManager != null) {
@@ -401,7 +400,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"<HTML>" + "Sets this data type to have <B>no</B> minimum alignment<BR>" +
 				"when aligning this data type inside another data type.<BR>" +
 				"Align this data type based only on its components." + "</HTML>";
-		ToolTipManager.setToolTipText(defaultMinAlignButton, alignmentToolTip);
+		defaultMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(defaultMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -413,7 +412,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentToolTip = "<HTML>" + "Sets this data type to have a minimum alignment<BR>" +
 			"that is a multiple of the <B>machine</B> alignment<BR>" +
 			"when aligning this data type inside another data type." + "</HTML>";
-		ToolTipManager.setToolTipText(machineMinAlignButton, alignmentToolTip);
+		machineMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(machineMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -425,7 +424,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentToolTip = "<HTML>" + "Sets this data type to have a minimum alignment<BR>" +
 			"that is a multiple of the <B>specified value</B><BR>" +
 			"when aligning this data type inside another data type." + "</HTML>";
-		ToolTipManager.setToolTipText(byValueMinAlignButton, alignmentToolTip);
+		byValueMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(byValueMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -434,7 +433,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		minAlignValueTextField.setName("Minimum Alignment Value");
 		minAlignValueTextField.setEditable(true);
 		minAlignValueTextField.setMargin(TEXTFIELD_INSETS);
-		ToolTipManager.setToolTipText(minAlignValueTextField, alignmentToolTip);
+		minAlignValueTextField.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(minAlignValueTextField, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -495,13 +494,13 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 2;
 		gridBagConstraints.gridy = 3;
-		ToolTipManager.setToolTipText(actualAlignmentLabel, actualAlignmentToolTip);
+		actualAlignmentLabel.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentPanel.add(actualAlignmentLabel, BorderLayout.EAST);
 		infoPanel.add(actualAlignmentPanel, gridBagConstraints);
 
 		actualAlignmentValueTextField = new JTextField(8);
 		actualAlignmentValueTextField.setText("" + ((CompEditorModel) model).getMinimumAlignment());
-		ToolTipManager.setToolTipText(actualAlignmentValueTextField, actualAlignmentToolTip);
+		actualAlignmentValueTextField.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentValueTextField.setEditable(false);
 		if (helpManager != null) {
 			helpManager.registerHelp(actualAlignmentValueTextField, new HelpLocation(
@@ -587,7 +586,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		ToolTipManager.setToolTipText(noPackingButton, packingToolTipText);
+		noPackingButton.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(noPackingButton, new HelpLocation(provider.getHelpTopic(),
 				provider.getHelpName() + "_" + "PackMaximum"));
@@ -602,7 +601,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				"Note: An individual data type's alignment may override this value.</HTML>";
 
 		byValuePackingButton.addActionListener(e -> chooseByValuePacking());
-		ToolTipManager.setToolTipText(byValuePackingButton, packingToolTipText);
+		byValuePackingButton.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(byValuePackingButton, new HelpLocation(provider.getHelpTopic(),
 				provider.getHelpName() + "_" + "PackMaximum"));
@@ -630,7 +629,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		ToolTipManager.setToolTipText(packingValueTextField, packingToolTipText);
+		packingValueTextField.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(packingValueTextField, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "PackMaximum"));
@@ -722,7 +721,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
 		sizeLabel = new GDLabel("Size:");
-		ToolTipManager.setToolTipText(sizeLabel, "The current size in bytes.");
+		sizeLabel.setToolTipText("The current size in bytes.");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 0;
@@ -732,7 +731,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		sizeStatusTextField = new JTextField(10);
 		sizeStatusTextField.setName("Total Length");
 		sizeStatusTextField.setEditable(false);
-		ToolTipManager.setToolTipText(sizeStatusTextField, "The current size in bytes.");
+		sizeStatusTextField.setToolTipText("The current size in bytes.");
 		sizeStatusTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.ipadx = 60;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;

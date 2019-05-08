@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
@@ -387,7 +386,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	private void updateToolTip() {
-		ToolTipManager.setToolTipText(cancelButton, "Cancel " + getTaskName());
+		cancelButton.setToolTipText("Cancel " + getTaskName());
 	}
 
 	private String getTaskName() {

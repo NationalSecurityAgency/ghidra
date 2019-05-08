@@ -26,7 +26,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DockingWindowManager;
-import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
@@ -155,11 +154,11 @@ class EditExternalLocationPanel extends JPanel {
 		extLibPathTextField.setFocusable(false);
 
 		clearButton = new JButton("Clear");
-		ToolTipManager.setToolTipText(clearButton, "Remove Link to External Program");
+		clearButton.setToolTipText("Remove Link to External Program");
 		clearButton.addActionListener(e -> extLibPathTextField.setText(null));
 
 		editButton = new JButton("Edit");
-		ToolTipManager.setToolTipText(editButton, "Edit Link to External Program");
+		editButton.setToolTipText("Edit Link to External Program");
 		editButton.addActionListener(e -> popupProgramChooser());
 
 		JPanel pathPanel = new JPanel(new BorderLayout());

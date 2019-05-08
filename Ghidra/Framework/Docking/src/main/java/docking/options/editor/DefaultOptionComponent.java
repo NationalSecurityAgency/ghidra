@@ -22,7 +22,6 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.options.EditorState;
 import ghidra.util.HTMLUtilities;
@@ -56,9 +55,9 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 		String description = editorState.getDescription();
 		if (description != null) {
 			String htmlDescription = HTMLUtilities.toWrappedHTML(description);
-			ToolTipManager.setToolTipText(label, htmlDescription);
+			label.setToolTipText(htmlDescription);
 			if (component instanceof JComponent) {
-				ToolTipManager.setToolTipText((JComponent) component, htmlDescription);
+				((JComponent) component).setToolTipText(htmlDescription);
 			}
 		}
 		add(label);

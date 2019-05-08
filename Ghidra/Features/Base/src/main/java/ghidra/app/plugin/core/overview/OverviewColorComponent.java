@@ -22,10 +22,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 
-import docking.ToolTipManager;
 import docking.action.DockingActionIf;
 import docking.help.Help;
 import ghidra.app.services.GoToService;

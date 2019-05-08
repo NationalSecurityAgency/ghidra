@@ -146,7 +146,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JScrollPane sp = new JScrollPane(table);
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		docking.ToolTipManager.sharedInstance().registerComponent(table);
+		ToolTipManager.sharedInstance().registerComponent(table);
 
 		panel.add(sp, BorderLayout.CENTER);
 

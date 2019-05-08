@@ -32,7 +32,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
-import docking.ToolTipManager;
 import docking.action.DockingActionIf;
 import docking.dnd.*;
 import docking.help.Help;
@@ -647,10 +646,10 @@ public abstract class CompositeEditorPanel extends JPanel
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, "Editor messages appear here.");
+			statusLabel.setToolTipText("Editor messages appear here.");
 		}
 	}
 
