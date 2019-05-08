@@ -80,8 +80,6 @@ public class SymbolTablePlugin extends Plugin
 	final static ImageIcon SYM_GIF = ResourceManager.loadImage("images/table.png");
 	final static ImageIcon REF_GIF = ResourceManager.loadImage("images/table_go.png");
 
-	private DockingAction viewSymTableAction;
-	private DockingAction viewRefTableAction;
 
 	private DockingAction openRefsAction;
 	private DockingAction deleteAction;
@@ -136,8 +134,6 @@ public class SymbolTablePlugin extends Plugin
 		super.dispose();
 		swingMgr.dispose();
 
-		viewSymTableAction.dispose();
-		viewRefTableAction.dispose();
 		deleteAction.dispose();
 		makeSelectionAction.dispose();
 
@@ -361,31 +357,14 @@ public class SymbolTablePlugin extends Plugin
 	}
 
 	private void createActions() {
-		viewSymTableAction = new DockingAction("View Symbol Table", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(symProvider, true);
-			}
-		};
-		viewSymTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table.png"), "View"));
-		viewSymTableAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
+		symProvider.setShowActionName("View Symbol Table");
+		symProvider.setShowActionToolBarData(new ToolBarData(SYM_GIF, "View"));
+		symProvider.setShowActionKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
+		symProvider.setShowActionDescription("Display Symbol Table");
 
-		viewSymTableAction.setDescription("Display Symbol Table");
-		tool.addAction(viewSymTableAction);
-
-		viewRefTableAction = new DockingAction("View Symbol References", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(refProvider, true);
-			}
-		};
-		viewRefTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table_go.png"), "View"));
-
-		viewRefTableAction.setDescription("Display Symbol References");
-		tool.addAction(viewRefTableAction);
+		refProvider.setShowActionName("View Symbol References");
+		refProvider.setShowActionToolBarData(new ToolBarData(REF_GIF, "View"));
+		refProvider.setShowActionDescription("Display Symbol References");
 	}
 
 	private void createSymActions() {

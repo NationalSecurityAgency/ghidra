@@ -467,20 +467,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	 * Create the actions for the menu on the tool.
 	 */
 	private void createActions() {
-		// create action
-		manageDataAction = new DockingAction("Data Type Manager", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(provider, true);
-			}
-		};
+
 		ImageIcon dtIcon = ResourceManager.loadImage(DATA_TYPES_ICON);
-		manageDataAction.setToolBarData(new ToolBarData(dtIcon, "View"));
-
-		manageDataAction.setDescription("Display Data Types");
-		manageDataAction.setHelpLocation(provider.getHelpLocation());
-
-		tool.addAction(manageDataAction);
+		provider.setShowActionName("Data Type Manager");
+		provider.setShowActionToolBarData(new ToolBarData(dtIcon, "View"));
+		provider.setShowActionDescription("Display Data Types");
 
 		createStandardArchivesMenu();
 	}

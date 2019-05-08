@@ -63,7 +63,6 @@ public class RegisterPlugin extends ProgramPlugin {
 	private RegisterManagerProvider registerMgrProvider;
 	private Register[] registers = new Register[0];
 
-	private DockingAction showRegistersAction;
 	private DockingAction deleteRegisterRangeAction;
 	private DockingAction deleteRegisterAtFunctionAction;
 	private DockingAction clearRegisterAction;
@@ -94,21 +93,12 @@ public class RegisterPlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		showRegistersAction = new DockingAction("Display Register Values", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(registerMgrProvider, true);
-			}
-		};
-		showRegistersAction.setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/registerGroup.png"), "View"));
-		showRegistersAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, 0));
 
-		showRegistersAction.setDescription("Display Register Values");
-		showRegistersAction.setHelpLocation(new HelpLocation("RegisterPlugin", "RegisterManager"));
-		showRegistersAction.setEnabled(true);
-
-		tool.addAction(showRegistersAction);
+		registerMgrProvider.setShowActionName("Display Register Values");
+		registerMgrProvider.setShowActionToolBarData(new ToolBarData(
+				ResourceManager.loadImage("images/registerGroup.png"), "View"));
+		registerMgrProvider.setShowActionKeyBindingData(new KeyBindingData(KeyEvent.VK_V, 0));
+		registerMgrProvider.setShowActionDescription("Display Register Values");
 
 		setRegisterAction = new DockingAction("Set Register Values", getName()) {
 			@Override

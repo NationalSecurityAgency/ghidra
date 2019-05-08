@@ -21,7 +21,6 @@ import java.util.*;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.decompiler.component.DecompilerHighlightService;
@@ -72,7 +71,6 @@ public class DecompilePlugin extends Plugin {
 	private ProgramLocation currentLocation;
 	private ProgramSelection currentSelection;
 
-	private DockingAction decompileAction;
 
 	/**
 	 * Delay location changes to allow location events to settle down.
@@ -116,19 +114,9 @@ public class DecompilePlugin extends Plugin {
 	}
 
 	private void createActions() {
-		decompileAction = new DockingAction("Display Decompiler", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		decompileAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/decompileFunction.gif"), "View"));
-		decompileAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
-
-		decompileAction.setHelpLocation(new HelpLocation(getName(), "Decompiler"));
-		tool.addAction(decompileAction);
+		connectedProvider.setShowActionName("Display Decompiler");
+		connectedProvider.setShowActionToolBarData(new ToolBarData(ResourceManager.loadImage("images/decompileFunction.gif"), "View"));
+		connectedProvider.setShowActionKeyBindingData(new KeyBindingData(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
 	}
 
 	/**

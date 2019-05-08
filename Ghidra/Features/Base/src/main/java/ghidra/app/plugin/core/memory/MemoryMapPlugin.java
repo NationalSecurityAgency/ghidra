@@ -61,7 +61,6 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
 
-	private DockingAction memViewAction;
 	private MemoryMapProvider provider;
 	private GoToService goToService;
 	private MemoryMapManager memManager;
@@ -83,9 +82,6 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	 */
 	@Override
 	public void dispose() {
-		if (memViewAction != null) {
-			memViewAction.dispose();
-		}
 		if (provider != null) {
 			provider.dispose();
 			provider = null;
@@ -174,16 +170,11 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	 */
 	private void createActions() {
 
-		memViewAction = new DockingAction("View Memory Map", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showMemory();
-			}
-		};
 		ImageIcon tableImage = ResourceManager.loadImage(MemoryMapProvider.MEMORY_IMAGE);
-		memViewAction.setToolBarData(new ToolBarData(tableImage, "View"));
-		memViewAction.setDescription("Display Memory Map");
-		tool.addAction(memViewAction);
+		provider.setShowActionName("View Memory Map");
+		provider.setShowActionToolBarData(new ToolBarData(tableImage, "View"));
+		provider.setShowActionDescription("Display Memory Map");
+
 	}
 
 	/**

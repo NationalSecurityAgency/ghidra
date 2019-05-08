@@ -90,6 +90,12 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private long instanceID = UniversalIdGenerator.nextID().getValue();
 	private boolean instanceIDHasBeenInitialized;
 
+	// Attributes to configure the show action in "Window" menu
+	private ToolBarData showActionToolBarData;
+	private KeyBindingData showActionKeyBindingData;
+	private String showActionName;
+	private String showActionDescription;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -99,6 +105,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 */
 	public ComponentProvider(DockingTool tool, String name, String owner) {
 		this(tool, name, owner, null);
+
 	}
 
 	/**
@@ -631,6 +638,38 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private static String getKey(String oldOwner, String oldName) {
 		return "owner=" + oldOwner + "name=" + oldName;
+	}
+
+	public ToolBarData getShowActionToolBarData() {
+		return showActionToolBarData;
+	}
+
+	public void setShowActionToolBarData(ToolBarData showActionToolBarData) {
+		this.showActionToolBarData = showActionToolBarData;
+	}
+
+	public KeyBindingData getShowActionKeyBindingData() {
+		return showActionKeyBindingData;
+	}
+
+	public void setShowActionKeyBindingData(KeyBindingData showActionKeyBindingData) {
+		this.showActionKeyBindingData = showActionKeyBindingData;
+	}
+
+	public String getShowActionName() {
+		return showActionName;
+	}
+
+	public void setShowActionName(String showActionName) {
+		this.showActionName = showActionName;
+	}
+
+	public String getShowActionDescription() {
+		return showActionDescription;
+	}
+
+	public void setShowActionDescription(String showActionDescription) {
+		this.showActionDescription = showActionDescription;
 	}
 
 }

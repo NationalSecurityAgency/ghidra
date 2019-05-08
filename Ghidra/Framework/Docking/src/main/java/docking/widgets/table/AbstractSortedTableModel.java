@@ -415,8 +415,8 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 			// at this point we compare the rows, since all of the sorting columns are 
 			// completely equal
-			if (t1 instanceof Comparable) {
-				return ((Comparable) t1).compareTo(t2);
+			if (t1 instanceof Comparable && t2 instanceof Comparable) {
+					return ((Comparable) t1).compareTo(t2);
 			}
 			return System.identityHashCode(t1) - System.identityHashCode(t2);
 		}

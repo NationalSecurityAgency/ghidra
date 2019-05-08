@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.symboltree;
 
 import javax.swing.ImageIcon;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
@@ -30,7 +29,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
 //@formatter:off
@@ -60,8 +58,8 @@ public class SymbolTreePlugin extends Plugin {
 
 	public SymbolTreePlugin(PluginTool tool) {
 		super(tool);
-		createAction();
 		provider = new SymbolTreeProvider(tool, this);
+		createAction();
 	}
 
 	@Override
@@ -152,19 +150,9 @@ public class SymbolTreePlugin extends Plugin {
 	}
 
 	private void createAction() {
-		symTreeAction = new DockingAction("Display Symbol Tree", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		symTreeAction.setToolBarData(new ToolBarData(SYMBOL_TREE_ICON, "View"));
-
-		symTreeAction.setDescription("Display Symbol Tree");
-
-		symTreeAction.setHelpLocation(new HelpLocation(getName(), "SymbolTree"));
-
-		tool.addAction(symTreeAction);
+		provider.setShowActionName("Display Symbol Tree");
+		provider.setShowActionToolBarData(new ToolBarData(SYMBOL_TREE_ICON, "View"));
+		provider.setShowActionDescription("Display Symbol Tree");
 	}
 
 	private void showProvider() {

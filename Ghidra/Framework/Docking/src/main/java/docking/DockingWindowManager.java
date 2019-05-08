@@ -105,6 +105,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private Window lastActiveWindow;
 
+	private List<ShowComponentAction> showActionList = new ArrayList<>();
+
 	/**
 	 * Constructs a new DockingWindowManager
 	 * @param toolName the name of the tool.
@@ -1108,6 +1110,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		actionManager.removeAll(DOCKING_WINDOWS_OWNER);
+		for (ShowComponentAction showAction : showActionList) {
+			actionManager.removeToolAction(showAction);
+		}
+		showActionList.clear();
 
 		Map<String, List<ComponentPlaceholder>> permanentMap = new HashMap<>();
 		Map<String, List<ComponentPlaceholder>> transientMap = new HashMap<>();
@@ -1166,18 +1172,39 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		for (String subMenuName : map.keySet()) {
 			List<ComponentPlaceholder> placeholders = map.get(subMenuName);
 			for (ComponentPlaceholder placeholder : placeholders) {
-				actionList.add(
-					new ShowComponentAction(this, placeholder, subMenuName, isTransient));
+				Iterator<DockingActionIf> action_it = placeholder.getActions();
+
+				ShowComponentAction show_action = null;
+				while(action_it.hasNext()) {
+					DockingActionIf action = action_it.next();
+					if (action instanceof ShowComponentAction) {
+						show_action = (ShowComponentAction)action;
+					}
+				}
+				if (show_action==null) {
+					show_action = new ShowComponentAction(this, placeholder, subMenuName, isTransient);
+					// Store the show action in the placeholder to not recreate it at each update
+					placeholder.addAction(show_action);
+					DockingTool tool = placeholder.getProvider().getTool();
+
+					// Add the action to the DockingTool to make it available in Configuration keys list
+					tool.addAction((DockingActionIf)show_action);
+				}
+
+				actionList.add(show_action);
 			}
 			if (subMenuName != null) {
 				// add an 'add all' action for the sub-menu
 				actionList.add(new ShowAllComponentsAction(this, placeholders, subMenuName));
 			}
 		}
+
 		Collections.sort(actionList);
 		for (ShowComponentAction action : actionList) {
 			actionManager.addToolAction(action);
 		}
+		showActionList.addAll(actionList);
+
 	}
 
 	private void promoteSingleMenuGroups(Map<String, List<ComponentPlaceholder>> map) {

@@ -19,7 +19,9 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import docking.action.DockingAction;
+import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import docking.action.ToolBarData;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -44,6 +46,15 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		return title.substring(0, MAX_LENGTH - 3) + "...";
 	}
 
+	private static String GetActionName(ComponentPlaceholder info) {
+		if (info.hasProvider() && info.getProvider().getShowActionName() != null) {
+			return info.getProvider().getShowActionName();
+		}
+		else {
+			return truncateTitleAsNeeded(info.getTitle());
+		}
+	}
+
 	protected ShowComponentAction(DockingWindowManager winMgr, String name, String subMenuName) {
 		super(truncateTitleAsNeeded(name), DockingWindowManager.DOCKING_WINDOWS_OWNER);
 	}
@@ -55,7 +66,8 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 	 */
 	ShowComponentAction(DockingWindowManager winMgr, ComponentPlaceholder info, String subMenuName,
 			boolean isTransient) {
-		super(truncateTitleAsNeeded(info.getTitle()), DockingWindowManager.DOCKING_WINDOWS_OWNER);
+		super(GetActionName(info),info.getOwner());
+
 		String group = isTransient ? "Transient" : "Permanent";
 
 		Icon icon = info.getIcon();
@@ -86,6 +98,21 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 			// This action only exists as a convenience for users to show a provider from the menu.
 			// There is no need for this action itself to report errors if no help exists.
 			markHelpUnnecessary();
+		}
+
+		if (info.hasProvider()) {
+			KeyBindingData keyBinding = provider.getShowActionKeyBindingData();
+			ToolBarData toolbar = provider.getShowActionToolBarData();
+			String description = provider.getShowActionDescription();
+			if (keyBinding != null){
+				setKeyBindingData(keyBinding);
+			}
+			if (toolbar != null) {
+				setToolBarData(toolbar);
+			}
+			if (description !=  null) {
+				setDescription(description);
+			}
 		}
 	}
 
