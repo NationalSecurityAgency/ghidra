@@ -422,7 +422,7 @@ public class StringDataInstance {
 	}
 
 	private String getStringValueNoTrim() {
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return null;
 		}
 		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
@@ -895,7 +895,10 @@ public class StringDataInstance {
 		}
 
 		String str = getStringValue();
-		if (str == null || str.length() == 0) {
+		if (str == null) {
+			return defaultStr;
+		}
+		if (str.length() == 0) {
 			return prefixStr;
 		}
 
