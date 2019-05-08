@@ -317,7 +317,7 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the first visible layout
+	 * Returns the first visible layout or null if there are no visible layouts
 	 * 
 	 * @return the first visible layout
 	 */
@@ -329,7 +329,7 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the last visible layout
+	 * Returns the last visible layout or null if there are no visible layouts
 	 * 
 	 * @return the last visible layout
 	 */
