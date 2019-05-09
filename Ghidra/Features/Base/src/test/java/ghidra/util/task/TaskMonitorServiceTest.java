@@ -313,11 +313,35 @@ public class TaskMonitorServiceTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	/**
-	 * Verifies that once a monitor has been reset, the next call to retrieve a monitor will
-	 * return it as a primary
+	 * Verifies that calling finish on a primary monitor will cause it to
+	 * be set back to an uninitialized state.
 	 */
 	@Test
-	public void testMonitorReset() {
+	public void testMonitorFinishPrimary() {
+
+		TaskLauncher.launch(new Task("task") {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+
+				TaskMonitor monitor1 = TaskMonitorService.getMonitor();
+				assertTrue(monitor1 instanceof TaskDialog);
+
+				monitor1.finished();
+
+				monitor1 = TaskMonitorService.getMonitor();
+				assertTrue(monitor1 instanceof TaskDialog);
+			}
+		});
+
+		waitForTasks();
+	}
+
+	/**
+	 * Verifies that calling finish on a secondary monitor will NOT cause
+	 * it to be uninitialized (only primary monitors can reset this state)
+	 */
+	@Test
+	public void testMonitorFinishSecondary() {
 
 		TaskLauncher.launch(new Task("task") {
 			@Override
@@ -329,10 +353,10 @@ public class TaskMonitorServiceTest extends AbstractGhidraHeadedIntegrationTest 
 				monitor1 = TaskMonitorService.getMonitor();
 				assertTrue(monitor1 instanceof SecondaryTaskMonitor);
 
-				monitor1.release();
+				monitor1.finished();
 
 				monitor1 = TaskMonitorService.getMonitor();
-				assertTrue(monitor1 instanceof TaskDialog);
+				assertTrue(monitor1 instanceof SecondaryTaskMonitor);
 			}
 		});
 

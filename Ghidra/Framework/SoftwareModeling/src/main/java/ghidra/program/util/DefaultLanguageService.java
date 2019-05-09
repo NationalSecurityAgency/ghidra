@@ -86,10 +86,18 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	}
 
 	private void searchForProviders() {
-		Set<LanguageProvider> languageProviders =
-			ClassSearcher.getInstances(LanguageProvider.class);
-		searchCompleted = true;
-		processProviders(languageProviders);
+		TaskMonitor monitor = TaskMonitorService.getMonitor();
+		monitor.setMessage("Searching for language providers");
+		try {
+			Set<LanguageProvider> languageProviders =
+				ClassSearcher.getInstances(LanguageProvider.class);
+
+			searchCompleted = true;
+			processProviders(languageProviders);
+		}
+		finally {
+			monitor.finished();
+		}
 	}
 
 	/**
@@ -100,7 +108,6 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 		TaskMonitor monitor = TaskMonitorService.getMonitor();
 		monitor.setMessage("Retrieving language: " + languageID);
-
 		try {
 			LanguageInfo info = languageMap.get(languageID);
 
@@ -112,7 +119,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 			return lang;
 		}
 		finally {
-			monitor.release();
+			monitor.finished();
 		}
 	}
 

@@ -33,8 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 public class OpenProgramTask extends Task {
 
@@ -108,7 +107,7 @@ public class OpenProgramTask extends Task {
 
 	@Override
 	public void run(TaskMonitor taskMonitor) {
-		this.monitor = taskMonitor;
+		this.monitor = TaskMonitorService.getMonitor();
 
 		if (domainFileInfoList.size() > 1) {
 			monitor.initialize(domainFileInfoList.size());

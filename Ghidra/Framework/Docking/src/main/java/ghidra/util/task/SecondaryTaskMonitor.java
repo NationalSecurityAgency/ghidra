@@ -65,6 +65,17 @@ public class SecondaryTaskMonitor implements TaskMonitor {
 		parentMonitor.setInitialized(init);
 	}
 
+	/**
+	 * Secondary monitors should not be able to reset progress or revert back
+	 * to an uninitialized state; hence the override.
+	 */
+	@Override
+	public void finished() {
+		synchronized (this) {
+			setMessage("");
+		}
+	}
+
 	@Override
 	public boolean isCancelEnabled() {
 		return parentMonitor.isCancelEnabled();

@@ -66,7 +66,7 @@ public interface TaskMonitor {
 	 * monitor being returned from the {@link TaskMonitorService} on the next
 	 * invocation. 
 	 */
-	public default void release() {
+	public default void finished() {
 		synchronized (this) {
 			setMessage("");
 			setProgress(0);
