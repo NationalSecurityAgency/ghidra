@@ -153,9 +153,10 @@ protected:
   void emitCommentGroup(const PcodeOp *inst);		///< Emit comments associated with a given statement
   void emitCommentFuncHeader(const Funcdata *fd);	///< Emit comments in the given function's header
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
-  void opTypeCast(const PcodeOp *op);			///< Pus the given p-code op using type-cast syntax to the RPN stack
+  void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
   static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
   bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
+  bool isExtensionCastImplied(const PcodeOp *op) const;
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,

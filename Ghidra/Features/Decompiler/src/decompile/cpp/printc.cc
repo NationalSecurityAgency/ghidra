@@ -577,8 +577,12 @@ void PrintC::opReturn(const PcodeOp *op)
 void PrintC::opIntZext(const PcodeOp *op)
 
 {
-  if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType()))
-    opTypeCast(op);
+  if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+    if (isExtensionCastImplied(op))
+      pushVnImplied(op->getIn(0),op,mods);
+    else
+      opTypeCast(op);
+  }
   else
     opFunc(op);
 }
@@ -586,8 +590,12 @@ void PrintC::opIntZext(const PcodeOp *op)
 void PrintC::opIntSext(const PcodeOp *op)
 
 {
-  if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType()))
-    opTypeCast(op);
+  if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+    if (isExtensionCastImplied(op))
+      pushVnImplied(op->getIn(0),op,mods);
+    else
+      opTypeCast(op);
+  }
   else
     opFunc(op);
 }
@@ -1245,6 +1253,31 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
   else
     res = false;
   return res;
+}
+
+/// \brief Is the given ZEXT/SEXT cast implied by the expression its in
+///
+/// We know that the given ZEXT or SEXT op can be viewed as a natural \e cast operation.
+/// Sometimes such a cast is implied by the expression its in, and the cast itself
+/// doesn't need to be printed.
+/// \param op is the given ZEXT or SEXT PcodeOp
+/// \return \b true if the op as a cast does not need to be printed
+bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
+
+{
+  const Varnode *outVn = op->getOut();
+  if (outVn->isExplicit()) {
+
+  }
+  else {
+    PcodeOp *expOp = outVn->loneDescend();
+    if (expOp != (PcodeOp *)0) {
+      OpCode opc = expOp->code();
+      if (opc == CPUI_PTRADD)
+	return true;
+    }
+  }
+  return false;
 }
 
 /// \brief Push a single character constant to the RPN stack
