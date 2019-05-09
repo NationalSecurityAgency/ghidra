@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +322,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		// then changed the text field text.
 		DataType selectedDataType = selectionField.getSelectedValue();
 		if (selectedDataType != null && selectionField.getText().equals(selectedDataType.getName())) {
-			DataTypeParser.checkAllowableType(selectedDataType, allowedDataTypes);
+			DataTypeParser.ensureIsAllowableType(selectedDataType, allowedDataTypes);
 			return true;
 		}
 

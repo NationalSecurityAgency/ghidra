@@ -294,7 +294,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			dtm = activeProgram.getDataTypeManager();
 		}
 		DataTypeSelectionDialog d = new DataTypeSelectionDialog(tool, dtm, Integer.MAX_VALUE,
-			AllowedDataTypes.FIXED_LENGTH);
+			AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		tool.showDialog(d, provider);
 		DataType dt = d.getUserChosenDataType();
 		addDataType(dt);
