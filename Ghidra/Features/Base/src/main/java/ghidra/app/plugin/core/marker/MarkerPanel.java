@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JPanel;
+import javax.swing.ToolTipManager;
 
 /**
  * Panel to display markers.  Normally placed to the left hand side
@@ -33,7 +33,7 @@ public class MarkerPanel extends JPanel {
 		super();
 		this.manager = manager;
 
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 	}
 
 	@Override

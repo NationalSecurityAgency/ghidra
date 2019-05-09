@@ -32,7 +32,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
-import docking.ToolTipManager;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GDLabel;
@@ -409,8 +408,8 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		// tooltip text problem where the text is obscured by a component
 		// added after tooltip has been added
 		//
-		ToolTipManager.setToolTipText(upButton, "Changes the order of search for plugins");
-		ToolTipManager.setToolTipText(downButton, "Changes the order of search for plugins");
+		upButton.setToolTipText("Changes the order of search for plugins");
+		downButton.setToolTipText("Changes the order of search for plugins");
 
 		pluginPathListPanel.validate();
 		return pluginPathListPanel;

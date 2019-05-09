@@ -668,7 +668,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		col.setMaxWidth(80);
 		col.setResizable(false);
 
-		docking.ToolTipManager.sharedInstance().registerComponent(refsTable);
+		ToolTipManager.sharedInstance().registerComponent(refsTable);
 
 		dropTargetAdapter = new DropTgtAdapter(dropHandler, DnDConstants.ACTION_COPY_OR_MOVE,
 			ACCEPTABLE_DROP_FLAVORS);

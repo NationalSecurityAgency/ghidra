@@ -22,7 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
+import docking.DockingUtils;
 import docking.widgets.PopupWindow;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -104,7 +104,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 		activeHoverService = null;
 		lastField = null;
 
-		ToolTipManager.sharedInstance().hideTipWindow();
+		DockingUtils.hideTipWindow();
 
 		if (popupWindow != null) {
 			popupWindow.dispose();

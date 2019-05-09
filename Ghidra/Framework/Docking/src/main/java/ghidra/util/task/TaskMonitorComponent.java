@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDHtmlLabel;
@@ -44,10 +43,10 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
-	
+
 	private JProgressBar progressBar;
 	private JButton cancelButton;
-	
+
 	private JPanel cancelPanel;
 	private JPanel progressBarPanel;
 	private JPanel mainContentPanel;
@@ -55,11 +54,11 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private String progressMessage;
 	private String taskName;
-	
+
 	private JLabel messageLabel;
-	
+
 	private volatile boolean isCancelled;
-	
+
 	private long lastProgress = -1;
 	private long progress;
 	private long lastMaxProgress = -1;
@@ -76,14 +75,14 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	private boolean showingCancelButton = true;
 	private boolean cancelEnabled = true;
 	private boolean paintProgressValue = true;
-	
+
 	private AtomicBoolean isIndeterminate = new AtomicBoolean(false);
 	private AtomicInteger taskID = new AtomicInteger();
 
 	private Timer updateTimer;
-	
+
 	private NumberFormat percentFormat = NumberFormat.getPercentInstance();
-	
+
 	/**
 	 * Constructor
 	 */
@@ -117,7 +116,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 		buildProgressPanel(includeTextField, includeCancelButton);
 	}
-	
+
 	@Override
 	public void addCancelledListener(CancelledListener mcl) {
 		listeners.add(mcl);
@@ -127,7 +126,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	public void removeCancelledListener(CancelledListener mcl) {
 		listeners.remove(mcl);
 	}
-	
+
 	@Override
 	public void incrementProgress(long incrementAmount) {
 		setProgress(progress + incrementAmount);
@@ -164,7 +163,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		progress = value;
 		startUpdateTimer();
 	}
-	
+
 	@Override
 	public void initialize(long maxValue) {
 		setMaximum(maxValue);
@@ -179,7 +178,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		}
 		startUpdateTimer();
 	}
-	
+
 	/**
 	 * Sets the <code>indeterminate</code> property of the progress bar,
 	 * which determines whether the progress bar is in determinate
@@ -242,7 +241,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 			isCancelled = false;
 		}
 	}
-	
+
 	@Override
 	public void setShowProgressValue(boolean showProgressValue) {
 		this.paintProgressValue = showProgressValue;
@@ -253,7 +252,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	public long getMaximum() {
 		return maxProgress;
 	}
-	
+
 	/**
 	 * Reset this monitor so that it can be reused
 	 */
@@ -262,7 +261,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		isCancelled = false;
 		taskID.incrementAndGet();
 	}
-	
+
 	/**
 	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
 	 * been called.
@@ -314,9 +313,9 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		else {
 			remove(cancelPanel);
 		}
-		
+
 		repaint();
-		showingCancelButton = visible;		
+		showingCancelButton = visible;
 	}
 
 	/**
@@ -340,7 +339,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 		SystemUtilities.runSwingNow(r);
 	}
-	
+
 	protected void notifyChangeListeners() {
 		Runnable r = () -> {
 			for (CancelledListener mcl : listeners) {
@@ -349,7 +348,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		};
 		SwingUtilities.invokeLater(r);
 	}
-	
+
 	private synchronized void startUpdateTimer() {
 		if (!updateTimer.isRunning()) {
 			updateTimer.start();
@@ -428,7 +427,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	private void updateToolTip() {
-		ToolTipManager.setToolTipText(cancelButton, "Cancel " + getTaskName());
+		cancelButton.setToolTipText("Cancel " + getTaskName());
 	}
 
 	private String getTaskName() {

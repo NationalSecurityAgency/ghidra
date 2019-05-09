@@ -22,7 +22,6 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.ToolTipManager;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.GhidraServerHandle;
@@ -151,7 +150,7 @@ public class ServerInfoComponent extends JPanel {
 		};
 		portNumberField.getDocument().addDocumentListener(portDocListener);
 
-		ToolTipManager.setToolTipText(portNumberField, "Enter port number");
+		portNumberField.setToolTipText("Enter port number");
 		JPanel panel = new JPanel(new PairLayout(5, 10));
 		panel.add(nameLabel);
 		panel.add(nameField);

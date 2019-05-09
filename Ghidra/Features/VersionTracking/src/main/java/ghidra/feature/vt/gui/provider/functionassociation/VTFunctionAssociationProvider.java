@@ -29,7 +29,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 
 import docking.ActionContext;
-import docking.ToolTipManager;
 import docking.WindowPosition;
 import docking.action.*;
 import docking.menu.ActionState;
@@ -629,10 +628,10 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, null);
+			statusLabel.setToolTipText(null);
 		}
 	}
 

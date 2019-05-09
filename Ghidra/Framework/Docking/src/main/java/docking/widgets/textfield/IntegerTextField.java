@@ -21,13 +21,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
 import docking.DockingUtils;
-import docking.ToolTipManager;
 import docking.util.GraphicsUtils;
 import ghidra.util.SystemUtilities;
 

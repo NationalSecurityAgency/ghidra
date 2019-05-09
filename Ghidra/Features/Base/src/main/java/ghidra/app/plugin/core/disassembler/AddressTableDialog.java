@@ -25,7 +25,6 @@ import javax.swing.event.DocumentListener;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
-import docking.ToolTipManager;
 import docking.action.*;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
@@ -126,7 +125,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel makeTablePanel = new JPanel(new FlowLayout());
 
 		makeTableButton = new JButton("Make Table");
-		ToolTipManager.setToolTipText(makeTableButton,
+		makeTableButton.setToolTipText(
 			"Make a table of addresses at the selected location(s).");
 		makeTablePanel.add(makeTableButton);
 		makeTableButton.setEnabled(false);
@@ -134,7 +133,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		JPanel disassemblePanel = new JPanel(new FlowLayout());
 		disassembleTableButton = new JButton("Disassemble");
-		ToolTipManager.setToolTipText(disassembleTableButton,
+		disassembleTableButton.setToolTipText(
 			"Disassemble at all locations pointed to by the selected address table(s) members.");
 		disassembleTableButton.setEnabled(false);
 		disassemblePanel.add(disassembleTableButton);
@@ -152,7 +151,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		searchOptionsPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
 		JLabel minLengthLabel = new GLabel("Minimum Length: ");
-		ToolTipManager.setToolTipText(minLengthLabel,
+		minLengthLabel.setToolTipText(
 			"The minimum number of consecutive addresses that will make an address table.");
 		minLengthField = new JTextField(5);
 		minLengthField.setName("Minimum Length");
@@ -165,7 +164,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		alignLabel = new GDLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
-		ToolTipManager.setToolTipText(alignLabel,
+		alignLabel.setToolTipText(
 			"Alignment that address tables and what they are pointing to must satisfy.");
 		int align = plugin.getProgram().getLanguage().getInstructionAlignment();
 		if (PseudoDisassembler.hasLowBitCodeModeInAddrValues(plugin.getProgram())) {
@@ -176,7 +175,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		skipLabel = new GDLabel("Skip Length: ");
 		skipField = new JTextField(5);
 		skipField.setName("Skip");
-		ToolTipManager.setToolTipText(skipLabel,
+		skipLabel.setToolTipText(
 			"Number of bytes to skip between found addresses in a table.");
 		skipField.setText("0");
 
@@ -195,7 +194,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		selectionButton = new GCheckBox("Search Selection");
 		selectionButton.setSelected(false);
-		ToolTipManager.setToolTipText(selectionButton,
+		selectionButton.setToolTipText(
 			"If checked, search only the current selection.");
 		JPanel searchOptionsWestPanel = new JPanel(new GridLayout(2, 1));
 		searchOptionsWestPanel.add(selectionButton);
@@ -213,7 +212,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 			shiftedAddressButton.setVisible(false);
 		}
 
-		ToolTipManager.setToolTipText(shiftedAddressButton,
+		shiftedAddressButton.setToolTipText(
 			"Search for tables of four byte values that when shifted left by two, are valid " +
 				"addresses in the current program.");
 		searchOptionsWestPanel.add(shiftedAddressButton);
@@ -230,11 +229,11 @@ public class AddressTableDialog extends DialogComponentProvider {
 		autoLabelCB = new GCheckBox("Auto Label");
 		autoLabelCB.setSelected(true);
 		autoLabelCB.setEnabled(false);
-		ToolTipManager.setToolTipText(autoLabelCB,
+		autoLabelCB.setToolTipText(
 			"Label the top of the address table and all members of the table.");
 
 		offsetLabel = new GDLabel("Offset: ");
-		ToolTipManager.setToolTipText(offsetLabel,
+		offsetLabel.setToolTipText(
 			"Offset from the beginning of the selected table(s)");
 		offsetLabel.setEnabled(false);
 
@@ -243,7 +242,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		viewOffset = new HintTextField(20);
 		viewOffset.setName("viewOffset");
-		ToolTipManager.setToolTipText(viewOffset,
+		viewOffset.setToolTipText(
 			"Address of the selected table starting at the given offset");
 		viewOffset.setHintText("table start address");
 		viewOffset.showHint();
@@ -257,8 +256,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		offsetField = new JTextField(2);
 		offsetField.setName("offset");
-		ToolTipManager.setToolTipText(offsetField,
-			"Offset from the beginning of the selected table(s)");
+		offsetField.setToolTipText("Offset from the beginning of the selected table(s)");
 		offsetField.setText("0");
 		offsetField.setEnabled(false);
 		offsetField.addActionListener(

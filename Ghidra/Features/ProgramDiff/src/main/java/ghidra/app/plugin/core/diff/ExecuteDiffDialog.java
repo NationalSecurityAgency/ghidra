@@ -25,7 +25,6 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
-import docking.ToolTipManager;
 import docking.widgets.checkbox.GCheckBox;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -180,7 +179,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 
 		limitToSelectionCB = new GCheckBox("Limit To Selection");
 		limitToSelectionCB.setName("LimitToSelectionDiffCB");
-		ToolTipManager.setToolTipText(limitToSelectionCB, "Limits the Diff to the selection.");
+		limitToSelectionCB.setToolTipText("Limits the Diff to the selection.");
 		limitToSelectionCB.addActionListener(ev -> {
 			limitToSelection = limitToSelectionCB.isSelected();
 			updateDiffSetText();
@@ -197,7 +196,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	 */
 	private JPanel createDiffFilterPanel() {
 		JPanel checkBoxPanel = new JPanel();
-		ToolTipManager.setToolTipText(checkBoxPanel,
+		checkBoxPanel.setToolTipText(
 			"Check the types of differences between the two " +
 				"programs that you want detected and highlighted.");
 
@@ -238,7 +237,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createBytesCheckBox() {
 		diffBytesCB = new GCheckBox("Bytes", diffBytes);
 		diffBytesCB.setName("BytesDiffCB");
-		ToolTipManager.setToolTipText(diffBytesCB, "Highlight byte differences.");
+		diffBytesCB.setToolTipText("Highlight byte differences.");
 		diffBytesCB.addItemListener(event -> {
 			diffBytes = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.BYTE_DIFFS, diffBytes);
@@ -249,7 +248,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createLabelsCheckBox() {
 		diffLabelsCB = new GCheckBox("Labels", diffLabels);
 		diffLabelsCB.setName("LabelsDiffCB");
-		ToolTipManager.setToolTipText(diffLabelsCB, "Highlight label differences.");
+		diffLabelsCB.setToolTipText("Highlight label differences.");
 		diffLabelsCB.addItemListener(event -> {
 			diffLabels = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.SYMBOL_DIFFS, diffLabels);
@@ -260,7 +259,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createCodeUnitsCheckBox() {
 		diffCodeUnitsCB = new GCheckBox("Code Units", diffCodeUnits);
 		diffCodeUnitsCB.setName("CodeUnitsDiffCB");
-		ToolTipManager.setToolTipText(diffCodeUnitsCB,
+		diffCodeUnitsCB.setToolTipText(
 			"Highlight the instruction, data, " + "and equate differences.");
 		diffCodeUnitsCB.addItemListener(event -> {
 			diffCodeUnits = (event.getStateChange() == ItemEvent.SELECTED);
@@ -273,7 +272,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createReferencesCheckBox() {
 		diffReferencesCB = new GCheckBox("References", diffReferences);
 		diffReferencesCB.setName("ReferencesDiffCB");
-		ToolTipManager.setToolTipText(diffReferencesCB, "Highlight the reference differences.");
+		diffReferencesCB.setToolTipText("Highlight the reference differences.");
 		diffReferencesCB.addItemListener(event -> {
 			diffReferences = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.REFERENCE_DIFFS, diffReferences);
@@ -284,8 +283,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createProgramContextCheckBox() {
 		diffProgramContextCB = new GCheckBox("Program Context", diffProgramContext);
 		diffProgramContextCB.setName("ProgramContextDiffCB");
-		ToolTipManager.setToolTipText(diffProgramContextCB,
-			"Highlight the program context register differences.");
+		diffProgramContextCB.setToolTipText("Highlight the program context register differences.");
 		diffProgramContextCB.addItemListener(event -> {
 			diffProgramContext = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.PROGRAM_CONTEXT_DIFFS, diffProgramContext);
@@ -296,7 +294,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createCommentsCheckBox() {
 		diffCommentsCB = new GCheckBox("Comments", diffComments);
 		diffCommentsCB.setName("CommentsDiffCB");
-		ToolTipManager.setToolTipText(diffCommentsCB, "Highlight comment differences.");
+		diffCommentsCB.setToolTipText("Highlight comment differences.");
 		diffCommentsCB.addItemListener(event -> {
 			diffComments = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.COMMENT_DIFFS, diffComments);
@@ -307,7 +305,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createBookmarksCheckBox() {
 		diffBookmarksCB = new GCheckBox("Bookmarks", diffBookmarks);
 		diffBookmarksCB.setName("BookmarksDiffCB");
-		ToolTipManager.setToolTipText(diffBookmarksCB,
+		diffBookmarksCB.setToolTipText(
 			"Highlight bookmark differences. " + "(for example, bookmark differences)");
 		diffBookmarksCB.addItemListener(event -> {
 			diffBookmarks = (event.getStateChange() == ItemEvent.SELECTED);
@@ -319,8 +317,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createPropertiesCheckBox() {
 		diffPropertiesCB = new GCheckBox("Properties", diffProperties);
 		diffPropertiesCB.setName("PropertiesDiffCB");
-		ToolTipManager.setToolTipText(diffPropertiesCB,
-			"Highlight user defined property differences. " +
+		diffPropertiesCB.setToolTipText("Highlight user defined property differences. " +
 				"(for example, Format (space) differences)");
 		diffPropertiesCB.addItemListener(event -> {
 			diffProperties = (event.getStateChange() == ItemEvent.SELECTED);
@@ -332,7 +329,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private void createFunctionsCheckBox() {
 		diffFunctionsCB = new GCheckBox("Functions", diffFunctions);
 		diffFunctionsCB.setName("FunctionsDiffCB");
-		ToolTipManager.setToolTipText(diffFunctionsCB, "Highlight function differences.");
+		diffFunctionsCB.setToolTipText("Highlight function differences.");
 		diffFunctionsCB.addItemListener(event -> {
 			diffFunctions = (event.getStateChange() == ItemEvent.SELECTED);
 			// Functions check box controls both functions and function tags.

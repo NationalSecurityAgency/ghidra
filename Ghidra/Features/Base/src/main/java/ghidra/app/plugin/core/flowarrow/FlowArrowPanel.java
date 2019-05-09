@@ -20,11 +20,11 @@ import java.awt.event.*;
 import java.util.Iterator;
 
 import javax.swing.JPanel;
+import javax.swing.ToolTipManager;
 
 import org.jdesktop.animation.timing.Animator;
 
 import docking.DockingWindowManager;
-import docking.ToolTipManager;
 import docking.util.AnimationUtils;
 import docking.util.SwingAnimationCallback;
 import ghidra.program.model.address.*;

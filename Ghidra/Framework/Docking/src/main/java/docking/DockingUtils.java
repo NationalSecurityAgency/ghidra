@@ -351,4 +351,14 @@ public class DockingUtils {
 		c.setBackground(new Color(0, 0, 0, 0));
 	}
 
+	/** Hides any open tooltip window */
+	public static void hideTipWindow() {
+		// This is a hack, since Java's manager doesn't have this method
+		javax.swing.ToolTipManager.sharedInstance().setEnabled(false);
+		javax.swing.ToolTipManager.sharedInstance().setEnabled(true);
+
+// TODO: Ultimately, the ESCAPE key binding in the Java TTM should hide any visible tooltips.  We
+//       need to look into why this isn't working.
+	}
+
 }

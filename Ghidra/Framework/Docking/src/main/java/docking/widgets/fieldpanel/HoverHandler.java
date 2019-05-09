@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 
 import javax.swing.Timer;
+import javax.swing.ToolTipManager;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -63,7 +63,7 @@ public class HoverHandler implements ActionListener {
 	public void setHoverProvider(HoverProvider hoverProvider) {
 		this.hoverProvider = hoverProvider;
 		if (hoverProvider != null && hoverTimer == null) {
-			int timeout = docking.ToolTipManager.sharedInstance().getInitialDelay();
+			int timeout = ToolTipManager.sharedInstance().getInitialDelay();
 			hoverTimer = new Timer(timeout, this);
 			hoverTimer.setRepeats(false);
 			hoverTimer.stop();
