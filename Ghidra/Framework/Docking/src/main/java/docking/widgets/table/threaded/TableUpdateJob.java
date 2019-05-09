@@ -204,7 +204,8 @@ public class TableUpdateJob<T> {
 	 * @return true if the sort can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the sort job.
 	 */
-	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext, boolean forceSort) {
+	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext,
+			boolean forceSort) {
 		if (currentState == DONE) {
 			return false;
 		}
@@ -688,7 +689,7 @@ public class TableUpdateJob<T> {
 
 	@Override
 	public String toString() {
-		return "Job - [state history=\n" + getStateHistoryString() + "]";
+		return getClass().getSimpleName() + " - [state history=\n" + getStateHistoryString() + "]";
 	}
 
 	private String getStateHistoryString() {
