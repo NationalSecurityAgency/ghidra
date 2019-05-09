@@ -21,12 +21,16 @@ import ghidra.docking.settings.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.ByteMemBufferImpl;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
+import utilities.util.ArrayUtilities;
 
 /**
  * A hover service to show tool tip text for hovering over scalar values.
@@ -39,11 +43,10 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	//@formatter:off
 	private static final Settings[] INTEGER_SETTINGS = new Settings[] { 
 		getSettingsForRadix("hex"),
-		getSettingsForRadix("decimal"), 
-		getSettingsForRadix("char")
+		getSettingsForRadix("decimal") 
 	};
 
-	private static final AbstractIntegerDataType[] DISPLAY_TYPES =
+	private static final AbstractIntegerDataType[] INTEGER_DISPLAY_TYPES =
 		new AbstractIntegerDataType[] { 
 			new ByteDataType(),
 			new WordDataType(), 
@@ -65,22 +68,16 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 		super(tool, priority);
 	}
 
-	protected String formatScalar(Program program, Address addr, Scalar scalar) {
+	private void formatIntegerTypes(Program program, Address addr, Scalar scalar,
+			StringBuilder htmlText) {
+		ByteMemBufferImpl memBuffer = getScalarOperandAsMemBuffer(addr, scalar, 1, Endian.BIG);
 
-		StringBuilder sb = new StringBuilder(HTMLUtilities.HTML);
-
-		byte[] opBytes = getOperandBytes(scalar);
-		int opSize = opBytes.length;
-
-		Memory memory = program.getMemory();
-		MemBuffer memBuffer = new ByteMemBufferImpl(addr, opBytes, !memory.isBigEndian());
-
-		buildTableHeader(sb);
+		StringBuilder sb = new StringBuilder();
 
 		// For each data type, render different the bases/formats
-		for (DataType type : DISPLAY_TYPES) {
+		for (DataType type : INTEGER_DISPLAY_TYPES) {
 
-			if (type.getLength() != opSize) {
+			if (type.getLength() != memBuffer.getLength()) {
 				continue;
 			}
 
@@ -96,7 +93,88 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 			addReprRow(sb, type.getDisplayName(), reprs);
 		}
 
-		sb.append("</table>");
+		if (sb.length() > 0) {
+			htmlText.append("<table><tr><th nowrap>&nbsp;</th>");
+			for (Settings setting : INTEGER_SETTINGS) {
+
+				String radixName = FORMAT.getDisplayChoice(setting);
+				radixName = Character.toTitleCase(radixName.charAt(0)) + radixName.substring(1);
+
+				htmlText.append("<th nowrap>").append(radixName).append("</th>");
+			}
+			htmlText.append("</tr>");
+			htmlText.append(sb);
+			htmlText.append("</table>");
+		}
+	}
+
+	private void formatCharTypes(Program program, Address addr, Scalar scalar,
+			StringBuilder htmlText) {
+
+		// The CharDataType can change depending on the DataOrg of the current program, so this
+		// can't be a static array like INTEGER_DISPLAY_TYPES
+		List<DataType> charDataTypes = Arrays.asList(new CharDataType(program.getDataTypeManager()),
+			new WideChar16DataType(program.getDataTypeManager()),
+			new WideChar32DataType(program.getDataTypeManager()));
+
+		String prevCharVal = "";
+		StringBuilder localHTMLText = new StringBuilder();
+
+		Endian progEndian = program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE;
+		for (DataType charDt : charDataTypes) {
+			// for each char data type, append its representation to the buffer, if it is
+			// a new way to display the scalar
+			ByteMemBufferImpl charMemBuffer =
+				getScalarOperandAsMemBuffer(addr, scalar, charDt.getLength(), progEndian);
+			prevCharVal =
+				appendCharDataTypeFormattedHTML(prevCharVal, charDt, charMemBuffer, localHTMLText);
+		}
+
+		if (localHTMLText.length() > 0) {
+			htmlText.append("<hr>");
+			htmlText.append("<table width=\"100%\">") //
+				.append(localHTMLText) //
+				.append("</table>");
+		}
+	}
+
+	private String appendCharDataTypeFormattedHTML(String prevCharVal, DataType charDt,
+			ByteMemBufferImpl charMemBuffer, StringBuilder htmlText) {
+		// appends a HTML table row to the stringbuilder with the scalar displayed as the
+		// specified data type, only if its a value that hasn't already been added to the buffer.
+
+		if (charMemBuffer.getLength() >= charDt.getLength()) {
+			StringDataInstance sdi = StringDataInstance.getStringDataInstance(charDt, charMemBuffer,
+				SettingsImpl.NO_SETTINGS, charMemBuffer.getLength());
+			boolean isArray = (charMemBuffer.getLength() >= charDt.getLength() * 2);
+			String charVal = sdi.getStringValue();
+			String charRep = isArray ? sdi.getStringRepresentation() : sdi.getCharRepresentation();
+
+			// if the string-ified char data is the same as the previous instance, or if it
+			// doesn't have a quote mark in it (ie. all bytes sequences), skip it
+			boolean shouldSkip = prevCharVal.equals(charVal)  // 
+				|| !charRep.contains(isArray ? "\"" : "'") //
+				|| hasEncodingError(charVal);
+			if (!shouldSkip) {
+				htmlText.append("<tr><td>") // 
+					.append(charDt.getName()) //
+					.append(isArray ? "[]" : "");
+				if (charMemBuffer.getLength() > 1) {
+					htmlText.append(" <b>" +
+						(charMemBuffer.isBigEndian() ? Endian.BIG : Endian.LITTLE).toShortString() +
+						"</b>");
+				}
+				htmlText.append("</td><td>") //
+					.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
+					.append("</td></tr>");
+				prevCharVal = charVal;
+			}
+		}
+		return prevCharVal;
+	}
+
+	private void formatAsAddressVal(Program program, Address addr, Scalar scalar,
+			StringBuilder htmlText) {
 
 		// maybe the scalar is an address..
 		long scalarLong = scalar.getValue();
@@ -109,76 +187,71 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 		catch (AddressOutOfBoundsException ex) {
 			asAddress = null;	// Constant doesn't make sense as an address
 		}
-		if (asAddress != null && memory.contains(asAddress)) {
-			sb.append("<hr>");
-			sb.append("<table>");
 
-			addReprRow(sb, "Address", asAddress.toString());
+		Memory memory = program.getMemory();
+		if (asAddress != null && memory.contains(asAddress)) {
+			htmlText.append("<hr>");
+			htmlText.append("<table>");
+
+			addReprRow(htmlText, "Address", asAddress.toString());
 
 			// .. and maybe it points to some data...
 			Data data = program.getListing().getDataContaining(asAddress);
 			if (data != null) {
 				Symbol primary = data.getPrimarySymbol();
 				if (primary != null) {
-					addReprRow(sb, "Symbol", HTMLUtilities.italic(primary.getName()));
-
+					addReprRow(htmlText, "Symbol",
+						HTMLUtilities.italic(HTMLUtilities.friendlyEncodeHTML(primary.getName())));
 				}
 			}
 
-			sb.append("</table>");
+			htmlText.append("</table>");
 		}
+	}
+
+	protected String formatScalar(Program program, Address addr, Scalar scalar) {
+
+		StringBuilder sb = new StringBuilder(HTMLUtilities.HTML);
+		formatIntegerTypes(program, addr, scalar, sb);
+		formatCharTypes(program, addr, scalar, sb);
+		formatAsAddressVal(program, addr, scalar, sb);
 
 		return sb.toString();
 	}
 
-	private byte[] getOperandBytes(Scalar scalar) {
+	private boolean hasEncodingError(String s) {
+		return s.codePoints().anyMatch(
+			codePoint -> StringUtilities.isUnicodeReplacementCodePoint(codePoint));
+	}
+
+	private ByteMemBufferImpl getScalarOperandAsMemBuffer(Address addr, Scalar scalar,
+			int minTrimLen, Endian endian) {
 		byte[] operandBytes = scalar.byteArrayValue();
-		byte[] trimmed = trimLeadingZeros(operandBytes);
-		return trimmed;
+		if (minTrimLen > 0) {
+			operandBytes = trimLeadingZeros(operandBytes, minTrimLen);
+		}
+		if (endian == Endian.LITTLE) {
+			operandBytes = ArrayUtilities.reverse(operandBytes);
+		}
+		return new ByteMemBufferImpl(addr, operandBytes, endian == Endian.BIG);
 	}
 
-	private static byte[] trimLeadingZeros(byte[] bytes) {
-		int fullLength = bytes.length;
-		for (int i = 0; i < fullLength; i++) {
-			if (bytes[i] == 0) {
-				continue;
-			}
-
-			if (i == 0) {
-				// non-zero value in the first byte--nothing to trim
-				break;
-			}
-
-			int toCopy = fullLength - i;
-			int len = toCopy;
-			if (len < 2) {
-				len = 2;
-			}
-			else if (len < 4) {
-				len = 4;
-			}
-			else if (len < 8) {
-				len = 8;
-			}
-
-			byte[] newBytes = new byte[len];
-			int offset = len - toCopy;
-			System.arraycopy(bytes, i, newBytes, offset, toCopy);
-			return newBytes;
+	private static byte[] trimLeadingZeros(byte[] bytes, int minTrimLen) {
+		int firstUsedByteIndex = 0;
+		for (; firstUsedByteIndex < bytes.length &&
+			bytes[firstUsedByteIndex] == 0; firstUsedByteIndex++) {
+			// no op
 		}
-		return bytes;
-	}
 
-	private static void buildTableHeader(StringBuilder sb) {
-		sb.append("<table><tr><th></th>");
-		for (Settings setting : INTEGER_SETTINGS) {
-
-			String radixName = FORMAT.getDisplayChoice(setting);
-			radixName = Character.toTitleCase(radixName.charAt(0)) + radixName.substring(1);
-
-			sb.append("<th>").append(radixName).append("</th>");
+		int bytesToCopy = bytes.length - firstUsedByteIndex;
+		int newLen = Math.max(bytesToCopy, minTrimLen);
+		if (newLen > 1) {
+			newLen += (newLen % 2);
 		}
-		sb.append("</tr>");
+		byte[] newBytes = new byte[newLen];
+		System.arraycopy(bytes, firstUsedByteIndex, newBytes, newLen - bytesToCopy, bytesToCopy);
+
+		return newBytes;
 	}
 
 	private static void addReprRow(StringBuilder sb, String typeName, String repr) {
@@ -186,9 +259,9 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	}
 
 	private static void addReprRow(StringBuilder sb, String typeName, Iterable<String> reprs) {
-		sb.append("<tr><td style=\"text-align: left;\">").append(typeName).append("</td>");
+		sb.append("<tr><td nowrap style=\"text-align: left;\">").append(typeName).append("</td>");
 		for (String repr : reprs) {
-			sb.append("<td style=\"text-align: right;\">").append(repr).append("</td>");
+			sb.append("<td nowrap style=\"text-align: right;\">").append(repr).append("</td>");
 		}
 		sb.append("</tr>");
 	}
