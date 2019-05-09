@@ -2339,9 +2339,9 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_function(t_cpn,t_op1,t_op2,CRd,CRn,CRm);
 }
 
-@if defined(VERSION_6K)
+@if defined(VERSION_6K) || defined(VERSION_7)
 
-:clrex	is c0031=0xf57ff01f	{
+:clrex	is $(AMODE) & c0031=0xf57ff01f	{
 	ClearExclusiveLocal();
 }
 

@@ -1103,7 +1103,7 @@ with : ARMcondCk=1 {
   resflags(Rd0811);
 }
 
-:add^thSBIT_CZNO^ItCond^".w"	Rd0811,sp,thshift2 		is TMode=1 & ItCond & op11=0x1e & thc0910=1 & sop0508=8 & thSBIT_CZNO & sop0003=0xd & sp; thc1515=0 & Rd0811 & thshift2
+:add^thSBIT_CZNO^ItCond^".w"	Rd0811,sp,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=8 & thSBIT_CZNO & sop0003=0xd & sp; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
   build thshift2;
