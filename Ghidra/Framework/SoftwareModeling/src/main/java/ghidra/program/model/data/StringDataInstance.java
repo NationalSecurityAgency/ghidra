@@ -625,7 +625,7 @@ public class StringDataInstance {
 	 */
 	public String getStringRepresentation() {
 
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
 		}
 
