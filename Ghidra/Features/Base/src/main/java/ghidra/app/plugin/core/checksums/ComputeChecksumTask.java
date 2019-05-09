@@ -59,7 +59,7 @@ public class ComputeChecksumTask extends Task {
 	@Override
 	public void run(TaskMonitor monitor) {
 
-		AddressSet addrs = new AddressSet(set != null ? set : memory); //null ok here
+		AddressSet addrs = new AddressSet(set != null ? set : memory);
 		for (MemoryBlock block : memory.getBlocks()) {
 			if (!block.isInitialized()) {
 				addrs.deleteRange(block.getStart(), block.getEnd());
