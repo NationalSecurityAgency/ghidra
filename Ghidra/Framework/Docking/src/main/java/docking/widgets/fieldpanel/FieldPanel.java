@@ -197,7 +197,7 @@ public class FieldPanel extends JPanel
 
 	@Override
 	public void scrollLineDown() {
-		layouts = layoutHandler.ShiftViewDownOneRow();
+		layouts = layoutHandler.shiftViewDownOneRow();
 		notifyScrollListenerViewChangedAndRepaint();
 	}
 
@@ -293,6 +293,51 @@ public class FieldPanel extends JPanel
 
 	public List<AnchoredLayout> getVisibleLayouts() {
 		return new ArrayList<>(layouts);
+	}
+
+	/**
+	 * Returns true if the given field location is rendered on the screen; false if scrolled 
+	 * offscreen
+	 * 
+	 * @param location the location to check
+	 * @return true if the location is on the screen
+	 */
+	public boolean isLocationVisible(FieldLocation location) {
+		if (location == null) {
+			return false;
+		}
+
+		BigInteger locationIndex = location.getIndex();
+		for (AnchoredLayout layout : layouts) {
+			if (layout.getIndex().equals(locationIndex)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the first visible layout or null if there are no visible layouts
+	 * 
+	 * @return the first visible layout
+	 */
+	public AnchoredLayout getVisibleStartLayout() {
+		if (layouts.isEmpty()) {
+			return null;
+		}
+		return layouts.get(0);
+	}
+
+	/**
+	 * Returns the last visible layout or null if there are no visible layouts
+	 * 
+	 * @return the last visible layout
+	 */
+	public AnchoredLayout getVisibleEndLayout() {
+		if (layouts.isEmpty()) {
+			return null;
+		}
+		return layouts.get(layouts.size() - 1);
 	}
 
 	@Override
@@ -714,13 +759,19 @@ public class FieldPanel extends JPanel
 	 *            the row in the field to go to.
 	 * @param col
 	 *            the column in the field to go to.
-	 * @param centerCursor
+	 * @param alwaysCenterCursor
 	 *            if true, centers cursor on screen. Otherwise, only centers
 	 *            cursor if cursor is offscreen.
 	 */
 	public void goTo(BigInteger index, int fieldNum, int row, int col, boolean alwaysCenterCursor) {
+		goTo(index, fieldNum, row, col, alwaysCenterCursor, EventTrigger.API_CALL);
+	}
 
-		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, EventTrigger.API_CALL)) {
+	// for subclasses to control the event trigger
+	protected void goTo(BigInteger index, int fieldNum, int row, int col,
+			boolean alwaysCenterCursor, EventTrigger trigger) {
+
+		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, trigger)) {
 			return;
 		}
 

@@ -443,6 +443,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void locationChanged(ProgramLocation programLocation) {
+		if (programLocation.equals(currentLocation)) {
+			return;
+		}
 		currentLocation = programLocation;
 		contextChanged();
 		plugin.locationChanged(this, programLocation);

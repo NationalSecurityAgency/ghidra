@@ -15,22 +15,21 @@
  */
 package ghidra.app.decompiler.component;
 
-import ghidra.app.decompiler.*;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
-
 import java.awt.Color;
 import java.util.*;
 
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.decompiler.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * Class to handle highlights for a decompiled function.
  */
 
-public class ClangHighlightController {
+public abstract class ClangHighlightController {
 
 	// Note: Most of the methods in this class were extracted from the ClangLayoutController class
 	//       and the DecompilerPanel class.
@@ -40,13 +39,15 @@ public class ClangHighlightController {
 	protected Color defaultSpecialColor = new Color(255, 100, 0, 128); // Default color for specially highlighted tokens
 	protected Color defaultParenColor = new Color(255, 255, 0, 128); // Default color for highlighting parentheses
 
-	protected HashSet<ClangToken> highlightTokenSet = new HashSet<ClangToken>();
+	protected HashSet<ClangToken> highlightTokenSet = new HashSet<>();
 
-	protected ArrayList<ClangHighlightListener> highlightListenerList =
-		new ArrayList<ClangHighlightListener>();
+	protected ArrayList<ClangHighlightListener> highlightListenerList = new ArrayList<>();
 
 	public ClangHighlightController() {
 	}
+
+	public abstract void fieldLocationChanged(FieldLocation location, Field field,
+			EventTrigger trigger);
 
 	void loadOptions(DecompileOptions options) {
 		Color currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
@@ -115,18 +116,21 @@ public class ClangHighlightController {
 			else if (node instanceof ClangToken) {
 				ClangToken tok = (ClangToken) node;
 				Varnode vn = DecompilerUtils.getVarnodeRef(tok);
-				if (varnodes.contains(vn))
+				if (varnodes.contains(vn)) {
 					addHighlight(tok, highlightColor);
+				}
 				if (vn == specificvn) { // Look for specific varnode to label with specialColor
-					if ((specificop != null) && (tok.getPcodeOp() == specificop))
+					if ((specificop != null) && (tok.getPcodeOp() == specificop)) {
 						addHighlight(tok, specialColor);
+					}
 				}
 			}
 		}
 		notifyListeners();
 	}
 
-	public void addPcodeOpsToHighlight(ClangNode parentNode, Set<PcodeOp> ops, Color highlightColor) {
+	public void addPcodeOpsToHighlight(ClangNode parentNode, Set<PcodeOp> ops,
+			Color highlightColor) {
 		int nchild = parentNode.numChildren();
 		for (int i = 0; i < nchild; ++i) {
 			ClangNode node = parentNode.Child(i);
@@ -136,8 +140,9 @@ public class ClangHighlightController {
 			else if (node instanceof ClangToken) {
 				ClangToken tok = (ClangToken) node;
 				PcodeOp op = tok.getPcodeOp();
-				if (ops.contains(op))
+				if (ops.contains(op)) {
 					addHighlight(tok, highlightColor);
+				}
 			}
 		}
 		notifyListeners();
@@ -188,24 +193,27 @@ public class ClangHighlightController {
 	 * @return a list of all tokens that were highlighted.
 	 */
 	public List<ClangToken> addHighlightParen(ClangSyntaxToken tok, Color highlightColor) {
-		ArrayList<ClangToken> tokenList = new ArrayList<ClangToken>();
+		ArrayList<ClangToken> tokenList = new ArrayList<>();
 		int paren = tok.getOpen();
-		if (paren == -1)
+		if (paren == -1) {
 			paren = tok.getClose();
-		if (paren == -1)
+		}
+		if (paren == -1) {
 			return tokenList; // Not a parenthesis
+		}
 		ClangNode par = tok.Parent();
 		while (par != null) {
 			boolean outside = true;
 			if (par instanceof ClangTokenGroup) {
-				ArrayList<ClangNode> list = new ArrayList<ClangNode>();
+				ArrayList<ClangNode> list = new ArrayList<>();
 				((ClangTokenGroup) par).flatten(list);
 				for (int i = 0; i < list.size(); ++i) {
 					ClangToken tk = (ClangToken) list.get(i);
 					if (tk instanceof ClangSyntaxToken) {
 						ClangSyntaxToken syn = (ClangSyntaxToken) tk;
-						if (syn.getOpen() == paren)
+						if (syn.getOpen() == paren) {
 							outside = false;
+						}
 						else if (syn.getClose() == paren) {
 							outside = true;
 							addHighlight(syn, highlightColor);
@@ -224,72 +232,20 @@ public class ClangHighlightController {
 	}
 
 	public void addHighlightBrace(ClangSyntaxToken token, Color highlightColor) {
-		ClangNode parent = token.Parent();
-		String text = token.getText();
-		if ("{".equals(text)) {
-			highlightBrace(token, parent, false, highlightColor);
-			return;
-		}
 
-		if ("}".equals(text)) {
-			highlightBrace(token, parent, true, highlightColor);
-			return;
-		}
-		notifyListeners();
-	}
-
-	private void highlightBrace(ClangSyntaxToken startToken, ClangNode parent, boolean forward,
-			Color highlightColor) {
-		List<ClangNode> list = new ArrayList<ClangNode>();
-		parent.flatten(list);
-
-		if (!forward) {
-			Collections.reverse(list);
-		}
-
-		Stack<ClangSyntaxToken> braceStack = new Stack<ClangSyntaxToken>();
-		for (int i = 0; i < list.size(); ++i) {
-			ClangToken token = (ClangToken) list.get(i);
-			if (token instanceof ClangSyntaxToken) {
-				ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
-
-				if (startToken == syntaxToken) {
-					// found our starting token, take the current value on the stack
-					ClangSyntaxToken matchingBrace = braceStack.pop();
-					matchingBrace.setMatchingToken(true);
-					addHighlight(matchingBrace, highlightColor);
-					return;
-				}
-
-				if (!isBrace(syntaxToken)) {
-					continue;
-				}
-
-				if (braceStack.isEmpty()) {
-					braceStack.push(syntaxToken);
-					continue;
-				}
-
-				ClangSyntaxToken lastToken = braceStack.peek();
-				if (isMatchingBrace(lastToken, syntaxToken)) {
-					braceStack.pop();
-				}
-				else {
-					braceStack.push(syntaxToken);
-				}
-			}
+		if (DecompilerUtils.isBrace(token)) {
+			highlightBrace(token, highlightColor);
+			notifyListeners();
 		}
 	}
 
-	private boolean isBrace(ClangSyntaxToken token) {
-		String text = token.getText();
-		return "{".equals(text) || "}".equals(text);
-	}
+	private void highlightBrace(ClangSyntaxToken startToken, Color highlightColor) {
 
-	private boolean isMatchingBrace(ClangSyntaxToken braceToken, ClangSyntaxToken otherBraceToken) {
-		String brace = braceToken.getText();
-		String otherBrace = otherBraceToken.getText();
-		return !brace.equals(otherBrace);
+		ClangSyntaxToken matchingBrace = DecompilerUtils.getMatchingBrace(startToken);
+		if (matchingBrace != null) {
+			matchingBrace.setMatchingToken(true); // this is a signal to the painter
+			addHighlight(matchingBrace, highlightColor);
+		}
 	}
 
 	/**
@@ -298,13 +254,14 @@ public class ClangHighlightController {
 	 */
 	public void addHighlightFill() {
 		ClangTokenGroup lastgroup = null;
-		ArrayList<ClangNode> newhi = new ArrayList<ClangNode>();
-		ArrayList<Color> newcolor = new ArrayList<Color>();
+		ArrayList<ClangNode> newhi = new ArrayList<>();
+		ArrayList<Color> newcolor = new ArrayList<>();
 		for (ClangToken tok : highlightTokenSet) {
 			if (tok.Parent() instanceof ClangTokenGroup) {
 				ClangTokenGroup par = (ClangTokenGroup) tok.Parent();
-				if (par == lastgroup)
+				if (par == lastgroup) {
 					continue;
+				}
 				lastgroup = par;
 				int beg = -1;
 				int end = par.numChildren();
@@ -313,8 +270,9 @@ public class ClangHighlightController {
 						ClangToken token = (ClangToken) par.Child(j);
 						Color curcolor = token.getHighlight();
 						if (curcolor != null) {
-							if (beg == -1)
+							if (beg == -1) {
 								beg = j;
+							}
 							else {
 								end = j;
 								for (int k = beg + 1; k < end; ++k) {
@@ -330,43 +288,20 @@ public class ClangHighlightController {
 							beg = -1;
 						}
 					}
-					else
+					else {
 						beg = -1;
+					}
 				}
 			}
 		}
 		for (int i = 0; i < newhi.size(); ++i) {
 			ClangToken tok = (ClangToken) newhi.get(i);
-			if (tok.getHighlight() != null)
+			if (tok.getHighlight() != null) {
 				continue;
+			}
 			addHighlight(tok, newcolor.get(i));
 		}
 		notifyListeners();
-	}
-
-	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
-
-		// Do nothing.
-
-//		clearHighlights();
-//
-//		if (!(field instanceof ClangTextField)) {
-//			return;
-//		}
-//
-//		ClangToken tok = ((ClangTextField) field).getToken(location);
-//		if (tok == null) {
-//			return;
-//		}
-//
-////		// clear any highlighted searchResults
-////		decompilerPanel.setSearchResults(null);
-//
-//		addHighlight(tok, defaultHighlightColor);
-//		if (tok instanceof ClangSyntaxToken) {
-//			addHighlightParen((ClangSyntaxToken) tok, defaultParenColor);
-//			addHighlightBrace((ClangSyntaxToken) tok, defaultParenColor);
-//		}
 	}
 
 	public boolean addListener(ClangHighlightListener listener) {

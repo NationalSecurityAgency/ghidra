@@ -23,15 +23,11 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class DecompilerTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program prog;
 	private DecompInterface decompiler;
-
-	public DecompilerTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -57,9 +53,8 @@ public class DecompilerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testDecompileInterfaceReturnsAFunction() throws Exception {
 		Address addr = prog.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
 		Function func = prog.getListing().getFunctionAt(addr);
-		DecompileResults decompResults =
-			decompiler.decompileFunction(func, DecompileOptions.SUGGESTED_DECOMPILE_TIMEOUT_SECS,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+		DecompileResults decompResults = decompiler.decompileFunction(func,
+			DecompileOptions.SUGGESTED_DECOMPILE_TIMEOUT_SECS, TaskMonitor.DUMMY);
 		String decompilation = decompResults.getDecompiledFunction().getC();
 		Assert.assertNotNull(decompilation);
 	}

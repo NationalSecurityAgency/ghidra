@@ -234,16 +234,17 @@ public class DecompilerUtils {
 
 	/**
 	 * Find index of first field containing a ClangNode in tokenList
-	 * @param tokenlist
+	 * @param queryTokens the list of tokens of interest
+	 * @param fields the universe of fields to check
 	 * @return index of field, or -1
 	 */
-	public static int findIndexOfFirstField(List<ClangToken> tokenlist, Field[] fields) {
+	public static int findIndexOfFirstField(List<ClangToken> queryTokens, Field[] fields) {
 		for (int i = 0; i < fields.length; i++) {
 			ClangTextField f = (ClangTextField) fields[i];
-			List<ClangToken> tokenList = f.getTokens();
-			for (int j = 0; j < tokenList.size(); j++) {
-				ClangNode token = tokenList.get(j);
-				if (tokenlist.contains(token)) {
+			List<ClangToken> fieldTokens = f.getTokens();
+			for (int j = 0; j < fieldTokens.size(); j++) {
+				ClangNode fieldToken = fieldTokens.get(j);
+				if (queryTokens.contains(fieldToken)) {
 					return i;
 				}
 			}
@@ -252,11 +253,10 @@ public class DecompilerUtils {
 	}
 
 	/**
-	 * Find all ClangNodes that have a minimum address in
-	 * the AddressSetView
-	 * @param reslist is resulting list of found ClangNodes
-	 * @param parentNode is root of node tree to search
-	 * @param aset is the AddressSetView to match
+	 * Find all ClangNodes that have a minimum address in the AddressSetView
+	 * @param root the root of the token tree
+	 * @param addressSet the addresses to restrict
+	 * @return the list of tokens
 	 */
 	public static List<ClangToken> getTokens(ClangNode root, AddressSetView addressSet) {
 		List<ClangToken> tokenList = new ArrayList<>();
@@ -512,6 +512,110 @@ public class DecompilerUtils {
 		return null;
 	}
 
+	public static ClangLabelToken getGoToTargetToken(ClangTokenGroup root, ClangLabelToken label) {
+		ClangNode parent = label.Parent();
+		if (!(parent instanceof ClangStatement)) {
+			return null;
+		}
+
+		ClangStatement statement = (ClangStatement) parent;
+		if (!isGoToStatement(statement)) {
+			return null;
+		}
+
+		String destinationStart = label.getText() + ':';
+		Address address = label.getMinAddress();
+		List<ClangToken> tokens = DecompilerUtils.getTokens(root, address);
+		for (ClangToken token : tokens) {
+			if (isGoToStatement(token)) {
+				continue; // ignore any goto statements
+			}
+
+			if (!(token instanceof ClangLabelToken)) {
+				continue;
+			}
+
+			ClangNode tokenParent = token.Parent();
+			String parentText = tokenParent.toString();
+			if (parentText.startsWith(destinationStart)) {
+				return (ClangLabelToken) token;
+			}
+		}
+
+		return null;
+	}
+
+	public static ClangSyntaxToken getMatchingBrace(ClangSyntaxToken startToken) {
+
+		ClangNode parent = startToken.Parent();
+		List<ClangNode> list = new ArrayList<>();
+		parent.flatten(list);
+
+		String text = startToken.getText();
+		boolean forward = "}".equals(text);
+		if (!forward) {
+			Collections.reverse(list);
+		}
+
+		Stack<ClangSyntaxToken> braceStack = new Stack<>();
+		for (int i = 0; i < list.size(); ++i) {
+			ClangToken token = (ClangToken) list.get(i);
+			if (token instanceof ClangSyntaxToken) {
+				ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+
+				if (startToken == syntaxToken) {
+					// found our starting token, take the current value on the stack
+					ClangSyntaxToken matchingBrace = braceStack.pop();
+					return matchingBrace;
+				}
+
+				if (!isBrace(syntaxToken)) {
+					continue;
+				}
+
+				if (braceStack.isEmpty()) {
+					braceStack.push(syntaxToken);
+					continue;
+				}
+
+				ClangSyntaxToken lastToken = braceStack.peek();
+				if (isMatchingBrace(lastToken, syntaxToken)) {
+					braceStack.pop();
+				}
+				else {
+					braceStack.push(syntaxToken);
+				}
+			}
+		}
+		return null;
+	}
+
+	public static boolean isMatchingBrace(ClangSyntaxToken braceToken,
+			ClangSyntaxToken otherBraceToken) {
+		String brace = braceToken.getText();
+		String otherBrace = otherBraceToken.getText();
+		return !brace.equals(otherBrace);
+	}
+
+	public static boolean isBrace(ClangSyntaxToken token) {
+		String text = token.getText();
+		return "{".equals(text) || "}".equals(text);
+	}
+
+	public static boolean isGoToStatement(ClangToken token) {
+
+		ClangNode parent = token.Parent();
+		if (!(parent instanceof ClangStatement)) {
+			return false;
+		}
+		return isGoToStatement((ClangStatement) parent);
+	}
+
+	private static boolean isGoToStatement(ClangStatement statement) {
+		String text = statement.toString();
+		return text.startsWith("goto");
+	}
+
 	public static ArrayList<ClangLine> toLines(ClangTokenGroup group) {
 
 		List<ClangNode> alltoks = new ArrayList<>();
@@ -549,4 +653,5 @@ public class DecompilerUtils {
 		lines.add(current);
 		return lines;
 	}
+
 }
