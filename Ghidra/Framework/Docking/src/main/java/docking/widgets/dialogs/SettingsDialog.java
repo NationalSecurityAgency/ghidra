@@ -27,11 +27,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
-import docking.DockingWindowManager;<<<<<<<Upstream,based on origin/master
+import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
-import docking.widgets.table.DefaultSortedTableModel;=======
-import docking.widgets.table.AbstractSortedTableModel;>>>>>>>000543e  GT-2763-Table Sorting-updated help;removed old DefaultSortedTableModel
+import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.docking.settings.*;
 import ghidra.util.HelpLocation;
