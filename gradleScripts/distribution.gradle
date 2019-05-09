@@ -302,11 +302,11 @@ task assembleCommon (type: Copy) {
 	// LICENSE SUPPORT
 	//////////////////////////////
 	with getMultiRepoCopySpec( "licenses", "licenses" ) 
+	
 	from (ROOT_PROJECT_DIR) {
-		include "LICENSE.txt"
+		include "LICENSE"
 	}
 
-	
 	//////////////////////////////
 	// LAUNCH SUPPORT
 	//////////////////////////////
@@ -394,7 +394,14 @@ task assembleCommon (type: Copy) {
 		into "Ghidra"
 		filter (ConcatFilter, prepend: buildDateFile)
 	}
-		
+
+	////////////////
+	// Patch Readme
+	////////////////
+	from (ROOT_PROJECT_DIR + "/GhidraBuild/patch") {
+		into "Ghidra/patch"
+	}		
+	
 	/////////////////
 	// GLOBALS
 	/////////////////
@@ -494,7 +501,7 @@ project.OS_NAMES.each { platform ->
 			// GHIDRA PROJECTS
 			/////////////////
 			subprojects { p ->		
-				if (isGhidra(p)) {
+				if (isGhidra(p) && !isExtension(p)) {
 									
 					// the getZipPath calls here are not in closures because we are already in a taskGraph.whenReady closure
 					from (p.projectDir.toString() + "/build/os/$platform") {
@@ -757,6 +764,11 @@ subprojects { p ->
 			// handle special case where modules build data artifacts into the build dir
 			from (p.projectDir.toString() + "/build/data") {
 				into { getBaseProjectName(p) + "/data" }
+			}
+
+			// copy the LICENSE.txt file into the extension zip
+			from (p.projectDir.toString() + "/build/LICENSE.txt") {
+				into { getBaseProjectName(p) }
 			}
 			
 			/////////////////

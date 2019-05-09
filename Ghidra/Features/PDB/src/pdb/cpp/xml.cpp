@@ -15,33 +15,35 @@
  */
 #include "xml.h"
 
-char * indent(int nSpaces) {
+char* indent(size_t nSpaces) {
 	switch (nSpaces) {
-		case  1: return " ";
-		case  2: return "  ";
-		case  4: return "    ";
-		case  6: return "      ";
-		case  8: return "        ";
-		case 10: return "          ";
-		case 12: return "            ";
+	case  1: return " ";
+	case  2: return "  ";
+	case  4: return "    ";
+	case  6: return "      ";
+	case  8: return "        ";
+	case 10: return "          ";
+	case 12: return "            ";
 	}
-	
+
 	// NOTE: memory leak if following code is hit, but luckily there are no callers
 	// that use indent() that would trigger this.
 	// Probably would be better to throw an error if a non-standard nSpaces value is used.
 	if (nSpaces < 0) {
 		nSpaces = 0;
 	}
-	char * indent = (char *)calloc(nSpaces+1, sizeof(char));
-	for (int i = 0 ; i < nSpaces ; ++i) {
-		indent[i] = ' ';
+	char* indent = (char*)calloc(nSpaces + 1, sizeof(char));
+	if (indent != NULL) {
+		for (int i = 0; i < nSpaces; ++i) {
+			indent[i] = ' ';
+		}
 	}
 	return indent;
 }
 
 BSTR escapeXmlEntities(BSTR bstr) {
 	WCHAR * str = (WCHAR *)bstr;
-	int len = wcslen(str);
+	size_t len = wcslen(str);
 	if (len == 0) return str;
 	size_t destLen = 0;
 	
@@ -69,30 +71,34 @@ BSTR escapeXmlEntities(BSTR bstr) {
 				break;
 		}
 	}
-	
-	WCHAR * newstr = (WCHAR *)calloc(destLen + 1, sizeof(WCHAR));
+	destLen += 1;
+
+	WCHAR * newstr = (WCHAR *)calloc(destLen, sizeof(WCHAR));
+	if (newstr == NULL) {
+		return newstr;
+	}
 	WCHAR * tmp = newstr;
 	
 	for (int i = 0 ; i < len ; ++i) {
 		switch (str[i]) {
 			case '&' :
-				wcscpy(tmp, L"&amp;");
+				wcscpy_s(tmp, destLen, L"&amp;");
 				tmp += 5;
 				break;
 			case '<' :
-				wcscpy(tmp, L"&lt;");
+				wcscpy_s(tmp, destLen, L"&lt;");
 				tmp += 4;
 				break;
 			case '>' :
-				wcscpy(tmp, L"&gt;");
+				wcscpy_s(tmp, destLen, L"&gt;");
 				tmp += 4;
 				break;
 			case '\'' :
-				wcscpy(tmp, L"&apos;");
+				wcscpy_s(tmp, destLen, L"&apos;");
 				tmp += 6;
 				break;
 			case '"' :
-				wcscpy(tmp, L"&quot;");
+				wcscpy_s(tmp, destLen, L"&quot;");
 				tmp += 6;
 				break;
 			case 0x7F :

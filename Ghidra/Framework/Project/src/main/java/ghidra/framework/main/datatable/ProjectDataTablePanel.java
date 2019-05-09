@@ -36,6 +36,7 @@ import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 
@@ -79,12 +80,12 @@ public class ProjectDataTablePanel extends JPanel {
 	private void buildContent() {
 		model = new ProjectDataTableModel(tool);
 		model.addThreadedTableModelListener(new SelectPendingFilesListener());
-		table = new GFilterTable<DomainFileInfo>(model) {
+		table = new GFilterTable<>(model) {
 			@Override
 			protected GThreadedTablePanel<DomainFileInfo> createThreadedTablePanel(
 					ThreadedTableModel<DomainFileInfo, ?> threadedModel) {
 
-				return new GThreadedTablePanel<DomainFileInfo>(threadedModel) {
+				return new GThreadedTablePanel<>(threadedModel) {
 					@Override
 					protected GTable createTable(ThreadedTableModel<DomainFileInfo, ?> m) {
 						// the table's default actions aren't that useful in the Front End
@@ -267,10 +268,11 @@ public class ProjectDataTablePanel extends JPanel {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
-
-			GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
-			glassPane.removePainter(painter);
-			glassPane.addPainter(painter);
+			SystemUtilities.runSwingLater(() -> {
+				GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
+				glassPane.removePainter(painter);
+				glassPane.addPainter(painter);
+			});
 		}
 	}
 

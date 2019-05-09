@@ -10,30 +10,44 @@
 @echo off
 setlocal
 
-if "%~1" == "" (
-	echo "Usage: createPdbXmlFiles.bat <path to .pdb file|path to directory of .pdb files>"
-	Exit /B 0
-)
-
 REM Get parent of current folder
-for %%A in (%~dp0\.) do set ghidraPath=%%~dpA
+set SCRIPT_DIR=%~dp0
+
+set GHIDRA_DIR=%SCRIPT_DIR%..\Ghidra
+set OS_DIR=os
 
 REM Production Environment
-if exist "%ghidraPath%Ghidra" goto continue
+if exist "%GHIDRA_DIR%" goto continue
 
 REM Development Environment
-set ghidraPath="%ghidraPath%..\..\..\..\ghidra.bin\"
+set GHIDRA_DIR=%SCRIPT_DIR%..\..\..
+set OS_DIR=build\os
 
 :continue
 
-set arg1="%~1"
+REM create absolute path
+for /f %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
 
 REM Determine if 64-bit or 32-bit
 if exist "%PROGRAMFILES(X86)%" (
-	set osType=win64
+	set OS_TYPE=win64
 ) else (
-	set osType=win32
+	set OS_TYPE=win32
 )
+
+set PDB_EXE=%GHIDRA_DIR%\Features\PDB\%OS_DIR%\%OS_TYPE%\pdb.exe
+
+if not exist "%PDB_EXE%" (
+	echo "%PDB_EXE% not found"
+	Exit /B 1
+)
+
+if "%~1" == "" (
+	echo "Usage: createPdbXmlFiles.bat <path to .pdb file|path to directory of .pdb files>"
+	Exit /B 1
+)
+
+set arg1="%~1"
 
 set /a count=0
 
@@ -50,7 +64,7 @@ for /f "tokens=* delims=" %%a in ('dir %arg1% /s /b') do (
 			setlocal enableDelayedExpansion
 			(
 				echo "Processing file: %%a"
-				START /B /WAIT "" "%ghidraPath%Ghidra\Features\PDB\os\%ostype%\pdb.exe" %%a > "%%a.xml"
+				START /B /WAIT "" "%PDB_EXE%" %%a > "%%a.xml"
 
 				REM Exit if executable returned non-zero error code (signifies that there is a problem).
 				if !errorlevel! neq 0 (
@@ -63,7 +77,7 @@ for /f "tokens=* delims=" %%a in ('dir %arg1% /s /b') do (
 						echo Error detected. Exiting...
 					)
 
-					Exit /B 0
+					Exit /B 1
 				)
 			)
 

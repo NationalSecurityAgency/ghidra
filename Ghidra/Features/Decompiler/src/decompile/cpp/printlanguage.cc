@@ -446,6 +446,10 @@ bool PrintLanguage::unicodeNeedsEscape(int4 codepoint)
     if (codepoint == 0x3000) {
       return true;			// ideographic space
     }
+    if (codepoint >= 0xd7fc) {		// D7FC - D7FF are currently unassigned.
+					// D800 - DFFF are high and low surrogates, technically illegal.
+      return true;			// Treat as needing to be escaped
+    }
     return false;
   }
   if (codepoint < 0xf900) {

@@ -33,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
+import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
@@ -465,19 +466,26 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		checkForDifferences();
+		if (checkForDifferences()) {
+			propertyChangeListener.propertyChange(
+				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, Boolean.TRUE));
+		}
 	}
 
 	private boolean checkForDifferences() {
+		boolean changes = false;
 		for (int i = 0; i < analyzerNames.size(); ++i) {
 			String analyzerName = analyzerNames.get(i);
 			boolean currEnabled = analyzerEnablement.get(i);
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
+				changes = true;
 				propertyChangeListener.propertyChange(
 						new PropertyChangeEvent(this, analyzerName, origEnabled, currEnabled));
-				return true;
 			}
+		}
+		if (changes) {
+			return true;
 		}
 		for (EditorState info : editorList) {
 			if (info.isValueChanged()) {
@@ -602,21 +610,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 */
 	public void updateOptionForAllPrograms(String analyzerName, boolean enabled) {
 		for (Program program : programs) {
-			
+
+			// Check to make sure we're only handling events that relate to analyzers. If we 
+			// receive something else (eg: "analyze.apply") ignore it.
+			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
+			if (!options.getOptionNames().contains(analyzerName)) {
+				continue;
+			}
+
 			boolean commit = false;
-			int id = program.startTransaction("Setting analysis property");
+			int id = program.startTransaction("Setting analysis property " + analyzerName);
 			try {
-				Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-								
-				// Sanity check to make sure that the analyzer is appropriate for
-				// this program. This should always be the case but it doesn't
-				// hurt to check.
-				if (!options.getOptionNames().contains(analyzerName)) {
-					continue;
-				}
-				
 				options.setBoolean(analyzerName, enabled);
-								
 				commit = true;
 			}
 			finally {
@@ -624,5 +629,4 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
-
 }

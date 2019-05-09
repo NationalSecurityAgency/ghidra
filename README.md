@@ -4,13 +4,10 @@ Ghidra is a software reverse engineering (SRE) framework created and maintained 
 
 In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and teaming problems on complex SRE efforts, and to provide a customizable and extensible SRE research platform. NSA has applied Ghidra SRE capabilities to a variety of problems that involve analyzing malicious code and generating deep insights for SRE analysts who seek a better understanding of potential vulnerabilities in networks and systems.
 
-This repository contains the framework and core features.
-More often than not, you can develop extensions and scripts without modifying the core framework.
-Nevertheless, we appreciate all your contributions.
-Try out the GhidraDev plugin for Eclipse, which is part of the distribution package, to get started developing.
-The release can be downloaded from our [project homepage][project].
-If you would like to contribute to the framework and core feature set, please take a look at our [contributor guide][contrib] to see how
-you can participate in this open source project.
+To start developing extensions and scripts, try out the GhidraDev plugin for Eclipse, which is part of the distribution package.  The full release build can be downloaded from our [project homepage][project].
+
+This repository contains the source for the core framework, features, and extensions.
+If you would like to contribute, please take a look at our [contributor guide][contrib] to see how you can participate in this open source project.
 
 If you are interested in projects like this and would like to develop this, and
 other cybersecurity tools, for NSA to help protect our nation and its allies,

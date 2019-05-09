@@ -16,6 +16,13 @@ import DisplayParser, SemanticParser;
 		gDisplayParser.setLexer(lexer);
 		gSemanticParser.setLexer(lexer);
 	}
+
+	@Override
+	public void setEnv(ParsingEnvironment env) {
+		super.setEnv(env);
+		gDisplayParser.setEnv(env);
+		gSemanticParser.setEnv(env);
+	}
 }
 
 /**

@@ -144,7 +144,7 @@ public class ConfigureGradleWizardPage extends WizardPage {
 		if (visible) {
 			IProject project = projectPage.getGhidraModuleProject().getProject();
 			IFolder ghidraFolder = project.getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-			File ghidraDir = ghidraFolder.getRawLocation().toFile();
+			File ghidraDir = ghidraFolder.getLocation().toFile();
 			try {
 				GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(ghidraDir);
 				ApplicationProperties props = ghidraLayout.getApplicationProperties();

@@ -111,7 +111,7 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 			// Get path to Ghidra installation directory
 			String ghidraInstallDirPath = project.getFolder(
-				GhidraProjectUtils.GHIDRA_FOLDER_NAME).getRawLocation().toOSString();
+				GhidraProjectUtils.GHIDRA_FOLDER_NAME).getLocation().toOSString();
 			
 			// Get project's java.  Gradle should use the same version.
 			// TODO: It's more correct to get this from the project's classpath, since Ghidra's
@@ -126,7 +126,7 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 			// Setup the Gradle build attributes
 			List<String> tasks = new ArrayList<>();
-			String workingDir = project.getRawLocation().toOSString();
+			String workingDir = project.getLocation().toOSString();
 			String gradleDist = gradleDistribution.toString();
 			String gradleUserHome = "";
 			String javaHome = javaHomeDir.getAbsolutePath();

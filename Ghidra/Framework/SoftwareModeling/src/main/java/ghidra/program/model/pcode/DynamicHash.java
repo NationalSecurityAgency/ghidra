@@ -118,8 +118,8 @@ public class DynamicHash {
 			reg = SimpleCRC32.hashOneByte(reg, slot);
 			reg = SimpleCRC32.hashOneByte(reg, transtable[op.getOpcode()]);
 			long val = op.getSeqnum().getTarget().getOffset();
-			int sz = op.getSeqnum().getTarget().getPointerSize();
-			for (int i = 0; i < sz; ++i) {
+			int sz = op.getSeqnum().getTarget().getSize();
+			for (int i = 0; i < sz; i += 8) {
 				reg = SimpleCRC32.hashOneByte(reg, (int) val);
 				val >>= 8;
 			}
