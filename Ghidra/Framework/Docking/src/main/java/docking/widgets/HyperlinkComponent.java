@@ -114,6 +114,7 @@ public class HyperlinkComponent extends JPanel {
 		//              Also, if we call getPreferredSize(), then it will work.
 		//
 		textPane.getPreferredSize();
+		getPreferredSize();
 	}
 
 	public String getText() {
