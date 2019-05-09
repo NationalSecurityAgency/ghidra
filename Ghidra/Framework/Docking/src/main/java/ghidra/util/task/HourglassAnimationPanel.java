@@ -54,6 +54,6 @@ public class HourglassAnimationPanel extends JPanel {
 		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
 		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
 		
-		add (new JLabel(progressIcon), BorderLayout.CENTER);
+		add(new JLabel(progressIcon), BorderLayout.NORTH);
 	}
 }

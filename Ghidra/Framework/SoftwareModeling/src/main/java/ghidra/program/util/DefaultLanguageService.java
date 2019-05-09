@@ -112,7 +112,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 			return lang;
 		}
 		finally {
-			monitor.setMessage("");
+			monitor.release();
 		}
 	}
 

@@ -329,7 +329,7 @@ public class TaskMonitorServiceTest extends AbstractGhidraHeadedIntegrationTest 
 				monitor1 = TaskMonitorService.getMonitor();
 				assertTrue(monitor1 instanceof SecondaryTaskMonitor);
 
-				monitor1.reset();
+				monitor1.release();
 
 				monitor1 = TaskMonitorService.getMonitor();
 				assertTrue(monitor1 instanceof TaskDialog);

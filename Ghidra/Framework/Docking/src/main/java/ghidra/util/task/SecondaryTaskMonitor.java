@@ -50,6 +50,7 @@ public class SecondaryTaskMonitor implements TaskMonitor {
 	public void setMessage(String message) {
 		if (parentMonitor instanceof TaskDialog) {
 			((TaskDialog) parentMonitor).setSecondaryMessage(message);
+			return;
 		}
 		parentMonitor.setMessage(message);
 	}

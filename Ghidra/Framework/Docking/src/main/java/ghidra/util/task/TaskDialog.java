@@ -336,7 +336,6 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		SwingUtilities.invokeLater(closeDialog);
 	}
 
-	@Override
 	public synchronized void reset() {
 		taskDone = false;
 		taskID.incrementAndGet();
@@ -476,5 +475,4 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 		return secondaryTaskMonitor;
 	}
-
 }
