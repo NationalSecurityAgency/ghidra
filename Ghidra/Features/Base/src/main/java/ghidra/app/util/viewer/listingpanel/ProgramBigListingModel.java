@@ -495,12 +495,16 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	protected void notifyDataChanged(boolean updateImmediately) {
+		layoutCache.clear();
+
 		for (ListingModelListener listener : listeners) {
 			listener.dataChanged(updateImmediately);
 		}
 	}
 
 	private void notifyModelSizeChanged() {
+		layoutCache.clear();
+
 		for (ListingModelListener listener : listeners) {
 			listener.modelSizeChanged();
 		}
@@ -546,8 +550,6 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		if (program.isClosed()) {
 			return;
 		}
-
-		layoutCache.clear();
 
 		boolean updateImmediately = ev.numRecords() <= 5;
 		notifyDataChanged(updateImmediately);

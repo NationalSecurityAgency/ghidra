@@ -764,8 +764,14 @@ public class FieldPanel extends JPanel
 	 *            cursor if cursor is offscreen.
 	 */
 	public void goTo(BigInteger index, int fieldNum, int row, int col, boolean alwaysCenterCursor) {
+		goTo(index, fieldNum, row, col, alwaysCenterCursor, EventTrigger.API_CALL);
+	}
 
-		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, EventTrigger.API_CALL)) {
+	// for subclasses to control the event trigger
+	protected void goTo(BigInteger index, int fieldNum, int row, int col,
+			boolean alwaysCenterCursor, EventTrigger trigger) {
+
+		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, trigger)) {
 			return;
 		}
 

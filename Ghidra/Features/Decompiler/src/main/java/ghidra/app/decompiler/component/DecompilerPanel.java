@@ -63,7 +63,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final DecompilerController controller;
 	private final DecompileOptions options;
 
-	private FieldPanel codeViewer;
+	private DecompilerFieldPanel fieldPanel;
 	private ClangLayoutController layoutMgr;
 	private HighlightFactory hlFactory;
 	private ClangHighlightController highlightController;
@@ -94,13 +94,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		hlFactory = new SearchHighlightFactory();
 
 		layoutMgr = new ClangLayoutController(options, this, metrics, hlFactory);
-		codeViewer = new FieldPanel(layoutMgr);
+		fieldPanel = new DecompilerFieldPanel(layoutMgr);
 		setBackground(options.getCodeViewerBackgroundColor());
 
-		IndexedScrollPane scroller = new IndexedScrollPane(codeViewer);
-		codeViewer.addFieldSelectionListener(this);
-		codeViewer.addFieldMouseListener(this);
-		codeViewer.addFieldLocationListener(this);
+		IndexedScrollPane scroller = new IndexedScrollPane(fieldPanel);
+		fieldPanel.addFieldSelectionListener(this);
+		fieldPanel.addFieldMouseListener(this);
+		fieldPanel.addFieldLocationListener(this);
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
@@ -125,7 +125,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public FieldPanel getFieldPanel() {
-		return codeViewer;
+		return fieldPanel;
 	}
 
 	@Override
@@ -134,8 +134,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (useNonFunctionColor) {
 			bg = NON_FUNCTION_BACKGROUND_COLOR_DEF;
 		}
-		if (codeViewer != null) {
-			codeViewer.setBackgroundColor(bg);
+		if (fieldPanel != null) {
+			fieldPanel.setBackgroundColor(bg);
 		}
 		super.setBackground(bg);
 	}
@@ -208,7 +208,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 		if (viewerPosition != null) {
-			codeViewer.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
+			fieldPanel.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
 				viewerPosition.getYOffset());
 		}
 		List<ClangToken> tokens =
@@ -216,7 +216,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		if (location instanceof DecompilerLocation) {
 			DecompilerLocation decompilerLocation = (DecompilerLocation) location;
-			codeViewer.goTo(BigInteger.valueOf(decompilerLocation.getLineNumber()), 0, 0,
+			fieldPanel.goTo(BigInteger.valueOf(decompilerLocation.getLineNumber()), 0, 0,
 				decompilerLocation.getCharPos(), false);
 		}
 		else if (!tokens.isEmpty()) {
@@ -231,7 +231,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private void goToBeginningOfLine(List<ClangToken> tokens) {
 		int firstLineNumber = DecompilerUtils.findIndexOfFirstField(tokens, layoutMgr.getFields());
 		if (firstLineNumber != -1) {
-			codeViewer.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
+			fieldPanel.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
 		}
 	}
 
@@ -255,7 +255,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		int distance = getOffscreenDistance(lineNumber);
 		if (distance == 0) {
-			codeViewer.goTo(BigInteger.valueOf(lineNumber), 0, 0, column, false);
+			fieldPanel.navigateTo(lineNumber, column);
 			return;
 		}
 
@@ -265,14 +265,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private int getOffscreenDistance(int line) {
 
-		AnchoredLayout start = codeViewer.getVisibleStartLayout();
+		AnchoredLayout start = fieldPanel.getVisibleStartLayout();
 		int visibleStartLine = start.getIndex().intValue();
 		if (visibleStartLine > line) {
 			// the end is off the top of the screen
 			return visibleStartLine - line;
 		}
 
-		AnchoredLayout end = codeViewer.getVisibleEndLayout();
+		AnchoredLayout end = fieldPanel.getVisibleEndLayout();
 		int visibleEndLine = end.getIndex().intValue();
 		if (visibleEndLine < line) {
 			// the end is off the bottom of the screen
@@ -343,7 +343,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				DecompilerUtils.getTokens(layoutMgr.getRoot(), translateSet(selection));
 			fieldSelection = DecompilerUtils.getFieldSelection(tokens);
 		}
-		codeViewer.setSelection(fieldSelection);
+		fieldPanel.setSelection(fieldSelection);
 	}
 
 	public void setDecompilerHoverProvider(DecompilerHoverProvider provider) {
@@ -584,8 +584,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (!decompileData.hasDecompileResults()) {
 			return null;
 		}
-		Field currentField = codeViewer.getCurrentField();
-		FieldLocation cursorPosition = codeViewer.getCursorLocation();
+		Field currentField = fieldPanel.getCurrentField();
+		FieldLocation cursorPosition = fieldPanel.getCursorLocation();
 		return getProgramLocation(currentField, cursorPosition);
 	}
 
@@ -608,7 +608,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		if (trigger != EventTrigger.INTERNAL_ONLY) {
+		// only broadcast when the user is clicking around
+		if (trigger == EventTrigger.GUI_ACTION) {
 			ProgramLocation programLocation = getProgramLocation(field, location);
 			if (programLocation != null) {
 				controller.locationChanged(programLocation);
@@ -699,13 +700,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public FieldLocation getCursorPosition() {
-		return codeViewer.getCursorLocation();
+		return fieldPanel.getCursorLocation();
 	}
 
 	public void setCursorPosition(FieldLocation fieldLocation) {
-		codeViewer.setCursorPosition(fieldLocation.getIndex(), fieldLocation.getFieldNum(),
+		fieldPanel.setCursorPosition(fieldLocation.getIndex(), fieldLocation.getFieldNum(),
 			fieldLocation.getRow(), fieldLocation.getCol());
-		codeViewer.scrollToCursor();
+		fieldPanel.scrollToCursor();
 	}
 
 	/**
@@ -713,7 +714,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @return a single selected token; null if there is no selection or multiple tokens selected.
 	 */
 	public ClangToken getSelectedToken() {
-		FieldSelection selection = codeViewer.getSelection();
+		FieldSelection selection = fieldPanel.getSelection();
 		if (selection.isEmpty()) {
 			return null;
 		}
@@ -729,8 +730,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public ClangToken getTokenAtCursor() {
-		FieldLocation cursorPosition = codeViewer.getCursorLocation();
-		Field field = codeViewer.getCurrentField();
+		FieldLocation cursorPosition = fieldPanel.getCursorLocation();
+		Field field = fieldPanel.getCurrentField();
 		if (field == null) {
 			return null;
 		}
@@ -748,10 +749,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	public void setHoverMode(boolean enabled) {
 		decompilerHoverProvider.setHoverEnabled(enabled);
 		if (enabled) {
-			codeViewer.setHoverProvider(decompilerHoverProvider);
+			fieldPanel.setHoverProvider(decompilerHoverProvider);
 		}
 		else {
-			codeViewer.setHoverProvider(null);
+			fieldPanel.setHoverProvider(null);
 		}
 	}
 
@@ -797,24 +798,24 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public ViewerPosition getViewerPosition() {
-		return codeViewer.getViewerPosition();
+		return fieldPanel.getViewerPosition();
 	}
 
 	public void setViewerPosition(ViewerPosition viewerPosition) {
-		codeViewer.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
+		fieldPanel.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
 			viewerPosition.getYOffset());
 	}
 
 	@Override
 	public void requestFocus() {
-		codeViewer.requestFocus();
+		fieldPanel.requestFocus();
 	}
 
 	public void selectAll() {
 		BigInteger numIndexes = layoutMgr.getNumIndexes();
 		FieldSelection selection = new FieldSelection();
 		selection.addRange(BigInteger.ZERO, numIndexes);
-		codeViewer.setSelection(selection);
+		fieldPanel.setSelection(selection);
 		// fake it out that the selection was caused by the field panel GUI.
 		selectionChanged(selection, EventTrigger.GUI_ACTION);
 	}
@@ -909,13 +910,33 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 
 			FieldLocation location = new FieldLocation(BigInteger.valueOf(current));
-			codeViewer.scrollTo(location);
+			fieldPanel.scrollTo(location);
 		}
 
 		@Override
 		public void done() {
-			codeViewer.goTo(BigInteger.valueOf(endLine), 0, 0, endColumn, false);
+			fieldPanel.goTo(BigInteger.valueOf(endLine), 0, 0, endColumn, false);
+		}
+	}
+
+	private class DecompilerFieldPanel extends FieldPanel {
+
+		public DecompilerFieldPanel(LayoutModel model) {
+			super(model);
 		}
 
+		/**
+		 * Moves this field panel to the given line and column.  Further, this navigation will
+		 * fire an event to the rest of the tool.   (This is in contrast to a field panel
+		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an 
+		 * tool-level navigation event.) 
+		 * 
+		 * @param lineNumber the line number 
+		 * @param column the column within the line
+		 */
+		void navigateTo(int lineNumber, int column) {
+			fieldPanel.goTo(BigInteger.valueOf(lineNumber), 0, 0, column, false,
+				EventTrigger.GUI_ACTION);
+		}
 	}
 }

@@ -70,7 +70,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	 * Override this method if you need to build your own program.
 	 * 
 	 * @return the program to use for this test.
-	 * @throws Exception if an exceptioun is thrown opening the program
+	 * @throws Exception if an exception is thrown opening the program
 	 */
 	protected Program getProgram() throws Exception {
 		return env.getProgram(getProgramName());
