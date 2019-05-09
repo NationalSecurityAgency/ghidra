@@ -77,16 +77,15 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			}
 		});
 
-		addMouseListener(new MouseAdapter() {
+		addMouseListener(new GMouseListenerAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+
 				// always end editing on a mouse click of any kind
 				listEditor.setVisible(false);
 				requestFocus();
 			}
-		});
-
-		addMouseListener(new GMouseListenerAdapter() {
 
 			@Override
 			public boolean shouldConsume(MouseEvent e) {
@@ -183,7 +182,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 						chooser.getInvalidFilenameMessage(listEditorField.getText());
 					if (invalidFilenameMessage != null) {
 						chooser.setStatusText(invalidFilenameMessage);
-						// keep the user in the field
+						// keep the user in the field by not stopping the current edit
 					}
 					else {
 						stopListEdit();
@@ -355,6 +354,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			chooser.getInvalidFilenameMessage(listEditorField.getText());
 		if (invalidFilenameMessage != null) {
 			chooser.setStatusText("Rename aborted - " + invalidFilenameMessage);
+			cancelListEdit();
 			return;
 		}
 
