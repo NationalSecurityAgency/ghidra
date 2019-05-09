@@ -18,6 +18,7 @@
 
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
+OpToken PrintC::hidden = { "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
 OpToken PrintC::scope = { "::", 2, 70, true, OpToken::binary, 0, 0, (OpToken *)0 };
 OpToken PrintC::object_member = { ".", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0  };
 OpToken PrintC::pointer_member = { "->", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0 };
@@ -98,6 +99,7 @@ PrintC::PrintC(Architecture *g,const string &nm) : PrintLanguage(g,nm)
   option_convention = true;
   option_nocasts = false;
   option_unplaced = false;
+  option_hide_exts = true;
   nullToken = "NULL";
   
   // Set the flip tokens
@@ -316,6 +318,21 @@ void PrintC::opTypeCast(const PcodeOp *op)
     pushOp(&typecast,op);
     pushType(op->getOut()->getHigh()->getType());
   }
+  pushVnImplied(op->getIn(0),op,mods);
+}
+
+/// The syntax represents the given op using a function with one input,
+/// where the function name is not printed. The input expression is simply printed
+/// without adornment inside the larger expression, with one minor difference.
+/// The hidden operator protects against confusing evaluation order between
+/// the operators inside and outside the hidden function.  If both the inside
+/// and outside operators are the same associative token, the hidden token
+/// makes sure the inner expression is surrounded with parentheses.
+/// \param op is the given PcodeOp
+void PrintC::opHiddenFunc(const PcodeOp *op)
+
+{
+  pushOp(&hidden,op);
   pushVnImplied(op->getIn(0),op,mods);
 }
 
@@ -579,7 +596,7 @@ void PrintC::opIntZext(const PcodeOp *op)
 {
   if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
     if (isExtensionCastImplied(op))
-      pushVnImplied(op->getIn(0),op,mods);
+      opHiddenFunc(op);
     else
       opTypeCast(op);
   }
@@ -592,7 +609,7 @@ void PrintC::opIntSext(const PcodeOp *op)
 {
   if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
     if (isExtensionCastImplied(op))
-      pushVnImplied(op->getIn(0),op,mods);
+      opHiddenFunc(op);
     else
       opTypeCast(op);
   }
@@ -1265,6 +1282,8 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
 bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
 
 {
+  if (!option_hide_exts)
+    return false;		// If hiding extensions is not on, we must always print extension
   const Varnode *outVn = op->getOut();
   if (outVn->isExplicit()) {
 
@@ -1272,9 +1291,32 @@ bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
   else {
     PcodeOp *expOp = outVn->loneDescend();
     if (expOp != (PcodeOp *)0) {
-      OpCode opc = expOp->code();
-      if (opc == CPUI_PTRADD)
-	return true;
+      type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+      Varnode *otherVn;
+      int4 slot;
+      switch(expOp->code()) {
+	case CPUI_PTRADD:
+	  return true;
+	case CPUI_INT_ADD:
+	case CPUI_INT_SUB:
+	case CPUI_INT_MULT:
+	case CPUI_INT_DIV:
+	case CPUI_INT_AND:
+	case CPUI_INT_OR:
+	case CPUI_INT_XOR:
+	case CPUI_INT_LESS:
+	case CPUI_INT_LESSEQUAL:
+	case CPUI_INT_SLESS:
+	case CPUI_INT_SLESSEQUAL:
+	  slot = expOp->getSlot(outVn);
+	  otherVn = expOp->getIn(1-slot);
+	  // Check if the expression involves an explicit variable of the right integer type
+	  if (otherVn->isExplicit() && otherVn->getHigh()->getType()->getMetatype() == metatype)
+	    return true;
+	  break;
+	default:
+	  break;
+      }
     }
   }
   return false;
