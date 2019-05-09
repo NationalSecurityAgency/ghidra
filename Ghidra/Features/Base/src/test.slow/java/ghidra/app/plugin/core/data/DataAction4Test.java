@@ -484,7 +484,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CREATE_ARRAY, false);
 
-		final NumberInputDialog dlg1 = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		final NumberInputDialog dlg1 = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull("Expected element count input dialog", dlg1);
 
 		Runnable r = () -> dlg1.setInput(0x20);
@@ -500,8 +500,6 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		// Test action disablement on array element location
 
-		Data array = getContextData();
-		Data d0 = array.getComponent(0);
 		BytesFieldLocation loc =
 			new BytesFieldLocation(program, addr(0x010069f2), addr(0x010069f2), new int[] { 0 }, 0);
 		locationGenerated(loc);
@@ -515,7 +513,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CREATE_ARRAY, false);
 
-		final NumberInputDialog dlg2 = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		final NumberInputDialog dlg2 = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull("Expected element count input dialog", dlg2);
 
 		r = () -> dlg2.setInput(0x10);
@@ -748,7 +746,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CREATE_ARRAY, false);
 
-		final NumberInputDialog dlg1 = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		final NumberInputDialog dlg1 = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull("Expected element count input dialog", dlg1);
 
 		Runnable r = () -> dlg1.setInput(5);

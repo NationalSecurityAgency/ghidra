@@ -177,7 +177,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 // Inner Classes
 //==================================================================================================   
 
-	private class MarkupTablePassthroughFilter implements TableFilter<VTMarkupItem> {
+	private static class MarkupTablePassthroughFilter implements TableFilter<VTMarkupItem> {
 
 		private List<Filter<VTMarkupItem>> appliedFilters;
 
@@ -242,6 +242,20 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 				}
 			}
 			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			// not meant to put in hashing structures; the data for equals changes
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			// For now we don't support equals(); if this filter gets re-created, 
+			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// we must also implement equals() on the filters used by this filter.
+			return this == obj;
 		}
 	}
 
@@ -478,7 +492,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 
 		private static final String NO_SOURCE_TEXT = "None";
 
-		private GColumnRenderer<String> sourceCellRenderer = new AbstractGColumnRenderer<String>() {
+		private GColumnRenderer<String> sourceCellRenderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -543,30 +557,28 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 	static class IsInDBTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<VTMarkupItem, Boolean> {
 
-		private GColumnRenderer<Boolean> isInDBCellRenderer =
-			new AbstractGColumnRenderer<Boolean>() {
-				@Override
-				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+		private GColumnRenderer<Boolean> isInDBCellRenderer = new AbstractGColumnRenderer<>() {
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-					Object value = data.getValue();
+				Object value = data.getValue();
 
-					boolean isInDB = ((Boolean) value).booleanValue();
+				boolean isInDB = ((Boolean) value).booleanValue();
 
-					GTableCellRenderingData renderData =
-						data.copyWithNewValue(isInDB ? "yes" : null);
+				GTableCellRenderingData renderData = data.copyWithNewValue(isInDB ? "yes" : null);
 
-					JLabel renderer = (JLabel) super.getTableCellRendererComponent(renderData);
-					renderer.setOpaque(true);
+				JLabel renderer = (JLabel) super.getTableCellRendererComponent(renderData);
+				renderer.setOpaque(true);
 
-					return renderer;
-				}
+				return renderer;
+			}
 
-				@Override
-				public String getFilterString(Boolean t, Settings settings) {
-					boolean isInDB = t.booleanValue();
-					return isInDB ? "yes" : "";
-				}
-			};
+			@Override
+			public String getFilterString(Boolean t, Settings settings) {
+				boolean isInDB = t.booleanValue();
+				return isInDB ? "yes" : "";
+			}
+		};
 
 		@Override
 		public String getColumnName() {

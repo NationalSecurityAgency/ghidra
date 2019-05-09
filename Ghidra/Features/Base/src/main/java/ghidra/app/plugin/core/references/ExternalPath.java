@@ -13,38 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.filter;
+package ghidra.app.plugin.core.references;
 
 import java.util.Objects;
 
-public class InvertedTextFilter implements TextFilter {
+/**
+ * A simple container class used as a row object
+ */
+class ExternalPath {
 
-	private final TextFilter filter;
+	private String name;
+	private String path;
 
-	public InvertedTextFilter(TextFilter filter) {
-		this.filter = filter;
+	ExternalPath(String name, String path) {
+		this.name = name;
+		this.path = path;
 	}
 
-	@Override
-	public boolean isSubFilterOf(TextFilter textFilter) {
-		// Inverted filters can't add back data that has already been filtered out
-		return false;
+	String getName() {
+		return name;
 	}
 
-	@Override
-	public boolean matches(String text) {
-		return !filter.matches(text);
-	}
-
-	@Override
-	public String getFilterText() {
-		return filter.getFilterText();
+	String getPath() {
+		return path;
 	}
 
 	@Override
 	public int hashCode() {
-		// not meant to put in hashing structures; the data for equals may change over time
-		throw new UnsupportedOperationException();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		return result;
 	}
 
 	@Override
@@ -59,10 +59,14 @@ public class InvertedTextFilter implements TextFilter {
 			return false;
 		}
 
-		InvertedTextFilter other = (InvertedTextFilter) obj;
-		if (!Objects.equals(filter, other.filter)) {
+		ExternalPath other = (ExternalPath) obj;
+		if (!Objects.equals(name, other.name)) {
+			return false;
+		}
+		if (!Objects.equals(path, other.path)) {
 			return false;
 		}
 		return true;
 	}
+
 }

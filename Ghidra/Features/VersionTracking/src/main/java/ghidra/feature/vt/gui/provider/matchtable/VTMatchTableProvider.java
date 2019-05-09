@@ -181,7 +181,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		if (filtered) {
 			int filteredCount = matchesTableModel.getRowCount();
-			int unfilteredCount = matchesTableModel.getUnfilteredCount();
+			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
 			ancillaryFilterButton.setToolTipText(
 				"More Filters - " + filteredOutCount + " item(s) hidden");
@@ -231,7 +231,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
 			int filteredCount = matchesTableModel.getRowCount();
-			int unfilteredCount = matchesTableModel.getUnfilteredCount();
+			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
 			StringBuffer buffy = new StringBuffer();

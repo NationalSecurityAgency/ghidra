@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,7 @@
  */
 package docking.widgets.table;
 
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 
 public class TableSortingContext<T> {
 
@@ -25,8 +23,8 @@ public class TableSortingContext<T> {
 	private Comparator<T> comparator;
 
 	public TableSortingContext(TableSortState sortState, Comparator<T> comparator) {
-		this.sortState = sortState;
-		this.comparator = comparator;
+		this.sortState = Objects.requireNonNull(sortState);
+		this.comparator = Objects.requireNonNull(comparator);
 	}
 
 	public Comparator<T> getComparator() {
@@ -35,6 +33,15 @@ public class TableSortingContext<T> {
 
 	public TableSortState getSortState() {
 		return sortState;
+	}
+
+	/**
+	 * Returns true if there are no columns marked as sorted, which represents a 'no sort' state
+	 * 
+	 * @return true if there are no columns sorted
+	 */
+	public boolean isUnsorted() {
+		return sortState.isUnsorted();
 	}
 
 	public boolean isReverseOf(TableSortingContext<T> otherContext) {

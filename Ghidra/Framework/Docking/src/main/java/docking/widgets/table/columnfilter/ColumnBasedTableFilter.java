@@ -318,10 +318,6 @@ public class ColumnBasedTableFilter<R> implements TableFilter<R> {
 			list.add(constraintSet);
 		}
 
-		public boolean isEmpty() {
-			return list.isEmpty();
-		}
-
 		boolean acceptsRow(R rowObject) {
 			for (ColumnConstraintSet<R, ?> constraintSet : list) {
 				if (!constraintSet.accepts(rowObject, tableFilterContext)) {

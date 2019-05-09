@@ -15,16 +15,21 @@
  */
 package docking.widgets.table.threaded;
 
-import ghidra.util.task.TaskMonitor;
+import org.junit.Before;
 
-public class LoadSpecificDataJob<T> extends TableUpdateJob<T> {
+import docking.widgets.table.TableSortState;
 
-	LoadSpecificDataJob(ThreadedTableModel<T, ?> model, TaskMonitor monitor, TableData<T> data) {
-		super(model, monitor);
-		setData(data);
+public class NonSortedThreadedTableTest extends ThreadedTableTest {
 
-		// set the comparator so the data will be sorted; always force a sort, since we just 
-		// loaded the data
-		requestSort(model.getSortingContext(), true);
+	@Override
+	@Before
+	public void setUp() throws Exception {
+
+		super.setUp();
+
+		TableSortState sortState = TableSortState.createUnsortedSortState();
+		runSwing(() -> model.setTableSortState(sortState));
+		waitForTableModel(model);
 	}
+
 }

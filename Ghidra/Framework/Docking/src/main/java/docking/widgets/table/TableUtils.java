@@ -15,8 +15,6 @@
  */
 package docking.widgets.table;
 
-import java.awt.Toolkit;
-
 import javax.swing.JTable;
 import javax.swing.table.*;
 
@@ -113,11 +111,17 @@ public class TableUtils {
 		TableSortStateEditor editor = new TableSortStateEditor(columnSortStates);
 
 		if (editor.isColumnSorted(modelColumnIndex)) {
-			// remove it.  If there is only one, don't remove the last one
-			if (editor.getSortedColumnCount() == 1) {
-				Toolkit.getDefaultToolkit().beep();
-				return;
-			}
+
+			/*			 
+			 	Note: this code allows us to disable the 'unsorting' of a table via the UI
+			 
+				// remove it.  If there is only one, don't remove the last one
+				if (editor.getSortedColumnCount() == 1) {
+					Toolkit.getDefaultToolkit().beep();
+					return;
+				}
+			*/
+
 			editor.removeSortedColumn(modelColumnIndex);
 		}
 		else {

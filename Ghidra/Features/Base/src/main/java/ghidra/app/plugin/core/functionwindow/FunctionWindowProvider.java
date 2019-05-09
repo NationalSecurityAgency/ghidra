@@ -133,7 +133,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 		functionModel.addTableModelListener(e -> {
 			int rowCount = functionModel.getRowCount();
-			int unfilteredCount = functionModel.getUnfilteredCount();
+			int unfilteredCount = functionModel.getUnfilteredRowCount();
 
 			StringBuilder buffy = new StringBuilder();
 

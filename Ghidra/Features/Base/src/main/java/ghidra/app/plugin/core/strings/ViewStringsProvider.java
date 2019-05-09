@@ -124,7 +124,7 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 		stringModel.addTableModelListener(e -> {
 			int rowCount = stringModel.getRowCount();
-			int unfilteredCount = stringModel.getUnfilteredCount();
+			int unfilteredCount = stringModel.getUnfilteredRowCount();
 
 			setSubTitle("" + rowCount + " items" +
 				(rowCount != unfilteredCount ? " (of " + unfilteredCount + ")" : ""));

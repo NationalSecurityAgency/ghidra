@@ -96,7 +96,7 @@ public class ResourceManager {
 			return is;
 		}
 
-		URL url = getResource(testSearchPaths, filename);
+		URL url = getResource(getTestSearchPaths(), filename);
 		if (url == null) {
 			return null;
 		}

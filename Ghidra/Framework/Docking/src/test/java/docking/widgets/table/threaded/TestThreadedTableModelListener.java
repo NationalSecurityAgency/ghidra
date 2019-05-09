@@ -25,46 +25,49 @@ public class TestThreadedTableModelListener implements ThreadedTableModelListene
 	private volatile boolean cancelled;
 
 	private SpyEventRecorder spy;
+	private ThreadedTableModel<?, ?> model;
 
-	public TestThreadedTableModelListener() {
-		this(new SpyEventRecorder("Listener Spy"));
+	public TestThreadedTableModelListener(ThreadedTableModel<?, ?> model) {
+		this(model, new SpyEventRecorder("Listener Spy"));
 	}
 
-	public TestThreadedTableModelListener(SpyEventRecorder spy) {
+	public TestThreadedTableModelListener(ThreadedTableModel<?, ?> model, SpyEventRecorder spy) {
 		this.spy = spy;
+		this.model = model;
 	}
 
-	void reset(ThreadedTableModel<?, ?> model) {
-		spy.record("listener - reset()");
+	void reset(ThreadedTableModel<?, ?> newModel) {
+		spy.record("Test - listener - reset()");
 		completed = cancelled = false;
 	}
 
 	boolean doneWork() {
-		spy.record("listener - doneWork()? " + (completed || cancelled) + " - complted? " +
+		spy.record("Test - listener - doneWork()? " + (completed || cancelled) + " - completed? " +
 			completed + "; cancelled? " + cancelled);
 		return completed || cancelled;
 	}
 
 	boolean startedWork() {
-		spy.record("listener - startedWork() - updating? " + updating);
+		spy.record("Test - listener - startedWork() - updating? " + updating);
 		return updating;
 	}
 
 	@Override
 	public void loadPending() {
-		spy.record("listener - loadPending()");
+		spy.record("Swing - listener - loadPending()");
 		pending = true;
 	}
 
 	@Override
 	public void loadingStarted() {
-		spy.record("listener - loadStarted()");
+		spy.record("Swing - listener - loadStarted()");
 		updating = true;
 	}
 
 	@Override
 	public void loadingFinished(boolean wasCancelled) {
-		spy.record("listener - loadingFinished() - cancelled? " + wasCancelled);
+		spy.record("Swing - listener - loadingFinished() - cancelled? " + wasCancelled +
+			"; size: " + model.getRowCount());
 		cancelled = wasCancelled;
 		completed = !cancelled;
 	}
