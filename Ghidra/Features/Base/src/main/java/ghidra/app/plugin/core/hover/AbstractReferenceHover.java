@@ -227,9 +227,9 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			for (Symbol s : symbols) {
 				ColorAndStyle style = inspector.getColorAndStyle(s);
 				String name = s.getName(true);
-				name = HTMLUtilities.friendlyEncodeHTML(pad);
+				name = pad + HTMLUtilities.friendlyEncodeHTML(name);
 				String html = style.toHtml(name);
-				buffy.append(pad).append(html).append(newline);
+				buffy.append(html).append(newline);
 			}
 		}
 
