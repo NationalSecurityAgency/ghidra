@@ -256,7 +256,6 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	/**
 	 * Reset this monitor so that it can be reused
 	 */
-	@Override
 	public synchronized void reset() {
 		isCancelled = false;
 		taskID.incrementAndGet();

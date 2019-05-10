@@ -942,17 +942,18 @@ public class DialogComponentProvider
 			}
 		});
 		
-		subStatusLabel = new JLabel();
+		subStatusLabel = new JLabel(" ");
 		subStatusLabel.setName("subStatusLabel");
 		subStatusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		subStatusLabel.setForeground(Color.blue);
 		subStatusLabel.setFont(subStatusLabel.getFont().deriveFont(Font.ITALIC));
-		subStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		subStatusLabel.setFont(subStatusLabel.getFont().deriveFont(11.0f));
+		subStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 3, 5));
+		subStatusLabel.setFont(subStatusLabel.getFont().deriveFont(9.0f));
 
 		// use a strut panel so the size of the message area does not change if we make
 		// the message label not visible
-		int height = statusLabel.getPreferredSize().height;
+		int height =
+			statusLabel.getPreferredSize().height + subStatusLabel.getPreferredSize().height + 5;
 
 		panel.add(Box.createVerticalStrut(height), BorderLayout.WEST);
 		panel.add(statusLabel, BorderLayout.CENTER);

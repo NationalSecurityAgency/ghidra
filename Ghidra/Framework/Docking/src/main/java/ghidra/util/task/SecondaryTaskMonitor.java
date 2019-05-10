@@ -50,6 +50,7 @@ public class SecondaryTaskMonitor implements TaskMonitor {
 	public void setMessage(String message) {
 		if (parentMonitor instanceof TaskDialog) {
 			((TaskDialog) parentMonitor).setSecondaryMessage(message);
+			return;
 		}
 		parentMonitor.setMessage(message);
 	}
@@ -62,6 +63,17 @@ public class SecondaryTaskMonitor implements TaskMonitor {
 	@Override
 	public void setInitialized(boolean init) {
 		parentMonitor.setInitialized(init);
+	}
+
+	/**
+	 * Secondary monitors should not be able to reset progress or revert back
+	 * to an uninitialized state; hence the override.
+	 */
+	@Override
+	public void finished() {
+		synchronized (this) {
+			setMessage("");
+		}
 	}
 
 	@Override
