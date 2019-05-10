@@ -1767,8 +1767,9 @@ BlockInfLoop *BlockGraph::newBlockInfLoop(FlowBlock *body)
 
 /// Add the new BlockSwitch to \b this, collapsing all the case FlowBlocks into it.
 /// \param cs is the list of case FlowBlocks
+/// \param hasExit is \b true if the switch has a formal exit
 /// \return the new BlockSwitch
-BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs)
+BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit)
 
 {
   FlowBlock *rootbl = cs[0];
@@ -1779,6 +1780,8 @@ BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs)
   ret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
   identifyInternal(ret,cs);
   addBlock(ret);
+  if (hasExit)
+    ret->forceOutputNum(1);	// If there is an exit, there should be exactly 1 out edge
   ret->clearFlag(f_switch_out);	// Don't consider this as being a switch "out"
   return ret;
 }

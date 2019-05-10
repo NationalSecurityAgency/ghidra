@@ -1636,7 +1636,10 @@ bool CollapseStructure::ruleBlockSwitch(FlowBlock *bl)
   // Find "obvious" exitblock,  is sizeIn>1 or sizeOut>1
   for(int4 i=0;i<sizeout;++i) {
     FlowBlock *curbl = bl->getOut(i);
-    if (curbl == bl) return false; // Cannot exit to itself (this can happen as a goto)
+    if (curbl == bl) {
+      exitblock = curbl;	// Exit back to top of switch (loop)
+      break;
+    }
     if (curbl->sizeOut() > 1) {
       exitblock = curbl;
       break;
@@ -1673,7 +1676,6 @@ bool CollapseStructure::ruleBlockSwitch(FlowBlock *bl)
       if (exitblock->isGotoOut(i)) return false;
     for(int4 i=0;i<sizeout;++i) {
       FlowBlock *curbl = bl->getOut(i);
-      if (curbl == bl) return false;
       if (curbl == exitblock) continue;	// The switch can go straight to the exit block
       if (curbl->sizeIn() > 1) return false; // A case can only have the switch fall into it
       if (curbl->isGotoIn(0)) return false; // In cannot be a goto
@@ -1696,7 +1698,7 @@ bool CollapseStructure::ruleBlockSwitch(FlowBlock *bl)
     if (curbl == exitblock) continue; // Don't include exit as a case
     cases.push_back(curbl);
   }
-  graph.newBlockSwitch(cases);
+  graph.newBlockSwitch(cases,(exitblock != (FlowBlock *)0));
   return true;
 }
 
