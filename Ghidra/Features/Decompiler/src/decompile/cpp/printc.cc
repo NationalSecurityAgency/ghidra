@@ -1289,14 +1289,15 @@ bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
 
   }
   else {
-    PcodeOp *expOp = outVn->loneDescend();
-    if (expOp != (PcodeOp *)0) {
-      type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+    list<PcodeOp *>::const_iterator iter;
+    for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+      PcodeOp *expOp = *iter;
       Varnode *otherVn;
       int4 slot;
       switch(expOp->code()) {
 	case CPUI_PTRADD:
-	  return true;
+	  break;
 	case CPUI_INT_ADD:
 	case CPUI_INT_SUB:
 	case CPUI_INT_MULT:
@@ -1311,13 +1312,16 @@ bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
 	  slot = expOp->getSlot(outVn);
 	  otherVn = expOp->getIn(1-slot);
 	  // Check if the expression involves an explicit variable of the right integer type
-	  if (otherVn->isExplicit() && otherVn->getHigh()->getType()->getMetatype() == metatype)
-	    return true;
+	  if (!otherVn->isExplicit())
+	    return false;
+	  if (otherVn->getHigh()->getType()->getMetatype() != metatype)
+	    return false;
 	  break;
 	default:
-	  break;
+	  return false;
       }
     }
+    return true;	// Everything is integer promotion
   }
   return false;
 }
