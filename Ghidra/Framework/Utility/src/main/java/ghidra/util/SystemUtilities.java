@@ -341,23 +341,6 @@ public class SystemUtilities {
 		return Objects.equals(o1, o2);
 	}
 
-	/**
-	 * Returns true if the given element is equals to one of the provided elements.
-	 *
-	 * @param o the element to test
-	 * @param others the potential matches
-	 * @return true if the given element is equals to one of the provided elements.
-	 */
-	@SafeVarargs // we are not using the provided type, so there is no pollution
-	public static <T> boolean isOneOf(T o, T... others) {
-		for (T t : others) {
-			if (o.equals(t)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	public static <T extends Comparable<T>> int compareTo(T c1, T c2) {
 		if (c1 == null) {
 			return c2 == null ? 0 : 1;

@@ -22,6 +22,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
 import ghidra.app.util.*;
@@ -156,16 +158,16 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 	private JPanel buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 20, 150));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-		blockNameLabel = new JLabel(".text");
+		blockNameLabel = new GDLabel(".text");
 		blockNameLabel.setName("blockName"); // name components for junits
 
-		origStartLabel = new JLabel("1001000");
+		origStartLabel = new GDLabel("1001000");
 		origStartLabel.setName("origStart");
 
-		origEndLabel = new JLabel("1002000");
+		origEndLabel = new GDLabel("1002000");
 		origEndLabel.setName("origEnd");
 
-		lengthLabel = new JLabel("4096 (0x1000)");
+		lengthLabel = new GDLabel("4096 (0x1000)");
 		lengthLabel.setName("length");
 
 		newStartField = new AddressInput();
@@ -187,17 +189,17 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 			}
 		});
 
-		panel.add(new JLabel("Name:", SwingConstants.RIGHT));
+		panel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		panel.add(blockNameLabel);
-		panel.add(new JLabel("Start Address:", SwingConstants.RIGHT));
+		panel.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panel.add(origStartLabel);
-		panel.add(new JLabel("End Address:", SwingConstants.RIGHT));
+		panel.add(new GLabel("End Address:", SwingConstants.RIGHT));
 		panel.add(origEndLabel);
-		panel.add(new JLabel("Length:", SwingConstants.RIGHT));
+		panel.add(new GLabel("Length:", SwingConstants.RIGHT));
 		panel.add(lengthLabel);
-		panel.add(new JLabel("New Start Address:", SwingConstants.RIGHT));
+		panel.add(new GLabel("New Start Address:", SwingConstants.RIGHT));
 		panel.add(newStartField);
-		panel.add(new JLabel("New End Address:", SwingConstants.RIGHT));
+		panel.add(new GLabel("New End Address:", SwingConstants.RIGHT));
 		panel.add(newEndField);
 		return panel;
 	}

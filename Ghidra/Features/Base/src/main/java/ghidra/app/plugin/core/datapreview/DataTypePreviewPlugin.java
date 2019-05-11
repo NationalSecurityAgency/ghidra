@@ -47,8 +47,9 @@ import ghidra.util.HelpLocation;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.SwingUpdateManager;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
+import util.CollectionUtils;
 
 //@formatter:off
 @PluginInfo(
@@ -56,7 +57,8 @@ import resources.ResourceManager;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Data Type Preview Plugin",
-	description = "This plugin provides a preview of bytes at an address based on data types that you choose to view."
+	description = "This plugin provides a preview of bytes at an address based on data types " +
+		"that you choose to view."
 )
 //@formatter:on
 public class DataTypePreviewPlugin extends ProgramPlugin {
@@ -66,10 +68,10 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	private DTPPTable table;
 	private DTPPScrollPane component;
 	private Address currentAddress;
-	private GoToService gotoService;
+	private GoToService goToService;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private DataTypeManager dataTypeMgr;
+	private DataTypeManager dataTypeManager;
 	private Program activeProgram;
 
 	private SwingUpdateManager updateManager = new SwingUpdateManager(650, () -> updatePreview());
@@ -83,7 +85,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	}
 
 	GoToService getGoToService() {
-		return gotoService;
+		return goToService;
 	}
 
 	DTPPComponentProvider getProvider() {
@@ -94,12 +96,12 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	protected void init() {
 		super.init();
 
-		gotoService = tool.getService(GoToService.class);
+		goToService = tool.getService(GoToService.class);
 
 		model = new DTPPTableModel();
 		table = new DTPPTable(model);
 		component = new DTPPScrollPane(table);
-		dataTypeMgr = new LayeredDataTypeManager();
+		dataTypeManager = new LayeredDataTypeManager();
 
 		addDataType(new ByteDataType());
 		addDataType(new WordDataType());
@@ -115,6 +117,20 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		tool.addComponentProvider(provider, false);
 
 		createActions();
+	}
+
+	@Override
+	public void serviceRemoved(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == GoToService.class) {
+			goToService = null;
+		}
+	}
+
+	@Override
+	public void serviceAdded(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == GoToService.class) {
+			goToService = (GoToService) service;
+		}
 	}
 
 	@Override
@@ -141,9 +157,9 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	}
 
 	void updateModel() {
-		int transactionId = dataTypeMgr.startTransaction("realign");
+		int transactionId = dataTypeManager.startTransaction("realign");
 		try {
-			Iterator<Composite> allComposites = dataTypeMgr.getAllComposites();
+			Iterator<Composite> allComposites = dataTypeManager.getAllComposites();
 			while (allComposites.hasNext()) {
 				Composite composite = allComposites.next();
 				if (composite.isInternallyAligned()) {
@@ -154,7 +170,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			}
 		}
 		finally {
-			dataTypeMgr.endTransaction(transactionId, true);
+			dataTypeManager.endTransaction(transactionId, true);
 		}
 	}
 
@@ -204,9 +220,10 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	@Override
 	public void readConfigState(SaveState saveState) {
 		String[] names = saveState.getNames();
-		if (names == null || names.length == 0) {
+		if (CollectionUtils.isBlank(names)) {
 			return;
 		}
+
 		BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
 		try {
 			for (String element : names) {
@@ -214,12 +231,9 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 				if (path == null) {
 					continue;
 				}
+
 				DataType dt = builtInMgr.getDataType(new CategoryPath(path), element);
-				if (dt != null) {
-					if (!model.contains(dt)) {
-						addDataType(dt);
-					}
-				}
+				addDataType(dt);
 			}
 		}
 		finally {
@@ -233,9 +247,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		while (iter.hasNext()) {
 			Preview preview = iter.next();
 			DataType dt = preview.getDataType();
-			if (dt instanceof BuiltIn) {
-				saveState.putString(dt.getName(), dt.getCategoryPath().getPath());
-			}
+			saveState.putString(dt.getName(), dt.getCategoryPath().getPath());
 		}
 	}
 
@@ -285,32 +297,38 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			AllowedDataTypes.FIXED_LENGTH);
 		tool.showDialog(d, provider);
 		DataType dt = d.getUserChosenDataType();
-		if (dt != null) {
-			addDataType(dt);
-		}
+		addDataType(dt);
 	}
 
 	void addDataType(DataType dt) {
-		int transactionID = dataTypeMgr.startTransaction("Add dataType");
+
+		if (dt == null || model.contains(dt)) {
+			return;
+		}
+
+		int transactionID = dataTypeManager.startTransaction("Add dataType");
 		try {
-			DataType resolvedDt = dataTypeMgr.resolve(dt, null);
+			DataType resolvedDt = dataTypeManager.resolve(dt, null);
 			model.add(resolvedDt);
 		}
 		finally {
-			dataTypeMgr.endTransaction(transactionID, true);
+			dataTypeManager.endTransaction(transactionID, true);
 		}
 	}
 
 	private void removeDataType(DataType dt) {
-		int transactionID = dataTypeMgr.startTransaction("Remove dataType");
+		int transactionID = dataTypeManager.startTransaction("Remove dataType");
 		try {
 			model.removeAll(dt);
-			dataTypeMgr.remove(dt, null);
+
+			// Note: do not do this, as there may be user-added composites that are based on 
+			//       the type being removed.  For now, let the 'fake' DTM grow forever (this should
+			//       never become a problem).
+			// dataTypeManager.remove(dt, null);
 		}
 		finally {
-			dataTypeMgr.endTransaction(transactionID, true);
+			dataTypeManager.endTransaction(transactionID, true);
 		}
-
 	}
 
 	private void delete() {
@@ -431,8 +449,13 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 				if (queryString == null) {
 					return;
 				}
-				gotoService.goToQuery(currentAddress, new QueryData(queryString, false), null,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+
+				if (goToService == null) {
+					return;
+				}
+
+				goToService.goToQuery(currentAddress, new QueryData(queryString, false), null,
+					TaskMonitor.DUMMY);
 			}
 			table.handleTableSelection();
 		}
@@ -442,7 +465,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		final static int NAME_COL = 0;
 		final static int PREVIEW_COL = 1;
 
-		private ArrayList<Preview> data = new ArrayList<>();
+		private List<Preview> data = new ArrayList<>();
 
 		String getPreviewAt(int row) {
 			if (currentProgram == null) {
@@ -530,28 +553,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			return removed;
 		}
 
-		boolean removeAll(CategoryPath deletedDataTypePath) {
-			boolean removed = false;
-			String dtName = deletedDataTypePath.getName();
-			CategoryPath dtParent = deletedDataTypePath.getParent();
-			ArrayList<Preview> clone = new ArrayList<>(data);
-			Iterator<Preview> iter = clone.iterator();
-			while (iter.hasNext()) {
-				Object obj = iter.next();
-				Preview preview = (Preview) obj;
-				DataType dt = preview.getDataType();
-				if (dt.getName().equals(dtName) && dt.getCategoryPath().equals(dtParent)) {
-					data.remove(preview);
-					removed = true;
-				}
-			}
-			if (removed) {
-				fireTableDataChanged();
-			}
-			return removed;
-		}
-
-		boolean isValid(DataType dt) {
+		private boolean isValid(DataType dt) {
 			if (dt == null) {
 				return false;
 			}
@@ -571,7 +573,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			return true;
 		}
 
-		boolean contains(DataType dt) {
+		private boolean contains(DataType dt) {
 			Iterator<Preview> iter = data.iterator();
 			while (iter.hasNext()) {
 				Preview p = iter.next();
@@ -677,7 +679,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 	}
 
-	public class LayeredDataTypeManager extends StandAloneDataTypeManager {
+	private class LayeredDataTypeManager extends StandAloneDataTypeManager {
 
 		public LayeredDataTypeManager() {
 			super("DataTypePreviewer");

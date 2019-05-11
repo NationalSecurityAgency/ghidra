@@ -23,6 +23,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -130,11 +133,13 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 		addrInput = new AddressInput();
 		addrInput.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				okCallback();
 			}
 		});
 		addrInput.addChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				clearStatusText();
 			}
@@ -142,19 +147,17 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		addrInput.setAddressFactory(addrFactory);
 		addrInput.setAddress(defaultAddress);
 
-		JLabel label = new JLabel("Enter Base Address:", SwingConstants.RIGHT);
-		panel.add(label);
+		panel.add(new GLabel("Enter Base Address:", SwingConstants.RIGHT));
 		panel.add(addrInput);
 
-		JLabel sizeLabel = new JLabel("Select Data Size (Bytes):", SwingConstants.RIGHT);
-		comboBox = new JComboBox<String>(new String[] { "1", "2", "4", "8" });
+		comboBox = new GComboBox<>(new String[] { "1", "2", "4", "8" });
 		int pointerSize = defaultAddress.getPointerSize();
 		comboBox.setSelectedItem(Integer.toString(pointerSize));
 
-		panel.add(sizeLabel);
+		panel.add(new GLabel("Select Data Size (Bytes):", SwingConstants.RIGHT));
 		panel.add(comboBox);
 
-		signedCheckBox = new JCheckBox("Signed Data Value(s)", true);
+		signedCheckBox = new GCheckBox("Signed Data Value(s)", true);
 		panel.add(signedCheckBox);
 		return panel;
 	}

@@ -261,7 +261,16 @@ public class PcodeDataTypeManager {
 		if (type instanceof Array) {
 			return buildType(type, size);
 		}
-		if (!(type instanceof FunctionDefinition) && type.getLength() <= 0) {
+		if (type instanceof FunctionDefinition) {
+			long id = progDataTypes.getID(type);
+			if (id <= 0) {
+				// Its possible the FunctionDefinition was built on the fly and is not
+				// a permanent data-type of the program with an ID.  In this case, we can't
+				// construct a <typeref> tag but must build a full <type> tag.
+				return buildType(type, size);
+			}
+		}
+		else if (type.getLength() <= 0) {
 			return buildType(type, size);
 		}
 		StringBuilder resBuf = new StringBuilder();

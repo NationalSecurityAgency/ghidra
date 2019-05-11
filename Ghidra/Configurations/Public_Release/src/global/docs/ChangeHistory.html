@@ -7,6 +7,49 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 9.0.3 Change History (April 2019)</H1>
+
+<blockquote><p><u>New Feature</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>GUI.</I> Function tags are now viewable by function.</li>
+
+</ul>
+</blockquote>
+
+<blockquote><p><u>Improvements</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Decompiler.</I> Improved modeling of CFG on Windows 10. (Issue #340)</li>
+<li><I>Patcher.</I> Renamed patch directory to /Ghidra/patch and added README.txt that explains how the patch directory is used.</li>
+<li><I>Search.</I> Updated the Decompiler Data Type Finder to find references to inside of nested array access in a line of Decompiler C output. (Issue #416)</li>
+<li><I>Sleigh.</I> Improved error reporting for SLEIGH compiler. (Issue #364)</li>
+
+</ul>
+</blockquote>
+
+<blockquote><p><u>Bugs</u></p></blockquote>
+<blockquote>
+<ul>
+
+<li><I>Analysis.</I> Code that checks for thunks no longer throws an exception if the PC is not set for the processor.</li>
+<li><I>Analysis.</I> Made a fix to enable Apply button when changing tool options. (Issue #40)</li>
+<li><I>Data Types.</I> Fixed concurrent modification exception when replacing one datatype for another that results in some other datatype being renamed. </li>
+<li><I>Decompiler.</I> Fixed dynamic variables and equates in 16-bit x86 programs. (Issue #336)</li>
+<li><I>Decompiler:Java.</I> Fixed DEX decompilation regression issue. (Issue #350)</li>
+<li><I>Eclipse Integration.</I> Fixed exception in Eclipse GhidraDev plugin that occurred when performing certain actions on a Ghidra project that was imported from a previously exported Archive File. (Issues #283, #383)</li>
+<li><I>GUI.</I> Improved documentation on how to deal with HiDPI monitor issues in Linux. In the <I>&lt;ghidra_installation&gt;</I>/support/launch.properties file, change VMARGS=-Dsun.java2d.xrender from false to true.</li> 
+<li><I>Importer.</I> Fixed an exception that occurred when batch importing APK files. (Issue #426)</li>
+<li><I>Languages.</I> The 6502 Zero page indexed addressing has been corrected to only access the Zero page. (Issue #201)</li>
+<li><I>Languages.</I> The 68000 BCD arithmetic instructions now have pcode semantics that allow disassembly to continue. (Issue #227)</li>
+<li><I>Multi-User:Ghidra Server.</I> Restored ability to execute svrAdmin script in development mode. </li>
+<li><I>Search.</I> Fixed NullPointerException in Decompiler Data Type Reference Finder. (Issue #407)</li>
+
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.0.2 Change History (April 2019)</H1>
 
 <blockquote><p><u>Bugs</u></p></blockquote>

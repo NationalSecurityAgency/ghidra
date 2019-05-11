@@ -33,6 +33,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
@@ -976,7 +977,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		private JCheckBox checkbox;
 
 		RefCellBooleanEditor() {
-			super(new JCheckBox());
+			super(new GCheckBox());
 			setClickCountToStart(1);
 			checkbox = (JCheckBox) editorComponent;
 			checkbox.setOpaque(false);

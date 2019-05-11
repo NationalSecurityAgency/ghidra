@@ -18,6 +18,7 @@ package ghidra.plugins.fsbrowser;
 import java.awt.Component;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -30,6 +31,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
@@ -42,7 +44,6 @@ import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.plugins.fsbrowser.tasks.GFileSystemExtractAllTask;
 import ghidra.plugins.importer.batch.BatchImportDialog;
-import ghidra.plugins.importer.tasks.ImportBatchTask;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -297,32 +298,34 @@ class FSBActionManager {
 	private void openProgramFromFile(FSRL file, String suggestedDestinationPath) {
 		ProgramManager pm = FSBUtils.getProgramManager(plugin.getTool(), false);
 		if (pm != null) {
-			TaskLauncher.launchNonModal("Open Programs", monitor -> {
-				doOpenProgramFromFile(file, suggestedDestinationPath, pm, monitor);
+			AtomicBoolean success = new AtomicBoolean();
+			TaskLauncher.launchModal("Open Programs", monitor -> {
+				success.set(doOpenProgramFromFile(file, suggestedDestinationPath, pm, monitor));
 			});
+			if (!success.get()) {
+				ImporterUtilities.showImportDialog(file, null, suggestedDestinationPath,
+					plugin.getTool(), pm);
+			}
 		}
 	}
 
-	private void doOpenProgramFromFile(FSRL fsrl, String suggestedDestinationPath,
+	private boolean doOpenProgramFromFile(FSRL fsrl, String suggestedDestinationPath,
 			ProgramManager programManager, TaskMonitor monitor) {
-		if (programManager == null) {
-			return;
-		}
 
 		Object consumer = new Object();
 		Program program = ProgramMappingService.findMatchingProgramOpenIfNeeded(fsrl, consumer,
 			programManager, ProgramManager.OPEN_CURRENT);
 
 		if (program == null) {
-			searchProjectForMatchingFileOrImport(fsrl, suggestedDestinationPath, programManager,
-				monitor);
-			return;
+			return searchProjectForMatchingFileOrFail(fsrl, suggestedDestinationPath,
+				programManager, monitor);
 		}
 
 		program.release(consumer);
+		return true;
 	}
 
-	private void searchProjectForMatchingFileOrImport(FSRL fsrl, String suggestedDestinationPath,
+	private boolean searchProjectForMatchingFileOrFail(FSRL fsrl, String suggestedDestinationPath,
 			ProgramManager programManager, TaskMonitor monitor) {
 		boolean doSearch = isProjectSmallEnoughToSearchWithoutWarningUser() ||
 			OptionDialog.showYesNoDialog(null, "Search Project for matching program?",
@@ -336,10 +339,9 @@ class FSBActionManager {
 		if (domainFile != null) {
 			ProgramMappingService.createAssociation(fsrl, domainFile);
 			showProgramInProgramManager(fsrl, domainFile, programManager, true);
-			return;
+			return true;
 		}
-		ImporterUtilities.showImportDialog(fsrl, null, suggestedDestinationPath, plugin.getTool(),
-			programManager);
+		return false;
 	}
 
 	/**
@@ -356,10 +358,19 @@ class FSBActionManager {
 	 */
 	private void openProgramsFromFiles(List<FSRL> files) {
 		ProgramManager pm = FSBUtils.getProgramManager(plugin.getTool(), false);
+		List<FSRL> unmatchedFiles = new ArrayList<>();
 		if (pm != null) {
-			TaskLauncher.launchNonModal("Open Programs", monitor -> {
-				doOpenProgramsFromFiles(files, pm, monitor);
+			TaskLauncher.launchModal("Open Programs", monitor -> {
+				List<FSRL> tmpUnmatchedFiles = doOpenProgramsFromFiles(files, pm, monitor);
+				unmatchedFiles.addAll(tmpUnmatchedFiles);
 			});
+			if (unmatchedFiles.size() == 1) {
+				ImporterUtilities.showImportDialog(unmatchedFiles.get(0), null, null,
+					plugin.getTool(), pm);
+			}
+			else if (unmatchedFiles.size() > 1) {
+				BatchImportDialog.showAndImport(plugin.getTool(), null, unmatchedFiles, null, pm);
+			}
 		}
 	}
 
@@ -373,12 +384,10 @@ class FSBActionManager {
 	 * @param fsrls {@link List} of {@link FSRL}s of the files to search for.
 	 * @param programManager {@link ProgramManager} to use to open the programs, null ok.
 	 * @param monitor {@link TaskMonitor} to watch for cancel and update with progress.
+	 * @return list of unmatched files that need to be imported
 	 */
-	private void doOpenProgramsFromFiles(List<FSRL> fsrls, ProgramManager programManager,
+	private List<FSRL> doOpenProgramsFromFiles(List<FSRL> fsrls, ProgramManager programManager,
 			TaskMonitor monitor) {
-		if (programManager == null) {
-			return;
-		}
 
 		int programsOpened = 0;
 		List<FSRL> unmatchedFiles = new ArrayList<>();
@@ -400,12 +409,14 @@ class FSBActionManager {
 		// UnmatchedFiles contains any files that had no association to a Program
 		// Give the user a chance to search the project for it, and import it if not found
 		if (!unmatchedFiles.isEmpty()) {
-			searchProjectForMatchingFilesOrImport(unmatchedFiles, programManager, monitor,
-				programsOpened);
+			unmatchedFiles = searchProjectForMatchingFilesOrFail(unmatchedFiles, programManager,
+				monitor, programsOpened);
 		}
+
+		return unmatchedFiles;
 	}
 
-	private void searchProjectForMatchingFilesOrImport(List<FSRL> fsrlList,
+	private List<FSRL> searchProjectForMatchingFilesOrFail(List<FSRL> fsrlList,
 			ProgramManager programManager, TaskMonitor monitor, int programsOpened) {
 		boolean doSearch = isProjectSmallEnoughToSearchWithoutWarningUser() ||
 			OptionDialog.showYesNoDialog(null, "Search Project for matching programs?",
@@ -430,16 +441,7 @@ class FSBActionManager {
 			}
 		}
 
-		if (unmatchedFSRLs.size() == 1) {
-			ProgramManager pmForImporter =
-				programsOpened < ImportBatchTask.MAX_PROGRAMS_TO_OPEN ? programManager : null;
-			ImporterUtilities.showImportDialog(unmatchedFSRLs.get(0), null, null, plugin.getTool(),
-				pmForImporter);
-		}
-		else if (unmatchedFSRLs.size() > 1) {
-			BatchImportDialog.showAndImport(plugin.getTool(), null, unmatchedFSRLs, null,
-				programManager);
-		}
+		return unmatchedFSRLs;
 	}
 
 	private boolean isProjectSmallEnoughToSearchWithoutWarningUser() {
@@ -472,40 +474,48 @@ class FSBActionManager {
 	 * @param monitor {@link TaskMonitor} to monitor and update when accessing the filesystems.
 	 */
 	private void showInfoForFile(FSRL fsrl, TaskMonitor monitor) {
-		String title = "  no title  ";
-		String info = "  no information available  ";
-		String fileSystemName = " unknown ";
+		String title;
+		String info;
 
 		if (fsrl != null) {
+			info = "";
+			title = "Info about " + fsrl.getName();
 			if (fsrl instanceof FSRLRoot && ((FSRLRoot) fsrl).hasContainer()) {
-				fsrl = ((FSRLRoot) fsrl).getContainer();
+				FSRL containerFSRL = ((FSRLRoot) fsrl).getContainer();
+				title = containerFSRL.getName();
+				info = getInfoStringFor(containerFSRL, monitor);
+				info += "------------------------------------\n";
 			}
-			try (RefdFile refdFile = FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
-
-				title = fsrl.getName();
-
-				GFileSystem fs = refdFile.fsRef.getFilesystem();
-				fileSystemName = fs.getDescription();
-				info = "FSRL: " + fsrl + "\n";
-				DomainFile associatedDomainFile =
-					ProgramMappingService.getCachedDomainFileFor(fsrl);
-				if (associatedDomainFile != null) {
-					info = info + "Project file: " + associatedDomainFile.getPathname() + "\n";
-				}
-				String nodeInfo = fs.getInfo(refdFile.file, monitor);
-				if (nodeInfo != null) {
-					info += nodeInfo;
-				}
-			}
-			catch (IOException | CancelledException e) {
-				info = "Error retrieving information: " + e.getMessage();
-			}
+			info += getInfoStringFor(fsrl, monitor);
+		}
+		else {
+			title = "Missing File";
+			info = "Unable to retrieve information";
 		}
 
-		MultiLineMessageDialog.showMessageDialog(plugin.getTool().getActiveWindow(),
-			"Info about " + title, null, "File system: " + fileSystemName + '\n' + info,
-			MultiLineMessageDialog.INFORMATION_MESSAGE);
+		MultiLineMessageDialog.showMessageDialog(plugin.getTool().getActiveWindow(), title, null,
+			info, MultiLineMessageDialog.INFORMATION_MESSAGE);
 
+	}
+
+	private String getInfoStringFor(FSRL fsrl, TaskMonitor monitor) {
+		try (RefdFile refdFile = FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
+			GFileSystem fs = refdFile.fsRef.getFilesystem();
+			String result = "File system: " + fs.getDescription() + "\n";
+			result += "FSRL: " + fsrl + "\n";
+			DomainFile associatedDomainFile = ProgramMappingService.getCachedDomainFileFor(fsrl);
+			if (associatedDomainFile != null) {
+				result += "Project file: " + associatedDomainFile.getPathname() + "\n";
+			}
+			String nodeInfo = fs.getInfo(refdFile.file, monitor);
+			if (nodeInfo != null) {
+				result += nodeInfo;
+			}
+			return result;
+		}
+		catch (IOException | CancelledException e) {
+			return "Error retrieving information: " + e.getMessage() + "\n";
+		}
 	}
 
 	/**
@@ -691,7 +701,7 @@ class FSBActionManager {
 					}
 					else {
 						SystemUtilities.runSwingLater(() -> {
-							JLabel label = new JLabel(icon);
+							JLabel label = new GIconLabel(icon);
 							JOptionPane.showMessageDialog(null, label,
 								"Image Viewer: " + fsrl.getName(), JOptionPane.INFORMATION_MESSAGE);
 						});
@@ -743,7 +753,7 @@ class FSBActionManager {
 					}
 					if (file.length() == 0) {
 						Msg.showInfo(this, parent, "View As Text Failed",
-							fsrl.getName() + " is empty (0 bytes).");
+							"File " + fsrl.getName() + " is empty (0 bytes).");
 						return;
 					}
 					try {

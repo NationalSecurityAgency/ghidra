@@ -26,9 +26,12 @@ import javax.swing.*;
 import docking.*;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.filter.FilterTextField;
+import docking.widgets.label.GLabel;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.StringUtilities;
@@ -241,11 +244,11 @@ class FilterAction extends ToggleDockingAction {
 
 			JPanel enablePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			ButtonGroup group = new ButtonGroup();
-			enableButton = new JRadioButton("Enabled", true);
+			enableButton = new GRadioButton("Enabled", true);
 			enableButton.addKeyListener(listener);
 			enablePanel.add(enableButton);
 			group.add(enableButton);
-			disableButton = new JRadioButton("Disabled", false);
+			disableButton = new GRadioButton("Disabled", false);
 			disableButton.addKeyListener(listener);
 			enablePanel.add(disableButton);
 			group.add(disableButton);
@@ -317,7 +320,7 @@ class FilterAction extends ToggleDockingAction {
 			JPanel filterPanel = new JPanel(new BorderLayout());
 			filterField = new FilterTextField(checkboxPanel);
 			filterPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-			filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+			filterPanel.add(new GLabel("Filter:"), BorderLayout.WEST);
 
 			filterPanel.add(filterField, BorderLayout.CENTER);
 			filterField.addFilterListener(filterListener);
@@ -388,7 +391,7 @@ class FilterAction extends ToggleDockingAction {
 		}
 
 		private void createCheckBox(String curTypeHtml, String curType, Boolean lEnabled) {
-			JCheckBox newCheckbox = new JCheckBox(curTypeHtml, lEnabled.booleanValue());
+			JCheckBox newCheckbox = new GHtmlCheckBox(curTypeHtml, lEnabled.booleanValue());
 			newCheckbox.setName(curType);
 			newCheckbox.addKeyListener(listener);
 			newCheckbox.addItemListener(itemListener);

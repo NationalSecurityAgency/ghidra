@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.Scrollable;
 
 /**
  * A panel that is scrollable and uses a VariableHeightLayoutManager that
@@ -155,31 +155,6 @@ public class VariableHeightPanel extends JPanel implements Scrollable {
 	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
 		return 20;
 	}
-
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		Container c = frame.getContentPane();
-		c.setLayout(new BorderLayout());
-
-		JPanel panel = new VariableHeightPanel(false, 10, 0);
-
-		JButton button = new JButton("Not Lined Up");
-		c.add(panel, BorderLayout.NORTH);
-		JPanel p = new JPanel();
-		p.setBorder(BorderFactory.createLineBorder(Color.RED));
-		p.setBackground(Color.RED);
-		c.add(p, BorderLayout.CENTER);
-		for (int i = 0; i < 20; i++) {
-			JLabel l = new JLabel("label " + i);
-			panel.add(l);
-		}
-
-		c.add(button, BorderLayout.SOUTH);
-		frame.pack();
-		frame.setVisible(true);
-
-	}
 }
 
 //==================================================================================================
@@ -239,8 +214,8 @@ class VariableHeightLayoutManager implements LayoutManager {
 			width += d.width;
 		}
 
-		return new Dimension(width + insets.left + insets.right, height + insets.top +
-			insets.bottom);
+		return new Dimension(width + insets.left + insets.right,
+			height + insets.top + insets.bottom);
 	}
 
 	// This preferred size returns Dimension based upon the rows and columns of components that
@@ -334,7 +309,8 @@ class VariableHeightLayoutManager implements LayoutManager {
 	}
 
 	// isolates the preferred size, which varies depending upon the type of layout we are mocking
-	private Dimension getPreferredDimensionForComponent(Component component, Dimension standardSize) {
+	private Dimension getPreferredDimensionForComponent(Component component,
+			Dimension standardSize) {
 
 		Dimension preferredDimension = component.getPreferredSize();
 

@@ -51,7 +51,7 @@ public class Lab5Script extends GhidraScript {
 			String comment =
 				"[" + register.getName() + "]=[" + scalar.toString(16, false, false, "", "") + "]";
 			setEOLComment(instruction.getMinAddress(), comment);
-			instruction = getNextInstruction();
+			instruction = getInstructionAfter(instruction);
 		}
 	}
 }

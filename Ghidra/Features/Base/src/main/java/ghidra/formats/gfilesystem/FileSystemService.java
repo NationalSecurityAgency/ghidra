@@ -514,7 +514,7 @@ public class FileSystemService {
 		String derivedMD5 = fileCacheNameIndex.get(srcCFI.md5, derivedName);
 		FileCacheEntry derivedFile = (derivedMD5 != null) ? fileCache.getFile(derivedMD5) : null;
 		if (derivedFile == null) {
-			monitor.setMessage(fsrl.getName() + " " + derivedName);
+			monitor.setMessage("Caching " + fsrl.getName() + " " + derivedName);
 			derivedFile = fileCache.pushStream(pusher, monitor);
 			fileCacheNameIndex.add(srcCFI.md5, derivedName, derivedFile.md5);
 		}

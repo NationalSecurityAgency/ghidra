@@ -353,7 +353,8 @@ public class ImporterPlugin extends Plugin
 	private void addToProgram(File file) {
 		GFile gFile = FileSystemService.getInstance().getLocalGFile(file);
 		if (gFile.getLength() == 0) {
-			Msg.showInfo(this, null, "Import File Failed", file.getName() + " is empty (0 bytes).");
+			Msg.showInfo(this, null, "Import File Failed",
+				"File " + file.getName() + " is empty (0 bytes).");
 			return;
 		}
 

@@ -160,7 +160,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		catch (MemoryAccessException e) {
 			throw new IOException(e);
 		}
-		monitor.setMessage(program.getName() + ": done!");
+		monitor.setMessage("[" + program.getName() + "]: done!");
 	}
 
 	@Override
@@ -289,7 +289,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return;
 		}
-		monitor.setMessage(prog.getName() + ": processing relocation tables...");
+		monitor.setMessage("[" + prog.getName() + "]: processing relocation tables...");
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
 		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_BASERELOC) {
@@ -375,7 +375,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return;
 		}
-		monitor.setMessage(program.getName() + ": processing imports...");
+		monitor.setMessage("[" + program.getName() + "]: processing imports...");
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
 		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_IMPORT) {
@@ -470,7 +470,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return;
 		}
-		monitor.setMessage(program.getName() + ": processing exports...");
+		monitor.setMessage("[" + program.getName() + "]: processing exports...");
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
 		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_EXPORT) {
@@ -623,7 +623,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return sectionNumberToAddress;
 		}
-		monitor.setMessage(prog.getName() + ": processing memory blocks...");
+		monitor.setMessage("[" + prog.getName() + "]: processing memory blocks...");
 
 		NTHeader ntHeader = pe.getNTHeader();
 		FileHeader fileHeader = ntHeader.getFileHeader();
@@ -683,7 +683,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					try (InputStream dataStream = sections[i].getDataStream()) {
 						int dataSize =
 							((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
-									? virtualSize : rawDataSize;
+									? virtualSize
+									: rawDataSize;
 						if (ntHeader.checkRVA(dataSize) ||
 							(0 < dataSize && dataSize < pe.getFileLength())) {
 							if (!ntHeader.checkRVA(dataSize)) {
@@ -774,7 +775,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return;
 		}
-		monitor.setMessage(prog.getName() + ": processing entry points...");
+		monitor.setMessage("[" + prog.getName() + "]: processing entry points...");
 
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
 		AddressFactory af = prog.getAddressFactory();
@@ -808,7 +809,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (monitor.isCancelled()) {
 			return;
 		}
-		monitor.setMessage(program.getName() + ": processing debug information...");
+		monitor.setMessage("[" + program.getName() + "]: processing debug information...");
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
 		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG) {

@@ -532,12 +532,17 @@ public class UserManager {
 			readUserList(userFile, list, lookupMap);
 
 			System.out.println("\nRepository Server Users:");
-			for (String name : list.keySet()) {
-				System.out.println("  " + name);
+			if (list.isEmpty()) {
+				System.out.println("   <No users have been added>");
+			}
+			else {
+				for (String name : list.keySet()) {
+					System.out.println("  " + name);
+				}
 			}
 		}
 		catch (IOException e) {
-			System.out.println("Failed to read user file: " + e.getMessage());
+			System.out.println("\nFailed to read user file: " + e.getMessage());
 		}
 	}
 

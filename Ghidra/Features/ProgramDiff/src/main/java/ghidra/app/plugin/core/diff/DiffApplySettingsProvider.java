@@ -26,6 +26,8 @@ import javax.swing.*;
 
 import docking.WindowPosition;
 import docking.widgets.VariableHeightPanel;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.diff.DiffApplySettingsOptionManager.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -259,12 +261,12 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		createChoices();
 		VariableHeightPanel panel = new VariableHeightPanel(false, 10, 3);
 
-		panel.setToolTipText(
-			"<HTML>" + "For each difference type, select whether to ignore, replace, or merge." +
-				"<BR>&nbsp&nbsp<B>Ignore</B> - don't apply this type of difference." +
-				"<BR>&nbsp&nbsp<B>Replace</B> - replace the difference type with the one from program 2." +
-				"<BR>&nbsp&nbsp<B>Merge</B> - merge the difference type from program 2 with what's there." +
-				"</HTML>");
+		panel.setToolTipText("<HTML>" +
+			"For each difference type, select whether to ignore, replace, or merge." +
+			"<BR>&nbsp&nbsp<B>Ignore</B> - don't apply this type of difference." +
+			"<BR>&nbsp&nbsp<B>Replace</B> - replace the difference type with the one from program 2." +
+			"<BR>&nbsp&nbsp<B>Merge</B> - merge the difference type from program 2 with what's there." +
+			"</HTML>");
 		for (Choice choice : choices) {
 			panel.add(choice);
 		}
@@ -404,14 +406,14 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 		protected void init() {
 			applyCB =
-				new JComboBox<>(allowMerge ? DiffApplySettingsOptionManager.MERGE_CHOICE.values()
+				new GComboBox<>(allowMerge ? DiffApplySettingsOptionManager.MERGE_CHOICE.values()
 						: DiffApplySettingsOptionManager.REPLACE_CHOICE.values());
 			applyCB.setName(type + " Diff Apply CB");
 			String typeName = type;
 			if (typeName.endsWith(" Comments")) {
 				typeName = "Comments, " + typeName.substring(0, typeName.length() - 9);
 			}
-			label = new JLabel(" " + typeName + " ");
+			label = new GDLabel(" " + typeName + " ");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			add(applyCB, BorderLayout.EAST);
 			add(label, BorderLayout.CENTER);
@@ -457,9 +459,9 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 		@Override
 		protected void init() {
-			applyCB = new JComboBox<>(DiffApplySettingsOptionManager.SYMBOL_MERGE_CHOICE.values());
+			applyCB = new GComboBox<>(DiffApplySettingsOptionManager.SYMBOL_MERGE_CHOICE.values());
 			applyCB.setName(type + " Diff Apply CB");
-			label = new JLabel(" " + type + " ");
+			label = new GDLabel(" " + type + " ");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			add(applyCB, BorderLayout.EAST);
 			add(label, BorderLayout.CENTER);

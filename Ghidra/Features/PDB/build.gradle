@@ -1,10 +1,12 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features PDB'
 
-/*********************************************************************************
- * Imports
- *********************************************************************************/
-apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
 
 /*********************************************************************************
  * Build dependencies
@@ -23,7 +25,7 @@ dependencies {
  * inside the closure, 'project' refers to the root project, while 'this' refers to 
  * PDB.
  */
-rootProject.assembleCommon {
+rootProject.assembleDistribution {
 	into (getZipPath(this.project) + "/src/pdb") {
 		from projectDir.toString() + "/src/pdb"
 	}

@@ -18,8 +18,6 @@ package ghidra.util.task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,6 +27,8 @@ import docking.ToolTipManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.Issue;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -400,7 +400,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private void buildProgressPanel(boolean includeTextField, boolean includeCancelButton) {
 		setLayout(new BorderLayout(5, 1));
-		messageLabel = new JLabel("               ") {
+		messageLabel = new GDHtmlLabel("               ") {
 			@Override
 			public void invalidate() {
 				// don't care
@@ -465,63 +465,15 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	private void createAnimatedIcon() {
-		List<Icon> iconList = new ArrayList<>();
-		iconList.add(ResourceManager.loadImage("images/hourglass24_01.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_09.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_10.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
-		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
-		imageLabel = new JLabel(progressIcon);
-	}
-
-	/**
-	 * Simple test for the TaskMonitorComponent class.
-	 * @param args not used
-	 */
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e) {
-			// don't care
-		}
-
-		JFrame f = new JFrame();
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		f.getContentPane().setLayout(new BorderLayout());
-		final TaskMonitorComponent tm = new TaskMonitorComponent();
-		f.getContentPane().add(tm);
-		tm.showCancelButton(true);
-		f.pack();
-		f.setVisible(true);
-
-//		tm.initialize(78);
-//		TaskMonitor monitor = new UnknownProgressWrappingTaskMonitor(tm, 10);
-//
-//		for (int i = 0; i < 78; i++) {
-//			try {
-//				Thread.sleep(250);
-//				monitor.setProgress(i);
-//				System.out.println("set progress to " + i);
-//			}
-//			catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
+		String[] filenames = { "images/hourglass24_01.png", "images/hourglass24_02.png",
+			"images/hourglass24_02.png", "images/hourglass24_03.png", "images/hourglass24_03.png",
+			"images/hourglass24_04.png", "images/hourglass24_04.png", "images/hourglass24_05.png",
+			"images/hourglass24_05.png", "images/hourglass24_06.png", "images/hourglass24_06.png",
+			"images/hourglass24_07.png", "images/hourglass24_07.png", "images/hourglass24_08.png",
+			"images/hourglass24_08.png", "images/hourglass24_09.png", "images/hourglass24_10.png",
+			"images/hourglass24_11.png" };
+		imageLabel =
+			new GIconLabel(new AnimatedIcon(ResourceManager.loadImages(filenames), 150, 0));
 	}
 
 	@Override

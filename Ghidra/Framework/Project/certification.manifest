@@ -1,12 +1,10 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
-##MODULE IP: Modified Nuvola Icons - LGPL 2.1
-##MODULE IP: Tango Icons - Public Domain
-##MODULE IP: FAMFAMFAM Icons - CC 2.5
-##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Crystal Clear Icons - LGPL 2.1
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|

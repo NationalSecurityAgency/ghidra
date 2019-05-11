@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import edu.uci.ics.jung.visualization.picking.PickedInfo;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
+import ghidra.program.util.ProgramSelection;
 
 public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVertex, Paint> {
 
@@ -55,6 +56,15 @@ public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVe
 	@Override
 	public Paint apply(FGVertex v) {
 		Color backgroundColor = v.getBackgroundColor();
+
+		ProgramSelection selection = v.getProgramSelection();
+		if (!selection.isEmpty()) {
+			// mix the colors so the user can see both the selection and the background color
+			Color selectionColor = v.getSelectionColor();
+			Color mixed = mix(selectionColor, backgroundColor);
+			backgroundColor = mixed;
+		}
+
 		FGVertexType vertexType = v.getVertexType();
 		if (info.isPicked(v)) {
 			if (v.isDefaultBackgroundColor()) {

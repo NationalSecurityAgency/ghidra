@@ -1,3 +1,4 @@
+apply plugin: 'java'
 apply plugin: 'eclipse'
 eclipse.project.name = '_LaunchSupport'
 
@@ -5,3 +6,9 @@ eclipse.project.name = '_LaunchSupport'
 // user's system.
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
+
+rootProject.assembleDistribution {
+	from (jar) {
+		into "support"
+	}
+}

@@ -52,7 +52,7 @@ public abstract class DecompilerVariable {
 		}
 
 		// Note: this is the icky part of the API.  How to know from where to get the data type?
-		HighVariable highVariable = variable.getHighVariable();		
+		HighVariable highVariable = variable.getHighVariable();
 		if (highVariable != null) {
 			return highVariable.getDataType();
 		}
@@ -62,7 +62,7 @@ public abstract class DecompilerVariable {
 		if (dataType != null) {
 			return dataType;
 		}
-		
+
 		// Prefer the type of the first input varnode, unless that type is a 'void *'.  
 		// Usually, in that special case, the output varnode has the correct type information. 		
 		PcodeOp op = variable.getPcodeOp();
@@ -104,7 +104,19 @@ public abstract class DecompilerVariable {
 		}
 
 		Varnode output = op.getOutput();
-		return output.getHigh().getDataType();
+		if (output == null) {
+			// can happen when a variable in volatile memory is used in a write_volatile
+			// pseudo operation
+			return null;
+		}
+
+		HighVariable high = output.getHigh();
+		if (high == null) {
+			// not sure if this can happen; just in case
+			return null;
+		}
+
+		return high.getDataType();
 	}
 
 	private DataType getDataType(Varnode varnode) {

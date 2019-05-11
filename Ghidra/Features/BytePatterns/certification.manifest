@@ -1,7 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: Oxygen Icons - LGPL 3.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||reviewed||END|
 build.gradle||GHIDRA||||END|
 data/test/FileBitPatternInfoReaderTestFile1.xml||GHIDRA||||END|

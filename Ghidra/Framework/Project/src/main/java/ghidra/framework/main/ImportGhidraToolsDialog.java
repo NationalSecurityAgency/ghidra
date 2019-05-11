@@ -28,6 +28,7 @@ import com.google.common.collect.Iterables;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.model.ToolTemplate;
@@ -40,7 +41,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 	private ListPanel listPanel;
 	private JPanel mainPanel;
-	private JCheckBox[] checkboxes;
+	private GCheckBox[] checkboxes;
 	private String[] tools;
 	private JButton selectAllButton;
 	private JButton deselectAllButton;
@@ -167,13 +168,13 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 		int elementCount = defaultTools.size() + extraTools.size();
 		tools = new String[elementCount];
-		checkboxes = new JCheckBox[elementCount];
+		checkboxes = new GCheckBox[elementCount];
 
 		Iterator<String> itr = defaultToolNames.iterator();
 		int count = 0;
 		while (itr.hasNext()) {
 			tools[count] = itr.next();
-			checkboxes[count] = new JCheckBox(tools[count], false);
+			checkboxes[count] = new GCheckBox(tools[count], false);
 			checkboxes[count].setBackground(Color.WHITE);
 			count++;
 		}
@@ -181,7 +182,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		itr = extraToolNames.iterator();
 		while (itr.hasNext()) {
 			tools[count] = itr.next();
-			checkboxes[count] = new JCheckBox(tools[count], false);
+			checkboxes[count] = new GCheckBox(tools[count], false);
 			checkboxes[count].setBackground(Color.LIGHT_GRAY);
 			count++;
 		}

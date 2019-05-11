@@ -175,9 +175,4 @@ public class DexToJarFileSystem extends GFileSystemBase {
 	public void close() throws IOException {
 		super.close();
 	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
 }

@@ -113,11 +113,12 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 			}
 
 		};
-		setLanguageAction.setPopupMenuData(new MenuData(new String[] { "Set Language..." },
-			"Language"));
+		setLanguageAction.setPopupMenuData(
+			new MenuData(new String[] { "Set Language..." }, "Language"));
 
 		setLanguageAction.setEnabled(true);
-		setLanguageAction.setHelpLocation(new HelpLocation("LanguageProviderPlugin", "set language"));
+		setLanguageAction.setHelpLocation(
+			new HelpLocation("LanguageProviderPlugin", "set language"));
 		tool.addAction(setLanguageAction);
 	}
 
@@ -142,22 +143,23 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 		String dfName = domainFile.getName();
 
 		if (domainFile.isReadOnly()) {
-			Msg.showInfo(getClass(), tool.getToolFrame(), "Permission Denied", dfName +
+			Msg.showInfo(getClass(), tool.getToolFrame(), "Permission Denied", "Program " + dfName +
 				" is read-only!\n" + "Set language may not be done on a read-only Program.");
 			return;
 		}
 
 		if (!domainFile.getConsumers().isEmpty() || domainFile.isBusy()) {
-			Msg.showInfo(getClass(), tool.getToolFrame(), "File In-Use", dfName + " is in-use!\n" +
-				"Set language may not be done while the associated file is\n" +
-				"open or in-use.  Be sure the file is not open in a tool.");
+			Msg.showInfo(getClass(), tool.getToolFrame(), "File In-Use",
+				"Program " + dfName + " is in-use!\n" +
+					"Set language may not be done while the associated file is\n" +
+					"open or in-use.  Be sure the file is not open in a tool.");
 			return;
 		}
 
 		if (domainFile.isCheckedOut() && !domainFile.isCheckedOutExclusive()) {
-			String msg =
-				(domainFile.modifiedSinceCheckout() || domainFile.isChanged()) ? "check-in this file"
-						: "undo your checkout";
+			String msg = (domainFile.modifiedSinceCheckout() || domainFile.isChanged())
+					? "check-in this file"
+					: "undo your checkout";
 
 			Msg.showInfo(getClass(), tool.getToolFrame(), "Exclusive Checkout Required",
 				"You do not have an exclusive checkout of: " + dfName + "\n \n" +
@@ -171,28 +173,25 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 		String msg = "Setting the language can not be undone!\n";
 
 		if (domainFile.modifiedSinceCheckout()) {
-			msg +=
-				"\nIt is highly recommended that you check-in your recent\n"
-					+ "changes before performing this operation.";
+			msg += "\nIt is highly recommended that you check-in your recent\n" +
+				"changes before performing this operation.";
 		}
 		else if (!domainFile.isCheckedOut()) {
-			msg +=
-				"\nIt is highly recommended that you make a copy of the\n"
-					+ "selected file before performing this operation.";
+			msg += "\nIt is highly recommended that you make a copy of the\n" +
+				"selected file before performing this operation.";
 		}
 
 		ToolTemplate defaultToolTemplate =
 			tool.getToolServices().getDefaultToolTemplate(domainFile);
-		String toolMsg =
-			defaultToolTemplate == null ? "WARNING! Without a default tool the file "
-				+ "will be overwritten\nwhen the Set Language is complete."
-					: "When complete you can Save the results or Open the results\nin the " +
-						defaultToolTemplate.getName() + " tool";
+		String toolMsg = defaultToolTemplate == null
+				? "WARNING! Without a default tool the file " +
+					"will be overwritten\nwhen the Set Language is complete."
+				: "When complete you can Save the results or Open the results\nin the " +
+					defaultToolTemplate.getName() + " tool";
 
-		int result =
-			OptionDialog.showOptionDialog(tool.getToolFrame(), "Set Language: " + dfName, msg +
-				"\n \n" + toolMsg + "\n \nDo you want to continue?", "Ok",
-				OptionDialog.WARNING_MESSAGE);
+		int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Set Language: " + dfName,
+			msg + "\n \n" + toolMsg + "\n \nDo you want to continue?", "Ok",
+			OptionDialog.WARNING_MESSAGE);
 		if (result > 0) {
 			final SetLanguageTask task = new SetLanguageTask(domainFile);
 			new TaskLauncher(task, tool.getToolFrame(), 0);
@@ -326,8 +325,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 			try {
 				SwingUtilities.invokeAndWait(() -> {
 					ToolServices toolServices = tool.getToolServices();
-					String defaultToolName =
-						toolServices.getDefaultToolTemplate(file).getName();
+					String defaultToolName = toolServices.getDefaultToolTemplate(file).getName();
 					for (Tool t : toolServices.getRunningTools()) {
 						if (t.getName().equals(defaultToolName)) {
 							openTool = (PluginTool) t;

@@ -25,6 +25,7 @@ import javax.swing.table.TableColumn;
 
 import org.jdom.Element;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.DefaultRowFilterTransformer;
 import docking.widgets.table.RowFilterTransformer;
 import ghidra.app.services.GoToService;
@@ -98,7 +99,7 @@ class SymbolPanel extends JPanel {
 
 		tableFilterPanel.add(Box.createHorizontalStrut(5));
 
-		final JCheckBox nameColumnOnlyCheckbox = new JCheckBox("Name Only");
+		final JCheckBox nameColumnOnlyCheckbox = new GCheckBox("Name Only");
 		nameColumnOnlyCheckbox.setName("NameOnly"); // used by JUnit
 		nameColumnOnlyCheckbox.setToolTipText(
 			"<html><b>Selected</b> causes filter to only consider the symbol's name.");

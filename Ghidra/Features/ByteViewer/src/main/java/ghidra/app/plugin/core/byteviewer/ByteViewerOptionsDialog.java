@@ -29,6 +29,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.format.ByteBlockSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
 import ghidra.app.util.AddressInput;
@@ -72,8 +74,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 	private Component buildSettingsPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		JLabel label = new JLabel("Alignment Address:");
-		panel.add(label);
+		panel.add(new GLabel("Alignment Address:"));
 
 		if (provider instanceof ProgramByteViewerComponentProvider) {
 			Program program = ((ProgramByteViewerComponentProvider) provider).getProgram();
@@ -87,8 +88,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 			}
 		}
 
-		label = new JLabel("Bytes Per Line:");
-		panel.add(label);
+		panel.add(new GLabel("Bytes Per Line:"));
 		bytesPerLineField = new FixedBitSizeValueField(8, false, true);
 		bytesPerLineField.setFormat(10, false);
 		bytesPerLineField.setMinMax(BigInteger.valueOf(1), BigInteger.valueOf(256));
@@ -96,8 +96,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		panel.add(bytesPerLineField);
 		bytesPerLineField.addChangeListener(this);
 
-		label = new JLabel("Group size (Hex View Only):");
-		panel.add(label);
+		panel.add(new GLabel("Group size (Hex View Only):"));
 		groupSizeField = new FixedBitSizeValueField(8, false, true);
 		groupSizeField.setFormat(10, false);
 		groupSizeField.setMinMax(BigInteger.valueOf(1), BigInteger.valueOf(256));
@@ -117,7 +116,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		Set<String> currentViews = provider.getCurrentViews();
 		List<String> dataModelNames = provider.getDataFormatNames();
 		for (String formatName : dataModelNames) {
-			JCheckBox checkBox = new JCheckBox(formatName);
+			GCheckBox checkBox = new GCheckBox(formatName);
 			checkBox.addActionListener(this);
 			checkboxMap.put(formatName, checkBox);
 			if (currentViews.contains(formatName)) {

@@ -400,10 +400,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		JComponent nameFilterPanel = createTextFilterPanel();
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
-		ancillaryFilterButton = new JButton();
+		ancillaryFilterButton = new JButton(FILTER_ICON);
 		ancillaryFilterButton.addActionListener(
 			e -> tool.showDialog(ancillaryFilterDialog, component));
-		ancillaryFilterButton.setIcon(FILTER_ICON);
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
 
 		parentPanel.add(ancillaryFilterButton, BorderLayout.EAST);

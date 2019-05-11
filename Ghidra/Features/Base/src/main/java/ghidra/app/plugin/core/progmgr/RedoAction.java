@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,13 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import java.awt.event.InputEvent;
+import java.io.IOException;
+
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.services.GoToService;
@@ -24,15 +30,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
-
-import java.awt.event.InputEvent;
-import java.io.IOException;
-
-import javax.swing.Icon;
-
 import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
 
 public class RedoAction extends ProgramContextAction {
 	private final PluginTool tool;
@@ -70,7 +68,8 @@ public class RedoAction extends ProgramContextAction {
 		if (program.canRedo()) {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Redo " + programName);
-			String tip = HTMLUtilities.toWrappedHTML("Redo " + program.getRedoName());
+			String tip = HTMLUtilities.toWrappedHTML(
+				"Redo " + HTMLUtilities.escapeHTML(program.getRedoName()));
 			setDescription(tip);
 			return true;
 		}

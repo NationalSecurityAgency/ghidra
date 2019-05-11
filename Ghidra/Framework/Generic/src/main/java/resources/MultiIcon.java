@@ -160,19 +160,18 @@ public class MultiIcon implements Icon {
 
 	@Override
 	public String toString() {
-		// return getClass().getSimpleName() + "[" + getIconNames() + "]";
-		return getDescription();
+		return getClass().getSimpleName() + "[" + getIconNames() + "]";
 	}
 
-//	private String getIconNames() {
-//		StringBuffer buffy = new StringBuffer();
-//		for (Icon icon : iconList) {
-//			if (buffy.length() > 0) {
-//				buffy.append(", ");
-//			}
-//			buffy.append(ResourceManager.getIconName(icon));
-//		}
-//
-//		return buffy.toString();
-//	}
+	private String getIconNames() {
+		StringBuffer buffy = new StringBuffer();
+		for (Icon icon : iconList) {
+			if (buffy.length() > 0) {
+				buffy.append(", ");
+			}
+			buffy.append(ResourceManager.getIconName(icon));
+		}
+
+		return buffy.toString();
+	}
 }

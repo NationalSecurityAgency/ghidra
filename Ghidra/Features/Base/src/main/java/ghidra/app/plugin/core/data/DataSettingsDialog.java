@@ -27,6 +27,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
@@ -719,7 +720,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox comboBox = new JComboBox();
+		private GComboBox<String> comboBox = new GComboBox<>();
 
 		SettingsEditor() {
 			comboBox.addItemListener(new ItemListener() {
@@ -747,7 +748,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		private StringChoices getComboBoxEnum() {
 			String[] items = new String[comboBox.getItemCount()];
 			for (int i = 0; i < items.length; i++) {
-				items[i] = (String) comboBox.getItemAt(i);
+				items[i] = comboBox.getItemAt(i);
 			}
 			StringChoices enuum = new StringChoices(items);
 			enuum.setSelectedValue(comboBox.getSelectedIndex());

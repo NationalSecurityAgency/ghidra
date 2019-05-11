@@ -1,4 +1,9 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Framework Docking'
 
 dependencies {
@@ -13,8 +18,7 @@ dependencies {
 	
 	
 	// include code from src/test in Generic
-	testCompile project(':Generic').sourceSets.test.output
-	
+	testCompile project(path: ':Generic', configuration: 'testArtifacts')
 	compileOnly "junit:junit:4.12"
 }
 

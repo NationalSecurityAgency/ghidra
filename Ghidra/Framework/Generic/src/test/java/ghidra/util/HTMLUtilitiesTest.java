@@ -173,4 +173,17 @@ public class HTMLUtilitiesTest {
 		String htmlStr = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(placeholderStr);
 		assertEquals("<A HREF=\"test\">Stuff inside <b>link</b> tag</A>", htmlStr);
 	}
+
+	@Test
+	public void testEscapeHTML() {
+		assertEquals("abc", HTMLUtilities.escapeHTML("abc"));
+		assertEquals("&#x2222;", HTMLUtilities.escapeHTML("\u2222"));
+
+		// unicode char above 0xffff encoded with 2 utf-16 characters
+		assertEquals("&#x1F344;", HTMLUtilities.escapeHTML("\uD83C\uDF44"));
+
+		assertEquals("&lt;abc&gt;", HTMLUtilities.escapeHTML("<abc>"));
+		assertEquals("a&amp;b", HTMLUtilities.escapeHTML("a&b"));
+
+	}
 }

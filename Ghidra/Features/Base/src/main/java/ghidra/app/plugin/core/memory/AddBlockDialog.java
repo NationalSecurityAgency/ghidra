@@ -22,7 +22,11 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -144,31 +148,27 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		lengthField.setChangeListener(e -> lengthChanged());
 		addrField.addChangeListener(ev -> addrChanged());
 
-		JLabel readLabel = new JLabel("Read");
-		readCB = new JCheckBox();
+		readCB = new GCheckBox();
 		readCB.setName("Read");
 
-		JLabel writeLabel = new JLabel("Write");
-		writeCB = new JCheckBox();
+		writeCB = new GCheckBox();
 		writeCB.setName("Write");
 
-		JLabel executeLabel = new JLabel("Execute");
-		executeCB = new JCheckBox();
+		executeCB = new GCheckBox();
 		executeCB.setName("Execute");
 
-		JLabel volatileLabel = new JLabel("Volatile");
-		volatileCB = new JCheckBox();
+		volatileCB = new GCheckBox();
 		volatileCB.setName("Volatile");
 
 		JPanel topPanel = new JPanel(new PairLayout(4, 10, 150));
 		topPanel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
-		topPanel.add(new JLabel("Block Name:", SwingConstants.RIGHT));
+		topPanel.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		topPanel.add(nameField);
-		topPanel.add(new JLabel("Start Addr:", SwingConstants.RIGHT));
+		topPanel.add(new GLabel("Start Addr:", SwingConstants.RIGHT));
 		topPanel.add(addrField);
-		topPanel.add(new JLabel("Length:", SwingConstants.RIGHT));
+		topPanel.add(new GLabel("Length:", SwingConstants.RIGHT));
 		topPanel.add(lengthField);
-		topPanel.add(new JLabel("Comment:", SwingConstants.RIGHT));
+		topPanel.add(new GLabel("Comment:", SwingConstants.RIGHT));
 		topPanel.add(commentField);
 
 		JPanel execPanel = new JPanel();
@@ -177,19 +177,19 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 
 		execPanel.setLayout(bl);
 		execPanel.add(Box.createHorizontalStrut(10));
-		execPanel.add(readLabel);
+		execPanel.add(new GLabel("Read"));
 		execPanel.add(readCB);
 		execPanel.add(Box.createHorizontalStrut(10));
 
-		execPanel.add(writeLabel);
+		execPanel.add(new GLabel("Write"));
 		execPanel.add(writeCB);
 		execPanel.add(Box.createHorizontalStrut(10));
 
-		execPanel.add(executeLabel);
+		execPanel.add(new GLabel("Execute"));
 		execPanel.add(executeCB);
 		execPanel.add(Box.createHorizontalStrut(10));
 
-		execPanel.add(volatileLabel);
+		execPanel.add(new GLabel("Volatile"));
 		execPanel.add(volatileCB);
 
 		JPanel panel = new JPanel();
@@ -234,7 +234,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		nameField.setText("");
 		addrField.setAddress(model.getStartAddress());
 
-		lengthField.setValue(new Long(0));
+		lengthField.setValue(Long.valueOf(0));
 		model.setLength(0);
 		commentField.setText("");
 
@@ -243,7 +243,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		executeCB.setSelected(false);
 		volatileCB.setSelected(false);
 
-		initialValueField.setValue(new Long(0));
+		initialValueField.setValue(Long.valueOf(0));
 		model.setBlockType(MemoryBlockType.DEFAULT);
 		model.setIsInitialized(initializedRB.isSelected());
 		model.setInitialValue(0);
@@ -380,11 +380,11 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		panel.setLayout(bl);
 
 		ButtonGroup radioGroup = new ButtonGroup();
-		initializedRB = new JRadioButton("Initialized", false);
+		initializedRB = new GRadioButton("Initialized", false);
 		initializedRB.setName(initializedRB.getText());
 		initializedRB.addActionListener(ev -> initializeRBChanged());
 
-		uninitializedRB = new JRadioButton("Uninitialized", true);
+		uninitializedRB = new GRadioButton("Uninitialized", true);
 		uninitializedRB.setName(uninitializedRB.getText());
 		uninitializedRB.addActionListener(ev -> uninitializedRBChanged());
 
@@ -411,7 +411,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private void createInitializedPanel() {
-		initialValueLabel = new JLabel("Initial Value");
+		initialValueLabel = new GDLabel("Initial Value");
 		initialValueField = new RegisterField(8, null, false);
 		initialValueField.setName("Initial Value");
 		initialValueField.setEnabled(false);
@@ -427,7 +427,6 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JPanel createAddressPanel() {
 		JPanel addressPanel = new JPanel(new PairLayout());
 
-		JLabel addrToAddLabel = new JLabel("Source Addr:");
 		baseAddrField = new AddressInput();
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");
@@ -441,7 +440,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		}
 		baseAddrField.setAddress(minAddr);
 		model.setBaseAddress(minAddr);
-		addressPanel.add(addrToAddLabel);
+		addressPanel.add(new GLabel("Source Addr:"));
 		addressPanel.add(baseAddrField);
 		addressPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 		return addressPanel;

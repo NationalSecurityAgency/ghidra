@@ -387,7 +387,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	protected boolean promptToKeepChangesOnException() {
 
-		String message = "<html>Encountered exception running script \"" + sourceFile.getName() +
+		String message = "<html>Encountered exception running script \"" +
+			HTMLUtilities.escapeHTML(sourceFile.getName()) +
 			"\".<br><br>Keep the changes to the program?";
 		//@formatter:off
 			int choice =
@@ -2818,6 +2819,11 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			Runnable r = () -> dtd.showComponent();
 			SystemUtilities.runSwingNow(r);
+
+			if (dtd.wasCancelled()) {
+				throw new CancelledException();
+			}
+
 			return ref.get();
 		});
 

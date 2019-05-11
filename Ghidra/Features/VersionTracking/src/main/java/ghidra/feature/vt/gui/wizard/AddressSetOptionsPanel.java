@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+
+import docking.widgets.checkbox.GCheckBox;
+import docking.wizard.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelatorAddressRestrictionPreference;
 import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;
-
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
-
-import docking.wizard.*;
 
 public class AddressSetOptionsPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
@@ -38,23 +37,21 @@ public class AddressSetOptionsPanel extends AbstractMageJPanel<VTWizardStateKey>
 	public AddressSetOptionsPanel() { //
 		setBorder(BorderFactory.createEmptyBorder(40, 40, 0, 0));
 
-		excludeCheckbox = new JCheckBox("Exclude accepted matches");
-		String excludeAcceptedTooltip =
-			"This option will cause the correlator algorithm "
-				+ "to <b>not</b> consider any functions or data that have already been "
-				+ "accepted. Using this option can greatly speed up the processing time "
-				+ "of the correlator algorithm; however, this options should only be "
-				+ "used when you trust that your accepted matches are correct.";
+		excludeCheckbox = new GCheckBox("Exclude accepted matches", false);
+		String excludeAcceptedTooltip = "This option will cause the correlator algorithm " +
+			"to <b>not</b> consider any functions or data that have already been " +
+			"accepted. Using this option can greatly speed up the processing time " +
+			"of the correlator algorithm; however, this options should only be " +
+			"used when you trust that your accepted matches are correct.";
 		excludeCheckbox.setToolTipText(HTMLUtilities.toWrappedHTML(excludeAcceptedTooltip));
-		excludeCheckbox.setEnabled(false);
 
-		showAddressSetPanelsCheckbox = new JCheckBox("Limit source and destination address sets");
-		String manuallyLimitTooltip =
-			"Selecting this checkbox will trigger additional wizard "
-				+ " panels allowing you to customize the address sets used "
-				+ " by the selected algorithm.  When not selected, the entire address space is used.";
+		showAddressSetPanelsCheckbox = new GCheckBox("Limit source and destination address sets");
+		String manuallyLimitTooltip = "Selecting this checkbox will trigger additional wizard " +
+			" panels allowing you to customize the address sets used " +
+			" by the selected algorithm.  When not selected, the entire address space is used.";
 
-		showAddressSetPanelsCheckbox.setToolTipText(HTMLUtilities.toWrappedHTML(manuallyLimitTooltip));
+		showAddressSetPanelsCheckbox.setToolTipText(
+			HTMLUtilities.toWrappedHTML(manuallyLimitTooltip));
 
 		add(excludeCheckbox);
 		add(showAddressSetPanelsCheckbox);
@@ -74,8 +71,8 @@ public class AddressSetOptionsPanel extends AbstractMageJPanel<VTWizardStateKey>
 	@Override
 	public void enterPanel(WizardState<VTWizardStateKey> state) {
 		@SuppressWarnings("unchecked")
-		List<VTProgramCorrelatorFactory> list =
-			(List<VTProgramCorrelatorFactory>) state.get(VTWizardStateKey.PROGRAM_CORRELATOR_FACTORY_LIST);
+		List<VTProgramCorrelatorFactory> list = (List<VTProgramCorrelatorFactory>) state.get(
+			VTWizardStateKey.PROGRAM_CORRELATOR_FACTORY_LIST);
 
 		Boolean value = (Boolean) state.get(VTWizardStateKey.EXCLUDE_ACCEPTED_MATCHES);
 		if (value != null) {
@@ -90,9 +87,8 @@ public class AddressSetOptionsPanel extends AbstractMageJPanel<VTWizardStateKey>
 				(AddressSetView) state.get(VTWizardStateKey.SOURCE_SELECTION);
 			AddressSetView destinationSelection =
 				(AddressSetView) state.get(VTWizardStateKey.DESTINATION_SELECTION);
-			boolean somethingSelected =
-				(sourceSelection != null && !sourceSelection.isEmpty()) ||
-					(destinationSelection != null && !destinationSelection.isEmpty());
+			boolean somethingSelected = (sourceSelection != null && !sourceSelection.isEmpty()) ||
+				(destinationSelection != null && !destinationSelection.isEmpty());
 			showAddressSetPanelsCheckbox.setSelected(somethingSelected);
 		}
 

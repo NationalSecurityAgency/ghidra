@@ -1111,7 +1111,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		else {
 			buildSortedDataTypeList();
-			Iterator<DataType> it = sortedDataTypes.iterator();
+			// make copy of sortedDataTypes list before iterating as dt.dataTypeReplaced may 
+			// call back into this class and cause a modification to the sortedDataTypes list.
+			Iterator<DataType> it = new ArrayList<>(sortedDataTypes).iterator();
 			while (it.hasNext()) {
 				DataType dt = it.next();
 				dt.dataTypeReplaced(existingDt, newDt);

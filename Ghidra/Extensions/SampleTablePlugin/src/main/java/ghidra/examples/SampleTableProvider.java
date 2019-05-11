@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooserPanel;
 import docking.widgets.table.GFilterTable;
 import ghidra.framework.options.OptionsChangeListener;
@@ -47,7 +48,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 	private SampleTableModel model;
 
 	private List<FunctionAlgorithm> discoveredAlgorithms;
-	private JCheckBox[] checkBoxes;
+	private GCheckBox[] checkBoxes;
 
 	private GhidraFileChooserPanel fileChooserPanel;
 
@@ -94,9 +95,9 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 
 		JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
 		checkBoxPanel.setBorder(BorderFactory.createTitledBorder("Discovered Algorithms"));
-		checkBoxes = new JCheckBox[discoveredAlgorithms.size()];
+		checkBoxes = new GCheckBox[discoveredAlgorithms.size()];
 		for (int i = 0; i < discoveredAlgorithms.size(); i++) {
-			checkBoxes[i] = new JCheckBox(discoveredAlgorithms.get(i).getName());
+			checkBoxes[i] = new GCheckBox(discoveredAlgorithms.get(i).getName());
 			checkBoxPanel.add(checkBoxes[i]);
 		}
 
@@ -162,7 +163,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 
 				StringBuilder buffer = new StringBuilder();
 				buffer.append("Writing the following objects to file: ");
-				buffer.append(fileChooserPanel.getFileName());
+				buffer.append(HTMLUtilities.escapeHTML(fileChooserPanel.getFileName()));
 
 				List<FunctionStatsRowObject> selectedObjects = filterTable.getSelectedRowObjects();
 				for (FunctionStatsRowObject stats : selectedObjects) {

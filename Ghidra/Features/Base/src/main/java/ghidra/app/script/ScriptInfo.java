@@ -15,7 +15,8 @@
  */
 package ghidra.app.script;
 
-import static ghidra.util.HTMLUtilities.*;
+import static ghidra.util.HTMLUtilities.HTML_NEW_LINE;
+import static ghidra.util.HTMLUtilities.HTML_SPACE;
 
 import java.io.*;
 import java.util.List;
@@ -25,9 +26,12 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DockingKeyBindingAction;
 import generic.jar.ResourceFile;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
@@ -77,8 +81,8 @@ public class ScriptInfo {
 		this.sourceFile = sourceFile;
 
 		if (!sourceFile.exists()) {
-			throw new IllegalArgumentException("Source file for script does not exist!: " +
-				sourceFile);
+			throw new IllegalArgumentException(
+				"Source file for script does not exist!: " + sourceFile);
 		}
 	}
 
@@ -92,7 +96,7 @@ public class ScriptInfo {
 		toolbarImage = null;
 		keybindingErrorMessage = null;
 	}
-	
+
 	/**
 	 * Setting the toolbar image to null forces it to be reloaded on the next request.
 	 */
@@ -304,7 +308,7 @@ public class ScriptInfo {
 			String token = tokenizer.nextToken();
 
 			if (i == tokenCount - 1) { // the key char value is the last element 
-				// ...all key character values must be upper case 
+				// ...all key character values must be upper case
 				buildy.append(token.toUpperCase());
 			}
 			else {
@@ -402,7 +406,7 @@ public class ScriptInfo {
 	 * @return the script tool bar icon
 	 */
 	public ImageIcon getToolBarImage(boolean scaled) {
-		
+
 		parseHeader();
 		if (toolbar == null) {
 			return null;
@@ -432,21 +436,22 @@ public class ScriptInfo {
 	 * @return a string designed to be used as a tool tip
 	 */
 	public String getToolTipText() {
-		String htmlDescription =
-			description == null ? "No Description" : description.replaceAll("\n", HTML_NEW_LINE +
-				HTML_SPACE);
-		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE + (toToolTip(author));
-		String htmlCategory =
-			HTMLUtilities.bold("Category:") + HTML_SPACE +
-				toToolTip(StringUtilities.convertStringArray(category, "."));
+		String htmlDescription = (description == null) ? "No Description"
+				: HTMLUtilities.escapeHTML(description).replaceAll("\n",
+					HTML_NEW_LINE + HTML_SPACE);
+		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE +
+			HTMLUtilities.escapeHTML(toToolTip(author));
+		String htmlCategory = HTMLUtilities.bold("Category:") + HTML_SPACE +
+			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(category, DELIMITTER)));
+
 		String htmlKeyBinding =
 			HTMLUtilities.bold("Key Binding:") + HTML_SPACE + getKeybindingToolTip();
-		String htmlMenuPath =
-			HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
-				toToolTip(StringUtilities.convertStringArray(menupath, "."));
+		String htmlMenuPath = HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
+			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(menupath, DELIMITTER)));
 
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("<h3>").append(HTML_SPACE).append(getName()).append("</h3>");
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<h3>").append(HTML_SPACE).append(HTMLUtilities.escapeHTML(getName())).append(
+			"</h3>");
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(HTML_SPACE).append(htmlDescription);
 		buffer.append(HTML_NEW_LINE);

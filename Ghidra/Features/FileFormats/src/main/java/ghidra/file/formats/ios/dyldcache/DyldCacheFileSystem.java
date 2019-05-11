@@ -112,11 +112,6 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 */
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
-
-	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
 		if (directory == null || directory.equals(root)) {
 			List<GFile> roots = new ArrayList<>();

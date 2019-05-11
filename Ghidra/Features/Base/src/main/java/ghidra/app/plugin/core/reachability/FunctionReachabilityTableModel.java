@@ -87,6 +87,10 @@ public class FunctionReachabilityTableModel
 
 		Accumulator<List<FRVertex>> pathAccumulator = new PassThroughAccumulator(accumulator);
 
+		if (v1.equals(v2)) {
+			return;
+		}
+
 		monitor.setMessage("Finding paths...");
 		GraphAlgorithms.findPaths(graph, v1, v2, pathAccumulator, monitor);
 	}

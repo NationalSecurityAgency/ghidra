@@ -147,4 +147,12 @@
       <range space="stack" first="8" last="39"/>
     </localrange>
   </prototype>
+  <callfixup name="guard_dispatch_icall">
+    <target name="_guard_dispatch_icall"/>
+    <pcode>
+      <body><![CDATA[
+        call [RAX];
+      ]]></body>
+    </pcode>
+  </callfixup>
 </compiler_spec>

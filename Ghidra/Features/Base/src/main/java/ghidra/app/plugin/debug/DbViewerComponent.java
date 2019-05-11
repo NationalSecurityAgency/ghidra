@@ -26,6 +26,9 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 
 import db.*;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.plugin.debug.dbtable.*;
 import ghidra.util.Msg;
@@ -36,7 +39,7 @@ class DbViewerComponent extends JPanel {
 
 	private static Table[] NO_TABLES = new Table[0];
 
-	private static Comparator<Table> TABLE_NAME_COMPARATOR = new Comparator<Table>() {
+	private static Comparator<Table> TABLE_NAME_COMPARATOR = new Comparator<>() {
 		@Override
 		public int compare(Table o1, Table o2) {
 			return (o1).getName().compareTo((o2).getName());
@@ -49,8 +52,7 @@ class DbViewerComponent extends JPanel {
 	private JLabel dbLabel;
 	private JComboBox<TableItem> combo;
 	private Table[] tables = NO_TABLES;
-	private Hashtable<String, TableStatistics[]> tableStats =
-		new Hashtable<String, TableStatistics[]>();
+	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
 
 	private SwingUpdateManager updateMgr;
 
@@ -59,11 +61,11 @@ class DbViewerComponent extends JPanel {
 
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
-		subNorthPanel.add(new JLabel("Database:"));
-		dbLabel = new JLabel("");
+		subNorthPanel.add(new GLabel("Database:"));
+		dbLabel = new GDLabel();
 		subNorthPanel.add(dbLabel);
-		subNorthPanel.add(new JLabel("Tables:"));
-		combo = new JComboBox<>();
+		subNorthPanel.add(new GLabel("Tables:"));
+		combo = new GComboBox<>();
 		combo.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -226,10 +228,9 @@ class DbViewerComponent extends JPanel {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		JLabel statsLabel =
-			new JLabel(recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt +
-				"   " + size);
-		panel.add(statsLabel, BorderLayout.SOUTH);
+		panel.add(new GLabel(
+			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size),
+			BorderLayout.SOUTH);
 
 		return panel;
 	}

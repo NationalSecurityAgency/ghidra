@@ -23,8 +23,7 @@ import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -67,8 +66,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 
 		Category[] subCategories = category.getCategories();
 		DataType[] dataTypes = category.getDataTypes();
-		List<GTreeNode> children =
-			new ArrayList<>(subCategories.length + dataTypes.length);
+		List<GTreeNode> children = new ArrayList<>(subCategories.length + dataTypes.length);
 		for (Category subCategory : subCategories) {
 			children.add(new CategoryNode(subCategory));
 		}
@@ -142,7 +140,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return category.getCategoryPathName();
+		return "<html>" + HTMLUtilities.escapeHTML(category.getCategoryPathName());
 	}
 
 	@Override

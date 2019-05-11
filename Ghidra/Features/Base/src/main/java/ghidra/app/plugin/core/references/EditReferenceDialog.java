@@ -15,15 +15,6 @@
  */
 package ghidra.app.plugin.core.references;
 
-import ghidra.framework.options.SaveState;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Reference;
-import ghidra.util.HelpLocation;
-import ghidra.util.exception.AssertException;
-
 import java.awt.*;
 
 import javax.swing.*;
@@ -34,6 +25,15 @@ import javax.swing.event.ChangeListener;
 import org.jdom.Element;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
+import ghidra.framework.options.SaveState;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Reference;
+import ghidra.util.HelpLocation;
+import ghidra.util.exception.AssertException;
 
 public class EditReferenceDialog extends DialogComponentProvider {
 
@@ -98,26 +98,24 @@ public class EditReferenceDialog extends DialogComponentProvider {
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 
-		instrPanel =
-			new InstructionPanel(5, 5, 5, 5, null, plugin,
-				new InstructionPanelListener() {
-					@Override
-					public boolean dropSupported() {
-						return false;
-					}
+		instrPanel = new InstructionPanel(5, 5, 5, 5, null, plugin, new InstructionPanelListener() {
+			@Override
+			public boolean dropSupported() {
+				return false;
+			}
 
-					@Override
-					public void operandSelected(int opIndex, int subIndex) {
-						if (!initializing) {
-							setAddOpIndex(opIndex, subIndex);
-						}
-					}
+			@Override
+			public void operandSelected(int opIndex, int subIndex) {
+				if (!initializing) {
+					setAddOpIndex(opIndex, subIndex);
+				}
+			}
 
-					@Override
-					public void selectionDropped(AddressSetView set, CodeUnit cu, int opIndex) {
-						throw new UnsupportedOperationException();
-					}
-				});
+			@Override
+			public void selectionDropped(AddressSetView set, CodeUnit cu, int opIndex) {
+				throw new UnsupportedOperationException();
+			}
+		});
 		topPanel.add(instrPanel, BorderLayout.NORTH);
 
 		JPanel refTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
@@ -135,13 +133,13 @@ public class EditReferenceDialog extends DialogComponentProvider {
 			}
 		};
 
-		memRefChoice = new JRadioButton("Memory");
+		memRefChoice = new GRadioButton("Memory");
 		memRefChoice.addChangeListener(refChoiceListener);
-		extRefChoice = new JRadioButton("External");
+		extRefChoice = new GRadioButton("External");
 		extRefChoice.addChangeListener(refChoiceListener);
-		stackRefChoice = new JRadioButton("Stack");
+		stackRefChoice = new GRadioButton("Stack");
 		stackRefChoice.addChangeListener(refChoiceListener);
-		regRefChoice = new JRadioButton("Register");
+		regRefChoice = new GRadioButton("Register");
 		regRefChoice.addChangeListener(refChoiceListener);
 
 		ButtonGroup refChoices = new ButtonGroup();

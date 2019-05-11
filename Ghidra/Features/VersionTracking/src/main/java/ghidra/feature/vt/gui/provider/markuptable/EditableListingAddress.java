@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
+import java.awt.event.ActionListener;
+
+import javax.swing.JLabel;
+
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.gui.editors.*;
@@ -23,10 +27,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.PairLayout;
-
-import java.awt.event.ActionListener;
-
-import javax.swing.JLabel;
 
 public class EditableListingAddress extends DisplayableListingAddress implements EditableAddress {
 
@@ -68,7 +68,7 @@ public class EditableListingAddress extends DisplayableListingAddress implements
 					}
 				}
 			});
-			JLabel label = new JLabel("Address: ");
+			JLabel label = new GDLabel("Address: ");
 			add(label);
 			add(addressField);
 		}
@@ -77,12 +77,12 @@ public class EditableListingAddress extends DisplayableListingAddress implements
 		public Address getAddress() throws InvalidInputException {
 			Address selectedAddress = addressField.getAddress();
 			if (selectedAddress == null) {
-				throw new InvalidInputException("\"" + addressField.getValue() +
-					"\" is not a valid address.");
+				throw new InvalidInputException(
+					"\"" + addressField.getValue() + "\" is not a valid address.");
 			}
 			if (!program.getMemory().contains(selectedAddress)) {
-				throw new InvalidInputException("\"" + selectedAddress.toString() +
-					"\" is not an address in the program.");
+				throw new InvalidInputException(
+					"\"" + selectedAddress.toString() + "\" is not an address in the program.");
 			}
 			address = selectedAddress;
 			return address;

@@ -35,6 +35,9 @@ import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.*;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.examples.graph.layout.SampleGraphPluginDependencyLayoutProvider;
 import ghidra.framework.plugintool.*;
 import ghidra.graph.job.FilterVerticesJob;
@@ -146,7 +149,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		JLabel label = new JLabel("Vertex Filter: ");
+		JLabel label = new GDLabel("Vertex Filter: ");
 		label.setToolTipText(
 			"Vertices with names matching the filter will remain, along with connected vertices");
 		panel.add(label);
@@ -187,9 +190,9 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		//
 		// How should we display the filtered-out vertices? 
 		//
-		fadedButton = new JRadioButton("Faded");
+		fadedButton = new GRadioButton("Faded");
 		fadedButton.setToolTipText("Filtered vertices remain in the graph, but are grayed-out");
-		removedButton = new JRadioButton("Removed");
+		removedButton = new GRadioButton("Removed");
 		removedButton.setToolTipText("Filtered vertices are removed from the graph");
 
 		ButtonGroup group = new ButtonGroup();
@@ -198,7 +201,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		fadedButton.setSelected(true);
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panel.add(new JLabel("Filtered Display: "));
+		panel.add(new GLabel("Filtered Display: "));
 		panel.add(fadedButton);
 		panel.add(removedButton);
 		return panel;
@@ -207,7 +210,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 	private void installTooltipProvider() {
 
 		VertexTooltipProvider<SampleVertex, SampleEdge> tooltipProvider =
-			new VertexTooltipProvider<SampleVertex, SampleEdge>() {
+			new VertexTooltipProvider<>() {
 
 				@Override
 				public JComponent getTooltip(SampleVertex v) {
@@ -342,8 +345,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 	private void addLayoutAction() {
 
 		MultiStateDockingAction<LayoutProvider<SampleVertex, SampleEdge, SampleGraph>> layoutAction =
-			new MultiStateDockingAction<LayoutProvider<SampleVertex, SampleEdge, SampleGraph>>(
-				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
 				protected void doActionPerformed(ActionContext context) {

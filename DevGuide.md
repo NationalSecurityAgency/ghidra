@@ -157,7 +157,7 @@ You may see build path errors until the environment is properly prepared, as des
 From the project root, execute:
 
 ```bash
-gradle prepDev -x yajswDevUnpack
+gradle prepDev -x yajswDevUnpack eclipse
 ```
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 Regarding `yajswDevUnpack`, please see the relevant sections on GhidraServer below.
@@ -194,7 +194,7 @@ On macOS:
 gradle buildNatives_osx64
 ```
 
-On macOS:
+On Windows:
 
 ```bash
 gradle buildNatives_win64
@@ -303,11 +303,12 @@ Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for
 Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in a directory named:
 `ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/`. Note that
 `ghidra.bin` must be a sibling of `ghidra`.
-To respect the Eclipse Project's resources, you may need to download the file using a browser, or at the very least, locate a suitable mirror on your own:
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL https://$CHOOSE_YOUR_MIRROR/pub/eclipse/tools/cdt/releases/8.6/cdt-8.6.0.zip
+curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'http://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+sha512sum -c 'cdt-8.6.0.zip.sha512'
 mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
 cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
 ```

@@ -32,6 +32,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HTMLUtilities;
 
 /**
  * A hover service to show tool tip text for hovering over a program address in the listing.
@@ -92,7 +93,8 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 
 		MemoryBlock block = program.getMemory().getBlock(loc);
 		long memblockOffset = loc.subtract(block.getStart());
-		appendTableRow(sb, "Memory Block Offset", block.getName(), memblockOffset);
+		appendTableRow(sb, "Memory Block Offset", HTMLUtilities.escapeHTML(block.getName()),
+			memblockOffset);
 
 		addFunctionInfo(program, loc, sb);
 		addDataInfo(program, loc, sb);
@@ -141,7 +143,8 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 		Function function = program.getFunctionManager().getFunctionContaining(loc);
 		if (function != null) {
 			long functionOffset = loc.subtract(function.getEntryPoint());
-			appendTableRow(sb, "Function Offset", function.getName(), functionOffset);
+			appendTableRow(sb, "Function Offset", HTMLUtilities.escapeHTML(function.getName()),
+				functionOffset);
 		}
 	}
 

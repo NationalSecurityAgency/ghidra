@@ -22,6 +22,7 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.constraint.ColumnConstraint;
 import resources.Icons;
@@ -82,7 +83,7 @@ public class ConstraintFilterPanel extends JPanel {
 
 	private Component buildConstraintCombo() {
 		JPanel panel = new JPanel(new BorderLayout());
-		constraintComboBox = new JComboBox<>();
+		constraintComboBox = new GComboBox<>();
 		constraintComboBox.setRenderer(new ConstraintComboBoxCellRenderer());
 		constraintComboBox.addActionListener(constraintComboBoxListener);
 		panel.add(constraintComboBox, BorderLayout.CENTER);
@@ -121,15 +122,8 @@ public class ConstraintFilterPanel extends JPanel {
 	private class ConstraintComboBoxCellRenderer extends GListCellRenderer<ColumnConstraint<?>> {
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends ColumnConstraint<?>> list,
-				ColumnConstraint<?> value, int index, boolean isSelected, boolean cellHasFocus) {
-
-			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
-				isSelected, cellHasFocus);
-
-			label.setText(value.getName());
-
-			return label;
+		protected String getItemText(ColumnConstraint<?> value) {
+			return value.getName();
 		}
 
 		@Override

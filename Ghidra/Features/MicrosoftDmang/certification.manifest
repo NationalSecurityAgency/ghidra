@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/main/java/mdemangler/MDMang_README.txt||GHIDRA||||END|

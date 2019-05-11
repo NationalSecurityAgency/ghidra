@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +17,15 @@ package ghidra.program.model.listing;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.program.model.address.Address;
 
 /**
  * Container class for information about changes to a comment.
  */
 public class CommentHistory {
-	
+
 	private Address addr;
 	private int commentType;
 	private Date modificationDate;
@@ -39,8 +40,8 @@ public class CommentHistory {
 	 * @param comments the list of comments.
 	 * @param modificationDate the date the comment was changed.
 	 */
-	public CommentHistory(Address addr, int commentType, String userName, 
-							String comments, Date modificationDate) {
+	public CommentHistory(Address addr, int commentType, String userName, String comments,
+			Date modificationDate) {
 		this.addr = addr;
 		this.commentType = commentType;
 		this.userName = userName;
@@ -49,35 +50,55 @@ public class CommentHistory {
 	}
 
 	/**
-	 * Get address for this label history object.
+	 * Get address for this label history object
+	 * @return address for this label history object.
 	 */
 	public Address getAddress() {
 		return addr;
 	}
 
 	/**
-	 * Get the user that made the change.
+	 * Get the user that made the change
+	 * @return the user that made the change
 	 */
 	public String getUserName() {
 		return userName;
 	}
+
 	/**
-	 * Get the comments for this history object.
+	 * Get the comments for this history object
+	 * @return the comments for this history object
 	 */
 	public String getComments() {
 		return comments;
 	}
+
 	/**
-	 * Get the comment type.
+	 * Get the comment type
+	 * @return the comment type
 	 */
 	public int getCommentType() {
 		return commentType;
 	}
+
 	/**
 	 * Get the modification date
+	 * @return the modification date
 	 */
 	public Date getModificationDate() {
 		return modificationDate;
 	}
-		
+
+	@Override
+	public String toString() {
+
+		//@formatter:off
+		return "{\n" +
+			"\tuser: " + userName + ",\n" +
+			"\tdate: " + modificationDate + ",\n" + 
+			"\taddress: " + addr + ",\n" +
+			"\tcomment: " + StringUtils.abbreviate(comments, 10) + "\n" +
+		"}";		
+		//@formatter:on
+	}
 }

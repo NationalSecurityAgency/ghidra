@@ -29,6 +29,7 @@ import javax.swing.event.HyperlinkListener;
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
@@ -211,12 +212,12 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 		gbc.gridwidth = 2;
 		inner.add(comboBox, gbc);
 
-		caseSensitiveBox = new JCheckBox("Case sensitive", false);
+		caseSensitiveBox = new GCheckBox("Case sensitive", false);
 		gbc.gridy = 2;
 		gbc.gridwidth = 1;
 		inner.add(caseSensitiveBox, gbc);
 
-		includeDynamicBox = new JCheckBox("Dynamic labels", true);
+		includeDynamicBox = new GCheckBox("Dynamic labels", true);
 		includeDynamicBox.setToolTipText("Include dynamic lables in the search (slower)");
 		gbc.gridx = 1;
 		inner.add(includeDynamicBox, gbc);

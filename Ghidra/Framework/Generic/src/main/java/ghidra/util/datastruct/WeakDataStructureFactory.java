@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,15 @@
  */
 package ghidra.util.datastruct;
 
+/**
+ * Factory for creating containers to use in various threading environments
+ */
 public class WeakDataStructureFactory {
 
 	/**
 	 * Use when all access are on a single thread, such as the Swing thread.
 	 * 
 	 * @return a new WeakSet
-	 * @see CopyOnWriteReadWeakSet
 	 */
 	public static <T> WeakSet<T> createSingleThreadAccessWeakSet() {
 		return new ThreadUnsafeWeakSet<T>();
@@ -32,7 +33,7 @@ public class WeakDataStructureFactory {
 	 * Use when mutations outweigh iterations.
 	 * 
 	 * @return a new WeakSet
-	 * @see CopyOnWriteReadWeakSet
+	 * @see CopyOnReadWeakSet
 	 */
 	public static <T> WeakSet<T> createCopyOnReadWeakSet() {
 		return new CopyOnReadWeakSet<T>();
@@ -47,5 +48,4 @@ public class WeakDataStructureFactory {
 	public static <T> WeakSet<T> createCopyOnWriteWeakSet() {
 		return new CopyOnWriteWeakSet<T>();
 	}
-
 }

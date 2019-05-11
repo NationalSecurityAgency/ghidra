@@ -31,6 +31,7 @@ import docking.action.DockingActionIf;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.generic.function.Callback;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -889,7 +890,7 @@ public class DialogComponentProvider
 
 	private JPanel buildStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDHtmlLabel(" ");
 		statusLabel.setName("statusLabel");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);

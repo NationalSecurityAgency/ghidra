@@ -16,8 +16,6 @@
 package ghidra.util.task;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
@@ -26,6 +24,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.timer.GTimer;
@@ -170,18 +169,13 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
 			mainPanel.removeAll();
 
-			List<Icon> iconList = new ArrayList<>();
-			iconList.add(ResourceManager.loadImage("images/eatbits1.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits2.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits3.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits4.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits5.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits6.png"));
-			iconList.add(ResourceManager.loadImage("images/eatbits7.png"));
-			AnimatedIcon icon = new AnimatedIcon(iconList, 200, 0);
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setSize(new Dimension(200, 100));
-			panel.add(new JLabel(icon));
+			String[] filenames = { "images/eatbits1.png", "images/eatbits2.png",
+				"images/eatbits3.png", "images/eatbits4.png", "images/eatbits5.png",
+				"images/eatbits6.png", "images/eatbits7.png" };
+			panel.add(
+				new GIconLabel(new AnimatedIcon(ResourceManager.loadImages(filenames), 200, 0)));
 			mainPanel.add(panel, BorderLayout.CENTER);
 
 			repack();

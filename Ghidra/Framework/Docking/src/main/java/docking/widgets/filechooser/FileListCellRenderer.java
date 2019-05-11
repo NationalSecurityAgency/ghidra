@@ -18,11 +18,12 @@ package docking.widgets.filechooser;
 import java.awt.Component;
 import java.io.File;
 
-import javax.swing.*;
+import javax.swing.JList;
 
+import docking.widgets.list.GListCellRenderer;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 
-class FileListCellRenderer extends DefaultListCellRenderer {
+class FileListCellRenderer extends GListCellRenderer<File> {
 
 	private GhidraFileChooser chooser;
 	private GhidraFileChooserModel model;
@@ -33,18 +34,18 @@ class FileListCellRenderer extends DefaultListCellRenderer {
 	}
 
 	@Override
-	public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+	protected String getItemText(File file) {
+		return chooser.getDisplayName(file);
+	}
+
+	@Override
+	public Component getListCellRendererComponent(JList<? extends File> list, File file, int index,
 			boolean isSelected, boolean cellHasFocus) {
 
-		File file = (File) value;
+		super.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
+		setIcon(model.getIcon(file));
 
-		Component c = super.getListCellRendererComponent(list, chooser.getDisplayName(file), index,
-			isSelected, cellHasFocus);
-		if (c instanceof JLabel) {
-			((JLabel) c).setIcon(model.getIcon(file));
-		}
-		return c;
-
+		return this;
 	}
 
 }

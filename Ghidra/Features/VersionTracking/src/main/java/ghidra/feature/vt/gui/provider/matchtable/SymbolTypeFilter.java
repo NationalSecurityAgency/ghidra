@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,18 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
+import javax.swing.JCheckBox;
+
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.filters.CheckBoxBasedAncillaryFilter;
 import ghidra.feature.vt.gui.filters.CheckBoxInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-
-import javax.swing.JCheckBox;
 
 /**
  * This filter allows through any match that has a source *or* destination symbol type matches
@@ -41,6 +41,7 @@ public class SymbolTypeFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 	@Override
 	protected void createCheckBoxInfos() {
 		ItemListener listener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				fireStatusChanged(getFilterStatus());
 			}
@@ -48,15 +49,13 @@ public class SymbolTypeFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 
 		SourceType[] values = SourceType.values();
 		for (SourceType type : values) {
-			JCheckBox checkBox = new JCheckBox(type.getDisplayString());
-			checkBox.setSelected(true);
+			GCheckBox checkBox = new GCheckBox(type.getDisplayString(), true);
 			checkBox.addItemListener(listener);
 			CheckBoxInfo<VTMatch> info = new SymbolTypeCheckBoxInfo(checkBox, type);
 			checkBoxInfos.add(info);
 		}
 
-		JCheckBox nullSymbolCheckbox = new JCheckBox("<No Symbol>");
-		nullSymbolCheckbox.setSelected(true);
+		GCheckBox nullSymbolCheckbox = new GCheckBox("<No Symbol>", true);
 		nullSymbolCheckbox.addItemListener(listener);
 		checkBoxInfos.add(new NullSymbolCheckBoxInfo(nullSymbolCheckbox));
 	}

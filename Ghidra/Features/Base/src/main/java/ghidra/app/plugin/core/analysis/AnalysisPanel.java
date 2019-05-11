@@ -32,7 +32,9 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
+import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
@@ -62,15 +64,14 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private List<Boolean> analyzerEnablement = new ArrayList<>();
 	private Set<String> prototypeAnalyzers = new HashSet<>();
 	private Map<String, Component> analyzerToOptionsPanelMap = new HashMap<>();
-	private Map<String, List<Component>> analyzerManagedComponentsMap =
-		new HashMap<>();
+	private Map<String, List<Component>> analyzerManagedComponentsMap = new HashMap<>();
 	private EditorStateFactory editorStateFactory;
 
 	private JPanel noOptionsPanel;
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param program the programs to be analyzed
 	 * @param editorStateFactory the editor factory
 	 * @param propertyChangeListener subscriber for property change notifications
@@ -79,33 +80,33 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			PropertyChangeListener propertyChangeListener) {
 		this(List.of(program), editorStateFactory, propertyChangeListener);
 	}
-	
+
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param programs list of programs that will be analyzed
 	 * @param editorStateFactory the editor factory
 	 * @param propertyChangeListener subscriber for property change notifications
 	 */
 	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory,
 			PropertyChangeListener propertyChangeListener) {
-		
-		// Do a quick check to make sure we have at least one program. If not, we 
+
+		// Do a quick check to make sure we have at least one program. If not, we
 		// shouldn't even be here (the menus should be disabled).
 		if (CollectionUtils.isEmpty(programs)) {
 			throw new AssertException("Must provide a program to run analysis");
 		}
-				
+
 		this.programs = programs;
 		this.propertyChangeListener = propertyChangeListener;
 		this.editorStateFactory = editorStateFactory;
 		analysisOptions = programs.get(0).getOptions(Program.ANALYSIS_PROPERTIES);
-		
+
 		setName("Analysis Panel");
 		build();
 		load();
 	}
-	
+
 	private void load() {
 		editorList.clear();
 		analyzerNames.clear();
@@ -127,9 +128,9 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private void loadAnalyzers() {
-		
+
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
-		
+
 		List<String> propertyNames = analysisOptions.getOptionNames();
 		Collections.sort(propertyNames, new Comparator<String>() {
 			@Override
@@ -465,19 +466,26 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		checkForDifferences();
+		if (checkForDifferences()) {
+			propertyChangeListener.propertyChange(
+				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, Boolean.TRUE));
+		}
 	}
 
 	private boolean checkForDifferences() {
+		boolean changes = false;
 		for (int i = 0; i < analyzerNames.size(); ++i) {
 			String analyzerName = analyzerNames.get(i);
 			boolean currEnabled = analyzerEnablement.get(i);
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
+				changes = true;
 				propertyChangeListener.propertyChange(
-						new PropertyChangeEvent(this, analyzerName, origEnabled, currEnabled));
-				return true;
+					new PropertyChangeEvent(this, analyzerName, origEnabled, currEnabled));
 			}
+		}
+		if (changes) {
+			return true;
 		}
 		for (EditorState info : editorList) {
 			if (info.isValueChanged()) {
@@ -492,14 +500,14 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * <p>
 	 * Details: This loops over every analyzer name in this panel and for
 	 * each, updates the associated enablement for all programs being
-	 * analyzed. 
+	 * analyzed.
 	 */
 	void applyChanges() {
-		
+
 		for (int i = 0; i < analyzerNames.size(); ++i) {
 			String analyzerName = analyzerNames.get(i);
 			boolean enabled = analyzerEnablement.get(i);
-			
+
 			int id = programs.get(0).startTransaction("setting analysis options");
 			boolean commit = false;
 			try {
@@ -512,7 +520,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 			updateOptionForAllPrograms(analyzerName, enabled);
 		}
-		
+
 		for (EditorState info : editorList) {
 			info.applyValue();
 		}
@@ -522,7 +530,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		List<Options> optionGroups = analysisOptions.getChildOptions();
 		noOptionsPanel = new JPanel(new VerticalLayout(5));
 		noOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-		noOptionsPanel.add(new JLabel("No options available."));
+		noOptionsPanel.add(new GLabel("No options available."));
 
 		for (Options optionsGroup : optionGroups) {
 			String analyzerName = optionsGroup.getName();
@@ -539,8 +547,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			List<String> optionNames = getOptionNames(optionsGroup);
 			Collections.sort(optionNames);
 
-			List<GenericOptionsComponent> optionComponents =
-				new ArrayList<>();
+			List<GenericOptionsComponent> optionComponents = new ArrayList<>();
 
 			for (String childOptionName : optionNames) {
 				EditorState childState =
@@ -579,7 +586,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		PropertyEditor editor = options.getPropertyEditor(optionName);
 		return options.getObject(optionName, null) != null || editor != null;
 	}
-	
+
 	/**
 	 * Updates the enablement of the given analyzer for all programs being analyzed.
 	 * <p>
@@ -587,36 +594,33 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * 	<OL>
 	 * 		<LI>
 	 *	   	When a user toggles the status of an analyzer we need to update that status for
-	 *	    EVERY open program. We don't want a situation where a user turns a particular 
+	 *	    EVERY open program. We don't want a situation where a user turns a particular
 	 *		analyzer off, but it's only turned off for the selected program.
 	 *		</LI>
 	 *		<LI>
-	 *		Programs with different architectures may have different available analyzers, but we 
+	 *		Programs with different architectures may have different available analyzers, but we
 	 *		don't worry about that here because this class is only handed programs with
 	 *		similar architectures. If this were to ever change we would need to revisit this.
 	 *		</LI>
 	 * </OL>
-	 * 
+	 *
 	 * @param analyzerName the name of the analyzer to update
 	 * @param enabled if true, enable the analyzer; otherwise disable it
 	 */
 	public void updateOptionForAllPrograms(String analyzerName, boolean enabled) {
 		for (Program program : programs) {
-			
+
+			// Check to make sure we're only handling events that relate to analyzers. If we
+			// receive something else (eg: "analyze.apply") ignore it.
+			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
+			if (!options.getOptionNames().contains(analyzerName)) {
+				continue;
+			}
+
 			boolean commit = false;
-			int id = program.startTransaction("Setting analysis property");
+			int id = program.startTransaction("Setting analysis property " + analyzerName);
 			try {
-				Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-								
-				// Sanity check to make sure that the analyzer is appropriate for
-				// this program. This should always be the case but it doesn't
-				// hurt to check.
-				if (!options.getOptionNames().contains(analyzerName)) {
-					continue;
-				}
-				
 				options.setBoolean(analyzerName, enabled);
-								
 				commit = true;
 			}
 			finally {
@@ -624,5 +628,4 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
-
 }

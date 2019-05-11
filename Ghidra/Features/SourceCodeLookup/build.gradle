@@ -1,7 +1,11 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
-eclipse.project.name = 'Features SourceCodeLookup'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
+eclipse.project.name = 'Features SourceCodeLookup'
 
 dependencies {
 	compile project(":Base")

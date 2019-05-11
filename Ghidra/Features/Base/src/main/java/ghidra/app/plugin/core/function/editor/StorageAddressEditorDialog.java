@@ -26,6 +26,8 @@ import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.address.Address;
@@ -37,8 +39,8 @@ import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 
-public class StorageAddressEditorDialog extends DialogComponentProvider implements
-		ModelChangeListener {
+public class StorageAddressEditorDialog extends DialogComponentProvider
+		implements ModelChangeListener {
 	private FunctionVariableData variableData;
 	private StorageAddressModel model;
 	private VarnodeTableModel varnodeTableModel;
@@ -160,10 +162,9 @@ public class StorageAddressEditorDialog extends DialogComponentProvider implemen
 		JPanel panel = new JPanel(new PairLayout(10, 4));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-		panel.add(new JLabel("Datatype: "));
+		panel.add(new GLabel("Datatype: "));
 
-		dataTypeEditor =
-			new ParameterDataTypeCellEditor(this, service);
+		dataTypeEditor = new ParameterDataTypeCellEditor(this, service);
 
 		dataTypeEditor.addCellEditorListener(new CellEditorListener() {
 
@@ -211,11 +212,11 @@ public class StorageAddressEditorDialog extends DialogComponentProvider implemen
 		});
 
 		panel.add(dataTypeEditComponent);
-		panel.add(new JLabel("Datatype Size: "));
-		sizeLabel = new JLabel("" + size);
+		panel.add(new GLabel("Datatype Size: "));
+		sizeLabel = new GDLabel("" + size);
 		panel.add(sizeLabel);
-		panel.add(new JLabel("Allocated Size:"));
-		currentSizeLabel = new JLabel("");
+		panel.add(new GLabel("Allocated Size:"));
+		currentSizeLabel = new GDLabel("");
 		panel.add(currentSizeLabel);
 
 		setFocusComponent(textField);

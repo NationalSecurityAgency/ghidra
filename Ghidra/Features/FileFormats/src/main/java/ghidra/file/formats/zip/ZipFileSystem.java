@@ -117,9 +117,9 @@ public class ZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
-		return FSUtilities.infoMapToString(getInfoMap(zipEntry));
+		return (zipEntry != null) ? FSUtilities.infoMapToString(getInfoMap(zipEntry)) : null;
 	}
 
 	@Override

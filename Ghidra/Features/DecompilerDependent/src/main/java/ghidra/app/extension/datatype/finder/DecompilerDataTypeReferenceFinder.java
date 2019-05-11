@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.apache.commons.collections4.IterableUtils;
+
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.parallel.*;
@@ -225,13 +227,13 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		private DataType dataType;
 		private String fieldName;
 
-		/** Search for Data Type access only--no field usage */
+		/* Search for Data Type access only--no field usage */
 		DecompilerDataTypeFinderQCallback(Program program, DataType dataType,
 				Consumer<DataTypeReference> callback) {
 			this(program, dataType, null, callback);
 		}
 
-		/** Search for composite field access */
+		/* Search for composite field access */
 		DecompilerDataTypeFinderQCallback(Program program, DataType dataType, String fieldName,
 				Consumer<DataTypeReference> callback) {
 
@@ -336,14 +338,38 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			return result;
 		}
 
+		/**
+		 * Uses the given line to find variables (also parameters and return types) and any 
+		 * accesses to them in that line.   A given variable may be used directly or, as in 
+		 * the case with Composite types, may have one of its fields accessed.  Each result
+		 * found by this method will be at least a variable access and may also itself have
+		 * field accesses.
+		 * 
+		 * <p>Sometimes a line is structured such that there are anonymous variable accesses.  This
+		 * is the case where a Composite is being accessed, but the Composite itself is
+		 * not a variable in the current function.  See {@link AnonymousVariableAccessDR} for 
+		 * more details.
+		 * 
+		 * @param line the current line being processed from the Decompiler
+		 * @param results the accumulator into which matches will be placed
+		 */
 		private void findVariablesInLine(ClangLine line, List<DecompilerReference> results) {
+
+			List<ClangToken> allTokens = line.getAllTokens();
+			Iterable<ClangToken> filteredTokens = IterableUtils.filteredIterable(allTokens,
+				token -> {
+					// Only include desirable tokens (this is really just for easier debugging).
+					// Update this filter if the loop below ever needs other types of tokens.
+					return (token instanceof ClangTypeToken) ||
+						(token instanceof ClangVariableToken) || (token instanceof ClangFieldToken);
+				});
 
 			// gather any casts until we can use them (the type they modify will follow)
 			List<DecompilerVariable> castsSoFar = new ArrayList<>();
 
 			VariableDR declaration = null;
 			VariableAccessDR access = null;
-			for (ClangToken token : line.getAllTokens()) {
+			for (ClangToken token : filteredTokens) {
 
 				if (token instanceof ClangTypeToken) {
 
@@ -371,16 +397,15 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 					//
 					// Observations: 
-					// 1) 'variableAccess' will be null if we are on a C statement that 
-					//    is a declaration (parameter or variable).  In this case, 'ref' will
-					//    be an instance of VariableDR.
-					// 2) 'variableAccess' will be null the first time a variable is used in
+					// 1) 'access' will be null if we are on a C statement that 
+					//    is a declaration (parameter or variable).  In this case, 
+					//    'declaration' will be an instance of VariableDR.
+					// 2) 'access' will be null the first time a variable is used in
 					//    a statement.
-					// 3) if 'variableAccess' is non-null, but already has a variable assigned, 
+					// 3) if 'access' is non-null, but already has a variable assigned, 
 					//    then this means the current ClangVariableToken represents a new 
 					//    variable access/usage.
 					//
-
 					if (declaration != null) {
 						declaration.setVariable((ClangVariableToken) token);
 						declaration = null;
@@ -415,10 +440,30 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 						}
 					}
 
-					access.addField((ClangFieldToken) token, casts);
+					ClangFieldToken field = (ClangFieldToken) token;
+					if (typesDoNotMatch(access, field)) {
+						// this can happen when a field is used anonymously, such as directly 
+						// after a nested array index operation
+						results.add(new AnonymousVariableAccessDR(line, field));
+						continue;
+					}
+
+					access.addField(field, casts);
 					castsSoFar.clear();
 				}
 			}
+		}
+
+		private boolean typesDoNotMatch(VariableAccessDR access, ClangFieldToken field) {
+
+			DecompilerVariable variable = access.getVariable();
+			if (variable == null) {
+				return false; // should not happen
+			}
+
+			DataType variableDt = variable.getDataType();
+			DataType fieldDt = field.getDataType();
+			return !DecompilerReference.isEqual(variableDt, fieldDt);
 		}
 
 		private VariableAccessDR getLastAccess(List<DecompilerReference> variables) {

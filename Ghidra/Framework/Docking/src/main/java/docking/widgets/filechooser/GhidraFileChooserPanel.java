@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileFilter;
 
@@ -157,7 +158,7 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 		gbc.gridy = 0;
 
 		if (!createBorder && title != null) {
-			add(new JLabel(title), gbc);
+			add(new GLabel(title), gbc);
 		}
 
 		gbc.fill = GridBagConstraints.HORIZONTAL;

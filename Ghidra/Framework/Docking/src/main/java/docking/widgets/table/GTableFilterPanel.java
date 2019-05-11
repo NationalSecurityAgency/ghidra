@@ -35,6 +35,7 @@ import docking.menu.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.EventTrigger;
 import docking.widgets.filter.*;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterSaveManager;
 import docking.widgets.table.constraint.dialog.ColumnFilterDialog;
@@ -348,7 +349,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
-		searchLabel = new JLabel(filterLabel);
+		searchLabel = new GDLabel(filterLabel);
 		searchLabel.setToolTipText("Include only table elements that match the given search text");
 
 		filterField = new FilterTextField(table);
@@ -401,26 +402,26 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 		RowObjectFilterModel<ROW_OBJECT> tableModel =
 			(RowObjectFilterModel<ROW_OBJECT>) table.getModel();
-		columnFilterAction = new NonToolbarMultiStateAction<ColumnBasedTableFilter<ROW_OBJECT>>(
-			"Column Filter", "GTableFilterPanel") {
+		columnFilterAction =
+			new NonToolbarMultiStateAction<>("Column Filter", "GTableFilterPanel") {
 
-			@Override
-			public void actionStateChanged(
-					ActionState<ColumnBasedTableFilter<ROW_OBJECT>> newActionState,
-					EventTrigger trigger) {
-				if (trigger != EventTrigger.GUI_ACTION) {
-					return;
+				@Override
+				public void actionStateChanged(
+						ActionState<ColumnBasedTableFilter<ROW_OBJECT>> newActionState,
+						EventTrigger trigger) {
+					if (trigger != EventTrigger.GUI_ACTION) {
+						return;
+					}
+					ColumnFilterActionState state = (ColumnFilterActionState) newActionState;
+					state.performAction();
 				}
-				ColumnFilterActionState state = (ColumnFilterActionState) newActionState;
-				state.performAction();
-			}
 
-			@Override
-			protected void doActionPerformed(ActionContext context) {
-				showFilterDialog(tableModel);
-			}
+				@Override
+				protected void doActionPerformed(ActionContext context) {
+					showFilterDialog(tableModel);
+				}
 
-		};
+			};
 		columnFilterAction.setPerformActionOnPrimaryButtonClick(true);
 		HelpLocation helpLocation = new HelpLocation("Trees", "Column_Filters");
 		columnFilterAction.setHelpLocation(helpLocation);

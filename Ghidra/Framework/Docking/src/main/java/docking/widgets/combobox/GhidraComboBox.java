@@ -26,6 +26,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.text.*;
 
+import docking.widgets.GComponent;
+
 /**
  * GhidraComboBox adds the following features:
  * 
@@ -54,9 +56,9 @@ import javax.swing.text.*;
  * focus) in that you end up changing the button's internal state(by calling
  * setEnabled(true or false)) in the middle of the button press.
  */
-public class GhidraComboBox<E> extends JComboBox<E> {
-	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
-	private ArrayList<DocumentListener> docListeners = new ArrayList<DocumentListener>();
+public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
+	private ArrayList<ActionListener> listeners = new ArrayList<>();
+	private ArrayList<DocumentListener> docListeners = new ArrayList<>();
 	private boolean setSelectedFlag = false;
 
 	private boolean forwardEnter;
@@ -67,6 +69,7 @@ public class GhidraComboBox<E> extends JComboBox<E> {
 	 */
 	public GhidraComboBox() {
 		super();
+		init();
 	}
 
 	/**
@@ -75,6 +78,7 @@ public class GhidraComboBox<E> extends JComboBox<E> {
 	 */
 	public GhidraComboBox(ComboBoxModel<E> aModel) {
 		super(aModel);
+		init();
 	}
 
 	/**
@@ -84,6 +88,7 @@ public class GhidraComboBox<E> extends JComboBox<E> {
 	 */
 	public GhidraComboBox(E[] items) {
 		super(items);
+		init();
 	}
 
 	/**
@@ -93,6 +98,14 @@ public class GhidraComboBox<E> extends JComboBox<E> {
 	 */
 	public GhidraComboBox(Vector<E> items) {
 		super(items);
+		init();
+	}
+
+	private void init() {
+		setHTMLRenderingEnabled(false);
+		if (getRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
+		}
 	}
 
 	@Override

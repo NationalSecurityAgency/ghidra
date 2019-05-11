@@ -1,9 +1,10 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Xtra sample'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
-
-project.ext.includeExtensionInInstallation = true
 
 dependencies {
 	compile project(':Base')
