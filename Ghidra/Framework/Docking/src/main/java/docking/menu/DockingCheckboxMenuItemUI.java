@@ -26,9 +26,8 @@ import javax.swing.plaf.MenuItemUI;
 
 public class DockingCheckboxMenuItemUI extends DockingMenuItemUI {
 	public static ComponentUI createUI(JComponent c) {
-		LookAndFeel underlying = UIManager.getLookAndFeel();
 		DockingCheckboxMenuItemUI result = new DockingCheckboxMenuItemUI();
-		result.ui = (MenuItemUI) underlying.getDefaults().getUI(c);
+		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
 	}
 }
