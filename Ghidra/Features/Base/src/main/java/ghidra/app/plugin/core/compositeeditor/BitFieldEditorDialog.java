@@ -171,8 +171,9 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		applyCallback();
-		close();
+		if (!bitFieldEditorPanel.isEditing() || bitFieldEditorPanel.apply(listener)) {
+			close();
+		}
 	}
 
 	@Override

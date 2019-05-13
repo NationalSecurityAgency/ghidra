@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import java.awt.Dimension;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -32,6 +31,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Composite;
 import ghidra.util.Msg;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.layout.*;
@@ -202,6 +202,22 @@ public class BitFieldEditorPanel extends JPanel {
 			dtChoiceEditor.getDropDownTextField();
 		dtChoiceTextField.setBorder(UIManager.getBorder("TextField.border"));
 
+		dtChoiceEditor.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				Component other = e.getOppositeComponent();
+				if (other == null) {
+					// Focus lost to a different application
+				}
+				else if (SwingUtilities.isDescendingFrom(other, BitFieldEditorPanel.this)) {
+					if (!SwingUtilities.isDescendingFrom(other,
+						dtChoiceEditor.getEditorComponent())) {
+						dtChoiceEditor.stopCellEditing();
+					}
+				}
+			}
+		});
+
 		dtChoiceEditor.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
@@ -212,6 +228,7 @@ public class BitFieldEditorPanel extends JPanel {
 			public void editingStopped(ChangeEvent e) {
 				if (!checkValidBaseDataType()) {
 					dtChoiceTextField.selectAll();
+					dtChoiceTextField.requestFocus();
 				}
 				else {
 					baseDataType = dtChoiceEditor.getCellEditorValueAsDataType();
@@ -440,6 +457,15 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	boolean apply(CompositeChangeListener listener) {
+
+		if (!checkValidBaseDataType()) {
+			DropDownSelectionTextField<DataType> dtChoiceTextField =
+				dtChoiceEditor.getDropDownTextField();
+			dtChoiceTextField.selectAll();
+			dtChoiceTextField.requestFocus();
+			return false;
+		}
+
 		boolean deleteConflicts = false;
 		if (placementComponent.hasApplyConflict()) {
 			long allocationSize = (Long) allocSizeModel.getValue();
