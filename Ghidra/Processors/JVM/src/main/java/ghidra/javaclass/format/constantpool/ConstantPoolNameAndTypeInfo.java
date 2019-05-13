@@ -15,13 +15,11 @@
  */
 package ghidra.javaclass.format.constantpool;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -41,8 +39,8 @@ public class ConstantPoolNameAndTypeInfo extends AbstractConstantPoolInfoJava {
 	private short nameIndex;
 	private short descriptorIndex;
 
-	public ConstantPoolNameAndTypeInfo( BinaryReader reader ) throws IOException {
-		super( reader );
+	public ConstantPoolNameAndTypeInfo(BinaryReader reader) throws IOException {
+		super(reader);
 		nameIndex = reader.readNextShort();
 		descriptorIndex = reader.readNextShort();
 	}
@@ -55,8 +53,8 @@ public class ConstantPoolNameAndTypeInfo extends AbstractConstantPoolInfoJava {
 	 * method.
 	 * @return a valid index into the constant_pool table to the name
 	 */
-	public short getNameIndex() {
-		return nameIndex;
+	public int getNameIndex() {
+		return nameIndex & 0xffff;
 	}
 
 	/**
@@ -66,17 +64,17 @@ public class ConstantPoolNameAndTypeInfo extends AbstractConstantPoolInfoJava {
 	 * or method descriptor.
 	 * @return a valid index into the constant_pool table to the descriptor
 	 */
-	public short getDescriptorIndex() {
-		return descriptorIndex;
+	public int getDescriptorIndex() {
+		return descriptorIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_NameAndType_info";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "name_index", null );
-		structure.add( WORD, "descriptor_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "name_index", null);
+		structure.add(WORD, "descriptor_index", null);
 		return structure;
 	}
 

@@ -15,21 +15,15 @@
  */
 package ghidra.javaclass.format;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.javaclass.format.attributes.AbstractAttributeInfo;
 import ghidra.javaclass.format.attributes.AttributeFactory;
-import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
-import ghidra.javaclass.format.constantpool.ConstantPoolDoubleInfo;
-import ghidra.javaclass.format.constantpool.ConstantPoolFactory;
-import ghidra.javaclass.format.constantpool.ConstantPoolLongInfo;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.javaclass.format.constantpool.*;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -85,9 +79,9 @@ public class ClassFileJava implements StructConverter {
 		minorVersion = reader.readNextShort();
 		majorVersion = reader.readNextShort();
 		constantPoolCount = reader.readNextShort();
-		constantPool = new AbstractConstantPoolInfoJava[constantPoolCount];
+		constantPool = new AbstractConstantPoolInfoJava[getConstantPoolCount()];
 		//NOTE: start at index 1 per JVM specification!!!
-		for (int i = 1; i < constantPoolCount; i++) {
+		for (int i = 1; i < getConstantPoolCount(); i++) {
 			constantPool[i] = ConstantPoolFactory.get(reader);
 
 			//From section 4.4.5 of JVM specification:
@@ -97,7 +91,7 @@ public class ClassFileJava implements StructConverter {
 			///located at index n+2. The constant_pool index n+1 must be valid but is considered
 			//unusable.
 			if (constantPool[i] instanceof ConstantPoolLongInfo ||
-					constantPool[i] instanceof ConstantPoolDoubleInfo) {
+				constantPool[i] instanceof ConstantPoolDoubleInfo) {
 				++i;
 			}
 		}
@@ -105,20 +99,20 @@ public class ClassFileJava implements StructConverter {
 		thisClass = reader.readNextShort();
 		superClass = reader.readNextShort();
 		interfacesCount = reader.readNextShort();
-		interfaces = reader.readNextShortArray(interfacesCount);
+		interfaces = reader.readNextShortArray(getInterfacesCount());
 		fieldsCount = reader.readNextShort();
-		fields = new FieldInfoJava[fieldsCount];
-		for (int i = 0; i < fieldsCount; i++) {
+		fields = new FieldInfoJava[getFieldsCount()];
+		for (int i = 0; i < getFieldsCount(); i++) {
 			fields[i] = new FieldInfoJava(reader, this);
 		}
 		methodsCount = reader.readNextShort();
-		methods = new MethodInfoJava[methodsCount];
-		for (int i = 0; i < methodsCount; i++) {
+		methods = new MethodInfoJava[getMethodsCount()];
+		for (int i = 0; i < getMethodsCount(); i++) {
 			methods[i] = new MethodInfoJava(reader, this);
 		}
 		attributesCount = reader.readNextShort();
-		attributes = new AbstractAttributeInfo[attributesCount];
-		for (int i = 0; i < attributesCount; i++) {
+		attributes = new AbstractAttributeInfo[getAttributesCount()];
+		for (int i = 0; i < getAttributesCount(); i++) {
 			attributes[i] = AttributeFactory.get(reader, getConstantPool());
 		}
 	}
@@ -173,8 +167,8 @@ public class ClassFileJava implements StructConverter {
 	 * exception for constants of type long and double noted in ?4.4.5.
 	 * @return the number of entries in the constant_pool table plus one
 	 */
-	public short getConstantPoolCount() {
-		return constantPoolCount;
+	public int getConstantPoolCount() {
+		return constantPoolCount & 0xffff;
 	}
 
 	/**
@@ -207,8 +201,8 @@ public class ClassFileJava implements StructConverter {
 	 * defined by this class file.
 	 * @return a valid index into the constant_pool table to a CONSTANT_Class_info
 	 */
-	public short getThisClass() {
-		return thisClass;
+	public int getThisClass() {
+		return thisClass & 0xffff;
 	}
 
 	/**
@@ -228,8 +222,8 @@ public class ClassFileJava implements StructConverter {
 	 * must be a CONSTANT_Class_info structure representing the class Object.
 	 * @return a valid index into the constant_pool table to a CONSTANT_Class_info
 	 */
-	public short getSuperClass() {
-		return superClass;
+	public int getSuperClass() {
+		return superClass & 0xffff;
 	}
 
 	/**
@@ -237,8 +231,8 @@ public class ClassFileJava implements StructConverter {
 	 * superinterfaces of this class or interface type.
 	 * @return the number of direct superinterfaces of this class
 	 */
-	public short getInterfacesCount() {
-		return interfacesCount;
+	public int getInterfacesCount() {
+		return interfacesCount & 0xffff;
 	}
 
 	/**
@@ -248,10 +242,11 @@ public class ClassFileJava implements StructConverter {
 	 * CONSTANT_Class_info (?4.4.1) structure representing an interface that is a
 	 * direct superinterface of this class or interface type, in the left-to-right order
 	 * given in the source for the type.
-	 * @return an array of interfaces
+	 * @param i entry
+	 * @return interface index
 	 */
-	public short[] getInterfaces() {
-		return interfaces;
+	public int getInterfacesEntry(int i) {
+		return interfaces[i] & 0xffff;
 	}
 
 	/**
@@ -261,8 +256,8 @@ public class ClassFileJava implements StructConverter {
 	 * interface type.
 	 * @return the number of field_info structures in the fields table
 	 */
-	public short getFieldsCount() {
-		return fieldsCount;
+	public int getFieldsCount() {
+		return fieldsCount & 0xffff;
 	}
 
 	/**
@@ -282,8 +277,8 @@ public class ClassFileJava implements StructConverter {
 	 * structures in the methods table.
 	 * @return the number of method_info structures in the methods table
 	 */
-	public short getMethodsCount() {
-		return methodsCount;
+	public int getMethodsCount() {
+		return methodsCount & 0xffff;
 	}
 
 	/**
@@ -309,8 +304,8 @@ public class ClassFileJava implements StructConverter {
 	 * in the attributes table of this class.
 	 * @return the number of attributes in the attributes table
 	 */
-	public short getAttributesCount() {
-		return attributesCount;
+	public int getAttributesCount() {
+		return attributesCount & 0xffff;
 	}
 
 	/**
@@ -370,14 +365,14 @@ public class ClassFileJava implements StructConverter {
 		structure.add(WORD, "super_class", null);
 		structure.add(WORD, "interfaces_count", null);
 
-		if (interfacesCount > 0) {
-			DataType array = new ArrayDataType(WORD, interfacesCount, WORD.getLength());
+		if (getInterfacesCount() > 0) {
+			DataType array = new ArrayDataType(WORD, getInterfacesCount(), WORD.getLength());
 			structure.add(array, "interfaces", null);
 		}
 
 		structure.add(WORD, "field_count", null);
 
-		if (fieldsCount > 0) {
+		if (getFieldsCount() > 0) {
 			Structure fieldStruct = new StructureDataType("fields", 0);
 			for (int i = 0; i < fields.length; ++i) {
 				fieldStruct.add(fields[i].toDataType(), "field_" + i, null);
@@ -387,7 +382,7 @@ public class ClassFileJava implements StructConverter {
 
 		structure.add(WORD, "method_count", null);
 
-		if (methodsCount > 0) {
+		if (getMethodsCount() > 0) {
 			Structure methodsStruct = new StructureDataType("methods", 0);
 			for (int i = 0; i < methods.length; ++i) {
 				methodsStruct.add(methods[i].toDataType(), "methods_" + i, null);
@@ -396,7 +391,7 @@ public class ClassFileJava implements StructConverter {
 		}
 
 		structure.add(WORD, "attributes_count", null);
-		if (attributesCount > 0){
+		if (getAttributesCount() > 0) {
 			Structure attributesStruct = new StructureDataType("attributes", 0);
 			for (int i = 0; i < attributes.length; ++i) {
 				attributesStruct.add(attributes[i].toDataType(), "attributes_" + i, null);

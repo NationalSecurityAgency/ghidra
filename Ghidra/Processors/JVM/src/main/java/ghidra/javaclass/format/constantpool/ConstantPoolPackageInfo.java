@@ -22,43 +22,35 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
+ * Note: text taken from/based on jvms12.pdf
  * <p>
- * The CONSTANT_String_info structure is used to represent constant objects of the
- * type String:
- * <pre>
- * 		CONSTANT_String_info {
- * 			u1 tag;
- * 			u2 string_index
- *		}
- * </pre>
+ * Objects of this class represent a package exported or opened by a module
  */
-public class ConstantPoolStringInfo extends AbstractConstantPoolInfoJava {
+public class ConstantPoolPackageInfo extends AbstractConstantPoolInfoJava {
 
-	private short stringIndex;
+	private short name_index;
 
-	public ConstantPoolStringInfo(BinaryReader reader) throws IOException {
+	protected ConstantPoolPackageInfo(BinaryReader reader) throws IOException {
 		super(reader);
-		stringIndex = reader.readNextShort();
+		name_index = reader.readNextShort();
 	}
 
 	/**
-	 * The value of the string_index item must be a valid index into the
-	 * constant_pool table. The constant_pool entry at that index must be a
-	 * CONSTANT_Utf8_info structure representing the sequence of Unicode
-	 * code points to which the String object is to be initialized.
-	 * @return a valid index into the constant_pool table
+	 * The {@code name_index} must be a valid index into the constant pool. The entry at that index
+	 * must be a {@link ConstantPoolUtf8Info} structure representing a valid package name (encoded 
+	 * in internal form).
+	 * @return the name index
 	 */
-	public int getStringIndex() {
-		return stringIndex & 0xffff;
+	public int getNameIndex() {
+		return name_index & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "CONSTANT_String_info";
+		String name = "CONSTANT_Package_info";
 		Structure structure = new StructureDataType(name, 0);
 		structure.add(BYTE, "tag", null);
-		structure.add(WORD, "string_index", null);
+		structure.add(WORD, "name_index", null);
 		return structure;
 	}
 

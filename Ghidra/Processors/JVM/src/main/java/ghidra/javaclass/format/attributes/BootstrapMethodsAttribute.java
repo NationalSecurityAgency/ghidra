@@ -15,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -55,33 +55,33 @@ import java.io.IOException;
 public class BootstrapMethodsAttribute extends AbstractAttributeInfo {
 
 	private short numberOfBootstrapMethods;
-	private BootstrapMethods [] bootstrapMethods;
+	private BootstrapMethods[] bootstrapMethods;
 
-	public BootstrapMethodsAttribute( BinaryReader reader ) throws IOException {
+	public BootstrapMethodsAttribute(BinaryReader reader) throws IOException {
 		super(reader);
 
 		numberOfBootstrapMethods = reader.readNextShort();
 
-		bootstrapMethods = new BootstrapMethods[ numberOfBootstrapMethods ];
-		for ( int i = 0 ; i < numberOfBootstrapMethods ; ++i ) {
-			bootstrapMethods[ i ] = new BootstrapMethods( reader );
+		bootstrapMethods = new BootstrapMethods[getNumberOfBootstrapMethods()];
+		for (int i = 0; i < getNumberOfBootstrapMethods(); ++i) {
+			bootstrapMethods[i] = new BootstrapMethods(reader);
 		}
 	}
 
-	public short getNumberOfBootstrapMethods() {
-		return numberOfBootstrapMethods;
+	public int getNumberOfBootstrapMethods() {
+		return numberOfBootstrapMethods & 0xffff;
 	}
-	
-	public BootstrapMethods[] getBootstrapMethods(){
+
+	public BootstrapMethods[] getBootstrapMethods() {
 		return bootstrapMethods;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = getBaseStructure( "BootstrapMethods_attribute" );
-		structure.add( WORD, "num_bootstrap_methods", null );
-		for ( int i = 0 ; i < bootstrapMethods.length ; ++i ) {
-			structure.add( bootstrapMethods[ i ].toDataType(), "bootstrap_methods" + i, null );
+		StructureDataType structure = getBaseStructure("BootstrapMethods_attribute");
+		structure.add(WORD, "num_bootstrap_methods", null);
+		for (int i = 0; i < bootstrapMethods.length; ++i) {
+			structure.add(bootstrapMethods[i].toDataType(), "bootstrap_methods" + i, null);
 		}
 		return structure;
 	}

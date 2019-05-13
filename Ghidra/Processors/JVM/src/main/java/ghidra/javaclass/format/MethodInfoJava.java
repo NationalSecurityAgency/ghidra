@@ -15,14 +15,15 @@
  */
 package ghidra.javaclass.format;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.javaclass.flags.MethodsInfoAccessFlags;
 import ghidra.javaclass.format.attributes.*;
 import ghidra.javaclass.format.constantpool.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * Each method, including each instance initialization method (2.9) and the class or
@@ -58,8 +59,8 @@ public class MethodInfoJava implements StructConverter {
 		nameIndex = reader.readNextShort();
 		descriptorIndex = reader.readNextShort();
 		attributesCount = reader.readNextShort();
-		attributes = new AbstractAttributeInfo[attributesCount];
-		for (int i = 0; i < attributesCount; i++) {
+		attributes = new AbstractAttributeInfo[getAttributesCount()];
+		for (int i = 0; i < getAttributesCount(); i++) {
 			attributes[i] = AttributeFactory.get(reader, classFile.getConstantPool());
 		}
 	}
@@ -81,13 +82,14 @@ public class MethodInfoJava implements StructConverter {
 	public short getAccessFlags() {
 		return accessFlags;
 	}
-	
+
 	/**
 	 * 
 	 * @return boolean encoding whether the method is static
 	 */
-	public boolean isStatic(){
-		return AccessFlagsJava.isStatic(accessFlags);
+	public boolean isStatic() {
+		return (MethodsInfoAccessFlags.ACC_STATIC.getValue() &
+			accessFlags) == MethodsInfoAccessFlags.ACC_STATIC.getValue();
 	}
 
 	/**
@@ -98,8 +100,8 @@ public class MethodInfoJava implements StructConverter {
 	 * denoting a method.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getNameIndex() {
-		return nameIndex;
+	public int getNameIndex() {
+		return nameIndex & 0xffff;
 	}
 
 	/**
@@ -108,8 +110,8 @@ public class MethodInfoJava implements StructConverter {
 	 * CONSTANT_Utf8_info structure representing a valid method descriptor.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getDescriptorIndex() {
-		return descriptorIndex;
+	public int getDescriptorIndex() {
+		return descriptorIndex & 0xffff;
 	}
 
 	/**
@@ -117,8 +119,8 @@ public class MethodInfoJava implements StructConverter {
 	 * attributes of this method.
 	 * @return the number of additional attributes of this method
 	 */
-	public short getAttributesCount() {
-		return attributesCount;
+	public int getAttributesCount() {
+		return attributesCount & 0xffff;
 	}
 
 	/**
@@ -178,11 +180,13 @@ public class MethodInfoJava implements StructConverter {
 		ConstantPoolUtf8Info methodDescriptor =
 			(ConstantPoolUtf8Info) constantPool[descriptorIndex];
 		StringBuffer stringBuffer = new StringBuffer();
-		stringBuffer.append(AccessFlagsJava.toString(accessFlags, false).trim());
+		stringBuffer.append(MethodsInfoAccessFlags.toString(accessFlags));
 
-		if (!methodName.getString().equals("<clinit>")) {
+		if (methodName.getString().equals("<clinit>")) {
+			stringBuffer.append(" (class initializer)");
+		}
+		else {
 			stringBuffer.append(' ');
-
 			if (methodName.getString().equals("<init>")) {//replace constructors with name of this class
 				ConstantPoolClassInfo thisClass =
 					(ConstantPoolClassInfo) constantPool[classFile.getThisClass()];
@@ -205,13 +209,12 @@ public class MethodInfoJava implements StructConverter {
 				stringBuffer.append(methodName.getString());
 			}
 
-			stringBuffer.append('(');
-
 			CodeAttribute codeAttribute = getCodeAttribute();
 			if (codeAttribute != null) {
 				LocalVariableTableAttribute localVariableTable =
 					codeAttribute.getLocalVariableTableAttribute();
 				if (localVariableTable != null) {
+					stringBuffer.append('(');
 					LocalVariableJava[] localVariables = localVariableTable.getLocalVariables();
 					int startIndex = getParametersStartIndex();
 					for (int i = startIndex; i < localVariables.length; ++i) {
@@ -224,22 +227,28 @@ public class MethodInfoJava implements StructConverter {
 							ConstantPoolUtf8Info parameterDescriptor =
 								(ConstantPoolUtf8Info) constantPool[localVariables[i].getDescriptorIndex()];
 
-							stringBuffer.append(DescriptorDecoder.decodeType(parameterDescriptor,
-								false));
+							stringBuffer.append(DescriptorDecoder.getTypeNameFromDescriptor(
+								parameterDescriptor.getString(), false, true));
 							stringBuffer.append(" ");
 							stringBuffer.append(parameterName);
 
 						}
 					}
+					stringBuffer.append(')');
+				}
+				else {
+					stringBuffer.append(
+						DescriptorDecoder.getParameterString(methodDescriptor.getString()));
 				}
 			}
 
-			stringBuffer.append(')');
 			ExceptionsAttribute exceptionsAttribute = getExceptionsAttribute();
 			if (exceptionsAttribute != null) {
 				int i = 0;
-				for (short s : exceptionsAttribute.getExceptionIndexTable()) {
-					ConstantPoolClassInfo exceptionClass = (ConstantPoolClassInfo) constantPool[s];
+				for (int k = 0; k < exceptionsAttribute.getNumberOfExceptions(); k++) {
+					ConstantPoolClassInfo exceptionClass =
+						(ConstantPoolClassInfo) constantPool[exceptionsAttribute.getExceptionIndexTableEntry(
+							k)];
 					ConstantPoolUtf8Info exceptionClassName =
 						(ConstantPoolUtf8Info) constantPool[exceptionClass.getNameIndex()];
 					String className = exceptionClassName.getString();
@@ -265,7 +274,7 @@ public class MethodInfoJava implements StructConverter {
 	 * otherwise skip index 0 because it contains the 'this' parameter.
 	 */
 	private int getParametersStartIndex() {
-		return AccessFlagsJava.isStatic(accessFlags) ? 0 : 1;
+		return isStatic() ? 0 : 1;
 	}
 
 	/**
@@ -299,7 +308,8 @@ public class MethodInfoJava implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "method_info" + "|" + nameIndex + "|" + descriptorIndex + "|" + attributesCount + "|";
+		String name =
+			"method_info" + "|" + nameIndex + "|" + descriptorIndex + "|" + attributesCount + "|";
 
 		Structure structure = new StructureDataType(name, 0);
 

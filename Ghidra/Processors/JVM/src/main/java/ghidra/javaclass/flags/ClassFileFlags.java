@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,33 @@
  */
 package ghidra.javaclass.flags;
 
-public final class ClassFileFlags {
+public enum ClassFileFlags {
 
 	/** Declared public; may be accessed from outside its package. */
-	public final static short ACC_PUBLIC      = 0x0001;
+	ACC_PUBLIC(0x0001),
 	/** Declared final; no subclasses allowed. */
-	public final static short ACC_FINAL       = 0x0010;
+	ACC_FINAL(0x0010),
 	/** Treat superclass methods specially when invoked by the invokespecial instruction. */
-	public final static short ACC_SUPER       = 0x0020;
+	ACC_SUPER(0x0020),
 	/** Is an interface, not a class. */
-	public final static short ACC_INTERFACE   = 0x0200; 
+	ACC_INTERFACE(0x0200),
 	/** Declared abstract; must not be instantiated. */
-	public final static short ACC_ABSTRACT    = 0x0400;
+	ACC_ABSTRACT(0x0400),
 	/** Declared synthetic; not present in the source code. */
-	public final static short ACC_SYNTHETIC   = 0x1000;
+	ACC_SYNTHETIC(0x1000),
 	/** Declared as an annotation type. */
-	public final static short ACC_ANNOTATION  = 0x2000;
+	ACC_ANNOTATION(0x2000),
 	/** Declared as an enum type. */
-	public final static short ACC_ENUM        = 0x4000;
+	ACC_ENUM(0x4000);
+
+	private int value;
+
+	private ClassFileFlags(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
 
 }

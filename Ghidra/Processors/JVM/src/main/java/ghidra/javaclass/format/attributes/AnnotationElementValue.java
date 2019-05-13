@@ -15,14 +15,14 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.javaclass.format.DescriptorDecoder;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -69,38 +69,35 @@ public class AnnotationElementValue implements StructConverter {
 	private AnnotationJava annotation;
 
 	private short numberOfValues;
-	private AnnotationElementValue [] values;
+	private AnnotationElementValue[] values;
 
-	public AnnotationElementValue( BinaryReader reader ) throws IOException {
+	public AnnotationElementValue(BinaryReader reader) throws IOException {
 		tag = reader.readNextByte();
 
-		if ( tag == DescriptorDecoder.BASE_TYPE_BYTE ||
-			 tag == DescriptorDecoder.BASE_TYPE_CHAR ||
-			 tag == DescriptorDecoder.BASE_TYPE_INT ||
-			 tag == DescriptorDecoder.BASE_TYPE_SHORT ||
-			 tag == DescriptorDecoder.BASE_TYPE_LONG ||
-			 tag == DescriptorDecoder.BASE_TYPE_FLOAT ||
-			 tag == DescriptorDecoder.BASE_TYPE_DOUBLE ||
-			 tag == DescriptorDecoder.BASE_TYPE_BOOLEAN ||
-			 tag == DescriptorDecoder.BASE_TYPE_STRING ) {
+		if (tag == DescriptorDecoder.BASE_TYPE_BYTE || tag == DescriptorDecoder.BASE_TYPE_CHAR ||
+			tag == DescriptorDecoder.BASE_TYPE_INT || tag == DescriptorDecoder.BASE_TYPE_SHORT ||
+			tag == DescriptorDecoder.BASE_TYPE_LONG || tag == DescriptorDecoder.BASE_TYPE_FLOAT ||
+			tag == DescriptorDecoder.BASE_TYPE_DOUBLE ||
+			tag == DescriptorDecoder.BASE_TYPE_BOOLEAN ||
+			tag == DescriptorDecoder.BASE_TYPE_STRING) {
 
 			constantValueIndex = reader.readNextShort();
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ENUM ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_ENUM) {
 			typeNameIndex = reader.readNextShort();
 			constantNameIndex = reader.readNextShort();
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_CLASS ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_CLASS) {
 			classInfoIndex = reader.readNextShort();
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ANNOTATION ) {
-			annotation = new AnnotationJava( reader );
+		else if (tag == DescriptorDecoder.BASE_TYPE_ANNOTATION) {
+			annotation = new AnnotationJava(reader);
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ARRAY ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_ARRAY) {
 			numberOfValues = reader.readNextShort();
-			values = new AnnotationElementValue[ numberOfValues ];
-			for ( int i = 0 ; i < numberOfValues ; ++i ) {
-				values[ i ] = new AnnotationElementValue( reader );
+			values = new AnnotationElementValue[numberOfValues & 0xffff];
+			for (int i = 0; i < (numberOfValues & 0xffff); ++i) {
+				values[i] = new AnnotationElementValue(reader);
 			}
 		}
 	}
@@ -138,8 +135,8 @@ public class AnnotationElementValue implements StructConverter {
 	 * for the field type designated by the tag item, as specified in Table 4.24.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getConstantValueIndex() {
-		return constantValueIndex;
+	public int getConstantValueIndex() {
+		return constantValueIndex & 0xffff;
 	}
 
 	/**
@@ -151,11 +148,11 @@ public class AnnotationElementValue implements StructConverter {
 	 * element_value structure.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getTypeNameIndex() {
-		if ( tag != DescriptorDecoder.BASE_TYPE_ENUM ) {
+	public int getTypeNameIndex() {
+		if (tag != DescriptorDecoder.BASE_TYPE_ENUM) {
 			throw new IllegalArgumentException();
 		}
-		return typeNameIndex;
+		return typeNameIndex & 0xffff;
 	}
 
 	/**
@@ -166,11 +163,11 @@ public class AnnotationElementValue implements StructConverter {
 	 * structure.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getConstantNameIndex() {
-		if ( tag != DescriptorDecoder.BASE_TYPE_ENUM ) {
+	public int getConstantNameIndex() {
+		if (tag != DescriptorDecoder.BASE_TYPE_ENUM) {
 			throw new IllegalArgumentException();
 		}
-		return constantNameIndex;
+		return constantNameIndex & 0xffff;
 	}
 
 	/**
@@ -183,8 +180,8 @@ public class AnnotationElementValue implements StructConverter {
 	 * For example, 'V' for Void.class, 'Ljava/lang/Object;' for Object, etc.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getClassInfoIndex() {
-		return classInfoIndex;
+	public int getClassInfoIndex() {
+		return classInfoIndex & 0xffff;
 	}
 
 	/**
@@ -206,32 +203,29 @@ public class AnnotationElementValue implements StructConverter {
 	 * array-typed value represented by this element_value structure.
 	 * @return nested element value table
 	 */
-	public AnnotationElementValue [] getValues() {
+	public AnnotationElementValue[] getValues() {
 		return values;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "element_value" +"|" + tag + "|";
-		StructureDataType structure = new StructureDataType( name, 0 );
+		String name = "element_value" + "|" + tag + "|";
+		StructureDataType structure = new StructureDataType(name, 0);
 
-		if ( tag == DescriptorDecoder.BASE_TYPE_BYTE ||
-				 tag == DescriptorDecoder.BASE_TYPE_CHAR ||
-				 tag == DescriptorDecoder.BASE_TYPE_INT ||
-				 tag == DescriptorDecoder.BASE_TYPE_SHORT ||
-				 tag == DescriptorDecoder.BASE_TYPE_LONG ||
-				 tag == DescriptorDecoder.BASE_TYPE_FLOAT ||
-				 tag == DescriptorDecoder.BASE_TYPE_DOUBLE ||
-				 tag == DescriptorDecoder.BASE_TYPE_BOOLEAN ||
-				 tag == DescriptorDecoder.BASE_TYPE_STRING ) {
+		if (tag == DescriptorDecoder.BASE_TYPE_BYTE || tag == DescriptorDecoder.BASE_TYPE_CHAR ||
+			tag == DescriptorDecoder.BASE_TYPE_INT || tag == DescriptorDecoder.BASE_TYPE_SHORT ||
+			tag == DescriptorDecoder.BASE_TYPE_LONG || tag == DescriptorDecoder.BASE_TYPE_FLOAT ||
+			tag == DescriptorDecoder.BASE_TYPE_DOUBLE ||
+			tag == DescriptorDecoder.BASE_TYPE_BOOLEAN ||
+			tag == DescriptorDecoder.BASE_TYPE_STRING) {
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ENUM ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_ENUM) {
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_CLASS ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_CLASS) {
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ANNOTATION ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_ANNOTATION) {
 		}
-		else if ( tag == DescriptorDecoder.BASE_TYPE_ARRAY ) {
+		else if (tag == DescriptorDecoder.BASE_TYPE_ARRAY) {
 		}
 
 		return structure;
