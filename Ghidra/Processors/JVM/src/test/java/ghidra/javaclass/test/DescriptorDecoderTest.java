@@ -15,8 +15,7 @@
  */
 package ghidra.javaclass.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -435,6 +434,80 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		assertEquals("Integer", typeNames.get(1));
 		assertEquals("int[][][]", typeNames.get(2));
 		assertEquals("Integer[][][]", typeNames.get(3));
+	}
+
+	@Test
+	public void testGetReturnTypeOfMethodDescriptor() {
+		String ItoInt = "(I)Ljava/lang/Integer;";
+
+		DataType type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(ItoInt, dtm);
+		assertEquals(new PointerDataType(dtInteger), type);
+
+		String IntIntInttoInt =
+			"(Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(IntIntInttoInt, dtm);
+		assertEquals(new PointerDataType(dtInteger), type);
+
+		String voidTovoid = "()V";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(voidTovoid, dtm);
+		assertEquals(DataType.VOID, type);
+
+		String ItoI = "(I)I";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(ItoI, dtm);
+		assertEquals(IntegerDataType.dataType, type);
+
+		String OneDIntTwoDInttoInt =
+			"([Ljava/lang/Integer;[[Ljava/lang/Integer;)Ljava/lang/Integer;";
+
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(OneDIntTwoDInttoInt, dtm);
+		assertEquals(new PointerDataType(dtInteger), type);
+
+		String DDtoD = "(DD)D";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(DDtoD, dtm);
+		assertEquals(DoubleDataType.dataType, type);
+
+		String crazy = "(DJLjava/lang/Integer;[[Ljava/lang/Integer;)[[Ljava/lang/Integer;";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(crazy, dtm);
+		assertEquals(dtm.getPointer(DWordDataType.dataType), type);
+
+		String getClass = "()Ljava/lang/Class";
+		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(getClass, dtm);
+		assertEquals(PointerDataType.dataType, type);
+	}
+
+	@Test
+	public void testGetParameterString() {
+		String ItoInt = "(I)Ljava/lang/Integer;";
+
+		String paramString = DescriptorDecoder.getParameterString(ItoInt);
+		assertEquals("(int)", paramString);
+
+		String IntIntInttoInt =
+			"(Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;";
+		paramString = DescriptorDecoder.getParameterString(IntIntInttoInt);
+		assertEquals("(java.lang.Integer, java.lang.Integer, java.lang.Integer)", paramString);
+
+		String voidToVoid = "()V";
+		paramString = DescriptorDecoder.getParameterString(voidToVoid);
+		assertEquals("()", paramString);
+
+		String ItoI = "(I)I";
+		paramString = DescriptorDecoder.getParameterString(ItoI);
+		assertEquals("(int)", paramString);
+
+		String OneDIntTwoDInttoInt =
+			"([Ljava/lang/Integer;[[Ljava/lang/Integer;)Ljava/lang/Integer;";
+
+		paramString = DescriptorDecoder.getParameterString(OneDIntTwoDInttoInt);
+		assertEquals("(java.lang.Integer[], java.lang.Integer[][])", paramString);
+
+		String DDtoD = "(DD)D";
+		paramString = DescriptorDecoder.getParameterString(DDtoD);
+		assertEquals("(double, double)", paramString);
+
+		String crazy = "(DJLjava/lang/Integer;[[Ljava/lang/Integer;)[[Ljava/lang/Integer;";
+		paramString = DescriptorDecoder.getParameterString(crazy);
+		assertEquals("(double, long, java.lang.Integer, java.lang.Integer[][])", paramString);
 	}
 
 }

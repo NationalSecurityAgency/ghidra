@@ -15,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -80,13 +80,13 @@ public class CodeAttribute extends AbstractAttributeInfo {
 		_codeOffset = reader.getPointerIndex();
 		code = reader.readNextByteArray(codeLength);
 		exceptionTableLength = reader.readNextShort();
-		exceptionTable = new ExceptionHandlerJava[exceptionTableLength];
-		for (int i = 0; i < exceptionTableLength; i++) {
+		exceptionTable = new ExceptionHandlerJava[getExceptionTableLength()];
+		for (int i = 0; i < getExceptionTableLength(); i++) {
 			exceptionTable[i] = new ExceptionHandlerJava(reader);
 		}
 		attributesCount = reader.readNextShort();
-		attributes = new AbstractAttributeInfo[attributesCount];
-		for (int i = 0; i < attributesCount; i++) {
+		attributes = new AbstractAttributeInfo[getAttributesCount()];
+		for (int i = 0; i < getAttributesCount(); i++) {
 			attributes[i] = AttributeFactory.get(reader, constantPool);
 		}
 	}
@@ -96,8 +96,8 @@ public class CodeAttribute extends AbstractAttributeInfo {
 	 * operand stack of this method at any point during execution of the method.
 	 * @return the maximum depth of the operand stack
 	 */
-	public short getMaxStack() {
-		return maxStack;
+	public int getMaxStack() {
+		return maxStack & 0xffff;
 	}
 
 	/**
@@ -111,8 +111,8 @@ public class CodeAttribute extends AbstractAttributeInfo {
 	 * @return the number of local variables in the
 	 * local variable array allocated upon invocation of this method
 	 */
-	public short getMaxLocals() {
-		return maxLocals;
+	public int getMaxLocals() {
+		return maxLocals & 0xffff;
 	}
 
 	/**
@@ -148,8 +148,8 @@ public class CodeAttribute extends AbstractAttributeInfo {
 	 * in the exception_table table.
 	 * @return the number of entries in the exception_table table
 	 */
-	public short getExceptionTableLength() {
-		return exceptionTableLength;
+	public int getExceptionTableLength() {
+		return exceptionTableLength & 0xffff;
 	}
 
 	/**
@@ -168,8 +168,8 @@ public class CodeAttribute extends AbstractAttributeInfo {
 	 * the Code attribute.
 	 * @return the number of attributes of the Code attribute
 	 */
-	public short getAttributesCount() {
-		return attributesCount;
+	public int getAttributesCount() {
+		return attributesCount & 0xffff;
 	}
 
 	/**

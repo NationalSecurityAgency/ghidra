@@ -18,9 +18,7 @@ package ghidra.javaclass.format.constantpool;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -38,8 +36,8 @@ public class ConstantPoolMethodTypeInfo extends AbstractConstantPoolInfoJava {
 
 	private short descriptorIndex;
 
-	public ConstantPoolMethodTypeInfo( BinaryReader reader ) throws IOException {
-		super( reader );
+	public ConstantPoolMethodTypeInfo(BinaryReader reader) throws IOException {
+		super(reader);
 		descriptorIndex = reader.readNextShort();
 	}
 
@@ -49,16 +47,16 @@ public class ConstantPoolMethodTypeInfo extends AbstractConstantPoolInfoJava {
 	 * CONSTANT_Utf8_info structure representing a method descriptor.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getDescriptorIndex() {
-		return descriptorIndex;
+	public int getDescriptorIndex() {
+		return descriptorIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_MethodType_info";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "descriptor_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "descriptor_index", null);
 		return structure;
 	}
 

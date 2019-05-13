@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +33,16 @@ public final class AttributesConstants {
 	public final static String Deprecated = "Deprecated";
 	public final static String RuntimeVisibleAnnotations = "RuntimeVisibleAnnotations";
 	public final static String RuntimeInvisibleAnnotations = "RuntimeInvisibleAnnotations";
-	public final static String RuntimeVisibleParameterAnnotations = "RuntimeVisibleParameterAnnotations";
-	public final static String RuntimeInvisibleParameterAnnotations = "RuntimeInvisibleParameterAnnotations";
+	public final static String RuntimeVisibleParameterAnnotations =
+		"RuntimeVisibleParameterAnnotations";
+	public final static String RuntimeInvisibleParameterAnnotations =
+		"RuntimeInvisibleParameterAnnotations";
 	public final static String AnnotationDefault = "AnnotationDefault";
 	public final static String BootstrapMethods = "BootstrapMethods";
+	public final static String Module = "Module";
+	public final static String ModulePackages = "ModulePackages";
+	public final static String ModuleMainClass = "ModuleMainClass";
+	public final static String NestHost = "NestHost";
+	public final static String NestMembers = "NestMembers";
 
 }

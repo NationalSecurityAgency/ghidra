@@ -15,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -52,17 +52,17 @@ import java.io.IOException;
 public class RuntimeInvisibleAnnotationsAttribute extends AbstractAttributeInfo {
 
 	private short numberOfAnnotations;
-	private AnnotationJava [] annotations;
+	private AnnotationJava[] annotations;
 
-	public RuntimeInvisibleAnnotationsAttribute( BinaryReader reader ) throws IOException {
-		super( reader );
+	public RuntimeInvisibleAnnotationsAttribute(BinaryReader reader) throws IOException {
+		super(reader);
 
 		numberOfAnnotations = reader.readNextShort();
 
-		annotations = new AnnotationJava[ numberOfAnnotations ];
+		annotations = new AnnotationJava[getNumberOfAnnotations()];
 
-		for ( int i = 0 ; i < numberOfAnnotations ; ++i ) {
-			annotations[ i ] = new AnnotationJava( reader );
+		for (int i = 0; i < getNumberOfAnnotations(); ++i) {
+			annotations[i] = new AnnotationJava(reader);
 		}
 	}
 
@@ -74,8 +74,8 @@ public class RuntimeInvisibleAnnotationsAttribute extends AbstractAttributeInfo 
 	 * may be directly attached to a program element.
 	 * @return the number of runtime-visible annotations
 	 */
-	public short getNumberOfAnnotations() {
-		return numberOfAnnotations;
+	public int getNumberOfAnnotations() {
+		return numberOfAnnotations & 0xffff;
 	}
 
 	/**
@@ -83,17 +83,17 @@ public class RuntimeInvisibleAnnotationsAttribute extends AbstractAttributeInfo 
 	 * annotation on a program element.
 	 * @return the annotations table
 	 */
-	public AnnotationJava [] getAnnotations() {
+	public AnnotationJava[] getAnnotations() {
 		return annotations;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "RuntimeInvisibleAnnotations_attribute" +"|" + numberOfAnnotations + "|";
-		StructureDataType structure = getBaseStructure( name );
-		structure.add( WORD, "num_annotations", null );
-		for ( int i = 0 ; i < annotations.length ; ++i ) {
-			structure.add( annotations[ i ].toDataType(), "annotation_" + i, null );
+		String name = "RuntimeInvisibleAnnotations_attribute" + "|" + numberOfAnnotations + "|";
+		StructureDataType structure = getBaseStructure(name);
+		structure.add(WORD, "num_annotations", null);
+		for (int i = 0; i < annotations.length; ++i) {
+			structure.add(annotations[i].toDataType(), "annotation_" + i, null);
 		}
 		return structure;
 	}

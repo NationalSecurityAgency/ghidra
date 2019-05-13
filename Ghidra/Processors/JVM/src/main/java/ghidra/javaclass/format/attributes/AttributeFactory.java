@@ -15,90 +15,82 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.javaclass.format.constantpool.ConstantPoolUtf8Info;
 
-import java.io.IOException;
-
 public class AttributeFactory {
 
-	public static AbstractAttributeInfo get( BinaryReader reader, AbstractConstantPoolInfoJava [] constantPool ) throws IOException {
-		
-		int attributeNameIndex = reader.readShort( reader.getPointerIndex() );
+	public static AbstractAttributeInfo get(BinaryReader reader,
+			AbstractConstantPoolInfoJava[] constantPool) throws IOException {
 
-		if ( attributeNameIndex < 1 || attributeNameIndex >= constantPool.length ) {
-			throw new RuntimeException( "invalid index");
+		int attributeNameIndex = reader.readShort(reader.getPointerIndex());
+
+		if (attributeNameIndex < 1 || attributeNameIndex >= constantPool.length) {
+			throw new RuntimeException("invalid index");
 		}
 
-		if ( !( constantPool[ attributeNameIndex ] instanceof ConstantPoolUtf8Info ) ) {
+		if (!(constantPool[attributeNameIndex] instanceof ConstantPoolUtf8Info)) {
 			throw new RuntimeException();
 		}
 
-		ConstantPoolUtf8Info utf8 = (ConstantPoolUtf8Info) constantPool[ attributeNameIndex ];
+		ConstantPoolUtf8Info utf8 = (ConstantPoolUtf8Info) constantPool[attributeNameIndex];
 
-		if ( utf8.getString().equals( AttributesConstants.ConstantValue ) ) {
-			return new ConstantValueAttribute( reader );
+		switch (utf8.getString()) {
+			case AttributesConstants.AnnotationDefault:
+				return new AnnotationDefaultAttribute(reader);
+			case AttributesConstants.BootstrapMethods:
+				return new BootstrapMethodsAttribute(reader);
+			case AttributesConstants.Code:
+				return new CodeAttribute(reader, constantPool);
+			case AttributesConstants.ConstantValue:
+				return new ConstantValueAttribute(reader);
+			case AttributesConstants.Deprecated:
+				return new DeprecatedAttribute(reader);
+			case AttributesConstants.EnclosingMethod:
+				return new EnclosingMethodAttribute(reader);
+			case AttributesConstants.Exceptions:
+				return new ExceptionsAttribute(reader);
+			case AttributesConstants.InnerClasses:
+				return new InnerClassesAttribute(reader);
+			case AttributesConstants.LineNumberTable:
+				return new LineNumberTableAttribute(reader);
+			case AttributesConstants.LocalVariableTable:
+				return new LocalVariableTableAttribute(reader, constantPool);
+			case AttributesConstants.LocalVariableTypeTable:
+				return new LocalVariableTypeTableAttribute(reader);
+			case AttributesConstants.ModuleMainClass:
+				return new ModuleMainClassAttribute(reader);
+			case AttributesConstants.ModulePackages:
+				return new ModulePackagesAttribute(reader);
+			case AttributesConstants.NestHost:
+				return new NestHostAttribute(reader);
+			case AttributesConstants.NestMembers:
+				return new NestMembersAttribute(reader);
+			case AttributesConstants.RuntimeInvisibleAnnotations:
+				return new RuntimeInvisibleAnnotationsAttribute(reader);
+			case AttributesConstants.RuntimeInvisibleParameterAnnotations:
+				return new RuntimeParameterAnnotationsAttribute(reader, false /*invisible*/ );
+			case AttributesConstants.RuntimeVisibleAnnotations:
+				return new RuntimeVisibleAnnotationsAttribute(reader);
+			case AttributesConstants.RuntimeVisibleParameterAnnotations:
+				return new RuntimeParameterAnnotationsAttribute(reader, true /*visible*/ );
+			case AttributesConstants.Signature:
+				return new SignatureAttribute(reader);
+			case AttributesConstants.SourceDebugExtension:
+				return new SourceDebugExtensionAttribute(reader);
+			case AttributesConstants.SourceFile:
+				return new SourceFileAttribute(reader);
+			case AttributesConstants.StackMapTable:
+				return new StackMapTableAttribute(reader);
+			case AttributesConstants.Synthetic:
+				return new SyntheticAttribute(reader);
+			case AttributesConstants.Module:
+				return new ModuleAttribute(reader);
+			default:
+				throw new RuntimeException("Unknown attribute type: " + utf8.getString());
 		}
-		else if ( utf8.getString().equals( AttributesConstants.Code ) ) {
-			return new CodeAttribute( reader, constantPool );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.StackMapTable ) ) {
-			return new StackMapTableAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.Exceptions ) ) {
-			return new ExceptionsAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.InnerClasses ) ) {
-			return new InnerClassesAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.EnclosingMethod ) ) {
-			return new EnclosingMethodAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.Synthetic ) ) {
-			return new SyntheticAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.Signature ) ) {
-			return new SignatureAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.SourceFile ) ) {
-			return new SourceFileAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.SourceDebugExtension ) ) {
-			return new SourceDebugExtensionAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.LineNumberTable ) ) {
-			return new LineNumberTableAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.LocalVariableTable ) ) {
-			return new LocalVariableTableAttribute( reader, constantPool );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.LocalVariableTypeTable ) ) {
-			return new LocalVariableTypeTableAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.Deprecated ) ) {
-			return new DeprecatedAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.RuntimeVisibleAnnotations ) ) {
-			return new RuntimeVisibleAnnotationsAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.RuntimeInvisibleAnnotations ) ) {
-			return new RuntimeInvisibleAnnotationsAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.RuntimeVisibleParameterAnnotations ) ) {
-			return new RuntimeParameterAnnotationsAttribute( reader, true /*visible*/ );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.RuntimeInvisibleParameterAnnotations ) ) {
-			return new RuntimeParameterAnnotationsAttribute( reader, false /*invisible*/ );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.AnnotationDefault ) ) {
-			return new AnnotationDefaultAttribute( reader );
-		}
-		else if ( utf8.getString().equals( AttributesConstants.BootstrapMethods ) ) {
-			return new BootstrapMethodsAttribute( reader );
-		}
-
-		throw new RuntimeException( "Unknown attribute type: " + utf8.getString() );
 	}
-
 }

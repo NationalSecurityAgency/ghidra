@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -34,12 +31,12 @@ public class BootstrapMethods implements StructConverter {
 
 	private short bootstrapMethodsReference;
 	private short numberOfBootstrapArguments;
-	private short [] bootstrapArguments;
+	private short[] bootstrapArguments;
 
-	public BootstrapMethods( BinaryReader reader ) throws IOException {
+	public BootstrapMethods(BinaryReader reader) throws IOException {
 		bootstrapMethodsReference = reader.readNextShort();
 		numberOfBootstrapArguments = reader.readNextShort();
-		bootstrapArguments = reader.readNextShortArray( numberOfBootstrapArguments & 0xffff );
+		bootstrapArguments = reader.readNextShortArray(getNumberOfBootstrapArguments());
 	}
 
 	/**
@@ -55,8 +52,8 @@ public class BootstrapMethods implements StructConverter {
 	 * 
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getBootstrapMethodsReference() {
-		return bootstrapMethodsReference;
+	public int getBootstrapMethodsReference() {
+		return bootstrapMethodsReference & 0xffff;
 	}
 
 	/**
@@ -64,8 +61,8 @@ public class BootstrapMethods implements StructConverter {
 	 * items in the bootstrap_arguments array.
 	 * @return the number of items in the bootstrap_arguments array
 	 */
-	public short getNumberOfBootstrapArguments() {
-		return numberOfBootstrapArguments;
+	public int getNumberOfBootstrapArguments() {
+		return numberOfBootstrapArguments & 0xffff;
 	}
 
 	/**
@@ -80,20 +77,21 @@ public class BootstrapMethods implements StructConverter {
 	 * 		CONSTANT_Double_info,
 	 * 		CONSTANT_MethodHandle_info, or 
 	 * 		CONSTANT_MethodType_info structure.
-	 * @return
+	 * @param i entry
+	 * @return index
 	 */
-	public short [] getBootstrapArguments() {
-		return bootstrapArguments;
+	public int getBootstrapArgumentsEntry(int i) {
+		return bootstrapArguments[i] & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = new StructureDataType( "bootstrap_methods", 0 );
-		structure.add( WORD, "bootstrap_method_ref", null );
-		structure.add( WORD, "num_bootstrap_arguments", null );
-		if ( numberOfBootstrapArguments > 0 ) {
-			DataType array = new ArrayDataType( WORD, numberOfBootstrapArguments, WORD.getLength() );
-			structure.add( array, "bootstrapArguments", null );
+		StructureDataType structure = new StructureDataType("bootstrap_methods", 0);
+		structure.add(WORD, "bootstrap_method_ref", null);
+		structure.add(WORD, "num_bootstrap_arguments", null);
+		if (numberOfBootstrapArguments > 0) {
+			DataType array = new ArrayDataType(WORD, numberOfBootstrapArguments, WORD.getLength());
+			structure.add(array, "bootstrapArguments", null);
 		}
 		return structure;
 	}

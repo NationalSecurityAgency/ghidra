@@ -22,29 +22,27 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
+ * Note: text extracted from jvms12.pdf
  * <p>
- * The CONSTANT_InvokeDynamic_info structure is used by an invokedynamic
- * instruction to specify a bootstrap method, the dynamic
- * invocation name, the argument and return types of the call, and optionally, a
- * sequence of additional constants called static arguments to the bootstrap method.
- * <pre>
- * 		CONSTANT_InvokeDynamic_info {
- * 			u1 tag;
- * 			u2 bootstrap_method_attr_index;
- * 			u2 name_and_type_index;
- * 		}
- * </pre>
- */
-public class ConstantPoolInvokeDynamicInfo extends AbstractConstantPoolInfoJava {
+ * 
+ *   The CONSTANT_Dynamic_info structure is defined as follows:
+ *   <pre>
+ *   CONSTANT_Dynamic_info {
+ *     u1 tag;
+ *     u2 bootstrap_method_attr_index;
+ *     u2 name_and_type_index;
+ *   }
+ *   </pre>
+*/
+public class ConstantPoolDynamicInfo extends AbstractConstantPoolInfoJava {
 
-	private short bootstrapMethodAttrIndex;
-	private short nameAndTypeIndex;
+	private short bootstrap_method_attr_index;
+	private short name_and_type_index;
 
-	public ConstantPoolInvokeDynamicInfo(BinaryReader reader) throws IOException {
+	protected ConstantPoolDynamicInfo(BinaryReader reader) throws IOException {
 		super(reader);
-		bootstrapMethodAttrIndex = reader.readNextShort();
-		nameAndTypeIndex = reader.readNextShort();
+		bootstrap_method_attr_index = reader.readNextShort();
+		name_and_type_index = reader.readNextShort();
 	}
 
 	/**
@@ -54,28 +52,28 @@ public class ConstantPoolInvokeDynamicInfo extends AbstractConstantPoolInfoJava 
 	 * @return a valid index into the bootstrap_methods array
 	 */
 	public int getBootstrapMethodAttrIndex() {
-		return bootstrapMethodAttrIndex & 0xffff;
+		return bootstrap_method_attr_index & 0xffff;
 	}
 
 	/**
 	 * The value of the name_and_type_index item must be a valid index into
 	 * the constant_pool table. The constant_pool entry at that index must be a
-	 * CONSTANT_NameAndType_info structure representing a method name
-	 * and method descriptor.
+	 * CONSTANT_NameAndType_info structure representing a field descriptor.
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getNameAndTypeIndex() {
-		return nameAndTypeIndex & 0xffff;
+		return name_and_type_index & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "CONSTANT_InvokeDynamic_info";
+		String name = "CONSTANT_Dynamic_info";
 		Structure structure = new StructureDataType(name, 0);
 		structure.add(BYTE, "tag", null);
 		structure.add(WORD, "bootstrap_method_attr_index", null);
 		structure.add(WORD, "name_and_type_index", null);
 		return structure;
+
 	}
 
 }
