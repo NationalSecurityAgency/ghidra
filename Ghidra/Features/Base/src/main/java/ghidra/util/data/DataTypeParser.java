@@ -28,7 +28,7 @@ public class DataTypeParser {
 
 	public enum AllowedDataTypes {
 		/**
-		 * All data-types are permitted
+		 * All data-types are permitted (excluding bitfields)
 		 */
 		ALL,
 		/**
@@ -51,7 +51,7 @@ public class DataTypeParser {
 		 * Only Enums, Integer types and those Typedefs based on them
 		 * for use as a bitfield base datatype
 		 */
-		BITFIELD_USE
+		BITFIELD_BASE_TYPE
 	}
 
 	private DataTypeManager sourceDataTypeManager;			// may be null
@@ -186,7 +186,7 @@ public class DataTypeParser {
 					throw new InvalidDataTypeException("fixed-length or string data-type required");
 				}
 				break;
-			case BITFIELD_USE:
+			case BITFIELD_BASE_TYPE:
 				if (!BitFieldDataType.isValidBaseDataType(dt)) {
 					throw new InvalidDataTypeException(
 						"enum or integer derived data-type required");

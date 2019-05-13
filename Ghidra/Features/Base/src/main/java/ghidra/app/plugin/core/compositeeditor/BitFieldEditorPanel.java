@@ -193,7 +193,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private JComponent createDataTypeChoiceEditor() {
 
-		dtChoiceEditor = new DataTypeSelectionEditor(dtmService, -1, AllowedDataTypes.BITFIELD_USE);
+		dtChoiceEditor = new DataTypeSelectionEditor(dtmService, -1, AllowedDataTypes.BITFIELD_BASE_TYPE);
 		dtChoiceEditor.setConsumeEnterKeyPress(false);
 		dtChoiceEditor.setTabCommitsEdit(true);
 		//dtChoiceEditor.setPreferredDataTypeManager(composite.getDataTypeManager());

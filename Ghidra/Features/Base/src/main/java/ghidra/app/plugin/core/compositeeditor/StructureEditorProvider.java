@@ -70,7 +70,8 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 			new EditFieldAction(this), 
 			new HexNumbersAction(this),
 			new CreateInternalStructureAction(this),
-			new AddBitFieldAction(this)
+			new AddBitFieldAction(this),
+			new EditBitFieldAction(this)
 		};
 		//@formatter:on
 	}

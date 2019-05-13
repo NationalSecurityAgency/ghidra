@@ -64,7 +64,8 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 			new EditComponentAction(this),
 			new EditFieldAction(this), 
 			new HexNumbersAction(this),
-			new AddBitFieldAction(this)
+			new AddBitFieldAction(this),
+			new EditBitFieldAction(this)
 		};
 		//@formatter:on
 	}
