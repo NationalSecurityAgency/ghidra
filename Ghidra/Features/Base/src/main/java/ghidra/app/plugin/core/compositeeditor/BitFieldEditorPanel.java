@@ -67,6 +67,8 @@ public class BitFieldEditorPanel extends JPanel {
 	private SpinnerNumberModel bitSizeModel;
 	private JSpinnerWithMouseWheel bitSizeInput;
 
+	private BitSelectionHandler bitSelectionHandler;
+
 	private boolean updating = false;
 
 	BitFieldEditorPanel(Composite composite, DataTypeManagerService dtmService) {
@@ -236,6 +238,51 @@ public class BitFieldEditorPanel extends JPanel {
 		return editorComponent;
 	}
 
+	private class BitSelectionHandler extends MouseAdapter {
+
+		private boolean selectionActive = false;
+		private int startBit;
+		private int lastBit;
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			selectionActive = false;
+			if (e.getButton() == MouseEvent.BUTTON1 && bitOffsetInput.isEnabled()) {
+				startBit = setBitFieldOffset(e.getPoint());
+				bitSizeModel.setValue(1L);
+				lastBit = startBit;
+				selectionActive = startBit >= 0;
+			}
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			if (!selectionActive) {
+				return;
+			}
+			int bitOffset = placementComponent.getBitOffset(e.getPoint());
+			if (bitOffset == lastBit) {
+				return;
+			}
+			if (bitOffset >= 0) {
+				// NOTE: spinner models require use of long values
+				lastBit = bitOffset;
+				if (bitOffset <= startBit) {
+					int start = Math.min(startBit, bitOffset);
+					bitOffsetModel.setValue((long) start);
+				}
+				long bitSize = Math.abs(bitOffset - startBit) + 1;
+				bitSizeModel.setValue(bitSize);
+			}
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			selectionActive = false;
+		}
+
+	}
+
 	private JPanel createPlacementPanel() {
 		JPanel midPanel = new JPanel(new PairLayout(5, 5));
 
@@ -251,24 +298,9 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.setFont(UIManager.getFont("TextField.font"));
 		placementComponent.addMouseWheelListener(e -> bitSizeInput.mouseWheelMoved(e));
 
-		placementComponent.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1 &&
-					bitOffsetInput.isEnabled()) {
-					setBitFieldOffset(e.getPoint());
-				}
-//				if (e.getClickCount() == 2 && endCurrentEdit() &&
-//					editBitFieldComponent(e.getPoint())) {
-//					enableControls(true);
-//				}
-			}
-//			public void mousePressed(MouseEvent e) {
-//				if (e.isPopupTrigger()) {
-//					setBitFieldPopupContext(e.getPoint());
-//				}
-//			};
-		});
+		bitSelectionHandler = new BitSelectionHandler();
+		placementComponent.addMouseListener(bitSelectionHandler);
+		placementComponent.addMouseMotionListener(bitSelectionHandler);
 
 		JScrollPane scrollPane =
 			new JScrollPane(placementComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
@@ -439,12 +471,13 @@ public class BitFieldEditorPanel extends JPanel {
 		}
 	}
 
-	private void setBitFieldOffset(Point point) {
+	private int setBitFieldOffset(Point point) {
 		int bitOffset = placementComponent.getBitOffset(point);
 		if (bitOffset >= 0) {
 			// long cast is required for auto-box to Long object
 			bitOffsetModel.setValue((long) bitOffset);
 		}
+		return bitOffset;
 	}
 
 	private DataTypeComponent getDataTypeComponent(Point p) {
