@@ -446,8 +446,8 @@ public class BitFieldPlacementComponent extends JPanel {
 	class BitFieldAllocation {
 
 		private final int allocationByteSize;
-		private int bitSize;
-		private int bitOffset;
+		private final int bitSize;
+		private final int bitOffset;
 		private boolean hasConflict;
 
 		// bit layout normalized to big-endian layout

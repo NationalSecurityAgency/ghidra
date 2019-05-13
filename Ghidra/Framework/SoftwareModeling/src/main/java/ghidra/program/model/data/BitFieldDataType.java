@@ -29,6 +29,9 @@ import ghidra.util.exception.AssertException;
  * less than or equal to the base datatype size and will always be the smallest possible size
  * to contain the bitfield and offset within the least significant byte containing the 
  * lsb of the bitfield.
+ * <p>
+ * NOTE: This datatype implementation is intended for internal use only.  Creating bitfields
+ * must be accomplished directly via a Structure or Union instance API method.
  */
 public class BitFieldDataType extends AbstractDataType {
 

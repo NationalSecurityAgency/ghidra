@@ -30,6 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
+import docking.DockingWindowManager;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
@@ -148,6 +149,29 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
 
+	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
+		if (model.viewComposite instanceof Structure &&
+			!model.viewComposite.isInternallyAligned() &&
+			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
+			// check if we are attempting to edit a bitfield
+			DataTypeComponent dtComponent = model.getComponent(editingRow);
+			if (dtComponent.isBitFieldComponent()) {
+				table.getCellEditor().cancelCellEditing();
+
+				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
+					provider.dtmService, editingRow, ordinal -> {
+						model.fireTableDataChanged();
+						model.compositeInfoChanged();
+					});
+				Component c = provider.getComponent();
+				Window w = SwingUtilities.windowForComponent(c);
+				DockingWindowManager.showDialog(w, dlg, c);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void setupTableCellEditor() {
 
 		table.addPropertyChangeListener("tableCellEditor", evt -> {
@@ -161,7 +185,9 @@ public abstract class CompositeEditorPanel extends JPanel
 				SwingUtilities.invokeLater(() -> {
 					int editingRow = table.getEditingRow();
 					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
-					model.beginEditingField(editingRow, modelColumn);
+					if (!launchBitFieldEditor(modelColumn, editingRow)) {
+						model.beginEditingField(editingRow, modelColumn);
+					}
 				});
 			}
 		});

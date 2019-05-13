@@ -359,7 +359,7 @@ public class BitFieldEditorPanel extends JPanel {
 		long allocationSize = useCurrentAllocation ? (Long) allocSizeModel.getValue()
 				: initialBaseDataType.getLength();
 		placementComponent.initAdd((int) allocationSize, 1, bitOffset);
-		initControls(null, initialBaseDataType);
+		initControls(null, initialBaseDataType, 1);
 		enableControls(true);
 	}
 
@@ -397,7 +397,8 @@ public class BitFieldEditorPanel extends JPanel {
 		// TODO: adjust offset and allocationSize if needed
 		placementComponent.setAllocationOffset(allocationOffset);
 		placementComponent.init(allocationSize, bitfieldDtc);
-		initControls(initialFieldName, initialBaseDataType);
+		bitFieldAllocation = placementComponent.getBitFieldAllocation(); // get updated instance
+		initControls(initialFieldName, initialBaseDataType, bitFieldAllocation.getBitSize());
 		enableControls(bitfieldDtc != null);
 	}
 
@@ -405,7 +406,8 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.componentDeleted(ordinal);
 	}
 
-	private void initControls(String initialFieldName, DataType initialBaseDataType) {
+	private void initControls(String initialFieldName, DataType initialBaseDataType,
+			int initialBitSize) {
 		updating = true;
 		try {
 			baseDataType = initialBaseDataType;
@@ -416,7 +418,7 @@ public class BitFieldEditorPanel extends JPanel {
 			BitFieldAllocation bitFieldAllocation = placementComponent.getBitFieldAllocation();
 			allocSizeModel.setValue((long) bitFieldAllocation.getAllocationByteSize());
 			int allocBits = 8 * bitFieldAllocation.getAllocationByteSize();
-			bitSizeModel.setValue(1L);
+			bitSizeModel.setValue((long) initialBitSize);
 			bitOffsetModel.setMaximum((long) allocBits - 1);
 			bitOffsetModel.setValue((long) bitFieldAllocation.getBitOffset());
 			updateBitSizeModel();
