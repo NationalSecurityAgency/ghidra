@@ -18,6 +18,7 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.Processor;
 
 /**
  * This class represents the Compiler Flags symbol.

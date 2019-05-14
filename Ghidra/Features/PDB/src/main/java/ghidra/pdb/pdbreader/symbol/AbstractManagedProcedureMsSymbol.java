@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.AbstractString;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents various flavors of Managed Procedure symbol.

@@ -24,7 +24,6 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
-import ghidra.pdb.pdbreader.symbol.Processor;
 import ghidra.pdb.pdbreader.symbol.RegisterMsSymbol;
 import ghidra.util.Msg;
 

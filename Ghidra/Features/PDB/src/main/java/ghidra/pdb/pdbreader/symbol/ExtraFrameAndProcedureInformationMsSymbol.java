@@ -18,6 +18,7 @@ package ghidra.pdb.pdbreader.symbol;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.RegisterName;
 
 /**
  * This class represents the Extra Frame And Procedure Information symbol.

@@ -21,6 +21,7 @@ import java.util.Map;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.pdb.pdbreader.RegisterName;
 
 /**
  * This class represents the Frame Security Cookie symbol.
