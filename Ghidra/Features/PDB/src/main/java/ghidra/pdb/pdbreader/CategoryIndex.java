@@ -24,7 +24,7 @@ package ghidra.pdb.pdbreader;
  *  index is just a record number (as in the case of data type or item type; it is a made up,
  *  one-up number for symbols).
  */
-public class CategoryIndex {
+public class CategoryIndex implements Comparable<CategoryIndex> {
 
 	/**
 	 * Enum for categories: DATA, ITEM, and SYMBOL.
@@ -114,5 +114,11 @@ public class CategoryIndex {
 		}
 		string += index;
 		return string;
+	}
+
+	@Override
+	public int compareTo(CategoryIndex other) {
+		int catVal = this.category.compareTo(other.getCategory());
+		return (catVal != 0) ? catVal : this.index - other.index;
 	}
 }

@@ -57,7 +57,8 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 	}
 
 	@Override
-	protected void deserializeInternalSubstreams(PdbByteReader reader) throws PdbException {
+	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+			throws PdbException, CancelledException {
 		processModuleInformation(reader, false);
 		processSectionContributions(reader, false);
 		processSegmentMap(reader, false);

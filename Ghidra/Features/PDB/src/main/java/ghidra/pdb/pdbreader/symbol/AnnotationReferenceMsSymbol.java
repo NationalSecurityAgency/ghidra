@@ -44,6 +44,14 @@ public class AnnotationReferenceMsSymbol extends AbstractReferenceMsSymbol {
 		return PDB_ID;
 	}
 
+	/**
+	 * Returns the name field of this symbol.
+	 * @return the name.
+	 */
+	public String getName() {
+		return ((ReferenceSymbolInternals2) internals).getName();
+	}
+
 	@Override
 	protected void create() {
 		internals = new ReferenceSymbolInternals2(pdb);

@@ -111,7 +111,7 @@ public abstract class AbstractDatabaseInterface {
 			throws IOException, PdbException, CancelledException {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 		deserializeHeader(reader);
-		deserializeInternalSubstreams(reader);
+		deserializeInternalSubstreams(reader, monitor);
 		deserializeAdditionalSubstreams(monitor);
 
 		return versionNumber;
@@ -259,9 +259,12 @@ public abstract class AbstractDatabaseInterface {
 	/**
 	 * Deserializes the SubStreams internal to the Database Interface stream.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	protected abstract void deserializeInternalSubstreams(PdbByteReader reader) throws PdbException;
+	protected abstract void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+			throws PdbException, CancelledException;
 
 	/**
 	 * Deserializes the AdditionalSubstreams components.

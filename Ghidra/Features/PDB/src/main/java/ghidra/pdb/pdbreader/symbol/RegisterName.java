@@ -874,43 +874,141 @@ public class RegisterName extends AbstractParsableItem {
 
 	@Override
 	public void emit(StringBuilder builder) {
-		builder.append(getRegisterName(pdb.getTargetProcessorIndexNumber(), register));
+		builder.append(getRegisterName(pdb.getTargetProcessor(), register));
 	}
 
-	private String getRegisterName(int processorIn, int registerIn) {
-		if (registerIn < 0) {
-			return badRegister;
-		}
-		if (processorIn >= 0x00 && processorIn <= 0x07 && registerIn < regX86.length) {
-			return regX86[registerIn];
-		}
-		else if (processorIn >= 0x10 && processorIn <= 0x18 && registerIn < regMips.length) {
-			return regMips[registerIn];
-		}
-		else if (processorIn >= 0x20 && processorIn <= 0x24 && registerIn < reg68k.length) {
-			return reg68k[registerIn];
-		}
-		else if (processorIn >= 0x30 && processorIn <= 0x34 && registerIn < regAlpha.length) {
-			return regAlpha[registerIn];
-		}
-		else if (processorIn >= 0x40 && processorIn <= 0x45 && registerIn < regPpc.length) {
-			return regPpc[registerIn];
-		}
-		else if (processorIn >= 0x50 && processorIn <= 0x54 && registerIn < regSh.length) {
-			return regSh[registerIn];
-		}
+	private String getRegisterName(Processor processorIn, int registerIn) {
 
-		else if (processorIn == 0xd0 && registerIn < regAmd64.length) {
-			return regAmd64[registerIn];
+		// We do not have registers for many of the processors... set the default.
+		String registerName = badRegister;
+		switch (processorIn) {
+
+			case UNKNOWN:
+			case UNK1AB:
+			case UNK304:
+				break;
+
+			case I8080:
+			case I8086:
+			case I80286:
+			case I80386:
+			case I80486:
+			case PENTIUM:
+			case PENTIUMPRO_PENTIUMII:
+			case PENTIUMIII:
+				if (registerIn < regX86.length) {
+					registerName = regX86[registerIn];
+				}
+				break;
+
+			case MIPS_MIPSR4000:
+			case MIPS16:
+			case MIPS32:
+			case MIPS64:
+			case MIPSI:
+			case MIPSII:
+			case MIPSIII:
+			case MIPSIV:
+			case MIPSV:
+				if (registerIn < regMips.length) {
+					registerName = regMips[registerIn];
+				}
+				break;
+
+			case M68000:
+			case M68010:
+			case M68020:
+			case M68030:
+			case M68040:
+				if (registerIn < reg68k.length) {
+					registerName = reg68k[registerIn];
+				}
+				break;
+
+			case ALPHA_21064:
+			case ALPHA_21164:
+			case ALPHA_21164A:
+			case ALPHA_21264:
+			case ALPHA_21364:
+				if (registerIn < regAlpha.length) {
+					registerName = regAlpha[registerIn];
+				}
+				break;
+
+			case PPC601:
+			case PPC603:
+			case PPC604:
+			case PPC620:
+			case PPCFP:
+			case PPCBE:
+				if (registerIn < regPpc.length) {
+					registerName = regPpc[registerIn];
+				}
+				break;
+
+			case SH3:
+			case SH3E:
+			case SH3DSP:
+			case SH4:
+			case SHMEDIA:
+				if (registerIn < regSh.length) {
+					registerName = regSh[registerIn];
+				}
+				break;
+
+			case ARM3:
+			case ARM4:
+			case ARM4T:
+			case ARM5:
+			case ARM5T:
+			case ARM6:
+			case ARM_XMAC:
+			case ARM_WMMX:
+			case ARM7:
+				break;
+
+			case OMNI:
+				break;
+
+			case IA64_IA64_1:
+			case IA64_2:
+				if (registerIn < regIa64Map.size()) {
+					registerName = regIa64Map.get(registerIn);
+				}
+				break;
+
+			case CEE:
+				break;
+
+			case AM33:
+				break;
+
+			case M32R:
+				break;
+
+			case TRICORE:
+				break;
+
+			case X64_AMD64:
+				if (registerIn < regAmd64.length) {
+					registerName = regAmd64[registerIn];
+				}
+				break;
+
+			case EBC:
+				break;
+
+			case THUMB:
+			case ARMNT:
+			case ARM64:
+				break;
+
+			case D3D11_SHADER:
+				break;
+
 		}
-		else if (processorIn >= 0x80 && processorIn <= 0x81 && registerIn < regIa64Map.size()) {
-			String val = regIa64Map.get(registerIn);
-			if (val != null) {
-				return val;
-			}
-		}
-		// TODO:  Don't have anything for arm, and other processors. See API for possibilities.
-		return badRegister;
+		return registerName;
+
 	}
 
 }

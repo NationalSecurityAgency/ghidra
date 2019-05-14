@@ -44,7 +44,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	protected boolean compiledWithLtcgPgoOrPgu;
 	protected boolean dotExpModule;
 	protected int processorIndex;
-	protected ProcessorName processor;
+	protected Processor processor;
 	protected int frontEndMajorVersionNumber;
 	protected int frontEndMinorVersionNumber;
 	protected int frontEndBuildVersionNumber;
@@ -66,7 +66,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 		compilerVersionString = new StringUtf8Nt();
 		processFlags(reader.parseUnsignedIntVal());
 		processorIndex = reader.parseUnsignedShortVal();
-		processor = new ProcessorName(processorIndex);
+		processor = Processor.fromValue(processorIndex);
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndBuildVersionNumber = reader.parseUnsignedShortVal();
@@ -79,7 +79,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 
 		// Very important: sStore target machine information.  It is used elsewhere, including
 		//  in RegisterName.
-		pdb.setTargetProcessorIndexNumber(processorIndex);
+		pdb.setTargetProcessor(processor);
 	}
 
 	@Override

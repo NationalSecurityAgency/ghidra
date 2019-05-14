@@ -42,6 +42,23 @@ public class SegmentMapDescription {
 	//==============================================================================================
 	// API
 	//==============================================================================================
+
+	/**
+	 * Returns the segment offset.
+	 * @return The offset of the segment.
+	 */
+	public long getSegmentOffset() {
+		return segOffset;
+	}
+
+	/**
+	 * Returns the segment length.
+	 * @return The length of the segment.
+	 */
+	public long getLength() {
+		return segLength;
+	}
+
 	/**
 	 * Deserializes the {@link SegmentMapDescription}.
 	 * @param substreamReader {@link PdbByteReader} from which to deserialize the data.

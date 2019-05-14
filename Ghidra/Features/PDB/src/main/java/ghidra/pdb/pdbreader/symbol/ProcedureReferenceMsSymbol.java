@@ -39,6 +39,14 @@ public class ProcedureReferenceMsSymbol extends AbstractProcedureReferenceMsSymb
 		super(pdb, reader);
 	}
 
+	/**
+	 * Returns the name field of this symbol.
+	 * @return the name.
+	 */
+	public String getName() {
+		return ((ReferenceSymbolInternals2) internals).getName();
+	}
+
 	@Override
 	public int getPdbId() {
 		return PDB_ID;

@@ -35,14 +35,14 @@ public class SymbolsTest extends AbstractGenericTest {
 	//  ensure consistency across the tests.  We are setting it int the pdb here (in the static
 	//  assignment block), but we do not know the order that any tests are run, so having the
 	//  same value  will ensure consistent results.
-	private int processorIndex;
+	private Processor processor;
 	private SymbolParser symbolParser;
 
 	public SymbolsTest() {
 		try (DummyPdb700 dummyPdb700 = new DummyPdb700(4096, 4096, 4096, 4096)) {
 			pdb = dummyPdb700;
-			processorIndex = 0x0000;
-			pdb.setTargetProcessorIndexNumber(processorIndex);
+			processor = Processor.I8080;
+			pdb.setTargetProcessor(processor);
 
 			symbolParser = pdb.getSymbolParser();
 			AbstractMsType type;
@@ -290,7 +290,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile2StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
-		writer.putUnsignedShort(processorIndex); // Processor value.
+		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
 		writer.putUnsignedShort(0x0002); // front end minor version number 
 		writer.putUnsignedShort(0x0003); // front end build version number
@@ -322,7 +322,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile2MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
-		writer.putUnsignedShort(processorIndex); // Processor value.
+		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
 		writer.putUnsignedShort(0x0002); // front end minor version number 
 		writer.putUnsignedShort(0x0003); // front end build version number
@@ -354,7 +354,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile3MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
-		writer.putUnsignedShort(processorIndex); // Processor value.
+		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
 		writer.putUnsignedShort(0x0002); // front end minor version number 
 		writer.putUnsignedShort(0x0003); // front end build version number
@@ -2612,72 +2612,57 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalSlotIndexFieldedLILStMsSymbol()
-			throws PdbException {
+	public void testLocalSlotIndexFieldedLILStMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			LocalSlotIndexFieldedLILStMsSymbol.PDB_ID);
+		writer.putUnsignedShort(LocalSlotIndexFieldedLILStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
 		writer.putInt(4096); // type index or metadata token
 		writer.putByteLengthPrefixedUtf8String("LocalSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof LocalSlotIndexFieldedLILStMsSymbol,
-			true);
+		assertEquals(symbol instanceof LocalSlotIndexFieldedLILStMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("LOCALSLOT_ST: [00000010], Type: DummyMsType, LocalSlotName", result);
 	}
 
 	@Test
-	public void testLocalSlotIndexFieldedLILMsSymbol()
-			throws PdbException {
+	public void testLocalSlotIndexFieldedLILMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			LocalSlotIndexFieldedLILMsSymbol.PDB_ID);
+		writer.putUnsignedShort(LocalSlotIndexFieldedLILMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
 		writer.putInt(4096); // type index or metadata token
 		writer.putNullTerminatedUtf8String("LocalSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof LocalSlotIndexFieldedLILMsSymbol, true);
+		assertEquals(symbol instanceof LocalSlotIndexFieldedLILMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("LOCALSLOT: [00000010], Type: DummyMsType, LocalSlotName", result);
 	}
 
 	@Test
-	public void testParameterSlotIndexFieldedLILStMsSymbol()
-			throws PdbException {
+	public void testParameterSlotIndexFieldedLILStMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ParameterSlotIndexFieldedLILStMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ParameterSlotIndexFieldedLILStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
 		writer.putInt(4096); // type index or metadata token
 		writer.putByteLengthPrefixedUtf8String("ParamSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof ParameterSlotIndexFieldedLILStMsSymbol,
-			true);
+		assertEquals(symbol instanceof ParameterSlotIndexFieldedLILStMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("PARAMSLOT_ST: [00000010], Type: DummyMsType, ParamSlotName", result);
 	}
 
 	@Test
-	public void testParameterSlotIndexFieldedLILMsSymbol()
-			throws PdbException {
+	public void testParameterSlotIndexFieldedLILMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ParameterSlotIndexFieldedLILMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ParameterSlotIndexFieldedLILMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
 		writer.putInt(4096); // type index or metadata token
 		writer.putNullTerminatedUtf8String("ParamSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof ParameterSlotIndexFieldedLILMsSymbol,
-			true);
+		assertEquals(symbol instanceof ParameterSlotIndexFieldedLILMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("PARAMSLOT: [00000010], Type: DummyMsType, ParamSlotName", result);
 	}
@@ -2865,11 +2850,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoVFPStMsSymbol()
-			throws PdbException {
+	public void testManLocOrParamReltoVFPStMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ManLocOrParamReltoVFPStMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ManLocOrParamReltoVFPStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		byte[] localVarFlags = createLocalVariableFlagsBuffer(true, true, true, true, true, true,
@@ -2879,8 +2862,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof ManLocOrParamReltoVFPStMsSymbol, true);
+		assertEquals(symbol instanceof ManLocOrParamReltoVFPStMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("MANFRAMEREL_ST: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2888,11 +2870,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoVFPMsSymbol()
-			throws PdbException {
+	public void testManLocOrParamReltoVFPMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ManLocOrParamReltoVFPMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ManLocOrParamReltoVFPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		byte[] localVarFlags = createLocalVariableFlagsBuffer(true, true, true, true, true, true,
@@ -2902,8 +2882,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof ManLocOrParamReltoVFPMsSymbol,
-			true);
+		assertEquals(symbol instanceof ManLocOrParamReltoVFPMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("MANFRAMEREL: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2911,11 +2890,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttribLocOrParamReltoVFPMsSymbol()
-			throws PdbException {
+	public void testAttribLocOrParamReltoVFPMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			AttribLocOrParamReltoVFPMsSymbol.PDB_ID);
+		writer.putUnsignedShort(AttribLocOrParamReltoVFPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		byte[] localVarFlags = createLocalVariableFlagsBuffer(true, true, true, true, true, true,
@@ -2925,9 +2902,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AttributedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof AttribLocOrParamReltoVFPMsSymbol,
-			true);
+		assertEquals(symbol instanceof AttribLocOrParamReltoVFPMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_MANFRAMEREL: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3092,8 +3067,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedManyRegister2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIMR2StMsSymbol,
-			true);
+		assertEquals(symbol instanceof ManagedLocalOrParameterSIMR2StMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("MANMANYREG2_ST: al, cl, dl DummyMsType ManagedManyRegister2Name", result);
 	}
@@ -3135,18 +3109,15 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedManyRegister2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof AttributedLocalOrParameterSIMRMsSymbol,
-			true);
+		assertEquals(symbol instanceof AttributedLocalOrParameterSIMRMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_MANYREG: al, cl, dl DummyMsType ManagedManyRegister2Name", result);
 	}
 
 	@Test
-	public void testManLocOrParamReltoAMPStMsSymbol()
-			throws PdbException {
+	public void testManLocOrParamReltoAMPStMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ManLocOrParamReltoAMPStMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ManLocOrParamReltoAMPStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		writer.putUnsignedShort(1); // Register index
@@ -3157,9 +3128,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof ManLocOrParamReltoAMPStMsSymbol,
-			true);
+		assertEquals(symbol instanceof ManLocOrParamReltoAMPStMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGREL_ST: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3167,11 +3136,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoAMPMsSymbol()
-			throws PdbException {
+	public void testManLocOrParamReltoAMPMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			ManLocOrParamReltoAMPMsSymbol.PDB_ID);
+		writer.putUnsignedShort(ManLocOrParamReltoAMPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		writer.putUnsignedShort(1); // Register index
@@ -3182,8 +3149,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof ManLocOrParamReltoAMPMsSymbol, true);
+		assertEquals(symbol instanceof ManLocOrParamReltoAMPMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGREL: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3191,11 +3157,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttribLocOrParamReltoAMPMsSymbol()
-			throws PdbException {
+	public void testAttribLocOrParamReltoAMPMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			AttribLocOrParamReltoAMPMsSymbol.PDB_ID);
+		writer.putUnsignedShort(AttribLocOrParamReltoAMPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
 		writer.putInt(4096); // type index or mdatadata token
 		writer.putUnsignedShort(1); // Register index
@@ -3206,9 +3170,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AttributedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof AttribLocOrParamReltoAMPMsSymbol,
-			true);
+		assertEquals(symbol instanceof AttribLocOrParamReltoAMPMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_REGREL: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3518,8 +3480,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof EnregisteredSymbolDARMsSymbol,
-			true);
+		assertEquals(symbol instanceof EnregisteredSymbolDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_REGISTER:Attributes: MayAvailable al" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3539,8 +3500,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof FramePointerRelativeDARMsSymbol,
-			true);
+		assertEquals(symbol instanceof FramePointerRelativeDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_FRAMEPOINTER_REL: FrameOffset: 1000" +
 			"    Range: [0001:00002000] - [0001:00003000]," +
@@ -3548,11 +3508,9 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnregisteredFieldOfSymbolDARMsSymbol()
-			throws PdbException {
+	public void testEnregisteredFieldOfSymbolDARMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			EnregisteredFieldOfSymbolDARMsSymbol.PDB_ID);
+		writer.putUnsignedShort(EnregisteredFieldOfSymbolDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register holding the value of the symbol
 		// attribute (bit 0: 1=may have no user name on one of the control flow paths
 		writer.putUnsignedShort(0x01);
@@ -3566,8 +3524,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof EnregisteredFieldOfSymbolDARMsSymbol, true);
+		assertEquals(symbol instanceof EnregisteredFieldOfSymbolDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_SUBFIELD_REGISTER: offset at 0010: Attributes: MayAvailable al" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3575,27 +3532,21 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFramePointerRelativeFullScopeDARMsSymbol()
-			throws PdbException {
+	public void testFramePointerRelativeFullScopeDARMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			FramePointerRelativeFullScopeDARMsSymbol.PDB_ID);
+		writer.putUnsignedShort(FramePointerRelativeFullScopeDARMsSymbol.PDB_ID);
 		writer.putInt(0x0100); // offset to frame pointer
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof FramePointerRelativeFullScopeDARMsSymbol,
-			true);
+		assertEquals(symbol instanceof FramePointerRelativeFullScopeDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE: FrameOffset: 0100 FULL_SCOPE", result);
 	}
 
 	@Test
-	public void testEnregisteredSymbolRelativeDARMsSymbol()
-			throws PdbException {
+	public void testEnregisteredSymbolRelativeDARMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
-		writer.putUnsignedShort(
-			EnregisteredSymbolRelativeDARMsSymbol.PDB_ID);
+		writer.putUnsignedShort(EnregisteredSymbolRelativeDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register holding base pointer of symbol
 		// spilled member for s.i. (1 bit)
 		// padding for future (3 bits)
@@ -3610,8 +3561,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(
-			symbol instanceof EnregisteredSymbolRelativeDARMsSymbol, true);
+		assertEquals(symbol instanceof EnregisteredSymbolRelativeDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"DEFRANGE_REGISTER_REL: [al + 0100] spilledUserDefinedTypeMember offset at 16" +
@@ -3767,8 +3717,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeferredProcedureCallPointerTagRegDimDARMsSymbol()
-			throws PdbException {
+	public void testDeferredProcedureCallPointerTagRegDimDARMsSymbol() throws PdbException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DeferredProcedureCallPointerTagRegDimDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register type from HLSLREG
@@ -3792,8 +3741,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
-		assertEquals(symbol instanceof DeferredProcedureCallPointerTagRegDimDARMsSymbol,
-			true);
+		assertEquals(symbol instanceof DeferredProcedureCallPointerTagRegDimDARMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_DPC_PTR_TAG: al, RegisterIndices = 2, SAMPLER" +
 			"   Range: [0001:00002000] - [0001:00003000]," +

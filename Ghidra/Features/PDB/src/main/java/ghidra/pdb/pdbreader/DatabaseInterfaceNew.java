@@ -50,11 +50,12 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	protected int lengthEditAndContinueSubstream = 0; // signed 32-bit
 
 	protected int flags = 0; // unsigned 16-bit
-	protected int machineType = 0; // unsigned 16-bit
+	protected ImageFileMachine machineType; // parsed unsigned 16-bit and interpreted.
 	protected long padReserve = 0; // unsigned 32-bit
 
 	protected List<String> editAndContinueNameList = new ArrayList<>();
 	protected List<Integer> debugStreamList = new ArrayList<>(); // TODO: this is a guess.
+	protected DebugData debugData;
 
 	//==============================================================================================
 	// API
@@ -66,6 +67,23 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	 */
 	public DatabaseInterfaceNew(AbstractPdb pdb, int streamNumber) {
 		super(pdb, streamNumber);
+		debugData = new DebugData(pdb);
+	}
+
+	/**
+	 * Returns the {@link ImageFileMachine} machine type.
+	 * @return the machine type.
+	 */
+	public ImageFileMachine getMachineType() {
+		return machineType;
+	}
+
+	/**
+	 * Returns the {@link DebugData} for this {@link DatabaseInterfaceNew}.
+	 * @return the {@link DebugData}.
+	 */
+	public DebugData getDebugData() {
+		return debugData;
 	}
 
 	//==============================================================================================
@@ -99,23 +117,25 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		lengthEditAndContinueSubstream = reader.parseInt();
 
 		flags = reader.parseUnsignedShortVal();
-		machineType = reader.parseUnsignedShortVal();
+		machineType = ImageFileMachine.fromValue(reader.parseUnsignedShortVal());
+		pdb.setTargetProcessor(machineType.getProcessor());
 
 		padReserve = reader.parseUnsignedIntVal();
 
 	}
 
 	@Override
-	protected void deserializeInternalSubstreams(PdbByteReader reader) throws PdbException {
+	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+			throws PdbException, CancelledException {
 		processModuleInformation(reader, false);
 		processSectionContributions(reader, false);
 		processSegmentMap(reader, false);
 		processFileInformation(reader, false);
-//		super.deserializeInternalSubstreams(reader);
 		processTypeServerMap(reader, false);
 		//Note that the next two are in reverse order from their length fields in the header.
 		processEditAndContinueInformation(reader, false);
-		processDebugHeader(reader, false);
+		//processDebugHeader(reader, false);
+		debugData.deserializeHeader(reader, monitor);
 	}
 
 	@Override
@@ -126,8 +146,8 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		// globalSymbolInformation.deserialize(monitor);
 		symbolRecords.deserialize(monitor);
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
-		// processEditAndContinueInformation, and processDebugHeader.  The last of these created
-		// a list of debug streams (also seen in each SectionContributionInformation).
+		// and processEditAndContinueInformation.
+		debugData.deserialize(monitor);
 	}
 
 	@Override
@@ -186,7 +206,7 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		builder.append("\nlengthEditAndContinueSubstream: ");
 		builder.append(lengthEditAndContinueSubstream);
 		builder.append(String.format("\nflags: 0x%04x", flags));
-		builder.append(String.format("\nmachineType: 0x%04x", machineType));
+		builder.append(String.format("\nmachineType: %s", machineType.toString()));
 		builder.append("\npadReserve: ");
 		builder.append(padReserve);
 		writer.write(builder.toString());
@@ -203,13 +223,10 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		writer.write("SegmentMap--------------------------------------------------\n");
 		dumpSegmentMap(writer);
 		writer.write("\nEnd SegmentMap----------------------------------------------\n");
-//		super.dumpInternalSubstreams();
 		writer.write("EditAndContinueNameList-------------------------------------\n");
 		dumpEditAndContinueNameList(writer);
-		writer.write("\nEditAndContinueNameList-------------------------------------\n");
-		writer.write("DebugStreamList---------------------------------------------\n");
-		dumpDebugStreamList(writer);
-		writer.write("\nEnd DebugStreamList-----------------------------------------\n");
+		writer.write("\nEnd EditAndContinueNameList---------------------------------\n");
+		debugData.dump(writer);
 	}
 
 	//==============================================================================================
@@ -305,28 +322,6 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Deserializes/Processes the DebugHeader.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException Upon not enough data left to parse.
-	 */
-	protected void processDebugHeader(PdbByteReader reader, boolean skip) throws PdbException {
-		if (lengthOptionalDebugHeader == 0) {
-			return;
-		}
-		if (skip) {
-			reader.skip(lengthOptionalDebugHeader);
-			return;
-		}
-		PdbByteReader substreamReader = reader.getSubPdbByteReader(lengthOptionalDebugHeader);
-		//System.out.println(substreamReader.dump(0x1000));
-		while (substreamReader.hasMore()) {
-			int debugStreamNumber = substreamReader.parseUnsignedShortVal();
-			debugStreamList.add(debugStreamNumber);
-		}
-	}
-
-	/**
 	 * Dumps the EditAndContinueNameList.  This package-protected method is for debugging only.
 	 * @param writer {@link Writer} to which to write the debug dump.
 	 * @throws IOException On issue writing to the {@link Writer}.
@@ -334,17 +329,6 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	protected void dumpEditAndContinueNameList(Writer writer) throws IOException {
 		for (String name : editAndContinueNameList) {
 			writer.write(String.format("Name: %s\n", name));
-		}
-	}
-
-	/**
-	 * Dumps the DebugStreamList.  This package-protected method is for debugging only.
-	 * @param writer {@link Writer} to which to write the debug dump.
-	 * @throws IOException On issue writing to the {@link Writer}.
-	 */
-	protected void dumpDebugStreamList(Writer writer) throws IOException {
-		for (int strmNumber : debugStreamList) {
-			writer.write(String.format("StrmNumber: %04x\n", strmNumber));
 		}
 	}
 

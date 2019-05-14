@@ -38,6 +38,14 @@ public class ReferenceSymbolInternals2 extends AbstractReferenceSymbolInternals 
 		super(pdb);
 	}
 
+	/**
+	 * Returns the name field of this symbol internals.
+	 * @return the name.
+	 */
+	public String getName() {
+		return name.get();
+	}
+
 	@Override
 	public void emit(StringBuilder builder) {
 		super.emit(builder);

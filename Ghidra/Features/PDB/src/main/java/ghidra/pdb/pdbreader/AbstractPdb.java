@@ -63,7 +63,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected AbstractTypeProgramInterface typeProgramInterface;
 	protected AbstractDatabaseInterface databaseInterface;
 
-	protected int targetProcessorIndexNumber = 0xffff;
+	protected Processor targetProcessor = Processor.UNKNOWN;
 
 	// Items below begin in Pdb400
 	protected boolean minimalDebugInfo = false;
@@ -220,20 +220,29 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Get the index number of the target processor used for compilation. Also see
-	 * {@link ProcessorName} and {@link RegisterName}.
+	 * {@link Processor} and {@link RegisterName}.
 	 * @return Index number of the target processor used for compilation.
 	 */
-	public int getTargetProcessorIndexNumber() {
-		return targetProcessorIndexNumber;
+	public Processor getTargetProcessor() {
+		return targetProcessor;
 	}
 
 	/**
 	 * Set the index number of the target processor used for compilation. Also see
-	 * {@link ProcessorName} and {@link RegisterName}.
-	 * @param targetProcessorIndexNumberIn Processor identifier.
+	 * {@link Processor} and {@link RegisterName}.
+	 * @param targetProcessorIn Processor identifier.
 	 */
-	public void setTargetProcessorIndexNumber(int targetProcessorIndexNumberIn) {
-		targetProcessorIndexNumber = targetProcessorIndexNumberIn;
+	public void setTargetProcessor(Processor targetProcessorIn) {
+		/**
+		 * Should we allow an overwrite?  The {@link DatabaseInterfaceNew} value (mapped from 
+		 * {@link ImageFileMachine} should be processed and laid down first.  Subsequent values
+		 * can come from {@link AbstractCompile2MsSymbol} and {@link Compile3MsSymbol}.  Note:
+		 * {@link DatabaseInterface} does not carry {@link ImageFileMachine}, and thus no mapping
+		 * is applied.
+		 */
+		if (targetProcessor == Processor.UNKNOWN) {
+			targetProcessor = targetProcessorIn;
+		}
 	}
 
 	/**

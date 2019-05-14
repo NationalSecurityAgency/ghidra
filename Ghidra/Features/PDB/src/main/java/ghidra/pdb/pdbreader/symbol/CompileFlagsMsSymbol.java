@@ -30,7 +30,7 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	public static final int PDB_ID = 0x0001;
 
 	protected int processorIndex;
-	protected ProcessorName processor;
+	protected Processor processor;
 	protected LanguageName language;
 	protected boolean pcodePresent;
 	protected int floatingPrecision;
@@ -49,7 +49,7 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	public CompileFlagsMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
 		processorIndex = reader.parseUnsignedByteVal();
-		processor = new ProcessorName(processorIndex);
+		processor = Processor.fromValue(processorIndex);
 		//Possible padding here for structure???
 		byte[] flags = reader.parseBytes(3);
 		processFlags(flags);
@@ -57,7 +57,7 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 
 		// Very important: sStore target machine information.  It is used elsewhere, including
 		//  in RegisterName.
-		pdb.setTargetProcessorIndexNumber(processorIndex);
+		pdb.setTargetProcessor(processor);
 	}
 
 	@Override

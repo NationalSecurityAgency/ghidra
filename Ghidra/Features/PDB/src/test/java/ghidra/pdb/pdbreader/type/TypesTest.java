@@ -24,6 +24,7 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
+import ghidra.pdb.pdbreader.symbol.Processor;
 import ghidra.pdb.pdbreader.symbol.RegisterMsSymbol;
 import ghidra.util.Msg;
 
@@ -36,7 +37,7 @@ public class TypesTest extends AbstractGenericTest {
 	//  ensure consistency across the tests.  We are setting it int the pdb here (in the static
 	//  assignment block), but we do not know the order that any tests are run, so having the
 	//  same value  will ensure consistent results.
-	private int processorIndex;
+	private Processor processor;
 	private int stringIdMsType1;
 	private int stringIdMsType2;
 	private int substringListMsType1;
@@ -49,8 +50,8 @@ public class TypesTest extends AbstractGenericTest {
 	public TypesTest() {
 		try (DummyPdb700 dummyPdb700 = new DummyPdb700(4096, 4096, 4096, 4096)) {
 			pdb = dummyPdb700;
-			processorIndex = 0x0000;
-			pdb.setTargetProcessorIndexNumber(processorIndex);
+			processor = Processor.I8080;
+			pdb.setTargetProcessor(processor);
 
 			typeParser = pdb.getTypeParser();
 			AbstractMsType type;

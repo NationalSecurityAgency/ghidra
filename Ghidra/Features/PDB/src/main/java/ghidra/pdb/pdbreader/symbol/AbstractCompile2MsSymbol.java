@@ -42,7 +42,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	protected boolean convertedWithCvtcil;
 	protected boolean microsoftIntermediateLanguageNetModule;
 	protected int processorIndex;
-	protected ProcessorName processor;
+	protected Processor processor;
 	protected int frontEndMajorVersionNumber;
 	protected int frontEndMinorVersionNumber;
 	protected int frontEndBuildVersionNumber;
@@ -63,7 +63,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 		create();
 		processFlags(reader.parseUnsignedIntVal());
 		processorIndex = reader.parseUnsignedShortVal();
-		processor = new ProcessorName(processorIndex);
+		processor = Processor.fromValue(processorIndex);
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndBuildVersionNumber = reader.parseUnsignedShortVal();
@@ -84,7 +84,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 
 		// Very important: Store target machine information.  It is used elsewhere, including
 		//  in RegisterName.
-		pdb.setTargetProcessorIndexNumber(processorIndex);
+		pdb.setTargetProcessor(processor);
 	}
 
 	/**
