@@ -53,7 +53,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	private List<ListingModelListener> listeners = new ArrayList<>();
 
 	// Use a cache so that simple arrowing to-and-fro with the keyboard will respond quickly
-	private LRUMap<Address, Layout> layoutCache = new LRUMap<>(10);
+	private LayoutCache layoutCache = new LayoutCache();
 
 	public ProgramBigListingModel(Program program, FormatManager formatMgr) {
 		this.program = program;
@@ -124,15 +124,15 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	@Override
 	public Layout getLayout(Address addr, boolean isGapAddress) {
 
-		Layout layout = layoutCache.get(addr);
+		Layout layout = layoutCache.get(addr, isGapAddress);
 		if (layout == null) {
 			layout = doGetLayout(addr, isGapAddress);
-			layoutCache.put(addr, layout);
+			layoutCache.put(addr, layout, isGapAddress);
 		}
 		return layout;
 	}
 
-	public Layout doGetLayout(Address addr, boolean isGapAddress) {
+	private Layout doGetLayout(Address addr, boolean isGapAddress) {
 		List<RowLayout> list = new ArrayList<>();
 		FieldFormatModel format;
 		CodeUnit cu = listing.getCodeUnitAt(addr);
@@ -580,5 +580,32 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 		return addressSet;
+	}
+
+	private class LayoutCache {
+
+		private LRUMap<Address, Layout> cache = new LRUMap<>(10);
+		private LRUMap<Address, Layout> gapCache = new LRUMap<>(10);
+
+		void clear() {
+			cache.clear();
+			gapCache.clear();
+		}
+
+		Layout get(Address addr, boolean isGapAddress) {
+			if (isGapAddress) {
+				return gapCache.get(addr);
+			}
+			return cache.get(addr);
+		}
+
+		void put(Address addr, Layout layout, boolean isGapAddress) {
+			if (isGapAddress) {
+				gapCache.put(addr, layout);
+			}
+			else {
+				cache.put(addr, layout);
+			}
+		}
 	}
 }

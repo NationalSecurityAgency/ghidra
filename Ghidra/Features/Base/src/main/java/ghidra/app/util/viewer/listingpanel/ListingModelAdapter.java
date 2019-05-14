@@ -53,16 +53,13 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		removeUnviewableAddressRanges();
 		model.addListener(this);
 
-		updateMgr = new SwingUpdateManager(500, 5000, new Runnable() {
-			@Override
-			public void run() {
-				if (!model.isClosed()) {
-					resetIndexMap();
-					for (LayoutModelListener listener : listeners) {
-						listener.dataChanged(BigInteger.ZERO, addressToIndexMap.getIndexCount());
-					}
-					preferredViewSize = null;
+		updateMgr = new SwingUpdateManager(500, 5000, () -> {
+			if (!model.isClosed()) {
+				resetIndexMap();
+				for (LayoutModelListener listener : listeners) {
+					listener.dataChanged(BigInteger.ZERO, addressToIndexMap.getIndexCount());
 				}
+				preferredViewSize = null;
 			}
 		});
 	}
@@ -217,7 +214,6 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		if (floc != null) {
 			return floc;
 		}
-
 		return getFieldLocation(location.getAddress(), location, true);
 	}
 
@@ -237,7 +233,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		BigInteger index = addressToIndexMap.getIndex(address);
 		Layout layout = getLayout(index);
 		if (layout == null) {
-			index = getLayoutForArrayElement(address);
+			index = getLayoutWithinCodeUnit(address);
 			layout = getLayout(index);
 		}
 
@@ -272,11 +268,12 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		return null;
 	}
 
-	private BigInteger getLayoutForArrayElement(Address address) {
+	private BigInteger getLayoutWithinCodeUnit(Address address) {
 		CodeUnit cu = model.getProgram().getListing().getCodeUnitContaining(address);
 		if (cu == null) {
 			return null;
 		}
+
 		Address min = cu.getMinAddress();
 		while (address.compareTo(min) > 0) {
 			address = address.subtract(1);
