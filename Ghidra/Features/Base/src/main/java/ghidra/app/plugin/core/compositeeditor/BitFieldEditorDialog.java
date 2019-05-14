@@ -239,7 +239,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		if (!dtc.isBitFieldComponent()) {
 			throw new IllegalArgumentException("editOrdinal does not correspond to bitfield");
 		}
-		bitFieldEditorPanel.initEdit(dtc, getPreferredAllocationOffset(dtc), false);
+		bitFieldEditorPanel.initEdit(dtc, getPreferredAllocationOffset(dtc));
 		setApplyEnabled(true);
 	}
 

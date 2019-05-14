@@ -213,13 +213,18 @@ class UnionEditorModel extends CompEditorModel {
 	// Begin methods for determining if a type of edit action is allowed.
 	// *************************************************************
 
+	@Override
+	public boolean isBitFieldAllowed() {
+		return isSingleRowSelection();
+	}
+
 	/**
 	 * Returns whether or not the selection
 	 * is allowed to be changed into an array.
 	 */
 	@Override
 	public boolean isArrayAllowed() {
-		return (getNumSelectedComponentRows() == 1);
+		return isSingleRowSelection();
 	}
 
 	/**

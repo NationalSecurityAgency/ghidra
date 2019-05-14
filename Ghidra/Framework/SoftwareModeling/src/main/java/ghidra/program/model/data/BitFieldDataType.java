@@ -90,7 +90,7 @@ public class BitFieldDataType extends AbstractDataType {
 	/**
 	 * Construct a bit-field type based upon a supported baseDataType.
 	 * @param baseDataType a supported primitive integer data type or TypeDef to such a type.
-	 * A deep clone of this type will be performed using the specified dataMgr.
+	 * The baseType must already be cloned to the target datatype manager.
 	 * @param bitSize size of bit-field expressed as number of bits
 	 * @throws InvalidDataTypeException if specified baseDataType is not permitted
 	 */

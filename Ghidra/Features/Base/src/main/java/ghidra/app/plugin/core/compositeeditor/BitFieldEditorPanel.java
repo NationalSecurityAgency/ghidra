@@ -193,7 +193,8 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private JComponent createDataTypeChoiceEditor() {
 
-		dtChoiceEditor = new DataTypeSelectionEditor(dtmService, -1, AllowedDataTypes.BITFIELD_BASE_TYPE);
+		dtChoiceEditor =
+			new DataTypeSelectionEditor(dtmService, -1, AllowedDataTypes.BITFIELD_BASE_TYPE);
 		dtChoiceEditor.setConsumeEnterKeyPress(false);
 		dtChoiceEditor.setTabCommitsEdit(true);
 		//dtChoiceEditor.setPreferredDataTypeManager(composite.getDataTypeManager());
@@ -368,11 +369,8 @@ public class BitFieldEditorPanel extends JPanel {
 	 * If null an allocation size of 4-bytes will be used but may be adjusted.
 	 * @param bitfieldDtc bitfield component or null
 	 * @param allocationOffset allocation offset to be used
-	 * @param useCurrentAllocation retain current allocation size, otherwise
-	 * use size of base datatype.
 	 */
-	void initEdit(DataTypeComponent bitfieldDtc, int allocationOffset,
-			boolean useCurrentAllocation) {
+	void initEdit(DataTypeComponent bitfieldDtc, int allocationOffset) {
 		String initialFieldName = null;
 		DataType initialBaseDataType = null;
 		int allocationSize = -1;
@@ -387,8 +385,12 @@ public class BitFieldEditorPanel extends JPanel {
 			initialFieldName = bitfieldDtc.getFieldName();
 			BitFieldDataType bitfieldDt = (BitFieldDataType) bitfieldDtc.getDataType();
 			initialBaseDataType = bitfieldDt.getBaseDataType();
-			if (!useCurrentAllocation || allocationSize < 1) {
+			if (allocationSize < 1) {
 				allocationSize = initialBaseDataType.getLength();
+			}
+			int allocationAdjust = composite.getLength() - allocationOffset - allocationSize;
+			if (allocationAdjust < 0) {
+				allocationSize += allocationAdjust;
 			}
 		}
 		if (allocationSize < 1) {

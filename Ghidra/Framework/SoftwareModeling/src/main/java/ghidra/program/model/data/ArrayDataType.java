@@ -72,6 +72,10 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	private void validate(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"Array data-type may not be a bitfield: " + dt.getName());
+		}
 		if (dt instanceof FactoryDataType) {
 			throw new IllegalArgumentException(
 				"Array data-type may not be a Factory data-type: " + dt.getName());

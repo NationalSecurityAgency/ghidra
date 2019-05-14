@@ -88,6 +88,11 @@ public interface EditorModel {
 	public boolean isArrayAllowed();
 
 	/**
+	 * Returns whether or not a bitfield is allowed at the current location.
+	 */
+	public boolean isBitFieldAllowed();
+
+	/**
 	 * Returns whether or not clearing the selected components is allowed.
 	 */
 	public boolean isClearAllowed();

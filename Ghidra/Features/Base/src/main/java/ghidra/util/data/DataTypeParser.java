@@ -23,6 +23,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
+import ghidra.util.exception.AssertException;
 
 public class DataTypeParser {
 
@@ -40,6 +41,15 @@ public class DataTypeParser {
 		 */
 		SIZABLE_DYNAMIC,
 		/**
+		 * All fixed-length data-types, sizable Dynamic data-types.
+		 * In addition a bitfield specification may be specified (e.g., int:2) 
+		 * for use when defining structure and union components only
+		 * (see {@link ProxyBitFieldDataType}).  Parser must be properly constructed
+		 * with the intended {@link DataTypeParser#destinationDataTypeManager}.
+		 * If a bitfield is returned special handling is required.
+		 */
+		SIZABLE_DYNAMIC_AND_BITFIELD,
+		/**
 		 * Only Fixed-length data-types
 		 */
 		FIXED_LENGTH,
@@ -52,6 +62,26 @@ public class DataTypeParser {
 		 * for use as a bitfield base datatype
 		 */
 		BITFIELD_BASE_TYPE
+	}
+
+	/**
+	 * <code>ProxyBitFieldDataType</code> provides acts as a proxy bitfield
+	 * whose specification may be used when defining a structure or 
+	 * union bitfield.  This datatype may not be directly applied to a program. 
+	 */
+	private static class ProxyBitFieldDataType extends BitFieldDataType {
+		/**
+		 * Construct proxy bitfield datatype for use when defining 
+		 * a structure or union bitfield.
+		 * @param baseDataType a supported primitive integer data type or TypeDef to such a type.
+		 * A deep clone of this type will be performed using the specified dataMgr.
+		 * @param bitSize size of bit-field expressed as number of bits
+		 * @throws InvalidDataTypeException if specified baseDataType is not permitted
+		 */
+		private ProxyBitFieldDataType(DataType baseDataType, int bitSize)
+				throws InvalidDataTypeException {
+			super(baseDataType, bitSize);
+		}
 	}
 
 	private DataTypeManager sourceDataTypeManager;			// may be null
@@ -162,6 +192,12 @@ public class DataTypeParser {
 	 */
 	public static void ensureIsAllowableType(DataType dt, AllowedDataTypes allowedTypes)
 			throws InvalidDataTypeException {
+		if (dt instanceof BitFieldDataType) {
+			if (allowedTypes != AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD) {
+				throw new InvalidDataTypeException("bitfield data-type not allowed");
+			}
+			return;
+		}
 		switch (allowedTypes) {
 			case DYNAMIC:
 				if (dt instanceof FactoryDataType) {
@@ -169,6 +205,7 @@ public class DataTypeParser {
 				}
 				break;
 			case SIZABLE_DYNAMIC:
+			case SIZABLE_DYNAMIC_AND_BITFIELD:
 				if (dt instanceof FactoryDataType) {
 					throw new InvalidDataTypeException("factory data-type not allowed");
 				}
@@ -205,7 +242,11 @@ public class DataTypeParser {
 			throws InvalidDataTypeException {
 		int arraySequenceStartIndex = -1;
 		List<DtPiece> modifiers = new ArrayList<>();
+		boolean terminalModifier = false;
 		for (String piece : splitDataTypeModifiers(dataTypeModifiers)) {
+			if (terminalModifier) {
+				throw new InvalidDataTypeException("Invalid data type modifier");
+			}
 			if (piece.startsWith("*")) {
 				modifiers.add(new PointerSpecPiece(piece));
 				arraySequenceStartIndex = -1;
@@ -220,6 +261,10 @@ public class DataTypeParser {
 					arraySequenceStartIndex = modifiers.size();
 					modifiers.add(arraySpec);
 				}
+			}
+			else if (piece.startsWith(":")) {
+				terminalModifier = true;
+				modifiers.add(new BitfieldSpecPiece(piece));
 			}
 			else if (piece.startsWith("{")) {
 				// # indicates the size of an array element when the base data type is dynamic.
@@ -241,10 +286,21 @@ public class DataTypeParser {
 						elementLength = ((ElementSizeSpecPiece) modifier).getElementSize();
 					}
 				}
-				else {
+				else if (modifier instanceof ArraySpecPiece) {
 					int elementCount = ((ArraySpecPiece) modifier).getElementCount();
 					dt = createArrayDataType(dt, elementLength, elementCount);
 					elementLength = dt.getLength();
+				}
+				else if (modifier instanceof BitfieldSpecPiece) {
+					if (allowedTypes != AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD) {
+						throw new InvalidDataTypeException("bitfield not permitted");
+					}
+					if (destinationDataTypeManager == null) {
+						throw new AssertException(
+							"bitfields require destination datatype manager to be specified");
+					}
+					int bitSize = ((BitfieldSpecPiece) modifier).getBitSize();
+					dt = new ProxyBitFieldDataType(dt.clone(destinationDataTypeManager), bitSize);
 				}
 			}
 		}
@@ -375,7 +431,7 @@ public class DataTypeParser {
 		int nextIndex = 0;
 		while (nextIndex < dataTypeString.length()) {
 			char c = dataTypeString.charAt(nextIndex);
-			if (c == '*' || c == '[' || c == '{') {
+			if (c == '*' || c == '[' || c == ':' || c == '{') {
 				return dataTypeString.substring(0, nextIndex).trim();
 			}
 			++nextIndex;
@@ -384,7 +440,7 @@ public class DataTypeParser {
 	}
 
 	private static String[] splitDataTypeModifiers(String dataTypeModifiers) {
-		dataTypeModifiers = dataTypeModifiers.replaceAll("[ \\t]", "");
+		dataTypeModifiers = dataTypeModifiers.replaceAll(":[ \\t]", "");
 		if (dataTypeModifiers.length() == 0) {
 			return new String[0];
 		}
@@ -393,7 +449,7 @@ public class DataTypeParser {
 		int nextIndex = 1;
 		while (nextIndex < dataTypeModifiers.length()) {
 			char c = dataTypeModifiers.charAt(nextIndex);
-			if (c == '*' || c == '[' || c == '{') {
+			if (c == '*' || c == '[' || c == ':' || c == '{') {
 				list.add(dataTypeModifiers.substring(startIndex, nextIndex));
 				startIndex = nextIndex;
 			}
@@ -420,7 +476,7 @@ public class DataTypeParser {
 			destinationDataTypeManager);
 	}
 
-	private static int parseArraySize(String numStr) {
+	private static int parseSize(String numStr) {
 		numStr = (numStr == null ? "" : numStr.trim());
 		if (numStr.length() == 0) {
 			throw new NumberFormatException();
@@ -435,6 +491,30 @@ public class DataTypeParser {
 		// dummy interface so we don't have to use Object in the list container
 	}
 
+	private static class BitfieldSpecPiece implements DtPiece {
+		int bitSize;
+
+		BitfieldSpecPiece(String piece) throws InvalidDataTypeException {
+			if (piece.startsWith(":")) {
+				String bitSizeStr = piece.substring(1);
+				try {
+					bitSize = parseSize(bitSizeStr);
+					if (bitSize >= 0) {
+						return;
+					}
+				}
+				catch (NumberFormatException e) {
+					// handled below
+				}
+			}
+			throw new InvalidDataTypeException("invalid bitfield specification: " + piece);
+		}
+
+		int getBitSize() {
+			return bitSize;
+		}
+	}
+
 	private static class ArraySpecPiece implements DtPiece {
 		int elementCount;
 
@@ -442,7 +522,7 @@ public class DataTypeParser {
 			if (piece.startsWith("[") && piece.endsWith("]")) {
 				String elementCountStr = piece.substring(1, piece.length() - 1);
 				try {
-					elementCount = parseArraySize(elementCountStr);
+					elementCount = parseSize(elementCountStr);
 					return;
 				}
 				catch (NumberFormatException e) {
@@ -492,7 +572,7 @@ public class DataTypeParser {
 			if (piece.startsWith("{") && piece.endsWith("}")) {
 				String elementSizeStr = piece.substring(1, piece.length() - 1);
 				try {
-					elementSize = parseArraySize(elementSizeStr);
+					elementSize = parseSize(elementSizeStr);
 					return;
 				}
 				catch (NumberFormatException e) {

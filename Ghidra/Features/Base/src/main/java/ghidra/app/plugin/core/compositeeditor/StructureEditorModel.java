@@ -181,8 +181,7 @@ class StructureEditorModel extends CompEditorModel {
 	@Override
 	public DataTypeComponent getComponent(int rowIndex) {
 		int numComponents = getNumComponents();
-
-		if (rowIndex < 0 || rowIndex == numComponents) {
+		if (numComponents == 0 || rowIndex < 0 || rowIndex == numComponents) {
 			return null;
 		}
 		Structure viewStruct = (Structure) viewComposite;
@@ -570,6 +569,11 @@ class StructureEditorModel extends CompEditorModel {
 	// *************************************************************
 	// Begin methods for determining if a type of edit action is allowed.
 	// *************************************************************
+
+	@Override
+	public boolean isBitFieldAllowed() {
+		return isSingleRowSelection() && !isFlexibleArraySelection();
+	}
 
 	/**
 	 * Returns whether or not the selection

@@ -1216,6 +1216,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		private DataTypeSelectionEditor editor;
 		private DataType dt;
 		private int maxLength;
+		private boolean bitfieldAllowed;
 
 		private JPanel editorPanel;
 
@@ -1224,6 +1225,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				boolean isSelected, int row, int column) {
 			model.clearStatus();
 			maxLength = model.getMaxAddLength(row);
+			bitfieldAllowed = model.isBitFieldAllowed();
 			init();
 
 			DataTypeInstance dti = (DataTypeInstance) value;
@@ -1243,7 +1245,9 @@ public abstract class CompositeEditorPanel extends JPanel
 
 			Plugin plugin = provider.getPlugin();
 			final PluginTool tool = plugin.getTool();
-			editor = new DataTypeSelectionEditor(tool, maxLength, AllowedDataTypes.SIZABLE_DYNAMIC);
+			editor = new DataTypeSelectionEditor(tool, maxLength,
+				bitfieldAllowed ? AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD
+						: AllowedDataTypes.SIZABLE_DYNAMIC);
 			editor.setTabCommitsEdit(true);
 			DataTypeManager originalDataTypeManager = model.getOriginalDataTypeManager();
 			editor.setPreferredDataTypeManager(originalDataTypeManager);
