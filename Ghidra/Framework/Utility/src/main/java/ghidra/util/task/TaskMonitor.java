@@ -43,40 +43,6 @@ public interface TaskMonitor {
 	public boolean isCancelled();
 
 	/**
-	 * Returns true if the monitor has been initialized
-	 * 
-	 * @return true if the monitor has been initialized
-	 */
-	public default boolean isInitialized() {
-		return false;
-	}
-
-	/**
-	 * Sets the initialization state of the monitor
-	 * 
-	 * @param init true for initialized, false otherwise
-	 */
-	public default void setInitialized(boolean init) {
-		// do nothing - this is defaulted for backward compatibility so current
-		// task monitor implementations do not have to change
-	}
-
-	/**
-	 * Restores the monitor to an uninitialized state. This will result in the primary
-	 * monitor being returned from the {@link TaskMonitorService} on the next
-	 * invocation. 
-	 */
-	public default void finished() {
-		synchronized (this) {
-			setMessage("");
-			setProgress(0);
-			setMaximum(0);
-			setInitialized(false);
-			clearCanceled();
-		}
-	}
-
-	/**
 	 * True (the default) signals to paint the progress information inside of the progress bar
 	 * 
 	 * @param showProgressValue true to paint the progress value; false to not
@@ -89,16 +55,6 @@ public interface TaskMonitor {
 	 * @param message the message to display
 	 */
 	public void setMessage(String message);
-	
-	/**
-	 * Returns a version of this monitor that cannot have its progress state changed. This is 
-	 * meant for sub-tasks that should not be allowed to hijack task progress.
-	 * 
-	 * @return null
-	 */
-	public default TaskMonitor getSecondaryMonitor() {
-		return null;
-	}
 
 	/**
 	 * Sets the current progress value

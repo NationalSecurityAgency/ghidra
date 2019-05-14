@@ -42,6 +42,17 @@ import util.CollectionUtils;
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
  * </pre>
+ * 
+ * Or,
+ * 
+ * <pre>
+ *	    TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
+ *			.setTitle("Task Title")
+ *			.setHasProgress(true)
+ *			.setCanCancel(true)
+ *			.setStatusTextAlignment(SwingConstants.LEADING)
+ *			.launchModal();		
+ * </pre>
  */
 public class TaskBuilder {
 
@@ -57,7 +68,25 @@ public class TaskBuilder {
 	private int statusTextAlignment = SwingConstants.CENTER;
 
 	/**
-	 * Constructor.
+	 * A convenience method to start a builder using the given runnable.  After calling this
+	 * method you are still required to call {@link #setTitle(String)}. 
+	 * 
+	 * <p>This method allows for a more attractive fluent API usage than does the constructor 
+	 * (see the javadoc header).
+	 * 
+	 * @param r the runnable
+	 * @return this builder
+	 */
+	public static TaskBuilder withRunnable(MonitoredRunnable r) {
+		return new TaskBuilder(r);
+	}
+
+	private TaskBuilder(MonitoredRunnable r) {
+		this.runnable = Objects.requireNonNull(r);
+	}
+
+	/**
+	 * Constructor
 	 * 
 	 * @param title the required title for your task.  This will appear as the title of the
 	 *        task dialog
@@ -66,6 +95,18 @@ public class TaskBuilder {
 	public TaskBuilder(String title, MonitoredRunnable runnable) {
 		this.title = Objects.requireNonNull(title);
 		this.runnable = Objects.requireNonNull(runnable);
+	}
+
+	/**
+	 * Sets the title of this task.  The title must be set before calling any of the 
+	 * <code>launch</code> methods.
+	 * 
+	 * @param title the title
+	 * @return this builder
+	 */
+	public TaskBuilder setTitle(String title) {
+		this.title = Objects.requireNonNull(title);
+		return this;
 	}
 
 	/**
@@ -149,6 +190,8 @@ public class TaskBuilder {
 	 * Launches the task built by this builder, using a blocking modal dialog.
 	 */
 	public void launchModal() {
+		validate();
+
 		boolean isModal = true;
 		Task t = new TaskBuilderTask(isModal);
 		int delay = getDelay(launchDelay, isModal);
@@ -160,11 +203,19 @@ public class TaskBuilder {
 	 * @return the launcher that launched the task
 	 */
 	public TaskLauncher launchNonModal() {
+		validate();
+
 		boolean isModal = false;
 		Task t = new TaskBuilderTask(isModal);
 		int delay = getDelay(launchDelay, isModal);
 		TaskLauncher launcher = new TaskLauncher(t, parent, delay, dialogWidth);
 		return launcher;
+	}
+
+	private void validate() {
+		if (title == null) {
+			throw new NullPointerException("Task title cannot be null");
+		}
 	}
 
 	private static int getDelay(int userDelay, boolean isModal) {

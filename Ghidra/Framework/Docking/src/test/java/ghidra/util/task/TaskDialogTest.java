@@ -23,12 +23,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
-import ghidra.util.exception.CancelledException;
 
 public class TaskDialogTest extends AbstractDockingTest {
 
@@ -95,105 +93,53 @@ public class TaskDialogTest extends AbstractDockingTest {
 		assertTrue(dialogSpy.wasShown());
 		assertSwingThreadFinishedBeforeTask();
 	}
-	
+
 	/*
 	 * Verifies that if the dialog cancel button is activated, the task is cancelled
 	 */
 	@Test
 	public void testTaskCancel() throws Exception {
-		SlowModalTask task = new SlowModalTask();		
+		SlowModalTask task = new SlowModalTask();
 		TaskDialogSpy dialogSpy = launchTask(task);
-	
+
 		dialogSpy.doShow();
-		
+
 		waitForTask();
-						
+
 		assertFalse(dialogSpy.isCancelled());
 		dialogSpy.cancel();
 		assertTrue(dialogSpy.isCancelled());
 	}
-	
+
 	/*
 	 * Verifies that if the task does not allow cancellation, the cancel button on the GUI
 	 * is disabled
 	 */
 	@Test
 	public void testTaskNoCancel() throws Exception {
-		SlowModalTask task = new SlowModalTask();		
+		SlowModalTask task = new SlowModalTask();
 		TaskDialogSpy dialogSpy = launchTask(task);
-	
+
 		dialogSpy.doShow();
 		dialogSpy.setCancelEnabled(false);
-		
+
 		waitForTask();
-				
+
 		assertFalse(dialogSpy.isCancelEnabled());
-	}
-
-	/*
-	 * Verifies that the progress value can be successfully updated
-	 * after using the {@link TaskMonitorService} to retrieve a monitor.
-	 */
-	@Test
-	public void testUpdateProgressSuccess() throws Exception {
-
-		TaskLauncher.launch(new Task("task") {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				TaskMonitor monitor1 = TaskMonitorService.getMonitor();
-				long val = monitor1.getProgress();
-
-				monitor1.setProgress(10);
-				val = monitor1.getProgress();
-				assertEquals(val, 10);
-			}
-		});
-	}
-
-	/*
-	 * Verifies that the progress value will NOT be updated if the caller is a 
-	 * secondary monitor. As a bonus, this also verifies that the Task Launcher does
-	 * not lock the task for future progress updates when a new task is launched.
-	 */
-	@Test
-	public void testUpdatePogressFail() throws Exception {
-
-		TaskLauncher.launch(new Task("task") {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-
-				TaskMonitor monitor1 = TaskMonitorService.getMonitor();
-				TaskMonitor monitor2 = TaskMonitorService.getMonitor();
-
-				// Update should be accepted
-				monitor1.setProgress(10);
-
-				// Update should fail
-				monitor2.setProgress(20);
-
-				long val = monitor2.getProgress();
-				assertEquals(val, 10);
-			}
-		});
-
-		waitForTasks();
 	}
 
 	private void assertSwingThreadBlockedForTask() {
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (!swingIsLast) {
-			System.out.println("Events " + eventQueue);
 			fail("The Swing thread did not block until the task finished");
 		}
 	}
 
 	private void assertSwingThreadFinishedBeforeTask() {
-		int size = eventQueue.size();
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (swingIsLast) {
-			System.out.println("Events (" + size + ")\n\t" + StringUtils.join(eventQueue, "\n\t"));
 			fail("The Swing thread blocked until the task finished");
 		}
 	}
@@ -244,7 +190,7 @@ public class TaskDialogTest extends AbstractDockingTest {
 		public TaskDialogSpy(Task task) {
 			super(task);
 		}
-			
+
 		@Override
 		protected void doShow() {
 			shown.set(true);

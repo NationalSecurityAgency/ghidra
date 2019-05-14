@@ -18,7 +18,6 @@ package ghidra.plugins.fsbrowser;
 import java.awt.Component;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -40,6 +39,7 @@ import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.plugins.fsbrowser.tasks.GFileSystemExtractAllTask;
@@ -151,28 +151,17 @@ class FSBActionManager {
 		if (!(contextObject instanceof FSBNode[])) {
 			return Collections.emptyList();
 		}
+
 		List<FSRL> fsrls = new ArrayList<>();
 		for (FSBNode node : (FSBNode[]) contextObject) {
 			FSRL fsrl = node.getFSRL();
-			if ((node instanceof FSBDirNode) || (node instanceof FSBRootNode)) {
-				FSBRootNode rootNode = FSBUtils.getNodesRoot(node);
-				GFileSystem fs = rootNode.getFSRef().getFilesystem();
-				if (fs instanceof GFileSystemProgramProvider) {
-					GFile gfile;
-					try {
-						gfile = fs.lookup(node.getFSRL().getPath());
-						if (gfile != null &&
-							((GFileSystemProgramProvider) fs).canProvideProgram(gfile)) {
-							fsrls.add(fsrl);
-							continue;
-						}
-					}
-					catch (IOException e) {
-						// ignore error and fall thru to normal file handling
-					}
-				}
+
+			FSRL validated = vaildateFsrl(fsrl, node);
+			if (validated != null) {
+				fsrls.add(validated);
+				continue;
 			}
-			if (node instanceof FSBRootNode && fsrl.getFS().hasContainer()) {
+			else if (node instanceof FSBRootNode && fsrl.getFS().hasContainer()) {
 				// 'convert' a file system root node back into its container file
 				fsrls.add(fsrl.getFS().getContainer());
 			}
@@ -181,6 +170,28 @@ class FSBActionManager {
 			}
 		}
 		return fsrls;
+	}
+
+	private FSRL vaildateFsrl(FSRL fsrl, FSBNode node) {
+		if ((node instanceof FSBDirNode) || (node instanceof FSBRootNode)) {
+			FSBRootNode rootNode = FSBUtils.getNodesRoot(node);
+			GFileSystem fs = rootNode.getFSRef().getFilesystem();
+			if (fs instanceof GFileSystemProgramProvider) {
+				GFile gfile;
+				try {
+					gfile = fs.lookup(node.getFSRL().getPath());
+					if (gfile != null &&
+						((GFileSystemProgramProvider) fs).canProvideProgram(gfile)) {
+						return fsrl;
+					}
+				}
+				catch (IOException e) {
+					// ignore error and return null
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private FSRL getLoadableFSRLFromContext(ActionContext context) {
@@ -297,16 +308,17 @@ class FSBActionManager {
 
 	private void openProgramFromFile(FSRL file, String suggestedDestinationPath) {
 		ProgramManager pm = FSBUtils.getProgramManager(plugin.getTool(), false);
-		if (pm != null) {
-			AtomicBoolean success = new AtomicBoolean();
-			TaskLauncher.launchModal("Open Programs", monitor -> {
-				success.set(doOpenProgramFromFile(file, suggestedDestinationPath, pm, monitor));
-			});
-			if (!success.get()) {
-				ImporterUtilities.showImportDialog(file, null, suggestedDestinationPath,
-					plugin.getTool(), pm);
-			}
+		if (pm == null) {
+			return;
 		}
+
+		TaskLauncher.launchModal("Open Programs", monitor -> {
+			boolean success = doOpenProgramFromFile(file, suggestedDestinationPath, pm, monitor);
+			if (!success) {
+				ImporterUtilities.showImportDialog(plugin.getTool(), pm, file, null,
+					suggestedDestinationPath, monitor);
+			}
+		});
 	}
 
 	private boolean doOpenProgramFromFile(FSRL fsrl, String suggestedDestinationPath,
@@ -351,27 +363,27 @@ class FSBActionManager {
 	 * If there is no {@link ProgramManager} associated with the current tool, one will
 	 * be searched for and the user may be prompted for confirmation, or warned if
 	 * no PM found.
-	 * <p>
-	 * Package visible only.
 	 *
 	 * @param files List of {@link FSRL} files to open in the active {@link ProgramManager}.
 	 */
 	private void openProgramsFromFiles(List<FSRL> files) {
 		ProgramManager pm = FSBUtils.getProgramManager(plugin.getTool(), false);
-		List<FSRL> unmatchedFiles = new ArrayList<>();
-		if (pm != null) {
-			TaskLauncher.launchModal("Open Programs", monitor -> {
-				List<FSRL> tmpUnmatchedFiles = doOpenProgramsFromFiles(files, pm, monitor);
-				unmatchedFiles.addAll(tmpUnmatchedFiles);
-			});
+		if (pm == null) {
+			return;
+		}
+
+		TaskLauncher.launchModal("Open Programs", monitor -> {
+			List<FSRL> unmatchedFiles = doOpenProgramsFromFiles(files, pm, monitor);
+
 			if (unmatchedFiles.size() == 1) {
-				ImporterUtilities.showImportDialog(unmatchedFiles.get(0), null, null,
-					plugin.getTool(), pm);
+				ImporterUtilities.showImportDialog(plugin.getTool(), pm, unmatchedFiles.get(0),
+					null, null, monitor);
 			}
 			else if (unmatchedFiles.size() > 1) {
 				BatchImportDialog.showAndImport(plugin.getTool(), null, unmatchedFiles, null, pm);
 			}
-		}
+		});
+
 	}
 
 	/**
@@ -420,7 +432,8 @@ class FSBActionManager {
 			ProgramManager programManager, TaskMonitor monitor, int programsOpened) {
 		boolean doSearch = isProjectSmallEnoughToSearchWithoutWarningUser() ||
 			OptionDialog.showYesNoDialog(null, "Search Project for matching programs?",
-				"Search entire Project for matching programs? (WARNING, could take large amount of time)") == OptionDialog.YES_OPTION;
+				"Search entire Project for matching programs? " +
+					"(WARNING, could take large amount of time)") == OptionDialog.YES_OPTION;
 
 		Map<FSRL, DomainFile> matchedFSRLs =
 			doSearch ? ProgramMappingService.searchProjectForMatchingFiles(fsrlList, monitor)
@@ -1081,13 +1094,17 @@ class FSBActionManager {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				FSRL fsrl = getLoadableFSRLFromContext(context);
-				if (fsrl != null) {
-					String treePath = getFormattedTreePath(context);
-					String suggestedDestinationPath =
-						FilenameUtils.getFullPathNoEndSeparator(treePath).replaceAll(":/", "/");
-					ImporterUtilities.showImportDialog(fsrl, null, suggestedDestinationPath,
-						plugin.getTool(), FSBUtils.getProgramManager(plugin.getTool(), false));
+				if (fsrl == null) {
+					return;
 				}
+
+				String treePath = getFormattedTreePath(context);
+				String suggestedPath =
+					FilenameUtils.getFullPathNoEndSeparator(treePath).replaceAll(":/", "/");
+
+				PluginTool tool = plugin.getTool();
+				ProgramManager pm = FSBUtils.getProgramManager(tool, false);
+				ImporterUtilities.showImportDialog(tool, pm, fsrl, null, suggestedPath);
 			}
 
 			@Override

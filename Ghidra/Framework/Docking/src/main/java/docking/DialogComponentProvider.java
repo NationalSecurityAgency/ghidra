@@ -67,7 +67,6 @@ public class DialogComponentProvider
 	protected JButton dismissButton;
 	private boolean isAlerting;
 	private JLabel statusLabel;
-	private JLabel subStatusLabel;
 	private JPanel statusProgPanel; // contains status panel and progress panel
 	private Timer showTimer;
 	private TaskScheduler taskScheduler;
@@ -609,11 +608,6 @@ public class DialogComponentProvider
 	public void setStatusText(String text) {
 		setStatusText(text, MessageType.INFO);
 	}
-	
-	@Override
-	public void setSubStatusText(String text) {
-		setSubStatusText(text, MessageType.INFO);
-	}
 
 	/**
 	 * Sets the text in the dialog's status line using the specified message type to control
@@ -628,22 +622,10 @@ public class DialogComponentProvider
 	}
 
 	@Override
-	public void setSubStatusText(String message, MessageType type) {
-		setSubStatusText(message, type, false);
-	}
-	
-	@Override
 	public void setStatusText(String message, MessageType type, boolean alert) {
 
 		String text = StringUtils.isBlank(message) ? " " : message;
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> doSetStatusText(text, type, alert));
-	}
-	
-	@Override
-	public void setSubStatusText(String message, MessageType type, boolean alert) {
-		
-		String text = StringUtils.isBlank(message) ? " " : message;
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> doSetSubStatusText(text, type, alert));
 	}
 
 	private void doSetStatusText(String text, MessageType type, boolean alert) {
@@ -659,14 +641,12 @@ public class DialogComponentProvider
 			alertMessage();
 		}
 	}
-	
+
 	private void doSetSubStatusText(String text, MessageType type, boolean alert) {
 
 		SystemUtilities.assertThisIsTheSwingThread(
 			"Setting text must be performed on the Swing thread");
 
-		subStatusLabel.setText(text);
-		subStatusLabel.setForeground(getStatusColor(type));
 		updateStatusToolTip();
 
 		if (alert) {
@@ -711,13 +691,11 @@ public class DialogComponentProvider
 		//       normal Swing mechanism may not have yet happened).
 		mainPanel.validate();
 		statusLabel.setVisible(false); // disable painting in this dialog so we don't see double
-		subStatusLabel.setVisible(false);
 		Animator animator = AnimationUtils.pulseComponent(statusLabel, 1);
 		animator.addTarget(new TimingTargetAdapter() {
 			@Override
 			public void end() {
 				statusLabel.setVisible(true);
-				subStatusLabel.setVisible(true);
 				alertFinishedCallback.call();
 				isAlerting = false;
 			}
@@ -828,7 +806,6 @@ public class DialogComponentProvider
 	public void clearStatusText() {
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
 			statusLabel.setText(" ");
-			subStatusLabel.setText(" ");
 			updateStatusToolTip();
 		});
 	}
@@ -840,15 +817,6 @@ public class DialogComponentProvider
 	 */
 	public String getStatusText() {
 		return statusLabel.getText();
-	}
-
-	/**
-	 * Returns the secondary status message
-	 * 
-	 * @return the secondary status message
-	 */
-	public String getSubStatusText() {
-		return subStatusLabel.getText();
 	}
 
 	protected JLabel getStatusLabel() {
@@ -941,23 +909,13 @@ public class DialogComponentProvider
 				updateStatusToolTip();
 			}
 		});
-		
-		subStatusLabel = new JLabel(" ");
-		subStatusLabel.setName("subStatusLabel");
-		subStatusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		subStatusLabel.setForeground(Color.blue);
-		subStatusLabel.setFont(subStatusLabel.getFont().deriveFont(Font.ITALIC));
-		subStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 3, 5));
-		subStatusLabel.setFont(subStatusLabel.getFont().deriveFont(9.0f));
 
 		// use a strut panel so the size of the message area does not change if we make
 		// the message label not visible
-		int height =
-			statusLabel.getPreferredSize().height + subStatusLabel.getPreferredSize().height + 5;
+		int height = statusLabel.getPreferredSize().height;
 
 		panel.add(Box.createVerticalStrut(height), BorderLayout.WEST);
 		panel.add(statusLabel, BorderLayout.CENTER);
-		panel.add(subStatusLabel, BorderLayout.SOUTH);
 		return panel;
 	}
 

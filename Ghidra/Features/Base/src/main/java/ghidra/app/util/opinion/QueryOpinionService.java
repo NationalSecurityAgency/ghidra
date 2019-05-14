@@ -40,7 +40,6 @@ public class QueryOpinionService {
 
 			List<ResourceFile> files = searchAndFindAllOpinionXMLs();
 			for (ResourceFile file : files) {
-				Msg.debug(QueryOpinionService.class, "parsing " + file);
 				try {
 					parseFile(file);
 				}
