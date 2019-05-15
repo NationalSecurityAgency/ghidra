@@ -39,6 +39,7 @@ public class StructureDBTest extends AbstractGTest {
 		dataMgr = new StandAloneDataTypeManager("dummyDTM");
 
 		// default data organization is little-endian
+		// default BitFieldPackingImpl uses gcc conventions with type alignment enabled
 
 		dataMgr.startTransaction("Test");
 

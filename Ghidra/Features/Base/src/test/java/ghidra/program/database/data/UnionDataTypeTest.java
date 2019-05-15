@@ -140,7 +140,29 @@ public class UnionDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
-	public void testBitFieldUnionLength() throws Exception {
+	public void testBitFieldUnion() throws Exception {
+
+		int cnt = union.getNumComponents();
+		for (int i = 0; i < cnt; i++) {
+			union.delete(0);
+		}
+		// NOTE: bitOffset ignored for union
+		union.insertBitField(0, 4, 12, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
+		union.insert(0, ShortDataType.dataType);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   short   2   null   \"\"\n" + 
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
+			"}\n" + 
+			"Size = 2   Actual Alignment = 1", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testAlignedBitFieldUnion() throws Exception {
 
 		int cnt = union.getNumComponents();
 		for (int i = 0; i < cnt; i++) {
@@ -148,16 +170,17 @@ public class UnionDataTypeTest extends AbstractGTest {
 		}
 		union.insertBitField(0, 4, 12, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
 		union.insert(0, ShortDataType.dataType);
+		union.setInternallyAligned(true);
 
-	//@formatter:off
-	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-		"Unaligned\n" + 
-		"Union TestUnion {\n" + 
-		"   0   short   2   null   \"\"\n" + 
-		"   1   byte:2(4)   1   bf1   \"bf1Comment\"\n" + 
-		"}\n" + 
-		"Size = 4   Actual Alignment = 1", union);
-	//@formatter:on
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Aligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   short   2   null   \"\"\n" + 
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 4", union);
+		//@formatter:on
 	}
 
 	@Test

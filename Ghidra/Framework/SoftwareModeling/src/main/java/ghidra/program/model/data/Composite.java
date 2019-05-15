@@ -203,8 +203,8 @@ public interface Composite extends DataType {
 
 	/**
 	 * Inserts a new bitfield at the specified ordinal position in this composite. 
-	 * Within an aligned composites the specified byteWidth and bitOffset will be ignored 
-	 * while bitOffset is always ignored for unions.
+	 * Within aligned composites and unions the specified byteWidth and bitOffset will be 
+	 * ignored.
 	 * The component length will be computed based upon the specified parameters and will 
 	 * be reduced from byteWidth to its minimal size for the new component.
 	 * <p>
