@@ -60,7 +60,12 @@ public class PasteAction extends SymbolTreeContextAction {
 			return false;
 		}
 
-		SymbolTreeNode node = (SymbolTreeNode) selectionPaths[0].getLastPathComponent();
+		Object pathComponent = selectionPaths[0].getLastPathComponent();
+		if (!(pathComponent instanceof SymbolTreeNode)) {
+			return false;
+		}
+
+		SymbolTreeNode node = (SymbolTreeNode) pathComponent;
 		Clipboard clipboard = context.getSymbolTreeProvider().getClipboard();
 		Transferable transferable = clipboard.getContents(this);
 		if (transferable == null) {

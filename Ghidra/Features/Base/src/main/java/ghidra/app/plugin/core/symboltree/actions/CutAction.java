@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,6 @@
 package ghidra.app.plugin.core.symboltree.actions;
 
 import static docking.KeyBindingPrecedence.ActionMapLevel;
-import ghidra.app.plugin.core.symboltree.*;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
 
 import java.awt.datatransfer.*;
 import java.awt.event.InputEvent;
@@ -30,13 +27,15 @@ import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
-import resources.ResourceManager;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeTransferHandler;
+import ghidra.app.plugin.core.symboltree.*;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
+import resources.ResourceManager;
 
 public class CutAction extends SymbolTreeContextAction {
 	private final static Icon CUT_ICON = ResourceManager.loadImage("images/edit-cut22.png");
@@ -51,12 +50,10 @@ public class CutAction extends SymbolTreeContextAction {
 		KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
 		setKeyBindingData(new KeyBindingData(keyStroke, ActionMapLevel));
 
-		clipboardOwner = new ClipboardOwner() {
-			public void lostOwnership(Clipboard currentClipboard, Transferable transferable) {
-				GTreeNodeTransferable gtTransferable = (GTreeNodeTransferable) transferable;
-				List<GTreeNode> nodeList = gtTransferable.getAllData();
-				setNodesCut(nodeList, false);
-			}
+		clipboardOwner = (currentClipboard, transferable) -> {
+			GTreeNodeTransferable gtTransferable = (GTreeNodeTransferable) transferable;
+			List<GTreeNode> nodeList = gtTransferable.getAllData();
+			setNodesCut(nodeList, false);
 		};
 	}
 
@@ -69,7 +66,12 @@ public class CutAction extends SymbolTreeContextAction {
 
 		// only valid if all selected paths are of the correct type
 		for (TreePath path : selectionPaths) {
-			SymbolTreeNode node = (SymbolTreeNode) path.getLastPathComponent();
+			Object pathComponent = path.getLastPathComponent();
+			if (!(pathComponent instanceof SymbolTreeNode)) {
+				return false;
+			}
+
+			SymbolTreeNode node = (SymbolTreeNode) pathComponent;
 			if (!node.canCut()) {
 				return false;
 			}
@@ -108,7 +110,7 @@ public class CutAction extends SymbolTreeContextAction {
 	}
 
 	private List<GTreeNode> createList(TreePath[] paths) {
-		ArrayList<GTreeNode> list = new ArrayList<GTreeNode>();
+		ArrayList<GTreeNode> list = new ArrayList<>();
 		if (paths != null) {
 			for (TreePath element : paths) {
 				GTreeNode node = (GTreeNode) element.getLastPathComponent();
@@ -128,7 +130,8 @@ public class CutAction extends SymbolTreeContextAction {
 	// this class is just a marker interface so we can tell if we put the contents into the
 	// clipboard
 	class SymbolTreeNodeTransferable extends GTreeNodeTransferable {
-		public SymbolTreeNodeTransferable(GTreeTransferHandler handler, List<GTreeNode> selectedData) {
+		public SymbolTreeNodeTransferable(GTreeTransferHandler handler,
+				List<GTreeNode> selectedData) {
 			super(handler, selectedData);
 		}
 	}
