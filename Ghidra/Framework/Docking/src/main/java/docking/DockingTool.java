@@ -28,11 +28,13 @@ public interface DockingTool {
 	/**
 	 * Returns a combination of the tool name and the instance name of the form
 	 * tool name(instance name), e.g., SomeTool(2)
+	 * @return the tool name
 	 */
 	public String getName();
 
 	/**
-	 * Returns true if tool is visible.
+	 * Returns true if tool is visible
+	 * @return true if tool is visible
 	 */
 	public boolean isVisible();
 
@@ -52,7 +54,8 @@ public interface DockingTool {
 	public void toFront();
 
 	/**
-	 * Get the icon that the tool is using.
+	 * Get the icon that the tool is using
+	 * @return the icon that the tool is using
 	 */
 	public ImageIcon getIcon();
 
@@ -64,8 +67,8 @@ public interface DockingTool {
 	public void addComponentProvider(ComponentProvider componentProvider, boolean show);
 
 	/**
-	 * Removes the given ComponentProvider from the tool.
-	 * @param componentProviderAdapter the provider to remove from the tool.
+	 * Removes the given ComponentProvider from the tool
+	 * @param componentProvider the provider to remove from the tool
 	 */
 	public void removeComponentProvider(ComponentProvider componentProvider);
 
@@ -191,10 +194,12 @@ public interface DockingTool {
 	public void updateTitle(ComponentProvider componentProvider);
 
 	/**
-	 * Signals to the tool that the provider's context has changed.  This lets toolbar actions update
-	 * enablement based on current context.
+	 * Signals to the tool that the provider's context has changed.  This lets toolbar and 
+	 * menu actions update enablement based on current context.  
+	 * 
+	 * <p>Pass <code>null</code> to signal that the entire tool's context has changed
 	 *
-	 * @param provider the provider whose context changed.
+	 * @param provider the provider whose context changed; null to signal the tool's context
 	 */
 	public void contextChanged(ComponentProvider provider);
 
@@ -207,6 +212,8 @@ public interface DockingTool {
 	/**
 	 * Get the options for the given category name; if no options exist with
 	 * the given name, then one is created.
+	 * @param categoryName the category name
+	 * @return the options
 	 */
 	public ToolOptions getOptions(String categoryName);
 
@@ -217,7 +224,8 @@ public interface DockingTool {
 	public void setConfigChanged(boolean changed);
 
 	/**
-	 * Return true if the tool's configuration has changed.
+	 * Return true if the tool's configuration has changed
+	 * @return  true if the tool's configuration has changed
 	 */
 	public boolean hasConfigChanged();
 
