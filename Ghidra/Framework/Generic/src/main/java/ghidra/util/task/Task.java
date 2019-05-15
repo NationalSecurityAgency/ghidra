@@ -24,9 +24,7 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Base class for Tasks to be run in separate threads.
- *
- *
+ * Base class for Tasks to be run in separate threads
  */
 public abstract class Task implements MonitoredRunnable {
 	private String title;
@@ -37,7 +35,7 @@ public abstract class Task implements MonitoredRunnable {
 	private boolean isForgettable;
 	protected boolean waitForTaskCompleted = false;
 	private Set<TaskListener> listeners = new HashSet<>();
-	private TaskMonitor taskMonitor;
+	protected TaskMonitor taskMonitor = TaskMonitor.DUMMY;
 
 	/**
 	 * Creates new Task.
@@ -70,9 +68,9 @@ public abstract class Task implements MonitoredRunnable {
 	 * progress indicator
 	 * @param isModal true means that the dialog is modal and the task has to
 	 * complete or be canceled before any other action can occur
-	 * @param waitForTaskCompleted true causes the running thread to block until the finish or cancelled
-	 * callback has completed on the swing thread.  Note: passing true only makes sense if the
-	 * task is modal.
+	 * @param waitForTaskCompleted true causes the running thread to block until the finish or 
+	 *  	  cancelled callback has completed on the swing thread.  Note: passing true 
+	 *  	  only makes sense if the task is modal.
 	 */
 	public Task(String title, boolean canCancel, boolean hasProgress, boolean isModal,
 			boolean waitForTaskCompleted) {
@@ -113,9 +111,6 @@ public abstract class Task implements MonitoredRunnable {
 	 * When an object implementing interface <code>Runnable</code> is used to create a thread, 
 	 * starting the thread causes the object's <code>run</code> method to be called in that 
 	 * separately executing thread.
-	 * <p>
-	 * Note that the monitor is handed to the {@link TaskMonitorService} here so it will be 
-	 * available to any users request it via {@link TaskMonitorService#getMonitor() getMonitor}.
 	 * 
 	 * @param monitor the task monitor
 	*/
@@ -123,8 +118,6 @@ public abstract class Task implements MonitoredRunnable {
 	public final void monitoredRun(TaskMonitor monitor) {
 		this.taskMonitor = monitor;
 
-		int monitorId = TaskMonitorService.register(monitor);
-		
 		// this will be removed from SystemUtilities in Task.run() after the task is finished
 		TaskUtilities.addTrackedTask(this, monitor);
 
@@ -141,14 +134,8 @@ public abstract class Task implements MonitoredRunnable {
 				getTaskTitle() + " - Uncaught Exception: " + t.toString(), t);
 		}
 		finally {
-			
-			// This should not be necessary since the thread local object will be cleaned up 
-			// by the GC when the thread terminates, but it's here in case we ever use this
-			// in conjunction with thread pools and have to manually remove them.
-			TaskMonitorService.remove(monitorId);
-			
 			TaskUtilities.removeTrackedTask(this);
-			this.taskMonitor = null;			
+			this.taskMonitor = null;
 		}
 
 		notifyTaskListeners(isCancelled);

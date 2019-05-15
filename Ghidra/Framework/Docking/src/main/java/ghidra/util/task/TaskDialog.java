@@ -17,7 +17,6 @@ package ghidra.util.task;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
@@ -38,10 +37,10 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	/** Timer used to give the task a chance to complete */
 	private static final int SLEEPY_TIME = 10;
-	
+
 	/** Amount of time to wait before showing the monitor dialog */
 	private final static int MAX_DELAY = 200000;
-	
+
 	public final static int DEFAULT_WIDTH = 275;
 
 	private Timer showTimer;
@@ -57,23 +56,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	/** Runnable that updates the primary message label in the dialog */
 	private Runnable updatePrimaryMessageRunnable;
 
-	/** Runnable that updates the secondary message label in the dialog */
-	private Runnable updateSecondaryMessageRunnable;
-
 	/** If not null, then the value of the string has yet to be rendered */
 	private String newPrimaryMessage;
-
-	/** If not null, then the value of the string has yet to be rendered */
-	private String newSecondaryMessage;
-
-	/** 
-	 * Indicates if this monitor has been initialized for progress updates. If this value
-	 * is set to true, the {@link TaskMonitorService} will not return the monitor to 
-	 * another caller (only one client should be able to update progress at a time).
-	 */
-	private AtomicBoolean initialized = new AtomicBoolean(false);
-
-	private SecondaryTaskMonitor secondaryTaskMonitor;
 
 	/** 
 	 * Constructor
@@ -108,7 +92,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	public TaskDialog(String title, boolean canCancel, boolean isModal, boolean hasProgress) {
 		this(null, title, isModal, canCancel, hasProgress);
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -126,20 +110,10 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		setup(canCancel, hasProgress);
 	}
 
-	@Override
-	public boolean isInitialized() {
-		return initialized.get();
-	}
-
-	@Override
-	public void setInitialized(boolean init) {
-		this.initialized.set(init);
-	}
-
 	private void setup(boolean canCancel, boolean hasProgress) {
 		monitorComponent = new TaskMonitorComponent(false, false);
 		chompingBitsPanel = new ChompingBitsAnimationPanel();
-		
+
 		setCancelEnabled(canCancel);
 		setRememberLocation(false);
 		setRememberSize(false);
@@ -154,12 +128,6 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 				newPrimaryMessage = null;
 			}
 		};
-		updateSecondaryMessageRunnable = () -> {
-			setSubStatusText(newSecondaryMessage);
-			synchronized (TaskDialog.this) {
-				newSecondaryMessage = null;
-			}
-		};
 		shouldCancelRunnable = () -> {
 			int currentTaskID = taskID.get();
 
@@ -171,7 +139,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 		mainPanel = new JPanel(new BorderLayout());
 		addWorkPanel(mainPanel);
-		
+
 		if (hasProgress) {
 			installProgressMonitor();
 		}
@@ -306,19 +274,6 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 	}
 
-	/**
-	 * Updates the secondary message on the task monitor
-	 * 
-	 * @param str the string to update
-	 */
-	synchronized public void setSecondaryMessage(String str) {
-		boolean invoke = (newSecondaryMessage == null);
-		if (invoke) {
-			newSecondaryMessage = str;
-			SwingUtilities.invokeLater(updateSecondaryMessageRunnable);
-		}
-	}
-
 	@Override
 	public void setCancelEnabled(boolean enable) {
 		monitorComponent.setCancelEnabled(enable);
@@ -386,7 +341,6 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		//       only to show a progress dialog if enough time has elapsed.
 		//
 		GTimer.scheduleRunnable(delay, () -> {
-
 			if (isCompleted()) {
 				return;
 			}
@@ -466,13 +420,5 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
 		monitorComponent.removeCancelledListener(listener);
-	}
-
-	@Override
-	public synchronized TaskMonitor getSecondaryMonitor() {
-		if (secondaryTaskMonitor == null) {
-			secondaryTaskMonitor = new SecondaryTaskMonitor(this);
-		}
-		return secondaryTaskMonitor;
 	}
 }

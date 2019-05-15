@@ -33,13 +33,14 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
 public class OpenProgramTask extends Task {
 
 	private final List<DomainFileInfo> domainFileInfoList = new ArrayList<>();
 	private List<Program> programList = new ArrayList<>();
-	private TaskMonitor monitor;
+
 	private final Object consumer;
 	private boolean silent; // if true operation does not permit interaction
 	private boolean noCheckout; // if true operation should not perform optional checkout
@@ -122,20 +123,17 @@ public class OpenProgramTask extends Task {
 	}
 
 	@Override
-	public void run(TaskMonitor taskMonitor) {
-		this.monitor = TaskMonitorService.getMonitor();
+	public void run(TaskMonitor monitor) {
 
-		if (domainFileInfoList.size() > 1) {
-			monitor.initialize(domainFileInfoList.size());
-		}
+		taskMonitor.initialize(domainFileInfoList.size());
 
 		for (DomainFileInfo domainFileInfo : domainFileInfoList) {
-			if (monitor.isCancelled()) {
+			if (taskMonitor.isCancelled()) {
 				return;
 			}
 			openDomainFile(domainFileInfo);
 
-			monitor.incrementProgress(1);
+			taskMonitor.incrementProgress(1);
 		}
 	}
 
@@ -154,12 +152,12 @@ public class OpenProgramTask extends Task {
 	}
 
 	private void openReadOnlyFile(DomainFile domainFile, int version) {
-		monitor.setMessage("Opening " + domainFile.getName());
+		taskMonitor.setMessage("Opening " + domainFile.getName());
 		openReadOnly(domainFile, version);
 	}
 
 	private void openVersionedFile(DomainFile domainFile, int version) {
-		monitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
+		taskMonitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
 		openReadOnly(domainFile, version);
 	}
 
@@ -168,7 +166,7 @@ public class OpenProgramTask extends Task {
 		try {
 			contentType = domainFile.getContentType();
 			Program program =
-				(Program) domainFile.getReadOnlyDomainObject(consumer, version, monitor);
+				(Program) domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
 
 			if (program == null) {
 				String errorMessage = "Can't open program - \"" + domainFile.getPathname() + "\"";
@@ -203,7 +201,7 @@ public class OpenProgramTask extends Task {
 
 	private void openUnversionedFile(DomainFile domainFile) {
 		String filename = domainFile.getName();
-		monitor.setMessage("Opening " + filename);
+		taskMonitor.setMessage("Opening " + filename);
 		performOptionalCheckout(domainFile);
 		try {
 			openFileMaybeUgrade(domainFile);
@@ -241,7 +239,7 @@ public class OpenProgramTask extends Task {
 
 		try {
 			Program program =
-				(Program) domainFile.getDomainObject(consumer, false, recoverFile, monitor);
+				(Program) domainFile.getDomainObject(consumer, false, recoverFile, taskMonitor);
 
 			if (program != null) {
 				programList.add(program);
@@ -251,7 +249,7 @@ public class OpenProgramTask extends Task {
 		catch (VersionException e) {
 			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, openPromptText, e)) {
 				Program program =
-					(Program) domainFile.getDomainObject(consumer, true, recoverFile, monitor);
+					(Program) domainFile.getDomainObject(consumer, true, recoverFile, taskMonitor);
 				if (program != null) {
 					programList.add(program);
 				}
@@ -284,8 +282,8 @@ public class OpenProgramTask extends Task {
 		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
-				monitor.setMessage("Checking Out " + domainFile.getName());
-				if (domainFile.checkout(dialog.exclusiveCheckout(), monitor)) {
+				taskMonitor.setMessage("Checking Out " + domainFile.getName());
+				if (domainFile.checkout(dialog.exclusiveCheckout(), taskMonitor)) {
 					return;
 				}
 				Msg.showError(this, null, "Checkout Failed", "Exclusive checkout failed for: " +

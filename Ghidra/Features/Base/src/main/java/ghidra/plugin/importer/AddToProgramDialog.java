@@ -102,8 +102,8 @@ public class AddToProgramDialog extends ImporterDialog {
 			options = selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true);
 		}
 		TaskLauncher.launchNonModal("Import File", monitor -> {
-			ImporterUtilities.doAddToProgram(fsrl, selectedLoadSpec, options, addToProgram, monitor,
-				tool);
+			ImporterUtilities.addContentToProgram(tool, addToProgram, fsrl, selectedLoadSpec, options,
+				monitor);
 		});
 		close();
 	}

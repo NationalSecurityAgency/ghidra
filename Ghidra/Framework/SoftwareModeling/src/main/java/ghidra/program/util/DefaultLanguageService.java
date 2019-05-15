@@ -27,8 +27,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorService;
+import ghidra.util.task.TaskBuilder;
 
 /**
  * Default Language service used gather up all the languages that were found
@@ -86,18 +85,21 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	}
 
 	private void searchForProviders() {
-		TaskMonitor monitor = TaskMonitorService.getMonitor();
-		monitor.setMessage("Searching for language providers");
-		try {
-			Set<LanguageProvider> languageProviders =
-				ClassSearcher.getInstances(LanguageProvider.class);
+		Set<LanguageProvider> languageProviders =
+			ClassSearcher.getInstances(LanguageProvider.class);
 
-			searchCompleted = true;
-			processProviders(languageProviders);
-		}
-		finally {
-			monitor.finished();
-		}
+		searchCompleted = true;
+
+		//@formatter:off
+		TaskBuilder.withRunnable(monitor -> {			
+				processProviders(languageProviders); // load and cache
+			})
+			.setTitle("Language Search")
+			.setCanCancel(false)
+			.setHasProgress(false)
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
 	/**
@@ -105,22 +107,23 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	 */
 	@Override
 	public Language getLanguage(LanguageID languageID) throws LanguageNotFoundException {
-
-		TaskMonitor monitor = TaskMonitorService.getMonitor();
-		monitor.setMessage("Retrieving language: " + languageID);
-		try {
-			LanguageInfo info = languageMap.get(languageID);
-
-			if (info == null) {
-				throw new LanguageNotFoundException(languageID);
-			}
-
-			Language lang = info.getLanguage();
-			return lang;
+		LanguageInfo info = languageMap.get(languageID);
+		if (info == null) {
+			throw new LanguageNotFoundException(languageID);
 		}
-		finally {
-			monitor.finished();
-		}
+
+		//@formatter:off
+		TaskBuilder.withRunnable(monitor -> {			
+				info.getLanguage(); // load and cache				
+			})
+			.setTitle("Loading language '" + languageID + "'")
+			.setCanCancel(false)
+			.setHasProgress(false)
+			.launchModal()
+			;
+		//@formatter:on
+
+		return info.getLanguage();
 	}
 
 	/**
