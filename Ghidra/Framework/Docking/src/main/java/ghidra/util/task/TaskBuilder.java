@@ -53,6 +53,9 @@ import util.CollectionUtils;
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
  * </pre>
+ * 
+ * <p>Note: this class will check to see if it is in a headless environment before launching
+ * its task.  This makes it safe to use this class in headed or headless environments.
  */
 public class TaskBuilder {
 
@@ -187,29 +190,41 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Launches the task built by this builder, using a blocking modal dialog.
+	 * Launches the task built by this builder, using a blocking modal dialog.  The task will
+	 * be run in the current thread if in a headless environment.
 	 */
 	public void launchModal() {
 		validate();
 
 		boolean isModal = true;
 		Task t = new TaskBuilderTask(isModal);
+		if (SystemUtilities.isInHeadlessMode()) {
+			t.monitoredRun(TaskMonitor.DUMMY);
+			return;
+		}
+
+		// note: just calling the launcher will trigger the work
 		int delay = getDelay(launchDelay, isModal);
 		new TaskLauncher(t, parent, delay, dialogWidth);
 	}
 
 	/**
-	 * Launches the task built by this builder, using a non-blocking dialog.  
-	 * @return the launcher that launched the task
+	 * Launches the task built by this builder, using a non-blocking dialog.  The task will
+	 * be run in the current thread if in a headless environment.
 	 */
-	public TaskLauncher launchNonModal() {
+	public void launchNonModal() {
 		validate();
 
 		boolean isModal = false;
 		Task t = new TaskBuilderTask(isModal);
+		if (SystemUtilities.isInHeadlessMode()) {
+			t.monitoredRun(TaskMonitor.DUMMY);
+			return;
+		}
+
+		// note: just calling the launcher will trigger the work
 		int delay = getDelay(launchDelay, isModal);
-		TaskLauncher launcher = new TaskLauncher(t, parent, delay, dialogWidth);
-		return launcher;
+		new TaskLauncher(t, parent, delay, dialogWidth);
 	}
 
 	private void validate() {
