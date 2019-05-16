@@ -94,7 +94,7 @@ public abstract class AbstractChangeExecutionModelMsSymbol extends AbstractMsSym
 	public AbstractChangeExecutionModelMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		create();
+		offset = create();
 		offset.parse(reader);
 		segment = reader.parseUnsignedShortVal();
 		modelVal = reader.parseUnsignedShortVal();
@@ -144,10 +144,10 @@ public abstract class AbstractChangeExecutionModelMsSymbol extends AbstractMsSym
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #offset}.
+	 * @return the {@link AbstractOffset} type necessary for the {@link #offset} in the
+	 * concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractOffset create();
 
 	/**
 	 * Parses some specific values for this version of symbol.

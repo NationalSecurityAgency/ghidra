@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringSt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>StMsType</B> flavor of Type Server type.
@@ -46,8 +45,8 @@ public class TypeServerStMsType extends AbstractTypeServerMsType {
 	}
 
 	@Override
-	protected void create() {
-		name = new StringSt();
+	protected AbstractString create() {
+		return new StringSt();
 	}
 
 }

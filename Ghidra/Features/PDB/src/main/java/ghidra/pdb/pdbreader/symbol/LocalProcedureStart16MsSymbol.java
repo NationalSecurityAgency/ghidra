@@ -46,8 +46,8 @@ public class LocalProcedureStart16MsSymbol extends AbstractLocalProcedureStartMs
 	}
 
 	@Override
-	protected void create() {
-		internals = new ProcedureSymbolInternals16(pdb);
+	protected AbstractProcedureSymbolInternals create() {
+		return new ProcedureSymbolInternals16(pdb);
 	}
 
 	@Override

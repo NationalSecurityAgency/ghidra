@@ -46,8 +46,8 @@ public class GlobalThreadStorage32MsSymbol extends AbstractGlobalThreadStorageMs
 	}
 
 	@Override
-	protected void create() {
-		threadStorageInternals = new ThreadStorageSymbolInternals32(pdb);
+	protected AbstractThreadStorageSymbolInternals create() {
+		return new ThreadStorageSymbolInternals32(pdb);
 	}
 
 	@Override

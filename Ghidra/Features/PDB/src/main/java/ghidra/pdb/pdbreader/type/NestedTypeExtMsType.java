@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringNt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsType</B> flavor of Extended Nested type.
@@ -46,8 +45,8 @@ public class NestedTypeExtMsType extends AbstractNestedTypeExtMsType {
 	}
 
 	@Override
-	protected void create() {
-		name = new StringNt();
+	protected AbstractString create() {
+		return new StringNt();
 	}
 
 }

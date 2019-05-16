@@ -37,7 +37,7 @@ public abstract class AbstractBasicArrayMsType extends AbstractMsType {
 	 */
 	public AbstractBasicArrayMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		underlyingTypeIndex = create();
 		underlyingTypeIndex.parse(reader);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, underlyingTypeIndex.get()));
@@ -65,9 +65,9 @@ public abstract class AbstractBasicArrayMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #underlyingTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #underlyingTypeIndex}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 }

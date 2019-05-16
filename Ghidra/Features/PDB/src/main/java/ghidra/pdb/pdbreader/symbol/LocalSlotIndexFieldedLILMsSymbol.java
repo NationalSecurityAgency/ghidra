@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8Nt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsSymbol</B> flavor of Local Intermediate Language Symbol
@@ -27,8 +26,7 @@ import ghidra.pdb.pdbreader.StringUtf8Nt;
  * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
  *  base class for more information.
  */
-public class LocalSlotIndexFieldedLILMsSymbol
-		extends AbstractLocalSlotIndexFieldedLILMsSymbol {
+public class LocalSlotIndexFieldedLILMsSymbol extends AbstractLocalSlotIndexFieldedLILMsSymbol {
 
 	public static final int PDB_ID = 0x111a;
 
@@ -38,8 +36,8 @@ public class LocalSlotIndexFieldedLILMsSymbol
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 * @throws PdbException upon error parsing a field.
 	 */
-	public LocalSlotIndexFieldedLILMsSymbol(AbstractPdb pdb,
-			PdbByteReader reader) throws PdbException {
+	public LocalSlotIndexFieldedLILMsSymbol(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException {
 		super(pdb, reader);
 	}
 
@@ -49,8 +47,8 @@ public class LocalSlotIndexFieldedLILMsSymbol
 	}
 
 	@Override
-	protected void create() {
-		name = new StringUtf8Nt();
+	protected AbstractString create() {
+		return new StringUtf8Nt();
 	}
 
 	@Override

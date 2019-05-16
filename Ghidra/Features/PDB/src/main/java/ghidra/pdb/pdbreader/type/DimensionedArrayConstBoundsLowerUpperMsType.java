@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex32;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsType</B> flavor of Dimensioned Array type with constant upper
@@ -49,8 +48,8 @@ public class DimensionedArrayConstBoundsLowerUpperMsType
 	}
 
 	@Override
-	protected void create() {
-		typeIndex = new TypeIndex32();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex32();
 	}
 
 	@Override

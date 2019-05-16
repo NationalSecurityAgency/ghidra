@@ -18,7 +18,8 @@ package ghidra.pdb.pdbreader;
 import java.util.HashMap;
 import java.util.Map;
 
-import ghidra.pdb.pdbreader.symbol.*;
+import ghidra.pdb.pdbreader.symbol.AbstractCompile2MsSymbol;
+import ghidra.pdb.pdbreader.symbol.Compile3MsSymbol;
 
 /**
  * Machine Type seen in the {@link DatabaseInterfaceNew} header.  We also map in the Processor.
@@ -26,12 +27,12 @@ import ghidra.pdb.pdbreader.symbol.*;
  * Processor.  The {@link Processor} is what is specified in {@link AbstractCompile2MsSymbol} and
  * {@link Compile3MsSymbol} and what we save off in {@link AbstractPdb}, but
  * {@link ImageFileMachine} is what we see in the header of {@link DatabaseInterfaceNew}.
- * See <a href="https://docs.microsoft.com/en-us/windows/desktop/sysinfo/image-file-machine-constants">
+ * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/sysinfo/image-file-machine-constants">
  * Image File Machine Constants</a>.
- * See <a href="http://metadataconsulting.blogspot.com/2014/06/imagefilemachine-extensive-machine-type.html">
- * Also</a>.
- * Also see <a href="https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-image_file_header">
- * Other use</a>.
+ * @see <a href="http://metadataconsulting.blogspot.com/2014/06/imagefilemachine-extensive-machine-type.html">
+ * Also Image File Machine Constants</a>
+ * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-image_file_header">
+ * Other use</a>
  */
 public enum ImageFileMachine {
 	UNKNOWN("Unknown", 0x0000, Processor.UNKNOWN),

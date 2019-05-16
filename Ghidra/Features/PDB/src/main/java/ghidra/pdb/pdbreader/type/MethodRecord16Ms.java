@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex16;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>16MsType</B> flavor of Method Records.
@@ -39,8 +38,8 @@ public class MethodRecord16Ms extends AbstractMethodRecordMs {
 	}
 
 	@Override
-	protected void create() {
-		procedureRecordNumber = new TypeIndex16();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex16();
 	}
 
 	@Override

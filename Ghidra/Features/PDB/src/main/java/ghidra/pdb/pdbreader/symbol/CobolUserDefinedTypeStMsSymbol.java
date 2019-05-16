@@ -46,8 +46,8 @@ public class CobolUserDefinedTypeStMsSymbol extends AbstractCobolUserDefinedType
 	}
 
 	@Override
-	protected void create() {
-		internals = new UserDefinedTypeSymbolInternalsSt(pdb);
+	protected AbstractUserDefinedTypeSymbolInternals create() {
+		return new UserDefinedTypeSymbolInternalsSt(pdb);
 	}
 
 	@Override

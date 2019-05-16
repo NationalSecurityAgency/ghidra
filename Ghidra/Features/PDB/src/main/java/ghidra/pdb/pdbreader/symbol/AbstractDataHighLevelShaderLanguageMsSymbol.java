@@ -40,7 +40,7 @@ public abstract class AbstractDataHighLevelShaderLanguageMsSymbol extends Abstra
 	public AbstractDataHighLevelShaderLanguageMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		create();
+		internals = create();
 		internals.parse(reader);
 	}
 
@@ -84,9 +84,8 @@ public abstract class AbstractDataHighLevelShaderLanguageMsSymbol extends Abstra
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #internals}.
+	 * @return the internals type necessary for the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractDataHighLevelShaderLanguageSymbolInternals create();
 
 }

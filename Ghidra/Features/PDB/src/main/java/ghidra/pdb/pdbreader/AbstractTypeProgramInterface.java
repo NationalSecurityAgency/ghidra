@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.type.AbstractMsType;
@@ -66,12 +68,13 @@ public abstract class AbstractTypeProgramInterface {
 	//==============================================================================================
 	/**
 	 * Constructor.
-	 * @param pdbIn {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
+	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
 	 * @param streamNumber The stream number that contains the
 	 *  {@link AbstractTypeProgramInterface} data.
 	 */
-	public AbstractTypeProgramInterface(AbstractPdb pdbIn, int streamNumber) {
-		this.pdb = pdbIn;
+	public AbstractTypeProgramInterface(AbstractPdb pdb, int streamNumber) {
+		Validate.notNull(pdb, "pdb cannot be null)");
+		this.pdb = pdb;
 		this.streamNumber = streamNumber;
 	}
 
@@ -191,6 +194,7 @@ public abstract class AbstractTypeProgramInterface {
 	 * @param typeIndexMaxExclusive One greater than the MaxIndex to set/use.
 	 */
 	AbstractTypeProgramInterface(AbstractPdb pdb, int typeIndexMin, int typeIndexMaxExclusive) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 		this.typeIndexMin = typeIndexMin;
 		this.typeIndexMaxExclusive = typeIndexMaxExclusive;

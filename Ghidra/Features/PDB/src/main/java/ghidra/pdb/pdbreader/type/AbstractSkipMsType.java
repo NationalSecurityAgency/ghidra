@@ -39,7 +39,7 @@ public abstract class AbstractSkipMsType extends AbstractMsType {
 	 */
 	public AbstractSkipMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		nextValidTypeIndex = create();
 		nextValidTypeIndex.parse(reader);
 		recordLength = reader.getLimit() - reader.getIndex();
 	}
@@ -52,9 +52,9 @@ public abstract class AbstractSkipMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #nextValidTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #nextValidTypeIndex}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 }

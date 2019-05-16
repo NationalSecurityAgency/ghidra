@@ -39,7 +39,7 @@ public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType extend
 	public AbstractVirtualFunctionTablePointerWithOffsetMsType(AbstractPdb pdb,
 			PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		pointerTypeIndex = create();
 		parseInitialFields(reader);
 		pointerTypeIndex.parse(reader);
 		pdb.pushDependencyStack(
@@ -58,10 +58,10 @@ public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType extend
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #pointerTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #pointerTypeIndex}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the initial fields for this type.

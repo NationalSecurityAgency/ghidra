@@ -46,8 +46,8 @@ public class LocalThreadStorage32StMsSymbol extends AbstractLocalThreadStorageMs
 	}
 
 	@Override
-	protected void create() {
-		threadStorageInternals = new ThreadStorageSymbolInternals32St(pdb);
+	protected AbstractThreadStorageSymbolInternals create() {
+		return new ThreadStorageSymbolInternals32St(pdb);
 	}
 
 	@Override

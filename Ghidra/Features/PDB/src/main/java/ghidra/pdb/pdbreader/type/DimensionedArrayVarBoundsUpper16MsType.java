@@ -48,8 +48,8 @@ public class DimensionedArrayVarBoundsUpper16MsType
 	}
 
 	@Override
-	protected void create() {
-		typeIndex = new TypeIndex16();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex16();
 	}
 
 	@Override

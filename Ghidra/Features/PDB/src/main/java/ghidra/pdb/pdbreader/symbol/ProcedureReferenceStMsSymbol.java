@@ -45,8 +45,8 @@ public class ProcedureReferenceStMsSymbol extends AbstractProcedureReferenceMsSy
 	}
 
 	@Override
-	protected void create() {
-		internals = new ReferenceSymbolInternalsSt(pdb);
+	protected AbstractReferenceSymbolInternals create() {
+		return new ReferenceSymbolInternalsSt(pdb);
 	}
 
 	@Override

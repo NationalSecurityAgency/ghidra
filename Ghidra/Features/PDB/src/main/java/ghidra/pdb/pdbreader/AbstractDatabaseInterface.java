@@ -20,6 +20,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
@@ -84,6 +86,7 @@ public abstract class AbstractDatabaseInterface {
 	 * @param streamNumber The stream number of the stream containing the Database Interface.
 	 */
 	public AbstractDatabaseInterface(AbstractPdb pdb, int streamNumber) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
 //		globalSymbolInformation = new GlobalSymbolInformation(pdb);

@@ -45,8 +45,8 @@ public class Public3216MsSymbol extends AbstractPublic16Or3216MsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataSymbolInternals3216(pdb, false);
+	protected AbstractSymbolInternals create() {
+		return new DataSymbolInternals3216(pdb, false);
 	}
 
 	@Override

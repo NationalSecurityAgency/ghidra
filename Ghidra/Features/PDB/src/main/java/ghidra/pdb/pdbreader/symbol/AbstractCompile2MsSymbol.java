@@ -41,7 +41,6 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	// Converted from (.NET IL) Common Intermediate Language Module
 	protected boolean convertedWithCvtcil;
 	protected boolean microsoftIntermediateLanguageNetModule;
-	protected int processorIndex;
 	protected Processor processor;
 	protected int frontEndMajorVersionNumber;
 	protected int frontEndMinorVersionNumber;
@@ -60,10 +59,9 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	 */
 	public AbstractCompile2MsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		compilerVersionString = create();
 		processFlags(reader.parseUnsignedIntVal());
-		processorIndex = reader.parseUnsignedShortVal();
-		processor = Processor.fromValue(processorIndex);
+		processor = Processor.fromValue(reader.parseUnsignedShortVal());
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndBuildVersionNumber = reader.parseUnsignedShortVal();
@@ -168,19 +166,11 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Returns the processor index.
-	 * @return Processor index.
+	 * Returns the processor.
+	 * @return the processor.
 	 */
-	public int getProcessorIndex() {
-		return processorIndex;
-	}
-
-	/**
-	 * Returns the processor name.
-	 * @return Processor name.
-	 */
-	public String getProcessorName() {
-		return processor.toString();
+	public Processor getProcessor() {
+		return processor;
 	}
 
 	/**
@@ -288,10 +278,10 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #compilerVersionString}.
+	 * @return the {@link AbstractString} type necessary for the {@link #compilerVersionString}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractString create();
 
 	/**
 	 * Internal method that breaks out the flag values from the aggregate integral type.

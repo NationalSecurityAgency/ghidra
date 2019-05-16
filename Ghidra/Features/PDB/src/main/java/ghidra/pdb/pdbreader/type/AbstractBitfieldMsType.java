@@ -39,7 +39,7 @@ public abstract class AbstractBitfieldMsType extends AbstractMsType {
 	 */
 	public AbstractBitfieldMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		elementTypeIndex = create();
 		parseFields(reader);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, elementTypeIndex.get()));
@@ -83,10 +83,10 @@ public abstract class AbstractBitfieldMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #elementTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #elementTypeIndex} in the
+	 * concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the fields for this type.

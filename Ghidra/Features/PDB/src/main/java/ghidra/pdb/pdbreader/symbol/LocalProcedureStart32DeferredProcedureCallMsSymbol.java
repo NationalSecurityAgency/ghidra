@@ -46,8 +46,8 @@ public class LocalProcedureStart32DeferredProcedureCallMsSymbol extends Abstract
 	}
 
 	@Override
-	protected void create() {
-		internals = new ProcedureSymbolInternals32(pdb);
+	protected AbstractProcedureSymbolInternals create() {
+		return new ProcedureSymbolInternals32(pdb);
 	}
 
 	@Override

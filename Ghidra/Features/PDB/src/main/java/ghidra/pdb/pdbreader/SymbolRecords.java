@@ -20,6 +20,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
@@ -52,6 +54,7 @@ public class SymbolRecords {
 	 * @param pdb {@link AbstractPdb} to which the {@link SymbolRecords} belong.
 	 */
 	public SymbolRecords(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 	}
 

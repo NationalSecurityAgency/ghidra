@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex32;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsType</B> flavor of Base Class type.
@@ -47,8 +46,8 @@ public class BaseClassMsType extends AbstractBaseClassMsType {
 	}
 
 	@Override
-	protected void create() {
-		baseClassIndex = new TypeIndex32();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex32();
 	}
 
 	@Override

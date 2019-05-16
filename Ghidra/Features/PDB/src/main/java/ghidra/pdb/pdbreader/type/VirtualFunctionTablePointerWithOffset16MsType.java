@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex16;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>16MsType</B> flavor of Virtual Function Table Pointer With Offset
@@ -49,8 +48,8 @@ public class VirtualFunctionTablePointerWithOffset16MsType
 	}
 
 	@Override
-	protected void create() {
-		pointerTypeIndex = new TypeIndex16();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex16();
 	}
 
 	@Override

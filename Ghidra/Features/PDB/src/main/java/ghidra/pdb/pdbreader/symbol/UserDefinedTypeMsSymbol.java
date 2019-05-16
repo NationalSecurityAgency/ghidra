@@ -45,8 +45,8 @@ public class UserDefinedTypeMsSymbol extends AbstractUserDefinedTypeMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new UserDefinedTypeSymbolInternals(pdb);
+	protected AbstractUserDefinedTypeSymbolInternals create() {
+		return new UserDefinedTypeSymbolInternals(pdb);
 	}
 
 	@Override

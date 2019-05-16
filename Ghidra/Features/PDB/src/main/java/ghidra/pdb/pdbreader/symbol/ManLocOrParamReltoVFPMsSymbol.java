@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8Nt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsSymbol</B> flavor Managed Local- Or
@@ -38,8 +37,8 @@ public class ManLocOrParamReltoVFPMsSymbol
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 * @throws PdbException upon error parsing a field.
 	 */
-	public ManLocOrParamReltoVFPMsSymbol(AbstractPdb pdb,
-			PdbByteReader reader) throws PdbException {
+	public ManLocOrParamReltoVFPMsSymbol(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException {
 		super(pdb, reader);
 	}
 
@@ -49,8 +48,8 @@ public class ManLocOrParamReltoVFPMsSymbol
 	}
 
 	@Override
-	protected void create() {
-		name = new StringUtf8Nt();
+	protected AbstractString create() {
+		return new StringUtf8Nt();
 	}
 
 	@Override

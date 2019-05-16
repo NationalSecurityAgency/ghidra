@@ -41,7 +41,7 @@ public abstract class AbstractBaseClassMsType extends AbstractMsType {
 	 */
 	public AbstractBaseClassMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		baseClassIndex = create();
 		parseFields(reader);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, baseClassIndex.get()));
@@ -60,10 +60,10 @@ public abstract class AbstractBaseClassMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #baseClassIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #baseClassIndex} in the
+	 * concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the fields for this type.

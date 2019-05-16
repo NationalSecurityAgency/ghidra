@@ -23,7 +23,7 @@ import ghidra.app.util.datatype.microsoft.GUID;
 import ghidra.pdb.*;
 import ghidra.pdb.msfreader.AbstractMsf;
 import ghidra.pdb.msfreader.MsfStream;
-import ghidra.pdb.pdbreader.symbol.*;
+import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.pdb.pdbreader.type.AbstractMsType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.graph.DependencyGraph;
@@ -219,23 +219,25 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Get the index number of the target processor used for compilation. Also see
-	 * {@link Processor} and {@link RegisterName}.
+	 * Get the index number of the target processor used for compilation.
 	 * @return Index number of the target processor used for compilation.
+	 * @see Processor
+	 * @see RegisterName
 	 */
 	public Processor getTargetProcessor() {
 		return targetProcessor;
 	}
 
 	/**
-	 * Set the index number of the target processor used for compilation. Also see
-	 * {@link Processor} and {@link RegisterName}.
+	 * Set the index number of the target processor used for compilation.
 	 * @param targetProcessorIn Processor identifier.
+	 * @see Processor
+	 * @see RegisterName
 	 */
 	public void setTargetProcessor(Processor targetProcessorIn) {
 		/**
 		 * Should we allow an overwrite?  The {@link DatabaseInterfaceNew} value (mapped from 
-		 * {@link ImageFileMachine} should be processed and laid down first.  Subsequent values
+		 * {@link ImageFileMachine}) should be processed and laid down first.  Subsequent values
 		 * can come from {@link AbstractCompile2MsSymbol} and {@link Compile3MsSymbol}.  Note:
 		 * {@link DatabaseInterface} does not carry {@link ImageFileMachine}, and thus no mapping
 		 * is applied.

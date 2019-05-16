@@ -46,8 +46,8 @@ public class LocalProcedureStart32StMsSymbol extends AbstractLocalProcedureStart
 	}
 
 	@Override
-	protected void create() {
-		internals = new ProcedureSymbolInternals32St(pdb);
+	protected AbstractProcedureSymbolInternals create() {
+		return new ProcedureSymbolInternals32St(pdb);
 	}
 
 	@Override

@@ -18,6 +18,8 @@ package ghidra.pdb.pdbreader;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.type.*;
 
@@ -191,6 +193,7 @@ public class TypeParser {
 	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 */
 	public TypeParser(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 	}
 

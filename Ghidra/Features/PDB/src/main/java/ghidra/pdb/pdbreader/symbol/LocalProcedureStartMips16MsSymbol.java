@@ -46,8 +46,8 @@ public class LocalProcedureStartMips16MsSymbol extends AbstractLocalProcedureSta
 	}
 
 	@Override
-	protected void create() {
-		internals = new ProcedureStartMipsSymbolInternals16(pdb);
+	protected AbstractProcedureStartMipsSymbolInternals create() {
+		return new ProcedureStartMipsSymbolInternals16(pdb);
 	}
 
 	@Override

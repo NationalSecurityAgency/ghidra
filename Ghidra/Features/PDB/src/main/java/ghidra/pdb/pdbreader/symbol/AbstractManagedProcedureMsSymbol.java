@@ -50,7 +50,7 @@ public abstract class AbstractManagedProcedureMsSymbol extends AbstractMsSymbol 
 	public AbstractManagedProcedureMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		create();
+		name = create();
 		parentPointer = reader.parseUnsignedIntVal();
 		endPointer = reader.parseUnsignedIntVal();
 		nextPointer = reader.parseUnsignedIntVal();
@@ -83,9 +83,9 @@ public abstract class AbstractManagedProcedureMsSymbol extends AbstractMsSymbol 
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #name}.
+	 * @return the {@link AbstractString} type necessary for the {@link #name}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractString create();
 
 }

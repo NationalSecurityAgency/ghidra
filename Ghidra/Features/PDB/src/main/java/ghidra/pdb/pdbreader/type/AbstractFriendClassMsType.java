@@ -37,7 +37,7 @@ public abstract class AbstractFriendClassMsType extends AbstractMsType {
 	 */
 	public AbstractFriendClassMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		friendClassTypeIndex = create();
 		parseInitialFields(reader);
 		friendClassTypeIndex.parse(reader);
 		pdb.pushDependencyStack(
@@ -54,10 +54,11 @@ public abstract class AbstractFriendClassMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #friendClassTypeIndex}.
+	 * @return TODO
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #friendClassTypeIndex}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the initial fields of this type.

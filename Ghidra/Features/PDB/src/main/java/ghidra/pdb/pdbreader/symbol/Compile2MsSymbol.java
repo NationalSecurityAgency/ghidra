@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8Nt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsSymbol</B> flavor of Compile 2 symbol.
@@ -46,8 +45,8 @@ public class Compile2MsSymbol extends AbstractCompile2MsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		compilerVersionString = new StringUtf8Nt();
+	protected AbstractString create() {
+		return new StringUtf8Nt();
 	}
 
 	@Override

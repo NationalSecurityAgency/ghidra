@@ -37,7 +37,7 @@ public abstract class AbstractReferenceMsSymbol extends AbstractMsSymbol {
 	 */
 	public AbstractReferenceMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		internals = create();
 		internals.parse(reader);
 	}
 
@@ -73,9 +73,8 @@ public abstract class AbstractReferenceMsSymbol extends AbstractMsSymbol {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #internals}.
+	 * @return the internals type necessary for the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractReferenceSymbolInternals create();
 
 }

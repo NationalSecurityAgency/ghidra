@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.Offset32;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>32MsSymbol</B> flavor of Change Model Execution symbol.
@@ -51,8 +50,8 @@ public class ChangeExecutionModel32MsSymbol extends AbstractChangeExecutionModel
 	}
 
 	@Override
-	protected void create() {
-		offset = new Offset32();
+	protected AbstractOffset create() {
+		return new Offset32();
 	}
 
 	@Override

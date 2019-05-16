@@ -15,6 +15,8 @@
  */
 package ghidra.pdb.pdbreader.type;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 
@@ -38,8 +40,9 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
 	public AbstractMethodRecordMs(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
-		create();
+		procedureRecordNumber = create();
 		parseFields(reader);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, procedureRecordNumber.get()));
@@ -62,10 +65,9 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #procedureRecordNumber}.
+	 * @return the procedure record number type necessary for the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the fields for this type.

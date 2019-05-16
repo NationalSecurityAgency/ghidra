@@ -96,7 +96,7 @@ public class FramePointerOmissionRecord {
 	private int sizeOfParametersInDwords;
 	private int numFunctionPrologBytes;
 	private boolean hasStructuredExceptionHandling;
-	private boolean EBPAllocatedAndUsed;
+	private boolean ebpAllocatedAndUsed;
 	private int reserved;
 	private FrameType frameType;
 
@@ -153,7 +153,7 @@ public class FramePointerOmissionRecord {
 	 * @return whether EBP is allocated/used.
 	 */
 	public boolean EBPAllocatedAndUsed() {
-		return EBPAllocatedAndUsed;
+		return ebpAllocatedAndUsed;
 	}
 
 	/**
@@ -185,7 +185,7 @@ public class FramePointerOmissionRecord {
 		data >>= 8;
 		hasStructuredExceptionHandling = (data & 0x01) == 0x01;
 		data >>= 1;
-		EBPAllocatedAndUsed = (data & 0x01) == 0x01;
+		ebpAllocatedAndUsed = (data & 0x01) == 0x01;
 		data >>= 1;
 		reserved = data & 0x01;
 		data >>= 1;
@@ -209,7 +209,7 @@ public class FramePointerOmissionRecord {
 		writer.write(String.format("hasStructuredExceptionHandling: %s\n",
 			Boolean.toString(hasStructuredExceptionHandling)));
 		writer.write(
-			String.format("EBPAllocatedAndUsed: %s\n", Boolean.toString(EBPAllocatedAndUsed)));
+			String.format("EBPAllocatedAndUsed: %s\n", Boolean.toString(ebpAllocatedAndUsed)));
 		writer.write(String.format("reserved: 0X%01X\n", reserved));
 		writer.write(String.format("frameType: %s\n", frameType.toString()));
 		writer.write("End FramePointerOmissionRecord------------------------------\n");

@@ -45,8 +45,8 @@ public class GlobalData16MsSymbol extends AbstractGlobalDataMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataSymbolInternals16(pdb, false);
+	protected AbstractDataSymbolInternals create() {
+		return new DataSymbolInternals16(pdb, false);
 	}
 
 	@Override

@@ -28,8 +28,7 @@ import ghidra.pdb.pdbreader.AbstractPdb;
  * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
  *  base class for more information.
  */
-public class LocalDataHLSL32ExtMsSymbol
-		extends AbstractLocalDataHLSLMsSymbol {
+public class LocalDataHLSL32ExtMsSymbol extends AbstractLocalDataHLSLMsSymbol {
 
 	public static final int PDB_ID = 0x1165;
 
@@ -39,8 +38,7 @@ public class LocalDataHLSL32ExtMsSymbol
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 * @throws PdbException upon error parsing a field.
 	 */
-	public LocalDataHLSL32ExtMsSymbol(AbstractPdb pdb, PdbByteReader reader)
-			throws PdbException {
+	public LocalDataHLSL32ExtMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
 	}
 
@@ -50,8 +48,8 @@ public class LocalDataHLSL32ExtMsSymbol
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataHighLevelShaderLanguageSymbolInternals32Extended(pdb);
+	protected AbstractDataHighLevelShaderLanguageSymbolInternals create() {
+		return new DataHighLevelShaderLanguageSymbolInternals32Extended(pdb);
 	}
 
 	@Override

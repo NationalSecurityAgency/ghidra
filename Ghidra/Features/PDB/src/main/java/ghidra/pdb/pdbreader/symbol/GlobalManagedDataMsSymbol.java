@@ -45,8 +45,8 @@ public class GlobalManagedDataMsSymbol extends AbstractGlobalManagedDataMsSymbol
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataSymbolInternals32(pdb, true);
+	protected AbstractDataSymbolInternals create() {
+		return new DataSymbolInternals32(pdb, true);
 	}
 
 	@Override

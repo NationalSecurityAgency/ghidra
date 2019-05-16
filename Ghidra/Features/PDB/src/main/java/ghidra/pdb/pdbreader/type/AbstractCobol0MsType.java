@@ -39,7 +39,7 @@ public abstract class AbstractCobol0MsType extends AbstractMsType {
 	 */
 	public AbstractCobol0MsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		parentTypeIndex = create();
 		parentTypeIndex.parse(reader);
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, parentTypeIndex.get()));
@@ -64,9 +64,9 @@ public abstract class AbstractCobol0MsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #parentTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #parentTypeIndex} in the
+	 * concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 }

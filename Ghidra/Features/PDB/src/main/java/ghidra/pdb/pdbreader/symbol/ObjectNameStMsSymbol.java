@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8St;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>StMsSymbol</B> flavor of Object Name symbol.
@@ -46,8 +45,8 @@ public class ObjectNameStMsSymbol extends AbstractObjectNameMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		name = new StringUtf8St();
+	protected AbstractString create() {
+		return new StringUtf8St();
 	}
 
 	@Override

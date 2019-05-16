@@ -18,6 +18,8 @@ package ghidra.pdb.pdbreader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.AbstractParsableItem;
 
 /**
@@ -859,6 +861,7 @@ public class RegisterName extends AbstractParsableItem {
 	 * @param register Register ID.
 	 */
 	public RegisterName(AbstractPdb pdb, int register) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 		this.register = register;
 	}

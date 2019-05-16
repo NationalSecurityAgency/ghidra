@@ -45,8 +45,8 @@ public class Public32MsSymbol extends AbstractPublic32MsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new PublicSymbolInternals32(pdb);
+	protected AbstractSymbolInternals create() {
+		return new PublicSymbolInternals32(pdb);
 	}
 
 	@Override

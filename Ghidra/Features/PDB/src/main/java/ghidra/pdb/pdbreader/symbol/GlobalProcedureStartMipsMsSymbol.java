@@ -46,8 +46,8 @@ public class GlobalProcedureStartMipsMsSymbol extends AbstractGlobalProcedureSta
 	}
 
 	@Override
-	protected void create() {
-		internals = new ProcedureStartMipsSymbolInternals(pdb);
+	protected AbstractProcedureStartMipsSymbolInternals create() {
+		return new ProcedureStartMipsSymbolInternals(pdb);
 	}
 
 	@Override

@@ -30,7 +30,6 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 
 	public static final int PDB_ID = 0x0001;
 
-	protected int processorIndex;
 	protected Processor processor;
 	protected LanguageName language;
 	protected boolean pcodePresent;
@@ -49,8 +48,7 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	 */
 	public CompileFlagsMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		processorIndex = reader.parseUnsignedByteVal();
-		processor = Processor.fromValue(processorIndex);
+		processor = Processor.fromValue(reader.parseUnsignedByteVal());
 		//Possible padding here for structure???
 		byte[] flags = reader.parseBytes(3);
 		processFlags(flags);
@@ -64,6 +62,14 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	@Override
 	public int getPdbId() {
 		return PDB_ID;
+	}
+
+	/**
+	 * Returns the processor.
+	 * @return the processor.
+	 */
+	public Processor getProcessor() {
+		return processor;
 	}
 
 	@Override

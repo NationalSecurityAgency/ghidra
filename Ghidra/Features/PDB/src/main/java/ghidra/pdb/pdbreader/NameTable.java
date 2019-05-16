@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.util.exception.CancelledException;
@@ -61,6 +63,7 @@ public class NameTable {
 	 * @param pdb {@link AbstractPdb} that owns this Name Table.
 	 */
 	public NameTable(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 	}
 

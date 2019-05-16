@@ -42,7 +42,7 @@ public abstract class AbstractModifierMsType extends AbstractMsType {
 	 */
 	public AbstractModifierMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		modifiedTypeIndex = create();
 		parseFields(reader);
 		processAttributes(attributes);
 		pdb.pushDependencyStack(
@@ -80,10 +80,10 @@ public abstract class AbstractModifierMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #modifiedTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #modifiedTypeIndex} in
+	 *  concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses the fields for this type.

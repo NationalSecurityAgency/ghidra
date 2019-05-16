@@ -45,8 +45,8 @@ public class LocalData32StMsSymbol extends AbstractLocalDataMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataSymbolInternals32St(pdb, false);
+	protected AbstractDataSymbolInternals create() {
+		return new DataSymbolInternals32St(pdb, false);
 	}
 
 	@Override

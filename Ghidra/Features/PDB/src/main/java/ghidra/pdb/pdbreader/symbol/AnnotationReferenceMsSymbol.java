@@ -53,8 +53,8 @@ public class AnnotationReferenceMsSymbol extends AbstractReferenceMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new ReferenceSymbolInternals2(pdb);
+	protected AbstractReferenceSymbolInternals create() {
+		return new ReferenceSymbolInternals2(pdb);
 	}
 
 	@Override

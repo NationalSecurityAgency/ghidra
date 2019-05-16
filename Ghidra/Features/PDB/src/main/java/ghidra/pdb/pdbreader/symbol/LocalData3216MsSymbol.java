@@ -45,8 +45,8 @@ public class LocalData3216MsSymbol extends AbstractLocalDataMsSymbol {
 	}
 
 	@Override
-	protected void create() {
-		internals = new DataSymbolInternals3216(pdb, false);
+	protected AbstractDataSymbolInternals create() {
+		return new DataSymbolInternals3216(pdb, false);
 	}
 
 	@Override

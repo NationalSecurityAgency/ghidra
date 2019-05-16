@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8St;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>StMsSymbol</B> flavor of Managed Local- Or Parameter Stored
@@ -38,8 +37,8 @@ public class ManagedLocalOrParameterSIMRStMsSymbol
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 * @throws PdbException upon error parsing a field.
 	 */
-	public ManagedLocalOrParameterSIMRStMsSymbol(AbstractPdb pdb,
-			PdbByteReader reader) throws PdbException {
+	public ManagedLocalOrParameterSIMRStMsSymbol(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException {
 		super(pdb, reader);
 	}
 
@@ -49,8 +48,8 @@ public class ManagedLocalOrParameterSIMRStMsSymbol
 	}
 
 	@Override
-	protected void create() {
-		name = new StringUtf8St();
+	protected AbstractString create() {
+		return new StringUtf8St();
 	}
 
 	@Override

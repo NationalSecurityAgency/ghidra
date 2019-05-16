@@ -43,7 +43,6 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	protected boolean compiledWithSdl;
 	protected boolean compiledWithLtcgPgoOrPgu;
 	protected boolean dotExpModule;
-	protected int processorIndex;
 	protected Processor processor;
 	protected int frontEndMajorVersionNumber;
 	protected int frontEndMinorVersionNumber;
@@ -65,8 +64,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 		super(pdb, reader);
 		compilerVersionString = new StringUtf8Nt();
 		processFlags(reader.parseUnsignedIntVal());
-		processorIndex = reader.parseUnsignedShortVal();
-		processor = Processor.fromValue(processorIndex);
+		processor = Processor.fromValue(reader.parseUnsignedShortVal());
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndBuildVersionNumber = reader.parseUnsignedShortVal();
@@ -192,19 +190,11 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Returns the processor index.
-	 * @return Processor index.
+	 * Returns the processor.
+	 * @return the processor.
 	 */
-	public int getProcessorIndex() {
-		return processorIndex;
-	}
-
-	/**
-	 * Returns the processor name.
-	 * @return Processor name.
-	 */
-	public String getProcessorName() {
-		return processor.toString();
+	public Processor getProcessor() {
+		return processor;
 	}
 
 	/**

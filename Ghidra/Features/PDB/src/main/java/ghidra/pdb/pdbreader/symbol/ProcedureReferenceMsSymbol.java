@@ -53,8 +53,8 @@ public class ProcedureReferenceMsSymbol extends AbstractProcedureReferenceMsSymb
 	}
 
 	@Override
-	protected void create() {
-		internals = new ReferenceSymbolInternals2(pdb);
+	protected AbstractReferenceSymbolInternals create() {
+		return new ReferenceSymbolInternals2(pdb);
 	}
 
 	@Override

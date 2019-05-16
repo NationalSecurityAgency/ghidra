@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.symbol;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.StringUtf8Nt;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the Local Procedure IA64 ID symbol.
@@ -46,8 +45,8 @@ public class LocalProcedureIa64IdMsSymbol extends AbstractProcedureStartIa64MsSy
 	}
 
 	@Override
-	protected void create() {
-		name = new StringUtf8Nt();
+	protected AbstractString create() {
+		return new StringUtf8Nt();
 	}
 
 	@Override

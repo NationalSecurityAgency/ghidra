@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex32;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>MsType</B> flavor of Virtual Function Table Pointer type.
@@ -48,8 +47,8 @@ public class VirtualFunctionTablePointerMsType extends AbstractVirtualFunctionTa
 	}
 
 	@Override
-	protected void create() {
-		pointerTypeIndex = new TypeIndex32();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex32();
 	}
 
 	@Override

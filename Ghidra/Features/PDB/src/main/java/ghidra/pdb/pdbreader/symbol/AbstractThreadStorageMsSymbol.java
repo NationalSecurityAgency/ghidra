@@ -38,7 +38,7 @@ public abstract class AbstractThreadStorageMsSymbol extends AbstractMsSymbol {
 	public AbstractThreadStorageMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		create();
+		threadStorageInternals = create();
 		threadStorageInternals.parse(reader);
 	}
 
@@ -82,9 +82,8 @@ public abstract class AbstractThreadStorageMsSymbol extends AbstractMsSymbol {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #threadStorageInternals}.
+	 * @return the internals type necessary for the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractThreadStorageSymbolInternals create();
 
 }

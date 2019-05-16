@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader.type;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
-import ghidra.pdb.pdbreader.AbstractPdb;
-import ghidra.pdb.pdbreader.TypeIndex16;
+import ghidra.pdb.pdbreader.*;
 
 /**
  * This class represents the <B>16MsType</B> flavor of Index type.
@@ -46,8 +45,8 @@ public class Index16MsType extends AbstractIndexMsType {
 	}
 
 	@Override
-	protected void create() {
-		referencedTypeIndex = new TypeIndex16();
+	protected AbstractTypeIndex create() {
+		return new TypeIndex16();
 	}
 
 	@Override

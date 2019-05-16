@@ -38,7 +38,7 @@ public abstract class AbstractIndexMsType extends AbstractMsType {
 	 */
 	public AbstractIndexMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		create();
+		referencedTypeIndex = create();
 		parseFields(reader);
 	}
 
@@ -52,10 +52,10 @@ public abstract class AbstractIndexMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * <P>
-	 * Implementing class must initialize {@link #referencedTypeIndex}.
+	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #referencedTypeIndex}
+	 * in the concrete class.
 	 */
-	protected abstract void create();
+	protected abstract AbstractTypeIndex create();
 
 	/**
 	 * Parses fields for this type.

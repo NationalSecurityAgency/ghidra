@@ -20,6 +20,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.util.exception.CancelledException;
@@ -67,7 +69,7 @@ public class DebugData {
 	// Internals
 	//==============================================================================================
 	private AbstractPdb pdb;
-	private List<Integer> debugStreamList = new ArrayList<>();
+	private List<Integer> debugStreams = new ArrayList<>();
 
 	private List<FramePointerOmissionRecord> framePointerOmissionData = new ArrayList<>();
 	private List<ImageSectionHeader> imageSectionHeaders = new ArrayList<>();
@@ -85,6 +87,7 @@ public class DebugData {
 	 * @param pdb {@link AbstractPdb} that owns this {@link DebugData}.
 	 */
 	public DebugData(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 	}
 
@@ -97,17 +100,17 @@ public class DebugData {
 	}
 
 	/**
-	 * Deserialized {@link DebugData} header from the {@link PdbByteReader} input.  This parses
+	 * Deserialize {@link DebugData} header from the {@link PdbByteReader} input.  This parses
 	 *  stream numbers for varying Debug Types--the order/location of the stream number is for
-	 *  each particular debug type (i.e., the first stream number read is for the stream containing
-	 *  Frame Pointer Omission debug data.  I stream number of 0XFFFF says that there is no data
+	 *  each particular debug type (e.g., the first stream number read is for the stream containing
+	 *  Frame Pointer Omission debug data).  A stream number of 0XFFFF says that there is no data
 	 *  for that debug type; else the stream number represents the stream that should
 	 *  be deserialized to retrieve the debug data of that type.  The 
 	 *  {@link #deserialize(TaskMonitor)} method deserializes each of these streams
 	 *  that are valid to the corresponding debug data type.
 	 * @param reader {@link PdbByteReader} from which to parse the header.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException PdbException Upon error in processing components.
+	 * @throws PdbException Upon error in processing components.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	public void deserializeHeader(PdbByteReader reader, TaskMonitor monitor)
@@ -115,16 +118,16 @@ public class DebugData {
 		while (reader.hasMore()) {
 			monitor.checkCanceled();
 			int debugStreamNumber = reader.parseUnsignedShortVal();
-			debugStreamList.add(debugStreamNumber);
+			debugStreams.add(debugStreamNumber);
 		}
-		if (debugStreamList.size() != DebugType.values().length) {
+		if (debugStreams.size() != DebugType.values().length) {
 			// TODO: implement something.
 			//log.appendMsg("Unrecognized extra debug streams");
 		}
 	}
 
 	/**
-	 * Deserialized each valid {@link DebugData} stream, based upon valid stream numbers found while
+	 * Deserialize each valid {@link DebugData} stream, based upon valid stream numbers found while
 	 *  parsing the {@link DebugData} header.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws PdbException PdbException Upon error in processing components.
@@ -134,18 +137,17 @@ public class DebugData {
 	 */
 	public void deserialize(TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
-		if (debugStreamList.isEmpty()) {
+		if (debugStreams.isEmpty()) {
 			throw new PdbException(
 				"DebugData Header had not been deserialized at the appropriate time");
 		}
 		for (DebugType dbg : DebugType.values()) {
-			int streamNum = debugStreamList.get(dbg.getValue());
+			int streamNum = debugStreams.get(dbg.getValue());
 			if (streamNum == 0XFFFF) {
 				continue;
 			}
 			switch (dbg) {
 				case FRAME_POINTER_OMISSION:
-					// TODO: implement.
 					deserializeFramePointerOmissionData(streamNum, monitor);
 					break;
 				case EXCEPTION:
@@ -184,6 +186,7 @@ public class DebugData {
 
 	private void deserializeFramePointerOmissionData(int streamNum, TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
+		// TODO: check implementation for completeness.
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
 		while (reader.hasMore()) {
 			FramePointerOmissionRecord framePointerOmissionRecord =
@@ -203,13 +206,13 @@ public class DebugData {
 		}
 	}
 
+	// TODO: This is incomplete.
 	/**
 	 * See the {@link LinkerUnwindInfo} class that was built for and is pertinent to
 	 *  processing XData.
 	 */
 	private void deserializeXData(int streamNum, TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
-		// TODO: implement.
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
 		int streamLength = reader.getLimit();
 		//System.out.println(reader.dump(0x20));
@@ -235,6 +238,7 @@ public class DebugData {
 		//  interpretation available when the machine is different.
 	}
 
+	// TODO: This is incomplete.
 	private void deserializePData(int streamNum, TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
@@ -257,12 +261,14 @@ public class DebugData {
 			entry.deserialize(reader);
 			pData.add(entry);
 			long endPrologue = entry.getEndOfPrologueAddress();
+			// This is correct.  Using base from the XData header during this PData processing.
 			long base = xDataHeader.getRelativeVirtualAddressDataBase();
 			long index = endPrologue - base;
 			xDataReader.setIndex((int) index);
 			//System.out.println(xDataReader.dumpBytes(0x20));
 		}
-		// TODO: More work possible.  See XData processing and notes there.
+		// TODO: More work possible.  See XData processing and notes there.  This is very
+		//  incomplete.
 		if (pdb.getDatabaseInterface() instanceof DatabaseInterfaceNew) {
 			//Processor target = pdb.getTargetProcessor();
 			DatabaseInterfaceNew dbi = (DatabaseInterfaceNew) pdb.getDatabaseInterface();
@@ -319,7 +325,7 @@ public class DebugData {
 	private void dumpDebugStreamList(Writer writer) throws IOException {
 		writer.write("StreamList--------------------------------------------------\n");
 		int i = 0;
-		for (int strmNumber : debugStreamList) {
+		for (int strmNumber : debugStreams) {
 			writer.write(String.format("StrmNumber[%02d]: %04x\n", i++, strmNumber));
 		}
 		writer.write("End StreamList----------------------------------------------\n");
