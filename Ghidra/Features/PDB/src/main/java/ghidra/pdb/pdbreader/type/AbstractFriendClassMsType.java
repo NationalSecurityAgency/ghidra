@@ -54,7 +54,6 @@ public abstract class AbstractFriendClassMsType extends AbstractMsType {
 
 	/**
 	 * Creates subcomponents for this class, which can be deserialized later.
-	 * @return TODO
 	 * @return the {@link AbstractTypeIndex} type necessary for the {@link #friendClassTypeIndex}
 	 * in the concrete class.
 	 */
