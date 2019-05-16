@@ -165,12 +165,11 @@ public interface Address extends Comparable<Address> {
 	public int getSize();
 
 	/**
-	 * Calculates the displacement between two addresses (<code>this -
-	 * addr</code>).
+	 * Calculates the displacement between two addresses (<code>this - addr</code>)
 	 *
-	 * @param addr  the Address to subtract from <code>this</code> address.
-	 * @return the difference. (thisAddress.offset - thatAddress.offset
-	 *
+	 * @param addr  the Address to subtract from <code>this</code> address
+	 * @return the difference (thisAddress.offset - thatAddress.offset)
+	 * @throws IllegalArgumentException if the two addresses are not in the same address space
 	 */
 	public long subtract(Address addr);
 

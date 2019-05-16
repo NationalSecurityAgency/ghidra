@@ -55,10 +55,14 @@ import ghidra.util.task.TaskMonitor;
  */
 
 public class ProgramDatabaseSearcher implements Searcher {
+
 	private List<ProgramDatabaseFieldSearcher> searchers = new ArrayList<>();
 	private Address currentAddress;
 	private boolean isForward;
 	private SearchOptions searchOptions;
+
+	private long totalSearchCount;
+	private AddressSet remainingAddresses;
 	private TaskMonitor monitor;
 
 	public ProgramDatabaseSearcher(ServiceProvider serviceProvider, Program program,
@@ -74,7 +78,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 
 		initialize(serviceProvider, program, startLoc, set, options);
 		currentAddress = findNextSignificantAddress();
-		monitor.initialize(set.getNumAddresses());
+		monitor.initialize(totalSearchCount);
 	}
 
 	@Override
@@ -105,8 +109,22 @@ public class ProgramDatabaseSearcher implements Searcher {
 			return; // finished
 		}
 
-		int diff = (int) Math.abs(newAddress.subtract(lastAddress));
-		monitor.incrementProgress(diff);
+		AddressSpace lastSpace = lastAddress.getAddressSpace();
+		AddressSpace newSpace = newAddress.getAddressSpace();
+		if (!lastSpace.equals(newSpace)) {
+			remainingAddresses.delete(lastSpace.getMinAddress(), lastSpace.getMaxAddress());
+		}
+
+		Address from = newSpace.getMinAddress();
+		Address to = newAddress.subtract(1);
+		if (!isForward) {
+			to = newSpace.getMaxAddress();
+			from = newAddress.add(1);
+		}
+
+		remainingAddresses.delete(from, to);
+		long progress = totalSearchCount - remainingAddresses.getNumAddresses();
+		monitor.setProgress(progress);
 	}
 
 	@Override
@@ -129,6 +147,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 			nextAddress = isForward ? getMin(nextAddress, nextAddressToCheck)
 					: getMax(nextAddress, nextAddressToCheck);
 		}
+
 		return nextAddress;
 	}
 
@@ -160,6 +179,8 @@ public class ProgramDatabaseSearcher implements Searcher {
 
 		AddressSetView trimmedSet = adjustSearchSet(program, start, view, forward);
 		ProgramLocation adjustedStart = adjustStartLocation(program, start, trimmedSet, forward);
+		remainingAddresses = new AddressSet(trimmedSet);
+		totalSearchCount = trimmedSet.getNumAddresses();
 
 		Pattern pattern =
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
