@@ -22,12 +22,16 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.UnableToSwingException;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
@@ -257,7 +261,80 @@ public class SystemUtilities {
 	 * @see #runSwingNow(Supplier) if you need to return a value from the Swing thread.
 	 */
 	public static void runSwingNow(Runnable r) {
-		runSwing(r, true, SWING_RUN_ERROR_MSG);
+
+		try {
+			// not sure what a reasonable wait is for a background thread; we can make this larger
+			// if we find that a really slow system UI causes this to fail
+			int maxWait = 10;
+			runSwingNow(r, maxWait, TimeUnit.SECONDS);
+		}
+		catch (UnableToSwingException e) {
+			throw new RuntimeException("Timed-out waiting to run a Swing task--potential deadlock!",
+				e);
+		}
+	}
+
+	/**
+	 * Calls the given runnable on the Swing thread.  
+	 * 
+	 * <p>This method will throw an exception if the Swing thread is not available within the
+	 * given timeout.  This method is useful for preventing deadlocks.
+	 *
+	 * @param r the runnable
+	 * @param timeout the timeout value
+	 * @param unit the time unit of the timeout value
+	 * @throws UnableToSwingException if the timeout was reach waiting for the Swing thead 
+	 * @see #runSwingNow(Supplier) if you need to return a value from the Swing thread.
+	 */
+	public static void runSwingNow(Runnable r, long timeout, TimeUnit unit)
+			throws UnableToSwingException {
+
+		if (isInHeadlessMode() || SystemUtilities.isEventDispatchThread()) {
+			doRunSwing(r, true, SWING_RUN_ERROR_MSG);
+			return;
+		}
+
+		CountDownLatch start = new CountDownLatch(1);
+		CountDownLatch end = new CountDownLatch(1);
+		AtomicBoolean timedOut = new AtomicBoolean();
+
+		doRunSwing(() -> {
+
+			start.countDown();
+
+			try {
+				if (timedOut.get()) {
+					// timed-out waiting for Swing lock, but eventually did get the lock; too late now
+					return;
+				}
+
+				r.run();
+			}
+			finally {
+				end.countDown();
+			}
+
+		}, false, SWING_RUN_ERROR_MSG);
+
+		try {
+			timedOut.set(!start.await(timeout, unit));
+		}
+		catch (InterruptedException e) {
+			// handled below
+		}
+
+		if (timedOut.get()) {
+			throw new UnableToSwingException(
+				"Timed-out waiting for Swing thread lock in " + timeout + " " + unit);
+		}
+
+		// we've started!
+		try {
+			end.await(); // wait FOREVER!
+		}
+		catch (InterruptedException e) {
+			// we sometimes interrupt our tasks intentionally, so don't report it
+		}
 	}
 
 	/**
@@ -267,7 +344,7 @@ public class SystemUtilities {
 	 * @param r the runnable
 	 */
 	public static void runSwingLater(Runnable r) {
-		runSwing(r, false, SWING_RUN_ERROR_MSG);
+		doRunSwing(r, false, SWING_RUN_ERROR_MSG);
 	}
 
 	public static void runIfSwingOrPostSwingLater(Runnable r) {
@@ -284,7 +361,7 @@ public class SystemUtilities {
 		}
 	}
 
-	private static void runSwing(Runnable r, boolean wait, String errorMessage) {
+	private static void doRunSwing(Runnable r, boolean wait, String errorMessage) {
 		if (isInHeadlessMode()) {
 			r.run();
 			return;

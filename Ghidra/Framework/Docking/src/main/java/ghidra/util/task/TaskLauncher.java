@@ -16,12 +16,12 @@
 package ghidra.util.task;
 
 import java.awt.Component;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
-import generic.util.WindowUtilities;
-import ghidra.util.Msg;
-import ghidra.util.TaskUtilities;
+import ghidra.util.SystemUtilities;
+import ghidra.util.exception.UnableToSwingException;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
@@ -168,18 +168,6 @@ public class TaskLauncher {
 	/** The time, for modal tasks, to try and run before blocking and showing a dialog */
 	public static final int INITIAL_MODAL_DELAY = 500;
 
-	protected Task task;
-	private TaskDialog taskDialog;
-	private Thread taskThread;
-	private CancelledListener monitorChangeListener = () -> {
-		if (task.isInterruptible()) {
-			taskThread.interrupt();
-		}
-		if (task.isForgettable()) {
-			taskDialog.close(); // close the dialog and forget about the task
-		}
-	};
-
 	private static Component getParent(Component parent) {
 		if (parent == null) {
 			return null;
@@ -243,26 +231,11 @@ public class TaskLauncher {
 	 */
 	public TaskLauncher(Task task, Component parent, int delay, int dialogWidth) {
 
-		this.task = task;
-		this.taskDialog = buildTaskDialog(parent, dialogWidth);
-
-		startBackgroundThread(taskDialog);
-
-		taskDialog.show(Math.max(delay, 0));
-
-		waitForModalIfNotSwing();
-	}
-
-	private void waitForModalIfNotSwing() {
-		if (SwingUtilities.isEventDispatchThread() || !task.isModal()) {
-			return;
-		}
-
 		try {
-			taskThread.join();
+			runSwing(task, parent, delay, dialogWidth);
 		}
-		catch (InterruptedException e) {
-			Msg.debug(this, "Task Launcher unexpectedly interrupted waiting for task thread", e);
+		catch (UnableToSwingException e) {
+			runInThisBackgroundThread(task);
 		}
 	}
 
@@ -274,59 +247,50 @@ public class TaskLauncher {
 	 * <p>See <a href="#modal_usage">notes on modal usage</a>
 	 *
 	 * @param task task to run in another thread (other than the Swing Thread)
-	 * @param taskMonitor the monitor to use while running the task.
+	 * @param monitor the monitor to use while running the task.
 	 */
-	public TaskLauncher(Task task, TaskMonitor taskMonitor) {
-
-		this.task = task;
-
-		startBackgroundThread(taskMonitor);
-
+	public TaskLauncher(Task task, TaskMonitor monitor) {
+		BackgroundThreadTaskLauncher runner = new BackgroundThreadTaskLauncher(task);
+		runner.run(monitor);
 	}
 
-	private TaskDialog buildTaskDialog(Component comp, int dialogWidth) {
+	private void runSwing(Task task, Component parent, int delay, int dialogWidth)
+			throws UnableToSwingException {
 
-		taskDialog = createTaskDialog(comp);
-		taskDialog.setMinimumSize(dialogWidth, 0);
-
-		if (task.isInterruptible() || task.isForgettable()) {
-			taskDialog.addCancelledListener(monitorChangeListener);
+		SwingTaskLauncher swinger = buildSwingLauncher(task, parent, delay, dialogWidth);
+		if (SwingUtilities.isEventDispatchThread()) {
+			swinger.run();
+			return;
 		}
 
-		taskDialog.setStatusJustification(task.getStatusTextAlignment());
+		//
+		// Not on the Swing thread.  Try to execute on the Swing thread, timing-out if it takes
+		// too long (this prevents deadlocks).
+		//
 
-		return taskDialog;
+		// This will throw an exception if we could not get the Swing lock.  When that happens,
+		// the task was NOT run.
+		int timeout = getSwingTimeoutInSeconds();
+		SystemUtilities.runSwingNow(() -> {
+			swinger.run();
+		}, timeout, TimeUnit.SECONDS);
 	}
 
-	private void startBackgroundThread(TaskMonitor monitor) {
-
-		// add the task here, so we can track it before it is actually started by the thread
-		TaskUtilities.addTrackedTask(task, monitor);
-
-		String name = "Task - " + task.getTaskTitle();
-		taskThread = new Thread(() -> {
-			task.monitoredRun(monitor);
-			taskProcessed();
-		}, name);
-		taskThread.setPriority(Thread.MIN_PRIORITY);
-		taskThread.start();
+	protected int getSwingTimeoutInSeconds() {
+		return 2;
 	}
 
-	private void taskProcessed() {
-		if (taskDialog != null) {
-			taskDialog.taskProcessed();
-		}
+	protected SwingTaskLauncher buildSwingLauncher(Task task, Component parent, int delay,
+			int dialogWidth) {
+		return new SwingTaskLauncher(task, parent, delay, dialogWidth);
 	}
 
-	protected TaskDialog createTaskDialog(Component comp) {
-		Component parent = comp;
-		if (parent != null) {
-			parent = WindowUtilities.windowForComponent(comp);
+	protected void runInThisBackgroundThread(Task task) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			throw new IllegalStateException("Must not call this method from the Swing thread");
 		}
 
-		if (parent == null) {
-			return new TaskDialog(task);
-		}
-		return new TaskDialog(comp, task);
+		CurrentThreadTaskLauncher runner = new CurrentThreadTaskLauncher(task);
+		runner.run();
 	}
 }
