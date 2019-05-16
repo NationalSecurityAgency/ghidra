@@ -18,6 +18,8 @@
 #include "print.h"
 #include "symbol.h"
 
+#define ITF_RELEASE(X) { if (NULL != X) { X->Release(); X = NULL; } }
+
 // Returns a mixture of static strings and allocated strings.
 // Abandon all hope of memory management, ye who enter here
 wchar_t * printVariant( VARIANT & v ) {
@@ -133,13 +135,18 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 	DWORD tag = getTag(pType);
 
 	if ( tag == SymTagPointerType ) {
-		IDiaSymbol * pBaseType;
+		IDiaSymbol * pBaseType = NULL;
+		BSTR result = NULL;
 		if ( pType->get_type( &pBaseType ) == S_OK ) {
 			size_t length = wcslen(suffix) + 3;	// length of: suffix + " *\0"
 			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
 			if (str != NULL) {
 				swprintf_s(str, length, L"%ws *", suffix);
-				return (BSTR)printType(pBaseType, (BSTR)str);
+				result = (BSTR)printType(pBaseType, (BSTR)str);
+			}
+			ITF_RELEASE(pBaseType);
+			if (NULL != result) {
+				return result;
 			}
 		}
 		else {
@@ -171,9 +178,12 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 		wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
 		if (str != NULL) {
 			swprintf_s(str, strLen, L"%ws[%I64d]", suffix, lenArray / lenElem);
-			return printType(pBaseType, (BSTR)str);
+			BSTR result = printType(pBaseType, (BSTR)str);
+			ITF_RELEASE(pBaseType);
+			return result;
 		}
-	} 
+		ITF_RELEASE(pBaseType);
+	}
 
 	if ( tag == SymTagFunctionType ) {
 		return L"void *";  // was L"Function" but...
@@ -221,7 +231,7 @@ void printScopeName( IDiaSymbol* pscope ) {
 
 void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEnum ) {
 
-	IDiaSymbol * pSym;
+	IDiaSymbol * pSym = NULL;
 	DWORD celt;
 	while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
 		BSTR  name = getName( pSym );
@@ -229,7 +239,8 @@ void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEn
 		wprintf( L"\t%ws %ws found in ", tag, name );
 		printScopeName( pscope );
 		wprintf( L"\n" );
-		pSym = 0;
+		ITF_RELEASE(pSym);
 	}
+	ITF_RELEASE(pSym);
 }
 

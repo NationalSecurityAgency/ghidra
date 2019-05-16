@@ -16,17 +16,24 @@
  */
 #include "find.h"
 
+#define ITF_RELEASE(X) { if (NULL != X) { X->Release(); X = NULL; } }
+
 BSTR findMangledName(IDiaSymbol * pFunction) {
 	DWORD rva = getRVA(pFunction);
 	IDiaSymbol * pSymbol = NULL;
 	HRESULT hr = pSession->findSymbolByRVA(rva, SymTagPublicSymbol, &pSymbol);
 	if (hr == S_OK) {
+		BSTR result = NULL;
 		DWORD tag = getTag(pSymbol);
 		if (tag == SymTagPublicSymbol) {//do not delete
 			DWORD address = getRVA(pSymbol);
 			if (address == rva) {
-				return getName(pSymbol);
+				result = getName(pSymbol);
 			}
+		}
+		ITF_RELEASE(pSymbol);
+		if (NULL != result) {
+			return result;
 		}
 	}
 	return getName(pFunction);
@@ -39,69 +46,87 @@ void findNameInNamespace( wchar_t* name, IDiaSymbol* pnamespace )
 	pnamespace->get_name( &szNamespace );
 	buf = new wchar_t[ wcslen( name ) + wcslen( szNamespace ) + 3];
 	wsprintfW( buf, L"%s::%s", szNamespace, name );
-	IDiaEnumSymbols * pEnum;
+	IDiaEnumSymbols * pEnum = NULL;
 	if ( FAILED( pGlobal->findChildren( SymTagNull, name, nsCaseSensitive, &pEnum ) ) ) {
 		fatal( "Namespace findChildren failed" );
 	}
 	long cnt = 0;
-	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-		printNameFromScope( name, pGlobal, pEnum );
+	if ( pEnum != NULL) {
+		if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a name.
+			printNameFromScope(name, pGlobal, pEnum);
+		}
+		ITF_RELEASE(pEnum);
 	}
 	delete [] buf;
 }
 
 void findNameInEnum( wchar_t* name, IDiaSymbol* penumeration )
 {
-	IDiaEnumSymbols * pEnum;
+	IDiaEnumSymbols * pEnum = NULL;
 	if ( FAILED( penumeration->findChildren( SymTagData, name, nsRegularExpression, &pEnum ) ) ) {
 		fatal( "Enumeration findChildren failed" );
 	}
 	long cnt = 0;
-	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-		printNameFromScope( name, penumeration, pEnum );
+	if ( pEnum != NULL) {
+		if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a name.
+			printNameFromScope(name, penumeration, pEnum);
+		}
+		ITF_RELEASE(pEnum);
 	}
 }
 
 void findNameInClass( wchar_t* name, IDiaSymbol* pclass )
 {
-	IDiaEnumSymbols * pEnum;
+	IDiaEnumSymbols * pEnum = NULL;
 	if ( FAILED( pclass->findChildren( SymTagNull, name, nsCaseSensitive, &pEnum ) ) ) {
 		fatal( "Class findChildren failed" );
 	}
 	long cnt = 0;
-	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-		printNameFromScope( name, pclass, pEnum );
+	if (pEnum != NULL) {
+		if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a name.
+			printNameFromScope(name, pclass, pEnum);
+		}
+		ITF_RELEASE(pEnum);
 	}
-	pEnum = 0;
 	// Check out the enumerations.
-	IDiaSymbol * pSym;
+	IDiaSymbol * pSym = NULL;
 	if ( FAILED( pclass->findChildren( SymTagEnum, NULL, nsNone, &pEnum ) ) ) {
 		fatal( "Class findChildren for enums failed" );
 	}
-	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found an enum.
-		DWORD celt;
-		while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-			findNameInEnum( name, pSym );
-			pSym = 0;
+	if ( pEnum != NULL) {
+		if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found an enum.
+			DWORD celt;
+			pSym = NULL;
+			while (SUCCEEDED(pEnum->Next(1, &pSym, &celt)) && celt == 1) {
+				findNameInEnum(name, pSym);
+				ITF_RELEASE(pSym);
+			}
+			ITF_RELEASE(pSym);
 		}
+		// FIX 579 Don't release pEnum. We reuse it later.
 	}
-	pEnum = 0;
 	// Check out the base classes.
 	if ( FAILED( pclass->findChildren( SymTagBaseClass, NULL, nsNone, &pEnum ) ) ) {
 		fatal( "Class findChildren for base classes failed" );
 	}
-	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a base class.
-		DWORD celt;
-		while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-			IDiaSymbol * pClass;
-			if (  pSym->get_type( &pClass ) == S_OK ) {
-				fatal( "Getting class for a base type failed" );
+	if ( pEnum != NULL) {
+		if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a base class.
+			DWORD celt;
+			while (SUCCEEDED(pEnum->Next(1, &pSym, &celt)) && celt == 1) {
+				IDiaSymbol* pClass;
+				// FIX579 : Incidentally discovered this test logic was erroneous.
+				// Changed the comparator from == to !=
+				if (pSym->get_type(&pClass) != S_OK) {
+					fatal("Getting class for a base type failed");
+				}
+				if (pClass) {
+					findNameInClass(name, pClass);
+					ITF_RELEASE(pClass);
+				}
+				ITF_RELEASE(pSym);
 			}
-			if ( pClass ) {
-				findNameInClass( name, pClass );
-			}
-			pSym = 0;
 		}
+		ITF_RELEASE(pEnum);
 	}
 }
 
@@ -121,43 +146,54 @@ void findCppNameInScope( wchar_t* name, IDiaSymbol* pScope )
 
 	DWORD celt;
 	long cnt = 0;
-	IDiaSymbol * pSym;
-	IDiaSymbol * pParent;
-	IDiaSymbol * pscope;
-	for ( pscope = pScope; pscope != NULL; ) {
-		IDiaEnumSymbols * pEnum;
+	// FIX 579 : Renamed to avaoid confusion with function parameter.
+	IDiaSymbol * pLocalScope = NULL;
+	for ( pLocalScope = pScope; pLocalScope != NULL; ) {
+		IDiaEnumSymbols * pEnum = NULL;
 		// Local data search
-		if ( FAILED( pscope->findChildren( SymTagNull, name, nsCaseSensitive, &pEnum ) ) ) {
+		if ( FAILED( pLocalScope->findChildren( SymTagNull, name, nsCaseSensitive, &pEnum ) ) ) {
 			fatal( "Local scope findChildren failed" );
 		}
-		if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-			printNameFromScope( name, pscope, pEnum );
+		if ( pEnum != NULL) {
+			if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a name.
+				printNameFromScope(name, pLocalScope, pEnum);
+			}
+			// FIX 579 Don't release pEnum. It's used later.
 		}
-		pEnum = 0;
 		// Look into any namespaces.
-		if ( FAILED( pscope->findChildren( SymTagUsingNamespace, NULL, nsNone, &pEnum ) ) ) {
+		if ( FAILED( pLocalScope->findChildren( SymTagUsingNamespace, NULL, nsNone, &pEnum ) ) ) {
 			fatal( "Namespace findChildren failed" );
 		}
-		if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a namespace.
-			while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-				findNameInNamespace( name, pSym );
-				pSym = 0;
+		if ( pEnum != NULL) {
+			if (SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a namespace.
+				// FIX579 : Declaration moved here for scope reduction.
+				IDiaSymbol* pSym = NULL;
+				while (SUCCEEDED(pEnum->Next(1, &pSym, &celt)) && celt == 1) {
+					findNameInNamespace(name, pSym);
+					ITF_RELEASE(pSym);
+				}
 			}
+			// FIX 579 Won't be used later.
+			ITF_RELEASE(pEnum);
 		}
-		pEnum = 0;
 		// Check if this is a member function.
 		DWORD tag = SymTagNull;
-		if ( SUCCEEDED( pscope->get_symTag( &tag ) ) && tag == SymTagFunction && SUCCEEDED( pscope->get_classParent( &pParent ) ) && pParent != NULL ) {
-			findNameInClass( name, pParent );
+		if ( SUCCEEDED( pLocalScope->get_symTag( &tag ) ) && tag == SymTagFunction) {
+			// FIX 579 : Declaration moved here for scope reduction.
+			IDiaSymbol* pParent = NULL;
+			if (SUCCEEDED(pLocalScope->get_classParent(&pParent))) {
+				if (pParent != NULL) {
+					findNameInClass(name, pParent);
+					ITF_RELEASE(pParent);
+				}
+			}
 		}
-		pParent = NULL;
 		// Move to lexical parent.
-		if ( SUCCEEDED( pscope->get_lexicalParent( &pParent ) ) && pParent != NULL ) {
-			pscope = pParent;
-		} 
-		else {
-			pscope = NULL;
-		}
-		pParent = NULL;
+		IDiaSymbol* pNextScope = NULL;
+		pLocalScope->get_lexicalParent(&pNextScope);
+		ITF_RELEASE(pLocalScope);
+		pLocalScope = pNextScope;
 	};
+	// FIX 579 : Should not be required. Safety.
+	ITF_RELEASE(pLocalScope);
 }

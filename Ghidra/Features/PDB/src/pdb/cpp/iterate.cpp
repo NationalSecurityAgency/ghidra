@@ -16,10 +16,12 @@
  */
 #include "iterate.h"
 
+#define ITF_RELEASE(X) { if (NULL != X) { X->Release(); X = NULL; } }
+
 void iterateEnumMembers(IDiaSymbol * pSymbol) {
 	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pMember;
+	IDiaEnumSymbols * pEnum = NULL;
+	IDiaSymbol* pMember = NULL;
 	pSymbol->findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -34,14 +36,16 @@ void iterateEnumMembers(IDiaSymbol * pSymbol) {
 		BSTR name = getName(pMember);
 		BSTR value = getValue(pMember);
 		printf("%s<member name=\"%ws\" value=\"%ws\" />\n", indent(12), name, value);
-		pMember = 0;
+		ITF_RELEASE(pMember);
 	}
+	ITF_RELEASE(pMember);
+	ITF_RELEASE(pEnum);
 }
 
 void iterateEnums() {
 	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pSymbol;
+	IDiaEnumSymbols * pEnum = NULL;
+	IDiaSymbol * pSymbol = NULL;
 	pGlobal->findChildren(SymTagEnum, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -57,6 +61,7 @@ void iterateEnums() {
 
 		DWORD tag = getTag(pSymbol);
 		if (tag != SymTagEnum) {//do not delete
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -69,15 +74,17 @@ void iterateEnums() {
 		iterateEnumMembers(pSymbol);
 
 		printf("%s</enum>\n", indent(8));
-		pSymbol = 0;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pSymbol);
+	ITF_RELEASE(pEnum);
 	printf("%s</enums>\n", indent(4));
 }
 
 void iterateMembers(IDiaSymbol * pSymbol) {
 	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pMember;
+	IDiaEnumSymbols * pEnum = NULL;
+	IDiaSymbol * pMember = NULL;
 	pSymbol->findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -96,13 +103,16 @@ void iterateMembers(IDiaSymbol * pSymbol) {
 					getOffset(pMember),
 					getKindAsString(pMember),
 					getLength(pMember));
+		ITF_RELEASE(pMember);
 	}
+	ITF_RELEASE(pMember);
+	ITF_RELEASE(pEnum);
 }
 
 void iterateDataTypes() {
 	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pSymbol;
+	IDiaEnumSymbols * pEnum = NULL;
+	IDiaSymbol * pSymbol = NULL;
 	pGlobal->findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -118,10 +128,12 @@ void iterateDataTypes() {
 
 		DWORD tag = getTag(pSymbol);
 		if (tag != SymTagUDT) {//do not delete
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
 		if (getUdtKind(pSymbol) == UdtClass) {
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -130,6 +142,7 @@ void iterateDataTypes() {
 		ULONGLONG len  = getLength(pSymbol);
 
 		if ( len == 0 ) {
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -138,8 +151,10 @@ void iterateDataTypes() {
 		iterateMembers(pSymbol);
 
 		printf("%s</datatype>\n", indent(8));
-		pSymbol = 0;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pSymbol);
+	ITF_RELEASE(pEnum);
 	printf("%s</datatypes>\n", indent(4));
 }
 
@@ -162,6 +177,7 @@ void iterateTypedefs() {
 
 		DWORD tag = getTag(pSymbol);
 		if (tag != SymTagTypedef) {//do not delete
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 		BSTR name = getName(pSymbol);
@@ -169,8 +185,9 @@ void iterateTypedefs() {
 
 		printf("%s<typedef name=\"%ws\" basetype=\"%ws\" />\n", indent(8), name, type);
 
-		pSymbol = 0;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pEnum);
 	printf("%s</typedefs>\n", indent(4));
 }
 
@@ -193,10 +210,12 @@ void iterateClasses() {
 
 		DWORD tag = getTag(pSymbol);
 		if (tag != SymTagUDT) {//do not delete
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
 		if (getUdtKind(pSymbol) != UdtClass) {
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -204,6 +223,7 @@ void iterateClasses() {
 		ULONGLONG len  = getLength(pSymbol);
 
 		if ( len == 0 ) {
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -212,24 +232,26 @@ void iterateClasses() {
 		iterateMembers(pSymbol);
 
 		printf("%s</class>\n", indent(8));
-		pSymbol = 0;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pSymbol);
+	ITF_RELEASE(pEnum);
 	printf("%s</classes>\n", indent(4));
 }
 
 void dumpFunctionStackVariables( DWORD rva )
 {
-	IDiaSymbol * pBlock;
+	IDiaSymbol * pBlock = NULL;
 	if ( FAILED( pSession->findSymbolByRVA( rva, SymTagBlock, &pBlock ) ) ) {
 		fatal( "Failed to find symbols by RVA" );
 	}
 	for ( ; pBlock != NULL; ) {
-		IDiaEnumSymbols * pEnum;
+		IDiaEnumSymbols * pEnum = NULL;
 		// Local data search
 		if ( FAILED( pBlock->findChildren( SymTagNull, NULL, nsNone, &pEnum ) ) ) {
 			fatal( "Local scope findChildren failed" );
 		}
-		IDiaSymbol * pSymbol;
+		IDiaSymbol * pSymbol = NULL;
 		DWORD tag;
 		DWORD celt;
 		while ( pEnum != NULL && SUCCEEDED( pEnum->Next( 1, &pSymbol, &celt ) ) && celt == 1 ) {
@@ -263,21 +285,27 @@ void dumpFunctionStackVariables( DWORD rva )
 				}
 				*/
 			}
-			pSymbol = NULL;
+			ITF_RELEASE(pSymbol);
 		}
-		pBlock->get_symTag( &tag ); 
+		ITF_RELEASE(pSymbol);
+		ITF_RELEASE(pEnum);
+		pBlock->get_symTag( &tag );
 		if ( tag == SymTagFunction ) {  // Stop at function scope.
 			break;
 		}
 		// Move to lexical parent.
-		IDiaSymbol * pParent;
-		if ( SUCCEEDED( pBlock->get_lexicalParent( &pParent ) ) && pParent != NULL ) {
-			pBlock = pParent;
-		} 
-		else {
-			//fatal( "Finding lexical parent failed." );
-		}
+		IDiaSymbol * pParent = NULL;
+		// FIX 579 Corrected a logical bug. On failure, nothing was done
+		// so pBlock would remain untouched and we would enter an infinite
+		// loop. It is not clear wether we should issue a fatal error if
+		// lexical parent retrieval failed. The fatal() function call was
+		// commented out. We remain on this side and just make sure we will
+		// exit loop.
+		pBlock->get_lexicalParent(&pParent);
+		ITF_RELEASE(pBlock);
+		pBlock = pParent;
 	};
+	ITF_RELEASE(pBlock);
 }
 
 void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
@@ -291,11 +319,11 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 	if ( isect == 0 || length <= 0 ) {
 		return;
 	}
-	IDiaEnumLineNumbers * pLines;
+	IDiaEnumLineNumbers * pLines = NULL;
 	if (pSession->findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ) < 0) {
 		return;
 	}
-	IDiaLineNumber * pLine;
+	IDiaLineNumber * pLine = NULL;
 	DWORD celt;
 	while ( 1 ) {
 		if (pLines->Next( 1, &pLine, &celt ) < 0) {
@@ -305,14 +333,17 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 			break;
 		}
 
-		IDiaSymbol * pComp;
+		IDiaSymbol * pComp = NULL;
 		pLine->get_compiland( &pComp );
 
-		IDiaSourceFile * pSrc;
-		pLine->get_sourceFile( &pSrc );
-
+		IDiaSourceFile * pSrc = NULL;
 		BSTR sourceFileName = NULL;
-		pSrc->get_fileName( &sourceFileName );
+
+		// FIX 579 : Made source file name retrieval conditioned by succes
+		// of source file retrieval.
+		if (SUCCEEDED(pLine->get_sourceFile(&pSrc))) {
+			pSrc->get_fileName(&sourceFileName);
+		}
 
 		DWORD addr;
 		pLine->get_relativeVirtualAddress( &addr );
@@ -325,14 +356,16 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 		printf("%s<line_number source_file=\"%ws\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
 					indent(12), sourceFileName, start, end, addr);
 
-		pLine = NULL;
+		ITF_RELEASE(pLine);
 	}
+	ITF_RELEASE(pLine);
+	ITF_RELEASE(pLines);
 }
 
 void iterateFunctions() {
 	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pSymbol;
+	IDiaEnumSymbols * pEnum = NULL;
+	IDiaSymbol * pSymbol = NULL;
 	pGlobal->findChildren(SymTagFunction, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -348,6 +381,7 @@ void iterateFunctions() {
 
 		DWORD tag = getTag(pSymbol);
 		if (tag != SymTagFunction) {//do not delete
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -362,14 +396,16 @@ void iterateFunctions() {
 
 		printf("%s</function>\n", indent(8));
 
-		pSymbol = 0;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pSymbol);
+	ITF_RELEASE(pEnum);
 	printf("%s</functions>\n", indent(4));
 }
 
 void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 	DWORD celt;
-	IDiaSymbol * pSymbol;
+	IDiaSymbol * pSymbol = NULL;
 
 	while ( 1 ) {
 		if (pSymbols->Next( 1, &pSymbol, &celt ) < 0) {
@@ -381,6 +417,7 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 
 		BSTR name = getName(pSymbol);
 		if (name == NULL) {
+			ITF_RELEASE(pSymbol);
 			continue;
 		}
 
@@ -396,14 +433,15 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 		printf("datatype=\"%ws\" ",     getTypeAsString(pSymbol));
 		printf(" />\n");
 
-		pSymbol = NULL;
+		ITF_RELEASE(pSymbol);
 	}
+	ITF_RELEASE(pSymbol);
 }
 
 void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 	HRESULT hr;
 	DWORD celt;
-	IDiaSourceFile * pSourceFile;
+	IDiaSourceFile * pSourceFile = NULL;
 	while ( SUCCEEDED( hr = pSourceFiles->Next( 1, &pSourceFile, &celt ) ) && celt == 1 ) {
 		BSTR name;
 		pSourceFile->get_fileName( &name );
@@ -412,8 +450,9 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 		if ( name != NULL ) {
 			printf("%s<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12), name, id);
 		}
-		pSourceFile = NULL;
+		ITF_RELEASE(pSourceFile);
 	}
+	ITF_RELEASE(pSourceFile);
 }
 
 /*
@@ -426,15 +465,16 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 void iterateSegments(IDiaEnumSegments * pSegments) {
 	HRESULT hr;
 	DWORD celt;
-	IDiaSegment * pSegment;
+	IDiaSegment * pSegment = NULL;
 	while ( SUCCEEDED( hr = pSegments->Next( 1, &pSegment, &celt ) ) && celt == 1 ) {
 		DWORD rva;
 		DWORD seg;
 		pSegment->get_addressSection( &seg );
 		pSegment->get_relativeVirtualAddress( &rva );
 		printf("%s<segment number=\"%i\" address=\"0x%x\" />  \n", indent(12), seg, rva);
-		pSegment = NULL;
+		ITF_RELEASE(pSegment);
 	}
+	ITF_RELEASE(pSegment);
 }
 
 /*
@@ -445,7 +485,7 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
 void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 	DWORD celt;
 	IDiaSymbol * pSym = NULL;
-	IDiaSectionContrib * pSecContrib;
+	IDiaSectionContrib * pSecContrib = NULL;
 
 	while ( 1 ) {
 		if (pSecContribs->Next( 1, &pSecContrib, &celt ) < 0 ) {
@@ -457,7 +497,7 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 		DWORD rva;
 		if ( pSecContrib->get_relativeVirtualAddress( &rva ) == S_OK ) {
 			if ( pSession->findSymbolByRVA( rva, SymTagNull, &pSym ) != S_OK ) {
-				pSym = NULL;
+				ITF_RELEASE(pSym);
 			}
 		} 
 		else {
@@ -467,8 +507,8 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 			pSecContrib->get_addressOffset( &offset );
 			pSecContrib = NULL;
 			if ( pSession->findSymbolByAddr( isect, offset, SymTagNull, &pSym ) != S_OK ) {
-				pSym = NULL;
-			}         
+				ITF_RELEASE(pSym);
+			}
 		}
 		if (pSym == NULL) {
 			printf("%s<section_contrib address=\"0x%x\" /> \n", indent(12), rva);
@@ -480,7 +520,9 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 			printf("%s<section_contrib address=\"0x%x\" name=\"%ws\" tag=\"%ws\" /> \n", 
 						indent(12), rva, name, tag);
 		}
+		ITF_RELEASE(pSym);
 	}
+	ITF_RELEASE(pSecContrib);
 }
 
 /*
@@ -488,7 +530,7 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
  */
 void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 	DWORD celt;
-	IDiaInjectedSource* pInjectedSrc;
+	IDiaInjectedSource* pInjectedSrc = NULL;
 
 	while ( 1 ) {
 		HRESULT hr = pInjectedSrcs->Next( 1, &pInjectedSrc, &celt );
@@ -517,7 +559,9 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 					objectname,
 					crc,
 					length);
+		ITF_RELEASE(pInjectedSrc);
 	}
+	ITF_RELEASE(pInjectedSrc);
 }
 
 /*
@@ -527,7 +571,7 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
  */
 void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 	DWORD celt;
-	IDiaFrameData * pFrameData;
+	IDiaFrameData * pFrameData = NULL;
 
 	while ( 1 ) {
 		HRESULT hr = pEnumFrameData->Next( 1, &pFrameData, &celt );
@@ -538,7 +582,9 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 			break;
 		}
 		//TODO
+		ITF_RELEASE(pFrameData);
 	}
+	ITF_RELEASE(pFrameData);
 }
 
 int iterateTables(const bool printAll) {
@@ -546,14 +592,15 @@ int iterateTables(const bool printAll) {
 	HRESULT hr;
 	DWORD celt;
 
-	IDiaEnumTables * pTables;
+	IDiaEnumTables * pTables = NULL;
 
 	hr = pSession->getEnumTables( &pTables );
 	if ( hr < 0) {
+		ITF_RELEASE(pTables);
 		return hr;
 	}
 
-	IDiaTable * pTable;
+	IDiaTable * pTable = NULL;
 
 	while ( 1 ) {
 		if (pTables->Next( 1, &pTable, &celt ) < 0) {
@@ -567,12 +614,12 @@ int iterateTables(const bool printAll) {
 
 		printf("%s<table name=\"%ws\">\n", indent(8), name );
 
-		IDiaEnumSymbols         * pSymbols;
-		IDiaEnumSourceFiles     * pSourceFiles;
-		IDiaEnumSegments        * pSegments;
-		IDiaEnumSectionContribs * pSecContribs;
-		IDiaEnumInjectedSources * pInjectedSrcs;
-		IDiaEnumFrameData       * pEnumFrameData;
+		IDiaEnumSymbols         * pSymbols = NULL;
+		IDiaEnumSourceFiles     * pSourceFiles = NULL;
+		IDiaEnumSegments        * pSegments = NULL;
+		IDiaEnumSectionContribs * pSecContribs = NULL;
+		IDiaEnumInjectedSources * pInjectedSrcs = NULL;
+		IDiaEnumFrameData       * pEnumFrameData = NULL;
 
 		if ( SUCCEEDED( pTable->QueryInterface( _uuidof( IDiaEnumSymbols ), (void**)&pSymbols ) ) ) {
 			iterateSymbolTable(pSymbols);
@@ -596,8 +643,17 @@ int iterateTables(const bool printAll) {
 		}
 
 		printf("%s</table>\n", indent(8));
-		pTable = NULL;
+
+		ITF_RELEASE(pSymbols);
+		ITF_RELEASE(pSourceFiles);
+		ITF_RELEASE(pSegments);
+		ITF_RELEASE(pSecContribs);
+		ITF_RELEASE(pInjectedSrcs);
+		ITF_RELEASE(pEnumFrameData);
+		ITF_RELEASE(pTable);
 	}
+	ITF_RELEASE(pTable);
+	ITF_RELEASE(pTables);
 	printf("%s</tables>\n", indent(4));
 
 	return 0;
