@@ -50,6 +50,23 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 	}
 
 	@Test
+	public void testStructureBitFieldsB1Flex() {
+		Structure struct = getStructure("B1flex");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/B1flex\n" + 
+			"Aligned\n" + 
+			"Structure B1flex {\n" + 
+			"   0   char   1   a   \"\"\n" + 
+			"   2   ushort:6(0)   1   b   \"\"\n" + 
+			"   4   int:8(0)   1   c   \"\"\n" + 
+			"   8   short:4(0)   1   d   \"\"\n" + 
+			"   long[0]   0   flex   \"\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 4", struct);
+		//@formatter:on
+	}
+
+	@Test
 	public void testStructureBitFieldsB2() {
 		Structure struct = getStructure("B2");
 		//@formatter:off

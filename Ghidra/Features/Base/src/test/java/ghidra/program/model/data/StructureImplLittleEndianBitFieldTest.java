@@ -90,6 +90,23 @@ public class StructureImplLittleEndianBitFieldTest extends AbstractCompositeImpl
 	}
 
 	@Test
+	public void testStructureBitFieldsB1Flex() {
+		Structure struct = getStructure("B1flex");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/B1flex\n" + 
+			"Aligned\n" + 
+			"Structure B1flex {\n" + 
+			"   0   char   1   a   \"\"\n" + 
+			"   1   ushort:6(0)   1   b   \"\"\n" + 
+			"   1   int:8(6)   2   c   \"\"\n" + 
+			"   2   short:4(6)   2   d   \"\"\n" + 
+			"   long[0]   0   flex   \"\"\n" + 
+			"}\n" + 
+			"Size = 8   Actual Alignment = 8", struct);
+		//@formatter:on
+	}
+
+	@Test
 	public void testStructureBitFieldsB2() {
 		Structure struct = getStructure("B2");
 		//@formatter:off
