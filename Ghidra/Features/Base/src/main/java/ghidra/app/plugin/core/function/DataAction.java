@@ -18,18 +18,18 @@ package ghidra.app.plugin.core.function;
 import javax.swing.KeyStroke;
 
 import docking.action.*;
+import docking.tool.util.DockingToolConstants;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.data.DataType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableLocation;
 import ghidra.util.HelpLocation;
 
 /**
- * Base class for comment actions to edit and delete comments.
+ * Base class for actions to create data types
  */
 class DataAction extends ListingContextAction implements OptionsChangeListener {
 
@@ -61,7 +61,7 @@ class DataAction extends ListingContextAction implements OptionsChangeListener {
 		dummyKeybindingsAction =
 			new DummyKeyBindingsOptionsAction(actionName, getDefaultKeyStroke());
 		tool.addAction(dummyKeybindingsAction);
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
+		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		options.addOptionsChangeListener(this);
 		KeyStroke keyStroke =
 			options.getKeyStroke(dummyKeybindingsAction.getFullName(), getDefaultKeyStroke());
@@ -99,6 +99,11 @@ class DataAction extends ListingContextAction implements OptionsChangeListener {
 	}
 
 	@Override
+	public void actionPerformed(ListingActionContext context) {
+		plugin.createData(dataType, context, true);
+	}
+
+	@Override
 	protected boolean isEnabledForContext(ListingActionContext context) {
 		if (context.hasSelection() || context.getAddress() == null) {
 			return false;
@@ -113,11 +118,6 @@ class DataAction extends ListingContextAction implements OptionsChangeListener {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public void actionPerformed(ListingActionContext context) {
-		plugin.createData(dataType, context, true);
 	}
 
 	@Override
