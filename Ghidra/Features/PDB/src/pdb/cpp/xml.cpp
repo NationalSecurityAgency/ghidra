@@ -79,38 +79,62 @@ BSTR escapeXmlEntities(BSTR bstr) {
 	}
 	WCHAR * tmp = newstr;
 	
+	// FIX issue 597 : Adjust destLen after each wcscpy_s function call
+	// ALso check for wcscpy_s call return value and return null on error.
 	for (int i = 0 ; i < len ; ++i) {
 		switch (str[i]) {
 			case '&' :
-				wcscpy_s(tmp, destLen, L"&amp;");
+				if (0 != wcscpy_s(tmp, destLen, L"&amp;")) {
+					return NULL;
+				}
 				tmp += 5;
+				destLen -= 5;
 				break;
 			case '<' :
-				wcscpy_s(tmp, destLen, L"&lt;");
+				if (0 != wcscpy_s(tmp, destLen, L"&lt;")) {
+					return NULL;
+				}
 				tmp += 4;
+				destLen -= 4;
 				break;
 			case '>' :
-				wcscpy_s(tmp, destLen, L"&gt;");
+				if (0 != wcscpy_s(tmp, destLen, L"&gt;")) {
+					return NULL;
+				}
 				tmp += 4;
+				destLen -= 4;
 				break;
 			case '\'' :
-				wcscpy_s(tmp, destLen, L"&apos;");
+				if (0 != wcscpy_s(tmp, destLen, L"&apos;")) {
+					return NULL;
+				}
 				tmp += 6;
+				destLen -= 6;
 				break;
 			case '"' :
-				wcscpy_s(tmp, destLen, L"&quot;");
+				if (0 != wcscpy_s(tmp, destLen, L"&quot;")) {
+					return NULL;
+				}
 				tmp += 6;
+				destLen -= 6;
 				break;
 			case 0x7F :
 				break;
 			default :
+				if (0 >= destLen) {
+					return NULL;
+				}
 				*tmp = str[i];
 				++tmp;
+				destLen--;
 				break;
 		}
 	}
 	
 	// add null term at end of string.  Not strictly necessary since we are using calloc
+	if (0 >= destLen) {
+		return NULL;
+	}
 	*tmp = 0;
 	
 	return newstr;
