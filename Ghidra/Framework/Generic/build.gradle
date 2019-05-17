@@ -11,7 +11,7 @@ dependencies {
     compile "org.apache.logging.log4j:log4j-api:2.8.2"
     compile "org.apache.logging.log4j:log4j-core:2.8.2"
     compile "org.apache.commons:commons-collections4:4.1"
-    compile "org.apache.commons:commons-lang3:3.5"
+    compile "org.apache.commons:commons-lang3:3.9"
     compile "org.lucee:commons-io:2.6.0"
     
    	compileOnly "junit:junit:4.12"
