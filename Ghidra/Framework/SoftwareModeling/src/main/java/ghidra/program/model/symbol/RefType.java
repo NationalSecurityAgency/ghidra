@@ -53,6 +53,12 @@ public abstract class RefType {
 	static final byte __CONDITIONAL_CALL_TERMINATOR = 14;
 	static final byte __COMPUTED_CALL_TERMINATOR = 15;
 
+	static final byte __CALL_OVERRIDE_UNCONDITIONAL = 16;
+	static final byte __JUMP_OVERRIDE_UNCONDITIONAL = 17;
+
+	static final byte __CALLOTHER_OVERRIDE_CALL = 18;
+	static final byte __CALLOTHER_OVERRIDE_JUMP = 19;
+
 	// DATA REFERENCE TYPES
 	static final byte __UNKNOWNDATA = 100;
 	static final byte __READ = 101;
@@ -72,44 +78,58 @@ public abstract class RefType {
 	static final byte __DYNAMICDATA = 127;
 
 	public static final FlowType INVALID =
-		new FlowType(__INVALID, "INVALID", true, false, false, false, false, false);
+		new FlowType.Builder(__INVALID, "INVALID").setHasFall().build();
 	public static final FlowType FLOW =
-		new FlowType(__UNKNOWNFLOW, "FLOW", true, false, false, false, false, false);
+		new FlowType.Builder(__UNKNOWNFLOW, "FLOW").setHasFall().build();
 	public static final FlowType FALL_THROUGH =
-		new FlowType(__FALL_THROUGH, "FALL_THROUGH", true, false, false, false, false, false);
-	public static final FlowType UNCONDITIONAL_JUMP = new FlowType(__UNCONDITIONAL_JUMP,
-		"UNCONDITIONAL_JUMP", false, false, true, false, false, false);
-	public static final FlowType CONDITIONAL_JUMP =
-		new FlowType(__CONDITIONAL_JUMP, "CONDITIONAL_JUMP", true, false, true, false, false, true);
-	public static final FlowType UNCONDITIONAL_CALL = new FlowType(__UNCONDITIONAL_CALL,
-		"UNCONDITIONAL_CALL", true, true, false, false, false, false);
-	public static final FlowType CONDITIONAL_CALL =
-		new FlowType(__CONDITIONAL_CALL, "CONDITIONAL_CALL", true, true, false, false, false, true);
+		new FlowType.Builder(__FALL_THROUGH, "FALL_THROUGH").setHasFall().build();
+	public static final FlowType UNCONDITIONAL_JUMP =
+		new FlowType.Builder(__UNCONDITIONAL_JUMP, "UNCONDITIONAL_JUMP").setIsJump().build();
+	public static final FlowType CONDITIONAL_JUMP = new FlowType.Builder(__CONDITIONAL_JUMP,
+		"CONDITIONAL_JUMP").setHasFall().setIsJump().setIsConditional().build();
+	public static final FlowType UNCONDITIONAL_CALL = new FlowType.Builder(__UNCONDITIONAL_CALL,
+		"UNCONDITIONAL_CALL").setHasFall().setIsCall().build();
+	public static final FlowType CONDITIONAL_CALL = new FlowType.Builder(__CONDITIONAL_CALL,
+		"CONDITIONAL CALL").setHasFall().setIsCall().setIsConditional().build();
 	public static final FlowType TERMINATOR =
-		new FlowType(__TERMINATOR, "TERMINATOR", false, false, false, true, false, false);
+		new FlowType.Builder(__TERMINATOR, "TERMINATOR").setIsTerminal().build();
 	public static final FlowType COMPUTED_JUMP =
-		new FlowType(__COMPUTED_JUMP, "COMPUTED_JUMP", false, false, true, false, true, false);
-	public static final FlowType CONDITIONAL_TERMINATOR = new FlowType(__CONDITIONAL_TERMINATOR,
-		"CONDITIONAL_TERMINATOR", true, false, false, true, false, true);
-	public static final FlowType COMPUTED_CALL =
-		new FlowType(__COMPUTED_CALL, "COMPUTED_CALL", true, true, false, false, true, false);
-	public static final FlowType CALL_TERMINATOR =
-		new FlowType(__CALL_TERMINATOR, "CALL_TERMINATOR", false, true, false, true, false, false);
-	public static final FlowType COMPUTED_CALL_TERMINATOR = new FlowType(__COMPUTED_CALL_TERMINATOR,
-		"COMPUTED_CALL_TERMINATOR", false, true, false, true, true, false);
+		new FlowType.Builder(__COMPUTED_JUMP, "COMPUTED_JUMP").setIsJump().setIsComputed().build();
+	public static final FlowType CONDITIONAL_TERMINATOR =
+		new FlowType.Builder(__CONDITIONAL_TERMINATOR,
+			"CONDITIONAL_TERMINATOR").setHasFall().setIsTerminal().setIsConditional().build();
+	public static final FlowType COMPUTED_CALL = new FlowType.Builder(__COMPUTED_CALL,
+		"COMPUTED_CALL").setHasFall().setIsCall().setIsComputed().build();
+	public static final FlowType CALL_TERMINATOR = new FlowType.Builder(__CALL_TERMINATOR,
+		"CALL_TERMINATOR").setIsCall().setIsTerminal().build();
+	public static final FlowType COMPUTED_CALL_TERMINATOR =
+		new FlowType.Builder(__COMPUTED_CALL_TERMINATOR,
+			"COMPUTED_CALL_TERMINATOR").setIsCall().setIsTerminal().setIsComputed().build();
 	public static final FlowType CONDITIONAL_CALL_TERMINATOR =
-		new FlowType(__CONDITIONAL_CALL_TERMINATOR, "CONDITIONAL_CALL_TERMINATOR", false, true,
-			false, true, false, true);
-	public static final FlowType CONDITIONAL_COMPUTED_CALL =
-		new FlowType(__CONDITIONAL_COMPUTED_CALL, "CONDITIONAL_COMPUTED_CALL", true, true, false,
-			false, true, true);
-	public static final FlowType CONDITIONAL_COMPUTED_JUMP =
-		new FlowType(__CONDITIONAL_COMPUTED_JUMP, "CONDITIONAL_COMPUTED_JUMP", true, false, true,
-			false, true, true);
-	public static final FlowType JUMP_TERMINATOR =
-		new FlowType(__JUMP_TERMINATOR, "JUMP TERMINATOR", false, false, true, true, false, false);
+		new FlowType.Builder(__CONDITIONAL_CALL_TERMINATOR,
+			"CONDITIONAL_CALL_TERMINATOR").setIsCall().setIsTerminal().setIsConditional().build();
+	public static final FlowType CONDITIONAL_COMPUTED_CALL = new FlowType.Builder(
+		__CONDITIONAL_COMPUTED_CALL,
+		"CONDITIONAL_COMPUTED_CALL").setHasFall().setIsCall().setIsComputed().setIsConditional().build();
+	public static final FlowType CONDITIONAL_COMPUTED_JUMP = new FlowType.Builder(
+		__CONDITIONAL_COMPUTED_JUMP,
+		"CONDITIONAL_COMPUTED_JUMP").setHasFall().setIsJump().setIsComputed().setIsConditional().build();
+	public static final FlowType JUMP_TERMINATOR = new FlowType.Builder(__JUMP_TERMINATOR,
+		"JUMP_TERMINATOR").setIsJump().setIsTerminal().build();
 	public static final FlowType INDIRECTION =
-		new FlowType(__INDIRECTION, "INDIRECTION", false, false, false, false, false, false);
+		new FlowType.Builder(__INDIRECTION, "INDIRECTION").build();
+	public static final FlowType CALL_OVERRIDE_UNCONDITIONAL =
+		new FlowType.Builder(__CALL_OVERRIDE_UNCONDITIONAL,
+			"CALL_OVERRIDE_UNCONDITIONAL").setHasFall().setIsCall().setIsOverride().build();
+	public static final FlowType JUMP_OVERRIDE_UNCONDITIONAL =
+		new FlowType.Builder(__JUMP_OVERRIDE_UNCONDITIONAL,
+			"JUMP_OVERRIDE_UNCONDITIONAL").setIsJump().setIsOverride().build();
+	public static final FlowType CALLOTHER_OVERRIDE_CALL =
+		new FlowType.Builder(__CALLOTHER_OVERRIDE_CALL,
+			"CALLOTHER_OVERRIDE_CALL").setHasFall().setIsCall().setIsOverride().build();
+	public static final FlowType CALLOTHER_OVERRIDE_JUMP =
+		new FlowType.Builder(__CALLOTHER_OVERRIDE_JUMP,
+			"CALLOTHER_OVERRIDE_JUMP").setIsJump().setIsOverride().build();
 
 	/**
 	 * Reference type is unknown.
@@ -272,7 +292,7 @@ public abstract class RefType {
 	}
 
 	/**
-	 * Returns true if the flow is a conditiona call or jump.
+	 * Returns true if the flow is a conditional call or jump.
 	 */
 	public boolean isConditional() {
 		return false;
@@ -289,6 +309,14 @@ public abstract class RefType {
 	 * returns true if this instruction terminates.
 	 */
 	public boolean isTerminal() {
+		return false;
+	}
+
+	/**
+	 * 
+	 * @return true precisely when the reference is an overriding reference
+	 */
+	public boolean isOverride() {
 		return false;
 	}
 

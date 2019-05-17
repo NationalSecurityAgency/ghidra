@@ -31,6 +31,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
 import ghidra.test.*;
 
 public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
@@ -71,6 +72,41 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		builder.addBytesBranchWithDelaySlot("1001040", "1001050");
 		builder.createReturnInstruction("1001042");
 		builder.disassemble("1001040", 1);
+
+		//create a function for testing jump override comments
+		builder.createEmptyFunction("jump_override", "1003000", 100, null);
+		builder.createConditionalJmpInstruction("1003000", "1003006");
+		builder.createNOPInstruction("1003002", 4);
+		builder.createReturnInstruction("1003006");
+		builder.createReturnInstruction("1003008");
+
+		//create a function for testing indirect call override comments
+		builder.createEmptyFunction("indirect_call_override", "1004000", 100, null);
+		//call [r1]
+		builder.setBytes("1004000", "f6 10");
+		builder.disassemble("1004000", 2);
+		builder.createReturnInstruction("1004002");
+
+		//create function for testing direct call override comments
+		builder.createEmptyFunction("direct_call_override_backward_compatibility", "1005000", 10,
+			null);
+		builder.createEmptyFunction("call_dest_1", "1005020", 10, null);
+		builder.createCallInstruction("1005000", "1005020");
+		builder.createReturnInstruction("1005002");
+
+		//create function for testing that overrides only happen when there is exactly one
+		//primary overriding reference (e.g., if there's a primary overriding ref on
+		//both the mnemonic and an operand then no override
+		builder.createEmptyFunction("only_one_primary_override_ref", "1006000", 10, null);
+		builder.createEmptyFunction("call_dest_2", "1006020", 10, null);
+		builder.createCallInstruction("1006000", "1006020");
+		builder.createReturnInstruction("1006002");
+
+		//create function for testing overrides that don't actually change the destination
+		builder.createEmptyFunction("override_without_dest_change", "1007000", 10, null);
+		builder.createEmptyFunction("call_dest_3", "1007020", 10, null);
+		builder.createCallInstruction("1007000", "1007020");
+		builder.createReturnInstruction("1007002");
 
 		return builder.getProgram();
 	}
@@ -229,6 +265,430 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		tf = getFieldText(function);
 		assertEquals(4, tf.getNumRows());
 	}
+
+	@Test
+	public void testOverridingJumpComment() {
+		//test overriding a conditional jump to an unconditional jump
+		//using a RefType.JUMP_OVERRIDE_UNCONDITIONAL reference
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference ref1 = null;
+		int transactionID = program.startTransaction("add_primary_jump_ref");
+		try {
+			ref1 = refManager.addMemoryReference(addr("1003000"), addr("1003006"),
+				RefType.JUMP_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref1, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+
+		assertTrue(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Jump Destination Override: LAB_01003006 (01003006)", tf.getText());
+
+		//test that making the reference non-primary removes the post comment
+		ref1 = refManager.getPrimaryReferenceFrom(addr("1003000"), Reference.MNEMONIC);
+		assertTrue(ref1.isPrimary());
+		transactionID = program.startTransaction("set_ref_non_primary");
+		try {
+			refManager.setPrimary(ref1, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//test that adding a second ref of the same type and setting it to primary
+		//yields a new post comment
+		transactionID = program.startTransaction("add_second_jump_ref");
+		Reference ref2 = null;
+		try {
+			ref2 = refManager.addMemoryReference(addr("1003000"), addr("1003008"),
+				RefType.JUMP_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Jump Destination Override: LAB_01003008 (01003008)", tf.getText());
+
+		//test the swapping which reference is primary changes the post comment
+		transactionID = program.startTransaction("swap_primary");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(ref1, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Jump Destination Override: LAB_01003006 (01003006)", tf.getText());
+
+		//test that making all references non-primary removes the post comment
+		transactionID = program.startTransaction("no_primary_refs");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(ref1, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//test that the other overriding reference types don't add any post comments
+		transactionID = program.startTransaction("add_overriding_call_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1003000"), addr("1004000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_call_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1003000"), addr("1004000"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_jump_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1003000"), addr("1003006"),
+				RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1003000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//last test: test primary refs on mnemonic and operand 1
+		//shouldn't work
+	}
+
+	@Test
+	public void testOverridingIndirectCallComment() {
+		//test that a primary RefType.CALL_OVERRIDE_UNCONDITIONAL reference on an indirect call
+		//causes a post comment indicating that the call destination has been overridden
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference ref1 = null;
+		int transactionID = program.startTransaction("override indirect call");
+		try {
+			ref1 = refManager.addMemoryReference(addr("1004000"), addr("1003000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref1, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: jump_override (01003000)", tf.getText());
+
+		//test that making the reference non-primary remove the post comment
+		ref1 = refManager.getPrimaryReferenceFrom(addr("1004000"), Reference.MNEMONIC);
+		assertTrue(ref1.isPrimary());
+		transactionID = program.startTransaction("set_ref_non_primary");
+		try {
+			refManager.setPrimary(ref1, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//test that adding a second ref of the same type and setting it to primary
+		//yields a new post comment
+		transactionID = program.startTransaction("add_second_ref");
+		Reference ref2 = null;
+		try {
+			ref2 = refManager.addMemoryReference(addr("1004000"), addr("1001000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: FUN_01001000 (01001000)", tf.getText());
+
+		//test the swapping which reference is primary changes the post comment
+		transactionID = program.startTransaction("swap_primary");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(ref1, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: jump_override (01003000)", tf.getText());
+
+		//test that making all references non-primary removes the post comment
+		transactionID = program.startTransaction("no_primary_refs");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(ref1, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_jump_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1004000"), addr("1003008"),
+				RefType.JUMP_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_call_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1004000"), addr("1003000"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_jump_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1004000"), addr("1003006"),
+				RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1004000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+	}
+
+	@Test
+	public void testOverridingDirectCallAndBackwardCompatibility() {
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference defaultRef = refManager.getPrimaryReferenceFrom(addr("1005000"), 0);
+		assertNotNull(defaultRef);
+		Reference callOverride = null;
+		int transactionID = program.startTransaction("add_overriding_callother_jump_ref");
+		try {
+			callOverride = refManager.addMemoryReference(addr("1005000"), addr("1003000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//there's a primary call-type reference on operand one, so the CALL_OVERRIDE_UNCONDITIONAL
+		//override should *not* be active (this is testing backward compatibility)
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//now make defaultRef non-primary and verify that the postcomment from callOverride
+		//shows up
+		transactionID = program.startTransaction("de-primary default ref");
+		try {
+			refManager.setPrimary(defaultRef, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: jump_override (01003000)", tf.getText());
+
+		transactionID = program.startTransaction("set_ref_non_primary");
+		try {
+			refManager.setPrimary(callOverride, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//test that adding a second ref of the same type and setting it to primary
+		//yields a new post comment
+		transactionID = program.startTransaction("add_second_ref");
+		Reference ref2 = null;
+		try {
+			ref2 = refManager.addMemoryReference(addr("1005000"), addr("1001000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: FUN_01001000 (01001000)", tf.getText());
+
+		//test the swapping which reference is primary changes the post comment
+		transactionID = program.startTransaction("swap_primary");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(callOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: jump_override (01003000)", tf.getText());
+
+		//test that making all references non-primary removes the post comment
+		transactionID = program.startTransaction("no_primary_refs");
+		try {
+			refManager.setPrimary(ref2, false);
+			refManager.setPrimary(callOverride, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		//verify that JUMP_OVERRIDE_UNCONDITIONAL references and 
+		//CALLOTHER overriding references don't do anything
+		transactionID = program.startTransaction("add_overriding_jump_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1005000"), addr("1003008"),
+				RefType.JUMP_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_call_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1005000"), addr("1003000"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+		transactionID = program.startTransaction("add_overriding_callother_jump_ref");
+		try {
+			ref2 = refManager.addMemoryReference(addr("1005000"), addr("1003006"),
+				RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref2, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+	}
+
+	@Test
+	public void testExactlyOnePrimaryOverridingRef() {
+		assertFalse(cb.goToField(addr("1006000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference defaultRef = refManager.getPrimaryReferenceFrom(addr("1006000"), 0);
+		assertNotNull(defaultRef);
+		Reference callOverrideMnemonic = null;
+		int transactionID =
+			program.startTransaction("turn_off_existing_primary_ref_and_create_override_ref");
+		try {
+			refManager.setPrimary(defaultRef, false);
+			callOverrideMnemonic = refManager.addMemoryReference(addr("1006000"), addr("1003000"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOverrideMnemonic, true);
+
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1006000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: jump_override (01003000)", tf.getText());
+		Reference callOverrideOperand0 = null;
+		transactionID = program.startTransaction("set_operand_ref_primary");
+		try {
+			callOverrideOperand0 = refManager.addMemoryReference(addr("1006000"), addr("1005020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(callOverrideOperand0, true);
+
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//two primary override refs of same type, override should not take effect
+		assertFalse(cb.goToField(addr("1006000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		transactionID = program.startTransaction("set_mnemonic_ref_non_primary");
+		try {
+			refManager.setPrimary(callOverrideMnemonic, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//now there's only one primary overriding ref, so the override comment should be there
+		assertTrue(cb.goToField(addr("1006000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: call_dest_1 (01005020)", tf.getText());
+		transactionID = program.startTransaction("set_operand_ref_non_primary");
+		try {
+			refManager.setPrimary(callOverrideOperand0, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//no primary overriding refs, no override post comment
+		assertFalse(cb.goToField(addr("1006000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
+	}
+
+	@Test
+	public void testOverridingWithChangingDestination() {
+		assertFalse(cb.goToField(addr("1007000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference defaultRef = refManager.getPrimaryReferenceFrom(addr("1007000"), 0);
+		assertNotNull(defaultRef);
+		Reference callOverrideMnemonic = null;
+		int transactionID = program.startTransaction("override_without_changing_dest");
+		try {
+			refManager.setPrimary(defaultRef, false);
+			callOverrideMnemonic = refManager.addMemoryReference(addr("1007000"), addr("1007020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOverrideMnemonic, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1007000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- Call Destination Override: call_dest_3 (01007020)", tf.getText());
+		transactionID = program.startTransaction("turn_off_override");
+		try {
+			refManager.setPrimary(defaultRef, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1007000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+	}
+
+	//TODO: test overriding CALLOTHER ops
 
 	private void setCommentInFunction(Function function, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
