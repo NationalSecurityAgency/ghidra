@@ -284,10 +284,21 @@ public class BitFieldEditorPanel extends JPanel {
 			if (!selectionActive) {
 				return;
 			}
-			int bitOffset = placementComponent.getBitOffset(e.getPoint());
+
+			Point p = e.getPoint();
+			int bitOffset = placementComponent.getBitOffset(p);
 			if (bitOffset == lastBit) {
 				return;
 			}
+
+			// ensure that scroll region keeps mouse point visible
+			if (!placementComponent.getVisibleRect().contains(p)) {
+				BitAttributes bitAttributes = placementComponent.getBitAttributes(e.getPoint());
+				if (bitAttributes != null) {
+					placementComponent.scrollRectToVisible(bitAttributes.rectangle);
+				}
+			}
+
 			if (bitOffset >= 0) {
 				// NOTE: spinner models require use of long values
 				lastBit = bitOffset;
