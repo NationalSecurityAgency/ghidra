@@ -20,13 +20,13 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import javax.swing.JPanel;
-import javax.swing.ToolTipManager;
+import javax.swing.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
+import resources.icons.ColorIcon;
 
 public class BitFieldPlacementComponent extends JPanel {
 
@@ -39,14 +39,16 @@ public class BitFieldPlacementComponent extends JPanel {
 	private static final int SCROLLBAR_THICKNESS = 10;
 	private static final int MY_HEIGHT = (2 * CELL_HEIGHT) + (3 * BYTE_SEPARATOR_THICKNESS);
 
+	private static final int LENEND_BOX_SIZE = 16;
+
 	private static final Color TEXT_COLOR = Color.black;
 	private static final Color LINE_COLOR = Color.black;
 	private static final Color BYTE_HEADER_COLOR = new Color(0xdfdfdf);
-	private static final Color UNDEFINED_BIT_COLOR = new Color(0xe8e8e8);
+	private static final Color UNDEFINED_BIT_COLOR = new Color(0xf8f8f8);
 	private static final Color BITFIELD_BITS_COLOR = Color.green;
 	private static final Color CONFLICT_BITS_COLOR = Color.yellow;
 	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xcfcfff);
-	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xafafff);
+	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xafafaf);
 	private static final Color INTERIOR_LINE_COLOR = new Color(0xbfbfbf);
 
 	private final Composite composite;
@@ -57,6 +59,30 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	private EditMode editMode = EditMode.NONE;
 	private int editOrdinal = -1; // FIXME: improve insert use
+
+	public static class BitFieldLegend extends JPanel {
+
+		BitFieldLegend() {
+			setLayout(new GridLayout(2, 3, 5, 5));
+			//setLayout(new RowColumnLayout(10, 10, RowColumnLayout.ROW, 0));
+			add(new JLabel("Undefined bits",
+				new ColorIcon(UNDEFINED_BIT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+				SwingConstants.LEFT));
+			add(new JLabel("Defined bitfield",
+				new ColorIcon(BITFIELD_COMPONENT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+				SwingConstants.LEFT));
+			add(new JLabel("Defined non-bitfield",
+				new ColorIcon(NON_BITFIELD_COMPONENT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+				SwingConstants.LEFT));
+			add(new JLabel("Edit bitfield bits",
+				new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+				SwingConstants.LEFT));
+			add(new JLabel("Conflict bits",
+				new ColorIcon(CONFLICT_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+				SwingConstants.LEFT));
+		}
+
+	}
 
 	BitFieldPlacementComponent(Composite composite) {
 		this.composite = composite;

@@ -20,7 +20,15 @@ struct B1 {
 	unsigned short b:6; // gcc groups with previous non-bitfield
 	int c:8; // gcc groups with previous two fields (including non-bitfield)
 	short d:4;
-}; 
+};
+
+struct B1flex {
+	char a;
+	unsigned short b:6; // gcc groups with previous non-bitfield
+	int c:8; // gcc groups with previous two fields (including non-bitfield)
+	short d:4;
+	long flex[];
+};  
 
 struct B2 {
 	char a;

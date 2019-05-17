@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 
@@ -87,15 +88,20 @@ public class BitFieldEditorPanel extends JPanel {
 
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		createPlacementPanel();
-
 		if (composite instanceof Structure) {
 			add(createAllocationOffsetPanel());
 		}
-		add(placementComponent);
+		add(createPlacementPanel());
+		add(createLegendPanel());
 		add(createEntryPanel());
 
 		enableControls(false);
+	}
+
+	private JPanel createLegendPanel() {
+		JPanel legendPanel = new JPanel(new BorderLayout());
+		legendPanel.add(new BitFieldPlacementComponent.BitFieldLegend(), BorderLayout.WEST);
+		return legendPanel;
 	}
 
 	private JPanel createAllocationOffsetPanel() {
@@ -320,10 +326,14 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.addMouseListener(bitSelectionHandler);
 		placementComponent.addMouseMotionListener(bitSelectionHandler);
 
-		JScrollPane scrollPane =
-			new JScrollPane(placementComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JPanel p = new JPanel(new BorderLayout());
+		p.add(placementComponent, BorderLayout.WEST);
+		p.setBorder(new EmptyBorder(0, 0, 5, 0));
+
+		JScrollPane scrollPane = new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+			ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.getViewport().setBackground(getBackground());
+		scrollPane.setBorder(null);
 
 		midPanel.add(scrollPane);
 		return midPanel;
@@ -448,12 +458,12 @@ public class BitFieldEditorPanel extends JPanel {
 
 	boolean endCurrentEdit() {
 		if (placementComponent.isEditing()) {
-			String currentOp = placementComponent.isAdding() ? "add" : "edit";
-			int option = OptionDialog.showYesNoDialog(this, "Confirm Edit Action",
-				"Cancel current bitfield " + currentOp + " operation?");
-			if (option != OptionDialog.YES_OPTION) {
-				return false;
-			}
+//			String currentOp = placementComponent.isAdding() ? "add" : "edit";
+//			int option = OptionDialog.showYesNoDialog(this, "Confirm Edit Action",
+//				"Cancel current bitfield " + currentOp + " operation?");
+//			if (option != OptionDialog.YES_OPTION) {
+//				return false;
+//			}
 			placementComponent.cancelEdit();
 			enableControls(false);
 		}
@@ -490,14 +500,18 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	private void enableControls(boolean enable) {
+		dtChoiceEditor.getBrowseButton().setEnabled(enable);
+		dtChoiceEditor.getDropDownTextField().setEnabled(enable);
+		fieldNameTextField.setEnabled(enable);
 		allocSizeInput.setEnabled(enable);
 		bitSizeInput.setEnabled(enable);
 		bitOffsetInput.setEnabled(enable);
 		if (!enable) {
 			// TODO: set placementComponent mode to NONE
+			dtChoiceEditor.getDropDownTextField().setText("");
+			fieldNameTextField.setText(null);
 			bitOffsetModel.setValue(0L);
 			bitSizeModel.setValue(1L);
-			fieldNameTextField.setText(null);
 		}
 	}
 

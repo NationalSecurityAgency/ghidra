@@ -23,7 +23,6 @@ import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
-import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -56,32 +55,12 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		}
 		int rowIndex = model.getSelectedRows()[0];
 
-		if (editorModel.isAligned()) {
-			// Insert before selected component
-			// ordinal based, user input needed: 
-			//   1. bitfield base datatype
-			//   2. bitfield size
-			//   3. bitfield name (can be renamed later)
-			int ordinal = -1;
-			DataType baseDataType = null;
-			if (!editorModel.isAtEnd(rowIndex)) {
-				DataTypeComponent component = editorModel.getComponent(rowIndex);
-				ordinal = component.getOrdinal();
-				if (component.isBitFieldComponent()) {
-					BitFieldDataType currentBitfield = (BitFieldDataType) component.getDataType();
-					baseDataType = currentBitfield.getBaseDataType();
-				}
-			}
-			insertBitField(ordinal, baseDataType);
-		}
-		else {
-			BitFieldEditorDialog dlg =
-				new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
-					-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
-			Component c = provider.getComponent();
-			Window w = SwingUtilities.windowForComponent(c);
-			DockingWindowManager.showDialog(w, dlg, c);
-		}
+		BitFieldEditorDialog dlg =
+			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
+				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
+		Component c = provider.getComponent();
+		Window w = SwingUtilities.windowForComponent(c);
+		DockingWindowManager.showDialog(w, dlg, c);
 
 		requestTableFocus();
 	}
@@ -93,17 +72,12 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		editorTable.getSelectionModel().setSelectionInterval(ordinal, ordinal);
 	}
 
-	private void insertBitField(int ordinal, DataType baseDataType) {
-		// TODO Auto-generated method stub
-
-	}
-
 	@Override
 	public void adjustEnablement() {
 		boolean enabled = true;
 		CompEditorModel editorModel = (CompEditorModel) model;
-		if (editorModel.viewComposite == null || editorModel.getNumSelectedRows() != 1 ||
-			editorModel.isFlexibleArraySelection()) {
+		if (editorModel.viewComposite == null || editorModel.isAligned() ||
+			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
 			enabled = false;
 		}
 		setEnabled(enabled);
