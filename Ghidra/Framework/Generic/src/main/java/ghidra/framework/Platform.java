@@ -51,6 +51,21 @@ public enum Platform {
 	LINUX_64(OperatingSystem.LINUX, Architecture.X86_64, "linux64", ".so", ""),
 
 	/**
+	 * Identifies a Linux OS.
+	 */
+	LINUX_64_PPC(OperatingSystem.LINUX, Architecture.POWERPC_64, "linux64", ".so", ""),
+
+	/**
+	 * Identifies a Linux OS.
+	 */
+	LINUX_64_PPCLE(OperatingSystem.LINUX, Architecture.POWERPC_64LE, "linux64", ".so", ""),
+
+	/**
+	 * Identifies a Linux OS.
+	 */
+	LINUX_64_ARM(OperatingSystem.LINUX, Architecture.ARM_64, "linux64", ".so", ""),
+
+	/**
 	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered
 	 */
 	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux32", ".so", ""),

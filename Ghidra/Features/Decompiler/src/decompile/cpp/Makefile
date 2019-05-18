@@ -17,7 +17,7 @@ ifeq ($(OS),Linux)
 ifndef ARCH
   ARCH=$(CPU)
 endif
-ifeq ($(ARCH),x86_64)
+ifneq ($(filter x86_64 ppc64 ppc64le aarch64,$(ARCH)),)
   ARCH_TYPE=-m64
   OSDIR=linux64
 else
