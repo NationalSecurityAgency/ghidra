@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #---------------------------------------------------------------------------------------
 # Ghidra Server Script (see svrREADME.html for usage details)
@@ -6,7 +6,7 @@
 #---------------------------------------------------------------------------------------
 
 # The Java 11 (or later) runtime installation must either be on the system path or identified
-# by setting the JAVA_HOME environment variable.  If not using a formally installed Java 
+# by setting the JAVA_HOME environment variable.  If not using a formally installed Java
 # runtime which has been configured into the system PATH ahead of other Java installations
 # it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
 # below:
@@ -38,16 +38,16 @@ reportError() {
 	exit 1
 }
 
-if [ "$OPTION" == "" ]; then
+if [ "$OPTION" = "" ]; then
 	usage
 fi
 
-if [ "$EUID" != "0" ]; then
-	if [ "$OPTION" == "start" ]; then adminFail
-	elif [ "$OPTION" == "stop" ]; then adminFail
-	elif [ "$OPTION" == "install" ]; then adminFail
-	elif [ "$OPTION" == "uninstall" ]; then adminFail
-	elif [ "$OPTION" == "restart" ]; then adminFail
+if [ "$(id -u)" != "0" ]; then
+	if [ "$OPTION" = "start" ]; then adminFail
+	elif [ "$OPTION" = "stop" ]; then adminFail
+	elif [ "$OPTION" = "install" ]; then adminFail
+	elif [ "$OPTION" = "uninstall" ]; then adminFail
+	elif [ "$OPTION" = "restart" ]; then adminFail
 	fi
 fi
 
@@ -59,7 +59,7 @@ SERVICE_NAME=org.rzo.yajsw.$APP_NAME
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
-# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
@@ -145,12 +145,12 @@ enableForkHack() {
 	if [ "${HAS_FORK_HACK_LINE}" = "wrapper.fork_hack=true" ]; then
 		return 0
 	fi
-	
+
 	if [ "${HAS_FORK_HACK_LINE}" = "" ]; then
 		echo "ERROR: server.conf does not have fork_hack line - unable to fix it!"
 		return 1
 	fi
-	
+
 	# Enable fork_hack in server.conf
 	ed "${WRAPPER_CONF}" <<EOF > /dev/null
 /wrapper.fork_hack=
@@ -168,7 +168,7 @@ EOF
 		echo "ERROR: failed to install fork_hack in server.conf"
 		return 1
 	fi
-	
+
 	return 0
 }
 
@@ -191,7 +191,7 @@ start() {
     echo "Starting ${APP_LONG_NAME}..."
     java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
 }
- 
+
 stopit() {
     echo "Stopping ${APP_LONG_NAME}..."
     java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
@@ -217,9 +217,9 @@ case "$1" in
     	enableForkHack
         console
         ;;
-        
+
     'status')
-        status 
+        status
         ;;
 
     'start')
@@ -253,7 +253,7 @@ case "$1" in
     'uninstall')
     		checkInstall
     		if [ $? = 0 ]; then
-        		uninstall 
+        		uninstall
         fi
         ;;
 

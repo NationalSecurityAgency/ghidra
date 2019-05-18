@@ -44,7 +44,7 @@ If you need these offline, a reasonable course of action is to set up a developm
 ## Install Development and Build Tools
 
 If you're on Windows, install Git, MinGW, Bison, and Flex.
-Many of the commands given below must be executed in Bash (Use git-bash or MSYS from MinGW).
+Many of the commands given below must be executed in a shell, for example Bash (Use git-bash or MSYS from MinGW).
 **IMPORTANT**: The bison and flex executables may be named `win-bison.exe` and `win-flex.exe`.
 Our build cannot currently cope with that, so you should rename them to `bison.exe` and `flex.exe`.
 
@@ -61,7 +61,7 @@ Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
 You may choose any directory for your working copy, but these instructions will assume you have cloned the source to `~/git/ghidra`.
 Be sure to adjust the commands to match your chosen working directory if different than suggested:
 
-```bash
+```sh
 mkdir ~/git
 cd ~/git
 git clone git@github.com:NationalSecurityAgency/ghidra.git
@@ -87,7 +87,7 @@ allprojects {
 
 Create the `~/flatRepo` folder to hold the manually-downloaded dependencies:
 
-```bash
+```sh
 mkdir ~/flatRepo
 ```
 
@@ -99,7 +99,7 @@ Gradle's other init script facilities, but you're on your own.
 Download `dex-tools-2.0.zip` from the dex2jar project's releases page on GitHub.
 Unpack the `dex-*.jar` files from the `lib` directory to `~/flatRepo`:
 
-```bash
+```sh
 cd ~/Downloads   # Or wherever
 curl -OL https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
 unzip dex-tools-2.0.zip
@@ -110,7 +110,7 @@ cp dex2jar-2.0/lib/dex-*.jar ~/flatRepo/
 Download `AXMLPrinter2.jar` from the "android4me" archive on code.google.com.
 Place it in `~/flatRepo`:
 
-```bash
+```sh
 cd ~/flatRepo
 curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
 ```
@@ -120,7 +120,7 @@ curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.go
 Download `hfsexplorer-0_21-bin.zip` from www.catacombae.org.
 Unpack the `lib` directory to `~/flatRepo.`:
 
-```bash
+```sh
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip
 mkdir hfsx
@@ -143,7 +143,7 @@ You may see build path errors until the environment is properly prepared, as des
 This is the way to go if you'd prefer not to activate Gradle's BuildShip plugin.
 From the project root:
 
-```bash
+```sh
 gradle eclipse
 ```
 
@@ -156,7 +156,7 @@ You may see build path errors until the environment is properly prepared, as des
 
 From the project root, execute:
 
-```bash
+```sh
 gradle prepDev -x yajswDevUnpack eclipse
 ```
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
@@ -165,7 +165,7 @@ For now, we exclude the unpack task.
 
 Optionally, to pre-compile all the language modules, you may also execute:
 
-```bash
+```sh
 gradle sleighCompile
 ```
 
@@ -184,19 +184,19 @@ Now build using Gradle:
 
 On Linux:
 
-```bash
+```sh
 gradle buildNatives_linux64
 ```
 
 On macOS:
 
-```bash
+```sh
 gradle buildNatives_osx64
 ```
 
 On Windows:
 
-```bash
+```sh
 gradle buildNatives_win64
 ```
 
@@ -220,7 +220,7 @@ Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) ve
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in a directory named:
 `ghidra.bin/Ghidra/Features/GhidraServer/`. Note that `ghidra.bin` must be a sibling of `ghidra`:
 
-```bash
+```sh
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
 mkdir -p ~/git/ghidra.bin/Ghidra/Features/GhidraServer/
@@ -230,7 +230,7 @@ cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra.bin/Ghidra/Features/GhidraSer
 Use Gradle to unpack the wrapper for development.
 From your clone:
 
-```bash
+```sh
 gradle yajswDevUnpack
 ```
 
@@ -246,7 +246,7 @@ You may also be able to copy some of this data from a previous official distribu
 
 To build the full package, use Gradle:
 
-```bash
+```sh
 gradle buildGhidra
 ```
 
@@ -291,7 +291,7 @@ First, install the Eclipse Plugin Development Environment (PDE).
 By default, the GhidraDev project is excluded from the build.
 To enable it, uncomment it in `settings.gradle`.
 
-```bash
+```sh
 ${EDITOR:-vi} settings.gradle
 ```
 
@@ -304,7 +304,7 @@ Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in a director
 `ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/`. Note that
 `ghidra.bin` must be a sibling of `ghidra`.
 
-```bash
+```sh
 cd ~/Downloads   # Or wherever
 curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'http://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
@@ -315,7 +315,7 @@ cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraD
 
 Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
 
-```bash
+```sh
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
 cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
@@ -325,7 +325,7 @@ Use Gradle to unpack the dependencies.
 Note that these tasks will not work until you enable the GhidraDev project in `settings.gradle`.
 From your clone:
 
-```bash
+```sh
 gradle cdtUnpack pyDevUnpack
 ```
 

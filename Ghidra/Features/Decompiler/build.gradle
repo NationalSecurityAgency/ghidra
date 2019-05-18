@@ -13,11 +13,11 @@ eclipse.project.name = 'Features Decompiler'
 dependencies {
 	compile project(':Base')
 	compile project(':SoftwareModeling')
-	
+
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
 	integrationTestRuntime project(path: ':Base', configuration: 'testArtifacts')
 	testCompile "org.jmockit:jmockit:1.44"
-	
+
     helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
@@ -29,12 +29,12 @@ dependencies {
 task yaccDecompiler {
 	Task t1 = createBisonTask("xml", "decompile", true);
 	Task t2 = createBisonTask("grammar", "decompile", true);
-	
+
 	dependsOn t1, t2
 
-	// these variables are used by the cpp sources sets as an input to the decompiler native build	
+	// these variables are used by the cpp sources sets as an input to the decompiler native build
 	ext.sourceDir = file("build/generated/decompile/cpp")
-	ext.headerDir = file("build/generated/decompile/headers") 
+	ext.headerDir = file("build/generated/decompile/headers")
 }
 
 /**
@@ -45,11 +45,11 @@ task yaccSleigh {
 	Task t1 = createBisonTask("slghparse", "sleigh", false);
 	Task t2 = createBisonTask("pcodeparse", "sleigh", true);
 	Task t3 = createBisonTask("xml", "sleigh", true);
-	
+
 	dependsOn t1,t2,t3
 
 	ext.sourceDir = file("build/generated/sleigh/cpp")
-	ext.headerDir = file("build/generated/sleigh/headers")  
+	ext.headerDir = file("build/generated/sleigh/headers")
 }
 
 /**
@@ -58,11 +58,11 @@ task yaccSleigh {
  */
  task lexSleigh {
 	Task t1 = createLexTask("slghscan", "sleighlex")
-	
+
 	dependsOn t1
-		
+
 	ext.sourceDir = file("build/generated/sleighlex")
-	ext.headerDir = file("build/generated/sleighlex")  
+	ext.headerDir = file("build/generated/sleighlex")
 }
 
 def buildDir = "../../../build" // Relative to the 'workingDir' Exec task property.
@@ -78,7 +78,7 @@ def installPoint = "$rootDir/GhidraDocs/languages/html"
  */
 task buildDecompilerDocumentationPdfs(type: Exec) {
 	// Check the OS before enabling task.
-	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux()
 		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
 			println "The '$it.name' task only works on Linux or Mac Os X and is therefore disabled."
 			it.enabled = false
@@ -94,14 +94,14 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 	outputs.file "$workingDir/$buildDir/sleigh.pdf"
 
 	// 'which' returns the number of failed arguments
-	// Using 'which' first will allow the entire command to fail if the required 
+	// Using 'which' first will allow the entire command to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The shell commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
+	// 'commandLine' takes one command, so wrap multiple commands in sh.
+	commandLine 'sh', '-e', '-c', """
 		echo '** Checking if required executables are installed. **'
 		which fop 2>&1
 		which xsltproc 2>&1
@@ -123,7 +123,7 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 		echo '** Done. **'
 		"""
 
-	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
+	// Allows doLast block regardless of exit value. Task does not fail if shell command fails.
 	ignoreExitValue true
 
 	// Store the output instead of printing to the console.
@@ -156,17 +156,17 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 	// declared outputs.
 	outputs.file "$workingDir/$buildDir/index.html"
 	outputs.dir  "$workingDir/$buildDir/html"
-	
+
 
 	// 'which' returns the number of failed arguments
-	// Using the 'which' command first will allow the task to fail if the required 
+	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The shell commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
+	// 'commandLine' takes one command, so wrap multiple commands in sh.
+	commandLine 'sh', '-e', '-c', """
 		echo '** Checking if required executables are installed. **'
 		which sed 2>&1
 		which xsltproc 2>&1
@@ -210,7 +210,7 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 
 		// Check the OS before executing command.
 		doFirst {
-			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux()
 				|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
 				throw new TaskExecutionException( it,
 					new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
@@ -234,17 +234,17 @@ task buildDecompilerDocumentationHtml(type: Exec) {
  * Define the "native build model" for building the decompiler executables.
  */
 model {
-	
+
 	// Define the source files that are compiled and linked to become the decompiler.
 	// The decompiler source is a bit weird in that all the cpp and headers all live in
 	// the same directory with other files that are not used by the decompiler.
 	// That is why we have to list every cpp file that makes up the decomplier.
 	components {
-			
+
 		decompile(NativeExecutableSpec) {
-		
+
 			baseName "decompile"
-									
+
 			// these tell gradle for which platforms to build a decompiler executable.
 			targetPlatform "win64"
 			targetPlatform "linux64"
@@ -330,7 +330,7 @@ model {
 						srcDir "src/decompile/cpp"
 					}
 				} // end cpp
-				
+
 				// this creates a source set that is basically the output of bison yacc task
 				// defined above that compiles the xml.y file to a cpp file.
 				yacc(CppSourceSet) {
@@ -338,10 +338,10 @@ model {
 					exportedHeaders {
 						srcDir "src/decompile/cpp"
 					}
-				}				
+				}
 			} // end sources
 		}// end decompile
-		
+
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win64"
 			targetPlatform "linux64"
@@ -391,11 +391,11 @@ model {
 						srcDir lexSleigh.headerDir
 					}
 				}
-				
+
 			} // end sources (sleigh)
 		}
 	}  // end components
-	
+
 	binaries {
 		all{ b ->
 			if (b.toolChain in Gcc) {
@@ -423,8 +423,8 @@ model {
 					if (b.targetPlatform.name == "win64") {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
-					}	
-				}	
+					}
+				}
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-Wall"
@@ -460,24 +460,24 @@ Task createBisonTask(String filename, String binaryName, boolean qualifyVariable
 		doFirst {
 			file(outputCppDir).mkdirs()
 			file(outputHeadersDir)mkdirs()
-		}		
-		
+		}
+
 		executable 'bison'			// use bison program to process yacc files
-		
+
 		// specify the bison's output file
 		args "-o", "$outputCppDir/${filename}.tab.cc"
-		
+
 		// most of the yacc files should be compiled with a variable qualifyer to avoid dupes.
-		// Unfortunately there is one (slghparse) that can't use a qualifyer because it 
+		// Unfortunately there is one (slghparse) that can't use a qualifyer because it
 		// declares a variable used by other files.
-		
+
 		if (qualifyVariables) {
 			args "-p", filename
 		}
-		
+
 		// tell bison where to put the hh file.
 		args "--defines=${outputHeadersDir}/${filename}.tab.hh"
-		
+
 		// tell bison the file to compile
 		args inputFile
 	}
@@ -494,21 +494,21 @@ Task createLexTask(String filename, String binaryName) {
 		executable 'flex'			// the program to execute
 
 		// set up inputs and outputs so that gradle knows when this needs to be rebuilt
-	
+
 		inputs.file inputFile
-		outputs.dir outputDir	
-	
+		outputs.dir outputDir
+
 		// 	make sure the output dirs are created, but do it in the execution phase.
 		// 	Can't do it in the configure phase, otherwise
 		// 	a clean will remove it during the execution phase
-	
+
 		doFirst {
 			file(outputDir).mkdirs();
-		}	
+		}
 
 		// tell flex where to put the output
 		args "-o", "$outputDir/${filename}.yy.cc"
-		
+
 		// tell flex the input file
 		args inputFile
 	}
@@ -516,11 +516,11 @@ Task createLexTask(String filename, String binaryName) {
 
 rootProject.createInstallationZip {
 	dependsOn buildDecompilerDocumentationPdfs
-	
-	
+
+
 	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
-	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
+	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time
 	// (if there was an error or wrong platform), the zip task will move on.
 	buildDecompilerDocumentationPdfs.outputs.each { output ->
 		output.files.each { file ->

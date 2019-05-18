@@ -11,9 +11,9 @@ eclipse.project.name = 'Features FunctionID'
 dependencies {
 	compile project(":Base")
 	compile project(":DB")
-	compile project(":SoftwareModeling")    
+	compile project(":SoftwareModeling")
 	helpPath project(path: ":Base", configuration: 'helpPath')
-	
+
 }
 
 // All *.fidb files located in the BIN repo under src/main/fidb will be unpacked
@@ -26,11 +26,11 @@ def fidDbFiles = fileTree(fidbSrcDir) {
 task unpackFidDatabases {
 	doLast {
 		fidDbFiles.each { file ->
-		
+
 			// TODO: Preserve subdir path
 			def destName = file.name.replaceAll(/\.fidb$/, ".fidbf")
 			def destFile = new File(project.file('build/data'), destName)
-			
+
 			if (!destFile.exists() || destFile.length() == 0 || destFile.lastModified() < file.lastModified()) {
 				logger.info("FIDB: ${file} -> ${destFile}");
 				destFile.getParentFile().mkdirs();
@@ -58,14 +58,14 @@ task buildFidDocumentationPdf(type: Exec) {
 	outputs.file "$workingDir/$installPoint/FunctionID.pdf"
 
 	// 'which' returns the number of failed arguments
-	// Using the 'which' command first will allow the task to fail if the required 
+	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The shell commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
+	// 'commandLine' takes one command, so wrap multiple commands in the shell.
+	commandLine 'sh', '-e', '-c', """
 		echo '** Checking if required executables are installed. **'
 		which fop
 		which xsltproc
@@ -87,7 +87,7 @@ task buildFidDocumentationPdf(type: Exec) {
 		echo '** Done. **'
 		"""
 
-	// Allows doLast block regardless of exit value. 
+	// Allows doLast block regardless of exit value.
 	ignoreExitValue true
 
 	// Store the output instead of printing to the console.
@@ -97,7 +97,7 @@ task buildFidDocumentationPdf(type: Exec) {
 
 	// Check the OS before executing command.
 	doFirst {
-		if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+		if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux()
 			|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
 			throw new TaskExecutionException( it,
 				new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
@@ -126,14 +126,14 @@ task buildFidDocumentationHtml(type: Exec) {
 	workingDir 'src/main/doc'
 
 	// 'which' returns the number of failed arguments
-	// Using the 'which' command first will allow the task to fail if the required 
+	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The shell commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
+	// 'commandLine' takes one command, so wrap multiple commands in shell.
+	commandLine 'sh', '-e', '-c', """
 	echo '** Checking if required executables are installed. **'
 	which sed
 	which xsltproc
@@ -195,11 +195,11 @@ def unpackFolderItemDatabase(packedFile, destDbFile) {
 
 	BufferedInputStream fin = new BufferedInputStream(new FileInputStream(packedFile))
 	FileOutputStream fout = null
-	
+
 	// Read header containing: original item name and content type
 	boolean success = false;
 	try {
-	
+
 		ObjectInputStream objIn = new ObjectInputStream(fin);
 		if (objIn.readLong() != MAGIC_NUMBER) {
 			throw new IOException("Invalid data");
@@ -215,10 +215,10 @@ def unpackFolderItemDatabase(packedFile, destDbFile) {
 		}
 		int fileType = objIn.readInt();
 		long length = objIn.readLong();
-		
+
 		fout = new FileOutputStream(destDbFile);
 		saveItem(fin, fout, length);
-		
+
 		success = true;
 		return contentType;
 	}

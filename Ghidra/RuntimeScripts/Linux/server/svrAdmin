@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # ***********************************************************
 # ** Arguments (each -argument option may be repeated):
 # **   [-add <sid>] [-dn <sid> "<x500_distinguished_name>"]
-# **   [-remove <sid>] 
+# **   [-remove <sid>]
 # **   [-reset <sid>]
-# **   [-admin <sid> "<repository-name>"] 
-# **   [-list] [-users] 
+# **   [-admin <sid> "<repository-name>"]
+# **   [-list] [-users]
 # **   [-migrate "<repository-name>"] [-migrate-all]
 # **
 # **   add - add a new user to the server with the default password 'changeme'
@@ -17,17 +17,17 @@
 # **   users - list all users or those associated with each listed repository
 # **   migrate - migrate the specified named repository to an indexed data storage
 # **   migrate-all - migrate all named repositories to index data storage
-# ***********************************************************  
+# ***********************************************************
 
 SUDO=sudo
 
-# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
+# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of
 # the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
 MAXMEM=128M
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
-# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
@@ -48,5 +48,5 @@ if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
 	"${SCRIPT_DIR}"/../support/launch.sh fg svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "$@"
 else
  	echo "Running svrAdmin with $SUDO as ${OWNER} ..."
- 	$SUDO -u $OWNER "$0" "${ARGS[@]}"
+ 	$SUDO -u $OWNER "$0" "${ARGS}"
 fi

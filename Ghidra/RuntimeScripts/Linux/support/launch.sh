@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 umask 027
 
-function showUsage() {
+showUsage() {
 
 	echo "Usage: $0 <mode> <name> <max-memory> \"<vmarg-list>\" <app-classname> <app-args>... "
 	echo "   <mode>: fg   run as foreground process in current shell"
@@ -28,7 +28,7 @@ function showUsage() {
 
 
 VMARG_LIST=
-ARGS=()
+ARGS=
 INDEX=0
 
 WHITESPACE="[[:space:]]"
@@ -56,16 +56,16 @@ do
 			;;
 		*)
 			# Preserve quoted arguments
-			if [[ $AA =~ $WHITESPACE ]]; then
+			if [ $AA =~ $WHITESPACE ]; then
 				AA="\"$AA\""
 		    fi
-			ARGS[${#ARGS[@]}]=$AA
+			ARGS="${ARGS} $AA"
 			;;
 	esac
 done
 
 # Verify that required number of args were provided
-if [[ ${INDEX} -lt 5 ]]; then
+if [ ${INDEX} -lt 5 ]; then
 	echo "Incorrect launch usage - missing argument(s)"
 	showUsage
 	exit 1
@@ -99,7 +99,7 @@ JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -sa
 if [ ! $? -eq 0 ]; then
 	# No JDK has been setup yet.  Let the user choose one.
 	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -ask
-	
+
 	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
 	JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -save)"
 	if [ ! $? -eq 0 ]; then
@@ -111,35 +111,35 @@ fi
 JAVA_CMD="${JAVA_HOME}/bin/java"
 
 # Get the configurable VM arguments from the launch properties
-VMARG_LIST+=" $(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)"
+VMARG_LIST="${VMARG_LIST} $(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)"
 
 # Add extra macOS VM arguments
 if [ "$(uname -s)" = "Darwin" ]; then
-	VMARG_LIST+=" -Xdock:name=${APPNAME}"
-	VMARG_LIST+=" -Xdock:icon=\"${INSTALL_DIR}/Ghidra/Features/Base/os/osx64/ghidra.icns\""
-	
-	# Eclipse on macOS (Darwin) can have file locking issues if the user home directory is 
-	# networked.  Therefore, we will disable file locking by default for macOS. Comment the 
+	VMARG_LIST="${VMARG_LIST} -Xdock:name=${APPNAME}"
+	VMARG_LIST="${VMARG_LIST} -Xdock:icon=\"${INSTALL_DIR}/Ghidra/Features/Base/os/osx64/ghidra.icns\""
+
+	# Eclipse on macOS (Darwin) can have file locking issues if the user home directory is
+	# networked.  Therefore, we will disable file locking by default for macOS. Comment the
 	# following line out if Eclipse file locking is needed and known to work.
-	VMARG_LIST+=" -Declipse.filelock.disable=true"
+	VMARG_LIST="${VMARG_LIST} -Declipse.filelock.disable=true"
 fi
 
 # Add extra Linux VM arguments
 if [ "$(uname -s)" = "Linux" ]; then
-	VMARG_LIST+=" -Dawt.useSystemAAFontSettings=on"
+	VMARG_LIST="${VMARG_LIST} -Dawt.useSystemAAFontSettings=on"
 fi
 
 # Set Max Heap Size if specified
 if [ "${MAXMEM}" != "" ]; then
-	VMARG_LIST+=" -Xmx${MAXMEM}"
+	VMARG_LIST="${VMARG_LIST} -Xmx${MAXMEM}"
 fi
 
 BACKGROUND=false
 
 if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
-	
+
 	SUSPEND=n
-	
+
 	if [ "${DEBUG_ADDRESS}" = "" ]; then
 		DEBUG_ADDRESS=127.0.0.1:18001
 	fi
@@ -147,12 +147,12 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 	if [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
-	
-	VMARG_LIST+=" -Xdebug"
-	VMARG_LIST+=" -Xnoagent" 
-	VMARG_LIST+=" -Djava.compiler=NONE" 
-	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""  
-	VMARG_LIST+=" -Xrunjdwp:transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+
+	VMARG_LIST="${VMARG_LIST} -Xdebug"
+	VMARG_LIST="${VMARG_LIST} -Xnoagent"
+	VMARG_LIST="${VMARG_LIST} -Djava.compiler=NONE"
+	VMARG_LIST="${VMARG_LIST} -Dlog4j.configuration=\"${DEBUG_LOG4J}\""
+	VMARG_LIST="${VMARG_LIST} -Xrunjdwp:transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
 
 elif [ "${MODE}" = "fg" ]; then
 	:
@@ -166,20 +166,20 @@ else
 fi
 
 if [ "${BACKGROUND}" = true ]; then
-	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.GhidraLauncher ${CLASSNAME} ${ARGS[@]}" &>/dev/null &
-	
+	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.GhidraLauncher ${CLASSNAME} ${ARGS}" >/dev/null 2>&1
+
 	# If our process dies immediately, output something so the user knows to run in debug mode.
 	# Otherwise they'll never see any error output from background mode.
 	# Doing a kill -0 sends a no-op signal, which can be used to see if the process is still alive.
 	PID=$!
 	sleep 1
-	if ! kill -0 ${PID} &>/dev/null; then
+	if ! kill -0 ${PID} >/dev/null 2>&1; then
 		echo "Exited with error.  Run in foreground (fg) mode for more details."
 		exit 1
 	fi
 	exit 0
 else
-	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.GhidraLauncher ${CLASSNAME} ${ARGS[@]}"
+	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.GhidraLauncher ${CLASSNAME} ${ARGS}"
 	exit $?
 fi
 
