@@ -27,6 +27,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.task.TaskBuilder;
 
 /**
  * Default Language service used gather up all the languages that were found
@@ -43,6 +44,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 	/**
 	 * Returns the single instance of the DefaultLanguageService.
+	 * @return the language service
 	 */
 	public static synchronized LanguageService getLanguageService() {
 		if (languageService == null) {
@@ -85,8 +87,19 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	private void searchForProviders() {
 		Set<LanguageProvider> languageProviders =
 			ClassSearcher.getInstances(LanguageProvider.class);
+
 		searchCompleted = true;
-		processProviders(languageProviders);
+
+		//@formatter:off
+		TaskBuilder.withRunnable(monitor -> {			
+				processProviders(languageProviders); // load and cache
+			})
+			.setTitle("Language Search")
+			.setCanCancel(false)
+			.setHasProgress(false)
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
 	/**
@@ -95,10 +108,20 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	@Override
 	public Language getLanguage(LanguageID languageID) throws LanguageNotFoundException {
 		LanguageInfo info = languageMap.get(languageID);
-
 		if (info == null) {
 			throw new LanguageNotFoundException(languageID);
 		}
+
+		//@formatter:off
+		TaskBuilder.withRunnable(monitor -> {			
+				info.getLanguage(); // load and cache				
+			})
+			.setTitle("Loading language '" + languageID + "'")
+			.setCanCancel(false)
+			.setHasProgress(false)
+			.launchModal()
+			;
+		//@formatter:on
 
 		return info.getLanguage();
 	}
@@ -161,8 +184,9 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	private static boolean languageMatchesExternalProcessor(LanguageDescription description,
 			String externalProcessorName, String externalTool) {
 		boolean result = false;
-		if (externalProcessorName == null)
+		if (externalProcessorName == null) {
 			result = true;
+		}
 		else if (externalTool != null) {
 			List<String> extNames = description.getExternalNames(externalTool);
 			if (extNames != null) {

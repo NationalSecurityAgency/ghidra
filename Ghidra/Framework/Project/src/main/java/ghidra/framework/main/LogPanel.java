@@ -25,7 +25,6 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
 import docking.StatusBarSpacer;
-import docking.ToolTipManager;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
@@ -67,7 +66,7 @@ public class LogPanel extends JPanel implements LogListener {
 
 		button.setPreferredSize(new Dimension(24, 24));
 		button.setFocusable(false);
-		ToolTipManager.setToolTipText(button, "Show Console (Refresh Open Console)");
+		button.setToolTipText("Show Console (Refresh Open Console)");
 		button.addActionListener(e -> {
 			FrontEndTool tool = (FrontEndTool) plugin.getTool();
 			tool.showGhidraUserLogFile();
@@ -96,7 +95,7 @@ public class LogPanel extends JPanel implements LogListener {
 				label.setForeground(Color.RED);
 			}
 			label.setText(message);
-			ToolTipManager.setToolTipText(label, message);
+			label.setToolTipText(message);
 		});
 	}
 

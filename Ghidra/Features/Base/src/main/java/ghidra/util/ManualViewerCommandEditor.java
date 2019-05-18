@@ -27,7 +27,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.ToolTipManager;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.options.CustomOptionsEditor;
@@ -206,15 +205,15 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 			workPanel.setLayout(new PairLayout());
 
 			JLabel commandLabel = new GDLabel(COMMAND_STRING_LABEL);
-			ToolTipManager.setToolTipText(commandLabel, COMMAND_STRING_DESCRIPTION);
+			commandLabel.setToolTipText(COMMAND_STRING_DESCRIPTION);
 			commandField = new JTextField(30);
 
 			JLabel argumentsLabel = new GDLabel(COMMAND_ARGUMENTS_LABEL);
-			ToolTipManager.setToolTipText(argumentsLabel, COMMAND_ARGUMENTS_DESCRIPTION);
+			argumentsLabel.setToolTipText(COMMAND_ARGUMENTS_DESCRIPTION);
 			argumentsField = new JTextField(20);
 
 			JLabel formatLabel = new GDLabel(FILE_FORMAT_LABEL);
-			ToolTipManager.setToolTipText(formatLabel, FILE_FORMAT_DESCRIPTION);
+			formatLabel.setToolTipText(FILE_FORMAT_DESCRIPTION);
 			fileFormatComboBox = new GComboBox<>();
 			fileFormatComboBox.addItem(
 				ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING);

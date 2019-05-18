@@ -15,6 +15,8 @@
  */
 package ghidra.app.decompiler;
 
+import java.util.Objects;
+
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -52,7 +54,7 @@ public class DecompilerLocation extends ProgramLocation {
 	/**
 	 * Results from the decompilation
 	 * 
-	 * @return C-AST, DFG, and CFG object. Can return null if there are no results attached to this location.
+	 * @return C-AST, DFG, and CFG object. null if there are no results attached to this location
 	 */
 	public DecompileResults getDecompile() {
 		return results;
@@ -85,29 +87,36 @@ public class DecompilerLocation extends ProgramLocation {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (obj == null) {
+			return false;
+		}
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+
+		if (!super.equals(obj)) {
 			return false;
+		}
+
 		DecompilerLocation other = (DecompilerLocation) obj;
-		if (charPos != other.charPos)
+		if (charPos != other.charPos) {
 			return false;
-		if (functionEntryPoint == null) {
-			if (other.functionEntryPoint != null)
-				return false;
 		}
-		else if (!functionEntryPoint.equals(other.functionEntryPoint))
+
+		if (lineNumber != other.lineNumber) {
 			return false;
-		if (lineNumber != other.lineNumber)
-			return false;
-		if (tokenName == null) {
-			if (other.tokenName != null)
-				return false;
 		}
-		else if (!tokenName.equals(other.tokenName))
+
+		if (!Objects.equals(functionEntryPoint, other.functionEntryPoint)) {
 			return false;
+		}
+
+		if (!Objects.equals(tokenName, other.tokenName)) {
+			return false;
+		}
 		return true;
 	}
 
@@ -136,5 +145,20 @@ public class DecompilerLocation extends ProgramLocation {
 
 	public int getCharPos() {
 		return charPos;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getClass().getSimpleName());
+		buf.append('@');
+		buf.append(addr.toString());
+		buf.append(", line=");
+		buf.append(lineNumber);
+		buf.append(", character=");
+		buf.append(charPos);
+		buf.append(", token=");
+		buf.append(tokenName);
+		return buf.toString();
 	}
 }

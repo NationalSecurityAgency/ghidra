@@ -25,7 +25,6 @@ import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.ToolTipManager;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
@@ -103,7 +102,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		extLibPath.setFocusable(false);
 
 		clearButton = new JButton("Clear");
-		ToolTipManager.setToolTipText(clearButton, "Remove Link to External Program");
+		clearButton.setToolTipText("Remove Link to External Program");
 		clearButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -112,7 +111,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 		});
 
 		editButton = new JButton("Edit");
-		ToolTipManager.setToolTipText(editButton, "Edit Link to External Program");
+		editButton.setToolTipText("Edit Link to External Program");
 		editButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

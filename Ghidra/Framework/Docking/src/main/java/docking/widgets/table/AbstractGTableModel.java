@@ -93,13 +93,13 @@ public abstract class AbstractGTableModel<T> extends AbstractTableModel
 	}
 
 	/**
-	 * A convenience method for subclasses to quickly/efficiently search for the index of a given
+	 * A convenience method to search for the index of a given
 	 * row object <b>that is visible in the GUI</b>.  The <i>visible</i> limitation is due to the
 	 * fact that the data searched is retrieved from {@link #getModelData()}, which may be 
 	 * filtered.  
-	 * <p>
-	 * If a need for access to all of the data is required in the future, then an overloaded 
-	 * version of this method should be created that takes the data to be searched.
+	 * 
+	 * <p>Note: this operation is O(n).  For quick lookups, consider using the sorted version 
+	 * of this class.
 	 * 
 	 * @param rowObject The object for which to search.
 	 * @return the index of the item in the data returned by 
@@ -108,6 +108,14 @@ public abstract class AbstractGTableModel<T> extends AbstractTableModel
 		return getIndexForRowObject(rowObject, getModelData());
 	}
 
+	/**
+	 * Returns the index for the given object in the given list; -1 when the item is not in 
+	 * the list. 
+	 * 
+	 * @param rowObject the item
+	 * @param data the data
+	 * @return the index
+	 */
 	protected int getIndexForRowObject(T rowObject, List<T> data) {
 		return data.indexOf(rowObject);
 	}

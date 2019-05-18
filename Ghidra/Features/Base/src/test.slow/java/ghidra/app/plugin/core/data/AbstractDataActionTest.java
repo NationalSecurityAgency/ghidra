@@ -26,14 +26,17 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.widgets.dialogs.StringChoices;
+import docking.widgets.table.AbstractSortedTableModel;
 import ghidra.app.LocationCallback;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsRowObject;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
-import ghidra.docking.settings.*;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -215,7 +218,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		waitForSwing();
 
 		Runnable r = () -> {
-			DataSettingsDialog.SettingsTableModel model = dlg.getSettingsTableModel();
+			AbstractSortedTableModel<SettingsRowObject> model = dlg.getSettingsTableModel();
 			int useDefaultCol = model.findColumn("Use Default");
 			int rowCnt = model.getRowCount();
 
@@ -242,27 +245,25 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		waitForSwing();
 
-		final DataSettingsDialog.SettingsTableModel model = dlg.getSettingsTableModel();
-		final int settingsCol = model.findColumn("Settings");
-		assertEquals(Settings.class, model.getColumnClass(settingsCol));
+		AbstractSortedTableModel<SettingsRowObject> model = dlg.getSettingsTableModel();
 
 		error = null;
 
 		Runnable r = () -> {
 
 			int nameCol = model.findColumn("Name");
-			int settingsCol1 = model.findColumn("Settings");
+			int settingsCol = model.findColumn("Settings");
 			int rowCnt = model.getRowCount();
 
 			for (int i = 0; i < rowCnt; i++) {
 				String name = (String) model.getValueAt(i, nameCol);
 				int index = findSettingIndex(settingNames, name);
 				if (index != -1) {
-					Object v = model.getValueAt(i, settingsCol1);
+					Object v = model.getValueAt(i, settingsCol);
 					if (v instanceof StringChoices) {
 						StringChoices choices = (StringChoices) v;
 						choices.setSelectedValue(newValues[index]);
-						model.setValueAt(choices, i, settingsCol1);
+						model.setValueAt(choices, i, settingsCol);
 					}
 					else {
 						error = "Unsupported test setting: " + v.getClass();
@@ -770,7 +771,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void manipulateMutabilitySettings(boolean testDefaultSetting, boolean insideStruct,
 			boolean commonStruct, Data data1, Data data2) throws Exception {
 
-		assertTrue(data1.getDataType() == data2.getDataType());
+		assertSame(data1.getDataType(), data2.getDataType());
 
 		boolean settingsAreShared =
 			testDefaultSetting && (!insideStruct || (insideStruct && commonStruct));

@@ -26,14 +26,6 @@ import ghidra.program.model.data.DataType;
 @Category(NightlyCategory.class)
 public class DataAction1Test extends AbstractDataActionTest {
 
-	/**
-	 * Constructor for FallThroughActionTest.
-	 * @param arg0
-	 */
-	public DataAction1Test() {
-		super();
-	}
-
 	@Test
 	public void testAllStructDataSettings() throws Exception {
 

@@ -22,22 +22,23 @@ import java.io.FileFilter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
 
 import docking.*;
-import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
-import ghidra.GhidraApplicationLayout;
-import ghidra.framework.*;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -86,11 +87,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 	static final String DOT = ".";
 	static final String DOTDOT = "..";
 	static final String NEW_FOLDER = "New Folder";
+	static final Pattern INVALID_FILENAME_PATTERN = Pattern.compile("[/\\\\*?]");
 
 	private static final int PAD = 5;
-	private static final int DEFAULT_ICON_SIZE = 16;
-	private static final int HEIGHT_PADDING = 5;
-	private static final int WIDTH_PADDING = 14;
 
 	private static Icon refreshIcon = Icons.REFRESH_ICON;
 	private static Icon backIcon = ResourceManager.loadImage("images/left.png");
@@ -554,31 +553,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 	private JScrollPane buildDirectoryList() {
 		directoryListModel = new DirectoryListModel();
-
-		// SCR 3392 - 12/7/07
-		// initially added to resize the cells of the list when the new files are
-		// inserted into the list (like when creating a single new folder)
-		directoryListModel.addListDataListener(new ListDataListener() {
-			@Override
-			public void contentsChanged(ListDataEvent e) {
-				int size = directoryListModel.getSize();
-				List<File> fileList = new ArrayList<>(size);
-				for (int i = 0; i < size; i++) {
-					fileList.add(directoryListModel.getFile(i));
-				}
-				computeListCellDimensions(fileList);
-			}
-
-			@Override
-			public void intervalAdded(ListDataEvent e) {
-				// don't care
-			}
-
-			@Override
-			public void intervalRemoved(ListDataEvent e) {
-				// don't care
-			}
-		});
 		directoryList = new DirectoryList(this, directoryListModel);
 		directoryList.setName("LIST");
 
@@ -850,42 +824,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 		return worker.isBusy();
 	}
 
-	private void computeListCellDimensions(List<File> files) {
-
-		Font font = directoryList.getFont();
-		FontMetrics metrics = directoryList.getFontMetrics(font);
-
-		int maxWidth = getDefaultMaxWidth(files, metrics);
-
-		directoryList.setFixedCellWidth(maxWidth + DEFAULT_ICON_SIZE + WIDTH_PADDING);
-		int rowHeight = Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE);
-		directoryList.setFixedCellHeight(rowHeight + HEIGHT_PADDING);
-	}
-
-	private int getDefaultMaxWidth(List<File> theFiles, FontMetrics metrics) {
-		int maxWidth = 0;
-		if (theFiles.size() > 0) {
-			for (File file : theFiles) {
-				maxWidth = Math.max(maxWidth, metrics.stringWidth(getDisplayName(file)));
-			}
-			return maxWidth;
-		}
-
-		Dimension scrollSize = directoryScroll.getSize();
-		if (scrollSize.width == 0) {
-			return 0;
-		}
-
-		Border border = directoryScroll.getBorder();
-		if (border != null) {
-			Insets borderInsets = border.getBorderInsets(directoryScroll);
-			if (borderInsets != null) {
-				scrollSize.width -= (borderInsets.right + borderInsets.left);
-			}
-		}
-		return scrollSize.width - WIDTH_PADDING - DEFAULT_ICON_SIZE;
-	}
-
 	String getDisplayName(File file) {
 		if (file != null) {
 			if (GhidraFileChooser.MY_COMPUTER.equals(getCurrentDirectory())) {
@@ -906,8 +844,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	private void setDirectoryList(File directory, List<File> files) {
+		// if the visible listing is still the same directory as this incoming list of files
 		if (currentDirectory().equals(directory)) {
-			computeListCellDimensions(files);
+			// recompute list cell dims before causing an update to the model
 			directoryTableModel.setFiles(files);
 			directoryTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 			directoryListModel.setFiles(files);
@@ -2174,12 +2113,17 @@ public class GhidraFileChooser extends DialogComponentProvider
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		GhidraApplicationLayout layout = new GhidraApplicationLayout();
-		Application.initializeApplication(layout, new DockingApplicationConfiguration());
-		GhidraFileChooser chooser = new GhidraFileChooser(null);
-		chooser.show();
-		System.exit(0);
+	String getInvalidFilenameMessage(String filename) {
+		switch (filename) {
+			case ".":
+			case "..":
+				return "Reserved name '" + filename + "'";
+			default:
+				Matcher m = GhidraFileChooser.INVALID_FILENAME_PATTERN.matcher(filename);
+				if (m.find()) {
+					return "Invalid characters: " + m.group();
+				}
+		}
+		return null;
 	}
 }

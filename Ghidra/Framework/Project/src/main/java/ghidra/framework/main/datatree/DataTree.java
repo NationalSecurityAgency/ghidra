@@ -18,8 +18,7 @@ package ghidra.framework.main.datatree;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 
-import javax.swing.JTree;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.DockingUtils;
@@ -43,7 +42,7 @@ public class DataTree extends GTree {
 		setCellRenderer(new DataTreeCellRenderer());
 		setShowsRootHandles(true); // need this to "drill down"
 
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 
 		if (tool != null) {
 			dragNDropHandler = new DataTreeDragNDropHandler(tool, this, isActive);

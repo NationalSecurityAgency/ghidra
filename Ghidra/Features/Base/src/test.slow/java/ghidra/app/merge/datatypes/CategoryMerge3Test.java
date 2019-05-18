@@ -25,19 +25,14 @@ import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
-/**
- * Test category merge conflicts.
- * 
- * 
- */
 public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 
 	public static final int MAX_WAIT = 5000;
 
 	@Test
-    public void testEditFuncSig() throws Exception {
+	public void testEditFuncSig() throws Exception {
 		// test is here to see what the FunctionDefinition looks like
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
@@ -96,7 +91,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryDeleteMoveConflicts() throws Exception {
+	public void testCategoryDeleteMoveConflicts() throws Exception {
 		// move category in Latest program; delete same category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -113,7 +108,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -135,7 +130,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
-					root.removeCategory("MISC", TaskMonitorAdapter.DUMMY_MONITOR);
+					root.removeCategory("MISC", TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -159,7 +154,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMoveRenameConflict() throws Exception {
+	public void testCategoryMoveRenameConflict() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root; rename
 		// /Category3 to "Other Category3"
@@ -179,7 +174,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					c = root.getCategory(c.getName());
 					c.setName("Other Category3");
 					commit = true;
@@ -208,7 +203,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("My Category3");
-					miscCat.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					miscCat.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -236,7 +231,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMoveRename() throws Exception {
+	public void testCategoryMoveRename() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root
 		//My Program: rename Category1/Category2/Category3 to "My Category3",
@@ -254,7 +249,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -300,7 +295,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMoveRename2() throws Exception {
+	public void testCategoryMoveRename2() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root
 		//My Program: rename Category1/Category2/Category3 to "My Category3",
@@ -318,7 +313,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -366,7 +361,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMove() throws Exception {
+	public void testCategoryMove() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root
 		//My: move Category1/Category2/Category3 to /MISC
@@ -384,7 +379,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -406,7 +401,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -429,7 +424,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMove2() throws Exception {
+	public void testCategoryMove2() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root
 		//My: move Category1/Category2/Category3 to /MISC
@@ -447,7 +442,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -469,7 +464,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -492,7 +487,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCategoryMove3() throws Exception {
+	public void testCategoryMove3() throws Exception {
 
 		//Latest: move Category1/Category2/Category3 to Root
 		//My: move Category1/Category2/Category3 to /MISC
@@ -510,7 +505,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					root.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -532,7 +527,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -556,7 +551,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveCategoriesAndDataTypes() throws Exception {
+	public void testMoveCategoriesAndDataTypes() throws Exception {
 
 		// Latest: move data type
 		// My: move same data type
@@ -587,7 +582,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 					newc.moveDataType(td, DataTypeConflictHandler.DEFAULT_HANDLER);
 					c1.moveDataType(dll, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					c3.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					c3.moveCategory(misc, TaskMonitor.DUMMY);
 
 					commit = true;
 				}
@@ -625,7 +620,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 					c3.moveDataType(td, DataTypeConflictHandler.DEFAULT_HANDLER);
 					c3.moveDataType(dll, DataTypeConflictHandler.DEFAULT_HANDLER);
 					foo.setName("MY_Foo");
-					c1.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					c1.moveCategory(misc, TaskMonitor.DUMMY);
 
 					commit = true;
 				}
@@ -681,7 +676,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveCategory() throws Exception {
+	public void testMoveCategory() throws Exception {
 
 		// move same category in Latest and My
 
@@ -698,7 +693,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -721,7 +716,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c5 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 
 				try {
-					c5.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					c5.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -747,7 +742,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveCategory2() throws Exception {
+	public void testMoveCategory2() throws Exception {
 
 		// Latest: move /Category1/Category2/Category5 to
 		// /Category5; move Category1 to /Category5
@@ -769,8 +764,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c5 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
-					root.moveCategory(c5, TaskMonitorAdapter.DUMMY_MONITOR);
-					c5.moveCategory(c1, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c5, TaskMonitor.DUMMY);
+					c5.moveCategory(c1, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -800,7 +795,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 					s.add(new FloatDataType());
 					newc.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					root.moveCategory(c2, TaskMonitorAdapter.DUMMY_MONITOR);
+					root.moveCategory(c2, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -832,8 +827,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		c5 = dtm.getCategory(new CategoryPath("/Category5"));
 		DataType[] dts = c5.getDataTypes();
 		int count = 0;
-		for (int i = 0; i < dts.length; i++) {
-			if ((dts[i] instanceof Array) || dts[i] instanceof Pointer) {
+		for (DataType dt : dts) {
+			if ((dt instanceof Array) || dt instanceof Pointer) {
 				continue;
 			}
 			++count;
@@ -844,7 +839,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveCategory3() throws Exception {
+	public void testMoveCategory3() throws Exception {
 
 		// Latest: rename /Category1/Category2 to myCategory2; 
 		// move data types in /Category1/myCategory2/Category4 to
@@ -870,8 +865,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 					c2.setName("myCategory2");
 					Category newc = c1.createCategory("Category2");
 					DataType[] dts = c4.getDataTypes();
-					for (int i = 0; i < dts.length; i++) {
-						newc.moveDataType(dts[i], DataTypeConflictHandler.DEFAULT_HANDLER);
+					for (DataType dt : dts) {
+						newc.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
 					}
 					commit = true;
 				}
@@ -902,8 +897,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					DataType[] dts = c4.getDataTypes();
-					for (int i = 0; i < dts.length; i++) {
-						c2.moveDataType(dts[i], DataTypeConflictHandler.DEFAULT_HANDLER);
+					for (DataType dt : dts) {
+						c2.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
 					}
 
 					commit = true;
@@ -928,8 +923,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		Category c2 = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		DataType[] dts = c2.getDataTypes();
 		int count = 0;
-		for (int i = 0; i < dts.length; i++) {
-			if ((dts[i] instanceof Array) || dts[i] instanceof Pointer) {
+		for (DataType dt : dts) {
+			if ((dt instanceof Array) || dt instanceof Pointer) {
 				continue;
 			}
 			++count;
@@ -939,7 +934,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveMultipleCategories() throws Exception {
+	public void testMoveMultipleCategories() throws Exception {
 
 		// move same category in Latest and My
 
@@ -957,8 +952,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c5 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c3, TaskMonitorAdapter.DUMMY_MONITOR);
-					c5.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c3, TaskMonitor.DUMMY);
+					c5.moveCategory(misc, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -983,8 +978,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 
 				try {
-					c4.moveCategory(c3, TaskMonitorAdapter.DUMMY_MONITOR);
-					c5.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					c4.moveCategory(c3, TaskMonitor.DUMMY);
+					c5.moveCategory(misc, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -1009,7 +1004,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveMultipleCategories2() throws Exception {
+	public void testMoveMultipleCategories2() throws Exception {
 
 		// move same category in Latest and My
 
@@ -1027,8 +1022,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c4 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category4"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c3, TaskMonitorAdapter.DUMMY_MONITOR);
-					c4.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c3, TaskMonitor.DUMMY);
+					c4.moveCategory(misc, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -1053,8 +1048,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 
 				try {
-					c4.moveCategory(c3, TaskMonitorAdapter.DUMMY_MONITOR);
-					c5.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					c4.moveCategory(c3, TaskMonitor.DUMMY);
+					c5.moveCategory(misc, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -1081,7 +1076,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testMoveCategories() throws Exception {
+	public void testMoveCategories() throws Exception {
 
 		//Latest: Move /Category1/Category2/Category5 to /MISC
 		// My: Move /MISC to /Category1/Category2/Category5
@@ -1099,7 +1094,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category c5 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
-					misc.moveCategory(c5, TaskMonitorAdapter.DUMMY_MONITOR);
+					misc.moveCategory(c5, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -1122,7 +1117,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 				Category misc = dtm.getCategory(new CategoryPath("/MISC"));
 
 				try {
-					c5.moveCategory(misc, TaskMonitorAdapter.DUMMY_MONITOR);
+					c5.moveCategory(misc, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {

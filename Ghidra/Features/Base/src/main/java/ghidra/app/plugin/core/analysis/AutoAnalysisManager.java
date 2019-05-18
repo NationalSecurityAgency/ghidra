@@ -1514,12 +1514,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		@Override
-		public void reportIssue(Issue issue) {
-			dominantMonitor.reportIssue(issue);
-			slaveMonitor.reportIssue(issue);
-		}
-
-		@Override
 		public void cancel() {
 			dominantMonitor.cancel();
 			slaveMonitor.cancel();
@@ -1533,16 +1527,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		@Override
 		public void removeCancelledListener(CancelledListener listener) {
 			dominantMonitor.addCancelledListener(listener);
-		}
-
-		@Override
-		public void addIssueListener(IssueListener listener) {
-			dominantMonitor.addIssueListener(listener);
-		}
-
-		@Override
-		public void removeIssueListener(IssueListener listener) {
-			dominantMonitor.removeIssueListener(listener);
 		}
 
 		@Override

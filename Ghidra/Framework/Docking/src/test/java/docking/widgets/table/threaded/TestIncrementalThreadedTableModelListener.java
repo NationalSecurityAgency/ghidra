@@ -19,8 +19,9 @@ import ghidra.docking.spy.SpyEventRecorder;
 
 public class TestIncrementalThreadedTableModelListener extends TestThreadedTableModelListener {
 
-	TestIncrementalThreadedTableModelListener(SpyEventRecorder spy) {
-		super(spy);
+	TestIncrementalThreadedTableModelListener(ThreadedTableModel<?, ?> model,
+			SpyEventRecorder spy) {
+		super(model, spy);
 	}
 
 	@Override

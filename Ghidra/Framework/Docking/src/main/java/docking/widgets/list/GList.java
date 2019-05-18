@@ -18,8 +18,6 @@ package docking.widgets.list;
 import java.util.Vector;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.GComponent;
 import docking.widgets.table.GTable;
@@ -33,9 +31,9 @@ import docking.widgets.table.GTable;
  * HTML rendering is disabled by default.
  * <p>
  * 
+ * @param <T> the row type of the list
  */
 public class GList<T> extends JList<T> implements GComponent {
-	private static final long serialVersionUID = 1L;
 
 	/**The timeout for the auto-lookup feature*/
 	public static final long KEY_TIMEOUT = GTable.KEY_TIMEOUT;//made public for JUnits...
@@ -87,24 +85,6 @@ public class GList<T> extends JList<T> implements GComponent {
 		if (getCellRenderer() instanceof JComponent) {
 			GComponent.setHTMLRenderingFlag((JComponent) getCellRenderer(), false);
 		}
-		addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				ensureIndexIsVisible(getSelectedIndex());
-			}
-		});
+		addListSelectionListener(e -> ensureIndexIsVisible(getSelectedIndex()));
 	}
-
-//	/**
-//	 * Turns off the HTML rendering in the specified component and its current cell renderer.
-//	 * 
-//	 * @param list the list
-//	 */
-//	public static void turnOffHTMLRendering(JList<?> list) {
-//		turnOffHTMLRendering((JComponent) list);
-//		if (list.getCellRenderer() instanceof JComponent) {
-//			turnOffHTMLRendering((JComponent) list.getCellRenderer());
-//		}
-//	}
-
 }

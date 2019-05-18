@@ -16,6 +16,7 @@
 package docking.widgets.list;
 
 import java.awt.*;
+import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -54,6 +55,9 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * Constructs a new GListCellRenderer.
 	 */
 	public GListCellRenderer() {
+
+		// lists don't need alternation for rows, as they don't use long columnar data
+		setShouldAlternateRowBackgroundColors(false);
 	}
 
 	/**
@@ -117,5 +121,32 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 
 	protected void configureFont(JList<? extends E> list, ListModel<? extends E> model, int index) {
 		setFont(defaultFont);
+	}
+
+	/**
+	 * Returns the width, height necessary to display the largest element in this list.
+	 * <p>
+	 * Useful for setting a JList's fixed cell width and height to the actual necessary size.
+	 * <p>
+	 * NOTE: the items and the renderer must be in plain text mode, not HTML rendering mode.
+	 * 
+	 * @param list the JList that uses this cell renderer
+	 * @param items the items to measure
+	 * @param minWidth the minimum width that can be returned
+	 * @param minHeight the minimum height that can be returned
+	 * @return a new Dimension containing a width and height value necessary to display the largest
+	 * element in the list
+	 */
+	public Dimension computePlainTextListCellDimensions(JList<? extends E> list,
+			List<E> items,
+			int minWidth, int minHeight) {
+		configureFont(list, list.getModel(), 0);
+		FontMetrics metrics = getFontMetrics(getFont());
+		int maxWidth = minWidth;
+		for (E item : items) {
+			String text = getItemText(item).toString();
+			maxWidth = Math.max(maxWidth, metrics.stringWidth(text));
+		}
+		return new Dimension(maxWidth, Math.max(metrics.getHeight(), minHeight));
 	}
 }

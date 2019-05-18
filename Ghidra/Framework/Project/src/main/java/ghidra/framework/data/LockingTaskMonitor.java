@@ -15,10 +15,7 @@
  */
 package ghidra.framework.data;
 
-import ghidra.util.Issue;
 import ghidra.util.SystemUtilities;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -35,7 +32,6 @@ class LockingTaskMonitor implements TaskMonitor {
 	private boolean showProgressValue = true;
 	private String msg;
 	private MyTaskDialog taskDialog;
-	private WeakSet<IssueListener> issueListeners;
 
 	/**
 	 * Constructs a locking task handler for a locked dobj.  The setCompleted() method must be
@@ -262,29 +258,5 @@ class LockingTaskMonitor implements TaskMonitor {
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		if (issueListeners == null) {
-			issueListeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
-		}
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		if (issueListeners != null) {
-			issueListeners.remove(listener);
-		}
-
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		if (issueListeners != null) {
-			for (IssueListener listener : issueListeners) {
-				listener.issueReported(issue);
-			}
-		}
 	}
 }

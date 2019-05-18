@@ -128,7 +128,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 
 	protected void waitForMergeCompletion() {
 		int totalTime = 0;
-		while (!mergeMgr.processingCompleted()) {
+		while (mergeMgr != null && !mergeMgr.processingCompleted()) {
 
 			Window win = getWindowByTitleContaining(null, "Merge Information");
 			if (win != null) {

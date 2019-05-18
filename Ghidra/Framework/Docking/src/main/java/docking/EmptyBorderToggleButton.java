@@ -111,7 +111,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 			setEnabled(((Boolean) e.getNewValue()).booleanValue());
 		}
 		else if (name.equals(Action.SHORT_DESCRIPTION)) {
-			ToolTipManager.setToolTipText(this, (String) e.getNewValue());
+			setToolTipText((String) e.getNewValue());
 		}
 		else if (name.equals(Action.SMALL_ICON)) {
 			setIcon((Icon) e.getNewValue());

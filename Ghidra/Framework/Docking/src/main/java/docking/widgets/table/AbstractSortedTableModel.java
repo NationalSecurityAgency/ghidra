@@ -17,10 +17,10 @@ package docking.widgets.table;
 
 import java.util.*;
 
-import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;
 
+import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -31,15 +31,21 @@ import ghidra.util.datastruct.WeakSet;
  * <p>
  * In order to define custom comparators for a column, simply override 
  * {@link #createSortComparator(int)}.  Otherwise, a default comparator will be created for you.
+ * 
+ * <p>Note on sorting: it is possible that the user can disable sorting by de-selecting all 
+ * sorted columns.   This can also be achieved programmatically by calling 
+ * {@link #setTableSortState(TableSortState)} with a value of 
+ * {@link TableSortState#createUnsortedSortState()}.
  *
  * @param <T> The row type upon which the table is based
  */
 public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		implements SortedTableModel {
-	private static final long serialVersionUID = 1L;
+
+	private final Comparator<T> NO_SORT_COMPARATOR = (o1, o2) -> 0;
 
 	private TableSortState pendingSortState;
-	private TableSortState sortState;
+	private TableSortState sortState = TableSortState.createUnsortedSortState();
 	private boolean isSortPending;
 
 	protected boolean hasEverSorted;
@@ -58,6 +64,10 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	protected void setDefaultTableSortState(TableSortState defaultSortState) {
 		sortState = defaultSortState;
+		if (sortState == null) {
+			sortState = TableSortState.createUnsortedSortState();
+		}
+
 	}
 
 	@Override
@@ -81,14 +91,17 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	/**
 	 * Returns the index of the given row object in this model; -1 if the model does not contain
-	 * the given object.
+	 * the given object.  
+	 * 
+	 * <p>Warning: if the this model has no sort applied, then performance will be O(n).  If 
+	 * sorted, then performance is O(log n).  You can call {@link #isSorted()} to know when 
+	 * this will happen.
 	 */
 	@Override
 	public int getRowIndex(T rowObject) {
 		if (rowObject == null) {
 			return -1;
 		}
-
 		return getIndexForRowObject(rowObject);
 	}
 
@@ -121,7 +134,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	}
 
 	@Override
-	public void setTableSortState(final TableSortState newSortState) {
+	public void setTableSortState(TableSortState newSortState) {
 
 		if (!isValidSortState(newSortState)) {
 			// if the user calls this method with an invalid value, then let them know!
@@ -165,7 +178,8 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 		isSortPending = true;
 		pendingSortState = newSortState;
-		SwingUtilities.invokeLater(() -> sort(getModelData(), createSortingContext(newSortState)));
+		SystemUtilities.runSwingLater(
+			() -> sort(getModelData(), createSortingContext(newSortState)));
 	}
 
 	public TableSortState getPendingSortState() {
@@ -174,6 +188,10 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	public boolean isSortPending() {
 		return isSortPending;
+	}
+
+	public boolean isSorted() {
+		return !isSortPending && !sortState.isUnsorted();
 	}
 
 	protected TableSortingContext<T> createSortingContext(TableSortState newSortState) {
@@ -205,7 +223,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		hasEverSorted = true;
 		isSortPending = true;
 		pendingSortState = sortState;
-		SwingUtilities.invokeLater(() -> sort(getModelData(), createSortingContext(sortState)));
+		SystemUtilities.runSwingLater(() -> sort(getModelData(), createSortingContext(sortState)));
 	}
 
 	/**
@@ -213,9 +231,6 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 * row object <b>that is visible in the GUI</b>.  The <i>visible</i> limitation is due to the
 	 * fact that the data searched is retrieved from {@link #getModelData()}, which may be 
 	 * filtered.  
-	 * <p>
-	 * If a need for access to all of the data is required in the future, then an overloaded 
-	 * version of this method should be created that takes the data to be searched.
 	 * 
 	 * @param rowObject The object for which to search.
 	 * @return the index of the item in the data returned by 
@@ -225,10 +240,27 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		return getIndexForRowObject(rowObject, getModelData());
 	}
 
+	/**
+	 * Returns the index for the given object in the given list 
+	 * 
+	 * @param rowObject the item
+	 * @param data the data
+	 * @return the index
+	 */
 	@Override
 	protected int getIndexForRowObject(T rowObject, List<T> data) {
-		Comparator<T> comparator = getComparatorChain(sortState);
-		return Collections.binarySearch(data, rowObject, comparator);
+		if (isSorted()) {
+			Comparator<T> comparator = getComparatorChain(sortState);
+			return Collections.binarySearch(data, rowObject, comparator);
+		}
+
+		for (int i = 0; i < data.size(); i++) {
+			T t = data.get(i);
+			if (rowObject.equals(t)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -242,6 +274,14 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 *        comparator for sorting, etc...).
 	 */
 	protected void sort(List<T> data, TableSortingContext<T> sortingContext) {
+
+		if (sortingContext.isUnsorted()) {
+			// this is the 'no sort' state
+			sortCompleted(sortingContext);
+			notifyModelSorted(false);
+			return;
+		}
+
 		hasEverSorted = true; // signal that we have sorted at least one time
 		Collections.sort(data, sortingContext.getComparator());
 		sortCompleted(sortingContext);
@@ -315,6 +355,11 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 * data is sorted).
 	 */
 	private Comparator<T> getComparatorChain(TableSortState newSortState) {
+
+		if (newSortState.isUnsorted()) {
+			return NO_SORT_COMPARATOR;
+		}
+
 		ComparatorLink comparatorLink = new ComparatorLink();
 		for (ColumnSortState columnSortState : newSortState) {
 			Comparator<T> nextComparator = getComparator(columnSortState);

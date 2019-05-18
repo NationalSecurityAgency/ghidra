@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import generic.concurrent.ConcurrentListenerSet;
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
 
 public class TaskMonitorSplitter {
@@ -175,21 +174,6 @@ public class TaskMonitorSplitter {
 			for (CancelledListener listener : listeners) {
 				listener.cancelled();
 			}
-		}
-
-		@Override
-		public void addIssueListener(IssueListener listener) {
-			parent.addIssueListener(listener);
-		}
-
-		@Override
-		public void removeIssueListener(IssueListener listener) {
-			parent.removeIssueListener(listener);
-		}
-
-		@Override
-		public void reportIssue(Issue issue) {
-			parent.reportIssue(issue);
 		}
 	}
 }

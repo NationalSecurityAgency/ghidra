@@ -15,12 +15,13 @@
  */
 package docking.widgets.filter;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public abstract class AbstractPatternTextFilter implements TextFilter {
 
 	protected final String filterText;
-	private Pattern filterPattern;
+	protected Pattern filterPattern;
 
 	protected AbstractPatternTextFilter(String filterText) {
 		this.filterText = filterText;
@@ -65,6 +66,56 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 			filterPattern = createPattern();
 		}
 		return filterPattern;
+	}
+
+	@Override
+	public int hashCode() {
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		AbstractPatternTextFilter other = (AbstractPatternTextFilter) obj;
+		if (!patternsEqual(createPattern(), other.createPattern())) {
+			return false;
+		}
+
+		if (!Objects.equals(filterText, other.filterText)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean patternsEqual(Pattern p1, Pattern p2) {
+		String myPattern = getPatternString(p1);
+		String otherPattern = getPatternString(p2);
+		if (!myPattern.equals(otherPattern)) {
+			return false;
+		}
+
+		int f1 = getPatternFlags(p1);
+		int f2 = getPatternFlags(p2);
+		return f1 == f2;
+	}
+
+	private String getPatternString(Pattern p) {
+		return p == null ? "" : p.pattern();
+	}
+
+	private int getPatternFlags(Pattern p) {
+		return p == null ? -1 : p.flags();
 	}
 
 	@Override

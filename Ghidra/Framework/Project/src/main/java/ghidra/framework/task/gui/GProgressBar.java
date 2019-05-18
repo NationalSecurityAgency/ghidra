@@ -21,7 +21,6 @@ import java.text.NumberFormat;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
 import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDHtmlLabel;

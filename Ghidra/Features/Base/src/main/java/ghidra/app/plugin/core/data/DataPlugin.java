@@ -15,10 +15,7 @@
  */
 package ghidra.app.plugin.core.data;
 
-import java.awt.event.KeyEvent;
 import java.util.*;
-
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -69,10 +66,7 @@ import ghidra.util.task.SwingUpdateManager;
 public class DataPlugin extends Plugin implements DataService {
 
 	final static int BACKGROUND_SELECTION_THRESHOLD = 2048;
-
-	private final static KeyStroke POINTER_KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_P, 0);
-
-	private final static DataType POINTER_DATA_TYPE = new PointerDataType();
+	final static DataType POINTER_DATA_TYPE = new PointerDataType();
 
 	private static final String BASIC_DATA_GROUP = "BasicData";
 	private static final String DATA_MENU_POPUP_PATH = "Data";
@@ -137,7 +131,7 @@ public class DataPlugin extends Plugin implements DataService {
 		renameDataFieldAction = new RenameDataFieldAction(this);
 		tool.addAction(renameDataFieldAction);
 
-		pointerAction = new DataAction(POINTER_DATA_TYPE, this);
+		pointerAction = new PointerDataAction(this);
 		tool.addAction(pointerAction);
 
 		settingsAction = new DockingAction("Data Settings", getName()) {
@@ -312,13 +306,9 @@ public class DataPlugin extends Plugin implements DataService {
 		return doCreateData(context, dt);
 	}
 
-	/**
+	/*
 	 * This version uses the ProgramActionContext and does not depend on any
 	 * plugin's currentProgram
-	 *
-	 * @param context
-	 * @param dt
-	 * @return
 	 */
 	boolean doCreateData(ListingActionContext context, DataType dt) {
 		ProgramSelection selection = context.getSelection();

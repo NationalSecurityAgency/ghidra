@@ -20,7 +20,8 @@ import java.awt.Component;
 import javax.swing.SwingUtilities;
 
 import generic.util.WindowUtilities;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.TaskUtilities;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
@@ -285,16 +286,8 @@ public class TaskLauncher {
 
 	private TaskDialog buildTaskDialog(Component comp, int dialogWidth) {
 
-		//
-		// This class may be used by background threads.  Make sure that our GUI creation is
-		// on the Swing thread to prevent exceptions while painting (as seen when using the
-		// Nimbus Look and Feel).
-		//
-
-		SystemUtilities.runSwingNow(() -> {
-			taskDialog = createTaskDialog(comp);
-			taskDialog.setMinimumSize(dialogWidth, 0);
-		});
+		taskDialog = createTaskDialog(comp);
+		taskDialog.setMinimumSize(dialogWidth, 0);
 
 		if (task.isInterruptible() || task.isForgettable()) {
 			taskDialog.addCancelledListener(monitorChangeListener);

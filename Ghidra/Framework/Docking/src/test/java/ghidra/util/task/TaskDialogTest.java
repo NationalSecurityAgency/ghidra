@@ -23,7 +23,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Test;
 
@@ -95,21 +94,52 @@ public class TaskDialogTest extends AbstractDockingTest {
 		assertSwingThreadFinishedBeforeTask();
 	}
 
+	/*
+	 * Verifies that if the dialog cancel button is activated, the task is cancelled
+	 */
+	@Test
+	public void testTaskCancel() throws Exception {
+		SlowModalTask task = new SlowModalTask();
+		TaskDialogSpy dialogSpy = launchTask(task);
+
+		dialogSpy.doShow();
+
+		waitForTask();
+
+		assertFalse(dialogSpy.isCancelled());
+		dialogSpy.cancel();
+		assertTrue(dialogSpy.isCancelled());
+	}
+
+	/*
+	 * Verifies that if the task does not allow cancellation, the cancel button on the GUI
+	 * is disabled
+	 */
+	@Test
+	public void testTaskNoCancel() throws Exception {
+		SlowModalTask task = new SlowModalTask();
+		TaskDialogSpy dialogSpy = launchTask(task);
+
+		dialogSpy.doShow();
+		dialogSpy.setCancelEnabled(false);
+
+		waitForTask();
+
+		assertFalse(dialogSpy.isCancelEnabled());
+	}
+
 	private void assertSwingThreadBlockedForTask() {
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (!swingIsLast) {
-			System.out.println("Events " + eventQueue);
 			fail("The Swing thread did not block until the task finished");
 		}
 	}
 
 	private void assertSwingThreadFinishedBeforeTask() {
-		int size = eventQueue.size();
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (swingIsLast) {
-			System.out.println("Events (" + size + ")\n\t" + StringUtils.join(eventQueue, "\n\t"));
 			fail("The Swing thread blocked until the task finished");
 		}
 	}

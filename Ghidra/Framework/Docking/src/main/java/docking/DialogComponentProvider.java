@@ -490,7 +490,7 @@ public class DialogComponentProvider
 	 */
 	protected void setApplyToolTip(String tooltip) {
 		if (applyButton != null) {
-			ToolTipManager.setToolTipText(applyButton, tooltip);
+			applyButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -506,7 +506,7 @@ public class DialogComponentProvider
 	 */
 	protected void setOkToolTip(String tooltip) {
 		if (okButton != null) {
-			ToolTipManager.setToolTipText(okButton, tooltip);
+			okButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -516,7 +516,7 @@ public class DialogComponentProvider
 	 */
 	protected void setCancelToolTip(String tooltip) {
 		if (cancelButton != null) {
-			ToolTipManager.setToolTipText(cancelButton, tooltip);
+			cancelButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -532,7 +532,7 @@ public class DialogComponentProvider
 	 */
 	protected void setDismissToolTip(String tooltip) {
 		if (dismissButton != null) {
-			ToolTipManager.setToolTipText(dismissButton, tooltip);
+			dismissButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -635,6 +635,18 @@ public class DialogComponentProvider
 
 		statusLabel.setText(text);
 		statusLabel.setForeground(getStatusColor(type));
+		updateStatusToolTip();
+
+		if (alert) {
+			alertMessage();
+		}
+	}
+
+	private void doSetSubStatusText(String text, MessageType type, boolean alert) {
+
+		SystemUtilities.assertThisIsTheSwingThread(
+			"Setting text must be performed on the Swing thread");
+
 		updateStatusToolTip();
 
 		if (alert) {
@@ -755,12 +767,7 @@ public class DialogComponentProvider
 	private void showProgressBar(String localTitle, boolean hasProgress, boolean canCancel) {
 		taskMonitorComponent.setTaskName(localTitle);
 		taskMonitorComponent.showProgress(hasProgress);
-		if (canCancel) {
-			taskMonitorComponent.showCancelButton(true);
-		}
-		else {
-			taskMonitorComponent.showCancelButton(false);
-		}
+		taskMonitorComponent.setCancelButtonVisibility(canCancel);
 		progressCardLayout.show(statusProgPanel, PROGRESS);
 		rootPanel.validate();
 	}
@@ -785,10 +792,10 @@ public class DialogComponentProvider
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, null);
+			statusLabel.setToolTipText(null);
 		}
 	}
 
@@ -804,7 +811,8 @@ public class DialogComponentProvider
 	}
 
 	/**
-	 * returns the current status in the dialogs status line=
+	 * Returns the current status in the dialogs status line
+	 * 
 	 * @return the status text
 	 */
 	public String getStatusText() {

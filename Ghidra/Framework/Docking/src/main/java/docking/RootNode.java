@@ -500,11 +500,13 @@ class RootNode extends WindowNode {
 	@Override
 	void dispose() {
 
+		dockingWindowListeners.clear();
 		if (child != null) {
 			child.dispose();
 		}
 
 		super.dispose();
+
 		if (rootDropTargetHandler != null) {
 			rootDropTargetHandler.dispose();
 		}

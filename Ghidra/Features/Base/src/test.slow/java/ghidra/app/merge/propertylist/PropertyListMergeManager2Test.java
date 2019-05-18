@@ -23,16 +23,14 @@ import java.util.Set;
 
 import javax.swing.*;
 
-import org.junit.*;
+import org.junit.Test;
 
 import generic.util.WindowUtilities;
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.*;
 import ghidra.framework.options.Options;
 import ghidra.program.database.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramChangeSet;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
@@ -42,30 +40,10 @@ import ghidra.util.exception.CancelledException;
  *
  */
 
-public class PropertyListMergeManager2Test extends AbstractGhidraHeadedIntegrationTest {
+public class PropertyListMergeManager2Test extends AbstractMergeTest {
 
-	// TODO this may need to be modified for parallel mode
-	private static final int MAX_MERGE_TIMEOUT = 10000;
-
-	private MergeTestFacilitator mtf;
-	private Program origProgram;
-	private Program privateProgram;
-	private Program resultProgram;
-	private Program latestProgram;
 	private Window window;
-	private ProgramMultiUserMergeManager mergeMgr;
 	private Date currentDate;
-
-	@Before
-	public void setUp() throws Exception {
-		mtf = new MergeTestFacilitator();
-		fixupGUI();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		mtf.dispose();
-	}
 
 	@Test
 	public void testTypeMismatchAskTheUserOpt1() throws Exception {
@@ -843,15 +821,15 @@ public class PropertyListMergeManager2Test extends AbstractGhidraHeadedIntegrati
 	}
 
 	private void merge(boolean waitForConflict) throws Exception {
-		origProgram = mtf.getOriginalProgram();
-		privateProgram = mtf.getPrivateProgram();// my program
+		originalProgram = mtf.getOriginalProgram();
+		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
 		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
 		ProgramChangeSet myChangeSet = mtf.getPrivateChangeSet();
 
-		mergeMgr = new ProgramMultiUserMergeManager(resultProgram, privateProgram, origProgram,
+		mergeMgr = new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
 			latestProgram, resultChangeSet, myChangeSet);
 		Thread t = new Thread(() -> {
 			try {
@@ -902,26 +880,7 @@ public class PropertyListMergeManager2Test extends AbstractGhidraHeadedIntegrati
 	}
 
 	private void waitForCompletion() throws Exception {
-
-		long total = 0;
-		while (!mergeMgr.processingCompleted()) {
-
-			total += sleep(DEFAULT_WAIT_DELAY);
-			if (total >= MAX_MERGE_TIMEOUT) {
-				Assert.fail("Timed-out waiting for merge mangager to finish!");
-			}
-		}
-
-		if (window != null) {
-			while (window.isVisible()) {
-
-				total += sleep(DEFAULT_WAIT_DELAY);
-				if (total >= MAX_MERGE_TIMEOUT) {
-					Assert.fail("Timed-out waiting for merge window to close");
-				}
-			}
-		}
-		waitForSwing();
+		waitForMergeCompletion();
 	}
 
 	private void selectButtonAndApply(String text, boolean doWait) throws Exception {

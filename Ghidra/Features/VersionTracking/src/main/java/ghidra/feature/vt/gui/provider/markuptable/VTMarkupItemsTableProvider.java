@@ -321,14 +321,14 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTableModel = new VTMarkupItemsTableModel(controller);
 		markupItemsTableModel.addTableModelListener(e -> {
 			int filteredCount = markupItemsTableModel.getRowCount();
-			int unfilteredCount = markupItemsTableModel.getUnfilteredCount();
+			int unfilteredCount = markupItemsTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
 			StringBuffer buffy = new StringBuffer();
 			buffy.append("[Session: ").append(sessionName).append("] ");
 			buffy.append('-').append(markupItemsTableModel.getRowCount()).append(" markup items");
 			if (filteredCount != unfilteredCount) {
-				buffy.append(" (of ").append(markupItemsTableModel.getUnfilteredCount()).append(
+				buffy.append(" (of ").append(markupItemsTableModel.getUnfilteredRowCount()).append(
 					')');
 			}
 
@@ -848,7 +848,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 
 		if (filtered) {
 			int filteredCount = markupItemsTableModel.getRowCount();
-			int unfilteredCount = markupItemsTableModel.getUnfilteredCount();
+			int unfilteredCount = markupItemsTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
 			ancillaryFilterButton.setToolTipText(
 				"More Filters - " + filteredOutCount + " item(s) hidden");

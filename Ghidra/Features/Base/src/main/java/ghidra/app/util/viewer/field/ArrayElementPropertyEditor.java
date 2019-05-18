@@ -26,7 +26,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ToolTipManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -69,13 +68,13 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport
 		// the namespace checkbox will disable the text field options when it is not used
 		groupElementsCheckBox = new GCheckBox(SHOW_MULTI_ELEMENTS_LABEL);
 		groupElementsCheckBox.setSelected(true);
-		ToolTipManager.setToolTipText(groupElementsCheckBox, SHOW_MULTI_ELEMENTS_TOOLTIP);
+		groupElementsCheckBox.setToolTipText(SHOW_MULTI_ELEMENTS_TOOLTIP);
 
 		panel.add(groupElementsCheckBox);
 
 		elementsPerLineField =
 			createLocalPrefixTextField(GROUP_SIZE_LABEL, GROUP_SIZE_LABEL_TOOLTIP, panel);
-		ToolTipManager.setToolTipText(elementsLabel, GROUP_SIZE_LABEL_TOOLTIP);
+		elementsLabel.setToolTipText(GROUP_SIZE_LABEL_TOOLTIP);
 
 		groupElementsCheckBox.addItemListener(new ItemListener() {
 			@Override

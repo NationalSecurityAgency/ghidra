@@ -56,7 +56,29 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 
 	public int getViewRow(int modelRow);
 
+	/**
+	 * Returns the view index of the given item.  When filtered, this is the index is the smaller,
+	 * visible set of data; when unfiltered, this index is the same as that returned by
+	 * {@link #getModelIndex(Object)}.
+	 * 
+	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
+	 * operation is O(log n), as it uses a binary search.
+	 * 
+	 * @param t the item 
+	 * @return the view index
+	 */
 	public int getViewIndex(ROW_OBJECT t);
 
+	/**
+	 * Returns the model index of the given item.  When filtered, this is the index is the larger,
+	 * set of data; when unfiltered, this index is the same as that returned by
+	 * {@link #getModelIndex(Object)}.
+	 * 
+	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
+	 * operation is O(log n), as it uses a binary search.
+	 * 
+	 * @param t the item 
+	 * @return the model index
+	 */
 	public int getModelIndex(ROW_OBJECT t);
 }

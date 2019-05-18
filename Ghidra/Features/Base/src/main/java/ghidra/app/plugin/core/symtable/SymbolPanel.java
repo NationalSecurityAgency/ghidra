@@ -119,7 +119,7 @@ class SymbolPanel extends JPanel {
 
 	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
 		if (nameOnly) {
-			return new NameOnlyRowTransformer();
+			return new NameOnlyRowTransformer(tableModel);
 		}
 
 		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
@@ -201,17 +201,42 @@ class SymbolPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
 		private List<String> list = new ArrayList<>();
+		private SymbolTableModel model;
+
+		NameOnlyRowTransformer(SymbolTableModel model) {
+			this.model = model;
+		}
 
 		@Override
 		public List<String> transform(SymbolRowObject rowObject) {
 			list.clear();
-			Symbol symbol = tableModel.getSymbolForRowObject(rowObject);
+			Symbol symbol = model.getSymbolForRowObject(rowObject);
 			if (symbol != null) {
 				list.add(symbol.getName());
 			}
 			return list;
+		}
+
+		@Override
+		public int hashCode() {
+			// not meant to put in hashing structures; the data for equals may change over time
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			return true;
 		}
 	}
 }

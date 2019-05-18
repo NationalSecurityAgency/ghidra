@@ -137,7 +137,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-	private class MatchTablePassthroughFilter implements TableFilter<VTMatch> {
+	private static class MatchTablePassthroughFilter implements TableFilter<VTMatch> {
 
 		private List<Filter<VTMatch>> appliedFilters;
 
@@ -202,6 +202,20 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			}
 
 			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			// not meant to put in hashing structures; the data for equals changes
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			// For now we don't support equals(); if this filter gets re-created, 
+			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// we must also implement equals() on the filters used by this filter.
+			return this == obj;
 		}
 	}
 
@@ -397,7 +411,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			return 55;
 		}
 
-		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<VTScore>() {
+		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -457,7 +471,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			return 55;
 		}
 
-		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<VTScore>() {
+		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -550,7 +564,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableLabel> labelCellRenderer =
-			new AbstractGColumnRenderer<DisplayableLabel>() {
+			new AbstractGColumnRenderer<>() {
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -681,7 +695,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableAddress> addressCellRenderer =
-			new AbstractGColumnRenderer<DisplayableAddress>() {
+			new AbstractGColumnRenderer<>() {
 
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -788,7 +802,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableLabel> labelCellRenderer =
-			new AbstractGColumnRenderer<DisplayableLabel>() {
+			new AbstractGColumnRenderer<>() {
 
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -921,7 +935,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 
 		private GColumnRenderer<DisplayableAddress> addressCellRenderer =
-			new AbstractGColumnRenderer<DisplayableAddress>() {
+			new AbstractGColumnRenderer<>() {
 				@Override
 				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 

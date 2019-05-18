@@ -160,6 +160,39 @@ public class StringDiffTest {
 	}
 
 	@Test
+	public void testGetLineDiffs_Empty() {
+
+		String v1 = "";
+		String v2 = "";
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 0);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
+		assertEquals(v2, restoredV2);
+	}
+
+	@Test
+	public void testGetLineDiffs_EmptyInitial() {
+
+		String v1 = "";
+		String v2 = "This is not empty";
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 0);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
+		assertEquals(v2, restoredV2);
+	}
+
+	@Test
+	public void testGetLineDiffs_EmptyReplacement() {
+
+		String v1 = "This is not empty";
+		String v2 = "";
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(v1, v2, 0);
+		String restoredV2 = StringDiffUtils.applyDiffs(v1, Arrays.asList(diffs));
+		assertEquals(v2, restoredV2);
+	}
+
+	@Test
 	public void testReplace() {
 		String[] a1 = new String[] { "In", "the", "beginning" };
 		String[] a2 = new String[] { "There", "was", "vastness" };

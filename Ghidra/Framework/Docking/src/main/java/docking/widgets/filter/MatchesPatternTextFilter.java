@@ -22,12 +22,52 @@ import java.util.regex.Pattern;
  */
 public abstract class MatchesPatternTextFilter extends AbstractPatternTextFilter {
 
-	public MatchesPatternTextFilter(String filterText) {
+	protected boolean caseSensitive;
+	protected boolean allowGlobbing;
+
+	public MatchesPatternTextFilter(String filterText, boolean caseSensitive,
+			boolean allowGlobbing) {
 		super(filterText);
+
+		this.caseSensitive = caseSensitive;
+		this.allowGlobbing = allowGlobbing;
 	}
 
 	@Override
 	public boolean matches(String text, Pattern pattern) {
 		return pattern.matcher(text).matches();
 	}
+
+	@Override
+	public int hashCode() {
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		if (!super.equals(obj)) {
+			return false;
+		}
+
+		MatchesPatternTextFilter other = (MatchesPatternTextFilter) obj;
+		if (allowGlobbing != other.allowGlobbing) {
+			return false;
+		}
+		if (caseSensitive != other.caseSensitive) {
+			return false;
+		}
+		return true;
+	}
+
 }

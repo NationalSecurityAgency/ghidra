@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,12 +33,15 @@ import ghidra.docking.spy.SpyEventRecorder;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.task.TaskMonitor;
 
-public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
+/**
+ * Specifically tests the sub-filtering behavior of the {@link ThreadedTableModel}, as well
+ * as some other more complicated filtering combinations
+ */
+public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 	private SpyEventRecorder recorder = new SpyEventRecorder(getClass().getSimpleName());
 	private SpyTaskMonitor monitor = new SpyTaskMonitor();
 	private SpyTextFilter<Long> spyFilter;
-	private ThreadedTableModelListener spyLoadListener = new SpyTableModelListener();
 
 	@Override
 	protected TestDataKeyModel createTestModel() {
@@ -82,9 +86,11 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 			Boolean.FALSE.toString());
 
 		waitForTableModel(model);
+	}
 
-		// must run in Swing so that we do not mutate listeners while events are broadcasting
-		runSwing(() -> model.addThreadedTableModelListener(spyLoadListener));
+	@Override
+	protected TestThreadedTableModelListener createListener() {
+		return new TestThreadedTableModelListener(model, recorder);
 	}
 
 	@Override
@@ -98,7 +104,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterAddItem_ItemAddedPassesFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		filterOnRawColumnValue(newRowIndex);
 		resetSpies();
@@ -114,7 +120,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterRemoveAddItem_ItemAddedPassesFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		filterOnRawColumnValue(newRowIndex);
 		resetSpies();
@@ -137,7 +143,7 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappensAfterAdd_ItemAddedFailsFilter() throws Exception {
 
-		int newRowIndex = model.getRowCount() + 1;
+		int newRowIndex = getRowCount() + 1;
 
 		long nonMatchingFilter = 1;
 		filterOnRawColumnValue(nonMatchingFilter);
@@ -370,6 +376,89 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 		assertRowCount(4); // matching values (for both filters): two, ten, ten, ten
 	}
 
+	@Test
+	public void testCombinedFilter_AddRemove_ItemPassesFilter_FilterJobStateDoesNotRun() {
+
+		//
+		// Tests that an item can be added/removed via addObject()/removeObject() *and* that,
+		// with a *combined* filter installed, the *filter* phase of the TableLoadJob will *NOT*
+		// get run.  (The add/remove operation should perform filtering and sorting outside of
+		// the normal TableLoadJob's state machine.)
+		//
+
+		int fullCount = getRowCount();
+
+		createCombinedFilterWithEmptyTextFilter(new AllPassesTableFilter());
+		assertFilteredEntireModel();
+		assertRowCount(fullCount); // our filter passes everything
+
+		// call addObject()
+		long newId = fullCount + 1;
+
+		spyFilter.reset();
+		addItemToModel(newId);
+		assertNumberOfItemsPassedThroughFilter(1); // **this is the important check**
+
+		assertRowCount(fullCount + 1); // our filter passes everything
+	}
+
+	@Test
+	public void testCombinedFilter_AddRemove_ItemFailsFilter_FilterJobStateDoesNotRun() {
+
+		//
+		// Tests that an item can be added/removed via addObject()/removeObject() *and* that,
+		// with a *combined* filter installed, the *filter* phase of the TableLoadJob will *NOT*
+		// get run.  (The add/remove operation should perform filtering and sorting outside of
+		// the normal TableLoadJob's state machine.)
+		//
+
+		int fullCount = getRowCount();
+
+		// use filter to limit any new items added from passing
+		Predicate<Long> predicate = l -> l < fullCount;
+		PredicateTableFilter noNewItemsPassFilter = new PredicateTableFilter(predicate);
+		createCombinedFilterWithEmptyTextFilter(noNewItemsPassFilter);
+		assertFilteredEntireModel();
+		assertRowCount(fullCount); // our filter passes everything
+
+		// call addObject()
+		long newId = fullCount + 1;
+		spyFilter.reset();
+		addItemToModel(newId);
+		assertNumberOfItemsPassedThroughFilter(1); // **this is the important check**
+
+		assertRowCount(fullCount); // the new item should not be added
+	}
+
+	@Test
+	public void testCombinedFilter_AddRemove_ItemPassesFilter_RefilterThenUndo() throws Exception {
+
+		//
+		// Bug Case: This was a case where a table (like the Symbol Table) that uses permanent
+		//           combined filters would lose items inserted via the addObject() call.  The 
+		//           issue is that the job was not properly updating the table's full source 
+		//           data, only its filtered data.   Thus, when a job triggered a reload from 
+		//           the original source data, the value would be lost.
+		//
+
+		int fullCount = getRowCount();
+
+		createCombinedFilterWithEmptyTextFilter(new AllPassesTableFilter());
+		assertFilteredEntireModel();
+		assertRowCount(fullCount); // our filter passes everything
+
+		// call addObject()
+		long newId = fullCount + 1;
+		addItemToModel(newId);
+		assertRowCount(fullCount + 1); // our filter passes everything
+
+		filterOnRawColumnValue(newId);
+		assertRowCount(1);
+
+		createCombinedFilterWithEmptyTextFilter(new AllPassesTableFilter());
+		assertRowCount(fullCount + 1);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -380,18 +469,18 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 	}
 
 	private void assertFilteredEntireModel() {
-		int allCount = model.getUnfilteredCount();
+		int allCount = getUnfilteredRowCount();
 		assertNumberOfItemsPassedThroughFilter(allCount);
 	}
 
 	private void assertTableContainsValue(long expected) {
-		List<Long> modelValues = model.getModelData();
+		List<Long> modelValues = getModelData();
 		assertTrue("Value not in the model--filtered out? - Expected " + expected + "; found " +
 			modelValues, modelValues.contains(expected));
 	}
 
 	private void assertTableDoesNotContainValue(long expected) {
-		List<Long> modelValues = model.getModelData();
+		List<Long> modelValues = getModelData();
 		assertFalse("Value in the model--should not be there - Value " + expected + "; found " +
 			modelValues, modelValues.contains(expected));
 	}
@@ -449,6 +538,27 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 		waitForSwing();
 	}
 
+	private void createCombinedFilterWithEmptyTextFilter(TableFilter<Long> nonTextFilter) {
+
+		// the row objects are Long values that are 0-based one-up index values
+		DefaultRowFilterTransformer<Long> transformer =
+			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
+
+		TextFilter allPassesFilter = new EmptyTextFilter();
+		spyFilter = new SpyTextFilter<>(allPassesFilter, transformer, recorder);
+
+		CombinedTableFilter<Long> combinedFilter =
+			new CombinedTableFilter<>(spyFilter, nonTextFilter, null);
+
+		recorder.record("Before setting the new filter");
+		runSwing(() -> model.setTableFilter(combinedFilter));
+		recorder.record("\tafter setting filter");
+
+		waitForNotBusy();
+		waitForTableModel(model);
+		waitForSwing();
+	}
+
 	private void createCombinedStartsWithFilter(String filterValue,
 			TableFilter<Long> secondFilter) {
 
@@ -464,9 +574,11 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 		spyFilter = new SpyTextFilter<>(textFilter, transformer, recorder);
 
 		CombinedTableFilter<Long> combinedFilter =
-			new CombinedTableFilter<Long>(spyFilter, secondFilter, null);
+			new CombinedTableFilter<>(spyFilter, secondFilter, null);
 
+		recorder.record("Before setting the new filter");
 		runSwing(() -> model.setTableFilter(combinedFilter));
+		recorder.record("\tafter setting filter");
 
 		waitForNotBusy();
 		waitForTableModel(model);
@@ -505,6 +617,10 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 		assertTrue("The table did not filter data when it should have", spyFilter.hasFiltered());
 	}
 
+	@Override
+	protected void record(String message) {
+		recorder.record("Test - " + message);
+	}
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -568,28 +684,53 @@ public class ThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 	}
 
-	private class SpyTableModelListener implements ThreadedTableModelListener {
+	private class EmptyTextFilter implements TextFilter {
 
 		@Override
-		public void loadPending() {
-			recorder.record("Swing - model load pending");
+		public boolean matches(String text) {
+			return true;
 		}
 
 		@Override
-		public void loadingStarted() {
-			recorder.record("Swing - model load started");
+		public String getFilterText() {
+			return null;
 		}
 
 		@Override
-		public void loadingFinished(boolean wasCancelled) {
-			if (wasCancelled) {
-				recorder.record("Swing - model load cancelled");
-			}
-			else {
-				recorder.record("Swing - model load finsished; size: " + model.getRowCount());
-			}
+		public boolean isSubFilterOf(TextFilter filter) {
+			return true;
 		}
-
 	}
 
+	private class AllPassesTableFilter implements TableFilter<Long> {
+
+		@Override
+		public boolean acceptsRow(Long rowObject) {
+			return true;
+		}
+
+		@Override
+		public boolean isSubFilterOf(TableFilter<?> tableFilter) {
+			return false;
+		}
+	}
+
+	private class PredicateTableFilter implements TableFilter<Long> {
+
+		private Predicate<Long> predicate;
+
+		PredicateTableFilter(Predicate<Long> predicate) {
+			this.predicate = predicate;
+		}
+
+		@Override
+		public boolean acceptsRow(Long rowObject) {
+			return predicate.test(rowObject);
+		}
+
+		@Override
+		public boolean isSubFilterOf(TableFilter<?> tableFilter) {
+			return false;
+		}
+	}
 }

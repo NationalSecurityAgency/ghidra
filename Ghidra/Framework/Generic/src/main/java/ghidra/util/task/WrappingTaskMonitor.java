@@ -15,7 +15,6 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -92,11 +91,6 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void reportIssue(Issue issue) {
-		delegate.reportIssue(issue);
-	}
-
-	@Override
 	public void cancel() {
 		delegate.cancel();
 	}
@@ -124,15 +118,5 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	@Override
 	public void clearCanceled() {
 		delegate.clearCanceled();
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		delegate.addIssueListener(listener);
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		delegate.removeIssueListener(listener);
 	}
 }
