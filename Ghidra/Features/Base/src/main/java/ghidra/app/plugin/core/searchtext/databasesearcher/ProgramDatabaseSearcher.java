@@ -109,20 +109,13 @@ public class ProgramDatabaseSearcher implements Searcher {
 			return; // finished
 		}
 
-		AddressSpace lastSpace = lastAddress.getAddressSpace();
-		AddressSpace newSpace = newAddress.getAddressSpace();
-		if (!lastSpace.equals(newSpace)) {
-			remainingAddresses.delete(lastSpace.getMinAddress(), lastSpace.getMaxAddress());
+		if (isForward) {
+			remainingAddresses.delete(remainingAddresses.getMinAddress(), lastAddress);
+		}
+		else {
+			remainingAddresses.delete(lastAddress, remainingAddresses.getMaxAddress());
 		}
 
-		Address from = newSpace.getMinAddress();
-		Address to = newAddress.subtract(1);
-		if (!isForward) {
-			to = newSpace.getMaxAddress();
-			from = newAddress.add(1);
-		}
-
-		remainingAddresses.delete(from, to);
 		long progress = totalSearchCount - remainingAddresses.getNumAddresses();
 		monitor.setProgress(progress);
 	}
@@ -274,14 +267,6 @@ public class ProgramDatabaseSearcher implements Searcher {
 		return trimmedSet;
 	}
 
-	/**
-	 * Adjust the start location to be within the address set that will get searched.
-	 * @param program the program for the address set
-	 * @param start the program location where the search will start.
-	 * @param trimmedSet the address set to be searched.
-	 * @param forward true for a forward search and false for backward search.
-	 * @return
-	 */
 	private ProgramLocation adjustStartLocation(Program program, ProgramLocation start,
 			AddressSetView trimmedSet, boolean forward) {
 
