@@ -28,7 +28,7 @@ import ghidra.pdb.pdbreader.symbol.Compile3MsSymbol;
  * {@link Compile3MsSymbol} and what we save off in {@link AbstractPdb}, but
  * {@link ImageFileMachine} is what we see in the header of {@link DatabaseInterfaceNew}.
  * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/sysinfo/image-file-machine-constants">
- * Image File Machine Constants</a>.
+ * Image File Machine Constants</a>
  * @see <a href="http://metadataconsulting.blogspot.com/2014/06/imagefilemachine-extensive-machine-type.html">
  * Also Image File Machine Constants</a>
  * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-image_file_header">
