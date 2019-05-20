@@ -16,17 +16,18 @@
 package ghidra.util.task;
 
 import java.awt.Component;
+import java.util.concurrent.Executor;
 
-import javax.swing.SwingUtilities;
-
+import generic.concurrent.GThreadPool;
 import generic.util.WindowUtilities;
-import ghidra.util.*;
+import ghidra.util.Swing;
+import ghidra.util.TaskUtilities;
 
 /**
  * Helper class to launch the given task in a background thread, showing a task dialog if 
  * this task takes to long. See {@link TaskLauncher}.
  */
-class SwingTaskLauncher {
+class TaskRunner {
 
 	protected Task task;
 	private Component parent;
@@ -43,7 +44,7 @@ class SwingTaskLauncher {
 		}
 	};
 
-	SwingTaskLauncher(Task task, Component parent, int delay, int dialogWidth) {
+	TaskRunner(Task task, Component parent, int delay, int dialogWidth) {
 		this.task = task;
 		this.parent = parent;
 		this.delay = delay;
@@ -51,26 +52,16 @@ class SwingTaskLauncher {
 	}
 
 	void run() {
+
+		// note: we need to be on the Swing thread to create our UI widgets
+		Swing.assertThisIsTheSwingThread(
+			"The Task runner is required to be run from the Swing thread");
+
 		this.taskDialog = buildTaskDialog(parent);
 
 		startBackgroundThread(taskDialog);
 
 		taskDialog.show(Math.max(delay, 0));
-
-		waitIfNotSwing();
-	}
-
-	private void waitIfNotSwing() {
-		if (SwingUtilities.isEventDispatchThread() || !task.isModal()) {
-			return;
-		}
-
-		try {
-			taskThread.join();
-		}
-		catch (InterruptedException e) {
-			Msg.debug(this, "Task Launcher unexpectedly interrupted waiting for task thread", e);
-		}
 	}
 
 	protected TaskDialog buildTaskDialog(Component comp) {
@@ -80,10 +71,8 @@ class SwingTaskLauncher {
 		// on the Swing thread to prevent exceptions while painting (as seen when using the
 		// Nimbus Look and Feel).
 		//
-		SystemUtilities.runSwingNow(() -> {
-			taskDialog = createTaskDialog(comp);
-			taskDialog.setMinimumSize(dialogWidth, 0);
-		});
+		taskDialog = createTaskDialog(comp);
+		taskDialog.setMinimumSize(dialogWidth, 0);
 
 		if (task.isInterruptible() || task.isForgettable()) {
 			taskDialog.addCancelledListener(monitorChangeListener);
@@ -100,21 +89,16 @@ class SwingTaskLauncher {
 		TaskUtilities.addTrackedTask(task, monitor);
 
 		String name = "Task - " + task.getTaskTitle();
-		taskThread = new Thread(() -> {
+		GThreadPool pool = GThreadPool.getSharedThreadPool(Swing.GSWING_THREAD_POOL_NAME);
+		Executor executor = pool.getExecutor();
+		executor.execute(() -> {
+			Thread.currentThread().setName(name);
 			task.monitoredRun(monitor);
-			taskProcessed();
-		}, name);
-		taskThread.setPriority(Thread.MIN_PRIORITY);
-		taskThread.start();
-	}
-
-	private void taskProcessed() {
-		if (taskDialog != null) {
 			taskDialog.taskProcessed();
-		}
+		});
 	}
 
-	protected TaskDialog createTaskDialog(Component comp) {
+	private TaskDialog createTaskDialog(Component comp) {
 		Component currentParent = comp;
 		if (currentParent != null) {
 			currentParent = WindowUtilities.windowForComponent(comp);

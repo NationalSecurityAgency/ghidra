@@ -21,7 +21,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -149,7 +149,7 @@ public class CreateDataBackgroundCmd extends BackgroundCommand {
 
 				// Allow the Swing thread a chance to paint components that may require
 				// a DB lock.
-				SystemUtilities.allowSwingToProcessEvents();
+				Swing.allowSwingToProcessEvents();
 			}
 		}
 	}

@@ -18,9 +18,7 @@ package ghidra.util.task;
 import java.awt.Component;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.SwingUtilities;
-
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.UnableToSwingException;
 
 /**
@@ -232,34 +230,19 @@ public class TaskLauncher {
 	public TaskLauncher(Task task, Component parent, int delay, int dialogWidth) {
 
 		try {
-			runSwing(task, parent, delay, dialogWidth);
+			scheduleFromSwingThread(task, parent, delay, dialogWidth);
 		}
 		catch (UnableToSwingException e) {
 			runInThisBackgroundThread(task);
 		}
 	}
 
-	/**
-	 * Constructor where an external taskMonitor is used.  Normally, this class will provide
-	 * the {@link TaskDialog} as the monitor.  This constructor is useful when you want to run
-	 * the task and use a monitor that is embedded in some other component.
-	 *
-	 * <p>See <a href="#modal_usage">notes on modal usage</a>
-	 *
-	 * @param task task to run in another thread (other than the Swing Thread)
-	 * @param monitor the monitor to use while running the task.
-	 */
-	public TaskLauncher(Task task, TaskMonitor monitor) {
-		BackgroundThreadTaskLauncher runner = new BackgroundThreadTaskLauncher(task);
-		runner.run(monitor);
-	}
-
-	private void runSwing(Task task, Component parent, int delay, int dialogWidth)
+	private void scheduleFromSwingThread(Task task, Component parent, int delay, int dialogWidth)
 			throws UnableToSwingException {
 
-		SwingTaskLauncher swinger = buildSwingLauncher(task, parent, delay, dialogWidth);
-		if (SwingUtilities.isEventDispatchThread()) {
-			swinger.run();
+		TaskRunner runner = createTaskRunner(task, parent, delay, dialogWidth);
+		if (Swing.isEventDispatchThread()) {
+			runner.run();
 			return;
 		}
 
@@ -271,26 +254,28 @@ public class TaskLauncher {
 		// This will throw an exception if we could not get the Swing lock.  When that happens,
 		// the task was NOT run.
 		int timeout = getSwingTimeoutInSeconds();
-		SystemUtilities.runSwingNow(() -> {
-			swinger.run();
-		}, timeout, TimeUnit.SECONDS);
+		Swing.runNow(() -> runner.run(), timeout, TimeUnit.SECONDS);
 	}
 
 	protected int getSwingTimeoutInSeconds() {
 		return 2;
 	}
 
-	protected SwingTaskLauncher buildSwingLauncher(Task task, Component parent, int delay,
-			int dialogWidth) {
-		return new SwingTaskLauncher(task, parent, delay, dialogWidth);
+	protected TaskRunner createTaskRunner(Task task, Component parent, int delay, int dialogWidth) {
+		return new TaskRunner(task, parent, delay, dialogWidth);
 	}
 
+	/**
+	 * Runs the given task in the current thread, which <b>cannot be the Swing thread</b>
+	 * 
+	 * @param task the task to run
+	 * @throws IllegalStateException if the given thread is the Swing thread
+	 */
 	protected void runInThisBackgroundThread(Task task) {
-		if (SwingUtilities.isEventDispatchThread()) {
+		if (Swing.isEventDispatchThread()) {
 			throw new IllegalStateException("Must not call this method from the Swing thread");
 		}
 
-		CurrentThreadTaskLauncher runner = new CurrentThreadTaskLauncher(task);
-		runner.run();
+		task.monitoredRun(TaskMonitor.DUMMY);
 	}
 }

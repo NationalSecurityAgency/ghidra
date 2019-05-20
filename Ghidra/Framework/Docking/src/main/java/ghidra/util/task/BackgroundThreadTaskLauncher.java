@@ -15,29 +15,39 @@
  */
 package ghidra.util.task;
 
+import java.util.concurrent.Executor;
+
+import generic.concurrent.GThreadPool;
+import ghidra.util.Swing;
 import ghidra.util.TaskUtilities;
 
 /**
  * Helper class to launch the given task in a background thread  This helper will not 
- * show a task dialog. See {@link TaskLauncher}.
+ * show a task dialog. 
+ * 
+ * <p>This class is useful when you want to run the task and use a monitor that is embedded 
+ * in some other component.
+ * 
+ * <p>See {@link TaskLauncher}.
  */
-class BackgroundThreadTaskLauncher {
+public class BackgroundThreadTaskLauncher {
 
 	private Task task;
 
-	BackgroundThreadTaskLauncher(Task task) {
+	public BackgroundThreadTaskLauncher(Task task) {
 		this.task = task;
 	}
 
-	void run(TaskMonitor monitor) {
+	public void run(TaskMonitor monitor) {
 		// add the task here, so we can track it before it is actually started by the thread
 		TaskUtilities.addTrackedTask(task, monitor);
 
 		String name = "Task - " + task.getTaskTitle();
-		Thread taskThread = new Thread(() -> {
+		GThreadPool pool = GThreadPool.getSharedThreadPool(Swing.GSWING_THREAD_POOL_NAME);
+		Executor executor = pool.getExecutor();
+		executor.execute(() -> {
+			Thread.currentThread().setName(name);
 			task.monitoredRun(monitor);
-		}, name);
-		taskThread.setPriority(Thread.MIN_PRIORITY);
-		taskThread.start();
+		});
 	}
 }

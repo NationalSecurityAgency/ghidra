@@ -92,10 +92,10 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		}
 
 		@Override
-		protected SwingTaskLauncher buildSwingLauncher(Task task, Component parent, int delay,
+		protected TaskRunner createTaskRunner(Task task, Component parent, int delay,
 				int dialogWidth) {
 
-			return new SwingTaskLauncher(task, parent, delay, dialogWidth) {
+			return new TaskRunner(task, parent, delay, dialogWidth) {
 				@Override
 				protected TaskDialog buildTaskDialog(Component comp) {
 					dialogSpy = new TaskDialogSpy(task);
