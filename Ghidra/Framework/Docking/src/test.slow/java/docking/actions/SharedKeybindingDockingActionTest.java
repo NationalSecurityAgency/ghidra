@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.collections4.IterableUtils;
@@ -72,6 +73,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertNoLoggedMessages();
 		assertKeyBinding(action1, DEFAULT_KS_1);
 		assertKeyBinding(action2, DEFAULT_KS_1);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -89,6 +91,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertNoLoggedMessages();
 		assertKeyBinding(action1, newKs);
 		assertKeyBinding(action2, newKs);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -104,6 +107,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertImproperDefaultBindingMessage();
 		assertKeyBinding(action1, DEFAULT_KS_1);
 		assertKeyBinding(action2, DEFAULT_KS_1);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -119,6 +123,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertNoLoggedMessages();
 		assertKeyBinding(action1, null);
 		assertKeyBinding(action2, null);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -133,6 +138,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertImproperDefaultBindingMessage();
 		assertKeyBinding(action1, DEFAULT_KS_1);
 		assertKeyBinding(action2, DEFAULT_KS_1);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -168,6 +174,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 
 		assertNoLoggedMessages();
 		assertKeyBinding(action1, DEFAULT_KS_1);
+		assertSharedStubInTool();
 	}
 
 	@Test
@@ -204,14 +211,81 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertKeyBinding(action1, newKs);
 	}
 
+	@Test
+	public void testSharedKeyBinding_SameDefaultKeyBindings_LocalAction() {
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action2 = new TestAction(OWNER_2, DEFAULT_KS_1);
+
+		DummyComponentProvider provider = new DummyComponentProvider();
+		tool.addLocalAction(provider, action1);
+		tool.addLocalAction(provider, action2);
+
+		assertNoLoggedMessages();
+		assertKeyBinding(action1, DEFAULT_KS_1);
+		assertKeyBinding(action2, DEFAULT_KS_1);
+		assertSharedStubInTool();
+	}
+
+	@Test
+	public void testSharedKeyBinding_RemoveAction_LocalAction() {
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action2 = new TestAction(OWNER_2, DEFAULT_KS_1);
+
+		DummyComponentProvider provider = new DummyComponentProvider();
+		tool.addLocalAction(provider, action1);
+		tool.addLocalAction(provider, action2);
+
+		tool.removeLocalAction(provider, action1);
+
+		assertActionNotInTool(action1);
+		assertActionInTool(action2);
+
+		tool.removeLocalAction(provider, action2);
+		assertActionNotInTool(action2);
+
+		String sharedName = action1.getFullName();
+		assertNoSharedKeyBindingStubInstalled(sharedName);
+	}
+
+	@Test
+	public void testSharedKeyBinding_RemoveComonentActions() {
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action2 = new TestAction(OWNER_2, DEFAULT_KS_1);
+
+		DummyComponentProvider provider = new DummyComponentProvider();
+		tool.addLocalAction(provider, action1);
+		tool.addLocalAction(provider, action2);
+		assertActionInTool(action1);
+		assertActionInTool(action2);
+
+		tool.removeComponentProvider(provider);
+
+		assertActionNotInTool(action1);
+		assertActionNotInTool(action2);
+
+		String sharedName = action1.getFullName();
+		assertNoSharedKeyBindingStubInstalled(sharedName);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
 
+	private void assertSharedStubInTool() {
+		// the stub action's name is 'Shared Action Name (Tool)'
+		DockingActionIf action = getAction(tool, SHARED_OWNER, SHARED_NAME);
+		assertNotNull("Shared action stub is not in the tool", action);
+	}
+
 	private void assertOnlyOneVersionOfActionInTool(TestAction action) {
-		Set<DockingActionIf> actions = getActions(tool, action.getName());
-		assertEquals("There should be only one instance of this action in the tool: " + action, 1,
-			actions.size());
+
+		// this  method will fail if more than one action is registered
+		DockingActionIf registeredAction = getAction(tool, action.getOwner(), action.getName());
+		assertNotNull("There should be only one instance of this action in the tool: " + action,
+			registeredAction);
 	}
 
 	private void assertActionInTool(TestAction action) {
@@ -234,7 +308,6 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 	}
 
 	private void assertNoSharedKeyBindingStubInstalled(String sharedName) {
-
 		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(sharedName);
 		assertTrue("There should be no actions registered for '" + sharedName + "'",
 			actions.isEmpty());
@@ -284,6 +357,18 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		@Override
 		public void actionPerformed(ActionContext context) {
 			fail("Action performed should not have been called");
+		}
+	}
+
+	private class DummyComponentProvider extends ComponentProvider {
+		public DummyComponentProvider() {
+			super(tool, "Dummy", "Dummy Owner");
+			addToTool();
+		}
+
+		@Override
+		public JComponent getComponent() {
+			return null;
 		}
 	}
 }

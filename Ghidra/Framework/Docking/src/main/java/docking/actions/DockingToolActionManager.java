@@ -93,12 +93,12 @@ public class DockingToolActionManager implements PropertyChangeListener {
 
 	private void setKeyBindingOption(DockingActionIf action) {
 
-		if (!action.isKeyBindingManaged()) {
+		if (action.usesSharedKeyBinding()) {
+			installSharedKeyBinding(action);
 			return;
 		}
 
-		if (action.usesSharedKeyBinding()) {
-			installSharedKeyBinding(action);
+		if (!action.isKeyBindingManaged()) {
 			return;
 		}
 
@@ -159,15 +159,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
-		if (action.isKeyBindingManaged()) {
-			KeyStroke ks = action.getKeyBinding();
-			keyBindingOptions.registerOption(action.getFullName(), OptionType.KEYSTROKE_TYPE, ks,
-				null, null);
-			KeyStroke newKs = keyBindingOptions.getKeyStroke(action.getFullName(), ks);
-			if (ks != newKs) {
-				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
-			}
-		}
+		setKeyBindingOption(action);
 		winMgr.addLocalAction(provider, action);
 	}
 
@@ -198,14 +190,26 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	/**
 	 * Get all actions that have the action name which includes the action owner's name.
 	 * 
-	 * @param fullActionName full name for the action, e.g., "My Action (My Plugin)"
+	 * @param fullName full name for the action, e.g., "My Action (My Plugin)"
 	 * @return list of actions; empty if no action exists with the given name
 	 */
 	public List<DockingActionIf> getDockingActionsByFullActionName(String fullName) {
 		List<DockingActionIf> list = actionMap.get(fullName);
 		if (list == null) {
-			return new ArrayList<>();
+			list = new ArrayList<>();
 		}
+
+		// note: we only use the action name for the lookup, as all shared actions are owned
+		//       by the 'Tool'
+		int index = fullName.indexOf(" (Tool)");
+		if (index > 0) {
+			String actionName = fullName.substring(0, index);
+			SharedStubKeyBindingAction sharedAction = sharedActionMap.get(actionName);
+			if (sharedAction != null) {
+				list.add(sharedAction);
+			}
+		}
+
 		return new ArrayList<>(list);
 	}
 
@@ -222,11 +226,17 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 * @return a list of deduped actions.
 	 */
 	private List<DockingActionIf> getUniqueActionList(String owner) {
-		List<DockingActionIf> matchingActionList = new ArrayList<>();
 
+		List<DockingActionIf> matchingActionList = new ArrayList<>();
 		for (List<DockingActionIf> actionList : actionMap.values()) {
 			// we only want *one* instance of duplicate actions
 			DockingActionIf action = actionList.get(0);
+			if (owner == null || action.getOwner().equals(owner)) {
+				matchingActionList.add(action);
+			}
+		}
+
+		for (DockingActionIf action : sharedActionMap.values()) {
 			if (owner == null || action.getOwner().equals(owner)) {
 				matchingActionList.add(action);
 			}
@@ -289,7 +299,6 @@ public class DockingToolActionManager implements PropertyChangeListener {
 				actionMap.remove(name);
 			}
 		}
-
 	}
 
 	@Override

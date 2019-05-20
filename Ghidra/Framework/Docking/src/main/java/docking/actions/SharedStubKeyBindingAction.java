@@ -83,7 +83,7 @@ class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeL
 	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {
 
 		// this value may be null
-		KeyBindingData defaultBinding = newAction.getDefaultKeyBindingData();
+		KeyBindingData defaultBinding = newAction.getKeyBindingData();
 		KeyStroke newDefaultKs = getKeyStroke(defaultBinding);
 
 		Set<Entry<DockingActionIf, KeyStroke>> entries = clientActions.entrySet();

@@ -32,6 +32,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import docking.options.editor.OptionsDialog;
 import docking.options.editor.OptionsPanel;
+import docking.tool.util.DockingToolConstants;
 import docking.util.KeyBindingUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.tree.GTree;
@@ -49,7 +50,6 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.mgr.OptionsManager;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Msg;
@@ -65,7 +65,6 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String TEST_FILENAME =
 		"KeyBindingUtilsTest_Test_Filename" + KeyBindingUtils.PREFERENCES_FILE_EXTENSION;
-	private static final String TEST_TOOL_NAME = "KeyBindingsUtilsTest_TestTool";
 
 	private Writer debug = new NullWriter();
 
@@ -137,7 +136,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testExportImportKeyBindings() throws Exception {
 		debug("testExportImportKeyBindings()");
-		ToolOptions defaultKeyBindings = tool.getOptions(ToolConstants.KEY_BINDINGS);
+		ToolOptions defaultKeyBindings = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		debug("a");
 
@@ -195,7 +194,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testImportExportWithGUI() throws Exception {
 
-		setUpDialog();
+		setKeyBindingsUpDialog();
 
 		debug("a");
 
@@ -206,11 +205,11 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// save and reload them to make sure they are the same
 		File saveFile = exportOptions(toolKeyBindingOptions);
-		ToolOptions savedOptions = importOptions(saveFile);
+		ToolOptions originalOptions = importOptions(saveFile);
 
 		assertOptionsMatch(
 			"The Options objects do not contain different data after " + "changes have been made.",
-			toolKeyBindingOptions, savedOptions);
+			toolKeyBindingOptions, originalOptions);
 
 		debug("c");
 
@@ -222,7 +221,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		// verify the changes are different than the original values
 		assertOptionsDontMatch(
 			"The Options objects do not contain different data after " + "changes have been made.",
-			toolKeyBindingOptions, savedOptions);
+			toolKeyBindingOptions, originalOptions);
 
 		debug("e");
 
@@ -234,13 +233,13 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		debug("f");
 
 		// verify the data is the same as it was before the changes
-		boolean same = compareOptionsWithKeyStrokeMap(savedOptions, optionsMap);
+		boolean same = compareOptionsWithKeyStrokeMap(originalOptions, optionsMap);
 		assertTrue("The Options object contains different data than was " + "imported.", same);
 
 		debug("g");
 
 		// close the tool *without* applying the changes
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.dispose();
 
 		debug("h");
@@ -250,7 +249,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		// reload the tool and make sure the values are those of the changes
 		// *before* the last import
 		setUp();
-		setUpDialog();
+		setKeyBindingsUpDialog();
 
 		debug("i");
 
@@ -258,7 +257,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertOptionsMatch(
 			"The options from the first tool instance have changed " +
 				"in the second tool instance even though the testing changes were not applied.",
-			savedOptions, newlyLoadedDefaultOptions);
+			originalOptions, newlyLoadedDefaultOptions);
 
 		debug("j");
 
@@ -281,44 +280,54 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		debug("n");
 
-		saveTool();
-		closeAllWindowsAndFrames();
-		env.dispose();
-
-		debug("o");
-
 		saveFile.delete();
 
 		// reload the tool and make sure the values are those of the changes
 		// *after* the last import
 		// reload with our saved tool
-		setUp();
-		runSwing(() -> {
-			ToolServices services = tool.getProject().getToolServices();
-			tool = (PluginTool) services.launchTool(TEST_TOOL_NAME, null);
-		});
+		saveAndCloseTool();
+		reopenTool(tool);
 
 		debug("p");
 
+		setKeyBindingsUpDialog(tool);
+
 		newlyLoadedDefaultOptions = (ToolOptions) getInstanceField("options", panel);
 		assertOptionsDontMatch(
-			"The options are the same after making changes, applying, " + "closing and reloading.",
-			savedOptions, newlyLoadedDefaultOptions);
+			"The options are the same after making changes, applying, closing and reloading.",
+			originalOptions, newlyLoadedDefaultOptions);
 
 		debug("q");
+		closeAllWindows();
 	}
 
-	private void saveTool() {
-		executeOnSwingWithoutBlocking(() -> tool.saveTool());
+	private void reopenTool(PluginTool tool2) {
+		runSwing(() -> {
+			ToolServices services = tool.getProject().getToolServices();
+			tool = (PluginTool) services.launchTool(tool.getName(), null);
+		});
+		assertNotNull(tool);
 	}
 
-	// open the options dialog and show the key bindings editor
-	private void setUpDialog() throws Exception {
-		debug("setUpDialog()");
+	private void saveAndCloseTool() {
+		runSwing(() -> {
+			ToolServices services = tool.getProject().getToolServices();
+			services.saveTool(tool);
+		});
+		env.closeTool(tool);
+	}
+
+	private void setKeyBindingsUpDialog() throws Exception {
 		env.showTool();
+		setKeyBindingsUpDialog(tool);
+	}
+
+	private void setKeyBindingsUpDialog(PluginTool pluginTool) throws Exception {
+		debug("setUpDialog()");
 		debug("aa");
 
-		final OptionsManager optionsManager = (OptionsManager) getInstanceField("optionsMgr", tool);
+		final OptionsManager optionsManager =
+			(OptionsManager) getInstanceField("optionsMgr", pluginTool);
 
 		debug("bb");
 		executeOnSwingWithoutBlocking(() -> {
@@ -458,7 +467,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void closeWarningDialog(boolean proceed) {
-		Window window = waitForWindowByTitleContaining(null, "Continue", DEFAULT_WINDOW_TIMEOUT);
+		Window window = waitForWindowByTitleContaining("Continue");
 		assertNotNull(window);
 
 		String button = proceed ? "Yes" : "No";
@@ -488,7 +497,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	// locates the open file chooser and verifies its state
 	private File findAndTestFileChooser(File path, String filename) throws Exception {
 		// get the file chooser and set the file it will use
-		GhidraFileChooser fileChooser = waitForDialogComponent(null, GhidraFileChooser.class, 5000);
+		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 		if (fileChooser == null) {
 			Msg.debug(this, "Couldn't find file chooser");
 			printOpenWindows();
