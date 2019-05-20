@@ -51,11 +51,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * method allows actions to manage their own enablement.  Otherwise, the default behavior for this
  * method is to return the current enabled property of the action.  This allows for the possibility
  * for plugins to manage the enablement of its actions.
- * <p>
- * By default, actions that are not enabledForContext do not appear in the popup menu.  To change
- * that behavior, implementors can also override {@link #deleteThisContextMethod(ActionContext)}.  
- * This method is used to determine if the action should appear on the popup menu based on the given
- * context.
  */
 public abstract class DockingAction implements DockingActionIf {
 
@@ -283,8 +278,8 @@ public abstract class DockingAction implements DockingActionIf {
 //==================================================================================================
 
 	/**
-	 * Sets the {@link #MenuData} to be used to put this action on the tool's menu bar.
-	 * @param newMenuData the MenuData to be used to put this action on the tool's menu bar.
+	 * Sets the {@link MenuData} to be used to put this action on the tool's menu bar
+	 * @param newMenuData the MenuData to be used to put this action on the tool's menu bar
 	 */
 	public void setMenuBarData(MenuData newMenuData) {
 		MenuBarData oldData = menuBarData;
@@ -295,8 +290,8 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Sets the {@link #MenuData} to be used to put this action in the tool's popup menu.
-	 * @param newMenuData the MenuData to be used to put this action on the tool's popup menu.
+	 * Sets the {@link MenuData} to be used to put this action in the tool's popup menu
+	 * @param newMenuData the MenuData to be used to put this action on the tool's popup menu
 	 */
 	public void setPopupMenuData(MenuData newMenuData) {
 		PopupMenuData oldData = popupMenuData;
@@ -307,8 +302,8 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Sets the {@link #ToolBarData} to be used to put this action on the tool's toolbar.
-	 * @param newToolBarData the ToolBarData to be used to put this action on the tool's toolbar.
+	 * Sets the {@link ToolBarData} to be used to put this action on the tool's toolbar
+	 * @param newToolBarData the ToolBarData to be used to put this action on the tool's toolbar
 	 */
 	public void setToolBarData(ToolBarData newToolBarData) {
 
@@ -321,7 +316,7 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Sets the {@link #KeyBindingData} to be used to assign this action to a keybinding.
+	 * Sets the {@link KeyBindingData} to be used to assign this action to a keybinding.
 	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
 	 */
 	@Override
@@ -339,10 +334,7 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * <b>Users creating actions should not call this method, but should instead call
 	 * {@link #setKeyBindingData(KeyBindingData)}.</b>
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
-	 * @param validate true signals that this method should convert keybindings to their 
-	 *                 OS-dependent form (for example, on Mac a <tt>Ctrl</tt> 
-	 *                 key is changed to the <tt>Command</tt> key).
+	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
 	 */
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
@@ -364,7 +356,7 @@ public abstract class DockingAction implements DockingActionIf {
 
 	/**
 	 * Sets the description to be used in the tooltip.
-	 * @param description the description to be set.
+	 * @param newDescription the description to be set.
 	 */
 	public void setDescription(String newDescription) {
 		if (SystemUtilities.isEqual(newDescription, description)) {

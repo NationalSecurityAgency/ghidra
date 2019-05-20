@@ -30,6 +30,7 @@ import docking.DockingUtils;
 import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
+import docking.tool.util.DockingToolConstants;
 import docking.util.KeyBindingUtils;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
@@ -38,7 +39,6 @@ import docking.widgets.table.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
@@ -78,10 +78,6 @@ public class KeyBindingsPanel extends JPanel {
 	private PropertyChangeListener propertyChangeListener;
 	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
 
-	/**
-	 * Constructor
-	 * @param options options that have the key binding mappings.
-	 */
 	public KeyBindingsPanel(PluginTool tool, Options options) {
 		this.tool = tool;
 		this.options = options;
@@ -350,7 +346,7 @@ public class KeyBindingsPanel extends JPanel {
 			// run this after the current pending events in the swing
 			// thread so that the screen will repaint itself
 			SwingUtilities.invokeLater(() -> {
-				ToolOptions keyBindingOptions = tool.getOptions(ToolConstants.KEY_BINDINGS);
+				ToolOptions keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 				KeyBindingUtils.exportKeyBindings(keyBindingOptions);
 			});
 		});
@@ -447,16 +443,6 @@ public class KeyBindingsPanel extends JPanel {
 		selectionModel.addListSelectionListener(new TableSelectionListener());
 	}
 
-	/**
-	 * Update the keyMap and the actionMap and enable the apply button on
-	 * the dialog.
-	 * @param action plugin action could be null if ksName is not associated
-	 * with a plugin action
-	 * @param defaultActionName name of the action
-	 * @param ksName keystroke name
-	 * @return true if the old keystroke is different from the current
-	 * keystroke
-	 */
 	private boolean checkAction(String actionName, KeyStroke keyStroke) {
 		String ksName = KeyEntryTextField.parseKeyStroke(keyStroke);
 

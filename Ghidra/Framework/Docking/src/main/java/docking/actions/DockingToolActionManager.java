@@ -24,8 +24,7 @@ import javax.swing.KeyStroke;
 import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
-import ghidra.framework.options.OptionType;
-import ghidra.framework.options.Options;
+import ghidra.framework.options.*;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -34,8 +33,9 @@ import ghidra.util.exception.AssertException;
 public class DockingToolActionManager implements PropertyChangeListener {
 
 	private DockingWindowManager winMgr;
-	private Map<String, List<DockingActionIf>> actionMap;
-	private Options keyBindingOptions;
+	private Map<String, List<DockingActionIf>> actionMap = new HashMap<>();
+	private Map<String, SharedStubKeyBindingAction> sharedActionMap = new HashMap<>();
+	private ToolOptions keyBindingOptions;
 	private DockingTool dockingTool;
 
 	/**
@@ -48,7 +48,6 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	public DockingToolActionManager(DockingTool tool, DockingWindowManager windowManager) {
 		this.dockingTool = tool;
 		this.winMgr = windowManager;
-		actionMap = new HashMap<>();
 		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 	}
 
@@ -88,16 +87,45 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	public synchronized void addToolAction(DockingActionIf action) {
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
-		if (action.isKeyBindingManaged()) {
-			KeyStroke ks = action.getKeyBinding();
-			keyBindingOptions.registerOption(action.getFullName(), OptionType.KEYSTROKE_TYPE, ks,
-				null, null);
-			KeyStroke newKs = keyBindingOptions.getKeyStroke(action.getFullName(), ks);
-			if (ks != newKs) {
-				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
-			}
-		}
+		setKeyBindingOption(action);
 		winMgr.addToolAction(action);
+	}
+
+	private void setKeyBindingOption(DockingActionIf action) {
+
+		if (!action.isKeyBindingManaged()) {
+			return;
+		}
+
+		if (action.usesSharedKeyBinding()) {
+			installSharedKeyBinding(action);
+			return;
+		}
+
+		KeyStroke ks = action.getKeyBinding();
+		keyBindingOptions.registerOption(action.getFullName(), OptionType.KEYSTROKE_TYPE, ks, null,
+			null);
+		KeyStroke newKs = keyBindingOptions.getKeyStroke(action.getFullName(), ks);
+		if (!Objects.equals(ks, newKs)) {
+			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
+		}
+	}
+
+	private void installSharedKeyBinding(DockingActionIf action) {
+		String name = action.getName();
+		KeyStroke defaultKeyStroke = action.getKeyBinding();
+
+		// get or create the stub to which we will add the action
+		SharedStubKeyBindingAction stub = sharedActionMap.computeIfAbsent(name, key -> {
+
+			SharedStubKeyBindingAction newStub =
+				new SharedStubKeyBindingAction(name, keyBindingOptions);
+			keyBindingOptions.registerOption(newStub.getFullName(), OptionType.KEYSTROKE_TYPE,
+				defaultKeyStroke, null, null);
+			return newStub;
+		});
+
+		stub.addClientAction(action);
 	}
 
 	/**
@@ -173,8 +201,8 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 * @param fullActionName full name for the action, e.g., "My Action (My Plugin)"
 	 * @return list of actions; empty if no action exists with the given name
 	 */
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		List<DockingActionIf> list = actionMap.get(fullActionName);
+	public List<DockingActionIf> getDockingActionsByFullActionName(String fullName) {
+		List<DockingActionIf> list = actionMap.get(fullName);
 		if (list == null) {
 			return new ArrayList<>();
 		}

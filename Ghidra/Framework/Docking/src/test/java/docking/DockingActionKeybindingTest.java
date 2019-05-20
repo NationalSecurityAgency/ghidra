@@ -26,11 +26,7 @@ import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 
-public class DockingKeybindingActionTest extends AbstractGenericTest {
-
-	public DockingKeybindingActionTest() {
-		super();
-	}
+public class DockingActionKeybindingTest extends AbstractGenericTest {
 
 	@Test
 	public void testKeybinding_Unmodified() {

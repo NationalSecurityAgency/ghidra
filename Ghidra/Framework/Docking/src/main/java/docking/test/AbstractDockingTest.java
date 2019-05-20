@@ -483,6 +483,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
 	 * windowing environment knows about
+	 * 
 	 * @deprecated instead call the new {@link #closeAllWindows()}
 	 */
 	@Deprecated
@@ -1137,6 +1138,39 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
+	 * Finds the action by the given owner name and action name.  
+	 * If you do not know the owner name, then use  
+	 * the call {@link #getActions(DockingTool, String)} instead.
+	 * 
+	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
+	 * when you have an owner name (which is usually the plugin name).
+	 * 
+	 * @param tool the tool containing all system actions
+	 * @param owner the owner of the action
+	 * @param name the name to match
+	 * @return the matching action; null if no matching action can be found
+	 */
+	public static DockingActionIf getAction(DockingTool tool, String owner, String name) {
+		String fullName = name + " (" + owner + ")";
+		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullName);
+		if (actions.isEmpty()) {
+			return null;
+		}
+
+		if (actions.size() > 1) {
+			// This shouldn't happen
+			throw new AssertionFailedError(
+				"Found more than one action for name '" + fullName + "'");
+		}
+
+		return CollectionUtils.any(actions);
+	}
+
+	public static DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
+		return getAction(provider.getTool(), provider.getName(), actionName);
+	}
+
+	/**
 	 * Returns the given dialog's action that has the given name
 	 *
 	 * @param provider the dialog provider
@@ -1417,8 +1451,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * Simulates a user initiated keystroke using the keybinding of the given action
 	 * 
-	 * @param destination the action's destination component
-	 * @param action The action to simulate pressing.
+	 * @param destination the component for the action being executed
+	 * @param action The action to simulate pressing
 	 */
 	public static void triggerActionKey(Component destination, DockingActionIf action) {
 
