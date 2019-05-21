@@ -100,7 +100,8 @@ public class DisassociateAction extends DockingAction {
 			monitor -> doDisassociate(synchronizer, typesToDisassociate, allAssociatedTypes, monitor);
 		new TaskBuilder("Disassociate From Archive", r)
 			.setStatusTextAlignment(SwingConstants.LEADING)
-			.launchModal();		
+			.launchModal()
+			;		
 		//@formatter:on
 	}
 

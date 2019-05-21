@@ -31,7 +31,7 @@ class TaskRunner {
 
 	protected Task task;
 	private Component parent;
-	private int delay;
+	private int delayMs;
 	private int dialogWidth;
 	private TaskDialog taskDialog;
 	private Thread taskThread;
@@ -44,10 +44,10 @@ class TaskRunner {
 		}
 	};
 
-	TaskRunner(Task task, Component parent, int delay, int dialogWidth) {
+	TaskRunner(Task task, Component parent, int delayMs, int dialogWidth) {
 		this.task = task;
 		this.parent = parent;
-		this.delay = delay;
+		this.delayMs = delayMs;
 		this.dialogWidth = dialogWidth;
 	}
 
@@ -61,7 +61,7 @@ class TaskRunner {
 
 		startBackgroundThread(taskDialog);
 
-		taskDialog.show(Math.max(delay, 0));
+		taskDialog.show(Math.max(delayMs, 0));
 	}
 
 	protected TaskDialog buildTaskDialog(Component comp) {

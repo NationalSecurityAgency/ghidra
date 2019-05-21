@@ -105,8 +105,10 @@ public class Swing {
 
 	/**
 	 * Calls the given suppler on the Swing thread, blocking with a
-	 * {@link SwingUtilities#invokeAndWait(Runnable)}.  Use this method when you need to get
-	 * a value while being on the Swing thread.
+	 * {@link SwingUtilities#invokeAndWait(Runnable)} if not on the Swing thread.  
+	 * 
+	 * <p>Use this method when you are not on the Swing thread and you need to get a value 
+	 * that is managed/synchronized by the Swing thread.
 	 *
 	 * <pre>
 	 * 		String value = runNow(() -> label.getText());
@@ -195,9 +197,9 @@ public class Swing {
 				"Timed-out waiting for Swing thread lock in " + timeout + " " + unit);
 		}
 
-		// we've started!
+		// we've started; wait for the runnable with no timeout
 		try {
-			end.await(); // wait FOREVER!
+			end.await();
 		}
 		catch (InterruptedException e) {
 			// we sometimes interrupt our tasks intentionally, so don't report it
