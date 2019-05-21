@@ -30,6 +30,9 @@ import javax.swing.table.TableCellEditor;
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
@@ -290,9 +293,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 15));
 
 		JPanel leftPanel = new JPanel(new PairLayout(4, 8));
-		leftPanel.add(new JLabel("Function Name:"));
+		leftPanel.add(new GLabel("Function Name:"));
 		leftPanel.add(createNameField());
-		leftPanel.add(new JLabel("Calling Convention"));
+		leftPanel.add(new GLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
 
@@ -303,18 +306,18 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private Component buildTogglePanel() {
 		JPanel panel = new JPanel(new PairLayout());
-		varArgsCheckBox = new JCheckBox("Varargs");
+		varArgsCheckBox = new GCheckBox("Varargs");
 		varArgsCheckBox.addItemListener(e -> model.setHasVarArgs(varArgsCheckBox.isSelected()));
 		panel.add(varArgsCheckBox);
 
-		inLineCheckBox = new JCheckBox("In Line");
+		inLineCheckBox = new GCheckBox("In Line");
 		panel.add(inLineCheckBox);
 		inLineCheckBox.addItemListener(e -> model.setIsInLine(inLineCheckBox.isSelected()));
 		inLineCheckBox.setEnabled(model.isInlineAllowed());
 
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
-		storageCheckBox = new JCheckBox("Use Custom Storage");
+		storageCheckBox = new GCheckBox("Use Custom Storage");
 		storageCheckBox.addItemListener(
 			e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);
@@ -327,7 +330,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent createCallingConventionCombo() {
 		List<String> callingConventionNames = model.getCallingConventionNames();
 		String[] names = new String[callingConventionNames.size()];
-		callingConventionComboBox = new JComboBox<>(callingConventionNames.toArray(names));
+		callingConventionComboBox = new GComboBox<>(callingConventionNames.toArray(names));
 		callingConventionComboBox.setSelectedItem(model.getCallingConventionName());
 		callingConventionComboBox.addItemListener(e -> model.setCallingConventionName(
 			(String) callingConventionComboBox.getSelectedItem()));
@@ -335,7 +338,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private JComponent createCallFixupComboPanel() {
-		callFixupComboBox = new JComboBox<>();
+		callFixupComboBox = new GComboBox<>();
 		String[] callFixupNames = model.getCallFixupNames();
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);
@@ -601,7 +604,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					color = Color.red;
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
-				String headerText = "<HTML><b>" + dataType.getPathName() + "</b><BR>";
+				String headerText = "<HTML><b>" +
+					HTMLUtilities.friendlyEncodeHTML(dataType.getPathName()) + "</b><BR>";
 				toolTipText = toolTipText.replace("<HTML>", headerText);
 				setToolTipText(toolTipText);
 			}

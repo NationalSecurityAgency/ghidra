@@ -1,4 +1,7 @@
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply plugin: 'eclipse'
+
+
 eclipse.project.name = '_Skeleton'
 
 dependencies {
@@ -9,5 +12,15 @@ dependencies {
 compileJava.enabled = false
 jar.enabled = false
 
-// NOTE: In a build, this file will get replaced by buildTemplate.gradle.  This file mainly exists
-// so we can get an Eclipse project for the Skeleton.
+// NOTE: In a build, this file will get replaced by buildTemplate.gradle. 
+rootProject.assembleDistribution {
+	from (this.projectDir) {
+		exclude 'bin'
+		exclude 'build'
+		exclude 'ghidra_scripts/bin/'
+		exclude '.classpath'
+		exclude '.project'
+		rename "buildTemplate.gradle", "build.gradle"
+		into "Extensions/Ghidra/Skeleton"
+	}
+}

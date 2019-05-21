@@ -16,20 +16,17 @@
 package generic.algorithms;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 
 public class LCSTest extends AbstractGenericTest {
-
-	public LCSTest() {
-		super();
-
-	}
 
 	@Test
 	public void testIdentical() {
@@ -46,36 +43,53 @@ public class LCSTest extends AbstractGenericTest {
 				"Hooray for really loooooong strings that span multiple lines in java!",
 			"Some really long string that might complicate things." +
 				"Hooray for really long strings that span multiple lines!");
-
 	}
 
 	@Test
 	public void testDifferent() {
+
 		compareStrings("DEAD", "CANND", "AD");
 		compareStrings("DEADBEEFISGOOD", "CANNDBEEFISBAD", "ADBEEFISD");
 		compareStrings("this here is one string", "here a different string is", "here in string");
 	}
 
+	@Test
+	public void testSizeLimit() {
+
+		String input = "This is more than 5 characters";
+		StringLcs slcs = new StringLcs(input, input);
+		List<Character> lcs = slcs.getLcs();
+		String result = StringUtils.join(lcs, "");
+		assertEquals(input, result);
+
+		slcs = new StringLcs(input, input);
+		slcs.setSizeLimit(10);
+		List<Character> actual = slcs.getLcs();
+		assertTrue(actual.isEmpty());
+	}
+
 	private void compareStrings(String x, String y, String expected) {
-		StringLCS slcs = new StringLCS(x, y);
-		List<Character> actual = slcs.getLCS();
+
+		StringLcs slcs = new StringLcs(x, y);
+		List<Character> actual = slcs.getLcs();
 
 		assertEquals(convertString(expected), actual);
 	}
 
 	private List<Character> convertString(String s) {
-		List<Character> charList = new ArrayList<Character>();
-		for (char c : s.toCharArray())
+		List<Character> charList = new ArrayList<>();
+		for (char c : s.toCharArray()) {
 			charList.add(c);
+		}
 		return charList;
 	}
 
-	private class StringLCS extends LCS<Character> {
+	private class StringLcs extends Lcs<Character> {
 
 		private String x;
 		private String y;
 
-		public StringLCS(String x, String y) {
+		public StringLcs(String x, String y) {
 			super();
 			this.x = x;
 			this.y = y;
@@ -105,6 +119,5 @@ public class LCSTest extends AbstractGenericTest {
 		protected Character valueOfY(int index) {
 			return y.charAt(index - 1);
 		}
-
 	}
 }

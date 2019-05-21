@@ -20,6 +20,8 @@ import java.awt.Component;
 import javax.swing.JComponent;
 import javax.swing.table.TableCellRenderer;
 
+import docking.widgets.GComponent;
+
 public class DefaultTableCellRendererWrapper extends GTableCellRenderer {
 
 	private final TableCellRenderer renderer;
@@ -42,7 +44,7 @@ public class DefaultTableCellRendererWrapper extends GTableCellRenderer {
 	@Override
 	public void setHTMLRenderingEnabled(boolean enable) {
 		if (renderer instanceof JComponent) {
-			((JComponent) renderer).putClientProperty(HTML_DISABLE_STRING, !enable);
+			((JComponent) renderer).putClientProperty(GComponent.HTML_DISABLE_STRING, !enable);
 		}
 		super.setHTMLRenderingEnabled(enable);
 	}

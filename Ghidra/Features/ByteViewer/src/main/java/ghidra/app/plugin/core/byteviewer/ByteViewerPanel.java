@@ -34,6 +34,8 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.SingleRowLayout;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import docking.widgets.indexedscrollpane.*;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.format.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.InvalidInputException;
@@ -824,21 +826,21 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	private JPanel createStatusPanel() {
 
-		JLabel startLabel = new JLabel("Start:", SwingConstants.RIGHT);
-		JLabel endLabel = new JLabel("End:", SwingConstants.RIGHT);
-		JLabel offsetLabel = new JLabel("Offset:", SwingConstants.RIGHT);
-		JLabel insertionLabel = new JLabel("Insertion:", SwingConstants.RIGHT);
+		JLabel startLabel = new GLabel("Start:", SwingConstants.RIGHT);
+		JLabel endLabel = new GLabel("End:", SwingConstants.RIGHT);
+		JLabel offsetLabel = new GLabel("Offset:", SwingConstants.RIGHT);
+		JLabel insertionLabel = new GLabel("Insertion:", SwingConstants.RIGHT);
 
-		startField = new JLabel("00000000");
+		startField = new GDLabel("00000000");
 		startField.setName("Start");
 
-		endField = new JLabel("00000000");
+		endField = new GDLabel("00000000");
 		endField.setName("End");
 
-		offsetField = new JLabel("00000000");
+		offsetField = new GDLabel("00000000");
 		offsetField.setName("Offset");
 
-		insertionField = new JLabel("00000000");
+		insertionField = new GDLabel("00000000");
 		insertionField.setName("Insertion");
 
 		Font f = new Font("SansSerif", Font.PLAIN, 11);
@@ -1030,6 +1032,11 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 		return viewList;
 	}
 
+	/**
+	 * Set the status info on the tool.
+	 * 
+	 * @param message non-html text to display
+	 */
 	void setStatusMessage(String message) {
 		provider.setStatusMessage(message);
 	}

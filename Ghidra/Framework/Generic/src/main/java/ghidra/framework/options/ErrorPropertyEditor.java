@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +25,17 @@ public class ErrorPropertyEditor extends PropertyEditorSupport {
 	private JLabel errorLabel;
 	private Object editorValue;
 
-	public ErrorPropertyEditor( String errorMessage, Object value ) {
+	public ErrorPropertyEditor(String errorMessage, Object value) {
 		editorValue = value;
 		String message = errorMessage;
-		if ( editorValue != null ) {
+		if (editorValue != null) {
 			message += " - value: " + value.toString();
 		}
-		
-		errorLabel = new JLabel( message );
-		errorLabel.setForeground( Color.RED );            
+
+		// Use native java JLabel because we can't use docking widgets here
+		errorLabel = new JLabel(message);
+		errorLabel.setForeground(Color.RED);
+		errorLabel.putClientProperty("html.disable", true);
 	}
 
 	@Override
@@ -45,5 +46,5 @@ public class ErrorPropertyEditor extends PropertyEditorSupport {
 	@Override
 	public boolean supportsCustomEditor() {
 		return true;
-	}        
+	}
 }

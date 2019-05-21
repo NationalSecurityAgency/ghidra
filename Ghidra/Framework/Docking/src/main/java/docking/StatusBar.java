@@ -30,6 +30,7 @@ import org.jdesktop.animation.timing.Animator;
 
 import docking.util.AnimationUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import generic.util.WindowUtilities;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.SystemUtilities;
@@ -83,7 +84,7 @@ public class StatusBar extends JPanel {
 		JPanel eastPanel = createEastPanel(statusAreaPanel);
 		add(eastPanel, BorderLayout.EAST);
 
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDLabel(" ");
 		statusLabel.setOpaque(true);
 
 		statusLabel.setName("Tool Status");

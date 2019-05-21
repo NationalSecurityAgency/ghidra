@@ -17,6 +17,7 @@
 #include "find.h"
 #include "print.h"
 #include "symbol.h"
+#include <stdlib.h>
 
 IDiaSession     * pSession;//Provides a query context for debug symbols
 IDiaSymbol      * pGlobal;
@@ -51,14 +52,16 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 				break;
 			default:
 				char msg[256];
-				sprintf(msg, "Unspecified error occurred: 0x%x\n", hr);
+				sprintf_s(msg, 256, "Unspecified error occurred: 0x%lx\n", hr);
 				fatal(msg);
 				break;
 		}
 	}
 
-	wchar_t wszFilename[ _MAX_PATH ];
-	mbstowcs( wszFilename, szFilename, sizeof( wszFilename ) );
+	size_t sz = strlen(szFilename) + 1;
+	wchar_t* wszFilename = new wchar_t[sz];
+	size_t outsz;
+	mbstowcs_s(&outsz, wszFilename, sz, szFilename, sz - 1);
 
 	if (szSignature == NULL && szAge == NULL) {
 		hr = pSource->loadDataFromPdb( wszFilename );
@@ -81,6 +84,7 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 		fatal("Invalid combination of GUID/Signature/Age parameters specified!");
 	}
 	checkErr(hr);
+	delete [] wszFilename;
 
 	if (pSource->openSession( &pSession ) < 0) {
 		fatal("Unable to open session\n");
@@ -100,13 +104,19 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 	GUID currGUID;
 	BSTR guidString;
 
-	DWORD currAge;
+	DWORD currAge = 0;
 
 	// Include PDB GUID and age in XML output for compatibility checking
 	if (pGlobal->get_guid( &currGUID ) == S_OK) {
-		size_t maxGUIDStrLen = 64;
+		int maxGUIDStrLen = 64;
 		wchar_t * guidStr = (wchar_t *)calloc(maxGUIDStrLen, sizeof(wchar_t));
-		StringFromGUID2(currGUID, guidStr, maxGUIDStrLen);
+		if (guidStr == NULL) {
+			fatal("Unable to allocate GUID\n");
+			exit(-1);
+		}
+		if (StringFromGUID2(currGUID, guidStr, maxGUIDStrLen) <= 0) {
+			fatal("Unable to convert GUID\n");
+		}
 		guidString = guidStr;
 
 		if (pGlobal->get_age( &currAge ) == S_OK) {

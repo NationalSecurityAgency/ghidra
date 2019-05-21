@@ -1,4 +1,5 @@
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'GPL DemanglerGnu'
 
 apply from: "../nativeBuildProperties.gradle"

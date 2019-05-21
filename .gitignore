@@ -1,11 +1,14 @@
-*.class
+excludedFiles.txt
+ghidra.repos.config
+
+# Misc files produced while executing application
+repositories/
+Ghidra/.ghidraSvrKeys
+wrapper.log*
+
 Thumbs.db
 .DS_Store
 .svn
-excludedFiles.txt
-.classpath
-.project
-ghidra.repos.config
 
 /*/*/*/*/*/bin/
 /*/*/*/*/*/build/
@@ -21,7 +24,8 @@ ghidra.repos.config
 /bin/
 
 **/dist
-repositories/
+
+# Ignore Sleigh generated files
 *.sla
 **/data/build.xml
 
@@ -30,22 +34,15 @@ repositories/
 *.settings
 *.directory
 .gradle/
-.settings/
 
 # File locks
 *.ulock
 *.lock
 
-# Gradle creates these per developer
-**/vs/
-
-# Misc files produced while executing application
-Ghidra/.ghidraSvrKeys
-wrapper.log*
-
 # Ignore object files
 *.o
 *.obj
+*.class
 
 # Ignore MS Visual Studio artifcats
 Release
@@ -54,6 +51,8 @@ Release
 *.suo
 *.aps
 *.vcproj.*
+*.vcxproj.*
+.vs/
 
 # Ignore UNIX backup files
 *~
@@ -62,3 +61,4 @@ Release
 # Ignore eclipse project files
 .project
 .classpath
+.settings/

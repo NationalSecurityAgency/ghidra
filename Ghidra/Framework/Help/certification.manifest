@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.files/buildLocalHelp.xml||GHIDRA||||END|
 build.gradle||GHIDRA||||END|

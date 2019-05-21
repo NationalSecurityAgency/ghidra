@@ -17,11 +17,11 @@ package docking.widgets.table;
 
 import java.awt.*;
 
-import javax.swing.JCheckBox;
+import docking.widgets.checkbox.GCheckBox;
 
 public class GBooleanCellRenderer extends GTableCellRenderer {
 
-	protected JCheckBox cb = new JCheckBox();
+	protected GCheckBox cb = new GCheckBox();
 
 	public GBooleanCellRenderer() {
 		super();

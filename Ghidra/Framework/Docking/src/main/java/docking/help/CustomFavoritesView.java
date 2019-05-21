@@ -18,6 +18,7 @@ package docking.help;
 import java.awt.Component;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Hashtable;
@@ -73,6 +74,8 @@ public class CustomFavoritesView extends FavoritesView {
 
 	class CustomFavoritesNavigatorUI extends BasicFavoritesNavigatorUI {
 
+		private PropertyChangeListener titleListener;
+
 		CustomFavoritesNavigatorUI(JHelpFavoritesNavigator b) {
 			super(b);
 		}
@@ -94,7 +97,7 @@ public class CustomFavoritesView extends FavoritesView {
 
 			// Note: add a listener to fix the bug described in 'idChanged()' below
 			HelpModel model = favorites.getModel();
-			model.addPropertyChangeListener(e -> {
+			titleListener = e -> {
 
 				if (lastIdEvent == null) {
 					return;
@@ -109,7 +112,20 @@ public class CustomFavoritesView extends FavoritesView {
 				if (!currentTitle.equals(lastTitle)) {
 					resendNewEventWithFixedTitle(lastIdEvent, currentTitle);
 				}
-			});
+			};
+
+			model.addPropertyChangeListener(titleListener);
+		}
+
+		@Override
+		public void uninstallUI(JComponent c) {
+
+			HelpModel model = favorites.getModel();
+			if (model != null) {
+				model.removePropertyChangeListener(titleListener);
+			}
+
+			super.uninstallUI(c);
 		}
 
 		private void resendNewEventWithFixedTitle(HelpModelEvent originalEvent, String title) {

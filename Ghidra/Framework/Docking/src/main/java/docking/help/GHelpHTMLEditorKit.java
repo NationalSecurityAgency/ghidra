@@ -15,7 +15,6 @@
  */
 package docking.help;
 
-import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -380,18 +378,8 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	 */
 	private class GHelpImageView extends ImageView {
 
-		private Image myImage;
-
 		public GHelpImageView(Element elem) {
 			super(elem);
-		}
-
-		@Override
-		public Image getImage() {
-			if (myImage != null) {
-				return myImage;
-			}
-			return super.getImage();
 		}
 
 		@Override
@@ -419,10 +407,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			ImageIcon icon = iconProvider.getIcon();
-			myImage = icon.getImage();
-
-			URL url = iconProvider.getUrl();
+			URL url = iconProvider.getOrCreateUrl();
 			return url;
 		}
 

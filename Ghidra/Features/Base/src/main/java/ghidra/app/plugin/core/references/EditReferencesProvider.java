@@ -33,6 +33,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
@@ -667,7 +668,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		col.setMaxWidth(80);
 		col.setResizable(false);
 
-		docking.ToolTipManager.sharedInstance().registerComponent(refsTable);
+		ToolTipManager.sharedInstance().registerComponent(refsTable);
 
 		dropTargetAdapter = new DropTgtAdapter(dropHandler, DnDConstants.ACTION_COPY_OR_MOVE,
 			ACCEPTABLE_DROP_FLAVORS);
@@ -976,7 +977,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		private JCheckBox checkbox;
 
 		RefCellBooleanEditor() {
-			super(new JCheckBox());
+			super(new GCheckBox());
 			setClickCountToStart(1);
 			checkbox = (JCheckBox) editorComponent;
 			checkbox.setOpaque(false);

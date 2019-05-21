@@ -15,13 +15,13 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.io.*;
+import java.util.List;
+
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
-import java.util.List;
 
 /**
  * Interface that represents a filesystem that contains files.
@@ -155,9 +155,10 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * <p>
 	 * @param file {@link GFile} to get info message for.
 	 * @param monitor {@link TaskMonitor} to watch and update progress.
-	 * @return multi-line formatted string with info about the file.
-	 * @throws IOException if IO problem.
+	 * @return multi-line formatted string with info about the file, or null.
 	 */
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException;
+	default public String getInfo(GFile file, TaskMonitor monitor) {
+		return null;
+	}
 
 }

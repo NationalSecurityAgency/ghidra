@@ -679,8 +679,11 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			flowType.equals(RefType.CALL_TERMINATOR)) && !flowType.isConditional()) {
 			// program counter should be assumed to be used
 
+			// assume PC is used when considering registers that have been set
 			Register PC = program.getLanguage().getProgramCounter();
-			usedRegisters.add(new Varnode(PC.getAddress(), PC.getMinimumByteSize()));
+			if (PC != null) {
+				usedRegisters.add(new Varnode(PC.getAddress(), PC.getMinimumByteSize()));
+			}
 			setRegisters.removeAll(usedRegisters);
 
 			// check that the setRegisters are all hidden, meaning don't care.

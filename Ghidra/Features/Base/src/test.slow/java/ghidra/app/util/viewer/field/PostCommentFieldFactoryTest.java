@@ -41,10 +41,6 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	private Options fieldOptions;
 	private Program program;
 
-	public PostCommentFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 

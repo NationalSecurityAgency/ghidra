@@ -181,7 +181,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		if (filtered) {
 			int filteredCount = matchesTableModel.getRowCount();
-			int unfilteredCount = matchesTableModel.getUnfilteredCount();
+			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
 			ancillaryFilterButton.setToolTipText(
 				"More Filters - " + filteredOutCount + " item(s) hidden");
@@ -231,7 +231,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
 			int filteredCount = matchesTableModel.getRowCount();
-			int unfilteredCount = matchesTableModel.getUnfilteredCount();
+			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
 			StringBuffer buffy = new StringBuffer();
@@ -352,10 +352,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		JComponent lengthFilterPanel = createLengthFilterPanel();
 		innerPanel.add(lengthFilterPanel);
 
-		ancillaryFilterButton = new JButton();
+		ancillaryFilterButton = new JButton(UNFILTERED_ICON);
 		ancillaryFilterButton.addActionListener(
 			e -> tool.showDialog(ancillaryFilterDialog, component));
-		ancillaryFilterButton.setIcon(UNFILTERED_ICON);
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
 		HelpService helpService = DockingWindowManager.getHelpService();
 		HelpLocation filterHelpLocation =

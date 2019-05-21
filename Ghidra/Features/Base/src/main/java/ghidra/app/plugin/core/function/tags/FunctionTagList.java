@@ -21,7 +21,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
+import docking.widgets.list.GListCellRenderer;
 import ghidra.program.model.listing.FunctionTag;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Simple list for displaying {@link FunctionTag} items. The only part of the tag 
@@ -48,7 +50,7 @@ public class FunctionTagList extends JList<FunctionTag> {
 				return "<no comment set>";
 			}
 
-			return tag.getComment();
+			return "<html>" + HTMLUtilities.escapeHTML(tag.getComment());
 		}
 
 		return "";
@@ -62,25 +64,29 @@ public class FunctionTagList extends JList<FunctionTag> {
 	 */
 	@Override
 	public ListCellRenderer<? super FunctionTag> getCellRenderer() {
-		return new DefaultListCellRenderer() {
+		return new GListCellRenderer<>() {
 			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-				FunctionTag tag = (FunctionTag) value;
-				Component listCellRendererComponent = super.getListCellRendererComponent(list,
-					tag.getName(), index, isSelected, cellHasFocus);
+			protected String getItemText(FunctionTag value) {
+				return value.getName();
+			}
+
+			@Override
+			public Component getListCellRendererComponent(JList<? extends FunctionTag> list,
+					FunctionTag value, int index, boolean isSelected, boolean cellHasFocus) {
+
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
 				// If this tag is a temporary one (ie: read-in from a file), then it is
 				// read-only and should be indicated to the user as a different color.
 				if (value instanceof FunctionTagTemp) {
 					if (cellHasFocus) {
-						listCellRendererComponent.setForeground(Color.white);
+						setForeground(Color.white);
 					}
 					else {
-						listCellRendererComponent.setForeground(Color.blue);
+						setForeground(Color.blue);
 					}
 				}
-				return listCellRendererComponent;
+				return this;
 			}
 		};
 	}

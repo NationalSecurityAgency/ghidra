@@ -29,6 +29,7 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.util.GraphicsUtils;
 import docking.widgets.dialogs.NumberInputDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
@@ -792,10 +793,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JPanel createTreePanel(boolean isIncoming, GTree tree) {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		String name = isIncoming ? "Incoming Calls" : "Outgoing Calls";
-		JLabel label = new JLabel(name);
-
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"), BorderLayout.NORTH);
 		panel.add(tree, BorderLayout.CENTER);
 
 		return panel;

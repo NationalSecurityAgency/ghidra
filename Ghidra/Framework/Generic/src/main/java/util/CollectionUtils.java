@@ -366,6 +366,27 @@ public class CollectionUtils {
 	}
 
 	/**
+	 * Returns true if the given array is null or has 0 length
+	 * 
+	 * @param c the collection to check
+	 * @return true if blank
+	 */
+	public static <T> boolean isBlank(Collection<T> c) {
+		return c == null || c.isEmpty();
+	}
+
+	/**
+	 * Returns true if the given array is null or has 0 length
+	 * 
+	 * @param t the items to check
+	 * @return true if blank
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> boolean isBlank(T... t) {
+		return t == null || t.length == 0;
+	}
+
+	/**
 	 * Turns the given item into an iterable
 	 * @param t the object from which to create an iterable
 	 * @return an iterable over the given iterator

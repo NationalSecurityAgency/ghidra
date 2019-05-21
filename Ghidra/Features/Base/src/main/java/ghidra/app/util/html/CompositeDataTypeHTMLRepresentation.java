@@ -179,7 +179,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 			List<ValidatableLine> bodyLines, List<ValidatableLine> alignmentLines,
 			TextLine footerLine, TextLine alignmentValueLine) {
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 
 		// warnings
 		Iterator<String> warnings = warningLines.iterator();
@@ -288,8 +288,8 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		return wrapped;
 	}
 
-	protected static StringBuffer addAlignmentValue(String alignmentValueString,
-			StringBuffer buffer) {
+	protected static StringBuilder addAlignmentValue(String alignmentValueString,
+			StringBuilder buffer) {
 
 		buffer.append(BR);
 		buffer.append(ALIGNMENT_VALUE_PREFIX + alignmentValueString);

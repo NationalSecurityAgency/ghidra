@@ -15,6 +15,14 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.util.*;
+
+import org.jdom.Element;
+
+import docking.ActionContext;
+import docking.ComponentProvider;
+import docking.action.DockingAction;
+import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -28,16 +36,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
-
-import java.util.*;
-
-import org.jdom.Element;
-
 import resources.ResourceManager;
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 
 /**
  * Visible Plugin to show ByteBlock data in various formats.
@@ -68,8 +67,7 @@ public class ByteViewerPlugin extends Plugin {
 
 	private ProgramByteViewerComponentProvider connectedProvider;
 
-	private List<ProgramByteViewerComponentProvider> disconnectedProviders =
-		new ArrayList<ProgramByteViewerComponentProvider>();
+	private List<ProgramByteViewerComponentProvider> disconnectedProviders = new ArrayList<>();
 
 	public ByteViewerPlugin(PluginTool tool) {
 		super(tool);
@@ -86,8 +84,8 @@ public class ByteViewerPlugin extends Plugin {
 				showConnectedProvider();
 			}
 		};
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"),
-			"View"));
+		action.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"), "View"));
 
 		action.setDescription("Display Bytes");
 		action.setEnabled(true);
@@ -245,7 +243,7 @@ public class ByteViewerPlugin extends Plugin {
 
 	@Override
 	public Object getUndoRedoState(DomainObject domainObject) {
-		Map<Long, Object> stateMap = new HashMap<Long, Object>();
+		Map<Long, Object> stateMap = new HashMap<>();
 
 		addUndoRedoState(stateMap, domainObject, connectedProvider);
 
@@ -336,6 +334,9 @@ public class ByteViewerPlugin extends Plugin {
 
 	/**
 	 * Set the status info on the tool.
+	 * 
+	 * @param msg text to display
+	 * @param provider not used
 	 */
 	void setStatusMessage(String msg, ComponentProvider provider) {
 		tool.setStatusInfo(msg);

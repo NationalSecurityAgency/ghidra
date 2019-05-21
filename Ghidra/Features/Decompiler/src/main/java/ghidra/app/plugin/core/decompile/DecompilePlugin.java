@@ -79,12 +79,9 @@ public class DecompilePlugin extends Plugin {
 	 * This happens when a readDataState occurs when a tool is restored
 	 * or when switching program tabs.
 	 */
-	SwingUpdateManager delayedLocationUpdateMgr = new SwingUpdateManager(200, 200, new Runnable() {
-		@Override
-		public void run() {
-			if (currentLocation != null) {
-				connectedProvider.setLocation(currentLocation, null);
-			}
+	SwingUpdateManager delayedLocationUpdateMgr = new SwingUpdateManager(200, 200, () -> {
+		if (currentLocation != null) {
+			connectedProvider.setLocation(currentLocation, null);
 		}
 	});
 
@@ -92,7 +89,7 @@ public class DecompilePlugin extends Plugin {
 
 		super(tool);
 
-		disconnectedProviders = new ArrayList<DecompilerProvider>();
+		disconnectedProviders = new ArrayList<>();
 		connectedProvider = new PrimaryDecompilerProvider(this);
 
 		createActions();

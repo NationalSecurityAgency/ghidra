@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
@@ -607,7 +608,7 @@ public class ListingMergePanel extends JPanel
 
 }
 
-class LockComponent extends JCheckBox {
+class LockComponent extends GCheckBox {
 	private static final Icon lock = ResourceManager.loadImage("images/lock.gif");
 	private static final Icon unlock = ResourceManager.loadImage("images/unlock.gif");
 

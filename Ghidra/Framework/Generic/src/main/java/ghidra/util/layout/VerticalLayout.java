@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,6 @@
 package ghidra.util.layout;
 
 import java.awt.*;
-
-import javax.swing.*;
 
 /**
  * LayoutManager for arranging components in a single column.  All components
@@ -67,8 +64,8 @@ public class VerticalLayout implements LayoutManager {
 			width = Math.max(width, d.width);
 			height += d.height;
 		}
-		return new Dimension(width + insets.left + insets.right, height + insets.top +
-			insets.bottom);
+		return new Dimension(width + insets.left + insets.right,
+			height + insets.top + insets.bottom);
 	}
 
 	/**
@@ -101,26 +98,4 @@ public class VerticalLayout implements LayoutManager {
 		}
 	}
 
-	/**
-	 * Test main
-	 * @param args execution arguments
-	 */
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception exc) {
-			System.out.println("Error loading L&F: " + exc);
-		}
-
-		JFrame frame = new JFrame("Test");
-		JPanel panel = new JPanel(new VerticalLayout(10));
-		panel.add(new JLabel("One", SwingConstants.LEFT));
-		panel.add(new JLabel("Two", SwingConstants.RIGHT));
-		panel.add(new JLabel("Three", SwingConstants.CENTER));
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		frame.getContentPane().add(panel);
-		frame.pack();
-		frame.setVisible(true);
-	}
 }

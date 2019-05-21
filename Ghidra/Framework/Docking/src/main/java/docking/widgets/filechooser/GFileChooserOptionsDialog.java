@@ -18,6 +18,8 @@ package docking.widgets.filechooser;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.layout.PairLayout;
 
@@ -47,10 +49,10 @@ class GFileChooserOptionsDialog extends DialogComponentProvider {
 	private JComponent buildComponent() {
 		JPanel panel = new JPanel(new PairLayout());
 
-		showDotFilesCheckBox = new JCheckBox();
+		showDotFilesCheckBox = new GCheckBox();
 		showDotFilesCheckBox.setSelected(true);
 
-		JLabel label = new JLabel("Show '.' files");
+		JLabel label = new GLabel("Show '.' files");
 		label.setToolTipText("When toggled on the file chooser will show files " +
 			"with names that begin with a '.' character");
 

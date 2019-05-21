@@ -1989,15 +1989,14 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		if (!rootNode.getName().equals(rootName)) {
 			throw new RuntimeException(
 				"When selecting paths by name the first path element must be the " +
-					"name of the root node - path: " +
-					StringUtilities.convertStringArray(path, "."));
+					"name of the root node - path: " + StringUtils.join(path, '.'));
 		}
 		GTreeNode node = rootNode;
 		for (int i = 1; i < path.length; i++) {
 			GTreeNode child = node.getChild(path[i]);
 			if (child == null) {
-				throw new RuntimeException("Can't find path " +
-					StringUtilities.convertStringArray(path, ".") + "   failed at " + path[i]);
+				throw new RuntimeException(
+					"Can't find path " + StringUtils.join(path, '.') + "   failed at " + path[i]);
 			}
 			node = child;
 		}

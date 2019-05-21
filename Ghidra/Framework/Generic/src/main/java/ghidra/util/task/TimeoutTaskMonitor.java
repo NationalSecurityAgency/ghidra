@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import ghidra.generic.function.Callback;
-import ghidra.util.Issue;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.TimeoutException;
@@ -184,11 +183,6 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 		return delegate.getProgress();
 	}
 
-	@Override
-	public void reportIssue(Issue issue) {
-		delegate.reportIssue(issue);
-	}
-
 	private void timeout() {
 		didTimeout.set(true);
 		timeoutCallback.call();
@@ -224,15 +218,5 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	@Override
 	public void clearCanceled() {
 		delegate.clearCanceled();
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		delegate.addIssueListener(listener);
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		delegate.removeIssueListener(listener);
 	}
 }

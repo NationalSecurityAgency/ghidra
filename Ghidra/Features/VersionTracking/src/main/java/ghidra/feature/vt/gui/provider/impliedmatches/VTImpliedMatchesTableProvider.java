@@ -263,7 +263,7 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 
 		impliedMatchTableModel.addTableModelListener(e -> {
 			int filteredCount = impliedMatchTableModel.getRowCount();
-			int unfilteredCount = impliedMatchTableModel.getUnfilteredCount();
+			int unfilteredCount = impliedMatchTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
 			StringBuffer buffy = new StringBuffer();

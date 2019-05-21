@@ -1,4 +1,5 @@
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'GPL CabExtract'
 
 project.ext.cabextract = "cabextract-1.6"

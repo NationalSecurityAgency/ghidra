@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,12 @@
  */
 package ghidra.framework.task.gui.taskview;
 
-import ghidra.framework.task.gui.GProgressBar;
-
 import java.awt.*;
 
 import javax.swing.*;
+
+import docking.widgets.label.GDLabel;
+import ghidra.framework.task.gui.GProgressBar;
 
 public class ScheduledTaskPanel extends JPanel {
 	private int scrollOffset = 0;
@@ -37,7 +37,7 @@ public class ScheduledTaskPanel extends JPanel {
 
 		layout = new ScheduledElementLayout();
 		setLayout(layout);
-		label = new JLabel(labelText);
+		label = new GDLabel(labelText);
 		setBackground(Color.WHITE);
 		add(label);
 	}

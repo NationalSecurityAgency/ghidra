@@ -551,8 +551,8 @@ public class GTable extends JTable implements KeyStrokeConsumer, DockingActionPr
 	}
 
 	private void init(boolean allowAutoEdit) {
-		docking.ToolTipManager.sharedInstance().unregisterComponent(this);
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().unregisterComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 		setTableHeader(new GTableHeader(this));
 		if (!allowAutoEdit) {
 			putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);

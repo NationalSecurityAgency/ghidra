@@ -116,8 +116,6 @@ public:
 class Architecture : public AddrSpaceManager {
 public:
   string archid;		///< ID string uniquely describing this architecture
-  string description;	        ///< Description of architecture
-  string version;		///< Configuration version
 
 				// Configuration data
   int4 trim_recurse_max;	///< How many levels to let parameter trims recurse
@@ -177,6 +175,8 @@ public:
   void globalify(void);					///< Mark \e all spaces as global
   void restoreFlowOverride(const Element *el);		///< Set flow overrides from XML
   virtual ~Architecture(void);				///< Destructor
+
+  virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
 
   /// \brief Print an error message to console
   ///

@@ -1,0 +1,198 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if it 
+	has content that should be included in a distribution. (Unless the content should be included
+	as an "extension", in which case it should include "extensionModule" instead) 
+	
+	A gradle project can add itself to the distribution build by adding the following to its 
+	build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/support/distributableGhidraModule.gradle"
+ *****************************************************************************************/
+
+apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
+
+rootProject.assembleDistribution {
+	def p = this.project
+
+	def zipPath = getZipPath(p)
+	
+	from (p.projectDir.toString() + "/Module.manifest") {
+		into  { zipPath }
+	}
+
+	from (p.projectDir.toString() + "/data") {
+		into { zipPath + "/data" }
+		exclude 'build.xml' // associated with language modules (dev use only)
+	}
+	
+	from (BIN_REPO + '/' + getGhidraRelativePath(p) + "/data") {
+		into { zipPath + "/data" }
+	}
+	
+	from (p.projectDir.toString() + "/build/LICENSE.txt") {
+		into { zipPath }
+	}
+
+	// handle special case where modules build data artifacts into the build dir
+	from (p.projectDir.toString() + "/build/data") {
+		into {zipPath + "/data" }
+	}
+	
+	/////////////////
+	// SOURCE FOR BUILD
+	// 
+	// Some projects require that we provide source that can be built (makefiles,
+	// gradle build files, c-code, etc...).  If a project has a task for that 
+	// purpose, execute it here.
+	//
+	// Note the 'afterEvaluate' call - this must be done so the zip task in the 
+	// subproject is added to the task graph before the 'dependsOn' clause is
+	// executed. If we don't do this, that dependsOn relationship won't be respected
+	// and the subproject zip task won't be executed.
+	/////////////////
+	p.tasks.each { t ->
+		if (t.name == "zipBuildableSource") {
+			assembleDistribution.dependsOn {t}
+			from (t) {
+				into zipPath
+			}
+		}
+	}	
+	
+	///////////////////////
+	// copy Global files - files in a module under 'src/global' are copied to the project root
+	// relative to its location under 'src/global'
+	///////////////////////
+
+	// First get a list of all files that are under 'src/global'.	
+	FileTree fileTree = p.fileTree('src/global') {
+		include '**/*'
+	}
+	// Now loop over each one, copying it into the zip we're creating.  Each will be placed
+	// at the root level, starting with the first folder AFTER 'src/global/'.  
+	//
+	// eg: 	If the file is '/Ghidra/Configurations/Common/src/global/docs/hello.html', then
+	// 		the file in the zip will be at /docs/hello.html
+	//
+	fileTree.each { File file ->
+		String filePath = getGlobalFilePathSubDirName(file)
+		from (file) {
+			into filePath
+		}
+	}
+}
+
+// copy os specific files for each platform
+rootProject.OS_NAMES.each { platform ->
+	rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+
+		def p = this.project
+		
+			// the getZipPath calls here are not in closures because we are already in a taskGraph.whenReady closure
+		t.from (p.projectDir.toString() + "/build/os/$platform") {
+			exclude '*.lib'
+			exclude '*.exp'
+			into getZipPath(p)	+ "/os/$platform"
+		}
+		t.from (p.projectDir.toString() + "/os/$platform") {
+			into getZipPath(p) + "/os/$platform"
+		}
+	}	
+}
+
+// For Win64 build, we have to also include any Win32 binaries in the final zip.
+rootProject.assembleDistribution_win64 {
+	from (this.project.projectDir.toString() + "/build/os/win32") {
+		into getZipPath(this.project)	+ "/os/win32"
+	}
+}
+
+/*********************************************************************************
+ *  Takes the given file and returns a string representing the file path with everything
+ *	up-to and including 'src/global' removed, as well as the filename. 
+ *	
+ *	eg: 	If the file path is '/Ghidra/Configurations/Common/src/global/docs/hello.html', 
+ *			the returned string will be at /docs
+ *
+ *	Note: 	We have to use 'File.separator' instead of a slash ('/') because of how 
+ * 			windows/unix handle slashes ('/' vs. '\'). We only need to do this in cases where we're
+ *			using java string manipulation libraries (eg String.replace); Gradle already
+ *			understands how to use the proper slash.
+*********************************************************************************/
+String getGlobalFilePathSubDirName(File file) {
+
+	// First strip off everything before 'src/global/ in the file path.
+	def slashIndex = file.path.indexOf('src' + File.separator + 'global')
+	String filePath = file.path.substring(slashIndex);
+					
+	// Now remove 'src/global/' from the string.
+	filePath = filePath.replace('src' + File.separator + 'global' + File.separator, "");
+					
+	// Now we need to strip off the filename itself, which we do by finding the last
+	// instance of a slash ('/') in the string.  
+	//
+	// Note that it's possible there is no slash (all we have is a filename), meaning 
+	// this file will be placed at the root level.
+	//
+	slashIndex = filePath.lastIndexOf(File.separator)
+	if (slashIndex != -1) {
+		filePath = filePath.substring(0, slashIndex+1) // +1 for the slash
+	}	
+	else {
+		filePath = ""
+	}
+	
+	return filePath 
+}
+
+
+
+plugins.withType(JavaPlugin) {
+	// build up a java classpath for javadocs
+	rootProject.ghidraPath.from(sourceSets.main.compileClasspath)
+
+	rootProject.assembleSource {
+		from (this.project.zipSourceSubproject) {
+			into  rootProject.ext.ZIP_DIR_PREFIX + "/" +  getZipPath(this.project) + "/lib" 
+		}
+	}
+	
+	rootProject.assembleDistribution {
+		dependsOn assemble
+		def p = this.project
+		def zipPath = getZipPath(p)
+		
+		from (p.jar) {
+			// use closures for getting zip path to delay evaluation. See note at top of file.
+			into { zipPath + "/lib" }		
+		}
+		from (p.projectDir.toString() + "/ghidra_scripts") {
+			exclude 'bin/'
+			into { zipPath + "/ghidra_scripts" }
+		}
+		
+			// External Libraries
+		gradle.taskGraph.whenReady { taskGraph ->
+			List<String> externalPaths = getExternalDependencies(p)
+			externalPaths.each { path ->
+				from (path) {
+					into {zipPath + "/lib" }
+				}
+			}
+		}
+			
+	
+	}
+}	
+	
+/////////////////////////////////////////////////////////////////////////////
+// Native 
+/////////////////////////////////////////////////////////////////////////////	
+plugins.withType(CPlugin) {
+	rootProject.OS_NAMES.each { platform ->
+		rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+			t.dependsOn this.assemble
+	//		t.dependsOn this.project.name+":buildNatives_$platform" 
+		}
+	}
+}

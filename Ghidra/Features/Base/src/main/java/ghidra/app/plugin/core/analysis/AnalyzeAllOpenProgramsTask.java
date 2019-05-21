@@ -25,6 +25,7 @@ import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GLabel;
 import ghidra.GhidraOptions;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.DomainObject;
@@ -35,6 +36,7 @@ import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -98,7 +100,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		}
 		else {
 			// no options dialog--analyze all programs
-			validPrograms = new ArrayList<Program>(programs);
+			validPrograms = new ArrayList<>(programs);
 		}
 
 		analyzePrograms(prototypeAnalysisOptions, validPrograms, monitor);
@@ -175,7 +177,8 @@ class AnalyzeAllOpenProgramsTask extends Task {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					AnalysisOptionsDialog dialog = new AnalysisOptionsDialog(getValidProgramsByArchitecture());
+					AnalysisOptionsDialog dialog =
+						new AnalysisOptionsDialog(getValidProgramsByArchitecture());
 					tool.showDialog(dialog);
 					boolean shouldAnalyze = dialog.wasAnalyzeButtonSelected();
 					analyze.set(shouldAnalyze);
@@ -202,7 +205,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 		return true;
 	}
-	
+
 	/**
 	 * Returns a list of all programs that should be analyzed. 
 	 * <p>
@@ -213,7 +216,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 	 * @return the list of programs to analyze
 	 */
 	private List<Program> getValidProgramsByArchitecture() {
-		List<Program> validList = new ArrayList<Program>(programs);
+		List<Program> validList = new ArrayList<>(programs);
 
 		ProgramID protoTypeProgramID = new ProgramID(prototypeProgram);
 
@@ -223,7 +226,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 				validList.remove(program);
 			}
 		}
-		
+
 		return validList;
 	}
 
@@ -244,7 +247,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		List<Program> validList = getValidProgramsByArchitecture();
 
 		if (validList.size() != programs.size()) {
-			List<Program> invalidList = new ArrayList<Program>(programs);
+			List<Program> invalidList = new ArrayList<>(programs);
 			invalidList.removeAll(validList);
 
 			if (!showNonMatchingArchitecturesWarning(validList, invalidList)) {
@@ -274,7 +277,8 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 		StringBuilder buffy = new StringBuilder();
 		buffy.append("<html><BR>");
-		buffy.append("Found open programs with architectures differing from the current program.<BR><BR><BR>");
+		buffy.append(
+			"Found open programs with architectures differing from the current program.<BR><BR><BR>");
 		buffy.append("These programs <B>will</B> be analyzed: <BR><BR>");
 
 		buffy.append("<TABLE BORDER=\"0\" CELLPADDING=\"5\">");
@@ -294,7 +298,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 			buffy.append("<TR>");
 			buffy.append("<TD>");
 			buffy.append(specialFontOpen);
-			buffy.append(program.getName());
+			buffy.append(HTMLUtilities.escapeHTML(program.getName()));
 			buffy.append(specialFontClose);
 			buffy.append("</TD>");
 			buffy.append("<TD>");
@@ -321,7 +325,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		for (Program program : invalidList) {
 			buffy.append("<TR>");
 			buffy.append("<TD>");
-			buffy.append(program.getName());
+			buffy.append(HTMLUtilities.escapeHTML(program.getName()));
 			buffy.append("</TD>");
 			buffy.append("<TD>");
 			buffy.append(program.getLanguageID());
@@ -334,9 +338,8 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 		buffy.append("</TABLE>");
 
-		OptionDialog dialog =
-			new ScrollingOptionDialog("Found Differing Architectures--Continue?",
-				buffy.toString(), "Continue", OptionDialog.WARNING_MESSAGE);
+		OptionDialog dialog = new ScrollingOptionDialog("Found Differing Architectures--Continue?",
+			buffy.toString(), "Continue", OptionDialog.WARNING_MESSAGE);
 		dialog.show(null);
 		return dialog.getResult() == OptionDialog.OPTION_ONE;
 	}
@@ -467,8 +470,9 @@ class AnalyzeAllOpenProgramsTask extends Task {
 			}
 
 			if (compilerSpecID == null) {
-				if (other.compilerSpecID != null)
+				if (other.compilerSpecID != null) {
 					return false;
+				}
 			}
 			else if (!compilerSpecID.equals(other.compilerSpecID)) {
 				return false;
@@ -491,7 +495,8 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 	private class ScrollingOptionDialog extends OptionDialog {
 
-		public ScrollingOptionDialog(String title, String message, String option1, int messageType) {
+		public ScrollingOptionDialog(String title, String message, String option1,
+				int messageType) {
 			super(title, message, option1, messageType, null);
 		}
 
@@ -503,8 +508,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 				editorPane.setName("MESSAGE-COMPONENT");
 				editorPane.setText(message);
 
-				JLabel label = new JLabel();
-				editorPane.setBackground(label.getBackground());
+				editorPane.setBackground(new GLabel().getBackground());
 
 				JPanel panel = new JPanel(new BorderLayout());
 				panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

@@ -26,12 +26,12 @@ import javax.swing.tree.TreePath;
 import docking.DialogComponentProvider;
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.filter.TextFilterStrategy;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.program.model.data.DataType;
-import ghidra.util.HTMLUtilities;
 
 /**
  * A dialog that allows the user to choose from a tree of similarly named data types.
@@ -39,10 +39,7 @@ import ghidra.util.HTMLUtilities;
 public class DataTypeChooserDialog extends DialogComponentProvider {
 	private DataTypeArchiveGTree tree;
 	private DataType selectedDataType;
-	private JLabel messageLabel;
-
-	/** when false, the user is required to pick from a restricted set */
-	private boolean isEditable;
+	private GLabel messageLabel;
 
 	public DataTypeChooserDialog(DataTypeManagerPlugin plugin) {
 		super("Data Type Chooser", true, true, true, false);
@@ -98,8 +95,7 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		String message = "Choose the data type you wish to use.";
-		messageLabel = new JLabel(message);
+		messageLabel = new GLabel("Choose the data type you wish to use.");
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 2));
 		panel.add(messageLabel, BorderLayout.NORTH);
 		panel.add(this.tree, BorderLayout.CENTER);
@@ -121,24 +117,10 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 			tree.setFilterText(filterText);
 		}
 		setEditable(editable);
-		setMessageLabel();
 	}
 
 	public void setSelectedPath(TreePath selectedPath) {
 		tree.setSelectedNodeByPathName(selectedPath);
-	}
-
-	private void setMessageLabel() {
-		String message = "Choose the data type you wish to use.";
-
-// TODO this message doesn't make sense in all use cases.  If we want this or other messages,
-//		then we need to be able to set them.
-//		if (!isEditable) {
-//			message =
-//				"Multiple data types exist named \"" +
-//					((FilterTextField) tree.getFilterField()).getText() + "\".\n" + message;
-//		}
-		messageLabel.setText(HTMLUtilities.wrapAsHTML(message));
 	}
 
 	@Override

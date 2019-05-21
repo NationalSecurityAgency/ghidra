@@ -36,8 +36,7 @@ import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.project.tool.ToolIconURL;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
 
@@ -140,12 +139,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	public String getToolTipText(MouseEvent event) {
 		if (associatedRunningTool != null) {
 			if (associatedRunningTool instanceof PluginTool) {
-				return ((PluginTool) associatedRunningTool).getToolFrame().getTitle();
+				return "<html>" + HTMLUtilities.escapeHTML(
+					((PluginTool) associatedRunningTool).getToolFrame().getTitle());
 			}
 
-			return associatedRunningTool.getName();
+			return "<html>" + HTMLUtilities.escapeHTML(associatedRunningTool.getName());
 		}
-		return template.getName();
+		return "<html>" + HTMLUtilities.escapeHTML(template.getName());
 	}
 
 	public void launchTool(DomainFile domainFile) {
@@ -359,8 +359,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 
 		Class<?> c = file.getDomainObjectClass();
-		Class<?>[] classes = (associatedRunningTool != null)
-				? associatedRunningTool.getSupportedDataTypes() : template.getSupportedDataTypes();
+		Class<?>[] classes =
+			(associatedRunningTool != null) ? associatedRunningTool.getSupportedDataTypes()
+					: template.getSupportedDataTypes();
 		for (Class<?> element : classes) {
 			if (element.isAssignableFrom(c)) {
 				return true;

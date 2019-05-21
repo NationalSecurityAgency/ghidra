@@ -26,6 +26,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
 /**
@@ -93,9 +94,8 @@ public class BookmarkNavigator {
 			color = DEFAULT_COLOR;
 		}
 
-		markerSet =
-			markerService.createPointMarker(type + " Bookmarks", type + " Bookmarks",
-				bookmarkMgr.getProgram(), priority, true, true, false, color, icon);
+		markerSet = markerService.createPointMarker(type + " Bookmarks", type + " Bookmarks",
+			bookmarkMgr.getProgram(), priority, true, true, false, color, icon);
 
 		markerSet.setNavigationListener(new MarkerListener() {
 			@Override
@@ -118,11 +118,11 @@ public class BookmarkNavigator {
 					String cat = bookmarks[i].getCategory();
 					if (cat != null && cat.length() != 0) {
 						buf.append(" [");
-						buf.append(cat);
+						buf.append(HTMLUtilities.escapeHTML(cat));
 						buf.append("]");
 					}
 					buf.append(": ");
-					buf.append(bookmarks[i].getComment());
+					buf.append(HTMLUtilities.escapeHTML(bookmarks[i].getComment()));
 				}
 				return buf.toString();
 			}
@@ -203,10 +203,10 @@ public class BookmarkNavigator {
 	 */
 	public static void defineBookmarkTypes(Program program) {
 		BookmarkManager mgr = program.getBookmarkManager();
-		mgr.defineType(BookmarkType.NOTE, BookmarkNavigator.NOTE_ICON,
-			BookmarkNavigator.NOTE_COLOR, BookmarkNavigator.NOTE_PRIORITY);
-		mgr.defineType(BookmarkType.INFO, BookmarkNavigator.INFO_ICON,
-			BookmarkNavigator.INFO_COLOR, BookmarkNavigator.INFO_PRIORITY);
+		mgr.defineType(BookmarkType.NOTE, BookmarkNavigator.NOTE_ICON, BookmarkNavigator.NOTE_COLOR,
+			BookmarkNavigator.NOTE_PRIORITY);
+		mgr.defineType(BookmarkType.INFO, BookmarkNavigator.INFO_ICON, BookmarkNavigator.INFO_COLOR,
+			BookmarkNavigator.INFO_PRIORITY);
 		mgr.defineType(BookmarkType.WARNING, BookmarkNavigator.WARNING_ICON,
 			BookmarkNavigator.WARNING_COLOR, BookmarkNavigator.WARNING_PRIORITY);
 		mgr.defineType(BookmarkType.ERROR, BookmarkNavigator.ERROR_ICON,

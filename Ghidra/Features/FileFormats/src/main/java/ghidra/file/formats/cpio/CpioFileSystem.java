@@ -107,9 +107,9 @@ public class CpioFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		CpioArchiveEntry entry = map.get(file);
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		try {
 			buffer.append("Name: " + entry.getName() + "\n");
 			buffer.append("Checksum: " + Long.toHexString(entry.getChksum()) + "\n");
@@ -126,6 +126,7 @@ public class CpioFileSystem extends GFileSystemBase {
 			buffer.append("Device ID: " + Long.toHexString(entry.getDevice()) + "\n");
 		}
 		catch (Exception e) {
+			// ignore
 		}
 		return buffer.toString();
 	}
@@ -135,7 +136,7 @@ public class CpioFileSystem extends GFileSystemBase {
 			throws IOException, CancelledException, CryptoException {
 		CpioArchiveEntry fileEntry = map.get(file);
 		if (!fileEntry.isRegularFile()) {
-			throw new IOException(file.getName() + " is not a regular file.");
+			throw new IOException("CPIO entry " + file.getName() + " is not a regular file.");
 		}
 		byte[] bytes = provider.readBytes(0, provider.length());
 		InputStream inputStream = new ByteArrayInputStream(bytes);

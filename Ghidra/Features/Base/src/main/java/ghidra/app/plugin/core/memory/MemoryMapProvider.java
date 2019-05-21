@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
 import ghidra.app.context.ProgramActionContext;
@@ -176,7 +177,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			enableOptions(model);
 		});
 
-		memPanel.add(new JLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
+		memPanel.add(new GLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
 		memPanel.add(memPane, BorderLayout.CENTER);
 
 		return memPanel;

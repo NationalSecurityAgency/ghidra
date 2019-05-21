@@ -278,7 +278,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 	@Test
 	public void testSaveProgram() {
 		runSwing(() -> OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
-			"program1" + " has changed. Do you want to save it?", "&Save", "Do&n't Save",
+			"program1 has changed. Do you want to save it?", "&Save", "Do&n't Save",
 			OptionDialog.QUESTION_MESSAGE), false);
 		captureDialog();
 	}

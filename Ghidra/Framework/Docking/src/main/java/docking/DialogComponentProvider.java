@@ -31,6 +31,7 @@ import docking.action.DockingActionIf;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.generic.function.Callback;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -489,7 +490,7 @@ public class DialogComponentProvider
 	 */
 	protected void setApplyToolTip(String tooltip) {
 		if (applyButton != null) {
-			ToolTipManager.setToolTipText(applyButton, tooltip);
+			applyButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -505,7 +506,7 @@ public class DialogComponentProvider
 	 */
 	protected void setOkToolTip(String tooltip) {
 		if (okButton != null) {
-			ToolTipManager.setToolTipText(okButton, tooltip);
+			okButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -515,7 +516,7 @@ public class DialogComponentProvider
 	 */
 	protected void setCancelToolTip(String tooltip) {
 		if (cancelButton != null) {
-			ToolTipManager.setToolTipText(cancelButton, tooltip);
+			cancelButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -531,7 +532,7 @@ public class DialogComponentProvider
 	 */
 	protected void setDismissToolTip(String tooltip) {
 		if (dismissButton != null) {
-			ToolTipManager.setToolTipText(dismissButton, tooltip);
+			dismissButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -634,6 +635,18 @@ public class DialogComponentProvider
 
 		statusLabel.setText(text);
 		statusLabel.setForeground(getStatusColor(type));
+		updateStatusToolTip();
+
+		if (alert) {
+			alertMessage();
+		}
+	}
+
+	private void doSetSubStatusText(String text, MessageType type, boolean alert) {
+
+		SystemUtilities.assertThisIsTheSwingThread(
+			"Setting text must be performed on the Swing thread");
+
 		updateStatusToolTip();
 
 		if (alert) {
@@ -754,12 +767,7 @@ public class DialogComponentProvider
 	private void showProgressBar(String localTitle, boolean hasProgress, boolean canCancel) {
 		taskMonitorComponent.setTaskName(localTitle);
 		taskMonitorComponent.showProgress(hasProgress);
-		if (canCancel) {
-			taskMonitorComponent.showCancelButton(true);
-		}
-		else {
-			taskMonitorComponent.showCancelButton(false);
-		}
+		taskMonitorComponent.setCancelButtonVisibility(canCancel);
 		progressCardLayout.show(statusProgPanel, PROGRESS);
 		rootPanel.validate();
 	}
@@ -784,10 +792,10 @@ public class DialogComponentProvider
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, null);
+			statusLabel.setToolTipText(null);
 		}
 	}
 
@@ -803,7 +811,8 @@ public class DialogComponentProvider
 	}
 
 	/**
-	 * returns the current status in the dialogs status line=
+	 * Returns the current status in the dialogs status line
+	 * 
 	 * @return the status text
 	 */
 	public String getStatusText() {
@@ -889,7 +898,7 @@ public class DialogComponentProvider
 
 	private JPanel buildStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDHtmlLabel(" ");
 		statusLabel.setName("statusLabel");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);

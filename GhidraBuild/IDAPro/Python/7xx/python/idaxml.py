@@ -33,6 +33,7 @@ import idautils
 import idc
 import datetime
 import os
+import sys
 import time
 from xml.etree import cElementTree
 
@@ -1192,7 +1193,7 @@ class XmlExporter(IdaXml):
             elif idc.is_code(f) == True:
                 insn = ida_ua.insn_t()
                 ida_ua.decode_insn(insn, addr)
-                target = insn.ops[op].value - ri.tdelta + ri.base
+                target = (insn.ops[op].value - ri.tdelta + ri.base) & ((1 << 64) - 1)
             elif idc.is_data(f) == True:
                 target = self.get_data_value(addr) - ri.tdelta + ri.base;
             else:

@@ -149,7 +149,7 @@ public abstract class PcodeEmit {
 	public ParserWalker getWalker() {
 		return walker;
 	}
-	
+
 	/**
 	 * Make a note of the current op index, and associate
 	 * it with the label index from the label template,
@@ -158,11 +158,13 @@ public abstract class PcodeEmit {
 	 * @param op = the label template op
 	 */
 	private void setLabel(OpTpl op) {
-		if (labeldef == null)
+		if (labeldef == null) {
 			labeldef = new ArrayList<Integer>();
+		}
 		int labelindex = (int) op.getInput()[0].getOffset().getReal() + labelbase;
-		while (labeldef.size() <= labelindex)
+		while (labeldef.size() <= labelindex) {
 			labeldef.add(null);
+		}
 		labeldef.set(labelindex, numOps);
 	}
 
@@ -205,8 +207,8 @@ public abstract class PcodeEmit {
 	private void dumpNullReturn() {
 
 		VarnodeTpl nullAddr =
-			new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.REAL, 0), new ConstTpl(
-				ConstTpl.REAL, const_space.getPointerSize()));
+			new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.REAL, 0),
+				new ConstTpl(ConstTpl.REAL, const_space.getPointerSize()));
 
 		OpTpl retOpt = new OpTpl(PcodeOp.RETURN, null, new VarnodeTpl[] { nullAddr });
 		dump(retOpt);
@@ -253,13 +255,11 @@ public abstract class PcodeEmit {
 			//   <label>
 
 			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp =
-				new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()), new ConstTpl(ConstTpl.REAL,
-					tmpAddr.getOffset()), inputs[1].getSize());
+			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
+				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()), inputs[1].getSize());
 			int labelIndex = labelcount++;
-			VarnodeTpl label =
-				new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.J_RELATIVE,
-					labelIndex), new ConstTpl(ConstTpl.REAL, 8));
+			VarnodeTpl label = new VarnodeTpl(new ConstTpl(const_space),
+				new ConstTpl(ConstTpl.J_RELATIVE, labelIndex), new ConstTpl(ConstTpl.REAL, 8));
 			VarnodeTpl dest = inputs[0];
 			VarnodeTpl cond = inputs[1];
 
@@ -311,13 +311,12 @@ public abstract class PcodeEmit {
 			//   RETURN tmp
 
 			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp =
-				new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()), new ConstTpl(ConstTpl.REAL,
-					tmpAddr.getOffset()), new ConstTpl(ConstTpl.REAL, ptrSize));
+			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
+				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()),
+				new ConstTpl(ConstTpl.REAL, ptrSize));
 
-			VarnodeTpl destAddr =
-				new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(), new ConstTpl(
-					ConstTpl.REAL, ptrSize));
+			VarnodeTpl destAddr = new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(),
+				new ConstTpl(ConstTpl.REAL, ptrSize));
 
 			OpTpl copyOpt = new OpTpl(PcodeOp.COPY, tmp, new VarnodeTpl[] { destAddr });
 			dump(copyOpt);
@@ -353,23 +352,20 @@ public abstract class PcodeEmit {
 			//   <label>
 
 			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp =
-				new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()), new ConstTpl(ConstTpl.REAL,
-					tmpAddr.getOffset()), inputs[1].getSize());
+			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
+				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()), inputs[1].getSize());
 
 			tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp2 =
-				new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()), new ConstTpl(ConstTpl.REAL,
-					tmpAddr.getOffset()), new ConstTpl(ConstTpl.REAL, ptrSize));
+			VarnodeTpl tmp2 = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
+				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()),
+				new ConstTpl(ConstTpl.REAL, ptrSize));
 
-			VarnodeTpl destAddr =
-				new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(), new ConstTpl(
-					ConstTpl.REAL, ptrSize));
+			VarnodeTpl destAddr = new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(),
+				new ConstTpl(ConstTpl.REAL, ptrSize));
 
 			int labelIndex = labelcount++;
-			VarnodeTpl label =
-				new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.J_RELATIVE,
-					labelIndex), new ConstTpl(ConstTpl.REAL, 8));
+			VarnodeTpl label = new VarnodeTpl(new ConstTpl(const_space),
+				new ConstTpl(ConstTpl.J_RELATIVE, labelIndex), new ConstTpl(ConstTpl.REAL, 8));
 			VarnodeTpl cond = inputs[1];
 
 			OpTpl negOpt = new OpTpl(PcodeOp.BOOL_NEGATE, tmp, new VarnodeTpl[] { cond });
@@ -420,13 +416,16 @@ public abstract class PcodeEmit {
 	private void generateLocation(VarnodeTpl vntpl, VarnodeData vn) {
 		vn.space = vntpl.getSpace().fixSpace(walker);
 		vn.size = (int) vntpl.getSize().fix(walker);
-		if (vn.space == const_space)
+		if (vn.space == const_space) {
 			vn.offset =
 				vntpl.getOffset().fix(walker) & ConstTpl.calc_mask[vn.size > 8 ? 8 : vn.size];
-		else if (vn.space == uniq_space)
+		}
+		else if (vn.space == uniq_space) {
 			vn.offset = vntpl.getOffset().fix(walker) | uniqueoffset;
-		else
+		}
+		else {
 			vn.offset = vn.space.truncateOffset(vntpl.getOffset().fix(walker));
+		}
 	}
 
 	/**
@@ -439,12 +438,15 @@ public abstract class PcodeEmit {
 		FixedHandle hand = walker.getFixedHandle(vntpl.getOffset().getHandleIndex());
 		vn.space = hand.offset_space;
 		vn.size = hand.offset_size;
-		if (vn.space == const_space)
+		if (vn.space == const_space) {
 			vn.offset = hand.offset_offset & ConstTpl.calc_mask[vn.size];
-		else if (vn.space == uniq_space)
+		}
+		else if (vn.space == uniq_space) {
 			vn.offset = hand.offset_offset | uniqueoffset;
-		else
+		}
+		else {
 			vn.offset = vn.space.truncateOffset(hand.offset_offset);
+		}
 		return hand.space;
 	}
 
@@ -473,8 +475,9 @@ public abstract class PcodeEmit {
 				dump(startAddress, PcodeOp.LOAD, dyncache, 2, dyncache[2]);
 				numOps += 1;
 			}
-			else
+			else {
 				generateLocation(vn, incache[i]);
+			}
 		}
 		if ((isize > 0) && (opt.getInput()[0].isRelative())) {
 			incache[0].offset += labelbase;
@@ -515,22 +518,25 @@ public abstract class PcodeEmit {
 		}
 	}
 
-	private void appendBuild(OpTpl bld, int secnum) throws UnknownInstructionException,
-			MemoryAccessException {
+	private void appendBuild(OpTpl bld, int secnum)
+			throws UnknownInstructionException, MemoryAccessException {
 		// Recover operand index from build statement
 		int index = (int) bld.getInput()[0].getOffset().getReal();
 		Symbol sym = walker.getConstructor().getOperand(index).getDefiningSymbol();
-		if ((sym == null) || (!(sym instanceof SubtableSymbol)))
+		if ((sym == null) || (!(sym instanceof SubtableSymbol))) {
 			return;
+		}
 
 		walker.pushOperand(index);
 		Constructor ct = walker.getConstructor();
 		if (secnum >= 0) {
 			ConstructTpl construct = ct.getNamedTempl(secnum);
-			if (construct == null)
+			if (construct == null) {
 				buildEmpty(ct, secnum);
-			else
+			}
+			else {
 				build(construct, secnum);
+			}
 		}
 		else {
 			ConstructTpl construct = ct.getTempl();
@@ -548,8 +554,8 @@ public abstract class PcodeEmit {
 	private void delaySlot(OpTpl op) throws UnknownInstructionException, MemoryAccessException {
 
 		if (inDelaySlot) {
-			throw new SleighException("Delay Slot recursion problem for Instruction at " +
-				walker.getAddr());
+			throw new SleighException(
+				"Delay Slot recursion problem for Instruction at " + walker.getAddr());
 		}
 		inDelaySlot = true;
 		Address baseaddr = parsercontext.getAddr();
@@ -589,11 +595,12 @@ public abstract class PcodeEmit {
 	 * @throws UnknownInstructionException
 	 * @throws MemoryAccessException
 	 */
-	private void appendCrossBuild(OpTpl bld, int secnum) throws UnknownInstructionException,
-			MemoryAccessException {
-		if (secnum >= 0)
-			throw new SleighException("CROSSBUILD recursion problem for instruction at " +
-				walker.getAddr());
+	private void appendCrossBuild(OpTpl bld, int secnum)
+			throws UnknownInstructionException, MemoryAccessException {
+		if (secnum >= 0) {
+			throw new SleighException(
+				"CROSSBUILD recursion problem for instruction at " + walker.getAddr());
+		}
 		secnum = (int) bld.getInput()[1].getOffset().getReal();
 		VarnodeTpl vn = bld.getInput()[0];
 		AddressSpace spc = vn.getSpace().fixSpace(walker);
@@ -609,35 +616,38 @@ public abstract class PcodeEmit {
 			parsercontext = (SleighParserContext) instcontext.getParserContext(addr);
 		}
 		catch (UnknownContextException e) {
-			throw new UnknownInstructionException("Could not find cached crossbuild parser context");
+			throw new UnknownInstructionException(
+				"Could not find cached crossbuild parser context");
 		}
 
 		walker = new ParserWalker(parsercontext, oldwalker.getParserContext());
 		walker.baseState();
 		Constructor ct = walker.getConstructor();
 		ConstructTpl construct = ct.getNamedTempl(secnum);
-		if (construct == null)
+		if (construct == null) {
 			buildEmpty(ct, secnum);
-		else
+		}
+		else {
 			build(construct, secnum);
+		}
 		walker = oldwalker;
 		parsercontext = walker.getParserContext();
 		uniqueoffset = olduniqueoffset;
 	}
 
-	public void build(ConstructTpl construct, int secnum) throws UnknownInstructionException,
-			MemoryAccessException {
-		if (construct == null)
+	public void build(ConstructTpl construct, int secnum)
+			throws UnknownInstructionException, MemoryAccessException {
+		if (construct == null) {
 			throw new NotYetImplementedException(
 				"Semantics for this instruction are not implemented");
+		}
 
 		int oldbase = labelbase;	// Recursively save old labelbase
 		labelbase = labelcount;
 		labelcount += construct.getNumLabels();
 
 		OpTpl[] optpllist = construct.getOpVec();
-		for (int i = 0; i < optpllist.length; ++i) {
-			OpTpl op = optpllist[i];
+		for (OpTpl op : optpllist) {
 			switch (op.getOpcode()) {
 				case PcodeOp.MULTIEQUAL:		// Build placeholder
 					appendBuild(op, secnum);
@@ -668,28 +678,32 @@ public abstract class PcodeEmit {
 	 * @throws MemoryAccessException 
 	 * @throws UnknownInstructionException 
 	 */
-	private void buildEmpty(Constructor ct, int secnum) throws UnknownInstructionException,
-			MemoryAccessException {
+	private void buildEmpty(Constructor ct, int secnum)
+			throws UnknownInstructionException, MemoryAccessException {
 		int numops = ct.getNumOperands();
 
 		for (int i = 0; i < numops; ++i) {
 			TripleSymbol sym = ct.getOperand(i).getDefiningSymbol();
-			if ((sym == null) || (!(sym instanceof SubtableSymbol)))
+			if ((sym == null) || (!(sym instanceof SubtableSymbol))) {
 				continue;
+			}
 
 			walker.pushOperand(i);
 			ConstructTpl construct = walker.getConstructor().getNamedTempl(secnum);
-			if (construct == null)
+			if (construct == null) {
 				buildEmpty(walker.getConstructor(), secnum);
-			else
+			}
+			else {
 				build(construct, secnum);
+			}
 			walker.popOperand();
 		}
 	}
 
 	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		if (uniqueFactory == null)
+		if (uniqueFactory == null) {
 			return;
+		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) in[0].offset;
 			AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
@@ -713,16 +727,36 @@ public abstract class PcodeEmit {
 		}
 	}
 
-	void checkOverrides(int opcode, VarnodeData[] in) {
+	/**
+	 * Applies opcode-specific overrides
+	 * @param opcode opcode of instruction
+	 * @param in input varnodes
+	 * @return opcode of modified instruction
+	 */
+	int checkOverrides(int opcode, VarnodeData[] in) {
 		if (override == null) {
-			return;
+			return opcode;
+		}
+
+		//If there is an overriding reference on an indirect call, change the indirect
+		//call to a direct call
+		if (opcode == PcodeOp.CALLIND) {
+			Address callRef = override.getOverridingCallReference();
+			if (callRef != null) {
+				VarnodeData dest = in[0];
+				dest.space = callRef.getAddressSpace();
+				dest.offset = callRef.getOffset();
+				dest.size = dest.space.getPointerSize();
+				return PcodeOp.CALL;
+			}
 		}
 
 		// Simple call reference override - use primary call reference as destination
-		// Only perform reference override if destination function does not have a call-fixup
-		if (opcode == PcodeOp.CALL && !override.hasCallFixup(in[0].space.getAddress(in[0].offset))) {
+		// Only perform reference override if destination function does not have a call-fixup		
+		if (opcode == PcodeOp.CALL &&
+			!override.hasCallFixup(in[0].space.getAddress(in[0].offset))) {
 			// Check for call reference (not supported if call-fixup exists for the instruction)
-			Address callRef = override.getPrimaryCallReference();
+			Address callRef = override.getOverridingCallReference();
 			if (callRef != null) {
 				VarnodeData dest = in[0];
 				dest.space = callRef.getAddressSpace();
@@ -740,6 +774,6 @@ public abstract class PcodeEmit {
 				dest.size = dest.space.getPointerSize();
 			}
 		}
-
+		return opcode;
 	}
 }

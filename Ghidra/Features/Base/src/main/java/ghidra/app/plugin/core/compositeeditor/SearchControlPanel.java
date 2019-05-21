@@ -24,6 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GLabel;
 import resources.ResourceManager;
 
 public class SearchControlPanel extends JPanel {
@@ -42,8 +43,7 @@ public class SearchControlPanel extends JPanel {
 		this.editorPanel = editorPanel;
 
 		setLayout(new BorderLayout());
-		JLabel label = new JLabel("Search: ");
-		add(label, BorderLayout.WEST);
+		add(new GLabel("Search: "), BorderLayout.WEST);
 		textField = new JTextField(20);
 		add(textField, BorderLayout.CENTER);
 		add(buildButtonPanel(), BorderLayout.EAST);

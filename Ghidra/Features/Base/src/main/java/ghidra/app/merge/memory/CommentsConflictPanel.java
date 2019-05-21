@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,15 @@
  */
 package ghidra.app.merge.memory;
 
-import ghidra.app.merge.MergeConstants;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.button.GRadioButton;
+import ghidra.app.merge.MergeConstants;
+import ghidra.util.layout.PairLayout;
 
 /**
  * Panel that shows the block comments; has radio buttons to choose
@@ -123,8 +123,9 @@ class CommentsConflictPanel extends JPanel {
 			case MergeConstants.ORIGINAL:
 				str = MergeConstants.ORIGINAL_TITLE;
 		}
-		JRadioButton rb = new JRadioButton("Use comments from " + str);
+		GRadioButton rb = new GRadioButton("Use comments from " + str);
 		rb.addItemListener(new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					listener.stateChanged(null);

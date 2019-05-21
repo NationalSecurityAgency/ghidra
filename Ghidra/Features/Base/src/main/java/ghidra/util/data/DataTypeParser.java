@@ -41,7 +41,11 @@ public class DataTypeParser {
 		/**
 		 * Only Fixed-length data-types
 		 */
-		FIXED_LENGTH
+		FIXED_LENGTH,
+		/**
+		 * Only Fixed-length data types and string data types
+		 */
+		STRINGS_AND_FIXED_LENGTH
 	}
 
 	private DataTypeManager sourceDataTypeManager;			// may be null
@@ -144,30 +148,44 @@ public class DataTypeParser {
 	}
 
 	/**
-	 * Validate the specified data-type dt against the specified allowedTypes.
-	 * @param dt data-type
-	 * @param allowedTypes
+	 * Throws exception if the data type does not match the specified {@link AllowedDataTypes}.
+	 * 
+	 * @param dt {@link DataType} to check
+	 * @param allowedTypes {@link AllowedDataTypes enum} specifying what category of data types are ok
 	 * @throws InvalidDataTypeException if dt violates the specified allowedTypes
 	 */
-	public static void checkAllowableType(DataType dt, AllowedDataTypes allowedTypes)
+	public static void ensureIsAllowableType(DataType dt, AllowedDataTypes allowedTypes)
 			throws InvalidDataTypeException {
-		if (allowedTypes == AllowedDataTypes.DYNAMIC) {
-			if (dt instanceof FactoryDataType) {
-				throw new InvalidDataTypeException("factory data-type not allowed");
-			}
-		}
-		else if (allowedTypes == AllowedDataTypes.SIZABLE_DYNAMIC) {
-			if (dt instanceof FactoryDataType) {
-				throw new InvalidDataTypeException("factory data-type not allowed");
-			}
-			if (dt instanceof Dynamic && !((Dynamic) dt).canSpecifyLength()) {
-				throw new InvalidDataTypeException("non-sizable data-type not allowed");
-			}
-		}
-		else if (allowedTypes == AllowedDataTypes.FIXED_LENGTH) {
-			if (dt.getLength() < 0) {
-				throw new InvalidDataTypeException("fixed-length data-type required");
-			}
+		switch (allowedTypes) {
+			case DYNAMIC:
+				if (dt instanceof FactoryDataType) {
+					throw new InvalidDataTypeException("factory data-type not allowed");
+				}
+				break;
+			case SIZABLE_DYNAMIC:
+				if (dt instanceof FactoryDataType) {
+					throw new InvalidDataTypeException("factory data-type not allowed");
+				}
+				if (dt instanceof Dynamic && !((Dynamic) dt).canSpecifyLength()) {
+					throw new InvalidDataTypeException("non-sizable data-type not allowed");
+				}
+				break;
+			case FIXED_LENGTH:
+				if (dt.getLength() < 0) {
+					throw new InvalidDataTypeException("fixed-length data-type required");
+				}
+				break;
+			case STRINGS_AND_FIXED_LENGTH:
+				if (dt.getLength() < 0 && !(dt instanceof AbstractStringDataType)) {
+					throw new InvalidDataTypeException("fixed-length or string data-type required");
+				}
+				break;
+			case ALL:
+				// do nothing
+				break;
+			default:
+				throw new InvalidDataTypeException(
+					"unknown data type allowance specified: " + allowedTypes);
 		}
 	}
 
@@ -221,7 +239,7 @@ public class DataTypeParser {
 		catch (IllegalArgumentException e) {
 			throw new InvalidDataTypeException(e.getMessage());
 		}
-		checkAllowableType(dt, allowedTypes);
+		ensureIsAllowableType(dt, allowedTypes);
 		return dt;
 	}
 

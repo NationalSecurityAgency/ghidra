@@ -20,7 +20,7 @@ import java.awt.*;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import resources.ResourceManager;
+import generic.util.image.ImageUtils;
 
 public class ScaledImageIconWrapper extends ImageIconWrapper {
 
@@ -58,8 +58,7 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 	@Override
 	protected ImageIcon createImageIcon() {
 		ImageIcon baseIcon = super.createImageIcon();
-		Image scaledImage =
-			ResourceManager.createScaledImage(baseIcon.getImage(), width, height, hints);
+		Image scaledImage = ImageUtils.createScaledImage(baseIcon.getImage(), width, height, hints);
 		return new ImageIcon(scaledImage, getImageName());
 	}
 }

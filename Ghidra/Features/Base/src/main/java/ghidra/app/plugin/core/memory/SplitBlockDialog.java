@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,6 @@
  */
 package ghidra.app.plugin.core.memory;
 
-import ghidra.app.plugin.core.misc.RegisterField;
-import ghidra.app.util.AddressInput;
-import ghidra.app.util.HelpTopics;
-import ghidra.program.model.address.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.HelpLocation;
-import ghidra.util.NamingUtilities;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,6 +24,16 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GLabel;
+import ghidra.app.plugin.core.misc.RegisterField;
+import ghidra.app.util.AddressInput;
+import ghidra.app.util.HelpTopics;
+import ghidra.program.model.address.*;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.util.HelpLocation;
+import ghidra.util.NamingUtilities;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.layout.PairLayout;
 
 /**
  * 
@@ -119,13 +118,13 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneLengthField = new RegisterField(32, null, false);
 		blockOneLengthField.setName("BlockOneLength");
 
-		panelOne.add(new JLabel("Block Name:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelOne.add(blockOneNameField);
-		panelOne.add(new JLabel("Start Address:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panelOne.add(blockOneStartField);
-		panelOne.add(new JLabel("End Address:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("End Address:", SwingConstants.RIGHT));
 		panelOne.add(blockOneEnd);
-		panelOne.add(new JLabel("Block Length:", SwingConstants.RIGHT));
+		panelOne.add(new GLabel("Block Length:", SwingConstants.RIGHT));
 		panelOne.add(blockOneLengthField);
 
 		JPanel panelTwo = new JPanel(new PairLayout(5, 5, 150));
@@ -140,13 +139,13 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockTwoLengthField = new RegisterField(32, null, false);
 		blockTwoLengthField.setName("BlockTwoLength");
 
-		panelTwo.add(new JLabel("Block Name:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoNameField);
-		panelTwo.add(new JLabel("Start Address:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoStart);
-		panelTwo.add(new JLabel("End Address:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("End Address:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoEndField);
-		panelTwo.add(new JLabel("Block Length:", SwingConstants.RIGHT));
+		panelTwo.add(new GLabel("Block Length:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoLengthField);
 
 		JPanel mainPanel = new JPanel();
@@ -202,6 +201,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockTwoStart.addChangeListener(new AddressChangeListener(blockTwoStart));
 
 		ActionListener al = new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setStatusText("");
 			}
@@ -227,6 +227,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 			this.source = source;
 		}
 
+		@Override
 		public void stateChanged(ChangeEvent event) {
 			setStatusText("");
 			boolean ok = false;
@@ -331,6 +332,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 			this.source = source;
 		}
 
+		@Override
 		public void stateChanged(ChangeEvent event) {
 			setStatusText("");
 			boolean ok = false;
@@ -385,8 +387,8 @@ class SplitBlockDialog extends DialogComponentProvider {
 			}
 			long blockSize = block.getSize();
 			if (length > blockSize) {
-				setStatusText("End address must be less than original block end (" +
-					block.getEnd() + ")");
+				setStatusText(
+					"End address must be less than original block end (" + block.getEnd() + ")");
 				return false;
 			}
 			blockOneLengthField.setValue(new Long(length));

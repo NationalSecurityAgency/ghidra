@@ -67,14 +67,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	public GhidraJarBuilder(List<File> rootDirs) throws IOException {
 		for (File file : rootDirs) {
 			File rgd = file.getCanonicalFile();
-			if (!isValidRootDir(rgd)) {
-				throw new IOException("Invalid Ghidra directory: " + rgd);
-			}
 			rootGhidraDirs.add(rgd);
 		}
 		allModules = findAllModules();
 		Collections.sort(allModules);
-
 		for (ApplicationModule module : allModules) {
 			if (includeByDefault(module)) {
 				includedModules.add(module);
@@ -197,6 +193,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		Jar jar = new Jar(outputFile, manifest, monitor);
 
 		List<ApplicationModule> moduleList = new ArrayList<>(includedModules);
+
 		Collections.sort(moduleList);
 		createClassLoader(moduleList);
 
@@ -373,11 +370,12 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			processExternalLibs(jar, module);
 			return;
 		}
-
-		File binDir = new File(module.getModuleDir(), "bin");
+		// NOTE: This only works in a distribution where the 3rd party jars live in each
+		// module's libs directory
+		File binDir = new File(module.getModuleDir(), "bin/main");
 		writeDirRecursively(jar, binDir.getAbsolutePath(), binDir, module);
-		File resourceDir = new File(module.getModuleDir(), "resources");
-		writeDirRecursively(jar, resourceDir.getParentFile().getAbsolutePath(), resourceDir, null);
+		File resourceDir = new File(module.getModuleDir(), "src/main/resources");
+		writeDirRecursively(jar, resourceDir.getAbsolutePath(), resourceDir, null);
 
 		processLibDir(jar, module);
 	}
@@ -427,7 +425,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			//  	Log4j scatters .dat files around in modules that use the log4j
 			//		plugin construct. Each one contains the plugins that that module
 			//		requires. The problem is that each of these has the exact same path:
-			//	
+			//
 			//		META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat
 			//
 			//		If we just blindly copy all of them to our new jar, we risk overwriting the
@@ -437,9 +435,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			//
 			//  	NOTE: The above statement obviously means that we're dropping the information
 			//			contained in the 'other' .dat files. This could cause a problem at some
-			//			point, even though it doesn't now. As such, we may want to try to merge 
+			//			point, even though it doesn't now. As such, we may want to try to merge
 			//			all the .dat files together at some point.
-			//		
+			//
 			if (jarEntry.getName().contains("Log4j2Plugins.dat")) {
 				if (jarFile.getName().contains("log4j-core")) {
 					jar.addJarEntry(jarFile, jarEntry, module);
@@ -494,7 +492,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 		writeDirRecursively(jar, moduleDir.getAbsolutePath(), new File(helpDir, "shared"), null);
 		writeDirRecursively(jar, moduleDir.getAbsolutePath(), new File(helpDir, "topics"), null);
-		File helpBinDir = new File(helpDir, "bin");
+		File helpBinDir = new File(helpDir, "bin/main");
 		jar.setPathPrefix("help/");
 		writeDirRecursively(jar, helpBinDir.getAbsolutePath(), helpBinDir, null);
 		jar.setPathPrefix(null);
@@ -549,10 +547,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	private void writeNonModuleFiles(Jar jar) throws IOException, CancelledException {
 		jar.setPathPrefix(ROOT);
 
-		File rootGhidraDir = rootGhidraDirs.get(0);
-		File rootDir = rootGhidraDir.getParentFile();
-		File applicatonProperties = getApplicationPropertyFile(rootGhidraDir);
-		String jarPath = getPathFromRoot(rootDir.getAbsolutePath(), applicatonProperties);
+		File rootDir = findRootDir();
+		File applicatonProperties = getApplicationPropertyFile(rootDir);
+		String jarPath =
+			getPathFromRoot(rootDir.getParentFile().getAbsolutePath(), applicatonProperties);
 		jar.addFile(jarPath, applicatonProperties, null);
 
 		File whatsNew = new File(rootDir, "docs/WhatsNew.html");
@@ -566,6 +564,15 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			jarPath = getPathFromRoot(rootDir.getAbsolutePath(), changeHistory);
 			jar.addFile(jarPath, changeHistory, null);
 		}
+	}
+
+	private File findRootDir() {
+		for (File root : rootGhidraDirs) {
+			if (getApplicationPropertyFile(root).exists()) {
+				return root;
+			}
+		}
+		throw new AssertException("Can't find application property file!");
 	}
 
 	private Manifest createManifest() {
@@ -650,7 +657,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		/**
 		 * Puts a directory in the jar for Ghidra Extensions. This may be empty (if
 		 * no extensions are installed) but should exist nonetheless.
-		 * 
+		 *
 		 * @throws IOException if there's an error writing to the jar
 		 */
 		public void writeGhidraExtensionsDir() throws IOException {
@@ -731,8 +738,15 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		 */
 		public void addFile(String jarPath, File file, ApplicationModule module)
 				throws IOException, CancelledException {
+			if (!file.exists()) {
+				throw new AssertException(
+					"Attempted to write a file that does not exist to the jar! File = " +
+						file.getAbsolutePath());
+			}
+
 			if (!file.isFile()) {
-				throw new AssertException("Attempted to write a directory to the jar file");
+				throw new AssertException(
+					"Attempted to write a directory to the jar! File = " + file.getAbsolutePath());
 			}
 
 			jarPath = jarPath.replaceAll("\\\\", "/"); // handle windows separators
@@ -1044,13 +1058,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			System.out.println("Extra Bin Dir = " + extraBinDir);
 		}
 
-		for (File ghidraDir : ghidraDirs) {
-			if (!isValidRootDir(ghidraDir)) {
-				System.err.println("Invalid Ghidra directory: " + ghidraDir);
-				System.exit(0);
-			}
-		}
-
 		try {
 			GhidraJarBuilder builder = new GhidraJarBuilder(ghidraDirs);
 			if (mainClassArg != null) {
@@ -1088,10 +1095,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 
 	private static File getApplicationPropertyFile(File ghidraRootDir) {
 		return new File(ghidraRootDir, "application.properties");
-	}
-
-	private static boolean isValidRootDir(File ghidraRootDir) {
-		return getApplicationPropertyFile(ghidraRootDir).isFile();
 	}
 
 	private void setGradleMode() {

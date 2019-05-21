@@ -507,7 +507,9 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 		for (int i = 0; i < padLength; i++) {
 			address = address.next();
-
+			if (address == null) {
+				return 0;
+			}
 			CodeUnit cu = listing.getCodeUnitContaining(address);
 			if (cu == null) {
 				return 0; // null implies there cannot be data here

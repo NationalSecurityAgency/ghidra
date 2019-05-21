@@ -160,7 +160,7 @@ public class ISO9660FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		ISO9660Directory dir = fileToDirectoryMap.get(file);
 		if (dir != null) {
 			return dir.toString();

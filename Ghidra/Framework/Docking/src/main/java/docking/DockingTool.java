@@ -79,7 +79,7 @@ public interface DockingTool {
 
 	/**
 	 * Set the status information
-	 * @param text string to be displayed in the Status display area
+	 * @param text non-html string to be displayed in the Status display area
 	 */
 	public void setStatusInfo(String text);
 

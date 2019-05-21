@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,16 @@
  */
 package ghidra.app.merge.datatypes;
 
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.util.ConflictCountPanel;
-import ghidra.framework.data.DomainObjectMergeManager;
-
 import java.awt.BorderLayout;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.util.ConflictCountPanel;
+import ghidra.framework.data.DomainObjectMergeManager;
 
 /**
  * Panel that shows a conflict for a category; gets user input to resolve
@@ -86,6 +86,7 @@ class CategoryMergePanel extends JPanel {
 	private void create() {
 		countPanel = new ConflictCountPanel();
 		resolvePanel = new CategoryConflictPanel("Resolve Conflict", new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent e) {
 				mergeManager.clearStatusText();
 				mergeManager.setApplyEnabled(true);
@@ -112,7 +113,7 @@ class CategoryMergePanel extends JPanel {
 	}
 
 	private JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Category"));
+		useForAllCB = new GCheckBox(getUseAllString("Category"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

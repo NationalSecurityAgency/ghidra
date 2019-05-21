@@ -26,6 +26,7 @@ import docking.*;
 import docking.action.*;
 import docking.help.HelpService;
 import docking.tool.util.DockingToolConstants;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -331,7 +332,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 			setBorder(lowerBorder);
 
 			add(Box.createHorizontalStrut(4));
-			add(new JLabel("Min:"));
+			add(new GLabel("Min:"));
 			add(Box.createHorizontalStrut(19));
 
 			minField = createFilterWidget(FilterType.MIN);
@@ -339,7 +340,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 
 			add(Box.createHorizontalStrut(10));
 
-			add(new JLabel("Max:"));
+			add(new GLabel("Max:"));
 			add(Box.createHorizontalStrut(5));
 			maxField = createFilterWidget(FilterType.MAX);
 			add(maxField.getComponent());

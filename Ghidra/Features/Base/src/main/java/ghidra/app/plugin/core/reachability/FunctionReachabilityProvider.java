@@ -23,6 +23,7 @@ import javax.swing.*;
 
 import docking.ComponentProvider;
 import docking.WindowPosition;
+import docking.widgets.label.GDLabel;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -127,7 +128,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.PAGE_AXIS));
 
 		fromAddressField = new JTextField(15);
-		fromFunctionLabel = new JLabel();
+		fromFunctionLabel = new GDLabel();
 
 		JButton swapButton = new JButton("Swap");
 		swapButton.addActionListener(e -> {
@@ -138,7 +139,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		});
 
 		toAddressField = new JTextField(15);
-		toFunctionLabel = new JLabel();
+		toFunctionLabel = new GDLabel();
 
 		JButton goButton = new JButton("Go");
 		goButton.addActionListener(e -> findPaths());
@@ -162,7 +163,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		resultsModel = new FunctionReachabilityTableModel(plugin.getTool(), program);
 
 		GhidraThreadedTablePanel<FunctionReachabilityResult> tablePanel =
-			new GhidraThreadedTablePanel<FunctionReachabilityResult>(resultsModel);
+			new GhidraThreadedTablePanel<>(resultsModel);
 
 		resultsTable = tablePanel.getTable();
 

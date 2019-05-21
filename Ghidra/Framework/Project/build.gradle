@@ -1,4 +1,9 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Framework Project'
 
 dependencies {
@@ -8,7 +13,7 @@ dependencies {
 	compile project(':FileSystem')
 	compile project(':Utility')
 	
-	testCompile project(':Generic').sourceSets.test.output
+	testCompile project(path: ':Generic', configuration: 'testArtifacts')
 	compile "org.apache.commons:commons-compress:1.18"
 }
 

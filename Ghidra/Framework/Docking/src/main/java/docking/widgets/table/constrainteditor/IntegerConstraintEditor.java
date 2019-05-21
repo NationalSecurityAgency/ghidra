@@ -21,6 +21,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.spinner.IntegerSpinner;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.SingleValueColumnConstraint;
@@ -70,7 +71,7 @@ public class IntegerConstraintEditor<T extends Number> extends AbstractColumnCon
 		spinnerModel.addChangeListener(e -> valueChanged());
 
 		panel.add(spinner.getSpinner(), BorderLayout.CENTER);
-		statusLabel = new JLabel();
+		statusLabel = new GDHtmlLabel();
 		panel.add(statusLabel, BorderLayout.SOUTH);
 		statusLabel.setForeground(Color.RED);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);

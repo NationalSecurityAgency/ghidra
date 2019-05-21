@@ -22,7 +22,10 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
@@ -127,7 +130,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		String signature = function.getPrototypeString(false, false);
 		signatureField = new JTextField(signature.length()); // add some extra room to edit
 		signatureField.setText(signature);
-		signatureLabel = new JLabel("Signature:");
+		signatureLabel = new GDLabel("Signature:");
 		signaturePanel.add(signatureLabel);
 		signaturePanel.add(signatureField);
 
@@ -164,12 +167,12 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			function.getProgram().getFunctionManager().getCallingConventionNames();
 		String[] choices = callingConventions.toArray(new String[callingConventions.size()]);
 		setCallingConventionChoices(choices);
-		parentPanel.add(new JLabel("Calling Convention:"));
+		parentPanel.add(new GLabel("Calling Convention:"));
 		parentPanel.add(callingConventionComboBox);
 	}
 
 	protected void installInlineWidget(JPanel parentPanel) {
-		inlineCheckBox = new JCheckBox("Inline");
+		inlineCheckBox = new GCheckBox("Inline");
 		inlineCheckBox.addChangeListener(e -> {
 			if (inlineCheckBox.isSelected() && callFixupComboBox != null) {
 				callFixupComboBox.setSelectedItem(NONE_CHOICE);
@@ -179,7 +182,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	}
 
 	protected void installNoReturnWidget(JPanel parentPanel) {
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		parentPanel.add(noReturnCheckBox);
 	}
 
@@ -214,7 +217,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			callFixupComboBox.setSelectedItem(callFixupName);
 		}
 
-		callFixupPanel.add(new JLabel("Call-Fixup:"));
+		callFixupPanel.add(new GLabel("Call-Fixup:"));
 		callFixupPanel.add(callFixupComboBox);
 
 		callFixupPanel.add(Box.createGlue());

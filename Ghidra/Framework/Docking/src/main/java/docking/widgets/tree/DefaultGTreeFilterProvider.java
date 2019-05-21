@@ -26,6 +26,7 @@ import docking.DockingWindowManager;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.filter.*;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeFilter;
 import ghidra.framework.options.PreferenceState;
@@ -120,7 +121,7 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 	private JPanel createFilterPanel() {
 		JPanel newFilterPanel = new JPanel(new BorderLayout());
 		newFilterPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		JLabel filterLabel = new JLabel(" Filter: ");
+		JLabel filterLabel = new GLabel(" Filter: ");
 		newFilterPanel.add(filterLabel, BorderLayout.WEST);
 
 		filterField = new FilterTextField(gTree.getJTree());

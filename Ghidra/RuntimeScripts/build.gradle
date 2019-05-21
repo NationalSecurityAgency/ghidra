@@ -1,4 +1,41 @@
 apply plugin: 'eclipse'
+
 eclipse.project.name = '_Runtime Scripts'
 
-ext.isPureEclipseProject = true
+rootProject.assembleDistribution {
+
+	from (this.project.file("Common/support")) {
+		into "support"
+	}
+	
+	from (this.project.file("Common/server")) {
+		into "server"
+	}
+}
+
+rootProject.OS_NAMES.each { platform ->
+	rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+		def p = this.project
+
+		if (isLinux(platform) || isMac(platform)) {
+			t.from ("${p.projectDir}/Linux/support") {
+				into "support"
+			}
+			t.from ("${p.projectDir}/Linux/server") {
+				into "server"
+			}
+			t.from (p.file("Linux/ghidraRun")) 
+		}
+
+		if (isWindows(platform)) {
+			t.from ("${p.projectDir}/Windows/support") {
+				into "support"
+			}
+			t.from ("${p.projectDir}/Windows/server") {
+				into "server"
+			}
+			t.from (p.file("Windows/ghidraRun.bat"))
+		}		
+	}
+}
+

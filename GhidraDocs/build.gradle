@@ -1,2 +1,25 @@
+apply plugin: 'java'
 apply plugin: 'eclipse'
 eclipse.project.name = '_GhidraDocs'
+
+sourceSets {
+	ghidraClass {
+		java {
+			srcDir 'GhidraClass/AdvancedDevelopment/contrib/gadc/ghidra_scripts'
+		}
+	}
+}
+
+dependencies {
+	compile project(':Base') 
+}
+
+rootProject.assembleDistribution {
+	from (this.project.projectDir) {
+		exclude "**/build.gradle"
+		exclude "**/build/**"
+		exclude "**/bin/**"
+		into "docs"
+	
+	}
+}

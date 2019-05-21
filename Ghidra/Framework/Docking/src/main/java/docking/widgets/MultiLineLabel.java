@@ -29,7 +29,9 @@ import utilities.util.reflection.ReflectionUtilities;
  *  
  * Class to render a String that has new line characters as a multiline
  * label. Calculates the resizing and centering characteristics.
- *
+ * <p>
+ * Not affected by HTML formatting.
+ * <p>
  */
 
 public class MultiLineLabel extends JPanel {

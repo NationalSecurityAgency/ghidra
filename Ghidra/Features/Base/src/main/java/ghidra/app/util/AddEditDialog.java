@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.cmd.label.*;
 import ghidra.framework.cmd.CompoundCmd;
@@ -432,14 +433,14 @@ public class AddEditDialog extends DialogComponentProvider {
 		comboBox.setEnterKeyForwarding(true);
 		namespaceChoices = comboBox;
 
-		primaryCheckBox = new JCheckBox("Primary");
+		primaryCheckBox = new GCheckBox("Primary");
 		primaryCheckBox.setMnemonic('P');
 		primaryCheckBox.setToolTipText(
 			"Make this label be the one that shows up in references to this location.");
-		entryPointCheckBox = new JCheckBox("Entry Point  ");
+		entryPointCheckBox = new GCheckBox("Entry Point  ");
 		entryPointCheckBox.setMnemonic('E');
 		entryPointCheckBox.setToolTipText("Mark this location as an external entry point.");
-		pinnedCheckBox = new JCheckBox("Pinned");
+		pinnedCheckBox = new GCheckBox("Pinned");
 		pinnedCheckBox.setMnemonic('A');
 		pinnedCheckBox.setToolTipText(
 			"Do not allow this label to move when the image base changes or a memory block is moved.");

@@ -65,18 +65,15 @@ public abstract class AddressBasedTableModel<ROW_TYPE> extends GhidraProgramTabl
 
 		ROW_TYPE rowObject = filteredData.get(row);
 		DynamicTableColumn<ROW_TYPE, ?, ?> tableColumn = getColumn(column);
-		if (tableColumn != null) {
-			if (tableColumn instanceof ProgramLocationTableColumn<?, ?>) {
+		if (tableColumn instanceof ProgramLocationTableColumn<?, ?>) {
 
-				@SuppressWarnings("unchecked")
-				// we checked
-				ProgramLocationTableColumn<ROW_TYPE, ?> programField =
-					(ProgramLocationTableColumn<ROW_TYPE, ?>) tableColumn;
-				ProgramLocation loc = programField.getProgramLocation(rowObject,
-					getColumnSettings(column), getProgram(), serviceProvider);
-				if (loc != null) {
-					return loc;
-				}
+			@SuppressWarnings("unchecked") // we checked			
+			ProgramLocationTableColumn<ROW_TYPE, ?> programField =
+				(ProgramLocationTableColumn<ROW_TYPE, ?>) tableColumn;
+			ProgramLocation loc = programField.getProgramLocation(rowObject,
+				getColumnSettings(column), getProgram(), serviceProvider);
+			if (loc != null) {
+				return loc;
 			}
 		}
 

@@ -64,7 +64,7 @@ void iterateEnums() {
 		BSTR      type = getTypeAsString(pSymbol);
 		ULONGLONG len  = getLength(pSymbol);
 
-		printf("%s<enum name=\"%ws\" type=\"%ws\" length=\"0x%x\" >\n", indent(8), name, type, len);
+		printf("%s<enum name=\"%ws\" type=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, type, len);
 
 		iterateEnumMembers(pSymbol);
 
@@ -89,7 +89,7 @@ void iterateMembers(IDiaSymbol * pSymbol) {
 		if (celt != 1) {
 			break;
 		}
-		printf("%s<member name=\"%ws\" datatype=\"%ws\" offset=\"0x%x\" kind=\"%ws\" length=\"0x%x\" />\n", 
+		printf("%s<member name=\"%ws\" datatype=\"%ws\" offset=\"0x%x\" kind=\"%ws\" length=\"0x%I64x\" />\n", 
 					indent(12), 
 					getName(pMember), 
 					getTypeAsString(pMember),
@@ -133,7 +133,7 @@ void iterateDataTypes() {
 			continue;
 		}
 
-		printf("%s<datatype name=\"%ws\" kind=\"%ws\" length=\"0x%x\" >\n", indent(8), name, kind, len);
+		printf("%s<datatype name=\"%ws\" kind=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, kind, len);
 
 		iterateMembers(pSymbol);
 
@@ -207,7 +207,7 @@ void iterateClasses() {
 			continue;
 		}
 
-		printf("%s<class name=\"%ws\" length=\"0x%x\" >\n", indent(8), name, len);
+		printf("%s<class name=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, len);
 
 		iterateMembers(pSymbol);
 
@@ -235,7 +235,7 @@ void dumpFunctionStackVariables( DWORD rva )
 		while ( pEnum != NULL && SUCCEEDED( pEnum->Next( 1, &pSymbol, &celt ) ) && celt == 1 ) {
 			pSymbol->get_symTag( &tag );
 			if ( tag == SymTagData ) {
-				printf("%s<stack_variable name=\"%ws\" kind=\"%ws\" offset=\"0x%x\" datatype=\"%ws\" length=\"0x%x\" />\n", 
+				printf("%s<stack_variable name=\"%ws\" kind=\"%ws\" offset=\"0x%x\" datatype=\"%ws\" length=\"0x%I64x\" />\n", 
 							indent(12),
 							getName(pSymbol), 
 							getKindAsString(pSymbol), 
@@ -355,7 +355,7 @@ void iterateFunctions() {
 		DWORD     address = getRVA(pSymbol);
 		ULONGLONG len     = getLength(pSymbol);
 
-		printf("%s<function name=\"%ws\" address=\"0x%x\" length=\"0x%x\">\n", indent(8), name, address, len);
+		printf("%s<function name=\"%ws\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8), name, address, len);
 
 		dumpFunctionStackVariables(address);
 		dumpFunctionLines(pSymbol, pSession);
@@ -387,7 +387,7 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 		printf("%s",                    indent(12));
 		printf("<symbol name=\"%ws\" ", name);
 		printf("address=\"0x%x\" ",     getRVA(pSymbol));
-		printf("length=\"0x%x\" ",      getLength(pSymbol));
+		printf("length=\"0x%I64x\" ",   getLength(pSymbol));
 		printf("tag=\"%ws\" ",          getTagAsString(pSymbol));
 		printf("kind=\"%ws\" ",         getKindAsString(pSymbol));
 		printf("index=\"0x%x\" ",       getIndex(pSymbol));
@@ -444,7 +444,7 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
  */
 void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 	DWORD celt;
-	IDiaSymbol * pSym;
+	IDiaSymbol * pSym = NULL;
 	IDiaSectionContrib * pSecContrib;
 
 	while ( 1 ) {
@@ -466,7 +466,6 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 			pSecContrib->get_addressSection( &isect );
 			pSecContrib->get_addressOffset( &offset );
 			pSecContrib = NULL;
-			IDiaSymbol * pSym;
 			if ( pSession->findSymbolByAddr( isect, offset, SymTagNull, &pSym ) != S_OK ) {
 				pSym = NULL;
 			}         
@@ -512,7 +511,7 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 		ULONGLONG length;
 		pInjectedSrc->get_length(&length);
 
-		printf("%s<injected_source filename=\"%ws\" objectname=\"%ws\" crc=\"0x%x\" length=\"0x%x\" />\n",
+		printf("%s<injected_source filename=\"%ws\" objectname=\"%ws\" crc=\"0x%x\" length=\"0x%I64x\" />\n",
 					indent(8),
 					filename,
 					objectname,

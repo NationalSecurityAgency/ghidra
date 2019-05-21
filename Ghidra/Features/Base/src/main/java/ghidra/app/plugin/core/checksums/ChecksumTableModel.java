@@ -25,8 +25,7 @@ import ghidra.framework.plugintool.ServiceProvider;
 /**
  * This class is used to model the table in the ComputeChecksumsProvider.
  */
-public class ChecksumTableModel
-		extends GDynamicColumnTableModel<ChecksumAlgorithm, List<ChecksumAlgorithm>> {
+public class ChecksumTableModel extends GDynamicColumnTableModel<ChecksumAlgorithm, Object> {
 	final public static int NAME_COL = 0;
 	final public static int VALUE_COL = 1;
 
@@ -49,10 +48,6 @@ public class ChecksumTableModel
 		return "Checksum";
 	}
 
-	/**
-	 * Returns a list of all of the checksums in this table model.
-	 * @return a list of all of the checksums in this table model.
-	 */
 	@Override
 	public List<ChecksumAlgorithm> getModelData() {
 		return checksumList;
@@ -62,7 +57,7 @@ public class ChecksumTableModel
 	 * Method used to update the display options for the applicable checksums.
 	 * @param asHex True if the applicable checksums should be displayed in hex, otherwise false.
 	 */
-	public void formatOptions(boolean asHex) {
+	void setFormatOptions(boolean asHex) {
 		this.isHex = asHex;
 	}
 
@@ -71,7 +66,7 @@ public class ChecksumTableModel
 	 * @param checksumName the name of the checksum to get.
 	 * @return the checksum with the given name, or null if there isn't one.
 	 */
-	public ChecksumAlgorithm getChecksumFor(String checksumName) {
+	ChecksumAlgorithm getChecksumFor(String checksumName) {
 		for (ChecksumAlgorithm res : checksumList) {
 			if (res.getName().equals(checksumName)) {
 				return res;
@@ -90,13 +85,9 @@ public class ChecksumTableModel
 		return descriptor;
 	}
 
-	/**
-	 * Returns a list of the checksums.
-	 * @return a list of the checksums.
-	 */
 	@Override
-	public List<ChecksumAlgorithm> getDataSource() {
-		return checksumList;
+	public Object getDataSource() {
+		return null;
 	}
 
 	private class ChecksumNameColumn

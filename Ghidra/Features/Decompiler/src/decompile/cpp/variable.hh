@@ -45,7 +45,9 @@ public:
   enum {
     flagsdirty = 1,		///< Boolean properties for the HighVariable are dirty
     typedirty = 2,		///< The data-type for the HighVariable is dirty
-    coverdirty = 4		///< The cover for the HighVariable is dirty
+    coverdirty = 4,		///< The cover for the HighVariable is dirty
+    copy_in1 = 8,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
+    copy_in2 = 16		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
   };
 private:
   friend class Merge;
@@ -61,6 +63,11 @@ private:
   void updateFlags(void) const;		///< (Re)derive boolean properties of \b this from the member Varnodes
   void updateCover(void) const;		///< (Re)derive the cover of \b this from the member Varnodes
   void updateType(void) const;		///< (Re)derive the data-type for \b this from the member Varnodes
+  void setCopyIn1(void) const { highflags |= copy_in1; }	///< Mark the existence of one COPY into \b this
+  void setCopyIn2(void) const { highflags |= copy_in2; }	///< Mark the existence of two COPYs into \b this
+  void clearCopyIns(void) const { highflags &= ~(copy_in1 | copy_in2); }	///< Clear marks indicating COPYs into \b this
+  bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
+  bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
@@ -120,6 +127,9 @@ public:
   bool isUnattached(void) const { return inst.empty(); }	///< Return \b true if \b this has no member Varnode
   bool isTypeLock(void) const { updateType(); return ((flags & Varnode::typelock)!=0); }	///< Return \b true if \b this is \e typelocked
   bool isNameLock(void) const { updateFlags(); return ((flags & Varnode::namelock)!=0); }	///< Return \b true if \b this is \e namelocked
+#ifdef MERGEMULTI_DEBUG
+  void verifyCover(void) const;
+#endif
   //  Varnode *findGlobalRep(void) const;
   static bool compareName(Varnode *vn1,Varnode *vn2);	///< Determine which given Varnode is most nameable
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location

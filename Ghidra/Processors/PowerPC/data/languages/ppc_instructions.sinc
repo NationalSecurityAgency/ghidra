@@ -1577,15 +1577,13 @@
 #fneg fr0,fr0	0xfc 00 00 50
 :fneg fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=40 & Rc=0
 {
-	tmp:8 = (~fB) & 0x8000000000000000;
-	fD = (fB & 0x7fffffffffffffff) | tmp;
+	fD = f- fB;
 }
 
 #fneg. fr0,fr0	0xfc 00 00 51
 :fneg. fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=40 & Rc=1
 {
-	tmp:8 = (~fB) & 0x8000000000000000;
-	fD = (fB & 0x7fffffffffffffff) | tmp;
+	fD = f- fB;
 	cr1flags();
 }
 

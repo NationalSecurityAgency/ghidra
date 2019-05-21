@@ -18,10 +18,13 @@ package docking.widgets.table.constrainteditor;
 import java.awt.BorderLayout;
 import java.awt.Component;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.constraint.BooleanMatchColumnConstraint;
 import docking.widgets.table.constraint.ColumnConstraint;
 
@@ -44,8 +47,9 @@ public class BooleanConstraintEditor extends AbstractColumnConstraintEditor<Bool
 	protected Component buildInlineEditorComponent() {
 
 		JPanel panel = new JPanel(new BorderLayout());
-		comboBox = new JComboBox<>(new Boolean[] { Boolean.TRUE, Boolean.FALSE });
-		comboBox.setRenderer(new BooleanCellRenderer());
+		comboBox = new GComboBox<>(new Boolean[] { Boolean.TRUE, Boolean.FALSE });
+		comboBox.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
+			b -> StringUtils.capitalize(b.toString())));
 		comboBox.addItemListener(e -> valueChanged());
 
 		panel.add(comboBox, BorderLayout.CENTER);
@@ -69,20 +73,6 @@ public class BooleanConstraintEditor extends AbstractColumnConstraintEditor<Bool
 	@Override
 	public void reset() {
 		comboBox.setSelectedIndex(0);
-	}
-
-	private class BooleanCellRenderer extends DefaultListCellRenderer {
-
-		@Override
-		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus) {
-			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
-				isSelected, cellHasFocus);
-
-			setText(StringUtils.capitalize(((Boolean) value).toString()));
-
-			return label;
-		}
 	}
 
 	@Override

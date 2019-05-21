@@ -27,6 +27,7 @@ import javax.swing.event.*;
 import docking.*;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.SystemUtilities;
 import resources.ResourceManager;
 
@@ -415,7 +416,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 		private final int EMTPY_SEPARATOR_HEIGHT = 10;
 		private final int TEXT_SEPARATOR_HEIGHT = 32;
-		private JLabel renderer = new JLabel();
+		private JLabel renderer = new GDHtmlLabel();
 
 		private int separatorHeight = EMTPY_SEPARATOR_HEIGHT;
 

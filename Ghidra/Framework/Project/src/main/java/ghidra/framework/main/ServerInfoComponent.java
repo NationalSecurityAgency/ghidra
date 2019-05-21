@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,6 @@
  */
 package ghidra.framework.main;
 
-import ghidra.framework.model.ServerInfo;
-import ghidra.framework.remote.GhidraServerHandle;
-import ghidra.util.MessageType;
-import ghidra.util.StatusListener;
-import ghidra.util.layout.PairLayout;
-
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,7 +22,12 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.ToolTipManager;
+import docking.widgets.label.GDLabel;
+import ghidra.framework.model.ServerInfo;
+import ghidra.framework.remote.GhidraServerHandle;
+import ghidra.util.MessageType;
+import ghidra.util.StatusListener;
+import ghidra.util.layout.PairLayout;
 
 /**
  * Component that allows the user to specify the host name and port
@@ -95,56 +93,64 @@ public class ServerInfoComponent extends JPanel {
 	}
 
 	private void buildMainPanel() {
-		JLabel nameLabel = new JLabel("Server Name:", SwingConstants.RIGHT);
+		JLabel nameLabel = new GDLabel("Server Name:", SwingConstants.RIGHT);
 		nameField = new JTextField(20);
 		nameField.setName("Server Name");
 		nameField.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				nameField.transferFocus();
 			}
 		});
 		nameDocListener = new DocumentListener() {
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 		};
 		nameField.getDocument().addDocumentListener(nameDocListener);
 
-		JLabel portLabel = new JLabel("Port Number:", SwingConstants.RIGHT);
+		JLabel portLabel = new GDLabel("Port Number:", SwingConstants.RIGHT);
 		portNumberField = new JTextField(20);
 		portNumberField.setName("Port Number");
 
 		portNumberField.setText(Integer.toString(GhidraServerHandle.DEFAULT_PORT));
 		portNumberField.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				portNumberField.transferFocus();
 			}
 		});
 
 		portDocListener = new DocumentListener() {
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				notifyChange();
 			}
 		};
 		portNumberField.getDocument().addDocumentListener(portDocListener);
 
-		ToolTipManager.setToolTipText(portNumberField, "Enter port number");
+		portNumberField.setToolTipText("Enter port number");
 		JPanel panel = new JPanel(new PairLayout(5, 10));
 		panel.add(nameLabel);
 		panel.add(nameField);

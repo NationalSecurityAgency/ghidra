@@ -19,6 +19,7 @@ import java.awt.event.ItemListener;
 
 import javax.swing.JCheckBox;
 
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.api.main.VTMarkupItemStatus;
 import ghidra.feature.vt.gui.filters.CheckBoxBasedAncillaryFilter;
@@ -36,7 +37,7 @@ public class MarkupStatusFilter extends CheckBoxBasedAncillaryFilter<VTMarkupIte
 
 		VTMarkupItemStatus[] values = VTMarkupItemStatus.values();
 		for (VTMarkupItemStatus status : values) {
-			JCheckBox checkBox = new JCheckBox(status.getDescription());
+			GCheckBox checkBox = new GCheckBox(status.getDescription());
 			checkBox.setSelected(true);
 			checkBox.addItemListener(listener);
 			CheckBoxInfo<VTMarkupItem> info = new MatchStatusCheckBoxInfo(checkBox, status);

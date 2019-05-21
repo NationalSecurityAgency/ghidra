@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
+import docking.widgets.label.GIconLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.util.table.GhidraTableCellRenderer;
@@ -52,22 +53,23 @@ public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 
 	private static void initialize() {
 		if (sourceMap == null) {
-			sourceMap = new HashMap<VTRelatedMatchCorrelationType, JLabel>();
-			sourceMap.put(VTRelatedMatchCorrelationType.TARGET, new JLabel(TARGET_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.CALLER, new JLabel(CALLER_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.CALLEE, new JLabel(CALLEE_ICON));
-			sourceMap.put(VTRelatedMatchCorrelationType.UNRELATED, new JLabel(UNRELATED_ICON));
+			sourceMap = new HashMap<>();
+			sourceMap.put(VTRelatedMatchCorrelationType.TARGET, new GIconLabel(TARGET_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.CALLER, new GIconLabel(CALLER_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.CALLEE, new GIconLabel(CALLEE_ICON));
+			sourceMap.put(VTRelatedMatchCorrelationType.UNRELATED, new GIconLabel(UNRELATED_ICON));
 
-			destinationMap = new HashMap<VTRelatedMatchCorrelationType, JLabel>();
-			destinationMap.put(VTRelatedMatchCorrelationType.TARGET, new JLabel(TARGET_ICON));
-			destinationMap.put(VTRelatedMatchCorrelationType.CALLER, new JLabel(CALLER_ICON));
-			destinationMap.put(VTRelatedMatchCorrelationType.CALLEE, new JLabel(CALLEE_ICON));
-			destinationMap.put(VTRelatedMatchCorrelationType.UNRELATED, new JLabel(UNRELATED_ICON));
+			destinationMap = new HashMap<>();
+			destinationMap.put(VTRelatedMatchCorrelationType.TARGET, new GIconLabel(TARGET_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.CALLER, new GIconLabel(CALLER_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.CALLEE, new GIconLabel(CALLEE_ICON));
+			destinationMap.put(VTRelatedMatchCorrelationType.UNRELATED,
+				new GIconLabel(UNRELATED_ICON));
 
-			statusMap = new HashMap<VTAssociationStatus, JLabel>();
-			statusMap.put(VTAssociationStatus.ACCEPTED, new JLabel(ACCEPTED_ICON));
-			statusMap.put(VTAssociationStatus.AVAILABLE, new JLabel(AVAILABLE_ICON));
-			statusMap.put(VTAssociationStatus.BLOCKED, new JLabel(LOCKED_OUT_ICON));
+			statusMap = new HashMap<>();
+			statusMap.put(VTAssociationStatus.ACCEPTED, new GIconLabel(ACCEPTED_ICON));
+			statusMap.put(VTAssociationStatus.AVAILABLE, new GIconLabel(AVAILABLE_ICON));
+			statusMap.put(VTAssociationStatus.BLOCKED, new GIconLabel(LOCKED_OUT_ICON));
 		}
 	}
 
@@ -80,7 +82,8 @@ public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 			VTRelatedMatchType relatedMatchType = (VTRelatedMatchType) value;
 			relatedMatchColumnComponent.removeAll();
 			relatedMatchColumnComponent.add(sourceMap.get(relatedMatchType.getSourceType()));
-			relatedMatchColumnComponent.add(destinationMap.get(relatedMatchType.getDestinationType()));
+			relatedMatchColumnComponent.add(
+				destinationMap.get(relatedMatchType.getDestinationType()));
 			relatedMatchColumnComponent.add(statusMap.get(relatedMatchType.getAssociationStatus()));
 			Color bgColor = findBackgroundColor(relatedMatchType);
 			if (bgColor != null) {

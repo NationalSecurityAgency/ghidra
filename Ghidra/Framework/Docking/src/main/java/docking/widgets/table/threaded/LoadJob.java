@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +21,6 @@ public class LoadJob<T> extends TableUpdateJob<T> {
 	LoadJob(ThreadedTableModel<T, ?> model, TaskMonitor monitor) {
 		super(model, monitor);
 		reload();								 // set job to totally reload data;
-		sort(model.getSortingContext(), false);	 // set the comparator so the data will be sorted
+		requestSort(model.getSortingContext(), false);	 // set the comparator so the data will be sorted
 	}
 }

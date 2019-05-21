@@ -249,16 +249,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		options.addOptionsChangeListener(this);
 	}
 
-	// a place to clear options that are specific to the FrontEndTool and should be reset between
-	// opening projects
-	private void clearFrontEndOptions() {
-		// TODO: just for the record, it seems odd to me that you would want to the FrontEndTool
-		// to have the 'auto save' setting be different for different projects--no sir, I don' like it
-		ToolOptions options = getOptions("Tool");
-		options.removeOptionsChangeListener(this);
-		options.removeOption(AUTOMATICALLY_SAVE_TOOLS);
-	}
-
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
@@ -295,7 +285,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;
 		}
 
-		clearFrontEndOptions();
+		ToolOptions options = getOptions("Tool");
+		options.removeOptionsChangeListener(this);
+
 		configureToolAction.setEnabled(true);
 		setProject(project);
 		AppInfo.setActiveProject(project);

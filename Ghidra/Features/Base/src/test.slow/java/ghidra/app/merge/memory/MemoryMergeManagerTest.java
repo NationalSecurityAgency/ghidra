@@ -21,148 +21,19 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.*;
 
-/**
- *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
- * 
- * 
- */
-public class MemoryMergeManagerTest extends AbstractGhidraHeadedIntegrationTest {
+public class MemoryMergeManagerTest extends AbstractMergeTest {
 
-	private MergeTestFacilitator mtf;
-	private Program origProgram;
-	private Program privateProgram;
-	private Program resultProgram;
-	private Program latestProgram;
-	private PluginTool mergeTool;
-	private ProgramMultiUserMergeManager mergeMgr;
-
-	@Before
-	public void setUp() throws Exception {
-		mtf = new MergeTestFacilitator();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		resultProgram.flushEvents();
-		waitForPostedSwingRunnables();
-		int count = 0;
-		while (!mergeMgr.processingCompleted() && count < 100) {
-			Thread.sleep(100);
-			++count;
-		}
-		if (mergeTool != null) {
-			SwingUtilities.invokeLater(() -> mergeTool.setVisible(false));
-		}
-		waitForPostedSwingRunnables();
-		mtf.dispose();
-	}
-
-//	public void testImageBaseConflict() throws Exception {
-//		mtf.initialize("notepad", new ProgramModifierListener() {
-//			/* (non-Javadoc)
-//			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-//			 */
-//			public void modifyLatest(ProgramDB program) {
-//				boolean commit=false;
-//				MemoryBlock[] blocks = program.getMemory().getBlocks();
-//				int transactionID = program.startTransaction("test");
-//				Address baseAddr = program.getMinAddress().getNewAddress(0x03002000L);
-//				try {
-//					program.setImageBase(baseAddr, true);
-//					commit = true;
-//				} catch (AddressOverflowException e) {
-//					Assert.fail(e.toString());
-//				}finally {
-//					program.endTransaction(transactionID, commit);
-//				}
-//				
-//			}
-//			/* (non-Javadoc)
-//			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-//			 */
-//			public void modifyPrivate(ProgramDB program) {
-//				boolean commit=false;
-//				MemoryBlock[] blocks = program.getMemory().getBlocks();
-//				Address baseAddr = program.getMinAddress().getNewAddress(0x03006000L);
-//				int transactionID = program.startTransaction("test");
-//				try {
-//					program.setImageBase(baseAddr, true);
-//				} catch (AddressOverflowException e) {
-//					Assert.fail(e.toString());
-//				}finally {
-//					program.endTransaction(transactionID, true);
-//				}
-//			}
-//		});
-//		merge();
-//		
-//		// select my image base
-//		selectButtonAndApply(MergeConstants.MY_TITLE);
-//		
-//		Address baseAddr = resultProgram.getMinAddress().getNewAddress(0x03006000L);
-//		assertEquals(baseAddr, resultProgram.getImageBase());
-//	}
-//	public void testImageBaseConflict2() throws Exception {
-//		mtf.initialize("notepad", new ProgramModifierListener() {
-//			/* (non-Javadoc)
-//			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-//			 */
-//			public void modifyLatest(ProgramDB program) {
-//				boolean commit=false;
-//				MemoryBlock[] blocks = program.getMemory().getBlocks();
-//				int transactionID = program.startTransaction("test");
-//				Address baseAddr = program.getMinAddress().getNewAddress(0x03002000L);
-//				try {
-//					program.setImageBase(baseAddr, true);
-//					commit = true;
-//				} catch (AddressOverflowException e) {
-//					Assert.fail(e.toString());
-//				}finally {
-//					program.endTransaction(transactionID, commit);
-//				}
-//				
-//			}
-//			/* (non-Javadoc)
-//			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-//			 */
-//			public void modifyPrivate(ProgramDB program) {
-//				boolean commit=false;
-//				MemoryBlock[] blocks = program.getMemory().getBlocks();
-//				Address baseAddr = program.getMinAddress().getNewAddress(0x03006000L);
-//				int transactionID = program.startTransaction("test");
-//				try {
-//					program.setImageBase(baseAddr, true);
-//				} catch (AddressOverflowException e) {
-//					Assert.fail(e.toString());
-//				}finally {
-//					program.endTransaction(transactionID, true);
-//				}
-//			}
-//		});
-//		merge();
-//		
-//		// select my image base
-//		selectButtonAndApply(MergeConstants.ORIGINAL_TITLE);
-//		
-//		Address baseAddr = resultProgram.getMinAddress().getNewAddress(0);
-//		assertEquals(baseAddr, resultProgram.getImageBase());
-//	}
-//
 	@Test
 	public void testNameConflict() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -881,18 +752,16 @@ public class MemoryMergeManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		});
 	}
 
-	////////////////////////////////////////////////////////////////
-
 	private void merge() throws Exception {
-		origProgram = mtf.getOriginalProgram();
-		privateProgram = mtf.getPrivateProgram();// my program
+		originalProgram = mtf.getOriginalProgram();
+		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
 		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
 		ProgramChangeSet myChangeSet = mtf.getPrivateChangeSet();
 
-		mergeMgr = new ProgramMultiUserMergeManager(resultProgram, privateProgram, origProgram,
+		mergeMgr = new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
 			latestProgram, resultChangeSet, myChangeSet);
 		Thread t = new Thread(() -> {
 			try {
@@ -907,25 +776,11 @@ public class MemoryMergeManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void waitForCompletion() throws Exception {
-		while (!mergeMgr.processingCompleted()) {
-			Thread.sleep(300);
-		}
+		waitForMergeCompletion();
 	}
 
 	private PluginTool getMergeTool() {
-		if (mergeTool == null) {
-			int sleepyTime = 50;
-			int total = 0;
-			while (mergeTool == null && total < 100) {
-				mergeTool = mergeMgr.getMergeTool();
-				sleep(sleepyTime);
-			}
-		}
-
-		if (mergeTool == null) {
-			throw new AssertException("Unable to find merge tool!");
-		}
-
+		waitForMergeTool();
 		return mergeTool;
 	}
 

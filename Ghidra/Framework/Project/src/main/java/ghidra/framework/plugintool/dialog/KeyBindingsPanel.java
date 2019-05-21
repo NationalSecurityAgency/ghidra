@@ -33,11 +33,13 @@ import docking.action.KeyBindingData;
 import docking.util.KeyBindingUtils;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.ToolConstants;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
@@ -273,8 +275,6 @@ public class KeyBindingsPanel extends JPanel {
 		JPanel keyPanel = new JPanel(new BorderLayout());
 
 		JPanel defaultPanel = new JPanel(new BorderLayout());
-		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
 
 		// the content of the left-hand side label
 		MultiLineLabel mlabel =
@@ -287,7 +287,7 @@ public class KeyBindingsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(imageLabel);
+		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(mlabel);
 
@@ -720,7 +720,7 @@ public class KeyBindingsPanel extends JPanel {
 				if (description == null || description.trim().isEmpty()) {
 					description = actions.get(0).getName();
 				}
-				statusLabel.setText(description);
+				statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
 			}
 			catch (Exception ex) {
 				statusLabel.setText("");

@@ -50,6 +50,8 @@ public class TestVisualGraph extends DefaultVisualGraph<AbstractTestVertex, Test
 			newGraph.addEdge(e);
 		}
 
+		newGraph.setLayout(layout);
+
 		return newGraph;
 	}
 }

@@ -21,6 +21,8 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
+
 /**
  * Adds a border to a component that displays a title and provides a area for adding
  * components (usually icon buttons)
@@ -30,7 +32,7 @@ public class TitledPanel extends JPanel {
 	private JPanel titlePanel;
 	private JPanel iconPanel;
 	private JComponent bottomComp;
-	private List<JComponent> titleComps = new ArrayList<JComponent>();
+	private List<JComponent> titleComps = new ArrayList<>();
 
 	/**
 	 * Creates a new TitlePanel
@@ -42,24 +44,26 @@ public class TitledPanel extends JPanel {
 		super(new BorderLayout());
 		titlePanel = new JPanel(new BorderLayout());
 		iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 1));
-		iconPanel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
-		title = new JLabel(name);
+		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+		title = new GDLabel(name);
 		title.setToolTipText(name);
-		JLabel filler = new JLabel();
+		JLabel filler = new GDLabel();
 		filler.setPreferredSize(new Dimension(margin, filler.getPreferredSize().height));
 		titlePanel.add(filler, BorderLayout.WEST);
 
-		titlePanel.setBorder(BorderFactory.createEmptyBorder(0,0, 0, 0)); 
+		titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 		titlePanel.add(title, BorderLayout.CENTER);
 		titlePanel.add(iconPanel, BorderLayout.EAST);
-		
+
 		add(titlePanel, BorderLayout.NORTH);
 		add(panel, BorderLayout.CENTER);
 	}
+
 	public void setTitleName(String name) {
 		title.setText(name);
 		title.setToolTipText(name);
 	}
+
 	/**
 	 * Adds a component to the right side of the title bar.
 	 * @param comp the component to add.
@@ -67,10 +71,11 @@ public class TitledPanel extends JPanel {
 	public void addTitleComponent(JComponent comp) {
 		titleComps.add(0, comp);
 		iconPanel.removeAll();
-		for(int i=0;i<titleComps.size();i++) {
+		for (int i = 0; i < titleComps.size(); i++) {
 			iconPanel.add(titleComps.get(i));
 		}
 	}
+
 	/**
 	 * Sets a component below the main panel that was passed to the constructor.
 	 * If the component passed to this method is null then the TitledPanel will

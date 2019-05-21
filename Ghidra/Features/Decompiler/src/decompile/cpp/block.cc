@@ -354,6 +354,21 @@ int4 FlowBlock::calcDepth(const FlowBlock *leaf) const
   return depth;
 }
 
+/// Return \b true if \b this block \e dominates the given block (or is equal to it).
+/// This assumes that block indices have been set with a reverse post order so that having a
+/// smaller index is a necessary condition for dominance.
+/// \param subBlock is the given block to test against \b this for dominance
+/// \return \b true if \b this dominates
+bool FlowBlock::dominates(const FlowBlock *subBlock) const
+
+{
+  while(subBlock != (const FlowBlock *)0 && index <= subBlock->index) {
+    if (subBlock == this) return true;
+    subBlock = subBlock->getImmedDom();
+  }
+  return false;
+}
+
 /// \return \b true if \b this is the top of a loop
 bool FlowBlock::hasLoopIn(void) const
 
@@ -703,6 +718,42 @@ FlowBlock *FlowBlock::findCommonBlock(FlowBlock *bl1,FlowBlock *bl2)
     bl2 = bl2->getImmedDom();
   }
   return common;
+}
+
+/// Find the most immediate dominating FlowBlock of all blocks in the given set.
+/// The container must not be empty.
+/// \param blockSet is the given set of blocks
+/// \return the most immediate dominating FlowBlock
+FlowBlock *FlowBlock::findCommonBlock(const vector<FlowBlock *> &blockSet)
+
+{
+  vector<FlowBlock *> markedSet;
+  FlowBlock *bl;
+  FlowBlock *res = blockSet[0];
+  int4 bestIndex = res->getIndex();
+  bl = res;
+  do {
+    bl->setMark();
+    markedSet.push_back(bl);
+    bl = bl->getImmedDom();
+  } while (bl != (FlowBlock *)0);
+  for(int4 i=1;i<blockSet.size();++i) {
+    if (bestIndex == 0)
+      break;
+    bl = blockSet[i];
+    while(!bl->isMark()) {
+      bl->setMark();
+      markedSet.push_back(bl);
+      bl = bl->getImmedDom();
+    }
+    if (bl->getIndex() < bestIndex) {	// If first meeting with old paths is higher than ever before
+      res = bl;				// we have a new best
+      bestIndex = res->getIndex();
+    }
+  }
+  for(int4 i=0;i<markedSet.size();++i)
+    markedSet[i]->clearMark();
+  return res;
 }
 
 /// Add the given FlowBlock to the list and make \b this the parent
@@ -1716,8 +1767,9 @@ BlockInfLoop *BlockGraph::newBlockInfLoop(FlowBlock *body)
 
 /// Add the new BlockSwitch to \b this, collapsing all the case FlowBlocks into it.
 /// \param cs is the list of case FlowBlocks
+/// \param hasExit is \b true if the switch has a formal exit
 /// \return the new BlockSwitch
-BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs)
+BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit)
 
 {
   FlowBlock *rootbl = cs[0];
@@ -1728,6 +1780,8 @@ BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs)
   ret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
   identifyInternal(ret,cs);
   addBlock(ret);
+  if (hasExit)
+    ret->forceOutputNum(1);	// If there is an exit, there should be exactly 1 out edge
   ret->clearFlag(f_switch_out);	// Don't consider this as being a switch "out"
   return ret;
 }

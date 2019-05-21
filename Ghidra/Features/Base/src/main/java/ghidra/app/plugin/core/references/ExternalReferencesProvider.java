@@ -24,7 +24,6 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.ActionContext;
-import docking.widgets.table.DefaultSortedTableModel;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -35,7 +34,6 @@ import ghidra.util.table.GhidraTable;
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private JPanel mainPanel;
 	private ExternalNamesTableModel tableModel;
-	private DefaultSortedTableModel sortedModel;
 	private GhidraTable table;
 	private Program program;
 
@@ -106,9 +104,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JPanel panel = new JPanel(new BorderLayout());
 		tableModel = new ExternalNamesTableModel(tool);
 
-		sortedModel = new DefaultSortedTableModel(tableModel);
-		sortedModel.sortByColumn(ExternalNamesTableModel.NAME_COL);
-		table = new GhidraTable(sortedModel);
+		table = new GhidraTable(tableModel);
 
 		InputMap inputMap = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 		KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
@@ -146,43 +142,9 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JScrollPane sp = new JScrollPane(table);
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		docking.ToolTipManager.sharedInstance().registerComponent(table);
+		ToolTipManager.sharedInstance().registerComponent(table);
 
 		panel.add(sp, BorderLayout.CENTER);
-
-//        addButton = new JButton("Add");
-//        addButton.setMnemonic('A');
-//        addButton.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				clearStatusText();
-//				tableModel.addDefaultRow();
-//			}
-//        });
-//        ToolTipManager.setToolTipText(addButton,
-//        	"Link new External Program name to blank Ghidra Pathname");
-//
-//        clearButton = new JButton("Clear");
-//		clearButton.setMnemonic('C');
-//        clearButton.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				clear();
-//			}
-//        });
-//        ToolTipManager.setToolTipText(clearButton, "Remove External Program Link");
-
-//        editButton = new JButton("Edit");
-//		editButton.setMnemonic('E');
-//        editButton.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				editPathName();
-//			}
-//        });
-//        ToolTipManager.setToolTipText(editButton, "Edit Ghidra Pathname");
-//
-//        addButton(addButton);
-//        addButton(editButton);
-//        addButton(clearButton);
-//        enableButtons();
 
 		return panel;
 	}
@@ -201,9 +163,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	public List<String> getSelectedExternalNames() {
 		List<String> externalNames = new ArrayList<>();
 		int[] selectedRows = table.getSelectedRows();
-		for (int selectedRow : selectedRows) {
-			int index = sortedModel.getSortedIndex(selectedRow);
-			String externalName = (String) tableModel.getValueAt(index, 0);
+		for (int row : selectedRows) {
+			String externalName = (String) tableModel.getValueAt(row, 0);
 			externalNames.add(externalName);
 		}
 		return externalNames;

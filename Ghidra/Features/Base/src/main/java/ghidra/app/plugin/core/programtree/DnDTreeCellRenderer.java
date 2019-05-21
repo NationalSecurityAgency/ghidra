@@ -22,7 +22,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import docking.ToolTipManager;
+import docking.widgets.GComponent;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
 
@@ -71,8 +71,22 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 		defaultSelectionColor = getBackgroundSelectionColor();
 		rowForFeedback = -1;
 
+		// disable HTML rendering
+		setHTMLRenderingEnabled(false);
+
 		loadImages();
 
+	}
+
+	/**
+	 * Enables and disables the rendering of HTML content in this renderer.  If enabled, this
+	 * renderer will interpret HTML content when the text this renderer is showing begins with
+	 * <tt>&lt;html&gt;</tt>
+	 *
+	 * @param enable true to enable HTML rendering; false to disable it
+	 */
+	public void setHTMLRenderingEnabled(boolean enable) {
+		putClientProperty(GComponent.HTML_DISABLE_STRING, !enable);
 	}
 
 	void setSelectionForDrag(Color color) {
@@ -133,7 +147,8 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 * @param node node to render
 	 * @param dtree tree
 	 */
-	private void setSelectionColors(boolean selected, int row, ProgramNode node, DragNDropTree dtree) {
+	private void setSelectionColors(boolean selected, int row, ProgramNode node,
+			DragNDropTree dtree) {
 		if (dtree.getDrawFeedbackState()) {
 			if (row == rowForFeedback) {
 				if (!selected) {
@@ -147,12 +162,12 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 				setBackgroundSelectionColor(defaultSelectionColor);
 				setBackgroundNonSelectionColor(defaultNonSelectionColor);
 			}
-			ToolTipManager.setToolTipText(this, null);
+			setToolTipText(null);
 		}
 		else {
 			setBackgroundSelectionColor(defaultSelectionColor);
 			setBackgroundNonSelectionColor(defaultNonSelectionColor);
-			ToolTipManager.setToolTipText(this, dtree.getToolTipText(node));
+			setToolTipText(dtree.getToolTipText(node));
 		}
 	}
 
@@ -291,19 +306,17 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 */
 	private void loadImages() {
 		// try to load icon images
-		iconMap = new HashMap<String, Icon>();
+		iconMap = new HashMap<>();
 		String[] filenames =
 			{ DOCS, FRAGMENT, EMPTY_FRAGMENT, VIEWED_FRAGMENT, VIEWED_EMPTY_FRAGMENT,
 				VIEWED_CLOSED_FOLDER, VIEWED_OPEN_FOLDER, VIEWED_CLOSED_FOLDER_WITH_DESC, // descendants in view
 				CLOSED_FOLDER, // closed folder not in view
 				OPEN_FOLDER, // opened folder not in the view
 			};
-		String[] disabledFilenames =
-			{ DISABLED_DOCS, DISABLED_FRAGMENT, DISABLED_EMPTY_FRAGMENT,
-				DISABLED_VIEWED_EMPTY_FRAGMENT, DISABLED_VIEWED_FRAGMENT,
-				DISABLED_VIEWED_CLOSED_FOLDER, DISABLED_VIEWED_OPEN_FOLDER,
-				DISABLED_VIEWED_CLOSED_FOLDER_WITH_DESC, DISABLED_CLOSED_FOLDER,
-				DISABLED_OPEN_FOLDER, };
+		String[] disabledFilenames = { DISABLED_DOCS, DISABLED_FRAGMENT, DISABLED_EMPTY_FRAGMENT,
+			DISABLED_VIEWED_EMPTY_FRAGMENT, DISABLED_VIEWED_FRAGMENT, DISABLED_VIEWED_CLOSED_FOLDER,
+			DISABLED_VIEWED_OPEN_FOLDER, DISABLED_VIEWED_CLOSED_FOLDER_WITH_DESC,
+			DISABLED_CLOSED_FOLDER, DISABLED_OPEN_FOLDER, };
 
 		for (int i = 0; i < filenames.length; i++) {
 			ImageIcon icon = ResourceManager.loadImage(filenames[i]);
@@ -326,9 +339,8 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 
 	static Icon getDisabledIcon(String imageName, ImageIcon icon) {
 		Image cutImage = icon.getImage();
-		BufferedImage bufferedImage =
-			new BufferedImage(cutImage.getWidth(null), cutImage.getHeight(null),
-				BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bufferedImage = new BufferedImage(cutImage.getWidth(null),
+			cutImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = bufferedImage.createGraphics();
 		g2d.drawImage(cutImage, 0, 0, null);
 		g2d.setColor(new Color(255, 255, 255, 128));

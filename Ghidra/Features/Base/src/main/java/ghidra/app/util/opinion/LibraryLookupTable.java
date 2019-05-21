@@ -130,7 +130,7 @@ public class LibraryLookupTable {
 			return file;
 		}
 
-		monitor.setMessage(program.getName() + ": creating symbol file...");
+		monitor.setMessage("[" + program.getName() + "]: creating symbol file...");
 		LibrarySymbolTable symTab = new LibrarySymbolTable(program, monitor);
 		cacheMap.put(symTab.getCacheKey(), symTab);
 

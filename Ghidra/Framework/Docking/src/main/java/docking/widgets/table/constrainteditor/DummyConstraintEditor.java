@@ -22,6 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import ghidra.util.HTMLUtilities;
 
@@ -48,7 +49,7 @@ public final class DummyConstraintEditor<T> implements ColumnConstraintEditor<T>
 	public Component getInlineComponent() {
 		JPanel panel = new JPanel();
 
-		JLabel errorLabel = new JLabel(
+		JLabel errorLabel = new GDHtmlLabel(
 			"<html>" + HTMLUtilities.bold(HTMLUtilities.colorString(Color.RED, message)));
 
 		panel.add(errorLabel);

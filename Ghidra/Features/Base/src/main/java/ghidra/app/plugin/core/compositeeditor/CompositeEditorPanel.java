@@ -26,14 +26,12 @@ import java.util.EventObject;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
-import docking.ToolTipManager;
 import docking.action.DockingActionIf;
 import docking.dnd.*;
 import docking.help.Help;
@@ -43,6 +41,8 @@ import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.textfield.GValidatedTextField;
@@ -603,7 +603,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private JPanel createStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDLabel(" ");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);
 		statusLabel.addComponentListener(new ComponentAdapter() {
@@ -620,7 +620,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	/**
 	 * Sets the currently displayed status message.
 	 *
-	 * @param id the new size
+	 * @param status non-html message string to be displayed.
 	 */
 	public void setStatus(String status) {
 		if (statusLabel != null) {
@@ -646,10 +646,10 @@ public abstract class CompositeEditorPanel extends JPanel
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, "Editor messages appear here.");
+			statusLabel.setToolTipText("Editor messages appear here.");
 		}
 	}
 
@@ -657,7 +657,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel label = new JLabel(name + ":", SwingConstants.RIGHT);
+		JLabel label = new GLabel(name + ":", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(label.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
@@ -1190,7 +1190,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			implements TableCellEditor {
 		private static final long serialVersionUID = 1L;
 		private DataTypeSelectionEditor editor;
-		private JLabel label = new JLabel();
 		private DataType dt;
 		private int maxLength;
 
@@ -1199,11 +1198,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		@Override
 		public Component getTableCellEditorComponent(JTable table1, Object value,
 				boolean isSelected, int row, int column) {
-			if (label == null) {
-				label = new JLabel();
-				label.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-			}
-
 			model.clearStatus();
 			maxLength = model.getMaxAddLength(row);
 			init();

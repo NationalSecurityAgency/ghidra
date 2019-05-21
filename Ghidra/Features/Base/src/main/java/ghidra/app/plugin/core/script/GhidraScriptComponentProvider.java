@@ -27,6 +27,8 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.event.mouse.GMouseListenerAdapter;
@@ -44,7 +46,8 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -226,7 +229,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			reader.close();
 			writer.close();
 
-			FileUtilities.copyFile(temp, renameFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			FileUtilities.copyFile(temp, renameFile, TaskMonitor.DUMMY);
 
 			if (!renameFile.exists()) {
 				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
@@ -378,8 +381,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			checkNewScriptDirectoryEnablement(newFile);
 
-			String category = StringUtilities.convertStringArray(getSelectedCategoryPath(),
-				ScriptInfo.DELIMITTER);
+			String category = StringUtils.join(getSelectedCategoryPath(), ScriptInfo.DELIMITTER);
 			provider.createNewScript(newFile, category);
 
 			GhidraScriptEditorComponentProvider editor =
@@ -477,7 +479,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableModel.fireTableDataChanged();
 	}
 
-	/**
+	/*
 	 * is more than just root node selected?
 	 */
 	boolean isSelectedCategory() {
@@ -630,7 +632,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 
@@ -644,7 +646,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 

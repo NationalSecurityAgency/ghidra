@@ -18,16 +18,8 @@ package ghidra.app.plugin.core.function.tags;
 import java.io.IOException;
 import java.util.*;
 
-import javax.xml.parsers.*;
-
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.AddFunctionTagCmd;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
-import ghidra.framework.Application;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -186,51 +178,6 @@ public class SourceTagsPanel extends TagListPanel {
 	 * @return the loaded tags
 	 */
 	private List<FunctionTag> loadTags() {
-		List<FunctionTag> tags = new ArrayList<>();
-
-		try {
-			ResourceFile tagFile = Application.getModuleDataFile(TAG_FILE);
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			org.w3c.dom.Document doc = dBuilder.parse(tagFile.getInputStream());
-
-			if (doc == null) {
-				Msg.error(null, "Unable to parse input file: " + tagFile.getAbsolutePath());
-				return tags;
-			}
-
-			NodeList nList = doc.getElementsByTagName("tag");
-			if (nList == null || nList.getLength() == 0) {
-				Msg.error(null, "No tags defined in the input file: " + tagFile.getAbsolutePath());
-				return tags;
-			}
-
-			for (int i = 0; i < nList.getLength(); i++) {
-				String name = "";
-				String comment = "";
-				Node nNode = nList.item(i);
-				if (nNode == null) {
-					return tags; // shoudln't be null, but protect ourselves nonetheless
-				}
-				NodeList childNodes = nNode.getChildNodes();
-				for (int j = 0; j < childNodes.getLength(); j++) {
-					Node item = childNodes.item(j);
-					if (item.getNodeName().equals("name")) {
-						name = item.getTextContent();
-					}
-					if (item.getNodeName().equals("comment")) {
-						comment = item.getTextContent();
-					}
-				}
-
-				FunctionTagTemp tag = new FunctionTagTemp(name, comment);
-				tags.add(tag);
-			}
-		}
-		catch (ParserConfigurationException | SAXException | IOException e) {
-			Msg.error(this, "Error loading function tags from " + TAG_FILE, e);
-		}
-
-		return tags;
+		return FunctionTagLoader.loadTags(TAG_FILE);
 	}
 }

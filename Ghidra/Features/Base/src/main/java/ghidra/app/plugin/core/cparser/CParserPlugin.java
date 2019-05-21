@@ -41,8 +41,7 @@ import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.task.TaskMonitor;
 
 //@formatter:off
@@ -302,7 +301,8 @@ public class CParserPlugin extends ProgramPlugin {
 				}
 				list.add(openDTmanagers[i]);
 				if (!(openDTmanagers[i] instanceof BuiltInDataTypeManager)) {
-					htmlNamesList += "<li><b>" + openDTmanagers[i].getName() + "</b></li>";
+					htmlNamesList += "<li><b>" +
+						HTMLUtilities.escapeHTML(openDTmanagers[i].getName()) + "</b></li>";
 				}
 			}
 			openDTmanagers = list.toArray(new DataTypeManager[0]);

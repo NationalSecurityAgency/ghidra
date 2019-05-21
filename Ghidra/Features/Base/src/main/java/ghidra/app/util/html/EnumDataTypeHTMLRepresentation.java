@@ -62,7 +62,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		long[] values = enumDataType.getValues();
 		Arrays.sort(values);
 
-		List<ValidatableLine> list = new ArrayList<ValidatableLine>(values.length);
+		List<ValidatableLine> list = new ArrayList<>(values.length);
 		for (long value : values) {
 			String name = enumDataType.getName(value);
 			list.add(new TextLine(name + " = 0x" + Long.toHexString(value)));
@@ -74,7 +74,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 	private static String buildHTMLText(List<ValidatableLine> headerLines, TextLine displayName,
 			List<ValidatableLine> bodyLines, TextLine footerLine) {
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 
 		// header
 		Iterator<ValidatableLine> iterator = headerLines.iterator();

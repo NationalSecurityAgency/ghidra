@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,16 @@
  */
 package ghidra.app.plugin.core.flowarrow;
 
-import ghidra.program.model.address.*;
-import ghidra.program.model.symbol.RefType;
-import ghidra.util.exception.AssertException;
-
 import java.awt.*;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.program.model.address.*;
+import ghidra.program.model.symbol.RefType;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.exception.AssertException;
 
 abstract class FlowArrow {
 
@@ -50,7 +50,7 @@ abstract class FlowArrow {
 	protected Shape arrowHead;
 
 	/** The shape of the arrow body, but with added size */
-	private List<Shape> clickableShapes = new ArrayList<Shape>();
+	private List<Shape> clickableShapes = new ArrayList<>();
 
 	FlowArrow(FlowArrowPlugin plugin, Component canvas, Address start, Address end,
 			RefType referenceType) {
@@ -153,7 +153,7 @@ abstract class FlowArrow {
 	}
 
 	private void createClickableShapes() {
-		List<Shape> shapes = new ArrayList<Shape>();
+		List<Shape> shapes = new ArrayList<>();
 		Rectangle r = null;
 		PathIterator it = arrowBody.getPathIterator(null);
 		float[] coords = new float[6];
@@ -242,13 +242,11 @@ abstract class FlowArrow {
 		int displayWidth = canvas.getWidth();// - FlowArrowPlugin.LEFT_OFFSET;
 		int lineWidth = calculateLineWidth(displayWidth);
 
-		arrowBody =
-			FlowArrowShapeFactory.createArrowBody(plugin, this, displayWidth, displayHeight,
-				lineWidth);
+		arrowBody = FlowArrowShapeFactory.createArrowBody(plugin, this, displayWidth, displayHeight,
+			lineWidth);
 
-		arrowHead =
-			FlowArrowShapeFactory.createArrowHead(plugin, this, displayWidth, displayHeight,
-				lineWidth);
+		arrowHead = FlowArrowShapeFactory.createArrowHead(plugin, this, displayWidth, displayHeight,
+			lineWidth);
 	}
 
 	private int calculateLineWidth(int displayWidth) {
@@ -323,7 +321,8 @@ abstract class FlowArrow {
 	}
 
 	public String getDisplayString() {
-		return "<html><table><tr><td>start</td><td>" + start + "</td><tr><td>end</td><td>" + end +
+		return "<html><table><tr><td>start</td><td>" + HTMLUtilities.escapeHTML(start.toString()) +
+			"</td><tr><td>end</td><td>" + HTMLUtilities.escapeHTML(end.toString()) +
 			"</td><tr><td>ref type</td><td>" + refType + "</td></tr></table>";
 	}
 

@@ -97,8 +97,9 @@ public class ExportDataDirectory extends DataDirectory {
 			throws IOException {
 		processDataDirectory(ntHeader, reader);
 
-		if (exports == null)
+		if (exports == null) {
 			exports = new ExportInfo[0];
+		}
 	}
 
 	/**
@@ -161,7 +162,7 @@ public class ExportDataDirectory extends DataDirectory {
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
 			DataTypeConflictException, IOException {
-		monitor.setMessage(program.getName() + ": exports...");
+		monitor.setMessage("[" + program.getName() + "]: exports...");
 
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
@@ -310,7 +311,7 @@ public class ExportDataDirectory extends DataDirectory {
 				numberOfNames = 0;
 			}
 
-			List<ExportInfo> exportList = new ArrayList<ExportInfo>();
+			List<ExportInfo> exportList = new ArrayList<>();
 
 			for (int i = 0; i < numberOfFunctions; ++i) {
 				int entryPointRVA = reader.readInt(pointerToFunctions);
@@ -348,9 +349,8 @@ public class ExportDataDirectory extends DataDirectory {
 					}
 				}
 
-				String cmt =
-					"0x" + Integer.toHexString(entryPointRVA) + "  " + Integer.toString(i + base) +
-						"  " + lname;
+				String cmt = "0x" + Integer.toHexString(entryPointRVA) + "  " +
+					Integer.toString(i + base) + "  " + lname;
 
 				boolean forwarded = false;
 

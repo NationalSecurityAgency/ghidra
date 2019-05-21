@@ -45,7 +45,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 	private final Pattern SORT_SIZE_PATTERN = Pattern.compile(".*\\((\\d+) rows\\).*");
 
-	private SpyEventRecorder recorder = new SpyEventRecorder(getClass().getSimpleName());
+	private SpyEventRecorder recorder = new SpyEventRecorder(testName.getMethodName());
 	private SpyTaskMonitor spyMonitor = new SpyTaskMonitor(recorder);
 	private SpyTextFilter<Long> spyFilter;
 	private SortListener spySortListener =
@@ -102,6 +102,12 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 			public void setIncrementalTaskMonitor(TaskMonitor monitor) {
 				// no! some of our tests use a spy monitor
 			}
+
+			@Override
+			public void setTableSortState(TableSortState newSortState) {
+				record("model.setTableSortState() - " + newSortState);
+				super.setTableSortState(newSortState);
+			}
 		});
 		return box[0];
 	}
@@ -111,7 +117,6 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		//
 		// make sure the sort is on the filtered data and not *all* data
 		//
-		waitForNotBusy();
 		assertSortSize(12);
 
 		filter_ten();
@@ -291,8 +296,8 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 	@Test
 	public void testAddSendsEvent() {
 		waitForTableModel(model);
-		final AtomicReference<TableModelEvent> ref = new AtomicReference<>();
-		model.addTableModelListener(e -> ref.set(e));
+		AtomicReference<TableModelEvent> ref = new AtomicReference<>();
+		runSwing(() -> model.addTableModelListener(e -> ref.set(e)));
 
 		int newValue = model.getRowCount() + 1;
 		addItemToModel(newValue);
@@ -512,7 +517,6 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		//
 		// we need to use a model that loads slowly enough to trigger the pending panel to show
 		//
-		waitForNotBusy();// if we are working while adding, we will not get the pending notification
 		model.setDelayTimeBetweenAddingDataItemsWhileLoading(60000);
 		model.setUpdateDelay(100000000, 100000001);// make sure we don't update after repeated requests arrive
 
@@ -534,15 +538,15 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 	@Override
 	protected void sortByClick(int columnToClick, int modifiers) throws Exception {
-		recorder.record(
-			"Test." + testName + " - clicking column=" + columnToClick + "; modifiers=" + 0);
+		recorder.record("Test." + testName.getMethodName() + " - clicking column=" + columnToClick +
+			"; modifiers=" + 0);
 		super.sortByClick(columnToClick, modifiers);
 	}
 
 	@Override
 	protected void removeSortByClicking(int columnToClick) throws Exception {
-		recorder.record(
-			"Test." + testName + " - clicking column to remove sort - column=" + columnToClick);
+		recorder.record("Test." + testName.getMethodName() +
+			" - clicking column to remove sort - column=" + columnToClick);
 		super.removeSortByClicking(columnToClick);
 	}
 
@@ -607,7 +611,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 	private void toggleStringColumnSort() throws Exception {
 		Rectangle rect = header.getHeaderRect(TestDataKeyModel.STRING_COL);
-		testTableModelListener.reset(model);
+		resetBusyListener();
 		clickMouse(header, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
 		waitForNotBusy();
 		waitForSwing();
@@ -753,6 +757,8 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 	}
 
 	private void clearFilter() throws Exception {
+		resetSpies();
+		resetBusyListener();
 		runSwing(() -> model.setTableFilter(null));
 
 		waitForNotBusy();
@@ -782,6 +788,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 	@Override
 	protected void doTestSorting(int columnIndex) throws Exception {
+
 		sortByNormalClicking(columnIndex);
 
 		SortedTableModel sortedModel = (SortedTableModel) table.getModel();
@@ -829,7 +836,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		TextFilterFactory textFactory = options.getTextFilterFactory();
 		TextFilter textFilter = textFactory.getTextFilter(text);
 
-		testTableModelListener.reset(model);
+		resetBusyListener();
 
 		spyFilter = new SpyTextFilter<>(textFilter, transformer, recorder);
 
@@ -857,6 +864,11 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		}
 
 		assertTrue("Table did not filter; requested filter on '" + text + "'", hasFiltered);
+	}
+
+	@Override
+	protected void record(String message) {
+		recorder.record("Test - " + message);
 	}
 
 	private void resetSpies() {
