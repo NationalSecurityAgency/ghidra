@@ -66,7 +66,7 @@ public class ClassSearcher {
 	static final Logger log = LogManager.getLogger(ClassSearcher.class);
 
 	private static ClassFinder searcher;
-	private static List<Class<?>> extensionPoints;
+	private static Set<Class<?>> extensionPoints;
 
 	private static WeakSet<ChangeListener> listenerList =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
@@ -225,13 +225,13 @@ public class ClassSearcher {
 		extensionPoints = null;
 
 		long t = (new Date()).getTime();
-		log.trace("Searching for classes...");
 
+		log.trace("Searching for classes...");
 		List<String> searchPaths = gatherSearchPaths();
 		searcher = new ClassFinder(searchPaths, monitor);
 
 		monitor.setMessage("Loading classes...");
-		extensionPoints = searcher.getClasses(ExtensionPoint.class, monitor);
+		extensionPoints = searcher.getClasses(monitor);
 		log.trace("Found extension classes: " + extensionPoints);
 		if (extensionPoints.isEmpty()) {
 			throw new AssertException("Unable to location extension points!");
@@ -296,7 +296,7 @@ public class ClassSearcher {
 		ResourceFile extensionClassesFile = new ResourceFile(appRoot, "EXTENSION_POINT_CLASSES");
 		try {
 			List<String> classNames = FileUtilities.getLines(extensionClassesFile);
-			List<Class<?>> extensionClasses = new ArrayList<>();
+			Set<Class<?>> extensionClasses = new HashSet<>();
 			for (String className : classNames) {
 				try {
 					Class<?> clazz = Class.forName(className);
@@ -306,13 +306,12 @@ public class ClassSearcher {
 					Msg.warn(ClassSearcher.class, "Can't load extension point: " + className);
 				}
 			}
-			extensionPoints = Collections.unmodifiableList(extensionClasses);
+			extensionPoints = Collections.unmodifiableSet(extensionClasses);
 
 		}
 		catch (IOException e) {
 			throw new AssertException("Got unexpected IOException ", e);
 		}
-
 	}
 
 	private static void loadExtensionPointSuffixes() {

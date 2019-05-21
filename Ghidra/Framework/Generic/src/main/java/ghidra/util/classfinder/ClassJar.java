@@ -40,9 +40,8 @@ class ClassJar {
 		Pattern.compile(".*/(.*)/(?:lib|build/libs)/(.+).jar");
 
 	private String path;
-	private long time;
 	private Set<String> classNameList = new HashSet<>();
-	private Set<Class<?>> classes = null;
+	private Set<Class<?>> classes = new HashSet<>();
 
 	ClassJar(String path, TaskMonitor monitor) throws CancelledException {
 		this.path = path;
@@ -50,45 +49,13 @@ class ClassJar {
 		scan(monitor);
 	}
 
-	String getJarPath() {
-		return path;
-	}
-
-	boolean rescan(TaskMonitor monitor) throws CancelledException {
-		File file = new File(path);
-		if (file.lastModified() != time) {
-			scan(monitor);
-			return true;
-		}
-		return false;
-	}
-
-	void getClasses(Set<Class<?>> list, TaskMonitor monitor) {
-		if (classes == null) {
-			ClassLoader classLoader = ClassSearcher.class.getClassLoader();
-			classes = new HashSet<>();
-			Iterator<String> iter = classNameList.iterator();
-			while (iter.hasNext()) {
-				String name = iter.next();
-				try {
-					monitor.setMessage("loading class: " + name);
-					classes.add(Class.forName(name, true, classLoader));
-				}
-				catch (Throwable t) {
-					Msg.showError(this, null, "Error loading class",
-						"Error loading class " + name + ":", t);
-				}
-			}
-		}
-		list.addAll(classes);
+	void getClasses(Set<Class<?>> set, TaskMonitor monitor) {
+		set.addAll(classes);
 	}
 
 	private void scan(TaskMonitor monitor) throws CancelledException {
-		classes = new HashSet<>();
-		classNameList.clear();
 
 		File file = new File(path);
-		time = file.lastModified();
 
 		try (JarFile jarFile = new JarFile(file)) {
 
