@@ -25,7 +25,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
@@ -184,7 +184,7 @@ public class ClearCmd extends BackgroundCommand {
 					monitor.setProgress(progress);
 
 					// Allow Swing a chance to paint components that may require a DB lock
-					SystemUtilities.allowSwingToProcessEvents();
+					Swing.allowSwingToProcessEvents();
 				}
 			}
 			previousRangeAddrCnt += range.getLength();
@@ -295,7 +295,7 @@ public class ClearCmd extends BackgroundCommand {
 		AddressRangeIterator it = clearView.getAddressRanges();
 		while (it.hasNext()) {
 
-			AddressRange currentRange = it.next();			
+			AddressRange currentRange = it.next();
 			Address start = currentRange.getMinAddress();
 			Address end = currentRange.getMaxAddress();
 			clearAddresses(monitor, listing, start, end);
@@ -320,7 +320,7 @@ public class ClearCmd extends BackgroundCommand {
 			monitor.incrementProgress(numDone);
 
 			// Allow the Swing thread a chance to paint components that may require a DB lock
-			SystemUtilities.allowSwingToProcessEvents();
+			Swing.allowSwingToProcessEvents();
 		}
 	}
 

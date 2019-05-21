@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.Callback;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -51,6 +50,7 @@ import ghidra.util.TrackedTaskListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.Task;
+import utility.function.Callback;
 
 public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTest {
 

@@ -15,8 +15,7 @@
  */
 package docking.test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
@@ -1760,9 +1759,11 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 */
 	public static void setErrorsExpected(boolean expected) {
 		if (expected) {
+			Msg.error(AbstractDockingTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
 			ConcurrentTestExceptionHandler.disable();
 		}
 		else {
+			Msg.error(AbstractDockingTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
 			ConcurrentTestExceptionHandler.enable();
 		}
 	}

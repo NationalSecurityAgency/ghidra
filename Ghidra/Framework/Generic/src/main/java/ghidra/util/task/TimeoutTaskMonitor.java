@@ -19,12 +19,12 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import ghidra.generic.function.Callback;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.TimeoutException;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
+import utility.function.Callback;
 
 /**
  * A task monitor that allows clients the ability to specify a timeout after which this monitor

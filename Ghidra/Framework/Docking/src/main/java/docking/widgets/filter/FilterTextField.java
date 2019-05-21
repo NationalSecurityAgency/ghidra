@@ -22,10 +22,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ghidra.generic.function.Callback;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import utility.function.Callback;
 
 /**
  * A text field that is meant to be used in conjunction with tables that allow filter text.  This

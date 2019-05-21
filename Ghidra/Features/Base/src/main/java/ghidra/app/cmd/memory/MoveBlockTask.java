@@ -58,7 +58,6 @@ public class MoveBlockTask extends ProgramTask {
 
 	@Override
 	protected void doRun(TaskMonitor monitor) {
-		// TODO Auto-generated method stub
 
 		Memory mem = program.getMemory();
 		MemoryBlock block = mem.getBlock(currentStart);
@@ -77,23 +76,23 @@ public class MoveBlockTask extends ProgramTask {
 			}
 		}
 		catch (OutOfMemoryError e) {
-			monitor.setMessage(msg = "Insufficient memory to complete operation");
+			msg = "Insufficient memory to complete operation";
 			cause = e;
 		}
 		catch (NotFoundException exc) {
-			monitor.setMessage(msg = "Memory block not found");
+			msg = "Memory block not found";
 			cause = exc;
 		}
 		catch (MemoryConflictException exc) {
-			monitor.setMessage(msg = exc.getMessage());
+			msg = exc.getMessage();
 			cause = exc;
 		}
 		catch (MemoryBlockException exc) {
-			monitor.setMessage(msg = exc.getMessage());
+			msg = exc.getMessage();
 			cause = exc;
 		}
 		catch (IllegalArgumentException e) {
-			monitor.setMessage(msg = e.getMessage());
+			msg = e.getMessage();
 			cause = e;
 		}
 		catch (Throwable t) {
@@ -102,25 +101,18 @@ public class MoveBlockTask extends ProgramTask {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			monitor.setMessage(msg);
 			cause = t;
 		}
+
+		monitor.setMessage(msg);
 		listener.moveBlockCompleted(this);
 		throw new RollbackException(msg, cause);
 	}
 
-	/**
-	 * Return true if the user cancelled the move command.
-	 */
 	public boolean isCancelled() {
 		return wasCancelled;
 	}
 
-	/**
-	 * Return whether the block was successfully moved.
-	 * 
-	 * @return true if the block was moved
-	 */
 	public boolean getStatus() {
 		return status;
 	}

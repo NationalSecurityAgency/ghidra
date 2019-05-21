@@ -17,11 +17,11 @@ package ghidra.graph.job;
 
 import java.util.*;
 
-import ghidra.generic.function.Callback;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.QueueStub;
 import ghidra.util.exception.AssertException;
+import utility.function.Callback;
 
 /**
  * A class to run {@link GraphJob}s.  This class will queue jobs and will run them

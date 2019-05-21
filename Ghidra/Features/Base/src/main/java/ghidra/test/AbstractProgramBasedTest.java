@@ -25,13 +25,13 @@ import org.junit.After;
 
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.ExceptionalConsumer;
-import ghidra.generic.function.ExceptionalFunction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
+import utility.function.ExceptionalConsumer;
+import utility.function.ExceptionalFunction;
 
 /**
  * A convenience base class for creating tests that use the default tool and open a program.

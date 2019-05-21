@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.generic.function;
+package ghidra.util.task;
 
-/**
- * A generic functional interface that allows you to consume an item, return a result, 
- * and potentially throw an exception.  
- * 
- * @param <I> the input type 
- * @param <R> the result type
- * @param <E> the exception of your choice
- */
-@FunctionalInterface
-public interface ExceptionalFunction<I, R, E extends Exception> {
+import java.util.concurrent.atomic.AtomicBoolean;
 
-	/**
-	 * The method that will be called
-	 * 
-	 * @param i the input
-	 * @return the result of the call
-	 * @throws E if the call throws an exception
-	 */
-	public R apply(I i) throws E;
+public class TaskDialogSpy extends TaskDialog {
+	private AtomicBoolean shown = new AtomicBoolean();
+
+	public TaskDialogSpy(Task task) {
+		super(task);
+	}
+
+	@Override
+	protected void doShow() {
+		shown.set(true);
+		super.doShow();
+	}
+
+	boolean wasShown() {
+		return shown.get();
+	}
 }
