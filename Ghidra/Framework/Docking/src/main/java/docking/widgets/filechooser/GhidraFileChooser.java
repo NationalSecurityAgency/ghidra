@@ -1282,6 +1282,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		if (!created) {
 			Msg.showError(this, rootPanel, "Create Folder Failed",
 				"Unable to create new folder in " + currentDirectory());
+			return;
 		}
 
 		GhidraFile folder =
