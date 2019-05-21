@@ -238,30 +238,39 @@ public class ProgramDatabaseSearcher implements Searcher {
 	 * or backward. The address set is adjusted by removing addresses that are before the start
 	 * locations address when searching forward or after the start address when searching backwards.
 	 * @param program the program for the address set
-	 * @param start the program location where the search will start.
+	 * @param startLocation the program location where the search will start.
 	 * @param view the address set to be searched.
 	 * @param forward true for a forward search and false for backward search.
 	 * @return the adjusted address set.
 	 */
-	private AddressSetView adjustSearchSet(Program program, ProgramLocation start,
+	private AddressSetView adjustSearchSet(Program program, ProgramLocation startLocation,
 			AddressSetView view, boolean forward) {
 
+		if (view == null) {
+			view = program.getMemory();
+		}
+
+		if (startLocation == null) {
+			return view;
+		}
+
 		AddressSetView trimmedSet = view;
-		ProgramLocation adjustedStart = start;
-		if (adjustedStart != null && trimmedSet != null) {
-			trimmedSet = trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
-			if (!trimmedSet.isEmpty()) {
-				Address maxAddress = trimmedSet.getMaxAddress();
-				if (!forward && adjustedStart.getAddress().compareTo(maxAddress) > 0) {
-					adjustedStart = new ProgramLocation(program, maxAddress);
-					// If the adjustedStart isn't the maxAddress, then adjust this set to the
-					// minimum address of the code unit.  Otherwise the FieldSearcher will
-					// throw an IllegalArgumentException.
-					if (!adjustedStart.getAddress().equals(maxAddress)) {
-						trimmedSet = trimAddressSet(program, trimmedSet, adjustedStart.getAddress(),
-							forward);
-					}
-				}
+		Address start = startLocation.getAddress();
+		trimmedSet = trimAddressSet(program, trimmedSet, start, forward);
+		if (trimmedSet.isEmpty()) {
+			return trimmedSet;
+		}
+
+		Address maxAddress = trimmedSet.getMaxAddress();
+		if (!forward && start.compareTo(maxAddress) > 0) {
+
+			// If the adjustedStart isn't the maxAddress, then adjust this set to the
+			// minimum address of the code unit.  Otherwise the FieldSearcher will
+			// throw an IllegalArgumentException.
+			ProgramLocation adjustedStart = new ProgramLocation(program, maxAddress);
+			if (!adjustedStart.getAddress().equals(maxAddress)) {
+				trimmedSet =
+					trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
 			}
 		}
 		return trimmedSet;
