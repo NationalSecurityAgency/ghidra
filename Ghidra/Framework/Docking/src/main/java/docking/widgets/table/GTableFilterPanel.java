@@ -40,7 +40,6 @@ import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterSaveManager;
 import docking.widgets.table.constraint.dialog.ColumnFilterDialog;
 import ghidra.framework.options.PreferenceState;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -50,6 +49,7 @@ import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Callback;
 
 /**
  * This class is a panel that provides a label and text field that allows users to input text that

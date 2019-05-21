@@ -16,9 +16,7 @@
 package ghidra.util;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -159,51 +157,39 @@ public class Swing {
 			throws UnableToSwingException {
 
 		if (isInHeadlessMode() || SystemUtilities.isEventDispatchThread()) {
-			doRunSwing(r, true, SWING_RUN_ERROR_MSG);
+			doRun(r, true, SWING_RUN_ERROR_MSG);
 			return;
 		}
 
-		CountDownLatch start = new CountDownLatch(1);
-		CountDownLatch end = new CountDownLatch(1);
-		AtomicBoolean timedOut = new AtomicBoolean();
+		/*
+		 	We use the CyclicBarrier to force this thread and the Swing thread to wait for each
+		 	other.  This allows the calling thread to know if/when the Swing thread starts and 
+		 	the Swing thread to know if the calling thread timed-out.
+		 */
+		CyclicBarrier start = new CyclicBarrier(2);
+		CyclicBarrier end = new CyclicBarrier(2);
 
-		doRunSwing(() -> {
+		runLater(() -> {
 
-			start.countDown();
+			if (!waitFor(start)) {
+				return; // must have timed-out
+			}
 
 			try {
-				if (timedOut.get()) {
-					// timed-out waiting for Swing lock, but eventually did get the lock; too late now
-					return;
-				}
-
 				r.run();
 			}
 			finally {
-				end.countDown();
+				waitFor(end);
 			}
 
-		}, false, SWING_RUN_ERROR_MSG);
+		});
 
-		try {
-			timedOut.set(!start.await(timeout, unit));
-		}
-		catch (InterruptedException e) {
-			// handled below
-		}
-
-		if (timedOut.get()) {
+		if (!waitFor(start, timeout, unit)) {
 			throw new UnableToSwingException(
 				"Timed-out waiting for Swing thread lock in " + timeout + " " + unit);
 		}
 
-		// we've started; wait for the runnable with no timeout
-		try {
-			end.await();
-		}
-		catch (InterruptedException e) {
-			// we sometimes interrupt our tasks intentionally, so don't report it
-		}
+		waitFor(end);
 	}
 
 	/**
@@ -213,7 +199,7 @@ public class Swing {
 	 * @param r the runnable
 	 */
 	public static void runLater(Runnable r) {
-		doRunSwing(r, false, SWING_RUN_ERROR_MSG);
+		doRun(r, false, SWING_RUN_ERROR_MSG);
 	}
 
 	public static void runIfSwingOrRunLater(Runnable r) {
@@ -230,33 +216,60 @@ public class Swing {
 		}
 	}
 
+	private static boolean waitFor(CyclicBarrier barrier, long timeout, TimeUnit unit) {
+	
+		try {
+			barrier.await(timeout, unit);
+			return true;
+		}
+		catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+			// our Swing tasks may be interrupted from the framework
+		}
+	
+		// timed-out or was interrupted
+		return false;
+	}
+
+	private static boolean waitFor(CyclicBarrier barrier) {
+	
+		try {
+			barrier.await();
+			return true;
+		}
+		catch (InterruptedException | BrokenBarrierException e) {
+			// our Swing tasks may be interrupted from the framework
+		}
+		return false;
+	}
+
 	private static boolean isInHeadlessMode() {
 		return SystemUtilities.isInHeadlessMode();
 	}
 
-	private static void doRunSwing(Runnable r, boolean wait, String errorMessage) {
+	private static void doRun(Runnable r, boolean wait, String errorMessage) {
 		if (isInHeadlessMode()) {
 			r.run();
 			return;
 		}
 
-		if (wait) {
-			if (SwingUtilities.isEventDispatchThread()) {
-				r.run();
-				return;
-			}
-			try {
-				SwingUtilities.invokeAndWait(r);
-			}
-			catch (InterruptedException e) {
-				// we sometimes interrupt our tasks intentionally, so don't report it
-			}
-			catch (InvocationTargetException e) {
-				Msg.error(Swing.class, errorMessage + "\nException Message: " + e.getMessage(), e);
-			}
-		}
-		else {
+		if (!wait) {
 			SwingUtilities.invokeLater(r);
+			return;
+		}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			r.run();
+			return;
+		}
+
+		try {
+			SwingUtilities.invokeAndWait(r);
+		}
+		catch (InterruptedException e) {
+			// we sometimes interrupt our tasks intentionally, so don't report it
+		}
+		catch (InvocationTargetException e) {
+			Msg.error(Swing.class, errorMessage + "\nException Message: " + e.getMessage(), e);
 		}
 	}
 

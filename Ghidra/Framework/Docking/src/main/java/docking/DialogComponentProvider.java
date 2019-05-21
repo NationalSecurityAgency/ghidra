@@ -32,10 +32,10 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.generic.function.Callback;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
+import utility.function.Callback;
 
 /**
  * Base class used for creating dialogs in Ghidra. Subclass this to create a dialog provider that has

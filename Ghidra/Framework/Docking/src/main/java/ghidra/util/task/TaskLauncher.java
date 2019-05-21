@@ -23,12 +23,19 @@ import ghidra.util.exception.UnableToSwingException;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
- * activity.  The progress dialog will show an animation in the event that the task of this class
- * cannot show progress.
+ * activity <b>if the task takes too long</b>.  The progress dialog will show an 
+ * animation in the event that the task of this class cannot show progress.
  *
  * <p>For complete control of how this class functions, use
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
+ * 
+ * <p><b>Important Usage Note:</b><br>
+ * For clients that are not on the Swing thread the behavior of this class is designed to 
+ * prevent deadlocks.  When called from a non-Swing thread, this class will attempt to show a 
+ * modal dialog.  However, if more than {@link #getSwingTimeoutInSeconds()} elapses while waiting
+ * for the Swing thread, then this class will <b>give up on using the Swing thread and will not 
+ * create a background thread</b>.  Instead, the client code will be run in the client thread.
  *
  * <a name="modal_usage"></a>
  * <p><b><a name="modal_usage">Modal Usage</a></b><br>
@@ -250,12 +257,12 @@ public class TaskLauncher {
 		Swing.runNow(() -> runner.run(), timeout, TimeUnit.SECONDS);
 	}
 
-	// template method to allow timeout change
+	// template method to allow timeout change; used by tests
 	protected int getSwingTimeoutInSeconds() {
 		return 2;
 	}
 
-	// template method to allow task runner change
+	// template method to allow task runner change; used by tests
 	protected TaskRunner createTaskRunner(Task task, Component parent, int delayMs,
 			int dialogWidth) {
 		return new TaskRunner(task, parent, delayMs, dialogWidth);

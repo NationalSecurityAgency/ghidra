@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.generic.function;
+package utility.function;
 
 /**
- * A generic functional interface that allows you to consume an item and potentially throw
- * an exception.  
+ * A generic functional interface that is more semantically sound than {@link Runnable}.  Use
+ * anywhere you wish to have a generic callback function and you need to throw an exception.
  * 
- * @param <T> the input type 
  * @param <E> the exception of your choice
  */
 @FunctionalInterface
-public interface ExceptionalConsumer<T, E extends Exception> {
+public interface ExceptionalCallback<E extends Exception> {
 
 	/**
 	 * The method that will be called
 	 * 
-	 * @param t the input
-	 * @throws E if the call throws an exception
+	 * @throws Exception if the call throws an exception
 	 */
-	public void accept(T t) throws E;
+	public void call() throws E;
 }

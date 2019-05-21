@@ -176,8 +176,8 @@ public class TaskBuilder {
 
 	/**
 	 * Sets the amount of time that will pass before showing the dialog.  The default is
-	 * {@link TaskLauncher#INITIAL_DELAY} for non-modal tasks and 
-	 * {@link TaskLauncher#INITIAL_MODAL_DELAY} for modal tasks.
+	 * {@link TaskLauncher#INITIAL_DELAY_MS} for non-modal tasks and 
+	 * {@link TaskLauncher#INITIAL_MODAL_DELAY_MS} for modal tasks.
 	 *  
 	 * @param delay the delay time
 	 * @return this builder

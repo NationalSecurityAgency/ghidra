@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.generic.function;
+package utility.function;
 
 /**
- * A generic functional interface that allows you to consume an item, return a result, 
- * and potentially throw an exception.  
+ * A generic functional interface that allows you to consume an item and potentially throw
+ * an exception.  
  * 
- * @param <I> the input type 
- * @param <R> the result type
+ * @param <T> the input type 
  * @param <E> the exception of your choice
  */
 @FunctionalInterface
-public interface ExceptionalFunction<I, R, E extends Exception> {
+public interface ExceptionalConsumer<T, E extends Exception> {
 
 	/**
 	 * The method that will be called
 	 * 
-	 * @param i the input
-	 * @return the result of the call
+	 * @param t the input
 	 * @throws E if the call throws an exception
 	 */
-	public R apply(I i) throws E;
+	public void accept(T t) throws E;
 }
