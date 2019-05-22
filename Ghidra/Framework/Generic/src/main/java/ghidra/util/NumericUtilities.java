@@ -670,7 +670,7 @@ public final class NumericUtilities {
 	 */
 	public static String convertBytesToString(byte[] bytes, int start, int len, String delimeter) {
 
-		Iterator<Byte> iterator = IteratorUtils.arrayIterator(bytes, start, len);
+		Iterator<Byte> iterator = IteratorUtils.arrayIterator(bytes, start, start + len);
 		return convertBytesToString(iterator, delimeter);
 	}
 
