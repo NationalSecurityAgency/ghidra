@@ -1147,6 +1147,7 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
     case CPUI_INT_SUB:
       countaddsub += 1;
       if (countaddsub > maxaddsub) break;
+      if (!normop->getIn(1-j)->isConstant()) break;
       switchvn = testvn;
       break;
     case CPUI_INT_ZEXT:
