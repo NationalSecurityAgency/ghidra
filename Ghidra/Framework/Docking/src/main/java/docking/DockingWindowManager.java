@@ -1909,13 +1909,37 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Set the status text in the active component window.
+	 * Set the status text in the active component window
 	 * @param text status text
 	 */
 	public void setStatusText(String text) {
 		if (root != null) {
 			root.setStatusText(text);
 		}
+	}
+
+	/**
+	  * Set the status text in the active component window
+	  * 
+	  * @param text string to be displayed in the Status display area
+	  * @param beep whether to beep or not
+	  */
+	public void setStatusText(String text, boolean beep) {
+		if (root == null) {
+			return;
+		}
+
+		setStatusText(text);
+		if (beep) {
+			Toolkit.getDefaultToolkit().beep();
+		}
+	}
+
+	/**
+	 * A convenience method to make an attention-grabbing noise to the user
+	 */
+	public static void beep() {
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 	/**

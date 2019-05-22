@@ -492,14 +492,10 @@ public abstract class PluginTool extends AbstractDockingTool
 	/**
 	  * Set the status information.
 	  * @param text string to be displayed in the Status display area
-	  * @param beep whether to be or not
+	  * @param beep whether to beep or not
 	  */
 	public void setStatusInfo(String text, boolean beep) {
-		winMgr.setStatusText(text);
-		if (beep) {
-			Toolkit tk = getToolFrame().getToolkit();
-			tk.beep();
-		}
+		winMgr.setStatusText(text, beep);
 	}
 
 	@Override
@@ -512,6 +508,13 @@ public abstract class PluginTool extends AbstractDockingTool
 	 */
 	public void clearStatusInfo() {
 		winMgr.setStatusText("");
+	}
+
+	/**
+	 * A convenience method to make an attention-grabbing noise to the user
+	 */
+	public void beep() {
+		DockingWindowManager.beep();
 	}
 
 	/**
@@ -1357,7 +1360,7 @@ public abstract class PluginTool extends AbstractDockingTool
 				taskMgr.stop(false);
 			}
 			else {
-				getToolFrame().getToolkit().beep();
+				beep();
 				Msg.showInfo(getClass(), getToolFrame(), "Tool Busy",
 					"You must stop all background tasks before exiting.");
 				return false;

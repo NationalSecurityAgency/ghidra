@@ -159,8 +159,7 @@ public class VTPlugin extends Plugin {
 		Preferences.setProperty(SHOW_HELP_PREFERENCE, "No");
 		Preferences.store();
 
-		URL url =
-			ResourceManager.getResource("help/topics/VersionTrackingPlugin/VT_Workflow.html");
+		URL url = ResourceManager.getResource("help/topics/VersionTrackingPlugin/VT_Workflow.html");
 		if (url == null) {
 			Msg.showError(this, null, "Help Not Found",
 				"Unable to find the Version Tracking workflow help");
@@ -396,7 +395,7 @@ public class VTPlugin extends Plugin {
 	 */
 	static void showBusyToolMessage(PluginTool tool) {
 		JFrame toolFrame = tool.getToolFrame();
-		toolFrame.getToolkit().beep();
+		tool.beep();
 		Msg.showInfo(VTPlugin.class, toolFrame, "Tool \"" + tool.getName() + "\" Busy",
 			"You must stop all background tasks before exiting.");
 	}
