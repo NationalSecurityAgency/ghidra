@@ -57,7 +57,7 @@ public class DeterministicDependencyGraph<T> extends AbstractDependencyGraph<T> 
 	}
 
 	@Override
-	public AbstractDependencyGraph<T> copy() {
+	public DeterministicDependencyGraph<T> copy() {
 		return new DeterministicDependencyGraph<>(this);
 	}
 

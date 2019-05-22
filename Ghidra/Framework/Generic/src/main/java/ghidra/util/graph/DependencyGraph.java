@@ -52,7 +52,7 @@ public class DependencyGraph<T> extends AbstractDependencyGraph<T> {
 	}
 
 	@Override
-	public AbstractDependencyGraph<T> copy() {
+	public DependencyGraph<T> copy() {
 		return new DependencyGraph<>(this);
 	}
 
