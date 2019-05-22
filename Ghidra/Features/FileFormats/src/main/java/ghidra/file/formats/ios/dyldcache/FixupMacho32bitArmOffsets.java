@@ -15,6 +15,10 @@
  */
 package ghidra.file.formats.ios.dyldcache;
 
+import java.io.*;
+import java.util.*;
+
+import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -23,16 +27,11 @@ import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.*;
-import java.util.*;
-
-import generic.continues.RethrowContinuesFactory;
-
 public class FixupMacho32bitArmOffsets {
 	private DataConverter converter = new LittleEndianDataConverter();
 
-	public File fix(GFile file, long offsetAdjustment, ByteProvider provider, TaskMonitor monitor)
-			throws IOException, MachException {
+	public InputStream fix(GFile file, long offsetAdjustment, ByteProvider provider,
+			TaskMonitor monitor) throws IOException, MachException {
 		Map<Long, byte []> changeMap = new HashMap<Long, byte []>();
 
 		//check to make sure mach-o header is valid
@@ -146,9 +145,8 @@ public class FixupMacho32bitArmOffsets {
 
 		List<Long> indexList = new ArrayList<Long>( changeMap.keySet() );
 		Collections.sort( indexList );
-
-		File tempMachoFile = File.createTempFile( "ghidra" + "_" + file.getName() + "_", ".macho.tmp" );
-		OutputStream tempOut = new FileOutputStream( tempMachoFile );
+		
+		ByteArrayOutputStream tempOut = new ByteArrayOutputStream();
 		try {
 			long tempIndex = offsetAdjustment;
 			while ( !monitor.isCancelled() ) {
@@ -174,6 +172,6 @@ public class FixupMacho32bitArmOffsets {
 			tempOut.close();
 		}
 
-		return tempMachoFile;
+		return new ByteArrayInputStream(tempOut.toByteArray());
 	}
 }
