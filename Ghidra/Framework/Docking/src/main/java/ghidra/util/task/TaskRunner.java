@@ -16,7 +16,8 @@
 package ghidra.util.task;
 
 import java.awt.Component;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 import generic.concurrent.GThreadPool;
 import generic.util.WindowUtilities;
@@ -47,12 +48,7 @@ class TaskRunner {
 
 		BasicTaskMonitor internalMonitor = new BasicTaskMonitor();
 		WrappingTaskMonitor monitor = new WrappingTaskMonitor(internalMonitor);
-		startBackgroundThread(monitor);
-
-		showDialogIfSwingOrShowLaterAndWait(monitor);
-	}
-
-	private void showDialogIfSwingOrShowLaterAndWait(WrappingTaskMonitor monitor) {
+		startTaskThread(monitor);
 
 		Swing.runIfSwingOrRunLater(() -> showTaskDialog(monitor));
 		waitForModalTask();
@@ -83,7 +79,7 @@ class TaskRunner {
 		return dialog;
 	}
 
-	private void startBackgroundThread(TaskMonitor monitor) {
+	private void startTaskThread(TaskMonitor monitor) {
 
 		// add the task here, so we can track it before it is actually started by the thread
 		TaskUtilities.addTrackedTask(task, monitor);
@@ -104,15 +100,26 @@ class TaskRunner {
 	}
 
 	private TaskDialog createTaskDialog(Component comp) {
-		Component currentParent = comp;
+		Component centerOverComponent = comp;
+		Component currentParent = centerOverComponent;
 		if (currentParent != null) {
 			currentParent = WindowUtilities.windowForComponent(comp);
 		}
 
 		if (currentParent == null) {
-			return new TaskDialog(task);
+			centerOverComponent = null;
 		}
-		return new TaskDialog(comp, task);
+
+		return new TaskDialog(centerOverComponent, task) {
+
+			// note: we override this method here to help with the race condition where the 
+			//       TaskRunner does not yet know about the task dialog, but the background
+			//       thread has actually finished the work.
+			@Override
+			public synchronized boolean isCompleted() {
+				return super.isCompleted() || isFinished();
+			}
+		};
 	}
 
 	private void showTaskDialog(WrappingTaskMonitor monitor) {
@@ -121,21 +128,14 @@ class TaskRunner {
 
 		taskDialog = buildTaskDialog(parent, monitor);
 		monitor.setDelegate(taskDialog); // initialize the dialog to the current state of the monitor
-		int delay = Math.max(delayMs, 0);
-		try {
-			if (finished.await(delay, TimeUnit.MILLISECONDS)) {
-				return;
-			}
-		}
-		catch (InterruptedException e) {
-			// not sure about this case; proceed to show the dialog
-		}
+		taskDialog.show(Math.max(delayMs, 0));
+	}
 
-		taskDialog.show(delay);
+	/*testing*/ boolean isFinished() {
+		return finished.getCount() == 0;
 	}
 
 	private void taskFinished() {
-
 		finished.countDown();
 
 		// Do this later on the Swing thread to handle the race condition where the dialog 

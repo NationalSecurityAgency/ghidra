@@ -106,7 +106,12 @@ public class AbstractTaskTest extends AbstractDockingTest {
 			return new TaskRunner(task, parent, delay, dialogWidth) {
 				@Override
 				protected TaskDialog buildTaskDialog(Component comp, TaskMonitor monitor) {
-					dialogSpy = new TaskDialogSpy(task);
+					dialogSpy = new TaskDialogSpy(task) {
+						@Override
+						public synchronized boolean isCompleted() {
+							return super.isCompleted() || isFinished();
+						}
+					};
 					return dialogSpy;
 				}
 			};
