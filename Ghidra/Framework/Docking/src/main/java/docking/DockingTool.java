@@ -84,6 +84,18 @@ public interface DockingTool {
 	public void setStatusInfo(String text);
 
 	/**
+	  * Set the status information
+	  * @param text string to be displayed in the Status display area
+	  * @param beep whether to be or not
+	  */
+	public void setStatusInfo(String text, boolean beep);
+
+	/**
+	 * Clear the status information
+	 */
+	public void clearStatusInfo();
+
+	/**
 	 * Adds the action to the tool.
 	 * @param action the action to be added.
 	 */

@@ -498,6 +498,16 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
+	public void setStatusInfo(String text, boolean beep) {
+		//do nothing
+	}
+
+	@Override
+	public void clearStatusInfo() {
+		//do nothing
+	}
+
+	@Override
 	public void addAction(DockingActionIf action) {
 		//do nothing
 	}

@@ -15,9 +15,9 @@
  */
 package docking;
 
-import java.awt.Frame;
-import java.awt.Window;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -76,6 +76,20 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void setStatusInfo(String text) {
 		winMgr.setStatusText(text);
+	}
+
+	@Override
+	public void setStatusInfo(String text, boolean beep) {
+		winMgr.setStatusText(text);
+		if (beep) {
+			Toolkit tk = getToolFrame().getToolkit();
+			tk.beep();
+		}
+	}
+
+	@Override
+	public void clearStatusInfo() {
+		winMgr.setStatusText("");
 	}
 
 	@Override

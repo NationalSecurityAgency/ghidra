@@ -102,6 +102,36 @@ public class Swing {
 	}
 
 	/**
+	 * Calls the given runnable on the Swing thread in the future by putting the request on
+	 * the back of the event queue.
+	 *
+	 * @param r the runnable
+	 */
+	public static void runLater(Runnable r) {
+		doRun(r, false, SWING_RUN_ERROR_MSG);
+	}
+
+	/**
+	 * Runs the given runnable now if the caller is on the Swing thread.  Otherwise, the 
+	 * runnable will be posted later.
+	 * 
+	 * @param r the runnable
+	 */
+	public static void runIfSwingOrRunLater(Runnable r) {
+		if (isInHeadlessMode()) {
+			r.run();
+			return;
+		}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			r.run();
+		}
+		else {
+			SwingUtilities.invokeLater(r);
+		}
+	}
+
+	/**
 	 * Calls the given suppler on the Swing thread, blocking with a
 	 * {@link SwingUtilities#invokeAndWait(Runnable)} if not on the Swing thread.  
 	 * 
@@ -136,8 +166,29 @@ public class Swing {
 			runNow(r, SWING_TIMEOUT_SECONDS_VALUE, TimeUnit.SECONDS);
 		}
 		catch (UnableToSwingException e) {
-			throw new RuntimeException("Timed-out waiting to run a Swing task--potential deadlock!",
-				e);
+
+			//
+			// Special Cases: if we are in production mode, then this is most likely a deadlock.
+			// In that case, log the thread state.  In development mode, it is possible for this
+			// to happen while debugging.  In that case, log a message, and then post the work
+			// to be done without a timeout.
+			//
+			String warning = "Timed-out waiting to run a Swing task--potential deadlock!";
+			if (SystemUtilities.isInReleaseMode()) {
+				Throwable threadDump = ReflectionUtilities.createJavaFilteredThrowable();
+				Msg.error(Swing.class, warning + "\nThreads State:\n" + threadDump);
+				throw new RuntimeException(warning, e);
+			}
+
+			//
+			// dev or testing mode
+			//
+
+			// note: using Swing.class for the originator does not work (presumably it conflicts
+			//       with another logger sharing its name.  So, use the full name here.
+			String originator = Swing.class.getName();
+			Msg.debug(originator, warning + "  Ignore this message if debugging");
+			doRun(r, true, SWING_RUN_ERROR_MSG);
 		}
 	}
 
@@ -172,7 +223,7 @@ public class Swing {
 		runLater(() -> {
 
 			if (!waitFor(start)) {
-				return; // must have timed-out
+				return; // interrupted or timed-out
 			}
 
 			try {
@@ -185,53 +236,36 @@ public class Swing {
 		});
 
 		if (!waitFor(start, timeout, unit)) {
-			throw new UnableToSwingException(
-				"Timed-out waiting for Swing thread lock in " + timeout + " " + unit);
+			// Special case: if the wait() returns false, then it was interrupted.  If the 
+			// timeout occurred, an exception would have been thrown.   Interrupts are expected, 
+			// so just exit.
+			return;
 		}
 
 		waitFor(end);
 	}
 
-	/**
-	 * Calls the given runnable on the Swing thread in the future by putting the request on
-	 * the back of the event queue.
-	 *
-	 * @param r the runnable
-	 */
-	public static void runLater(Runnable r) {
-		doRun(r, false, SWING_RUN_ERROR_MSG);
-	}
+	private static boolean waitFor(CyclicBarrier barrier, long timeout, TimeUnit unit)
+			throws UnableToSwingException {
 
-	public static void runIfSwingOrRunLater(Runnable r) {
-		if (isInHeadlessMode()) {
-			r.run();
-			return;
-		}
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			r.run();
-		}
-		else {
-			SwingUtilities.invokeLater(r);
-		}
-	}
-
-	private static boolean waitFor(CyclicBarrier barrier, long timeout, TimeUnit unit) {
-	
 		try {
 			barrier.await(timeout, unit);
 			return true;
 		}
-		catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+		catch (InterruptedException e) {
 			// our Swing tasks may be interrupted from the framework
 		}
-	
+		catch (BrokenBarrierException | TimeoutException e) {
+			throw new UnableToSwingException(
+				"Timed-out waiting for Swing thread lock in " + timeout + " " + unit);
+		}
+
 		// timed-out or was interrupted
 		return false;
 	}
 
 	private static boolean waitFor(CyclicBarrier barrier) {
-	
+
 		try {
 			barrier.await();
 			return true;

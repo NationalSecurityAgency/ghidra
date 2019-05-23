@@ -21,11 +21,13 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 
 import org.jdom.Element;
 
@@ -213,11 +215,6 @@ public abstract class PluginTool extends AbstractDockingTool
 		// placeholder
 	}
 
-	@Override
-	public DockingWindowManager getWindowManager() {
-		return winMgr;
-	}
-
 	private void setDefaultOptionValues() {
 		Options toolOptions = optionsMgr.getOptions("Tool");
 		boolean windowsOnTop = toolOptions.getBoolean(DOCKING_WINDOWS_ON_TOP, false);
@@ -319,47 +316,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Adds the action to the tool.
-	 * @param action the action to be added.
-	 */
-	@Override
-	public void addAction(DockingActionIf action) {
-		actionMgr.addToolAction(action);
-	}
-
-	/**
-	 * Add an action that is associated with the given provider. The action
-	 * works only in the context of the provider, and not across the tool
-	 * as for a "global" action.
-	 * @param provider provider that has a visible component in the tool
-	 * @param action local action to associate with the provider
-	 */
-	@Override
-	public void addLocalAction(ComponentProvider provider, DockingActionIf action) {
-		actionMgr.addLocalAction(provider, action);
-	}
-
-	/**
-	 * Removes the given action from the tool
-	 * @param action the action to be removed.
-	 */
-	@Override
-	public void removeAction(DockingActionIf action) {
-		actionMgr.removeToolAction(action);
-	}
-
-	/**
-	 * Adds a visible component to the tool.
-	 * @param provider The component provider that provides the component to be added.
-	 * @param show flag to initially show the component.
-	 */
-	@Override
-	public void addComponentProvider(final ComponentProvider provider, final boolean show) {
-		Runnable r = () -> winMgr.addComponent(provider, show);
-		SystemUtilities.runSwingNow(r);
-	}
-
-	/**
 	 * Set whether a component's header should be shown; the header is the component that
 	 * is dragged in order to move the component within the tool, or out of the tool
 	 * into a separate window
@@ -369,76 +325,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	 */
 	public void showComponentHeader(ComponentProvider provider, boolean b) {
 		winMgr.showComponentHeader(provider, b);
-	}
-
-	@Override
-	public boolean isActive(ComponentProvider provider) {
-		return winMgr.isActiveProvider(provider);
-	}
-
-	/**
-	 * Hides or shows the component associated with the given provider.
-	 * @param provider the provider of the component to be hidden or shown.
-	 * @param visibleState true to show the component, false to hide it.
-	 */
-	@Override
-	public void showComponentProvider(final ComponentProvider provider,
-			final boolean visibleState) {
-		Runnable r = () -> winMgr.showComponent(provider, visibleState);
-		SystemUtilities.runSwingNow(r);
-	}
-
-	@Override
-	public void toFront(final ComponentProvider provider) {
-		Runnable r = () -> winMgr.toFront(provider);
-		SystemUtilities.runSwingNow(r);
-	}
-
-	@Override
-	public void removeComponentProvider(final ComponentProvider provider) {
-		Runnable r = () -> actionMgr.removeComponent(provider);
-		SystemUtilities.runSwingNow(r);
-	}
-
-	@Override
-	public void updateTitle(ComponentProvider provider) {
-		winMgr.updateTitle(provider);
-	}
-
-	@Override
-	public boolean isVisible(ComponentProvider provider) {
-		return winMgr.isVisible(provider);
-	}
-
-	@Override
-	public boolean isVisible() {
-		return winMgr.isVisible();
-	}
-
-	/**
-	 * @see ghidra.framework.model.Tool#setVisible(boolean)
-	 */
-	@Override
-	public void setVisible(boolean visibility) {
-		winMgr.setVisible(visibility);
-	}
-
-	@Override
-	public void toFront() {
-		JFrame frame = winMgr.getRootFrame();
-		if (frame.getExtendedState() == Frame.ICONIFIED) {
-			frame.setExtendedState(Frame.NORMAL);
-		}
-		frame.toFront();
-	}
-
-	/**
-	 * Returns the tool's frame
-	 * @return the tool's frame
-	 */
-	@Override
-	public JFrame getToolFrame() {
-		return winMgr.getRootFrame();
 	}
 
 	/** Install any services that are not provided by plugins */
@@ -487,31 +373,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	@Override
 	public void removeServiceListener(ServiceListener listener) {
 		serviceMgr.removeServiceListener(listener);
-	}
-
-	/**
-	  * Set the status information.
-	  * @param text string to be displayed in the Status display area
-	  * @param beep whether to be or not
-	  */
-	public void setStatusInfo(String text, boolean beep) {
-		winMgr.setStatusText(text);
-		if (beep) {
-			Toolkit tk = getToolFrame().getToolkit();
-			tk.beep();
-		}
-	}
-
-	@Override
-	public void setStatusInfo(String text) {
-		winMgr.setStatusText(text);
-	}
-
-	/**
-	 * Clear the status information.
-	 */
-	public void clearStatusInfo() {
-		winMgr.setStatusText("");
 	}
 
 	/**
@@ -1035,30 +896,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	 */
 	public void removeStatusComponent(JComponent c) {
 		winMgr.removeStatusItem(c);
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		Set<DockingActionIf> set = new HashSet<>();
-		set.addAll(actionMgr.getDockingActionsByFullActionName(fullActionName));
-		set.addAll(winMgr.getActions(fullActionName));
-		return new ArrayList<>(set);
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner) {
-		List<DockingActionIf> actions = actionMgr.getActions(owner);
-		return actions;
-	}
-
-	@Override
-	public List<DockingActionIf> getAllActions() {
-		return actionMgr.getAllActions();
-	}
-
-	@Override
-	public void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
-		actionMgr.removeProviderAction(provider, action);
 	}
 
 	protected void addExitAction() {
@@ -1585,18 +1422,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Shows the dialog using the active top-level window (often the tool's root frame)
-	 * as a parent.  Also, remembers any
-	 * size and location adjustments made by the user for the next time the dialog is shown.
-	 *
-	 * @param dialogComponent the DialogComponentProvider object to be shown in a dialog.
-	 */
-	@Override
-	public void showDialog(DialogComponentProvider dialogComponent) {
-		DockingWindowManager.showDialog(dialogComponent);
-	}
-
-	/**
 	 * Shows the dialog using the tool's currently active window as a parent.  Also,
 	 * remembers any size and location adjustments made by the user for the next
 	 * time the dialog is shown.
@@ -1677,11 +1502,6 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	public void removePreferenceState(String name) {
 		winMgr.removePreferenceState(name);
-	}
-
-	@Override
-	public Window getProviderWindow(ComponentProvider componentProvider) {
-		return winMgr.getProviderWindow(componentProvider);
 	}
 
 //==================================================================================================
