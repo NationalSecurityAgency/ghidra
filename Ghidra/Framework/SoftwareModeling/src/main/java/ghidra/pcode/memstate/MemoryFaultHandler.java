@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +22,10 @@ public interface MemoryFaultHandler {
 	/**
 	 * An attempt has been made to read uninitialized memory at the 
 	 * specified address.  
-	 * @param address
-	 * @param size
-	 * @param buf
-	 * @param bufOffset
+	 * @param address uninitialized storage address (memory, register or unique)
+	 * @param size number of uninitialized bytes
+	 * @param buf storage buffer
+	 * @param bufOffset read offset within buffer
 	 * @return true if data should be treated as initialized
 	 */
 	boolean uninitializedRead(Address address, int size, byte[] buf, int bufOffset);

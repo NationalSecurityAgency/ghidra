@@ -19,5 +19,5 @@ assert_fail
 assert_rtn
 fortify_fail
 ZSt9terminatev
-_ZN10__cxxabiv111__terminateEPFvvE
+ZN10__cxxabiv111__terminateEPFvvE
 pthread_exit
