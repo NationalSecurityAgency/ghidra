@@ -33,7 +33,7 @@ public class Swing {
 
 	private static final String SWING_TIMEOUT_SECONDS_PROPERTY =
 		Swing.class.getName().toLowerCase() + ".timeout.seconds";
-	private static final int SWING_TIMEOUT_SECONDS_DEFAULT_VALUE = 10;
+	private static final int SWING_TIMEOUT_SECONDS_DEFAULT_VALUE = 20;
 
 	private static int loadTimeout() {
 		String timeoutString = System.getProperty(SWING_TIMEOUT_SECONDS_PROPERTY,
@@ -61,7 +61,7 @@ public class Swing {
 	 *
 	 * @return  true if this is the event dispatch thread -OR- is in headless mode.
 	 */
-	public static boolean isEventDispatchThread() {
+	public static boolean isSwingThread() {
 		if (isInHeadlessMode()) {
 			return true;
 		}
@@ -94,7 +94,7 @@ public class Swing {
 			return; // squash during production mode
 		}
 
-		if (!isEventDispatchThread()) {
+		if (!isSwingThread()) {
 			Throwable t =
 				ReflectionUtilities.filterJavaThrowable(new AssertException(errorMessage));
 			Msg.error(SystemUtilities.class, errorMessage, t);

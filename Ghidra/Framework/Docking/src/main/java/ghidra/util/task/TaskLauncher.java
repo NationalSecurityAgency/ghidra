@@ -16,10 +16,8 @@
 package ghidra.util.task;
 
 import java.awt.Component;
-import java.util.concurrent.TimeUnit;
 
 import ghidra.util.Swing;
-import ghidra.util.exception.UnableToSwingException;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
@@ -30,14 +28,6 @@ import ghidra.util.exception.UnableToSwingException;
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
  * 
- * <p><b>Important Usage Note:</b><br>
- * For clients that are not on the Swing thread the behavior of this class is designed to 
- * prevent deadlocks.  When called from a non-Swing thread, this class will attempt to show a 
- * modal dialog.  However, if more than {@link #getSwingTimeoutInSeconds()} elapses while waiting
- * for the Swing thread, then this class will <b>give up on using the Swing thread and will not 
- * create a background thread</b>.  Instead, the client code will be run in the client thread.
- *
- * <a name="modal_usage"></a>
  * <p><b><a name="modal_usage">Modal Usage</a></b><br>
  * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
@@ -229,37 +219,8 @@ public class TaskLauncher {
 	 */
 	public TaskLauncher(Task task, Component parent, int delayMs, int dialogWidth) {
 
-		try {
-			scheduleFromSwingThread(task, parent, delayMs, dialogWidth);
-		}
-		catch (UnableToSwingException e) {
-			runInThisBackgroundThread(task);
-		}
-	}
-
-	private void scheduleFromSwingThread(Task task, Component parent, int delayMs, int dialogWidth)
-			throws UnableToSwingException {
-
 		TaskRunner runner = createTaskRunner(task, parent, delayMs, dialogWidth);
-		if (Swing.isEventDispatchThread()) {
-			runner.run();
-			return;
-		}
-
-		//
-		// Not on the Swing thread.  Try to execute on the Swing thread, timing-out if it takes
-		// too long (this prevents deadlocks).
-		//
-
-		// This will throw an exception if we could not get the Swing lock.  When that happens,
-		// the task was NOT run.
-		int timeout = getSwingTimeoutInSeconds();
-		Swing.runNow(() -> runner.run(), timeout, TimeUnit.SECONDS);
-	}
-
-	// template method to allow timeout change; used by tests
-	protected int getSwingTimeoutInSeconds() {
-		return 2;
+		runner.run();
 	}
 
 	// template method to allow task runner change; used by tests
@@ -275,7 +236,7 @@ public class TaskLauncher {
 	 * @throws IllegalStateException if the given thread is the Swing thread
 	 */
 	protected void runInThisBackgroundThread(Task task) {
-		if (Swing.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			throw new IllegalStateException("Must not call this method from the Swing thread");
 		}
 

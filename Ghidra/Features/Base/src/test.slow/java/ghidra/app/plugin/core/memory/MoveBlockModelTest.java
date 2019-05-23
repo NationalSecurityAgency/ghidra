@@ -30,7 +30,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskBuilder;
 
 public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		implements MoveBlockListener {
@@ -42,7 +42,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	private MemoryBlock block;
 
 	private volatile boolean moveCompleted;
-	private volatile boolean status;
+	private volatile boolean success;
 	private volatile String errMsg;
 
 	private Program buildProgram1(String programName) throws Exception {
@@ -134,7 +134,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 		// wait until the we get the move complete notification
 		waitForCondition(() -> moveCompleted && notepad.canLock());
-		assertTrue("Error message= [" + errMsg + "], ", status);
+		assertTrue("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 		// wait until the we get the move complete notification
 		waitForCondition(() -> moveCompleted && notepad.canLock());
-		assertTrue("Error message= [" + errMsg + "], ", status);
+		assertTrue("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
@@ -177,7 +177,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		waitForCondition(() -> moveCompleted && x8051.canLock());
 		setErrorsExpected(false);
 
-		assertFalse("Error message= [" + errMsg + "], ", status);
+		assertFalse("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
@@ -242,15 +242,10 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(errMsg);
 	}
 
-	private void launch(Task task) {
+	private void launch(MoveBlockTask task) {
 
-		BackgroundThreadTaskLauncher launcher = new BackgroundThreadTaskLauncher(task);
-		launcher.run(new TaskMonitorAdapter() {
-			@Override
-			public void setMessage(String message) {
-				errMsg = message;
-			}
-		});
+		TaskBuilder.withTask(task).launchModal();
+		errMsg = task.getStatusMessage();
 	}
 
 	private Address getNotepadAddr(int offset) {
@@ -265,7 +260,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Override
 	public void moveBlockCompleted(MoveBlockTask cmd) {
 		moveCompleted = true;
-		this.status = cmd.getStatus();
+		this.success = cmd.wasSuccessful();
 	}
 
 	@Override

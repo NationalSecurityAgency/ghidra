@@ -18,6 +18,7 @@ package ghidra.util.task;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 
@@ -50,14 +51,13 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	private Runnable shouldCancelRunnable;
 	private boolean taskDone;
 	private JPanel mainPanel;
-	private ChompingBitsAnimationPanel chompingBitsPanel;
+	private JPanel activityPanel;
 	private TaskMonitorComponent monitorComponent;
 
-	/** Runnable that updates the primary message label in the dialog */
-	private Runnable updatePrimaryMessageRunnable;
-
 	/** If not null, then the value of the string has yet to be rendered */
-	private String newPrimaryMessage;
+	private AtomicReference<String> newMessage = new AtomicReference<>();
+	private SwingUpdateManager messageUpdater =
+		new SwingUpdateManager(100, 250, () -> setStatusText(newMessage.getAndSet(null)));
 
 	/** 
 	 * Constructor
@@ -112,7 +112,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	private void setup(boolean canCancel, boolean hasProgress) {
 		monitorComponent = new TaskMonitorComponent(false, false);
-		chompingBitsPanel = new ChompingBitsAnimationPanel();
+		activityPanel = new ChompingBitsAnimationPanel();
 
 		setCancelEnabled(canCancel);
 		setRememberLocation(false);
@@ -122,12 +122,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			close();
 			dispose();
 		};
-		updatePrimaryMessageRunnable = () -> {
-			setStatusText(newPrimaryMessage);
-			synchronized (TaskDialog.this) {
-				newPrimaryMessage = null;
-			}
-		};
+
 		shouldCancelRunnable = () -> {
 			int currentTaskID = taskID.get();
 
@@ -160,10 +155,9 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * 
 	 * @return true if the task should be cancelled
 	 */
-	protected boolean promptToVerifyCancel() {
+	private boolean promptToVerifyCancel() {
 		boolean userSaysYes = OptionDialog.showYesNoDialog(getComponent(), "Cancel?",
 			"Do you really want to cancel \"" + getTitle() + "\"?") == OptionDialog.OPTION_ONE;
-
 		return userSaysYes;
 	}
 
@@ -179,13 +173,13 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	/**
-	 * Adds the panel that contains the chomping bits animation to the dialog. This should only be 
-	 * called if the dialog has no need to display progress.
+	 * Adds the panel that contains the activity panel (e.g., the eating bits animation) to the 
+	 * dialog. This should only be called if the dialog has no need to display progress.
 	 */
 	private void installActivityDisplay() {
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
 			mainPanel.removeAll();
-			mainPanel.add(chompingBitsPanel, BorderLayout.CENTER);
+			mainPanel.add(activityPanel, BorderLayout.CENTER);
 			repack();
 		});
 	}
@@ -204,74 +198,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	@Override
-	public void setShowProgressValue(boolean showProgressValue) {
-		monitorComponent.setShowProgressValue(showProgressValue);
-	}
-
-	/** 
-	 * Sets the percentage done
-	 * 
-	 * @param param The percentage of the task completed.
-	 */
-	@Override
-	public void setProgress(long param) {
-		monitorComponent.setProgress(param);
-	}
-
-	@Override
-	public void initialize(long max) {
-		if (monitorComponent.isIndeterminate()) {
-			// don't show the progress bar if we have already been marked as indeterminate (this
-			// allows us to prevent low-level algorithms from changing the display settings).
-			return;
-		}
-
-		if (!monitorComponent.isShowing()) {
-			installProgressMonitor();
-		}
-
-		monitorComponent.initialize(max);
-	}
-
-	@Override
-	public void setMaximum(long max) {
-		monitorComponent.setMaximum(max);
-	}
-
-	@Override
-	public long getMaximum() {
-		return monitorComponent.getMaximum();
-	}
-
-	/**
-	 * Sets the <code>indeterminate</code> property of the progress bar,
-	 * which determines whether the progress bar is in determinate
-	 * or indeterminate mode.
-	 * An indeterminate progress bar continuously displays animation
-	 * indicating that an operation of unknown length is occurring.
-	 * By default, this property is <code>false</code>.
-	 * Some look and feels might not support indeterminate progress bars;
-	 * they will ignore this property.
-	 *
-	 * @see JProgressBar
-	 */
-	@Override
-	public void setIndeterminate(final boolean indeterminate) {
-		monitorComponent.setIndeterminate(indeterminate);
-	}
-
-	@Override
 	protected void cancelCallback() {
 		SwingUtilities.invokeLater(shouldCancelRunnable);
-	}
-
-	@Override
-	synchronized public void setMessage(String str) {
-		boolean invoke = (newPrimaryMessage == null);
-		if (invoke) {
-			newPrimaryMessage = str;
-			SwingUtilities.invokeLater(updatePrimaryMessageRunnable);
-		}
 	}
 
 	@Override
@@ -298,11 +226,6 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	public synchronized boolean isCompleted() {
 		return taskDone;
-	}
-
-	@Override
-	public boolean isCancelled() {
-		return monitorComponent.isCancelled();
 	}
 
 	/**
@@ -382,6 +305,71 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		SystemUtilities.runSwingNow(disposeTask);
 	}
 
+//==================================================================================================
+// TaskMonitor Methods
+//==================================================================================================
+
+	@Override
+	public void setMessage(String str) {
+		newMessage.set(str);
+		messageUpdater.update();
+	}
+
+	@Override
+	public String getMessage() {
+		return monitorComponent.getMessage();
+	}
+
+	@Override
+	public void setShowProgressValue(boolean showProgressValue) {
+		monitorComponent.setShowProgressValue(showProgressValue);
+	}
+
+	@Override
+	public void setProgress(long progress) {
+		monitorComponent.setProgress(progress);
+	}
+
+	@Override
+	public void initialize(long max) {
+		if (monitorComponent.isIndeterminate()) {
+			// don't show the progress bar if we have already been marked as indeterminate (this
+			// allows us to prevent low-level algorithms from changing the display settings).
+			return;
+		}
+
+		if (!monitorComponent.isShowing()) {
+			installProgressMonitor();
+		}
+
+		monitorComponent.initialize(max);
+	}
+
+	@Override
+	public void setMaximum(long max) {
+		monitorComponent.setMaximum(max);
+	}
+
+	@Override
+	public long getMaximum() {
+		return monitorComponent.getMaximum();
+	}
+
+	@Override
+	public void setIndeterminate(final boolean indeterminate) {
+		monitorComponent.setIndeterminate(indeterminate);
+	}
+
+	@Override
+	public boolean isIndeterminate() {
+		return monitorComponent.isIndeterminate();
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return monitorComponent.isCancelled();
+	}
+
 	@Override
 	public synchronized void cancel() {
 		if (monitorComponent.isCancelled()) {
@@ -421,4 +409,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	public void removeCancelledListener(CancelledListener listener) {
 		monitorComponent.removeCancelledListener(listener);
 	}
+
+//==================================================================================================
+// End TaskMonitor Methods
+//==================================================================================================
 }

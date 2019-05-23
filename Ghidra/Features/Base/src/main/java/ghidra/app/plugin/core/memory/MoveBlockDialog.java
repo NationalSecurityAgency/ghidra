@@ -29,9 +29,9 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
-import ghidra.util.task.BackgroundThreadTaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskBuilder;
 
 /**
  * Dialog that uses a model to validate the fields for moving a block of memory.
@@ -49,15 +49,6 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 	private MoveBlockModel model;
 	private PluginTool tool;
 
-	/**
-	 * Constructor for MoveBlockDialog.
-	 * 
-	 * @param dialog
-	 * @param title
-	 * @param modal
-	 * @param includeStatus
-	 * @param includeButtons
-	 */
 	MoveBlockDialog(MoveBlockModel model, PluginTool tool) {
 		super("Move Memory Block");
 		this.model = model;
@@ -69,33 +60,22 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		addCancelButton();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#moveBlockCompleted(boolean,
-	 *      java.lang.String)
-	 */
 	@Override
-	public void moveBlockCompleted(final MoveBlockTask cmd) {
-		Runnable r = () -> {
-			if (cmd.getStatus()) {
+	public void moveBlockCompleted(MoveBlockTask task) {
+
+		setCursor(Cursor.getDefaultCursor());
+		boolean success = task.wasSuccessful();
+		setOkEnabled(success);
+		setStatusText(task.getStatusMessage());
+
+		Swing.runLater(() -> {
+			if (success) {
 				close();
 				model.dispose();
 			}
-			else {
-				setCursor(Cursor.getDefaultCursor());
-				setOkEnabled(false);
-				if (cmd.isCancelled()) {
-					tool.setStatusInfo(getStatusText());
-					close();
-					model.dispose();
-				}
-			}
-		};
-		SwingUtilities.invokeLater(r);
+		});
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#stateChanged()
-	 */
 	@Override
 	public void stateChanged() {
 		setOkEnabled(false);
@@ -138,18 +118,20 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		setOkEnabled(false);
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-		BackgroundThreadTaskLauncher launcher = new BackgroundThreadTaskLauncher(model.makeTask());
-		launcher.run(new TaskMonitorAdapter() {
-			@Override
-			public void setMessage(String message) {
-				setStatusText(message);
-			}
-		});
+		MoveBlockTask task = model.makeTask();
+
+		//@formatter:off		
+		TaskBuilder.withTask(task)
+			.setParent(this.getComponent())
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
 	@Override
 	protected void cancelCallback() {
 		close();
+		model.dispose();
 	}
 
 	private JPanel buildMainPanel() {

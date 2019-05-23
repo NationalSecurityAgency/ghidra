@@ -156,6 +156,11 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	@Override
+	public synchronized String getMessage() {
+		return progressMessage;
+	}
+
+	@Override
 	public synchronized void setProgress(long value) {
 		if (progress == value) {
 			return;

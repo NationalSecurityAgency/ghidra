@@ -28,6 +28,21 @@ public class TaskDialogTest extends AbstractTaskTest {
 	}
 
 	@Test
+	public void testModalDialogWithoutDependencyInjection() throws Exception {
+
+		//
+		// A version of the test to use all of the real dialog internals of the
+		// TaskRunner, which are usually replaced with test versions.
+		//
+
+		FastModalTask task = new FastModalTask();
+
+		new TaskLauncher(task);
+
+		waitForTasks(); // make sure we don't timeout
+	}
+
+	@Test
 	public void testModalDialog_FastTask_NoDialog() throws Exception {
 
 		FastModalTask task = new FastModalTask();
@@ -62,7 +77,7 @@ public class TaskDialogTest extends AbstractTaskTest {
 		waitForTask();
 
 		assertFalse(dialogSpy.wasShown());
-		assertSwingThreadFinishedBeforeTask();
+		assertNoDialogShown();
 	}
 
 	@Test
@@ -111,5 +126,4 @@ public class TaskDialogTest extends AbstractTaskTest {
 
 		assertFalse(dialogSpy.isCancelEnabled());
 	}
-
 }

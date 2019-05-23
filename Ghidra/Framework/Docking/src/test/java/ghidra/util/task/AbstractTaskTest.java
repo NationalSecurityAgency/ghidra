@@ -64,6 +64,14 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		}
 	}
 
+	protected void assertNoDialogShown() {
+		if (dialogSpy == null) {
+			return; // not shown
+		}
+
+		assertFalse(dialogSpy.wasShown());
+	}
+
 	protected void waitForTask() throws Exception {
 		threadsFinished.await(2, TimeUnit.SECONDS);
 	}
@@ -97,16 +105,16 @@ public class AbstractTaskTest extends AbstractDockingTest {
 
 			return new TaskRunner(task, parent, delay, dialogWidth) {
 				@Override
-				protected TaskDialog buildTaskDialog(Component comp) {
-					dialogSpy = new TaskDialogSpy(task);
+				protected TaskDialog buildTaskDialog(Component comp, TaskMonitor monitor) {
+					dialogSpy = new TaskDialogSpy(task) {
+						@Override
+						public synchronized boolean isCompleted() {
+							return super.isCompleted() || isFinished();
+						}
+					};
 					return dialogSpy;
 				}
 			};
-		}
-
-		@Override
-		protected int getSwingTimeoutInSeconds() {
-			return 1; // speed-up for tests
 		}
 
 		@Override

@@ -140,6 +140,11 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return delegate.getMessage();
+	}
+
+	@Override
 	public void setProgress(long value) {
 		delegate.setProgress(value);
 	}
@@ -162,6 +167,11 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	@Override
 	public void setIndeterminate(boolean indeterminate) {
 		delegate.setIndeterminate(indeterminate);
+	}
+
+	@Override
+	public boolean isIndeterminate() {
+		return delegate.isIndeterminate();
 	}
 
 	@Override

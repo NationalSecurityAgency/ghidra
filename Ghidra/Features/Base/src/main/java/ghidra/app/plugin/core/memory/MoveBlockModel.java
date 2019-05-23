@@ -17,15 +17,10 @@ package ghidra.app.plugin.core.memory;
 
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.framework.model.*;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.task.Task;
 
 /**
  * Model for moving a memory block; this class does validation of the new start
@@ -172,11 +167,11 @@ class MoveBlockModel implements DomainObjectListener {
 	}
 
 	/**
-	 * Start the task that will move the block.
+	 * Create the task that will move the block
 	 * 
-	 * @param delay number of ms to delay until the progress dialog is displayed
+	 * @return the new task
 	 */
-	Task makeTask() {
+	MoveBlockTask makeTask() {
 		return new MoveBlockTask(program, block.getStart(), newStartAddr, listener);
 	}
 
