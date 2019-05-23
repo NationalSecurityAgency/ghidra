@@ -43,7 +43,7 @@ import utility.application.ApplicationLayout;
 public class GhidraProjectCreatorPreferencePage extends PreferencePage
 implements IWorkbenchPreferencePage {
 
-	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("9.0");
+	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("9.1");
 
 	private Table table;
 	private Button addButton;
