@@ -23,6 +23,16 @@ import ghidra.util.exception.CancelledException;
  * An implementation of the {@link TaskMonitor} interface that simply wraps a delegate task
  * monitor.   This is useful for classes that wish to wrap a task monitor, changing behavior
  * as needed by overriding a subset of methods.
+ * 
+ * <p><b>Synchronization Policy</b>:<br>
+ * We wish for this class to be performant.    Thus, we do not synchronize the methods of this
+ * class. The {@link #setDelegate(TaskMonitor)} is synchronized to ensure thread visibility
+ * for the state of the delegate monitor. 
+ * 
+ * <p>When calling {@link #setDelegate(TaskMonitor)} there is the potential for the values being
+ * transferred to become inconsistent with any new values being set.  We have decided that this
+ * does not much matter for the overall progress or the messages on the monitor.  However, most
+ * of the other setter methods could lead to bad behavior if they are inconsistent.  
  */
 public class WrappingTaskMonitor implements TaskMonitor {
 
@@ -45,21 +55,30 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	 * 
 	 * @param newDelegate the new delegate
 	 */
-	public void setDelegate(TaskMonitor newDelegate) {
-		newDelegate.setMaximum(delegate.getMaximum());
-		newDelegate.setProgress(delegate.getProgress());
-		newDelegate.setMessage(delegate.getMessage());
-		newDelegate.setIndeterminate(delegate.isIndeterminate());
+	public synchronized void setDelegate(TaskMonitor newDelegate) {
+
+		// if the existing monitor has already been cancelled, then do not apply the state
+		if (delegate.isCancelled()) {
+			newDelegate.cancel();
+			return;
+		}
+
 		for (CancelledListener l : listeners) {
 			newDelegate.addCancelledListener(l);
 			delegate.removeCancelledListener(l);
 		}
 
+		newDelegate.setMaximum(delegate.getMaximum());
+		newDelegate.setProgress(delegate.getProgress());
+		newDelegate.setMessage(delegate.getMessage());
+		newDelegate.setIndeterminate(delegate.isIndeterminate());
+		newDelegate.setCancelEnabled(delegate.isCancelEnabled());
+
 		this.delegate = newDelegate;
 	}
 
 	@Override
-	public boolean isCancelled() {
+	public synchronized boolean isCancelled() {
 		return delegate.isCancelled();
 	}
 
@@ -89,7 +108,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void setMaximum(long max) {
+	public synchronized void setMaximum(long max) {
 		delegate.setMaximum(max);
 	}
 
@@ -99,7 +118,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void setIndeterminate(boolean indeterminate) {
+	public synchronized void setIndeterminate(boolean indeterminate) {
 		delegate.setIndeterminate(indeterminate);
 	}
 
@@ -124,24 +143,24 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void cancel() {
+	public synchronized void cancel() {
 		delegate.cancel();
 	}
 
 	@Override
-	public void addCancelledListener(CancelledListener listener) {
+	public synchronized void addCancelledListener(CancelledListener listener) {
 		listeners.add(listener);
 		delegate.addCancelledListener(listener);
 	}
 
 	@Override
-	public void removeCancelledListener(CancelledListener listener) {
+	public synchronized void removeCancelledListener(CancelledListener listener) {
 		listeners.remove(listener);
 		delegate.removeCancelledListener(listener);
 	}
 
 	@Override
-	public void setCancelEnabled(boolean enable) {
+	public synchronized void setCancelEnabled(boolean enable) {
 		delegate.setCancelEnabled(enable);
 	}
 
@@ -151,7 +170,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public synchronized void clearCanceled() {
 		delegate.clearCanceled();
 	}
 }

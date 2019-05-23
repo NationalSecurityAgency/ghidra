@@ -15,7 +15,7 @@
  */
 package ghidra.util.task;
 
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -23,65 +23,72 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * A task monitor that tracks all monitor state, but is not attached to any UI component
+ * 
+ * <p><b>Synchronization Policy</b>:<br>
+ * We wish for this class to be performant.    Thus, we do not synchronize the methods of this
+ * class, nor do we make the values thread visible via <code>volatile</code> or by any of 
+ * the Java concurrent structures (e.g., {@link AtomicBoolean}).   In order to keep the values of
+ * this class's fields update-to-date, we have chosen to synchronize the <code>getter</code> 
+ * methods.   Thus, when the fields are read, the most recent version will be used.
  */
 class BasicTaskMonitor implements TaskMonitor {
 
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
 
-	private AtomicReference<String> message = new AtomicReference<>();
-	private AtomicLong progress = new AtomicLong();
-	private AtomicLong maxProgress = new AtomicLong();
+	private String message;
+	private long progress;
+	private long maxProgress;
 
-	private AtomicBoolean cancelEnabled = new AtomicBoolean(true);
-	private AtomicBoolean isCancelled = new AtomicBoolean(false);
-	private AtomicBoolean isIndeterminate = new AtomicBoolean(false);
+	private boolean cancelEnabled = true;
+	private boolean isCancelled;
+	private boolean isIndeterminate;
 
 	@Override
-	public void addCancelledListener(CancelledListener mcl) {
-		listeners.add(mcl);
+	public void addCancelledListener(CancelledListener l) {
+		listeners.add(l);
 	}
 
 	@Override
-	public void removeCancelledListener(CancelledListener mcl) {
-		listeners.remove(mcl);
+	public void removeCancelledListener(CancelledListener l) {
+		listeners.remove(l);
 	}
 
 	@Override
 	public void incrementProgress(long incrementAmount) {
-		setProgress(progress.get() + incrementAmount);
+		setProgress(progress + incrementAmount);
 	}
 
 	@Override
 	public long getProgress() {
-		return progress.get();
+		return progress;
 	}
 
 	@Override
 	public boolean isCancelled() {
-		return isCancelled.get();
+		return isCancelled;
 	}
 
 	@Override
 	public void checkCanceled() throws CancelledException {
-		if (isCancelled.get()) {
+		if (isCancelled) {
 			throw new CancelledException();
 		}
 	}
 
 	@Override
 	public void setMessage(String message) {
-		this.message.set(message);
+		this.message = message;
 	}
 
 	@Override
 	public String getMessage() {
-		return message.get();
+		return message;
 	}
 
 	@Override
 	public void setProgress(long value) {
-		progress.set(value);
+		progress = value;
 	}
 
 	@Override
@@ -91,31 +98,32 @@ class BasicTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void setMaximum(long max) {
-		this.maxProgress.set(max);
-		if (progress.get() > max) {
-			progress.set(max);
+	public synchronized void setMaximum(long max) {
+		this.maxProgress = max;
+		if (progress > max) {
+			progress = max;
 		}
 	}
 
 	@Override
 	public void setIndeterminate(boolean indeterminate) {
-		isIndeterminate.set(indeterminate);
+		isIndeterminate = indeterminate;
 	}
 
 	@Override
 	public void setCancelEnabled(boolean enable) {
-		cancelEnabled.set(enable);
+		cancelEnabled = enable;
 	}
 
 	@Override
 	public boolean isCancelEnabled() {
-		return cancelEnabled.get();
+		return cancelEnabled;
 	}
 
 	@Override
 	public void cancel() {
-		boolean wasCancelled = isCancelled.getAndSet(true);
+		boolean wasCancelled = isCancelled;
+		isCancelled = true;
 		if (!wasCancelled) {
 			notifyChangeListeners();
 		}
@@ -123,17 +131,17 @@ class BasicTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void clearCanceled() {
-		isCancelled.set(false);
+		isCancelled = false;
 	}
 
 	@Override
 	public long getMaximum() {
-		return maxProgress.get();
+		return maxProgress;
 	}
 
 	@Override
 	public boolean isIndeterminate() {
-		return isIndeterminate.get();
+		return isIndeterminate;
 	}
 
 	@Override
