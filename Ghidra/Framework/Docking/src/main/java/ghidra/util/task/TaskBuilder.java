@@ -255,6 +255,22 @@ public class TaskBuilder {
 		new TaskLauncher(t, parent, delay, dialogWidth);
 	}
 
+	/**
+	 * Runs the task in a background thread with the given monitor that cannot be null.  This
+	 * is a special case for clients that already have a task monitor widget in their UI and 
+	 * they wish to let it show the progress of the given task while not blocking the Swing
+	 * thread.
+	 * 
+	 * @param monitor the task monitor; may not be null
+	 */
+	public void launchInBackground(TaskMonitor monitor) {
+		// validate(); // not needed since we are in the background
+		Objects.requireNonNull(monitor);
+		BackgroundThreadTaskLauncher launcher =
+			new BackgroundThreadTaskLauncher(new TaskBuilderTask(false));
+		launcher.run(monitor);
+	}
+
 	private void validate() {
 		if (title == null) {
 			throw new NullPointerException("Task title cannot be null");

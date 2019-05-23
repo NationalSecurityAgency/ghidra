@@ -30,15 +30,15 @@ import ghidra.util.TaskUtilities;
  * 
  * <p>See {@link TaskLauncher}.
  */
-public class BackgroundThreadTaskLauncher {
+class BackgroundThreadTaskLauncher {
 
 	private Task task;
 
-	public BackgroundThreadTaskLauncher(Task task) {
+	BackgroundThreadTaskLauncher(Task task) {
 		this.task = task;
 	}
 
-	public void run(TaskMonitor monitor) {
+	void run(TaskMonitor monitor) {
 		// add the task here, so we can track it before it is actually started by the thread
 		TaskUtilities.addTrackedTask(task, monitor);
 
@@ -49,5 +49,6 @@ public class BackgroundThreadTaskLauncher {
 			Thread.currentThread().setName(name);
 			task.monitoredRun(monitor);
 		});
+
 	}
 }

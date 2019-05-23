@@ -221,8 +221,8 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 		reloadDataButton.setVisible(false);
 		Task task = new LoadDataTask();
 		task.addTaskListener(this);
-		BackgroundThreadTaskLauncher launcher = new BackgroundThreadTaskLauncher(task);
-		launcher.run(taskMonitorComponent);
+
+		TaskBuilder.withTask(task).launchInBackground(taskMonitorComponent);
 	}
 
 	@Override

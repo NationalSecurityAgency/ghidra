@@ -32,8 +32,9 @@ public class MoveBlockTask extends ProgramTask {
 	private Address currentStart;
 	private Address newStart;
 	private MoveBlockListener listener;
-	private boolean wasCancelled;
-	private boolean status;
+	private boolean cancelled;
+	private String statusMessage;
+	private boolean success;
 
 	/**
 	 * Creates a background command for moving memory blocks. The memory block
@@ -62,58 +63,53 @@ public class MoveBlockTask extends ProgramTask {
 		Memory mem = program.getMemory();
 		MemoryBlock block = mem.getBlock(currentStart);
 		monitor.setMessage("Moving Memory Block ...");
-		String msg = "";
+		statusMessage = "";
 		Throwable cause = null;
 		try {
 			mem.moveBlock(block, newStart, monitor);
 			if (monitor.isCancelled()) {
-				wasCancelled = true;
+				cancelled = true;
 			}
 			else {
-				status = true;
+				success = true;
 				listener.moveBlockCompleted(this);
 				return;
 			}
 		}
 		catch (OutOfMemoryError e) {
-			msg = "Insufficient memory to complete operation";
+			statusMessage = "Insufficient memory to complete operation";
 			cause = e;
 		}
-		catch (NotFoundException exc) {
-			msg = "Memory block not found";
-			cause = exc;
+		catch (NotFoundException e) {
+			statusMessage = "Memory block not found";
+			cause = e;
 		}
-		catch (MemoryConflictException exc) {
-			msg = exc.getMessage();
-			cause = exc;
-		}
-		catch (MemoryBlockException exc) {
-			msg = exc.getMessage();
-			cause = exc;
-		}
-		catch (IllegalArgumentException e) {
-			msg = e.getMessage();
+		catch (MemoryConflictException | MemoryBlockException | IllegalArgumentException e) {
+			statusMessage = e.getMessage();
 			cause = e;
 		}
 		catch (Throwable t) {
 			Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
-			msg = t.getMessage();
-			if (msg == null) {
-				msg = t.toString();
+			statusMessage = t.getMessage();
+			if (statusMessage == null) {
+				statusMessage = t.toString();
 			}
 			cause = t;
 		}
 
-		monitor.setMessage(msg);
 		listener.moveBlockCompleted(this);
-		throw new RollbackException(msg, cause);
+		throw new RollbackException(statusMessage, cause);
 	}
 
 	public boolean isCancelled() {
-		return wasCancelled;
+		return cancelled;
 	}
 
-	public boolean getStatus() {
-		return status;
+	public boolean wasSuccessful() {
+		return success;
+	}
+
+	public String getStatusMessage() {
+		return statusMessage;
 	}
 }
