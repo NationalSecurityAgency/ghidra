@@ -23,7 +23,7 @@ package ghidra.framework;
  *                          name         version        release name
  * </pre>
  * Application names will be converted to all lowercase and application release names will be
- * converted to all uppercase.
+ * converted to all uppercase.  Both will have spaces removed from their names.
  * <p>
  * Examples:
  * <li>ghidra-7.4_DEV
@@ -44,14 +44,16 @@ public class ApplicationIdentifier {
 	 */
 	public ApplicationIdentifier(ApplicationProperties applicationProperties)
 			throws IllegalArgumentException {
-		applicationName = applicationProperties.getApplicationName().toLowerCase();
+		applicationName =
+			applicationProperties.getApplicationName().replaceAll("\\s", "").toLowerCase();
 		if (applicationName.isEmpty()) {
 			throw new IllegalArgumentException("Application name is undefined.");
 		}
 		
 		applicationVersion = new ApplicationVersion(applicationProperties.getApplicationVersion());
 
-		applicationReleaseName = applicationProperties.getApplicationReleaseName().toUpperCase();
+		applicationReleaseName =
+			applicationProperties.getApplicationReleaseName().replaceAll("\\s", "").toUpperCase();
 		if (applicationReleaseName.isEmpty()) {
 			throw new IllegalArgumentException("Application release name is undefined.");
 		}
@@ -144,9 +146,9 @@ public class ApplicationIdentifier {
 
 		String[] identifierParts = identifier.split("_");
 		if (identifierParts.length >= 3) {
-			applicationName = identifierParts[0].toLowerCase();
+			applicationName = identifierParts[0].replaceAll("\\s", "").toLowerCase();
 			applicationVersion = new ApplicationVersion(identifierParts[1]);
-			applicationReleaseName = identifierParts[2].toUpperCase();
+			applicationReleaseName = identifierParts[2].replaceAll("\\s", "").toUpperCase();
 			// Ignore any parts after the release name...they are not part of the identifier
 		}
 		else {

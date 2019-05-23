@@ -59,7 +59,7 @@ public class ApplicationIdentifierTest extends AbstractGenericTest {
 
 	@Test
 	public void testApplicationIdentifierEquals() {
-		ApplicationIdentifier id1 = new ApplicationIdentifier("ghidra_9.0_public");
+		ApplicationIdentifier id1 = new ApplicationIdentifier("ghi dra_9.0_pub lic");
 		ApplicationIdentifier id2 = new ApplicationIdentifier("Ghidra_9.0.0_PUBLIC");
 		assertEquals(id1, id2);
 

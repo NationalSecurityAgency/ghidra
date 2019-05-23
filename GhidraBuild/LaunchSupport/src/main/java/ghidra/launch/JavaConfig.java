@@ -352,10 +352,11 @@ public class JavaConfig {
 		}
 
 		// Get the java home save file from user home directory (it might not exist yet).
-		File userSettingsParentDir = new File(userHomeDir, "." + applicationName.toLowerCase());
+		File userSettingsParentDir =
+			new File(userHomeDir, "." + applicationName.replaceAll("\\s", "").toLowerCase());
 
 		String userSettingsDirName = userSettingsParentDir.getName() + "_" + applicationVersion +
-			"_" + applicationReleaseName.toUpperCase();
+			"_" + applicationReleaseName.replaceAll("\\s", "").toUpperCase();
 
 		if (isDev) {
 			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
