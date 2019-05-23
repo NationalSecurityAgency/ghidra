@@ -16,12 +16,13 @@
 package ghidra.util.task;
 
 import java.awt.Component;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 
 import generic.concurrent.GThreadPool;
 import generic.util.WindowUtilities;
-import ghidra.util.Swing;
-import ghidra.util.TaskUtilities;
+import ghidra.util.*;
 
 /**
  * Helper class to launch the given task in a background thread, showing a task dialog if 
@@ -29,20 +30,23 @@ import ghidra.util.TaskUtilities;
  */
 class TaskRunner {
 
-	protected Task task;
+	private Task task;
 	private Component parent;
 	private int delayMs;
 	private int dialogWidth;
-	private TaskDialog taskDialog;
+
 	private Thread taskThread;
 	private CancelledListener monitorChangeListener = () -> {
 		if (task.isInterruptible()) {
 			taskThread.interrupt();
 		}
 		if (task.isForgettable()) {
-			taskDialog.close(); // close the dialog and forget about the task
+			closeDialog(); // close the dialog and forget about the task
 		}
 	};
+
+	private AtomicReference<TaskDialog> taskDialog = new AtomicReference<>();
+	private CountDownLatch finished = new CountDownLatch(1);
 
 	TaskRunner(Task task, Component parent, int delayMs, int dialogWidth) {
 		this.task = task;
@@ -53,17 +57,35 @@ class TaskRunner {
 
 	void run() {
 
-		// note: we need to be on the Swing thread to create our UI widgets
-		Swing.assertThisIsTheSwingThread(
-			"The Task runner is required to be run from the Swing thread");
+		BasicTaskMonitor internalMonitor = new BasicTaskMonitor();
+		WrappingTaskMonitor monitor = new WrappingTaskMonitor(internalMonitor);
+		startBackgroundThread(monitor);
 
-		this.taskDialog = buildTaskDialog(parent);
-
-		startBackgroundThread(taskDialog);
-
-		taskDialog.show(Math.max(delayMs, 0));
+		showDialogIfSwingOrShowLaterAndWait(monitor);
 	}
 
+	private void showDialogIfSwingOrShowLaterAndWait(WrappingTaskMonitor monitor) {
+
+		Swing.runIfSwingOrRunLater(() -> showTaskDialog(monitor));
+		waitForModalIfNotSwing();
+	}
+
+	private void waitForModalIfNotSwing() {
+		if (Swing.isSwingThread() || !task.isModal()) {
+			// if this is the Swing thread, then the work is already done at this point; otherwise,
+			// the task is not modal, so do not block
+			return;
+		}
+
+		try {
+			finished.await();
+		}
+		catch (InterruptedException e) {
+			Msg.debug(this, "Task Launcher unexpectedly interrupted waiting for task thread", e);
+		}
+	}
+
+	// protected to allow for dependency injection
 	protected TaskDialog buildTaskDialog(Component comp) {
 
 		//
@@ -71,16 +93,30 @@ class TaskRunner {
 		// on the Swing thread to prevent exceptions while painting (as seen when using the
 		// Nimbus Look and Feel).
 		//
-		taskDialog = createTaskDialog(comp);
-		taskDialog.setMinimumSize(dialogWidth, 0);
+		TaskDialog dialog = createTaskDialog(comp);
+		dialog.setMinimumSize(dialogWidth, 0);
 
 		if (task.isInterruptible() || task.isForgettable()) {
-			taskDialog.addCancelledListener(monitorChangeListener);
+			dialog.addCancelledListener(monitorChangeListener);
 		}
 
-		taskDialog.setStatusJustification(task.getStatusTextAlignment());
+		dialog.setStatusJustification(task.getStatusTextAlignment());
 
-		return taskDialog;
+		return dialog;
+	}
+
+	private void showTaskDialog(WrappingTaskMonitor monitor) {
+
+		Swing.assertThisIsTheSwingThread("Must be on the Swing thread build the Task Dialog");
+
+		if (finished.getCount() == 0) {
+			return;
+		}
+
+		TaskDialog dialog = buildTaskDialog(parent);
+		taskDialog.set(dialog);
+		monitor.setDelegate(dialog); // initialize the dialog to the current state of the monitor
+		dialog.show(Math.max(delayMs, 0));
 	}
 
 	private void startBackgroundThread(TaskMonitor monitor) {
@@ -93,9 +129,29 @@ class TaskRunner {
 		Executor executor = pool.getExecutor();
 		executor.execute(() -> {
 			Thread.currentThread().setName(name);
-			task.monitoredRun(monitor);
-			taskDialog.taskProcessed();
+
+			try {
+				task.monitoredRun(monitor);
+			}
+			finally {
+				taskFinished();
+			}
 		});
+	}
+
+	private void taskFinished() {
+		finished.countDown();
+		TaskDialog dialog = taskDialog.get();
+		if (dialog != null) {
+			dialog.taskProcessed();
+		}
+	}
+
+	private void closeDialog() {
+		TaskDialog dialog = taskDialog.get();
+		if (dialog != null) {
+			dialog.close();
+		}
 	}
 
 	private TaskDialog createTaskDialog(Component comp) {

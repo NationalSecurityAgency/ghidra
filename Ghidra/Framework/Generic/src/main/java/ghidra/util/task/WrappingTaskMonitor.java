@@ -15,6 +15,8 @@
  */
 package ghidra.util.task;
 
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -24,7 +26,9 @@ import ghidra.util.exception.CancelledException;
  */
 public class WrappingTaskMonitor implements TaskMonitor {
 
-	protected final TaskMonitor delegate;
+	private WeakSet<CancelledListener> listeners =
+		WeakDataStructureFactory.createCopyOnReadWeakSet();
+	protected TaskMonitor delegate;
 
 	/**
 	 * Constructor
@@ -33,6 +37,25 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	 */
 	public WrappingTaskMonitor(TaskMonitor delegate) {
 		this.delegate = delegate;
+	}
+
+	/**
+	 * Sets the delegate of this wrapper to be the new value.  The new delegate will be 
+	 * initialized with the current values of the existing delegate.
+	 * 
+	 * @param newDelegate the new delegate
+	 */
+	public void setDelegate(TaskMonitor newDelegate) {
+		newDelegate.setMaximum(delegate.getMaximum());
+		newDelegate.setProgress(delegate.getProgress());
+		newDelegate.setMessage(delegate.getMessage());
+		newDelegate.setIndeterminate(delegate.isIndeterminate());
+		for (CancelledListener l : listeners) {
+			newDelegate.addCancelledListener(l);
+			delegate.removeCancelledListener(l);
+		}
+
+		this.delegate = newDelegate;
 	}
 
 	@Override
@@ -48,6 +71,11 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	@Override
 	public void setMessage(String message) {
 		delegate.setMessage(message);
+	}
+
+	@Override
+	public String getMessage() {
+		return delegate.getMessage();
 	}
 
 	@Override
@@ -76,6 +104,11 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return delegate.isIndeterminate();
+	}
+
+	@Override
 	public void checkCanceled() throws CancelledException {
 		delegate.checkCanceled();
 	}
@@ -97,11 +130,13 @@ public class WrappingTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void addCancelledListener(CancelledListener listener) {
+		listeners.add(listener);
 		delegate.addCancelledListener(listener);
 	}
 
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
+		listeners.remove(listener);
 		delegate.removeCancelledListener(listener);
 	}
 

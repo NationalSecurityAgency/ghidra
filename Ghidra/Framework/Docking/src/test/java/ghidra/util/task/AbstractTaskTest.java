@@ -64,6 +64,14 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		}
 	}
 
+	protected void assertNoDialogShown() {
+		if (dialogSpy == null) {
+			return; // not shown
+		}
+
+		assertFalse(dialogSpy.wasShown());
+	}
+
 	protected void waitForTask() throws Exception {
 		threadsFinished.await(2, TimeUnit.SECONDS);
 	}
@@ -102,11 +110,6 @@ public class AbstractTaskTest extends AbstractDockingTest {
 					return dialogSpy;
 				}
 			};
-		}
-
-		@Override
-		protected int getSwingTimeoutInSeconds() {
-			return 1; // speed-up for tests
 		}
 
 		@Override

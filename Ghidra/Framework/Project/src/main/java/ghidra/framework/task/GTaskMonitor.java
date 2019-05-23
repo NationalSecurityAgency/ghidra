@@ -103,6 +103,11 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return indeterminate;
+	}
+
+	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled) {
 			setMessage("CANCELLED!");
@@ -163,6 +168,7 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 		return showProgressValue;
 	}
 
+	@Override
 	public String getMessage() {
 		return message;
 	}

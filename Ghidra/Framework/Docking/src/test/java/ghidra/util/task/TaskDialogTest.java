@@ -62,7 +62,7 @@ public class TaskDialogTest extends AbstractTaskTest {
 		waitForTask();
 
 		assertFalse(dialogSpy.wasShown());
-		assertSwingThreadFinishedBeforeTask();
+		assertNoDialogShown();
 	}
 
 	@Test

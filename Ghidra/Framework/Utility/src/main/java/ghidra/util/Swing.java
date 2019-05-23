@@ -33,7 +33,7 @@ public class Swing {
 
 	private static final String SWING_TIMEOUT_SECONDS_PROPERTY =
 		Swing.class.getName().toLowerCase() + ".timeout.seconds";
-	private static final int SWING_TIMEOUT_SECONDS_DEFAULT_VALUE = 10;
+	private static final int SWING_TIMEOUT_SECONDS_DEFAULT_VALUE = 20;
 
 	private static int loadTimeout() {
 		String timeoutString = System.getProperty(SWING_TIMEOUT_SECONDS_PROPERTY,
@@ -68,6 +68,14 @@ public class Swing {
 
 		// Note: just calling this method may trigger the AWT thread to get created
 		return SwingUtilities.isEventDispatchThread();
+	}
+
+	/**
+	 * A convenience method for {@link #isEventDispatchThread()}
+	 * @return true if this is the Swing thread
+	 */
+	public static boolean isSwingThread() {
+		return isEventDispatchThread();
 	}
 
 	/**
