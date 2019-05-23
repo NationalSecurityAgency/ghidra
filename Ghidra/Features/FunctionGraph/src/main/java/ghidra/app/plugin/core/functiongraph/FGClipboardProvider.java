@@ -86,8 +86,7 @@ public class FGClipboardProvider extends CodeBrowserClipboardProvider {
 			if (msg == null) {
 				msg = e.toString();
 			}
-			tool.setStatusInfo("Copy failed: " + msg);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Copy failed: " + msg, true);
 		}
 
 		return null;

@@ -173,8 +173,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				return pasteByteString(string);
 			}
 
-			tool.setStatusInfo("Paste failed: unsupported data type");
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: unsupported data type", true);
 		}
 		catch (Exception e) {
 			String msg = e.getMessage();
@@ -182,8 +181,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				msg = e.toString();
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
-			tool.setStatusInfo("Paste failed: " + msg);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + msg, true);
 		}
 		return false;
 	}
@@ -405,8 +403,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 			String message = "Copy failed: " + msg;
 			Msg.error(this, message, e);
-			tool.setStatusInfo(message);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo(message, true);
 		}
 
 		return null;
@@ -440,8 +437,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			if (msg == null) {
 				msg = e.toString();
 			}
-			tool.setStatusInfo("Paste failed: " + msg);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + msg, true);
 		}
 
 		return false;

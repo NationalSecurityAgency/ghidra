@@ -376,6 +376,13 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
+	 * A convenience method to make an attention-grabbing noise to the user
+	 */
+	public void beep() {
+		DockingWindowManager.beep();
+	}
+
+	/**
 	 * Sets the provider that should get the default focus when no component has focus.
 	 * @param provider the provider that should get the default focus when no component has focus.
 	 */
@@ -1194,7 +1201,7 @@ public abstract class PluginTool extends AbstractDockingTool
 				taskMgr.stop(false);
 			}
 			else {
-				getToolFrame().getToolkit().beep();
+				beep();
 				Msg.showInfo(getClass(), getToolFrame(), "Tool Busy",
 					"You must stop all background tasks before exiting.");
 				return false;
