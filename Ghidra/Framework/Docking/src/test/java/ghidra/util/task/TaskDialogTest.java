@@ -111,5 +111,4 @@ public class TaskDialogTest extends AbstractTaskTest {
 
 		assertFalse(dialogSpy.isCancelEnabled());
 	}
-
 }

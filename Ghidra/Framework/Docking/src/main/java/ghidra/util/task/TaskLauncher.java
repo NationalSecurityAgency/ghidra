@@ -28,7 +28,6 @@ import ghidra.util.Swing;
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
  * 
- * <a name="modal_usage"></a>
  * <p><b><a name="modal_usage">Modal Usage</a></b><br>
  * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
@@ -237,7 +236,7 @@ public class TaskLauncher {
 	 * @throws IllegalStateException if the given thread is the Swing thread
 	 */
 	protected void runInThisBackgroundThread(Task task) {
-		if (Swing.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			throw new IllegalStateException("Must not call this method from the Swing thread");
 		}
 

@@ -422,7 +422,7 @@ public class SystemUtilities {
 	 * @return  true if this is the event dispatch thread -OR- is in headless mode.
 	 */
 	public static boolean isEventDispatchThread() {
-		return Swing.isEventDispatchThread();
+		return Swing.isSwingThread();
 	}
 
 	/**

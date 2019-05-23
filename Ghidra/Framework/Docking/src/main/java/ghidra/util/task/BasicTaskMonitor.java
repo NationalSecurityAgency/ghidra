@@ -28,8 +28,9 @@ import ghidra.util.exception.CancelledException;
  * We wish for this class to be performant.    Thus, we do not synchronize the methods of this
  * class, nor do we make the values thread visible via <code>volatile</code> or by any of 
  * the Java concurrent structures (e.g., {@link AtomicBoolean}).   In order to keep the values of
- * this class's fields update-to-date, we have chosen to synchronize the <code>getter</code> 
- * methods.   Thus, when the fields are read, the most recent version will be used.
+ * this class's fields update-to-date, we have chosen to synchronize the package-level client of
+ * this class.  <b>If this class is ever made public, then most of the methods herein need to 
+ * be synchronized to prevent race conditions and to provide visibility.
  */
 class BasicTaskMonitor implements TaskMonitor {
 
@@ -98,7 +99,7 @@ class BasicTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public synchronized void setMaximum(long max) {
+	public void setMaximum(long max) {
 		this.maxProgress = max;
 		if (progress > max) {
 			progress = max;
@@ -125,7 +126,7 @@ class BasicTaskMonitor implements TaskMonitor {
 		boolean wasCancelled = isCancelled;
 		isCancelled = true;
 		if (!wasCancelled) {
-			notifyChangeListeners();
+			notifyCancelledListeners();
 		}
 	}
 
@@ -149,7 +150,7 @@ class BasicTaskMonitor implements TaskMonitor {
 		// stub
 	}
 
-	private synchronized void notifyChangeListeners() {
+	private void notifyCancelledListeners() {
 		for (CancelledListener listener : listeners) {
 			listener.cancelled();
 		}

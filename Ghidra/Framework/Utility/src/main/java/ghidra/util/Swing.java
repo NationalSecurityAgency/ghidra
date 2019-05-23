@@ -61,21 +61,13 @@ public class Swing {
 	 *
 	 * @return  true if this is the event dispatch thread -OR- is in headless mode.
 	 */
-	public static boolean isEventDispatchThread() {
+	public static boolean isSwingThread() {
 		if (isInHeadlessMode()) {
 			return true;
 		}
 
 		// Note: just calling this method may trigger the AWT thread to get created
 		return SwingUtilities.isEventDispatchThread();
-	}
-
-	/**
-	 * A convenience method for {@link #isEventDispatchThread()}
-	 * @return true if this is the Swing thread
-	 */
-	public static boolean isSwingThread() {
-		return isEventDispatchThread();
 	}
 
 	/**
@@ -102,7 +94,7 @@ public class Swing {
 			return; // squash during production mode
 		}
 
-		if (!isEventDispatchThread()) {
+		if (!isSwingThread()) {
 			Throwable t =
 				ReflectionUtilities.filterJavaThrowable(new AssertException(errorMessage));
 			Msg.error(SystemUtilities.class, errorMessage, t);

@@ -57,7 +57,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	/** If not null, then the value of the string has yet to be rendered */
 	private AtomicReference<String> newMessage = new AtomicReference<>();
 	private SwingUpdateManager messageUpdater =
-		new SwingUpdateManager(() -> setStatusText(newMessage.getAndSet(null)));
+		new SwingUpdateManager(100, 250, () -> setStatusText(newMessage.getAndSet(null)));
 
 	/** 
 	 * Constructor
