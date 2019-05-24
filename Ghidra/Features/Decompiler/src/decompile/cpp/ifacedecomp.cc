@@ -129,6 +129,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcVolatile(),"volatile");
   status->registerCom(new IfcPreferSplit(),"prefersplit");
   status->registerCom(new IfcStructureBlocks(),"structure","blocks");
+  status->registerCom(new IfcAnalyzeRange(), "analyze","range");
 #ifdef CPUI_RULECOMPILE
   status->registerCom(new IfcParseRule(),"parse","rule");
   status->registerCom(new IfcExperimentalRules(),"experimental","rules");
@@ -2473,6 +2474,28 @@ void IfcCountPcode::execute(istream &s)
   }
   *status->optr << "Count - pcode = " << dec << count << endl;
 }
+
+void IfcAnalyzeRange::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("Image not loaded");
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
+  Varnode *vn = iface_read_varnode(dcp,s);
+  vector<Varnode *> sinks;
+  sinks.push_back(vn);
+  Varnode *stackReg = dcp->fd->findSpacebaseInput(dcp->conf->getStackSpace());
+  ValueSetSolver vsSolver;
+  vsSolver.establishValueSets(sinks, stackReg);
+  vsSolver.solve(10000);
+  list<ValueSet>::const_iterator iter;
+  for(iter=vsSolver.beginValueSets();iter!=vsSolver.endValueSets();++iter) {
+    (*iter).printRaw(*status->optr);
+    *status->optr << endl;
+  }
+ }
 
 #ifdef OPACTION_DEBUG
 

@@ -308,10 +308,10 @@ uintb AddrSpace::read(const string &s,int4 &size) const
     offset = addressToByte(offset,wordsize);
     enddata = (const char *) tmpdata;
     if (enddata - s.c_str() == s.size()) { // If no size or offset override
-      size = getAddrSize();	// Return "natural" size
+      size = manage->getDefaultSize();	// Return "natural" size
       return offset;
     }
-    size = getAddrSize();
+    size = manage->getDefaultSize();
   }
   if (append != string::npos) {
     enddata = s.c_str()+append;
