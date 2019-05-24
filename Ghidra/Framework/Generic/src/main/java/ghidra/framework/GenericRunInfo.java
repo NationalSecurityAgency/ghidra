@@ -165,14 +165,20 @@ public class GenericRunInfo {
 
 		for (File dir : getUserSettingsDirsByTime()) {
 			String dirName = dir.getName();
+
+			// Ignore the currently active user settings directory.
+			// By definition, it is not a previous one.
+			if (dirName.equals(Application.getUserSettingsDirectory().getName())) {
+				continue;
+			}
+
 			if (dirName.startsWith(".")) {
 				dirName = dirName.substring(1);
 			}
 			try {
-				ApplicationIdentifier identifier = new ApplicationIdentifier(dirName);
-				if (!identifier.equals(myIdentifier) &&
-					identifier.getApplicationReleaseName().equalsIgnoreCase(
-						myIdentifier.getApplicationReleaseName())) {
+				// The current release name has to match for it to be considered
+				if (new ApplicationIdentifier(dirName).getApplicationReleaseName().equals(
+					myIdentifier.getApplicationReleaseName())) {
 					applicationSettiingsDirs.add(dir);
 				}
 			}
