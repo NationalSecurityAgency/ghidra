@@ -45,8 +45,12 @@ public class PreviewDataTableCellRenderer extends AbstractGColumnRenderer<Previe
 		JTable table = data.getTable();
 		boolean isSelected = data.isSelected();
 
+		if (value == null) {
+			return renderer;
+		}
+
 		// this class is only meant to handle PreviewTableCellData objects
-		if (value != null && !(value instanceof PreviewTableCellData)) {
+		if (!(value instanceof PreviewTableCellData)) {
 			Msg.error(this,
 				"Renderer is not being used on " + PreviewTableCellData.class.getSimpleName());
 			return renderer;
