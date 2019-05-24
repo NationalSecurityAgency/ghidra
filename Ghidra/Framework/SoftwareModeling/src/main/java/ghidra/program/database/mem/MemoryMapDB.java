@@ -1776,6 +1776,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			finally {
 				program.setEventsEnabled(true);
 			}
+
 			fireBlockRemoved(startAddress);
 			if (startAddress.getAddressSpace().isOverlaySpace()) {
 				checkRemoveAddressSpace(startAddress.getAddressSpace());

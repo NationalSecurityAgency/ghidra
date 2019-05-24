@@ -206,7 +206,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			toAddr = toAddr.subtractWrap(defaultOffset);
 		}
 
-		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory(), false);
+		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory(), false, false);
 		toAddressField.setAddress(toAddr);
 		enableOffsetField(editReference.isOffsetReference());
 
@@ -231,7 +231,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		addrHistoryButton.setEnabled(getAddressHistorySize(p) != 0);
 
-		toAddressField.setAddressFactory(p.getAddressFactory(), false);
+		toAddressField.setAddressFactory(p.getAddressFactory(), false, false);
 
 		Address cuAddr = fromCu.getMinAddress();
 

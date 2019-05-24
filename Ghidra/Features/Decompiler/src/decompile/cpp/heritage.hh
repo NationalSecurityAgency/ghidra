@@ -90,8 +90,9 @@ class HeritageInfo {
   int4 deadremoved;		///< >0 if Varnodes in this space have been eliminated
   bool loadGuardSearch;		///< \b true if the search for LOAD ops to guard has been performed
   bool warningissued;		///< \b true if warning issued previously
-  HeritageInfo(AddrSpace *spc,int4 dl,int4 dcdl) {
-    space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; loadGuardSearch=false; warningissued=false; } ///< Constructor
+  void set(AddrSpace *spc,int4 dl,int4 dcdl) {
+    space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; loadGuardSearch = false; } ///< Set all fields
+  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }
   void reset(void) {
     deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
 };

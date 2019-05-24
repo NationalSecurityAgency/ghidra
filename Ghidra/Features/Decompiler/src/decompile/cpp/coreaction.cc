@@ -2239,6 +2239,7 @@ int4 ActionNameVars::apply(Funcdata &data)
 
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     enditer = data.endLoc(spc);
     for(iter=data.beginLoc(spc);iter!=enditer;++iter) {
       Varnode *curvn = *iter;
@@ -3094,7 +3095,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
 				// Set pre-live registers
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);
-    if (!spc->doesDeadcode()) continue;
+    if (spc == (AddrSpace *)0 || !spc->doesDeadcode()) continue;
     if (data.deadRemovalAllowed(spc)) continue; // Mark consumed if we have NOT heritaged
     viter = data.beginLoc(spc);
     endviter = data.endLoc(spc);
@@ -3138,7 +3139,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
 
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);
-    if (!spc->doesDeadcode()) continue;
+    if (spc == (AddrSpace *)0 || !spc->doesDeadcode()) continue;
     if (!data.deadRemovalAllowed(spc)) continue; // Don't eliminate if we haven't heritaged
     viter = data.beginLoc(spc);
     endviter = data.endLoc(spc);
