@@ -73,6 +73,52 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		this(dataType, parent, length, ordinal, offset, null, null);
 	}
 
+	/**
+	 * Create a new DataTypeComponent at ordinal 0, index 0
+	 * @param dataType the dataType for this component
+	 * @param parent the dataType that this component belongs to
+	 * @param fieldName the name associated with this component
+	 * @param comment the comment associated with ths component
+	 */
+	public ReadOnlyDataTypeComponent(DataType dataType, DynamicDataType parent,
+			String fieldName, String comment) {
+		this(dataType, parent, dataType.getLength(), 0, 0, fieldName, comment);
+	}
+
+	/**
+	 * Create a new DataTypeComponent at ordinal 0, index 0
+	 * @param dataType the dataType for this component
+	 * @param parent the dataType that this component belongs to
+	 */
+	public ReadOnlyDataTypeComponent(DataType dataType, DynamicDataType parent) {
+		this(dataType, parent, dataType.getLength(), 0, 0, null, null);
+	}
+
+	/**
+	 * Create a new DataTypeComponent
+	 * @param dataType the dataType for this component
+	 * @param parent the dataType that this component belongs to
+	 * @param previous the DataTypeComponent that this component comes after
+	 * @param fieldName the name associated with this component
+	 * @param comment the comment associated with ths component
+	 */
+	public ReadOnlyDataTypeComponent(DataType dataType, DynamicDataType parent,
+			DataTypeComponent previous, String fieldName, String comment) {
+		this(dataType, parent, dataType.getLength(), previous.getOrdinal+1,
+			 previous.getEndOffset()+1, fieldName, comment);
+	}
+
+	/**
+	 * Create a new DataTypeComponent
+	 * @param dataType the dataType for this component
+	 * @param parent the dataType that this component belongs to
+	 * @param previous the DataTypeComponent that this component comes after
+	 */
+	public ReadOnlyDataTypeComponent(DataType dataType, DynamicDataType parent, DataTypeComponent previous) {
+		this(dataType, parent, dataType.getLength(), previous.getOrdinal+1,
+			 previous.getEndOffset()+1, null, null);
+	}
+
 	@Override
 	public boolean isFlexibleArrayComponent() {
 		return false; // Unsupported use
