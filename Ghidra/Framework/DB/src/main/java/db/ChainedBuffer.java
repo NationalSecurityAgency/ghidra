@@ -132,8 +132,8 @@ public class ChainedBuffer implements Buffer {
 		this.useXORMask = enableObfuscation;
 
 		if (size < 0) {
-			throw new IllegalArgumentException("Maximum bufer size is " + Integer.MAX_VALUE +
-				"; given size of " + size);
+			throw new IllegalArgumentException(
+				"Maximum bufer size is " + Integer.MAX_VALUE + "; given size of " + size);
 		}
 
 		if (uninitializedDataSource != null) {
@@ -588,9 +588,8 @@ public class ChainedBuffer implements Buffer {
 
 		// Create new DBBuffer
 		int cnt = size - offset;
-		ChainedBuffer newDBBuf =
-			new ChainedBuffer(cnt, useXORMask, uninitializedDataSource,
-				uninitializedDataSourceOffset + offset, bufferMgr);
+		ChainedBuffer newDBBuf = new ChainedBuffer(cnt, useXORMask, uninitializedDataSource,
+			uninitializedDataSourceOffset + offset, bufferMgr);
 
 		// Copy data from this DBBuffer into new DBBuffer
 		int newOffset = 0;
@@ -879,7 +878,7 @@ public class ChainedBuffer implements Buffer {
 		int id = dataBufferIdTable[index];
 		if (id < 0) {
 			if (uninitializedDataSource != null) {
-				uninitializedDataSource.get(offset, data, uninitializedDataSourceOffset +
+				uninitializedDataSource.get(uninitializedDataSourceOffset + offset, data,
 					dataOffset, len);
 			}
 			else {
@@ -957,7 +956,7 @@ public class ChainedBuffer implements Buffer {
 		int id = dataBufferIdTable[index];
 		if (id < 0) {
 			if (uninitializedDataSource != null) {
-				return uninitializedDataSource.getByte(uninitializedDataSourceOffset + bufferDataOffset);
+				return uninitializedDataSource.getByte(uninitializedDataSourceOffset + offset);
 			}
 			return 0;
 		}
@@ -1081,7 +1080,8 @@ public class ChainedBuffer implements Buffer {
 	 * @param endOffset ending offset, exclusive
 	 * @param fillByte byte value
 	 */
-	public synchronized void fill(int startOffset, int endOffset, byte fillByte) throws IOException {
+	public synchronized void fill(int startOffset, int endOffset, byte fillByte)
+			throws IOException {
 		if (readOnly)
 			throw new UnsupportedOperationException("Read-only buffer");
 		if (endOffset <= startOffset)
@@ -1372,28 +1372,28 @@ public class ChainedBuffer implements Buffer {
 	 * @param buf newly allocated database buffer
 	 * @throws IOException
 	 */
-	private void initializeAllocatedBuffer(int chainBufferIndex, DataBuffer buf) throws IOException {
-		if (uninitializedDataSource != null) {
-			int offset = chainBufferIndex * dataSpace;
-			int len = size - offset;
-			if (len >= dataSpace) {
-				len = dataSpace;
-			}
-			else {
-				buf.clear(); // partial fill - clear entire buffer first
-			}
-			byte[] data = new byte[len];
-			uninitializedDataSource.get(uninitializedDataSourceOffset + offset, data, 0, len);
-			if (useXORMask) {
-				for (int i = 0; i < len; i++) {
-					data[i] = xorMaskByte(i, data[i]);
-				}
-			}
-			buf.put(dataBaseOffset, data);
+	private void initializeAllocatedBuffer(int chainBufferIndex, DataBuffer buf)
+			throws IOException {
+
+		int offset = chainBufferIndex * dataSpace;
+		int len = size - offset;
+		if (len >= dataSpace) {
+			len = dataSpace;
 		}
 		else {
-			buf.clear();
+			buf.clear(); // partial fill - clear entire buffer first
 		}
+
+		byte[] data = new byte[len];
+		if (uninitializedDataSource != null) {
+			uninitializedDataSource.get(uninitializedDataSourceOffset + offset, data, 0, len);
+		}
+		if (useXORMask) {
+			for (int i = 0; i < len; i++) {
+				data[i] = xorMaskByte(i, data[i]);
+			}
+		}
+		buf.put(dataBaseOffset, data);
 	}
 
 	/**

@@ -18,6 +18,6 @@ package db;
 public class ObfuscatedChaninedBufferTest extends AbstractChainedBufferTest {
 
 	public ObfuscatedChaninedBufferTest() {
-		super(true);
+		super(true, null, -1);
 	}
 }
