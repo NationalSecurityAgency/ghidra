@@ -52,7 +52,7 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (!swingIsLast) {
-			fail("The Swing thread did not block until the task finished");
+			fail("The Swing thread did not block until the task finished.\nEvents: " + eventQueue);
 		}
 	}
 
@@ -60,7 +60,7 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (swingIsLast) {
-			fail("The Swing thread blocked until the task finished");
+			fail("The Swing thread blocked until the task finished.\nEvents: " + eventQueue);
 		}
 	}
 

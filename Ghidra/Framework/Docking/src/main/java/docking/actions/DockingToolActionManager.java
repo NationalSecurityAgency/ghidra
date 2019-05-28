@@ -170,7 +170,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	/**
 	 * Get all actions that have the action name which includes the action owner's name.
 	 * 
-	 * @param fullName full name for the action, e.g., "My Action (My Plugin)"
+	 * @param fullActionName full name for the action, e.g., "My Action (My Plugin)"
 	 * @return list of actions; empty if no action exists with the given name
 	 */
 	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
@@ -248,11 +248,10 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	}
 
 	/**
-	 * Get the actions for the given provider and remove them from the
-	 * actionMap; call the window manager to remove the provider.
-	 * @param provider provider to be removed
+	 * Get the actions for the given provider and remove them from the action map
+	 * @param provider provider whose actions are to be removed
 	 */
-	public void removeComponent(ComponentProvider provider) {
+	public void removeComponentActions(ComponentProvider provider) {
 		Iterator<DockingActionIf> iterator = winMgr.getComponentActions(provider);
 		while (iterator.hasNext()) {
 			DockingActionIf action = iterator.next();
@@ -262,7 +261,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 				actionMap.remove(name);
 			}
 		}
-		winMgr.removeComponent(provider);
+
 	}
 
 	@Override
