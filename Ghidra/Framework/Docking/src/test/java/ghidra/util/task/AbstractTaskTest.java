@@ -51,6 +51,7 @@ public class AbstractTaskTest extends AbstractDockingTest {
 	}
 
 	protected void assertSwingThreadBlockedForTask() {
+		waitForSwing();
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (!swingIsLast) {
@@ -59,10 +60,12 @@ public class AbstractTaskTest extends AbstractDockingTest {
 	}
 
 	protected void assertSwingThreadFinishedBeforeTask() {
+		waitForSwing();
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
 		if (swingIsLast) {
-			fail("The Swing thread blocked until the task finished.\nEvents: " + eventQueue);
+			fail("The Swing thread blocked until the task finished.\nEvents: " + eventQueue +
+				"\nLast Event: " + lastEvent);
 		}
 	}
 
