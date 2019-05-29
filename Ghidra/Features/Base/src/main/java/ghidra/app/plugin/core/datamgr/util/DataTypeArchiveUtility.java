@@ -126,10 +126,10 @@ public class DataTypeArchiveUtility {
 
 			if (uefi) {
 				if (size == 64) {
-					list.add("uefi_64");
+					list.add("uefi_x64");
 				}
 				else {
-					list.add("uefi_32");
+					list.add("uefi_ia32");
 				}
 
 			}

@@ -67,8 +67,8 @@ data/symbols/win64/msvcrt.hints||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
-data/typeinfo/uefi/uefi_32.gdt||GHIDRA||||END|
-data/typeinfo/uefi/uefi_64.gdt||GHIDRA||||END|
+data/typeinfo/uefi/uefi_ia32.gdt||GHIDRA||||END|
+data/typeinfo/uefi/uefi_x64.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/guids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/iids.txt||GHIDRA||reviewed||END|
