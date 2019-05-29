@@ -1809,19 +1809,14 @@ void StructDeclarator(Declaration dt, Composite comp, CompositeHandler composite
 	(
 		LOOKAHEAD(3)
 		dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
-			   Integer bitSize = getConstantValue(bitSizeObj,0);
-			   if (bitSize != null) {
-		          dec.setBitFieldSize(bitSize);
-		       }
+			   Integer bitSize = getConstantValue(bitSizeObj,-1);
+		       dec.setBitFieldSize(bitSize);
 		   }] 
 		|
 		":" bitSizeObj = ConstantExpression() {
-		    Integer bitSize = getConstantValue(bitSizeObj,0);
-			if (bitSize != 0) {
-				throw new ParseException("invalid bit-field declaration: ':" + bitSize);
-			}
-			dec = new Declaration(dt);
-			dec.setBitFieldSize(0);
+		       Integer bitSize = getConstantValue(bitSizeObj,-1);
+			   dec = new Declaration(dt);
+			   dec.setBitFieldSize(bitSize);
 		}
 	)
 	{
