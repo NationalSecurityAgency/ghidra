@@ -23,11 +23,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import docking.test.AbstractDockingTest;
+import ghidra.util.Swing;
 
 public class AbstractTaskTest extends AbstractDockingTest {
 
 	protected static final int DELAY_FAST = 10;
-	protected static final int DELAY_SLOW = 100;
+	protected static final int DELAY_SLOW = TaskLauncher.INITIAL_MODAL_DELAY_MS + 100; // + some fudge
+	protected static final int DELAY_NONMODAL_SLOW = TaskLauncher.INITIAL_DELAY_MS + 100; // + some fudge
 	protected static final int DELAY_LAUNCHER = DELAY_FAST * 2;
 
 	// 2 - 1 for the task itself; 1 for the launcher
@@ -69,7 +71,12 @@ public class AbstractTaskTest extends AbstractDockingTest {
 			return; // not shown
 		}
 
-		assertFalse(dialogSpy.wasShown());
+		assertFalse("Dialog should not have been shown.\nEvents: " + eventQueue,
+			dialogSpy.wasShown());
+	}
+
+	protected void assertDialogShown() {
+		assertTrue("Dialog should have been shown.\nEvents: " + eventQueue, dialogSpy.wasShown());
 	}
 
 	protected void waitForTask() throws Exception {
@@ -186,7 +193,8 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		@Override
 		public void run(TaskMonitor monitor) {
 			postEvent(getName() + " started...");
-			sleep(DELAY_SLOW);
+			sleep(DELAY_NONMODAL_SLOW);
+			Swing.runNow(() -> null);
 			threadsFinished.countDown();
 			postEvent(getName() + " finished.");
 		}
