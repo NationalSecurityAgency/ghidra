@@ -15,7 +15,8 @@
  */
 package docking.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
@@ -54,7 +55,8 @@ import generic.util.image.ImageUtils;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Worker;
@@ -220,7 +222,11 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 *
+	 * Deprecated
+	 * @param parentWindow 
+	 * @param text 
+	 * @param timeoutMS 
+	 * @return window
 	 * @deprecated Instead call one of the methods that does not take a timeout
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
@@ -304,10 +310,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Waits for a window with the given name.
+	 * Waits for a window with the given name
 	 *
 	 * @param title The title of the window for which to search
-	 * @param timeoutMS The timeout after which this method will wait no more
 	 * @return The window, if found, null otherwise.
 	 */
 	public static Window waitForWindow(String title) {
@@ -477,8 +482,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
-	 * windowing environment knows about.
-	 * @return true if any windows were closed
+	 * windowing environment knows about
 	 * @deprecated instead call the new {@link #closeAllWindows()}
 	 */
 	@Deprecated
@@ -488,8 +492,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
-	 * windowing environment knows about.
-	 * @return true if any windows were closed
+	 * windowing environment knows about
 	 */
 	public static void closeAllWindows() {
 		closeAllWindows(false);
@@ -987,7 +990,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 *
 	 * @param provider the DialogComponentProvider containing the button.
 	 * @param buttonText the text on the desired JButton.
-	 * @throws UsrException if the button isn't found.
 	 */
 	public static void pressButtonByText(DialogComponentProvider provider, String buttonText) {
 		pressButtonByText(provider.getComponent(), buttonText, true);
@@ -1001,7 +1003,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param buttonText the text on the desired JButton.
 	 * @param waitForCompletion if true wait for action to complete before returning,
 	 * otherwise schedule action to be performed and return immediately.
-	 * @throws UsrException if the button isn't found.
 	 */
 	public static void pressButtonByText(DialogComponentProvider provider, String buttonText,
 			boolean waitForCompletion) {
@@ -1057,6 +1058,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 *  <li>{@link JRadioButton}</li>
 	 *  <li>{@link EmptyBorderToggleButton}</li>
 	 * </ul>
+	 * @param button the button to select
 	 * @param selected true to toggle the button to selected; false for de-selected
 	 */
 	public static void setToggleButtonSelected(AbstractButton button, boolean selected) {
@@ -1232,7 +1234,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param action action to be performed
 	 * @param provider the component provider from which to get action context; if null,
 	 *        then an empty context will used
-	 * @param waitForCompletion if true wait for action to complete before returning,
+	 * @param wait if true wait for action to complete before returning,
 	 * 		otherwise schedule action to be performed and return immediately.
 	 */
 	public static void performAction(DockingActionIf action, ComponentProvider provider,
@@ -1387,7 +1389,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * This method should used for the special keyboard keys
 	 * (ARROW, F1, END, etc) and alpha keys when associated with actions.
 	 *
-	 * @param destination    the component that should be the receiver of the key event; the event source
+	 * @param c         the component that should be the receiver of the key event; the event source
 	 * @param modifiers the modifier keys down during event (shift, ctrl, alt, meta)
 	 *                  Either extended _DOWN_MASK or old _MASK modifiers
 	 *                  should be used, but both models should not be mixed
@@ -1413,8 +1415,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Simulates a user initiated keystroke using the keybinding of the given action.
-	 *
+	 * Simulates a user initiated keystroke using the keybinding of the given action
+	 * 
+	 * @param destination the action's destination component
 	 * @param action The action to simulate pressing.
 	 */
 	public static void triggerActionKey(Component destination, DockingActionIf action) {
@@ -1449,7 +1452,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		triggerText(c, "\010");
 	}
 
-	/** Simulates the user pressing the 'Enter' key on the given text field */
+	/** 
+	 * Simulates the user pressing the 'Enter' key on the given text field 
+	 * @param tf the text field
+	 */
 	public static void triggerEnter(JTextField tf) {
 		// text components will not perform built-in actions if they are not focused
 		triggerFocusGained(tf);
@@ -1948,6 +1954,11 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	private static <T> void doWaitForTableModel(ThreadedTableModel<T, ?> model) {
 
+		// Always wait for Swing at least once.  There seems to be a race condition for 
+		// incremental threaded models where the table is not busy at the time this method
+		// is called, but there is an update pending via an invokeLater().
+		waitForSwing();
+
 		boolean didWait = false;
 		int waitTime = 0;
 		while (model.isBusy()) {
@@ -2150,7 +2161,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 *
 	 * @param c the component
 	 * @return the new image
-	 * @throws Exception if there is a problem creating the image
+	 * @throws AWTException if there is a problem creating the image
 	 */
 	public static Image createScreenImage(Component c) throws AWTException {
 
@@ -2199,7 +2210,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 *
 	 * @param image the image
 	 * @param imageFile the file
-	 * @throws Exception if there is any issue writing the image
+	 * @throws IOException if there is any issue writing the image
 	 */
 	public static void writeImage(Image image, File imageFile) throws IOException {
 		ImageUtils.writeFile(image, imageFile);
