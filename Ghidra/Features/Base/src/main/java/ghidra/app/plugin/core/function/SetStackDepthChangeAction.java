@@ -28,7 +28,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 
 /**
  * <CODE>SetStackDepthChangeAction</CODE> allows the user to set a stack depth change value 
@@ -172,14 +171,8 @@ class SetStackDepthChangeAction extends ListingContextAction {
 				currentAddress.toString() + ".";
 		// @formatter:on
 
-		final OptionDialog dialog = new OptionDialog("Stack Depth Change or Function Purge?",
-			message, "Local", "Global", OptionDialog.QUESTION_MESSAGE,
-			OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE), true);
-
-		dialog.setHelpLocation(new HelpLocation(funcPlugin.getName(), "Set_Stack_Depth_Change"));
-
-		Runnable r = () -> tool.showDialog(dialog);
-		SystemUtilities.runSwingNow(r);
+		StackChangeOptionDialog dialog = new StackChangeOptionDialog(message);
+		dialog.show();
 		return dialog.getResult();
 	}
 
@@ -198,4 +191,13 @@ class SetStackDepthChangeAction extends ListingContextAction {
 		return true;
 	}
 
+	private class StackChangeOptionDialog extends OptionDialog {
+
+		StackChangeOptionDialog(String message) {
+			super("Stack Depth Change or Function Purge?", message, "Local", "Global",
+				OptionDialog.QUESTION_MESSAGE, null, true);
+
+			setHelpLocation(new HelpLocation(funcPlugin.getName(), "Set_Stack_Depth_Change"));
+		}
+	}
 }

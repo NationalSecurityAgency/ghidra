@@ -85,19 +85,8 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 	@Override
 	public boolean promptForReconnect(final Component parent, final String message) {
 
-		final boolean[] retVal = new boolean[] { false };
-
-		Runnable r = () -> {
-			String msg = message;
-			if (msg != null) {
-				msg = msg + "\n";
-			}
-			msg = msg + "Do you want to reconnect to the server now?";
-			retVal[0] = OptionDialog.showYesNoDialog(parent, "Lost Connection to Server",
-				message) == OptionDialog.OPTION_ONE;
-		};
-		SystemUtilities.runSwingNow(r);
-		return retVal[0];
+		return OptionDialog.showYesNoDialog(parent, "Lost Connection to Server",
+			message) == OptionDialog.OPTION_ONE;
 	}
 
 	@Override
