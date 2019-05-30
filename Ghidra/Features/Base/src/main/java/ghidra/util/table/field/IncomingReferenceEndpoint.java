@@ -26,4 +26,9 @@ public class IncomingReferenceEndpoint extends ReferenceEndpoint {
 	public IncomingReferenceEndpoint(Reference r, boolean isOffcut) {
 		super(r, r.getFromAddress(), r.getReferenceType(), isOffcut, r.getSource());
 	}
+
+	@Override
+	public String toString() {
+		return "Incoming " + getReferenceType().getName();
+	}
 }
