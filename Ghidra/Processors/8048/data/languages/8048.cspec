@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE"/>
+    <range space="INTMEM"/>
+    <range space="EXTMEM"/>
+    <range space="PORT"/>
+  </global>
+  <stackpointer register="SP" space="INTMEM" growth="positive"/>
+  <returnaddress>
+    <varnode space="stack" offset="-2" size="2"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x8" last="0x17"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>
