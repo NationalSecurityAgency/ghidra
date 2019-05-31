@@ -114,21 +114,6 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public KeyBindingData getKeyBindingData() {
-		return keyBindingData;
-	}
-
-	@Override
-	public KeyBindingData getDefaultKeyBindingData() {
-		return defaultKeyBindingData;
-	}
-
-	@Override
-	public KeyStroke getKeyBinding() {
-		return keyBindingData == null ? null : keyBindingData.getKeyBinding();
-	}
-
-	@Override
 	public MenuData getMenuBarData() {
 		return menuBarData;
 	}
@@ -273,6 +258,40 @@ public abstract class DockingAction implements DockingActionIf {
 		return menuItem;
 	}
 
+	@Override
+	public KeyStroke getKeyBinding() {
+		return keyBindingData == null ? null : keyBindingData.getKeyBinding();
+	}
+
+	@Override
+	public KeyBindingData getKeyBindingData() {
+		return keyBindingData;
+	}
+
+	@Override
+	public KeyBindingData getDefaultKeyBindingData() {
+		return defaultKeyBindingData;
+	}
+
+	@Override
+	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
+		KeyBindingData oldData = keyBindingData;
+		keyBindingData = KeyBindingData.validateKeyBindingData(newKeyBindingData);
+
+		if (defaultKeyBindingData == null) {
+			defaultKeyBindingData = keyBindingData;
+		}
+
+		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	@Override
+	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
+		KeyBindingData oldData = keyBindingData;
+		keyBindingData = newKeyBindingData;
+		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
 //==================================================================================================
 // Non interface methods
 //==================================================================================================
@@ -313,34 +332,6 @@ public abstract class DockingAction implements DockingActionIf {
 					newToolBarData.getToolBarSubGroup());
 		toolBarData = newToolBarDataCopy;
 		firePropertyChanged(TOOLBAR_DATA_PROPERTY, oldData, newToolBarDataCopy);
-	}
-
-	/**
-	 * Sets the {@link KeyBindingData} to be used to assign this action to a keybinding.
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
-	 */
-	@Override
-	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
-		KeyBindingData oldData = keyBindingData;
-		keyBindingData = KeyBindingData.validateKeyBindingData(newKeyBindingData);
-
-		if (defaultKeyBindingData == null) {
-			defaultKeyBindingData = keyBindingData;
-		}
-
-		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
-	}
-
-	/**
-	 * <b>Users creating actions should not call this method, but should instead call
-	 * {@link #setKeyBindingData(KeyBindingData)}.</b>
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
-	 */
-	@Override
-	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
-		KeyBindingData oldData = keyBindingData;
-		keyBindingData = newKeyBindingData;
-		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
 	}
 
 	/**

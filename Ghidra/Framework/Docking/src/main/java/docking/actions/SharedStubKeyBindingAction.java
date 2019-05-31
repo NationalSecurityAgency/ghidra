@@ -35,11 +35,11 @@ import utilities.util.reflection.ReflectionUtilities;
  * 
  * <p>Clients should not be using this class directly.
  */
-class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeListener {
+public class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeListener {
 
 	static final String SHARED_OWNER = "Tool";
 
-	/*
+	/**
 	 * We save the client actions for later validate and options updating.  We also need the
 	 * default key binding data, which is stored in the value of this map.
 	 * 
@@ -57,7 +57,7 @@ class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeL
 	 *             key binding's action
 	 * @param options the tool's key binding options
 	 */
-	public SharedStubKeyBindingAction(String name, ToolOptions options) {
+	SharedStubKeyBindingAction(String name, ToolOptions options) {
 		super(name, SHARED_OWNER);
 		this.keyBindingOptions = options;
 
@@ -71,19 +71,20 @@ class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeL
 	void addClientAction(DockingActionIf action) {
 
 		// 1) Validate new action keystroke against existing actions
-		KeyStroke validatedKeyStroke = validateActionsHaveTheSameDefaultKeyStroke(action);
+		KeyStroke defaultKs = validateActionsHaveTheSameDefaultKeyStroke(action);
 
-		// 2) Update the given action with the current option value.  This allows clients to 
+		// 2) Add the action and the validated keystroke, as this is the default keystroke
+		clientActions.put(action, defaultKs);
+
+		// 3) Update the given action with the current option value.  This allows clients to 
 		//    add and remove actions after the tool has been initialized.
-		validatedKeyStroke = updateKeyStrokeFromOptions(validatedKeyStroke);
-
-		clientActions.put(action, validatedKeyStroke);
+		updateActionKeyStrokeFromOptions(action, defaultKs);
 	}
 
 	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {
 
 		// this value may be null
-		KeyBindingData defaultBinding = newAction.getKeyBindingData();
+		KeyBindingData defaultBinding = newAction.getDefaultKeyBindingData();
 		KeyStroke newDefaultKs = getKeyStroke(defaultBinding);
 
 		Set<Entry<DockingActionIf, KeyStroke>> entries = clientActions.entrySet();
@@ -116,20 +117,31 @@ class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeL
 		//@formatter:off
 		String s = "Shared Key Binding Actions have different deafult values.  These " +
 				"must be the same." +
+				"\n\tAction name: '"+existingAction.getName()+"'" + 
 				"\n\tAction 1: " + existingAction.getInceptionInformation() +
 				"\n\t\tKey Binding: " + existingDefaultKs +
 				"\n\tAction 2: " + newAction.getInceptionInformation() + 
 				"\n\t\tKey Binding: " + newAction.getKeyBinding() +
 				"\nUsing the " +
-				"first value set - " + existingDefaultKs				
-			;
+				"first value set - " + existingDefaultKs;
 		//@formatter:on
 
 		Msg.warn(this, s, ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
-	private KeyStroke updateKeyStrokeFromOptions(KeyStroke validatedKeyStroke) {
-		return keyBindingOptions.getKeyStroke(getFullName(), validatedKeyStroke);
+	private void updateActionKeyStrokeFromOptions(DockingActionIf action, KeyStroke defaultKs) {
+
+		KeyStroke optionsKs = getKeyStrokeFromOptions(defaultKs);
+		if (!Objects.equals(defaultKs, optionsKs)) {
+			// we use the 'unvalidated' call since this value is provided by the user--we assume
+			// that user input is correct; we only validate programmer input
+			action.setUnvalidatedKeyBindingData(new KeyBindingData(optionsKs));
+		}
+	}
+
+	private KeyStroke getKeyStrokeFromOptions(KeyStroke validatedKeyStroke) {
+		KeyStroke ks = keyBindingOptions.getKeyStroke(getFullName(), validatedKeyStroke);
+		return ks;
 	}
 
 	private KeyStroke getKeyStroke(KeyBindingData data) {
@@ -149,9 +161,8 @@ class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeL
 
 		KeyStroke newKs = (KeyStroke) newValue;
 		for (DockingActionIf action : clientActions.keySet()) {
-
-			// Note: update this to say why we are using the 'unvalidated' call instead of the
-			//       setKeyBindingData() call
+			// we use the 'unvalidated' call since this value is provided by the user--we assume
+			// that user input is correct; we only validate programmer input
 			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 		}
 	}

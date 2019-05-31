@@ -208,7 +208,33 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 
 		// verify the newly added keybinding gets the newly changed option
 		tool.addAction(action2);
+		assertKeyBinding(action2, newKs);
+		assertNoLoggedMessages();
+	}
+
+	@Test
+	public void testSharedKeyBinding_AddActionAfterOptionHasChanged_RepeatAddRemove() {
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action2 = new TestAction(OWNER_2, DEFAULT_KS_1);
+
+		tool.addAction(action1);
+		KeyStroke newKs = KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0);
+		setSharedKeyBinding(newKs);
+
 		assertKeyBinding(action1, newKs);
+
+		// verify the newly added keybinding gets the newly changed option
+		tool.addAction(action2);
+		assertKeyBinding(action2, newKs);
+		assertNoLoggedMessages();
+
+		tool.removeAction(action2);
+		assertActionNotInTool(action2);
+
+		tool.addAction(action2);
+		assertKeyBinding(action2, newKs);
+		assertNoLoggedMessages();
 	}
 
 	@Test

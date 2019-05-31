@@ -176,7 +176,7 @@ public class KeyBindingsPanel extends JPanel {
 
 		List<DockingActionIf> actions = tool.getAllActions();
 		for (DockingActionIf action : actions) {
-			if (!action.isKeyBindingManaged()) {
+			if (isIgnored(action)) {
 				continue;
 			}
 
@@ -204,6 +204,12 @@ public class KeyBindingsPanel extends JPanel {
 		TableColumn col = actionTable.getColumnModel().getColumn(ACTION_NAME);
 		col.setPreferredWidth(maxWidth);
 		tableModel.fireTableDataChanged();
+	}
+
+	private boolean isIgnored(DockingActionIf action) {
+		// not keybinding managed; a shared keybinding implies that this action should not be in 
+		// the UI, as there will be a single proxy in place of all actions sharing that binding
+		return !action.isKeyBindingManaged() || action.usesSharedKeyBinding();
 	}
 
 	/**

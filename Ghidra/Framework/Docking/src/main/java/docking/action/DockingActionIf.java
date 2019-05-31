@@ -114,6 +114,9 @@ public interface DockingActionIf extends HelpDescriptor {
 	/**
 	 * Returns the default {@link KeyBindingData} to be used to assign this action to a 
 	 * key binding.  The KeyBindingData will be null if the action is not set to have a keyBinding.
+	 * The value of this method is that which is set from a call to 
+	 * {@link #setKeyBindingData(KeyBindingData)}.
+	 * 
 	 * @return the {@link KeyBindingData} for the action or null if the action does not have a keyBinding.
 	 */
 	public KeyBindingData getDefaultKeyBindingData();
@@ -264,7 +267,7 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * <p>
 	 * Call this method when you wish to bypass the validation of 
 	 * {@link #setKeyBindingData(KeyBindingData)} so that keybindings are set exactly as they
-	 * are given.
+	 * are given (such as when set by the user and not by the programmer).
 	 * 
 	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
 	 */

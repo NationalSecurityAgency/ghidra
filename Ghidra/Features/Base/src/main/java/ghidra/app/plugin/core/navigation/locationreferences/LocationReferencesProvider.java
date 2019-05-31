@@ -39,6 +39,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
@@ -441,7 +442,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	private class DeleteAction extends DeleteTableRowAction {
 
 		DeleteAction(PluginTool tool, GTable table) {
-			super(tool, table, locationReferencesPlugin.getName());
+			super(table, locationReferencesPlugin.getName());
 		}
 
 		@Override
