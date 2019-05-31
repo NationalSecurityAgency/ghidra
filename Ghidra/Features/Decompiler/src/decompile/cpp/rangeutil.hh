@@ -159,6 +159,29 @@ public:
   }				///< Construct empty partition
 };
 
+/// \brief A special form of ValueSet associated with the \e read \e point of a Varnode
+///
+/// When a Varnode is read, it may have a more restricted range at the point of the read
+/// compared to the full scope. This class officially stores the value set at the point
+/// of the read (specified by PcodeOp and slot).  It is computed as a final step after
+/// the main iteration has completed.
+class ValueSetRead {
+  friend class ValueSetSolver;
+  int4 typeCode;	///< 0=pure constant 1=stack relative
+  PcodeOp *op;		///< The PcodeOp at the point of the value set read
+  int4 slot;		///< The slot being read
+  CircleRange range;	///< Range of values or offsets in this set
+  int4 equationTypeCode;	///< Type code of the associated equation
+  CircleRange equationConstraint;	///< Constraint associated with the equation
+  void setPcodeOp(PcodeOp *o,int4 slt);	///< Establish \e read this value set corresponds to
+  void addEquation(int4 slt,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
+public:
+  int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
+  const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
+  void compute(void);			///< Compute \b this value set
+  void printRaw(ostream &s) const;	///< Write a text description of \b to the given stream
+};
+
 /// \brief Class the determines a ValueSet for each Varnode in a data-flow system
 ///
 /// This class uses \e value \e set \e analysis to calculate (an overestimation of)
@@ -185,6 +208,7 @@ class ValueSetSolver {
   };
 
   list<ValueSet> valueNodes;		///< Storage for all the current value sets
+  map<SeqNum,ValueSetRead> readNodes;	///< Additional, after iteration, add-on value sets
   Partition orderPartition;		///< Value sets in iteration order
   list<Partition> recordStorage;	///< Storage for the Partitions establishing components
   vector<ValueSet *> rootNodes;		///< Values treated as inputs
@@ -206,11 +230,13 @@ class ValueSetSolver {
   bool checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const;	///< Check if the given Varnode is a \e relative constant
   void generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch);	///< Try to find a \e relative constraint
 public:
-  void establishValueSets(const vector<Varnode *> &sinks,Varnode *stackReg);	///< Build value sets for a data-flow system
+  void establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg);	///< Build value sets for a data-flow system
   int4 getNumIterations(void) const { return numIterations; }	///< Get the current number of iterations
   void solve(int4 max);				///< Iterate the ValueSet system until it stabilizes
-  list<ValueSet>::const_iterator beginValueSets(void) { return valueNodes.begin(); }	///< Start of all ValueSets in the system
-  list<ValueSet>::const_iterator endValueSets(void) { return valueNodes.end(); }	///< End of all ValueSets in the system
+  list<ValueSet>::const_iterator beginValueSets(void) const { return valueNodes.begin(); }	///< Start of all ValueSets in the system
+  list<ValueSet>::const_iterator endValueSets(void) const { return valueNodes.end(); }	///< End of all ValueSets in the system
+  map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads
+  map<SeqNum,ValueSetRead>::const_iterator endValueSetReads(void) const { return readNodes.end(); }	///< End of ValueSetReads
 };
 
 /// \param op2 is the range to compare \b this to

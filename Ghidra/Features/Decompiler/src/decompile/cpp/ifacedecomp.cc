@@ -2485,17 +2485,28 @@ void IfcAnalyzeRange::execute(istream &s)
 
   Varnode *vn = iface_read_varnode(dcp,s);
   vector<Varnode *> sinks;
+  vector<PcodeOp *> reads;
   sinks.push_back(vn);
+  for(list<PcodeOp *>::const_iterator iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() == CPUI_LOAD || op->code() == CPUI_STORE)
+      reads.push_back(op);
+  }
   Varnode *stackReg = dcp->fd->findSpacebaseInput(dcp->conf->getStackSpace());
   ValueSetSolver vsSolver;
-  vsSolver.establishValueSets(sinks, stackReg);
+  vsSolver.establishValueSets(sinks, reads, stackReg);
   vsSolver.solve(10000);
   list<ValueSet>::const_iterator iter;
   for(iter=vsSolver.beginValueSets();iter!=vsSolver.endValueSets();++iter) {
     (*iter).printRaw(*status->optr);
     *status->optr << endl;
   }
- }
+  map<SeqNum,ValueSetRead>::const_iterator riter;
+  for(riter=vsSolver.beginValueSetReads();riter!=vsSolver.endValueSetReads();++riter) {
+    (*riter).second.printRaw(*status->optr);
+    *status->optr << endl;
+  }
+}
 
 #ifdef OPACTION_DEBUG
 

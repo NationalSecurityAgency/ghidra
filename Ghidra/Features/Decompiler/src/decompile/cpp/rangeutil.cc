@@ -1472,6 +1472,7 @@ void ValueSet::doWidening(const CircleRange &newRange)
       const Equation &landmark(equations.back());
       if (landmark.slot == numParams && typeCode == landmark.typeCode) {
 	bool leftIsStable = range.getMin() == newRange.getMin();
+	range = newRange;	// Preserve any new step information
 	if (landmark.range.contains(range)) {
 	  range.widen(landmark.range,leftIsStable);
 	  return;
@@ -1599,17 +1600,11 @@ bool ValueSet::iterate(void)
       setFull();
       return true;
     }
-    typeCode = inSet1->typeCode;
   }
   else if (numParams == 2) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
     ValueSet *inSet2 = op->getIn(1)->getValueSet();
-    typeCode = inSet1->typeCode + inSet2->typeCode;
-    if (inSet1->typeCode != 0 && inSet2->typeCode != 0) {	// Combining two based constants
-      typeCode = 0;
-      res.setFull(vn->getSize());
-    }
-    else if (equations.size() == 0) {
+    if (equations.size() == 0) {
       if (!res.pushForwardBinary(opCode, inSet1->range, inSet2->range, inSet1->vn->getSize(), vn->getSize(), 32)) {
 	setFull();
 	return true;
@@ -1665,6 +1660,57 @@ void ValueSet::printRaw(ostream &s) const
   else
     s << ' ' << get_opname(opCode);
   s << ' ';
+  range.printRaw(s);
+}
+
+/// \param o is the PcodeOp reading the value set
+/// \param slt is the input slot the values are coming in from
+void ValueSetRead::setPcodeOp(PcodeOp *o,int4 slt)
+
+{
+  typeCode = 0;
+  op = o;
+  slot = slt;
+  equationTypeCode = 100;
+}
+
+/// \param slt is the given slot
+/// \param type is the constraint characteristic
+/// \param constraint is the given range
+void ValueSetRead::addEquation(int4 slt,int4 type,const CircleRange &constraint)
+
+{
+  if (slot == slt) {
+    equationTypeCode = type;
+    equationConstraint = constraint;
+  }
+}
+
+/// This value set will be the same as the ValueSet of the Varnode being read but may
+/// be modified due to additional control-flow constraints
+void ValueSetRead::compute(void)
+
+{
+  Varnode *vn = op->getIn(slot);
+  ValueSet *valueSet = vn->getValueSet();
+  typeCode = valueSet->getTypeCode();
+  range = valueSet->getRange();
+  if (typeCode == equationTypeCode) {
+    if (0 != range.intersect(equationConstraint)) {
+      range = equationConstraint;
+    }
+  }
+}
+
+/// \param s is the stream to print to
+void ValueSetRead::printRaw(ostream &s) const
+
+{
+  s << "Read: " << get_opname(op->code());
+  if (typeCode == 0)
+    s << " absolute ";
+  else
+    s << " stackptr ";
   range.printRaw(s);
 }
 
@@ -1848,6 +1894,10 @@ void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &r
   FlowBlock *falseBlock = splitPoint->getFalseOut();
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     PcodeOp *op = *iter;
+    if (op->isMark()) {	// Special read site being tracked
+      readNodes[op->getSeqNum()].addEquation(op->getSlot(vn), type, range);
+      continue;
+    }
     Varnode *outVn = op->getOut();
     if (outVn == (Varnode *)0) continue;
     if (!outVn->isMark()) continue;
@@ -2063,8 +2113,9 @@ void ValueSetSolver::generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch
 
 /// Given a set of sinks, find all the Varnodes that flow directly into them.
 /// \param sinks is the list terminating Varnodes
+/// \param reads are add-on PcodeOps where we would like to know input ValueSets at the point of read
 /// \param stackReg (if non-NULL) gives the stack pointer (for keeping track of relative offsets)
-void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,Varnode *stackReg)
+void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg)
 
 {
   vector<Varnode *> worklist;
@@ -2107,7 +2158,21 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,Varnode *
       worklist.push_back(inVn);
     }
   }
+  for(int4 i=0;i<reads.size();++i) {
+    PcodeOp *op = reads[i];
+    for(int4 slot=0;slot<op->numInput();++slot) {
+      Varnode *vn = op->getIn(slot);
+      if (vn->isMark()) {
+	readNodes[op->getSeqNum()].setPcodeOp(op, slot);
+	op->setMark();			// Mark read ops for equation generation stage
+	break;			// Only 1 read allowed
+      }
+    }
+  }
   generateConstraints(worklist);
+  for(int4 i=0;i<reads.size();++i)
+    reads[i]->clearMark();		// Clear marks on read ops
+
   establishTopologicalOrder();
   for(int4 i=0;i<worklist.size();++i)
     worklist[i]->clearMark();
@@ -2170,4 +2235,7 @@ void ValueSetSolver::solve(int4 max)
       curSet = curSet->next;
     }
   }
+  map<SeqNum,ValueSetRead>::iterator riter;
+  for(riter=readNodes.begin();riter!=readNodes.end();++riter)
+    (*riter).second.compute();				// Calculate any follow-on value sets
 }
