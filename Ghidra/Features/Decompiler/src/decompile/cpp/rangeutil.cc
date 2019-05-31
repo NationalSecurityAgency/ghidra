@@ -170,8 +170,8 @@ bool CircleRange::newDomain(uintb newMask,int4 newStep,uintb &myleft,uintb &myri
 /// then proceeds by the given \e step up to (but not including) the given
 /// right boundary.  Care should be taken to make sure the remainders of the
 /// left and right boundaries modulo the step are equal.
-/// \param mn is the left boundary of the range
-/// \param mx is the right boundary of the range
+/// \param lft is the left boundary of the range
+/// \param rgt is the right boundary of the range
 /// \param size is the domain size in bytes (1,2,4,8,..)
 /// \param stp is the desired step (1,2,4,8,..)
 CircleRange::CircleRange(uintb lft,uintb rgt,int4 size,int4 stp)
@@ -1373,7 +1373,7 @@ int4 CircleRange::translate2Op(OpCode &opc,uintb &c,int4 &cslot) const
   return 2;			// Cannot represent
 }
 
-/// \param is the stream to write to
+/// \param s is the stream to write to
 void CircleRange::printRaw(ostream &s) const
 
 {
@@ -1440,8 +1440,9 @@ void ValueSet::setVarnode(Varnode *v,int4 tCode)
 
 /// Equations are stored as an array of (slot,range) pairs, ordered on slot.
 /// \param slot is the given slot
-/// \param range is the given range
-void ValueSet::addEquation(int4 slot,const CircleRange &constraint)
+/// \param type is the constraint characteristic
+/// \param constraint is the given range
+void ValueSet::addEquation(int4 slot,int4 type,const CircleRange &constraint)
 
 {
   vector<Equation>::iterator iter;
@@ -1451,7 +1452,7 @@ void ValueSet::addEquation(int4 slot,const CircleRange &constraint)
       break;
     ++iter;
   }
-  equations.insert(iter,Equation(slot,constraint));
+  equations.insert(iter,Equation(slot,type,constraint));
 }
 
 /// For an iteration that isn't stabilizing attempt to widen \b this value set
@@ -1462,7 +1463,6 @@ void ValueSet::addEquation(int4 slot,const CircleRange &constraint)
 void ValueSet::doWidening(const CircleRange &newRange)
 
 {
-  count += 1;
   if (count < 2) {
     range = newRange;
     return;
@@ -1470,7 +1470,7 @@ void ValueSet::doWidening(const CircleRange &newRange)
   else if (count == 2) {
     if (!equations.empty()) {	// Look for landmark
       const Equation &landmark(equations.back());
-      if (landmark.slot == numParams) {
+      if (landmark.slot == numParams && typeCode == landmark.typeCode) {
 	bool leftIsStable = range.getMin() == newRange.getMin();
 	if (landmark.range.contains(range)) {
 	  range.widen(landmark.range,leftIsStable);
@@ -1491,7 +1491,7 @@ void ValueSet::doWidening(const CircleRange &newRange)
     range = newRange;
     return;
   }
-  range.setFull(vn->getSize());		// In all other cases expand to everything
+  setFull();		// In all other cases expand to everything
 }
 
 /// Give \b this value set a chance to reset its counter do to looping
@@ -1502,6 +1502,47 @@ void ValueSet::looped(void)
     count = 2;		// Reset to point just after any widening
 }
 
+/// Examine the input value sets that determine \b this set and decide if it
+/// is relative. In general, \b this will be relative if any of its inputs are.
+/// Certain combinations are indeterminate, which this method flags by calling
+/// setFull(). The Varnode attached to \b this must have a defining op.
+void ValueSet::computeTypeCode(void)
+
+{
+  int4 relCount = 0;
+  int4 lastTypeCode;
+  PcodeOp *op = vn->getDef();
+  for(int4 i=0;i<numParams;++i) {
+    ValueSet *valueSet = op->getIn(i)->getValueSet();
+    if (valueSet->typeCode != 0) {
+      relCount += 1;
+      lastTypeCode = valueSet->typeCode;
+    }
+  }
+  if (relCount == 0) {
+    typeCode = 0;
+    return;
+  }
+  // Only certain operations can propagate a relative value set
+  switch(opCode) {
+    case CPUI_PTRSUB:
+    case CPUI_INT_ADD:
+      if (relCount == 1)
+	typeCode = lastTypeCode;
+      else
+	setFull();
+      break;
+    case CPUI_COPY:
+    case CPUI_INDIRECT:
+    case CPUI_MULTIEQUAL:
+      typeCode = lastTypeCode;
+      break;
+    default:
+      setFull();
+      break;
+  }
+}
+
 /// Recalculate \b this value set by grabbing the value sets of the inputs to the
 /// operator defining the Varnode attached to \b this value set and pushing them
 /// forward through the operator.
@@ -1510,6 +1551,10 @@ bool ValueSet::iterate(void)
 
 {
   if (!vn->isWritten()) return false;
+  if (typeCode >= 100) return false;
+  if (count == 0)
+    computeTypeCode();
+  count += 1;		// Count this iteration
   CircleRange res;
   PcodeOp *op = vn->getDef();
   int4 eqPos = 0;
@@ -1517,7 +1562,7 @@ bool ValueSet::iterate(void)
     int4 pieces = 0;
     for(int4 i=0;i<numParams;++i) {
       ValueSet *inSet = op->getIn(i)->getValueSet();
-      if (eqPos < equations.size() && equations[eqPos].slot == i) {
+      if (doesEquationApply(eqPos, i)) {
 	CircleRange rangeCopy(inSet->range);
 	if (0 !=rangeCopy.intersect(equations[eqPos].range)) {
 	  rangeCopy = equations[eqPos].range;
@@ -1539,17 +1584,20 @@ bool ValueSet::iterate(void)
   }
   else if (numParams == 1) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
-    if (eqPos < equations.size() && equations[eqPos].slot == 0) {
+    if (doesEquationApply(eqPos, 0)) {
       CircleRange rangeCopy(inSet1->range);
       if (0 != rangeCopy.intersect(equations[eqPos].range)) {
 	rangeCopy = equations[eqPos].range;
       }
-      if (!res.pushForwardUnary(opCode, rangeCopy, inSet1->vn->getSize(), vn->getSize()))
-	res.setFull(vn->getSize());
+      if (!res.pushForwardUnary(opCode, rangeCopy, inSet1->vn->getSize(), vn->getSize())) {
+	setFull();
+	return true;
+      }
       eqPos += 1;
     }
     else if (!res.pushForwardUnary(opCode, inSet1->range, inSet1->vn->getSize(), vn->getSize())) {
-      res.setFull(vn->getSize());
+      setFull();
+      return true;
     }
     typeCode = inSet1->typeCode;
   }
@@ -1562,23 +1610,26 @@ bool ValueSet::iterate(void)
       res.setFull(vn->getSize());
     }
     else if (equations.size() == 0) {
-      if (!res.pushForwardBinary(opCode, inSet1->range, inSet2->range, inSet1->vn->getSize(), vn->getSize(), 32))
-	res.setFull(vn->getSize());
+      if (!res.pushForwardBinary(opCode, inSet1->range, inSet2->range, inSet1->vn->getSize(), vn->getSize(), 32)) {
+	setFull();
+	return true;
+      }
     }
     else {
       CircleRange range1 = inSet1->range;
       CircleRange range2 = inSet2->range;
-      if (equations[eqPos].slot == 0) {
+      if (doesEquationApply(eqPos, 0)) {
 	if (0 != range1.intersect(equations[eqPos].range))
 	  range1 = equations[eqPos].range;
 	eqPos += 1;
       }
-      if (eqPos < equations.size() && equations[eqPos].slot == 1) {
+      if (doesEquationApply(eqPos, 1)) {
 	if (0 != range2.intersect(equations[eqPos].range))
 	  range2 = equations[eqPos].range;
       }
-      if (!res.pushForwardBinary(opCode, range1, range2, inSet1->vn->getSize(), vn->getSize(), 32))
-	res.setFull(vn->getSize());
+      if (!res.pushForwardBinary(opCode, range1, range2, inSet1->vn->getSize(), vn->getSize(), 32)) {
+	setFull();
+      }
     }
   }
   else
@@ -1778,9 +1829,10 @@ void ValueSetSolver::establishTopologicalOrder(void)
 /// the Varnode.  An equation holding the constraint is added to the ValueSet of the Varnode
 /// output of the PcodeOp.
 /// \param vn is the given Varnode
+/// \param type is the constraint characteristic
 /// \param range is the known constraint (assuming the \b true branch was taken)
 /// \param splitPoint is the basic block making the conditional branch
-void ValueSetSolver::applyConstraints(Varnode *vn,const CircleRange &range,FlowBlock *splitPoint)
+void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &range,FlowBlock *splitPoint)
 
 {
   list<PcodeOp *>::const_iterator iter;
@@ -1789,7 +1841,7 @@ void ValueSetSolver::applyConstraints(Varnode *vn,const CircleRange &range,FlowB
     defBlock = vn->getDef()->getParent();
     ValueSet *vSet = vn->getValueSet();
     if (vSet->opCode == CPUI_MULTIEQUAL) {
-      vSet->addLandmark(range);		// Leave landmark for widening
+      vSet->addLandmark(type,range);		// Leave landmark for widening
     }
   }
   FlowBlock *trueBlock = splitPoint->getTrueOut();
@@ -1802,13 +1854,13 @@ void ValueSetSolver::applyConstraints(Varnode *vn,const CircleRange &range,FlowB
     FlowBlock *curBlock = op->getParent();
     for(;;) {
       if (curBlock == trueBlock) {
-	outVn->getValueSet()->addEquation(op->getSlot(vn), range);
+	outVn->getValueSet()->addEquation(op->getSlot(vn), type, range);
 	break;
       }
       else if (curBlock == falseBlock) {
 	CircleRange falseRange(range);
 	falseRange.invert();
-	outVn->getValueSet()->addEquation(op->getSlot(vn), falseRange);
+	outVn->getValueSet()->addEquation(op->getSlot(vn), type, falseRange);
 	break;
       }
       else if (curBlock == splitPoint || curBlock == (FlowBlock *)0
@@ -1819,31 +1871,33 @@ void ValueSetSolver::applyConstraints(Varnode *vn,const CircleRange &range,FlowB
   }
 }
 
-/// Knowing that there is a lifting path from the given CBRANCH to the given Varnode
-/// in the system, go ahead and left the \b true value range to a constraint range
-/// on the Varnode.  Then look for reads of the Varnode where the constraint range applies.
-/// \param vn is the given Varnode in the system
-/// \param cbranch is the given CBRANCH
-void ValueSetSolver::constraintsFromPath(Varnode *vn,PcodeOp *cbranch)
+/// \brief Generate constraints given a Varnode path
+///
+/// Knowing that there is a lifting path from the given starting Varnode to an ending Varnode
+/// in the system, go ahead and lift the given range to a final constraint on the ending
+/// Varnode.  Then look for reads of the Varnode where the constraint applies.
+/// \param type is the constraint characteristic
+/// \param lift is the given range that will be lifted
+/// \param startVn is the starting Varnode
+/// \param endVn is the given ending Varnode in the system
+/// \param splitPoint is the point where control-flow splits
+void ValueSetSolver::constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,FlowBlock *splitPoint)
 
 {
-  CircleRange lift(true);
-  Varnode *curVn = cbranch->getIn(1);
-  while(curVn != vn) {
+  while(startVn != endVn) {
     Varnode *constVn;
-    curVn = lift.pullBack(curVn->getDef(),&constVn,false);
-    if (curVn == (Varnode *)0) return;	// Couldn't pull all the back to our value set
+    startVn = lift.pullBack(startVn->getDef(),&constVn,false);
+    if (startVn == (Varnode *)0) return;	// Couldn't pull all the way back to our value set
   }
-  FlowBlock *splitPoint = cbranch->getParent();
   for(;;) {
     Varnode *constVn;
-    applyConstraints(vn,lift,splitPoint);
-    if (!vn->isWritten()) break;
-    PcodeOp *op = vn->getDef();
+    applyConstraints(endVn,type,lift,splitPoint);
+    if (!endVn->isWritten()) break;
+    PcodeOp *op = endVn->getDef();
     if (op->isCall() || op->isMarker()) break;
-    vn = lift.pullBack(op,&constVn,false);
-    if (vn == (Varnode *)0) break;
-    if (!vn->isMark()) break;
+    endVn = lift.pullBack(op,&constVn,false);
+    if (endVn == (Varnode *)0) break;
+    if (!endVn->isMark()) break;
   }
 }
 
@@ -1864,11 +1918,21 @@ void ValueSetSolver::constraintsFromCBranch(PcodeOp *cbranch)
     int4 num = op->numInput();
     if (num == 0 || num > 2) break;
     vn = op->getIn(0);
-    if (vn->isConstant() && num == 2)
-      vn = op->getIn(1);
+    if (num == 2) {
+      if (vn->isConstant())
+	vn = op->getIn(1);
+      else if (!op->getIn(1)->isConstant()) {
+	// If we reach here, both inputs are non-constant
+	generateRelativeConstraint(op, cbranch);
+	return;
+      }
+      // If we reach here, vn is non-constant, other input is constant
+    }
   }
   if (vn->isMark()) {
-    constraintsFromPath(vn,cbranch);
+    CircleRange lift(true);
+    Varnode *startVn = cbranch->getIn(1);
+    constraintsFromPath(0,lift,startVn,vn,cbranch->getParent());
   }
 }
 
@@ -1903,6 +1967,98 @@ void ValueSetSolver::generateConstraints(vector<Varnode *> &worklist)
   }
   for(int4 i=0;i<blockList.size();++i)
     blockList[i]->clearMark();
+}
+
+/// Verify that the given Varnode is produced by a straight line sequence of
+/// COPYs, INT_ADDs with a constant, from the base register marked as \e relative
+/// for our system.
+/// \param vn is the given Varnode
+/// \param typeCode will hold the base register code (if found)
+/// \param value will hold the additive value relative to the base register (if found)
+/// \return \b true if the Varnode is a \e relative constant
+bool ValueSetSolver::checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const
+
+{
+  value = 0;
+  for(;;) {
+    if (vn->isMark()) {
+      ValueSet *valueSet = vn->getValueSet();
+      if (valueSet->typeCode != 0) {
+	typeCode = valueSet->typeCode;
+	break;
+      }
+    }
+    if (!vn->isWritten()) return false;
+    PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
+    if (opc == CPUI_COPY || opc == CPUI_INDIRECT)
+      vn = op->getIn(0);
+    else if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+      Varnode *constVn = op->getIn(1);
+      if (!constVn->isConstant())
+	return false;
+      value = (value + constVn->getOffset()) & calc_mask(constVn->getSize());
+      vn = op->getIn(0);
+    }
+    else
+      return false;
+  }
+  return true;		// Never reach here
+}
+
+/// Given a binary PcodeOp producing a conditional branch, check if it can be interpreted
+/// as a constraint relative to (the) base register specified for this system. If it can
+/// be, a \e relative Equation is generated, which will apply to \e relative ValueSets.
+/// \param compOp is the comparison PcodeOp
+/// \param cbranch is the conditional branch
+void ValueSetSolver::generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch)
+
+{
+  OpCode opc = compOp->code();
+  switch(opc) {
+    case CPUI_INT_LESS:
+      opc = CPUI_INT_SLESS;	// Treat unsigned pointer comparisons as signed relative to the base register
+      break;
+    case CPUI_INT_LESSEQUAL:
+      opc = CPUI_INT_SLESSEQUAL;
+      break;
+    case CPUI_INT_SLESS:
+    case CPUI_INT_SLESSEQUAL:
+    case CPUI_INT_EQUAL:
+    case CPUI_INT_NOTEQUAL:
+      break;
+    default:
+      return;
+  }
+  int4 typeCode;
+  uintb value;
+  Varnode *vn;
+  Varnode *inVn0 = compOp->getIn(0);
+  Varnode *inVn1 = compOp->getIn(1);
+  CircleRange lift(true);
+  if (checkRelativeConstant(inVn0, typeCode, value)) {
+    vn = inVn1;
+    if (!lift.pullBackBinary(opc, value, 1, vn->getSize(), 1))
+      return;
+  }
+  else if (checkRelativeConstant(inVn1,typeCode,value)) {
+    vn = inVn0;
+    if (!lift.pullBackBinary(opc, value, 0, vn->getSize(), 1))
+      return;
+  }
+  else
+    return;		// Neither side looks like a relative constant
+
+  Varnode *endVn = vn;
+  while(!endVn->isMark()) {
+    if (!endVn->isWritten()) return;
+    PcodeOp *op = endVn->getDef();
+    if (op->code() != CPUI_COPY && op->code() != CPUI_INDIRECT)
+      return;
+    endVn = op->getIn(0);
+  }
+  if (endVn != (Varnode *)0)
+    constraintsFromPath(typeCode,lift,endVn,endVn,cbranch->getParent());
 }
 
 /// Given a set of sinks, find all the Varnodes that flow directly into them.

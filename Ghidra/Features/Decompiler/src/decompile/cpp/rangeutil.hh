@@ -107,12 +107,18 @@ class Partition;		// Forward declaration
 /// or some other register (if \b typeCode is non-zero).
 class ValueSet {
 public:
+  /// \brief An external that can be applied to a ValueSet
+  ///
+  /// An Equation is attached to a particular ValueSet and its underlying Varnode
+  /// providing additional restriction on the ValueSet of an input parameter of the
+  /// operation producing the Varnode.
   class Equation {
     friend class ValueSet;
-    int4 slot;
-    CircleRange range;
+    int4 slot;			///< The input parameter slot to which the constraint is attached
+    int4 typeCode;		///< The constraint characteristic 0=absolute 1=relative to a spacebase register
+    CircleRange range;		///< The range constraint
   public:
-    Equation(int4 s,const CircleRange &rng) { slot=s; range = rng; }	///< Constructor
+    Equation(int4 s,int4 tc,const CircleRange &rng) { slot=s; typeCode = tc; range = rng; }	///< Constructor
   };
 private:
   friend class ValueSetSolver;
@@ -125,12 +131,15 @@ private:
   vector<Equation> equations;	///< Any equations associated with this value set
   Partition *partHead;	///< If Varnode is a component head, pointer to corresponding Partition
   ValueSet *next;	///< Next ValueSet to iterate
+  bool doesEquationApply(int4 num,int4 slot) const;	///< Does the indicated equation apply for the given input slot
+  void setFull(void) { range.setFull(vn->getSize()); typeCode = 100; }	///< Mark value set as possibly containing any value
   void setVarnode(Varnode *v,int4 tCode);	///< Attach \b this to given Varnode and set initial values
-  void addEquation(int4 slot,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
-  void addLandmark(const CircleRange &constraint) { addEquation(numParams,constraint); }	///< Add a widening landmark
+  void addEquation(int4 slot,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
+  void addLandmark(int4 type,const CircleRange &constraint) { addEquation(numParams,type,constraint); }	///< Add a widening landmark
   void doWidening(const CircleRange &newRange);	///< Widen the value set so fixed point is reached sooner
   void looped(void);	///< Mark that iteration has looped back to \b this
-  bool iterate(void);				///< Regenerate \b this value set from operator inputs
+  void computeTypeCode(void);	///< Figure out if \b this value set is absolute or relative
+  bool iterate(void);		///< Regenerate \b this value set from operator inputs
 public:
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   Varnode *getVarnode(void) const { return vn; }	///< Get the Varnode attached to \b this ValueSet
@@ -190,10 +199,12 @@ class ValueSetSolver {
   void component(ValueSet *vertex,Partition &part);		///< Generate a partition component given its head
   int4 visit(ValueSet *vertex,Partition &part);			///< Recursively walk the data-flow graph finding partitions
   void establishTopologicalOrder(void);				///< Find the optimal order for iterating through the ValueSets
-  void applyConstraints(Varnode *vn,const CircleRange &range,FlowBlock *splitPoint);
-  void constraintsFromPath(Varnode *vn,PcodeOp *cbranch);	///< Generate constraints given a branch and matching Varnode
+  void applyConstraints(Varnode *vn,int4 type,const CircleRange &range,FlowBlock *splitPoint);
+  void constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,FlowBlock *splitPoint);
   void constraintsFromCBranch(PcodeOp *cbranch);		///< Generate constraints arising from the given branch
   void generateConstraints(vector<Varnode *> &worklist);	///< Generate constraints given a system of Varnodes
+  bool checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const;	///< Check if the given Varnode is a \e relative constant
+  void generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch);	///< Try to find a \e relative constraint
 public:
   void establishValueSets(const vector<Varnode *> &sinks,Varnode *stackReg);	///< Build value sets for a data-flow system
   int4 getNumIterations(void) const { return numIterations; }	///< Get the current number of iterations
@@ -241,6 +252,23 @@ inline char CircleRange::encodeRangeOverlaps(uintb op1left, uintb op1right, uint
   val |= (op1right <= op2right) ? 2 : 0;
   val |= (op2left <= op2right) ? 1 : 0;
   return arrange[val];
+}
+
+/// Perform basic checks that the selected Equation exists and applies
+/// to the indicated input slot.
+/// \param num is the index selecting an Equation
+/// \param slot is the indicated slot
+/// \return \b true if the Equation exists and applies
+inline bool ValueSet::doesEquationApply(int4 num,int4 slot) const
+
+{
+  if (num < equations.size()) {
+    if (equations[num].slot == slot) {
+      if (equations[num].typeCode == typeCode)
+	return true;
+    }
+  }
+  return false;
 }
 
 /// \param vertex is the node that will be prepended
