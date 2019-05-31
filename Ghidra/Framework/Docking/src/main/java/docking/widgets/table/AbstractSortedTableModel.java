@@ -20,7 +20,9 @@ import java.util.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;
 
-import ghidra.util.SystemUtilities;
+import docking.widgets.table.sort.DefaultColumnComparator;
+import docking.widgets.table.sort.RowToColumnComparator;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -178,8 +180,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 		isSortPending = true;
 		pendingSortState = newSortState;
-		SystemUtilities.runSwingLater(
-			() -> sort(getModelData(), createSortingContext(newSortState)));
+		Swing.runLater(() -> sort(getModelData(), createSortingContext(newSortState)));
 	}
 
 	public TableSortState getPendingSortState() {
@@ -223,7 +224,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		hasEverSorted = true;
 		isSortPending = true;
 		pendingSortState = sortState;
-		SystemUtilities.runSwingLater(() -> sort(getModelData(), createSortingContext(sortState)));
+		Swing.runLater(() -> sort(getModelData(), createSortingContext(sortState)));
 	}
 
 	/**
@@ -320,14 +321,14 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	/**
 	 * An extension point for subclasses to insert their own comparator objects for their data.
-	 * Subclasses can create comparators for a single or multiple columns, as desired.  The 
-	 * {@link DefaultColumnComparator} is used as a, well, default comparator.
+	 * Subclasses can create comparators for a single or multiple columns, as desired.  
 	 * 
-	 * @param columnIndex the column index for which a comparator is desired.
-	 * @return a comparator for the given index.
+	 * @param columnIndex the column index
+	 * @return the comparator 
 	 */
 	protected Comparator<T> createSortComparator(int columnIndex) {
-		return new DefaultColumnComparator(columnIndex);
+		return new RowToColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
+			new StringBasedBackupRowToColumnComparator(columnIndex));
 	}
 
 	private Comparator<T> createLastResortComparator(ComparatorLink parentChain) {
@@ -416,23 +417,6 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 			}
 		}
 
-		int size() {
-			int count = 0;
-			if (primaryComparator != null) {
-				count++;
-			}
-
-			if (nextComparator == null) {
-				return count;
-			}
-
-			if (nextComparator instanceof AbstractSortedTableModel.ComparatorLink) {
-				count += ((ComparatorLink) nextComparator).size();
-			}
-
-			return count + 1; // +1 for the non-null comparator
-		}
-
 		@Override
 		public int compare(T t1, T t2) {
 			int result = primaryComparator.compare(t1, t2);
@@ -451,18 +435,18 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 * when we get to this comparator, then we have to make a decision about reasonable default
 	 * comparisons in order to maintain sorting consistency across sorts.
 	 */
-	@SuppressWarnings("unchecked")
-	// Comparable cast 
+	@SuppressWarnings("unchecked")	// Comparable cast 
 	private class EndOfChainComparator implements Comparator<T> {
 		@SuppressWarnings("rawtypes")
 		@Override
 		public int compare(T t1, T t2) {
 
-			// at this point we compare the rows, since all of the sorting columns are 
-			// completely equal
+			// at this point we compare the rows, since all of the sorting column values are equal
 			if (t1 instanceof Comparable) {
 				return ((Comparable) t1).compareTo(t2);
 			}
+
+			// use the identity hash to provide a consistent unique identifier within a JVM session
 			return System.identityHashCode(t1) - System.identityHashCode(t2);
 		}
 	}
@@ -480,19 +464,35 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		}
 	}
 
-	private class DefaultColumnComparator implements Comparator<T> {
-		private final int columnIndex;
+	private class StringBasedBackupRowToColumnComparator implements Comparator<T> {
 
-		public DefaultColumnComparator(int columnIndex) {
-			this.columnIndex = columnIndex;
+		private int sortColumn;
+
+		StringBasedBackupRowToColumnComparator(int sortColumn) {
+			this.sortColumn = sortColumn;
 		}
 
 		@Override
 		public int compare(T t1, T t2) {
-			Object value1 = getColumnValueForRow(t1, columnIndex);
-			Object value2 = getColumnValueForRow(t2, columnIndex);
-			return DEFAULT_COMPARATOR.compare(value1, value2);
+			if (t1 == t2) {
+				return 0;
+			}
+
+			String s1 = getColumStringValue(t1);
+			String s2 = getColumStringValue(t2);
+
+			if (s1 == null || s2 == null) {
+				return TableComparators.compareWithNullValues(s1, s2);
+			}
+
+			return s1.compareToIgnoreCase(s2);
+		}
+
+		private String getColumStringValue(T t) {
+			// just use the toString(), which may or may not produce a good value (this will
+			// catch the cases where the column value is itself a string)
+			Object o = getColumnValueForRow(t, sortColumn);
+			return o == null ? null : o.toString();
 		}
 	}
-
 }
