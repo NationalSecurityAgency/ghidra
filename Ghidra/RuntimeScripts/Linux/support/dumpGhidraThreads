@@ -23,4 +23,4 @@ SCRIPT_DIR="${SCRIPT_FILE%/*}"
 # Launch Thread Dumper
 "${SCRIPT_DIR}"/launch.sh fg ThreadDump "${MAXMEM}" "" util.DebugThreadDumper 18001
 
-printf "Press Enter to continue..." && read
+printf "Press Enter to continue..." && read continue
