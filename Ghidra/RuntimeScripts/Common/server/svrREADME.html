@@ -204,12 +204,12 @@ name/address queries.
 </P>
 
 <P>
-By default the server will attempt to identify an appropriate remote access IP address which will
-be written to the log at startup.  In addition, the server will only bind/listen to incoming 
-connections on this address by default.  It is important to understand between the published address
-and the listening address.  See the <typewriter>-ip</typewriter> parameter and 
-<typewriter>-i</typewriter> options in the <a href="#serverOptions">Server 
-Options</a> section for more details.
+By default the server will attempt to identify an appropriate remote access IPv4 address which will
+be written to the log at startup.  In addition, the server will listen for incoming 
+connections on all IPv4 interfaces by default.  It is important to understand the difference between 
+the published remote access address and the listening address (i.e. interface) which are both
+configurable.  See the <typewriter>-ip</typewriter> and <typewriter>-i</typewriter> options in 
+the <a href="#serverOptions">Server Options</a> section for more details.
 </P>
 
 (<a href="#top">Back to Top</a>)
@@ -291,9 +291,9 @@ public key files may be made without restarting the Ghidra Server.
 	login for <typewriter>-a0</typewriter> authentication mode.  Without this option, the users 
 	client-side login ID will be assumed.</LI>
 	<br>
-	<LI><typewriter>-ip &lt;hostname&gt;</typewriter><br>Identifies the remote access IP address or
-	hostname (FQDN) which should be used by remote clients to access the server.  By default the 
-	host name reported by the operating system is resolved to an IP address, if this fails the 
+	<LI><typewriter>-ip &lt;hostname&gt;</typewriter><br>Identifies the remote access hostname (FQDN) 
+	or IPv4 address which should be used by remote clients to access the server.  By default the 
+	host name reported by the operating system is resolved to an IPv4 address, if this fails the 
 	local loopback address is used.  The server log will indicate the remote access hostname 
 	at startup.  This option may be required when a server has multiple IP interfaces, relies on 
 	a dynamic DNS or other network address translation for incoming connections.
@@ -301,9 +301,9 @@ public key files may be made without restarting the Ghidra Server.
 	</LI>
 	<br>
 	<LI><typewriter>-i &lt;#.#.#.#&gt;</typewriter><br>Forces the server to be bound to a specific 
-	IP interface on the server.  If specified and the <typewriter>-ip</typewriter> option is not, 
+	IPv4 interface on the server.  If specified and the <typewriter>-ip</typewriter> option is not, 
 	the address specified by <typewriter>-i</typewriter> will establish the remote access IP 
-	address as well as restricting the listing interface. If this option is not specified connections 
+	address as well as restrict the listening interface. If this option is not specified connections 
 	will be accepted on any interface.</LI>
 	<br>
 	<LI><typewriter>-p#</typewriter><br>Allows the base TCP port to be specified (default: 13100).  The 

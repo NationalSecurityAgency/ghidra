@@ -123,17 +123,6 @@ class ServerConnectTask extends Task {
 		return name;
 	}
 
-//	private static void setOutgoingIpAddress(InetAddress destAddr, int serverPort)
-//			throws IOException {
-//		// TODO: this may not be needed since we do not create remote objects on the client
-//		InetSocketAddress sockAddr = new InetSocketAddress(destAddr, serverPort);
-//		Socket s = new Socket();
-//		s.connect(sockAddr, 5000);
-//		String ip = s.getLocalAddress().getHostAddress();
-//		System.setProperty("java.rmi.server.hostname", ip);
-//		s.close();
-//	}
-
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
@@ -157,8 +146,6 @@ class ServerConnectTask extends Task {
 	 * @throws IOException
 	 */
 	public static GhidraServerHandle getGhidraServerHandle(ServerInfo server) throws IOException {
-
-//		setOutgoingIpAddress(InetAddress.getByName(server.getServerName()), server.getPortNumber());
 
 		GhidraServerHandle gsh = null;
 		try {

@@ -69,7 +69,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String HELP_FILE = "/ghidra/server/remote/ServerHelp.txt";
 	private static String USAGE_ARGS =
-		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip<ipAddr>] [-i<ipAddr>] [-e<expireDays>] [-n] <serverPath>";
+		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip <hostname>] [-i <ipAddress>] [-e<expireDays>] [-n] <serverPath>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
 
@@ -421,7 +421,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	private static String initRemoteAccessHostname() throws UnknownHostException {
-//		System.setProperty("java.rmi.server.useLocalHostname", "false");
 		String hostname = System.getProperty(RMI_SERVER_PROPERTY);
 		if (hostname == null) {
 			if (bindAddress != null) {
@@ -433,7 +432,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					localhost = findHost();
 					if (localhost == null) {
 						log.fatal("Can't find host ip address!");
-						System.exit(0);
+						System.exit(-1);
 					}
 				}
 				hostname = localhost.getHostAddress();

@@ -1,8 +1,8 @@
 Ghidra server startup parameters.
 Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-n] <repository_path>
  
-   -ip <hostname> : identifies the remote access IP address or	hostname (FQDN) which should be 
-   	                 used by remote clients to access the server.
+   -ip <hostname> : identifies the remote access IPv4 address or hostname (FQDN) which should be 
+   	                used by remote clients to access the server.
    	                 
    -i #.#.#.# : server interface IPv4 address to listen on (default will listen on all interfaces).
 	
