@@ -109,7 +109,6 @@ class Partition;		// Forward declaration
 /// or some other register (if \b typeCode is non-zero).
 class ValueSet {
 public:
-  static const int4 FULL;	///< Special typeCode indicating is permanently marked full
   static const int4 MAX_STEP;	///< Maximum step inferred for a value set
   /// \brief An external that can be applied to a ValueSet
   ///
@@ -136,7 +135,7 @@ private:
   Partition *partHead;	///< If Varnode is a component head, pointer to corresponding Partition
   ValueSet *next;	///< Next ValueSet to iterate
   bool doesEquationApply(int4 num,int4 slot) const;	///< Does the indicated equation apply for the given input slot
-  void setFull(void) { range.setFull(vn->getSize()); typeCode = FULL; }	///< Mark value set as possibly containing any value
+  void setFull(void) { range.setFull(vn->getSize()); typeCode = 0; }	///< Mark value set as possibly containing any value
   void setVarnode(Varnode *v,int4 tCode);	///< Attach \b this to given Varnode and set initial values
   void addEquation(int4 slot,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
   void addLandmark(int4 type,const CircleRange &constraint) { addEquation(numParams,type,constraint); }	///< Add a widening landmark

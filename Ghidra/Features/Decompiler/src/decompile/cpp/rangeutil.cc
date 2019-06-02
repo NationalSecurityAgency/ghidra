@@ -1423,7 +1423,6 @@ void CircleRange::printRaw(ostream &s) const
   }
 }
 
-const int4 ValueSet::FULL = 100;
 const int4 ValueSet::MAX_STEP = 32;
 
 /// The initial values in \b this are set based on the type of Varnode:
@@ -1462,7 +1461,7 @@ void ValueSet::setVarnode(Varnode *v,int4 tCode)
   else {	// Some other form of input
     opCode = CPUI_MAX;
     numParams = 0;
-    typeCode = FULL;
+    typeCode = 0;
     range.setFull(vn->getSize());
   }
 }
@@ -1581,7 +1580,7 @@ bool ValueSet::iterate(void)
 
 {
   if (!vn->isWritten()) return false;
-  if (typeCode >= FULL) return false;
+  if (range.isFull()) return false;
   if (count == 0)
     computeTypeCode();
   count += 1;		// Count this iteration
@@ -1721,7 +1720,7 @@ void ValueSetRead::setPcodeOp(PcodeOp *o,int4 slt)
   typeCode = 0;
   op = o;
   slot = slt;
-  equationTypeCode = ValueSet::FULL;
+  equationTypeCode = -1;
 }
 
 /// \param slt is the given slot
@@ -1757,6 +1756,7 @@ void ValueSetRead::printRaw(ostream &s) const
 
 {
   s << "Read: " << get_opname(op->code());
+  s << '(' << op->getSeqNum() << ')';
   if (typeCode == 0)
     s << " absolute ";
   else
