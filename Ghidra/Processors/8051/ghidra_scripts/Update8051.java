@@ -35,7 +35,7 @@ public class Update8051 extends GhidraScript {
     	}
 		SymbolTable st = currentProgram.getSymbolTable();
 		SymbolIterator iter = st.getDefinedSymbols();
-		int count =0;
+		int count = 0;
 		while (iter.hasNext()) {
 			Symbol symbol = iter.next();
 			String spaceName = symbol.getAddress().getAddressSpace().getName();
