@@ -49,7 +49,7 @@ public class Update8051 extends GhidraScript {
 			println("No address spaces found for " +SFR + ", "+ BITS + ", " + SFR_BITS + ".");
 		}
 		else {
-			String str = (count > 1 ? " symbol to update." : " symbols to update."); 
+			String str = (count > 1 ? " symbols to update." : " symbol to update."); 
 			println("Found " + count + str);
 		}
     }
