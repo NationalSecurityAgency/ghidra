@@ -91,6 +91,8 @@ public:
   Varnode *pullBack(PcodeOp *op,Varnode **constMarkup,bool usenzmask);	///< Pull-back \b this range through given PcodeOp.
   bool pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize,int4 outSize);	///< Push-forward thru given unary operator
   bool pushForwardBinary(OpCode opc,const CircleRange &in1,const CircleRange &in2,int4 inSize,int4 outSize,int4 maxStep);
+  bool pushForwardTrinary(OpCode opc,const CircleRange &in1,const CircleRange &in2,const CircleRange &in3,
+			  int4 inSize,int4 outSize,int4 maxStep);
   void widen(const CircleRange &op2,bool leftIsStable);	///< Widen the unstable bound to match containing range
   int4 translate2Op(OpCode &opc,uintb &c,int4 &cslot) const;	///< Translate range to a comparison op
   void printRaw(ostream &s) const;		///< Write a text representation of \b this to stream
@@ -107,6 +109,8 @@ class Partition;		// Forward declaration
 /// or some other register (if \b typeCode is non-zero).
 class ValueSet {
 public:
+  static const int4 FULL;	///< Special typeCode indicating is permanently marked full
+  static const int4 MAX_STEP;	///< Maximum step inferred for a value set
   /// \brief An external that can be applied to a ValueSet
   ///
   /// An Equation is attached to a particular ValueSet and its underlying Varnode
@@ -132,7 +136,7 @@ private:
   Partition *partHead;	///< If Varnode is a component head, pointer to corresponding Partition
   ValueSet *next;	///< Next ValueSet to iterate
   bool doesEquationApply(int4 num,int4 slot) const;	///< Does the indicated equation apply for the given input slot
-  void setFull(void) { range.setFull(vn->getSize()); typeCode = 100; }	///< Mark value set as possibly containing any value
+  void setFull(void) { range.setFull(vn->getSize()); typeCode = FULL; }	///< Mark value set as possibly containing any value
   void setVarnode(Varnode *v,int4 tCode);	///< Attach \b this to given Varnode and set initial values
   void addEquation(int4 slot,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
   void addLandmark(int4 type,const CircleRange &constraint) { addEquation(numParams,type,constraint); }	///< Add a widening landmark

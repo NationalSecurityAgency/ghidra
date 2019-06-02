@@ -1076,6 +1076,7 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
     return true;
   }
   switch(opc) {
+    case CPUI_CAST:
     case CPUI_COPY:
       *this = in1;
       break;
@@ -1125,6 +1126,7 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
   }
   return true;
 }
+
 /// \brief Push \b this range forward through a binary operation
 ///
 /// Push all values in the given ranges through a binary p-code operator.
@@ -1144,6 +1146,7 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
     return true;
   }
   switch(opc) {
+    case CPUI_PTRSUB:
     case CPUI_INT_ADD:
       isempty = false;
       mask = in1.mask | in2.mask;
@@ -1301,6 +1304,28 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
   return true;
 }
 
+/// \brief Push \b this range forward through a trinary operation
+///
+/// Push all values in the given ranges through a trinary p-code operator (currenly only CPUI_PTRADD).
+/// If the output set of values forms a range, then set \b this to the range and return \b true.
+/// \param opc is the given p-code operator
+/// \param in1 is the first given input range
+/// \param in2 is the second given input range
+/// \param in3 is the third given input range
+/// \param inSize is the storage space in bytes for the input
+/// \param outSize is the storage space in bytes for the output
+/// \param maxStep is the maximum to allow step to grow via multiplication
+/// \return \b true if the result is known and forms a range
+bool CircleRange::pushForwardTrinary(OpCode opc,const CircleRange &in1,const CircleRange &in2,const CircleRange &in3,
+				     int4 inSize,int4 outSize,int4 maxStep)
+{
+  if (opc != CPUI_PTRADD) return false;
+  CircleRange tmpRange;
+  if (!tmpRange.pushForwardBinary(CPUI_INT_MULT, in2, in3, inSize, inSize, maxStep))
+    return false;
+  return pushForwardBinary(CPUI_INT_ADD, in1, tmpRange, inSize, outSize, maxStep);
+}
+
 /// Widen \b this range so at least one of the boundaries matches with the given
 /// range, which must contain \b this.
 /// \param op2 is the given containing range
@@ -1398,6 +1423,9 @@ void CircleRange::printRaw(ostream &s) const
   }
 }
 
+const int4 ValueSet::FULL = 100;
+const int4 ValueSet::MAX_STEP = 32;
+
 /// The initial values in \b this are set based on the type of Varnode:
 ///   - Constant gets the single value
 ///   - Input gets all possible values
@@ -1434,6 +1462,7 @@ void ValueSet::setVarnode(Varnode *v,int4 tCode)
   else {	// Some other form of input
     opCode = CPUI_MAX;
     numParams = 0;
+    typeCode = FULL;
     range.setFull(vn->getSize());
   }
 }
@@ -1552,7 +1581,7 @@ bool ValueSet::iterate(void)
 
 {
   if (!vn->isWritten()) return false;
-  if (typeCode >= 100) return false;
+  if (typeCode >= FULL) return false;
   if (count == 0)
     computeTypeCode();
   count += 1;		// Count this iteration
@@ -1575,12 +1604,12 @@ bool ValueSet::iterate(void)
 	pieces = res.circleUnion(inSet->range);
       }
       if (pieces == 2) {
-	if (res.minimalContainer(inSet->range,32))	// Could not get clean union, force it
+	if (res.minimalContainer(inSet->range,MAX_STEP))	// Could not get clean union, force it
 	  break;
       }
     }
     if (0 != res.circleUnion(range)) {	// Union with the previous iteration's set
-      res.minimalContainer(range,32);
+      res.minimalContainer(range,MAX_STEP);
     }
   }
   else if (numParams == 1) {
@@ -1605,7 +1634,7 @@ bool ValueSet::iterate(void)
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
     ValueSet *inSet2 = op->getIn(1)->getValueSet();
     if (equations.size() == 0) {
-      if (!res.pushForwardBinary(opCode, inSet1->range, inSet2->range, inSet1->vn->getSize(), vn->getSize(), 32)) {
+      if (!res.pushForwardBinary(opCode, inSet1->range, inSet2->range, inSet1->vn->getSize(), vn->getSize(), MAX_STEP)) {
 	setFull();
 	return true;
       }
@@ -1622,9 +1651,30 @@ bool ValueSet::iterate(void)
 	if (0 != range2.intersect(equations[eqPos].range))
 	  range2 = equations[eqPos].range;
       }
-      if (!res.pushForwardBinary(opCode, range1, range2, inSet1->vn->getSize(), vn->getSize(), 32)) {
+      if (!res.pushForwardBinary(opCode, range1, range2, inSet1->vn->getSize(), vn->getSize(), MAX_STEP)) {
 	setFull();
+	return true;
       }
+    }
+  }
+  else if (numParams == 3) {
+    ValueSet *inSet1 = op->getIn(0)->getValueSet();
+    ValueSet *inSet2 = op->getIn(1)->getValueSet();
+    ValueSet *inSet3 = op->getIn(2)->getValueSet();
+    CircleRange range1 = inSet1->range;
+    CircleRange range2 = inSet2->range;
+    if (doesEquationApply(eqPos, 0)) {
+      if (0 != range1.intersect(equations[eqPos].range))
+	range1 = equations[eqPos].range;
+      eqPos += 1;
+    }
+    if (doesEquationApply(eqPos, 1)) {
+      if (0 != range2.intersect(equations[eqPos].range))
+	range2 = equations[eqPos].range;
+    }
+    if (!res.pushForwardTrinary(opCode, range1, range2, inSet3->range, inSet1->vn->getSize(), vn->getSize(), MAX_STEP)) {
+      setFull();
+      return true;
     }
   }
   else
@@ -1671,7 +1721,7 @@ void ValueSetRead::setPcodeOp(PcodeOp *o,int4 slt)
   typeCode = 0;
   op = o;
   slot = slt;
-  equationTypeCode = 100;
+  equationTypeCode = ValueSet::FULL;
 }
 
 /// \param slt is the given slot
@@ -2006,7 +2056,7 @@ void ValueSetSolver::generateConstraints(vector<Varnode *> &worklist)
 	bl->setMark();
 	blockList.push_back(bl);
 	PcodeOp *lastOp = bl->lastOp();
-	if (lastOp->code() == CPUI_CBRANCH) {
+	if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
 	  constraintsFromCBranch(lastOp);
 	}
 	bl = (BlockBasic *)bl->getImmedDom();
@@ -2119,11 +2169,12 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
 
 {
   vector<Varnode *> worklist;
-  int4 workPos = 1;
+  int4 workPos = 0;
   if (stackReg != (Varnode *)0) {
     newValueSet(stackReg,1);		// Establish stack pointer as special
     stackReg->setMark();
     worklist.push_back(stackReg);
+    workPos += 1;
     rootNodes.push_back(stackReg->getValueSet());
   }
   for(int4 i=0;i<sinks.size();++i) {
@@ -2145,17 +2196,39 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
       continue;
     }
     PcodeOp *op = vn->getDef();
-    if (op->isCall()) {
-      vn->getValueSet()->range.setFull(vn->getSize());
-      rootNodes.push_back(vn->getValueSet());
-      continue;
-    }
-    for(int4 i=0;i<op->numInput();++i) {
-      Varnode *inVn = op->getIn(i);
-      if (inVn->isMark() || inVn->isAnnotation()) continue;
-      newValueSet(inVn,0);
-      inVn->setMark();
-      worklist.push_back(inVn);
+    switch(op->code()) {	// Distinguish ops where we can never predict an integer range
+      case CPUI_CALL:
+      case CPUI_CALLIND:
+      case CPUI_CALLOTHER:
+      case CPUI_LOAD:
+      case CPUI_NEW:
+      case CPUI_SEGMENTOP:
+      case CPUI_CPOOLREF:
+      case CPUI_FLOAT_ADD:
+      case CPUI_FLOAT_DIV:
+      case CPUI_FLOAT_MULT:
+      case CPUI_FLOAT_SUB:
+      case CPUI_FLOAT_NEG:
+      case CPUI_FLOAT_ABS:
+      case CPUI_FLOAT_SQRT:
+      case CPUI_FLOAT_INT2FLOAT:
+      case CPUI_FLOAT_FLOAT2FLOAT:
+      case CPUI_FLOAT_TRUNC:
+      case CPUI_FLOAT_CEIL:
+      case CPUI_FLOAT_FLOOR:
+      case CPUI_FLOAT_ROUND:
+	vn->getValueSet()->setFull();
+	rootNodes.push_back(vn->getValueSet());
+	break;
+      default:
+	for(int4 i=0;i<op->numInput();++i) {
+	  Varnode *inVn = op->getIn(i);
+	  if (inVn->isMark() || inVn->isAnnotation()) continue;
+	  newValueSet(inVn,0);
+	  inVn->setMark();
+	  worklist.push_back(inVn);
+	}
+	break;
     }
   }
   for(int4 i=0;i<reads.size();++i) {
