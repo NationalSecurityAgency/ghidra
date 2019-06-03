@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -639,6 +639,12 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	// test that navigating a vertex updates the code browser's location
 	@Test
 	public void testNavigationFromVertexToCodeBrowser() {
+
+		//
+		// This test covers navigation, which relies on the provider being focused to work
+		//
+		setProviderAlwaysFocused();
+
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
@@ -722,6 +728,12 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	}
 
 	protected void doTestRelayout(boolean fullReload) throws Exception {
+
+		//
+		// This test covers navigation, which relies on the provider being focused to work
+		//
+		setProviderAlwaysFocused();
+
 		//
 		// Test that we can move a node, call relayout and that the moved node will not be 
 		// at the moved position.

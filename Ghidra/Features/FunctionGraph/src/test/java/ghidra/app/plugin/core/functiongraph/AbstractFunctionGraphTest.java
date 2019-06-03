@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 
@@ -777,13 +778,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 //		long start = System.nanoTime();
 
 		waitForSwing();
-		
+
 		int tryCount = 3;
-		while (tryCount++ < 5 && updater.isBusy()) { 
+		while (tryCount++ < 5 && updater.isBusy()) {
 			waitForConditionWithoutFailing(() -> !updater.isBusy());
 		}
 		waitForSwing();
-		
+
 		assertFalse(updater.isBusy());
 
 //		long end = System.nanoTime();
@@ -862,6 +863,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected void showProvider() {
 		runSwing(() -> graphPlugin.showProvider());
 		waitForBusyGraph();
+	}
+
+	protected void setProviderAlwaysFocused() {
+		Supplier<Boolean> focusDelegate = () -> true;
+		runSwing(() -> graphProvider.setFocusStatusDelegate(focusDelegate));
 	}
 
 	protected void assertSatelliteVisible(boolean visible) {
