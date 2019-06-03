@@ -111,7 +111,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 
 	void getActions() {
 		actions = provider.getActions();
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				favorites.add((FavoritesAction) action);
 			}

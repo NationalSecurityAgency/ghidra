@@ -57,8 +57,8 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorProvider#createActions()
 	 */
 	@Override
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[] {
+	protected CompositeEditorTableAction[] createActions() {
+		return new CompositeEditorTableAction[] {
 			new ApplyAction(this),
 //					new ToggleLockAction(this),
 			new InsertUndefinedAction(this), new MoveUpAction(this), new MoveDownAction(this),

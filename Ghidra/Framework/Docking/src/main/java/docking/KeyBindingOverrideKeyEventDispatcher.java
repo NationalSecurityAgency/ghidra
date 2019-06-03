@@ -256,12 +256,12 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		// We've made the executive decision to allow all keys to go through to the text component
 		// unless they are modified with the 'Alt'/'Ctrl'/etc keys, unless they directly used 
 		// by the text component
-		if (!isNonTextModifierOn(event)) {
+		if (!isModified(event)) {
 			return true; // unmodified keys will be given to the text component
 		}
 
 		// the key is modified; let it through if the component has a mapping for the key
-		return hasComponentKeyToActionMapping((JTextComponent) destination, event);
+		return hasRegisteredKeyBinding((JTextComponent) destination, event);
 	}
 
 	/**
@@ -270,11 +270,11 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 	 * @param e the event
 	 * @return true if modified
 	 */
-	private boolean isNonTextModifierOn(KeyEvent e) {
+	private boolean isModified(KeyEvent e) {
 		return e.isAltDown() || e.isAltGraphDown() || e.isMetaDown() || e.isControlDown();
 	}
 
-	private boolean hasComponentKeyToActionMapping(JComponent c, KeyEvent event) {
+	private boolean hasRegisteredKeyBinding(JComponent c, KeyEvent event) {
 		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 		Action action = getJavaActionForComponent(c, keyStroke);
 		return action != null;

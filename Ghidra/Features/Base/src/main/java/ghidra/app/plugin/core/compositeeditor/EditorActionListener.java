@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +21,11 @@ public interface EditorActionListener {
 	 * Notification that the indicated actions were added.
 	 * @param actions the composite editor actions.
 	 */
-	public void actionsAdded(CompositeEditorAction[] actions);
+	public void actionsAdded(CompositeEditorTableAction[] actions);
 	
 	/**
 	 * Notification that the indicated actions were removed.
 	 * @param actions the composite editor actions.
 	 */
-	public void actionsRemoved(CompositeEditorAction[] actions);
+	public void actionsRemoved(CompositeEditorTableAction[] actions);
 }

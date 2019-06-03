@@ -279,7 +279,7 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 
 	void getActions() {
 		actions = ((StackEditorProvider) provider).getActions();
-		for (CompositeEditorAction element : actions) {
+		for (CompositeEditorTableAction element : actions) {
 			if (element instanceof FavoritesAction) {
 				favorites.add((FavoritesAction) element);
 			}

@@ -88,8 +88,8 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[] { new ApplyAction(this), new ClearAction(this),
+	protected CompositeEditorTableAction[] createActions() {
+		return new CompositeEditorTableAction[] { new ApplyAction(this), new ClearAction(this),
 			new DeleteAction(this), new PointerAction(this), new ArrayAction(this),
 			new ShowComponentPathAction(this), new EditComponentAction(this),
 			new EditFieldAction(this), new HexNumbersAction(this) };
@@ -133,7 +133,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorAction[] getActions() {
+	protected CompositeEditorTableAction[] getActions() {
 		return actionMgr.getAllActions();
 	}
 
