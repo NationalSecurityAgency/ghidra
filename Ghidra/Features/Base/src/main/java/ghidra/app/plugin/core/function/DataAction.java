@@ -66,8 +66,7 @@ class DataAction extends ListingContextAction {
 			return;
 		}
 
-		// we don't have a default keybinding, so any value implies user-defined
-		setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	void setPopupMenu(String name, boolean isSignatureAction) {

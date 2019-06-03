@@ -199,17 +199,6 @@ public class DockingToolActionManager implements PropertyChangeListener {
 			list = new ArrayList<>();
 		}
 
-		// note: we only use the action name for the lookup, as all shared actions are owned
-		//       by the 'Tool'
-		int index = fullName.indexOf(" (Tool)");
-		if (index > 0) {
-			String actionName = fullName.substring(0, index);
-			SharedStubKeyBindingAction sharedAction = sharedActionMap.get(actionName);
-			if (sharedAction != null) {
-				list.add(sharedAction);
-			}
-		}
-
 		return new ArrayList<>(list);
 	}
 
@@ -236,6 +225,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 			}
 		}
 
+		// these are the 'shared' actions that are needed in order to appear in the options UI
 		for (DockingActionIf action : sharedActionMap.values()) {
 			if (owner == null || action.getOwner().equals(owner)) {
 				matchingActionList.add(action);
@@ -321,5 +311,9 @@ public class DockingToolActionManager implements PropertyChangeListener {
 				dockingTool.setConfigChanged(true);
 			}
 		}
+	}
+
+	DockingActionIf getSharedStubKeyBindingAction(String name) {
+		return sharedActionMap.get(name);
 	}
 }
