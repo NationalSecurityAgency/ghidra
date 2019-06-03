@@ -47,6 +47,9 @@ public interface GhidraServerHandle extends Remote {
 	 *   9: Added support for transient checkouts (7.2)
 	 *   10: Added BlockStreamServer (7.4)
 	 *   11: Revised password hash to SHA-256 (9.0)
+	 *       - version 9.1 switched to using SSL/TLS for RMI registry connection preventing
+	 *         older clients the ability to connect to the server.  Remote interface remained
+	 *         unchanged allowing 9.1 clients to connect to 9.0 server.
 	 */
 	public static final int INTERFACE_VERSION = 11;
 

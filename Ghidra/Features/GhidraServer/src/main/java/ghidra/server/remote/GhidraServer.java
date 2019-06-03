@@ -63,15 +63,15 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
+	private static InetAddress bindAddress;
 
 	private static Logger log;
 
 	private static String HELP_FILE = "/ghidra/server/remote/ServerHelp.txt";
 	private static String USAGE_ARGS =
-		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip<ipAddr>] [-e<expireDays>] [-n] <serverPath>";
+		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip <hostname>] [-i <ipAddress>] [-e<expireDays>] [-n] <serverPath>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
-	// private static final String RMI_CODEBASE_PROPERTY = "java.rmi.server.codebase";
 
 	private static final String[] AUTH_MODES =
 		{ "None", "Password File", "OS Password", "PKI", "OS Password & Password File" };
@@ -175,13 +175,20 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		GhidraServer.server = this;
 
+		// Start block stream server - use RMI serverSocketFactory
 		blockStreamServer = BlockStreamServer.getBlockStreamServer();
-		blockStreamServer.startServer();
+		ServerSocket streamServerSocket;
+		if (serverSocketFactory != null) {
+			streamServerSocket =
+				serverSocketFactory.createServerSocket(ServerPortFactory.getStreamPort());
+		}
+		else {
+			streamServerSocket = new GhidraSSLServerSocket(ServerPortFactory.getStreamPort(),
+				bindAddress, null, null, authMode == PKI_LOGIN);
+		}
+		blockStreamServer.startServer(streamServerSocket, initRemoteAccessHostname());
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#getAuthenticationCallbacks(javax.security.auth.Subject)
-	 */
 	@Override
 	public Callback[] getAuthenticationCallbacks() throws RemoteException {
 		log.info("Authentication callbacks requested by " + RepositoryManager.getRMIClient());
@@ -203,9 +210,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#checkCompatibility(int)
-	 */
 	@Override
 	public void checkCompatibility(int serverInterfaceVersion) throws RemoteException {
 		if (serverInterfaceVersion > INTERFACE_VERSION) {
@@ -219,9 +223,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#getRepositoryServer(javax.security.auth.callback.Callback[])
-	 */
 	@Override
 	public RemoteRepositoryServerHandle getRepositoryServer(Subject user, Callback[] authCallbacks)
 			throws LoginException, RemoteException {
@@ -419,6 +420,28 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		return null;
 	}
 
+	private static String initRemoteAccessHostname() throws UnknownHostException {
+		String hostname = System.getProperty(RMI_SERVER_PROPERTY);
+		if (hostname == null) {
+			if (bindAddress != null) {
+				hostname = bindAddress.getHostAddress();
+			}
+			else {
+				InetAddress localhost = InetAddress.getLocalHost();
+				if (localhost.isLoopbackAddress()) {
+					localhost = findHost();
+					if (localhost == null) {
+						log.fatal("Can't find host ip address!");
+						System.exit(-1);
+					}
+				}
+				hostname = localhost.getHostAddress();
+			}
+			System.setProperty(RMI_SERVER_PROPERTY, hostname);
+		}
+		return hostname;
+	}
+
 	/**
 	 * Main method for starting the Ghidra server.
 	 * 
@@ -475,8 +498,43 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.exit(-1);
 				}
 			}
-			else if (s.startsWith("-ip")) { // Setting server ip address to bind to
-				System.setProperty(RMI_SERVER_PROPERTY, s.substring(3));
+			else if (s.startsWith("-ip")) { // setting server remote access hostname
+				int nextArgIndex = i + 1;
+				String hostname;
+				if (s.length() == 3 && nextArgIndex < args.length) {
+					hostname = args[++i];
+				}
+				else {
+					hostname = s.substring(3);
+				}
+				hostname = hostname.trim();
+				if (hostname.length() == 0 || hostname.startsWith("-")) {
+					displayUsage("Missing -ip hostname");
+					System.exit(-1);
+				}
+				System.setProperty(RMI_SERVER_PROPERTY, hostname);
+			}
+			else if (s.startsWith("-i")) {  // setting server bind address
+				int nextArgIndex = i + 1;
+				String bindIp;
+				if (s.length() == 2 && nextArgIndex < args.length) {
+					bindIp = args[++i];
+				}
+				else {
+					bindIp = s.substring(2);
+				}
+				bindIp = bindIp.trim();
+				if (bindIp.length() == 0 || bindIp.startsWith("-")) {
+					displayUsage("Missing -i interface bind address");
+					System.exit(-1);
+				}
+				try {
+					bindAddress = InetAddress.getByName(bindIp);
+				}
+				catch (UnknownHostException e) {
+					System.err.println("Unknown server interface bind address: " + bindIp);
+					System.exit(-1);
+				}
 			}
 			else if (s.startsWith("-d") && s.length() > 2) { // Login Domain
 				loginDomain = s.substring(2);
@@ -592,24 +650,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		// }
 
 		try {
-			// Determine IP interface to bind to
-			String hostname = System.getProperty(RMI_SERVER_PROPERTY);
-			if (hostname == null) {
-				InetAddress localhost = InetAddress.getLocalHost();
-				if (localhost.isLoopbackAddress()) {
-					localhost = findHost();
-					if (localhost == null) {
-						log.fatal("Can't find host ip address!");
-						System.exit(0);
-						return;
-					}
-				}
-				System.setProperty(RMI_SERVER_PROPERTY, localhost.getHostAddress());
-				hostname = localhost.getCanonicalHostName();
-			}
-			else {
-				log.warn("forcing server to bind to " + hostname);
-			}
+			// Ensure that remote access hostname is properly set for RMI registration
+			String hostname = initRemoteAccessHostname();
 
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
 				// keystore has not been identified - use self-signed certificate
@@ -629,8 +671,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// System.setProperty(RMI_CODEBASE_PROPERTY, codeBaseProp);
 
 			log.info("Ghidra Server " + Application.getApplicationVersion());
-
-			log.info("   Server bound to " + System.getProperty(RMI_SERVER_PROPERTY));
+			log.info("   Server remote access address: " + hostname);
+			if (bindAddress == null) {
+				log.info("   Server listening on all interfaces");
+			}
+			else {
+				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
+			}
 			log.info("   RMI Registry port: " + ServerPortFactory.getRMIRegistryPort());
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
 			log.info("   Block Stream port: " + ServerPortFactory.getStreamPort());
@@ -659,7 +706,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			serverSocketFactory = new SslRMIServerSocketFactory(null, null, authMode == PKI_LOGIN) {
 				@Override
 				public ServerSocket createServerSocket(int port) throws IOException {
-					return new GhidraSSLServerSocket(port, getEnabledCipherSuites(),
+					return new GhidraSSLServerSocket(port, bindAddress, getEnabledCipherSuites(),
 						getEnabledProtocols(), getNeedClientAuth());
 				}
 			};
@@ -671,8 +718,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 			log.info("Registering Ghidra Server...");
 
-			Registry registry =
-				LocateRegistry.createRegistry(ServerPortFactory.getRMIRegistryPort());
+			Registry registry = LocateRegistry.createRegistry(
+				ServerPortFactory.getRMIRegistryPort(), clientSocketFactory, serverSocketFactory);
 			registry.bind(BIND_NAME, svr);
 
 			log.info("Registered Ghidra Server.");
