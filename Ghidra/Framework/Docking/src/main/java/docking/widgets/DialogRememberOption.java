@@ -32,7 +32,6 @@ public class DialogRememberOption {
 	 * Constructs a new DialogRememberOption for use in an OptionDialog for adding an
 	 * "Apply to all", "Remember my decision", etc. checkBox.
 	 * @param description the checkBox text (e.g. "Apply to all")
-	 * @param defaultState the default state of the checkBox. (This almost always false.)
 	 */
 	public DialogRememberOption(String description) {
 		this.description = description;
@@ -57,8 +56,8 @@ public class DialogRememberOption {
 
 	/**
 	 * Returns true if a previous call to the dialog was remembered (The user selected the
-	 * checkBox.)
-	 * @return
+	 * checkBox)
+	 * @return true if a previous call to the dialog was remembered
 	 */
 	public boolean hasRememberedResult() {
 		return hasRememberedResult;
@@ -72,12 +71,10 @@ public class DialogRememberOption {
 	 * "shown", if there is a saved result, it will be returned
 	 * instead of actually showing the dialog.
 	 *
-	 * @param choice the boolean state of the checkBox.
-	 * @param rememberedResult the users result from the OptionDialog.
+	 * @param choice the user's choice from the OptionDialog
 	 */
-	public void rememberResult(int rememberedResult) {
+	public void rememberResult(int choice) {
 		this.hasRememberedResult = true;
-		this.rememberedResult = rememberedResult;
+		this.rememberedResult = choice;
 	}
-
 }

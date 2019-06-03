@@ -31,6 +31,7 @@ import org.jdom.output.XMLOutputter;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -369,23 +370,23 @@ public class FrontEndPlugin extends Plugin
 			"\nserver may be forced to close as a result.";
 		// @formatter:on
 
-		OptionDialog info = new OptionDialog("Ghidra Server Error", message,
-			OptionDialog.PLAIN_MESSAGE, DISCONNECTED_ICON);
+		OkDialog info = new OkDialog("Ghidra Server Error", message, DISCONNECTED_ICON);
 		info.show(tool.getToolFrame());
 	}
 
 	/**
 	 * Set the project manager; try to reopen the last project that was
 	 * opened.
-	 * @param pm
+	 * @param pm the project manager
 	 */
 	void setProjectManager(ProjectManager pm) {
 		this.projectManager = pm;
 	}
 
 	/**
-	 * sets the handle to the activeProject, as well as updating the
+	 * Sets the handle to the activeProject, as well as updating the
 	 * active data tree to show the new active project's data
+	 * @param project the active project
 	 */
 	void setActiveProject(Project project) {
 
