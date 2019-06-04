@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.fallthrough;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.*;
 
@@ -37,7 +37,8 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 
-public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest implements LocationCallback {
+public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest
+		implements LocationCallback {
 	private Program program;
 	private TestEnv env;
 	private PluginTool tool;
@@ -70,7 +71,7 @@ public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest i
 
 	@Test
 	public void testNotepadLocations() {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		checkAction(actions, AUTO_OVERRIDE, false, "Start");
 		checkAction(actions, CLEAR_FALLTHROUGH, false, "Start");
 
@@ -96,7 +97,7 @@ public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest i
 			new ProgramSelectionPluginEvent("Test", selection, program);
 		tool.firePluginEvent(ev);
 
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		checkAction(actions, AUTO_OVERRIDE, true, "selection");
 		checkAction(actions, CLEAR_FALLTHROUGH, true, "selection");
 
@@ -110,7 +111,7 @@ public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest i
 	@Override
 	public void locationGenerated(ProgramLocation loc) {
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", loc, program));
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 
 		ListingActionContext actionContext =
 			(ListingActionContext) cb.getProvider().getActionContext(null);
@@ -126,7 +127,7 @@ public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest i
 
 	}
 
-	private void checkAction(List<DockingActionIf> actions, String name, boolean isValidContext,
+	private void checkAction(Set<DockingActionIf> actions, String name, boolean isValidContext,
 			String caseName) {
 		for (DockingActionIf action : actions) {
 			String actionName = action.getName();

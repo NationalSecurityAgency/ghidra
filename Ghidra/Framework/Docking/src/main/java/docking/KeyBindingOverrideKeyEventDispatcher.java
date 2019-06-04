@@ -25,7 +25,7 @@ import java.awt.event.KeyListener;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
 

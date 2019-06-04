@@ -846,23 +846,25 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Turn the given list into an attractive string, with the separator of you choosing.
+	 * Turn the given data into an attractive string, with the separator of your choosing
 	 *
-	 * @param list the list from which a string will be generated
+	 * @param collection the data from which a string will be generated
 	 * @param separator the string used to separate elements
 	 * @return a string representation of the given list
 	 */
-	public static String toString(List<?> list, String separator) {
-		if (list == null) {
+	public static String toString(Collection<?> collection, String separator) {
+		if (collection == null) {
 			return null;
 		}
 
+		int i = 0;
 		StringBuffer buffer = new StringBuffer("[ ");
-		for (int i = 0; i < list.size(); i++) {
-			buffer.append(list.get(i).toString());
-			if (i + 1 < list.size()) {
+		for (Object o : collection) {
+			buffer.append(o.toString());
+			if (i + 1 < collection.size()) {
 				buffer.append(separator);
 			}
+			i++;
 		}
 
 		buffer.append(" ]");

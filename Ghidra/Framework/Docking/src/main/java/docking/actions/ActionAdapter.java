@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.util;
+package docking.actions;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;

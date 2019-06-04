@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.util;
+package docking.actions;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.io.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -27,8 +28,10 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import docking.action.ActionContextProvider;
-import docking.action.DockingAction;
+import com.google.common.collect.Sets;
+
+import docking.DockingTool;
+import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.preferences.Preferences;
@@ -37,6 +40,8 @@ import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
+import util.CollectionUtils;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A class to provide utilities for system key bindings, such as importing and
@@ -81,6 +86,7 @@ public class KeyBindingUtils {
 	 * If there is a problem reading the data then the user will be shown an
 	 * error dialog.
 	 * 
+	 * @param inputStream the input stream from which to read options
 	 * @return An options object that is composed of key binding names and their
 	 *         associated keystrokes.
 	 */
@@ -232,9 +238,8 @@ public class KeyBindingUtils {
 	 * @param keyStroke the keystroke for to which the action will be bound
 	 * @param action the action to execute when the given keystroke is triggered
 	 * @param focusCondition the focus condition under which to bind the action
-	 *            ({@link JComponent#getInputMap(int)})
-	 * @param focusCondition see {@link JComponent} for more info; the default
-	 *            is usually {@link JComponent#WHEN_FOCUSED}
+	 *            ({@link JComponent#getInputMap(int)}).  See {@link JComponent} for more info; 
+	 *            the default is usually {@link JComponent#WHEN_FOCUSED}
 	 */
 	public static void registerAction(JComponent component, KeyStroke keyStroke, Action action,
 			int focusCondition) {
@@ -325,6 +330,116 @@ public class KeyBindingUtils {
 	}
 
 	/**
+	 * A utility method to get all key binding actions.  This method will remove duplicate 
+	 * actions and will only return actions that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * 
+	 * @param tool the tool containing the actions
+	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
+	 */
+	public static Map<String, DockingActionIf> getAllKeyBindingActions(DockingTool tool) {
+
+		Map<String, DockingActionIf> deduper = new HashMap<>();
+		Set<DockingActionIf> actions = tool.getAllActions();
+		for (DockingActionIf action : actions) {
+			if (isIgnored(action)) {
+				// don't bother tracking non-keybinding actions; this would be a mistake due
+				// to the potential for a shared key binding action overwriting its 
+				// SharedStubKeyBindingAction
+				continue;
+			}
+
+			deduper.put(action.getFullName(), action);
+		}
+
+		return deduper;
+	}
+
+	/**
+	 * A utility method to get all key binding actions that have the given owner.  
+	 * This method will remove duplicate actions and will only return actions 
+	 * that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * 
+	 * @param tool the tool containing the actions
+	 * @param owner the action owner name
+	 * @return the actions
+	 */
+	public static Set<DockingActionIf> getKeyBindingActions(DockingTool tool, String owner) {
+
+		Map<String, DockingActionIf> deduper = new HashMap<>();
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(owner);
+		for (DockingActionIf action : actions) {
+			if (isIgnored(action)) {
+				// don't bother tracking non-keybinding actions; this would be a mistake due
+				// to the potential for a shared key binding action overwriting its 
+				// SharedStubKeyBindingAction
+				continue;
+			}
+
+			deduper.put(action.getFullName(), action);
+		}
+
+		return CollectionUtils.asSet(deduper.values());
+	}
+
+	/**
+	 * Returns all actions that match the given owner and name
+	 * 
+	 * @param tool the tool containing the actions
+	 * @param owner the owner
+	 * @param name the name
+	 * @return the actions
+	 */
+	public static Set<DockingActionIf> getActions(DockingTool tool, String owner, String name) {
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(owner);
+		return getActions(actions, owner, name);
+	}
+
+	/**
+	 * Returns all actions that match the given owner and name
+	 * 
+	 * @param allActions the universe of actions
+	 * @param owner the owner
+	 * @param name the name
+	 * @return the actions
+	 */
+	public static Set<DockingActionIf> getActions(Set<DockingActionIf> allActions, String owner,
+			String name) {
+
+		Set<DockingActionIf> ownerMatch =
+			Sets.filter(allActions, action -> action.getOwner().equals(owner));
+		return Sets.filter(ownerMatch, action -> action.getName().equals(name));
+	}
+
+	/**
+	 * A method to locate the {@link SharedStubKeyBindingAction} representative for the given 
+	 * action name.  This method is not useful to general clients.
+	 * 
+	 * @param allActions all actions in the system
+	 * @param sharedName the name of the shared action
+	 * @return the shared action representative
+	 */
+	public static DockingActionIf getSharedKeyBindingAction(Set<DockingActionIf> allActions,
+			String sharedName) {
+
+		Set<DockingActionIf> toolActions = getActions(allActions, "Tool", sharedName);
+
+		//@formatter:off
+		return toolActions
+			.stream()
+			.filter(action -> action instanceof SharedStubKeyBindingAction)
+			.findAny()
+			.orElse(null)
+			;
+		//@formatter:on
+	}
+
+	private static boolean isIgnored(DockingActionIf action) {
+		// not keybinding managed; a shared keybinding implies that this action should not be in 
+		// the UI, as there will be a single proxy in place of all actions sharing that binding
+		return !action.isKeyBindingManaged() || action.usesSharedKeyBinding();
+	}
+
+	/**
 	 * Takes the existing docking action and allows it to be registered with
 	 * Swing components
 	 * 
@@ -339,6 +454,46 @@ public class KeyBindingUtils {
 	 */
 	public static Action adaptDockingActionToNonContextAction(DockingAction action) {
 		return new ActionAdapter(action);
+	}
+
+	public static void assertSameDefaultKeyBindings(DockingActionIf newAction,
+			List<DockingActionIf> existingActions) {
+
+		KeyBindingData newDefaultBinding = newAction.getDefaultKeyBindingData();
+		KeyStroke defaultKs = getKeyStroke(newDefaultBinding);
+		for (DockingActionIf action : existingActions) {
+			KeyBindingData existingDefaultBinding = action.getDefaultKeyBindingData();
+			KeyStroke existingKs = getKeyStroke(existingDefaultBinding);
+			if (!Objects.equals(defaultKs, existingKs)) {
+				logDifferentKeyBindingsWarnigMessage(newAction, action, existingKs);
+				break; // one warning seems like enough
+			}
+		}
+	}
+
+	public static void logDifferentKeyBindingsWarnigMessage(DockingActionIf newAction,
+			DockingActionIf existingAction, KeyStroke existingDefaultKs) {
+
+		//@formatter:off
+		String s = "Shared Key Binding Actions have different default values.  These " +
+				"must be the same." +
+				"\n\tAction name: '"+existingAction.getName()+"'" + 
+				"\n\tAction 1: " + existingAction.getInceptionInformation() +
+				"\n\t\tKey Binding: " + existingDefaultKs +
+				"\n\tAction 2: " + newAction.getInceptionInformation() + 
+				"\n\t\tKey Binding: " + newAction.getKeyBinding() +
+				"\nUsing the " +
+				"first value set - " + existingDefaultKs;
+		//@formatter:on
+
+		Msg.warn(KeyBindingUtils.class, s, ReflectionUtilities.createJavaFilteredThrowable());
+	}
+
+	private static KeyStroke getKeyStroke(KeyBindingData data) {
+		if (data == null) {
+			return null;
+		}
+		return data.getKeyBinding();
 	}
 
 //==================================================================================================

@@ -38,6 +38,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
+import com.google.common.collect.Sets;
+
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
@@ -1098,23 +1100,48 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the name to match
 	 * @return the matching actions; empty list if no matches
 	 */
-	public static Set<DockingActionIf> getActions(DockingTool tool, String name) {
+	public static Set<DockingActionIf> getActionsByName(DockingTool tool, String name) {
 
-		Set<DockingActionIf> actions = new HashSet<>();
+		Set<DockingActionIf> result = new HashSet<>();
 
-		List<DockingActionIf> toolActions = tool.getAllActions();
+		Set<DockingActionIf> toolActions = tool.getAllActions();
 		for (DockingActionIf action : toolActions) {
 			if (action.getName().equals(name)) {
-				actions.add(action);
+				result.add(action);
 			}
 		}
-		return actions;
+		return result;
+	}
+
+	/**
+	 * A helper method to find all actions with the given owner's name
+	 *
+	 * @param tool the tool containing all system actions
+	 * @param name the owner's name to match
+	 * @return the matching actions; empty list if no matches
+	 */
+	public static Set<DockingActionIf> getActionsByOwner(DockingTool tool, String name) {
+		return tool.getDockingActionsByOwnerName(name);
+	}
+
+	/**
+	 * A helper method to find all actions by name, with the given owner's name
+	 *
+	 * @param tool the tool containing all system actions
+	 * @param owner the owner's name
+	 * @param name the owner's name to match
+	 * @return the matching actions; empty list if no matches
+	 */
+	public static Set<DockingActionIf> getActionsByOwnerAndName(DockingTool tool, String owner,
+			String name) {
+		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
+		return Sets.filter(ownerActions, action -> action.getName().equals(name));
 	}
 
 	/**
 	 * Finds the singular tool action by the given name.  If more than one action exists with
 	 * that name, then an exception is thrown.  If you want more than one matching action,
-	 * the call {@link #getActions(DockingTool, String)} instead.
+	 * the call {@link #getActionsByName(DockingTool, String)} instead.
 	 *
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions
 	 * when you have an owner name (which is usually the plugin name).
@@ -1125,7 +1152,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 */
 	public static DockingActionIf getAction(DockingTool tool, String name) {
 
-		Set<DockingActionIf> actions = getActions(tool, name);
+		Set<DockingActionIf> actions = getActionsByName(tool, name);
 		if (actions.isEmpty()) {
 			return null;
 		}
@@ -1140,7 +1167,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * Finds the action by the given owner name and action name.  
 	 * If you do not know the owner name, then use  
-	 * the call {@link #getActions(DockingTool, String)} instead.
+	 * the call {@link #getActionsByName(DockingTool, String)} instead.
 	 * 
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
 	 * when you have an owner name (which is usually the plugin name).
@@ -1151,8 +1178,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @return the matching action; null if no matching action can be found
 	 */
 	public static DockingActionIf getAction(DockingTool tool, String owner, String name) {
-		String fullName = name + " (" + owner + ")";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullName);
+		Set<DockingActionIf> actions = getActionsByOwnerAndName(tool, owner, name);
 		if (actions.isEmpty()) {
 			return null;
 		}
@@ -1160,7 +1186,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		if (actions.size() > 1) {
 			// This shouldn't happen
 			throw new AssertionFailedError(
-				"Found more than one action for name '" + fullName + "'");
+				"Found more than one action for name '" + name + " (" + owner + ")'");
 		}
 
 		return CollectionUtils.any(actions);

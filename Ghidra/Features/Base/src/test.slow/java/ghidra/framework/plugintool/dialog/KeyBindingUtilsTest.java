@@ -30,10 +30,10 @@ import javax.swing.tree.TreePath;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import docking.options.editor.OptionsDialog;
 import docking.options.editor.OptionsPanel;
 import docking.tool.util.DockingToolConstants;
-import docking.util.KeyBindingUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.tree.GTree;
 import generic.io.NullWriter;
@@ -228,13 +228,13 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		// import the original values file through the tool
 		importOptionsWithGUI(saveFile, true);
 		// get the updated values that have not been applied
-		Map<?, ?> optionsMap = (Map<?, ?>) getInstanceField("actionMap", panel);
+		Map<String, KeyStroke> keyStrokeMap = panel.getKeyStrokeMap();
 
 		debug("f");
 
 		// verify the data is the same as it was before the changes
-		boolean same = compareOptionsWithKeyStrokeMap(originalOptions, optionsMap);
-		assertTrue("The Options object contains different data than was " + "imported.", same);
+		boolean same = compareOptionsWithKeyStrokeMap(originalOptions, keyStrokeMap);
+		assertTrue("The Options object contains different data than was imported.", same);
 
 		debug("g");
 
@@ -405,26 +405,26 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setKeyBinding(String keyText, int keyCode) throws Exception {
-		List<DockingActionIf> list = tool.getAllActions();
-		DockingActionIf action = null;
-		for (int i = 0; i < list.size(); i++) {
-			action = list.get(i);
+		Set<DockingActionIf> list = tool.getAllActions();
+		DockingActionIf arbitraryAction = null;
+		for (DockingActionIf action : list) {
 			if (action.isKeyBindingManaged() && action.getKeyBinding() == null) {
+				arbitraryAction = action;
 				break;
 			}
 		}
 
-		if (action == null) {
+		if (arbitraryAction == null) {
 			Assert.fail("Unable to find an action for which to set a key binding.");
 		}
 
-		selectRowForAction(action);
+		selectRowForAction(arbitraryAction);
 		triggerText(keyField, keyText);
 
 		assertEquals(keyText.toUpperCase(), keyField.getText());
 
 		runSwing(() -> panel.apply());
-		assertEquals(KeyStroke.getKeyStroke(keyCode, 0), action.getKeyBinding());
+		assertEquals(KeyStroke.getKeyStroke(keyCode, 0), arbitraryAction.getKeyBinding());
 	}
 
 	private void selectRowForAction(DockingActionIf action) throws Exception {
@@ -533,20 +533,19 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	// compares the provided options with the mapping of property names to
 	// keystrokes (the map is obtained from the key bindings panel after an
 	// import is done).
-	private boolean compareOptionsWithKeyStrokeMap(Options options, Map<?, ?> optionsMap) {
+	private boolean compareOptionsWithKeyStrokeMap(Options options,
+			Map<String, KeyStroke> panelKeyStrokeMap) {
 		List<String> propertyNames = options.getOptionNames();
 		for (String element : propertyNames) {
-			boolean match = optionsMap.containsKey(element);
+			boolean match = panelKeyStrokeMap.containsKey(element);
 
-			Object value = invokeInstanceMethod("getKeyStroke", options,
-				new Class[] { String.class, KeyStroke.class }, new Object[] { element, null });
-			Object value2 = optionsMap.get(element);
+			KeyStroke optionsKs = options.getKeyStroke(element, null);
+			KeyStroke panelKs = panelKeyStrokeMap.get(element);
 
-			// if the value is null, then it would not have been placed into the
-			// options map in the key bindings panel, so we only care about
-			// non-null values
-			if (value != null) {
-				match &= (value.equals(value2));
+			// if the value is null, then it would not have been placed into the options map 
+			// in the key bindings panel, so we only care about non-null values
+			if (optionsKs != null) {
+				match &= (optionsKs.equals(panelKs));
 			}
 			else {
 				match = true;

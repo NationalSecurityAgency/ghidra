@@ -1090,10 +1090,9 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf getAction(String actionName) {
 		// make sure there is a provider from which to get actions
 		getProvider();
-		String fullActionName = actionName + " (CallTreePlugin)";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
-		Assert.assertTrue("Could not find action: " + fullActionName, actions.size() > 0);
-		return actions.get(0);
+
+		DockingActionIf action = getAction(tool, "CallTreePlugin", actionName);
+		return action;
 	}
 
 	private void myWaitForTree(GTree gTree, CallTreeProvider treeProvider) {

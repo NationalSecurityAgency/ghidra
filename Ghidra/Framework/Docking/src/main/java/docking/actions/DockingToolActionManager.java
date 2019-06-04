@@ -18,8 +18,11 @@ package docking.actions;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.function.Predicate;
 
 import javax.swing.KeyStroke;
+
+import org.apache.commons.collections4.map.LazyMap;
 
 import docking.*;
 import docking.action.*;
@@ -33,13 +36,16 @@ import ghidra.util.exception.AssertException;
 public class DockingToolActionManager implements PropertyChangeListener {
 
 	private DockingWindowManager winMgr;
-	private Map<String, List<DockingActionIf>> actionMap = new HashMap<>();
+	private DockingWindowManagerActionUpdater winMgrActionUpdater;
+
+	private Map<String, List<DockingActionIf>> actionMap =
+		LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
 	private Map<String, SharedStubKeyBindingAction> sharedActionMap = new HashMap<>();
 	private ToolOptions keyBindingOptions;
 	private DockingTool dockingTool;
 
 	/**
-	 * Construct an ActionManager.
+	 * Construct an ActionManager
 	 * 
 	 * @param tool tool using this ActionManager
 	 * @param windowManager manager of the "Docking" arrangement of a set of components 
@@ -48,6 +54,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	public DockingToolActionManager(DockingTool tool, DockingWindowManager windowManager) {
 		this.dockingTool = tool;
 		this.winMgr = windowManager;
+		this.winMgrActionUpdater = new DockingWindowManagerActionUpdater(winMgr);
 		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 	}
 
@@ -58,26 +65,32 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	private void addActionToMap(DockingActionIf action) {
 		String name = action.getFullName();
 		List<DockingActionIf> actionList = actionMap.get(name);
-		if (actionList == null) {
-			List<DockingActionIf> newList = new ArrayList<>();
-			newList.add(action);
-			actionMap.put(name, newList);
+
+		List<DockingActionIf> list = actionMap.get(name);
+		if (!list.isEmpty()) {
+			KeyBindingUtils.assertSameDefaultKeyBindings(action, actionList);
 		}
-		else {
-			actionList.add(action);
-		}
+
+		actionList.add(action);
 	}
 
 	private void removeActionFromMap(DockingActionIf action) {
 		String name = action.getFullName();
-		List<DockingActionIf> actionList = actionMap.get(name);
-		if (actionList == null) {
-			return;
-		}
+		actionMap.get(name).remove(action);
+	}
 
-		if (actionList.remove(action) && actionList.isEmpty()) {
-			actionMap.remove(name);
-		}
+	/**
+	 * Add an action that works specifically with a component provider. 
+	 * @param provider provider associated with the action
+	 * @param action local action to the provider
+	 */
+	public synchronized void addLocalAction(ComponentProvider provider, DockingActionIf action) {
+		checkForAlreadyAddedAction(provider, action);
+
+		action.addPropertyChangeListener(this);
+		addActionToMap(action);
+		setKeyBindingOption(action);
+		winMgrActionUpdater.addLocalAction(provider, action);
 	}
 
 	/**
@@ -88,7 +101,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
 		setKeyBindingOption(action);
-		winMgr.addToolAction(action);
+		winMgrActionUpdater.addToolAction(action);
 	}
 
 	private void setKeyBindingOption(DockingActionIf action) {
@@ -135,7 +148,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	public synchronized void removeToolAction(DockingActionIf action) {
 		action.removePropertyChangeListener(this);
 		removeActionFromMap(action);
-		winMgr.removeToolAction(action);
+		winMgrActionUpdater.removeToolAction(action);
 	}
 
 	/**
@@ -143,32 +156,16 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 * @param owner owner of the actions to remove
 	 */
 	public synchronized void removeToolActions(String owner) {
-		List<DockingActionIf> actions = getActions(owner);
+		Predicate<String> ownerMatches = actionOwner -> actionOwner.equals(owner);
+		Set<DockingActionIf> actions = getActions(ownerMatches);
 		for (DockingActionIf action : actions) {
 			removeToolAction(action);
 		}
 	}
 
-	/**
-	 * Add an action that works specifically with a component provider. 
-	 * @param provider provider associated with the action
-	 * @param action local action to the provider
-	 */
-	public synchronized void addLocalAction(ComponentProvider provider, DockingActionIf action) {
-		checkForAlreadyAddedAction(provider, action);
-
-		action.addPropertyChangeListener(this);
-		addActionToMap(action);
-		setKeyBindingOption(action);
-		winMgr.addLocalAction(provider, action);
-	}
-
 	private void checkForAlreadyAddedAction(ComponentProvider provider, DockingActionIf action) {
 		String name = action.getFullName();
 		List<DockingActionIf> actionList = actionMap.get(name);
-		if (actionList == null) {
-			return;
-		}
 		if (actionList.contains(action)) {
 			throw new AssertException("Cannot add the same action more than once. Provider " +
 				provider.getName() + " - action: " + name);
@@ -193,46 +190,38 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 * @param fullName full name for the action, e.g., "My Action (My Plugin)"
 	 * @return list of actions; empty if no action exists with the given name
 	 */
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullName) {
+	public Set<DockingActionIf> getDockingActionsByFullActionName(String fullName) {
 		List<DockingActionIf> list = actionMap.get(fullName);
-		if (list == null) {
-			list = new ArrayList<>();
-		}
-
-		return new ArrayList<>(list);
+		return new HashSet<>(list);
 	}
 
 	/**
-	 * Returns a list of actions whose owner matches the given owner or all actions if the given
-	 * owner is null.
-	 * <p>
-	 * This method will only return a single instance of any named action, even if multiple 
-	 * actions have been registered with the same name.
-	 * <p>
+	 * Returns a list of actions whose owner matches the given predicate.
+	 * 
 	 * Note: Actions with the same name are assumed to be different instances of the same action.
 	 * 
-	 * @param owner The of the action, or null to get all actions
+	 * @param ownerFilter the predicate that is used to test if the owners are the same; to get
+	 *        all actions, return an 'always true' predicate 
 	 * @return a list of deduped actions.
 	 */
-	private List<DockingActionIf> getUniqueActionList(String owner) {
+	private Set<DockingActionIf> getActions(Predicate<String> ownerFilter) {
 
-		List<DockingActionIf> matchingActionList = new ArrayList<>();
-		for (List<DockingActionIf> actionList : actionMap.values()) {
-			// we only want *one* instance of duplicate actions
-			DockingActionIf action = actionList.get(0);
-			if (owner == null || action.getOwner().equals(owner)) {
-				matchingActionList.add(action);
+		Set<DockingActionIf> result = new HashSet<>();
+		for (List<DockingActionIf> list : actionMap.values()) {
+			for (DockingActionIf action : list) {
+				if (ownerFilter.test(action.getOwner())) {
+					result.addAll(list);
+				}
 			}
 		}
 
-		// these are the 'shared' actions that are needed in order to appear in the options UI
 		for (DockingActionIf action : sharedActionMap.values()) {
-			if (owner == null || action.getOwner().equals(owner)) {
-				matchingActionList.add(action);
+			if (ownerFilter.test(action.getOwner())) {
+				result.add(action);
 			}
 		}
 
-		return matchingActionList;
+		return result;
 	}
 
 	/**
@@ -241,17 +230,18 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 * @return array of actions; zero length array is returned if no
 	 * action exists with the given name
 	 */
-	public synchronized List<DockingActionIf> getActions(String owner) {
-		List<DockingActionIf> list = getUniqueActionList(owner);
-		return list;
+	public synchronized Set<DockingActionIf> getActions(String owner) {
+		Predicate<String> ownerMatches = actionOwner -> actionOwner.equals(owner);
+		return getActions(ownerMatches);
 	}
 
 	/**
-	 * Get a list of all actions in the tool.
+	 * Get a list of all actions in the tool
 	 * @return list of PluginAction objects
 	 */
-	public List<DockingActionIf> getAllActions() {
-		return getUniqueActionList(null);
+	public synchronized Set<DockingActionIf> getAllActions() {
+		Predicate<String> allOwnersMatch = name -> true;
+		return getActions(allOwnersMatch);
 	}
 
 	/**
@@ -262,7 +252,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 	 */
 	public synchronized void restoreKeyBindings() {
 		keyBindingOptions = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		List<DockingActionIf> actions = getAllActions();
+		Set<DockingActionIf> actions = getAllActions();
 		for (DockingActionIf action : actions) {
 			if (!action.isKeyBindingManaged()) {
 				continue;
@@ -284,10 +274,7 @@ public class DockingToolActionManager implements PropertyChangeListener {
 		while (iterator.hasNext()) {
 			DockingActionIf action = iterator.next();
 			String name = action.getFullName();
-			List<DockingActionIf> actionList = actionMap.get(name);
-			if (actionList != null && actionList.remove(action) && actionList.isEmpty()) {
-				actionMap.remove(name);
-			}
+			actionMap.get(name).remove(action);
 		}
 	}
 

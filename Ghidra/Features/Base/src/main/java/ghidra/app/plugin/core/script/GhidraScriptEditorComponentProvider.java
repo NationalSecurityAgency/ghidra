@@ -29,8 +29,8 @@ import javax.swing.undo.UndoableEdit;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontPropertyEditor;
-import docking.util.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;

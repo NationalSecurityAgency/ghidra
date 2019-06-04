@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.label.GIconLabel;
 import ghidra.util.HelpLocation;
 import ghidra.util.ReservedKeyBindings;
@@ -92,12 +93,9 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		labelPanel.add(pane);
 		labelPanel.add(Box.createHorizontalStrut(5));
 
-		keyEntryField = new KeyEntryTextField(20, new KeyEntryListener() {
-			@Override
-			public void processEntry(KeyStroke keyStroke) {
-				okButton.setEnabled(true);
-				updateCollisionPane(keyStroke);
-			}
+		keyEntryField = new KeyEntryTextField(20, keyStroke -> {
+			okButton.setEnabled(true);
+			updateCollisionPane(keyStroke);
 		});
 
 		defaultPanel.add(labelPanel, BorderLayout.NORTH);
@@ -146,8 +144,9 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		clearStatusText();
 
-		List<DockingActionIf> actions =
-			actionManager.getAllDockingActionsByFullActionName(action.getFullName());
+		Set<DockingActionIf> allActions = actionManager.getAllActions();
+		Set<DockingActionIf> actions =
+			KeyBindingUtils.getActions(allActions, action.getOwner(), action.getName());
 		for (DockingActionIf element : actions) {
 			if (element.isKeyBindingManaged()) {
 				element.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
@@ -160,7 +159,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	private void setUpAttributes() {
 		textAttrSet = new SimpleAttributeSet();
 		textAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		textAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		textAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
 
 		tabAttrSet = new SimpleAttributeSet();
@@ -207,7 +206,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		Map<String, DockingActionIf> nameMap = new HashMap<>(list.size());
 
 		// the list may have multiple matches for a single owner, which we do not want (see
-		// DummyKeyBindingsOptionsAction)
+		// SharedStubKeyBindingAction)
 		for (DockingActionIf dockableAction : list) {
 			if (shouldAddAction(dockableAction)) {
 				// this overwrites same named actions
@@ -218,9 +217,6 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		return new ArrayList<>(nameMap.values());
 	}
 
-	/**
-	 * Get the multiple key action for the given keystroke.
-	 */
 	private MultipleKeyAction getMultipleKeyAction(KeyStroke ks) {
 		Action keyAction = actionManager.getDockingKeyAction(ks);
 		if (keyAction instanceof MultipleKeyAction) {
@@ -230,6 +226,11 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private boolean shouldAddAction(DockingActionIf dockableAction) {
-		return dockableAction.isKeyBindingManaged();
+		if (dockableAction.isKeyBindingManaged()) {
+			return true;
+		}
+
+		// shared key bindings are handled specially
+		return !dockableAction.usesSharedKeyBinding();
 	}
 }

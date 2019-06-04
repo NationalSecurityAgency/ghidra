@@ -667,22 +667,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Adds an action that will be associated with the given provider.  These actions will
-	 * appear in the local header for the component as a toolbar button or a drop-down menu
-	 * item if it has an icon and menu path respectively.
-	 * @param provider the provider whose header on which the action is to be placed.
-	 * @param action the action to add to the providers header bar.
-	 */
-	public void addLocalAction(ComponentProvider provider, DockingActionIf action) {
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder == null) {
-			throw new IllegalArgumentException("Unknown component provider: " + provider);
-		}
-		placeholder.addAction(action);
-		actionManager.addLocalAction(action, provider);
-	}
-
-	/**
 	 * Removes the action from the given provider's header bar.
 	 * @param provider the provider whose header bar from which the action should be removed.
 	 * @param action the action to be removed from the provider's header bar.
@@ -695,13 +679,33 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 	}
 
+//==================================================================================================
+// Package-level Action Methods
+//==================================================================================================
+
+	/**
+	 * Adds an action that will be associated with the given provider.  These actions will
+	 * appear in the local header for the component as a toolbar button or a drop-down menu
+	 * item if it has an icon and menu path respectively.
+	 * @param provider the provider whose header on which the action is to be placed.
+	 * @param action the action to add to the providers header bar.
+	 */
+	void addLocalAction(ComponentProvider provider, DockingActionIf action) {
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder == null) {
+			throw new IllegalArgumentException("Unknown component provider: " + provider);
+		}
+		placeholder.addAction(action);
+		actionManager.addLocalAction(action, provider);
+	}
+
 	/**
 	 * Adds an action to the global menu or toolbar which appear in the main frame. If
 	 * the action has a menu path, it will be in the menu.  If it has an icon, it will
 	 * appear in the toolbar.
 	 * @param action the action to be added.
 	 */
-	public void addToolAction(DockingActionIf action) {
+	void addToolAction(DockingActionIf action) {
 		actionManager.addToolAction(action);
 		scheduleUpdate();
 	}
@@ -710,14 +714,22 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Removes the given action from the global menu and toolbar.
 	 * @param action the action to be removed.
 	 */
-	public void removeToolAction(DockingActionIf action) {
+	void removeToolAction(DockingActionIf action) {
 		actionManager.removeToolAction(action);
 		scheduleUpdate();
 	}
 
-	public Collection<DockingActionIf> getActions(String fullActionName) {
-		return actionManager.getAllDockingActionsByFullActionName(fullActionName);
+	/**
+	 * Returns all actions registered with this manager
+	 * @return the actions
+	 */
+	public Set<DockingActionIf> getAllActions() {
+		return actionManager.getAllActions();
 	}
+
+//==================================================================================================
+// 			End Package-level Methods
+//==================================================================================================	
 
 	/**
 	 * Hides or shows the component associated with the given provider.

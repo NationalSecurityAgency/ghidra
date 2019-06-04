@@ -43,7 +43,6 @@ import utilities.util.FileUtilities;
 
 class GhidraScriptActionManager {
 	public static final String RERUN_LAST_SHARED_ACTION_NAME = "Rerun Last Script";
-	public static final String GLOBAL_RERUN_LAST_SHARED_ACTION_NAME = "Global Rerun Last Script";
 	private static final KeyStroke RERUN_LAST_SCRIPT_KEYSTROKE = KeyStroke.getKeyStroke(
 		KeyEvent.VK_R, DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
 	private static final String SCRIPT_ACTIONS_KEY = "Scripts_Actions_Key";

@@ -30,6 +30,7 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeRootNode;
@@ -596,10 +597,9 @@ public class ActionManager1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAction(String actionName) {
-		List<DockingActionIf> a =
-			frontEndTool.getDockingActionsByFullActionName(actionName + " (FrontEndPlugin)");
-		Assert.assertEquals(1, a.size());
-		return a.get(0);
+		DockingActionIf action =
+			AbstractDockingTest.getAction(frontEndTool, "FrontEndPlugin", actionName);
+		return action;
 	}
 
 	private void expandTreePath(TreePath path) {

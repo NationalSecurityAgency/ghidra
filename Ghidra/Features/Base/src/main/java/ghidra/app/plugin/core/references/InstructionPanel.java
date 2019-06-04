@@ -28,9 +28,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingAction;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
-import docking.util.KeyBindingUtils;
 import docking.widgets.label.GDLabel;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;

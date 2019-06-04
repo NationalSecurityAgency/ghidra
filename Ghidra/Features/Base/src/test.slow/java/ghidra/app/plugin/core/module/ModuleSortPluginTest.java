@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.module;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 
@@ -42,7 +41,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private PluginTool tool;
 	private Program program;
 	private ModuleSortPlugin plugin;
-	private List<DockingActionIf> actions;
+	private Set<DockingActionIf> actions;
 	private ProgramTreeService service;
 
 	public ModuleSortPluginTest() {
@@ -63,7 +62,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 				break;
 			}
 		}
-		actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		actions = getActionsByOwner(tool, plugin.getName());
 		service = tool.getService(ProgramTreeService.class);
 
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);

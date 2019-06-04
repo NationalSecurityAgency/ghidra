@@ -21,26 +21,33 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
-import docking.ComponentProvider;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.action.*;
+import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.exception.AssertException;
 
 /**
  * Helper class to manage plugin actions for the tool. 
  */
 public class ProjectActionManager implements PropertyChangeListener {
+
 	private DockingWindowManager winMgr;
+	private DockingWindowManagerActionUpdater winMgrActionUpdater;
+
+	// TODO
+	// TODO
+	// TODO does this class need the shared action concept (probably not)
+	// TODO
+	// TODO
 	private Map<String, List<DockingActionIf>> actionMap;
 	private Options keyBindingOptions;
 	private PluginTool tool;
 
 	/**
-	 * Construct an ActionManager.
+	 * Construct an ActionManager
 	 * @param tool plugin tool using this ActionManager
 	 * @param winMgr manager of the "Docking" arrangement 
 	 * of a set of components and actions in the tool
@@ -48,8 +55,9 @@ public class ProjectActionManager implements PropertyChangeListener {
 	public ProjectActionManager(PluginTool tool, DockingWindowManager winMgr) {
 		this.tool = tool;
 		this.winMgr = winMgr;
+		this.winMgrActionUpdater = new DockingWindowManagerActionUpdater(winMgr);
 		actionMap = new HashMap<>();
-		keyBindingOptions = tool.getOptions(ToolConstants.KEY_BINDINGS);
+		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 	}
 
 	public void dispose() {
@@ -97,7 +105,8 @@ public class ProjectActionManager implements PropertyChangeListener {
 				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 			}
 		}
-		winMgr.addToolAction(action);
+
+		winMgrActionUpdater.addToolAction(action);
 	}
 
 	/**
@@ -107,7 +116,7 @@ public class ProjectActionManager implements PropertyChangeListener {
 	public synchronized void removeToolAction(DockingActionIf action) {
 		action.removePropertyChangeListener(this);
 		removeActionFromMap(action);
-		winMgr.removeToolAction(action);
+		winMgrActionUpdater.removeToolAction(action);
 	}
 
 	/**
@@ -140,7 +149,7 @@ public class ProjectActionManager implements PropertyChangeListener {
 				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 			}
 		}
-		winMgr.addLocalAction(provider, action);
+		winMgrActionUpdater.addLocalAction(provider, action);
 	}
 
 	private void checkForAlreadyAddedAction(ComponentProvider provider, DockingActionIf action) {
@@ -167,14 +176,15 @@ public class ProjectActionManager implements PropertyChangeListener {
 		winMgr.removeProviderAction(provider, action);
 	}
 
+	// TODO delete me
 	/**
 	 * Get all actions that have the action name which includes the action owner's name.
 	 * 
 	 * @param fullName full name for the action, e.g., "My Action (My Plugin)"
 	 * @return list of actions; empty if no action exists with the given name
 	 */
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		List<DockingActionIf> list = actionMap.get(fullActionName);
+	public List<DockingActionIf> getDockingActionsByFullActionName(String fullName) {
+		List<DockingActionIf> list = actionMap.get(fullName);
 		if (list == null) {
 			return new ArrayList<>();
 		}
@@ -233,7 +243,7 @@ public class ProjectActionManager implements PropertyChangeListener {
 	 *
 	 */
 	public synchronized void restoreKeyBindings() {
-		keyBindingOptions = tool.getOptions(ToolConstants.KEY_BINDINGS);
+		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		List<DockingActionIf> actions = getAllActions();
 		for (DockingActionIf action : actions) {
 			if (!action.isKeyBindingManaged()) {
@@ -275,7 +285,7 @@ public class ProjectActionManager implements PropertyChangeListener {
 			}
 			KeyBindingData keyBindingData = (KeyBindingData) evt.getNewValue();
 			KeyStroke newKeyStroke = keyBindingData.getKeyBinding();
-			Options opt = tool.getOptions(ToolConstants.KEY_BINDINGS);
+			Options opt = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 			KeyStroke optKeyStroke = opt.getKeyStroke(action.getFullName(), null);
 			if (newKeyStroke == null) {
 				opt.removeOption(action.getFullName());

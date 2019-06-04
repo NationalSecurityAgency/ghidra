@@ -28,6 +28,8 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
+import docking.actions.ActionAdapter;
+import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;

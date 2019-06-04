@@ -31,7 +31,7 @@ import javax.swing.table.*;
 
 import docking.*;
 import docking.action.*;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;

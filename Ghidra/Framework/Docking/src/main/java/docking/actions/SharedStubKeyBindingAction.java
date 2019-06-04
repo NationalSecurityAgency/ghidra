@@ -25,8 +25,6 @@ import docking.DockingWindowManager;
 import docking.action.*;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
-import ghidra.util.Msg;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A stub action that allows key bindings to be edited through the key bindings options.  This 
@@ -95,7 +93,8 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 				continue;
 			}
 
-			logDifferentKeyBindingsWarnigMessage(newAction, existingAction, existingDefaultKs);
+			KeyBindingUtils.logDifferentKeyBindingsWarnigMessage(newAction, existingAction,
+				existingDefaultKs);
 
 			//
 			// Not sure which keystroke to prefer here--keep the first one that was set
@@ -109,24 +108,6 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		}
 
 		return newDefaultKs;
-	}
-
-	private void logDifferentKeyBindingsWarnigMessage(DockingActionIf newAction,
-			DockingActionIf existingAction, KeyStroke existingDefaultKs) {
-
-		//@formatter:off
-		String s = "Shared Key Binding Actions have different deafult values.  These " +
-				"must be the same." +
-				"\n\tAction name: '"+existingAction.getName()+"'" + 
-				"\n\tAction 1: " + existingAction.getInceptionInformation() +
-				"\n\t\tKey Binding: " + existingDefaultKs +
-				"\n\tAction 2: " + newAction.getInceptionInformation() + 
-				"\n\t\tKey Binding: " + newAction.getKeyBinding() +
-				"\nUsing the " +
-				"first value set - " + existingDefaultKs;
-		//@formatter:on
-
-		Msg.warn(this, s, ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
 	private void updateActionKeyStrokeFromOptions(DockingActionIf action, KeyStroke defaultKs) {

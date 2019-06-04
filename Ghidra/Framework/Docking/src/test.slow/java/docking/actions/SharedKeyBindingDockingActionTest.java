@@ -36,7 +36,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.util.Msg;
 import ghidra.util.SpyErrorLogger;
 
-public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
+public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 	private static final String SHARED_NAME = "Shared Action Name";
 	private static final String SHARED_OWNER = SharedStubKeyBindingAction.SHARED_OWNER;
@@ -158,8 +158,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		tool.removeAction(action2);
 		assertActionNotInTool(action2);
 
-		String sharedName = action1.getFullName();
-		assertNoSharedKeyBindingStubInstalled(sharedName);
+		assertNoSharedKeyBindingStubInstalled(action1);
 	}
 
 	@Test
@@ -271,8 +270,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		tool.removeLocalAction(provider, action2);
 		assertActionNotInTool(action2);
 
-		String sharedName = action1.getFullName();
-		assertNoSharedKeyBindingStubInstalled(sharedName);
+		assertNoSharedKeyBindingStubInstalled(action1);
 	}
 
 	@Test
@@ -293,7 +291,65 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 		assertActionNotInTool(action2);
 
 		String sharedName = action1.getFullName();
-		assertNoSharedKeyBindingStubInstalled(sharedName);
+		assertNoSharedKeyBindingStubInstalled(action1);
+	}
+
+	@Test
+	public void testNonSharedKeyBinding_SameActionAddedTwice() {
+		//
+		// We support adding the same action twice.  (This can happen when a transient component
+		// provider is repeatedly shown, such as a search results provider.)   Make sure we get
+		// a warning if the same action is added twice, but with different key bindings.
+		//
+		// Note: in this context, two actions are considered to be the same if they share the 
+		//       same name and owner.
+		//
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action1Copy = new TestAction(OWNER_1, DEFAULT_KS_1);
+
+		tool.addAction(action1);
+		tool.addAction(action1Copy);
+		assertActionInTool(action1);
+		assertActionInTool(action1Copy);
+
+		assertNoLoggedMessages();
+
+		tool.removeAction(action1);
+		assertActionNotInTool(action1);
+		assertActionInTool(action1Copy);
+
+		tool.removeAction(action1Copy);
+		assertActionNotInTool(action1Copy);
+	}
+
+	@Test
+	public void testNonSharedKeyBinding_DifferentActionsWithSameFullName() {
+		//
+		// We support adding the same action twice.  (This can happen when a transient component
+		// provider is repeatedly shown, such as a search results provider.)   Make sure we get
+		// a warning if the same action is added twice, but with different key bindings.
+		//
+		// Note: in this context, two actions are considered to be the same if they share the 
+		//       same name and owner.
+		//
+
+		TestAction action1 = new TestAction(OWNER_1, DEFAULT_KS_1);
+		TestAction action1Copy = new TestAction(OWNER_1, DEFAULT_KS_DIFFERENT_THAN_1);
+
+		tool.addAction(action1);
+		tool.addAction(action1Copy);
+		assertActionInTool(action1);
+		assertActionInTool(action1Copy);
+
+		assertImproperDefaultBindingMessage();
+
+		tool.removeAction(action1);
+		assertActionNotInTool(action1);
+		assertActionInTool(action1Copy);
+
+		tool.removeAction(action1Copy);
+		assertActionNotInTool(action1Copy);
 	}
 
 //==================================================================================================
@@ -317,7 +373,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 
 	private void assertActionInTool(TestAction action) {
 
-		Set<DockingActionIf> actions = getActions(tool, action.getName());
+		Set<DockingActionIf> actions = getActionsByName(tool, action.getName());
 		for (DockingActionIf toolAction : actions) {
 			if (toolAction == action) {
 				return;
@@ -328,16 +384,19 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 	}
 
 	private void assertActionNotInTool(TestAction action) {
-		Set<DockingActionIf> actions = getActions(tool, action.getName());
+		Set<DockingActionIf> actions = getActionsByName(tool, action.getName());
 		for (DockingActionIf toolAction : actions) {
 			assertNotSame(toolAction, action);
 		}
 	}
 
-	private void assertNoSharedKeyBindingStubInstalled(String sharedName) {
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(sharedName);
-		assertTrue("There should be no actions registered for '" + sharedName + "'",
-			actions.isEmpty());
+	private void assertNoSharedKeyBindingStubInstalled(DockingActionIf action) {
+
+		String name = action.getName();
+		String owner = action.getOwner();
+		DockingActionIf sharedAction = getAction(tool, owner, name);
+		assertNull("There should be no actions registered for '" + name + " (" + owner + ")'",
+			sharedAction);
 	}
 
 	private void setSharedKeyBinding(KeyStroke newKs) {
@@ -355,7 +414,7 @@ public class SharedKeybindingDockingActionTest extends AbstractDockingTest {
 	}
 
 	private void assertImproperDefaultBindingMessage() {
-		spyLogger.assertLogMessage("shared", "key", "binding", "action", "different", "default");
+		spyLogger.assertLogMessage("shared", "key", "binding", "actions", "different", "default");
 	}
 
 	private void assertKeyBinding(TestAction action, KeyStroke expectedKs) {

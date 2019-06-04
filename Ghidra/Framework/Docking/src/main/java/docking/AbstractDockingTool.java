@@ -17,7 +17,6 @@ package docking;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -116,22 +115,16 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
-	public List<DockingActionIf> getAllActions() {
-		return actionMgr.getAllActions();
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner) {
-		List<DockingActionIf> actions = actionMgr.getActions(owner);
+	public Set<DockingActionIf> getAllActions() {
+		Set<DockingActionIf> actions = actionMgr.getAllActions();
+		DockingActionManager am = winMgr.getActionManager();
+		actions.addAll(am.getAllActions());
 		return actions;
 	}
 
 	@Override
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		Set<DockingActionIf> set = new HashSet<>();
-		set.addAll(actionMgr.getDockingActionsByFullActionName(fullActionName));
-		set.addAll(winMgr.getActions(fullActionName));
-		return new ArrayList<>(set);
+	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
+		return actionMgr.getActions(owner);
 	}
 
 	@Override

@@ -17,8 +17,7 @@ package ghidra.feature.vt.gui.plugin;
 
 import java.awt.Component;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 
@@ -27,6 +26,7 @@ import org.jdom.output.XMLOutputter;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.util.DockingToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldSelection;
@@ -153,23 +153,33 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		catch (PluginException e) {
 			Msg.error(this, "Failed to create subordinate tool: " + toolName);
 		}
+
 		newTool.setToolName(toolName);
-		newTool.removeAction(newTool.getDockingActionsByFullActionName("Save Tool (Tool)").get(0));
-		newTool.removeAction(
-			newTool.getDockingActionsByFullActionName("Save Tool As (Tool)").get(0));
-		// newTool.removeAction(newTool.getDockableActionsByFullActionName("Export
-		// Tool (Tool)").get(0));
+
+		DockingActionIf save = getToolAction(newTool, "Save Tool");
+		newTool.removeAction(save);
+
 		createMarkupActions(newTool);
 
 		newTool.setConfigChanged(false);
 
-		ToolOptions options = newTool.getOptions(ToolConstants.KEY_BINDINGS);
+		ToolOptions options = newTool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		options.addOptionsChangeListener(this);
 
 		// custom VT actions
 		createMatchActions(newTool);
 
 		return newTool;
+	}
+
+	private DockingActionIf getToolAction(Tool tool, String actionName) {
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		for (DockingActionIf action : actions) {
+			if (action.getName().equals(actionName)) {
+				return action;
+			}
+		}
+		throw new IllegalArgumentException("Unable to find Tool action '" + actionName + "'");
 	}
 
 	@Override

@@ -21,7 +21,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -589,7 +589,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	public static DockingActionIf getToolAction(PluginTool tool, String name) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "Tool");
 		for (DockingActionIf action : actions) {
 			if (name.equals(action.getName())) {
 				return action;
