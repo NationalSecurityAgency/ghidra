@@ -1468,9 +1468,19 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		@Override
+		public boolean isIndeterminate() {
+			return false;
+		}
+
+		@Override
 		public void setMessage(String message) {
 			dominantMonitor.setMessage(message);
 			slaveMonitor.setMessage(message);
+		}
+
+		@Override
+		public String getMessage() {
+			return dominantMonitor.getMessage();
 		}
 
 		@Override

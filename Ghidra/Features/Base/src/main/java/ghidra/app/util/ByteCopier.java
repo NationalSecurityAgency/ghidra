@@ -125,8 +125,7 @@ public abstract class ByteCopier {
 					String string = (String) object;
 					if (!isOnlyAsciiBytes(string)) {
 						tool.setStatusInfo("Paste string contains non-text ascii bytes. " +
-							"Only the ascii text will be pasted.");
-						tool.getToolFrame().getToolkit().beep();
+							"Only the ascii text will be pasted.", true);
 
 						string = keepOnlyAsciiBytes(string);
 					}
@@ -219,8 +218,7 @@ public abstract class ByteCopier {
 	protected boolean pasteBytes(Transferable pasteData)
 			throws UnsupportedFlavorException, IOException {
 		if (!supportsPasteTransferable(pasteData)) {
-			tool.setStatusInfo("Paste failed: No valid data on clipboard");
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: No valid data on clipboard", true);
 			return false;
 		}
 
@@ -249,8 +247,7 @@ public abstract class ByteCopier {
 					String validString = string;
 					if (!isOnlyAsciiBytes(string)) {
 						tool.setStatusInfo("Pasted string contained non-text ascii bytes. " +
-							"Only the ascii text was pasted.");
-						tool.getToolFrame().getToolkit().beep();
+							"Only the ascii text was pasted.", true);
 
 						validString = keepOnlyAsciiBytes(string);
 					}
@@ -258,7 +255,7 @@ public abstract class ByteCopier {
 					byte[] bytes = getBytes(validString);
 					if (bytes == null) {
 						status = "Improper data format (expected sequence of hex bytes)";
-						tool.getToolFrame().getToolkit().beep();
+						tool.beep();
 						return false;
 					}
 
@@ -270,13 +267,13 @@ public abstract class ByteCopier {
 					for (int i = 0; i < byteCount;) {
 						if (curAddr == null) {
 							status = "Not enough addresses to paste bytes";
-							tool.getToolFrame().getToolkit().beep();
+							tool.beep();
 							return false;
 						}
 						CodeUnit curCodeUnit = listing.getCodeUnitContaining(curAddr);
 						if (!(curCodeUnit instanceof Data) || ((Data) curCodeUnit).isDefined()) {
 							status = "Cannot paste on top of defined instructions/data";
-							tool.getToolFrame().getToolkit().beep();
+							tool.beep();
 							return false;
 						}
 						int length = curCodeUnit.getLength();

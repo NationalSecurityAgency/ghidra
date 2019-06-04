@@ -103,8 +103,12 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			return;
 		}
 
-		new TaskLauncher(new SyncTask(synchronizer), null, TaskLauncher.INITIAL_MODAL_DELAY,
-			SwingConstants.LEFT);
+		//@formatter:off
+		TaskBuilder.withTask(new SyncTask(synchronizer))
+			.setStatusTextAlignment(SwingConstants.LEADING)
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
 	private void doSync(DataTypeSynchronizer synchronizer, TaskMonitor monitor) {

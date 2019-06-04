@@ -469,6 +469,21 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 		}
 	}
 
+	@Override
+	public void clearCheckout() throws IOException {
+		if (isVersioned) {
+			throw new UnsupportedOperationException(
+				"clearCheckout is not applicable to versioned item");
+		}
+		if (fileSystem.isReadOnly()) {
+			throw new ReadOnlyException();
+		}
+		synchronized (fileSystem) {
+			privateDb.updateCheckoutCopy(); // removes change data
+			super.clearCheckout();
+		}
+	}
+
 	/*
 	 * @see ghidra.framework.store.local.LocalFolderItem#deleteCurrentVersion()
 	 */

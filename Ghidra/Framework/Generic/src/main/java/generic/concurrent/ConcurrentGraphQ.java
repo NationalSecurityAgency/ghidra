@@ -15,16 +15,16 @@
  */
 package generic.concurrent;
 
-import ghidra.util.graph.DependencyGraph;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
 import java.util.Set;
 
 public class ConcurrentGraphQ<I> {
 	private ConcurrentQ<I, Object> queue;
-	private DependencyGraph<I> graph;
+	private AbstractDependencyGraph<I> graph;
 
-	public ConcurrentGraphQ(QRunnable<I> runnable, DependencyGraph<I> graph, GThreadPool pool,
+	public ConcurrentGraphQ(QRunnable<I> runnable, AbstractDependencyGraph<I> graph, GThreadPool pool,
 			TaskMonitor monitor) {
 		this.graph = graph;
 		// @formatter:off

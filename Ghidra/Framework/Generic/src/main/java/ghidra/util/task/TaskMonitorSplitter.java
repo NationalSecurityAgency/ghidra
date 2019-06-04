@@ -137,6 +137,11 @@ public class TaskMonitorSplitter {
 		}
 
 		@Override
+		public boolean isIndeterminate() {
+			return parent.isIndeterminate();
+		}
+
+		@Override
 		public void initialize(long newMax) {
 			setMaximum(newMax);
 			setProgress(0);
@@ -152,7 +157,11 @@ public class TaskMonitorSplitter {
 		@Override
 		public void setMessage(String message) {
 			parent.setMessage(message);
+		}
 
+		@Override
+		public String getMessage() {
+			return parent.getMessage();
 		}
 
 		@Override

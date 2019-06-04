@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.Callback;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -51,6 +50,7 @@ import ghidra.util.TrackedTaskListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.Task;
+import utility.function.Callback;
 
 public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -64,6 +64,17 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 	private TestTaskListener taskListener = new TestTaskListener();
 
+	private AddressTableDialog dialog;
+	private JButton makeTable;
+	private JButton search;
+	private JButton disassemble;
+	private GTable table;
+	private JTextField viewOffset;
+	private JTextField offset;
+	private JTextField alignment;
+	private JCheckBox autoLabel;
+	private JCheckBox searchSelection;
+
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
@@ -72,6 +83,20 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		plugin = env.getPlugin(AutoTableDisassemblerPlugin.class);
 
 		TaskUtilities.addTrackedTaskListener(taskListener);
+
+		performAction(searchAction);
+		dialog = waitForDialogComponent(AddressTableDialog.class);
+		makeTable = findButtonByText(dialog, "Make Table");
+		search = findButtonByText(dialog, "Search");
+		disassemble = findButtonByText(dialog, "Disassemble");
+		table = findComponent(dialog, GTable.class);
+
+		viewOffset = (JTextField) findComponentByName(dialog.getComponent(), "viewOffset");
+		offset = (JTextField) findComponentByName(dialog.getComponent(), "offset");
+		alignment = (JTextField) findComponentByName(dialog.getComponent(), "Alignment");
+		autoLabel = (JCheckBox) findAbstractButtonByText(dialog.getComponent(), "Auto Label");
+		searchSelection =
+			(JCheckBox) findAbstractButtonByText(dialog.getComponent(), "Search Selection");
 	}
 
 	@After
@@ -82,13 +107,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testBasicState() throws Exception {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton makeTable = findButtonByText(dialog, "Make Table");
-		JButton search = findButtonByText(dialog, "Search");
-		JButton disassemble = findButtonByText(dialog, "Disassemble");
-		GTable table = findComponent(dialog, GTable.class);
-
 		// do the search
 		pressButton(search);
 		AutoTableDisassemblerModel model = plugin.getModel();
@@ -98,13 +116,13 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 			"004038b0");
 
 		// select a result and make a table
-		selectRow(table, 0, 0);
+		selectRow(0, 0);
 		assertTrue(makeTable.isEnabled());
 		assertTrue(disassemble.isEnabled());
 		waitFor(() -> pressButton(makeTable));
 
-		select(table, "00401030");
-		selectRow(table, 0, 0);
+		select("00401030");
+		selectRow(0, 0);
 
 		Symbol s = getUniqueSymbol(program, "AddrTable00401030");
 		assertNotNull(s);
@@ -129,7 +147,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		// make table at 00403870 - this one tests that the index does not go past the elements when the
 		// elements are valid index values (ie. the bytes pointed to by the table are values from 0 - len-1)
-		select(table, "00403870");
+		select("00403870");
 		assertEnabled(makeTable, true);
 		assertEnabled(disassemble, true);
 		waitFor(() -> pressButton(makeTable));
@@ -160,7 +178,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		// make table selection for 004038b0
 		// this will test that index does not go past a table element when the table element occurs right after
 		// the table and the data is valid index values (0 - len-1)
-		select(table, "004038b0");
+		select("004038b0");
 		assertEnabled(makeTable, true);
 		assertEnabled(disassemble, true);
 		waitFor(() -> pressButton(makeTable));
@@ -193,13 +211,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testMultiRowSelection() throws Exception {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton makeTable = findButtonByText(dialog, "Make Table");
-		JButton search = findButtonByText(dialog, "Search");
-		JButton disassemble = findButtonByText(dialog, "Disassemble");
-		JTable table = findComponent(dialog, JTable.class);
-
 		// do the search
 		pressButton(search);
 		AutoTableDisassemblerModel model = plugin.getModel();
@@ -218,11 +229,11 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		// select a multiple results and make a table
 		assertEnabled(makeTable, false);
 
-		selectRow(table, 0, 2);
+		selectRow(0, 2);
 		assertEnabled(makeTable, true);
 		assertEnabled(disassemble, true);
 		waitFor(() -> pressButton(makeTable));
-		selectRow(table, 0, 2);
+		selectRow(0, 2);
 		assertEnabled(makeTable, true);
 		assertEnabled(disassemble, true);
 
@@ -273,16 +284,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testOffset() throws Exception {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton makeTable = findButtonByText(dialog, "Make Table");
-		JButton search = findButtonByText(dialog, "Search");
-		JButton disassemble = findButtonByText(dialog, "Disassemble");
-		JTextField viewOffset =
-			(JTextField) findComponentByName(dialog.getComponent(), "viewOffset");
-		JTextField offset = (JTextField) findComponentByName(dialog.getComponent(), "offset");
-		JTable table = findComponent(dialog, JTable.class);
-
 		// do the search
 		pressButton(search);
 		AutoTableDisassemblerModel model = plugin.getModel();
@@ -292,7 +293,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 			"004038b0");
 
 		assertEnabled(makeTable, false);
-		select(table, "004038b0");
+		select("004038b0");
 		assertEnabled(makeTable, true);
 		assertEnabled(disassemble, true);
 
@@ -301,7 +302,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		Listing l = program.getListing();
 
 		undo(program);
-		select(table, "00402518");
+		select("00402518");
 		setText(offset, "4");
 		assertEnabled(makeTable, false);
 		assertEnabled(disassemble, false);
@@ -315,7 +316,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		waitFor(() -> pressButton(makeTable));
 
-		select(table, "00402518");
+		select("00402518");
 
 		l = program.getListing();
 		Data d = l.getDataAt(addr("0x40251c"));
@@ -337,11 +338,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testAlignment() {
-
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton search = findButtonByText(dialog, "Search");
-		JTextField alignment = (JTextField) findComponentByName(dialog.getComponent(), "Alignment");
 
 		setText(alignment, "2");
 		assertEquals("2", alignment.getText());
@@ -365,15 +361,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testAutoLabelOff() throws Exception {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton makeTable = findButtonByText(dialog, "Make Table");
-		JButton search = findButtonByText(dialog, "Search");
-		JCheckBox autoLabel =
-			(JCheckBox) findAbstractButtonByText(dialog.getComponent(), "Auto Label");
-
-		JTable table = findComponent(dialog, JTable.class);
-
 		// do the search
 		pressButton(search);
 		waitForSwing();
@@ -385,7 +372,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		runSwing(() -> autoLabel.setSelected(false));
 
 		// select a result and make a table
-		selectRow(table, 0, 0);
+		selectRow(0, 0);
 		waitFor(() -> pressButton(makeTable));
 
 		SymbolTable st = program.getSymbolTable();
@@ -409,12 +396,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testCodeSelection() {
-
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton search = findButtonByText(dialog, "Search");
-		final JCheckBox searchSelection =
-			(JCheckBox) findAbstractButtonByText(dialog.getComponent(), "Search Selection");
 
 		// do the search
 		pressButton(search);
@@ -482,16 +463,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testOffsetFieldsEnabled() {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-
-		// make sure that the options are disabled by default
-		JButton disassemble = findButtonByText(dialog, "Disassemble");
-		JButton makeTable = findButtonByText(dialog, "Make Table");
-		JCheckBox autoLabel =
-			(JCheckBox) findAbstractButtonByText(dialog.getComponent(), "Auto Label");
-		JTextField offset = (JTextField) findComponentByName(dialog.getComponent(), "offset");
-
 		Component[] offsetButtons = new Component[] { disassemble, makeTable };
 		Component[] infoFields = new Component[] { autoLabel, offset };
 		Component[] offsetPanelFields =
@@ -500,13 +471,11 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		checkOffsetFieldsEnabledState(offsetPanelFields, false);
 
 		// now search for data
-		JButton search = findButtonByText(dialog, "Search");
 		pressButton(search);
 		AutoTableDisassemblerModel model = plugin.getModel();
 		waitForCondition(() -> !model.isBusy(), "Table model never finished");
 
 		// select a row
-		JTable table = findComponent(dialog, JTable.class);
 		table.getSelectionModel().setSelectionInterval(0, 0);
 
 		// make sure the buttons are enabled
@@ -577,18 +546,12 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testSelectionNavigation() throws Exception {
 
-		performAction(searchAction);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton search = findButtonByText(dialog, "Search");
-
 		// do the search
 		pressButton(search);
 		AutoTableDisassemblerModel model = plugin.getModel();
 		waitForModel(model);
 
 		assertEquals(8, model.getRowCount());
-
-		GTable table = findComponent(dialog, GTable.class);
 		runSwing(() -> table.clearSelection());
 
 		int row = 0;
@@ -618,12 +581,6 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testMakeSelection() throws Exception {
 
-		performAction(searchAction, true);
-		AddressTableDialog dialog = waitForDialogComponent(AddressTableDialog.class);
-		JButton search = findButtonByText(dialog, "Search");
-
-		// do the search
-
 		pressButton(search);
 		waitForSwing();
 
@@ -632,11 +589,10 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		assertEquals(8, model.getRowCount());
 
-		JTable table = findComponent(dialog, JTable.class);
-		select(table, "00401030", "004024ac", "00403870");
+		select("00401030", "004024ac", "00403870");
 
 		// make the selection
-		JButton button = getActionButton("Make Selection", dialog);
+		JButton button = getActionButton("Make Selection");
 		assertNotNull(button);
 		pressButton(button);
 
@@ -668,12 +624,11 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Note: due to focus issues, we will call navigate directly
 
-		GhidraTable table = (GhidraTable) gTable;
-		runSwing(() -> table.navigate(row, 0));
+		runSwing(() -> ((GhidraTable) table).navigate(row, 0));
 		waitForSwing();
 	}
 
-	private JButton getActionButton(String actionName, AddressTableDialog dialog) {
+	private JButton getActionButton(String actionName) {
 		Map<?, ?> actionMap = (Map<?, ?>) getInstanceField("actionMap", dialog);
 		Set<?> entrySet = actionMap.entrySet();
 		for (Object entry : entrySet) {
@@ -795,10 +750,10 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-	private void select(JTable table, String... addrs) {
+	private void select(String... addrs) {
 		List<Integer> rows = new ArrayList<>();
 		for (String addr : addrs) {
-			rows.add(getRow(table, addr));
+			rows.add(getRow(addr));
 		}
 
 		ListSelectionModel model = table.getSelectionModel();
@@ -808,12 +763,12 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-	private void select(JTable table, String addr) {
-		int row = getRow(table, addr);
-		selectRow(table, row, row);
+	private void select(String addr) {
+		int row = getRow(addr);
+		selectRow(row, row);
 	}
 
-	private int getRow(JTable table, String addr) {
+	private int getRow(String addr) {
 		int count = table.getRowCount();
 		for (int i = 0; i < count; i++) {
 			Object value = table.getValueAt(i, 0);
@@ -826,7 +781,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		return -1;// can't get here
 	}
 
-	private void selectRow(final JTable table, final int rowStart, final int rowEnd) {
+	private void selectRow(final int rowStart, final int rowEnd) {
 		waitForSwing();
 		runSwing(() -> table.setRowSelectionInterval(rowStart, rowEnd));
 	}
@@ -842,7 +797,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		@Override
 		public void taskRemoved(Task task) {
-			//
+			// don't care
 		}
 
 		void reset() {
@@ -852,6 +807,5 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		boolean started() {
 			return started.get() > 0;
 		}
-
 	}
 }

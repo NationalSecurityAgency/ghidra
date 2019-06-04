@@ -146,27 +146,19 @@ class SearchTextDialog extends DialogComponentProvider {
 		}
 	}
 
-	/* (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#executeProgressTask(ghidra.util.task.Task, int)
-	 */
+	// overridden to increase visibility
 	@Override
 	protected void executeProgressTask(Task task, int delay) {
 		super.executeProgressTask(task, delay);
 	}
 
-	/*
-	 *  (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#getTaskMonitorComponent()
-	 */
+	// overridden to increase visibility
 	@Override
 	protected TaskMonitorComponent getTaskMonitorComponent() {
 		return super.getTaskMonitorComponent();
 	}
 
-	/*
-	 *  (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#getTaskScheduler()
-	 */
+	// overridden to increase visibility
 	@Override
 	protected TaskScheduler getTaskScheduler() {
 		return super.getTaskScheduler();
@@ -178,9 +170,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		previousButton.setEnabled(!isBusy && searchEnabled);
 	}
 
-	/**
-	 * Enable/disable the search button.
-	 */
 	void setSearchEnabled(boolean enabled) {
 		searchEnabled = enabled;
 		updateSearchButtonsEnablement();
@@ -195,14 +184,10 @@ class SearchTextDialog extends DialogComponentProvider {
 		return searchSelectionCB.isSelected();
 	}
 
-	///////////////////////////////////////////////////////////////////
 	private void setMessage(String msg) {
 		super.setStatusText(msg);
 	}
 
-	/**
-	 * Create the main panel.
-	 */
 	private JPanel createMainPanel() {
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(10, 0));
@@ -211,9 +196,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		return mainPanel;
 	}
 
-	/**
-	 * Create the top panel that has the text field.
-	 */
 	private JPanel createSearchPanel() {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 10, 4));
@@ -252,9 +234,8 @@ class SearchTextDialog extends DialogComponentProvider {
 		return panel;
 	}
 
-	/**
-	 * Create the inner panel that has the direction and the
-	 * case sensitive panel.
+	/*
+	 * Create the inner panel that has the direction and the case sensitive panel
 	 */
 	private JPanel createDetailsPanel() {
 		JPanel detailsPanel = new JPanel(new BorderLayout());
@@ -275,7 +256,6 @@ class SearchTextDialog extends DialogComponentProvider {
 
 	private JPanel createRightPanel() {
 		JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
-//    	JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.add(createDirectionPanel());
 		panel.add(createOptionsPanel());
 		return panel;
@@ -296,11 +276,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		return panel;
 	}
 
-	/**
-	 * Create the options panel.
-	 * 
-	 * @return JPanel
-	 */
 	private JPanel createFieldOptionsPanel() {
 		JPanel optionsPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(optionsPanel, BoxLayout.Y_AXIS);

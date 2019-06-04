@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 
 import docking.DockingWindowManager;
 import generic.concurrent.GThreadPool;
-import ghidra.generic.function.Callback;
 import ghidra.graph.*;
 import ghidra.graph.algo.ChkDominanceAlgorithm;
 import ghidra.graph.algo.ChkPostDominanceAlgorithm;
@@ -34,6 +33,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.CallbackAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
+import utility.function.Callback;
 
 /**
  * A class that calculates flow between vertices and then triggers that flow to be painted

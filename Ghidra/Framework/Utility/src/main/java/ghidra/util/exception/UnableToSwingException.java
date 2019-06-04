@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.generic.function;
+package ghidra.util.exception;
+
+import javax.swing.SwingUtilities;
 
 /**
- * A generic functional interface that allows you to consume an item and potentially throw
- * an exception.  
- * 
- * @param <T> the input type 
- * @param <E> the exception of your choice
+ * Signals that a background thread attempted to {@link SwingUtilities#invokeAndWait(Runnable)}
+ * operation that timed-out because the Swing thread was busy.  This can be a sign of 
+ * a deadlock.
  */
-@FunctionalInterface
-public interface ExceptionalConsumer<T, E extends Exception> {
+public class UnableToSwingException extends Exception {
 
-	/**
-	 * The method that will be called
-	 * 
-	 * @param t the input
-	 * @throws E if the call throws an exception
-	 */
-	public void accept(T t) throws E;
+	public UnableToSwingException(String message) {
+		super(message);
+	}
 }

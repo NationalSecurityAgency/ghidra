@@ -33,8 +33,9 @@ public class JavaConfig {
 	private LaunchProperties launchProperties;
 	private File javaHomeSaveFile;
 
-	private String applicationName;
-	private String applicationVersion;
+	private String applicationName; // example: Ghidra
+	private String applicationVersion; // example: 9.0.1
+	private String applicationReleaseName; // example: PUBLIC, DEV, etc
 	private int minSupportedJava;
 	private int maxSupportedJava;
 	private String compilerComplianceLevel;
@@ -277,6 +278,8 @@ public class JavaConfig {
 		// Required properties
 		applicationName = getDefinedProperty(applicationProperties, "application.name");
 		applicationVersion = getDefinedProperty(applicationProperties, "application.version");
+		applicationReleaseName =
+			getDefinedProperty(applicationProperties, "application.release.name");
 		compilerComplianceLevel =
 			getDefinedProperty(applicationProperties, "application.java.compiler");
 		try {
@@ -349,13 +352,17 @@ public class JavaConfig {
 		}
 
 		// Get the java home save file from user home directory (it might not exist yet).
-		String prefix = "." + applicationName.replaceAll("\\s", "").toLowerCase();
-		String suffix = applicationVersion;
+		File userSettingsParentDir =
+			new File(userHomeDir, "." + applicationName.replaceAll("\\s", "").toLowerCase());
+
+		String userSettingsDirName = userSettingsParentDir.getName() + "_" + applicationVersion +
+			"_" + applicationReleaseName.replaceAll("\\s", "").toUpperCase();
+
 		if (isDev) {
-			suffix += "_location_" + installDir.getParentFile().getName();
+			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
 		}
-		File userSettingsDir =
-			new File(userHomeDir, prefix + File.separator + prefix + "-" + suffix);
+
+		File userSettingsDir = new File(userSettingsParentDir, userSettingsDirName);
 		javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
 	}
 

@@ -15,14 +15,18 @@
  */
 package ghidra.framework.data;
 
+import java.io.*;
+import java.net.URL;
+import java.util.*;
+
 import generic.timer.GhidraSwinglessTimer;
-import generic.timer.TimerCallback;
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
-import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
+import ghidra.framework.store.FileSystemListener;
+import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.remote.RemoteFileSystem;
 import ghidra.util.*;
@@ -30,11 +34,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
-
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-
 import utilities.util.FileUtilities;
 
 /**
@@ -74,13 +73,13 @@ public class ProjectFileManager implements ProjectData {
 	private RepositoryAdapter repository;
 
 	private DomainFileIndex fileIndex = new DomainFileIndex(this);
-	private DomainFolderChangeListenerList listenerList = new DomainFolderChangeListenerList(
-		fileIndex);
+	private DomainFolderChangeListenerList listenerList =
+		new DomainFolderChangeListenerList(fileIndex);
 
 	private RootGhidraFolderData rootFolderData;
 
 	private Map<String, DomainObjectAdapter> openDomainObjects =
-		new HashMap<String, DomainObjectAdapter>();
+		new HashMap<>();
 
 	private TaskMonitorAdapter projectDisposalMonitor = new TaskMonitorAdapter();
 
@@ -107,11 +106,10 @@ public class ProjectFileManager implements ProjectData {
 		}
 		else if (isInWritableProject && !SystemUtilities.getUserName().equals(owner)) {
 			if (owner == null) {
-				throw new NotOwnerException(
-					"Older projects may only be opened as a View.\n"
-						+ "You must first create a new project or open an existing current project, \n"
-						+ "then use the \"Project->View\" menu action to open the older project as a view.\n"
-						+ "You can then drag old files into your active project.");
+				throw new NotOwnerException("Older projects may only be opened as a View.\n" +
+					"You must first create a new project or open an existing current project, \n" +
+					"then use the \"Project->View\" menu action to open the older project as a view.\n" +
+					"You can then drag old files into your active project.");
 			}
 			throw new NotOwnerException("Project is owned by " + owner);
 		}
@@ -166,8 +164,8 @@ public class ProjectFileManager implements ProjectData {
 		properties = new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
 		if (create) {
 			if (projectDir.exists()) {
-				throw new DuplicateFileException("Project directory already exists: " +
-					projectDir.getCanonicalPath());
+				throw new DuplicateFileException(
+					"Project directory already exists: " + projectDir.getCanonicalPath());
 			}
 			projectDir.mkdir();
 			localStorageLocator.getMarkerFile().createNewFile();
@@ -181,8 +179,8 @@ public class ProjectFileManager implements ProjectData {
 			}
 			if (properties.exists()) {
 				if (isInWritableProject && properties.isReadOnly()) {
-					throw new ReadOnlyException("Project " + localStorageLocator.getName() +
-						" is read-only");
+					throw new ReadOnlyException(
+						"Project " + localStorageLocator.getName() + " is read-only");
 				}
 				properties.readState();
 				owner = properties.getString(OWNER, SystemUtilities.getUserName());
@@ -236,9 +234,8 @@ public class ProjectFileManager implements ProjectData {
 			if (!versionedFileSystemDir.exists()) {
 				versionedFileSystemDir.mkdir();
 			}
-			versionedFileSystem =
-				LocalFileSystem.getLocalFileSystem(versionedFileSystemDir.getAbsolutePath(), true,
-					true, false, true);
+			versionedFileSystem = LocalFileSystem.getLocalFileSystem(
+				versionedFileSystemDir.getAbsolutePath(), true, true, false, true);
 		}
 	}
 
@@ -259,9 +256,8 @@ public class ProjectFileManager implements ProjectData {
 		if (TEST_REPOSITORY_PATH != null) {
 			File versionedFileSystemDir = new File(TEST_REPOSITORY_PATH);
 			if (versionedFileSystemDir.exists()) {
-				versionedFileSystem =
-					LocalFileSystem.getLocalFileSystem(versionedFileSystemDir.getAbsolutePath(),
-						false, true, false, true);
+				versionedFileSystem = LocalFileSystem.getLocalFileSystem(
+					versionedFileSystemDir.getAbsolutePath(), false, true, false, true);
 				return;
 			}
 			Msg.error(this, "Test repository not found: " + TEST_REPOSITORY_PATH);
@@ -276,9 +272,8 @@ public class ProjectFileManager implements ProjectData {
 				versionedFileSystemDir.mkdir();
 				create = true;
 			}
-			versionedFileSystem =
-				LocalFileSystem.getLocalFileSystem(versionedFileSystemDir.getAbsolutePath(),
-					create, true, !isInWritableProject, true);
+			versionedFileSystem = LocalFileSystem.getLocalFileSystem(
+				versionedFileSystemDir.getAbsolutePath(), create, true, !isInWritableProject, true);
 		}
 		else {
 			int port = properties.getInt(PORT_NUMBER, -1);
@@ -353,17 +348,16 @@ public class ProjectFileManager implements ProjectData {
 		if (!fileSystemDir.isDirectory()) {
 			if (create && !fileSystemDir.exists()) {
 				if (!fileSystemDir.mkdir()) {
-					throw new IOException("Failed to create project data directory: " +
-						fileSystemDir);
+					throw new IOException(
+						"Failed to create project data directory: " + fileSystemDir);
 				}
 			}
 			else {
 				throw new IOException("Project data directory not found: " + fileSystemDir);
 			}
 		}
-		fileSystem =
-			LocalFileSystem.getLocalFileSystem(fileSystemDir.getAbsolutePath(), create, false,
-				!isInWritableProject, true);
+		fileSystem = LocalFileSystem.getLocalFileSystem(fileSystemDir.getAbsolutePath(), create,
+			false, !isInWritableProject, true);
 	}
 
 	private void getUserFileSystem(boolean isInWritableProject) throws IOException {
@@ -378,9 +372,8 @@ public class ProjectFileManager implements ProjectData {
 			}
 			create = true;
 		}
-		userFileSystem =
-			LocalFileSystem.getLocalFileSystem(fileSystemDir.getAbsolutePath(), create, false,
-				!isInWritableProject, true);
+		userFileSystem = LocalFileSystem.getLocalFileSystem(fileSystemDir.getAbsolutePath(), create,
+			false, !isInWritableProject, true);
 	}
 
 	/**
@@ -408,8 +401,8 @@ public class ProjectFileManager implements ProjectData {
 	public DomainFolder getFolder(String path) {
 		int len = path.length();
 		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
-			throw new IllegalArgumentException("Absolute path must begin with '" +
-				FileSystem.SEPARATOR_CHAR + "'");
+			throw new IllegalArgumentException(
+				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
 		}
 		try {
 			return getRootFolder().getFolderPathData(path).getDomainFolder();
@@ -466,8 +459,8 @@ public class ProjectFileManager implements ProjectData {
 	public DomainFile getFile(String path) {
 		int len = path.length();
 		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
-			throw new IllegalArgumentException("Absolute path must begin with '" +
-				FileSystem.SEPARATOR_CHAR + "'");
+			throw new IllegalArgumentException(
+				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
 		}
 		else if (path.charAt(len - 1) == FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException("Missing file name in path");
@@ -533,6 +526,7 @@ public class ProjectFileManager implements ProjectData {
 	 * them to the specified list.
 	 * @param list the list to receive the changed domain files
 	 */
+	@Override
 	public void findOpenFiles(List<DomainFile> list) {
 		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 			list.add(domainObj.getDomainFile());
@@ -613,16 +607,13 @@ public class ProjectFileManager implements ProjectData {
 			throw new IllegalStateException("Only private project may be converted to shared");
 		}
 
-		// 1) check for checked out files
-		findCheckedOutFiles(getRootFolder(), monitor);
-
-		// 2) Convert versioned files to private files
+		// 1) Convert versioned files (inclulding checked-out files) to private files
 		convertFilesToPrivate(getRootFolder(), monitor);
 
-		// 3) Update the properties with server info
+		// 2) Update the properties with server info
 		updatePropertiesFile(newRepository);
 
-		// 4) Transition versioned filesystem and remove the old versioned filesystem
+		// 3) Transition versioned filesystem and remove the old versioned filesystem
 		versionedFileSystem.dispose();
 		repository = newRepository;
 		versionedFileSystem = new RemoteFileSystem(newRepository);
@@ -646,8 +637,8 @@ public class ProjectFileManager implements ProjectData {
 		updatePropertiesFile(newRepository);
 	}
 
-	private void findCheckedOutFiles(DomainFolder folder, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	private void findCheckedOutFiles(DomainFolder folder, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		DomainFile[] files = folder.getFiles();
 		for (int i = 0; i < files.length; i++) {
@@ -711,26 +702,17 @@ public class ProjectFileManager implements ProjectData {
 			return;
 		}
 
-		userDataReconcileTimer =
-			new GhidraSwinglessTimer(USER_DATA_RECONCILE_DELAY_MS, new TimerCallback() {
-				@Override
-				public void timerFired() {
-					synchronized (ProjectFileManager.this) {
-						startReconcileUserDataFiles();
-					}
-				}
-			});
+		userDataReconcileTimer = new GhidraSwinglessTimer(USER_DATA_RECONCILE_DELAY_MS, () -> {
+			synchronized (ProjectFileManager.this) {
+				startReconcileUserDataFiles();
+			}
+		});
 		userDataReconcileTimer.setRepeats(false);
 		userDataReconcileTimer.start();
 	}
 
 	private void startReconcileUserDataFiles() {
-		userDataReconcileThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				reconcileUserDataFiles();
-			}
-		});
+		userDataReconcileThread = new Thread(() -> reconcileUserDataFiles());
 		userDataReconcileThread.setPriority(Thread.MIN_PRIORITY);
 		userDataReconcileThread.start();
 	}

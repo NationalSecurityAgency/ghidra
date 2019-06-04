@@ -32,10 +32,10 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.generic.function.Callback;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
+import utility.function.Callback;
 
 /**
  * Base class used for creating dialogs in Ghidra. Subclass this to create a dialog provider that has
@@ -72,7 +72,7 @@ public class DialogComponentProvider
 	private TaskScheduler taskScheduler;
 	private TaskMonitorComponent taskMonitorComponent;
 
-	private static KeyStroke escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+	private static final KeyStroke ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
 	private CardLayout progressCardLayout;
 	private JButton defaultButton;
@@ -180,7 +180,7 @@ public class DialogComponentProvider
 			}
 		};
 
-		KeyBindingUtils.registerAction(rootPanel, escKeyStroke, escAction,
+		KeyBindingUtils.registerAction(rootPanel, ESC_KEYSTROKE, escAction,
 			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 	}
 
@@ -642,18 +642,6 @@ public class DialogComponentProvider
 		}
 	}
 
-	private void doSetSubStatusText(String text, MessageType type, boolean alert) {
-
-		SystemUtilities.assertThisIsTheSwingThread(
-			"Setting text must be performed on the Swing thread");
-
-		updateStatusToolTip();
-
-		if (alert) {
-			alertMessage();
-		}
-	}
-
 	/**
 	 * Signals for this dialog to visually draw the user's attention to the status text
 	 */
@@ -765,6 +753,13 @@ public class DialogComponentProvider
 	}
 
 	private void showProgressBar(String localTitle, boolean hasProgress, boolean canCancel) {
+
+		if (!isVisible()) {
+			// It doesn't make any sense to show the task monitor when the dialog is not 
+			// visible, so show the dialog
+			DockingWindowManager.showDialog(getParent(), this);
+		}
+
 		taskMonitorComponent.setTaskName(localTitle);
 		taskMonitorComponent.showProgress(hasProgress);
 		taskMonitorComponent.setCancelButtonVisibility(canCancel);
@@ -1063,6 +1058,13 @@ public class DialogComponentProvider
 
 	DockingDialog getDialog() {
 		return dialog;
+	}
+
+	private Component getParent() {
+		if (dialog == null) {
+			return null;
+		}
+		return dialog.getParent();
 	}
 
 	public boolean isVisible() {

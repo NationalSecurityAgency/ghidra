@@ -26,10 +26,10 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 public class InterpreterComponentProvider extends ComponentProviderAdapter
 		implements InterpreterConsole {

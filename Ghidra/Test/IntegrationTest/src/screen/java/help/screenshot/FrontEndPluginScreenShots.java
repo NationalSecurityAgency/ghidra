@@ -28,8 +28,7 @@ import org.junit.Test;
 
 import docking.DialogComponentProvider;
 import docking.DockingDialog;
-import docking.widgets.OptionDialog;
-import docking.widgets.PasswordChangeDialog;
+import docking.widgets.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
 import docking.wizard.WizardManager;
@@ -120,8 +119,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 			new PasswordChangeDialog("Change Password", "Repository Server", "server1", "user-1");
 		runSwing(() -> tool.showDialog(pcd), false);
 
-		PasswordChangeDialog dialog =
-			waitForDialogComponent(null, PasswordChangeDialog.class, DEFAULT_WINDOW_TIMEOUT);
+		PasswordChangeDialog dialog = waitForDialogComponent(PasswordChangeDialog.class);
 		captureDialog(dialog);
 
 	}
@@ -353,11 +351,8 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testProjectExists() {
-		final OptionDialog dialog = new OptionDialog("Project Exists",
-			"Cannot restore project because project named " + "TestPrj" + " already exists.",
-			OptionDialog.PLAIN_MESSAGE, null);
-		runSwing(() -> tool.showDialog(dialog), false);
-
+		OkDialog.show("Project Exists",
+			"Cannot restore project because project named TestPrj already exists.");
 		captureDialog();
 	}
 
@@ -689,7 +684,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	private void waitForVMMemoryInitialilzed() {
-		Window w = waitForWindow("VM Memory Usage", 2000);
+		Window w = waitForWindow("VM Memory Usage");
 		DialogComponentProvider dc = ((DockingDialog) w).getDialogComponent();
 		Boolean initialized = (Boolean) invokeInstanceMethod("isInitialized", dc);
 

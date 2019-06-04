@@ -82,7 +82,7 @@ public abstract class RemoteBlockStreamHandle<T extends BlockStream> implements 
 	 */
 	public RemoteBlockStreamHandle(BlockStreamServer server, int blockCount, int blockSize)
 			throws IOException {
-		streamServerIPAddress = server.getServerIpAddress();
+		streamServerIPAddress = server.getServerHostname();
 		if (!server.isRunning() || streamServerIPAddress == null) {
 			throw new IOException("block stream server is not running");
 		}

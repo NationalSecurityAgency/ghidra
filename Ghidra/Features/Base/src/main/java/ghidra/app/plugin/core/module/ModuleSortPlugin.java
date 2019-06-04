@@ -21,6 +21,13 @@
 
 package ghidra.app.plugin.core.module;
 
+import java.util.*;
+
+import javax.swing.SwingConstants;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -35,14 +42,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.*;
-
-import java.util.*;
-
-import javax.swing.SwingConstants;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
 /**
  * Plugin to sort Modules and Fragments within a selected Module.
@@ -97,10 +96,12 @@ public class ModuleSortPlugin extends ProgramPlugin {
 			return;
 		}
 
-		SortTask sortTask = new SortTask(module, sortType);
-
-		// this blocks until the task is finished
-		new TaskLauncher(sortTask, null, TaskLauncher.INITIAL_MODAL_DELAY, SwingConstants.LEADING);
+		//@formatter:off
+		TaskBuilder.withTask(new SortTask(module, sortType))
+			.setStatusTextAlignment(SwingConstants.LEADING)
+			.launchModal()
+			;
+		//@formatter:on		
 	}
 
 	private void doSort(ProgramModule parent, GroupComparator comparator, TaskMonitor monitor)
@@ -110,11 +111,11 @@ public class ModuleSortPlugin extends ProgramPlugin {
 
 		monitor.initialize(kids.length);
 
-		for (int i = 0; i < kids.length; i++) {
+		for (Group kid : kids) {
 			monitor.checkCanceled();
-			list.add(kids[i]);
-			if (kids[i] instanceof ProgramModule) {
-				doSort((ProgramModule) kids[i], comparator, monitor);
+			list.add(kid);
+			if (kid instanceof ProgramModule) {
+				doSort((ProgramModule) kid, comparator, monitor);
 			}
 			monitor.incrementProgress(1);
 		}
@@ -152,8 +153,9 @@ public class ModuleSortPlugin extends ProgramPlugin {
 	private ProgramModule getSelectedModule(Object contextObj) {
 		if (contextObj instanceof ProgramNode) {
 			ProgramNode node = (ProgramNode) contextObj;
-			if (node.isModule() && node.getTree().getSelectionCount() == 1)
+			if (node.isModule() && node.getTree().getSelectionCount() == 1) {
 				return node.getModule();
+			}
 		}
 		return null;
 	}
@@ -244,12 +246,14 @@ public class ModuleSortPlugin extends ProgramPlugin {
 			this.sortType = sortType;
 			if (sortType == SORT_BY_ADDRESS) {
 				setPopupMenuData(new MenuData(SORT_BY_ADDR_MENUPATH, null, "module"));
-				setDescription("Perform a minimum address sort of all fragments contained within a selected folder");
+				setDescription(
+					"Perform a minimum address sort of all fragments contained within a selected folder");
 			}
 			else {
 				setPopupMenuData(new MenuData(SORT_BY_NAME_MENUPATH, null, "module"));
 
-				setDescription("Perform a name sort of all fragments contained within a selected folder");
+				setDescription(
+					"Perform a name sort of all fragments contained within a selected folder");
 			}
 			setEnabled(true); // always enabled
 			setHelpLocation(new HelpLocation("ProgramTreePlugin", "SortByAddressOrName"));
@@ -258,7 +262,7 @@ public class ModuleSortPlugin extends ProgramPlugin {
 		/**
 		 * Determine if the Module Sort action should be visible within
 		 * the popup menu for the specified active object.
-		 * @param activeObj the object under the mouse location for the popup.
+		 * @param context the context
 		 * @return true if action should be made visible in popup menu.
 		 */
 		@Override

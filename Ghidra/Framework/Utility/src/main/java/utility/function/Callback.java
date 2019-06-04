@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.generic.function;
+package utility.function;
 
 /**
  * A generic functional interface that is more semantically sound than {@link Runnable}.  Use

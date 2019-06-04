@@ -33,7 +33,7 @@ public interface LanguageProvider extends ExtensionPoint {
 	 * @return the {@link Language} with the given name
 	 */
 	Language getLanguage(LanguageID languageId);
-		
+
 	/**
 	 * Returns a list of language descriptions provided by this provider
 	 */
@@ -45,4 +45,11 @@ public interface LanguageProvider extends ExtensionPoint {
 	 */
 	boolean hadLoadFailure();
 
+	/**
+	 * Returns true if the given language has been successfully loaded
+	 * 
+	 * @param languageId the name of the language to be retrieved
+	 * @return true if the given language has been successfully loaded
+	 */
+	boolean isLanguageLoaded(LanguageID languageId);
 }
