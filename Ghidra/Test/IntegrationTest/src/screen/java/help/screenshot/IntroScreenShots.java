@@ -21,13 +21,13 @@ import org.junit.Test;
 
 import docking.DockingWindowManager;
 import docking.ErrLogDialog;
-import docking.widgets.OptionDialog;
+import docking.widgets.OkDialog;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ProjectData;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class IntroScreenShots extends GhidraScreenShotGenerator {
 
@@ -45,55 +45,42 @@ public class IntroScreenShots extends GhidraScreenShotGenerator {
 		// don't need to load a program
 	}
 
-@Test
-    public void testEmpty_ghidra() {
+	@Test
+	public void testEmpty_ghidra() {
 		performAction("Close Project", "FrontEndPlugin", true);
 		Msg.info("RecoverySnapshotMgrPlugin", "Recovery snapshot timer set to 5 minute(s)");
 		captureToolWindow(600, 500);
 	}
 
-@Test
-    public void testErr_Dialog() {
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				ErrLogDialog dialog =
-					ErrLogDialog.createLogMessageDialog("Unexpected Error",
-						"Oops, this is really bad!", "");
-				DockingWindowManager.showDialog(null, dialog);
-			}
+	@Test
+	public void testErr_Dialog() {
+		runSwing(() -> {
+			ErrLogDialog dialog = ErrLogDialog.createLogMessageDialog("Unexpected Error",
+				"Oops, this is really bad!", "");
+			DockingWindowManager.showDialog(null, dialog);
 		}, false);
 		waitForSwing();
 		captureDialog();
 
 	}
 
-@Test
-    public void testOpen_ghidra() throws InvalidNameException, CancelledException, IOException {
+	@Test
+	public void testOpen_ghidra() throws InvalidNameException, CancelledException, IOException {
 		program = env.getProgram("WinHelloCPP.exe");
 		Project project = env.getProject();
 		ProjectData projectData = project.getProjectData();
-		projectData.getRootFolder().createFile("WinHelloCpp.exe", program,
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		projectData.getRootFolder().createFile("AnotherProgram.exe", program,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		projectData.getRootFolder().createFile("WinHelloCpp.exe", program, TaskMonitor.DUMMY);
+		projectData.getRootFolder().createFile("AnotherProgram.exe", program, TaskMonitor.DUMMY);
 		waitForSwing();
 		Msg.info("ProjectImpl", "Opening project: " + tool.getProject().getName());
 		captureToolWindow(600, 500);
 	}
 
-@Test
-    public void testSimple_err_dialog() {
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				OptionDialog dialog =
-					new OptionDialog("Some Resonable Error",
-						"Your operation did not complete because... (i.e File Not Found)",
-						OptionDialog.ERROR_MESSAGE, null);
-				DockingWindowManager.showDialog(null, dialog);
-			}
-		}, false);
+	@Test
+	public void testSimple_err_dialog() {
+
+		OkDialog.showError("Some Resonable Error",
+			"Your operation did not complete because... (i.e File Not Found)");
 		captureDialog();
 	}
 

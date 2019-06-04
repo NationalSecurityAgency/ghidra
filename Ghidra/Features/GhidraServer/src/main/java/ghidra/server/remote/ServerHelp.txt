@@ -1,8 +1,11 @@
 Ghidra server startup parameters.
-Command line parameters: [-ip###.###.###.###] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-n] <repository_path>
+Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-n] <repository_path>
  
-   -ip###.###.###.### : ip address to bound to (by default, uses IP address bound to hostname)  
- 	
+   -ip <hostname> : identifies the remote access IPv4 address or hostname (FQDN) which should be 
+   	                used by remote clients to access the server.
+   	                 
+   -i #.#.#.# : server interface IPv4 address to listen on (default will listen on all interfaces).
+	
    -p# : base TCP port to be used (default: 13100) [see Note 1]
    
    -a# : an optional authentication mode where # is a value 0 or 2

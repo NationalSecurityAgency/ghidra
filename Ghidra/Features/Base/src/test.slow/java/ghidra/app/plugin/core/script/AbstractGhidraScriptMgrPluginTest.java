@@ -62,7 +62,8 @@ import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import utilities.util.FileUtilities;
 
-public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHeadedIntegrationTest {
+public abstract class AbstractGhidraScriptMgrPluginTest
+		extends AbstractGhidraHeadedIntegrationTest {
 	protected static final int MAX_TIME = 4000;
 	protected static final int SCRIPT_TIMEOUT_SECS = 5;
 	protected TestEnv env;
@@ -190,6 +191,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	protected void selectCategory(String category) {
 
 		GTree categoryTree = (GTree) findComponentByName(provider.getComponent(), "CATEGORY_TREE");
+		waitForTree(categoryTree);
 		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
 		assertNotNull(jTree);
 		GTreeNode child = categoryTree.getRootNode().getChild(category);
@@ -345,6 +347,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	 * This call will:
 	 * -open the file in an editor
 	 * -update the text area and buffer fields of this test
+	 * @param file the file to open
 	 */
 	protected void openInEditor(final ResourceFile file) {
 		runSwing(() -> editor = provider.editScriptInGhidra(file));
@@ -500,12 +503,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		buffer.append("Test text: ").append(testName.getMethodName());
 
 		runSwing(() -> {
-
-			// TODO editorTextArea.requestFocusInWindow()
 			editorTextArea.setText(buffer.toString());
 		});
-
-		//typeText(buffer.toString());
 
 		return buffer.toString();
 	}
@@ -692,8 +691,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		//@category name
 		contents = contents.replaceFirst("//@category \\w+", "//@category " + newCategory);
 
-		Msg.debug(this, "new category string: " + newCategory);
-
 		writeStringToFile(script, contents);
 
 		//
@@ -703,7 +700,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		//
 		File file = script.getFile(false);
 		long lastModified = file.lastModified();
-		file.setLastModified(lastModified + (1000 * System.currentTimeMillis()));
+		long inTheFuture = 10000 + System.currentTimeMillis();
+		file.setLastModified(lastModified + inTheFuture);
 
 		return newCategory;
 	}
@@ -1318,7 +1316,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		String parentClassName = parentScriptName.replaceAll("\\.java", "");
 
 		String importLine = (parentScriptPackage != null
-				? ("import " + parentScriptPackage + "." + parentClassName + ";\n\n") : "");
+				? ("import " + parentScriptPackage + "." + parentClassName + ";\n\n")
+				: "");
 
 		//@formatter:off
 		String newScript =

@@ -16,7 +16,7 @@
 package ghidra.app.merge;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
@@ -35,7 +35,6 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.UniversalIdGenerator;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
 
@@ -60,14 +59,9 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 	private JButton cancelButton;
 	private boolean wasCanceled;
 
-	private ImageIcon WARNING_ICON = ResourceManager.loadImage("images/warning.png");
 	private ImageIcon MERGE_ICON = ResourceManager.loadImage("images/Merge.png");
-	private long instanceID = UniversalIdGenerator.nextID().getValue();
 	private JPanel mainPanel;
 
-	/**
-	 * Constructor
-	 */
 	public MergeManagerProvider(MergeManagerPlugin plugin, String title) {
 		super(plugin.getTool(), "Merge Manager", plugin.getName());
 		this.plugin = plugin;
@@ -157,7 +151,7 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Sets the merge description at the top of the merge tool.
-	 * @param description
+	 * @param description the description
 	 */
 	void updateMergeDescription(String description) {
 		nameLabel.setText(description);
@@ -186,12 +180,18 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 		setApplyEnabled(false);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	void cancelCallback(boolean force) {
-		if (force ||
-			CancelMergeDialog.showYesNoDialog(mainPanel, WARNING_ICON) == OptionDialog.OPTION_ONE) {
+
+		boolean cancel = force;
+		if (!force) {
+			int choice =
+				OptionDialog.showYesNoDialogWithNoAsDefaultButton(null, "Confirm Cancel Merge",
+					"Warning!  Cancel causes the entire merge process to be canceled.\n" +
+						"Do you want to cancel the Merge Process?");
+			cancel = choice == OptionDialog.OPTION_ONE;
+		}
+
+		if (cancel) {
 			wasCanceled = true;
 			MergeManager mergeManager = plugin.getMergeManager();
 			if (mergeManager != null) {
@@ -231,22 +231,12 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 
 	private JPanel createButtonPanel() {
 		applyButton = new JButton("Apply");
-		applyButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				applyCallback();
-			}
-		});
+		applyButton.addActionListener(e -> applyCallback());
 		applyButton.setEnabled(false);
 		applyButton.setToolTipText("Apply conflict resolution");
 
 		cancelButton = new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				cancelCallback(false);
-			}
-		});
+		cancelButton.addActionListener(e -> cancelCallback(false));
 
 		JPanel panel = ButtonPanelFactory.createButtonPanel(
 			new JButton[] { applyButton, cancelButton }, ButtonPanelFactory.X_AXIS);

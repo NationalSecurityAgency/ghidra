@@ -126,8 +126,14 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 				}
 				// skip either the valid data that was found or skip one byte
 				// then do the next search
-				start = found.add(skipLen);
-				found = memory.findBytes(start, end, mediaBytes, mask, true, monitor);
+				try {
+					start = found.add(skipLen);
+					found = memory.findBytes(start, end, mediaBytes, mask, true, monitor);
+				}
+				catch (AddressOutOfBoundsException e) {
+					// If media was at the very end of the address space, we will end up here
+					break;
+				}
 			}
 		}
 

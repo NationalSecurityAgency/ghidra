@@ -18,7 +18,6 @@ package ghidra.app.util.task;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.util.dialog.CheckoutDialog;
@@ -259,16 +258,10 @@ public class OpenProgramTask extends Task {
 
 	private boolean askRecoverFile(final String filename) {
 
-		final AtomicBoolean result = new AtomicBoolean();
-
-		SystemUtilities.runSwingNow(() -> {
-			int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-				"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
-					"Would you like to recover unsaved changes?");
-			result.set(option == OptionDialog.OPTION_ONE);
-		});
-
-		return result.get();
+		int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
+			"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
+				"Would you like to recover unsaved changes?");
+		return option == OptionDialog.OPTION_ONE;
 	}
 
 	private void performOptionalCheckout(DomainFile domainFile) {

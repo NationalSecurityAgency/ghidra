@@ -277,11 +277,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		searchDialog.executeProgressTask(task, 500);
 	}
 
-	/**
-	 * Search for all matches.
-	 *
-	 * @param queryString string to use in the label on the query dialog
-	 */
 	void searchAll(SearchOptions options) {
 
 		ProgramSelection selection = navigatable.getSelection();
@@ -362,6 +357,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	void searched() {
+		tool.contextChanged(null);
 		searchedOnce = true;
 	}
 

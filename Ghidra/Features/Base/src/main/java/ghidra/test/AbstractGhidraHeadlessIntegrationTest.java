@@ -533,8 +533,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	public static <T> void replaceService(Class<? extends T> service,
 			Class<? extends T> replacement) {
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		Set<Class<?>> extentions =
+			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
 		HashSet<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
@@ -546,7 +546,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		set.add(replacement);
 
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
+		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 

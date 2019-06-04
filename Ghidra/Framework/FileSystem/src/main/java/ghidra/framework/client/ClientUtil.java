@@ -217,7 +217,7 @@ public class ClientUtil {
 				excMsg = exc.toString();
 			}
 			if (exc instanceof IOException) {
-				Msg.showError(ClientUtil.class, parent, title, excMsg);
+				Msg.showError(ClientUtil.class, parent, title, excMsg, exc);
 			}
 			else {
 				// show the stacktrace for non-IOException

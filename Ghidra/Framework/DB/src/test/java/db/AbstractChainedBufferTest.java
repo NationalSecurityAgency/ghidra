@@ -15,8 +15,7 @@
  */
 package db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -39,19 +38,22 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	private static final Random random = new Random(1);
 
 	private final boolean obfuscated;
+	private final Buffer sourceData;
+	private final int sourceDataOffset;
 
 	/**
 	 * Constructor for DatabaseTest.
 	 * @param arg0
 	 */
-	AbstractChainedBufferTest(boolean obfuscated) {
+	AbstractChainedBufferTest(boolean obfuscated, Buffer sourceData, int sourceDataOffset) {
 		super();
 		this.obfuscated = obfuscated;
+		this.sourceData = sourceData;
+		this.sourceDataOffset = sourceDataOffset;
 	}
 
 	@Before
 	public void setUp() throws Exception {
-
 		mgr = new BufferMgr(BUFFER_SIZE, CACHE_SIZE, BufferMgr.DEFAULT_CHECKPOINT_COUNT);
 	}
 
@@ -63,15 +65,26 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 
 	@Test
 	public void testCreateChainedBuffer() throws IOException {
-		ChainedBuffer cb = new ChainedBuffer(128 * 1024, obfuscated, mgr);
-		byte[] origBytes = new byte[128 * 1024];
-		Arrays.fill(origBytes, (byte) '1');
-		assertEquals(origBytes.length, cb.put(0, origBytes));
+		ChainedBuffer cb =
+			new ChainedBuffer(128 * 1024, obfuscated, sourceData, sourceDataOffset, mgr);
+		byte[] origBytes = new byte[cb.length()];
+		if (sourceData != null) {
+			sourceData.get(sourceDataOffset, origBytes);
+		}
+		assertArrayEquals(origBytes, cb.get(0, origBytes.length));
+
+		cb = new ChainedBuffer(BUFFER_SIZE / 2, obfuscated, sourceData, sourceDataOffset, mgr);
+		origBytes = new byte[cb.length()];
+		if (sourceData != null) {
+			sourceData.get(sourceDataOffset, origBytes);
+		}
+		assertArrayEquals(origBytes, cb.get(0, origBytes.length));
 	}
 
 	@Test
 	public void testReadOnlyChainedBuffer() throws IOException {
-		ChainedBuffer cb = new ChainedBuffer(128 * 1024, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(128 * 1024, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] origBytes = new byte[128 * 1024];
 		Arrays.fill(origBytes, (byte) '1');
 		assertEquals(origBytes.length, cb.put(0, origBytes));
@@ -89,7 +102,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	@Test
 	public void testFillChainnedBuffer() throws IOException {
 
-		ChainedBuffer cb = new ChainedBuffer(BIG_DATA_SIZE, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(BIG_DATA_SIZE, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		// Fill
 		cb.fill(0, BIG_DATA_SIZE - 1, (byte) 0x12);
@@ -114,7 +128,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	@Test
 	public void testBigChainnedBuffer() throws IOException {
 
-		ChainedBuffer cb = new ChainedBuffer(BIG_DATA_SIZE, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(BIG_DATA_SIZE, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		// Fill
 		int cnt = BIG_DATA_SIZE / 4;
@@ -157,7 +172,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		byte[] checkBytes = new byte[size];
 		int nextIndex;
 
-		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		// Write to entire buffer.
 		nextIndex = cb.put(0, bytes0);
@@ -245,7 +260,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(origBytes, (byte) 'a');
 		System.arraycopy(origBytes, 0, newBytes, 0, size);
 
-		ChainedBuffer cb = new ChainedBuffer(origBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(origBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 		cb.put(0, origBytes);
 
 		newBytes[100] = (byte) 'B';
@@ -278,24 +294,33 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	@Test
 	public void testGetByte() throws IOException {
 		int size = 800;
-		byte[] bytes = new byte[size];
+		byte[] bytes = new byte[size / 2];
 		Arrays.fill(bytes, (byte) 'a');
 		bytes[120] = (byte) 'W';
+		bytes[299] = (byte) 0x02;
 		bytes[360] = (byte) 'x';
-		bytes[799] = (byte) 0x02;
 
-		ChainedBuffer cb = new ChainedBuffer(bytes.length, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, sourceData, sourceDataOffset, mgr);
 
-		cb.getByte(0);// uninitialized data
-		cb.getByte(size - 1);// uninitialized data
+		assertEquals(sourceData != null ? sourceData.getByte(sourceDataOffset) : 0, cb.getByte(0));// uninitialized data
+		assertEquals(sourceData != null ? sourceData.getByte(sourceDataOffset + (size - 1)) : 0,
+			cb.getByte(size - 1));// uninitialized data
 
-		cb.put(0, bytes);
+		int baseIndex = 50;
+		cb.put(baseIndex, bytes);
 
-		assertEquals(cb.getByte(0), (byte) 'a');
-		assertEquals(cb.getByte(120), (byte) 'W');
-		assertEquals(cb.getByte(360), (byte) 'x');
-		assertEquals(cb.getByte(399), (byte) 'a');
-		assertEquals(cb.getByte(799), (byte) 0x02);
+		assertEquals(cb.getByte(baseIndex + 0), (byte) 'a');
+		assertEquals(cb.getByte(baseIndex + 120), (byte) 'W');
+		assertEquals(cb.getByte(baseIndex + 299), (byte) 0x02);
+		assertEquals(cb.getByte(baseIndex + 360), (byte) 'x');
+		assertEquals(cb.getByte(baseIndex + 399), (byte) 'a');
+
+		assertEquals(sourceData != null ? sourceData.getByte(sourceDataOffset + 20) : 0,
+			cb.getByte(20));
+		assertEquals(sourceData != null ? sourceData.getByte(sourceDataOffset + 450) : 0,
+			cb.getByte(450));
+		assertEquals(sourceData != null ? sourceData.getByte(sourceDataOffset + 700) : 0,
+			cb.getByte(700));
 
 		try {
 			cb.getByte(-1);
@@ -323,7 +348,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(origBytes, (byte) 'a');
 		System.arraycopy(origBytes, 0, newBytes, 0, size);
 
-		ChainedBuffer cb = new ChainedBuffer(origBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(origBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 		cb.put(0, origBytes);
 
 		newBytes[100] = (byte) 0x12;
@@ -402,7 +428,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		int value3 = 0x77777777;
 		int value = 0x47474747;
 
-		ChainedBuffer cb = new ChainedBuffer(newBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(newBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		cb.getInt(0);// uninitialized data
 		cb.getInt(size - 4);// uninitialized data
@@ -450,7 +477,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(origBytes, (byte) 'b');
 		System.arraycopy(origBytes, 0, newBytes, 0, size);
 
-		ChainedBuffer cb = new ChainedBuffer(origBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(origBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 		cb.put(0, origBytes);
 
 		newBytes[100] = (byte) 0x12;
@@ -553,7 +581,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		long value3 = 0x7777777777777777L;
 		long value = 0x4747474747474747L;
 
-		ChainedBuffer cb = new ChainedBuffer(newBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(newBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		cb.getLong(0);// uninitialized data
 		cb.getLong(size - 8);// uninitialized data
@@ -601,7 +630,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(origBytes, (byte) 'a');
 		System.arraycopy(origBytes, 0, newBytes, 0, size);
 
-		ChainedBuffer cb = new ChainedBuffer(origBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(origBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 		cb.put(0, origBytes);
 
 		newBytes[100] = (byte) 0x12;
@@ -668,7 +698,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		short value3 = 0x7777;
 		short value = 0x4747;
 
-		ChainedBuffer cb = new ChainedBuffer(newBytes.length, obfuscated, mgr);
+		ChainedBuffer cb =
+			new ChainedBuffer(newBytes.length, obfuscated, sourceData, sourceDataOffset, mgr);
 
 		cb.getShort(0);// uninitialized data
 		cb.getShort(size - 2);// uninitialized data
@@ -711,7 +742,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	public void testGetId() throws IOException {
 
 		int size = 400;
-		ChainedBuffer cb = new ChainedBuffer(32768, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(32768, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] bytes = new byte[size];
 		random.nextBytes(bytes);
 		cb.put(0, bytes);
@@ -724,7 +755,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	@Test
 	public void testDelete() throws IOException {
 
-		ChainedBuffer cb = new ChainedBuffer(32768, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(32768, obfuscated, sourceData, sourceDataOffset, mgr);
 		int id = cb.getId();
 		cb.delete();
 		assertEquals(-1, cb.getId());
@@ -740,7 +771,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	}
 
 	private void doSplitTest(int size) throws IOException {
-		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] bytes = new byte[size];
 		random.nextBytes(bytes);
 		cb.put(0, bytes);
@@ -767,17 +798,30 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 
 	private void doAppendTest(int size1, int size2) throws IOException {
 
-		ChainedBuffer cb1 = new ChainedBuffer(size1, obfuscated, mgr);
+		ChainedBuffer cb1 = new ChainedBuffer(size1, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] bytes1 = new byte[size1];
 		random.nextBytes(bytes1);
 		cb1.put(0, bytes1);
 
-		ChainedBuffer cb2 = new ChainedBuffer(size2, obfuscated, mgr);
+		ChainedBuffer cb2 = new ChainedBuffer(size2, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] bytes2 = new byte[size2];
 		random.nextBytes(bytes2);
 		cb2.put(0, bytes2);
 
-		cb1.append(cb2);
+		try {
+			cb1.append(cb2);
+			if (sourceData != null) {
+				fail("Buffers with source data should have thrown exception");
+			}
+		}
+		catch (UnsupportedOperationException e) {
+			if (sourceData == null) {
+				e.printStackTrace();
+				fail("unexpected exception");
+			}
+			return;
+		}
+
 		assertEquals(size1 + size2, cb1.length());
 
 		// Make sure cb2 no longer exists
@@ -786,6 +830,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		assertTrue(Arrays.equals(bytes1, cb1.get(0, size1)));
 		assertTrue(Arrays.equals(bytes2, cb1.get(size1, size2)));
 		assertEquals(0, mgr.getLockCount());
+
 	}
 
 	@Test
@@ -808,12 +853,30 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		return true;
 	}
 
+	private boolean doSetSize(ChainedBuffer cb, int newSize, boolean preserveData)
+			throws IOException {
+		try {
+			cb.setSize(newSize, preserveData);
+			if (sourceData != null) {
+				fail("Buffers with source data should have thrown exception");
+			}
+			return true;
+		}
+		catch (UnsupportedOperationException e) {
+			if (sourceData == null) {
+				e.printStackTrace();
+				fail("unexpected exception");
+			}
+		}
+		return false;
+	}
+
 	@Test
 	public void testSetSize() throws IOException {
 
 		// start with small buffer
 		int size = BUFFER_SIZE / 2;
-		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, mgr);
+		ChainedBuffer cb = new ChainedBuffer(size, obfuscated, sourceData, sourceDataOffset, mgr);
 		byte[] bytes = new byte[size];
 		random.nextBytes(bytes);
 		cb.put(0, bytes);
@@ -822,57 +885,61 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 
 		// Grow buffer (single index buffer)
 		int newSize = 2 * BUFFER_SIZE;
-		cb.setSize(newSize, true);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
-		int addSize = newSize - size;
-		byte[] addBytes = new byte[addSize];
-		random.nextBytes(addBytes);
-		cb.put(size, addBytes);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
-		assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
-		bytes = cb.get(0, newSize);
-		size = newSize;
-		assertEquals(cb.length(), size);
-		assertEquals(bytes.length, size);
-		assertEquals(0, mgr.getLockCount());
+		if (doSetSize(cb, newSize, true)) {
+			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+			int addSize = newSize - size;
+			byte[] addBytes = new byte[addSize];
+			random.nextBytes(addBytes);
+			cb.put(size, addBytes);
+			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+			assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
+			bytes = cb.get(0, newSize);
+			size = newSize;
+			assertEquals(cb.length(), size);
+			assertEquals(bytes.length, size);
+			assertEquals(0, mgr.getLockCount());
+		}
 
 		// Grow buffer (multiple index buffers)
 		newSize = (BUFFER_SIZE / 8) * BUFFER_SIZE;
-		cb.setSize(newSize, true);
-		addSize = newSize - size;
-		addBytes = new byte[addSize];
-		random.nextBytes(addBytes);
-		cb.put(size, addBytes);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
-		assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
-		bytes = cb.get(0, newSize);
-		size = newSize;
-		assertEquals(cb.length(), size);
-		assertEquals(bytes.length, size);
-		assertEquals(0, mgr.getLockCount());
+		if (doSetSize(cb, newSize, true)) {
+			int addSize = newSize - size;
+			byte[] addBytes = new byte[addSize];
+			random.nextBytes(addBytes);
+			cb.put(size, addBytes);
+			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+			assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
+			bytes = cb.get(0, newSize);
+			size = newSize;
+			assertEquals(cb.length(), size);
+			assertEquals(bytes.length, size);
+			assertEquals(0, mgr.getLockCount());
+		}
 
 		// Shrink buffer (single index buffer)
 		newSize = 2 * BUFFER_SIZE;
-		cb.setSize(newSize, true);
-		assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
-		bytes = new byte[newSize];
-		random.nextBytes(bytes);
-		cb.put(0, bytes);
-		assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
-		size = newSize;
-		assertEquals(cb.length(), size);
-		assertEquals(0, mgr.getLockCount());
+		if (doSetSize(cb, newSize, true)) {
+			assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
+			bytes = new byte[newSize];
+			random.nextBytes(bytes);
+			cb.put(0, bytes);
+			assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
+			size = newSize;
+			assertEquals(cb.length(), size);
+			assertEquals(0, mgr.getLockCount());
+		}
 
 		// Shrink to small buffer
 		newSize = BUFFER_SIZE / 2;
-		cb.setSize(newSize, true);
-		assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
-		bytes = new byte[newSize];
-		random.nextBytes(bytes);
-		cb.put(0, bytes);
-		assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
-		size = newSize;
-		assertEquals(cb.length(), size);
-		assertEquals(0, mgr.getLockCount());
+		if (doSetSize(cb, newSize, true)) {
+			assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
+			bytes = new byte[newSize];
+			random.nextBytes(bytes);
+			cb.put(0, bytes);
+			assertTrue(equals(bytes, 0, cb.get(0, newSize), 0, newSize));
+			size = newSize;
+			assertEquals(cb.length(), size);
+			assertEquals(0, mgr.getLockCount());
+		}
 	}
 }

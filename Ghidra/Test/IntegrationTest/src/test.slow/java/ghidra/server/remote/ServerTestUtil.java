@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+
 import org.apache.commons.lang3.RandomStringUtils;
 
 import generic.test.*;
@@ -550,7 +552,7 @@ public class ServerTestUtil {
 	}
 
 	private static boolean isServerRegistered(int port) throws IOException {
-		Registry reg = LocateRegistry.getRegistry(LOCALHOST, port);
+		Registry reg = LocateRegistry.getRegistry(LOCALHOST, port, new SslRMIClientSocketFactory());
 		try {
 			reg.lookup(GhidraServerHandle.BIND_NAME);
 			return true;
