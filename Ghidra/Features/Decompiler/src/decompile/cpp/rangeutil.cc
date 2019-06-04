@@ -1927,44 +1927,73 @@ void ValueSetSolver::establishTopologicalOrder(void)
 /// \param vn is the given Varnode
 /// \param type is the constraint characteristic
 /// \param range is the known constraint (assuming the \b true branch was taken)
-/// \param splitPoint is the basic block making the conditional branch
-void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &range,FlowBlock *splitPoint)
+/// \param cbranch is conditional branch creating the constraint
+void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &range,PcodeOp *cbranch)
 
 {
+  FlowBlock *splitPoint = cbranch->getParent();
+  FlowBlock *trueBlock,*falseBlock;
+  if (cbranch->isBooleanFlip()) {
+    trueBlock = splitPoint->getFalseOut();
+    falseBlock = splitPoint->getTrueOut();
+  }
+  else {
+    trueBlock = splitPoint->getTrueOut();
+    falseBlock = splitPoint->getFalseOut();
+  }
+  // Check if the only path to trueBlock or falseBlock is via a splitPoint out-edge induced by the condition
+  bool trueIsRestricted = trueBlock->restrictedByConditional(splitPoint);
+  bool falseIsRestricted = falseBlock->restrictedByConditional(splitPoint);
+
   list<PcodeOp *>::const_iterator iter;
-  FlowBlock *defBlock = (FlowBlock *)0;
   if (vn->isWritten()) {
-    defBlock = vn->getDef()->getParent();
     ValueSet *vSet = vn->getValueSet();
     if (vSet->opCode == CPUI_MULTIEQUAL) {
       vSet->addLandmark(type,range);		// Leave landmark for widening
     }
   }
-  FlowBlock *trueBlock = splitPoint->getTrueOut();
-  FlowBlock *falseBlock = splitPoint->getFalseOut();
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     PcodeOp *op = *iter;
-    if (op->isMark()) {	// Special read site being tracked
-      readNodes[op->getSeqNum()].addEquation(op->getSlot(vn), type, range);
-      continue;
+    Varnode *outVn = (Varnode *)0;
+    if (!op->isMark()) {	// If this is not a special read site
+      outVn = op->getOut();	// Make sure there is a Varnode in the system
+      if (outVn == (Varnode *)0) continue;
+      if (!outVn->isMark()) continue;
     }
-    Varnode *outVn = op->getOut();
-    if (outVn == (Varnode *)0) continue;
-    if (!outVn->isMark()) continue;
     FlowBlock *curBlock = op->getParent();
+    int4 slot = op->getSlot(vn);
     for(;;) {
       if (curBlock == trueBlock) {
-	outVn->getValueSet()->addEquation(op->getSlot(vn), type, range);
+	if (!trueIsRestricted) {
+	  // If its possible that both the true and false edges can reach trueBlock
+	  // then the only input we can restrict is a MULTIEQUAL input along the exact true edge
+	  if (op->code() != CPUI_MULTIEQUAL) break;
+	  if (op->getParent() != trueBlock) break;
+	  if (trueBlock->getIn(slot) != splitPoint) break;
+	}
+	if (outVn != (Varnode *)0)
+	  outVn->getValueSet()->addEquation(slot, type, range);
+	else
+	  readNodes[op->getSeqNum()].addEquation(slot, type, range);	// Special read site
 	break;
       }
       else if (curBlock == falseBlock) {
+	if (!falseIsRestricted) {
+	  // If its possible that both the true and false edges can reach falseBlock
+	  // then the only input we can restrict is a MULTIEQUAL input along the exact false edge
+	  if (op->code() != CPUI_MULTIEQUAL) break;
+	  if (op->getParent() != falseBlock) break;
+	  if (falseBlock->getIn(slot) != splitPoint) break;
+	}
 	CircleRange falseRange(range);
 	falseRange.invert();
-	outVn->getValueSet()->addEquation(op->getSlot(vn), type, falseRange);
+	if (outVn != (Varnode *)0)
+	  outVn->getValueSet()->addEquation(slot, type, falseRange);
+	else
+	  readNodes[op->getSeqNum()].addEquation(slot, type, falseRange);	// Special read site
 	break;
       }
-      else if (curBlock == splitPoint || curBlock == (FlowBlock *)0
-	       || curBlock == defBlock)
+      else if (curBlock == splitPoint || curBlock == (FlowBlock *)0)
 	break;
       curBlock = curBlock->getImmedDom();
     }
@@ -1980,8 +2009,8 @@ void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &r
 /// \param lift is the given range that will be lifted
 /// \param startVn is the starting Varnode
 /// \param endVn is the given ending Varnode in the system
-/// \param splitPoint is the point where control-flow splits
-void ValueSetSolver::constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,FlowBlock *splitPoint)
+/// \param cbranch is the PcodeOp causing the control-flow split
+void ValueSetSolver::constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,PcodeOp *cbranch)
 
 {
   while(startVn != endVn) {
@@ -1991,7 +2020,7 @@ void ValueSetSolver::constraintsFromPath(int4 type,CircleRange &lift,Varnode *st
   }
   for(;;) {
     Varnode *constVn;
-    applyConstraints(endVn,type,lift,splitPoint);
+    applyConstraints(endVn,type,lift,cbranch);
     if (!endVn->isWritten()) break;
     PcodeOp *op = endVn->getDef();
     if (op->isCall() || op->isMarker()) break;
@@ -2032,7 +2061,7 @@ void ValueSetSolver::constraintsFromCBranch(PcodeOp *cbranch)
   if (vn->isMark()) {
     CircleRange lift(true);
     Varnode *startVn = cbranch->getIn(1);
-    constraintsFromPath(0,lift,startVn,vn,cbranch->getParent());
+    constraintsFromPath(0,lift,startVn,vn,cbranch);
   }
 }
 
@@ -2043,7 +2072,8 @@ void ValueSetSolver::constraintsFromCBranch(PcodeOp *cbranch)
 ///   - Which applies at a particular \e read of the Varnode
 ///
 /// \param worklist is the set of Varnodes in the data-flow system (all marked)
-void ValueSetSolver::generateConstraints(vector<Varnode *> &worklist)
+/// \param reads is the additional set of PcodeOps that read a Varnode from the system
+void ValueSetSolver::generateConstraints(const vector<Varnode *> &worklist,const vector<PcodeOp *> &reads)
 
 {
   vector<FlowBlock *> blockList;
@@ -2051,6 +2081,22 @@ void ValueSetSolver::generateConstraints(vector<Varnode *> &worklist)
     PcodeOp *op = worklist[i]->getDef();
     if (op == (PcodeOp *)0) continue;
     BlockBasic *bl = (BlockBasic *)op->getParent()->getImmedDom();
+    while(bl != (FlowBlock *)0) {
+      if (!bl->isMark()) {
+	bl->setMark();
+	blockList.push_back(bl);
+	PcodeOp *lastOp = bl->lastOp();
+	if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
+	  constraintsFromCBranch(lastOp);
+	}
+	bl = (BlockBasic *)bl->getImmedDom();
+      }
+      else
+	break;
+    }
+  }
+  for(int4 i=0;i<reads.size();++i) {
+    BlockBasic *bl = (BlockBasic *)reads[i]->getParent()->getImmedDom();
     while(bl != (FlowBlock *)0) {
       if (!bl->isMark()) {
 	bl->setMark();
@@ -2158,7 +2204,7 @@ void ValueSetSolver::generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch
     endVn = op->getIn(0);
   }
   if (endVn != (Varnode *)0)
-    constraintsFromPath(typeCode,lift,endVn,endVn,cbranch->getParent());
+    constraintsFromPath(typeCode,lift,endVn,endVn,cbranch);
 }
 
 /// Given a set of sinks, find all the Varnodes that flow directly into them.
@@ -2242,7 +2288,7 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
       }
     }
   }
-  generateConstraints(worklist);
+  generateConstraints(worklist,reads);
   for(int4 i=0;i<reads.size();++i)
     reads[i]->clearMark();		// Clear marks on read ops
 

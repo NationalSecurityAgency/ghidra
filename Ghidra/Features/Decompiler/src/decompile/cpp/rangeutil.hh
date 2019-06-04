@@ -226,10 +226,10 @@ class ValueSetSolver {
   void component(ValueSet *vertex,Partition &part);		///< Generate a partition component given its head
   int4 visit(ValueSet *vertex,Partition &part);			///< Recursively walk the data-flow graph finding partitions
   void establishTopologicalOrder(void);				///< Find the optimal order for iterating through the ValueSets
-  void applyConstraints(Varnode *vn,int4 type,const CircleRange &range,FlowBlock *splitPoint);
-  void constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,FlowBlock *splitPoint);
+  void applyConstraints(Varnode *vn,int4 type,const CircleRange &range,PcodeOp *cbranch);
+  void constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,PcodeOp *cbranch);
   void constraintsFromCBranch(PcodeOp *cbranch);		///< Generate constraints arising from the given branch
-  void generateConstraints(vector<Varnode *> &worklist);	///< Generate constraints given a system of Varnodes
+  void generateConstraints(const vector<Varnode *> &worklist,const vector<PcodeOp *> &reads);	///< Generate constraints given a system of Varnodes
   bool checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const;	///< Check if the given Varnode is a \e relative constant
   void generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch);	///< Try to find a \e relative constraint
 public:
