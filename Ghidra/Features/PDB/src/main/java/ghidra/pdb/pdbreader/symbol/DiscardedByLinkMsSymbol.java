@@ -20,6 +20,8 @@ import java.util.*;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents the Discarded By Link symbol.
@@ -76,8 +78,10 @@ public class DiscardedByLinkMsSymbol extends AbstractMsSymbol {
 	 * @param pdb {@link AbstractPdb} to which this symbol belongs.
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public DiscardedByLinkMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+	public DiscardedByLinkMsSymbol(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
 		super(pdb, reader);
 		long fields = reader.parseUnsignedIntVal();
 		discardedVal = (int) (fields & 0xff);
@@ -92,7 +96,8 @@ public class DiscardedByLinkMsSymbol extends AbstractMsSymbol {
 		PdbByteReader dataReader = new PdbByteReader(data);
 //		SymbolParser parser = new SymbolParser(pdb);
 //		symbolList = parser.deserializeSymbolRecords(dataReader);
-		symbolList = pdb.getSymbolRecords().deserializeSymbolRecords(dataReader);
+		symbolList = new ArrayList<>(pdb.getSymbolRecords().deserializeSymbolRecords(dataReader,
+			TaskMonitor.DUMMY).values());
 	}
 
 	@Override

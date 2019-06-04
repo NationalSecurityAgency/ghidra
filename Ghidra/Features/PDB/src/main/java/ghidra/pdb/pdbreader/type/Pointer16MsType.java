@@ -48,8 +48,8 @@ public class Pointer16MsType extends AbstractPointerMsType {
 	protected void create() {
 		underlyingTypeIndex = new TypeIndex16();
 		memberPointerContainingClassIndex = new TypeIndex16();
-		baseSymbol = new StringSt();
-		name = new StringSt();
+		baseSymbol = new StringSt(pdb);
+		name = new StringSt(pdb);
 	}
 
 	@Override

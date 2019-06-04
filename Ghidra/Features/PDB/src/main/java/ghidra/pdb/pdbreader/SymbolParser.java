@@ -15,13 +15,13 @@
  */
 package ghidra.pdb.pdbreader;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.Validate;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.symbol.*;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Parser for detecting the parsing the appropriate Symbol structures ({@link AbstractMsSymbol}) in
@@ -266,8 +266,14 @@ public class SymbolParser {
 	public String getNewSymbolTypesLog() {
 		StringBuilder builder = new StringBuilder();
 		DelimiterState ds = new DelimiterState("New Symbol IDs Seen: ", ",");
-		for (Integer val : newSymbolTypesSeen) {
-			builder.append(ds.out(true, String.format("0x04X, ", val)));
+		/**
+		 *  We are creating the sorted set now, as we are willing to incur the cost of a sorted
+		 *  set now, but do not want to incur too much debug cost for adding to the
+		 *  {@link newSymbolTypesSeen} when not doing debug.
+		 */
+		Set<Integer> sortedSet = new TreeSet<>(newSymbolTypesSeen);
+		for (Integer val : sortedSet) {
+			builder.append(ds.out(true, String.format("0X%04X", val)));
 		}
 		return builder.toString();
 	}
@@ -277,8 +283,9 @@ public class SymbolParser {
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
 	 * @return {@link AbstractMsSymbol} that was parsed.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public AbstractMsSymbol parse(PdbByteReader reader) throws PdbException {
+	public AbstractMsSymbol parse(PdbByteReader reader) throws PdbException, CancelledException {
 		int symbolTypeId = reader.parseUnsignedShortVal();
 		AbstractMsSymbol symbol;
 		try {
@@ -295,9 +302,10 @@ public class SymbolParser {
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
 	 * @return {@link AbstractMsSymbol} that was parsed.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
 	private AbstractMsSymbol parseRecord(int symbolTypeId, PdbByteReader reader)
-			throws PdbException {
+			throws PdbException, CancelledException {
 //		//System.out.println(reader.dump(0x200));
 //		// DO NOT REMOVE
 //		// The following code is for developmental investigations;

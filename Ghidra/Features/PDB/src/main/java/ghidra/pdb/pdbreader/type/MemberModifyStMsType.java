@@ -46,7 +46,7 @@ public class MemberModifyStMsType extends AbstractMemberModifyMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringSt();
+		return new StringSt(pdb);
 	}
 
 }

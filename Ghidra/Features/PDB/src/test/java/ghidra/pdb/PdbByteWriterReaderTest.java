@@ -19,6 +19,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
@@ -183,15 +184,15 @@ public class PdbByteWriterReaderTest extends AbstractGenericTest {
 		numericValue = reader.parseNumeric();
 		assertEquals(numericValue.compareTo(numericValueTest7), 0);
 
-		string = reader.parseByteLengthPrefixedString();
+		string = reader.parseByteLengthPrefixedString(StandardCharsets.UTF_8);
 		assertEquals(string, stringTest1);
 		string = reader.parseByteLengthPrefixedUtf8String();
 		assertEquals(string, stringTest2);
-		string = reader.parseNullTerminatedString();
+		string = reader.parseNullTerminatedString(StandardCharsets.UTF_8);
 		assertEquals(string, stringTest3);
 		string = reader.parseNullTerminatedUtf8String();
 		assertEquals(string, stringTest4);
-		string = reader.parseNullTerminatedWcharString();
+		string = reader.parseNullTerminatedWcharString(StandardCharsets.UTF_16);
 		assertEquals(string, stringTest5);
 
 		guid = reader.parseGUID();

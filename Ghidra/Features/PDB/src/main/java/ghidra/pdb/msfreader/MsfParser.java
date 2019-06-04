@@ -18,7 +18,10 @@ package ghidra.pdb.msfreader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbException;
+import ghidra.pdb.pdbreader.PdbReaderOptions;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -35,21 +38,26 @@ public class MsfParser {
 	 * Detects, creates, and returns the appropriate {@link AbstractMsf} object found for
 	 * the filename given. 
 	 * @param filename Filename of the file to process.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
 	 * @return Derived {@link AbstractMsf} object.
 	 * @throws IOException For file I/O reasons
 	 * @throws PdbException If an appropriate object cannot be created.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public static AbstractMsf parse(String filename, TaskMonitor monitor)
+	public static AbstractMsf parse(String filename, PdbReaderOptions pdbOptions, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
+		Validate.notNull(filename, "filename cannot be null)");
+		Validate.notNull(pdbOptions, "pdbOptions cannot be null)");
+		Validate.notNull(monitor, "monitor cannot be null)");
+
 		AbstractMsf msf;
 		RandomAccessFile file = new RandomAccessFile(filename, "r");
 		if (Msf200.detected(file)) {
-			msf = new Msf200(file);
+			msf = new Msf200(file, pdbOptions);
 		}
 		else if (Msf700.detected(file)) {
-			msf = new Msf700(file);
+			msf = new Msf700(file, pdbOptions);
 		}
 		else {
 			// Must close the file here.  In cases where MSF is created, the MSF takes

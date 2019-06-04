@@ -39,7 +39,7 @@ public class ThreadStorageSymbolInternals3216 extends AbstractThreadStorageSymbo
 	protected void create() {
 		typeIndex = new TypeIndex16();
 		offset = new Offset32();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

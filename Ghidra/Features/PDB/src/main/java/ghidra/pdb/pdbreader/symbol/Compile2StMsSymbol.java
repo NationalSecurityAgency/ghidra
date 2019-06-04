@@ -46,7 +46,7 @@ public class Compile2StMsSymbol extends AbstractCompile2MsSymbol {
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8St();
+		return new StringUtf8St(pdb);
 	}
 
 	@Override

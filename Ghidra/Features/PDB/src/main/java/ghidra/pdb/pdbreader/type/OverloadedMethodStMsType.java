@@ -48,7 +48,7 @@ public class OverloadedMethodStMsType extends AbstractOverloadedMethodMsType {
 	@Override
 	protected void create() {
 		methodListIndex = new TypeIndex32();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 }

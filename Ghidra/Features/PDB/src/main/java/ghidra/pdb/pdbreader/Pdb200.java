@@ -35,11 +35,12 @@ public class Pdb200 extends AbstractPdb {
 	/**
 	 * Constructor.
 	 * @param msf {@link AbstractMsf} foundation for the PDB.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @throws IOException Upon file IO seek/read issues.
 	 * @throws PdbException Upon unknown value for configuration or error in processing components.
 	 */
-	Pdb200(AbstractMsf msf) throws IOException, PdbException {
-		super(msf);
+	Pdb200(AbstractMsf msf, PdbReaderOptions pdbOptions) throws IOException, PdbException {
+		super(msf, pdbOptions);
 	}
 
 	@Override

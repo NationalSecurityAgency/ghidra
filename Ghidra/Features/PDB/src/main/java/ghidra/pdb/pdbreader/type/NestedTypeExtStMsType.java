@@ -46,7 +46,7 @@ public class NestedTypeExtStMsType extends AbstractNestedTypeExtMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringSt();
+		return new StringSt(pdb);
 	}
 
 }

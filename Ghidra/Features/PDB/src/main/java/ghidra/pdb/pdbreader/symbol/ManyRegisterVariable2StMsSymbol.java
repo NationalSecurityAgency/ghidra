@@ -48,7 +48,7 @@ public class ManyRegisterVariable2StMsSymbol extends AbstractManyRegisterVariabl
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex32();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package ghidra.pdb.pdbreader.type;
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.util.exception.CancelledException;
 
 /**
  * This class represents the <B>MsType</B> flavor of Field List type.
@@ -34,8 +35,10 @@ public class FieldListMsType extends AbstractFieldListMsType {
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 * @param reader {@link PdbByteReader} from which this type is deserialized.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public FieldListMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+	public FieldListMsType(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
 		super(pdb, reader);
 	}
 

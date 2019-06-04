@@ -71,7 +71,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 		//TODO: This might be a set of null-terminated strings... look at real data.
 		compilerVersionString.parse(reader);
 		while (reader.hasMore()) {
-			AbstractString string = new StringUtf8Nt();
+			AbstractString string = new StringUtf8Nt(pdb);
 			string.parse(reader);
 			if (string.get().isEmpty()) {
 				break;

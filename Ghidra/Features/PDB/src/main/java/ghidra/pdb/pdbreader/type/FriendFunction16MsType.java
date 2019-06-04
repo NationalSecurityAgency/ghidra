@@ -47,7 +47,7 @@ public class FriendFunction16MsType extends AbstractFriendFunctionMsType {
 	@Override
 	protected void create() {
 		friendTypeIndex = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

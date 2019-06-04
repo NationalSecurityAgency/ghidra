@@ -49,7 +49,7 @@ public class Register16MsSymbol extends AbstractRegisterMsSymbol {
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex16();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

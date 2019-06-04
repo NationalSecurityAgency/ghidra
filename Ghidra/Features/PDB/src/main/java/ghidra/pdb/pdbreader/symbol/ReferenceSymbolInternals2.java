@@ -55,7 +55,7 @@ public class ReferenceSymbolInternals2 extends AbstractReferenceSymbolInternals 
 
 	@Override
 	protected void create() {
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 	@Override

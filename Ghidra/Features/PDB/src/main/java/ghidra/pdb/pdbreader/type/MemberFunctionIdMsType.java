@@ -43,7 +43,7 @@ public class MemberFunctionIdMsType extends AbstractMsType {
 		super(pdb, reader);
 		parentTypeIndex = new TypeIndex32();
 		functionType = new TypeIndex32();
-		name = new StringNt();
+		name = new StringNt(pdb);
 
 		parentTypeIndex.parse(reader);
 		pdb.pushDependencyStack(

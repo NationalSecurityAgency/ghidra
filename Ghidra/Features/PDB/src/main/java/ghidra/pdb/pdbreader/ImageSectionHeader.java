@@ -18,6 +18,8 @@ package ghidra.pdb.pdbreader;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 
@@ -29,6 +31,24 @@ import ghidra.pdb.PdbException;
  *  confirm this.
  */
 public class ImageSectionHeader {
+
+	//==============================================================================================
+	// Internals
+	//==============================================================================================
+	private AbstractPdb pdb;
+
+	//==============================================================================================
+	// API
+	//==============================================================================================
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} to which this type belongs.
+	 */
+	public ImageSectionHeader(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
+		this.pdb = pdb;
+	}
+
 	/**
 	 * Returns the {@link ImageSectionHeader} name.
 	 * @return the name.
@@ -131,7 +151,7 @@ public class ImageSectionHeader {
 			throw new PdbException("Not enough data for ImageSectionHeader");
 		}
 		PdbByteReader nameReader = reader.getSubPdbByteReader(8);
-		name = nameReader.parseNullTerminatedString();
+		name = nameReader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 		unionPAVS = reader.parseUnsignedIntVal();
 		virtualAddress = reader.parseUnsignedIntVal();
 		rawDataSize = reader.parseUnsignedIntVal();

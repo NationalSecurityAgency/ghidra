@@ -50,7 +50,7 @@ public class BasePointerRelative32MsSymbol extends AbstractBasePointerRelativeMs
 	protected void create() {
 		offset = new Offset32();
 		typeIndex = new TypeIndex32();
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 	@Override

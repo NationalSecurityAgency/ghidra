@@ -40,7 +40,7 @@ public abstract class AbstractLocalSymbolInOptimizedCodeMsSymbol extends Abstrac
 	public AbstractLocalSymbolInOptimizedCodeMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt(); // Might need a create() method if the 2005 version needs St ver.
+		name = new StringUtf8Nt(pdb); // Might need a create() method if the 2005 version needs St ver.
 		typeIndex = reader.parseInt();
 		localVariableFlags = new LocalVariableFlags(reader);
 		name.parse(reader);

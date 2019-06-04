@@ -48,7 +48,7 @@ public class StaticMemberStMsType extends AbstractStaticMemberMsType {
 	@Override
 	protected void create() {
 		fieldTypeRecordIndex = new TypeIndex32();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

@@ -15,13 +15,13 @@
  */
 package ghidra.pdb.pdbreader;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.Validate;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.type.*;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Parser for detecting the parsing the appropriate Data\Item structures ({@link AbstractMsType})
@@ -204,8 +204,14 @@ public class TypeParser {
 	public String getNewDataTypesLog() {
 		StringBuilder builder = new StringBuilder();
 		DelimiterState ds = new DelimiterState("New Symbol IDs Seen: ", ",");
-		for (Integer val : newDataTypesSeen) {
-			builder.append(ds.out(true, String.format("0x04X, ", val)));
+		/**
+		 *  We are creating the sorted set now, as we are willing to incur the cost of a sorted
+		 *  set now, but do not want to incur too much debug cost for adding to the
+		 *  {@link newDataTypesSeen} when not doing debug.
+		 */
+		Set<Integer> sortedSet = new TreeSet<>(newDataTypesSeen);
+		for (Integer val : sortedSet) {
+			builder.append(ds.out(true, String.format("0X%04X", val)));
 		}
 		return builder.toString();
 	}
@@ -215,8 +221,9 @@ public class TypeParser {
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @return {@link AbstractMsType} parsed.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public AbstractMsType parse(PdbByteReader reader) throws PdbException {
+	public AbstractMsType parse(PdbByteReader reader) throws PdbException, CancelledException {
 		int dataTypeId = reader.parseUnsignedShortVal();
 		AbstractMsType type;
 		try {
@@ -233,8 +240,10 @@ public class TypeParser {
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @return {@link AbstractMsType} parsed.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	private AbstractMsType parseRecord(int dataTypeId, PdbByteReader reader) throws PdbException {
+	private AbstractMsType parseRecord(int dataTypeId, PdbByteReader reader)
+			throws PdbException, CancelledException {
 		//Debugging and research investigation
 		//System.out.println(reader.dump());
 		// Leaving commented-out code here for continued research/development

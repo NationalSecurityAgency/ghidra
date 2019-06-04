@@ -58,9 +58,9 @@ public class EnumMsType extends AbstractEnumMsType {
 	protected void create() {
 		fieldDescriptorListTypeIndex = new TypeIndex32();
 		underlyingTypeIndex = new TypeIndex32();
-		name = new StringNt();
+		name = new StringNt(pdb);
 		// Additional initialization
-		mangledName = new StringNt();
+		mangledName = new StringNt(pdb);
 	}
 
 	@Override

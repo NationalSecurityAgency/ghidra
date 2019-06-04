@@ -17,6 +17,8 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbException;
 import ghidra.pdb.msfreader.AbstractMsf;
 import ghidra.pdb.msfreader.MsfParser;
@@ -50,38 +52,42 @@ public class PdbParser {
 	 *  used to deserialize its main identifiers (signature, age, guid (if available)) is
 	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}.
 	 * @param filename {@link String} pathname of the PDB file to parse.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
 	 * @return {@link AbstractPdb} class object for the file.
 	 * @throws IOException on file I/O issues.
 	 * @throws PdbException on parsing issues. 
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public static AbstractPdb parse(String filename, TaskMonitor monitor)
+	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
+		Validate.notNull(filename, "filename cannot be null)");
+		Validate.notNull(pdbOptions, "pdbOptions cannot be null)");
+		Validate.notNull(monitor, "monitor cannot be null)");
 
 		// Do not do a try with resources here, as the msf must live within the PDB that is
 		//  created below.
-		AbstractMsf msf = MsfParser.parse(filename, monitor);
+		AbstractMsf msf = MsfParser.parse(filename, pdbOptions, monitor);
 
 		int versionNumber = AbstractPdb.deserializeVersionNumber(msf, monitor);
 
 		AbstractPdb pdb;
 		switch (versionNumber) {
 			case VC2_ID:
-				pdb = new Pdb200(msf);
+				pdb = new Pdb200(msf, pdbOptions);
 				break;
 			case VC4_ID:
 			case VC41_ID:
 			case VC50_ID:
 			case VC98_ID:
 			case VC70DEP_ID:
-				pdb = new Pdb400(msf);
+				pdb = new Pdb400(msf, pdbOptions);
 				break;
 			case VC70_ID:
 			case VC80_ID:
 			case VC110_ID:
 			case VC140_ID:
-				pdb = new Pdb700(msf);
+				pdb = new Pdb700(msf, pdbOptions);
 				break;
 			default:
 				// Must close the MSF here.  In cases where PDB is created, the PDB takes

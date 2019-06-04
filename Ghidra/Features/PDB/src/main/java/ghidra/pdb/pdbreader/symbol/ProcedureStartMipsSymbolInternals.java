@@ -38,7 +38,7 @@ public class ProcedureStartMipsSymbolInternals extends AbstractProcedureStartMip
 
 	@Override
 	protected void create() {
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 	@Override

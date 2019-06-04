@@ -127,13 +127,13 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	@Override
 	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
 			throws PdbException, CancelledException {
-		processModuleInformation(reader, false);
-		processSectionContributions(reader, false);
-		processSegmentMap(reader, false);
-		processFileInformation(reader, false);
+		processModuleInformation(reader, monitor, false);
+		processSectionContributions(reader, monitor, false);
+		processSegmentMap(reader, monitor, false);
+		processFileInformation(reader, monitor, false);
 		processTypeServerMap(reader, false);
 		//Note that the next two are in reverse order from their length fields in the header.
-		processEditAndContinueInformation(reader, false);
+		processEditAndContinueInformation(reader, monitor, false);
 		//processDebugHeader(reader, false);
 		debugData.deserializeHeader(reader, monitor);
 	}
@@ -143,16 +143,19 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
-		// globalSymbolInformation.deserialize(monitor);
 		symbolRecords.deserialize(monitor);
+		globalSymbolInformation.deserialize(
+			pdb.databaseInterface.getGlobalSymbolsHashMaybeStreamNumber(), false, monitor);
+		publicSymbolInformation.deserialize(
+			pdb.databaseInterface.getPublicStaticSymbolsHashMaybeStreamNumber(), true, monitor);
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// and processEditAndContinueInformation.
 		debugData.deserialize(monitor);
 	}
 
 	@Override
-	protected void processModuleInformation(PdbByteReader reader, boolean skip)
-			throws PdbException {
+	protected void processModuleInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthModuleInformationSubstream == 0) {
 			return;
 		}
@@ -163,7 +166,8 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			AbstractModuleInformation moduleInformation = new ModuleInformation600();
+			monitor.checkCanceled();
+			AbstractModuleInformation moduleInformation = new ModuleInformation600(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);
 		}
@@ -263,12 +267,14 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	/**
 	 * Deserializes/Processes the EditAndContinueInformation.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @param skip Skip over the data in the {@link PdbByteReader}.
 	 * @throws PdbException upon error parsing a name.
+	 * @throws CancelledException Upon user cancellation.
 	 */
 	@SuppressWarnings("unused") // hashVal
-	protected void processEditAndContinueInformation(PdbByteReader reader, boolean skip)
-			throws PdbException {
+	protected void processEditAndContinueInformation(PdbByteReader reader, TaskMonitor monitor,
+			boolean skip) throws PdbException, CancelledException {
 		if (lengthEditAndContinueSubstream == 0) {
 			return;
 		}
@@ -301,9 +307,11 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		int count = tableSize;
 		int realEntryCount = 0;
 		while (--count >= 0) {
+			monitor.checkCanceled();
 			int offset = substreamReader.parseInt();
 			bufferReader.setIndex(offset);
-			String name = bufferReader.parseNullTerminatedString();
+			String name = bufferReader.parseNullTerminatedString(
+				pdb.getPdbReaderOptions().getOneByteCharset());
 			//if (name != null) {
 			if (name.length() != 0) {
 				realEntryCount++;

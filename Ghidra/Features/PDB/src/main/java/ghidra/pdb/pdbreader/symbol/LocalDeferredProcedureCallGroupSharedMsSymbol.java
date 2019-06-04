@@ -44,7 +44,7 @@ public class LocalDeferredProcedureCallGroupSharedMsSymbol extends AbstractMsSym
 	public LocalDeferredProcedureCallGroupSharedMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		typeIndex = reader.parseInt();
 		flags = new LocalVariableFlags(reader);
 		dataSlot = reader.parseUnsignedShortVal();

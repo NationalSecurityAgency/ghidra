@@ -54,8 +54,8 @@ public class ClassMsType extends AbstractClassMsType {
 		fieldDescriptorListTypeIndex = new TypeIndex32();
 		derivedFromListTypeIndex = new TypeIndex32(); // Can be zero if none.
 		vShapeTableTypeIndex = new TypeIndex32();
-		name = new StringNt();
-		mangledName = new StringNt();
+		name = new StringNt(pdb);
+		mangledName = new StringNt(pdb);
 	}
 
 	@Override

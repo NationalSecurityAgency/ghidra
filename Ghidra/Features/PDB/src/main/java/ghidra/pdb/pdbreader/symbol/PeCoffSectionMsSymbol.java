@@ -45,7 +45,7 @@ public class PeCoffSectionMsSymbol extends AbstractMsSymbol {
 	 */
 	public PeCoffSectionMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		sectionNumber = reader.parseUnsignedShortVal();
 		align = reader.parseUnsignedByteVal();
 		reserved = reader.parseUnsignedByteVal();

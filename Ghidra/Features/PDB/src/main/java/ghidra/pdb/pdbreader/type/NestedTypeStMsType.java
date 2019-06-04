@@ -48,7 +48,7 @@ public class NestedTypeStMsType extends AbstractNestedTypeMsType {
 	@Override
 	protected void create() {
 		nestedTypeDefinitionIndex = new TypeIndex32();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

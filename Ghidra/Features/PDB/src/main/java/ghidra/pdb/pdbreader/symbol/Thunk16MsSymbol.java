@@ -47,8 +47,8 @@ public class Thunk16MsSymbol extends AbstractThunkMsSymbol {
 	@Override
 	protected void create() {
 		offset = new Offset16();
-		name = new StringUtf8St();
-		variantString = new StringUtf8St();
+		name = new StringUtf8St(pdb);
+		variantString = new StringUtf8St(pdb);
 	}
 
 	@Override

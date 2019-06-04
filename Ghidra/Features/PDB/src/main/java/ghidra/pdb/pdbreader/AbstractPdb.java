@@ -54,6 +54,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	//==============================================================================================
 	protected AbstractMsf msf;
 
+	protected PdbReaderOptions pdbOptions;
+
 	// Items below begin in Pdb200
 	protected int versionNumber = 0;
 	protected int signature = 0;
@@ -102,6 +104,14 @@ public abstract class AbstractPdb implements AutoCloseable {
 		if (msf != null) {
 			msf.close();
 		}
+	}
+
+	/**
+	 * Returns the {@link PdbReaderOptions} for this PDB.
+	 * @return the {@link PdbReaderOptions} for this PDB.
+	 */
+	public PdbReaderOptions getPdbReaderOptions() {
+		return pdbOptions;
 	}
 
 	/**
@@ -565,11 +575,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Constructor.
 	 * @param msf {@link AbstractMsf} foundation for the PDB.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @throws IOException Upon file IO seek/read issues.
 	 * @throws PdbException Upon unknown value for configuration or error in processing components.
 	 */
-	AbstractPdb(AbstractMsf msf) throws IOException, PdbException {
+	AbstractPdb(AbstractMsf msf, PdbReaderOptions pdbOptions) throws IOException, PdbException {
 		this.msf = msf;
+		this.pdbOptions = pdbOptions;
 		strings = new ArrayList<>();
 		parameters = new ArrayList<>();
 		nameTable = new NameTable(this);

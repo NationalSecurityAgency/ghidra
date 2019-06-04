@@ -48,7 +48,7 @@ public class Enum16MsType extends AbstractEnumMsType {
 	protected void create() {
 		fieldDescriptorListTypeIndex = new TypeIndex16();
 		underlyingTypeIndex = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

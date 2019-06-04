@@ -172,7 +172,8 @@ public class NameTable {
 			int bufOffset = reader.parseInt();
 			int streamNumber = reader.parseInt();
 			nameBufferReader.setIndex(bufOffset);
-			String name = nameBufferReader.parseNullTerminatedString();
+			String name = nameBufferReader.parseNullTerminatedString(
+				pdb.getPdbReaderOptions().getOneByteCharset());
 			streamNumbers[i] = streamNumber;
 			names[i] = name;
 			mapStreamNumberToName.put(streamNumber, name);
@@ -209,6 +210,7 @@ public class NameTable {
 							int length = reader.parseInt();
 							PdbByteReader stringReader = reader.getSubPdbByteReader(length);
 							while (stringReader.hasMore()) {
+								monitor.checkCanceled();
 								int offset = stringReader.getIndex();
 								String string = stringReader.parseNullTerminatedUtf8String();
 								mapOffsetToString.put(offset, string);

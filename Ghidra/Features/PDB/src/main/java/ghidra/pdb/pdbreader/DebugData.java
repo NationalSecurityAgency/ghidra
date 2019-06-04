@@ -189,6 +189,7 @@ public class DebugData {
 		// TODO: check implementation for completeness.
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
 		while (reader.hasMore()) {
+			monitor.checkCanceled();
 			FramePointerOmissionRecord framePointerOmissionRecord =
 				new FramePointerOmissionRecord();
 			framePointerOmissionRecord.parse(reader);
@@ -200,7 +201,8 @@ public class DebugData {
 			throws PdbException, CancelledException, IOException {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
 		while (reader.hasMore()) {
-			ImageSectionHeader imageSectionHeader = new ImageSectionHeader();
+			monitor.checkCanceled();
+			ImageSectionHeader imageSectionHeader = new ImageSectionHeader(pdb);
 			imageSectionHeader.parse(reader);
 			imageSectionHeaders.add(imageSectionHeader);
 		}
@@ -257,6 +259,7 @@ public class DebugData {
 		reader.setIndex((int) headerLength);
 		//System.out.println(reader.dump());
 		while (reader.hasMore()) {
+			monitor.checkCanceled();
 			ImageFunctionEntry entry = new ImageFunctionEntry();
 			entry.deserialize(reader);
 			pData.add(entry);

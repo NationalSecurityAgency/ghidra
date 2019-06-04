@@ -49,7 +49,7 @@ public class RegisterRelativeAddress16MsSymbol extends AbstractRegisterRelativeA
 	protected void create() {
 		offset = new Offset16();
 		typeIndex = new TypeIndex16();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

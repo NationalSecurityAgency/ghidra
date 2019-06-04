@@ -24,6 +24,7 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.pdb.PdbByteWriter;
+import ghidra.pdb.pdbreader.PdbReaderOptions;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
@@ -111,7 +112,8 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 	//==============================================================================================
 	@Test
 	public void testStreamFile200Header() {
-		try (AbstractMsf streamFile = MsfParser.parse(testFileName200, TaskMonitor.DUMMY)) {
+		try (AbstractMsf streamFile =
+			MsfParser.parse(testFileName200, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
 			int numStreams = streamFile.getNumStreams();
 			StringBuilder builder = new StringBuilder();
 			builder.append("NumStreams: " + numStreams + "\n");
@@ -128,7 +130,8 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 
 	@Test
 	public void testStreamFile700Header() {
-		try (AbstractMsf streamFile = MsfParser.parse(testFileName700, TaskMonitor.DUMMY)) {
+		try (AbstractMsf streamFile =
+			MsfParser.parse(testFileName700, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
 			int numStreams = streamFile.getNumStreams();
 			StringBuilder builder = new StringBuilder();
 			builder.append("NumStreams: " + numStreams + "\n");

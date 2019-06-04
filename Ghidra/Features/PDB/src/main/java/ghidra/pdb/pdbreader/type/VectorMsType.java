@@ -46,7 +46,7 @@ public class VectorMsType extends AbstractMsType {
 	public VectorMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
 		elementTypeIndex = new TypeIndex32();
-		name = new StringNt();
+		name = new StringNt(pdb);
 
 		elementTypeIndex.parse(reader);
 		pdb.pushDependencyStack(

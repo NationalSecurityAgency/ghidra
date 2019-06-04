@@ -42,7 +42,7 @@ public class UnknownX1167MsSymbol extends AbstractUnknownMsSymbol {
 	 */
 	public UnknownX1167MsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		string = new StringUtf8Nt();
+		string = new StringUtf8Nt(pdb);
 		unknownUnsignedShort1 = reader.parseUnsignedShortVal();
 		unknownUnsignedShort2 = reader.parseUnsignedShortVal();
 		unknownUnsignedShort3 = reader.parseUnsignedShortVal();

@@ -47,7 +47,7 @@ public class LocalProcedureStartIa64MsSymbol extends AbstractProcedureStartIa64M
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 	@Override

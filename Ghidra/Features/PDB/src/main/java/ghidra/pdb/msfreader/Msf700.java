@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
+import ghidra.pdb.pdbreader.PdbReaderOptions;
 
 /**
  * This class is the version of {@link AbstractMsf} for Microsoft v7.00 MSF.
@@ -41,11 +42,13 @@ public class Msf700 extends AbstractMsf {
 	/**
 	 * Constructor.
 	 * @param file The {@link RandomAccessFile} to process as a {@link Msf700}.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @throws IOException Upon file IO seek/read issues.
 	 * @throws PdbException Upon unknown value for configuration.
 	 */
-	public Msf700(RandomAccessFile file) throws IOException, PdbException {
-		super(file);
+	public Msf700(RandomAccessFile file, PdbReaderOptions pdbOptions)
+			throws IOException, PdbException {
+		super(file, pdbOptions);
 	}
 
 	//==============================================================================================

@@ -52,8 +52,8 @@ public class UnionStMsType extends AbstractUnionMsType {
 	@Override
 	protected void create() {
 		fieldDescriptorListTypeIndex = new TypeIndex32();
-		name = new StringSt();
-		mangledName = new StringSt();
+		name = new StringSt(pdb);
+		mangledName = new StringSt(pdb);
 	}
 
 	@Override

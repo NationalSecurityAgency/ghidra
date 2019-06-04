@@ -46,7 +46,7 @@ public class EnumerateMsType extends AbstractEnumerateMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringNt();
+		return new StringNt(pdb);
 	}
 
 }

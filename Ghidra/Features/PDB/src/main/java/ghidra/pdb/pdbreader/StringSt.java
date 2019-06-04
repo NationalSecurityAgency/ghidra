@@ -24,12 +24,17 @@ import ghidra.pdb.PdbException;
  */
 public class StringSt extends AbstractString {
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} to which this type belongs.
+	 */
+	public StringSt(AbstractPdb pdb) {
+		super(pdb);
+	}
+
 	@Override
 	protected String doParse(PdbByteReader reader) throws PdbException {
-		return reader.parseByteLengthPrefixedString();
+		return reader.parseByteLengthPrefixedString(pdb.getPdbReaderOptions().getOneByteCharset());
 	}
 
 }

@@ -38,7 +38,7 @@ public class ProcedureSymbolInternals32 extends AbstractProcedureSymbolInternals
 
 	@Override
 	protected void create() {
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 	@Override

@@ -46,7 +46,7 @@ public class AliasMsType extends AbstractAliasMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringNt();
+		return new StringNt(pdb);
 	}
 
 }

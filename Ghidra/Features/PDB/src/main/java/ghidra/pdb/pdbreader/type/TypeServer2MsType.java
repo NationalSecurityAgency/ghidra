@@ -42,7 +42,7 @@ public class TypeServer2MsType extends AbstractMsType {
 	 */
 	public TypeServer2MsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringNt();
+		name = new StringNt(pdb);
 		signature = reader.parseGUID();
 		age = reader.parseUnsignedIntVal();
 		name.parse(reader);

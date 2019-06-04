@@ -43,7 +43,7 @@ public class FunctionIdMsType extends AbstractMsType {
 		super(pdb, reader);
 		scopeId = new TypeIndex32();
 		functionType = new TypeIndex32();
-		name = new StringNt();
+		name = new StringNt(pdb);
 
 		scopeId.parse(reader);
 		if (scopeId.get() != 0) {

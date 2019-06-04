@@ -36,7 +36,7 @@ public class PublicSymbolInternals32 extends AbstractPublicSymbolInternals32 {
 	@Override
 	protected void create() {
 		offset = new Offset32();
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 }

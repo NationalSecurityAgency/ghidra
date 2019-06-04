@@ -43,7 +43,7 @@ public class PeCoffGroupMsSymbol extends AbstractMsSymbol {
 	 */
 	public PeCoffGroupMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		length = reader.parseInt();
 		characteristics = reader.parseInt();
 		offset = reader.parseUnsignedIntVal();

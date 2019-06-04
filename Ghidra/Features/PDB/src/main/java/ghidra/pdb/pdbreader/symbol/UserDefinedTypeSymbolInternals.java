@@ -36,7 +36,7 @@ public class UserDefinedTypeSymbolInternals extends AbstractUserDefinedTypeSymbo
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex32();
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 }

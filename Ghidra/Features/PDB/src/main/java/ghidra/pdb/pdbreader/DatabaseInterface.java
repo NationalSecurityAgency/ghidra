@@ -59,10 +59,10 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 	@Override
 	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
 			throws PdbException, CancelledException {
-		processModuleInformation(reader, false);
-		processSectionContributions(reader, false);
-		processSegmentMap(reader, false);
-		processFileInformation(reader, false);
+		processModuleInformation(reader, monitor, false);
+		processSectionContributions(reader, monitor, false);
+		processSegmentMap(reader, monitor, false);
+		processFileInformation(reader, monitor, false);
 	}
 
 	@Override
@@ -70,15 +70,18 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
-		// globalSymbolInformation.deserialize(monitor);
 		symbolRecords.deserialize(monitor);
+		globalSymbolInformation.deserialize(
+			pdb.databaseInterface.getGlobalSymbolsHashMaybeStreamNumber(), false, monitor);
+		publicSymbolInformation.deserialize(
+			pdb.databaseInterface.getPublicStaticSymbolsHashMaybeStreamNumber(), true, monitor);
 		//TODO: SectionContributions has information about code sections and refers to
 		// debug streams for each.
 	}
 
 	@Override
-	protected void processModuleInformation(PdbByteReader reader, boolean skip)
-			throws PdbException {
+	protected void processModuleInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthModuleInformationSubstream == 0) {
 			return;
 		}
@@ -89,7 +92,8 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			AbstractModuleInformation moduleInformation = new ModuleInformation500();
+			monitor.checkCanceled();
+			AbstractModuleInformation moduleInformation = new ModuleInformation500(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);
 		}

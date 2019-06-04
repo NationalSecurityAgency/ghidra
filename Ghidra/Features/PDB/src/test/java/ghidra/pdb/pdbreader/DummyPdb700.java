@@ -46,7 +46,7 @@ public class DummyPdb700 extends Pdb700 {
 	 */
 	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive, int ipiIndexMin,
 			int ipiIndexMaxExclusive) throws IOException, PdbException {
-		super(null);
+		super(null, new PdbReaderOptions());
 		typeProgramInterface =
 			new DummyTypeProgramInterface800(this, tpiIndexMin, tpiIndexMaxExclusive);
 		databaseInterface = new DummyDatabaseInterfaceNew(this);

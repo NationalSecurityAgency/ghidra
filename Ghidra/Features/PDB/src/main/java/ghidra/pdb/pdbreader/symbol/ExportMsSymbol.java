@@ -46,7 +46,7 @@ public class ExportMsSymbol extends AbstractMsSymbol {
 	 */
 	public ExportMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		ordinal = reader.parseUnsignedShortVal();
 		int flags = reader.parseUnsignedShortVal();
 		processFlags(flags);

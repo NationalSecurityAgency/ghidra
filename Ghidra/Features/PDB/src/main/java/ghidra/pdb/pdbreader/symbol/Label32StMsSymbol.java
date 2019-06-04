@@ -47,7 +47,7 @@ public class Label32StMsSymbol extends AbstractLabelMsSymbol {
 	@Override
 	protected void create() {
 		offset = new Offset32();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

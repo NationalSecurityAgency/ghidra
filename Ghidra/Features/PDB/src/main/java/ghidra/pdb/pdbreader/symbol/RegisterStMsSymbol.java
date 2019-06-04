@@ -47,7 +47,7 @@ public class RegisterStMsSymbol extends AbstractRegisterMsSymbol {
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex32();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

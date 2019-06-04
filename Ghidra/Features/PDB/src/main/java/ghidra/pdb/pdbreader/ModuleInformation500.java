@@ -15,6 +15,8 @@
  */
 package ghidra.pdb.pdbreader;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 
@@ -24,9 +26,16 @@ import ghidra.pdb.PdbException;
 public class ModuleInformation500 extends AbstractModuleInformation {
 
 	//==============================================================================================
+	// Internals
+	//==============================================================================================
+	private AbstractPdb pdb;
+
+	//==============================================================================================
 	// API
 	//==============================================================================================
-	public ModuleInformation500() {
+	public ModuleInformation500(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
+		this.pdb = pdb;
 		sectionContribution = new SectionContribution400();
 	}
 
@@ -38,8 +47,10 @@ public class ModuleInformation500 extends AbstractModuleInformation {
 		ecSymbolicInformationEnabled = false;
 		nameIndexSourceFile = 0; // no value available.
 		nameIndexCompilerPdbPath = 0; // no value available.
-		moduleName = reader.parseNullTerminatedString();
-		objectFileName = reader.parseNullTerminatedString();
+		moduleName =
+			reader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
+		objectFileName =
+			reader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 	}
 
 	@Override

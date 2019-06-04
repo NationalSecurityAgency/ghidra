@@ -47,7 +47,7 @@ public class GlobalManagedProcedureStMsSymbol extends AbstractGlobalManagedProce
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8St();
+		return new StringUtf8St(pdb);
 	}
 
 	@Override

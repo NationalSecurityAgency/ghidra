@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.lang3.Validate;
 
@@ -75,7 +74,8 @@ public abstract class AbstractDatabaseInterface {
 	protected List<SegmentMapDescription> segmentMapList = new ArrayList<>();
 
 	protected SymbolRecords symbolRecords;
-//	protected GlobalSymbolInformation globalSymbolInformation;
+	protected GlobalSymbolInformation globalSymbolInformation;
+	protected GlobalSymbolInformation publicSymbolInformation;
 
 	//==============================================================================================
 	// API
@@ -89,7 +89,8 @@ public abstract class AbstractDatabaseInterface {
 		Validate.notNull(pdb, "pdb cannot be null)");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
-//		globalSymbolInformation = new GlobalSymbolInformation(pdb);
+		globalSymbolInformation = new GlobalSymbolInformation(pdb);
+		publicSymbolInformation = new GlobalSymbolInformation(pdb);
 		symbolRecords = new SymbolRecords(pdb);
 	}
 
@@ -174,20 +175,22 @@ public abstract class AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Returns the list of regular {@link AbstractMsSymbol} symbols.
-	 * @return Regular {@link AbstractMsSymbol} symbols.
+	 * Returns the list of regular symbols.
+	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * symbols.
 	 */
-	public List<AbstractMsSymbol> getSymbolsList() {
-		return symbolRecords.getSymbolsList();
+	public Map<Long, AbstractMsSymbol> getSymbolMap() {
+		return symbolRecords.getSymbolMap();
 	}
 
 	/**
-	 * Returns list of {@link AbstractMsSymbol} for the module specified.
+	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber.
 	 * @param moduleNumber The number ID of the module for which to return the list.
-	 * @return {@link AbstractMsSymbol} symbols in the specified module.
+	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * symbols for the specified module.
 	 */
-	public List<AbstractMsSymbol> getModuleSymbolLists(int moduleNumber) {
-		return symbolRecords.getModuleSymbolLists(moduleNumber);
+	public Map<Long, AbstractMsSymbol> getModuleSymbolMap(int moduleNumber) {
+		return symbolRecords.getModuleSymbolMap(moduleNumber);
 	}
 
 	/**
@@ -214,13 +217,22 @@ public abstract class AbstractDatabaseInterface {
 		return symbolRecords;
 	}
 
-//	/**
-//	 * Returns {@link GlobalSymbolInformation} component for this Database Interface.
-//	 * @return {@link GlobalSymbolInformation} component.
-//	 */
-//	public GlobalSymbolInformation getGlobalSymbolInformation() {
-//		return globalSymbolInformation;
-//	}
+	/**
+	 * Returns {@link GlobalSymbolInformation} component for this Database Interface.
+	 * @return {@link GlobalSymbolInformation} component.
+	 */
+	public GlobalSymbolInformation getGlobalSymbolInformation() {
+		return globalSymbolInformation;
+	}
+
+	/**
+	 * Returns Public Symbol Information (of type {@link GlobalSymbolInformation}) component for
+	 * this Database Interface.
+	 * @return Public Symbol Information component.
+	 */
+	public GlobalSymbolInformation getPublicSymbolInformation() {
+		return publicSymbolInformation;
+	}
 
 	//==============================================================================================
 	// Package-Protected Internals
@@ -283,11 +295,13 @@ public abstract class AbstractDatabaseInterface {
 	/**
 	 * Deserializes/Processes the appropriate {@link AbstractModuleInformation} flavor.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @param skip Skip over the data in the {@link PdbByteReader}.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	protected abstract void processModuleInformation(PdbByteReader reader, boolean skip)
-			throws PdbException;
+	protected abstract void processModuleInformation(PdbByteReader reader, TaskMonitor monitor,
+			boolean skip) throws PdbException, CancelledException;
 
 	/**
 	 * Dumps the Header.  This method is for debugging only.
@@ -309,11 +323,13 @@ public abstract class AbstractDatabaseInterface {
 	/**
 	 * Deserializes/Processes the SectionContributions component.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @param skip Skip over the data in the {@link PdbByteReader}.
 	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	protected void processSectionContributions(PdbByteReader reader, boolean skip)
-			throws PdbException {
+	protected void processSectionContributions(PdbByteReader reader, TaskMonitor monitor,
+			boolean skip) throws PdbException, CancelledException {
 		if (lengthSectionContributionSubstream == 0) {
 			return;
 		}
@@ -328,6 +344,7 @@ public abstract class AbstractDatabaseInterface {
 		if (version == SCV1400) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
+				monitor.checkCanceled();
 				AbstractSectionContribution sectionContribution = new SectionContribution1400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -336,6 +353,7 @@ public abstract class AbstractDatabaseInterface {
 		else if (version == SCV600) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
+				monitor.checkCanceled();
 				AbstractSectionContribution sectionContribution = new SectionContribution600();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -347,6 +365,7 @@ public abstract class AbstractDatabaseInterface {
 		// be the override method for DatabaseInformationNew.
 		else {
 			while (substreamReader.hasMore()) {
+				monitor.checkCanceled();
 				AbstractSectionContribution sectionContribution = new SectionContribution400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -354,17 +373,20 @@ public abstract class AbstractDatabaseInterface {
 		}
 	}
 
-	// TODO: unused value numSegLog?
-	// Note: this is SegmentMap or SectionMap (API structs are segment; API code is Section)
-	// Suppress "unused" for numSegLog
 	/**
 	 * Deserializes/Processes the {@link SegmentMapDescription}.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @param skip Skip over the data in the {@link PdbByteReader}.
 	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws CancelledException Upon user cancellation.
 	 */
+	// TODO: unused value numSegLog?
+	// Note: this is SegmentMap or SectionMap (API structs are segment; API code is Section)
+	// Suppress "unused" for numSegLog
 	@SuppressWarnings("unused")
-	protected void processSegmentMap(PdbByteReader reader, boolean skip) throws PdbException {
+	protected void processSegmentMap(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthSectionMap == 0) {
 			return;
 		}
@@ -379,6 +401,7 @@ public abstract class AbstractDatabaseInterface {
 		int numSegLog = substreamReader.parseUnsignedShortVal();
 		// Process records
 		while (substreamReader.hasMore()) {
+			monitor.checkCanceled();
 			SegmentMapDescription segment = new SegmentMapDescription();
 			segment.deserialize(substreamReader);
 			segmentMapList.add(segment);
@@ -391,11 +414,14 @@ public abstract class AbstractDatabaseInterface {
 	/**
 	 * Deserializes/Processes the FileInformation.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @param skip Skip over the data in the {@link PdbByteReader}.
 	 * @throws PdbException upon error parsing filename.
+	 * @throws CancelledException Upon user cancellation.
 	 */
 	@SuppressWarnings("unused") // pmod is not used below
-	protected void processFileInformation(PdbByteReader reader, boolean skip) throws PdbException {
+	protected void processFileInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthFileInformation == 0) {
 			return;
 		}
@@ -412,6 +438,7 @@ public abstract class AbstractDatabaseInterface {
 		int numRefs = substreamReader.parseUnsignedShortVal();
 		int x = 0;
 		for (int i = 0; i < numInformationModules; i++) {
+			monitor.checkCanceled();
 			int refIndex = substreamReader.parseUnsignedShortVal();
 			AbstractModuleInformation module = moduleInformationList.get(i);
 			int num = module.getNumFilesContributing();
@@ -421,11 +448,13 @@ public abstract class AbstractDatabaseInterface {
 			x += num;
 		}
 		for (int i = 0; i < numInformationModules; i++) {
+			monitor.checkCanceled();
 			// TODO: Is there anything we can do with this?
 			int pmod = substreamReader.parseUnsignedShortVal();
 		}
 		int count = 0;
 		for (int i = 0; i < numInformationModules; i++) {
+			monitor.checkCanceled();
 			AbstractModuleInformation module = moduleInformationList.get(i);
 			int num = module.getNumFilesContributing();
 			for (int j = 0; j < num; j++) {
@@ -443,6 +472,7 @@ public abstract class AbstractDatabaseInterface {
 
 		//System.out.println(fileNameReader.dump());
 		for (int i = 0; i < numInformationModules; i++) {
+			monitor.checkCanceled();
 			AbstractModuleInformation module = moduleInformationList.get(i);
 			List<Integer> offsetsArray = module.getOffsetsArray();
 			List<String> filenameArray = module.getFilenamesArray();
@@ -450,7 +480,8 @@ public abstract class AbstractDatabaseInterface {
 				int offset = offsetsArray.get(j);
 				//System.out.println(String.format("%04x", offset));
 				fileNameReader.setIndex(offset);
-				String filename = fileNameReader.parseNullTerminatedString();
+				String filename = fileNameReader.parseNullTerminatedString(
+					pdb.getPdbReaderOptions().getOneByteCharset());
 				filenameArray.add(filename);
 				//System.out.println(filename);
 			}
@@ -483,8 +514,10 @@ public abstract class AbstractDatabaseInterface {
 	 */
 	protected void dumpAdditionalSubstreams(Writer writer) throws IOException {
 		symbolRecords.dump(writer);
-//		writer.write("\n");
-//		globalSymbolInformation.dump(writer);
+		writer.write("\n");
+		globalSymbolInformation.dump(writer);
+		writer.write("\n");
+		publicSymbolInformation.dump(writer);
 	}
 
 	/**

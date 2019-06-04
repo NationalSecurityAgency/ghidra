@@ -47,7 +47,7 @@ public class MiniPdbReferenceMsSymbol extends AbstractMsSymbol {
 	 */
 	public MiniPdbReferenceMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		long val = reader.parseUnsignedIntVal();
 		moduleIndex = reader.parseUnsignedShortVal();
 		int flags = reader.parseUnsignedShortVal();

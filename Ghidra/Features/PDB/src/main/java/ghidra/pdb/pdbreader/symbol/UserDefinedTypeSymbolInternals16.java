@@ -36,7 +36,7 @@ public class UserDefinedTypeSymbolInternals16 extends AbstractUserDefinedTypeSym
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex16();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 }

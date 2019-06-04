@@ -54,7 +54,7 @@ public class EnvironmentBlockMsSymbol extends AbstractMsSymbol {
 		super(pdb, reader);
 		flags = reader.parseUnsignedByteVal();
 		while (reader.hasMore()) {
-			AbstractString string = new StringUtf8Nt();
+			AbstractString string = new StringUtf8Nt(pdb);
 			string.parse(reader);
 			if (string.get().isEmpty()) {
 				break;

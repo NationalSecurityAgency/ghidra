@@ -20,6 +20,7 @@ import java.util.List;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.AbstractPdb;
+import ghidra.util.exception.CancelledException;
 
 /**
  * This class represents various flavors of Field List type.
@@ -38,8 +39,10 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 * @param reader {@link PdbByteReader} from which this type is deserialized.
 	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public AbstractFieldListMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+	public AbstractFieldListMsType(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
 		super(pdb, reader);
 		while (reader.hasMore()) {
 			AbstractMsType type = pdb.getTypeParser().parse(reader);

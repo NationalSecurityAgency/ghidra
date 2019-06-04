@@ -46,7 +46,7 @@ public class ObjectNameMsSymbol extends AbstractObjectNameMsSymbol {
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 	@Override

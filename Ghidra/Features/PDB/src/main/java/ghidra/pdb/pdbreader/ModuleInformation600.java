@@ -15,6 +15,8 @@
  */
 package ghidra.pdb.pdbreader;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 
@@ -24,9 +26,16 @@ import ghidra.pdb.PdbException;
 public class ModuleInformation600 extends AbstractModuleInformation {
 
 	//==============================================================================================
+	// Internals
+	//==============================================================================================
+	private AbstractPdb pdb;
+
+	//==============================================================================================
 	// API
 	//==============================================================================================
-	public ModuleInformation600() {
+	public ModuleInformation600(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
+		this.pdb = pdb;
 		sectionContribution = new SectionContribution600();
 	}
 
@@ -39,8 +48,10 @@ public class ModuleInformation600 extends AbstractModuleInformation {
 		spare >>= 1;
 		nameIndexSourceFile = reader.parseUnsignedIntVal();
 		nameIndexCompilerPdbPath = reader.parseUnsignedIntVal();
-		moduleName = reader.parseNullTerminatedString();
-		objectFileName = reader.parseNullTerminatedString();
+		moduleName =
+			reader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
+		objectFileName =
+			reader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 	}
 
 	@Override

@@ -16,6 +16,7 @@
 package ghidra.pdb;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -41,13 +42,6 @@ import ghidra.util.LittleEndianDataConverter;
  * memory. 
  */
 public class PdbByteReader {
-	// TODO: Regarding String conversions... We expect that US_ASCII could be a problem, but it
-	//  is probably better than creating the String without any code set chosen at all.  Do we
-	//  need to change all processing of Strings within the PDB so that we are only creating byte 
-	//  arrays with some notional idea (1 byte, 2 byte, possibly utf-8, utf-16, wchar_t, or
-	//  "unknown" and defer true interpretation/conversion to String until we know or until
-	//  Ghidra user can ad-hoc apply interpretations to those fields?  Needs investigation, but
-	//  not critical at this time.
 
 	//==============================================================================================
 	// Internals
@@ -328,19 +322,19 @@ public class PdbByteReader {
 	 *  string length is determined by the first byte of data (not returned)--there is not a null
 	 *  terminator in the source bytes.  This number of bytes is extracted and converted to a
 	 *  String and returned.
+	 * @param charset the {@link Charset} to be used for parsing the {@link String}.
 	 * @return The String containing the bytes (excluding the byte containing the length).
 	 * @throws PdbException upon error parsing string.
 	 */
-	public String parseByteLengthPrefixedString() throws PdbException {
+	public String parseByteLengthPrefixedString(Charset charset) throws PdbException {
 		int length = parseUnsignedByteVal();
 		if (length == 0) {
 			return "";
 		}
 		int offset = index;
 		index += length;
-		// TODO: See note above regarding US_ASCII.
 		try {
-			return new String(bytes, offset, length, StandardCharsets.US_ASCII);
+			return new String(bytes, offset, length, charset);
 		}
 		catch (IndexOutOfBoundsException e) {
 			throw new PdbException("Error parsing String: " + e.toString());
@@ -373,10 +367,11 @@ public class PdbByteReader {
 	/**
 	 * Parses a null-terminated string from the PdbByteReader and returns the {@link String} (minus
 	 *  the terminating null character).  If no null, then contract not fulfilled.
+	 * @param charset the {@link Charset} to be used for parsing the {@link String}.
 	 * @return The String parsed.
 	 * @throws PdbException upon error parsing string.
 	 */
-	public String parseNullTerminatedString() throws PdbException {
+	public String parseNullTerminatedString(Charset charset) throws PdbException {
 		int offset = index;
 		int width = 1;
 		int end = findNullTerminatorIndex(width);
@@ -384,8 +379,7 @@ public class PdbByteReader {
 		if (end == offset) {
 			return "";
 		}
-		// TODO: See note above regarding US_ASCII.
-		return new String(bytes, offset, end - offset, StandardCharsets.US_ASCII);
+		return new String(bytes, offset, end - offset, charset);
 	}
 
 	/**
@@ -408,10 +402,11 @@ public class PdbByteReader {
 	/**
 	 * Parses a null-terminated wchar_t string from the PdbByteReader and returns the String (minus
 	 *  the terminating null character).  If no null, then contract not fulfilled: returns "".
+	 * @param charset the {@link Charset} to be used for parsing the {@link String}.
 	 * @return The String parsed.
 	 * @throws PdbException upon error parsing string.
 	 */
-	public String parseNullTerminatedWcharString() throws PdbException {
+	public String parseNullTerminatedWcharString(Charset charset) throws PdbException {
 		int offset = index;
 		int width = 2;
 		int end = findNullTerminatorIndex(width);
@@ -419,7 +414,7 @@ public class PdbByteReader {
 		if (end == offset) {
 			return "";
 		}
-		return new String(bytes, offset, end - offset, StandardCharsets.UTF_16);
+		return new String(bytes, offset, end - offset, charset);
 	}
 
 	/**

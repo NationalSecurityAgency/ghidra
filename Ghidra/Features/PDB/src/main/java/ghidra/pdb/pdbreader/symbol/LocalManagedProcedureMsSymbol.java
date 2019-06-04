@@ -47,7 +47,7 @@ public class LocalManagedProcedureMsSymbol extends AbstractLocalManagedProcedure
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 	@Override

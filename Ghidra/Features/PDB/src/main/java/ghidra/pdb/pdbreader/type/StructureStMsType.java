@@ -54,8 +54,8 @@ public class StructureStMsType extends AbstractStructureMsType {
 		fieldDescriptorListTypeIndex = new TypeIndex32();
 		derivedFromListTypeIndex = new TypeIndex32(); // Can be zero if none.
 		vShapeTableTypeIndex = new TypeIndex32();
-		name = new StringSt();
-		mangledName = new StringSt();
+		name = new StringSt(pdb);
+		mangledName = new StringSt(pdb);
 	}
 
 	@Override

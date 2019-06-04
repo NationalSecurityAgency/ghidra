@@ -46,7 +46,7 @@ public class TypeServerMsType extends AbstractTypeServerMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringNt();
+		return new StringNt(pdb);
 	}
 
 }

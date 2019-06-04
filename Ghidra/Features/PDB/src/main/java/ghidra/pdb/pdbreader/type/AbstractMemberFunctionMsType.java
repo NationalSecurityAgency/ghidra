@@ -30,7 +30,7 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 	protected AbstractTypeIndex returnValueTypeIndex;
 	protected AbstractTypeIndex containingClassTypeIndex;
 	protected AbstractTypeIndex thisPointerTypeIndex; // Model-specific
-	protected int callingConvention; // MSFT API does not document the values.
+	protected CallingConvention callingConvention;
 	protected FunctionMsAttributes functionAttributes;
 	protected int numParameters;
 	protected AbstractTypeIndex argListTypeIndex;
@@ -57,7 +57,7 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 		pdb.pushDependencyStack(
 			new CategoryIndex(CategoryIndex.Category.DATA, thisPointerTypeIndex.get()));
 		pdb.popDependencyStack();
-		callingConvention = reader.parseUnsignedByteVal();
+		callingConvention = CallingConvention.fromValue(reader.parseUnsignedByteVal());
 		functionAttributes = new FunctionMsAttributes(reader);
 		numParameters = reader.parseUnsignedShortVal();
 		argListTypeIndex.parse(reader);
@@ -76,10 +76,10 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the calling convention (TODO: determine the mapping of these values to conventions.)
-	 * @return The calling convention.
+	 * Returns the {@link CallingConvention}.
+	 * @return the {@link CallingConvention}.
 	 */
-	public int getCallingConventionValue() {
+	public CallingConvention getCallingConventionValue() {
 		return callingConvention;
 	}
 

@@ -19,6 +19,7 @@ import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.AbstractPdb;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.util.exception.CancelledException;
 
 /**
  * This class represents the <B>MsType</B> flavor of Referenced Symbol type.
@@ -39,8 +40,10 @@ public class ReferencedSymbolMsType extends AbstractMsType {
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 * @param reader {@link PdbByteReader} from which this type is deserialized.
 	 * @throws PdbException upon error parsing a string.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public ReferencedSymbolMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
+	public ReferencedSymbolMsType(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
 		super(pdb, reader);
 		int recordLength = reader.parseUnsignedShortVal();
 		PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);

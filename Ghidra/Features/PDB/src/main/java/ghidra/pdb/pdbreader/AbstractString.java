@@ -15,6 +15,8 @@
  */
 package ghidra.pdb.pdbreader;
 
+import org.apache.commons.lang3.Validate;
+
 import ghidra.pdb.*;
 
 /**
@@ -26,11 +28,22 @@ public abstract class AbstractString extends AbstractParsableItem {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
+	protected AbstractPdb pdb;
 	protected String string = "";
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
+
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} to which this type belongs.
+	 */
+	public AbstractString(AbstractPdb pdb) {
+		Validate.notNull(pdb, "pdb cannot be null)");
+		this.pdb = pdb;
+	}
+
 	/**
 	 * Returns the string value.
 	 * @return {@link String} value.  Defaults to empty String if not parsed.

@@ -47,8 +47,8 @@ public class Thunk32MsSymbol extends AbstractThunkMsSymbol {
 	@Override
 	protected void create() {
 		offset = new Offset32();
-		name = new StringUtf8Nt();
-		variantString = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
+		variantString = new StringUtf8Nt(pdb);
 	}
 
 	@Override

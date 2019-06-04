@@ -46,7 +46,7 @@ public class ManagedMsType extends AbstractManagedMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 }

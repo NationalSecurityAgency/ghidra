@@ -47,7 +47,7 @@ public class PrecompiledType16MsType extends AbstractPrecompiledTypeMsType {
 	@Override
 	protected void create() {
 		start = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

@@ -48,7 +48,7 @@ public class With32StMsSymbol extends AbstractWithMsSymbol {
 	protected void create() {
 		length = new Offset32();
 		offset = new Offset32();
-		expression = new StringUtf8St();
+		expression = new StringUtf8St(pdb);
 	}
 
 	@Override

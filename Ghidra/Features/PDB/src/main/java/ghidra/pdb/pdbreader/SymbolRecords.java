@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.lang3.Validate;
 
@@ -41,8 +40,8 @@ public class SymbolRecords {
 	// Internals
 	//==============================================================================================
 	private AbstractPdb pdb;
-	private List<AbstractMsSymbol> symbolList;
-	private List<List<AbstractMsSymbol>> moduleSymbolLists = new ArrayList<>();
+	private Map<Long, AbstractMsSymbol> symbolMap;
+	private List<Map<Long, AbstractMsSymbol>> moduleSymbols = new ArrayList<>();
 	private int comprehensiveSymbolCount = 0;
 	private List<AbstractMsSymbol> comprehensiveSymbolList = new ArrayList<>();
 
@@ -85,20 +84,22 @@ public class SymbolRecords {
 	}
 
 	/**
-	 * Returns the list of regular symbols.
-	 * @return Regular {@link AbstractMsSymbol} symbols.
+	 * Returns the list of symbols.
+	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * symbols.
 	 */
-	protected List<AbstractMsSymbol> getSymbolsList() {
-		return symbolList;
+	protected Map<Long, AbstractMsSymbol> getSymbolMap() {
+		return symbolMap;
 	}
 
 	/**
-	 * Returns the symbol list for the module as specified by moduleNumber.
+	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber.
 	 * @param moduleNumber The number ID of the module for which to return the list.
-	 * @return {@link AbstractMsSymbol} Symbols  in the specified module.
+	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * symbols for the specified module.
 	 */
-	protected List<AbstractMsSymbol> getModuleSymbolLists(int moduleNumber) {
-		return moduleSymbolLists.get(moduleNumber);
+	protected Map<Long, AbstractMsSymbol> getModuleSymbolMap(int moduleNumber) {
+		return moduleSymbols.get(moduleNumber);
 	}
 
 	//==============================================================================================
@@ -118,7 +119,7 @@ public class SymbolRecords {
 
 		streamNumber = pdb.databaseInterface.getSymbolRecordsStreamNumber();
 		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		symbolList = deserializeSymbolRecords(reader);
+		symbolMap = deserializeSymbolRecords(reader, monitor);
 
 		for (AbstractModuleInformation module : pdb.databaseInterface.moduleInformationList) {
 			streamNumber = module.getStreamNumberDebugInformation();
@@ -129,57 +130,77 @@ public class SymbolRecords {
 				int sizeDebug = module.getSizeLocalSymbolsDebugInformation();
 				sizeDebug -= x; //TODO: seems right, but need to evaluate this
 				PdbByteReader debugReader = reader.getSubPdbByteReader(sizeDebug);
-				List<AbstractMsSymbol> moduleList = deserializeSymbolRecords(debugReader);
+				Map<Long, AbstractMsSymbol> moduleSymbolsMap =
+					deserializeSymbolRecords(debugReader, monitor);
+				moduleSymbols.add(moduleSymbolsMap);
+//				PdbByteReader rest = reader.getSubPdbByteReader(reader.numRemaining());
+//				System.out.println(rest.dump());
+
 //				System.out.println(reader.dump(4));
 //				System.out.println("stream: " + streamNumber + ", current index: " +
 //					reader.getIndex() + ", index limit: " + reader.getLimit());
 //				System.out.println(reader.dump(0x100));
 				// TODO: figure out the rest of the bytes in the stream (index of reader)
-				moduleSymbolLists.add(moduleList);
 			}
 			else {
-				moduleSymbolLists.add(null);
+				moduleSymbols.add(null);
 			}
 		}
 
 	}
 
 	/**
-	 * Deserializes the {@link AbstractMsSymbol} symbols from the {@link PdbByteReader}.
+	 * Deserializes the {@link AbstractMsSymbol} symbols from the {@link PdbByteReader} and
+	 * returns a {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * symbols.
 	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize.
-	 * @return {@link AbstractMsSymbol} symbols.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
+	//	 * @return {@link AbstractMsSymbol} symbols.
+	 * @return map of buffer offsets to {@link AbstractMsSymbol} symbols.
 	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	public List<AbstractMsSymbol> deserializeSymbolRecords(PdbByteReader reader)
-			throws PdbException {
-		int recordNumber = 0;
+	public Map<Long, AbstractMsSymbol> deserializeSymbolRecords(PdbByteReader reader,
+			TaskMonitor monitor) throws PdbException, CancelledException {
 		//System.out.println(reader.dump(0x400));
 		SymbolParser parser = pdb.getSymbolParser();
-		List<AbstractMsSymbol> mySymbolList = new ArrayList<>();
+		Map<Long, AbstractMsSymbol> mySymbolMap = new TreeMap<>();
 		while (reader.hasMore()) {
-//			//System.out.println("Symbol Record: " + recordNumber);
+			monitor.checkCanceled();
+
+//			//System.out.println("Buffer Offset: " + offset);
 //			// DO NOT REMOVE
 //			// The following code is for developmental investigations;
 //			//  set break point on "int a = 1;" instead of a
 //			//  conditional break point.
-//			if (recordNumber == 839) {
+//			if (offset == -1) {
 //				int a = 1;
 //				a = a + 1;
 //				//System.out.println(reader.dump(0x200));
 //			}
 			// Including length in byte array for alignment purposes. 
 			int recordLength = reader.parseUnsignedShortVal();
+			int offset = reader.getIndex();
+
+//			System.out.println(String.format("SROffset: 0x%08x; compSymbCount: %d\n",
+//				reader.getIndex(), comprehensiveSymbolCount));
+
+			if (offset == 0xb5a || offset == 0x160ae || offset == 0x3008a || offset == 0x161b6 ||
+				(offset > 28350 && offset < 28400)) { // val I'm tracking: 0x161b5 (+1)
+				int a = 1;
+				a = a + 1;
+			}
+
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
 			pdb.pushDependencyStack(
 				new CategoryIndex(CategoryIndex.Category.SYMBOL, comprehensiveSymbolCount));
 			AbstractMsSymbol symbol = parser.parse(recordReader);
 			pdb.popDependencyStack();
-			mySymbolList.add(symbol);
-			recordNumber++;
+			mySymbolMap.put((long) offset, symbol);
 			comprehensiveSymbolList.add(symbol);
 			comprehensiveSymbolCount++;
 		}
-		return mySymbolList;
+		return mySymbolMap;
 	}
 
 	/**
@@ -189,12 +210,12 @@ public class SymbolRecords {
 	 */
 	protected void dump(Writer writer) throws IOException {
 		writer.write("SymbolRecords-----------------------------------------------\n");
-		writer.write(dumpSymbolList(symbolList));
-		for (int i = 0; i < moduleSymbolLists.size(); i++) {
-			List<AbstractMsSymbol> list = moduleSymbolLists.get(i);
-			if (list != null) {
+		writer.write(dumpSymbolMap(symbolMap));
+		for (int i = 0; i < moduleSymbols.size(); i++) {
+			Map<Long, AbstractMsSymbol> map = moduleSymbols.get(i);
+			if (map != null) {
 				writer.write("Module(" + i + ") List:\n");
-				writer.write(dumpSymbolList(list));
+				writer.write(dumpSymbolMap(map));
 			}
 		}
 		writer.write("\nEnd SymbolRecords-------------------------------------------\n");
@@ -204,18 +225,20 @@ public class SymbolRecords {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Debug method for dumping the symbols from a symbol list
-	 * @param list The symbol list to dump.
+	 * Debug method for dumping the symbols from a symbol map
+	 * @param map the {@link Map}<{@link Long},{@link AbstractMsSymbol}> to dump.
 	 * @return {@link String} of pretty output of symbols dumped.
 	 */
-	protected String dumpSymbolList(List<AbstractMsSymbol> list) {
+	protected String dumpSymbolMap(Map<Long, AbstractMsSymbol> map) {
 		StringBuilder builder = new StringBuilder();
-		builder.append("SymbolList--------------------------------------------------");
-		for (AbstractMsSymbol symbol : list) {
+		builder.append("SymbolMap---------------------------------------------------");
+		for (Long offset : map.keySet()) {
+			AbstractMsSymbol symbol = map.get(offset);
 			builder.append("\n------------------------------------------------------------\n");
+			builder.append(String.format("Offset: 0X%08X\n", offset));
 			builder.append(symbol);
 		}
-		builder.append("\nEnd SymbolList----------------------------------------------\n");
+		builder.append("\nEnd SymbolMap-----------------------------------------------\n");
 		return builder.toString();
 	}
 

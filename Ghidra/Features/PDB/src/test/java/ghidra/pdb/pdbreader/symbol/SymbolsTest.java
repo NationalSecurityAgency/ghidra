@@ -27,6 +27,7 @@ import ghidra.pdb.pdbreader.*;
 import ghidra.pdb.pdbreader.type.AbstractMsType;
 import ghidra.pdb.pdbreader.type.DummyMsType;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
 public class SymbolsTest extends AbstractGenericTest {
 
@@ -244,7 +245,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	//==============================================================================================
 	//==============================================================================================
 	@Test
-	public void testUnknownMsSymbol() throws PdbException {
+	public void testUnknownMsSymbol() throws PdbException, CancelledException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(0xffff);
 		writer.putBytes(new byte[] { (byte) 0xfe, (byte) 0xfd, (byte) 0xfc }); // dummy data
@@ -256,7 +257,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBadMsSymbol() throws PdbException {
+	public void testBadMsSymbol() throws PdbException, CancelledException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CompileFlagsMsSymbol.PDB_ID);
 		writer.putUnsignedByte(0x00); // Processor value.
@@ -269,7 +270,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCompileFlagsMsSymbol() throws PdbException {
+	public void testCompileFlagsMsSymbol()
+			throws PdbException, CancelledException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CompileFlagsMsSymbol.PDB_ID);
 		writer.putUnsignedByte(0x00); // Processor value.
@@ -286,7 +288,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCompile2StMsSymbol() throws PdbException {
+	public void testCompile2StMsSymbol()
+			throws PdbException, CancelledException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile2StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
@@ -318,7 +321,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCompile2MsSymbol() throws PdbException {
+	public void testCompile2MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile2MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
@@ -350,7 +353,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCompile3MsSymbol() throws PdbException {
+	public void testCompile3MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Compile3MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0); // flags
@@ -381,7 +384,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnvironmentBlockMsSymbol() throws PdbException {
+	public void testEnvironmentBlockMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnvironmentBlockMsSymbol.PDB_ID);
 		writer.putUnsignedByte(0); // 1 if compiled for edit-and-continue debug
@@ -400,7 +403,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegister16MsSymbol() throws PdbException {
+	public void testRegister16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Register16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(4096); // Type index or metadata token
@@ -414,7 +417,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterStMsSymbol() throws PdbException {
+	public void testRegisterStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index or metadata token
@@ -428,7 +431,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterMsSymbol() throws PdbException {
+	public void testRegisterMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index or metadata token
@@ -442,7 +445,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testConstant16MsSymbol() throws PdbException {
+	public void testConstant16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Constant16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(4096); // Type index containing enum if enumerate
@@ -456,7 +459,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testConstantStMsSymbol() throws PdbException {
+	public void testConstantStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ConstantStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -470,7 +473,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testConstantMsSymbol() throws PdbException {
+	public void testConstantMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ConstantMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -484,7 +487,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedConstantMsSymbol() throws PdbException {
+	public void testManagedConstantMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedConstantMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -498,7 +501,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUserDefinedType16MsSymbol() throws PdbException {
+	public void testUserDefinedType16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UserDefinedType16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(4096); // Type index containing enum if enumerate
@@ -511,7 +514,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUserDefinedTypeStMsSymbol() throws PdbException {
+	public void testUserDefinedTypeStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UserDefinedTypeStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -524,7 +527,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUserDefinedTypeMsSymbol() throws PdbException {
+	public void testUserDefinedTypeMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UserDefinedTypeMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -537,7 +540,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobolUserDefinedType16MsSymbol() throws PdbException {
+	public void testCobolUserDefinedType16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CobolUserDefinedType16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(4096); // Type index containing enum if enumerate
@@ -550,7 +553,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobolUserDefinedTypeStMsSymbol() throws PdbException {
+	public void testCobolUserDefinedTypeStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CobolUserDefinedTypeStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -563,7 +566,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobolUserDefinedTypeMsSymbol() throws PdbException {
+	public void testCobolUserDefinedTypeMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CobolUserDefinedTypeMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -576,7 +579,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStartSearchMsSymbol() throws PdbException {
+	public void testStartSearchMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StartSearchMsSymbol.PDB_ID);
 		writer.putInt(0x100); // Offset of the procedure
@@ -589,7 +592,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEndMsSymbol() throws PdbException {
+	public void testEndMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -600,7 +603,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSkipMsSymbol() throws PdbException {
+	public void testSkipMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(SkipMsSymbol.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
@@ -612,7 +615,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCvReservedMsSymbol() throws PdbException {
+	public void testCvReservedMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CvReservedMsSymbol.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
@@ -624,7 +627,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testObjectNameStMsSymbol() throws PdbException {
+	public void testObjectNameStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ObjectNameStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -637,7 +640,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testObjectNameMsSymbol() throws PdbException {
+	public void testObjectNameMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ObjectNameMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -650,7 +653,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEndArgumentsListMsSymbol() throws PdbException {
+	public void testEndArgumentsListMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EndArgumentsListMsSymbol.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
@@ -662,7 +665,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManyRegisterVariable16MsSymbol() throws PdbException {
+	public void testManyRegisterVariable16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManyRegisterVariable16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(4096); // Type index containing enum if enumerate
@@ -680,7 +683,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManyRegisterVariableStMsSymbol() throws PdbException {
+	public void testManyRegisterVariableStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManyRegisterVariableStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -698,7 +701,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManyRegisterVariableMsSymbol() throws PdbException {
+	public void testManyRegisterVariableMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManyRegisterVariableMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -716,7 +719,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManyRegisterVariable2StMsSymbol() throws PdbException {
+	public void testManyRegisterVariable2StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManyRegisterVariable2StMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -734,7 +737,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManyRegisterVariable2MsSymbol() throws PdbException {
+	public void testManyRegisterVariable2MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManyRegisterVariable2MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index containing enum if enumerate
@@ -752,7 +755,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReturnDescriptionMsSymbol() throws PdbException {
+	public void testReturnDescriptionMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ReturnDescriptionMsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x00); // Generic flags
@@ -768,7 +771,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEntryThisMsSymbol() throws PdbException {
+	public void testEntryThisMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EntryThisMsSymbol.PDB_ID);
 		// API: "Symbol describing this pointer on entry" TODO: made up data; what should it be?
@@ -781,7 +784,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasePointerRelative16MsSymbol() throws PdbException {
+	public void testBasePointerRelative16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasePointerRelative16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x10); // BasePointer-relative offset.
@@ -795,7 +798,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasePointerRelative3216MsSymbol() throws PdbException {
+	public void testBasePointerRelative3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasePointerRelative3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // BasePointer-relative offset.
@@ -809,7 +812,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasePointerRelative32StMsSymbol() throws PdbException {
+	public void testBasePointerRelative32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasePointerRelative32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // BasePointer-relative offset.
@@ -823,7 +826,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasePointerRelative32MsSymbol() throws PdbException {
+	public void testBasePointerRelative32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasePointerRelative32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // BasePointer-relative offset.
@@ -837,7 +840,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalData16MsSymbol() throws PdbException {
+	public void testLocalData16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalData16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x10); // Offset of symbol.
@@ -852,7 +855,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalData3216MsSymbol() throws PdbException {
+	public void testLocalData3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalData3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // Offset of symbol.
@@ -867,7 +870,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalData32StMsSymbol() throws PdbException {
+	public void testLocalData32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalData32StMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -882,7 +885,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalData32MsSymbol() throws PdbException {
+	public void testLocalData32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalData32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -897,7 +900,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalData16MsSymbol() throws PdbException {
+	public void testGlobalData16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalData16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x10); // Offset of symbol.
@@ -912,7 +915,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalData3216MsSymbol() throws PdbException {
+	public void testGlobalData3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalData3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // Offset of symbol.
@@ -927,7 +930,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalData32StMsSymbol() throws PdbException {
+	public void testGlobalData32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalData32StMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -942,7 +945,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalData32MsSymbol() throws PdbException {
+	public void testGlobalData32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalData32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -957,7 +960,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPublic16MsSymbol() throws PdbException {
+	public void testPublic16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Public16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x10); // Offset of symbol.
@@ -972,7 +975,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPublic3216MsSymbol() throws PdbException {
+	public void testPublic3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Public3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // Offset of symbol.
@@ -987,7 +990,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPublic32StMsSymbol() throws PdbException {
+	public void testPublic32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Public32StMsSymbol.PDB_ID);
 		writer.putInt(0x0f); // Public symbol flags
@@ -1002,7 +1005,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPublic32MsSymbol() throws PdbException {
+	public void testPublic32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Public32MsSymbol.PDB_ID);
 		writer.putInt(0x0f); // Public symbol flags
@@ -1017,7 +1020,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalManagedDataStMsSymbol() throws PdbException {
+	public void testLocalManagedDataStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalManagedDataStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1033,7 +1036,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalManagedDataMsSymbol() throws PdbException {
+	public void testLocalManagedDataMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalManagedDataMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1048,7 +1051,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalManagedDataStMsSymbol() throws PdbException {
+	public void testGlobalManagedDataStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalManagedDataStMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1064,7 +1067,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalManagedDataMsSymbol() throws PdbException {
+	public void testGlobalManagedDataMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalManagedDataMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1079,7 +1082,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalThreadStorage3216MsSymbol() throws PdbException {
+	public void testLocalThreadStorage3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalThreadStorage3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // Offset into thread storage
@@ -1095,7 +1098,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalThreadStorage32StMsSymbol() throws PdbException {
+	public void testLocalThreadStorage32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalThreadStorage32StMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1111,7 +1114,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalThreadStorage32MsSymbol() throws PdbException {
+	public void testLocalThreadStorage32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalThreadStorage32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1127,7 +1130,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalThreadStorage3216MsSymbol() throws PdbException {
+	public void testGlobalThreadStorage3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalThreadStorage3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // Offset into thread storage
@@ -1143,7 +1146,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalThreadStorage32StMsSymbol() throws PdbException {
+	public void testGlobalThreadStorage32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalThreadStorage32StMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1159,7 +1162,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalThreadStorage32MsSymbol() throws PdbException {
+	public void testGlobalThreadStorage32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalThreadStorage32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1175,7 +1178,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalDataHLSLMsSymbol() throws PdbException {
+	public void testLocalDataHLSLMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalDataHLSLMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1196,7 +1199,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalDataHLSL32MsSymbol() throws PdbException {
+	public void testLocalDataHLSL32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalDataHLSL32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1217,7 +1220,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalDataHLSL32ExtMsSymbol() throws PdbException {
+	public void testLocalDataHLSL32ExtMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalDataHLSL32ExtMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1237,7 +1240,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalDataHLSLMsSymbol() throws PdbException {
+	public void testGlobalDataHLSLMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalDataHLSLMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1258,7 +1261,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalDataHLSL32MsSymbol() throws PdbException {
+	public void testGlobalDataHLSL32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalDataHLSL32MsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1279,7 +1282,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalDataHLSL32ExtMsSymbol() throws PdbException {
+	public void testGlobalDataHLSL32ExtMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalDataHLSL32ExtMsSymbol.PDB_ID);
 		writer.putInt(4096); // Type index
@@ -1299,7 +1302,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStart16MsSymbol() throws PdbException {
+	public void testLocalProcedureStart16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStart16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1327,7 +1330,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStart3216MsSymbol() throws PdbException {
+	public void testLocalProcedureStart3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStart3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1355,7 +1358,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStart32StMsSymbol() throws PdbException {
+	public void testLocalProcedureStart32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStart32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1383,7 +1386,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStart32MsSymbol() throws PdbException {
+	public void testLocalProcedureStart32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStart32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1411,7 +1414,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStart16MsSymbol() throws PdbException {
+	public void testGlobalProcedureStart16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStart16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1439,7 +1442,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStart3216MsSymbol() throws PdbException {
+	public void testGlobalProcedureStart3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStart3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1467,7 +1470,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStart32StMsSymbol() throws PdbException {
+	public void testGlobalProcedureStart32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStart32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1495,7 +1498,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStart32MsSymbol() throws PdbException {
+	public void testGlobalProcedureStart32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStart32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1523,7 +1526,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedure32IdMsSymbol() throws PdbException {
+	public void testLocalProcedure32IdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedure32IdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1551,7 +1554,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedure32IdMsSymbol() throws PdbException {
+	public void testGlobalProcedure32IdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedure32IdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1579,7 +1582,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStart32DeferredProcedureCallMsSymbol() throws PdbException {
+	public void testLocalProcedureStart32DeferredProcedureCallMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStart32DeferredProcedureCallMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1607,7 +1611,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedure32DeferredProcedureCallIdMsSymbol() throws PdbException {
+	public void testLocalProcedure32DeferredProcedureCallIdMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedure32DeferredProcedureCallIdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1635,7 +1640,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStartMips16MsSymbol() throws PdbException {
+	public void testLocalProcedureStartMips16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStartMips16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1666,7 +1671,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStartMipsStMsSymbol() throws PdbException {
+	public void testLocalProcedureStartMipsStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStartMipsStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1697,7 +1702,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStartMipsMsSymbol() throws PdbException {
+	public void testLocalProcedureStartMipsMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStartMipsMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1728,7 +1733,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStartMips16MsSymbol() throws PdbException {
+	public void testGlobalProcedureStartMips16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStartMips16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1759,7 +1764,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStartMipsStMsSymbol() throws PdbException {
+	public void testGlobalProcedureStartMipsStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStartMipsStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1790,7 +1795,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStartMipsMsSymbol() throws PdbException {
+	public void testGlobalProcedureStartMipsMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStartMipsMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1821,7 +1826,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureMipsIdMsSymbol() throws PdbException {
+	public void testLocalProcedureMipsIdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureMipsIdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1852,7 +1857,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureMipsIdMsSymbol() throws PdbException {
+	public void testGlobalProcedureMipsIdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureMipsIdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1883,7 +1888,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStartIa64StMsSymbol() throws PdbException {
+	public void testLocalProcedureStartIa64StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStartIa64StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1913,7 +1918,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureStartIa64MsSymbol() throws PdbException {
+	public void testLocalProcedureStartIa64MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureStartIa64MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1943,7 +1948,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStartIa64StMsSymbol() throws PdbException {
+	public void testGlobalProcedureStartIa64StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStartIa64StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -1973,7 +1978,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureStartIa64MsSymbol() throws PdbException {
+	public void testGlobalProcedureStartIa64MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureStartIa64MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2003,7 +2008,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureIa64IdMsSymbol() throws PdbException {
+	public void testLocalProcedureIa64IdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureIa64IdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2033,7 +2038,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalProcedureIa64IdMsSymbol() throws PdbException {
+	public void testGlobalProcedureIa64IdMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalProcedureIa64IdMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2063,7 +2068,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testThunk16MsSymbol() throws PdbException {
+	public void testThunk16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Thunk16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2087,7 +2092,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testThunkStMsSymbol() throws PdbException {
+	public void testThunkStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Thunk32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2111,7 +2116,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testThunkMsSymbol() throws PdbException {
+	public void testThunkMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Thunk32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2135,7 +2140,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBlock16MsSymbol() throws PdbException {
+	public void testBlock16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Block16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2153,7 +2158,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBlock32StMsSymbol() throws PdbException {
+	public void testBlock32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Block32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2171,7 +2176,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBlock32MsSymbol() throws PdbException {
+	public void testBlock32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Block32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2189,7 +2194,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testWith16MsSymbol() throws PdbException {
+	public void testWith16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(With16MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2207,7 +2212,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testWith32StMsSymbol() throws PdbException {
+	public void testWith32StMsSymbol() throws PdbException, CancelledException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(With32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2225,7 +2230,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testWith32MsSymbol() throws PdbException {
+	public void testWith32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(With32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2243,7 +2248,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLabel16MsSymbol() throws PdbException {
+	public void testLabel16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Label16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x30); // Offset of symbol
@@ -2262,7 +2267,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLabel32StMsSymbol() throws PdbException {
+	public void testLabel32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Label32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // Offset of symbol
@@ -2281,7 +2286,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLabel32MsSymbol() throws PdbException {
+	public void testLabel32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Label32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // Offset of symbol
@@ -2300,7 +2305,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testChangeExecutionModel16MsSymbol() throws PdbException {
+	public void testChangeExecutionModel16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ChangeExecutionModel16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x30); // Offset of symbol
@@ -2318,7 +2323,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testChangeExecutionModel32MsSymbol() throws PdbException {
+	public void testChangeExecutionModel32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ChangeExecutionModel32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // Offset of symbol
@@ -2336,7 +2341,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTable16MsSymbol() throws PdbException {
+	public void testVirtualFunctionTable16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTable16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x10); // offset of symbol
@@ -2351,7 +2356,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTable3216MsSymbol() throws PdbException {
+	public void testVirtualFunctionTable3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTable3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // offset of symbol
@@ -2366,7 +2371,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTable32MsSymbol() throws PdbException {
+	public void testVirtualFunctionTable32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTable32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(4096); // root
@@ -2381,7 +2386,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterRelativeAddress16MsSymbol() throws PdbException {
+	public void testRegisterRelativeAddress16MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterRelativeAddress16MsSymbol.PDB_ID);
 		writer.putUnsignedShort(0x30); // offset of symbol
@@ -2397,7 +2402,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterRelativeAddress3216MsSymbol() throws PdbException {
+	public void testRegisterRelativeAddress3216MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterRelativeAddress3216MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // offset of symbol
@@ -2413,7 +2418,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterRelativeAddress32StMsSymbol() throws PdbException {
+	public void testRegisterRelativeAddress32StMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterRelativeAddress32StMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // offset of symbol
@@ -2429,7 +2434,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testRegisterRelativeAddress32MsSymbol() throws PdbException {
+	public void testRegisterRelativeAddress32MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(RegisterRelativeAddress32MsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x30); // offset of symbol
@@ -2445,7 +2450,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStaticLinkForMipsExceptionHandlingMsSymbol() throws PdbException {
+	public void testStaticLinkForMipsExceptionHandlingMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StaticLinkForMipsExceptionHandlingMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2459,7 +2465,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProcedureReferenceStMsSymbol() throws PdbException {
+	public void testProcedureReferenceStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ProcedureReferenceStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2474,7 +2480,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDataReferenceStMsSymbol() throws PdbException {
+	public void testDataReferenceStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DataReferenceStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2489,7 +2495,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureReferenceStMsSymbol() throws PdbException {
+	public void testLocalProcedureReferenceStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureReferenceStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2504,7 +2510,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProcedureReferenceMsSymbol() throws PdbException {
+	public void testProcedureReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ProcedureReferenceMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2519,7 +2525,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDataReferenceMsSymbol() throws PdbException {
+	public void testDataReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DataReferenceMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2534,7 +2540,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalProcedureReferenceMsSymbol() throws PdbException {
+	public void testLocalProcedureReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalProcedureReferenceMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2549,7 +2555,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAnnotationReferenceMsSymbol() throws PdbException {
+	public void testAnnotationReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AnnotationReferenceMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2564,7 +2570,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testTokenReferenceToManagedProcedureMsSymbol() throws PdbException {
+	public void testTokenReferenceToManagedProcedureMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(TokenReferenceToManagedProcedureMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // frame size of parent procedure
@@ -2579,7 +2586,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAlignMsSymbol() throws PdbException {
+	public void testAlignMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AlignMsSymbol.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
@@ -2591,7 +2598,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOemDefinedMsSymbol() throws PdbException {
+	public void testOemDefinedMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OemDefinedMsSymbol.PDB_ID);
 		// SS_OEMID GUID (from API doc)
@@ -2612,7 +2619,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalSlotIndexFieldedLILStMsSymbol() throws PdbException {
+	public void testLocalSlotIndexFieldedLILStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalSlotIndexFieldedLILStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
@@ -2626,7 +2633,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalSlotIndexFieldedLILMsSymbol() throws PdbException {
+	public void testLocalSlotIndexFieldedLILMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalSlotIndexFieldedLILMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
@@ -2640,7 +2647,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testParameterSlotIndexFieldedLILStMsSymbol() throws PdbException {
+	public void testParameterSlotIndexFieldedLILStMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ParameterSlotIndexFieldedLILStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
@@ -2654,7 +2662,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testParameterSlotIndexFieldedLILMsSymbol() throws PdbException {
+	public void testParameterSlotIndexFieldedLILMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ParameterSlotIndexFieldedLILMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // slot index
@@ -2668,7 +2676,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAnnotationMsSymbol() throws PdbException {
+	public void testAnnotationMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AnnotationMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Offset
@@ -2686,7 +2694,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReserved1MsSymbol() throws PdbException {
+	public void testReserved1MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Reserved1MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -2697,7 +2705,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReserved2MsSymbol() throws PdbException {
+	public void testReserved2MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Reserved2MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -2708,7 +2716,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReserved3MsSymbol() throws PdbException {
+	public void testReserved3MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Reserved3MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -2719,7 +2727,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReserved4MsSymbol() throws PdbException {
+	public void testReserved4MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Reserved4MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -2730,7 +2738,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalManagedProcedureStMsSymbol() throws PdbException {
+	public void testLocalManagedProcedureStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalManagedProcedureStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2760,7 +2768,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalManagedProcedureMsSymbol() throws PdbException {
+	public void testLocalManagedProcedureMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalManagedProcedureMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2790,7 +2798,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalManagedProcedureStMsSymbol() throws PdbException {
+	public void testGlobalManagedProcedureStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalManagedProcedureStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2820,7 +2828,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGlobalManagedProcedureMsSymbol() throws PdbException {
+	public void testGlobalManagedProcedureMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(GlobalManagedProcedureMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -2850,7 +2858,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoVFPStMsSymbol() throws PdbException {
+	public void testManLocOrParamReltoVFPStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManLocOrParamReltoVFPStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -2870,7 +2878,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoVFPMsSymbol() throws PdbException {
+	public void testManLocOrParamReltoVFPMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManLocOrParamReltoVFPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -2890,7 +2898,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttribLocOrParamReltoVFPMsSymbol() throws PdbException {
+	public void testAttribLocOrParamReltoVFPMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AttribLocOrParamReltoVFPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -2910,7 +2918,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIRStMsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIRStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIRStMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -2930,7 +2938,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIRMsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIRMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIRMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -2950,7 +2958,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttributedLocalOrParameterSIRMsSymbol() throws PdbException {
+	public void testAttributedLocalOrParameterSIRMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AttributedLocalOrParameterSIRMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -2970,7 +2979,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedSymbolWithSlotIndexFieldStMsSymbol() throws PdbException {
+	public void testManagedSymbolWithSlotIndexFieldStMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedSymbolWithSlotIndexFieldStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(1); // Slot index
@@ -2990,7 +3000,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedSymbolWithSlotIndexFieldMsSymbol() throws PdbException {
+	public void testManagedSymbolWithSlotIndexFieldMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedSymbolWithSlotIndexFieldMsSymbol.PDB_ID);
 		writer.putUnsignedInt(1); // Slot index
@@ -3010,7 +3021,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIMRStMsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIMRStMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIMRStMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3031,7 +3043,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIMRMsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIMRMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIMRMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3052,7 +3064,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIMR2StMsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIMR2StMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIMR2StMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3073,7 +3086,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedLocalOrParameterSIMR2MsSymbol() throws PdbException {
+	public void testManagedLocalOrParameterSIMR2MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedLocalOrParameterSIMR2MsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3094,7 +3107,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttributedLocalOrParameterSIMRMsSymbol() throws PdbException {
+	public void testAttributedLocalOrParameterSIMRMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AttributedLocalOrParameterSIMRMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3115,7 +3129,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoAMPStMsSymbol() throws PdbException {
+	public void testManLocOrParamReltoAMPStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManLocOrParamReltoAMPStMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -3136,7 +3150,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManLocOrParamReltoAMPMsSymbol() throws PdbException {
+	public void testManLocOrParamReltoAMPMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManLocOrParamReltoAMPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -3157,7 +3171,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAttribLocOrParamReltoAMPMsSymbol() throws PdbException {
+	public void testAttribLocOrParamReltoAMPMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AttribLocOrParamReltoAMPMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x3000); // Frame-relative offset
@@ -3178,7 +3192,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndexForTypeReferencedByNameFromMetadataMsSymbol() throws PdbException {
+	public void testIndexForTypeReferencedByNameFromMetadataMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(IndexForTypeReferencedByNameFromMetadataMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index or mdatadata token
@@ -3190,7 +3205,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUsingNamespaceStMsSymbol() throws PdbException {
+	public void testUsingNamespaceStMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UsingNamespaceStMsSymbol.PDB_ID);
 		writer.putByteLengthPrefixedUtf8String("UsingNamespaceName");
@@ -3202,7 +3217,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUsingNamespaceMsSymbol() throws PdbException {
+	public void testUsingNamespaceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UsingNamespaceMsSymbol.PDB_ID);
 		writer.putNullTerminatedUtf8String("UsingNamespaceName");
@@ -3214,7 +3229,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testTrampolineMsSymbol() throws PdbException {
+	public void testTrampolineMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(TrampolineMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // trampoline subtype
@@ -3234,7 +3249,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSeparatedCodeFromCompilerSupportMsSymbol() throws PdbException {
+	public void testSeparatedCodeFromCompilerSupportMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(SeparatedCodeFromCompilerSupportMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // pointer to the parent
@@ -3257,7 +3273,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalSymbolInOptimizedCode2005MsSymbol() throws PdbException {
+	public void testLocalSymbolInOptimizedCode2005MsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalSymbolInOptimizedCode2005MsSymbol.PDB_ID);
 		writer.putInt(4096); // type index
@@ -3272,11 +3289,10 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals("LOCAL_2005: Param: 00001000  Address Taken, Compiler Generated, aggregate," +
 			" aggregated, aliased, alias, return value, optimized away, file static," +
 			" LocalSymbolInOptimizedCode2005Name", result);
-		//LOCAL_2005: Param: 00001000  Address Taken, Compiler Generated, aggregate, aggregated, aliased, alias, return value, optimized away, file static, LocalSymbolInOptimizedCode2005Name
 	}
 
 	@Test
-	public void testLocalSymbolInOptimizedCodeMsSymbol() throws PdbException {
+	public void testLocalSymbolInOptimizedCodeMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalSymbolInOptimizedCodeMsSymbol.PDB_ID);
 		writer.putInt(4096); // type index
@@ -3291,11 +3307,11 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals("LOCAL: Param: 00001000  Address Taken, Compiler Generated, aggregate," +
 			" aggregated, aliased, alias, return value, optimized away, file static," +
 			" LocalSymbolInOptimizedCodeName", result);
-		//LOCAL: Param: 00001000  Address Taken, Compiler Generated, aggregate, aggregated, aliased, alias, return value, optimized away, file static, LocalSymbolInOptimizedCodeName
 	}
 
 	@Test
-	public void testDefinedSingleAddressRange2005MsSymbol() throws PdbException {
+	public void testDefinedSingleAddressRange2005MsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefinedSingleAddressRange2005MsSymbol.PDB_ID);
 		// API not given; writing dummy data here.
@@ -3308,7 +3324,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDefinedMultipleAddressRanges2005MsSymbol() throws PdbException {
+	public void testDefinedMultipleAddressRanges2005MsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefinedMultipleAddressRanges2005MsSymbol.PDB_ID);
 		// API not given; writing dummy data here.
@@ -3321,7 +3338,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPeCoffSectionMsSymbol() throws PdbException {
+	public void testPeCoffSectionMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PeCoffSectionMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // Section number
@@ -3340,7 +3357,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPeCoffGroupMsSymbol() throws PdbException {
+	public void testPeCoffGroupMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PeCoffGroupMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x100); // cb (probably length?)
@@ -3357,7 +3374,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testExportMsSymbol() throws PdbException {
+	public void testExportMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ExportMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // Ordinal
@@ -3372,7 +3389,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndirectCallSiteInfoMsSymbol() throws PdbException {
+	public void testIndirectCallSiteInfoMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(IndirectCallSiteInfoMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // Offset
@@ -3387,7 +3404,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFrameSecurityCookieMsSymbol() throws PdbException {
+	public void testFrameSecurityCookieMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FrameSecurityCookieMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // Offset
@@ -3403,7 +3420,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDiscardedByLinkMsSymbol() throws PdbException {
+	public void testDiscardedByLinkMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DiscardedByLinkMsSymbol.PDB_ID);
 		writer.putUnsignedInt(1); // "discarded" enum value (0, 1, 2?)
@@ -3424,7 +3441,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDefinedSingleAddressRangeMsSymbol() throws PdbException {
+	public void testDefinedSingleAddressRangeMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefinedSingleAddressRangeMsSymbol.PDB_ID);
 		writer.putUnsignedInt(1); // DIA program to eval value of the symbol
@@ -3445,7 +3462,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSubfieldDARMsSymbol() throws PdbException {
+	public void testSubfieldDARMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(SubfieldDARMsSymbol.PDB_ID);
 		writer.putUnsignedInt(1); // DIA program to eval value of the symbol
@@ -3466,7 +3483,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnregisteredSymbolDARMsSymbol() throws PdbException {
+	public void testEnregisteredSymbolDARMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnregisteredSymbolDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register to hold value fo the symbol
@@ -3488,7 +3505,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFramePointerRelativeDARMsSymbol() throws PdbException {
+	public void testFramePointerRelativeDARMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FramePointerRelativeDARMsSymbol.PDB_ID);
 		writer.putInt(0x1000); // offset to frame pointer
@@ -3508,7 +3525,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnregisteredFieldOfSymbolDARMsSymbol() throws PdbException {
+	public void testEnregisteredFieldOfSymbolDARMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnregisteredFieldOfSymbolDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register holding the value of the symbol
@@ -3532,7 +3549,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFramePointerRelativeFullScopeDARMsSymbol() throws PdbException {
+	public void testFramePointerRelativeFullScopeDARMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FramePointerRelativeFullScopeDARMsSymbol.PDB_ID);
 		writer.putInt(0x0100); // offset to frame pointer
@@ -3544,7 +3562,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnregisteredSymbolRelativeDARMsSymbol() throws PdbException {
+	public void testEnregisteredSymbolRelativeDARMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnregisteredSymbolRelativeDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register holding base pointer of symbol
@@ -3571,7 +3590,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBuildInformationMsSymbol() throws PdbException {
+	public void testBuildInformationMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BuildInformationMsSymbol.PDB_ID);
 		writer.putUnsignedInt(4096); // item id of build info
@@ -3583,7 +3602,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProcedureIdEndMsSymbol() throws PdbException {
+	public void testProcedureIdEndMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ProcedureIdEndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -3594,7 +3613,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testInlinedFunctionCallsiteMsSymbol() throws PdbException {
+	public void testInlinedFunctionCallsiteMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(InlinedFunctionCallsiteMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // pointer to the parent
@@ -3614,7 +3633,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testInlinedFunctionCallsiteExtendedMsSymbol() throws PdbException {
+	public void testInlinedFunctionCallsiteExtendedMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(InlinedFunctionCallsiteExtendedMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // pointer to the parent
@@ -3635,7 +3655,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testInlinedFunctionEndMsSymbol() throws PdbException {
+	public void testInlinedFunctionEndMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(InlinedFunctionEndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -3646,7 +3666,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFileStaticMsSymbol() throws PdbException {
+	public void testFileStaticMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FileStaticMsSymbol.PDB_ID);
 		writer.putUnsignedInt(4096); // type index
@@ -3665,7 +3685,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLocalDeferredProcedureCallGroupSharedMsSymbol() throws PdbException {
+	public void testLocalDeferredProcedureCallGroupSharedMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LocalDeferredProcedureCallGroupSharedMsSymbol.PDB_ID);
 		writer.putUnsignedInt(4096); // type index
@@ -3685,7 +3706,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testHighLevelShaderLanguageRegDimDARMsSymbol() throws PdbException {
+	public void testHighLevelShaderLanguageRegDimDARMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(HighLevelShaderLanguageRegDimDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register type from HLSLREG
@@ -3717,7 +3739,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeferredProcedureCallPointerTagRegDimDARMsSymbol() throws PdbException {
+	public void testDeferredProcedureCallPointerTagRegDimDARMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DeferredProcedureCallPointerTagRegDimDARMsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // register type from HLSLREG
@@ -3749,7 +3772,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol() throws PdbException {
+	public void testDeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol.PDB_ID);
 		// write array of mappings from DPC pointer tag values to symbol record offsets.
@@ -3767,7 +3791,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArmSwitchTableMsSymbol() throws PdbException {
+	public void testArmSwitchTableMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ArmSwitchTableMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // section-relative offset to the base for switch offsets
@@ -3788,7 +3812,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCallersMsSymbol() throws PdbException {
+	public void testCallersMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CallersMsSymbol.PDB_ID);
 		int num = 3;
@@ -3805,7 +3829,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCalleesMsSymbol() throws PdbException {
+	public void testCalleesMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(CalleesMsSymbol.PDB_ID);
 		int num = 3;
@@ -3822,7 +3846,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProfileGuidedOptimizationDataMsSymbol() throws PdbException {
+	public void testProfileGuidedOptimizationDataMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ProfileGuidedOptimizationDataMsSymbol.PDB_ID);
 		writer.putUnsignedInt(5); // Number of times function was called (invocations)
@@ -3839,7 +3864,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testHeapAllocationSiteMsSymbol() throws PdbException {
+	public void testHeapAllocationSiteMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(HeapAllocationSiteMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // Offset of call site
@@ -3855,7 +3880,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testModuleTypeReferenceMsSymbol() throws PdbException {
+	public void testModuleTypeReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ModuleTypeReferenceMsSymbol.PDB_ID);
 		// flags: 1=true at given bit offset.
@@ -3880,7 +3905,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMiniPdbReferenceMsSymbol() throws PdbException {
+	public void testMiniPdbReferenceMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MiniPdbReferenceMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x10); // union of coff section and type index--context later.
@@ -3903,7 +3928,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMapToMiniPdbMsSymbol() throws PdbException {
+	public void testMapToMiniPdbMsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MapToMiniPdbMsSymbol.PDB_ID);
 		writer.putNullTerminatedWchartString("SourcePdbFileName");
@@ -3916,7 +3941,8 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testExtraFrameAndProcedureInformationMsSymbol() throws PdbException {
+	public void testExtraFrameAndProcedureInformationMsSymbol()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ExtraFrameAndProcedureInformationMsSymbol.PDB_ID);
 		writer.putUnsignedInt(0x1000); // total bytes in frame of procedure
@@ -3964,7 +3990,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnknownX1166MsSymbol() throws PdbException {
+	public void testUnknownX1166MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnknownX1166MsSymbol.PDB_ID);
 		// We have no idea of the symbol contents; just probable existence of symbol type x1166.
@@ -3977,7 +4003,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnknownX1167MsSymbol() throws PdbException {
+	public void testUnknownX1167MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnknownX1167MsSymbol.PDB_ID);
 		writer.putUnsignedShort(1); // unknown
@@ -3994,7 +4020,7 @@ public class SymbolsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnknownX1168MsSymbol() throws PdbException {
+	public void testUnknownX1168MsSymbol() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnknownX1168MsSymbol.PDB_ID);
 		writer.putInt(2); // we believe this is a count

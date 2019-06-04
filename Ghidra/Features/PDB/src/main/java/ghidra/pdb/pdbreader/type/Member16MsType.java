@@ -48,7 +48,7 @@ public class Member16MsType extends AbstractMemberMsType {
 	@Override
 	protected void create() {
 		fieldTypeRecordIndex = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 	@Override

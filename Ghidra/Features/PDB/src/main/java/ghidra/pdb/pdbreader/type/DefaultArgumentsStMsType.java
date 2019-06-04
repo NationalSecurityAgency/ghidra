@@ -47,7 +47,7 @@ public class DefaultArgumentsStMsType extends AbstractDefaultArgumentsMsType {
 	@Override
 	protected void create() {
 		typeIndex = new TypeIndex32();
-		expression = new StringSt();
+		expression = new StringSt(pdb);
 	}
 
 }

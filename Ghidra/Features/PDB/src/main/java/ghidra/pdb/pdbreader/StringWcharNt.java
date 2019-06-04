@@ -24,12 +24,17 @@ import ghidra.pdb.PdbException;
  */
 public class StringWcharNt extends AbstractString {
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} to which this type belongs.
+	 */
+	public StringWcharNt(AbstractPdb pdb) {
+		super(pdb);
+	}
+
 	@Override
 	protected String doParse(PdbByteReader reader) throws PdbException {
-		return reader.parseNullTerminatedWcharString();
+		return reader.parseNullTerminatedWcharString(pdb.getPdbReaderOptions().getTwoByteCharset());
 	}
 
 }

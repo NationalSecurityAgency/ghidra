@@ -46,7 +46,7 @@ public class StringIdMsType extends AbstractMsType {
 			new CategoryIndex(CategoryIndex.Category.ITEM, idOfSubstringIDList));
 		pdb.popDependencyStack();
 
-		name = reader.parseNullTerminatedString();
+		name = reader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 		reader.skipPadding();
 	}
 

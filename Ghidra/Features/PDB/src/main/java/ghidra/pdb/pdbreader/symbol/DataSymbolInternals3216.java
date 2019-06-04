@@ -41,7 +41,7 @@ public class DataSymbolInternals3216 extends AbstractDataSymbolInternals {
 	protected void create() {
 		typeIndex = new TypeIndex16();
 		offset = new Offset32();
-		name = new StringUtf8St();
+		name = new StringUtf8St(pdb);
 	}
 
 	@Override

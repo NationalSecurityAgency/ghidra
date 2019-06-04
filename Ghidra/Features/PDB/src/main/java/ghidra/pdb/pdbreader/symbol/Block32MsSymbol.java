@@ -48,7 +48,7 @@ public class Block32MsSymbol extends AbstractBlockMsSymbol {
 	protected void create() {
 		length = new Offset32();
 		offset = new Offset32();
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 	@Override

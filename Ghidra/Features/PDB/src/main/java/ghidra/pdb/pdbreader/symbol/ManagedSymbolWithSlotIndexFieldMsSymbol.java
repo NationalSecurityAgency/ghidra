@@ -54,7 +54,7 @@ public class ManagedSymbolWithSlotIndexFieldMsSymbol
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 }

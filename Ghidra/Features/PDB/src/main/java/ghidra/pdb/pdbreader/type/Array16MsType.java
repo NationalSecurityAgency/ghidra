@@ -48,7 +48,7 @@ public class Array16MsType extends AbstractArrayMsType {
 	protected void create() {
 		elementTypeIndex = new TypeIndex16();
 		indexTypeIndex = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 }

@@ -163,7 +163,7 @@ public abstract class AbstractTypeProgramInterface {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 
 		deserializeHeader(reader);
-		deserializeTypeRecords(reader);
+		deserializeTypeRecords(reader, monitor);
 
 		return versionNumber;
 	}
@@ -252,14 +252,18 @@ public abstract class AbstractTypeProgramInterface {
 	/**
 	 * Deserializes the Type Records of this class.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws CancelledException Upon user cancellation.
 	 */
-	protected void deserializeTypeRecords(PdbByteReader reader) throws PdbException {
+	protected void deserializeTypeRecords(PdbByteReader reader, TaskMonitor monitor)
+			throws PdbException, CancelledException {
 		int recordLength;
 		int recordNumber = typeIndexMin;
 		TypeParser parser = pdb.getTypeParser();
 		//System.out.println(reader.dump());
 		while (reader.hasMore()) {
+			monitor.checkCanceled();
 //			// DO NOT REMOVE
 //			int index = reader.getIndex();
 //			//System.out.println("index: " + index);

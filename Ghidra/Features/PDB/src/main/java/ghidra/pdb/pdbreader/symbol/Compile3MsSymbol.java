@@ -62,7 +62,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	 */
 	public Compile3MsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		compilerVersionString = new StringUtf8Nt();
+		compilerVersionString = new StringUtf8Nt(pdb);
 		processFlags(reader.parseUnsignedIntVal());
 		processor = Processor.fromValue(reader.parseUnsignedShortVal());
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();

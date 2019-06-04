@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 
-import ghidra.pdb.PdbByteReader;
-import ghidra.pdb.PdbException;
+import ghidra.pdb.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -37,6 +36,9 @@ public class DatabaseInterfaceParser {
 	public static final int DBI60_ID = 19970606;  // 0x0130ba2e
 	public static final int DBI70_ID = 19990903;  // 0x01310977
 	public static final int DBI110_ID = 20091201;  // 0x01329141
+
+	//==============================================================================================
+	private PdbByteReader debugReader;
 
 	//==============================================================================================
 	// API
@@ -61,6 +63,11 @@ public class DatabaseInterfaceParser {
 		if (reader.getLimit() == 0) {
 			return null;
 		}
+
+		// In support of debug.
+		debugReader = reader;
+		PdbMessageLog.message(this::debug1);
+
 		int headerSignature = reader.parseInt();
 		int versionNumber = reader.parseInt();
 
@@ -84,6 +91,11 @@ public class DatabaseInterfaceParser {
 		return databaseInterface;
 	}
 
+	private String debug1() {
+		return "DatabaseInterfaceParser data on stream " + getStreamNumber() + ":\n" +
+			debugReader.dump() + "\n";
+	}
+
 	//==============================================================================================
 	// Internal Data Methods
 	//==============================================================================================
@@ -93,7 +105,6 @@ public class DatabaseInterfaceParser {
 	 */
 	protected int getStreamNumber() {
 		return DATABASE_INTERFACE_STREAM_NUMBER;
-
 	}
 
 }

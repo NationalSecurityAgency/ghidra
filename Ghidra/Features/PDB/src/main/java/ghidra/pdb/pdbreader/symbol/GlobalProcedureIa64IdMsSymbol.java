@@ -47,7 +47,7 @@ public class GlobalProcedureIa64IdMsSymbol extends AbstractProcedureStartIa64MsS
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8Nt();
+		return new StringUtf8Nt(pdb);
 	}
 
 	@Override

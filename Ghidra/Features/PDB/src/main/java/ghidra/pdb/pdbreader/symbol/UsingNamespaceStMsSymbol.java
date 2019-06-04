@@ -51,7 +51,7 @@ public class UsingNamespaceStMsSymbol extends AbstractUsingNamespaceMsSymbol {
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8St();
+		return new StringUtf8St(pdb);
 	}
 
 }

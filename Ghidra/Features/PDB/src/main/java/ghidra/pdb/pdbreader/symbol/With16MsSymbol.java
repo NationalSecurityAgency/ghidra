@@ -48,7 +48,7 @@ public class With16MsSymbol extends AbstractWithMsSymbol {
 	protected void create() {
 		length = new Offset16();
 		offset = new Offset16();
-		expression = new StringUtf8St();
+		expression = new StringUtf8St(pdb);
 	}
 
 	@Override

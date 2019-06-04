@@ -20,6 +20,7 @@ import java.io.RandomAccessFile;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
+import ghidra.pdb.pdbreader.PdbReaderOptions;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -126,18 +127,23 @@ public abstract class AbstractMsf implements AutoCloseable {
 	protected int currentFreePageMapFirstPageNumber;
 	protected int numPages = 1; // Set to 1 to allow initial read
 
+	protected PdbReaderOptions pdbOptions;
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
 	 * Constructor for this class.
 	 * @param file The {@link RandomAccessFile} to process for this class.
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
 	 * @throws IOException Upon file IO seek/read issues.
 	 * @throws PdbException Upon unknown value for configuration.
 	 */
-	public AbstractMsf(RandomAccessFile file) throws IOException, PdbException {
+	public AbstractMsf(RandomAccessFile file, PdbReaderOptions pdbOptions)
+			throws IOException, PdbException {
 		// Do initial configuration with largest possible page size.  ConfigureParameters will
 		//  be called again later with the proper pageSize set.
+		this.pdbOptions = pdbOptions;
 		pageSize = 0x1000;
 		configureParameters();
 		// Create components.

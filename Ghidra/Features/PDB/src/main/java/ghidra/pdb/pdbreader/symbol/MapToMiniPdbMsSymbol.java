@@ -29,8 +29,8 @@ public class MapToMiniPdbMsSymbol extends AbstractMsSymbol {
 
 	public static final int PDB_ID = 0x1161;
 
-	private AbstractString fromName = new StringWcharNt();
-	private AbstractString toName = new StringWcharNt();
+	private AbstractString fromName = new StringWcharNt(pdb);
+	private AbstractString toName = new StringWcharNt(pdb);
 
 	/**
 	 * Constructor for this symbol.

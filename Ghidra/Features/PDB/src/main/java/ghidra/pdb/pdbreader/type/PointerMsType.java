@@ -99,8 +99,8 @@ public class PointerMsType extends AbstractPointerMsType {
 	protected void create() {
 		underlyingTypeIndex = new TypeIndex32();
 		memberPointerContainingClassIndex = new TypeIndex32();
-		baseSymbol = new StringNt();
-		name = new StringNt();
+		baseSymbol = new StringNt(pdb);
+		name = new StringNt(pdb);
 	}
 
 	@Override

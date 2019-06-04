@@ -26,6 +26,7 @@ import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
 import ghidra.pdb.pdbreader.symbol.RegisterMsSymbol;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
 //TODO: not sure if ST variety should get putPadding() or putAlign()
 
@@ -165,7 +166,7 @@ public class TypesTest extends AbstractGenericTest {
 	//==============================================================================================
 	//==============================================================================================
 	@Test
-	public void testUnknownMsType() throws PdbException {
+	public void testUnknownMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(0xffff);
 		writer.putBytes(new byte[] { (byte) 0xfe, (byte) 0xfd, (byte) 0xfc }); // dummy data
@@ -177,7 +178,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBadMsType() throws PdbException {
+	public void testBadMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Modifier16MsType.PDB_ID);
 		writer.putUnsignedShort(0x07);
@@ -190,7 +191,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testModifier16MsType() throws PdbException {
+	public void testModifier16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Modifier16MsType.PDB_ID);
 		writer.putUnsignedShort(0x07);
@@ -204,7 +205,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testModifierMsType() throws PdbException {
+	public void testModifierMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ModifierMsType.PDB_ID);
 		writer.putInt(4096);
@@ -218,7 +219,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPointer16MsType() throws PdbException {
+	public void testPointer16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Pointer16MsType.PDB_ID);
 		// pointer type = 9 = base(self)
@@ -241,7 +242,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPointerMsType() throws PdbException {
+	public void testPointerMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PointerMsType.PDB_ID);
 		writer.putInt(4096); // Underlying type
@@ -272,7 +273,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArray16MsType() throws PdbException {
+	public void testArray16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Array16MsType.PDB_ID);
 		writer.putUnsignedShort(4096);
@@ -288,7 +289,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArrayStMsType() throws PdbException {
+	public void testArrayStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ArrayStMsType.PDB_ID);
 		writer.putUnsignedInt(4096);
@@ -304,7 +305,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArrayMsType() throws PdbException {
+	public void testArrayMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ArrayMsType.PDB_ID);
 		writer.putUnsignedInt(4096);
@@ -320,7 +321,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStridedArrayMsType() throws PdbException {
+	public void testStridedArrayMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StridedArrayMsType.PDB_ID);
 		writer.putUnsignedInt(4096);
@@ -337,7 +338,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testClass16MsType() throws PdbException {
+	public void testClass16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Class16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -357,7 +358,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testClassStMsType() throws PdbException {
+	public void testClassStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ClassStMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -378,7 +379,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testClassMsType() throws PdbException {
+	public void testClassMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ClassMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -399,7 +400,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStructure16MsType() throws PdbException {
+	public void testStructure16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Structure16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the structure.
@@ -419,7 +420,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStructureStMsType() throws PdbException {
+	public void testStructureStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StructureStMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the structure.
@@ -440,7 +441,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStructureMsType() throws PdbException {
+	public void testStructureMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StructureMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the structure.
@@ -461,7 +462,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testInterfaceMsType() throws PdbException {
+	public void testInterfaceMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(InterfaceMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the interface.
@@ -482,7 +483,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnion16MsType() throws PdbException {
+	public void testUnion16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Union16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -500,7 +501,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnionStMsType() throws PdbException {
+	public void testUnionStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnionStMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -519,7 +520,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUnionMsType() throws PdbException {
+	public void testUnionMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnionMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -538,7 +539,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnum16MsType() throws PdbException {
+	public void testEnum16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Enum16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -556,7 +557,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnumStMsType() throws PdbException {
+	public void testEnumStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnumStMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -575,7 +576,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnumMsType() throws PdbException {
+	public void testEnumMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnumMsType.PDB_ID);
 		writer.putUnsignedShort(2); // Count of number of elements in the class.
@@ -594,7 +595,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProcedure16MsType() throws PdbException {
+	public void testProcedure16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Procedure16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // Return type index.
@@ -612,7 +613,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testProcedureMsType() throws PdbException {
+	public void testProcedureMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ProcedureMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Return type index.
@@ -630,7 +631,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberFunction16MsType() throws PdbException {
+	public void testMemberFunction16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MemberFunction16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // Return type index.
@@ -653,7 +654,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberFunctionMsType() throws PdbException {
+	public void testMemberFunctionMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MemberFunctionMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Return type index.
@@ -676,7 +677,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVtShapeMsType() throws PdbException {
+	public void testVtShapeMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] vtShapeMsTypeBytes = createVtShapeMsTypeBuffer();
 		writer.putBytes(vtShapeMsTypeBytes);
@@ -688,7 +689,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTableMsType() throws PdbException {
+	public void testVirtualFunctionTableMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTableMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // class/struct owner of vftable
@@ -711,7 +712,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobol016MsType() throws PdbException {
+	public void testCobol016MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Cobol016MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // Parent type index.
@@ -728,7 +729,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobol0MsType() throws PdbException {
+	public void testCobol0MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Cobol0MsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Parent type index.
@@ -745,7 +746,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCobol1MsType() throws PdbException {
+	public void testCobol1MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Cobol1MsType.PDB_ID);
 		// TODO: This is made up data.  API and examples are unknown.
@@ -759,7 +760,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasicArray16MsType() throws PdbException {
+	public void testBasicArray16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasicArray16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // Parent type index.
@@ -772,7 +773,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBasicArrayMsType() throws PdbException {
+	public void testBasicArrayMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BasicArrayMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Parent type index.
@@ -785,7 +786,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testLabelMsType() throws PdbException {
+	public void testLabelMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(LabelMsType.PDB_ID);
 		writer.putUnsignedShort(4); // 0 = NEAR; 4 = FAR addressing mode.
@@ -798,7 +799,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNullMsType() throws PdbException {
+	public void testNullMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NullMsType.PDB_ID);
 		writer.putAlign(2); // TODO: Not sure
@@ -810,7 +811,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNotTranMsType() throws PdbException {
+	public void testNotTranMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NotTranMsType.PDB_ID);
 		writer.putAlign(2); // TODO: Not sure
@@ -822,7 +823,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArray16MsType() throws PdbException {
+	public void testDimensionedArray16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArray16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // Underlying type index.
@@ -837,7 +838,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayStMsType() throws PdbException {
+	public void testDimensionedArrayStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayStMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Underlying type index.
@@ -852,7 +853,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayMsType() throws PdbException {
+	public void testDimensionedArrayMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // Underlying type index.
@@ -867,7 +868,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePath16MsType() throws PdbException {
+	public void testVirtualFunctionTablePath16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePath16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // count
@@ -882,7 +883,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePathMsType() throws PdbException {
+	public void testVirtualFunctionTablePathMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePathMsType.PDB_ID);
 		writer.putInt(2); // count
@@ -897,7 +898,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPrecompiledType16MsType() throws PdbException {
+	public void testPrecompiledType16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PrecompiledType16MsType.PDB_ID);
 		writer.putUnsignedShort(8192); // a "start" type index
@@ -915,7 +916,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPrecompiledTypeStMsType() throws PdbException {
+	public void testPrecompiledTypeStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PrecompiledTypeStMsType.PDB_ID);
 		writer.putInt(8192); // a "start" type index
@@ -933,7 +934,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPrecompiledTypeMsType() throws PdbException {
+	public void testPrecompiledTypeMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(PrecompiledTypeMsType.PDB_ID);
 		writer.putInt(8192); // a "start" type index
@@ -951,7 +952,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEndPrecompiledTypeMsType() throws PdbException {
+	public void testEndPrecompiledTypeMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EndPrecompiledTypeMsType.PDB_ID);
 		writer.putUnsignedInt(0xfedcba98L); // made-up signature
@@ -964,7 +965,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOemDefinableString16MsType() throws PdbException {
+	public void testOemDefinableString16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OemDefinableString16MsType.PDB_ID);
 		writer.putUnsignedShort(8192); // MSFT-assigned OEM identifier.
@@ -986,7 +987,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOemDefinableStringMsType() throws PdbException {
+	public void testOemDefinableStringMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OemDefinableStringMsType.PDB_ID);
 		writer.putUnsignedShort(8192); // MSFT-assigned OEM identifier.
@@ -1008,7 +1009,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOemDefinableString2MsType() throws PdbException {
+	public void testOemDefinableString2MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OemDefinableString2MsType.PDB_ID);
 		writer.putGUID(0x0c0d0e0f, (short) 0x0a0b, (short) 0x0809,
@@ -1029,7 +1030,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testTypeServerStMsType() throws PdbException {
+	public void testTypeServerStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(TypeServerStMsType.PDB_ID);
 		writer.putUnsignedInt(0xfedcba98); // signature
@@ -1044,7 +1045,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testTypeServerMsType() throws PdbException {
+	public void testTypeServerMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(TypeServerMsType.PDB_ID);
 		writer.putUnsignedInt(0xfedcba98); // signature
@@ -1059,7 +1060,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testTypeServer2MsType() throws PdbException {
+	public void testTypeServer2MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(TypeServer2MsType.PDB_ID);
 		writer.putGUID(0x0c0d0e0f, (short) 0x0a0b, (short) 0x0809,
@@ -1075,7 +1076,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSkip16() throws PdbException {
+	public void testSkip16() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Skip16MsType.PDB_ID);
 		writer.putUnsignedShort(8192); // next "valid" index
@@ -1090,7 +1091,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSkipMsType() throws PdbException {
+	public void testSkipMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(SkipMsType.PDB_ID);
 		writer.putInt(8192);  // next "valid" index
@@ -1105,7 +1106,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArgumentsList16MsType() throws PdbException {
+	public void testArgumentsList16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ArgumentsList16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // Number of arguments.
@@ -1120,7 +1121,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testArgumentsListMsType() throws PdbException {
+	public void testArgumentsListMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ArgumentsListMsType.PDB_ID);
 		writer.putUnsignedInt(2); // Number of arguments.
@@ -1135,7 +1136,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSubstringListMsType() throws PdbException {
+	public void testSubstringListMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(SubstringListMsType.PDB_ID);
 		writer.putUnsignedInt(2); // Number of elements.
@@ -1150,7 +1151,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStringIdMsType() throws PdbException {
+	public void testStringIdMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StringIdMsType.PDB_ID);
 		// Type index of SubStringListMsType (or 0 if not needed)
@@ -1165,7 +1166,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDefaultArguments16MsType() throws PdbException {
+	public void testDefaultArguments16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefaultArguments16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of expression type.
@@ -1179,7 +1180,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDefaultArgumentsStMsType() throws PdbException {
+	public void testDefaultArgumentsStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefaultArgumentsStMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // type index of expression type.
@@ -1193,7 +1194,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDefaultArgumentsMsType() throws PdbException {
+	public void testDefaultArgumentsMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DefaultArgumentsMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // type index of expression type.
@@ -1207,7 +1208,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testListMsType() throws PdbException {
+	public void testListMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ListMsType.PDB_ID);
 		writer.putUnsignedByte(0x41);
@@ -1220,7 +1221,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFieldList16MsType() throws PdbException {
+	public void testFieldList16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FieldList16MsType.PDB_ID);
 		byte[] baseClass16MsTypeBytes = createBaseClass16MsTypeBuffer();
@@ -1244,7 +1245,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFieldListMsType() throws PdbException {
+	public void testFieldListMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FieldListMsType.PDB_ID);
 		byte[] baseClassMsTypeBytes = createBaseClassMsTypeBuffer();
@@ -1268,7 +1269,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDerivedClassList16MsType() throws PdbException {
+	public void testDerivedClassList16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DerivedClassList16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // count
@@ -1283,7 +1284,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDerivedClassListMsType() throws PdbException {
+	public void testDerivedClassListMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DerivedClassListMsType.PDB_ID);
 		writer.putUnsignedInt(2); // count
@@ -1298,7 +1299,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBitfield16MsType() throws PdbException {
+	public void testBitfield16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Bitfield16MsType.PDB_ID);
 		writer.putUnsignedByte(2); // length
@@ -1313,7 +1314,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBitfieldMsType() throws PdbException {
+	public void testBitfieldMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BitfieldMsType.PDB_ID);
 		writer.putUnsignedInt(4096); // type index
@@ -1328,7 +1329,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMethodList16MsType() throws PdbException {
+	public void testMethodList16MsType() throws PdbException, CancelledException {
 		PdbByteReader reader = new PdbByteReader(createMethodList16MsTypeBuffer());
 		AbstractMsType type = typeParser.parse(reader);
 		assertEquals(type instanceof MethodList16MsType, true);
@@ -1339,7 +1340,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMethodListMsType() throws PdbException {
+	public void testMethodListMsType() throws PdbException, CancelledException {
 		PdbByteReader reader = new PdbByteReader(createMethodListMsTypeBuffer());
 		AbstractMsType type = typeParser.parse(reader);
 		assertEquals(type instanceof MethodListMsType, true);
@@ -1349,7 +1350,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayConstBoundsUpper16MsType() throws PdbException {
+	public void testDimensionedArrayConstBoundsUpper16MsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayConstBoundsUpper16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // rank
@@ -1365,7 +1367,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayConstBoundsUpperMsType() throws PdbException {
+	public void testDimensionedArrayConstBoundsUpperMsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayConstBoundsUpperMsType.PDB_ID);
 		writer.putInt(4096); // type index
@@ -1380,7 +1383,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayConstBoundsLowerUpper16MsType() throws PdbException {
+	public void testDimensionedArrayConstBoundsLowerUpper16MsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayConstBoundsLowerUpper16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // rank
@@ -1396,7 +1400,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayConstBoundsLowerUpperMsType() throws PdbException {
+	public void testDimensionedArrayConstBoundsLowerUpperMsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayConstBoundsLowerUpperMsType.PDB_ID);
 		writer.putInt(4096); // type index
@@ -1411,7 +1416,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayVarBoundsUpper16MsType() throws PdbException {
+	public void testDimensionedArrayVarBoundsUpper16MsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayVarBoundsUpper16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // rank
@@ -1428,7 +1434,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayVarBoundsUpperMsType() throws PdbException {
+	public void testDimensionedArrayVarBoundsUpperMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayVarBoundsUpperMsType.PDB_ID);
 		writer.putInt(2); // rank
@@ -1444,7 +1450,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayVarBoundsLowerUpper16MsType() throws PdbException {
+	public void testDimensionedArrayVarBoundsLowerUpper16MsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayVarBoundsLowerUpper16MsType.PDB_ID);
 		writer.putUnsignedShort(2); // rank
@@ -1462,7 +1469,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDimensionedArrayVarBoundsLowerUpperMsType() throws PdbException {
+	public void testDimensionedArrayVarBoundsLowerUpperMsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(DimensionedArrayVarBoundsLowerUpperMsType.PDB_ID);
 		writer.putInt(2); // rank
@@ -1480,7 +1488,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testReferencedSymbolMsType() throws PdbException {
+	public void testReferencedSymbolMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createReferencedSymbolMsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1492,7 +1500,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBaseClass16MsType() throws PdbException {
+	public void testBaseClass16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createBaseClass16MsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1505,7 +1513,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBaseClassMsType() throws PdbException {
+	public void testBaseClassMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createBaseClassMsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1518,7 +1526,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBaseInterfaceMsType() throws PdbException {
+	public void testBaseInterfaceMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BaseInterfaceMsType.PDB_ID);
 		int attributes = 3;
@@ -1537,7 +1545,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualBaseClass16MsType() throws PdbException {
+	public void testVirtualBaseClass16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualBaseClass16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of direct virtual base class
@@ -1561,7 +1569,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualBaseClassMsType() throws PdbException {
+	public void testVirtualBaseClassMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualBaseClassMsType.PDB_ID);
 		int attributes = 3;
@@ -1585,7 +1593,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndirectVirtualBaseClass16MsType() throws PdbException {
+	public void testIndirectVirtualBaseClass16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(IndirectVirtualBaseClass16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of direct virtual base class
@@ -1609,7 +1617,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndirectVirtualBaseClassMsType() throws PdbException {
+	public void testIndirectVirtualBaseClassMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(IndirectVirtualBaseClassMsType.PDB_ID);
 		int attributes = 3;
@@ -1633,7 +1641,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnumerateStMsType() throws PdbException {
+	public void testEnumerateStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnumerateStMsType.PDB_ID);
 		int attributes = 3;
@@ -1652,7 +1660,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testEnumerateMsType() throws PdbException {
+	public void testEnumerateMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(EnumerateMsType.PDB_ID);
 		int attributes = 3;
@@ -1671,7 +1679,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFriendFunction16MsType() throws PdbException {
+	public void testFriendFunction16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FriendFunction16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of friend function.
@@ -1686,7 +1694,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFriendFunctionStMsType() throws PdbException {
+	public void testFriendFunctionStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FriendFunctionStMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -1702,7 +1710,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFriendFunctionMsType() throws PdbException {
+	public void testFriendFunctionMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FriendFunctionMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -1718,7 +1726,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndex16MsType() throws PdbException {
+	public void testIndex16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Index16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of friend function.
@@ -1730,7 +1738,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testIndexMsType() throws PdbException {
+	public void testIndexMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(IndexMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -1743,7 +1751,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMember16MsType() throws PdbException {
+	public void testMember16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createMember16MsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1757,7 +1765,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberStMsType() throws PdbException {
+	public void testMemberStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createMemberStMsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1771,7 +1779,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberMsType() throws PdbException {
+	public void testMemberMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		byte[] symbolBytes = createMemberMsTypeBuffer();
 		writer.putBytes(symbolBytes);
@@ -1785,7 +1793,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStaticMember16MsType() throws PdbException {
+	public void testStaticMember16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StaticMember16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of field.
@@ -1806,7 +1814,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStaticMemberStMsType() throws PdbException {
+	public void testStaticMemberStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StaticMemberStMsType.PDB_ID);
 		int attributes = 3;
@@ -1827,7 +1835,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStaticMemberMsType() throws PdbException {
+	public void testStaticMemberMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(StaticMemberMsType.PDB_ID);
 		int attributes = 3;
@@ -1848,7 +1856,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOverloadedMethod16MsType() throws PdbException {
+	public void testOverloadedMethod16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethod16MsType.PDB_ID);
 		int count =
@@ -1867,7 +1875,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOverloadedMethodStMsType() throws PdbException {
+	public void testOverloadedMethodStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethodStMsType.PDB_ID);
 		int count = ((AbstractMethodListMsType) pdb.getTypeRecord(methodListMsType1)).getListSize();
@@ -1885,7 +1893,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOverloadedMethodMsType() throws PdbException {
+	public void testOverloadedMethodMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethodMsType.PDB_ID);
 		int count = ((AbstractMethodListMsType) pdb.getTypeRecord(methodListMsType1)).getListSize();
@@ -1903,7 +1911,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNestedType16MsType() throws PdbException {
+	public void testNestedType16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NestedType16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of nested type
@@ -1917,7 +1925,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNestedTypeStMsType() throws PdbException {
+	public void testNestedTypeStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NestedTypeStMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -1932,7 +1940,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNestedTypeMsType() throws PdbException {
+	public void testNestedTypeMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NestedTypeMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -1947,7 +1955,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNestedTypeExtStMsType() throws PdbException {
+	public void testNestedTypeExtStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NestedTypeExtStMsType.PDB_ID);
 		int attributes = 3;
@@ -1968,7 +1976,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNestedTypeExtMsType() throws PdbException {
+	public void testNestedTypeExtMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(NestedTypeExtMsType.PDB_ID);
 		int attributes = 3;
@@ -1989,7 +1997,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePointer16MsType() throws PdbException {
+	public void testVirtualFunctionTablePointer16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePointer16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of pointer
@@ -2002,7 +2010,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePointerMsType() throws PdbException {
+	public void testVirtualFunctionTablePointerMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePointerMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -2016,7 +2024,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFriendClass16MsType() throws PdbException {
+	public void testFriendClass16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FriendClass16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of pointer
@@ -2029,7 +2037,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFriendClassMsType() throws PdbException {
+	public void testFriendClassMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FriendClassMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -2043,7 +2051,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOneMethod16MsType() throws PdbException {
+	public void testOneMethod16MsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OneMethod16MsType.PDB_ID);
 		int procedureRecordNumber = 4096;
@@ -2067,7 +2075,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOneMethodStMsType() throws PdbException {
+	public void testOneMethodStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OneMethodStMsType.PDB_ID);
 		int procedureRecordNumber = 4096;
@@ -2091,7 +2099,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOneMethodMsType() throws PdbException {
+	public void testOneMethodMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OneMethodMsType.PDB_ID);
 		int procedureRecordNumber = 4096;
@@ -2115,7 +2123,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePointerWithOffset16MsType() throws PdbException {
+	public void testVirtualFunctionTablePointerWithOffset16MsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePointerWithOffset16MsType.PDB_ID);
 		writer.putUnsignedShort(4096); // type index of pointer
@@ -2129,7 +2138,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVirtualFunctionTablePointerWithOffsetMsType() throws PdbException {
+	public void testVirtualFunctionTablePointerWithOffsetMsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VirtualFunctionTablePointerWithOffsetMsType.PDB_ID);
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // padding
@@ -2144,7 +2154,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberModifyStMsType() throws PdbException {
+	public void testMemberModifyStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MemberModifyStMsType.PDB_ID);
 		int accessVal = 3;
@@ -2164,7 +2174,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberModifyMsType() throws PdbException {
+	public void testMemberModifyMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MemberModifyMsType.PDB_ID);
 		int accessVal = 3;
@@ -2184,7 +2194,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedStMsType() throws PdbException {
+	public void testManagedStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedStMsType.PDB_ID);
 		writer.putByteLengthPrefixedUtf8String("managedTypeName");
@@ -2197,7 +2207,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testManagedMsType() throws PdbException {
+	public void testManagedMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ManagedMsType.PDB_ID);
 		writer.putNullTerminatedUtf8String("managedTypeName");
@@ -2210,7 +2220,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAliasStMsType() throws PdbException {
+	public void testAliasStMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AliasStMsType.PDB_ID);
 		writer.putInt(4096); // underlying type index
@@ -2224,7 +2234,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAliasMsType() throws PdbException {
+	public void testAliasMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(AliasMsType.PDB_ID);
 		writer.putInt(4096); // underlying type index
@@ -2238,7 +2248,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testHighLevelShaderLanguageMsType() throws PdbException {
+	public void testHighLevelShaderLanguageMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(HighLevelShaderLanguageMsType.PDB_ID);
 		writer.putInt(4096); // subtype index (0 if none?)
@@ -2262,7 +2272,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testModifierExMsType() throws PdbException {
+	public void testModifierExMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(ModifierExMsType.PDB_ID);
 		writer.putInt(4096); // modified type index
@@ -2287,7 +2297,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVectorMsType() throws PdbException {
+	public void testVectorMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(VectorMsType.PDB_ID);
 		writer.putInt(4096); // element type index
@@ -2310,7 +2320,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMatrixMsType() throws PdbException {
+	public void testMatrixMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MatrixMsType.PDB_ID);
 		writer.putInt(4096); // element type index
@@ -2335,7 +2345,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFunctionIdMsType() throws PdbException {
+	public void testFunctionIdMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(FunctionIdMsType.PDB_ID);
 		writer.putInt(4096); // scope type index
@@ -2350,7 +2360,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMemberFunctionIdMsType() throws PdbException {
+	public void testMemberFunctionIdMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(MemberFunctionIdMsType.PDB_ID);
 		writer.putInt(4096); // parent type index
@@ -2365,7 +2375,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUserDefinedTypeSourceAndLineMsType() throws PdbException {
+	public void testUserDefinedTypeSourceAndLineMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UserDefinedTypeSourceAndLineMsType.PDB_ID);
 		writer.putInt(4096); // user defined type, type index
@@ -2383,7 +2393,8 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testUserDefinedTypeModuleSourceAndLineMsType() throws PdbException {
+	public void testUserDefinedTypeModuleSourceAndLineMsType()
+			throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UserDefinedTypeModuleSourceAndLineMsType.PDB_ID);
 		writer.putInt(4096); // user defined type, type index
@@ -2400,7 +2411,7 @@ public class TypesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBuildInfoMsType() throws PdbException {
+	public void testBuildInfoMsType() throws PdbException, CancelledException {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(BuildInfoMsType.PDB_ID);
 		writer.putUnsignedShort(5); // number of arguments

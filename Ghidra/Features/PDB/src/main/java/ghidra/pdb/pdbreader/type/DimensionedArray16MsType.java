@@ -48,7 +48,7 @@ public class DimensionedArray16MsType extends AbstractDimensionedArrayMsType {
 	protected void create() {
 		elementTypeIndex = new TypeIndex16();
 		dimensionInformation = new TypeIndex16();
-		name = new StringSt();
+		name = new StringSt(pdb);
 	}
 
 }

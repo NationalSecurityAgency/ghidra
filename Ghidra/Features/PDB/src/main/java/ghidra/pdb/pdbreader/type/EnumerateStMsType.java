@@ -46,7 +46,7 @@ public class EnumerateStMsType extends AbstractEnumerateMsType {
 
 	@Override
 	protected AbstractString create() {
-		return new StringSt();
+		return new StringSt(pdb);
 	}
 
 }

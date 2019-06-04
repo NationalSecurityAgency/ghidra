@@ -59,7 +59,8 @@ public class VirtualFunctionTableMsType extends AbstractMsType {
 		PdbByteReader namesReader = reader.getSubPdbByteReader(namesArrayLength);
 		boolean first = true;
 		while (namesReader.hasMore()) {
-			String name = namesReader.parseNullTerminatedString();
+			String name = namesReader.parseNullTerminatedString(
+				pdb.getPdbReaderOptions().getOneByteCharset());
 			if (first) {
 				first = false;
 				vftableName = name;

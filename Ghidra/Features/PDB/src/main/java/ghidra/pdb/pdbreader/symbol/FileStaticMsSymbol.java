@@ -42,7 +42,7 @@ public class FileStaticMsSymbol extends AbstractMsSymbol {
 	 */
 	public FileStaticMsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 		typeIndex = reader.parseInt();
 		moduleFilenameStringTableIndex = reader.parseInt();
 		localVariableFlags = new LocalVariableFlags(reader);

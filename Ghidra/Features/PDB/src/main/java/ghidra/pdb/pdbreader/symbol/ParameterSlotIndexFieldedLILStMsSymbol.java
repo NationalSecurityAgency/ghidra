@@ -49,7 +49,7 @@ public class ParameterSlotIndexFieldedLILStMsSymbol
 
 	@Override
 	protected AbstractString create() {
-		return new StringUtf8St();
+		return new StringUtf8St(pdb);
 	}
 
 	@Override

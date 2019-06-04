@@ -48,7 +48,7 @@ public class AnnotationMsSymbol extends AbstractMsSymbol {
 		segment = reader.parseUnsignedShortVal();
 		int count = reader.parseUnsignedShortVal();
 		for (int i = 0; i < count; i++) {
-			AbstractString string = new StringUtf8Nt();
+			AbstractString string = new StringUtf8Nt(pdb);
 			string.parse(reader);
 			annotationStringList.add(string);
 		}

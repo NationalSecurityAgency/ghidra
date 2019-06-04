@@ -47,7 +47,7 @@ public class OneMethodMsType extends AbstractOneMethodMsType {
 	@Override
 	protected void create() {
 		procedureTypeRecordIndex = new TypeIndex32();
-		name = new StringNt();
+		name = new StringNt(pdb);
 	}
 
 }

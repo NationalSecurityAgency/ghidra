@@ -66,7 +66,7 @@ public abstract class AbstractDataHighLevelShaderLanguageSymbolInternals
 
 	@Override
 	protected void create() {
-		name = new StringUtf8Nt();
+		name = new StringUtf8Nt(pdb);
 	}
 
 }

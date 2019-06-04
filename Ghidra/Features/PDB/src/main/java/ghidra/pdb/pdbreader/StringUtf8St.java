@@ -24,9 +24,14 @@ import ghidra.pdb.PdbException;
  */
 public class StringUtf8St extends AbstractString {
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
+	/**
+	 * Constructor.
+	 * @param pdb {@link AbstractPdb} to which this type belongs.
+	 */
+	public StringUtf8St(AbstractPdb pdb) {
+		super(pdb);
+	}
+
 	@Override
 	protected String doParse(PdbByteReader reader) throws PdbException {
 		return reader.parseByteLengthPrefixedUtf8String();
