@@ -305,10 +305,10 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * 
 		 * @throws Exception If there was a problem processing memory blocks for this PRELINK 
 		 *   Mach-O.
-		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean)
+		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
 		public void processMemoryBlocks() throws Exception {
-			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, false);
+			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, true, false);
 		}
 
 		/**
