@@ -2341,6 +2341,7 @@ void ValueSetSolver::solve(int4 max)
       componentStack.push_back(curSet->partHead);
       curComponent = curSet->partHead;
       curComponent->isDirty = false;
+      curComponent->startNode->looped();	// Reset component counter upon entry
     }
     if (curComponent != (Partition *)0) {
       if (curSet->iterate())
@@ -2349,7 +2350,7 @@ void ValueSetSolver::solve(int4 max)
 	curSet = curSet->next;
       }
       else {
-	do {
+	for(;;) {
 	  if (curComponent->isDirty) {
 	    curComponent->isDirty = false;
 	    curSet = curComponent->startNode;
@@ -2358,17 +2359,19 @@ void ValueSetSolver::solve(int4 max)
 	    }
 	    break;
 	  }
-	  else {
-	    componentStack.pop_back();
-	    if (componentStack.empty()) {
-	      curComponent = (Partition *)0;
-	      curSet = curSet->next;
-	      break;
-	    }
-	    curComponent = componentStack.back();
-	    curComponent->startNode->looped();
+
+	  componentStack.pop_back();
+	  if (componentStack.empty()) {
+	    curComponent = (Partition *)0;
+	    curSet = curSet->next;
+	    break;
 	  }
-	} while(curComponent->stopNode == curSet);
+	  curComponent = componentStack.back();
+	  if (curComponent->stopNode != curSet) {
+	    curSet = curSet->next;
+	    break;
+	  }
+	}
       }
     }
     else {
