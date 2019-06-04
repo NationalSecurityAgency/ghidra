@@ -71,6 +71,30 @@ Ghidra's build uses artifacts named as available in Maven Central and Bintray JC
 Unfortunately, in some cases, the artifact or the particular version we desire is not available.
 So, in addition to mavenCentral and jcenter, you must configure a flatDir-style repository for manually-downloaded dependencies.
 
+#### Dependency Setup Script
+The flat repository mentioned above can be done automatically by running a simple Gradle script. 
+Navigate to the Ghidra clone you just created and from the top-level ghidra folder, run the following:
+```
+gradle --init-script gradle/init.gradle tasks
+```
+The Gradle task to be executed, in this case _tasks_, is unimportant. The point is to have Gradle execute
+the __init.gradle__ script. If it ran correctly you will have a new folder, __flatRepo/__, in your home directory populated with the following jar files:
+ * AXMLPrinter2
+ * csframework
+ * dex-ir-2.0
+ * dex-reader-2.0
+ * dex-reader-api-2.0
+ * dex-tools-2.0
+ * dex-translator-2.0
+ * dex-writer-2.0
+ * hfsx
+ * hfsx_dmglib
+ * iharder-base64 
+
+There will also be a new archive, yajsw-stable-12.12.zip, placed in __ghidra.bin/Ghidra/Features/GhidraServer/__.  
+
+If you see these, congrats! Skip to [importing the Gradle project](#import-gradle-project). If not, continue with manual configuration below...
+
 Create `~/.gradle/init.d/repos.gradle` with the following contents:
 
 ```groovy
@@ -215,6 +239,8 @@ Then expand "Java Application" on the left to find the "Ghidra" launcher.
 To build the full Ghidra distribution, you must also build the GhidraServer.
 
 ## Get Dependencies for GhidraServer
+
+_Note_: If you already ran the [dependency setup script](#dependency-setup-script), you can skip this section and continue on to [building the package](#building-the-package).
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in a directory named:
