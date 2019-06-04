@@ -233,7 +233,7 @@ class ValueSetSolver {
   bool checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const;	///< Check if the given Varnode is a \e relative constant
   void generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch);	///< Try to find a \e relative constraint
 public:
-  void establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg);	///< Build value sets for a data-flow system
+  void establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg,bool indirectAsCopy);
   int4 getNumIterations(void) const { return numIterations; }	///< Get the current number of iterations
   void solve(int4 max);				///< Iterate the ValueSet system until it stabilizes
   list<ValueSet>::const_iterator beginValueSets(void) const { return valueNodes.begin(); }	///< Start of all ValueSets in the system

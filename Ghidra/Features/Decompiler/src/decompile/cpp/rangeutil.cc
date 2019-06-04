@@ -2207,11 +2207,16 @@ void ValueSetSolver::generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch
     constraintsFromPath(typeCode,lift,endVn,endVn,cbranch);
 }
 
-/// Given a set of sinks, find all the Varnodes that flow directly into them.
+/// \brief Build value sets for a data-flow system
+///
+/// Given a set of sinks, find all the Varnodes that flow directly into them and set up their
+/// initial ValueSet objects.
 /// \param sinks is the list terminating Varnodes
 /// \param reads are add-on PcodeOps where we would like to know input ValueSets at the point of read
 /// \param stackReg (if non-NULL) gives the stack pointer (for keeping track of relative offsets)
-void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg)
+/// \param indirectAsCopy is \b true if solver should treat CPUI_INDIRECT as CPUI_COPY operations
+void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg,
+					bool indirectAsCopy)
 
 {
   vector<Varnode *> worklist;
@@ -2234,7 +2239,10 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
     workPos += 1;
     if (!vn->isWritten()) {
       if (vn->isConstant()) {
-	if (vn->loneDescend()->numInput() == 1)
+	// Constant inputs to binary ops should not be treated as root nodes as they
+	// get picked up during iteration by the other input, except in the case of a
+	// a PTRSUB from a spacebase constant.
+	if (vn->isSpacebase() || vn->loneDescend()->numInput() == 1)
 	  rootNodes.push_back(vn->getValueSet());
       }
       else
@@ -2243,6 +2251,20 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
     }
     PcodeOp *op = vn->getDef();
     switch(op->code()) {	// Distinguish ops where we can never predict an integer range
+      case CPUI_INDIRECT:
+	if (indirectAsCopy) {
+	  Varnode *inVn = op->getIn(0);
+	  if (!inVn->isMark()) {
+	    newValueSet(inVn,0);
+	    inVn->setMark();
+	    worklist.push_back(inVn);
+	  }
+	}
+	else {
+	  vn->getValueSet()->setFull();
+	  rootNodes.push_back(vn->getValueSet());
+	}
+	break;
       case CPUI_CALL:
       case CPUI_CALLIND:
       case CPUI_CALLOTHER:
