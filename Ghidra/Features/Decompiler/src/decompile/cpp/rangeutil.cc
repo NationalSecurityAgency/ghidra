@@ -1527,8 +1527,10 @@ void ValueSet::doWidening(const CircleRange &newRange)
 void ValueSet::looped(void)
 
 {
-  if (count > 2)
+  if (count >= 2)
     count = 2;		// Reset to point just after any widening
+  else
+    count = 0;		// Delay widening, if we haven't performed it yet
 }
 
 /// Examine the input value sets that determine \b this set and decide if it
