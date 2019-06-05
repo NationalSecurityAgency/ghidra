@@ -20,11 +20,15 @@ import java.io.IOException;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -76,6 +80,36 @@ public class TLSDataDirectory extends DataDirectory {
 		}
 		createDirectoryBookmark(program, addr);
 		PeUtils.createData(program, addr, tls.toDataType(), log);
+
+		// Markup TLS callback functions
+		if (tls.getAddressOfCallBacks() != 0) {
+			AddressSpace space = program.getImageBase().getAddressSpace();
+			DataType pointerDataType =
+				ntHeader.getOptionalHeader().is64bit() ? Pointer64DataType.dataType
+						: Pointer32DataType.dataType;
+			try {
+				int i = 0;
+				while (true) {
+					Address nextCallbackPtrAddr = space.getAddress(
+						tls.getAddressOfCallBacks() + i * pointerDataType.getLength());
+					long nextCallbackAddr = ntHeader.getOptionalHeader().is64bit()
+							? program.getMemory().getLong(nextCallbackPtrAddr)
+							: Conv.intToLong(program.getMemory().getInt(nextCallbackPtrAddr));
+					if (nextCallbackAddr == 0) {
+						break;
+					}
+					PeUtils.createData(program, nextCallbackPtrAddr, pointerDataType, log);
+					Address callbackAddr = space.getAddress(nextCallbackAddr);
+					program.getSymbolTable().createLabel(callbackAddr, "tls_callback_" + i,
+						SourceType.IMPORTED);
+					program.getSymbolTable().addExternalEntryPoint(callbackAddr);
+					i++;
+				}
+			}
+			catch (MemoryAccessException | InvalidInputException e) {
+				log.appendMsg("TLS", "Failed to markup TLS callback functions: " + e.getMessage());
+			}
+		}
 	}
 
 	@Override
