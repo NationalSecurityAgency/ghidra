@@ -23,6 +23,11 @@ import javax.help.UnsupportedOperationException;
 import ghidra.docking.settings.Settings;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * <code>AlignedStructureInspector</code> provides a simple instance of a structure 
+ * member container used to perform alignment operations without forcing modification
+ * of the actual structure. 
+ */
 public class AlignedStructureInspector extends AlignedStructurePacker {
 
 	private AlignedStructureInspector(Structure structure) {
@@ -33,6 +38,9 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 		List<ReadOnlyComponentWrapper> list = new ArrayList<>();
 		for (DataTypeComponent c : structure.getComponents()) {
 			list.add(new ReadOnlyComponentWrapper(c));
+		}
+		if (structure.hasFlexibleArrayComponent()) {
+			list.add(new ReadOnlyComponentWrapper(structure.getFlexibleArrayComponent()));
 		}
 		return list;
 	}
@@ -55,10 +63,10 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 		}
 
 		@Override
-		public void update(int ordinal, int offset, int length) {
-			this.ordinal = ordinal;
-			this.offset = offset;
-			this.length = length;
+		public void update(int ord, int off, int len) {
+			this.ordinal = ord;
+			this.offset = off;
+			this.length = len;
 		}
 
 		@Override
@@ -73,7 +81,7 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 
 		@Override
 		public boolean isFlexibleArrayComponent() {
-			return false;
+			return component.isFlexibleArrayComponent();
 		}
 
 		@Override

@@ -20,15 +20,12 @@ import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import ghidra.GhidraApplicationLayout;
-import ghidra.app.plugin.core.analysis.DefaultDataTypeManagerService;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.framework.*;
 import ghidra.program.model.data.*;
-import ghidra.util.SystemUtilities;
 import resources.ResourceManager;
 
 public class BitFieldEditorDialog extends DialogComponentProvider {
@@ -93,7 +90,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 			if (bitfieldDtc == null || !bitFieldEditorPanel.endCurrentEdit()) {
 				return;
 			}
-			initEdit(bitfieldDtc.getOrdinal());
+			initEdit(bitfieldDtc.getOrdinal(), true);
 		}
 
 		@Override
@@ -200,7 +197,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 			initAdd(-editOrdinal - 1);
 		}
 		else {
-			initEdit(editOrdinal);
+			initEdit(editOrdinal, false);
 		}
 		return bitFieldEditorPanel;
 	}
@@ -234,16 +231,19 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		setApplyEnabled(true);
 	}
 
-	private void initEdit(int editOrdinal) throws ArrayIndexOutOfBoundsException {
+	private void initEdit(int editOrdinal, boolean useExistingAllocationSize)
+			throws ArrayIndexOutOfBoundsException {
 		DataTypeComponent dtc = composite.getComponent(editOrdinal);
 		if (!dtc.isBitFieldComponent()) {
 			throw new IllegalArgumentException("editOrdinal does not correspond to bitfield");
 		}
-		bitFieldEditorPanel.initEdit(dtc, getPreferredAllocationOffset(dtc));
+		bitFieldEditorPanel.initEdit(dtc, getPreferredAllocationOffset(dtc),
+			useExistingAllocationSize);
 		setApplyEnabled(true);
 	}
 
-	private int getPreferredAllocationOffset(DataTypeComponent bitfieldDtc) {
+	static int getPreferredAllocationOffset(DataTypeComponent bitfieldDtc) {
+		Composite composite = (Composite) bitfieldDtc.getParent();
 		if (composite instanceof Union) {
 			return 0;
 		}
@@ -270,34 +270,4 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 
 		return offset;
 	}
-
-	public static void main(String[] args) throws Exception {
-
-		//UniversalIdGenerator.initialize();
-		ApplicationConfiguration configuration = new HeadlessGhidraApplicationConfiguration();
-		configuration.setInitializeLogging(false);
-		Application.initializeApplication(new GhidraApplicationLayout(), configuration);
-
-		Structure s = new StructureDataType("Foo", 0);
-		DataTypeComponent dtcA =
-			s.insertBitFieldAt(0, 4, 16, IntegerDataType.dataType, 4, "BitA", null);
-		DataTypeComponent dtcZ =
-			s.insertBitFieldAt(0, 4, 16, IntegerDataType.dataType, 0, "BitZ", null);
-		DataTypeComponent dtcB =
-			s.insertBitFieldAt(0, 4, 12, IntegerDataType.dataType, 4, "BitB", null);
-		DataTypeComponent dtcC =
-			s.insertBitFieldAt(0, 4, 4, IntegerDataType.dataType, 4, "BitC", null);
-
-		DockingWindowManager winMgr = new DockingWindowManager("TEST", null, null);
-
-		BitFieldEditorDialog dlg =
-			new BitFieldEditorDialog(s, new DefaultDataTypeManagerService(), -1, null);
-
-		SystemUtilities.runSwingNow(() -> {
-			winMgr.setVisible(true);
-			DockingWindowManager.showDialog(null, dlg);
-		});
-
-	}
-
 }

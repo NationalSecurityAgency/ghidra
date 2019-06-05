@@ -18,11 +18,11 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.Component;
 import java.awt.Window;
 
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
+import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.Structure;
 import ghidra.util.exception.AssertException;
 
@@ -30,15 +30,14 @@ import ghidra.util.exception.AssertException;
  * Action for use in the composite data type editor.
  * This action has help associated with it.
  */
-public class AddBitFieldAction extends CompositeEditorTableAction {
+public class ViewBitFieldAction extends CompositeEditorTableAction {
 
-	private final static String ACTION_NAME = "Add Bitfield";
+	private final static String ACTION_NAME = "View Bitfield";
 	private final static String GROUP_NAME = BITFIELD_ACTION_GROUP;
-	private final static String DESCRIPTION =
-		"Add a bitfield at the position of a selected component";
+	private final static String DESCRIPTION = "View an existing bitfield";
 	private static String[] popupPath = new String[] { ACTION_NAME };
 
-	public AddBitFieldAction(CompositeEditorProvider provider) {
+	public ViewBitFieldAction(CompositeEditorProvider provider) {
 		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
@@ -47,42 +46,42 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		adjustEnablement();
 	}
 
+	private DataTypeComponent getBitFieldComponent() {
+		CompEditorModel editorModel = (CompEditorModel) model;
+		if ((editorModel.viewComposite instanceof Structure) &&
+			editorModel.getNumSelectedRows() == 1) {
+			int rowIndex = model.getSelectedRows()[0];
+			if (rowIndex < model.getNumComponents()) {
+				DataTypeComponent dtComponent = model.getComponent(rowIndex);
+				if (dtComponent.isBitFieldComponent()) {
+					return dtComponent;
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public void actionPerformed(ActionContext context) {
 
 		CompEditorModel editorModel = (CompEditorModel) model;
-		if (editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
+
+		DataTypeComponent dtComponent = getBitFieldComponent();
+		if (dtComponent == null) {
 			return;
 		}
-		int rowIndex = model.getSelectedRows()[0];
 
-		BitFieldEditorDialog dlg =
-			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
-				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
+		BitFieldViewerDialog dlg =
+			new BitFieldViewerDialog(editorModel.viewComposite, dtComponent.getOrdinal());
 		Component c = provider.getComponent();
 		Window w = SwingUtilities.windowForComponent(c);
 		DockingWindowManager.showDialog(w, dlg, c);
-
 		requestTableFocus();
-	}
-
-	private void refreshTableAndSelection(CompEditorModel editorModel, int ordinal) {
-		editorModel.fireTableDataChanged();
-		editorModel.compositeInfoChanged();
-		JTable editorTable = provider.getTable();
-		editorTable.getSelectionModel().setSelectionInterval(ordinal, ordinal);
 	}
 
 	@Override
 	public void adjustEnablement() {
-		boolean enabled = true;
-		CompEditorModel editorModel = (CompEditorModel) model;
-		// Union do not support unaligned placement of bitfields
-		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isAligned() ||
-			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
-			enabled = false;
-		}
-		setEnabled(enabled);
+		setEnabled(getBitFieldComponent() != null);
 	}
 
 }

@@ -421,6 +421,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				for (DataTypeComponent comp : comps) {
 					comp.getDataType().addParent(dt);
 				}
+				if (dt instanceof Structure) {
+					Structure struct = (Structure) dt;
+					if (struct.hasFlexibleArrayComponent()) {
+						struct.getFlexibleArrayComponent().getDataType().addParent(dt);
+					}
+				}
 			}
 			else if (dt instanceof FunctionDefinition) {
 				FunctionDefinition funDef = (FunctionDefinition) dt;

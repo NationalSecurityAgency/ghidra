@@ -45,10 +45,7 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.textfield.GValidatedTextField;
-import ghidra.app.plugin.core.data.DataTypeCellRenderer;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.framework.plugintool.Plugin;
@@ -144,7 +141,8 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private void setupTableCellRenderer() {
 		GTableCellRenderer cellRenderer = new GTableCellRenderer();
-		DataTypeCellRenderer dtiCellRenderer = new DataTypeCellRenderer();
+		DataTypeCellRenderer dtiCellRenderer = new DataTypeCellRenderer(
+			model.getOriginalDataTypeManager(), model.bitfieldsSupported());
 		table.setDefaultRenderer(String.class, cellRenderer);
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
@@ -558,6 +556,12 @@ public abstract class CompositeEditorPanel extends JPanel
 		table = new CompositeTable(model);
 		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		table.addMouseListener(new CompositeTableMouseListener());
+		if (model.bitfieldsSupported()) {
+			CompositeTableCellMouseListener cellMouseListener =
+				new CompositeTableCellMouseListener();
+			table.addMouseListener(cellMouseListener);
+			table.addMouseMotionListener(cellMouseListener);
+		}
 
 		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
 			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
@@ -1402,6 +1406,85 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
+	private class CompositeTableCellMouseListener extends MouseAdapter {
+
+		private boolean trackMovement;
+		private Cursor originalCursor;
+		private boolean pointerCursorActive;
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			trackMovement = false;
+			table.setCursor(originalCursor);
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			trackMovement = true;
+			originalCursor = table.getCursor();
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (!pointerCursorActive || e.getClickCount() != 1) {
+				return;
+			}
+			Point p = e.getPoint();
+			int columnIndex = table.columnAtPoint(p);
+			int rowIndex = table.rowAtPoint(p);
+			if ((columnIndex == -1) || (rowIndex == -1)) {
+				return;
+			}
+			DataTypeComponent dtc = model.getComponent(rowIndex);
+			if (dtc != null && dtc.isBitFieldComponent()) {
+				e.consume();
+				BitFieldViewerDialog dlg =
+					new BitFieldViewerDialog(model.viewComposite, dtc.getOrdinal());
+				Rectangle cellRect = table.getCellRect(rowIndex, columnIndex, false);
+				Point xyPoint = new Point(cellRect.x + DataTypeCellRenderer.ICON_WIDTH,
+					cellRect.y + cellRect.height);
+				SwingUtilities.convertPointToScreen(xyPoint, table);
+				dlg.setInitialLocation(xyPoint.x, xyPoint.y);
+				Window w = SwingUtilities.windowForComponent(table);
+				DockingWindowManager.showDialog(w, dlg, table);
+			}
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			if (!trackMovement) {
+				return;
+			}
+			Point p = e.getPoint();
+
+			// Locate the renderer under the event location
+			int columnIndex = table.columnAtPoint(p);
+			int rowIndex = table.rowAtPoint(p);
+
+			if ((columnIndex != -1) && (rowIndex != -1) &&
+				DataTypeInstance.class.equals(table.getColumnClass(columnIndex))) {
+
+				DataTypeComponent dtc = model.getComponent(rowIndex);
+				// ignore non-bitfield rows
+				if (dtc != null && dtc.isBitFieldComponent()) {
+					Rectangle cellRect = table.getCellRect(rowIndex, columnIndex, false);
+					p.translate(-cellRect.x, -cellRect.y);
+					if (p.x <= (DataTypeCellRenderer.ICON_WIDTH + 2)) {
+						if (!pointerCursorActive) {
+							pointerCursorActive = true;
+							table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+						}
+						return; // view bitfield cursor active
+					}
+				}
+			}
+			if (pointerCursorActive) {
+				table.setCursor(originalCursor);
+				pointerCursorActive = false;
+			}
+		}
+	}
+
 	private class CompositeTableMouseListener extends MouseAdapter {
 		@Override
 		public void mouseReleased(MouseEvent e) {
@@ -1471,69 +1554,6 @@ public abstract class CompositeEditorPanel extends JPanel
 
 		public CompositeTable(TableModel dm) {
 			super(dm);
-		}
-
-		// Use the contains method to set the tooltip text depending
-		// on the table cell the mouse is over.
-		@Override
-		public boolean contains(int x, int y) {
-			if (!super.contains(x, y)) {
-				return false;
-			}
-			Point p = new Point(x, y);
-			int columnIndex = columnAtPoint(p);
-			int rowIndex = rowAtPoint(p);
-			String toolTipText = null;
-			Object value = model.getValueAt(rowIndex, columnIndex);
-			if (columnIndex == model.getDataTypeColumn()) {
-				if (value instanceof DataTypeInstance) {
-					DataTypeInstance dataTypeInstance = (DataTypeInstance) value;
-					toolTipText = getDataTypeToolTip(dataTypeInstance.getDataType());
-				}
-			}
-			else if (value instanceof String) {
-				String string = (String) value;
-				if (string.length() == 0) {
-					string = null;
-				}
-				toolTipText = string;
-			}
-			String currentToolTipText = getToolTipText();
-			if (!SystemUtilities.isEqual(toolTipText, currentToolTipText)) {
-				setToolTipText(toolTipText);
-			}
-
-			return true;
-		}
-
-		private String getDataTypeToolTip(DataType dataType) {
-
-			DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-			// This checks for null dataTypeManager below since BadDataType won't have one.
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			DataTypeManager originalDTM = model.getOriginalDataTypeManager();
-			boolean localSource =
-				(sourceArchive == null) || ((dataTypeManager != null) && SystemUtilities.isEqual(
-					dataTypeManager.getUniversalID(), sourceArchive.getSourceArchiveID()));
-			if (localSource) {
-				sourceArchive = originalDTM.getSourceArchive(originalDTM.getUniversalID());
-			}
-			DataType foundDataType = originalDTM.getDataType(dataType.getDataTypePath());
-
-			String displayName = "";
-			if (foundDataType != null && (dataTypeManager != null)) {
-				displayName = dataTypeManager.getName();
-			}
-			displayName += dataType.getPathName();
-			if (!localSource) {
-				displayName += "  (" + sourceArchive.getName() + ")";
-			}
-			displayName = HTMLUtilities.friendlyEncodeHTML(displayName);
-
-			String toolTipText = ToolTipUtils.getToolTipText(dataType);
-			String headerText = "<HTML><b>" + displayName + "</b><BR>";
-			toolTipText = toolTipText.replace("<HTML>", headerText);
-			return toolTipText;
 		}
 
 		@Override

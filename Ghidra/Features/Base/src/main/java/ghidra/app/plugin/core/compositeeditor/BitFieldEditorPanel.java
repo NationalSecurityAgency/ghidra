@@ -39,8 +39,8 @@ import ghidra.util.layout.*;
 import resources.ResourceManager;
 
 /**
- * <code>BitFieldEditorPanel</code> provides the ability to place bitfields
- * within unaligned structures and unions.
+ * <code>BitFieldEditorPanel</code> provides the ability to add or modify bitfields
+ * within unaligned structures.
  */
 public class BitFieldEditorPanel extends JPanel {
 
@@ -100,7 +100,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private JPanel createLegendPanel() {
 		JPanel legendPanel = new JPanel(new BorderLayout());
-		legendPanel.add(new BitFieldPlacementComponent.BitFieldLegend(), BorderLayout.WEST);
+		legendPanel.add(new BitFieldPlacementComponent.BitFieldLegend(null), BorderLayout.WEST);
 		return legendPanel;
 	}
 
@@ -390,14 +390,18 @@ public class BitFieldEditorPanel extends JPanel {
 	 * If null an allocation size of 4-bytes will be used but may be adjusted.
 	 * @param bitfieldDtc bitfield component or null
 	 * @param allocationOffset allocation offset to be used
+	 * @param useExistingAllocationSize if true attempt to use existing allocation size
 	 */
-	void initEdit(DataTypeComponent bitfieldDtc, int allocationOffset) {
+	void initEdit(DataTypeComponent bitfieldDtc, int allocationOffset,
+			boolean useExistingAllocationSize) {
 		String initialFieldName = null;
 		DataType initialBaseDataType = null;
 		int allocationSize = -1;
-		BitFieldAllocation bitFieldAllocation = placementComponent.getBitFieldAllocation();
-		if (bitFieldAllocation != null) {
-			allocationSize = bitFieldAllocation.getAllocationByteSize();
+		if (useExistingAllocationSize) {
+			BitFieldAllocation bitFieldAllocation = placementComponent.getBitFieldAllocation();
+			if (bitFieldAllocation != null) {
+				allocationSize = bitFieldAllocation.getAllocationByteSize();
+			}
 		}
 		if (bitfieldDtc != null) {
 			if (!bitfieldDtc.isBitFieldComponent()) {
@@ -420,7 +424,7 @@ public class BitFieldEditorPanel extends JPanel {
 		// TODO: adjust offset and allocationSize if needed
 		placementComponent.setAllocationOffset(allocationOffset);
 		placementComponent.init(allocationSize, bitfieldDtc);
-		bitFieldAllocation = placementComponent.getBitFieldAllocation(); // get updated instance
+		BitFieldAllocation bitFieldAllocation = placementComponent.getBitFieldAllocation(); // get updated instance
 		initControls(initialFieldName, initialBaseDataType, bitFieldAllocation.getBitSize());
 		enableControls(bitfieldDtc != null);
 	}

@@ -649,6 +649,7 @@ class StructureDB extends CompositeDB implements Structure {
 			return 1; // Unaligned
 		}
 		if (alignment <= 0) {
+			// just in case - alignment should have been previously determined and stored
 			StructurePackResult packResult = AlignedStructureInspector.packComponents(this);
 			alignment = packResult.alignment;
 		}

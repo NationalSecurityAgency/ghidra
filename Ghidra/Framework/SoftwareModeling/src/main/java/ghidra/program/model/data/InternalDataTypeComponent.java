@@ -25,9 +25,9 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 
 	/**
 	 * Update component ordinal, offset and length during alignment
-	 * @param ordinal
-	 * @param offset
-	 * @param length
+	 * @param ordinal updated ordinal
+	 * @param offset updated offset
+	 * @param length updated byte length
 	 */
 	void update(int ordinal, int offset, int length);
 

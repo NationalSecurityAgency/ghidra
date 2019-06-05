@@ -2151,7 +2151,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	private void createReference(Data data, Address toAddr, List<Address> longSegmentAddressList) {
-		if (toAddr == null) {
+		if (toAddr == null || !toAddr.isLoadedMemoryAddress()) {
 			return;
 		}
 

@@ -26,6 +26,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
+import ghidra.util.layout.VerticalLayout;
 import resources.icons.ColorIcon;
 
 public class BitFieldPlacementComponent extends JPanel {
@@ -59,27 +60,50 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	private EditMode editMode = EditMode.NONE;
 	private int editOrdinal = -1; // FIXME: improve insert use
+	private DataTypeComponent editComponent;
 
 	public static class BitFieldLegend extends JPanel {
 
-		BitFieldLegend() {
-			setLayout(new GridLayout(2, 3, 5, 5));
-			//setLayout(new RowColumnLayout(10, 10, RowColumnLayout.ROW, 0));
-			add(new JLabel("Undefined bits",
-				new ColorIcon(UNDEFINED_BIT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
-				SwingConstants.LEFT));
-			add(new JLabel("Defined bitfield",
+		BitFieldLegend(DataTypeComponent viewedBitfield) {
+			JPanel legendPanel;
+			if (viewedBitfield != null) {
+				setLayout(new VerticalLayout(10));
+				legendPanel = new JPanel(new GridLayout(1, 3, 5, 5));
+				String viewComponentText =
+					"Selected bitfield  { " + viewedBitfield.getDataType().getDisplayName();
+				String viewComponentName = viewedBitfield.getFieldName();
+				if (viewComponentName != null) {
+					viewComponentText += "  " + viewComponentName;
+				}
+				viewComponentText += " }";
+				add(new JLabel(viewComponentText,
+					new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+					SwingConstants.LEFT));
+				add(legendPanel);
+			}
+			else {
+				setLayout(new GridLayout(2, 3, 5, 5));
+				legendPanel = this;
+			}
+
+			legendPanel.add(new JLabel("Defined bitfield",
 				new ColorIcon(BITFIELD_COMPONENT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
 				SwingConstants.LEFT));
-			add(new JLabel("Defined non-bitfield",
+			legendPanel.add(new JLabel("Defined non-bitfield  ",
 				new ColorIcon(NON_BITFIELD_COMPONENT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
 				SwingConstants.LEFT));
-			add(new JLabel("Edit bitfield bits",
-				new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+			legendPanel.add(new JLabel("Undefined bits",
+				new ColorIcon(UNDEFINED_BIT_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
 				SwingConstants.LEFT));
-			add(new JLabel("Conflict bits",
-				new ColorIcon(CONFLICT_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
-				SwingConstants.LEFT));
+
+			if (viewedBitfield == null) {
+				legendPanel.add(new JLabel("Edit bitfield bits",
+					new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+					SwingConstants.LEFT));
+				legendPanel.add(new JLabel("Conflict bits",
+					new ColorIcon(CONFLICT_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+					SwingConstants.LEFT));
+			}
 		}
 
 	}
@@ -127,7 +151,8 @@ public class BitFieldPlacementComponent extends JPanel {
 	}
 
 	void refresh(int allocationByteSize, int bitSize, int bitOffset) {
-		bitFieldAllocation = new BitFieldAllocation(allocationByteSize, bitSize, bitOffset);
+		bitFieldAllocation =
+			new BitFieldAllocation(allocationByteSize, bitSize, bitOffset, editComponent);
 		updatePreferredSize();
 		repaint();
 	}
@@ -147,14 +172,16 @@ public class BitFieldPlacementComponent extends JPanel {
 	void initAdd(int allocationByteSize, int bitSize, int bitOffset) {
 		editMode = EditMode.ADD;
 		editOrdinal = -1;
+		editComponent = null;
 		refresh(allocationByteSize, bitSize, bitOffset);
 	}
 
-	void init(int allocationByteSize, DataTypeComponent editComponent) {
+	void init(int allocationByteSize, DataTypeComponent editDtc) {
 
-		if (editComponent == null) {
+		if (editDtc == null) {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
+			this.editComponent = null;
 			refresh(allocationByteSize, 0, 0);
 			return;
 		}
@@ -163,12 +190,13 @@ public class BitFieldPlacementComponent extends JPanel {
 		// of the component being modified
 
 		editMode = EditMode.EDIT;
-		editOrdinal = editComponent.getOrdinal();
+		editOrdinal = editDtc.getOrdinal();
+		this.editComponent = editDtc;
 
-		BitFieldPlacement placement = new BitFieldPlacement(editComponent, allocationByteSize);
+		BitFieldPlacement placement = new BitFieldPlacement(editDtc, allocationByteSize);
 		bitFieldAllocation =
 			new BitFieldAllocation(allocationByteSize, placement.rightBit - placement.leftBit + 1,
-				(8 * allocationByteSize) - placement.rightBit - 1);
+				(8 * allocationByteSize) - placement.rightBit - 1, editDtc);
 		updatePreferredSize();
 		repaint();
 	}
@@ -213,6 +241,7 @@ public class BitFieldPlacementComponent extends JPanel {
 				// unexpected removal
 				editMode = EditMode.ADD;
 				editOrdinal = -1;
+				editComponent = null;
 			}
 			else if (ordinal < editOrdinal) {
 				--editOrdinal;
@@ -268,6 +297,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		finally {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
+			editComponent = null;
 			bitFieldAllocation.refresh();
 			repaint();
 		}
@@ -475,18 +505,21 @@ public class BitFieldPlacementComponent extends JPanel {
 		private final int bitSize;
 		private final int bitOffset;
 		private boolean hasConflict;
+		private DataTypeComponent editComponent;
 
 		// bit layout normalized to big-endian layout
 		// left-most allocation msb has array index of 0 
 		private BitAttributes[] bitAttributes;
 
-		BitFieldAllocation(int allocationByteSize, int bitSize, int bitOffset) {
+		BitFieldAllocation(int allocationByteSize, int bitSize, int bitOffset,
+				DataTypeComponent editComponent) {
 			if (allocationByteSize <= 0 || (bitSize + bitOffset) > (8 * allocationByteSize)) {
 				throw new IllegalArgumentException("allocation size too small");
 			}
 			this.allocationByteSize = allocationByteSize;
 			this.bitSize = bitSize;
 			this.bitOffset = bitOffset;
+			this.editComponent = editComponent;
 			refresh();
 		}
 
@@ -505,11 +538,11 @@ public class BitFieldPlacementComponent extends JPanel {
 			if (editMode != EditMode.NONE) {
 				int rightMostBit = bitAttributes.length - bitOffset - 1;
 				if (bitSize == 0) {
-					allocateZeroBitField(null, rightMostBit);
+					allocateZeroBitField(editComponent, rightMostBit);
 				}
 				else {
 					int leftMostBit = rightMostBit - bitSize + 1;
-					allocateBits(null, leftMostBit, rightMostBit, false, false);
+					allocateBits(editComponent, leftMostBit, rightMostBit, false, false);
 				}
 			}
 
@@ -741,7 +774,7 @@ public class BitFieldPlacementComponent extends JPanel {
 			if (zeroBitfield) {
 				return UNDEFINED_BIT_COLOR;
 			}
-			if (dtc == null) {
+			if (dtc == editComponent) {
 				return BITFIELD_BITS_COLOR; // edit field
 			}
 			return dtc.isBitFieldComponent() ? BITFIELD_COMPONENT_COLOR
