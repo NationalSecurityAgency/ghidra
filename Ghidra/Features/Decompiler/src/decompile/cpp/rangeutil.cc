@@ -489,7 +489,7 @@ bool CircleRange::minimalContainer(const CircleRange &op2,int4 maxStep)
     }
     else {
       left = op2.left;
-      right = bRight;
+      right = aRight;
     }
     break;
   case 'b':			// order (l op2.l r op2.r)
