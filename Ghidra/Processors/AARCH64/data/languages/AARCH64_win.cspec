@@ -4,7 +4,7 @@
   <!-- Copied from AARCH.cspec and modified... See: https://docs.microsoft.com/en-us/cpp/build/arm64-windows-abi-conventions?view=vs-2019 -->
   <data_organization>
      <absolute_max_alignment value="0" />
-     <machine_alignment value="4" />
+     <machine_alignment value="4" />                 <!-- Not sure -->
      <default_alignment value="1" />
      <default_pointer_alignment value="4" />
      <pointer_size value="8" />
@@ -123,7 +123,7 @@
       </input>
       <output>
         <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="q0"/>
+          <register name="v0"/>
         </pentry>
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
@@ -144,28 +144,43 @@
         <register name="x29"/>
         <register name="x30"/>
         <register name="sp"/>
+        <register name="pc"/>
+        <register name="v8"/>
+        <register name="v9"/>
+        <register name="v10"/>
+        <register name="v11"/>
+        <register name="v12"/>
+        <register name="v13"/>
+        <register name="v14"/>
+        <register name="v15"/>
       </unaffected>
       <killedbycall>
+        <register name="x0"/>
         <register name="x1"/>
-        <register name="x9"/>
-        <register name="x10"/>
-        <register name="x11"/>
-        <register name="x12"/> 
-        <register name="x13"/> 
-        <register name="x14"/> 
-        <register name="x15"/> 
-      </killedbycall>
+        <register name="x2"/>
+        <register name="x3"/>
+        <register name="x4"/>
+        <register name="x5"/>
+        <register name="x6"/>
+        <register name="x7"/>
+        <register name="x16"/>
+        <register name="x17"/>
+        <register name="x18"/>
+        <register name="x19"/>
+        <register name="v20"/>
+        <register name="v21"/>
+        <register name="v22"/>
+        <register name="v23"/>
+        <register name="v24"/>
+        <register name="v25"/>
+        <register name="v26"/>
+        <register name="v27"/>
+        <register name="v28"/>
+        <register name="v29"/>
+        <register name="v30"/>
+        <register name="v31"/>
+        </killedbycall>
     </prototype>
   </default_proto>
 
-
-  <callfixup name="PlaceHolderCallFixup">  <!-- This is here just to force call fixup and NoReturn fixup.  Will be fixed in Ghidra V6.0 -->
-    <target name="___NotARealFunctionName___"/>
-    <pcode>
-      <body><![CDATA[
-            tmpptr:4 = 0;
-      ]]></body>
-    </pcode>
-  </callfixup>
-  
 </compiler_spec>

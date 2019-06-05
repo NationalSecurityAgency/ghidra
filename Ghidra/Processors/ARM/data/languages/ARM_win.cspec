@@ -94,49 +94,32 @@
         <register name="r9"/>
         <register name="r10"/>
         <register name="r11"/>
-        <register name="d8"/>
-        <register name="d9"/>
-        <register name="d10"/>
-        <register name="d11"/>
-        <register name="d12"/>
-        <register name="d13"/>
-        <register name="d14"/>
-        <register name="d15"/>
-        <!-- Do we need to say something about q0-q15 instead of d?... -->
+        <register name="q4"/>
+        <register name="q5"/>
+        <register name="q6"/>
+        <register name="q7"/>
         <register name="sp"/>
+        <register name="lr"/>
+        <register name="pc"/>
       </unaffected>
       <killedbycall>
-          <!-- Maybe r0, r1, r2, r3, r12... was only r1 -->
           <register name="r0"/>
           <register name="r1"/>
           <register name="r2"/>
           <register name="r3"/>
           <register name="r12"/>
-          <register name="d0"/>
-          <register name="d1"/>
-          <register name="d2"/>
-          <register name="d3"/>
-          <register name="d4"/>
-          <register name="d5"/>
-          <register name="d6"/>
-          <register name="d7"/>
-          <!-- Maybe d16-d31 -->
-          <register name="d16"/>
-          <register name="d17"/>
-          <register name="d18"/>
-          <register name="d19"/>
-          <register name="d20"/>
-          <register name="d21"/>
-          <register name="d22"/>
-          <register name="d23"/>
-          <register name="d24"/>
-          <register name="d25"/>
-          <register name="d26"/>
-          <register name="d27"/>
-          <register name="d28"/>
-          <register name="d29"/>
-          <register name="d30"/>
-          <register name="d31"/>
+          <register name="q0"/>
+          <register name="q1"/>
+          <register name="q2"/>
+          <register name="q3"/>
+          <register name="q8"/>
+          <register name="q9"/>
+          <register name="q10"/>
+          <register name="q11"/>
+          <register name="q12"/>
+          <register name="q13"/>
+          <register name="q14"/>
+          <register name="q15"/>
       </killedbycall>
     </prototype>
   </default_proto>
