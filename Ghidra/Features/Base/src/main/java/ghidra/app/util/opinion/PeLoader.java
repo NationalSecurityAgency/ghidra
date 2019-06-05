@@ -473,14 +473,21 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private void setProcessorContext(FileHeader fileHeader, Program program, TaskMonitor monitor,
 			MessageLog log) {
 
-		String machineName = fileHeader.getMachineName();
-		if ("450".equals(machineName) || "452".equals(machineName)) {
-			Register tmodeReg = program.getProgramContext().getRegister("TMode");
-			if (tmodeReg == null) {
-				return;
+		try {
+			String machineName = fileHeader.getMachineName();
+			if ("450".equals(machineName) || "452".equals(machineName)) {
+				Register tmodeReg = program.getProgramContext().getRegister("TMode");
+				if (tmodeReg == null) {
+					return;
+				}
+				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
+				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+				program.getProgramContext().setRegisterValue(space.getMinAddress(),
+					space.getMaxAddress(), thumbMode);
 			}
-			RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
-			program.getProgramContext().setDefaultDisassemblyContext(thumbMode);
+		}
+		catch (ContextChangeException e) {
+			throw new AssertException("instructions should not exist");
 		}
 	}
 
