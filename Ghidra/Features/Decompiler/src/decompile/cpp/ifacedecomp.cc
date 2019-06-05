@@ -2494,7 +2494,7 @@ void IfcAnalyzeRange::execute(istream &s)
   }
   Varnode *stackReg = dcp->fd->findSpacebaseInput(dcp->conf->getStackSpace());
   ValueSetSolver vsSolver;
-  vsSolver.establishValueSets(sinks, reads, stackReg);
+  vsSolver.establishValueSets(sinks, reads, stackReg, false);
   vsSolver.solve(10000);
   list<ValueSet>::const_iterator iter;
   for(iter=vsSolver.beginValueSets();iter!=vsSolver.endValueSets();++iter) {
