@@ -17,20 +17,21 @@
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
-            endian="big"
-            instructionEndian="little"
+            endian="little"
             size="32"
-            variant="v8LEInstruction"
+            variant="v8"
             version="1.102"
             slafile="ARM8_le.sla"
             processorspec="ARMt.pspec"
             manualindexfile="../manuals/ARM.idx"
-            id="ARM:LEBE:32:v8LEInstruction">
-    <description>Generic ARM/Thumb v8 little endian instructions and big endian data</description>
+            id="ARM:LE:32:v8">
+    <description>Generic ARM/Thumb v8 little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
+    <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
   
@@ -67,22 +68,6 @@
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
 
-  <language processor="ARM"
-            endian="big"
-            instructionEndian="little"
-            size="32"
-            variant="v7LEInstruction"
-            version="1.102"
-            slafile="ARM7_le.sla"
-            processorspec="ARMt.pspec"
-            manualindexfile="../manuals/ARM.idx"
-            id="ARM:LEBE:32:v7LEInstruction">
-    <description>Generic ARM/Thumb v7 little endian instructions and big endian data</description>
-    <compiler name="default" spec="ARM.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
-    <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
-  </language>
-  
   <language processor="ARM"
             endian="big"
             size="32"
