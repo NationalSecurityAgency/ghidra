@@ -1442,6 +1442,8 @@ void ValueSet::setVarnode(Varnode *v,int4 tCode)
     opCode = CPUI_MAX;
     numParams = 0;
     range.setRange(0,vn->getSize());	// Treat as offset of 0 relative to special value
+    leftIsStable = true;
+    rightIsStable = true;
   }
   else if (vn->isWritten()) {
     PcodeOp *op = vn->getDef();
@@ -1452,17 +1454,23 @@ void ValueSet::setVarnode(Varnode *v,int4 tCode)
     }
     else
       numParams = op->numInput();
+    leftIsStable = false;
+    rightIsStable = false;
   }
   else if (vn->isConstant()) {
     opCode = CPUI_MAX;
     numParams = 0;
     range.setRange(vn->getOffset(),vn->getSize());
+    leftIsStable = true;
+    rightIsStable = true;
   }
   else {	// Some other form of input
     opCode = CPUI_MAX;
     numParams = 0;
     typeCode = 0;
     range.setFull(vn->getSize());
+    leftIsStable = false;
+    rightIsStable = false;
   }
 }
 
@@ -1633,6 +1641,8 @@ bool ValueSet::iterate(Widener &widener)
 
   if (res == range)
     return false;
+  leftIsStable = range.getMin() == res.getMin();
+  rightIsStable = range.getEnd() == res.getEnd();
   if (partHead != (Partition *)0) {
     if (!widener.doWidening(*this, range, res))
       setFull();

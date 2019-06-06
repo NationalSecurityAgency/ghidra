@@ -127,11 +127,13 @@ public:
 private:
   friend class ValueSetSolver;
   int4 typeCode;	///< 0=pure constant 1=stack relative
-  Varnode *vn;		///< Varnode whose set this represents
-  OpCode opCode;	///< Op-code defining Varnode
   int4 numParams;	///< Number of input parameters to defining operation
-  CircleRange range;	///< Range of values or offsets in this set
   int4 count;		///< Depth first numbering / widening count
+  OpCode opCode;	///< Op-code defining Varnode
+  bool leftIsStable;	///< Set to \b true if left boundary of range didn't change (last iteration)
+  bool rightIsStable;	///< Set to \b true if right boundary of range didn't change (last iteration)
+  Varnode *vn;		///< Varnode whose set this represents
+  CircleRange range;	///< Range of values or offsets in this set
   vector<Equation> equations;	///< Any equations associated with this value set
   Partition *partHead;	///< If Varnode is a component head, pointer to corresponding Partition
   ValueSet *next;	///< Next ValueSet to iterate
@@ -148,6 +150,8 @@ public:
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   Varnode *getVarnode(void) const { return vn; }	///< Get the Varnode attached to \b this ValueSet
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
+  bool isLeftStable(void) const { return leftIsStable; }
+  bool isRightStable(void) const { return rightIsStable; }
   void printRaw(ostream &s) const;		///< Write a text description of \b to the given stream
 };
 
