@@ -229,7 +229,20 @@ class StructureDB extends CompositeDB implements Structure {
 				idx = ordinal;
 			}
 			else {
-				idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+				// TODO: could improve insertion of bitfield which does not intersect
+				// existing ordinal bitfield at the bit-level
+				idx = Collections.binarySearch(components, Integer.valueOf(ordinal),
+					ordinalComparator);
+				if (idx > 0) {
+					DataTypeComponentDB existingDtc = components.get(idx);
+					if (existingDtc.isBitFieldComponent()) {
+						// must shift down to eliminate possible overlap with previous component 
+						DataTypeComponentDB previousDtc = components.get(idx - 1);
+						if (previousDtc.getEndOffset() == existingDtc.getOffset()) {
+							shiftOffsets(idx, 0, 1);
+						}
+					}
+				}
 			}
 			if (idx < 0) {
 				idx = -idx - 1;
@@ -331,7 +344,7 @@ class StructureDB extends CompositeDB implements Structure {
 
 			Comparator<Object> bitOffsetComparator =
 				bigEndian ? bitOffsetComparatorBE : bitOffsetComparatorLE;
-			int startIndex = Collections.binarySearch(components, new Integer(startBitOffset),
+			int startIndex = Collections.binarySearch(components, Integer.valueOf(startBitOffset),
 				bitOffsetComparator);
 			if (startIndex < 0) {
 				startIndex = -startIndex - 1;
@@ -437,7 +450,8 @@ class StructureDB extends CompositeDB implements Structure {
 				idx = ordinal;
 			}
 			else {
-				idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+				idx = Collections.binarySearch(components, Integer.valueOf(ordinal),
+					ordinalComparator);
 			}
 			if (idx >= 0) {
 				doDelete(idx);
@@ -467,10 +481,25 @@ class StructureDB extends CompositeDB implements Structure {
 		if (isInternallyAligned()) {
 			return;
 		}
-		int shiftAmount = 0;
-		// Bitfields: do not remove space previously occupied
-		if (!dtc.isBitFieldComponent()) {
-			shiftAmount = dtc.getLength();
+		int shiftAmount = dtc.getLength();
+		if (dtc.isBitFieldComponent()) {
+			// Must handle potential overlap with adjacent components
+			// NOTE: existing bitfields will not overlap by more than one byte
+			int minOffset = dtc.getOffset();
+			int maxOffset = dtc.getEndOffset();
+			if (index > 0) {
+				DataTypeComponentDB previousDtc = components.get(index - 1);
+				if (previousDtc.getEndOffset() == dtc.getOffset()) {
+					++minOffset;
+				}
+			}
+			if (minOffset <= maxOffset && index < components.size()) {
+				DataTypeComponentDB nextDtc = components.get(index);
+				if (nextDtc.getOffset() == dtc.getOffset()) {
+					--maxOffset;
+				}
+			}
+			shiftAmount = maxOffset - minOffset + 1;
 		}
 		shiftOffsets(index, -1, -shiftAmount);
 	}
@@ -498,7 +527,7 @@ class StructureDB extends CompositeDB implements Structure {
 					idx = ordinal;
 				}
 				else {
-					idx = Collections.binarySearch(components, new Integer(ordinal),
+					idx = Collections.binarySearch(components, Integer.valueOf(ordinal),
 						ordinalComparator);
 				}
 				if (idx >= 0) {
@@ -582,7 +611,8 @@ class StructureDB extends CompositeDB implements Structure {
 			if (isInternallyAligned()) {
 				return components.get(ordinal);
 			}
-			int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+			int idx =
+				Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 			if (idx >= 0) {
 				return components.get(idx);
 			}
@@ -684,7 +714,8 @@ class StructureDB extends CompositeDB implements Structure {
 				idx = ordinal;
 			}
 			else {
-				idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+				idx = Collections.binarySearch(components, Integer.valueOf(ordinal),
+					ordinalComparator);
 			}
 			if (idx >= 0) {
 				DataTypeComponentDB dtc = components.remove(idx);
@@ -766,7 +797,8 @@ class StructureDB extends CompositeDB implements Structure {
 			if (offset >= structLength) {
 				return;
 			}
-			int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+			int index =
+				Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 
 			int offsetDelta = 0;
 			int ordinalDelta = 0;
@@ -804,7 +836,8 @@ class StructureDB extends CompositeDB implements Structure {
 			if (offset >= structLength || offset < 0) {
 				return null;
 			}
-			int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+			int index =
+				Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 			if (index >= 0) {
 				DataTypeComponent dtc = components.get(index);
 				if (dtc.isBitFieldComponent()) {
@@ -883,7 +916,8 @@ class StructureDB extends CompositeDB implements Structure {
 				structLength = offset;
 			}
 
-			int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+			int index =
+				Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 
 			int additionalShift = 0;
 			if (index >= 0) {
@@ -1418,8 +1452,8 @@ class StructureDB extends CompositeDB implements Structure {
 				index = ordinal;
 			}
 			else {
-				index =
-					Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+				index = Collections.binarySearch(components, Integer.valueOf(ordinal),
+					ordinalComparator);
 			}
 			if (index < 0) {
 				index = -index - 1;
@@ -1465,7 +1499,7 @@ class StructureDB extends CompositeDB implements Structure {
 		if (ordinal >= numComponents) {
 			return 0;
 		}
-		int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int idx = Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		DataTypeComponentDB dtc = null;
 		if (idx < 0) {
 			idx = -idx - 1;

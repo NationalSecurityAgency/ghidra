@@ -255,7 +255,17 @@ public class BitFieldPlacementComponent extends JPanel {
 			CompositeChangeListener listener) {
 		HashSet<Integer> ordinalDeleteSet = new HashSet<>();
 		if (editOrdinal >= 0) {
+			int initialLength = composite.getLength();
+
 			composite.delete(editOrdinal);
+
+			int sizeChange = initialLength - composite.getLength();
+			if (!composite.isInternallyAligned() && editOrdinal < composite.getNumComponents()) {
+				// deletions cause shift which is bad - pad with defaults
+				for (int i = 0; i < sizeChange; i++) {
+					composite.insert(editOrdinal, DataType.DEFAULT);
+				}
+			}
 		}
 		if (deleteConflicts) {
 			for (BitAttributes attrs : bitFieldAllocation.bitAttributes) {

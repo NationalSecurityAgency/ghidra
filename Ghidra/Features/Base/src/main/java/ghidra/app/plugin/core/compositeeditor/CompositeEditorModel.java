@@ -1238,4 +1238,5 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	protected boolean bitfieldsSupported() {
 		return (viewComposite instanceof Structure) || (viewComposite instanceof Union);
 	}
+
 }
