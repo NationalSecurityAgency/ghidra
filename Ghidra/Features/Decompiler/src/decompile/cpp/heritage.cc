@@ -454,6 +454,220 @@ void Heritage::splitPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,
   }
 }
 
+/// \brief Find the last PcodeOps that write to specific addresses that flow to specific sites
+///
+/// Given a set of sites for which data-flow needs to be preserved at a specific address, find
+/// the \e last ops that write to the address such that data flows to the site
+/// only through \e artificial COPYs and MULTIEQUALs.  A COPY/MULTIEQUAL is artificial if all
+/// of its input and output Varnodes have the same storage address.  The specific sites are
+/// presented as artificial COPY ops.  The final set of ops that are not artificial will all
+/// have an output Varnode that matches the specific address of a COPY sink and will need to
+/// be marked address forcing. The original set of COPY sinks will be extended to all artificial
+/// COPY/MULTIEQUALs encountered.  Every PcodeOp encountered will have its mark set.
+/// \param copySinks is the list of sinks that we are trying to find flow to
+/// \param forces is the final list of address forcing PcodeOps
+void Heritage::findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> &forces)
+
+{
+  // Mark the sinks
+  for(int4 i=0;i<copySinks.size();++i) {
+    PcodeOp *op = copySinks[i];
+    op->setMark();
+  }
+
+  // Mark everything back-reachable from a sink, trimming at non-artificial ops
+  int4 pos = 0;
+  while(pos < copySinks.size()) {
+    PcodeOp *op = copySinks[pos];
+    Address addr = op->getOut()->getAddr();	// Address being flowed to
+    pos += 1;
+    int4 maxIn = op->numInput();
+    for(int4 i=0;i<maxIn;++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten()) continue;
+      PcodeOp *newOp = vn->getDef();
+      if (newOp->isMark()) continue;		// Already visited this op
+      newOp->setMark();
+      OpCode opc = newOp->code();
+      bool isArtificial = (opc == CPUI_COPY || opc == CPUI_MULTIEQUAL);
+      if (isArtificial) {
+	int4 maxInNew = newOp->numInput();
+	for(int4 j=0;j<maxInNew;++j) {
+	  Varnode *inVn = newOp->getIn(j);
+	  if (addr != inVn->getAddr()) {
+	    isArtificial = false;
+	    break;
+	  }
+	}
+      }
+      if (isArtificial)
+	copySinks.push_back(newOp);
+      else
+	forces.push_back(newOp);
+    }
+  }
+}
+
+/// \brief Eliminate a COPY sink preserving its data-flow
+///
+/// Given a COPY from a storage location to itself, propagate the input Varnode
+/// version of the storage location to all the ops reading the output Varnode, so
+/// the output no longer has any descendants. Then eliminate the COPY.
+/// \param op is the given COPY sink
+void Heritage::propagateCopyAway(PcodeOp *op)
+
+{
+  Varnode *inVn = op->getIn(0);
+  while(inVn->isWritten()) {		// Follow any COPY chain to earliest input
+    PcodeOp *nextOp = inVn->getDef();
+    if (nextOp->code() != CPUI_COPY) break;
+    Varnode *nextIn = nextOp->getIn(0);
+    if (nextIn->getAddr() != inVn->getAddr()) break;
+    inVn = nextIn;
+  }
+  fd->totalReplace(op->getOut(),inVn);
+  fd->opDestroy(op);
+}
+
+/// \brief Mark the boundary of artificial ops introduced by load guards
+///
+/// Having just completed renaming, run through all new COPY sinks from load guards
+/// and mark boundary Varnodes (Varnodes whose data-flow along all paths traverses only
+/// COPY/INDIRECT/MULTIEQUAL ops and hits a load guard). This lets dead code removal
+/// run forward from the boundary while still preserving the address force on the load guard.
+void Heritage::handleNewLoadCopies(void)
+
+{
+  vector<PcodeOp *> forces;
+  int4 copySinkSize = loadCopyOps.size();
+  findAddressForces(loadCopyOps, forces);
+
+  // Mark everything on the boundary as address forced to prevent dead-code removal
+  for(int4 i=0;i<forces.size();++i) {
+    PcodeOp *op = forces[i];
+    op->getOut()->setAddrForce();
+    op->clearMark();
+  }
+
+  // Eliminate or propagate away original COPY sinks
+  for(int4 i=0;i<copySinkSize;++i) {
+    PcodeOp *op = loadCopyOps[i];
+    propagateCopyAway(op);	// Make sure load guard COPYs no longer exist
+  }
+  // Clear marks on remaining artificial COPYs
+  for(int4 i=copySinkSize;i<loadCopyOps.size();++i) {
+    PcodeOp *op = loadCopyOps[i];
+    op->clearMark();
+  }
+  loadCopyOps.clear();		// We have handled all the load guard COPY ops
+}
+
+/// \brief Generate a guard record given an indexed LOAD into a stack space
+///
+/// Record the LOAD op and the (likely) range of addresses in the stack space that
+/// might be loaded from.
+/// \param node is the path element containing the constructed Address
+/// \param op is the LOAD PcodeOp
+/// \param spc is the stack space
+void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
+
+{
+  uintb spaceMax = spc->getHighest();
+  if (node.offset > spaceMax) return;	// Something unusual is going on
+  loadGuard.push_back(LoadGuard());
+  LoadGuard &guard( loadGuard.back() );
+  guard.op = op;
+  guard.spc = spc;
+  guard.minimumOffset = node.offset;
+  uintb sz = spaceMax - node.offset;
+  if (sz > 0x1000)
+    guard.maximumOffset = node.offset + 0x1000;
+  else
+    guard.maximumOffset = spaceMax;
+}
+
+/// \brief Trace input stackpointer to any indexed loads
+///
+/// Look for expressions of the form  val = *(SP(i) + vn + #c), where the base stack
+/// pointer has an (optional) constant added to it and a non-constant index, then a
+/// value is loaded from the resulting address.  The LOAD operations are added to the list
+/// of ops that potentially need to be guarded during a heritage pass.
+/// \param spc is the particular address space with a stackpointer (into it)
+void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
+
+{
+  for(int4 i=0;i<spc->numSpacebase();++i) {
+    const VarnodeData &stackPointer(spc->getSpacebase(i));
+    Varnode *spInput = fd->findVarnodeInput(stackPointer.size, stackPointer.getAddr());
+    if (spInput == (Varnode *)0) continue;
+    vector<StackNode> path;
+    spInput->setMark();
+    path.push_back(StackNode(spInput,0,0));
+    while(!path.empty()) {
+      StackNode &curNode(path.back());
+      if (curNode.iter == curNode.vn->endDescend()) {
+	path.back().vn->clearMark();
+	path.pop_back();
+	continue;
+      }
+      PcodeOp *op = *curNode.iter;
+      ++curNode.iter;
+      Varnode *outVn = op->getOut();
+      if (outVn == (Varnode *)0 || outVn->isMark()) continue;		// Trim loops
+      switch(op->code()) {
+	case CPUI_INT_ADD:
+	{
+	  Varnode *otherVn = op->getIn(1-op->getSlot(curNode.vn));
+	  if (otherVn->isConstant()) {
+	    uintb newOffset = curNode.offset + otherVn->getOffset();
+	    StackNode nextNode(outVn,newOffset,curNode.traversals);
+	    if (nextNode.iter != nextNode.vn->endDescend()) {
+	      outVn->setMark();
+	      path.push_back(nextNode);
+	    }
+	  }
+	  else {
+	    StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::nonconstant_index);
+	    if (nextNode.iter != nextNode.vn->endDescend()) {
+	      outVn->setMark();
+	      path.push_back(nextNode);
+	    }
+	  }
+	  break;
+	}
+//	case CPUI_INDIRECT:
+	case CPUI_COPY:
+	{
+	  StackNode nextNode(outVn,curNode.offset,curNode.traversals);
+	  if (nextNode.iter != nextNode.vn->endDescend()) {
+	    outVn->setMark();
+	    path.push_back(nextNode);
+	  }
+	  break;
+	}
+//	case CPUI_MULTIEQUAL:
+//	{
+//	  StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::multiequal);
+//	  if (nextNode.iter != nextNode.vn->endDescend()) {
+//	    outVn->setMark();
+//	    path.push_back(nextNode);
+//	  }
+//	  break;
+//	}
+	case CPUI_LOAD:
+	{
+	  if (curNode.traversals != 0) {
+	    generateLoadGuard(curNode,op,spc);
+	  }
+	  break;
+	}
+	default:
+	  break;
+      }
+    }
+  }
+}
+
 /// \brief Normalize p-code ops so that phi-node placement and renaming works
 ///
 /// The traditional phi-node placement and renaming algorithms don't expect
@@ -516,7 +730,7 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
     guardReturns(flags,addr,size,write);
     if (fd->getArch()->highPtrPossible(addr,size)) {
       guardStores(addr,size,write);
-      //      guardLoads(flags,addr,size,write);
+      guardLoads(flags,addr,size,write);
     }
   }
 }
@@ -632,6 +846,41 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
   }
 }
 
+/// \brief Guard LOAD ops in preparation for the renaming algorithm
+///
+/// The op must be in the loadGuard list, which means it may pull values from an indexed
+/// range on the stack.  A COPY guard is placed for the given range on any LOAD op whose
+/// indexed range it intersects.
+/// \param flags is boolean properties associated with the address
+/// \param addr is the first address of the given range
+/// \param size is the number of bytes in the given range
+/// \param write is the list of written Varnodes in the range (may be updated)
+void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
+
+{
+  PcodeOp *copyop;
+  list<LoadGuard>::iterator iter;
+
+  if ((flags & Varnode::addrtied)==0) return;	// If not address tied, don't consider for index alias
+  for(iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+    LoadGuard &guardRec(*iter);
+    if (guardRec.spc != addr.getSpace()) continue;
+    if (addr.getOffset() < guardRec.minimumOffset) continue;
+    if (addr.getOffset() > guardRec.maximumOffset) continue;
+    if (guardRec.op->isDead()) continue;
+    copyop = fd->newOp(1,guardRec.op->getAddr());
+    Varnode *vn = fd->newVarnodeOut(size,addr,copyop);
+    vn->setActiveHeritage();
+    vn->setAddrForce();
+    fd->opSetOpcode(copyop,CPUI_COPY);
+    Varnode *invn = fd->newVarnode(size,addr);
+    invn->setActiveHeritage();
+    fd->opSetInput(copyop,invn,0);
+    fd->opInsertBefore(copyop,guardRec.op);
+    loadCopyOps.push_back(copyop);
+  }
+}
+
 /// \brief Guard global data-flow at RETURN ops in preparation for renaming
 ///
 /// For the given global (persistent) address range, data-flow must persist up to
@@ -681,31 +930,6 @@ void Heritage::guardReturns(uint4 flags,const Address &addr,int4 size,vector<Var
     fd->opInsertBefore(copyop,op);
   }
 }
-
-// void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
-
-// {
-//   list<PcodeOp *>::const_iterator iter,iterend;
-//   PcodeOp *op,*copyop;
-
-//   iterend = fd->endOp(CPUI_LOAD);
-//   for(iter=fd->beginOp(CPUI_LOAD);iter!=iterend;++iter) {
-//     op = *iter;
-//     if (op->isDead()) continue;
-// 				// Check if load could possible read from this addr
-//     if (!Address::getSpaceFromConst(op->getIn(0)->getAddr())->contain(addr.getSpace()))
-//       continue;
-//     copyop = fd->newOp(1,op->getAddr());
-//     Varnode *vn = fd->newVarnodeOut(size,addr,copyop);
-//     vn->setActiveHeritage();
-//     vn->setAddrForce();
-//     fd->opSetOpcode(copyop,CPUI_COPY);
-//     Varnode *invn = fd->newVarnode(size,addr);
-//     vn->setActiveHeritage();
-//     fd->opSetInput(copyop,invn,0);
-//     fd->opInsertBefore(copyop,op);
-//   }
-// }
 
 /// \brief Build a refinement array given an address range and a list of Varnodes
 ///
@@ -1674,6 +1898,10 @@ void Heritage::heritage(void)
     if (!space->isHeritaged()) continue;
     info = getInfo(space);
     if (pass < info->delay) continue; // It is too soon to heritage this space
+    if (!info->loadGuardSearch) {
+      info->loadGuardSearch = true;
+      discoverIndexedStackLoads(info->space);
+    }
     needwarning = false;
     iter = fd->beginLoc(space);
     enditer = fd->endLoc(space);
@@ -1727,6 +1955,8 @@ void Heritage::heritage(void)
   }
   placeMultiequals();
   rename();
+  if (!loadCopyOps.empty())
+    handleNewLoadCopies();
   if (pass == 0)
     splitmanage.splitAdditional();
   pass += 1;
@@ -1835,6 +2065,7 @@ void Heritage::clear(void)
   depth.clear();
   merge.clear();
   clearInfoList();
+  loadGuard.clear();
   maxdepth = -1;
   pass = 0;
 }
