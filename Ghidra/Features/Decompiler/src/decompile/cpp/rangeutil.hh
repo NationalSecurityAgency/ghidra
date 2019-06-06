@@ -99,6 +99,7 @@ public:
 };
 
 class Partition;		// Forward declaration
+class Widener;			// Forward declaration
 
 /// \brief A range of values attached to a Varnode within a data-flow subsystem
 ///
@@ -139,11 +140,11 @@ private:
   void setVarnode(Varnode *v,int4 tCode);	///< Attach \b this to given Varnode and set initial values
   void addEquation(int4 slot,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
   void addLandmark(int4 type,const CircleRange &constraint) { addEquation(numParams,type,constraint); }	///< Add a widening landmark
-  void doWidening(const CircleRange &newRange);	///< Widen the value set so fixed point is reached sooner
-  void looped(void);	///< Mark that iteration has looped back to \b this
   void computeTypeCode(void);	///< Figure out if \b this value set is absolute or relative
-  bool iterate(void);		///< Regenerate \b this value set from operator inputs
+  bool iterate(Widener &widener);	///< Regenerate \b this value set from operator inputs
 public:
+  int4 getCount(void) const { return count; }		///< Get the current iteration count
+  const CircleRange *getLandMark(void) const;		///< Get any \e landmark range
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   Varnode *getVarnode(void) const { return vn; }	///< Get the Varnode attached to \b this ValueSet
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
@@ -183,6 +184,58 @@ public:
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
   void compute(void);			///< Compute \b this value set
   void printRaw(ostream &s) const;	///< Write a text description of \b to the given stream
+};
+
+class Widener {
+public:
+  virtual ~Widener(void) {}	///< Destructor
+
+  /// \brief Upon entering a fresh partition, determine how the given ValueSet count should be reset
+  ///
+  /// \param valueSet is the given value set
+  /// \return the value of the iteration counter to reset to
+  virtual int4 determineIterationReset(const ValueSet &valueSet)=0;
+
+  /// \brief Check if the given value set has been frozen for the remainder of the iteration process
+  ///
+  /// \param valueSet is the given value set
+  /// \return \b true if the valueSet will no longer change
+  virtual bool checkFreeze(const ValueSet &valueSet)=0;
+
+  /// \brief For an iteration that isn't stabilizing attempt to widen the given ValueSet
+  ///
+  /// Change the given range based on its previous iteration so that it stabilizes more
+  /// rapidly on future iterations.
+  /// \param valueSet is the given value set
+  /// \param range is the previous form of the given range (and storage for the widening result)
+  /// \param newRange is the current iteration of the given range
+  /// \return \b true if widening succeeded
+  virtual bool doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange)=0;
+};
+
+/// \brief Class for doing normal widening
+///
+/// Widening is attempted at a specific iteration. If a landmark is available, it is used
+/// to do a controlled widening, holding the stable range boundary constant. Otherwise a
+/// full range is produced.  At a later iteration, a full range is produced automatically.
+class WidenerFull : public Widener {
+  int4 widenIteration;		///< The iteration at which widening is attempted
+  int4 fullIteration;		///< The iteration at which a full range is produced
+public:
+  WidenerFull(void) { widenIteration = 2; fullIteration = 5; }	///< Constructor with default iterations
+  WidenerFull(int4 wide,int4 full) { widenIteration = wide; fullIteration = full; }	///< Constructor specifying iterations
+  virtual int4 determineIterationReset(const ValueSet &valueSet);
+  virtual bool checkFreeze(const ValueSet &valueSet);
+  virtual bool doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange);
+};
+
+class WidenerNone : public Widener {
+  int4 freezeIteration;		///< The iteration at which all change ceases
+public:
+  WidenerNone(void) { freezeIteration = 3; }
+  virtual int4 determineIterationReset(const ValueSet &valueSet);
+  virtual bool checkFreeze(const ValueSet &valueSet);
+  virtual bool doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange);
 };
 
 /// \brief Class the determines a ValueSet for each Varnode in a data-flow system
@@ -235,7 +288,7 @@ class ValueSetSolver {
 public:
   void establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg,bool indirectAsCopy);
   int4 getNumIterations(void) const { return numIterations; }	///< Get the current number of iterations
-  void solve(int4 max);				///< Iterate the ValueSet system until it stabilizes
+  void solve(int4 max,Widener &widener);			///< Iterate the ValueSet system until it stabilizes
   list<ValueSet>::const_iterator beginValueSets(void) const { return valueNodes.begin(); }	///< Start of all ValueSets in the system
   list<ValueSet>::const_iterator endValueSets(void) const { return valueNodes.end(); }	///< End of all ValueSets in the system
   map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads

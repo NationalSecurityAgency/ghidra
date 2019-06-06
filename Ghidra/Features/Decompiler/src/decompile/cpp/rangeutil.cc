@@ -1265,7 +1265,7 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
       step = 1;			// Lose any step
       if (in1.left < in1.right) {
 	left = in1.left >> sa;
-	right = in1.right >> sa;
+	right = ((in1.right - in1.step) >> sa) + 1;
       }
       else {
 	left = 0;
@@ -1483,56 +1483,6 @@ void ValueSet::addEquation(int4 slot,int4 type,const CircleRange &constraint)
   equations.insert(iter,Equation(slot,type,constraint));
 }
 
-/// For an iteration that isn't stabilizing attempt to widen \b this value set
-/// so that it stabilizes more rapidly on future iterations. For initial iterations,
-/// targeted widening is attempted using landmarks, otherwise \b this is widened
-/// to \e everything.
-/// \param newRange is the changed range for the current iteration
-void ValueSet::doWidening(const CircleRange &newRange)
-
-{
-  if (count < 2) {
-    range = newRange;
-    return;
-  }
-  else if (count == 2) {
-    if (!equations.empty()) {	// Look for landmark
-      const Equation &landmark(equations.back());
-      if (landmark.slot == numParams && typeCode == landmark.typeCode) {
-	bool leftIsStable = range.getMin() == newRange.getMin();
-	range = newRange;	// Preserve any new step information
-	if (landmark.range.contains(range)) {
-	  range.widen(landmark.range,leftIsStable);
-	  return;
-	}
-	else {
-	  CircleRange constraint = landmark.range;
-	  constraint.invert();
-	  if (constraint.contains(range)) {
-	    range.widen(constraint,leftIsStable);
-	    return;
-	  }
-	}
-      }
-    }
-  }
-  else if (count <5) {
-    range = newRange;
-    return;
-  }
-  setFull();		// In all other cases expand to everything
-}
-
-/// Give \b this value set a chance to reset its counter do to looping
-void ValueSet::looped(void)
-
-{
-  if (count >= 2)
-    count = 2;		// Reset to point just after any widening
-  else
-    count = 0;		// Delay widening, if we haven't performed it yet
-}
-
 /// Examine the input value sets that determine \b this set and decide if it
 /// is relative. In general, \b this will be relative if any of its inputs are.
 /// Certain combinations are indeterminate, which this method flags by calling
@@ -1578,11 +1528,11 @@ void ValueSet::computeTypeCode(void)
 /// operator defining the Varnode attached to \b this value set and pushing them
 /// forward through the operator.
 /// \return \b true if there was a change to \b this value set
-bool ValueSet::iterate(void)
+bool ValueSet::iterate(Widener &widener)
 
 {
   if (!vn->isWritten()) return false;
-  if (range.isFull()) return false;
+  if (widener.checkFreeze(*this)) return false;
   if (count == 0)
     computeTypeCode();
   count += 1;		// Count this iteration
@@ -1683,11 +1633,28 @@ bool ValueSet::iterate(void)
 
   if (res == range)
     return false;
-  if (partHead != (Partition *)0)
-    doWidening(res);
+  if (partHead != (Partition *)0) {
+    if (!widener.doWidening(*this, range, res))
+      setFull();
+  }
   else
     range = res;
   return true;
+}
+
+/// If a landmark was associated with \b this value set, return its range,
+/// otherwise return null.
+/// \return the landmark range or null
+const CircleRange *ValueSet::getLandMark(void) const
+
+{
+  if (equations.empty())
+    return (const CircleRange *)0;
+
+  const Equation &landmark(equations.back());
+  if (landmark.slot != numParams || typeCode != landmark.typeCode)
+    return (const CircleRange *)0;
+  return &landmark.range;
 }
 
 /// \param s is the stream to print to
@@ -1764,6 +1731,76 @@ void ValueSetRead::printRaw(ostream &s) const
   else
     s << " stackptr ";
   range.printRaw(s);
+}
+
+int4 WidenerFull::determineIterationReset(const ValueSet &valueSet)
+
+{
+  if (valueSet.getCount() >= widenIteration)
+    return widenIteration;	// Reset to point just after any widening
+  return 0;			// Delay widening, if we haven't performed it yet
+}
+
+bool WidenerFull::checkFreeze(const ValueSet &valueSet)
+
+{
+  return valueSet.getRange().isFull();
+}
+
+bool WidenerFull::doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange)
+
+{
+  if (valueSet.getCount() < widenIteration) {
+    range = newRange;
+    return true;
+  }
+  else if (valueSet.getCount() == widenIteration) {
+    const CircleRange *landmark = valueSet.getLandMark();
+    if (landmark != (const CircleRange *)0) {
+      bool leftIsStable = range.getMin() == newRange.getMin();
+      range = newRange;	// Preserve any new step information
+      if (landmark->contains(range)) {
+	range.widen(*landmark,leftIsStable);
+	return true;
+      }
+      else {
+	CircleRange constraint = *landmark;
+	constraint.invert();
+	if (constraint.contains(range)) {
+	  range.widen(constraint,leftIsStable);
+	  return true;
+	}
+      }
+    }
+  }
+  else if (valueSet.getCount() < fullIteration) {
+    range = newRange;
+    return true;
+  }
+  return false;		// Indicate that constrained widening failed (set to full)
+}
+
+int4 WidenerNone::determineIterationReset(const ValueSet &valueSet)
+
+{
+  if (valueSet.getCount() >= freezeIteration)
+    return freezeIteration;	// Reset to point just after any widening
+  return valueSet.getCount();
+}
+
+bool WidenerNone::checkFreeze(const ValueSet &valueSet)
+
+{
+  if (valueSet.getRange().isFull())
+    return true;
+  return (valueSet.getCount() >= freezeIteration);
+}
+
+bool WidenerNone::doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange)
+
+{
+  range = newRange;
+  return true;
 }
 
 /// \brief Construct an iterator over the outbound edges of the given ValueSet node
@@ -2324,7 +2361,8 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
 /// The ValueSets are recalculated in the established topological ordering, with looping
 /// at various levels until a fixed point is reached.
 /// \param max is the maximum number of iterations to allow before forcing termination
-void ValueSetSolver::solve(int4 max)
+/// \param widener is the Widening strategy to use to accelerate stabilization
+void ValueSetSolver::solve(int4 max,Widener &widener)
 
 {
   maxIterations = max;
@@ -2343,10 +2381,11 @@ void ValueSetSolver::solve(int4 max)
       componentStack.push_back(curSet->partHead);
       curComponent = curSet->partHead;
       curComponent->isDirty = false;
-      curComponent->startNode->looped();	// Reset component counter upon entry
+      // Reset component counter upon entry
+      curComponent->startNode->count = widener.determineIterationReset(*curComponent->startNode);
     }
     if (curComponent != (Partition *)0) {
-      if (curSet->iterate())
+      if (curSet->iterate(widener))
 	curComponent->isDirty = true;
       if (curComponent->stopNode != curSet) {
 	curSet = curSet->next;
@@ -2377,7 +2416,7 @@ void ValueSetSolver::solve(int4 max)
       }
     }
     else {
-      curSet->iterate();
+      curSet->iterate(widener);
       curSet = curSet->next;
     }
   }

@@ -2483,6 +2483,16 @@ void IfcAnalyzeRange::execute(istream &s)
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
+  bool useFullWidener;
+  string token;
+  s >> ws >> token;
+  if (token == "full")
+    useFullWidener = true;
+  else if (token == "partial") {
+    useFullWidener = false;
+  }
+  else
+    throw IfaceParseError("Must specify \"full\" or \"partial\" widening");
   Varnode *vn = iface_read_varnode(dcp,s);
   vector<Varnode *> sinks;
   vector<PcodeOp *> reads;
@@ -2495,7 +2505,14 @@ void IfcAnalyzeRange::execute(istream &s)
   Varnode *stackReg = dcp->fd->findSpacebaseInput(dcp->conf->getStackSpace());
   ValueSetSolver vsSolver;
   vsSolver.establishValueSets(sinks, reads, stackReg, false);
-  vsSolver.solve(10000);
+  if (useFullWidener) {
+    WidenerFull widener;
+    vsSolver.solve(10000,widener);
+  }
+  else {
+    WidenerNone widener;
+    vsSolver.solve(10000,widener);
+  }
   list<ValueSet>::const_iterator iter;
   for(iter=vsSolver.beginValueSets();iter!=vsSolver.endValueSets();++iter) {
     (*iter).printRaw(*status->optr);
