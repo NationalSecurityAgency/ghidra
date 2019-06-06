@@ -79,7 +79,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	protected int txId;
 	protected StatusListener listener;
 
-	protected CompositeEditorAction[] actions;
+	protected CompositeEditorTableAction[] actions;
 	protected ArrayList<FavoritesAction> favorites = new ArrayList<>();
 	protected ArrayList<CycleGroupAction> cycles = new ArrayList<>();
 
@@ -799,7 +799,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		}
 	}
 
-	protected void checkEnablement(CompositeEditorAction action, boolean expectedEnablement) {
+	protected void checkEnablement(CompositeEditorTableAction action, boolean expectedEnablement) {
 		AtomicBoolean result = new AtomicBoolean();
 		runSwing(() -> result.set(action.isEnabledForContext(provider.getActionContext(null))));
 		boolean actionEnablement = result.get();

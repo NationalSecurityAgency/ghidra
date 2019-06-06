@@ -535,8 +535,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		table.addMouseListener(new CompositeTableMouseListener());
 
-		CompositeEditorAction action = provider.actionMgr.getNamedAction(
-			CompositeEditorAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
+		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
+			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
 		Action swingAction = KeyBindingUtils.adaptDockingActionToNonContextAction(action);
 		InputMap map = table.getInputMap();
 		map.put(action.getKeyBinding(), "StartEditing");
