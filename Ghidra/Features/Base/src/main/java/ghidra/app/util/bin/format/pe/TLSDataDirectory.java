@@ -23,10 +23,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -84,29 +83,24 @@ public class TLSDataDirectory extends DataDirectory {
 		// Markup TLS callback functions
 		if (tls.getAddressOfCallBacks() != 0) {
 			AddressSpace space = program.getImageBase().getAddressSpace();
-			DataType pointerDataType =
-				ntHeader.getOptionalHeader().is64bit() ? Pointer64DataType.dataType
-						: Pointer32DataType.dataType;
+			DataType pointerDataType = PointerDataType.dataType.clone(program.getDataTypeManager());
 			try {
-				int i = 0;
-				while (true) {
+				for (int i = 0; i < 20; i++) { // cap # of TLS callbacks as a precaution (1 is the norm)
 					Address nextCallbackPtrAddr = space.getAddress(
 						tls.getAddressOfCallBacks() + i * pointerDataType.getLength());
-					long nextCallbackAddr = ntHeader.getOptionalHeader().is64bit()
-							? program.getMemory().getLong(nextCallbackPtrAddr)
-							: Conv.intToLong(program.getMemory().getInt(nextCallbackPtrAddr));
-					if (nextCallbackAddr == 0) {
+					Address nextCallbackAddr = PointerDataType.getAddressValue(
+						new DumbMemBufferImpl(program.getMemory(), nextCallbackPtrAddr),
+						pointerDataType.getLength(), space);
+					if (nextCallbackAddr.getOffset() == 0) {
 						break;
 					}
 					PeUtils.createData(program, nextCallbackPtrAddr, pointerDataType, log);
-					Address callbackAddr = space.getAddress(nextCallbackAddr);
-					program.getSymbolTable().createLabel(callbackAddr, "tls_callback_" + i,
+					program.getSymbolTable().createLabel(nextCallbackAddr, "tls_callback_" + i,
 						SourceType.IMPORTED);
-					program.getSymbolTable().addExternalEntryPoint(callbackAddr);
-					i++;
+					program.getSymbolTable().addExternalEntryPoint(nextCallbackAddr);
 				}
 			}
-			catch (MemoryAccessException | InvalidInputException e) {
+			catch (InvalidInputException e) {
 				log.appendMsg("TLS", "Failed to markup TLS callback functions: " + e.getMessage());
 			}
 		}
