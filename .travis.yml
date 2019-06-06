@@ -1,0 +1,53 @@
+language: java
+matrix:
+  include:
+    - name: ghidra-linux
+      os: linux
+      if: tag IS blank
+      branches:
+        only:
+        - master
+        - "/^v.*$/"
+      jdk:
+        - openjdk11
+      before_install:
+        - export TZ=Asia/Singapore
+      install:
+        - cd ..
+        - wget https://downloads.gradle.org/distributions/gradle-5.0-bin.zip
+        - unzip gradle-5.0-bin.zip
+        - CURRENT_DIR=`pwd` && export PATH=$CURRENT_DIR/gradle-5.0/bin:$PATH
+        - mkdir -p ~/.gradle/init.d/
+        - mkdir ~/flatRepo
+        - echo -e "ext.HOME = System.getProperty('user.home')\n\nallprojects {\n\trepositories
+          {\n\t\tmavenCentral()\n\t\tjcenter()\n\t\tflatDir name:'flat', dirs:[\"$HOME/flatRepo\"]
+          \n\t} \n}" > ~/.gradle/init.d/repos.gradle
+        - curl -OL https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
+        - unzip dex-tools-2.0.zip && mv dex2jar-2.0/lib/dex-*.jar ~/flatRepo
+        - rm -rf dex2jar-2.0 dex-tools-2.0.zip
+        - curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
+        - mv AXMLPrinter2.jar ~/flatRepo
+        - curl -OL https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip
+        - unzip hfsexplorer-0_21-bin.zip -d hfsx && mv hfsx/lib/csframework.jar hfsx/lib/hfsx_dmglib.jar hfsx/lib/hfsx.jar hfsx/lib/iharder-base64.jar ~/flatRepo
+        - rm -rf hfsx hfsexplorer-0_21-bin.zip
+        - curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
+        - mkdir -p ghidra.bin/Ghidra/Features/GhidraServer/ && mv yajsw-stable-12.12.zip ghidra.bin/Ghidra/Features/GhidraServer/
+        - cd $TRAVIS_BUILD_DIR
+      script:
+        - gradle buildNatives_linux64 
+        - gradle yajswDevUnpack
+        - gradle buildGhidra
+        - cd build/dist && export name=$(ls) && unzip *.zip && rm *.zip
+        - mv $TRAVIS_BUILD_DIR/GPL/DemanglerGnu/build/os */GPL/DemanglerGnu/ && zip -r $name *
+      before_deploy:
+        - git config --local user.name "Greatnest"
+        - git config --local user.email "lindonng@hotmail.com"
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%d%m%Y-%H%M%S')-$(git log --format=%h -1)}
+        - git tag $TRAVIS_TAG
+      deploy:
+        provider: releases
+        skip_cleanup: true
+        file_glob: true
+        file: "${TRAVIS_BUILD_DIR}/build/dist/*.zip"
+        api_key:
+          secure: "i5P0Oob87p9H4M6+MTwHzQjJLLz9I+4teFEfRU1/req9R++wZD+ConwgmfbvaEO2yV5fRL8UgChAQcvk+Z9LdLAv/kx/hDaKIgm9VmSICai+NGbdAYQXcX3Gx2LuMO2vH8a6+jBeUBV1mc/44VQlY0tDcnv/typj3rhQ6fuijFlteSWx3SbTxYQlVC99I/8W9SBP/tEzBBeNjyAvC5rmc90NN2l8CC0nHAPPNyn9krsgzL+rLLkKdmtv3LljXttE9RSlp0MH2a4FBg6Y9DBD9SBsQfiBhGzDmq0eCFdQse67o/YvfgIUjjrH5y6HGKAQ6YYuSsyz79SHgu/aMq1hRjm8rz555yVMP4Bfd2367BdAUaqZABW9O591F37KRU+s1hgCHczx4oduZg1QpMfRxavj/8ieRzinWYsufmd5kZnyW9ShVyiTrhlrNo+rQJjA5sh0awrrS/ukAXUl78qFe/8H3JBVXpDDILFdn4oK7Vl5hed+1qbcLl44q5e6ouooKnlSneOukGG36i+r1kQZivIYlKtg72QbXhqXhPY0UuR3DOQLZe9D9tvkejhbWu1xaPXbRzy2VdDgO9tRQ21UvAHNbK1RSaCLOu1rQBoss9B00jsIOmpzuaZdJrrAB5W7TATcNskWE25QIo5emrkFIIHP7Qog5gZmhiz7uMekZ2U="

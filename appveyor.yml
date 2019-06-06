@@ -1,0 +1,50 @@
+os: Visual Studio 2017
+
+environment:
+  matrix:
+    - JAVA_HOME: C:\Program Files\Java\jdk11
+
+platform:
+  - x64
+
+configuration:
+  - Release
+
+skip_tags: true
+
+install:
+  - cd ..
+  - choco install winflexbison3
+  - move C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_flex.exe C:\ProgramData\chocolatey\lib\winflexbison3\tools\flex.exe
+  - move C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_bison.exe C:\ProgramData\chocolatey\lib\winflexbison3\tools\bison.exe 
+  - curl -o gradle-5.0-bin.zip -L https://downloads.gradle.org/distributions/gradle-5.0-bin.zip
+  - 7z x -y gradle-5.0-bin.zip
+  - SET PATH=C:\ProgramData\chocolatey\lib\winflexbison3\tools\;%JAVA_HOME%\bin;%CD%\gradle-5.0\bin;%PATH%
+  - mkdir %USERPROFILE%\.gradle\init.d\ %USERPROFILE%\flatRepo
+  - curl -o %USERPROFILE%\.gradle\init.d\repos.gradle -L https://pastebin.com/raw/J5P4Qhpg
+  - curl -o dex-tools-2.0.zip -L https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
+  - 7z x -y dex-tools-2.0.zip && move dex2jar-2.0\lib\dex* %USERPROFILE%\flatRepo
+  - curl -o AXMLPrinter2.jar -L https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
+  - move AXMLPrinter2.jar %USERPROFILE%\flatRepo
+  - curl -o hfsexplorer-0_21-bin.zip -L https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip
+  - 7z x -y hfsexplorer-0_21-bin.zip -ohfsx && move hfsx\lib\*.jar %USERPROFILE%\flatRepo
+  - curl -o yajsw-stable-12.12.zip -L https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
+  - mkdir ghidra.bin\Ghidra\Features\GhidraServer\ && move yajsw-stable-12.12.zip ghidra.bin\Ghidra\Features\GhidraServer\
+  - cd %APPVEYOR_BUILD_FOLDER%
+build_script:
+  - gradle buildNatives_win64 
+  - gradle yajswDevUnpack
+  - gradle buildGhidra
+  - cd build\dist
+  - ps: Set-Variable -Name "zipName" -Value (Get-ChildItem -Path . -Name); 7z x -y *.zip; del *.zip; Set-Variable -Name "folderName" -Value (Get-ChildItem -Path . -Name); move ..\..\GPL\DemanglerGnu\build\os $folderName\GPL\DemanglerGnu\; 7z a -tzip $zipName *
+artifacts:
+  - path: build\dist\*.zip
+    name: release
+deploy:
+  - provider: GitHub
+    release: ghidra-windows-v$(appveyor_build_version)
+    auth_token:
+      secure: r7y4xWtO2Ddhz9tMl8bVwPNcx+nRkloXVNWCVpOFz4RNZ52zgYOjqUyb3XMku7p1
+    artifact: release        
+    on:
+      branch: master  
