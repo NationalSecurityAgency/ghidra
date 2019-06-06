@@ -15,8 +15,7 @@
  */
 package ghidra.graph.viewer.edge;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -726,10 +725,12 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 	private void focusMode(PathHighlightMode mode) {
 		swing(() -> graphComponent.setVertexFocusPathHighlightMode(mode));
+		waitForPathHighligter();
 	}
 
 	private void hoverMode(PathHighlightMode mode) {
 		swing(() -> graphComponent.setVertexHoverPathHighlightMode(mode));
+		waitForPathHighligter();
 	}
 
 	@Override
