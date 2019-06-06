@@ -336,7 +336,7 @@ public class KeyBindingUtils {
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, DockingActionIf> getAllKeyBindingActions(DockingTool tool) {
+	public static Map<String, DockingActionIf> getAllKeyBindingActionsByFullName(DockingTool tool) {
 
 		Map<String, DockingActionIf> deduper = new HashMap<>();
 		Set<DockingActionIf> actions = tool.getAllActions();
@@ -363,7 +363,8 @@ public class KeyBindingUtils {
 	 * @param owner the action owner name
 	 * @return the actions
 	 */
-	public static Set<DockingActionIf> getKeyBindingActions(DockingTool tool, String owner) {
+	public static Set<DockingActionIf> getKeyBindingActionsForOwner(DockingTool tool,
+			String owner) {
 
 		Map<String, DockingActionIf> deduper = new HashMap<>();
 		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(owner);
@@ -379,19 +380,6 @@ public class KeyBindingUtils {
 		}
 
 		return CollectionUtils.asSet(deduper.values());
-	}
-
-	/**
-	 * Returns all actions that match the given owner and name
-	 * 
-	 * @param tool the tool containing the actions
-	 * @param owner the owner
-	 * @param name the name
-	 * @return the actions
-	 */
-	public static Set<DockingActionIf> getActions(DockingTool tool, String owner, String name) {
-		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(owner);
-		return getActions(actions, owner, name);
 	}
 
 	/**
@@ -421,16 +409,17 @@ public class KeyBindingUtils {
 	public static DockingActionIf getSharedKeyBindingAction(Set<DockingActionIf> allActions,
 			String sharedName) {
 
-		Set<DockingActionIf> toolActions = getActions(allActions, "Tool", sharedName);
+		String owner = "Tool";
+		for (DockingActionIf action : allActions) {
+			if (!(action instanceof SharedStubKeyBindingAction)) {
+				continue;
+			}
 
-		//@formatter:off
-		return toolActions
-			.stream()
-			.filter(action -> action instanceof SharedStubKeyBindingAction)
-			.findAny()
-			.orElse(null)
-			;
-		//@formatter:on
+			if (action.getOwner().equals(owner) && action.getName().equals(sharedName)) {
+				return action;
+			}
+		}
+		return null;
 	}
 
 	private static boolean isIgnored(DockingActionIf action) {
@@ -456,8 +445,15 @@ public class KeyBindingUtils {
 		return new ActionAdapter(action);
 	}
 
+	/**
+	 * Checks each action in the given collection against the given new action to make sure that
+	 * they share the same default key binding.
+	 * 
+	 * @param newAction the action to check
+	 * @param existingActions the actions that have already been checked
+	 */
 	public static void assertSameDefaultKeyBindings(DockingActionIf newAction,
-			List<DockingActionIf> existingActions) {
+			Collection<DockingActionIf> existingActions) {
 
 		KeyBindingData newDefaultBinding = newAction.getDefaultKeyBindingData();
 		KeyStroke defaultKs = getKeyStroke(newDefaultBinding);
@@ -471,6 +467,14 @@ public class KeyBindingUtils {
 		}
 	}
 
+	/**
+	 * Logs a warning message for the two given actions to signal that they do not share the
+	 * same default key binding
+	 * 
+	 * @param newAction the new action
+	 * @param existingAction the action that has already been validated
+	 * @param existingDefaultKs the current validated key stroke
+	 */
 	public static void logDifferentKeyBindingsWarnigMessage(DockingActionIf newAction,
 			DockingActionIf existingAction, KeyStroke existingDefaultKs) {
 

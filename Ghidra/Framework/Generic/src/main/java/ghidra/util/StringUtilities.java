@@ -18,6 +18,7 @@ package ghidra.util;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -857,18 +858,9 @@ public class StringUtilities {
 			return null;
 		}
 
-		int i = 0;
-		StringBuffer buffer = new StringBuffer("[ ");
-		for (Object o : collection) {
-			buffer.append(o.toString());
-			if (i + 1 < collection.size()) {
-				buffer.append(separator);
-			}
-			i++;
-		}
-
-		buffer.append(" ]");
-		return buffer.toString();
+		String asString =
+			collection.stream().map(o -> o.toString()).collect(Collectors.joining(separator));
+		return "[ " + asString + " ]";
 	}
 
 	public static String toStringWithIndent(Object o) {

@@ -89,7 +89,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private Map<String, ComponentProvider> providerNameCache = new HashMap<>();
 	private Map<String, PreferenceState> preferenceStateMap = new HashMap<>();
 	private DockWinListener docListener;
-	private DockingActionManager actionManager;
+	private ActionToGuiMapper actionManager;
 
 	private WeakSet<DockingContextListener> contextListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
@@ -140,7 +140,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		root = new RootNode(this, toolName, images, modal, factory);
-		actionManager = new DockingActionManager(this);
+		actionManager = new ActionToGuiMapper(this);
 
 		KeyboardFocusManager km = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		km.addPropertyChangeListener("permanentFocusOwner", this);
@@ -161,7 +161,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param enable
 	 */
 	public static void enableDiagnosticActions(boolean enable) {
-		DockingActionManager.enableDiagnosticActions(enable);
+		ActionToGuiMapper.enableDiagnosticActions(enable);
 	}
 
 	/**
@@ -293,7 +293,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param helpLocation help content location
 	 */
 	public static void setHelpLocation(JComponent c, HelpLocation helpLocation) {
-		DockingActionManager.setHelpLocation(c, helpLocation);
+		ActionToGuiMapper.setHelpLocation(c, helpLocation);
 	}
 
 	/**
@@ -338,7 +338,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return placeholderManager;
 	}
 
-	DockingActionManager getActionManager() {
+	ActionToGuiMapper getActionManager() {
 		return actionManager;
 	}
 

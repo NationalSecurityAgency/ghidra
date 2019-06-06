@@ -357,8 +357,8 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 //==================================================================================================
 
 	private void assertSharedStubInTool() {
-		DockingToolActionManager actionManager =
-			(DockingToolActionManager) getInstanceField("actionMgr", tool);
+		ToolActions actionManager =
+			(ToolActions) getInstanceField("actionMgr", tool);
 		DockingActionIf action = actionManager.getSharedStubKeyBindingAction(SHARED_NAME);
 		assertNotNull("Shared action stub is not in the tool", action);
 	}

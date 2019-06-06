@@ -35,7 +35,7 @@ import resources.ResourceManager;
  */
 public class KeyEntryDialog extends DialogComponentProvider {
 
-	private DockingActionManager actionManager;
+	private ActionToGuiMapper actionManager;
 	private DockingActionIf action;
 	private JPanel defaultPanel;
 	private KeyEntryTextField keyEntryField;
@@ -45,7 +45,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	private SimpleAttributeSet textAttrSet;
 	private Color bgColor;
 
-	public KeyEntryDialog(DockingActionIf action, DockingActionManager actionManager) {
+	public KeyEntryDialog(DockingActionIf action, ActionToGuiMapper actionManager) {
 		super("Set Key Binding for " + action.getName(), true);
 		this.actionManager = actionManager;
 		this.action = action;

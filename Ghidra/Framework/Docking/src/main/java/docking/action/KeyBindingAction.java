@@ -24,9 +24,9 @@ import ghidra.util.Msg;
 import ghidra.util.ReservedKeyBindings;
 
 public class KeyBindingAction extends DockingAction {
-	private final DockingActionManager dockingActionManager;
+	private final ActionToGuiMapper dockingActionManager;
 
-	public KeyBindingAction(DockingActionManager dockingActionManager) {
+	public KeyBindingAction(ActionToGuiMapper dockingActionManager) {
 		super("Set KeyBinding", DockingWindowManager.DOCKING_WINDOWS_OWNER);
 		this.dockingActionManager = dockingActionManager;
 		createReservedKeyBinding(ReservedKeyBindings.UPDATE_KEY_BINDINGS_KEY);

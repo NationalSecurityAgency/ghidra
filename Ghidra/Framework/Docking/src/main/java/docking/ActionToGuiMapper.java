@@ -28,7 +28,7 @@ import ghidra.util.*;
 /**
  * Manages the global actions for the menu and toolbar.
  */
-public class DockingActionManager {
+public class ActionToGuiMapper {
 
 	private HashSet<DockingActionIf> globalActions = new LinkedHashSet<>();
 
@@ -44,7 +44,7 @@ public class DockingActionManager {
 	private PopupActionManager popupActionManager;
 	private DockingAction keyBindingsAction;
 
-	DockingActionManager(DockingWindowManager winMgr) {
+	ActionToGuiMapper(DockingWindowManager winMgr) {
 		menuGroupMap = new MenuGroupMap();
 
 		menuBarMenuHandler = new MenuBarMenuHandler(winMgr);

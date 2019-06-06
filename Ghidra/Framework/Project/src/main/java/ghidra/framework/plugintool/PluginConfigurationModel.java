@@ -218,7 +218,7 @@ public class PluginConfigurationModel {
 			return Collections.emptySet();
 		}
 
-		return KeyBindingUtils.getKeyBindingActions(tool, pluginDescription.getName());
+		return KeyBindingUtils.getKeyBindingActionsForOwner(tool, pluginDescription.getName());
 	}
 
 	/**

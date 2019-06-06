@@ -21,7 +21,7 @@ import java.util.*;
 import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
-import docking.actions.DockingToolActionManager;
+import docking.actions.ToolActions;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.SystemUtilities;
 
@@ -32,7 +32,7 @@ import ghidra.util.SystemUtilities;
 public abstract class AbstractDockingTool implements DockingTool {
 
 	protected DockingWindowManager winMgr;
-	protected DockingToolActionManager actionMgr;
+	protected ToolActions actionMgr;
 	protected Map<String, ToolOptions> optionsMap = new HashMap<>();
 	protected boolean configChangedFlag;
 
@@ -117,7 +117,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public Set<DockingActionIf> getAllActions() {
 		Set<DockingActionIf> actions = actionMgr.getAllActions();
-		DockingActionManager am = winMgr.getActionManager();
+		ActionToGuiMapper am = winMgr.getActionManager();
 		actions.addAll(am.getAllActions());
 		return actions;
 	}

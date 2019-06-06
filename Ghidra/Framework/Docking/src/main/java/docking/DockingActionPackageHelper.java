@@ -24,11 +24,11 @@ import docking.action.DockingActionIf;
  * {@link DockingWindowManager}.  This allows the manager's interface to hide methods that 
  * don't make sense for public consumption.
  */
-public class DockingWindowManagerActionUpdater {
+public class DockingActionPackageHelper {
 
 	private DockingWindowManager windowManager;
 
-	public DockingWindowManagerActionUpdater(DockingWindowManager windowManager) {
+	public DockingActionPackageHelper(DockingWindowManager windowManager) {
 		this.windowManager = windowManager;
 	}
 

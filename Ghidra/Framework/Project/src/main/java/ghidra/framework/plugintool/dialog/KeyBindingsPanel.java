@@ -171,7 +171,7 @@ public class KeyBindingsPanel extends JPanel {
 		originalValues = new HashMap<>();
 		String longestName = "";
 
-		actionsByFullName = KeyBindingUtils.getAllKeyBindingActions(tool);
+		actionsByFullName = KeyBindingUtils.getAllKeyBindingActionsByFullName(tool);
 		Set<Entry<String, DockingActionIf>> entries = actionsByFullName.entrySet();
 		for (Entry<String, DockingActionIf> entry : entries) {
 

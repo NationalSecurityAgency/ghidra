@@ -69,7 +69,7 @@ public class DialogComponentProviderPopupActionManager {
 			return;
 		}
 
-		DockingActionManager actionManager = dwm.getActionManager();
+		ActionToGuiMapper actionManager = dwm.getActionManager();
 		MenuGroupMap menuGroupMap = actionManager.getMenuGroupMap();
 		MenuManager menuMgr =
 			new MenuManager("Popup", '\0', null, true, popupMenuHandler, menuGroupMap);

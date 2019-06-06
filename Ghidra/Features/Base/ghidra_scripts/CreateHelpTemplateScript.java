@@ -102,7 +102,7 @@ public class CreateHelpTemplateScript extends GhidraScript {
 	}
 
 	private List<DockingActionIf> getActions(PluginTool tool, Plugin plugin) {
-		Set<DockingActionIf> actions = KeyBindingUtils.getKeyBindingActions(tool, plugin.getName());
+		Set<DockingActionIf> actions = KeyBindingUtils.getKeyBindingActionsForOwner(tool, plugin.getName());
 		List<DockingActionIf> list = new ArrayList<>(actions);
 		Comparator<DockingActionIf> comparator = (action1, action2) -> {
 			try {
