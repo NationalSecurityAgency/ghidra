@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -97,6 +97,20 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertCurrentAddress(addr(linkAddress));
 	}
 
+	@Test
+	public void testNewDecompileNavigatesToFunctionSignature() {
+
+		decompile("100000bf0"); // 'main'
+		int line = 5; // arbitrary value in view
+		int charPosition = 5; // arbitrary
+		setDecompilerLocation(line, charPosition);
+
+		decompile("100000d60"); // _call_structure_A()
+		line = 0; // function signature
+		charPosition = 0; // start of signature
+		assertCurrentLocation(line, charPosition);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -139,6 +153,14 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
 		String actual = field.getText();
 		assertEquals("Line text not as expected at line " + line, expected, actual);
+	}
+
+	private void assertCurrentLocation(int line, int col) {
+		int oneBasedLine = line + 1;
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		FieldLocation actual = panel.getCursorPosition();
+		FieldLocation expected = loc(oneBasedLine, col);
+		assertEquals("Decompiler cursor is not at the expected location", expected, actual);
 	}
 
 	private String getTokenText(FieldLocation loc) {
