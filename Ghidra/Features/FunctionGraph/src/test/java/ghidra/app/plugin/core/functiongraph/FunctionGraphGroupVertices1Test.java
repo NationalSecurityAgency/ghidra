@@ -109,6 +109,10 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		assertEquals(maxAddress, vertex.getAddresses().getMaxAddress());
 
 		Point2D newLocation = getLocation(vertex);
+
+		// TODO debug - this has failed; suspected timing issue
+		waitForCondition(() -> pointsAreSimilar(location, newLocation));
+
 		assertTrue(
 			"Vertex location not restored to default after performing a relayout " +
 				"original point: " + location + " - reloaded point: " + newLocation,
@@ -812,6 +816,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 	//==================================================================================================
 
 	// @formatter:off
+	@Override
 	protected void doTestGroupAndUngroupVertices() {
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
@@ -843,6 +848,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		
 	}
 
+	@Override
 	protected void doTestRestoringWhenCodeBlocksHaveChanged_WillRegroup() {
 		// 
 		// Tests the behavior of how group vertices are restored when one or more of the vertices 
@@ -924,6 +930,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		assertNotNull(newlyCreatedVertex);
 	}
 
+	@Override
 	protected void doTestSymbolAddedWhenGrouped_SymbolInsideOfGroupNode() {
 		//
 		// By default, if the FunctionGraph detects a symbol addition to one of the code blocks

@@ -38,8 +38,8 @@ public class NList implements StructConverter {
 	private String string;
 	private boolean is32bit;
 
-    static NList createNList(FactoryBundledWithBinaryReader reader,
-            boolean is32bit, int stringTableOffset) throws IOException {
+	public static NList createNList(FactoryBundledWithBinaryReader reader,
+			boolean is32bit, long stringTableOffset) throws IOException {
         NList nList = (NList) reader.getFactory().create(NList.class);
         nList.initNList(reader, is32bit, stringTableOffset);
         return nList;
@@ -50,7 +50,8 @@ public class NList implements StructConverter {
      */
     public NList() {}
 
-    private void initNList(FactoryBundledWithBinaryReader reader, boolean is32bit, int stringTableOffset) throws IOException {
+	private void initNList(FactoryBundledWithBinaryReader reader, boolean is32bit,
+			long stringTableOffset) throws IOException {
 		this.is32bit = is32bit;
 
 		n_strx      = reader.readNextInt();
@@ -64,9 +65,9 @@ public class NList implements StructConverter {
 			n_value = reader.readNextLong();
 		}
 		try {
-			string = reader.readAsciiString((stringTableOffset + n_strx) & 0xffffffffL);
+			string = reader.readAsciiString(stringTableOffset + n_strx);
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			string = "";
 		}
 	}

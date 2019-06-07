@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +26,7 @@ import docking.menu.DockingCheckboxMenuItemUI;
  * Action for use in the composite data type editor.
  * This action has help associated with it.
  */
-public class HexNumbersAction extends CompositeEditorAction implements ToggleDockingActionIf {
+public class HexNumbersAction extends CompositeEditorTableAction implements ToggleDockingActionIf {
 
 	private final static String ACTION_NAME = "Show Numbers In Hex";
 	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
@@ -69,10 +68,12 @@ public class HexNumbersAction extends CompositeEditorAction implements ToggleDoc
 		// Always enabled.
 	}
 
+	@Override
 	public boolean isSelected() {
 		return isSelected;
 	}
 
+	@Override
 	public void setSelected(boolean newValue) {
 		isSelected = newValue;
 		firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);

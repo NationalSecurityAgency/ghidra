@@ -122,7 +122,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(arrayDt);
 
 		// Check enablement.
-		CompositeEditorAction[] pActions = provider.getActions();
+		CompositeEditorTableAction[] pActions = provider.getActions();
 		for (int i = 0; i < pActions.length; i++) {
 			if ((pActions[i] instanceof FavoritesAction) ||
 				(pActions[i] instanceof CycleGroupAction) ||
