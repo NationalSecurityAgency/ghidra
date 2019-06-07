@@ -42,7 +42,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Greatnest"
         - git config --local user.email "lindonng@hotmail.com"
-        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%d%m%Y-%H%M%S')-$(git log --format=%h -1)}
+        - export TRAVIS_TAG=${TRAVIS_TAG:-ghidra-linux-v$TRAVIS_BUILD_NUMBER}
         - git tag $TRAVIS_TAG
       deploy:
         provider: releases

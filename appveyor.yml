@@ -35,6 +35,7 @@ build_script:
   - gradle buildNatives_win64 
   - gradle yajswDevUnpack
   - gradle buildGhidra
+after_build:
   - cd build\dist
   - ps: Set-Variable -Name "zipName" -Value (Get-ChildItem -Path . -Name); 7z x -y *.zip; del *.zip; Set-Variable -Name "folderName" -Value (Get-ChildItem -Path . -Name); move ..\..\GPL\DemanglerGnu\build\os $folderName\GPL\DemanglerGnu\; 7z a -tzip $zipName *
 artifacts:
