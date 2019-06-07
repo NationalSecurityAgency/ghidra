@@ -1084,13 +1084,14 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       isempty = false;
       step = in1.step;
       mask = calc_mask(outSize);
-      if (in1.right < in1.left) {	// Extending causes 2 pieces
+      left = in1.left;
+      right = (in1.right - in1.step) & in1.mask;
+      if (right < left) {	// Extending causes 2 pieces
 	left = 0;
 	right = in1.mask;
       }
       else {
-	left = in1.left;
-	right = in1.right;
+	right += step;	// Impossible for it to wrap with bigger mask
       }
       break;
     case CPUI_INT_SEXT:
@@ -1098,12 +1099,14 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       step = in1.step;
       mask = calc_mask(outSize);
       left = sign_extend(in1.left, inSize, outSize);
-      right = sign_extend(in1.right, inSize, outSize);
+      right = sign_extend((in1.right - in1.step)&in1.mask, inSize, outSize);
       if ((intb)right < (intb)left) {
 	right = calc_mask(inSize);
 	left = calc_mask(outSize) ^ right;
 	right += 1;
       }
+      else
+	right += step;
       break;
     case CPUI_INT_2COMP:
       isempty = false;
@@ -1120,6 +1123,14 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       left = -in1.right & mask;
       right = -in1.left & mask;
       normalize();
+      break;
+    case CPUI_BOOL_NEGATE:
+    case CPUI_FLOAT_NAN:
+      isempty = false;
+      mask = 0xff;
+      step = 1;
+      left = 0;
+      right = 2;
       break;
     default:
       return false;
@@ -1298,6 +1309,29 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
 	right = (left + 1)&mask;
       break;
     }
+    case CPUI_INT_EQUAL:
+    case CPUI_INT_NOTEQUAL:
+    case CPUI_INT_SLESS:
+    case CPUI_INT_SLESSEQUAL:
+    case CPUI_INT_LESS:
+    case CPUI_INT_LESSEQUAL:
+    case CPUI_INT_CARRY:
+    case CPUI_INT_SCARRY:
+    case CPUI_INT_SBORROW:
+    case CPUI_BOOL_XOR:
+    case CPUI_BOOL_AND:
+    case CPUI_BOOL_OR:
+    case CPUI_FLOAT_EQUAL:
+    case CPUI_FLOAT_NOTEQUAL:
+    case CPUI_FLOAT_LESS:
+    case CPUI_FLOAT_LESSEQUAL:
+      // Ops with boolean outcome.  We don't try to eliminate outcomes here.
+      isempty = false;
+      mask = 0xff;
+      step = 1;
+      left = 0;		// Both true and false are possible
+      right = 2;
+      break;
     default:
       return false;
   }
