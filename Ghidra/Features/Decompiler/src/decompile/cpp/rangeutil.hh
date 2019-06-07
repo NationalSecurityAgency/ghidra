@@ -142,7 +142,7 @@ private:
   void setVarnode(Varnode *v,int4 tCode);	///< Attach \b this to given Varnode and set initial values
   void addEquation(int4 slot,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
   void addLandmark(int4 type,const CircleRange &constraint) { addEquation(numParams,type,constraint); }	///< Add a widening landmark
-  void computeTypeCode(void);	///< Figure out if \b this value set is absolute or relative
+  bool computeTypeCode(void);	///< Figure out if \b this value set is absolute or relative
   bool iterate(Widener &widener);	///< Regenerate \b this value set from operator inputs
 public:
   int4 getCount(void) const { return count; }		///< Get the current iteration count

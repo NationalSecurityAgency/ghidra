@@ -1493,9 +1493,10 @@ void ValueSet::addEquation(int4 slot,int4 type,const CircleRange &constraint)
 
 /// Examine the input value sets that determine \b this set and decide if it
 /// is relative. In general, \b this will be relative if any of its inputs are.
-/// Certain combinations are indeterminate, which this method flags by calling
-/// setFull(). The Varnode attached to \b this must have a defining op.
-void ValueSet::computeTypeCode(void)
+/// Certain combinations are indeterminate, which this method flags by
+/// returning \b true. The Varnode attached to \b this must have a defining op.
+/// \return \b true if there is an indeterminate combination
+bool ValueSet::computeTypeCode(void)
 
 {
   int4 relCount = 0;
@@ -1510,26 +1511,29 @@ void ValueSet::computeTypeCode(void)
   }
   if (relCount == 0) {
     typeCode = 0;
-    return;
+    return false;
   }
   // Only certain operations can propagate a relative value set
   switch(opCode) {
     case CPUI_PTRSUB:
+    case CPUI_PTRADD:
     case CPUI_INT_ADD:
+    case CPUI_INT_SUB:
       if (relCount == 1)
 	typeCode = lastTypeCode;
       else
-	setFull();
+	return true;
       break;
+    case CPUI_CAST:
     case CPUI_COPY:
     case CPUI_INDIRECT:
     case CPUI_MULTIEQUAL:
       typeCode = lastTypeCode;
       break;
     default:
-      setFull();
-      break;
+      return true;
   }
+  return false;
 }
 
 /// Recalculate \b this value set by grabbing the value sets of the inputs to the
@@ -1541,8 +1545,12 @@ bool ValueSet::iterate(Widener &widener)
 {
   if (!vn->isWritten()) return false;
   if (widener.checkFreeze(*this)) return false;
-  if (count == 0)
-    computeTypeCode();
+  if (count == 0) {
+    if (computeTypeCode()) {
+      setFull();
+      return true;
+    }
+  }
   count += 1;		// Count this iteration
   CircleRange res;
   PcodeOp *op = vn->getDef();
@@ -1570,6 +1578,8 @@ bool ValueSet::iterate(Widener &widener)
     if (0 != res.circleUnion(range)) {	// Union with the previous iteration's set
       res.minimalContainer(range,MAX_STEP);
     }
+    leftIsStable = range.getMin() == res.getMin();
+    rightIsStable = range.getEnd() == res.getEnd();
   }
   else if (numParams == 1) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
@@ -1588,6 +1598,8 @@ bool ValueSet::iterate(Widener &widener)
       setFull();
       return true;
     }
+    leftIsStable = inSet1->leftIsStable;
+    rightIsStable = inSet1->rightIsStable;
   }
   else if (numParams == 2) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
@@ -1615,6 +1627,8 @@ bool ValueSet::iterate(Widener &widener)
 	return true;
       }
     }
+    leftIsStable = inSet1->leftIsStable && inSet2->leftIsStable;
+    rightIsStable = inSet1->rightIsStable && inSet2->rightIsStable;
   }
   else if (numParams == 3) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
@@ -1635,14 +1649,14 @@ bool ValueSet::iterate(Widener &widener)
       setFull();
       return true;
     }
+    leftIsStable = inSet1->leftIsStable && inSet2->leftIsStable;
+    rightIsStable = inSet1->rightIsStable && inSet2->rightIsStable;
   }
   else
     return false;		// No way to change this value set
 
   if (res == range)
     return false;
-  leftIsStable = range.getMin() == res.getMin();
-  rightIsStable = range.getEnd() == res.getEnd();
   if (partHead != (Partition *)0) {
     if (!widener.doWidening(*this, range, res))
       setFull();
