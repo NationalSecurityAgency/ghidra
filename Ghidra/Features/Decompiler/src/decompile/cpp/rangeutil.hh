@@ -176,16 +176,20 @@ public:
 class ValueSetRead {
   friend class ValueSetSolver;
   int4 typeCode;	///< 0=pure constant 1=stack relative
-  PcodeOp *op;		///< The PcodeOp at the point of the value set read
   int4 slot;		///< The slot being read
+  PcodeOp *op;		///< The PcodeOp at the point of the value set read
   CircleRange range;	///< Range of values or offsets in this set
-  int4 equationTypeCode;	///< Type code of the associated equation
   CircleRange equationConstraint;	///< Constraint associated with the equation
+  int4 equationTypeCode;	///< Type code of the associated equation
+  bool leftIsStable;	///< Set to \b true if left boundary of range didn't change (last iteration)
+  bool rightIsStable;	///< Set to \b true if right boundary of range didn't change (last iteration)
   void setPcodeOp(PcodeOp *o,int4 slt);	///< Establish \e read this value set corresponds to
   void addEquation(int4 slt,int4 type,const CircleRange &constraint);	///< Insert an equation restricting \b this value set
 public:
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
+  bool isLeftStable(void) const { return leftIsStable; }
+  bool isRightStable(void) const { return rightIsStable; }
   void compute(void);			///< Compute \b this value set
   void printRaw(ostream &s) const;	///< Write a text description of \b to the given stream
 };
@@ -297,6 +301,7 @@ public:
   list<ValueSet>::const_iterator endValueSets(void) const { return valueNodes.end(); }	///< End of all ValueSets in the system
   map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads
   map<SeqNum,ValueSetRead>::const_iterator endValueSetReads(void) const { return readNodes.end(); }	///< End of ValueSetReads
+  const ValueSetRead &getValueSetRead(const SeqNum &seq) { return (*readNodes.find(seq)).second; }	///< Get ValueSetRead by SeqNum
 };
 
 /// \param op2 is the range to compare \b this to

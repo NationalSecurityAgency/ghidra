@@ -1771,6 +1771,8 @@ void ValueSetRead::compute(void)
   ValueSet *valueSet = vn->getValueSet();
   typeCode = valueSet->getTypeCode();
   range = valueSet->getRange();
+  leftIsStable = valueSet->isLeftStable();
+  rightIsStable = valueSet->isRightStable();
   if (typeCode == equationTypeCode) {
     if (0 != range.intersect(equationConstraint)) {
       range = equationConstraint;
