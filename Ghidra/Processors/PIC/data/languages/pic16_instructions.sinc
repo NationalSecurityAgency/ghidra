@@ -6,10 +6,12 @@
 
 # Little-endian bit numbering
 define token instr16(16)
+	op16 =	(0,15)
 	op14 =	(0,13)
 	op12 =  (2,13)
 	op11 =	(3,13)
 	op9 =	(5,13)
+	op8 =	(6,13)
 	op7 =   (7,13)
 	op6 =	(8,13)
 	op5 =	(9,13)
@@ -26,6 +28,7 @@ define token instr16(16)
 	fsrk =	(6,6)
 	fregCore = (0,3)
 	k5 = 	(0,4)
+	k6 = 	(0,5)
 	k7 = 	(0,6)
 	k8 =	(0,7)
 	sk9 =   (0,8) signed
@@ -234,15 +237,15 @@ destREG: "1"		is d=1 & f7=0x02 & fregCore				{ export fregCore; } # PCL (special
 D: "w"		is d=0										{ }
 D: "f"		is d=1										{ }
 
-# Absolute address generated from k11 and PCLATH<4:3>
+# Absolute address generated from k11 and PCLATH<6:3>
 absAddr11: k11	is k11									{
-	addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
-	export addr; 
+	local addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
+	export *[const]:2 addr; 
 }
 
 @if PROCESSOR == "PIC_16F"
 
-# Absolute address generated from k11 and PCLATH<4:3>
+# Relative address generated from sk9
 relAddr9: addr	is sk9	[ addr = inst_next + sk9; ]								{
 	export *[CODE]:2 addr;
 }
@@ -252,13 +255,14 @@ relAddr9: addr	is sk9	[ addr = inst_next + sk9; ]								{
 # Immediate Data (Literal operation)
 imm8: "#"k8	is k8										{ export *[const]:1 k8; }
 
-@if PROCESSOR == "PIC_16F"
 # Immediate Data (Literal operation)
 imm7: "#"k7	is k7										{ export *[const]:1 k7; }
 
 # Immediate Data (Literal operation)
+imm6: "#"k6	is k6										{ export *[const]:1 k6; }
+
+# Immediate Data (Literal operation)
 imm5: "#"k5	is k5										{ export *[const]:1 k5; }
-@endif
 
 # Bit identifier
 bit: "#"b3		is b3									{ export *[const]:1 b3; }
@@ -269,9 +273,15 @@ trisREG: "5"	is l5=5												{ local trl:2 = 0x89; export *[DATA]:1 trl; } # 
 trisREG: "6"	is l5=6												{ local trl:2 = 0x187; export *[DATA]:1 trl; } # TRISB
 trisREG: "7"	is l5=7												{ local trl:2 = 0x188; export *[DATA]:1 trl; } # TRISC
 @elif PROCESSOR == "PIC_16F"
-trisREG: "5"	is l5=5												{ local trl:2 = 0x10C; export *[DATA]:1 trl; } # TRISA
-trisREG: "6"	is l5=6												{ local trl:2 = 0x10D; export *[DATA]:1 trl; } # TRISB
-trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } # TRISC
+@ifndef PIC16F153XX
+trisREG: "5"	is l5=5												{ local trl:2 = 0x08C; export *[DATA]:1 trl; } # TRISA
+trisREG: "6"	is l5=6												{ local trl:2 = 0x08D; export *[DATA]:1 trl; } # TRISB
+trisREG: "7"	is l5=7												{ local trl:2 = 0x08E; export *[DATA]:1 trl; } # TRISC
+@else
+trisREG: "5"	is l5=5												{ local trl:2 = 0x012; export *[DATA]:1 trl; } # TRISA
+trisREG: "6"	is l5=6												{ local trl:2 = 0x013; export *[DATA]:1 trl; } # TRISB
+trisREG: "7"	is l5=7												{ local trl:2 = 0x014; export *[DATA]:1 trl; } # TRISC
+@endif
 @endif
 
 :^instruction is possibleSkip=1 & instruction [ possibleSkip=0; ] {
@@ -316,7 +326,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 :ADDWF PC, D		is op6=0x07 & D & d=1 & f7=0x02 & PC	{
 	#  --00 0111 dfff ffff
 	#  0000 0111 1000 0010  ->  ADDWF PCL, w, ACCESS
-	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
+	addr:2 = inst_start >> 1; # Compensate for CODE wordsize
 	PCLATH = addr(1);
 	tmp:1 = addr:1;
 	setAddFlags(tmp, W);
@@ -346,7 +356,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 :ADDWFC PC, D		is op6=0x3D & D & d=1 & f7=0x02 & PC	{
 	#  --00 0111 dfff ffff
 	#  0000 0111 1000 0010  ->  ADDWF PCL, w, ACCESS
-	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
+	addr:2 = inst_start >> 1; # Compensate for CODE wordsize
 	PCLATH = addr(1);
 	val:1 = addr:1;
 	
@@ -417,7 +427,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(Z) = 0;
 }
 
-
+@if PROCESSOR == "PIC_16"
 :BCF STATUS, "RP0"			is op4=0x4 & b3=5 & f7=0x3 & STATUS & bit							{
 	#  --01 00bb bfff ffff
 	#  0001 0010 1000 0011	->	BCF STATUS, #RP0
@@ -443,6 +453,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	local bitmask = ~(1 << bit);
 	STATUS = STATUS & bitmask;
 }
+@endif
 
 :BSF srcREG, bit			is op4=0x5 & bit & srcREG							{
 	#  --01 01bb bfff ffff
@@ -475,6 +486,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(Z) = 1;
 }
 
+@if PROCESSOR == "PIC_16"
 :BSF STATUS, "RP0"			is op4=0x5 & b3=5 & f7=0x3 & STATUS & bit							{
 	#  --01 01bb bfff ffff
 	#  0001 0110 1000 0011	->	BSF STATUS, #RP0
@@ -499,6 +511,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	local bitmask = 1 << bit;
 	STATUS = STATUS | bitmask;
 }
+@endif
 
 :BTFSC srcREG, bit		is op4=0x6 & bit & srcREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
 	#  --01 10bb bfff ffff
@@ -612,6 +625,13 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	call [absAddr11];
 }
 
+:CALLW				is op16=0x0006			{ 
+	#  0000 0000 0000 1010
+	local loc:2 = (zext(PCLATH) << 8) | zext(W);
+	push(&:2 inst_next);
+	call [loc];
+}
+
 :CLRF srcREG				is op6=0x01 & d=1 & srcREG						{
 	#  --00 0001 1fff ffff
 	#  0000 0001 1000 0000	->	CLRF INDF
@@ -620,6 +640,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(Z) = 1;
 }
 
+@if PROCESSOR == "PIC_16"
 :CLRF STATUS				is op6=0x01 & d=1 & f7=0x3 & STATUS						{
 	#  --00 0001 1fff ffff
 	#  0000 0001 1000 0011	->	CLRF STATUS
@@ -630,6 +651,16 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(DC) = 0;
 	$(C) = 0;
 }
+@elif PROCESSOR == "PIC_16F"
+:CLRF STATUS				is op6=0x01 & d=1 & f7=0x3 & STATUS						{
+	#  --00 0001 1fff ffff
+	#  0000 0001 1000 0011	->	CLRF STATUS
+	STATUS = 0;
+	$(Z) = 0;
+	$(DC) = 0;
+	$(C) = 0;
+}
+@endif
 
 :CLRW					is op12=0b000001000000 & mm			{
 	#  --00 0001 0xxx xxxx
@@ -751,13 +782,23 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	srcFSRk = W;
 }
 
-:MOVLB imm5			is op9=0x1 & imm5 {
-	BSR = imm5;
-}
-
 :MOVLP imm7				is op7=0x63 & imm7 {
 	PCLATH = imm7;
 }
+@endif
+
+@if PROCESSOR == "PIC_16F"
+
+@ifndef PIC16F153XX
+:MOVLB imm5			is op9=0x1 & imm5 {
+	BSR = imm5;
+}
+@else
+:MOVLB imm6			is op8=0x05 & imm6 {
+	BSR = imm6;
+}
+@endif
+
 @endif
 
 :MOVLW imm8				is op6=0x30 & imm8								{

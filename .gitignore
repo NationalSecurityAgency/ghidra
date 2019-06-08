@@ -6,6 +6,7 @@ repositories/
 flatRepo/
 Ghidra/.ghidraSvrKeys
 wrapper.log*
+*.launch
 
 Thumbs.db
 .DS_Store
