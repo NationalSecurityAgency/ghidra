@@ -15,6 +15,7 @@
  */
 package ghidra.python;
 
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.List;
 
@@ -22,6 +23,9 @@ import javax.swing.ImageIcon;
 
 import org.python.core.PySystemState;
 
+import docking.ActionContext;
+import docking.DockingUtils;
+import docking.action.*;
 import generic.jar.ResourceFile;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -34,6 +38,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.HelpLocation;
 import ghidra.util.task.*;
 import resources.ResourceManager;
 
@@ -120,6 +125,45 @@ public class PythonPlugin extends ProgramPlugin
 			getTool().getService(InterpreterPanelService.class).createInterpreterPanel(this, false);
 		welcome();
 		console.addFirstActivationCallback(() -> resetInterpreter());
+		createActions();
+	}
+
+	/**
+	 * Creates various actions for the plugin.
+	 */
+	private void createActions() {
+		
+		// Interrupt Interpreter
+		DockingAction interruptAction = new DockingAction("Interrupt Interpreter", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				interrupt();
+			}
+		};
+		interruptAction.setDescription("Interrupt Interpreter");
+		interruptAction.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/dialog-cancel.png"), null));
+		interruptAction.setEnabled(true);
+		interruptAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		interruptAction.setHelpLocation(new HelpLocation(getTitle(), "Interrupt_Interpreter"));
+		console.addAction(interruptAction);
+
+		// Reset Interpreter
+		DockingAction resetAction = new DockingAction("Reset Interpreter", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				reset();
+			}
+		};
+		resetAction.setDescription("Reset Interpreter");
+		resetAction.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/reload3.png"), null));
+		resetAction.setEnabled(true);
+		resetAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_D, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		resetAction.setHelpLocation(new HelpLocation(getTitle(), "Reset_Interpreter"));
+		console.addAction(resetAction);
 	}
 
 	/**
@@ -253,7 +297,9 @@ public class PythonPlugin extends ProgramPlugin
 		super.dispose();
 	}
 
-	@Override
+	/**
+	 * Interrupts what the interpreter is currently doing.
+	 */
 	public void interrupt() {
 		if (interpreter == null) {
 			return;
@@ -262,7 +308,9 @@ public class PythonPlugin extends ProgramPlugin
 		console.setPrompt(interpreter.getPrimaryPrompt());
 	}
 
-	@Override
+	/**
+	 * Resets the interpreter's state.
+	 */
 	public void reset() {
 
 		// Do an interrupt in case there is a loop or something running
