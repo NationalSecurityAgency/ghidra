@@ -500,7 +500,7 @@ define pcodeop switchAssist;
 # A: destination register (8 bits)
 # B: arbitrary 32-bit constant
 
-:const registerA8,constant32		is inst0=0x14 ; registerA8 ; constant32
+:"const" registerA8,constant32		is inst0=0x14 ; registerA8 ; constant32
 {
 	registerA8 = constant32;
 }
@@ -808,11 +808,11 @@ define pcodeop switchAssist;
 	distance:4   =  B_BITS_0_31_S * 2;
 	ident:4      =  *[ram] ( inst_start + distance );
 	size2:2      =  *[ram] ( inst_start + distance + 2 );
-	size:4       =  zext( size2 );
+	sze:4       =  zext( size2 );
 	first_key:4  =  *[ram] ( inst_start + distance + 2 + 2 );
 
 	if ( registerA8 <   first_key           ) goto inst_next;
-	if ( registerA8 >= ( first_key + size ) ) goto inst_next;
+	if ( registerA8 >= ( first_key + sze ) ) goto inst_next;
 
 	targets:4    =  ( inst_start + distance + 2 + 2 + 4 );
 	delta:4      =  ( registerA8 ) - ( first_key ); # which index into target
@@ -836,11 +836,11 @@ define pcodeop switchAssist;
 	distance:4   =  B_BITS_0_31_S * 2;
 	temp:4       =  inst_start;
 	size2:2      =  *[ram] ( temp + 2 + distance);
-	size:4       =  zext( size2 );
+	sze:4       =  zext( size2 );
 	defaultPos:4 =  inst_next;
 
 
- 	address:4 = switchAssist( registerA8, size, defaultPos, temp, distance );
+ 	address:4 = switchAssist( registerA8, sze, defaultPos, temp, distance );
 	goto [ address ];
 }
 

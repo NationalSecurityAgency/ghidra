@@ -90,7 +90,7 @@ macro setAddFlags(op1,op2) {
 }
 
 macro setSubtractCarryFlags(op1,op2) {
-	notC = ~CY_flag;
+	local notC = ~CY_flag;
 	CY_flag = ((op1 < sext(notC)) || (op2 < (op1 - sext(notC))));
 }
 
