@@ -223,7 +223,7 @@ public class VarnodeAST extends Varnode {
 		if (isInput() != vn.isInput())
 			return false;
 		if (def != null)
-			return (def.getSeqnum() == vn.getDef().getSeqnum());
+			return (def.getSeqnum().equals(vn.getDef().getSeqnum()));
 		return true;
 	}
 
