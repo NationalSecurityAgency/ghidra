@@ -48,8 +48,6 @@ define token opbyte (8)
 	pRegPair4_2  = (4,5)
 	sRegPair4_2  = (4,5)
 	qRegPair4_2  = (4,5)
-	qRegPair4_2a = (4,5)
-	qRegPair4_2b = (4,5)
 	rRegPair4_2  = (4,5)
 	reg3_3       = (3,5)
 	bits3_3      = (3,5)
@@ -76,8 +74,6 @@ attach variables [ reg0_3 reg3_3 ] [ B C D E H L _ A ];
 attach variables [ sRegPair4_2 dRegPair4_2 ] [ BC DE HL SP ];
 
 attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
-attach variables [ qRegPair4_2a ] [ B D H A ];
-attach variables [ qRegPair4_2b ] [ C E L F ];
 
 attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
 attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
@@ -526,9 +522,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	SP = IY;
 }
 
-:PUSH qRegPair4_2   is op6_2=0x3 & qRegPair4_2 & qRegPair4_2a & qRegPair4_2b & bits0_4=0x5 {
-#	push8(qRegPair4_2b);
-#	push8(qRegPair4_2a);
+:PUSH qRegPair4_2   is op6_2=0x3 & qRegPair4_2 & bits0_4=0x5 {
 	push16(qRegPair4_2);
 }
 
@@ -540,9 +534,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	push16(IY);
 }
 
-:POP qRegPair4_2    is op6_2=0x3 & qRegPair4_2 & qRegPair4_2a & qRegPair4_2b & bits0_4=0x1 {
-#	pop8(qRegPair4_2a);
-#	pop8(qRegPair4_2b);
+:POP qRegPair4_2    is op6_2=0x3 & qRegPair4_2 & bits0_4=0x1 {
 	pop16(qRegPair4_2);
 }
 
