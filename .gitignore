@@ -62,3 +62,9 @@ Release
 .project
 .classpath
 .settings/
+
+# Ignore XTEXT generated dirs/files
+*/*/*/*/xtend-gen
+*/*/*/*/src-gen
+*/*/*/*/model/generated
+*/*/*/*/test-bin
