@@ -15,7 +15,7 @@
  */
 package docking;
 
-import java.util.Set;
+import java.util.Iterator;
 
 import docking.action.DockingActionIf;
 
@@ -24,11 +24,11 @@ import docking.action.DockingActionIf;
  * {@link DockingWindowManager}.  This allows the manager's interface to hide methods that 
  * don't make sense for public consumption.
  */
-public class DockingActionPackageHelper {
+public class ActionToGuiHelper {
 
 	private DockingWindowManager windowManager;
 
-	public DockingActionPackageHelper(DockingWindowManager windowManager) {
+	public ActionToGuiHelper(DockingWindowManager windowManager) {
 		this.windowManager = windowManager;
 	}
 
@@ -50,14 +50,6 @@ public class DockingActionPackageHelper {
 	}
 
 	/**
-	 * Returns all actions registered with this manager
-	 * @return the actions
-	 */
-	public Set<DockingActionIf> getAllActions() {
-		return windowManager.getAllActions();
-	}
-
-	/**
 	 * Adds an action that will be associated with the given provider.  These actions will
 	 * appear in the local header for the component as a toolbar button or a drop-down menu
 	 * item if it has an icon and menu path respectively.
@@ -69,4 +61,21 @@ public class DockingActionPackageHelper {
 		windowManager.addLocalAction(provider, action);
 	}
 
+	/**
+	 * Get an iterator over the actions for the given provider
+	 * @param provider the component provider for which to iterate over all its owned actions
+	 * @return null if the provider does not exist in the window manager
+	 */
+	public Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
+		return windowManager.getComponentActions(provider);
+	}
+
+	/**
+	 * Removes the action from the given provider's header bar.
+	 * @param provider the provider whose header bar from which the action should be removed.
+	 * @param action the action to be removed from the provider's header bar.
+	 */
+	public void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
+		windowManager.removeProviderAction(provider, action);
+	}
 }

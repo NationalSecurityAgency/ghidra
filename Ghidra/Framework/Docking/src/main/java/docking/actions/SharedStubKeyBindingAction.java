@@ -66,6 +66,10 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		options.addOptionsChangeListener(this);
 	}
 
+	void removeClientAction(DockingActionIf action) {
+		clientActions.remove(action);
+	}
+
 	void addClientAction(DockingActionIf action) {
 
 		// 1) Validate new action keystroke against existing actions

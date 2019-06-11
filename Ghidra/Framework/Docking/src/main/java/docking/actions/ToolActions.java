@@ -18,7 +18,6 @@ package docking.actions;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.swing.KeyStroke;
 
@@ -29,6 +28,7 @@ import docking.action.*;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.*;
 import ghidra.util.exception.AssertException;
+import util.CollectionUtils;
 
 /**
  * An class to manage actions registered with the tool
@@ -36,7 +36,7 @@ import ghidra.util.exception.AssertException;
 public class ToolActions implements PropertyChangeListener {
 
 	private DockingWindowManager winMgr;
-	private DockingActionPackageHelper actionGuiHelper;
+	private ActionToGuiHelper actionGuiHelper;
 
 	/*
 	 	Map of Maps of Sets
@@ -62,7 +62,7 @@ public class ToolActions implements PropertyChangeListener {
 	public ToolActions(DockingTool tool, DockingWindowManager windowManager) {
 		this.dockingTool = tool;
 		this.winMgr = windowManager;
-		this.actionGuiHelper = new DockingActionPackageHelper(winMgr);
+		this.actionGuiHelper = new ActionToGuiHelper(winMgr);
 		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 	}
 
@@ -76,10 +76,6 @@ public class ToolActions implements PropertyChangeListener {
 		Set<DockingActionIf> actions = getActionStorage(action);
 		KeyBindingUtils.assertSameDefaultKeyBindings(action, actions);
 		actions.add(action);
-	}
-
-	private void removeActionFromMap(DockingActionIf action) {
-		getActionStorage(action).remove(action);
 	}
 
 	/**
@@ -150,7 +146,7 @@ public class ToolActions implements PropertyChangeListener {
 	 */
 	public synchronized void removeToolAction(DockingActionIf action) {
 		action.removePropertyChangeListener(this);
-		removeActionFromMap(action);
+		removeAction(action);
 		actionGuiHelper.removeToolAction(action);
 	}
 
@@ -160,16 +156,19 @@ public class ToolActions implements PropertyChangeListener {
 	 */
 	public synchronized void removeToolActions(String owner) {
 
+		// remove from the outer map first, to prevent concurrent modification exceptions
+		Map<String, Set<DockingActionIf>> toCleanup = actionsByNameByOwner.remove(owner);
+		if (toCleanup == null) {
+			return; // no actions registered for this owner
+		}
+
 		//@formatter:off
-		Set<DockingActionIf> toRemove = actionsByNameByOwner.get(owner).values()
+		toCleanup.values()
 			.stream()
 			.flatMap(set -> set.stream())
-			.collect(Collectors.toSet())
+			.forEach(action -> removeToolAction(action))
 			;
 		//@formatter:on
-
-		// must do this later to avoid concurrent modification exceptions
-		toRemove.forEach(action -> removeToolAction(action));
 	}
 
 	private void checkForAlreadyAddedAction(ComponentProvider provider, DockingActionIf action) {
@@ -180,19 +179,7 @@ public class ToolActions implements PropertyChangeListener {
 	}
 
 	/**
-	 * Remove an action that works specifically with a component provider. 
-	 * @param provider provider associated with the action
-	 * @param action local action to the provider
-	 */
-	public synchronized void removeProviderAction(ComponentProvider provider,
-			DockingActionIf action) {
-		action.removePropertyChangeListener(this);
-		removeActionFromMap(action);
-		winMgr.removeProviderAction(provider, action);
-	}
-
-	/**
-	 * Get all actions for the given owner.
+	 * Get all actions for the given owner
 	 * @param owner owner of the actions
 	 * @return array of actions; zero length array is returned if no
 	 * action exists with the given name
@@ -251,13 +238,36 @@ public class ToolActions implements PropertyChangeListener {
 	}
 
 	/**
+	 * Remove an action that works specifically with a component provider. 
+	 * @param provider provider associated with the action
+	 * @param action local action to the provider
+	 */
+	public synchronized void removeProviderAction(ComponentProvider provider,
+			DockingActionIf action) {
+		action.removePropertyChangeListener(this);
+		removeAction(action);
+		actionGuiHelper.removeProviderAction(provider, action);
+	}
+
+	/**
 	 * Get the actions for the given provider and remove them from the action map
 	 * @param provider provider whose actions are to be removed
 	 */
-	public void removeComponentActions(ComponentProvider provider) {
-		Iterator<DockingActionIf> iterator = winMgr.getComponentActions(provider);
-		while (iterator.hasNext()) {
-			removeActionFromMap(iterator.next());
+	public synchronized void removeComponentActions(ComponentProvider provider) {
+		Iterator<DockingActionIf> it = actionGuiHelper.getComponentActions(provider);
+		Set<DockingActionIf> set = CollectionUtils.asSet(it);
+		for (DockingActionIf action : set) {
+			removeProviderAction(provider, action);
+		}
+	}
+
+	private void removeAction(DockingActionIf action) {
+		getActionStorage(action).remove(action);
+		if (action.usesSharedKeyBinding()) {
+			SharedStubKeyBindingAction stub = sharedActionMap.get(action.getName());
+			if (stub != null) {
+				stub.removeClientAction(action);
+			}
 		}
 	}
 

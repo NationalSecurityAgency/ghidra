@@ -60,8 +60,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	final static String COMPONENT_MENU_NAME = "Window";
 
-	private final static List<DockingActionIf> EMPTY_LIST = Collections.emptyList();
-
 	private static DockingActionIf actionUnderMouse;
 	private static Object objectUnderMouse;
 
@@ -644,19 +642,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Get an iterator over the actions for the given provider.
-	 * @param provider the component provider for which to iterate over all its owned actions.
-	 * @return null if the provider does not exist in this window manager
-	 */
-	public Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder != null) {
-			return placeholder.getActions();
-		}
-		return EMPTY_LIST.iterator();
-	}
-
-	/**
 	 * Removes all components and actions associated with the given owner. 
 	 * @param owner the name of the owner whose associated component and actions should be removed.
 	 */
@@ -666,12 +651,21 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		scheduleUpdate();
 	}
 
-	/**
-	 * Removes the action from the given provider's header bar.
-	 * @param provider the provider whose header bar from which the action should be removed.
-	 * @param action the action to be removed from the provider's header bar.
-	 */
-	public void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
+//==================================================================================================
+// Package-level Action Methods
+//==================================================================================================
+
+	Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder != null) {
+			return placeholder.getActions();
+		}
+
+		List<DockingActionIf> emptyList = Collections.emptyList();
+		return emptyList.iterator();
+	}
+
+	void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			actionManager.removeLocalAction(action);
@@ -679,17 +673,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 	}
 
-//==================================================================================================
-// Package-level Action Methods
-//==================================================================================================
-
-	/**
-	 * Adds an action that will be associated with the given provider.  These actions will
-	 * appear in the local header for the component as a toolbar button or a drop-down menu
-	 * item if it has an icon and menu path respectively.
-	 * @param provider the provider whose header on which the action is to be placed.
-	 * @param action the action to add to the providers header bar.
-	 */
 	void addLocalAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder == null) {
@@ -699,32 +682,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		actionManager.addLocalAction(action, provider);
 	}
 
-	/**
-	 * Adds an action to the global menu or toolbar which appear in the main frame. If
-	 * the action has a menu path, it will be in the menu.  If it has an icon, it will
-	 * appear in the toolbar.
-	 * @param action the action to be added.
-	 */
 	void addToolAction(DockingActionIf action) {
 		actionManager.addToolAction(action);
 		scheduleUpdate();
 	}
 
-	/**
-	 * Removes the given action from the global menu and toolbar.
-	 * @param action the action to be removed.
-	 */
 	void removeToolAction(DockingActionIf action) {
 		actionManager.removeToolAction(action);
 		scheduleUpdate();
-	}
-
-	/**
-	 * Returns all actions registered with this manager
-	 * @return the actions
-	 */
-	public Set<DockingActionIf> getAllActions() {
-		return actionManager.getAllActions();
 	}
 
 //==================================================================================================

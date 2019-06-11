@@ -336,7 +336,7 @@ public class KeyBindingUtils {
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, DockingActionIf> getAllKeyBindingActionsByFullName(DockingTool tool) {
+	public static Map<String, DockingActionIf> getAllActionsByFullName(DockingTool tool) {
 
 		Map<String, DockingActionIf> deduper = new HashMap<>();
 		Set<DockingActionIf> actions = tool.getAllActions();
