@@ -866,6 +866,7 @@ src/main/java/ghidra/app/cmd/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/cmd/refs/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/register/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/events/package.html||GHIDRA||reviewed||END|
+src/main/java/ghidra/app/plugin/core/compositeeditor/BITFIELDS_HELP_NOTES.txt||GHIDRA||||END|
 src/main/java/ghidra/app/plugin/core/disassembler/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/services/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/util/bin/format/elf/package.html||GHIDRA||||END|
