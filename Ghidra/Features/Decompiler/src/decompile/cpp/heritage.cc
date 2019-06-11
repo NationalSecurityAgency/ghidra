@@ -144,11 +144,8 @@ void Heritage::clearInfoList(void)
 
 {
   vector<HeritageInfo>::iterator iter;
-  for(iter=infolist.begin();iter!=infolist.end();++iter) {
-    (*iter).deadremoved = 0;
-    (*iter).deadcodedelay = (*iter).delay;
-    (*iter).warningissued = false;
-  }
+  for(iter=infolist.begin();iter!=infolist.end();++iter)
+    (*iter).reset();
 }
 
 /// \brief Collect free reads, writes, and inputs in the given address range

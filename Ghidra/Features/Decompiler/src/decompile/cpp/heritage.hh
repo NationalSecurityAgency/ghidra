@@ -91,6 +91,8 @@ class HeritageInfo {
   bool warningissued;		///< \b true if warning issued previously
   HeritageInfo(AddrSpace *spc,int4 dl,int4 dcdl) {
     space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; loadGuardSearch=false; warningissued=false; } ///< Constructor
+  void reset(void) {
+    deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
 };
 
 /// \brief Manage the construction of Static Single Assignment (SSA) form
