@@ -169,8 +169,9 @@ static wchar_t* BASIC_TYPE_STRINGS [] = {
 		L"char32_t"
 };
 
-BSTR getName(IDiaSymbol * pSymbol) {
-	BSTR name, escapedName = NULL;
+std::wstring getName(IDiaSymbol * pSymbol) {
+    BSTR name;
+    std::wstring escapedName;
 	DWORD symIndexId, locType;
 	ULONGLONG len;
 	if (pSymbol->get_name( &name ) == 0) {
@@ -180,6 +181,7 @@ BSTR getName(IDiaSymbol * pSymbol) {
 			if (str != NULL) {
 				swprintf_s(str, length, L"NONAME");
 				escapedName = escapeXmlEntities(str);
+                free(str);
 			}
 		} else
 		if(wcsstr(name, L"unnamed-tag") != NULL){
@@ -191,6 +193,7 @@ BSTR getName(IDiaSymbol * pSymbol) {
 			if (str != NULL) {
 				swprintf_s(str, length, L"<unnamed_%04x>", symIndexId);
 				escapedName = escapeXmlEntities(str);
+                free(str);
 			}
 		} else
 		if(pSymbol->get_locationType(&locType) == 0 &&
@@ -201,6 +204,7 @@ BSTR getName(IDiaSymbol * pSymbol) {
 			if (str != NULL) {
 				swprintf_s(str, length, L"%ws:0x%I64x", name, len);
 				escapedName = escapeXmlEntities(str);
+                free(str);
 			}
 		} else {
 			escapedName = escapeXmlEntities(name);
@@ -208,13 +212,13 @@ BSTR getName(IDiaSymbol * pSymbol) {
 		SysFreeString(name);
 		return escapedName;
 	}
-	return NULL;
+    return std::wstring();
 }
-BSTR getUndecoratedName(IDiaSymbol * pSymbol) {
+std::wstring getUndecoratedName(IDiaSymbol * pSymbol) {
 	BSTR name;
 	if (pSymbol->get_undecoratedName( &name ) == 0) {
-        BSTR escapedName = escapeXmlEntities(name);
-		SysFreeString(name);
+        std::wstring escapedName = escapeXmlEntities(name);
+        SysFreeString(name);
 		return escapedName;
 	}
 	return L"";
@@ -234,7 +238,7 @@ DWORD getTag(IDiaSymbol * pSymbol) {
 	pSymbol->get_symTag( &tag );
 	return tag;
 }
-BSTR getTagAsString(IDiaSymbol * pSymbol) {
+const wchar_t* getTagAsString(IDiaSymbol * pSymbol) {
 	return SYMBOL_TAG_STRINGS[getTag(pSymbol)];
 }
 DWORD getKind(IDiaSymbol * pSymbol) {
@@ -247,7 +251,7 @@ DWORD getUdtKind(IDiaSymbol * pSymbol) {
 	pSymbol->get_udtKind( &kind );
 	return kind;
 }
-BSTR getKindAsString(IDiaSymbol * pSymbol) {
+std::wstring getKindAsString(IDiaSymbol * pSymbol) {
 	DWORD tag = getTag(pSymbol);
 	if (tag == SymTagUDT) {
 		return UDT_KIND_STRINGS[getUdtKind(pSymbol)];
@@ -272,7 +276,7 @@ DWORD getIndex(IDiaSymbol * pSymbol) {
 	return index;
 }
 
-wchar_t * getValue(IDiaSymbol * pSymbol) {
+std::wstring getValue(IDiaSymbol * pSymbol) {
 	if (getKind(pSymbol) == DataIsConstant) {
 		VARIANT value;
 		HRESULT hr = pSymbol->get_value( &value );
@@ -308,8 +312,8 @@ IDiaSymbol * getType(IDiaSymbol * pSymbol) {
 	}
 	return NULL;
 }
-BSTR getTypeAsString(IDiaSymbol * pSymbol) {
-	BSTR typeStr ;
+std::wstring getTypeAsString(IDiaSymbol * pSymbol) {
+    std::wstring typeStr ;
 	IDiaSymbol * pType;
 	if (pSymbol->get_type( &pType ) == 0) {
 		typeStr = printType( pType, L"" );
@@ -328,7 +332,7 @@ DWORD getBaseType(IDiaSymbol * pSymbol) {
 	}
 	return -1;
 }
-BSTR getBaseTypeAsString(IDiaSymbol * pSymbol) {
+std::wstring getBaseTypeAsString(IDiaSymbol * pSymbol) {
 	ULONGLONG len = getLength(pSymbol);
 	DWORD bt = getBaseType(pSymbol);
     switch(bt) {

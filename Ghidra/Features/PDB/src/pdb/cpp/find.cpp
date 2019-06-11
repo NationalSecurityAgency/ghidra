@@ -16,7 +16,7 @@
  */
 #include "find.h"
 
-BSTR findMangledName(IDiaSymbol * pFunction) {
+std::wstring findMangledName(IDiaSymbol * pFunction) {
 	DWORD rva = getRVA(pFunction);
 	IDiaSymbol * pSymbol = NULL;
 	HRESULT hr = pSession->findSymbolByRVA(rva, SymTagPublicSymbol, &pSymbol);

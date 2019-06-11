@@ -99,7 +99,7 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 		fatal("Unable to get global symbol index\n");
 	}
 
-	BSTR exename = getName(pGlobal);
+	std::wstring exename = getName(pGlobal);
 	
 	GUID currGUID;
 	BSTR guidString;
@@ -128,7 +128,7 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 		fatal("Unable to get GUID\n");
 	}
 
-	printf("<pdb file=\"%s\" exe=\"%ws\" guid=\"%ws\" age=\"%ld\">\n", szFilename, exename, guidString, currAge);
+	printf("<pdb file=\"%s\" exe=\"%ws\" guid=\"%ws\" age=\"%ld\">\n", szFilename, exename.c_str(), guidString, currAge);
 
 	return hr;
 }

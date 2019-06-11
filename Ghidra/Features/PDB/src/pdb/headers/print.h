@@ -22,9 +22,10 @@
 #include "dia2.h"
 #include "diacreate.h"
 #include "cvconst.h"
+#include <string>
 
-wchar_t * printVariant( VARIANT & v );
-BSTR printType( IDiaSymbol* pType, BSTR prefix );
+std::wstring printVariant( VARIANT & v );
+std::wstring printType( IDiaSymbol* pType, BSTR prefix );
 
 void printBound( IDiaSymbol* pBound );
 void printScopeName( IDiaSymbol* pscope );

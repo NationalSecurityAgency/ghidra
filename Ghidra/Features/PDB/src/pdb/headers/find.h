@@ -30,7 +30,7 @@
 //This method locates the mangled
 //function name, which is stored in a SymTagPublicSymbol symbol.
 //
-BSTR findMangledName(IDiaSymbol * pFunction);
+std::wstring findMangledName(IDiaSymbol * pFunction);
 void findNameInNamespace( wchar_t* name, IDiaSymbol* pnamespace );
 void findNameInEnum( wchar_t* name, IDiaSymbol* penumeration );
 void findNameInClass( wchar_t* name, IDiaSymbol* pclass );

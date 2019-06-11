@@ -31,9 +31,9 @@ void iterateEnumMembers(IDiaSymbol * pSymbol) {
 		if (celt != 1) {
 			break;
 		}
-		BSTR name = getName(pMember);
-		BSTR value = getValue(pMember);
-		printf("%s<member name=\"%ws\" value=\"%ws\" />\n", indent(12), name, value);
+        std::wstring name = getName(pMember);
+		std::wstring value = getValue(pMember);
+		printf("%S<member name=\"%S\" value=\"%S\" />\n", indent(12).c_str(), name.c_str(), value.c_str());
 		pMember = 0;
 	}
 }
@@ -46,7 +46,7 @@ void iterateEnums() {
 	if (pEnum == NULL) {
 		return;
 	}
-	printf("%s<enums>\n", indent(4));
+	printf("%S<enums>\n", indent(4).c_str());
 	while ( 1 ) {
 		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
 			break;
@@ -60,18 +60,18 @@ void iterateEnums() {
 			continue;
 		}
 
-		BSTR      name = getName(pSymbol);
-		BSTR      type = getTypeAsString(pSymbol);
+        std::wstring    name = getName(pSymbol);
+		std::wstring    type = getTypeAsString(pSymbol);
 		ULONGLONG len  = getLength(pSymbol);
 
-		printf("%s<enum name=\"%ws\" type=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, type, len);
+		printf("%S<enum name=\"%ws\" type=\"%ws\" length=\"0x%I64x\" >\n", indent(8).c_str(), name.c_str(), type.c_str(), len);
 
 		iterateEnumMembers(pSymbol);
 
-		printf("%s</enum>\n", indent(8));
+		printf("%S</enum>\n", indent(8).c_str());
 		pSymbol = 0;
 	}
-	printf("%s</enums>\n", indent(4));
+	printf("%S</enums>\n", indent(4).c_str());
 }
 
 void iterateMembers(IDiaSymbol * pSymbol) {
@@ -89,12 +89,14 @@ void iterateMembers(IDiaSymbol * pSymbol) {
 		if (celt != 1) {
 			break;
 		}
-		printf("%s<member name=\"%ws\" datatype=\"%ws\" offset=\"0x%x\" kind=\"%ws\" length=\"0x%I64x\" />\n", 
-					indent(12), 
-					getName(pMember), 
-					getTypeAsString(pMember),
+
+        std::wstring name = getName(pMember);
+		printf("%S<member name=\"%ws\" datatype=\"%ws\" offset=\"0x%x\" kind=\"%ws\" length=\"0x%I64x\" />\n", 
+					indent(12).c_str(), 
+					name.c_str(), 
+					getTypeAsString(pMember).c_str(),
 					getOffset(pMember),
-					getKindAsString(pMember),
+					getKindAsString(pMember).c_str(),
 					getLength(pMember));
 	}
 }
@@ -107,7 +109,7 @@ void iterateDataTypes() {
 	if (pEnum == NULL) {
 		return;
 	}
-	printf("%s<datatypes>\n", indent(4));
+	printf("%S<datatypes>\n", indent(4).c_str());
 	while ( 1 ) {
 		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
 			break;
@@ -125,22 +127,22 @@ void iterateDataTypes() {
 			continue;
 		}
 
-		BSTR      name = getName(pSymbol);
-		BSTR      kind = getKindAsString(pSymbol);
+		std::wstring name = getName(pSymbol);
+		std::wstring kind = getKindAsString(pSymbol);
 		ULONGLONG len  = getLength(pSymbol);
 
 		if ( len == 0 ) {
 			continue;
 		}
 
-		printf("%s<datatype name=\"%ws\" kind=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, kind, len);
+		printf("%S<datatype name=\"%ws\" kind=\"%ws\" length=\"0x%I64x\" >\n", indent(8).c_str(), name.c_str(), kind.c_str(), len);
 
 		iterateMembers(pSymbol);
 
-		printf("%s</datatype>\n", indent(8));
+		printf("%S</datatype>\n", indent(8).c_str());
 		pSymbol = 0;
 	}
-	printf("%s</datatypes>\n", indent(4));
+	printf("%S</datatypes>\n", indent(4).c_str());
 }
 
 void iterateTypedefs() {
@@ -151,7 +153,7 @@ void iterateTypedefs() {
 	if (pEnum == NULL) {
 		return;
 	}
-	printf("%s<typedefs>\n", indent(4));
+	printf("%S<typedefs>\n", indent(4).c_str());
 	while ( 1 ) {
 		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
 			break;
@@ -164,14 +166,14 @@ void iterateTypedefs() {
 		if (tag != SymTagTypedef) {//do not delete
 			continue;
 		}
-		BSTR name = getName(pSymbol);
-		BSTR type = getTypeAsString(pSymbol);
+		std::wstring name = getName(pSymbol);
+		std::wstring type = getTypeAsString(pSymbol);
 
-		printf("%s<typedef name=\"%ws\" basetype=\"%ws\" />\n", indent(8), name, type);
+		printf("%S<typedef name=\"%ws\" basetype=\"%ws\" />\n", indent(8).c_str(), name.c_str(), type.c_str());
 
 		pSymbol = 0;
 	}
-	printf("%s</typedefs>\n", indent(4));
+	printf("%S</typedefs>\n", indent(4).c_str());
 }
 
 void iterateClasses() {
@@ -182,7 +184,7 @@ void iterateClasses() {
 	if (pEnum == NULL) {
 		return;
 	}
-	printf("%s<classes>\n", indent(4));
+	printf("%S<classes>\n", indent(4).c_str());
 	while ( 1 ) {
 		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
 			break;
@@ -200,21 +202,21 @@ void iterateClasses() {
 			continue;
 		}
 
-		BSTR      name = getName(pSymbol);
+		std::wstring    name = getName(pSymbol);
 		ULONGLONG len  = getLength(pSymbol);
 
 		if ( len == 0 ) {
 			continue;
 		}
 
-		printf("%s<class name=\"%ws\" length=\"0x%I64x\" >\n", indent(8), name, len);
+		printf("%S<class name=\"%ws\" length=\"0x%I64x\" >\n", indent(8).c_str(), name.c_str(), len);
 
 		iterateMembers(pSymbol);
 
-		printf("%s</class>\n", indent(8));
+		printf("%S</class>\n", indent(8).c_str());
 		pSymbol = 0;
 	}
-	printf("%s</classes>\n", indent(4));
+	printf("%S</classes>\n", indent(4).c_str());
 }
 
 void dumpFunctionStackVariables( DWORD rva )
@@ -235,12 +237,12 @@ void dumpFunctionStackVariables( DWORD rva )
 		while ( pEnum != NULL && SUCCEEDED( pEnum->Next( 1, &pSymbol, &celt ) ) && celt == 1 ) {
 			pSymbol->get_symTag( &tag );
 			if ( tag == SymTagData ) {
-				printf("%s<stack_variable name=\"%ws\" kind=\"%ws\" offset=\"0x%x\" datatype=\"%ws\" length=\"0x%I64x\" />\n", 
-							indent(12),
-							getName(pSymbol), 
-							getKindAsString(pSymbol), 
+				printf("%S<stack_variable name=\"%ws\" kind=\"%ws\" offset=\"0x%x\" datatype=\"%ws\" length=\"0x%I64x\" />\n", 
+							indent(12).c_str(),
+                            getName(pSymbol).c_str(),
+							getKindAsString(pSymbol).c_str(), 
 							getOffset(pSymbol),
-							getTypeAsString(pSymbol),
+							getTypeAsString(pSymbol).c_str(),
 							getLength(pSymbol));
 			} 
 			else if ( tag == SymTagAnnotation ) {
@@ -322,8 +324,8 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 		DWORD end;
 		pLine->get_lineNumberEnd( &end );
 
-		printf("%s<line_number source_file=\"%ws\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
-					indent(12), sourceFileName, start, end, addr);
+		printf("%S<line_number source_file=\"%ws\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
+					indent(12).c_str(), sourceFileName, start, end, addr);
 
 		pLine = NULL;
 	}
@@ -337,7 +339,7 @@ void iterateFunctions() {
 	if (pEnum == NULL) {
 		return;
 	}
-	printf("%s<functions>\n", indent(4));
+	printf("%S<functions>\n", indent(4).c_str());
 	while ( 1 ) {
 		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
 			break;
@@ -351,20 +353,20 @@ void iterateFunctions() {
 			continue;
 		}
 
-		BSTR      name    = findMangledName(pSymbol);
+		std::wstring    name    = findMangledName(pSymbol);
 		DWORD     address = getRVA(pSymbol);
 		ULONGLONG len     = getLength(pSymbol);
 
-		printf("%s<function name=\"%ws\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8), name, address, len);
+		printf("%S<function name=\"%ws\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8).c_str(), name.c_str(), address, len);
 
 		dumpFunctionStackVariables(address);
 		dumpFunctionLines(pSymbol, pSession);
 
-		printf("%s</function>\n", indent(8));
+		printf("%S</function>\n", indent(8).c_str());
 
 		pSymbol = 0;
 	}
-	printf("%s</functions>\n", indent(4));
+	printf("%S</functions>\n", indent(4).c_str());
 }
 
 void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
@@ -379,21 +381,21 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 			break;
 		}
 
-		BSTR name = getName(pSymbol);
-		if (name == NULL) {
+		std::wstring name = getName(pSymbol);
+		if (name.empty()) {
 			continue;
 		}
 
-		printf("%s",                    indent(12));
-		printf("<symbol name=\"%ws\" ", name);
+		printf("%S",                    indent(12).c_str());
+		printf("<symbol name=\"%ws\" ", name.c_str());
 		printf("address=\"0x%x\" ",     getRVA(pSymbol));
 		printf("length=\"0x%I64x\" ",   getLength(pSymbol));
 		printf("tag=\"%ws\" ",          getTagAsString(pSymbol));
-		printf("kind=\"%ws\" ",         getKindAsString(pSymbol));
+		printf("kind=\"%ws\" ",         getKindAsString(pSymbol).c_str());
 		printf("index=\"0x%x\" ",       getIndex(pSymbol));
-		printf("undecorated=\"%ws\" ",  getUndecoratedName(pSymbol));
-		printf("value=\"%ws\" ",        getValue(pSymbol));
-		printf("datatype=\"%ws\" ",     getTypeAsString(pSymbol));
+		printf("undecorated=\"%ws\" ",  getUndecoratedName(pSymbol).c_str());
+		printf("value=\"%ws\" ",        getValue(pSymbol).c_str());
+		printf("datatype=\"%ws\" ",     getTypeAsString(pSymbol).c_str());
 		printf(" />\n");
 
 		pSymbol = NULL;
@@ -410,7 +412,7 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 		DWORD id;
 		pSourceFile->get_uniqueId( &id );
 		if ( name != NULL ) {
-			printf("%s<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12), name, id);
+			printf("%S<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12).c_str(), name, id);
 		}
 		pSourceFile = NULL;
 	}
@@ -432,7 +434,7 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
 		DWORD seg;
 		pSegment->get_addressSection( &seg );
 		pSegment->get_relativeVirtualAddress( &rva );
-		printf("%s<segment number=\"%i\" address=\"0x%x\" />  \n", indent(12), seg, rva);
+		printf("%S<segment number=\"%i\" address=\"0x%x\" />  \n", indent(12).c_str(), seg, rva);
 		pSegment = NULL;
 	}
 }
@@ -471,14 +473,14 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 			}         
 		}
 		if (pSym == NULL) {
-			printf("%s<section_contrib address=\"0x%x\" /> \n", indent(12), rva);
+			printf("%S<section_contrib address=\"0x%x\" /> \n", indent(12).c_str(), rva);
 		}
 		else {
-			BSTR  name = getName(pSym);
-			BSTR  tag  = getTagAsString(pSym);
+			std::wstring name = getName(pSym);
+			std::wstring tag  = getTagAsString(pSym);
 
-			printf("%s<section_contrib address=\"0x%x\" name=\"%ws\" tag=\"%ws\" /> \n", 
-						indent(12), rva, name, tag);
+			printf("%S<section_contrib address=\"0x%x\" name=\"%ws\" tag=\"%ws\" /> \n", 
+						indent(12).c_str(), rva, name.c_str(), tag.c_str());
 		}
 	}
 }
@@ -511,8 +513,8 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 		ULONGLONG length;
 		pInjectedSrc->get_length(&length);
 
-		printf("%s<injected_source filename=\"%ws\" objectname=\"%ws\" crc=\"0x%x\" length=\"0x%I64x\" />\n",
-					indent(8),
+		printf("%S<injected_source filename=\"%ws\" objectname=\"%ws\" crc=\"0x%x\" length=\"0x%I64x\" />\n",
+					indent(8).c_str(),
 					filename,
 					objectname,
 					crc,
@@ -542,7 +544,7 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 }
 
 int iterateTables(const bool printAll) {
-	printf("%s<tables>\n", indent(4));
+	printf("%S<tables>\n", indent(4).c_str());
 	HRESULT hr;
 	DWORD celt;
 
@@ -565,7 +567,7 @@ int iterateTables(const bool printAll) {
 		BSTR name;
 		pTable->get_name( &name );
 
-		printf("%s<table name=\"%ws\">\n", indent(8), name );
+		printf("%S<table name=\"%ws\">\n", indent(8).c_str(), name );
 
 		IDiaEnumSymbols         * pSymbols;
 		IDiaEnumSourceFiles     * pSourceFiles;
@@ -595,10 +597,10 @@ int iterateTables(const bool printAll) {
 			iterateFrameData(pEnumFrameData);
 		}
 
-		printf("%s</table>\n", indent(8));
+		printf("%S</table>\n", indent(8).c_str());
 		pTable = NULL;
 	}
-	printf("%s</tables>\n", indent(4));
+	printf("%S</tables>\n", indent(4).c_str());
 
 	return 0;
 }
