@@ -619,6 +619,7 @@ void Heritage::LoadGuard::establishRange(const ValueSetRead &valueSet)
   }
   uintb max = spc->getHighest();
   if (minimumOffset > max) {
+    minimumOffset = max;
     maximumOffset = minimumOffset;	// Something is seriously wrong
   }
   else {
@@ -644,6 +645,8 @@ void Heritage::LoadGuard::finalizeRange(const ValueSetRead &valueSet)
   }
   if (step == 0)
     step = 1;
+  if (minimumOffset > spc->getHighest())
+    minimumOffset = spc->getHighest();
   if (maximumOffset > spc->getHighest())
     maximumOffset = spc->getHighest();
 }
@@ -719,34 +722,36 @@ void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 
 {
+  // We need to be careful of exponential ladders, so we mark Varnodes independently of
+  // the depth first path we are traversing.
+  vector<Varnode *> markedVn;
+  vector<StackNode> path;
   for(int4 i=0;i<spc->numSpacebase();++i) {
     const VarnodeData &stackPointer(spc->getSpacebase(i));
     Varnode *spInput = fd->findVarnodeInput(stackPointer.size, stackPointer.getAddr());
     if (spInput == (Varnode *)0) continue;
-    vector<StackNode> path;
-    spInput->setMark();
     path.push_back(StackNode(spInput,0,0));
     while(!path.empty()) {
       StackNode &curNode(path.back());
       if (curNode.iter == curNode.vn->endDescend()) {
-	path.back().vn->clearMark();
 	path.pop_back();
 	continue;
       }
       PcodeOp *op = *curNode.iter;
       ++curNode.iter;
       Varnode *outVn = op->getOut();
-      if (outVn == (Varnode *)0 || outVn->isMark()) continue;		// Trim loops
+      if (outVn == (Varnode *)0 || outVn->isMark()) continue;		// Don't revisit Varnodes
       switch(op->code()) {
 	case CPUI_INT_ADD:
 	{
 	  Varnode *otherVn = op->getIn(1-op->getSlot(curNode.vn));
 	  if (otherVn->isConstant()) {
-	    uintb newOffset = curNode.offset + otherVn->getOffset();
+	    uintb newOffset = spc->wrapOffset(curNode.offset + otherVn->getOffset());
 	    StackNode nextNode(outVn,newOffset,curNode.traversals);
 	    if (nextNode.iter != nextNode.vn->endDescend()) {
 	      outVn->setMark();
 	      path.push_back(nextNode);
+	      markedVn.push_back(outVn);
 	    }
 	  }
 	  else {
@@ -754,6 +759,7 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	    if (nextNode.iter != nextNode.vn->endDescend()) {
 	      outVn->setMark();
 	      path.push_back(nextNode);
+	      markedVn.push_back(outVn);
 	    }
 	  }
 	  break;
@@ -765,6 +771,7 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	  if (nextNode.iter != nextNode.vn->endDescend()) {
 	    outVn->setMark();
 	    path.push_back(nextNode);
+	    markedVn.push_back(outVn);
 	  }
 	  break;
 	}
@@ -774,11 +781,15 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	  if (nextNode.iter != nextNode.vn->endDescend()) {
 	    outVn->setMark();
 	    path.push_back(nextNode);
+	    markedVn.push_back(outVn);
 	  }
 	  break;
 	}
 	case CPUI_LOAD:
 	{
+	  // Note that if ANY path has one of the traversals (non-constant ADD or MULTIEQUAL), then
+	  // THIS path must have one of the traversals, because the only other acceptable path elements
+	  // (INDIRECT/COPY/constant ADD) have only one path through.
 	  if (curNode.traversals != 0) {
 	    generateLoadGuard(curNode,op,spc);
 	  }
@@ -789,6 +800,8 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
       }
     }
   }
+  for(int4 i=0;i<markedVn.size();++i)
+    markedVn[i]->clearMark();
 }
 
 /// \brief Normalize p-code ops so that phi-node placement and renaming works
