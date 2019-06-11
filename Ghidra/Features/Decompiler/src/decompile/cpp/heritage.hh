@@ -155,11 +155,17 @@ class Heritage {
   };
 
   /// \brief Description of a LOAD operation that needs to be guarded
-  struct LoadGuard {
+  class LoadGuard {
+    friend class Heritage;
     PcodeOp *op;		///< The LOAD op
     AddrSpace *spc;		///< The stack space being loaded from
+    uintb pointerBase;		///< Base offset of the pointer
     uintb minimumOffset;	///< Minimum offset of the LOAD
     uintb maximumOffset;	///< Maximum offset of the LOAD
+    int4 step;			///< Step of any access into this range
+    bool isAnalyzed;		///< Has a range analysis been performed on \b this
+    void establishRange(const ValueSetRead &valueSet);	///< Convert partial value set analysis into guard range
+    void finalizeRange(const ValueSetRead &valueSet);	///< Convert value set analysis to final guard range
   };
 
   Funcdata *fd;		        ///< The function \b this is controlling SSA construction 
@@ -201,6 +207,7 @@ class Heritage {
   void findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> &forces);
   void propagateCopyAway(PcodeOp *op);
   void handleNewLoadCopies(void);
+  void analyzeNewLoadGuards(void);
   void generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc);
   void discoverIndexedStackLoads(AddrSpace *spc);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);

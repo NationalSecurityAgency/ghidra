@@ -485,6 +485,7 @@ void Heritage::findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> 
     for(int4 i=0;i<maxIn;++i) {
       Varnode *vn = op->getIn(i);
       if (!vn->isWritten()) continue;
+      if (vn->isAddrForce()) continue;		// Already marked address forced
       PcodeOp *newOp = vn->getDef();
       if (newOp->isMark()) continue;		// Already visited this op
       newOp->setMark();
@@ -538,15 +539,25 @@ void Heritage::propagateCopyAway(PcodeOp *op)
 void Heritage::handleNewLoadCopies(void)
 
 {
+  if (loadCopyOps.empty()) return;
   vector<PcodeOp *> forces;
   int4 copySinkSize = loadCopyOps.size();
   findAddressForces(loadCopyOps, forces);
 
-  // Mark everything on the boundary as address forced to prevent dead-code removal
-  for(int4 i=0;i<forces.size();++i) {
-    PcodeOp *op = forces[i];
-    op->getOut()->setAddrForce();
-    op->clearMark();
+  if (!forces.empty()) {
+    RangeList loadRanges;
+    for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+      const LoadGuard &guard( *iter );
+      loadRanges.insertRange(guard.spc, guard.minimumOffset, guard.maximumOffset);
+    }
+    // Mark everything on the boundary as address forced to prevent dead-code removal
+    for(int4 i=0;i<forces.size();++i) {
+      PcodeOp *op = forces[i];
+      Varnode *vn = op->getOut();
+      if (loadRanges.inRange(vn->getAddr(), 1))	// If we are within one of the guarded ranges
+	vn->setAddrForce();			// then consider the output address forced
+      op->clearMark();
+    }
   }
 
   // Eliminate or propagate away original COPY sinks
@@ -562,6 +573,122 @@ void Heritage::handleNewLoadCopies(void)
   loadCopyOps.clear();		// We have handled all the load guard COPY ops
 }
 
+/// Make some determination of the range of possible values for a LOAD based
+/// an partial value set analysis. This can sometimes get
+///   - minimumOffset - otherwise the original constant pulled with the LOAD is used
+///   - step          - the partial analysis shows step and direction
+///   - maximumOffset - in rare cases
+///
+/// isAnalyzed is set to \b true, if full range analysis is not needed
+/// \param valueSet is the calculated value set as seen by the LOAD operation
+void Heritage::LoadGuard::establishRange(const ValueSetRead &valueSet)
+
+{
+  const CircleRange &range( valueSet.getRange() );
+  uintb rangeSize = range.getSize();
+  uintb size;
+  if (range.isEmpty()) {
+    step = 0;
+    minimumOffset = pointerBase;
+    size = 0x1000;
+  }
+  else if (range.isFull() || rangeSize > 0xffffff) {
+    step = 1;
+    minimumOffset = pointerBase;
+    size = 0x1000;
+    isAnalyzed = true;	// Don't bother doing more analysis
+  }
+  else {
+    step = (rangeSize == 3) ? range.getStep() : 0;	// Check for consistent step
+    size = 0x1000;
+    if (valueSet.isLeftStable()) {
+      minimumOffset = range.getMin();
+    }
+    else if (valueSet.isRightStable()) {
+      if (pointerBase < range.getEnd()) {
+	minimumOffset = pointerBase;
+	size = (range.getEnd() - pointerBase);
+      }
+      else {
+	minimumOffset = range.getMin();
+	size = rangeSize * range.getStep();
+      }
+    }
+    else
+      minimumOffset = pointerBase;
+  }
+  uintb max = spc->getHighest();
+  if (minimumOffset > max) {
+    maximumOffset = minimumOffset;	// Something is seriously wrong
+  }
+  else {
+    uintb maxSize = (max - minimumOffset) + 1;
+    if (size > maxSize)
+      size = maxSize;
+    maximumOffset = minimumOffset + size -1;
+  }
+}
+
+void Heritage::LoadGuard::finalizeRange(const ValueSetRead &valueSet)
+
+{
+  isAnalyzed = true;		// In all cases the settings determined here are final
+  const CircleRange &range( valueSet.getRange() );
+  uintb rangeSize = range.getSize();
+  if (rangeSize > 1 && rangeSize < 0xffffff) {	// Did we converge to something reasonable
+    step = range.getStep();
+    minimumOffset = range.getMin();
+    maximumOffset = range.getMax();
+    if (maximumOffset < minimumOffset)	// Values extend into what is usually stack parameters
+      maximumOffset = spc->getHighest();
+  }
+  if (step == 0)
+    step = 1;
+  if (maximumOffset > spc->getHighest())
+    maximumOffset = spc->getHighest();
+}
+
+void Heritage::analyzeNewLoadGuards(void)
+
+{
+  if (loadGuard.empty()) return;
+  if (loadGuard.back().isAnalyzed) return;	// Nothing new
+  list<LoadGuard>::iterator startIter = loadGuard.end();
+  vector<Varnode *> sinks;
+  vector<PcodeOp *> reads;
+  while(startIter != loadGuard.begin()) {
+    --startIter;
+    LoadGuard &guard( *startIter );
+    if (guard.isAnalyzed) break;
+    reads.push_back(guard.op);
+    sinks.push_back(guard.op->getIn(1));	// The CPUI_LOAD pointer
+  }
+  AddrSpace *stackSpc = fd->getArch()->getStackSpace();
+  Varnode *stackReg = (Varnode *)0;
+  if (stackSpc != (AddrSpace *)0 && stackSpc->numSpacebase() > 0)
+    stackReg = fd->findSpacebaseInput(stackSpc);
+  ValueSetSolver vsSolver;
+  vsSolver.establishValueSets(sinks, reads, stackReg, false);
+  WidenerNone widener;
+  vsSolver.solve(10000,widener);
+  list<LoadGuard>::iterator iter;
+  bool runFullAnalysis = false;
+  for(iter=startIter;iter!=loadGuard.end(); ++iter) {
+    LoadGuard &guard( *iter );
+    guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    if (!guard.isAnalyzed)
+      runFullAnalysis = true;
+  }
+  if (runFullAnalysis) {
+    WidenerFull fullWidener;
+    vsSolver.solve(10000, fullWidener);
+    for (iter = startIter; iter != loadGuard.end(); ++iter) {
+      LoadGuard &guard(*iter);
+      guard.finalizeRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    }
+  }
+}
+
 /// \brief Generate a guard record given an indexed LOAD into a stack space
 ///
 /// Record the LOAD op and the (likely) range of addresses in the stack space that
@@ -572,18 +699,14 @@ void Heritage::handleNewLoadCopies(void)
 void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 
 {
-  uintb spaceMax = spc->getHighest();
-  if (node.offset > spaceMax) return;	// Something unusual is going on
   loadGuard.push_back(LoadGuard());
   LoadGuard &guard( loadGuard.back() );
   guard.op = op;
   guard.spc = spc;
-  guard.minimumOffset = node.offset;
-  uintb sz = spaceMax - node.offset;
-  if (sz > 0x1000)
-    guard.maximumOffset = node.offset + 0x1000;
-  else
-    guard.maximumOffset = spaceMax;
+  guard.pointerBase = node.offset;
+  guard.minimumOffset = 0;			// Initially we guard everything
+  guard.maximumOffset = spc->getHighest();
+  guard.isAnalyzed = false;
 }
 
 /// \brief Trace input stackpointer to any indexed loads
@@ -635,7 +758,7 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	  }
 	  break;
 	}
-//	case CPUI_INDIRECT:
+	case CPUI_INDIRECT:
 	case CPUI_COPY:
 	{
 	  StackNode nextNode(outVn,curNode.offset,curNode.traversals);
@@ -645,15 +768,15 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	  }
 	  break;
 	}
-//	case CPUI_MULTIEQUAL:
-//	{
-//	  StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::multiequal);
-//	  if (nextNode.iter != nextNode.vn->endDescend()) {
-//	    outVn->setMark();
-//	    path.push_back(nextNode);
-//	  }
-//	  break;
-//	}
+	case CPUI_MULTIEQUAL:
+	{
+	  StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::multiequal);
+	  if (nextNode.iter != nextNode.vn->endDescend()) {
+	    outVn->setMark();
+	    path.push_back(nextNode);
+	  }
+	  break;
+	}
 	case CPUI_LOAD:
 	{
 	  if (curNode.traversals != 0) {
@@ -1955,8 +2078,8 @@ void Heritage::heritage(void)
   }
   placeMultiequals();
   rename();
-  if (!loadCopyOps.empty())
-    handleNewLoadCopies();
+  analyzeNewLoadGuards();
+  handleNewLoadCopies();
   if (pass == 0)
     splitmanage.splitAdditional();
   pass += 1;
