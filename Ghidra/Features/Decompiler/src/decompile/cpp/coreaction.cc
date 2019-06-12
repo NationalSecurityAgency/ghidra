@@ -3246,7 +3246,7 @@ int4 ActionConditionalConst::apply(Funcdata &data)
     if (flipEdge)
       constEdge = 1 - constEdge;
     FlowBlock *constBlock = bl->getOut(constEdge);
-    if (constBlock->sizeIn() != 1) continue;	// Must only be one path to constant block directly through CBRANCH
+    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
     propagateConstant(varVn,constVn,constBlock,data);
   }
   return 0;

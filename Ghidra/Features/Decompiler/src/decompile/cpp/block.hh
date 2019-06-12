@@ -215,6 +215,7 @@ public:
   FlowBlock *getFrontLeaf(void);					///< Get the first leaf FlowBlock
   int4 calcDepth(const FlowBlock *leaf) const;		///< Get the depth of the given component FlowBlock
   bool dominates(const FlowBlock *subBlock) const;	///< Does \b this block dominate the given block
+  bool restrictedByConditional(const FlowBlock *cond) const;
   int4 sizeOut(void) const { return outofthis.size(); }	///< Get the number of out edges
   int4 sizeIn(void) const { return intothis.size(); }	///< Get the number of in edges
   bool hasLoopIn(void) const;				///< Is there a looping edge coming into \b this block
