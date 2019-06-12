@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.decompile;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -158,8 +159,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 	private void copy() {
 
-		String fullName = "Copy (ClipboardPlugin)";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullName);
+		Set<DockingActionIf> actions = getActionsByOwnerAndName(tool, "ClipboardPlugin", "Copy");
 		for (DockingActionIf action : actions) {
 			Object service = getInstanceField("clipboardService", action);
 			if (service.getClass().toString().contains("Decomp")) {
