@@ -32,46 +32,47 @@ public class PackDataTypeAction extends DockingAction {
 
 	private DataTypeManagerPlugin plugin;
 
-    public PackDataTypeAction(DataTypeManagerPlugin plugin) {
+	public PackDataTypeAction(DataTypeManagerPlugin plugin) {
 		super("Pack Data Type", plugin.getName());
 		this.plugin = plugin;
-        setPopupMenuData(new MenuData(new String[] {"Pack"}, "Edit"));
+		setPopupMenuData(new MenuData(new String[] { "Pack" }, "Edit"));
 	}
 
-    @Override
-    public boolean isEnabledForContext(ActionContext context) {
-    	Object contextObject = context.getContextObject();
-    	if (!(contextObject instanceof GTree)) {
-    		return false;
-    	}
-        GTree gTree = (GTree)contextObject;
-        TreePath[] selectionPaths = gTree.getSelectionPaths();
-        if (selectionPaths.length != 1) {
-        	return false;
-        }
-        DataTypeTreeNode node = (DataTypeTreeNode)selectionPaths[0].getLastPathComponent();
+	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		Object contextObject = context.getContextObject();
+		if (!(contextObject instanceof GTree)) {
+			return false;
+		}
+		GTree gTree = (GTree) contextObject;
+		TreePath[] selectionPaths = gTree.getSelectionPaths();
+		if (selectionPaths.length != 1) {
+			return false;
+		}
+		DataTypeTreeNode node = (DataTypeTreeNode) selectionPaths[0].getLastPathComponent();
 
-        if (!(node instanceof DataTypeNode)) {
-        	return false;
-        }
-        setEnabled(node.getArchiveNode().isModifiable());
-        return true;
-    }
+		if (!(node instanceof DataTypeNode)) {
+			return false;
+		}
+		setEnabled(node.isModifiable());
+		return true;
+	}
 
-    @Override
-    public void actionPerformed(ActionContext context) {
-        GTree gTree = (GTree)context.getContextObject();
-        TreePath[] selectionPaths = gTree.getSelectionPaths();
-        if (selectionPaths.length != 1) {
-        	Msg.error(this, "Pack is only allowed on an individual data type.");
-        	return;
-        }
-        TreePath treePath = selectionPaths[0];
-        final DataTypeNode dataTypeNode = (DataTypeNode) treePath.getLastPathComponent();
-        DataType dataType = dataTypeNode.getDataType();
-        DataTypeManager dataTypeManager = dataType.getDataTypeManager();
+	@Override
+	public void actionPerformed(ActionContext context) {
+		GTree gTree = (GTree) context.getContextObject();
+		TreePath[] selectionPaths = gTree.getSelectionPaths();
+		if (selectionPaths.length != 1) {
+			Msg.error(this, "Pack is only allowed on an individual data type.");
+			return;
+		}
+		TreePath treePath = selectionPaths[0];
+		final DataTypeNode dataTypeNode = (DataTypeNode) treePath.getLastPathComponent();
+		DataType dataType = dataTypeNode.getDataType();
+		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		if (dataTypeManager == null) {
-			Msg.error(this, "Can't pack data type "+dataType.getName()+" without a data type manager.");
+			Msg.error(this,
+				"Can't pack data type " + dataType.getName() + " without a data type manager.");
 			return;
 		}
 
@@ -80,23 +81,26 @@ public class PackDataTypeAction extends DockingAction {
 		try {
 			// start a transaction
 			transactionID = dataTypeManager.startTransaction("pack of " + dataType.getName());
-            packDataType( dataType );
+			packDataType(dataType);
 			commit = true;
-		} catch (InvalidInputException iie) {
+		}
+		catch (InvalidInputException iie) {
 			// TODO Auto-generated catch block
 			iie.printStackTrace();
-		} finally {
+		}
+		finally {
 			// commit the changes
 			dataTypeManager.endTransaction(transactionID, commit);
 		}
-    }
+	}
 
 	private void packDataType(DataType dataType) throws InvalidInputException {
 		if (!(dataType instanceof Structure)) {
-			Msg.error(this, "Can't pack data type "+dataType.getName()+". It's not a structure.");
+			Msg.error(this,
+				"Can't pack data type " + dataType.getName() + ". It's not a structure.");
 			return;
 		}
-		((Structure)dataType).pack(1);
+		((Structure) dataType).pack(1);
 	}
 
 }

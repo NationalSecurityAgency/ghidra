@@ -94,6 +94,11 @@ public class CreatePointerAction extends DockingAction {
 		}
 
 		ArchiveNode archiveNode = node.getArchiveNode();
+		if (archiveNode == null) {
+			// this can happen as the tree is changing
+			return false;
+		}
+
 		boolean enabled = archiveNode.isModifiable();
 		if (archiveNode instanceof BuiltInArchiveNode) {
 			// these will be put into the program archive
