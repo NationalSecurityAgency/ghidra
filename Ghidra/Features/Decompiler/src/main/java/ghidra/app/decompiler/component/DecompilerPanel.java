@@ -38,7 +38,7 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -74,7 +74,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private SearchLocation currentSearchLocation;
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
-	private final DecompileClipboardProvider clipboard;
+	private final DecompilerClipboardProvider clipboard;
 
 	private Color originalBackgroundColor;
 	private boolean useNonFunctionColor = false;
@@ -83,7 +83,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private DecompilerHoverProvider decompilerHoverProvider;
 
 	DecompilerPanel(DecompilerController controller, DecompileOptions options,
-			DecompileClipboardProvider clipboard, JComponent taskMonitorComponent) {
+			DecompilerClipboardProvider clipboard, JComponent taskMonitorComponent) {
 		this.controller = controller;
 		this.options = options;
 		this.clipboard = clipboard;

@@ -15,12 +15,6 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import ghidra.app.decompiler.component.ClangTextField;
-import ghidra.app.services.ClipboardContentProviderService;
-import ghidra.app.util.ByteCopier;
-import ghidra.app.util.ClipboardType;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.FontMetrics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -31,6 +25,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.widgets.fieldpanel.Layout;
@@ -38,13 +34,20 @@ import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.services.ClipboardContentProviderService;
+import ghidra.app.util.ByteCopier;
+import ghidra.app.util.ClipboardType;
+import ghidra.util.task.TaskMonitor;
 
-public class DecompileClipboardProvider extends ByteCopier implements
-		ClipboardContentProviderService {
+public class DecompilerClipboardProvider extends ByteCopier
+		implements ClipboardContentProviderService {
 
 	private static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static final ClipboardType TEXT_TYPE = new ClipboardType(DataFlavor.stringFlavor,
-		"Text");
+	private static final ClipboardType TEXT_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Text");
 	private static final List<ClipboardType> COPY_TYPES = new LinkedList<ClipboardType>();
 
 	static {
@@ -54,20 +57,22 @@ public class DecompileClipboardProvider extends ByteCopier implements
 	private DecompilerProvider provider;
 	private FieldSelection selection;
 
-	private boolean copyEnabled;
+	private boolean copyFromSelectionEnabled;
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<ChangeListener>();
 	private int spaceCharWidthInPixels = 7;
 
-	public DecompileClipboardProvider(DecompilePlugin plugin, DecompilerProvider provider) {
+	public DecompilerClipboardProvider(DecompilePlugin plugin, DecompilerProvider provider) {
 		this.provider = provider;
 		this.tool = plugin.getTool();
 		PAINT_CONTEXT.setTextCopying(true);
 	}
 
+	@Override
 	public void addChangeListener(ChangeListener listener) {
 		listeners.add(listener);
 	}
 
+	@Override
 	public void removeChangeListener(ChangeListener listener) {
 		listeners.remove(listener);
 	}
@@ -79,12 +84,29 @@ public class DecompileClipboardProvider extends ByteCopier implements
 		}
 	}
 
+	@Override
 	public Transferable copy(TaskMonitor monitor) {
+		if (!copyFromSelectionEnabled) {
+			return createStringTransferable(getCursorText());
+		}
+
 		return copyText(monitor);
 	}
 
+	private String getCursorText() {
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		ClangToken token = panel.getTokenAtCursor();
+		if (token == null) {
+			return null;
+		}
+
+		String text = token.getText();
+		return text;
+	}
+
+	@Override
 	public List<ClipboardType> getCurrentCopyTypes() {
-		if (copyEnabled) {
+		if (copyFromSelectionEnabled) {
 			return COPY_TYPES;
 		}
 		return EMPTY_LIST;
@@ -94,6 +116,7 @@ public class DecompileClipboardProvider extends ByteCopier implements
 		return null;
 	}
 
+	@Override
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor) {
 		if (copyType == TEXT_TYPE) {
 			return copyText(monitor);
@@ -102,30 +125,35 @@ public class DecompileClipboardProvider extends ByteCopier implements
 		return null;
 	}
 
+	@Override
 	public boolean isValidContext(ActionContext context) {
 		return context.getComponentProvider() == provider;
 	}
 
 	public void selectionChanged(FieldSelection sel) {
 		this.selection = sel;
-		copyEnabled = (selection != null && selection.getNumRanges() > 0);
+		copyFromSelectionEnabled = (selection != null && selection.getNumRanges() > 0);
 		notifyStateChanged();
 	}
 
+	@Override
 	public ComponentProvider getComponentProvider() {
 		return provider;
 	}
 
+	@Override
 	public boolean enableCopy() {
 		return true;
 	}
 
+	@Override
 	public boolean enableCopySpecial() {
 		return false;
 	}
 
+	@Override
 	public boolean canCopy() {
-		return copyEnabled;
+		return copyFromSelectionEnabled || !StringUtils.isBlank(getCursorText());
 	}
 
 	@Override
@@ -134,26 +162,6 @@ public class DecompileClipboardProvider extends ByteCopier implements
 	}
 
 	protected Transferable copyText(TaskMonitor monitor) {
-
-//		TextLayoutGraphics g = new TextLayoutGraphics();
-//		Rectangle rect = new Rectangle(2048, 2048);
-//		LayoutBackgroundColorManager layoutColorMap = new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.background);
-//		
-//		LayoutModel model = provider.getDecompilerPanel().getLayoutModel();
-//		int numRanges = selection.getNumRanges();
-//		for (int i=0; i<numRanges; i++) {
-//			FieldRange range = selection.getFieldRange(i);
-//			for (int j=range.getStart().getIndex(); j<range.getEnd().getIndex(); j++) {
-//				Layout layout = model.getLayout(j);
-//				if (layout != null) {
-//					layout.paint(g, PAINT_CONTEXT, rect, layoutColorMap, null);
-//					g.setHeight(layout.getHeight());
-//					g.flush();
-//				}
-//			}
-//		}
-//
-//		return createStringTransferable(g.getBuffer().toString());
 		return createStringTransferable(getText());
 	}
 
@@ -173,9 +181,7 @@ public class DecompileClipboardProvider extends ByteCopier implements
 			appendTextSingleLine(buffer, startIndex, selection.intersect(startIndex));
 			return;
 		}
-//		if (fieldRange.getEnd().getCol() == 0) {
-//			endIndex--;
-//		}
+
 		appendText(buffer, startIndex, selection.intersect(startIndex));
 		for (int line = startIndex + 1; line <= endIndex; line++) {
 			buffer.append('\n');
@@ -183,7 +189,8 @@ public class DecompileClipboardProvider extends ByteCopier implements
 		}
 	}
 
-	private void appendText(StringBuffer buffer, int lineNumber, FieldSelection singleLineSelection) {
+	private void appendText(StringBuffer buffer, int lineNumber,
+			FieldSelection singleLineSelection) {
 		if (singleLineSelection.isEmpty()) {
 			return;
 		}
@@ -244,14 +251,17 @@ public class DecompileClipboardProvider extends ByteCopier implements
 // Unsupported Operations
 //==================================================================================================    
 
+	@Override
 	public boolean enablePaste() {
 		return false;
 	}
 
+	@Override
 	public boolean canPaste(DataFlavor[] availableFlavors) {
 		return false;
 	}
 
+	@Override
 	public boolean paste(Transferable pasteData) {
 		return false;
 	}
@@ -260,6 +270,7 @@ public class DecompileClipboardProvider extends ByteCopier implements
 		return false;
 	}
 
+	@Override
 	public void lostOwnership(Transferable transferable) {
 		// no-op
 	}
