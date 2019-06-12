@@ -633,7 +633,8 @@ void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
   uintb rangeSize = range.getSize();
   if (rangeSize > 1 && rangeSize < 0xffffff) {	// Did we converge to something reasonable
     analysisState = 2;			// Mark that we got a definitive result
-    step = range.getStep();
+    if (rangeSize > 2)
+      step = range.getStep();
     minimumOffset = range.getMin();
     maximumOffset = range.getMax();
     if (maximumOffset < minimumOffset)	// Values extend into what is usually stack parameters
