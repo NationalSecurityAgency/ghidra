@@ -578,22 +578,20 @@ void Heritage::handleNewLoadCopies(void)
 ///
 /// isAnalyzed is set to \b true, if full range analysis is not needed
 /// \param valueSet is the calculated value set as seen by the LOAD operation
-void Heritage::LoadGuard::establishRange(const ValueSetRead &valueSet)
+void LoadGuard::establishRange(const ValueSetRead &valueSet)
 
 {
   const CircleRange &range( valueSet.getRange() );
   uintb rangeSize = range.getSize();
   uintb size;
   if (range.isEmpty()) {
-    step = 0;
     minimumOffset = pointerBase;
     size = 0x1000;
   }
   else if (range.isFull() || rangeSize > 0xffffff) {
-    step = 1;
     minimumOffset = pointerBase;
     size = 0x1000;
-    isAnalyzed = true;	// Don't bother doing more analysis
+    analysisState = 1;	// Don't bother doing more analysis
   }
   else {
     step = (rangeSize == 3) ? range.getStep() : 0;	// Check for consistent step
@@ -627,21 +625,20 @@ void Heritage::LoadGuard::establishRange(const ValueSetRead &valueSet)
   }
 }
 
-void Heritage::LoadGuard::finalizeRange(const ValueSetRead &valueSet)
+void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
 
 {
-  isAnalyzed = true;		// In all cases the settings determined here are final
+  analysisState = 1;		// In all cases the settings determined here are final
   const CircleRange &range( valueSet.getRange() );
   uintb rangeSize = range.getSize();
   if (rangeSize > 1 && rangeSize < 0xffffff) {	// Did we converge to something reasonable
+    analysisState = 2;			// Mark that we got a definitive result
     step = range.getStep();
     minimumOffset = range.getMin();
     maximumOffset = range.getMax();
     if (maximumOffset < minimumOffset)	// Values extend into what is usually stack parameters
       maximumOffset = spc->getHighest();
   }
-  if (step == 0)
-    step = 1;
   if (minimumOffset > spc->getHighest())
     minimumOffset = spc->getHighest();
   if (maximumOffset > spc->getHighest())
@@ -652,14 +649,14 @@ void Heritage::analyzeNewLoadGuards(void)
 
 {
   if (loadGuard.empty()) return;
-  if (loadGuard.back().isAnalyzed) return;	// Nothing new
+  if (loadGuard.back().analysisState != 0) return;	// Nothing new
   list<LoadGuard>::iterator startIter = loadGuard.end();
   vector<Varnode *> sinks;
   vector<PcodeOp *> reads;
   while(startIter != loadGuard.begin()) {
     --startIter;
     LoadGuard &guard( *startIter );
-    if (guard.isAnalyzed) break;
+    if (guard.analysisState != 0) break;
     reads.push_back(guard.op);
     sinks.push_back(guard.op->getIn(1));	// The CPUI_LOAD pointer
   }
@@ -676,7 +673,7 @@ void Heritage::analyzeNewLoadGuards(void)
   for(iter=startIter;iter!=loadGuard.end(); ++iter) {
     LoadGuard &guard( *iter );
     guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
-    if (!guard.isAnalyzed)
+    if (guard.analysisState == 0)
       runFullAnalysis = true;
   }
   if (runFullAnalysis) {
@@ -700,13 +697,7 @@ void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 
 {
   loadGuard.push_back(LoadGuard());
-  LoadGuard &guard( loadGuard.back() );
-  guard.op = op;
-  guard.spc = spc;
-  guard.pointerBase = node.offset;
-  guard.minimumOffset = 0;			// Initially we guard everything
-  guard.maximumOffset = spc->getHighest();
-  guard.isAnalyzed = false;
+  loadGuard.back().set(op,spc,node.offset);
 }
 
 /// \brief Trace input stackpointer to any indexed loads

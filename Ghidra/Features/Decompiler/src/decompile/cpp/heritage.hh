@@ -95,6 +95,39 @@ class HeritageInfo {
     deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
 };
 
+/// \brief Description of a LOAD operation that needs to be guarded
+///
+/// Heritage maintains a list of CPUI_LOAD ops that reference the stack dynamically. These
+/// can potentially alias stack Varnodes, so we maintain what (possibly limited) information
+/// we known about the range of stack addresses that can be referenced.
+class LoadGuard {
+  friend class Heritage;
+  PcodeOp *op;		///< The LOAD op
+  AddrSpace *spc;	///< The stack space being loaded from
+  uintb pointerBase;	///< Base offset of the pointer
+  uintb minimumOffset;	///< Minimum offset of the LOAD
+  uintb maximumOffset;	///< Maximum offset of the LOAD
+  int4 step;		///< Step of any access into this range (0=unknown)
+  int4 analysisState;	///< 0=unanalyzed, 1=analyzed(partial result), 2=analyzed(full result)
+  void establishRange(const ValueSetRead &valueSet);	///< Convert partial value set analysis into guard range
+  void finalizeRange(const ValueSetRead &valueSet);	///< Convert value set analysis to final guard range
+
+  /// \brief Set a new unanalyzed LOAD guard that initially guards everything
+  ///
+  /// \param o is the LOAD op
+  /// \param s is the (stack) space it is loading from
+  /// \param off is the base offset that is indexed from
+  void set(PcodeOp *o,AddrSpace *s,uintb off) {
+    op = o; spc = s; pointerBase=off; minimumOffset=0; maximumOffset=s->getHighest(); step=0; analysisState=0;
+  }
+public:
+  PcodeOp *getOp(void) const { return op; }	///< Get the PcodeOp being guarded
+  uintb getMinimum(void) const { return minimumOffset; }	///< Get minimum offset of the guarded range
+  uintb getMaximum(void) const { return maximumOffset; }	///< Get maximum offset of the guarded range
+  int4 getStep(void) const { return step; }		///< Get the calculated step associated with the range (or 0)
+  bool isRangeLocked(void) const { return (analysisState == 2); }	///< Return \b true if the range is fully determined
+};
+
 /// \brief Manage the construction of Static Single Assignment (SSA) form
 ///
 /// With a specific function (Funcdata), this class links the Varnode and
@@ -156,20 +189,6 @@ class Heritage {
     }
   };
 
-  /// \brief Description of a LOAD operation that needs to be guarded
-  class LoadGuard {
-    friend class Heritage;
-    PcodeOp *op;		///< The LOAD op
-    AddrSpace *spc;		///< The stack space being loaded from
-    uintb pointerBase;		///< Base offset of the pointer
-    uintb minimumOffset;	///< Minimum offset of the LOAD
-    uintb maximumOffset;	///< Maximum offset of the LOAD
-    int4 step;			///< Step of any access into this range
-    bool isAnalyzed;		///< Has a range analysis been performed on \b this
-    void establishRange(const ValueSetRead &valueSet);	///< Convert partial value set analysis into guard range
-    void finalizeRange(const ValueSetRead &valueSet);	///< Convert value set analysis to final guard range
-  };
-
   Funcdata *fd;		        ///< The function \b this is controlling SSA construction 
   LocationMap globaldisjoint;	///< Disjoint cover of every heritaged memory location
   LocationMap disjoint;		///< Disjoint cover of memory locations currently being heritaged
@@ -229,6 +248,8 @@ class Heritage {
   void calcMultiequals(const vector<Varnode *> &write);
   void renameRecurse(BlockBasic *bl,VariableStack &varstack);
   void bumpDeadcodeDelay(Varnode *vn);
+  void placeMultiequals(void);
+  void rename(void);
 public:
   Heritage(Funcdata *data);	///< Constructor
 
@@ -246,9 +267,8 @@ public:
   void buildInfoList(void);	                    ///< Initialize information for each space
   void forceRestructure(void) { maxdepth = -1; }    ///< Force regeneration of basic block structures
   void clear(void);				    ///< Reset all analysis of heritage
-  void placeMultiequals(void);
-  void rename(void);
   void heritage(void);				    ///< Perform one pass of heritage
+  const list<LoadGuard> &getLoadGuards(void) const { return loadGuard; }	///< Get list of LOAD ops that are guarded
 };
 
 #endif
