@@ -127,6 +127,10 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation("DataPlugin", "SettingsOnStructureComponents"));
 	}
 
+	GTable getSettingsTable() {
+		return settingsTable;
+	}
+
 	SettingsTableModel getSettingsTableModel() {
 		return settingsTableModel;
 	}
@@ -666,6 +670,20 @@ public class DataSettingsDialog extends DialogComponentProvider {
 			return null;
 		}
 
+		// override this to force the correct cell editors to be used
+		@Override
+		public Class<?> getColumnClass(int col) {
+			switch (col) {
+				case 0:
+					return String.class;
+				case 1:
+					return Settings.class;
+				case 2:
+					return Boolean.class;
+			}
+			return null;
+		}
+
 		@Override
 		public Object getColumnValueForRow(SettingsRowObject t, int columnIndex) {
 			switch (columnIndex) {
@@ -698,7 +716,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		}
 	}
 
-	private class SettingsEditor extends AbstractCellEditor implements TableCellEditor {
+	class SettingsEditor extends AbstractCellEditor implements TableCellEditor {
 
 		final static int ENUM = 0;
 		final static int BOOLEAN = 1;
@@ -710,9 +728,10 @@ public class DataSettingsDialog extends DialogComponentProvider {
 			comboBox.addItemListener(e -> fireEditingStopped());
 		}
 
-		/**
-		 * @see javax.swing.CellEditor#getCellEditorValue()
-		 */
+		GComboBox<String> getComboBox() {
+			return comboBox;
+		}
+
 		@Override
 		public Object getCellEditorValue() {
 			switch (mode) {
