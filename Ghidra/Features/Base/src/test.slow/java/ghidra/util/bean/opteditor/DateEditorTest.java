@@ -201,10 +201,9 @@ public class DateEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showProgramOptions() {
-		List<DockingActionIf> list = tool.getAllActions();
-		for (int i = 0; i < list.size(); i++) {
-
-			DockingActionIf action = list.get(i);
+		// TODO change to getAction("Program Options")
+		Set<DockingActionIf> list = tool.getAllActions();
+		for (DockingActionIf action : list) {
 			if (action.getName().equals("Program Options")) {
 				performAction(action, plugin.getProvider(), false);
 				break;

@@ -52,7 +52,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	private JComponent providerComp;
 	private Component focusedComponent;
 	private DockingWindowManager winMgr;
-	private DockingActionManager actionMgr;
+	private ActionToGuiMapper actionMgr;
 	private DropTarget dockableDropTarget;
 
 	/**

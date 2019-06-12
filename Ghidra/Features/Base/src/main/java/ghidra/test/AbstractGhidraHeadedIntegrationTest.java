@@ -15,21 +15,20 @@
  */
 package ghidra.test;
 
-import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import docking.*;
+import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.FieldMouseListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.GhidraApplicationConfiguration;
@@ -41,10 +40,10 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.TaskUtilities;
 import ghidra.util.exception.AssertException;
 import junit.framework.AssertionFailedError;
-import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 
-public abstract class AbstractGhidraHeadedIntegrationTest extends AbstractGhidraHeadlessIntegrationTest {
+public abstract class AbstractGhidraHeadedIntegrationTest
+		extends AbstractGhidraHeadlessIntegrationTest {
 
 	public AbstractGhidraHeadedIntegrationTest() {
 		super();
@@ -113,42 +112,6 @@ public abstract class AbstractGhidraHeadedIntegrationTest extends AbstractGhidra
 		return null;
 	}
 
-	/**
-	 * Finds the action by the given owner name and action name.  
-	 * If you do not know the owner name, then use  
-	 * the call {@link #getActions(DockingTool, String)} instead.
-	 * 
-	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
-	 * when you have an owner name (which is usually the plugin name).
-	 * 
-	 * @param tool the tool containing all system actions
-	 * @param name the name to match
-	 * @return the matching action; null if no matching action can be found
-	 */
-	public static DockingActionIf getAction(DockingTool tool, String owner, String name) {
-		String fullName = name + " (" + owner + ")";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullName);
-		if (actions.isEmpty()) {
-			return null;
-		}
-
-		if (actions.size() > 1) {
-			// This shouldn't happen
-			throw new AssertionFailedError(
-				"Found more than one action for name '" + fullName + "'");
-		}
-
-		return CollectionUtils.any(actions);
-	}
-
-	public static DockingActionIf getAction(Plugin plugin, String actionName) {
-		return getAction(plugin.getTool(), plugin.getName(), actionName);
-	}
-
-	public static DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
-		return getAction(provider.getTool(), provider.getName(), actionName);
-	}
-
 	public static PluginTool showTool(final PluginTool tool) {
 		runSwing(() -> {
 			boolean wasErrorGUIEnabled = isUseErrorGUI();
@@ -162,9 +125,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest extends AbstractGhidra
 
 	/**
 	 * Shows the given DialogComponentProvider using the given tool's 
-	 * {@link PluginTool#showDialog(DialogComponentProvider)} method.  After calling show on a 
-	 * new thread the method will then wait for the dialog to be shown by calling
-	 * {@link TestEnv#waitForDialogComponent(Window, Class, int)}.
+	 * {@link PluginTool#showDialog(DialogComponentProvider)} method. 
 	 * 
 	 * @param tool The tool used to show the given provider.
 	 * @param provider The DialogComponentProvider to show.
@@ -206,22 +167,8 @@ public abstract class AbstractGhidraHeadedIntegrationTest extends AbstractGhidra
 		waitForSwing();
 	}
 
-	/**
-	 * @deprecated use {@link #waitForBusyTool(PluginTool)} instead
-	 */
-	@Deprecated
-	public static void waitForAnalysis() {
-		@SuppressWarnings("unchecked")
-		Map<Program, AutoAnalysisManager> programToManagersMap =
-			(Map<Program, AutoAnalysisManager>) getInstanceField("managerMap",
-				AutoAnalysisManager.class);
-
-		Collection<AutoAnalysisManager> managers = programToManagersMap.values();
-		for (AutoAnalysisManager manager : managers) {
-			while (manager.isAnalyzing()) {
-				sleep(DEFAULT_WAIT_DELAY);
-			}
-		}
+	public static DockingActionIf getAction(Plugin plugin, String actionName) {
+		return getAction(plugin.getTool(), plugin.getName(), actionName);
 	}
 
 	/**
@@ -230,6 +177,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest extends AbstractGhidra
 	 * 
 	 * @param project The project which with the tool is associated.
 	 * @param tool The tool to be saved
+	 * @return the new tool
 	 */
 	public static PluginTool saveTool(final Project project, final PluginTool tool) {
 		AtomicReference<PluginTool> ref = new AtomicReference<>();

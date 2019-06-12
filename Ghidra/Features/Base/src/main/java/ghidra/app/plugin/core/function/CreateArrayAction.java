@@ -19,20 +19,18 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 
-class CreateArrayAction extends ListingContextAction implements OptionsChangeListener {
+class CreateArrayAction extends ListingContextAction {
 
 	private static final KeyStroke DEFAULT_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
@@ -44,26 +42,21 @@ class CreateArrayAction extends ListingContextAction implements OptionsChangeLis
 
 		setPopupMenu(plugin.getDataActionMenuName(null));
 		setHelpLocation(new HelpLocation(plugin.getName(), "DataType"));
-		initializeKeybinding();
+
+		initKeyStroke(DEFAULT_KEY_STROKE);
 	}
 
-	private void initializeKeybinding() {
-		PluginTool tool = plugin.getTool();
-		DockingAction dummyKeybindingsAction =
-			new DummyKeyBindingsOptionsAction(getName(), DEFAULT_KEY_STROKE);
-		tool.addAction(dummyKeybindingsAction);
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-		KeyStroke keyStroke =
-			options.getKeyStroke(dummyKeybindingsAction.getFullName(), DEFAULT_KEY_STROKE);
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
 
-		if (!DEFAULT_KEY_STROKE.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
+		setKeyBindingData(new KeyBindingData(keyStroke));
+	}
+
+	@Override
+	public boolean usesSharedKeyBinding() {
+		return true;
 	}
 
 	private void setPopupMenu(String name) {
@@ -140,14 +133,5 @@ class CreateArrayAction extends ListingContextAction implements OptionsChangeLis
 		}
 
 		return dialog.getValue();
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (optionName.startsWith(getName())) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 }

@@ -225,6 +225,10 @@ public class TestEnv {
 	}
 
 	public void closeTool(PluginTool toolToClose, boolean ignoreChanges) {
+		if (toolToClose == tool) {
+			tool = null;
+		}
+
 		extraTools.remove(toolToClose);
 		AbstractGenericTest.executeOnSwingWithoutBlocking(() -> {
 			if (ignoreChanges) {

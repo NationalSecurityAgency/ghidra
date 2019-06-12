@@ -17,9 +17,11 @@ package ghidra.feature.vt.gui.plugin;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
+import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.wizard.WizardManager;
@@ -121,12 +123,27 @@ public class VTPlugin extends Plugin {
 		createActions();
 		registerServiceProvided(VTController.class, controller);
 		tool.setUnconfigurable();
-		tool.removeAction(tool.getDockingActionsByFullActionName("Save Tool As (Tool)").get(0));
-		tool.removeAction(tool.getDockingActionsByFullActionName("Export Tool (Tool)").get(0));
+
+		DockingActionIf saveAs = getToolAction("Save Tool As");
+		tool.removeAction(saveAs);
+
+		DockingActionIf export = getToolAction("Export Tool");
+		tool.removeAction(export);
+
 		new MatchStatusUpdaterAssociationHook(controller);
 		new ImpliedMatchAssociationHook(controller);
 
 		initializeOptions();
+	}
+
+	private DockingActionIf getToolAction(String actionName) {
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		for (DockingActionIf action : actions) {
+			if (action.getName().equals(actionName)) {
+				return action;
+			}
+		}
+		throw new IllegalArgumentException("Unable to find Tool action '" + actionName + "'");
 	}
 
 	private void initializeOptions() {

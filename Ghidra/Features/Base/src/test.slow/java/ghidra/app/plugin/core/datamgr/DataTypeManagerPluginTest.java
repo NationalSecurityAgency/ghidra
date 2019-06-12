@@ -37,7 +37,7 @@ import org.junit.*;
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputWithChoicesDialog;

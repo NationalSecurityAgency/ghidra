@@ -69,7 +69,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 		for (SymbolRowObject obj : rowObjects) {
 			symbolIDs[index++] = obj.getKey();
 		}
-		return new ProgramSymbolActionContext(this, program, symbolIDs);
+		return new ProgramSymbolActionContext(this, program, symbolIDs, getTable());
 	}
 
 	void deleteSymbols() {

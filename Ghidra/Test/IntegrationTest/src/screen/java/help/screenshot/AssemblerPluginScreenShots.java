@@ -18,12 +18,10 @@ package help.screenshot;
 import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
-import ghidra.app.plugin.core.assembler.AssembleDockingAction;
 import ghidra.app.plugin.core.assembler.AssemblerPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.framework.plugintool.util.PluginException;
@@ -37,9 +35,7 @@ public class AssemblerPluginScreenShots extends GhidraScreenShotGenerator {
 		positionCursor(0x0040512e);
 		tool.addPlugin(AssemblerPlugin.class.getName());
 
-		String fullActionName = "Assemble (AssemblerPlugin)";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
-		AssembleDockingAction action = (AssembleDockingAction) actions.get(0);
+		DockingActionIf action = getAction(tool, "AssemblerPlugin", "Assemble");
 
 		performAction(action, true);
 

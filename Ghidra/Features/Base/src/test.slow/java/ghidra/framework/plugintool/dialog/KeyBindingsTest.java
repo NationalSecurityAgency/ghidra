@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -29,10 +29,10 @@ import org.junit.*;
 
 import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
+import docking.tool.util.DockingToolConstants;
 import docking.widgets.MultiLineLabel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Msg;
@@ -102,9 +102,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testManagedKeyBindings() {
-		List<DockingActionIf> list = tool.getAllActions();
-		for (int i = 0; i < list.size(); i++) {
-			DockingActionIf action = list.get(i);
+		Set<DockingActionIf> list = tool.getAllActions();
+		for (DockingActionIf action : list) {
 			if (action.isKeyBindingManaged()) {
 				assertTrue(actionInTable(action));
 			}
@@ -128,10 +127,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionNotSelected() throws Exception {
 		table.clearSelection();
-		List<DockingActionIf> list = tool.getAllActions();
-		DockingActionIf action = null;
-		for (int i = 0; i < list.size(); i++) {
-			action = list.get(i);
+		Set<DockingActionIf> list = tool.getAllActions();
+		for (DockingActionIf action : list) {
 			KeyStroke ks = getKeyStroke(action);
 			if (isKeyBindingManaged(action) && ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
 				break;
@@ -318,10 +315,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getKeyBindingPluginAction() {
-		List<DockingActionIf> list = tool.getAllActions();
-		DockingActionIf action = null;
-		for (int i = 0; i < list.size(); i++) {
-			action = list.get(i);
+		Set<DockingActionIf> list = tool.getAllActions();
+		for (DockingActionIf action : list) {
 			KeyStroke ks = action.getKeyBinding();
 			if (action.isKeyBindingManaged() && ks != null &&
 				ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
@@ -372,7 +367,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setUpDialog() throws Exception {
 		runSwing(() -> {
-			panel = new KeyBindingsPanel(tool, tool.getOptions(ToolConstants.KEY_BINDINGS));
+			panel = new KeyBindingsPanel(tool, tool.getOptions(DockingToolConstants.KEY_BINDINGS));
 
 			dialog = new JDialog(tool.getToolFrame(), "Test KeyBindings", false);
 			dialog.getContentPane().add(panel);
@@ -391,10 +386,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void grabActionsWithoutKeybinding() {
-		List<DockingActionIf> list = tool.getAllActions();
-		DockingActionIf action = null;
-		for (int i = 0; i < list.size(); i++) {
-			action = list.get(i);
+		Set<DockingActionIf> list = tool.getAllActions();
+		for (DockingActionIf action : list) {
 			if (!action.isKeyBindingManaged()) {
 				continue;
 			}

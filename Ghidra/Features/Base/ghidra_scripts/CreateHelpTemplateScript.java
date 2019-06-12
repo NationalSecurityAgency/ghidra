@@ -20,6 +20,7 @@ import java.io.*;
 import java.util.*;
 
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -30,9 +31,9 @@ public class CreateHelpTemplateScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		PluginTool tool = state.getTool();
-		Plugin[] plugins = getSortedPlugins(tool);
+		List<Plugin> plugins = getSortedPlugins(tool);
 		Plugin selectedPlugin =
-			askChoice("Select Plugin To Use To Generate Help", "Plugin", plugins, plugins[0]);
+			askChoice("Select Plugin To Use To Generate Help", "Plugin", plugins, plugins.get(0));
 		if (selectedPlugin == null) {
 			printerr("no plugin selected, no help template created.");
 			return;
@@ -101,7 +102,8 @@ public class CreateHelpTemplateScript extends GhidraScript {
 	}
 
 	private List<DockingActionIf> getActions(PluginTool tool, Plugin plugin) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = KeyBindingUtils.getKeyBindingActionsForOwner(tool, plugin.getName());
+		List<DockingActionIf> list = new ArrayList<>(actions);
 		Comparator<DockingActionIf> comparator = (action1, action2) -> {
 			try {
 				return action1.getName().compareTo(action2.getName());
@@ -110,14 +112,12 @@ public class CreateHelpTemplateScript extends GhidraScript {
 				return 0;
 			}
 		};
-		Collections.sort(actions, comparator);
-		return actions;
+		Collections.sort(list, comparator);
+		return list;
 	}
 
-	private Plugin[] getSortedPlugins(PluginTool tool) {
+	private List<Plugin> getSortedPlugins(PluginTool tool) {
 		List<Plugin> list = tool.getManagedPlugins();
-		Plugin[] plugins = new Plugin[list.size()];
-		list.toArray(plugins);
 		Comparator<Plugin> comparator = (plugin1, plugin2) -> {
 			try {
 				return plugin1.getName().compareTo(plugin2.getName());
@@ -126,8 +126,9 @@ public class CreateHelpTemplateScript extends GhidraScript {
 				return 0;
 			}
 		};
-		Arrays.sort(plugins, comparator);
-		return plugins;
+
+		Collections.sort(list, comparator);
+		return list;
 	}
 
 }

@@ -165,7 +165,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		builtInDataTypesManager.setFavorite(root.getDataType("word"), true);
 	}
 
-	protected void checkActions(List<DockingActionIf> actions, boolean enabled, String caseStr) {
+	protected void checkActions(Set<DockingActionIf> actions, boolean enabled, String caseStr) {
 		checkAction(actions, CREATE_STRUCTURE, enabled, caseStr);
 		checkAction(actions, EDIT_DATA_TYPE, enabled, caseStr);
 		checkAction(actions, CREATE_ARRAY, enabled, caseStr);
@@ -1063,7 +1063,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		ProgramSelection sel = getCurrentSelection();
 		boolean useSelection = (sel != null && !sel.isEmpty());
 
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 
 		for (DockingActionIf element : actions) {
 			MenuData menuBarData = element.getMenuBarData();
@@ -1113,31 +1113,6 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			}
 		}
 
-//		if (useSelection) {
-//
-//			checkAction(actions, CREATE_STRUCTURE, true, caseName);
-//			checkAction(actions, EDIT_STRUCTURE, false, caseName);
-//			checkAction(actions, CREATE_ARRAY, true, caseName);
-//			checkAction(actions, DEFAULT_DATA_SETTINGS, false, caseName);
-//			checkAction(actions, DATA_SETTINGS, false, caseName);
-//			checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
-//			checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
-//			checkAction(actions, CYCLE_CHAR_STRING_UNICODE, true, caseName);
-//			checkAction(actions, DEFINE_BYTE, true, caseName);
-//			checkAction(actions, DEFINE_WORD, true, caseName);
-//			checkAction(actions, DEFINE_DWORD, true, caseName);
-//			checkAction(actions, DEFINE_QWORD, true, caseName);
-//			checkAction(actions, DEFINE_FLOAT, true, caseName);
-//			checkAction(actions, DEFINE_DOUBLE, true, caseName);
-//			checkAction(actions, DEFINE_TERM_CSTRING, true, caseName);
-//			checkAction(actions, DEFINE_POINTER, true, caseName);
-//
-//			PluginAction recentlyUsedAction = getAction(RECENTLY_USED);
-//			if (recentlyUsedAction != null) {
-//				checkAction(recentlyUsedAction, false, caseName);
-//			}
-//			return;
-//		}
 		if (data != null) {
 
 			DataType dt = data.getDataType();
@@ -1184,10 +1159,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkOnUndefined(List<DockingActionIf> actions) {
+	protected void checkOnUndefined(Set<DockingActionIf> actions) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data data = getContextData();
@@ -1223,10 +1198,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkOnDefined(List<DockingActionIf> actions, Class<?> expectedDataType) {
+	protected void checkOnDefined(Set<DockingActionIf> actions, Class<?> expectedDataType) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		String dtName = expectedDataType.getName();
@@ -1287,10 +1262,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, DEFINE_POINTER, true, caseName);
 	}
 
-	protected void checkOnArray(List<DockingActionIf> actions, DataType interiorDt, int arraySize) {
+	protected void checkOnArray(Set<DockingActionIf> actions, DataType interiorDt, int arraySize) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data d = getContextData();
@@ -1356,10 +1331,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	 * @param actions
 	 * @param structSize structure size or -1 to disable size check
 	 */
-	protected void checkOnStructure(List<DockingActionIf> actions, int structSize) {
+	protected void checkOnStructure(Set<DockingActionIf> actions, int structSize) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data d = getContextData();
@@ -1400,7 +1375,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	}
 
 	protected DockingActionIf getAction(String name) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf element : actions) {
 			String actionName = element.getName();
 			int pos = actionName.indexOf(" (");
@@ -1439,7 +1414,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkAction(List<DockingActionIf> actions, String name, boolean isEnabled,
+	protected void checkAction(Set<DockingActionIf> actions, String name, boolean isEnabled,
 			String caseName) {
 		for (DockingActionIf element : actions) {
 			String actionName = element.getName();

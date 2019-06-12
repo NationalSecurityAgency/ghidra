@@ -33,7 +33,7 @@ import org.jdom.Element;
 
 import docking.*;
 import docking.action.*;
-import docking.actions.DockingToolActionManager;
+import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
@@ -158,7 +158,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		actionMgr = new DockingToolActionManager(this, winMgr);
+		actionMgr = new ToolActions(this, winMgr);
 		pluginMgr = new PluginManager(this, serviceMgr);
 		dialogMgr = new DialogManager(this);
 		initActions();

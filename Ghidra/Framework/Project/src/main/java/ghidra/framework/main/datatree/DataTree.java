@@ -22,7 +22,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.DockingUtils;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.framework.main.FrontEndTool;
