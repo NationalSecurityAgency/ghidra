@@ -23,7 +23,7 @@ import com.google.common.cache.CacheBuilder;
 
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
@@ -45,7 +45,7 @@ public class DecompilerController {
 	private int cacheSize;
 
 	public DecompilerController(DecompilerCallbackHandler handler, DecompileOptions options,
-			DecompileClipboardProvider clipboard) {
+			DecompilerClipboardProvider clipboard) {
 		this.cacheSize = options.getCacheSize();
 		this.callbackHandler = handler;
 		decompilerCache = buildCache();

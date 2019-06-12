@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -111,9 +112,64 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertCurrentLocation(line, charPosition);
 	}
 
+	@Test
+	public void testDecompiler_CopyFromSymbolWithoutSelection() throws Exception {
+
+		/*
+		 	
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+		int line = 2; 		  // void
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		copy();
+		String copiedText = getClipboardText();
+		assertEquals("void", copiedText);
+
+		line = 5; 			// _printf
+		charPosition = 2; 	// 
+		setDecompilerLocation(line, charPosition);
+
+		copy();
+		copiedText = getClipboardText();
+		assertEquals("_printf", copiedText);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void copy() {
+
+		String fullName = "Copy (ClipboardPlugin)";
+		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullName);
+		for (DockingActionIf action : actions) {
+			Object service = getInstanceField("clipboardService", action);
+			if (service.getClass().toString().contains("Decomp")) {
+				performAction(action);
+				return;
+			}
+		}
+
+		fail("Could not find Decompiler Copy action");
+	}
 
 	private void setComment(String address, int type, String comment) {
 		applyCmd(program, new SetCommentCmd(addr(address), type, comment));
