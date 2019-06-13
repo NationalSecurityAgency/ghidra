@@ -20,19 +20,25 @@ import static org.junit.Assert.*;
 import java.math.BigInteger;
 import java.util.*;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.TableCellEditor;
+
 import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.GTable;
 import ghidra.app.LocationCallback;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsEditor;
 import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsRowObject;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.docking.settings.FormatSettingsDefinition;
@@ -134,6 +140,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	@After
 	public void tearDown() {
+		closeAllWindows();
 		env.dispose();
 	}
 
@@ -255,15 +262,20 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			int settingsCol = model.findColumn("Settings");
 			int rowCnt = model.getRowCount();
 
-			for (int i = 0; i < rowCnt; i++) {
-				String name = (String) model.getValueAt(i, nameCol);
+			for (int row = 0; row < rowCnt; row++) {
+				String name = (String) model.getValueAt(row, nameCol);
 				int index = findSettingIndex(settingNames, name);
 				if (index != -1) {
-					Object v = model.getValueAt(i, settingsCol);
+					Object v = model.getValueAt(row, settingsCol);
 					if (v instanceof StringChoices) {
 						StringChoices choices = (StringChoices) v;
+
+						triggerEdit(dlg, row, settingsCol);
+						setComboValue(dlg, newValues[index]);
+						endEdit(dlg);
+
 						choices.setSelectedValue(newValues[index]);
-						model.setValueAt(choices, i, settingsCol);
+						model.setValueAt(choices, row, settingsCol);
 					}
 					else {
 						error = "Unsupported test setting: " + v.getClass();
@@ -281,6 +293,44 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		pressButtonByText(dlg, "OK");
 
 		waitForSwing();
+	}
+
+	private void endEdit(DataSettingsDialog d) {
+		GTable table = d.getSettingsTable();
+		runSwing(() -> table.editingStopped(new ChangeEvent(table)));
+	}
+
+	private void setComboValue(DataSettingsDialog d, String string) {
+		GTable table = d.getSettingsTable();
+		TableCellEditor activeEditor = runSwing(() -> table.getCellEditor());
+		assertNotNull("Table should be editing, but is not", activeEditor);
+		assertTrue("Editor type is not correct", activeEditor instanceof SettingsEditor);
+
+		SettingsEditor settingsEditor = (SettingsEditor) activeEditor;
+		GComboBox<String> combo = settingsEditor.getComboBox();
+
+		int index = runSwing(() -> {
+			int n = combo.getItemCount();
+			for (int i = 0; i < n; i++) {
+				String item = combo.getItemAt(i);
+				if (item.equals(string)) {
+					return i;
+				}
+			}
+			return -1;
+		});
+
+		assertNotEquals("Combo does not contain item '" + string + "'", -1, index);
+
+		runSwing(() -> {
+			combo.setSelectedIndex(index);
+		});
+	}
+
+	private void triggerEdit(DataSettingsDialog d, int row, int col) {
+		GTable table = d.getSettingsTable();
+		boolean editStarted = runSwing(() -> table.editCellAt(row, col));
+		assertTrue("Unable to edit dialog table cell at " + row + ", " + col, editStarted);
 	}
 
 	protected int findSettingIndex(String[] settingNames, String name) {

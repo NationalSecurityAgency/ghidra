@@ -40,8 +40,6 @@ import ghidra.program.util.ProgramSelection;
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
  * <p>
  */
-@SuppressWarnings("deprecation")
-// Suppress - we are using the deprecated reference to DefaultSortedTableModel to handle old code
 public class GhidraTable extends GTable {
 
 	private Navigatable navigatable;
