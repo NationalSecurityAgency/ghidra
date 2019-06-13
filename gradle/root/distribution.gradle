@@ -172,14 +172,16 @@ task assembleDistribution (type: Copy) {
 	exclude "**/.settings/**"
 	
 	/////////////////////////////
-	// COPY all GPL code
+	// COPY all GPL support files
+	// (modules with build.gradle handled separately)
 	/////////////////////////////
 	from (ROOT_PROJECT_DIR + "/GPL") {
-		exclude "*/bin"
-		exclude "*/build"
+		include "*.*"
+		include "Icons/**"
+		include "licenses/**"
 		into "GPL"
 	}	
-	
+		
 	//////////////////////////////
 	// LGPL SOURCE INCLUSION
 	//////////////////////////////
@@ -420,9 +422,9 @@ task createInstallationZip(type: Zip) { t ->
 		updateSlaFilesTimestamp(DISTRIBUTION_DIR.getPath(), 2)
 	}
 	
-	doLast {
-		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
-	}
+//	doLast {
+//		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
+//	}
 }
 
 
