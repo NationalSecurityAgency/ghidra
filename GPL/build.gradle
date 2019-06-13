@@ -71,7 +71,3 @@ String getGhidraRelativePath(Project p) {
 
 	return path
 }
-
-subprojects {
-	apply plugin: 'java'
-}
