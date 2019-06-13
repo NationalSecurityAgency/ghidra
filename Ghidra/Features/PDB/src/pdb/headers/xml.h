@@ -21,6 +21,6 @@
 #include <comutil.h>
 
 std::wstring indent(size_t nSpaces);
-std::wstring escapeXmlEntities(BSTR bstr);
+std::wstring escapeXmlEntities(const std::wstring& bstr);
 
 #endif

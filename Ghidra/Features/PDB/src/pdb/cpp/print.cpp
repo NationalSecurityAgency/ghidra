@@ -17,6 +17,9 @@
 #include "find.h"
 #include "print.h"
 #include "symbol.h"
+#include <atlcomcli.h>
+#include <comutil.h>
+#include <vector>
 
 // Returns a mixture of static strings and allocated strings.
 // Abandon all hope of memory management, ye who enter here
@@ -103,42 +106,35 @@ std::wstring printVariant( VARIANT & v ) {
 	}
 }
 
-void printBound( IDiaSymbol* pBound ) {
+void printBound( IDiaSymbol& pBound ) {
 
 	DWORD tag = 0;
-	BSTR name;
-	DWORD kind;
-	pBound->get_symTag( &tag );
-	pBound->get_locationType( &kind );
+	bstr_t name;
+	DWORD kind = 0;
+	pBound.get_symTag( &tag );
+	pBound.get_locationType( &kind );
 	if ( tag == SymTagData && kind == LocIsConstant ) {
 		//TODO
 		//CComVariant v;
 		//pBound->get_value( &v );
 		//printVariant( v );
 	} 
-	else if ( pBound->get_name( &name ) == S_OK ) {
-		printf( "%ws", name );
+	else if ( pBound.get_name( name.GetAddress() ) == S_OK ) {
+		printf( "%ws", name.GetBSTR() );
 	}
 }
 
-std::wstring printType( IDiaSymbol * pType, BSTR suffix ) {
+std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	if (pType == NULL) {
 		return L"";
 	}
-	std::wstring name = getName(pType);
-	DWORD tag = getTag(pType);
+	std::wstring name = getName(*pType);
+	DWORD tag = getTag(*pType);
 
 	if ( tag == SymTagPointerType ) {
-		IDiaSymbol * pBaseType;
+	    CComPtr<IDiaSymbol> pBaseType;
 		if ( pType->get_type( &pBaseType ) == S_OK ) {
-			size_t length = wcslen(suffix) + 3;	// length of: suffix + " *\0"
-			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			if (str != NULL) {
-				swprintf_s(str, length, L"%ws *", suffix);
-				std::wstring ret = printType(pBaseType, (BSTR)str);
-                free(str);
-                return ret;
-			}
+			return printType(pBaseType, suffix + L" *");
 		}
 		else {
 			return L"";
@@ -146,35 +142,23 @@ std::wstring printType( IDiaSymbol * pType, BSTR suffix ) {
 	} 
 
 	if ( tag == SymTagBaseType ) {
-		std::wstring bt = getBaseTypeAsString( pType );
-		size_t length = bt.length() + wcslen(suffix) + 1;	// length of: bt + suffix + "\0"
-		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		if (str != NULL) {
-			swprintf_s(str, length, L"%ws%ws", bt.c_str(), suffix);
-			std::wstring ret(str);
-            free(str);
-            return ret;
-		}
+		return getBaseTypeAsString( *pType ) + suffix;
 	}
 
 	if ( tag == SymTagArrayType ) {
-		IDiaSymbol * pBaseType = getType( pType );
+	    CComPtr<IDiaSymbol> pBaseType = getType( *pType );
 		if ( pBaseType == NULL ) {
 			return L"";
 		}
-		ULONGLONG lenArray = getLength( pType );
-		ULONGLONG lenElem  = getLength( pBaseType );
+		ULONGLONG lenArray = getLength( *pType );
+		ULONGLONG lenElem  = getLength( *pBaseType );
 		if (lenElem == 0) {//prevent divide by zero...
 			lenElem = lenArray;
 		}
-		size_t strLen = wcslen(suffix) + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
-		wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
-		if (str != NULL) {
-			swprintf_s(str, strLen, L"%ws[%I64d]", suffix, lenArray / lenElem);
-			std::wstring ret = printType(pBaseType, (BSTR)str);
-            free(str);
-            return ret;
-		}
+		size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
+        std::vector<wchar_t> str(strLen);
+		swprintf_s(str.data(), strLen, L"%ws[%I64d]", suffix.c_str(), lenArray / lenElem);
+		return printType(pBaseType, str.data());
 	} 
 
 	if ( tag == SymTagFunctionType ) {
@@ -182,58 +166,45 @@ std::wstring printType( IDiaSymbol * pType, BSTR suffix ) {
 	}
 
 	if ( tag == SymTagCustomType ) {
-		DWORD id;
-		DWORD rec;
-		GUID guid;
+		DWORD id = 0;
+		DWORD rec = 0;
+        GUID guid = {};
 		if (pType->get_guid(&guid) == S_OK) {
-			int maxGUIDStrLen = 64;
-			wchar_t* guidStr = (wchar_t*)calloc((size_t)maxGUIDStrLen, sizeof(wchar_t));
-			if (guidStr != NULL) {
-				if (StringFromGUID2(guid, guidStr, maxGUIDStrLen) > 0) {
-                    std::wstring ret(guidStr);
-                    free(guidStr);
-                    return ret;
-				}
+			const int maxGUIDStrLen = 64 + 1;
+            std::vector<wchar_t> guidStr(maxGUIDStrLen);
+			if (StringFromGUID2(guid, guidStr.data(), maxGUIDStrLen) > 0) {
+               return guidStr.data();
 			}
 		} 
 		else if ( pType->get_oemId( &id ) == S_OK && pType->get_oemSymbolId( &rec ) == S_OK ) {
-			size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
-			wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
+			const size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
+            wchar_t str[strLen] = {};
 			if (str != NULL) {
-				swprintf_s(str, strLen, L"0x%x:0x%x", id, rec);
-                std::wstring ret(str);
-                free(str);
-                return ret;
+				swprintf_s(str, L"0x%x:0x%x", id, rec);
+                return str;
 			}
 		}
 		return L"";
 	}
 
 	if ( !name.empty() ) {
-		size_t length = name.length() + wcslen(suffix) + 1;	// length of name + suffix + "\0"
-		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		if (str != NULL) {
-			swprintf_s(str, length, L"%ws%ws", name.c_str(), suffix);
-            std::wstring ret(str);
-            free(str);
-            return ret;
-		}
+        return name + suffix;
 	} 
 
 	return L"Undefined";
 }
 
-void printScopeName( IDiaSymbol* pscope ) {
-	printf("<scope name=\"%ws\" tag=\"%ws\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ));
+void printScopeName( IDiaSymbol& pscope ) {
+	printf("<scope name=\"%ws\" tag=\"%ws\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ).c_str());
 }
 
-void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEnum ) {
+void printNameFromScope( const std::wstring& /*name*/, IDiaSymbol& pscope, IDiaEnumSymbols& pEnum ) {
 
-	IDiaSymbol * pSym;
-	DWORD celt;
-	while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-		std::wstring name = getName( pSym );
-		std::wstring tag  = getTagAsString( pSym );
+    CComPtr<IDiaSymbol> pSym;
+	DWORD celt = 0;
+	while ( SUCCEEDED( pEnum.Next( 1, &pSym, &celt ) ) && celt == 1 ) {
+		std::wstring name = getName( *pSym );
+		std::wstring tag  = getTagAsString( *pSym );
 		wprintf( L"\t%ws %ws found in ", tag.c_str(), name.c_str() );
 		printScopeName( pscope );
 		wprintf( L"\n" );

@@ -25,10 +25,10 @@
 #include <string>
 
 std::wstring printVariant( VARIANT & v );
-std::wstring printType( IDiaSymbol* pType, BSTR prefix );
+std::wstring printType( IDiaSymbol* pType, const std::wstring& prefix );
 
-void printBound( IDiaSymbol* pBound );
-void printScopeName( IDiaSymbol* pscope );
-void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEnum );
+void printBound( IDiaSymbol& pBound );
+void printScopeName( IDiaSymbol& pscope );
+void printNameFromScope( const std::wstring& name, IDiaSymbol& pscope, IDiaEnumSymbols& pEnum );
 
 #endif

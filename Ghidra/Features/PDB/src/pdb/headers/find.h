@@ -25,15 +25,17 @@
 #include "pdb.h"
 #include "print.h"
 #include "symbol.h"
+#include <string>
+
 //
 //The name of SymTagFunction symbol are demangled.
 //This method locates the mangled
 //function name, which is stored in a SymTagPublicSymbol symbol.
 //
-std::wstring findMangledName(IDiaSymbol * pFunction);
-void findNameInNamespace( wchar_t* name, IDiaSymbol* pnamespace );
-void findNameInEnum( wchar_t* name, IDiaSymbol* penumeration );
-void findNameInClass( wchar_t* name, IDiaSymbol* pclass );
-void findCppNameInScope( wchar_t* name, IDiaSymbol* pScope );
+std::wstring findMangledName(IDiaSymbol& pFunction);
+void findNameInNamespace( const std::wstring& name, IDiaSymbol& pnamespace );
+void findNameInEnum( const std::wstring& name, IDiaSymbol& penumeration );
+void findNameInClass( const std::wstring& name, IDiaSymbol& pclass );
+void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope );
 
 #endif

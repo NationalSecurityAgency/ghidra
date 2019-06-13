@@ -86,10 +86,10 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 	checkErr(hr);
 	delete [] wszFilename;
 
-	if (pSource->openSession( &pSession ) < 0) {
+	if (FAILED(pSource->openSession( &pSession ))) {
 		fatal("Unable to open session\n");
 	}
-	if (pSession->get_globalScope( &pGlobal ) < 0) {
+	if (FAILED(pSession->get_globalScope( &pGlobal ))) {
 		fatal("Unable to get global scope\n");
 	}
 
@@ -99,7 +99,7 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 		fatal("Unable to get global symbol index\n");
 	}
 
-	std::wstring exename = getName(pGlobal);
+	std::wstring exename = getName(*pGlobal);
 	
 	GUID currGUID;
 	BSTR guidString;

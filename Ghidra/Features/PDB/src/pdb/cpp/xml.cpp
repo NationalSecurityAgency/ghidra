@@ -20,13 +20,13 @@ std::wstring indent(size_t nSpaces) {
     return std::wstring(nSpaces, ' ');
 }
 
-std::wstring escapeXmlEntities(BSTR bstr) {
+std::wstring escapeXmlEntities(const std::wstring& bstr) {
 	
 	// Scan source str for problematic characters that need escaping.
 	// Calculate how many characters we will need in new string.
 	// The cases in this switch() statement need to match the cases in the following switch()
 	// statement. 
-    const size_t len = SysStringLen(bstr);
+    const size_t len = bstr.length();
     size_t destLen = 0;
     for (int i = 0; i < len; ++i) {
         switch (bstr[i]) {

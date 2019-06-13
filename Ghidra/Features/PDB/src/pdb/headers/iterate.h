@@ -28,6 +28,6 @@ void iterateEnums();
 void iterateTypedefs();
 void iterateClasses();
 void iterateFunctions();
-int iterateTables(const bool printAll);
+int iterateTables(bool printAll);
 
 #endif
