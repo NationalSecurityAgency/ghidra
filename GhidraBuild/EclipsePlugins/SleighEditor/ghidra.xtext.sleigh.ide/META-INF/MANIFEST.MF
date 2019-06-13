@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Automatic-Module-Name: ghidra.xtext.sleigh.ide
 Bundle-ManifestVersion: 2
 Bundle-Name: ghidra.xtext.sleigh.ide
-Bundle-Vendor: My Company
+Bundle-Vendor: Ghidra
 Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: ghidra.xtext.sleigh.ide; singleton:=true
 Bundle-ActivationPolicy: lazy
@@ -10,6 +10,6 @@ Require-Bundle: ghidra.xtext.sleigh,
  org.eclipse.xtext.ide,
  org.eclipse.xtext.xbase.ide,
  org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ghidra.xtext.sleigh.ide.contentassist.antlr,
  ghidra.xtext.sleigh.ide.contentassist.antlr.internal

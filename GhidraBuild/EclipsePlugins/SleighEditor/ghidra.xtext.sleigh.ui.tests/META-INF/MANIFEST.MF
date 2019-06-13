@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Automatic-Module-Name: ghidra.xtext.sleigh.ui.tests
 Bundle-ManifestVersion: 2
 Bundle-Name: ghidra.xtext.sleigh.ui.tests
-Bundle-Vendor: My Company
+Bundle-Vendor: Ghidra
 Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: ghidra.xtext.sleigh.ui.tests; singleton:=true
 Bundle-ActivationPolicy: lazy
@@ -14,5 +14,5 @@ Require-Bundle: ghidra.xtext.sleigh.ui,
  org.eclipse.xtext.xbase.junit,
  org.eclipse.core.runtime,
  org.eclipse.ui.workbench;resolution:=optional
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ghidra.xtext.sleigh.ui.tests;x-internal=true
