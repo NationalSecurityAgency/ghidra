@@ -9,8 +9,6 @@ eclipse.project.name = 'Framework Docking'
 dependencies {
 	compile project(':Generic')
 	compile 'net.java.dev.timingframework:timingframework:1.0'
-	compile 'com.toedter:jcalendar:1.4'
-	
 	
 	// Only include this debug version of the jh library if necessary.
 	//compile name:'jh2.with.debug'

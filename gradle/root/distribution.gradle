@@ -180,13 +180,6 @@ task assembleDistribution (type: Copy) {
 		include "Icons/**"
 		include "licenses/**"
 		into "GPL"
-	}	
-		
-	//////////////////////////////
-	// LGPL SOURCE INCLUSION
-	//////////////////////////////
-	from ("${rootProject.ext.BIN_REPO}/ExternalLibraries/libsSrc/jcalendar-1.3.3.zip" ) {
-		into "GPL/librarySourceForLGPL"
 	}
 	
 	//////////////////////////////
