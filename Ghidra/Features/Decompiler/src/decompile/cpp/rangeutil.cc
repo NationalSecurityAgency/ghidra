@@ -295,7 +295,7 @@ int4 CircleRange::getMaxInfo(void) const
 }
 
 /// \param op2 is the specific range to test for containment.
-/// \return \b true if \b true contains the interval \b op2
+/// \return \b true if \b this contains the interval \b op2
 bool CircleRange::contains(const CircleRange &op2) const
 
 {
@@ -303,13 +303,24 @@ bool CircleRange::contains(const CircleRange &op2) const
     return op2.isempty;
   if (op2.isempty)
     return true;
-  if (step > op2.step) return false; // Cannot be containment because step is wrong
+  if (step > op2.step) {
+    // This must have a smaller or equal step to op2 or containment is impossible
+    // except in the corner case where op2 consists of a single element (its step is meaningless)
+    if (!op2.isSingle())
+      return false;
+  }
   if (left == right) return true;
   if (op2.left == op2.right) return false;
+  if (left % step != op2.left % step) return false;	// Wrong phase
+  if (left == op2.left && right == op2.right) return true;
 
   char overlapCode = encodeRangeOverlaps(left, right, op2.left, op2.right);
 
-  return (overlapCode == 'c');
+  if (overlapCode == 'c')
+    return true;
+  if (overlapCode == 'b' && (right == op2.right))
+    return true;
+  return false;
 
   // Missing one case where op2.step > this->step, and the boundaries don't show containment,
   // but there is containment because the lower step size UP TO right still contains the edge points
@@ -1368,7 +1379,13 @@ void CircleRange::widen(const CircleRange &op2,bool leftIsStable)
 
 {
   if (leftIsStable) {
-    right = (op2.right + step-1) & mask;
+    uintb lmod = left % step;
+    uintb mod = op2.right % step;
+    if (mod <= lmod)
+      right = op2.right + (lmod - mod);
+    else
+      right = op2.right - (mod - lmod);
+    right &= mask;
   }
   else {
     left = op2.left & mask;
@@ -1534,7 +1551,7 @@ bool ValueSet::computeTypeCode(void)
 
 {
   int4 relCount = 0;
-  int4 lastTypeCode;
+  int4 lastTypeCode = 0;
   PcodeOp *op = vn->getDef();
   for(int4 i=0;i<numParams;++i) {
     ValueSet *valueSet = op->getIn(i)->getValueSet();
@@ -2176,42 +2193,48 @@ void ValueSetSolver::generateConstraints(const vector<Varnode *> &worklist,const
 
 {
   vector<FlowBlock *> blockList;
+  // Collect all blocks that contain a system op or dominate a container
   for(int4 i=0;i<worklist.size();++i) {
     PcodeOp *op = worklist[i]->getDef();
     if (op == (PcodeOp *)0) continue;
-    BlockBasic *bl = (BlockBasic *)op->getParent()->getImmedDom();
+    FlowBlock *bl = op->getParent();
     while(bl != (FlowBlock *)0) {
-      if (!bl->isMark()) {
-	bl->setMark();
-	blockList.push_back(bl);
-	PcodeOp *lastOp = bl->lastOp();
-	if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
-	  constraintsFromCBranch(lastOp);
-	}
-	bl = (BlockBasic *)bl->getImmedDom();
-      }
-      else
-	break;
+      if (bl->isMark()) break;
+      bl->setMark();
+      blockList.push_back(bl);
+      bl = bl->getImmedDom();
     }
   }
   for(int4 i=0;i<reads.size();++i) {
-    BlockBasic *bl = (BlockBasic *)reads[i]->getParent()->getImmedDom();
+    FlowBlock *bl = reads[i]->getParent();
     while(bl != (FlowBlock *)0) {
-      if (!bl->isMark()) {
-	bl->setMark();
-	blockList.push_back(bl);
-	PcodeOp *lastOp = bl->lastOp();
-	if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
-	  constraintsFromCBranch(lastOp);
-	}
-	bl = (BlockBasic *)bl->getImmedDom();
-      }
-      else
-	break;
+      if (bl->isMark()) break;
+      bl->setMark();
+      blockList.push_back(bl);
+      bl = bl->getImmedDom();
     }
   }
   for(int4 i=0;i<blockList.size();++i)
     blockList[i]->clearMark();
+
+  vector<FlowBlock *> finalList;
+  // Now go through input blocks to the previously calculated blocks
+  for(int4 i=0;i<blockList.size();++i) {
+    FlowBlock *bl = blockList[i];
+    for(int4 j=0;j<bl->sizeIn();++j) {
+      BlockBasic *splitPoint = (BlockBasic *)bl->getIn(j);
+      if (splitPoint->isMark()) continue;
+      if (splitPoint->sizeOut() != 2) continue;
+      PcodeOp *lastOp = splitPoint->lastOp();
+      if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
+	splitPoint->setMark();
+	finalList.push_back(splitPoint);
+	constraintsFromCBranch(lastOp);		// Try to generate constraints from this splitPoint
+      }
+    }
+  }
+  for(int4 i=0;i<finalList.size();++i)
+    finalList[i]->clearMark();
 }
 
 /// Verify that the given Varnode is produced by a straight line sequence of
@@ -2248,7 +2271,7 @@ bool ValueSetSolver::checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &val
     else
       return false;
   }
-  return true;		// Never reach here
+  return true;
 }
 
 /// Given a binary PcodeOp producing a conditional branch, check if it can be interpreted
@@ -2298,12 +2321,19 @@ void ValueSetSolver::generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch
   while(!endVn->isMark()) {
     if (!endVn->isWritten()) return;
     PcodeOp *op = endVn->getDef();
-    if (op->code() != CPUI_COPY && op->code() != CPUI_INDIRECT)
+    opc = op->code();
+    if (opc == CPUI_COPY || opc == CPUI_PTRSUB) {
+      endVn = op->getIn(0);
+    }
+    else if (opc == CPUI_INT_ADD) {	// Can pull-back through INT_ADD
+      if (!op->getIn(1)->isConstant())	// if second param is constant
+	return;
+      endVn = op->getIn(0);
+    }
+    else
       return;
-    endVn = op->getIn(0);
   }
-  if (endVn != (Varnode *)0)
-    constraintsFromPath(typeCode,lift,endVn,endVn,cbranch);
+  constraintsFromPath(typeCode,lift,vn,endVn,cbranch);
 }
 
 /// \brief Build value sets for a data-flow system
