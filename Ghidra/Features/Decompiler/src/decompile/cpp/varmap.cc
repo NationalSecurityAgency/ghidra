@@ -484,7 +484,7 @@ MapState::~MapState(void)
     delete *iter;
 }
 
-void MapState::addRange(uintb st,Datatype *ct,uint4 fl,bool ay,int4 lo,int4 hi)
+void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,int4 hi)
 
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
@@ -495,7 +495,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,bool ay,int4 lo,int4 hi)
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
-  MapRange *range = new MapRange(st,sz,sst,ct,fl,ay,lo,hi);
+  MapRange *range = new MapRange(st,sz,sst,ct,fl,at,hi);
   maplist.push_back(range);
 #ifdef OPACTION_DEBUG
   if (debugon) {
@@ -521,7 +521,7 @@ void MapState::addRange(const EntryMap *rangemap)
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
     uintb start = (*iter).getAddr().getOffset();
     Datatype *ct = sym->getType();
-    addRange(start,ct,sym->getFlags(),false,0,-1);
+    addRange(start,ct,sym->getFlags(),MapRange::notAnArray,-1);
   }
 }
 
@@ -537,7 +537,7 @@ bool MapState::initialize(void)
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
-  MapRange *range = new MapRange(high,1,sst,default_type,0,false,0,-2);
+  MapRange *range = new MapRange(high,1,sst,default_type,0,MapRange::notAnArray,-2);
   maplist.push_back(range);
 
   stable_sort(maplist.begin(),maplist.end(),compare_ranges);
@@ -561,7 +561,7 @@ void MapState::gatherVarnodes(const Funcdata &fd)
 				// as the flags were inherited from the previous
 				// (now obsolete) entry
     
-    addRange(start,ct,0,false,0,-1);
+    addRange(start,ct,0,MapRange::notAnArray,-1);
   }
 }
 
@@ -585,7 +585,7 @@ void MapState::gatherHighs(const Funcdata &fd)
     varvec.push_back(high);
     uintb start = vn->getOffset();
     Datatype *ct = high->getType(); // Get type from high
-    addRange(start,ct,0,false,0,-1);
+    addRange(start,ct,0,MapRange::notAnArray,-1);
   }
   for(int4 i=0;i<varvec.size();++i)
     varvec[i]->clearMark();
@@ -612,16 +612,47 @@ void MapState::gatherOpen(const Funcdata &fd)
     }
     else
       ct = (Datatype *)0;	// Do unknown array
-    int4 lo,hi;
+    int4 minItems;
     if ( addbase[i].index != (Varnode *)0) {
-      lo = 0;
-      hi = 3;			// If there is an index, assume it takes on at least the 4 values [0,3]
+      minItems = 3;			// If there is an index, assume it takes on at least the 4 values [0,3]
     }
     else {
-      lo = 0;
-      hi = -1;
+      minItems = -1;
     }
-    addRange(offset,ct,0,true,lo,hi);
+    addRange(offset,ct,0,MapRange::isAnArray,minItems);
+  }
+
+  const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
+  for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+    const LoadGuard &guard( *iter );
+    if (guard.getOp()->isDead()) continue;
+    int4 step = guard.getStep();
+    if (step == 0) continue;		// No definitive sign of array access
+    Datatype *ct = guard.getOp()->getIn(1)->getType();
+    if (ct->getMetatype() == TYPE_PTR) {
+      ct = ((TypePointer *) ct)->getPtrTo();
+      while (ct->getMetatype() == TYPE_ARRAY)
+	ct = ((TypeArray *) ct)->getBase();
+      if (ct->getSize() != step) {
+	// Datatype doesn't match step:  field in array of structures or something more unusual
+	if (ct->getSize() > step || (step % ct->getSize()) != 0)
+	  continue;
+	// Since ct's size divides the step and we want to preserve the arrayness
+	// we pretend we have an array of ct's size
+	step = ct->getSize();
+      }
+    }
+    else {
+      if (step > 8)
+	continue;		// Don't manufacture primitives bigger than 8-bytes
+      ct = fd.getArch()->types->getBase(step, TYPE_UNKNOWN);
+    }
+    int4 hi;
+    if (guard.isRangeLocked())
+      hi = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
+    else
+      hi = 3;
+    addRange(guard.getMinimum(),ct,0,MapRange::isAnArray,hi);
   }
 }
 
@@ -721,9 +752,9 @@ static bool range_preferred(const MapRange *a,const MapRange *b,bool reconcile)
     return true;
   
   if (!reconcile) {		// If the ranges don't reconcile
-    if ((a->arrayyes)&&(!b->arrayyes)) // Throw out the open range
+    if ((a->isArray())&&(!b->isArray())) // Throw out the open range
       return false;
-    if ((b->arrayyes)&&(!a->arrayyes))
+    if ((b->isArray())&&(!a->isArray()))
       return true;
   }
 
@@ -733,14 +764,18 @@ static bool range_preferred(const MapRange *a,const MapRange *b,bool reconcile)
 bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
 
 { // check if -a- is an array and could absorb -b-
-  if (!a->arrayyes) return false; 
-  if (a->highind < a->lowind) return false;
-  if ((b->lowind == 0)&&(b->highind==-2)) return false;	// Don't merge with bounding range
+  if (!a->isArray()) return false;
+  if (a->highind < 0) return false;
+  if (b->highind==-2) return false;	// Don't merge with bounding range
   Datatype *settype = a->type;
   if (settype->getSize() != b->type->getSize()) return false;
   if (settype->getMetatype() == TYPE_UNKNOWN)
     settype = b->type;
   else if (b->type->getMetatype() == TYPE_UNKNOWN) {
+  }
+  else if (settype->getMetatype() == TYPE_INT && b->type->getMetatype() == TYPE_UINT) {
+  }
+  else if (settype->getMetatype() == TYPE_UINT && b->type->getMetatype() == TYPE_INT) {
   }
   else if (settype != b->type)	// If they are both not unknown, they must be the same
     return false;
@@ -752,11 +787,8 @@ bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
   diffsz /= settype->getSize();
   if (diffsz > a->highind) return false;
   a->type = settype;
-  if (b->arrayyes && (b->lowind <= b->highind)) { // If b has array indexing
-    int4 triallo = b->lowind + diffsz; // Adjust its indexing to the new base
+  if (b->isArray() && (0 <= b->highind)) { // If b has array indexing
     int4 trialhi = b->highind + diffsz;
-    if (triallo < a->lowind)	// Check if we can expand the base indexing
-      a->lowind = triallo;
     if (a->highind < trialhi)
       a->highind = trialhi;
   }
@@ -770,13 +802,12 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
   uintb end;
   Datatype *restype;
   uint4 flags;
-  bool arrayyes,reconcile;
-  int4 lo,hi;
+  bool reconcile;
+  int4 hi;
 
   aend = spaceid->wrapOffset(a->start+a->size);
   bend = spaceid->wrapOffset(b->start+b->size);
-  arrayyes = false;
-  lo = 0;
+  MapRange::ArrayType arrayType = MapRange::notAnArray;
   hi = -1;
   if ((aend==0)||(bend==0))
     end = 0;
@@ -788,26 +819,24 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
     if (range_preferred(a,b,reconcile)) { // Find bigger type
       restype = a->type;
       flags = a->flags;
-      arrayyes = a->arrayyes;
-      lo = a->lowind;
+      arrayType = a->arrayType;
       hi = a->highind;
     }
     else {
       restype = b->type;
       flags = b->flags;
-      arrayyes = b->arrayyes;
-      lo = b->lowind;
+      arrayType = b->arrayType;
       hi = b->highind;
     }
     if ((a->start==b->start)&&(a->size==b->size)) {
-      arrayyes = a->arrayyes || b->arrayyes;
-      if (arrayyes) {
-	lo = (a->lowind < b->lowind) ? a->lowind : b->lowind;
+      arrayType = MapRange::notAnArray;
+      if (a->isArray() || b->isArray()) {
+	arrayType = MapRange::isAnArray;
 	hi = (a->highind < b->highind) ? b->highind : a->highind;
       }
     }
     if (warning && (!reconcile)) { // See if two types match up
-      if ((!b->arrayyes)&&(!a->arrayyes))
+      if ((!b->isArray())&&(!a->isArray()))
 	overlapproblems = true;
     }
   }
@@ -828,8 +857,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
 
   a->type = restype;
   a->flags = flags;
-  a->arrayyes = arrayyes;
-  a->lowind = lo;
+  a->arrayType = arrayType;
   a->highind = hi;
   if ((!reconcile)&&(a->start != b->start)) { // Truncation is forced
     if ((a->flags & Varnode::typelock)!=0) { // If a is locked
@@ -839,8 +867,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
     a->size = spaceid->wrapOffset(end-a->start);
     a->type = glb->types->getBase(a->size,TYPE_UNKNOWN);
     a->flags = 0;
-    a->arrayyes = false;
-    a->lowind = 0;
+    a->arrayType = MapRange::notAnArray;
     a->highind = -1;
     return;
   }
@@ -864,7 +891,7 @@ void ScopeLocal::restructure(MapState &state,bool warning)
       rangeUnion(&cur,next,warning); // Union them
     else {
       if (!rangeAbsorb(&cur,next)) {
-	if (cur.arrayyes)
+	if (cur.isArray())
 	  cur.size = next->sstart-cur.sstart;
 	if (adjustFit(cur))
 	  createEntry(cur);

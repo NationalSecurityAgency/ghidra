@@ -39,17 +39,21 @@ public:
 
 // Structure for internal map layout
 struct MapRange {
+  enum ArrayType {
+    notAnArray = 0,
+    isAnArray = 1
+  };
   uintb start;			// Start of range
   int4 size;
   intb sstart;			// Signed version of start point
   Datatype *type;
   uint4 flags;
-  bool arrayyes;
-  int4 lowind;			// Lower bound of index
-  int4 highind;			// Upper bound of index
+  ArrayType arrayType;
+  int4 highind;			// Minimum number of items in array
   MapRange(void) {}
-  MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,bool ay,int4 lo,int4 hi) {
-    start=st; size=sz; sstart=sst; type=ct; flags=fl; arrayyes=ay; lowind=lo; highind=hi; }
+  MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,ArrayType at,int4 hi) {
+    start=st; size=sz; sstart=sst; type=ct; flags=fl; arrayType = at; highind=hi; }
+  bool isArray(void) const { return (arrayType != notAnArray); }
 };
 
 class ProtoModel;
@@ -100,7 +104,7 @@ public:
 #endif
   MapState(AddrSpace *spc,const RangeList &rn,const RangeList &pm,Datatype *dt);
   ~MapState(void);
-  void addRange(uintb st,Datatype *ct,uint4 fl,bool ay,int4 lo,int4 hi);
+  void addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,int4 hi);
   void addRange(const EntryMap *rangemap);
   bool initialize(void);
   void sortAlias(void) { checker.sortAlias(); }
