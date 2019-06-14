@@ -647,12 +647,12 @@ void MapState::gatherOpen(const Funcdata &fd)
 	continue;		// Don't manufacture primitives bigger than 8-bytes
       ct = fd.getArch()->types->getBase(step, TYPE_UNKNOWN);
     }
-    int4 hi;
-    if (guard.isRangeLocked())
-      hi = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
+    if (guard.isRangeLocked()) {
+      int4 minItems = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
+      addRange(guard.getMinimum(),ct,0,MapRange::boundArray,minItems-1);
+    }
     else
-      hi = 3;
-    addRange(guard.getMinimum(),ct,0,MapRange::isAnArray,hi);
+      addRange(guard.getMinimum(),ct,0,MapRange::isAnArray,3);
   }
 }
 
@@ -803,12 +803,12 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
   Datatype *restype;
   uint4 flags;
   bool reconcile;
-  int4 hi;
+  int4 highestIndex;
 
   aend = spaceid->wrapOffset(a->start+a->size);
   bend = spaceid->wrapOffset(b->start+b->size);
   MapRange::ArrayType arrayType = MapRange::notAnArray;
-  hi = -1;
+  highestIndex = -1;
   if ((aend==0)||(bend==0))
     end = 0;
   else
@@ -820,19 +820,28 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
       restype = a->type;
       flags = a->flags;
       arrayType = a->arrayType;
-      hi = a->highind;
+      highestIndex = a->highind;
     }
     else {
       restype = b->type;
       flags = b->flags;
       arrayType = b->arrayType;
-      hi = b->highind;
+      highestIndex = b->highind;
     }
     if ((a->start==b->start)&&(a->size==b->size)) {
       arrayType = MapRange::notAnArray;
       if (a->isArray() || b->isArray()) {
 	arrayType = MapRange::isAnArray;
-	hi = (a->highind < b->highind) ? b->highind : a->highind;
+	if (a->highind < b->highind) {
+	  highestIndex = b->highind;
+	  if (b->arrayType == MapRange::boundArray)
+	    arrayType = b->arrayType;
+	}
+	else {
+	  highestIndex = a->highind;
+	  if (a->arrayType == MapRange::boundArray)
+	    arrayType = a->arrayType;
+	}
       }
     }
     if (warning && (!reconcile)) { // See if two types match up
@@ -858,7 +867,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
   a->type = restype;
   a->flags = flags;
   a->arrayType = arrayType;
-  a->highind = hi;
+  a->highind = highestIndex;
   if ((!reconcile)&&(a->start != b->start)) { // Truncation is forced
     if ((a->flags & Varnode::typelock)!=0) { // If a is locked
       return;			// Discard b entirely in favor of a

@@ -40,8 +40,9 @@ public:
 // Structure for internal map layout
 struct MapRange {
   enum ArrayType {
-    notAnArray = 0,
-    isAnArray = 1
+    notAnArray = 0,		///< Not an array
+    isAnArray = 1,		///< Some kind of array
+    boundArray = 2		///< An array with an established set of items
   };
   uintb start;			// Start of range
   int4 size;
@@ -49,7 +50,7 @@ struct MapRange {
   Datatype *type;
   uint4 flags;
   ArrayType arrayType;
-  int4 highind;			// Minimum number of items in array
+  int4 highind;			// Minimum upper bound on array index
   MapRange(void) {}
   MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,ArrayType at,int4 hi) {
     start=st; size=sz; sstart=sst; type=ct; flags=fl; arrayType = at; highind=hi; }
