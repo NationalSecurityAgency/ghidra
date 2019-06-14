@@ -1723,13 +1723,14 @@ bool ValueSet::iterate(Widener &widener)
 const CircleRange *ValueSet::getLandMark(void) const
 
 {
-  if (equations.empty())
-    return (const CircleRange *)0;
-
-  const Equation &landmark(equations.back());
-  if (landmark.slot != numParams || typeCode != landmark.typeCode)
-    return (const CircleRange *)0;
-  return &landmark.range;
+  // Any equation can serve as a landmark.  We prefer the one restricting the
+  // value of an input branch, as these usually give a tighter approximation
+  // of the stable point.
+  for(int4 i=0;i<equations.size();++i) {
+    if (equations[i].typeCode == typeCode)
+      return &equations[i].range;
+  }
+  return (const CircleRange *)0;
 }
 
 /// \param s is the stream to print to
