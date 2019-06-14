@@ -43,7 +43,6 @@ dependencies {
 	dmgCompile ':hfsx_dmglib@jar'
 }
 
-
 /***************************************************************************************
  *
  * Task to create the dmg.jar file
@@ -61,12 +60,3 @@ jar {
 		delete "build/libs"
 	}
 }
-
-/***************************************************************************************
- *
- * plugin the jar task into global task for building and zipping contribs
- *
- ***************************************************************************************/
-//assemble.dependsOn dmgJar
-
-
