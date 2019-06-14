@@ -62,7 +62,7 @@ import resources.ResourceManager;
 public class ByteViewerPlugin extends Plugin {
 
 	private Program currentProgram;
-	private boolean isRestoringState;
+	private boolean areEventsDisabled;
 	private ProgramLocation currentLocation;
 
 	private ProgramByteViewerComponentProvider connectedProvider;
@@ -193,7 +193,7 @@ public class ByteViewerPlugin extends Plugin {
 	@Override
 	public void readDataState(SaveState saveState) {
 
-		restore(() -> {
+		doWithEventsDisabled(() -> {
 
 			ProgramManager programManagerService = tool.getService(ProgramManager.class);
 
@@ -313,25 +313,25 @@ public class ByteViewerPlugin extends Plugin {
 	@Override
 	public void restoreTransientState(Object objectState) {
 
-		restore(() -> {
+		doWithEventsDisabled(() -> {
 			Object[] state = (Object[]) objectState;
 			connectedProvider.restoreLocation((SaveState) state[0]);
 			connectedProvider.setSelection((ProgramSelection) state[1]);
 		});
 	}
 
-	private void restore(Callback callback) {
-		isRestoringState = true;
+	private void doWithEventsDisabled(Callback callback) {
+		areEventsDisabled = true;
 		try {
 			callback.call();
 		}
 		finally {
-			isRestoringState = false;
+			areEventsDisabled = false;
 		}
 	}
 
-	boolean isRestoringState() {
-		return isRestoringState;
+	private boolean eventsDisabled() {
+		return areEventsDisabled;
 	}
 
 	void setStatusMessage(String msg) {
@@ -380,7 +380,7 @@ public class ByteViewerPlugin extends Plugin {
 	public void updateLocation(ProgramByteViewerComponentProvider provider,
 			ProgramLocationPluginEvent event, boolean export) {
 
-		if (isRestoringState()) {
+		if (eventsDisabled()) {
 			return;
 		}
 
