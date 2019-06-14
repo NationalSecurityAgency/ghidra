@@ -15,6 +15,13 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.util.*;
+
+import org.jdom.Element;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -24,20 +31,12 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.generic.function.Callback;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
-
-import java.util.*;
-
-import org.jdom.Element;
-
 import resources.ResourceManager;
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 
 /**
  * Visible Plugin to show ByteBlock data in various formats.
@@ -63,7 +62,7 @@ import docking.action.ToolBarData;
 public class ByteViewerPlugin extends Plugin {
 
 	private Program currentProgram;
-	private boolean restoringTransientState;
+	private boolean isRestoringState;
 	private ProgramLocation currentLocation;
 
 	private ProgramByteViewerComponentProvider connectedProvider;
@@ -86,8 +85,8 @@ public class ByteViewerPlugin extends Plugin {
 				showConnectedProvider();
 			}
 		};
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"),
-			"View"));
+		action.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"), "View"));
 
 		action.setDescription("Display Bytes");
 		action.setEnabled(true);
@@ -157,11 +156,12 @@ public class ByteViewerPlugin extends Plugin {
 
 	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
 			ProgramLocationPluginEvent event) {
+
 		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
 			return;
 		}
-		currentLocation = event.getLocation();
 
+		currentLocation = event.getLocation();
 		if (provider == connectedProvider) {
 			firePluginEvent(event);
 		}
@@ -192,30 +192,35 @@ public class ByteViewerPlugin extends Plugin {
 	 */
 	@Override
 	public void readDataState(SaveState saveState) {
-		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 
-		connectedProvider.readDataState(saveState);
+		restore(() -> {
 
-		int numDisconnected = saveState.getInt("Num Disconnected", 0);
-		for (int i = 0; i < numDisconnected; i++) {
-			Element xmlElement = saveState.getXmlElement("Provider" + i);
-			SaveState providerSaveState = new SaveState(xmlElement);
-			String programPath = providerSaveState.getString("Program Path", "");
-			DomainFile file = tool.getProject().getProjectData().getFile(programPath);
-			if (file == null) {
-				continue;
+			ProgramManager programManagerService = tool.getService(ProgramManager.class);
+
+			connectedProvider.readDataState(saveState);
+
+			int numDisconnected = saveState.getInt("Num Disconnected", 0);
+			for (int i = 0; i < numDisconnected; i++) {
+				Element xmlElement = saveState.getXmlElement("Provider" + i);
+				SaveState providerSaveState = new SaveState(xmlElement);
+				String programPath = providerSaveState.getString("Program Path", "");
+				DomainFile file = tool.getProject().getProjectData().getFile(programPath);
+				if (file == null) {
+					continue;
+				}
+				Program program = programManagerService.openProgram(file);
+				if (program != null) {
+					ProgramByteViewerComponentProvider provider =
+						new ProgramByteViewerComponentProvider(tool, this, false);
+					provider.doSetProgram(program);
+					provider.readConfigState(providerSaveState);
+					provider.readDataState(providerSaveState);
+					tool.showComponentProvider(provider, true);
+					addProvider(provider);
+				}
 			}
-			Program program = programManagerService.openProgram(file);
-			if (program != null) {
-				ProgramByteViewerComponentProvider provider =
-					new ProgramByteViewerComponentProvider(tool, this, false);
-				provider.doSetProgram(program);
-				provider.readConfigState(providerSaveState);
-				provider.readDataState(providerSaveState);
-				tool.showComponentProvider(provider, true);
-				addProvider(provider);
-			}
-		}
+
+		});
 	}
 
 	/**
@@ -292,8 +297,6 @@ public class ByteViewerPlugin extends Plugin {
 		}
 	}
 
-	////////////////////////////////////////////////////////////////
-
 	@Override
 	public Object getTransientState() {
 		Object[] state = new Object[2];
@@ -307,37 +310,31 @@ public class ByteViewerPlugin extends Plugin {
 		return state;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#restoreTransientState(java.lang.Object)
-	 */
 	@Override
 	public void restoreTransientState(Object objectState) {
-		restoringTransientState = true;
-		try {
+
+		restore(() -> {
 			Object[] state = (Object[]) objectState;
-
 			connectedProvider.restoreLocation((SaveState) state[0]);
-
 			connectedProvider.setSelection((ProgramSelection) state[1]);
+		});
+	}
+
+	private void restore(Callback callback) {
+		isRestoringState = true;
+		try {
+			callback.call();
 		}
 		finally {
-			restoringTransientState = false;
+			isRestoringState = false;
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////
-	// *** package-level methods ***
-	/////////////////////////////////////////////////////////////////
-
-	boolean isRestoringTransientState() {
-		return restoringTransientState;
+	boolean isRestoringState() {
+		return isRestoringState;
 	}
 
-	/**
-	 * Set the status info on the tool.
-	 */
-	void setStatusMessage(String msg, ComponentProvider provider) {
+	void setStatusMessage(String msg) {
 		tool.setStatusInfo(msg);
 	}
 
@@ -383,7 +380,7 @@ public class ByteViewerPlugin extends Plugin {
 	public void updateLocation(ProgramByteViewerComponentProvider provider,
 			ProgramLocationPluginEvent event, boolean export) {
 
-		if (isRestoringTransientState()) {
+		if (isRestoringState()) {
 			return;
 		}
 

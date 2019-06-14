@@ -450,7 +450,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	void setStatusMessage(String message) {
-		plugin.setStatusMessage(message, this);
+		plugin.setStatusMessage(message);
 	}
 
 	void setEditMode(boolean isEditable) {
