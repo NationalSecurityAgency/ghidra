@@ -2132,8 +2132,8 @@ void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &r
 	  generateFalseEquation(outVn, op, slot, type, range);
 	continue;
       }
-//      else
-//	curBlock = curBlock->getIn(slot);	// MULTIEQUAL input is really only from one in-block
+      else
+	curBlock = curBlock->getIn(slot);	// MULTIEQUAL input is really only from one in-block
     }
     for(;;) {
       if (curBlock == trueBlock) {
@@ -2230,26 +2230,39 @@ void ValueSetSolver::generateConstraints(const vector<Varnode *> &worklist,const
 
 {
   vector<FlowBlock *> blockList;
-  // Collect all blocks that contain a system op or dominate a container
+  // Collect all blocks that contain a system op (input) or dominate a container
   for(int4 i=0;i<worklist.size();++i) {
     PcodeOp *op = worklist[i]->getDef();
     if (op == (PcodeOp *)0) continue;
     FlowBlock *bl = op->getParent();
-    while(bl != (FlowBlock *)0) {
-      if (bl->isMark()) break;
-      bl->setMark();
-      blockList.push_back(bl);
-      bl = bl->getImmedDom();
+    if (op->code() == CPUI_MULTIEQUAL) {
+      for(int4 j=0;j<bl->sizeIn();++j) {
+	FlowBlock *curBl = bl->getIn(j);
+	do {
+	  if (curBl->isMark()) break;
+	  curBl->setMark();
+	  blockList.push_back(curBl);
+	  curBl = curBl->getImmedDom();
+	} while(curBl != (FlowBlock *)0);
+      }
+    }
+    else {
+      do {
+	if (bl->isMark()) break;
+	bl->setMark();
+	blockList.push_back(bl);
+	bl = bl->getImmedDom();
+      } while(bl != (FlowBlock *)0);
     }
   }
   for(int4 i=0;i<reads.size();++i) {
     FlowBlock *bl = reads[i]->getParent();
-    while(bl != (FlowBlock *)0) {
+    do {
       if (bl->isMark()) break;
       bl->setMark();
       blockList.push_back(bl);
       bl = bl->getImmedDom();
-    }
+    } while(bl != (FlowBlock *)0);
   }
   for(int4 i=0;i<blockList.size();++i)
     blockList[i]->clearMark();

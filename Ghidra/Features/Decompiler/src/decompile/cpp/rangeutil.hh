@@ -150,8 +150,8 @@ public:
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   Varnode *getVarnode(void) const { return vn; }	///< Get the Varnode attached to \b this ValueSet
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
-  bool isLeftStable(void) const { return leftIsStable; }
-  bool isRightStable(void) const { return rightIsStable; }
+  bool isLeftStable(void) const { return leftIsStable; }	///< Return \b true if the left boundary hasn't been changing
+  bool isRightStable(void) const { return rightIsStable; }	///< Return \b true if the right boundary hasn't been changing
   void printRaw(ostream &s) const;		///< Write a text description of \b to the given stream
 };
 
@@ -188,12 +188,17 @@ class ValueSetRead {
 public:
   int4 getTypeCode(void) const { return typeCode; }	///< Return '0' for normal constant, '1' for spacebase relative
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
-  bool isLeftStable(void) const { return leftIsStable; }
-  bool isRightStable(void) const { return rightIsStable; }
+  bool isLeftStable(void) const { return leftIsStable; }	///< Return \b true if the left boundary hasn't been changing
+  bool isRightStable(void) const { return rightIsStable; }	///< Return \b true if the right boundary hasn't been changing
   void compute(void);			///< Compute \b this value set
   void printRaw(ostream &s) const;	///< Write a text description of \b to the given stream
 };
 
+/// \brief Class holding a particular widening strategy for the ValueSetSolver iteration algorithm
+///
+/// This obects gets to decide when a value set gets \e frozen (checkFreeze()), meaning the set
+/// doesn't change for the remaining iteration steps. It also gets to decide when and by how much
+/// value sets get artificially increased in size to accelerate reaching their stable state (doWidening()).
 class Widener {
 public:
   virtual ~Widener(void) {}	///< Destructor
@@ -237,6 +242,13 @@ public:
   virtual bool doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange);
 };
 
+/// \brief Class for freezing value sets at a specific iteration (to accelerate convergence)
+///
+/// The value sets don't reach a true stable state but instead lock in a description of the
+/// first few values that \e reach a given Varnode. The ValueSetSolver does normal iteration,
+/// but individual ValueSets \e freeze after a specific number of iterations (3 by default),
+/// instead of growing to a true stable state. This gives evidence of iteration in the underlying
+/// code, showing the initial value and frequently the step size.
 class WidenerNone : public Widener {
   int4 freezeIteration;		///< The iteration at which all change ceases
 public:
@@ -246,7 +258,7 @@ public:
   virtual bool doWidening(const ValueSet &valueSet,CircleRange &range,const CircleRange &newRange);
 };
 
-/// \brief Class the determines a ValueSet for each Varnode in a data-flow system
+/// \brief Class that determines a ValueSet for each Varnode in a data-flow system
 ///
 /// This class uses \e value \e set \e analysis to calculate (an overestimation of)
 /// the range of values that can reach each Varnode.  The system is formed by providing
@@ -254,6 +266,9 @@ public:
 /// This creates a system of Varnodes (within the single function) that can flow to the sinks.
 /// Running the method solve() does the analysis, and the caller can examine the results
 /// by examining the ValueSet attached to any of the Varnodes in the system (via Varnode::getValueSet()).
+/// The ValueSetSolver::solve() starts with minimal value sets and does iteration steps by pushing
+/// them through the PcodeOps until stability is reached. A Widener object is passed to solve()
+/// which selects the specific strategy for accelerating convergence.
 class ValueSetSolver {
   /// \brief An iterator over out-bound edges for a single ValueSet node in a data-flow system
   ///
