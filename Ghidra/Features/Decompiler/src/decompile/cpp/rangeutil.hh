@@ -287,6 +287,8 @@ class ValueSetSolver {
   void component(ValueSet *vertex,Partition &part);		///< Generate a partition component given its head
   int4 visit(ValueSet *vertex,Partition &part);			///< Recursively walk the data-flow graph finding partitions
   void establishTopologicalOrder(void);				///< Find the optimal order for iterating through the ValueSets
+  void generateTrueEquation(Varnode *vn,PcodeOp *op,int4 slot,int4 type,const CircleRange &range);
+  void generateFalseEquation(Varnode *vn,PcodeOp *op,int4 slot,int4 type,const CircleRange &range);
   void applyConstraints(Varnode *vn,int4 type,const CircleRange &range,PcodeOp *cbranch);
   void constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,PcodeOp *cbranch);
   void constraintsFromCBranch(PcodeOp *cbranch);		///< Generate constraints arising from the given branch

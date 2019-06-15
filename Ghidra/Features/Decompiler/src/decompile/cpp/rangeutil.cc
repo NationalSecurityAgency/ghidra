@@ -2035,6 +2035,44 @@ void ValueSetSolver::establishTopologicalOrder(void)
   orderPartition.startNode = orderPartition.startNode->next;	// Remove simulated root
 }
 
+/// \brief Generate an equation given a \b true constraint and the input/output Varnodes it affects
+///
+/// The equation is expressed as: only \b true values can reach the indicated input to a specific PcodeOp.
+/// The equation is attached to the output of the PcodeOp.
+/// \param vn is the output Varnode the equation will be attached to
+/// \param op is the specific PcodeOp
+/// \param slot is the input slot of the constrained input Varnode
+/// \param type is the type of values
+/// \param range is the range of \b true values
+void ValueSetSolver::generateTrueEquation(Varnode *vn,PcodeOp *op,int4 slot,int4 type,const CircleRange &range)
+
+{
+  if (vn != (Varnode *) 0)
+    vn->getValueSet()->addEquation(slot, type, range);
+  else
+    readNodes[op->getSeqNum()].addEquation(slot, type, range);// Special read site
+}
+
+/// \brief Generate the complementary equation given a \b true constraint and the input/output Varnodes it affects
+///
+/// The equation is expressed as: only \b false values can reach the indicated input to a specific PcodeOp.
+/// The equation is attached to the output of the PcodeOp.
+/// \param vn is the output Varnode the equation will be attached to
+/// \param op is the specific PcodeOp
+/// \param slot is the input slot of the constrained input Varnode
+/// \param type is the type of values
+/// \param range is the range of \b true values, which must be complemented
+void ValueSetSolver::generateFalseEquation(Varnode *vn,PcodeOp *op,int4 slot,int4 type,const CircleRange &range)
+
+{
+  CircleRange falseRange(range);
+  falseRange.invert();
+  if (vn != (Varnode *) 0)
+    vn->getValueSet()->addEquation(slot, type, falseRange);
+  else
+    readNodes[op->getSeqNum()].addEquation(slot, type, falseRange);// Special read site
+}
+
 /// \brief Look for PcodeOps where the given constraint range applies and instantiate an equation
 ///
 /// If a read of the given Varnode is in a basic block dominated by the condition producing the
@@ -2079,35 +2117,33 @@ void ValueSetSolver::applyConstraints(Varnode *vn,int4 type,const CircleRange &r
     }
     FlowBlock *curBlock = op->getParent();
     int4 slot = op->getSlot(vn);
+    if (op->code() == CPUI_MULTIEQUAL) {
+      if (curBlock == trueBlock) {
+	// If its possible that both the true and false edges can reach trueBlock
+	// then the only input we can restrict is a MULTIEQUAL input along the exact true edge
+	if (trueIsRestricted || trueBlock->getIn(slot) == splitPoint)
+	  generateTrueEquation(outVn, op, slot, type, range);
+	continue;
+      }
+      else if (curBlock == falseBlock) {
+	// If its possible that both the true and false edges can reach falseBlock
+	// then the only input we can restrict is a MULTIEQUAL input along the exact false edge
+	if (falseIsRestricted || falseBlock->getIn(slot) == splitPoint)
+	  generateFalseEquation(outVn, op, slot, type, range);
+	continue;
+      }
+//      else
+//	curBlock = curBlock->getIn(slot);	// MULTIEQUAL input is really only from one in-block
+    }
     for(;;) {
       if (curBlock == trueBlock) {
-	if (!trueIsRestricted) {
-	  // If its possible that both the true and false edges can reach trueBlock
-	  // then the only input we can restrict is a MULTIEQUAL input along the exact true edge
-	  if (op->code() != CPUI_MULTIEQUAL) break;
-	  if (op->getParent() != trueBlock) break;
-	  if (trueBlock->getIn(slot) != splitPoint) break;
-	}
-	if (outVn != (Varnode *)0)
-	  outVn->getValueSet()->addEquation(slot, type, range);
-	else
-	  readNodes[op->getSeqNum()].addEquation(slot, type, range);	// Special read site
+	if (trueIsRestricted)
+	  generateTrueEquation(outVn, op, slot, type, range);
 	break;
       }
       else if (curBlock == falseBlock) {
-	if (!falseIsRestricted) {
-	  // If its possible that both the true and false edges can reach falseBlock
-	  // then the only input we can restrict is a MULTIEQUAL input along the exact false edge
-	  if (op->code() != CPUI_MULTIEQUAL) break;
-	  if (op->getParent() != falseBlock) break;
-	  if (falseBlock->getIn(slot) != splitPoint) break;
-	}
-	CircleRange falseRange(range);
-	falseRange.invert();
-	if (outVn != (Varnode *)0)
-	  outVn->getValueSet()->addEquation(slot, type, falseRange);
-	else
-	  readNodes[op->getSeqNum()].addEquation(slot, type, falseRange);	// Special read site
+	if (falseIsRestricted)
+	  generateFalseEquation(outVn, op, slot, type, range);
 	break;
       }
       else if (curBlock == splitPoint || curBlock == (FlowBlock *)0)
