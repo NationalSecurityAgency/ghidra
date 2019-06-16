@@ -49,19 +49,19 @@ bool AddressUsePointPair::operator==(const AddressUsePointPair &op2) const
   return (useaddr == op2.useaddr);
 }
 
-/// \brief Can the given intersecting MapRange coexist with \b this at their given offsets
+/// \brief Can the given intersecting RangeHint coexist with \b this at their given offsets
 ///
 /// Determine if the data-type information in the two ranges \e line \e up
 /// properly, in which case the union of the two ranges can exist without
 /// destroying data-type information.
 /// \param b is the range to reconcile with \b this
 /// \param \b true if the data-type information can be reconciled
-bool MapRange::reconcile(const MapRange *b) const
+bool RangeHint::reconcile(const RangeHint *b) const
 
 {
-  const MapRange *a = this;
+  const RangeHint *a = this;
   if (a->type->getSize() < b->type->getSize()) {
-    const MapRange *tmp = b;
+    const RangeHint *tmp = b;
     b = a;			// Make sure b is smallest
     a = tmp;
   }
@@ -86,7 +86,7 @@ bool MapRange::reconcile(const MapRange *b) const
 /// and that the two ranges intersect.
 /// \param b is the given range to check for containment with \b this
 /// \return \b true if one contains the other
-bool MapRange::contain(const MapRange *b) const
+bool RangeHint::contain(const RangeHint *b) const
 
 {
   if (sstart == b->sstart) return true;
@@ -103,7 +103,7 @@ bool MapRange::contain(const MapRange *b) const
 /// \param b is the other given range
 /// \param reconcile is \b true is the two ranges have \e reconciled data-types
 /// \return \b true if the \b this ranges's data-type is preferred
-bool MapRange::preferred(const MapRange *b,bool reconcile) const
+bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 
 {
   if (start != b->start)
@@ -117,13 +117,165 @@ bool MapRange::preferred(const MapRange *b,bool reconcile) const
     return true;
 
   if (!reconcile) {		// If the ranges don't reconcile
-    if ((rangeType == MapRange::open)&&(b->rangeType != MapRange::open)) // Throw out the open range
+    if ((rangeType == RangeHint::open)&&(b->rangeType != RangeHint::open)) // Throw out the open range
       return false;
-    if ((b->rangeType == MapRange::open)&&(rangeType != MapRange::open))
+    if ((b->rangeType == RangeHint::open)&&(rangeType != RangeHint::open))
       return true;
   }
 
   return (0>type->typeOrder(*b->type)); // Prefer the more specific
+}
+
+/// If \b this RangeHint is an array and the following details line up, adjust \b this
+/// so that it \e absorbs the other given RangeHint and return \b true.
+/// The second RangeHint:
+///   - must have the same element size
+///   - must have close to the same data-type
+///   - must line up with the step of the first array
+///   - must not be a locked data-type
+///   - must not extend the size of the first array beyond what is known of its limits
+///
+/// \param b is the other RangeHint to absorb
+/// \return \b true if the other RangeHint was successfully absorbed
+bool RangeHint::absorb(RangeHint *b)
+
+{
+  if (rangeType != RangeHint::open) return false;
+  if (highind < 0) return false;
+  if (b->rangeType == RangeHint::endpoint) return false;	// Don't merge with bounding range
+  Datatype *settype = type;
+  if (settype->getSize() != b->type->getSize()) return false;
+  if (settype->getMetatype() == TYPE_UNKNOWN)
+    settype = b->type;
+  else if (b->type->getMetatype() == TYPE_UNKNOWN) {
+  }
+  else if (settype->getMetatype() == TYPE_INT && b->type->getMetatype() == TYPE_UINT) {
+  }
+  else if (settype->getMetatype() == TYPE_UINT && b->type->getMetatype() == TYPE_INT) {
+  }
+  else if (settype != b->type)	// If they are both not unknown, they must be the same
+    return false;
+  if ((flags & Varnode::typelock)!=0) return false;
+  if ((b->flags & Varnode::typelock)!=0) return false;
+  if (flags != b->flags) return false;
+  intb diffsz = b->sstart - sstart;
+  if ((diffsz % settype->getSize()) != 0) return false;
+  diffsz /= settype->getSize();
+  if (diffsz > highind) return false;
+  type = settype;
+  if (b->rangeType == RangeHint::open && (0 <= b->highind)) { // If b has array indexing
+    int4 trialhi = b->highind + diffsz;
+    if (highind < trialhi)
+      highind = trialhi;
+  }
+  return true;
+}
+
+/// Given that \b this and the other RangeHint intersect, redefine \b this so that it
+/// becomes the union of the two original ranges.  The union must succeed in some form.
+/// An attempt is made to preserve the data-type information of both the original ranges,
+/// but changes will be made if necessary.  An exception is thrown if the data-types
+/// are locked and cannot be reconciled.
+/// \param b is the other RangeHint to merge with \b this
+/// \param space is the address space holding the ranges
+/// \param typeFactory is a factory for producing data-types
+/// \return \b true if there was an overlap that could be reconciled
+bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
+
+{
+  uintb aend,bend;
+  uintb end;
+  Datatype *resType;
+  uint4 resFlags;
+  bool didReconcile;
+  int4 resHighIndex;
+  bool overlapProblems = false;
+
+  aend = space->wrapOffset(start+size);
+  bend = space->wrapOffset(b->start+b->size);
+  RangeHint::RangeType resRangeType = RangeHint::fixed;
+  resHighIndex = -1;
+  if ((aend==0)||(bend==0))
+    end = 0;
+  else
+    end = (aend > bend) ? aend : bend;
+
+  if (contain(b)) {			// Does one range contain the other
+    didReconcile = reconcile(b);	// Can the data-type layout be reconciled
+    if (preferred(b,didReconcile)) { 	// If a's data-type is preferred over b
+      resType = type;
+      resFlags = flags;
+      resRangeType = rangeType;
+      resHighIndex = highind;
+    }
+    else {
+      resType = b->type;
+      resFlags = b->flags;
+      resRangeType = b->rangeType;
+      resHighIndex = b->highind;
+    }
+    if ((start==b->start)&&(size==b->size)) {
+      resRangeType = (rangeType==RangeHint::open || b->rangeType==RangeHint::open) ? RangeHint::open : RangeHint::fixed;
+      if (resRangeType == RangeHint::open)
+	resHighIndex = (highind < b->highind) ? b->highind : highind;
+    }
+    if (!didReconcile) { // See if two types match up
+      if ((b->rangeType != RangeHint::open)&&(rangeType != RangeHint::open))
+	overlapProblems = true;
+    }
+  }
+  else {
+    didReconcile = false;
+    resType = (Datatype *)0;	// Unable to resolve the type
+    resFlags = 0;
+  }
+				// Check for really problematic cases
+  if (!didReconcile) {
+    if ((b->flags & Varnode::typelock)!=0) {
+      if ((flags & Varnode::typelock)!=0)
+	throw LowlevelError("Overlapping forced variable types : " + type->getName() + "   " + b->type->getName());
+    }
+  }
+  if (resType == (Datatype *)0) // If all else fails
+    resType = typeFactory->getBase(1,TYPE_UNKNOWN); // Do unknown array (size 1)
+
+  type = resType;
+  flags = resFlags;
+  rangeType = resRangeType;
+  highind = resHighIndex;
+  if ((!didReconcile)&&(start != b->start)) { // Truncation is forced
+    if ((flags & Varnode::typelock)!=0) { // If a is locked
+      return overlapProblems;		// Discard b entirely in favor of a
+    }
+    // Concede confusion about types, set unknown type rather than a or b's type
+    size = space->wrapOffset(end-start);
+    type = typeFactory->getBase(size,TYPE_UNKNOWN);
+    flags = 0;
+    rangeType = RangeHint::fixed;
+    highind = -1;
+    return overlapProblems;
+  }
+  size = resType->getSize();
+  return overlapProblems;
+}
+
+/// Order the two ranges by the signed version of their offset, then by size,
+/// then by data-type
+/// \param a is the first range to compare
+/// \param b is the second range
+/// \return \b true if the first range is ordered before the second
+bool RangeHint::compareRanges(const RangeHint *a,const RangeHint *b)
+
+{
+  if (a->sstart != b->sstart)
+    return (a->sstart < b->sstart);
+  if (a->size != b->size)
+    return (a->size < b->size);		// Small sizes come first
+  type_metatype ameta = a->type->getMetatype();
+  type_metatype bmeta = b->type->getMetatype();
+  if (ameta != bmeta)
+    return (ameta < bmeta);		// Order more specific types first
+  return true;
 }
 
 /// \param spc is the (stack) address space associated with this function's local variables
@@ -135,7 +287,6 @@ ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInter
   space = spc;
   rangeLocked = false;
   stackGrowsNegative = true;
-  overlapProblems = false;
   restrictScope(fd);
   dedupId = fd->getAddress().getOffset();		// Allow multiple scopes with same name
 } 
@@ -306,11 +457,11 @@ string ScopeLocal::buildVariableName(const Address &addr,
   return ScopeInternal::buildVariableName(addr,pc,ct,index,flags);
 }
 
-/// Shrink the MapRange as necessary so that it fits in the mapped region of the Scope
+/// Shrink the RangeHint as necessary so that it fits in the mapped region of the Scope
 /// and doesn't overlap any other Symbols.  If this is not possible, return \b false.
-/// \param a is the given MapRange to fit
+/// \param a is the given RangeHint to fit
 /// \return \b true if a valid adjustment was made
-bool ScopeLocal::adjustFit(MapRange &a) const
+bool ScopeLocal::adjustFit(RangeHint &a) const
 
 {
   if (a.size==0) return false;	// Nothing to fit
@@ -337,10 +488,10 @@ bool ScopeLocal::adjustFit(MapRange &a) const
   return true;
 }
 
-/// A name and final data-type is constructed for the MapRange, and they are entered as
+/// A name and final data-type is constructed for the RangeHint, and they are entered as
 /// a new Symbol into \b this scope.
-/// \param a is the given MapRange to create a Symbol for
-void ScopeLocal::createEntry(const MapRange &a)
+/// \param a is the given RangeHint to create a Symbol for
+void ScopeLocal::createEntry(const RangeHint &a)
 
 {
   Address addr(space,a.start);
@@ -354,25 +505,6 @@ void ScopeLocal::createEntry(const MapRange &a)
   string nm = buildVariableName(addr,usepoint,ct,index,Varnode::addrtied);
 
   addSymbol(nm,ct,addr,usepoint);
-}
-
-/// Order the two ranges by the signed version of their offset, then by size,
-/// then by data-type
-/// \param a is the first range to compare
-/// \param b is the second range
-/// \return \b true if the first range is ordered before the second
-bool MapState::compareRanges(const MapRange *a,const MapRange *b)
-
-{
-  if (a->sstart != b->sstart)
-    return (a->sstart < b->sstart);
-  if (a->size != b->size)
-    return (a->size < b->size);		// Small sizes come first
-  type_metatype ameta = a->type->getMetatype();
-  type_metatype bmeta = b->type->getMetatype();
-  if (ameta != bmeta)
-    return (ameta < bmeta);		// Order more specific types first
-  return true;
 }
 
 /// Set up basic offset boundaries for what constitutes a local variable
@@ -613,7 +745,7 @@ MapState::MapState(AddrSpace *spc,const RangeList &rn,
 MapState::~MapState(void)
 
 {
-  vector<MapRange *>::iterator iter;
+  vector<RangeHint *>::iterator iter;
   for(iter=maplist.begin();iter!=maplist.end();++iter)
     delete *iter;
 }
@@ -625,7 +757,7 @@ MapState::~MapState(void)
 /// \param fl is additional boolean properties
 /// \param rt is the type of the hint
 /// \param hi is the biggest guaranteed index for \e open range hints
-void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,int4 hi)
+void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi)
 
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
@@ -636,7 +768,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,in
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
-  MapRange *range = new MapRange(st,sz,sst,ct,fl,rt,hi);
+  RangeHint *range = new RangeHint(st,sz,sst,ct,fl,rt,hi);
   maplist.push_back(range);
 #ifdef OPACTION_DEBUG
   if (debugon) {
@@ -650,7 +782,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,in
 #endif
 }
 
-/// Run through all Symbols in the given map and create a corresponding MapRange hint
+/// Run through all Symbols in the given map and create a corresponding RangeHint
 /// to \b this collection for each Symbol.
 /// \param rangemap is the given map of Symbols
 void MapState::gatherSymbols(const EntryMap *rangemap)
@@ -665,11 +797,11 @@ void MapState::gatherSymbols(const EntryMap *rangemap)
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
     uintb start = (*iter).getAddr().getOffset();
     Datatype *ct = sym->getType();
-    addRange(start,ct,sym->getFlags(),MapRange::fixed,-1);
+    addRange(start,ct,sym->getFlags(),RangeHint::fixed,-1);
   }
 }
 
-/// Sort the collection and add a special terminating MapRange
+/// Sort the collection and add a special terminating RangeHint
 /// \return \b true if the collection isn't empty (and iteration can begin)
 bool MapState::initialize(void)
 
@@ -683,15 +815,15 @@ bool MapState::initialize(void)
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
-  MapRange *range = new MapRange(high,1,sst,defaultType,0,MapRange::endpoint,-2);
+  RangeHint *range = new RangeHint(high,1,sst,defaultType,0,RangeHint::endpoint,-2);
   maplist.push_back(range);
 
-  stable_sort(maplist.begin(),maplist.end(),compareRanges);
+  stable_sort(maplist.begin(),maplist.end(),RangeHint::compareRanges);
   iter = maplist.begin();
   return true;
 }
 
-/// Add a MapRange hint corresponding to each Varnode stored in the address space
+/// Add a RangeHint corresponding to each Varnode stored in the address space
 /// for the given function.  The current knowledge of the Varnode's data-type
 /// is included as part of the hint.
 /// \param fd is the given function
@@ -710,11 +842,11 @@ void MapState::gatherVarnodes(const Funcdata &fd)
 				// Do not force Varnode flags on the entry
 				// as the flags were inherited from the previous
 				// (now obsolete) entry
-    addRange(start,ct,0,MapRange::fixed,-1);
+    addRange(start,ct,0,RangeHint::fixed,-1);
   }
 }
 
-/// Add a MapRange hint corresponding to each HighVariable that is mapped to our
+/// Add a RangeHint corresponding to each HighVariable that is mapped to our
 /// address space for the given function.
 /// \param fd is the given function
 void MapState::gatherHighs(const Funcdata &fd)
@@ -737,14 +869,14 @@ void MapState::gatherHighs(const Funcdata &fd)
     varvec.push_back(high);
     uintb start = vn->getOffset();
     Datatype *ct = high->getType(); // Get type from high
-    addRange(start,ct,0,MapRange::fixed,-1);
+    addRange(start,ct,0,RangeHint::fixed,-1);
   }
   for(int4 i=0;i<varvec.size();++i)
     varvec[i]->clearMark();
 }
 
 /// For any Varnode that looks like a pointer into our address space, create an
-/// \e open MapRange hint. The size of the object may not be known.
+/// \e open RangeHint. The size of the object may not be known.
 /// \param fd is the given function
 void MapState::gatherOpen(const Funcdata &fd)
 
@@ -773,7 +905,7 @@ void MapState::gatherOpen(const Funcdata &fd)
     else {
       minItems = -1;
     }
-    addRange(offset,ct,0,MapRange::open,minItems);
+    addRange(offset,ct,0,RangeHint::open,minItems);
   }
 
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
@@ -803,10 +935,10 @@ void MapState::gatherOpen(const Funcdata &fd)
     }
     if (guard.isRangeLocked()) {
       int4 minItems = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
-      addRange(guard.getMinimum(),ct,0,MapRange::open,minItems-1);
+      addRange(guard.getMinimum(),ct,0,RangeHint::open,minItems-1);
     }
     else
-      addRange(guard.getMinimum(),ct,0,MapRange::open,3);
+      addRange(guard.getMinimum(),ct,0,RangeHint::open,3);
   }
 }
 
@@ -829,7 +961,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   state.gatherVarnodes(*fd); // Gather stack type information from varnodes
   state.gatherOpen(*fd);
   state.gatherSymbols(maptable[space->getIndex()]);
-  restructure(state,false);
+  restructure(state);
 
   // At some point, processing mapped input symbols may be folded
   // into the above gather/restructure process, but for now
@@ -860,167 +992,39 @@ void ScopeLocal::restructureHigh(void)
   state.gatherHighs(*fd); // Gather stack type information from highs
   state.gatherOpen(*fd);
   state.gatherSymbols(maptable[space->getIndex()]);
-  restructure(state,true);
+  bool overlapProblems = restructure(state);
 
   if (overlapProblems)
     fd->warningHeader("Could not reconcile some variable overlaps");
 }
 
-/// If the first MapRange is an array and the following details line up, adjust the first MapRange
-/// so that it \e absorbs the second and return \b true.
-/// The second MapRange:
-///   - must have the same element size
-///   - must have close to the same data-type
-///   - must line up with the step of the first array
-///   - must not be a locked data-type
-///   - must not extend the size of the first array beyond what is known of its limits
-///
-/// \param a is the first MapRange
-/// \param b is the second MapRange being absorbed
-/// \return \b true if the second MapRange was successfully absorbed
-bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
-
-{
-  if (a->rangeType != MapRange::open) return false;
-  if (a->highind < 0) return false;
-  if (b->rangeType == MapRange::endpoint) return false;	// Don't merge with bounding range
-  Datatype *settype = a->type;
-  if (settype->getSize() != b->type->getSize()) return false;
-  if (settype->getMetatype() == TYPE_UNKNOWN)
-    settype = b->type;
-  else if (b->type->getMetatype() == TYPE_UNKNOWN) {
-  }
-  else if (settype->getMetatype() == TYPE_INT && b->type->getMetatype() == TYPE_UINT) {
-  }
-  else if (settype->getMetatype() == TYPE_UINT && b->type->getMetatype() == TYPE_INT) {
-  }
-  else if (settype != b->type)	// If they are both not unknown, they must be the same
-    return false;
-  if ((a->flags & Varnode::typelock)!=0) return false;
-  if ((b->flags & Varnode::typelock)!=0) return false;
-  if (a->flags != b->flags) return false;
-  intb diffsz = b->sstart - a->sstart;
-  if ((diffsz % settype->getSize()) != 0) return false;
-  diffsz /= settype->getSize();
-  if (diffsz > a->highind) return false;
-  a->type = settype;
-  if (b->rangeType == MapRange::open && (0 <= b->highind)) { // If b has array indexing
-    int4 trialhi = b->highind + diffsz;
-    if (a->highind < trialhi)
-      a->highind = trialhi;
-  }
-  return true;
-}
-
-/// Given that the two MapRanges intersect, redefine the first MapRange so that it
-/// becomes the union of the two original ranges.  The union must succeed in some form.
-/// An attempt is made to preserve the data-type information of both the original ranges,
-/// but changes will be made if necessary.  An exception is thrown if the data-types
-/// are locked and cannot be reconciled.
-/// \param a is the first given MapRange
-/// \param b is the second given MapRange
-/// \param warning is \b true if overlaps that cannot be reconciled should generate a warning comment
-void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
-
-{
-  uintb aend,bend;
-  uintb end;
-  Datatype *restype;
-  uint4 flags;
-  bool reconcile;
-  int4 highestIndex;
-
-  aend = space->wrapOffset(a->start+a->size);
-  bend = space->wrapOffset(b->start+b->size);
-  MapRange::RangeType rangeType = MapRange::fixed;
-  highestIndex = -1;
-  if ((aend==0)||(bend==0))
-    end = 0;
-  else
-    end = (aend > bend) ? aend : bend;
-
-  if (a->contain(b)) {			// Does one range contain the other
-    reconcile = a->reconcile(b);	// Can the data-type layout be reconciled
-    if (a->preferred(b,reconcile)) { 	// If a's data-type is preferred over b
-      restype = a->type;
-      flags = a->flags;
-      rangeType = a->rangeType;
-      highestIndex = a->highind;
-    }
-    else {
-      restype = b->type;
-      flags = b->flags;
-      rangeType = b->rangeType;
-      highestIndex = b->highind;
-    }
-    if ((a->start==b->start)&&(a->size==b->size)) {
-      rangeType = (a->rangeType==MapRange::open || b->rangeType==MapRange::open) ? MapRange::open : MapRange::fixed;
-      if (rangeType == MapRange::open)
-	highestIndex = (a->highind < b->highind) ? b->highind : a->highind;
-    }
-    if (warning && (!reconcile)) { // See if two types match up
-      if ((b->rangeType != MapRange::open)&&(a->rangeType != MapRange::open))
-	overlapProblems = true;
-    }
-  }
-  else {
-    reconcile = false;
-    restype = (Datatype *)0;	// Unable to resolve the type
-    flags = 0;
-  }
-				// Check for really problematic cases
-  if (!reconcile) {
-    if ((b->flags & Varnode::typelock)!=0) {
-      if ((a->flags & Varnode::typelock)!=0)
-	throw LowlevelError("Overlapping forced variable types : " + a->type->getName() + "   " + b->type->getName());
-    }
-  }
-  if (restype == (Datatype *)0) // If all else fails
-    restype = glb->types->getBase(1,TYPE_UNKNOWN); // Do unknown array (size 1)
-
-  a->type = restype;
-  a->flags = flags;
-  a->rangeType = rangeType;
-  a->highind = highestIndex;
-  if ((!reconcile)&&(a->start != b->start)) { // Truncation is forced
-    if ((a->flags & Varnode::typelock)!=0) { // If a is locked
-      return;			// Discard b entirely in favor of a
-    }
-    // Concede confusion about types, set unknown type rather than a or b's type
-    a->size = space->wrapOffset(end-a->start);
-    a->type = glb->types->getBase(a->size,TYPE_UNKNOWN);
-    a->flags = 0;
-    a->rangeType = MapRange::fixed;
-    a->highind = -1;
-    return;
-  }
-  a->size = restype->getSize();
-}
-
-/// MapRange hints from the given collection are merged into a definitive set of Symbols
-/// for \b this scope. Overlapping or open MapRange hints are adjusted to form a disjoint
+/// RangeHints from the given collection are merged into a definitive set of Symbols
+/// for \b this scope. Overlapping or open RangeHints are adjusted to form a disjoint
 /// cover of the mapped portion of the address space.  Names for the disjoint cover elements
 /// are chosen, and these form the final Symbols.
-/// \param state is the given collection of MapRange hints
-/// \param warning is \b true if a warning comment should be generated for overlaps that cannot be reconciled
-void ScopeLocal::restructure(MapState &state,bool warning)
+/// \param state is the given collection of RangeHints
+/// \return \b true if there were overlaps that could not be reconciled
+bool ScopeLocal::restructure(MapState &state)
 
 {
-  MapRange cur;
-  MapRange *next;
+  RangeHint cur;
+  RangeHint *next;
  				// This implementation does not allow a range
 				// to contain both ~0 and 0
-  overlapProblems = false;
-  if (!state.initialize()) return; // No references to stack at all
+  bool overlapProblems = false;
+  if (!state.initialize())
+    return overlapProblems; // No references to stack at all
 
   cur = *state.next();
   while(state.getNext()) {
     next = state.next();
-    if (next->sstart < cur.sstart+cur.size) // Do the ranges intersect
-      rangeUnion(&cur,next,warning); // Union them
+    if (next->sstart < cur.sstart+cur.size) {	// Do the ranges intersect
+      if (cur.merge(next,space,glb->types))	// Union them
+	overlapProblems = true;
+    }
     else {
-      if (!rangeAbsorb(&cur,next)) {
-	if (cur.rangeType == MapRange::open)
+      if (!cur.absorb(next)) {
+	if (cur.rangeType == RangeHint::open)
 	  cur.size = next->sstart-cur.sstart;
 	if (adjustFit(cur))
 	  createEntry(cur);
@@ -1030,6 +1034,7 @@ void ScopeLocal::restructure(MapState &state,bool warning)
   }
 				// The last range is artificial so we don't
 				// build an entry for it
+  return overlapProblems;
 }
 
 /// Given a set of alias starting offsets, calculate whether each Symbol within this scope might be

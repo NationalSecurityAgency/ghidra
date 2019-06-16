@@ -46,13 +46,16 @@ public:
 /// starting at a specific address offset (typically on the stack). It describes
 /// where the data-type starts, what data-type it might be, and how far it extends
 /// from the start point (possibly as an array).
-struct MapRange {
+class RangeHint {
+  friend class ScopeLocal;
+public:
   /// \brief The basic categorization of the range
   enum RangeType {
     fixed = 0,		///< A data-type with a fixed size
     open = 1,		///< An array with a (possibly unknown) number of elements
     endpoint = 2	///< An (artificial) boundary to the range of bytes getting analyzed
   };
+private:
   uintb start;		///< Starting offset of \b this range of bytes
   int4 size;		///< Number of bytes in a single element of this range
   intb sstart;		///< A signed version of the starting offset
@@ -60,12 +63,16 @@ struct MapRange {
   uint4 flags;		///< Additional boolean properties of this range
   RangeType rangeType;	///< The type of range
   int4 highind;		///< Minimum upper bound on the array index (if \b this is \e open)
-  MapRange(void) {}	///< Uninitialized constructor
-  MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
+public:
+  RangeHint(void) {}	///< Uninitialized constructor
+  RangeHint(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
     start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; }	///< Initialized constructor
-  bool reconcile(const MapRange *b) const;
-  bool contain(const MapRange *b) const;
-  bool preferred(const MapRange *b,bool reconcile) const;
+  bool reconcile(const RangeHint *b) const;
+  bool contain(const RangeHint *b) const;
+  bool preferred(const RangeHint *b,bool reconcile) const;
+  bool absorb(RangeHint *b);	///< Try to absorb the other RangeHint into \b this
+  bool merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory);	///< Try to form the union of \b this with another RangeHint
+  static bool compareRanges(const RangeHint *a,const RangeHint *b);	///< Compare to RangeHint pointers
 };
 
 class ProtoModel;
@@ -108,19 +115,18 @@ public:
 
 /// \brief A container for hints about the data-type layout of an address space
 ///
-/// A collection of data-type hints for the address space (as MapRange objects) can
+/// A collection of data-type hints for the address space (as RangeHint objects) can
 /// be collected from Varnodes, HighVariables or other sources, using the
 /// gatherVarnodes(), gatherHighs(), and gatherOpen() methods. This class can then sort
-/// and iterate through the MapRange objects.
+/// and iterate through the RangeHint objects.
 class MapState {
   AddrSpace *spaceid;			///< The address space being analyzed
   RangeList range;			///< The subset of ranges, within the whole address space to analyze
-  vector<MapRange *> maplist;		///< The list of collected MapRange hints
-  vector<MapRange *>::iterator iter;	///< The current iterator into the MapRange hints
-  Datatype *defaultType;		///< The default data-type to use for MapRanges
+  vector<RangeHint *> maplist;		///< The list of collected RangeHints
+  vector<RangeHint *>::iterator iter;	///< The current iterator into the RangeHints
+  Datatype *defaultType;		///< The default data-type to use for RangeHints
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
-  void addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,int4 hi);	///< Add a hint to the collection
-  static bool compareRanges(const MapRange *a,const MapRange *b);	///< Compare to MapRange pointers
+  void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi);	///< Add a hint to the collection
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -137,7 +143,7 @@ public:
   void gatherVarnodes(const Funcdata &fd);		///< Add stack Varnodes as hints to the collection
   void gatherHighs(const Funcdata &fd);			///< Add HighVariables as hints to the collection
   void gatherOpen(const Funcdata &fd);			///< Add pointer references as hints to the collection
-  MapRange *next(void) { return *iter; }		///< Get the current MapRange hint in the collection
+  RangeHint *next(void) { return *iter; }		///< Get the current RangeHint in the collection
   bool getNext(void) { ++iter; if (iter==maplist.end()) return false; return true; }	///< Advance the iterator, return \b true if another hint is available
 };
 
@@ -153,13 +159,10 @@ class ScopeLocal : public ScopeInternal {
   RangeList localRange;		///< The set of addresses that might hold mapped locals (not parameters)
   map<AddressUsePointPair,string> nameRecommend;	///< Symbol name recommendations for specific addresses
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
-  bool overlapProblems;		///< Cached problem flag
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
-  bool adjustFit(MapRange &a) const;	///< Make the given MapRange fit in the current Symbol map
-  void createEntry(const MapRange &a);	///< Create a Symbol entry corresponding to the given (fitted) MapRange
-  bool rangeAbsorb(MapRange *a,MapRange *b);	///< Try to absorb the second MapRange into the first
-  void rangeUnion(MapRange *a,MapRange *b,bool warning);	///< Try to form the union of the given two MapRanges
-  void restructure(MapState &state,bool warning);	///< Merge hints into a formal Symbol layout of the address space
+  bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
+  void createEntry(const RangeHint &a);	///< Create a Symbol entry corresponding to the given (fitted) RangeHint
+  bool restructure(MapState &state);	///< Merge hints into a formal Symbol layout of the address space
   void markUnaliased(const vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
