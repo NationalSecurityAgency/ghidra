@@ -49,14 +49,93 @@ bool AddressUsePointPair::operator==(const AddressUsePointPair &op2) const
   return (useaddr == op2.useaddr);
 }
 
+/// \brief Can the given intersecting MapRange coexist with \b this at their given offsets
+///
+/// Determine if the data-type information in the two ranges \e line \e up
+/// properly, in which case the union of the two ranges can exist without
+/// destroying data-type information.
+/// \param b is the range to reconcile with \b this
+/// \param \b true if the data-type information can be reconciled
+bool MapRange::reconcile(const MapRange *b) const
+
+{
+  const MapRange *a = this;
+  if (a->type->getSize() < b->type->getSize()) {
+    const MapRange *tmp = b;
+    b = a;			// Make sure b is smallest
+    a = tmp;
+  }
+  intb mod = (b->sstart - a->sstart) % a->type->getSize();
+  if (mod < 0)
+    mod += a->type->getSize();
+
+  Datatype *sub = a->type;
+  uintb umod = mod;
+  while((sub!=(Datatype *)0)&&(sub->getSize() > b->type->getSize()))
+    sub = sub->getSubType(umod,&umod);
+
+  if (sub == (Datatype *)0) return false;
+  if (umod != 0) return false;
+  if (sub->getSize() < b->type->getSize()) return false;
+  return true;
+}
+
+/// \brief Return \b true if \b this or the given range contains the other.
+///
+/// We assume \b this range starts at least as early as the given range
+/// and that the two ranges intersect.
+/// \param b is the given range to check for containment with \b this
+/// \return \b true if one contains the other
+bool MapRange::contain(const MapRange *b) const
+
+{
+  if (sstart == b->sstart) return true;
+  //  if (sstart==send) return true;
+  //  if (b->sstart==b->send) return true;
+  if (b->sstart+b->size-1 <= sstart+size-1) return true;
+  return false;
+}
+
+/// \brief Return \b true if the \b this range's data-type is preferred over the other given range
+///
+/// A locked data-type is preferred over unlocked. A \e fixed size over \e open size.
+/// Otherwise data-type ordering is used.
+/// \param b is the other given range
+/// \param reconcile is \b true is the two ranges have \e reconciled data-types
+/// \return \b true if the \b this ranges's data-type is preferred
+bool MapRange::preferred(const MapRange *b,bool reconcile) const
+
+{
+  if (start != b->start)
+    return true;		// Something must occupy a->start to b->start
+				// Prefer the locked type
+  if ((b->flags & Varnode::typelock)!=0) {
+    if ((flags & Varnode::typelock)==0)
+      return false;
+  }
+  else if ((flags & Varnode::typelock)!=0)
+    return true;
+
+  if (!reconcile) {		// If the ranges don't reconcile
+    if ((rangeType == MapRange::open)&&(b->rangeType != MapRange::open)) // Throw out the open range
+      return false;
+    if ((b->rangeType == MapRange::open)&&(rangeType != MapRange::open))
+      return true;
+  }
+
+  return (0>type->typeOrder(*b->type)); // Prefer the more specific
+}
+
 /// \param spc is the (stack) address space associated with this function's local variables
 /// \param fd is the function associated with these local variables
 /// \param g is the Architecture
 ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(fd->getName(),g)
 
 {
-  spaceid = spc;
-  qflags = 0;
+  space = spc;
+  rangeLocked = false;
+  stackGrowsNegative = true;
+  overlapProblems = false;
   restrictScope(fd);
   dedupId = fd->getAddress().getOffset();		// Allow multiple scopes with same name
 } 
@@ -70,7 +149,7 @@ void ScopeLocal::collectNameRecs(void)
 {
   SymbolNameTree::iterator iter;
 
-  name_recommend.clear();	// Clear out any old name recommendations
+  nameRecommend.clear();	// Clear out any old name recommendations
 
   iter = nametree.begin();
   while(iter!=nametree.end()) {
@@ -97,17 +176,16 @@ void ScopeLocal::collectNameRecs(void)
 void ScopeLocal::resetLocalWindow(void)
 
 {
-  if ((qflags&range_locked)!=0) return;
-  qflags = 0;
+  if (rangeLocked) return;
 
-  localrange = fd->getFuncProto().getLocalRange();
+  localRange = fd->getFuncProto().getLocalRange();
   const RangeList &paramrange( fd->getFuncProto().getParamRange() );
 
-  stackgrowsnegative = fd->getFuncProto().isStackGrowsNegative();
+  stackGrowsNegative = fd->getFuncProto().isStackGrowsNegative();
   RangeList newrange;
 
   set<Range>::const_iterator iter;
-  for(iter=localrange.begin();iter!=localrange.end();++iter) {
+  for(iter=localRange.begin();iter!=localRange.end();++iter) {
     AddrSpace *spc = (*iter).getSpace();
     uintb first = (*iter).getFirst();
     uintb last = (*iter).getLast();
@@ -126,8 +204,8 @@ void ScopeLocal::saveXml(ostream &s) const
 
 {
   s << "<localdb";
-  a_v(s,"main",spaceid->getName());
-  a_v_b(s,"lock",((qflags & range_locked)!=0));
+  a_v(s,"main",space->getName());
+  a_v_b(s,"lock",rangeLocked);
   s << ">\n";
   ScopeInternal::saveXml(s);
   s << "</localdb>\n";
@@ -136,10 +214,10 @@ void ScopeLocal::saveXml(ostream &s) const
 void ScopeLocal::restoreXml(const Element *el)
 
 {
-  qflags = 0;
+  rangeLocked = false;
   if (xml_readbool(el->getAttributeValue("lock")))
-    qflags |= range_locked;
-  spaceid = glb->getSpaceByName(el->getAttributeValue("main"));
+    rangeLocked = true;
+  space = glb->getSpaceByName(el->getAttributeValue("main"));
   
   ScopeInternal::restoreXml( *(el->getChildren().begin()) );
   collectNameRecs();
@@ -154,7 +232,7 @@ void ScopeLocal::restoreXml(const Element *el)
 void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter)
 
 {
-  if (spaceid != spc) return;
+  if (space != spc) return;
   uintb last = first + sz - 1;
   // Do not allow the range to cover the split point between "negative" and "positive" stack offsets
   if (last < first)		// Check for possible wrap around
@@ -162,19 +240,19 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
   else if (last > spc->getHighest())
     last = spc->getHighest();
   if (parameter) {		// Everything above parameter
-    if (stackgrowsnegative) {
-      const Range *rng = localrange.getRange(spc,first);
+    if (stackGrowsNegative) {
+      const Range *rng = localRange.getRange(spc,first);
       if (rng != (const Range *)0)
 	first = rng->getFirst(); // Everything less is not mapped
     }
     else {
-      const Range *rng = localrange.getRange(spc,last);
+      const Range *rng = localRange.getRange(spc,last);
       if (rng != (const Range *)0)
 	last = rng->getLast();	// Everything greater is not mapped
     }
     sz = (last-first)+1;
   }
-  Address addr(spaceid,first);
+  Address addr(space,first);
 				// Remove any symbols under range
   SymbolEntry *overlap = findOverlap(addr,sz);
   while(overlap != (SymbolEntry *)0) { // For every overlapping entry
@@ -190,7 +268,7 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
     removeSymbol(sym);
     overlap = findOverlap(addr,sz);
   }
-  glb->symboltab->removeRange(this,spaceid,first,last);
+  glb->symboltab->removeRange(this,space,first,last);
 }
 
 string ScopeLocal::buildVariableName(const Address &addr,
@@ -199,17 +277,17 @@ string ScopeLocal::buildVariableName(const Address &addr,
 				     int4 &index,uint4 flags) const
 {
   map<AddressUsePointPair,string>::const_iterator iter;
-  iter = name_recommend.find( AddressUsePointPair(addr,pc,0));
-  if (iter != name_recommend.end()) {
+  iter = nameRecommend.find( AddressUsePointPair(addr,pc,0));
+  if (iter != nameRecommend.end()) {
     // We are not checking if the recommended size matches
     return makeNameUnique((*iter).second);
   }
   if (((flags & (Varnode::addrtied|Varnode::persist))==Varnode::addrtied) &&
-      addr.getSpace() == spaceid) {
+      addr.getSpace() == space) {
     if (fd->getFuncProto().getLocalRange().inRange(addr,1)) {
-      intb start = (intb) AddrSpace::byteToAddress(addr.getOffset(),spaceid->getWordSize());
+      intb start = (intb) AddrSpace::byteToAddress(addr.getOffset(),space->getWordSize());
       sign_extend(start,addr.getAddrSize()*8-1);
-      if (stackgrowsnegative)
+      if (stackGrowsNegative)
 	start = -start;
       ostringstream s;
       if (ct != (Datatype *)0)
@@ -237,7 +315,7 @@ bool ScopeLocal::adjustFit(MapRange &a) const
 {
   if (a.size==0) return false;	// Nothing to fit
   if ((a.flags & Varnode::typelock)!=0) return false; // Already entered
-  Address addr(spaceid,a.start);
+  Address addr(space,a.start);
   uintb maxsize = getRangeTree().longestFit(addr,a.size);
   if (maxsize==0) return false;
   if (maxsize < a.size) {	// Suggested range doesn't fit
@@ -265,7 +343,7 @@ bool ScopeLocal::adjustFit(MapRange &a) const
 void ScopeLocal::createEntry(const MapRange &a)
 
 {
-  Address addr(spaceid,a.start);
+  Address addr(space,a.start);
   Address usepoint;
   Datatype *ct = a.type;
   int4 num = a.size/ct->getSize();
@@ -278,7 +356,12 @@ void ScopeLocal::createEntry(const MapRange &a)
   addSymbol(nm,ct,addr,usepoint);
 }
 
-static bool compare_ranges(const MapRange *a,const MapRange *b)
+/// Order the two ranges by the signed version of their offset, then by size,
+/// then by data-type
+/// \param a is the first range to compare
+/// \param b is the second range
+/// \return \b true if the first range is ordered before the second
+bool MapState::compareRanges(const MapRange *a,const MapRange *b)
 
 {
   if (a->sstart != b->sstart)
@@ -298,10 +381,10 @@ static bool compare_ranges(const MapRange *a,const MapRange *b)
 void AliasChecker::deriveBoundaries(const FuncProto &proto)
 
 {
-  localextreme = ~((uintb)0);			// Default settings
-  localboundary = 0x1000000;
+  localExtreme = ~((uintb)0);			// Default settings
+  localBoundary = 0x1000000;
   if (direction == -1)
-    localextreme = localboundary;
+    localExtreme = localBoundary;
 
   if (proto.hasModel()) {
     const RangeList &localrange( proto.getLocalRange() );
@@ -310,10 +393,10 @@ void AliasChecker::deriveBoundaries(const FuncProto &proto)
     const Range *local = localrange.getFirstRange();
     const Range *param = paramrange.getLastRange();
     if ((local != (const Range *)0)&&(param != (const Range *)0)) {
-      localboundary = param->getLast();
+      localBoundary = param->getLast();
       if (direction == -1) {
-	localboundary = paramrange.getFirstRange()->getFirst();
-	localextreme = localboundary;
+	localBoundary = paramrange.getFirstRange()->getFirst();
+	localExtreme = localBoundary;
       }
     }
   }
@@ -326,25 +409,25 @@ void AliasChecker::gatherInternal(void) const
 
 {
   calculated = true;
-  aliasboundary = localextreme;
-  Varnode *spacebase = fd->findSpacebaseInput(spaceid);
+  aliasBoundary = localExtreme;
+  Varnode *spacebase = fd->findSpacebaseInput(space);
   if (spacebase == (Varnode *)0) return; // No possible alias
 
-  gatherAdditiveBase(spacebase,addbase);
-  for(vector<AddBase>::iterator iter=addbase.begin();iter!=addbase.end();++iter) {
+  gatherAdditiveBase(spacebase,addBase);
+  for(vector<AddBase>::iterator iter=addBase.begin();iter!=addBase.end();++iter) {
     uintb offset = gatherOffset((*iter).base);
-    offset = AddrSpace::addressToByte(offset,spaceid->getWordSize()); // Convert to byte offset
+    offset = AddrSpace::addressToByte(offset,space->getWordSize()); // Convert to byte offset
     alias.push_back(offset);
     if (direction == 1) {
-      if (offset < localboundary) continue; // Parameter ref
+      if (offset < localBoundary) continue; // Parameter ref
     }
     else {
-      if (offset > localboundary) continue; // Parameter ref
+      if (offset > localBoundary) continue; // Parameter ref
     }
     // Always consider anything AFTER a pointer reference as
     // aliased, regardless of the stack direction
-    if (offset < aliasboundary)
-      aliasboundary = offset;
+    if (offset < aliasBoundary)
+      aliasBoundary = offset;
   }
 }
 
@@ -358,11 +441,11 @@ void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
 
 {
   fd = f;
-  spaceid = spc;
+  space = spc;
   calculated = false;		// Defer calculation
-  addbase.clear();
+  addBase.clear();
   alias.clear();
-  direction = spaceid->stackGrowsNegative() ? 1 : -1;		// direction == 1 for normal negative stack growth
+  direction = space->stackGrowsNegative() ? 1 : -1;		// direction == 1 for normal negative stack growth
   deriveBoundaries(fd->getFuncProto());
   if (!defer)
     gatherInternal();
@@ -379,13 +462,13 @@ bool AliasChecker::hasLocalAlias(Varnode *vn) const
   if (vn == (Varnode *)0) return false;
   if (!calculated)
     gatherInternal();
-  if (vn->getSpace() != spaceid) return false;
+  if (vn->getSpace() != space) return false;
   // For positive stack growth, this is not a good test because values being queued on the
   // stack to be passed to a subfunction always have offsets a little bit bigger than ALL
   // local variables on the stack
   if (direction == -1)
     return false;
-  return (vn->getOffset() >= aliasboundary);
+  return (vn->getOffset() >= aliasBoundary);
 }
 
 void AliasChecker::sortAlias(void) const
@@ -439,6 +522,7 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
 	  othervn = op->getIn(0);
 	if (!othervn->isConstant())
 	  indexvn = othervn;
+	// fallthru
       case CPUI_PTRSUB:
       case CPUI_SEGMENTOP:
 	subvn = op->getOut();
@@ -513,7 +597,7 @@ MapState::MapState(AddrSpace *spc,const RangeList &rn,
 		     const RangeList &pm,Datatype *dt) : range(rn)
 {
   spaceid = spc;
-  default_type = dt;
+  defaultType = dt;
   set<Range>::const_iterator iter;
   for(iter=pm.begin();iter!=pm.end();++iter) {
     AddrSpace *spc = (*iter).getSpace();
@@ -545,7 +629,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,in
 
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
-    ct = default_type;
+    ct = defaultType;
   int4 sz = ct->getSize();
   if (!range.inRange(Address(spaceid,st),sz))
     return;
@@ -599,10 +683,10 @@ bool MapState::initialize(void)
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
-  MapRange *range = new MapRange(high,1,sst,default_type,0,MapRange::endpoint,-2);
+  MapRange *range = new MapRange(high,1,sst,defaultType,0,MapRange::endpoint,-2);
   maplist.push_back(range);
 
-  stable_sort(maplist.begin(),maplist.end(),compare_ranges);
+  stable_sort(maplist.begin(),maplist.end(),compareRanges);
   iter = maplist.begin();
   return true;
 }
@@ -735,7 +819,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
 
 {
   clearUnlockedCategory(-1);	// Clear out any unlocked entries
-  MapState state(spaceid,getRangeTree(),fd->getFuncProto().getParamRange(),
+  MapState state(space,getRangeTree(),fd->getFuncProto().getParamRange(),
 		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
     
 #ifdef OPACTION_DEBUG
@@ -744,7 +828,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
 #endif
   state.gatherVarnodes(*fd); // Gather stack type information from varnodes
   state.gatherOpen(*fd);
-  state.gatherSymbols(maptable[spaceid->getIndex()]);
+  state.gatherSymbols(maptable[space->getIndex()]);
   restructure(state,false);
 
   // At some point, processing mapped input symbols may be folded
@@ -766,7 +850,7 @@ void ScopeLocal::restructureHigh(void)
 
 {				// Define stack mapping based on highs
   clearUnlockedCategory(-1);	// Clear out any unlocked entries
-  MapState state(spaceid,getRangeTree(),fd->getFuncProto().getParamRange(),
+  MapState state(space,getRangeTree(),fd->getFuncProto().getParamRange(),
 		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
     
 #ifdef OPACTION_DEBUG
@@ -775,69 +859,11 @@ void ScopeLocal::restructureHigh(void)
 #endif
   state.gatherHighs(*fd); // Gather stack type information from highs
   state.gatherOpen(*fd);
-  state.gatherSymbols(maptable[spaceid->getIndex()]);
+  state.gatherSymbols(maptable[space->getIndex()]);
   restructure(state,true);
 
-  if (overlapproblems)
+  if (overlapProblems)
     fd->warningHeader("Could not reconcile some variable overlaps");
-}
-
-static bool range_reconcile(const MapRange *a,const MapRange *b)
-
-{				// Can the types coexist at the given offsets
-  if (a->type->getSize() < b->type->getSize()) {
-    const MapRange *tmp = b;
-    b = a;			// Make sure b is smallest
-    a = tmp;
-  }
-  intb mod = (b->sstart - a->sstart) % a->type->getSize();
-  if (mod < 0)
-    mod += a->type->getSize();
-
-  Datatype *sub = a->type;
-  uintb umod = mod;
-  while((sub!=(Datatype *)0)&&(sub->getSize() > b->type->getSize()))
-    sub = sub->getSubType(umod,&umod);
-
-  if (sub == (Datatype *)0) return false;
-  if (umod != 0) return false;
-  if (sub->getSize() < b->type->getSize()) return false;
-  return true;
-}
-
-static bool range_contain(const MapRange *a,const MapRange *b)
-
-{				// Return true if one contains the other
-				// We assume a starts at least as early as b
-				// and that a and b intersect
-  if (a->sstart == b->sstart) return true;
-  //  if (a->sstart==a->send) return true;
-  //  if (b->sstart==b->send) return true;
-  if (b->sstart+b->size-1 <= a->sstart+a->size-1) return true;
-  return false;
-}
-
-static bool range_preferred(const MapRange *a,const MapRange *b,bool reconcile)
-
-{				// Return true if a's type is preferred over b's
-  if (a->start != b->start)
-    return true;		// Something must occupy a->start to b->start
-				// Prefer the locked type
-  if ((b->flags & Varnode::typelock)!=0) {
-    if ((a->flags & Varnode::typelock)==0)
-      return false;
-  }
-  else if ((a->flags & Varnode::typelock)!=0)
-    return true;
-  
-  if (!reconcile) {		// If the ranges don't reconcile
-    if ((a->rangeType == MapRange::open)&&(b->rangeType != MapRange::open)) // Throw out the open range
-      return false;
-    if ((b->rangeType == MapRange::open)&&(a->rangeType != MapRange::open))
-      return true;
-  }
-
-  return (0>a->type->typeOrder(*b->type)); // Prefer the more specific
 }
 
 /// If the first MapRange is an array and the following details line up, adjust the first MapRange
@@ -904,8 +930,8 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
   bool reconcile;
   int4 highestIndex;
 
-  aend = spaceid->wrapOffset(a->start+a->size);
-  bend = spaceid->wrapOffset(b->start+b->size);
+  aend = space->wrapOffset(a->start+a->size);
+  bend = space->wrapOffset(b->start+b->size);
   MapRange::RangeType rangeType = MapRange::fixed;
   highestIndex = -1;
   if ((aend==0)||(bend==0))
@@ -913,9 +939,9 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
   else
     end = (aend > bend) ? aend : bend;
 
-  if (range_contain(a,b)) {	// Check for containment
-    reconcile = range_reconcile(a,b);
-    if (range_preferred(a,b,reconcile)) { // Find bigger type
+  if (a->contain(b)) {			// Does one range contain the other
+    reconcile = a->reconcile(b);	// Can the data-type layout be reconciled
+    if (a->preferred(b,reconcile)) { 	// If a's data-type is preferred over b
       restype = a->type;
       flags = a->flags;
       rangeType = a->rangeType;
@@ -934,7 +960,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
     }
     if (warning && (!reconcile)) { // See if two types match up
       if ((b->rangeType != MapRange::open)&&(a->rangeType != MapRange::open))
-	overlapproblems = true;
+	overlapProblems = true;
     }
   }
   else {
@@ -961,7 +987,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
       return;			// Discard b entirely in favor of a
     }
     // Concede confusion about types, set unknown type rather than a or b's type
-    a->size = spaceid->wrapOffset(end-a->start);
+    a->size = space->wrapOffset(end-a->start);
     a->type = glb->types->getBase(a->size,TYPE_UNKNOWN);
     a->flags = 0;
     a->rangeType = MapRange::fixed;
@@ -984,7 +1010,7 @@ void ScopeLocal::restructure(MapState &state,bool warning)
   MapRange *next;
  				// This implementation does not allow a range
 				// to contain both ~0 and 0
-  overlapproblems = false;
+  overlapProblems = false;
   if (!state.initialize()) return; // No references to stack at all
 
   cur = *state.next();
@@ -1014,7 +1040,7 @@ void ScopeLocal::restructure(MapState &state,bool warning)
 void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 
 {
-  EntryMap *rangemap = maptable[spaceid->getIndex()];
+  EntryMap *rangemap = maptable[space->getIndex()];
   if (rangemap == (EntryMap *)0) return;
   list<SymbolEntry>::iterator iter,enditer;
 
@@ -1063,13 +1089,13 @@ void ScopeLocal::fakeInputSymbols(void)
     Varnode *vn = *iter++;
     bool locked = vn->isTypeLock();
     Address addr = vn->getAddr();
-    if (addr.getSpace() != spaceid) continue;
+    if (addr.getSpace() != space) continue;
     // Only allow offsets which can be parameters
     if (!fd->getFuncProto().getParamRange().inRange(addr,1)) continue;
     uintb endpoint = addr.getOffset() + vn->getSize() - 1;
     while(iter != enditer) {
       vn = *iter;
-      if (vn->getSpace() != spaceid) break;
+      if (vn->getSpace() != space) break;
       if (endpoint < vn->getOffset()) break;
       uintb newendpoint = vn->getOffset() + vn->getSize() -1;
       if (endpoint < newendpoint)
@@ -1122,7 +1148,7 @@ void ScopeLocal::makeNameRecommendationsForSymbols(vector<string> &resname,vecto
 
 { 				// Find nameable symbols with a varnode rep matching a name recommendation
   map<AddressUsePointPair,string>::const_iterator iter;
-  for(iter=name_recommend.begin();iter!=name_recommend.end();++iter) {
+  for(iter=nameRecommend.begin();iter!=nameRecommend.end();++iter) {
     VarnodeLocSet::const_iterator biter,eiter;
     bool isaddrtied;
     const Address &addr((*iter).first.getAddr());
@@ -1167,5 +1193,5 @@ void ScopeLocal::makeNameRecommendationsForSymbols(vector<string> &resname,vecto
 void ScopeLocal::addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz)
 
 {
-  name_recommend[ AddressUsePointPair(addr,usepoint,sz) ] = nm;
+  nameRecommend[ AddressUsePointPair(addr,usepoint,sz) ] = nm;
 }

@@ -63,6 +63,9 @@ struct MapRange {
   MapRange(void) {}	///< Uninitialized constructor
   MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
     start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; }	///< Initialized constructor
+  bool reconcile(const MapRange *b) const;
+  bool contain(const MapRange *b) const;
+  bool preferred(const MapRange *b,bool reconcile) const;
 };
 
 class ProtoModel;
@@ -82,22 +85,22 @@ public:
   };
 private:
   const Funcdata *fd;		///< Function being searched for aliases
-  AddrSpace *spaceid;		///< AddressSpace in which to search
-  mutable vector<AddBase> addbase; ///< Collection of pointers into the AddressSpace
+  AddrSpace *space;		///< AddressSpace in which to search
+  mutable vector<AddBase> addBase; ///< Collection of pointers into the AddressSpace
   mutable vector<uintb> alias;	///< List of aliased addresses (as offsets)
   mutable bool calculated;	///< Have aliases been calculated
-  uintb localextreme;		///< Largest possible offset for a local variable
-  uintb localboundary;		///< Boundary offset separating locals and parameters
-  mutable uintb aliasboundary;	///< Shallowest alias
+  uintb localExtreme;		///< Largest possible offset for a local variable
+  uintb localBoundary;		///< Boundary offset separating locals and parameters
+  mutable uintb aliasBoundary;	///< Shallowest alias
   int4 direction;		///< 1=stack grows negative, -1=positive
   void deriveBoundaries(const FuncProto &proto);	///< Set up basic boundaries for the stack layout
   void gatherInternal(void) const;	///< Run through Varnodes looking for pointers into the stack
 public:
-  AliasChecker() { fd = (const Funcdata *)0; spaceid = (AddrSpace *)0; calculated=false; }	///< Constructor
+  AliasChecker() { fd = (const Funcdata *)0; space = (AddrSpace *)0; calculated=false; }	///< Constructor
   void gather(const Funcdata *f,AddrSpace *spc,bool defer);		///< Gather Varnodes that point on the stack
   bool hasLocalAlias(Varnode *vn) const;	///< Return \b true if it looks like the given Varnode is aliased by a pointer
   void sortAlias(void) const;			///< Sort the alias starting offsets
-  const vector<AddBase> &getAddBase(void) const { return addbase; }	///< Get the collection of pointer Varnodes
+  const vector<AddBase> &getAddBase(void) const { return addBase; }	///< Get the collection of pointer Varnodes
   const vector<uintb> &getAlias(void) const { return alias; }		///< Get the list of alias starting offsets
   static void gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase);
   static uintb gatherOffset(Varnode *vn);
@@ -114,9 +117,10 @@ class MapState {
   RangeList range;			///< The subset of ranges, within the whole address space to analyze
   vector<MapRange *> maplist;		///< The list of collected MapRange hints
   vector<MapRange *>::iterator iter;	///< The current iterator into the MapRange hints
-  Datatype *default_type;		///< The default data-type to use for MapRanges
+  Datatype *defaultType;		///< The default data-type to use for MapRanges
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
   void addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,int4 hi);	///< Add a hint to the collection
+  static bool compareRanges(const MapRange *a,const MapRange *b);	///< Compare to MapRange pointers
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -145,15 +149,12 @@ public:
 /// about the \e stack address space: what portions of it are used for mapped local variables, what
 /// portions are used for temporary storage (not mapped), and what portion is for parameters.
 class ScopeLocal : public ScopeInternal {
-  enum {
-    range_locked=1		///< Flag set when the subset of addresses \e mapped to \b this scope has been locked
-  };
-  AddrSpace *spaceid;		///< Address space containing the local stack
-  bool stackgrowsnegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
-  RangeList localrange;		///< The set of addresses that might hold mapped locals (not parameters)
-  bool overlapproblems;		///< Cached problem flag
-  uint4 qflags;			///< Boolean properties of the scope
-  map<AddressUsePointPair,string> name_recommend;	///< Symbol name recommendations for specific addresses
+  AddrSpace *space;		///< Address space containing the local stack
+  RangeList localRange;		///< The set of addresses that might hold mapped locals (not parameters)
+  map<AddressUsePointPair,string> nameRecommend;	///< Symbol name recommendations for specific addresses
+  bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
+  bool overlapProblems;		///< Cached problem flag
+  bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
   bool adjustFit(MapRange &a) const;	///< Make the given MapRange fit in the current Symbol map
   void createEntry(const MapRange &a);	///< Create a Symbol entry corresponding to the given (fitted) MapRange
   bool rangeAbsorb(MapRange *a,MapRange *b);	///< Try to absorb the second MapRange into the first
@@ -166,13 +167,13 @@ public:
   ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
   virtual ~ScopeLocal(void) {}	///< Destructor
 
-  AddrSpace *getSpaceId(void) const { return spaceid; }		///< Get the associated (stack) address space
+  AddrSpace *getSpaceId(void) const { return space; }		///< Get the associated (stack) address space
 
   /// \brief Is this a storage location for \e unaffected registers
   ///
   /// \param vn is the Varnode storing an \e unaffected register
   /// \return \b true is the Varnode can be used as unaffected storage
-  bool isUnaffectedStorage(Varnode *vn) const { return (vn->getSpace() == spaceid); }
+  bool isUnaffectedStorage(Varnode *vn) const { return (vn->getSpace() == space); }
 
   void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 
