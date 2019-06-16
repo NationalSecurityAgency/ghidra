@@ -16,7 +16,10 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
-AddressSorter::AddressSorter(const Address &ad,const Address &use,int4 sz) : addr(ad), useaddr(use)
+/// \param ad is the storage address of the variable
+/// \param use is the use point address in code
+/// \param sz is the optional size of the variable
+AddressUsePointPair::AddressUsePointPair(const Address &ad,const Address &use,int4 sz) : addr(ad), useaddr(use)
 
 {
   size = sz;
@@ -24,28 +27,31 @@ AddressSorter::AddressSorter(const Address &ad,const Address &use,int4 sz) : add
     useaddr = Address((AddrSpace *)0,0); // Make sure to set offset to zero, so invalids compare equal
 }
 
-bool AddressSorter::operator<(const AddressSorter &op2) const
+/// Compare first by storage address and then by use point address.
+/// Do NOT compare the optional size.
+/// \param op2 is the pair to compare to \b this
+/// \return \b true if \b this should be sorted first
+bool AddressUsePointPair::operator<(const AddressUsePointPair &op2) const
 
-{				// Compare address and use, but NOT size
+{
   if (addr != op2.addr)
     return (addr < op2.addr);
   return (useaddr < op2.useaddr);
 }
 
-bool AddressSorter::operator==(const AddressSorter &op2) const
+/// Storage addresses and use point addresses must match. Size does not have to match.
+/// \param op2 is the pair to test \b this against for equality
+/// \return \b true if \b the two pairs are equal
+bool AddressUsePointPair::operator==(const AddressUsePointPair &op2) const
 
 {
   if (addr != op2.addr) return false;
   return (useaddr == op2.useaddr);
 }
 
-bool AddressSorter::operator!=(const AddressSorter &op2) const
-
-{
-  if (addr != op2.addr) return true;
-  return (useaddr != op2.useaddr);
-}
-
+/// \param spc is the (stack) address space associated with this function's local variables
+/// \param fd is the function associated with these local variables
+/// \param g is the Architecture
 ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(fd->getName(),g)
 
 {
@@ -55,9 +61,13 @@ ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInter
   dedupId = fd->getAddress().getOffset();		// Allow multiple scopes with same name
 } 
 
+/// Turn any symbols that are \e name \e locked but not \e type \e locked into name recommendations
+/// removing the symbol in the process.  This allows the decompiler to decide on how the stack is layed
+/// out without forcing specific variables to mapped. But, if the decompiler does create a variable at
+/// the specific location, it will use the original name.
 void ScopeLocal::collectNameRecs(void)
 
-{ // Turn any symbols that are namelocked but not typelocked into name recommendations (removing symbol)
+{
   SymbolNameTree::iterator iter;
 
   name_recommend.clear();	// Clear out any old name recommendations
@@ -82,9 +92,11 @@ void ScopeLocal::collectNameRecs(void)
   }
 }
 
+/// This resets the discovery process for new local variables mapped to the scope's address space.
+/// Any analysis removing specific ranges from the mapped set (via markNotMapped()) is cleared.
 void ScopeLocal::resetLocalWindow(void)
 
-{				// Reset local discovery
+{
   if ((qflags&range_locked)!=0) return;
   qflags = 0;
 
@@ -133,6 +145,12 @@ void ScopeLocal::restoreXml(const Element *el)
   collectNameRecs();
 }
 
+/// The given range can no longer hold a \e mapped local variable. This indicates the range
+/// is being used for temporary storage.
+/// \param spc is the address space holding the given range
+/// \param first is the starting offset of the given range
+/// \param sz is the number of bytes in the range
+/// \param parameter is \b true if the range is being used to store a sub-function parameter
 void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter)
 
 {
@@ -180,8 +198,8 @@ string ScopeLocal::buildVariableName(const Address &addr,
 				     Datatype *ct,
 				     int4 &index,uint4 flags) const
 {
-  map<AddressSorter,string>::const_iterator iter;
-  iter = name_recommend.find( AddressSorter(addr,pc,0));
+  map<AddressUsePointPair,string>::const_iterator iter;
+  iter = name_recommend.find( AddressUsePointPair(addr,pc,0));
   if (iter != name_recommend.end()) {
     // We are not checking if the recommended size matches
     return makeNameUnique((*iter).second);
@@ -209,7 +227,11 @@ string ScopeLocal::buildVariableName(const Address &addr,
   }
   return ScopeInternal::buildVariableName(addr,pc,ct,index,flags);
 }
-		
+
+/// Shrink the MapRange as necessary so that it fits in the mapped region of the Scope
+/// and doesn't overlap any other Symbols.  If this is not possible, return \b false.
+/// \param a is the given MapRange to fit
+/// \return \b true if a valid adjustment was made
 bool ScopeLocal::adjustFit(MapRange &a) const
 
 {
@@ -236,7 +258,10 @@ bool ScopeLocal::adjustFit(MapRange &a) const
   a.size = maxsize;
   return true;
 }
-		     
+
+/// A name and final data-type is constructed for the MapRange, and they are entered as
+/// a new Symbol into \b this scope.
+/// \param a is the given MapRange to create a Symbol for
 void ScopeLocal::createEntry(const MapRange &a)
 
 {
@@ -267,6 +292,9 @@ static bool compare_ranges(const MapRange *a,const MapRange *b)
   return true;
 }
 
+/// Set up basic offset boundaries for what constitutes a local variable
+/// or a parameter on the stack. This can be informed by the ProtoModel if available.
+/// \param proto is the function prototype to use as a prototype model
 void AliasChecker::deriveBoundaries(const FuncProto &proto)
 
 {
@@ -291,6 +319,9 @@ void AliasChecker::deriveBoundaries(const FuncProto &proto)
   }
 }
 
+/// If there is an AddrSpace (stack) pointer, find its input Varnode, and look for additive uses
+/// of it. Once all these Varnodes are accumulated, calculate specific offsets that start a region
+/// being aliased.
 void AliasChecker::gatherInternal(void) const
 
 {
@@ -317,6 +348,12 @@ void AliasChecker::gatherInternal(void) const
   }
 }
 
+/// For the given function and address space, gather all Varnodes that are pointers into the
+/// address space.  The actual calculation can be deferred until the first time
+/// hasLocalAlias() is called.
+/// \param f is the given function
+/// \param spc is the given address space
+/// \param defer is \b true is gathering is deferred
 void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
 
 {
@@ -331,6 +368,11 @@ void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
     gatherInternal();
 }
 
+/// This is gives a rough analysis of whether the given Varnode might be aliased by another pointer in
+/// the function. If \b false is returned, the Varnode is not likely to have an alias. If \b true is returned,
+/// the Varnode might have an alias.
+/// \param vn is the given Varnode
+/// \return \b true if the Varnode might have a pointer alias
 bool AliasChecker::hasLocalAlias(Varnode *vn) const
 
 {
@@ -352,13 +394,15 @@ void AliasChecker::sortAlias(void) const
   sort(alias.begin(),alias.end());
 }
 
-// For every sum that involves \b startvn, collect the final result Varnode of the sum.
-// A sum is any expression involving only the additive operators
-// INT_ADD, INT_SUB, PTRADD, PTRSUB, and SEGMENTOP.  The routine traverses forward recursively
-// through all descendants of \b vn that are additive operations and collects all the roots
-// of the traversed trees.
-// \param startvn is the Varnode to trace
-// \param addbase will contain all the collected roots
+/// \brief Gather result Varnodes for all \e sums that the given starting Varnode is involved in
+///
+/// For every sum that involves \b startvn, collect the final result Varnode of the sum.
+/// A sum is any expression involving only the additive operators
+/// INT_ADD, INT_SUB, PTRADD, PTRSUB, and SEGMENTOP.  The routine traverses forward recursively
+/// through all descendants of \b vn that are additive operations and collects all the roots
+/// of the traversed trees.
+/// \param startvn is the Varnode to trace
+/// \param addbase will contain all the collected roots
 void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
 
 {
@@ -414,11 +458,13 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
     vnqueue[i].base->clearMark();
 }
 
-// Treat \b vn as the result of a series of ADD operations.
-// Examine all the constant terms of this sum and add them together by traversing
-// the syntax tree rooted at \b vn, backwards, only through additive operations.
-// \param vn is the Varnode to gather off of
-// \return the resulting sub-sum
+/// \brief If the given Varnode is a sum result, return the constant portion of this sum.
+///
+/// Treat \b vn as the result of a series of ADD operations.
+/// Examine all the constant terms of this sum and add them together by traversing
+/// the syntax tree rooted at \b vn, backwards, only through additive operations.
+/// \param vn is the given Varnode to gather off of
+/// \return the resulting sub-sum
 uintb AliasChecker::gatherOffset(Varnode *vn)
 
 {
@@ -459,6 +505,10 @@ uintb AliasChecker::gatherOffset(Varnode *vn)
   return retval & calc_mask(vn->getSize());
 }
 
+/// \param spc is the address space being analyzed
+/// \param rn is the subset of addresses within the address space to analyze
+/// \param pm is subset of ranges within the address space considered to be parameters
+/// \param dt is the default data-type
 MapState::MapState(AddrSpace *spc,const RangeList &rn,
 		     const RangeList &pm,Datatype *dt) : range(rn)
 {
@@ -484,7 +534,14 @@ MapState::~MapState(void)
     delete *iter;
 }
 
-void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,int4 hi)
+/// A specific range of bytes is described for the hint, given a starting offset and other information.
+/// The size of range can be fixed or open-ended. A putative data-type can be provided.
+/// \param st is the starting offset of the range
+/// \param ct is the (optional) data-type information, which may be NULL
+/// \param fl is additional boolean properties
+/// \param rt is the type of the hint
+/// \param hi is the biggest guaranteed index for \e open range hints
+void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,int4 hi)
 
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
@@ -495,7 +552,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,in
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
-  MapRange *range = new MapRange(st,sz,sst,ct,fl,at,hi);
+  MapRange *range = new MapRange(st,sz,sst,ct,fl,rt,hi);
   maplist.push_back(range);
 #ifdef OPACTION_DEBUG
   if (debugon) {
@@ -509,9 +566,12 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,in
 #endif
 }
 
-void MapState::addRange(const EntryMap *rangemap)
+/// Run through all Symbols in the given map and create a corresponding MapRange hint
+/// to \b this collection for each Symbol.
+/// \param rangemap is the given map of Symbols
+void MapState::gatherSymbols(const EntryMap *rangemap)
 
-{				// Add rangemap entries to MapState
+{
   list<SymbolEntry>::const_iterator iter;
   Symbol *sym;
   if (rangemap == (EntryMap *)0) return;
@@ -521,10 +581,12 @@ void MapState::addRange(const EntryMap *rangemap)
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
     uintb start = (*iter).getAddr().getOffset();
     Datatype *ct = sym->getType();
-    addRange(start,ct,sym->getFlags(),MapRange::notAnArray,-1);
+    addRange(start,ct,sym->getFlags(),MapRange::fixed,-1);
   }
 }
 
+/// Sort the collection and add a special terminating MapRange
+/// \return \b true if the collection isn't empty (and iteration can begin)
 bool MapState::initialize(void)
 
 {
@@ -537,7 +599,7 @@ bool MapState::initialize(void)
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
-  MapRange *range = new MapRange(high,1,sst,default_type,0,MapRange::notAnArray,-2);
+  MapRange *range = new MapRange(high,1,sst,default_type,0,MapRange::endpoint,-2);
   maplist.push_back(range);
 
   stable_sort(maplist.begin(),maplist.end(),compare_ranges);
@@ -545,9 +607,13 @@ bool MapState::initialize(void)
   return true;
 }
 
+/// Add a MapRange hint corresponding to each Varnode stored in the address space
+/// for the given function.  The current knowledge of the Varnode's data-type
+/// is included as part of the hint.
+/// \param fd is the given function
 void MapState::gatherVarnodes(const Funcdata &fd)
 
-{				// Add MapState entry for each varnode in -spaceid-
+{
   VarnodeLocSet::const_iterator iter,iterend;
   Varnode *vn;
   iter = fd.beginLoc(spaceid);
@@ -557,17 +623,19 @@ void MapState::gatherVarnodes(const Funcdata &fd)
     if (vn->isFree()) continue;
     uintb start = vn->getOffset();
     Datatype *ct = vn->getType();
-				// Do not force varnodes flags on the entry
+				// Do not force Varnode flags on the entry
 				// as the flags were inherited from the previous
 				// (now obsolete) entry
-    
-    addRange(start,ct,0,MapRange::notAnArray,-1);
+    addRange(start,ct,0,MapRange::fixed,-1);
   }
 }
 
+/// Add a MapRange hint corresponding to each HighVariable that is mapped to our
+/// address space for the given function.
+/// \param fd is the given function
 void MapState::gatherHighs(const Funcdata &fd)
 
-{				// Same as gather_varnodes, but get types from highs
+{
   vector<HighVariable *> varvec;
   VarnodeLocSet::const_iterator iter,iterend;
   Varnode *vn;
@@ -585,16 +653,18 @@ void MapState::gatherHighs(const Funcdata &fd)
     varvec.push_back(high);
     uintb start = vn->getOffset();
     Datatype *ct = high->getType(); // Get type from high
-    addRange(start,ct,0,MapRange::notAnArray,-1);
+    addRange(start,ct,0,MapRange::fixed,-1);
   }
   for(int4 i=0;i<varvec.size();++i)
     varvec[i]->clearMark();
 }
 
+/// For any Varnode that looks like a pointer into our address space, create an
+/// \e open MapRange hint. The size of the object may not be known.
+/// \param fd is the given function
 void MapState::gatherOpen(const Funcdata &fd)
 
-{				// Gather open-ended ranges. These correspond
-				// to the use of ptrs to local variables
+{
   checker.gather(&fd,spaceid,false);
 
   const vector<AliasChecker::AddBase> &addbase( checker.getAddBase() );
@@ -619,7 +689,7 @@ void MapState::gatherOpen(const Funcdata &fd)
     else {
       minItems = -1;
     }
-    addRange(offset,ct,0,MapRange::isAnArray,minItems);
+    addRange(offset,ct,0,MapRange::open,minItems);
   }
 
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
@@ -649,16 +719,21 @@ void MapState::gatherOpen(const Funcdata &fd)
     }
     if (guard.isRangeLocked()) {
       int4 minItems = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
-      addRange(guard.getMinimum(),ct,0,MapRange::boundArray,minItems-1);
+      addRange(guard.getMinimum(),ct,0,MapRange::open,minItems-1);
     }
     else
-      addRange(guard.getMinimum(),ct,0,MapRange::isAnArray,3);
+      addRange(guard.getMinimum(),ct,0,MapRange::open,3);
   }
 }
 
+/// Define stack Symbols based on Varnodes.
+/// This method can be called repeatedly during decompilation. It helps propagate data-types.
+/// Unaliased symbols can optionally be marked to facilitate removal of INDIRECT ops, but
+/// this is generally done later in the process.
+/// \param aliasyes is \b true if unaliased Symbols should be marked
 void ScopeLocal::restructureVarnode(bool aliasyes)
 
-{ // Define stack mapping based on varnodes. Don't mark unaliased symbols unless -aliasyes- is true
+{
   clearUnlockedCategory(-1);	// Clear out any unlocked entries
   MapState state(spaceid,getRangeTree(),fd->getFuncProto().getParamRange(),
 		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
@@ -669,7 +744,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
 #endif
   state.gatherVarnodes(*fd); // Gather stack type information from varnodes
   state.gatherOpen(*fd);
-  state.addRange(maptable[spaceid->getIndex()]);
+  state.gatherSymbols(maptable[spaceid->getIndex()]);
   restructure(state,false);
 
   // At some point, processing mapped input symbols may be folded
@@ -683,6 +758,10 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
     markUnaliased(state.getAlias());
 }
 
+/// Define stack Symbols based on HighVariables.
+/// This method is called once at the end of decompilation to create the final set of stack Symbols after
+/// all data-type propagation has settled. It creates a consistent data-type for all Varnode instances of
+/// a HighVariable.
 void ScopeLocal::restructureHigh(void)
 
 {				// Define stack mapping based on highs
@@ -696,7 +775,7 @@ void ScopeLocal::restructureHigh(void)
 #endif
   state.gatherHighs(*fd); // Gather stack type information from highs
   state.gatherOpen(*fd);
-  state.addRange(maptable[spaceid->getIndex()]);
+  state.gatherSymbols(maptable[spaceid->getIndex()]);
   restructure(state,true);
 
   if (overlapproblems)
@@ -752,21 +831,33 @@ static bool range_preferred(const MapRange *a,const MapRange *b,bool reconcile)
     return true;
   
   if (!reconcile) {		// If the ranges don't reconcile
-    if ((a->isArray())&&(!b->isArray())) // Throw out the open range
+    if ((a->rangeType == MapRange::open)&&(b->rangeType != MapRange::open)) // Throw out the open range
       return false;
-    if ((b->isArray())&&(!a->isArray()))
+    if ((b->rangeType == MapRange::open)&&(a->rangeType != MapRange::open))
       return true;
   }
 
   return (0>a->type->typeOrder(*b->type)); // Prefer the more specific
 }
 
+/// If the first MapRange is an array and the following details line up, adjust the first MapRange
+/// so that it \e absorbs the second and return \b true.
+/// The second MapRange:
+///   - must have the same element size
+///   - must have close to the same data-type
+///   - must line up with the step of the first array
+///   - must not be a locked data-type
+///   - must not extend the size of the first array beyond what is known of its limits
+///
+/// \param a is the first MapRange
+/// \param b is the second MapRange being absorbed
+/// \return \b true if the second MapRange was successfully absorbed
 bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
 
-{ // check if -a- is an array and could absorb -b-
-  if (!a->isArray()) return false;
+{
+  if (a->rangeType != MapRange::open) return false;
   if (a->highind < 0) return false;
-  if (b->highind==-2) return false;	// Don't merge with bounding range
+  if (b->rangeType == MapRange::endpoint) return false;	// Don't merge with bounding range
   Datatype *settype = a->type;
   if (settype->getSize() != b->type->getSize()) return false;
   if (settype->getMetatype() == TYPE_UNKNOWN)
@@ -787,7 +878,7 @@ bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
   diffsz /= settype->getSize();
   if (diffsz > a->highind) return false;
   a->type = settype;
-  if (b->isArray() && (0 <= b->highind)) { // If b has array indexing
+  if (b->rangeType == MapRange::open && (0 <= b->highind)) { // If b has array indexing
     int4 trialhi = b->highind + diffsz;
     if (a->highind < trialhi)
       a->highind = trialhi;
@@ -795,9 +886,17 @@ bool ScopeLocal::rangeAbsorb(MapRange *a,MapRange *b)
   return true;
 }
 
+/// Given that the two MapRanges intersect, redefine the first MapRange so that it
+/// becomes the union of the two original ranges.  The union must succeed in some form.
+/// An attempt is made to preserve the data-type information of both the original ranges,
+/// but changes will be made if necessary.  An exception is thrown if the data-types
+/// are locked and cannot be reconciled.
+/// \param a is the first given MapRange
+/// \param b is the second given MapRange
+/// \param warning is \b true if overlaps that cannot be reconciled should generate a warning comment
 void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
 
-{				// Two ranges intersect, produce the reconciled union (in a)
+{
   uintb aend,bend;
   uintb end;
   Datatype *restype;
@@ -807,7 +906,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
 
   aend = spaceid->wrapOffset(a->start+a->size);
   bend = spaceid->wrapOffset(b->start+b->size);
-  MapRange::ArrayType arrayType = MapRange::notAnArray;
+  MapRange::RangeType rangeType = MapRange::fixed;
   highestIndex = -1;
   if ((aend==0)||(bend==0))
     end = 0;
@@ -819,33 +918,22 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
     if (range_preferred(a,b,reconcile)) { // Find bigger type
       restype = a->type;
       flags = a->flags;
-      arrayType = a->arrayType;
+      rangeType = a->rangeType;
       highestIndex = a->highind;
     }
     else {
       restype = b->type;
       flags = b->flags;
-      arrayType = b->arrayType;
+      rangeType = b->rangeType;
       highestIndex = b->highind;
     }
     if ((a->start==b->start)&&(a->size==b->size)) {
-      arrayType = MapRange::notAnArray;
-      if (a->isArray() || b->isArray()) {
-	arrayType = MapRange::isAnArray;
-	if (a->highind < b->highind) {
-	  highestIndex = b->highind;
-	  if (b->arrayType == MapRange::boundArray)
-	    arrayType = b->arrayType;
-	}
-	else {
-	  highestIndex = a->highind;
-	  if (a->arrayType == MapRange::boundArray)
-	    arrayType = a->arrayType;
-	}
-      }
+      rangeType = (a->rangeType==MapRange::open || b->rangeType==MapRange::open) ? MapRange::open : MapRange::fixed;
+      if (rangeType == MapRange::open)
+	highestIndex = (a->highind < b->highind) ? b->highind : a->highind;
     }
     if (warning && (!reconcile)) { // See if two types match up
-      if ((!b->isArray())&&(!a->isArray()))
+      if ((b->rangeType != MapRange::open)&&(a->rangeType != MapRange::open))
 	overlapproblems = true;
     }
   }
@@ -866,7 +954,7 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
 
   a->type = restype;
   a->flags = flags;
-  a->arrayType = arrayType;
+  a->rangeType = rangeType;
   a->highind = highestIndex;
   if ((!reconcile)&&(a->start != b->start)) { // Truncation is forced
     if ((a->flags & Varnode::typelock)!=0) { // If a is locked
@@ -876,13 +964,19 @@ void ScopeLocal::rangeUnion(MapRange *a,MapRange *b,bool warning)
     a->size = spaceid->wrapOffset(end-a->start);
     a->type = glb->types->getBase(a->size,TYPE_UNKNOWN);
     a->flags = 0;
-    a->arrayType = MapRange::notAnArray;
+    a->rangeType = MapRange::fixed;
     a->highind = -1;
     return;
   }
   a->size = restype->getSize();
 }
 
+/// MapRange hints from the given collection are merged into a definitive set of Symbols
+/// for \b this scope. Overlapping or open MapRange hints are adjusted to form a disjoint
+/// cover of the mapped portion of the address space.  Names for the disjoint cover elements
+/// are chosen, and these form the final Symbols.
+/// \param state is the given collection of MapRange hints
+/// \param warning is \b true if a warning comment should be generated for overlaps that cannot be reconciled
 void ScopeLocal::restructure(MapState &state,bool warning)
 
 {
@@ -900,7 +994,7 @@ void ScopeLocal::restructure(MapState &state,bool warning)
       rangeUnion(&cur,next,warning); // Union them
     else {
       if (!rangeAbsorb(&cur,next)) {
-	if (cur.isArray())
+	if (cur.rangeType == MapRange::open)
 	  cur.size = next->sstart-cur.sstart;
 	if (adjustFit(cur))
 	  createEntry(cur);
@@ -912,9 +1006,14 @@ void ScopeLocal::restructure(MapState &state,bool warning)
 				// build an entry for it
 }
 
+/// Given a set of alias starting offsets, calculate whether each Symbol within this scope might be
+/// aliased by a pointer.  The method uses locked Symbol information when available to determine
+/// how far an alias start might extend.  Otherwise a heuristic is used to determine if the Symbol
+/// is far enough away from the start of the alias to be considered unaliased.
+/// \param alias is the given set of alias starting offsets
 void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 
-{ // Mark all local symbols for which there are no aliases
+{
   EntryMap *rangemap = maptable[spaceid->getIndex()];
   if (rangemap == (EntryMap *)0) return;
   list<SymbolEntry>::iterator iter,enditer;
@@ -948,9 +1047,12 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   }
 }
 
+/// This assigns a Symbol to any input Varnode stored in our address space, which could be
+/// a parameter but isn't in the formal prototype of the function (these should already be in
+/// the scope marked as category '0').
 void ScopeLocal::fakeInputSymbols(void)
 
-{ // We create fake input symbols on the stack
+{
   int4 lockedinputs = getCategorySize(0);
   VarnodeDefSet::const_iterator iter,enditer;
 
@@ -1008,22 +1110,18 @@ void ScopeLocal::fakeInputSymbols(void)
   }
 }
 
-bool ScopeLocal::makeNameRecommendation(string &res,const Address &addr,const Address &usepoint) const
-
-{
-  map<AddressSorter,string>::const_iterator iter;
-  iter = name_recommend.find( AddressSorter(addr,usepoint,0) );
-  if (iter != name_recommend.end()) {
-    res = (*iter).second;
-    return true;
-  }
-  return false;
-}
-
+/// \brief Try to pick recommended names for any unnamed Symbols
+///
+/// Unlocked symbols that are presented to the decompiler are stored off as \e recommended names. These
+/// can be reattached after the decompiler makes a determination of what the final Symbols are.
+/// This method runs through the recommended names and checks if they can be applied to an existing
+/// unnamed Symbol.
+/// \param resname will hold the new name strings
+/// \param ressym will hold the list of Symbols corresponding to the new name strings
 void ScopeLocal::makeNameRecommendationsForSymbols(vector<string> &resname,vector<Symbol *> &ressym) const
 
 { 				// Find nameable symbols with a varnode rep matching a name recommendation
-  map<AddressSorter,string>::const_iterator iter;
+  map<AddressUsePointPair,string>::const_iterator iter;
   for(iter=name_recommend.begin();iter!=name_recommend.end();++iter) {
     VarnodeLocSet::const_iterator biter,eiter;
     bool isaddrtied;
@@ -1058,8 +1156,16 @@ void ScopeLocal::makeNameRecommendationsForSymbols(vector<string> &resname,vecto
   }
 }
 
+/// \brief Add a new recommended name to the list
+///
+/// Recommended names are associated with a storage address, a use point, and a suggested size.
+/// The name may be reattached to a Symbol after decompilation.
+/// \param addr is the storage address
+/// \param usepoint is the address of the code use point
+/// \param nm is the recommended name
+/// \param sz is the suggested size the Symbol should match
 void ScopeLocal::addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz)
 
-{ // Add a recommended name for a local symbol
-  name_recommend[ AddressSorter(addr,usepoint,sz) ] = nm;
+{
+  name_recommend[ AddressUsePointPair(addr,usepoint,sz) ] = nm;
 }

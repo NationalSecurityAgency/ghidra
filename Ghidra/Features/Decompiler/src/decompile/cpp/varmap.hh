@@ -13,89 +13,110 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Structure for dealing with local variables
+/// \file varmap.hh
+/// \brief Classes for keeping track of local variables and reconstructing stack layout
 
 #ifndef __CPUI_VARMAP__
 #define __CPUI_VARMAP__
 
 #include "database.hh"
 
-class AddressSorter {
-  Address addr;
-  Address useaddr;
-  int4 size;			// Recommended size
+/// \brief An Address pair with a point of use
+///
+/// A storage location and a point in the code where the storage is referenced.
+/// This object sorts first based on the storage address then on the use point.
+class AddressUsePointPair {
+  Address addr;			///< The starting address of the storage location
+  Address useaddr;		///< The code address at the point of use
+  int4 size;			///< An optional/recommended size for the variable being stored
 public:
-  AddressSorter(const Address &ad,const Address &use,int4 sz);
-  AddressSorter(const AddressSorter &op2) : addr(op2.addr), useaddr(op2.useaddr) { size = op2.size; }
-  const Address &getAddr(void) const { return addr; }
-  const Address &getUseAddr(void) const { return useaddr; }
-  int4 getSize(void) const { return size; }
-  bool operator<(const AddressSorter &op2) const;
-  bool operator==(const AddressSorter &op2) const;
-  bool operator!=(const AddressSorter &op2) const;
+  AddressUsePointPair(const Address &ad,const Address &use,int4 sz);	///< Constructor
+  AddressUsePointPair(const AddressUsePointPair &op2) : addr(op2.addr), useaddr(op2.useaddr) {
+    size = op2.size; }	///< Copy constructor
+  const Address &getAddr(void) const { return addr; }	///< Get the storage address
+  const Address &getUseAddr(void) const { return useaddr; }	///< Get the use point address
+  int4 getSize(void) const { return size; }			///< Get the optional size
+  bool operator<(const AddressUsePointPair &op2) const;		///< Compare operation
+  bool operator==(const AddressUsePointPair &op2) const;	///< Test for equality
 };
 
-// All offsets are byte based (as opposed to unit based)
-
-// Structure for internal map layout
+/// \brief Partial data-type information mapped to a specific range of bytes
+///
+/// This object gives a hint about the data-type for a sequence of bytes
+/// starting at a specific address offset (typically on the stack). It describes
+/// where the data-type starts, what data-type it might be, and how far it extends
+/// from the start point (possibly as an array).
 struct MapRange {
-  enum ArrayType {
-    notAnArray = 0,		///< Not an array
-    isAnArray = 1,		///< Some kind of array
-    boundArray = 2		///< An array with an established set of items
+  /// \brief The basic categorization of the range
+  enum RangeType {
+    fixed = 0,		///< A data-type with a fixed size
+    open = 1,		///< An array with a (possibly unknown) number of elements
+    endpoint = 2	///< An (artificial) boundary to the range of bytes getting analyzed
   };
-  uintb start;			// Start of range
-  int4 size;
-  intb sstart;			// Signed version of start point
-  Datatype *type;
-  uint4 flags;
-  ArrayType arrayType;
-  int4 highind;			// Minimum upper bound on array index
-  MapRange(void) {}
-  MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,ArrayType at,int4 hi) {
-    start=st; size=sz; sstart=sst; type=ct; flags=fl; arrayType = at; highind=hi; }
-  bool isArray(void) const { return (arrayType != notAnArray); }
+  uintb start;		///< Starting offset of \b this range of bytes
+  int4 size;		///< Number of bytes in a single element of this range
+  intb sstart;		///< A signed version of the starting offset
+  Datatype *type;	///< Putative data-type for a single element of this range
+  uint4 flags;		///< Additional boolean properties of this range
+  RangeType rangeType;	///< The type of range
+  int4 highind;		///< Minimum upper bound on the array index (if \b this is \e open)
+  MapRange(void) {}	///< Uninitialized constructor
+  MapRange(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
+    start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; }	///< Initialized constructor
 };
 
 class ProtoModel;
 
+/// \brief A light-weight class for analyzing pointers and aliasing on the stack
+///
+/// The gather() method looks for pointer references into a specific AddressSpace
+/// (usually the stack). Then hasLocalAlias() checks if a specific Varnode within
+/// the AddressSpace is (possibly) aliased by one of the gathered pointer references.
 class AliasChecker {
 public:
+  /// \brief A helper class holding a Varnode pointer reference and a possible index added to it
   struct AddBase {
-    Varnode *base;
-    Varnode *index;
-    AddBase(Varnode *b,Varnode *i) { base=b; index=i; }
+    Varnode *base;		///< The Varnode holding the base pointer
+    Varnode *index;		///< The index value or NULL
+    AddBase(Varnode *b,Varnode *i) { base=b; index=i; }	///< Constructor
   };
 private:
-  const Funcdata *fd;	// getFuncdata to search for aliases
-  AddrSpace *spaceid;		// Space in which to search
-  mutable vector<AddBase> addbase; // Collection of pointer exprs
-  mutable vector<uintb> alias;	// List of aliased addresses
-  mutable bool calculated;	// Are aliases cached
-  uintb localextreme;		// Local varible which is deepest on stack
-  uintb localboundary;		// Boundary between locals and parameters
-  mutable uintb aliasboundary;	// Shallowest alias
-  int4 direction;		// 1=stack grows negative, -1=positive
-  void deriveBoundaries(const FuncProto &proto);
-  void gatherInternal(void) const;
+  const Funcdata *fd;		///< Function being searched for aliases
+  AddrSpace *spaceid;		///< AddressSpace in which to search
+  mutable vector<AddBase> addbase; ///< Collection of pointers into the AddressSpace
+  mutable vector<uintb> alias;	///< List of aliased addresses (as offsets)
+  mutable bool calculated;	///< Have aliases been calculated
+  uintb localextreme;		///< Largest possible offset for a local variable
+  uintb localboundary;		///< Boundary offset separating locals and parameters
+  mutable uintb aliasboundary;	///< Shallowest alias
+  int4 direction;		///< 1=stack grows negative, -1=positive
+  void deriveBoundaries(const FuncProto &proto);	///< Set up basic boundaries for the stack layout
+  void gatherInternal(void) const;	///< Run through Varnodes looking for pointers into the stack
 public:
-  AliasChecker() { fd = (const Funcdata *)0; spaceid = (AddrSpace *)0; calculated=false; }
-  void gather(const Funcdata *f,AddrSpace *spc,bool defer);
-  bool hasLocalAlias(Varnode *vn) const;
-  void sortAlias(void) const;
-  const vector<AddBase> &getAddBase(void) const { return addbase; }
-  const vector<uintb> &getAlias(void) const { return alias; }
-  static void gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase); // Gather result varnodes for all \e sums that \b startvn is involved in
-  static uintb gatherOffset(Varnode *vn); // If \b vn is a sum result, return the constant portion of this sum
+  AliasChecker() { fd = (const Funcdata *)0; spaceid = (AddrSpace *)0; calculated=false; }	///< Constructor
+  void gather(const Funcdata *f,AddrSpace *spc,bool defer);		///< Gather Varnodes that point on the stack
+  bool hasLocalAlias(Varnode *vn) const;	///< Return \b true if it looks like the given Varnode is aliased by a pointer
+  void sortAlias(void) const;			///< Sort the alias starting offsets
+  const vector<AddBase> &getAddBase(void) const { return addbase; }	///< Get the collection of pointer Varnodes
+  const vector<uintb> &getAlias(void) const { return alias; }		///< Get the list of alias starting offsets
+  static void gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase);
+  static uintb gatherOffset(Varnode *vn);
 };
 
+/// \brief A container for hints about the data-type layout of an address space
+///
+/// A collection of data-type hints for the address space (as MapRange objects) can
+/// be collected from Varnodes, HighVariables or other sources, using the
+/// gatherVarnodes(), gatherHighs(), and gatherOpen() methods. This class can then sort
+/// and iterate through the MapRange objects.
 class MapState {
-  AddrSpace *spaceid;
-  RangeList range;
-  vector<MapRange *> maplist;
-  vector<MapRange *>::iterator iter;
-  Datatype *default_type;
-  AliasChecker checker;
+  AddrSpace *spaceid;			///< The address space being analyzed
+  RangeList range;			///< The subset of ranges, within the whole address space to analyze
+  vector<MapRange *> maplist;		///< The list of collected MapRange hints
+  vector<MapRange *>::iterator iter;	///< The current iterator into the MapRange hints
+  Datatype *default_type;		///< The default data-type to use for MapRanges
+  AliasChecker checker;			///< A collection of pointer Varnodes into our address space
+  void addRange(uintb st,Datatype *ct,uint4 fl,MapRange::RangeType rt,int4 hi);	///< Add a hint to the collection
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -103,43 +124,57 @@ public:
   void turnOnDebug(Architecture *g) const { debugon = true; glb=g; }
   void turnOffDebug(void) const { debugon = false; }
 #endif
-  MapState(AddrSpace *spc,const RangeList &rn,const RangeList &pm,Datatype *dt);
-  ~MapState(void);
-  void addRange(uintb st,Datatype *ct,uint4 fl,MapRange::ArrayType at,int4 hi);
-  void addRange(const EntryMap *rangemap);
-  bool initialize(void);
-  void sortAlias(void) { checker.sortAlias(); }
-  const vector<uintb> &getAlias(void) { return checker.getAlias(); }
-  void gatherVarnodes(const Funcdata &fd);
-  void gatherHighs(const Funcdata &fd);
-  void gatherOpen(const Funcdata &fd);
-  MapRange *next(void) { return *iter; }
-  bool getNext(void) { ++iter; if (iter==maplist.end()) return false; return true; }
+  MapState(AddrSpace *spc,const RangeList &rn,const RangeList &pm,Datatype *dt);	///< Constructor
+  ~MapState(void);		///< Destructor
+  bool initialize(void);	///< Initialize the hint collection for iteration
+  void sortAlias(void) { checker.sortAlias(); }		///< Sort the alias starting offsets
+  const vector<uintb> &getAlias(void) { return checker.getAlias(); }	///< Get the list of alias starting offsets
+  void gatherSymbols(const EntryMap *rangemap);		///< Add Symbol information as hints to the collection
+  void gatherVarnodes(const Funcdata &fd);		///< Add stack Varnodes as hints to the collection
+  void gatherHighs(const Funcdata &fd);			///< Add HighVariables as hints to the collection
+  void gatherOpen(const Funcdata &fd);			///< Add pointer references as hints to the collection
+  MapRange *next(void) { return *iter; }		///< Get the current MapRange hint in the collection
+  bool getNext(void) { ++iter; if (iter==maplist.end()) return false; return true; }	///< Advance the iterator, return \b true if another hint is available
 };
 
+/// \brief A Symbol scope for \e local variables of a particular function.
+///
+/// This acts like any other variable Scope, but is associated with a specific function
+/// and the address space where the function maps its local variables and parameters, typically
+/// the \e stack space. This object in addition to managing the local Symbols, builds up information
+/// about the \e stack address space: what portions of it are used for mapped local variables, what
+/// portions are used for temporary storage (not mapped), and what portion is for parameters.
 class ScopeLocal : public ScopeInternal {
-  enum { range_locked=1 };
-  AddrSpace *spaceid;		// Space containing main local stack
-  bool stackgrowsnegative;
-  RangeList localrange;		// Address ranges that might hold mapped locals (not parameters)
-  bool overlapproblems;		// Cached problem flag
-  uint4 qflags;
-  map<AddressSorter,string> name_recommend;
-  bool adjustFit(MapRange &a) const;
-  void createEntry(const MapRange &a);
-  bool rangeAbsorb(MapRange *a,MapRange *b);
-  void rangeUnion(MapRange *a,MapRange *b,bool warning);
-  void restructure(MapState &state,bool warning);
-  void markUnaliased(const vector<uintb> &alias);
-  void fakeInputSymbols(void);
-  void collectNameRecs(void);
+  enum {
+    range_locked=1		///< Flag set when the subset of addresses \e mapped to \b this scope has been locked
+  };
+  AddrSpace *spaceid;		///< Address space containing the local stack
+  bool stackgrowsnegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
+  RangeList localrange;		///< The set of addresses that might hold mapped locals (not parameters)
+  bool overlapproblems;		///< Cached problem flag
+  uint4 qflags;			///< Boolean properties of the scope
+  map<AddressUsePointPair,string> name_recommend;	///< Symbol name recommendations for specific addresses
+  bool adjustFit(MapRange &a) const;	///< Make the given MapRange fit in the current Symbol map
+  void createEntry(const MapRange &a);	///< Create a Symbol entry corresponding to the given (fitted) MapRange
+  bool rangeAbsorb(MapRange *a,MapRange *b);	///< Try to absorb the second MapRange into the first
+  void rangeUnion(MapRange *a,MapRange *b,bool warning);	///< Try to form the union of the given two MapRanges
+  void restructure(MapState &state,bool warning);	///< Merge hints into a formal Symbol layout of the address space
+  void markUnaliased(const vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
+  void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
+  void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
 public:
-  ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);
-  virtual ~ScopeLocal(void) {}
+  ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
+  virtual ~ScopeLocal(void) {}	///< Destructor
 
-  AddrSpace *getSpaceId(void) const { return spaceid; }
+  AddrSpace *getSpaceId(void) const { return spaceid; }		///< Get the associated (stack) address space
+
+  /// \brief Is this a storage location for \e unaffected registers
+  ///
+  /// \param vn is the Varnode storing an \e unaffected register
+  /// \return \b true is the Varnode can be used as unaffected storage
   bool isUnaffectedStorage(Varnode *vn) const { return (vn->getSpace() == spaceid); }
-  void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);
+
+  void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 
 				// Routines that are specific to one address space
   virtual void saveXml(ostream &s) const;
@@ -148,10 +183,9 @@ public:
 				   const Address &pc,
 				   Datatype *ct,
 				   int4 &index,uint4 flags) const;
-  void resetLocalWindow(void);
-  void restructureVarnode(bool aliasyes);
-  void restructureHigh(void);
-  bool makeNameRecommendation(string &res,const Address &addr,const Address &usepoint) const;
+  void resetLocalWindow(void);	///< Reset the set of addresses that are considered mapped by the scope to the default
+  void restructureVarnode(bool aliasyes);	///< Layout mapped symbols based on Varnode information
+  void restructureHigh(void);			///< Layout mapped symbols based on HighVariable information
   void makeNameRecommendationsForSymbols(vector<string> &resname,vector<Symbol *> &ressym) const;
   void addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz);
 };
