@@ -10,6 +10,6 @@ The data/buildLanguage.xml is used for building the contents of the data/languag
 The skel language definition has been commented-out within the skel.ldefs file so that the 
 skeleton language does not show-up within Ghidra.
 
-See the Sleigh language documentation (docs/languages/sleigh.htm or sleigh.pdf) for details
-on Sleigh language specification syntax.
+See the Sleigh language documentation (docs/languages/index.html) for details Sleigh language 
+specification syntax.
  

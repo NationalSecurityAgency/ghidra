@@ -77,6 +77,10 @@ public class CreateGhidraModuleProjectWizard extends Wizard implements INewWizar
 
 	@Override
 	public boolean performFinish() {
+		if (!validate()) {
+			return false;
+		}
+
 		File ghidraInstallDir = ghidraInstallationPage.getGhidraInstallDir();
 		String projectName = projectPage.getProjectName();
 		boolean createRunConfig = projectPage.shouldCreateRunConfig();
@@ -147,5 +151,21 @@ public class CreateGhidraModuleProjectWizard extends Wizard implements INewWizar
 		finally {
 			monitor.done();
 		}
+	}
+
+	/**
+	 * Validates the wizard pages.  If they are invalid, an error popup will be displayed which
+	 * will indicate the problem.
+	 * 
+	 * @return True if the data returned from the wizard pages are valid; otherwise, false
+	 */
+	private boolean validate() {
+		if (projectPage.getProjectDir().getAbsolutePath().startsWith(
+			ghidraInstallationPage.getGhidraInstallDir().getAbsolutePath())) {
+			EclipseMessageUtils.showErrorDialog("Invalid Project Root Directory",
+				"Project root directory cannot reside inside of the selected Ghidra installation directory.");
+			return false;
+		}
+		return true;
 	}
 }

@@ -12,6 +12,7 @@ GhidraDevPlugin/build.gradle||GHIDRA||||END|
 GhidraDevPlugin/build.properties||GHIDRA||||END|
 GhidraDevPlugin/build_README.txt||GHIDRA||||END|
 GhidraDevPlugin/icons/GhidraIcon16.png||GHIDRA||||END|
+GhidraDevPlugin/icons/GhidraIcon16_bw.png||GHIDRA||||END|
 GhidraDevPlugin/icons/brick_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/brick_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/folder_link.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
