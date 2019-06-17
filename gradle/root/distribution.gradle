@@ -172,19 +172,14 @@ task assembleDistribution (type: Copy) {
 	exclude "**/.settings/**"
 	
 	/////////////////////////////
-	// COPY all GPL code
+	// COPY all GPL support files
+	// (modules with build.gradle handled separately)
 	/////////////////////////////
 	from (ROOT_PROJECT_DIR + "/GPL") {
-		exclude "*/bin"
-		exclude "*/build"
+		include "*.*"
+		include "Icons/**"
+		include "licenses/**"
 		into "GPL"
-	}	
-	
-	//////////////////////////////
-	// LGPL SOURCE INCLUSION
-	//////////////////////////////
-	from ("${rootProject.ext.BIN_REPO}/ExternalLibraries/libsSrc/jcalendar-1.3.3.zip" ) {
-		into "GPL/librarySourceForLGPL"
 	}
 	
 	//////////////////////////////

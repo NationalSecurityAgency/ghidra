@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -97,9 +99,77 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertCurrentAddress(addr(linkAddress));
 	}
 
+	@Test
+	public void testNewDecompileNavigatesToFunctionSignature() {
+
+		decompile("100000bf0"); // 'main'
+		int line = 5; // arbitrary value in view
+		int charPosition = 5; // arbitrary
+		setDecompilerLocation(line, charPosition);
+
+		decompile("100000d60"); // _call_structure_A()
+		line = 0; // function signature
+		charPosition = 0; // start of signature
+		assertCurrentLocation(line, charPosition);
+	}
+
+	@Test
+	public void testDecompiler_CopyFromSymbolWithoutSelection() throws Exception {
+
+		/*
+		 	
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+		int line = 2; 		  // void
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		copy();
+		String copiedText = getClipboardText();
+		assertEquals("void", copiedText);
+
+		line = 5; 			// _printf
+		charPosition = 2; 	// 
+		setDecompilerLocation(line, charPosition);
+
+		copy();
+		copiedText = getClipboardText();
+		assertEquals("_printf", copiedText);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void copy() {
+
+		Set<DockingActionIf> actions = getActionsByOwnerAndName(tool, "ClipboardPlugin", "Copy");
+		for (DockingActionIf action : actions) {
+			Object service = getInstanceField("clipboardService", action);
+			if (service.getClass().toString().contains("Decomp")) {
+				performAction(action);
+				return;
+			}
+		}
+
+		fail("Could not find Decompiler Copy action");
+	}
 
 	private void setComment(String address, int type, String comment) {
 		applyCmd(program, new SetCommentCmd(addr(address), type, comment));
@@ -139,6 +209,14 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
 		String actual = field.getText();
 		assertEquals("Line text not as expected at line " + line, expected, actual);
+	}
+
+	private void assertCurrentLocation(int line, int col) {
+		int oneBasedLine = line + 1;
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		FieldLocation actual = panel.getCursorPosition();
+		FieldLocation expected = loc(oneBasedLine, col);
+		assertEquals("Decompiler cursor is not at the expected location", expected, actual);
 	}
 
 	private String getTokenText(FieldLocation loc) {

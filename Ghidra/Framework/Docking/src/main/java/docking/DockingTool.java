@@ -16,13 +16,17 @@
 package docking;
 
 import java.awt.Window;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 
 import docking.action.DockingActionIf;
 import ghidra.framework.options.ToolOptions;
 
+/**
+ * Generic tool interface for managing {@link ComponentProvider}s and 
+ * {@link DockingActionIf actions}
+ */
 public interface DockingTool {
 
 	/**
@@ -125,25 +129,27 @@ public interface DockingTool {
 	public void removeLocalAction(ComponentProvider componentProvider, DockingActionIf action);
 
 	/**
-	 * Return a list of all actions in the tool.
-	 * @return list of all actions
+	 * Return a set of all actions in the tool.
+	 * 
+	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
+	 * actions exist that share the same full name (the full name is the action name with the 
+	 * owner name, such as "My Action (MyPlugin)".
+	 * 
+	 * @return set of all actions
 	 */
-	public List<DockingActionIf> getAllActions();
+	public Set<DockingActionIf> getAllActions();
 
 	/**
 	 * Returns all actions for the given owner
+	 * 
+	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
+	 * actions exist that share the same full name (the full name is the action name with the 
+	 * owner name, such as "My Action (MyPlugin)".
+	 * 
 	 * @param owner the action owner's name
 	 * @return the actions
 	 */
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner);
-
-	/**
-	 * Return an list of actions with the given full name
-	 * @param fullActionName action name that includes the owner's name in
-	 * 		  parentheses, e.g. "MyAction (MyPlugin)"
-	 * @return the actions
-	 */
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName);
+	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner);
 
 	/**
 	 * Shows or hides the component provider in the tool

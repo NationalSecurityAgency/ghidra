@@ -277,20 +277,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 						completionWindow.setVisible(false);
 						e.consume();
 						break;
-					case KeyEvent.VK_D:
-						if (e.isControlDown()) {
-							// Ctrl+D - reset interpreter
-							e.consume();
-							interpreter.reset();
-						}
-						break;
-					case KeyEvent.VK_I:
-						if (e.isControlDown()) {
-							// Ctrl+I - interrupt interpreter
-							e.consume();
-							interpreter.interrupt();
-						}
-						break;
 					default:
 
 						// Check for the completion window trigger on input that contains text

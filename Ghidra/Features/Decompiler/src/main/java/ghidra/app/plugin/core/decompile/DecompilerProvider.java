@@ -86,7 +86,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
-	private DecompileClipboardProvider clipboardProvider;
+	private DecompilerClipboardProvider clipboardProvider;
 	private DecompileOptions decompilerOptions;
 
 	private Program program;
@@ -124,7 +124,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public DecompilerProvider(DecompilePlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), "Decompiler", plugin.getName(), DecompilerActionContext.class);
 		this.plugin = plugin;
-		clipboardProvider = new DecompileClipboardProvider(plugin, this);
+		clipboardProvider = new DecompilerClipboardProvider(plugin, this);
 		setConnected(isConnected);
 
 		decompilerOptions = new DecompileOptions();

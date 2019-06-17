@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -96,7 +96,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.close(program);
 		program = buildProgram("sdk");
 		env.open(program);
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Add Block") || action.getName().equals("Set Image Base") ||
 				action.getName().equals("View Memory Map")) {
@@ -114,7 +114,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.close(program);
 		JTable table = provider.getTable();
 		assertEquals(0, table.getModel().getRowCount());
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (!action.getName().equals("View Memory Map")) {
 				assertTrue(!action.isEnabledForContext(provider.getActionContext(null)));

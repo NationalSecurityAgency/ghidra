@@ -26,8 +26,8 @@ import javax.swing.*;
 import javax.swing.tree.*;
 
 import docking.DockingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
-import docking.util.KeyBindingUtils;
 import docking.widgets.table.AutoscrollAdapter;
 
 /**

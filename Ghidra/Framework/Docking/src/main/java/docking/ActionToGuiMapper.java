@@ -28,7 +28,7 @@ import ghidra.util.*;
 /**
  * Manages the global actions for the menu and toolbar.
  */
-public class DockingActionManager {
+public class ActionToGuiMapper {
 
 	private HashSet<DockingActionIf> globalActions = new LinkedHashSet<>();
 
@@ -44,12 +44,7 @@ public class DockingActionManager {
 	private PopupActionManager popupActionManager;
 	private DockingAction keyBindingsAction;
 
-	/**
-	 * Constructs a new ActionManager
-	 * @param frame the frame to contain the menu and toolbar.
-	 * @param enableDiagnosticActions if true additional diagnostic actions will enabled
-	 */
-	DockingActionManager(DockingWindowManager winMgr) {
+	ActionToGuiMapper(DockingWindowManager winMgr) {
 		menuGroupMap = new MenuGroupMap();
 
 		menuBarMenuHandler = new MenuBarMenuHandler(winMgr);
@@ -90,9 +85,10 @@ public class DockingActionManager {
 	/**
 	 * Register a specific Help content location for a component.
 	 * The DocWinListener will be notified with the help location if the specified
-	 * component 'c' has focus and the help key is pressed. 
+	 * component 'c' has focus and the help key is pressed.
+	 *  
 	 * @param c component
-	 * @param helpURL help content URL
+	 * @param helpLocation the help location
 	 */
 	static void setHelpLocation(JComponent c, HelpLocation helpLocation) {
 		DockingWindowManager.getHelpService().registerHelp(c, helpLocation);
@@ -149,39 +145,16 @@ public class DockingActionManager {
 		globalActions.remove(action);
 	}
 
-	public List<DockingActionIf> getAllDockingActionsByFullActionName(String fullActionName) {
+	public Set<DockingActionIf> getAllActions() {
 
 		// Note: this method is called by non-Swing test code.  Synchronize access to the 
 		//       data structures in this class in order to prevent concurrent mod exceptions.
-		List<DockingActionIf> actions = new ArrayList<>();
+		Set<DockingActionIf> actions = new HashSet<>();
 		SystemUtilities.runSwingNow(() -> {
-			actions.addAll(getGlobalDockingActionsByFullActionName(fullActionName));
-			actions.addAll(getLocalDockingActionsByFullActionName(fullActionName));
+			actions.addAll(globalActions);
+			actions.addAll(keyBindingsManager.getLocalActions());
 		});
 		return actions;
-	}
-
-	private List<DockingActionIf> getGlobalDockingActionsByFullActionName(String fullActionName) {
-		List<DockingActionIf> matchingActions = new ArrayList<>();
-		ArrayList<DockingActionIf> existingAction = new ArrayList<>(globalActions);
-		for (DockingActionIf action : existingAction) {
-			if (fullActionName.equals(action.getFullName())) {
-				matchingActions.add(action);
-			}
-		}
-		return matchingActions;
-	}
-
-	private List<DockingActionIf> getLocalDockingActionsByFullActionName(String fullActionName) {
-		List<DockingActionIf> matchingActions = new ArrayList<>();
-		ArrayList<DockingActionIf> existingAction =
-			new ArrayList<>(keyBindingsManager.getLocalActions());
-		for (DockingActionIf action : existingAction) {
-			if (fullActionName.equals(action.getFullName())) {
-				matchingActions.add(action);
-			}
-		}
-		return matchingActions;
 	}
 
 	public Action getDockingKeyAction(KeyStroke keyStroke) {

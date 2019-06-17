@@ -802,7 +802,7 @@ public class EquatePlugin extends Plugin {
 
 			@Override
 			protected boolean isEnabledForContext(ListingActionContext context) {
-				return context.hasSelection() || isEquatePermitted(context);
+				return context.hasSelection();
 			}
 		};
 		applyEnumAction.setHelpLocation(new HelpLocation("EquatePlugin", "Apply_Enum"));

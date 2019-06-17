@@ -33,7 +33,7 @@ import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
-import ghidra.util.table.DeleteTableRowAction;
+import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
 
 /**

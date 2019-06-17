@@ -21,9 +21,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EventObject;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -33,10 +31,10 @@ import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.help.Help;
 import docking.help.HelpService;
-import docking.util.KeyBindingUtils;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
@@ -1519,17 +1517,18 @@ public abstract class CompositeEditorPanel extends JPanel
 		@Override
 		public boolean isKeyConsumed(KeyStroke keyStroke) {
 			if (isEditing()) {
+				// don't let actions through when editing our table
 				return true;
 			}
 
-			// don't let actions through when editing our table
+			// TODO this should no longer be needed
 			return !hasLocalActionForKeyStroke(keyStroke);
 		}
 
 		private boolean hasLocalActionForKeyStroke(KeyStroke keyStroke) {
 			Plugin plugin = provider.getPlugin();
 			PluginTool tool = plugin.getTool();
-			List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
 			for (DockingActionIf action : actions) {
 				if (!(action instanceof CompositeEditorTableAction)) {
 					continue;

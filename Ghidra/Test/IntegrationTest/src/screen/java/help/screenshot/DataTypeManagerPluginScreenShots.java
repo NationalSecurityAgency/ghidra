@@ -156,10 +156,10 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testPreviewWindow() {
-		String fullActionName = "Show Preview Window (DataTypeManagerPlugin)";
-		List<DockingActionIf> action = tool.getDockingActionsByFullActionName(fullActionName);
-		performAction(action.get(0));
-//		performAction("Show Preview Window", "DataTypeManagerPlugin", false);
+
+		DockingActionIf action = getAction(tool, "DataTypeManagerPlugin", "Show Preview Window");
+		performAction(action);
+
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
 		GTreeRootNode rootNode = tree.getRootNode();

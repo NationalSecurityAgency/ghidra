@@ -16,16 +16,17 @@
 package docking.action;
 
 import java.awt.Component;
-import java.util.List;
+import java.util.Set;
 
 import docking.*;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.Msg;
 import ghidra.util.ReservedKeyBindings;
 
 public class KeyBindingAction extends DockingAction {
-	private final DockingActionManager dockingActionManager;
+	private final ActionToGuiMapper dockingActionManager;
 
-	public KeyBindingAction(DockingActionManager dockingActionManager) {
+	public KeyBindingAction(ActionToGuiMapper dockingActionManager) {
 		super("Set KeyBinding", DockingWindowManager.DOCKING_WINDOWS_OWNER);
 		this.dockingActionManager = dockingActionManager;
 		createReservedKeyBinding(ReservedKeyBindings.UPDATE_KEY_BINDINGS_KEY);
@@ -51,20 +52,20 @@ public class KeyBindingAction extends DockingAction {
 
 		if (!action.isKeyBindingManaged()) {
 			Component parent = windowManager.getActiveComponent();
-			Msg.showInfo(getClass(), parent, "Unable to Set Keybinding", "Action \"" +
-				getActionName(action) + "\" is not keybinding managed and thus a " +
-				"keybinding cannot be set.");
+			Msg.showInfo(getClass(), parent, "Unable to Set Keybinding",
+				"Action \"" + getActionName(action) + "\" is not keybinding managed and thus a " +
+					"keybinding cannot be set.");
 			return;
 		}
 
 		KeyEntryDialog d = new KeyEntryDialog(action, dockingActionManager);
-		windowManager.showDialog(d);
+		DockingWindowManager.showDialog(d);
 	}
 
 	/**
 	 * Checks to see if the given action is key binding-managed by another action at the  
 	 * tool-level and returns that tool-level action if found.
-	 * @param dockableAction The action for which to check for tool-level actions
+	 * @param dockingAction The action for which to check for tool-level actions
 	 * @return A tool-level action if one is found; otherwise, the original action
 	 */
 	private DockingActionIf maybeGetToolLevelAction(DockingActionIf dockingAction) {
@@ -72,15 +73,13 @@ public class KeyBindingAction extends DockingAction {
 			return dockingAction;
 		}
 
-		// It is not key binding managed, which means that it may have tool-level representation
-		// that allows for key binding editing (think DummyKeyBindingsOptionsAction).
-
-		// Bad form (code duplication)--code from DockingAction.getFullName()
-		String actionToolName = dockingAction.getName() + " (Tool)";
-		List<DockingActionIf> actions =
-			dockingActionManager.getAllDockingActionsByFullActionName(actionToolName);
-		for (DockingActionIf action : actions) {
-			return action;
+		// It is not key binding managed, which means that it may be a shared key binding
+		String actionName = dockingAction.getName();
+		Set<DockingActionIf> allActions = dockingActionManager.getAllActions();
+		DockingActionIf sharedAction =
+			KeyBindingUtils.getSharedKeyBindingAction(allActions, actionName);
+		if (sharedAction != null) {
+			return sharedAction;
 		}
 
 		return dockingAction;

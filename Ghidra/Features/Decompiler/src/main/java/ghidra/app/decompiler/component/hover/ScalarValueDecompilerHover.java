@@ -67,7 +67,7 @@ public class ScalarValueDecompilerHover extends AbstractScalarOperandHover
 	public JComponent getHoverComponent(Program program, ProgramLocation programLocation,
 			FieldLocation fieldLocation, Field field) {
 
-		if (!enabled || programLocation == null) {
+		if (!enabled) {
 			return null;
 		}
 

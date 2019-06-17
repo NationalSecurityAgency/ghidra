@@ -38,7 +38,7 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -74,7 +74,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private SearchLocation currentSearchLocation;
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
-	private final DecompileClipboardProvider clipboard;
+	private final DecompilerClipboardProvider clipboard;
 
 	private Color originalBackgroundColor;
 	private boolean useNonFunctionColor = false;
@@ -83,7 +83,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private DecompilerHoverProvider decompilerHoverProvider;
 
 	DecompilerPanel(DecompilerController controller, DecompileOptions options,
-			DecompileClipboardProvider clipboard, JComponent taskMonitorComponent) {
+			DecompilerClipboardProvider clipboard, JComponent taskMonitorComponent) {
 		this.controller = controller;
 		this.options = options;
 		this.clipboard = clipboard;
@@ -203,25 +203,77 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	public void setLocation(ProgramLocation location, ViewerPosition viewerPosition) {
 		repaint();
-		Address address = location.getAddress();
-		if (address == null) {
+		if (location.getAddress() == null) {
 			return;
 		}
+
 		if (viewerPosition != null) {
 			fieldPanel.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
 				viewerPosition.getYOffset());
 		}
-		List<ClangToken> tokens =
-			DecompilerUtils.getTokens(layoutMgr.getRoot(), translateAddress(address));
 
 		if (location instanceof DecompilerLocation) {
 			DecompilerLocation decompilerLocation = (DecompilerLocation) location;
 			fieldPanel.goTo(BigInteger.valueOf(decompilerLocation.getLineNumber()), 0, 0,
 				decompilerLocation.getCharPos(), false);
+			return;
 		}
-		else if (!tokens.isEmpty()) {
-			goToBeginningOfLine(tokens);
+
+		//
+		// Try to figure out where the given location's address maps to.  If we can find the
+		// line that contains the address, the go to the beginning of that line.  (We do not try
+		// to go to an actual token, since multiple tokens can share an address, we woudln't know
+		// which token is best.)
+		//
+		// Note:  at the time of this writing, not all fields have an address value.  For 
+		//        example, the ClangFuncNameToken, does not have an address.  (It seems that most
+		//        of the tokens in the function signature do not have an address, which can 
+		//        probably be fixed.)   So, to deal with this oddity, we will have some special
+		//        case code below.
+		//
+		Address address = location.getAddress();
+		if (goToFunctionSignature(address)) {
+			// special case: the address is at the function entry, which means we just navigate
+			// to the signature
+			return;
 		}
+
+		Address translated = translate(address);
+		List<ClangToken> tokens =
+			DecompilerUtils.getTokensFromView(layoutMgr.getFields(), translated);
+		goToBeginningOfLine(tokens);
+	}
+
+	private boolean goToFunctionSignature(Address address) {
+
+		Address entry = decompileData.getFunction().getEntryPoint();
+		if (!entry.equals(address)) {
+			return false;
+		}
+
+		List<ClangLine> lines = layoutMgr.getLines();
+		ClangLine signatureLine = getFunctionSignatureLine(lines);
+		if (signatureLine == null) {
+			return false; // can happen when there is no function decompiled
+		}
+
+		// -1 since the FieldPanel is 0-based; we are 1-based
+		int lineNumber = signatureLine.getLineNumber() - 1;
+		fieldPanel.goTo(BigInteger.valueOf(lineNumber), 0, 0, 0, false);
+
+		return true;
+	}
+
+	private ClangLine getFunctionSignatureLine(List<ClangLine> functionLines) {
+		for (ClangLine line : functionLines) {
+			List<ClangToken> tokens = line.getAllTokens();
+			for (ClangToken token : tokens) {
+				if (token.Parent() instanceof ClangFuncProto) {
+					return line;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -229,6 +281,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param tokens the tokens to search for 
 	 */
 	private void goToBeginningOfLine(List<ClangToken> tokens) {
+		if (tokens.isEmpty()) {
+			return;
+		}
+
 		int firstLineNumber = DecompilerUtils.findIndexOfFirstField(tokens, layoutMgr.getFields());
 		if (firstLineNumber != -1) {
 			fieldPanel.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
@@ -290,7 +346,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param addr the Ghidra address
 	 * @return the decompiler address
 	 */
-	private Address translateAddress(Address addr) {
+	private Address translate(Address addr) {
 		Function func = decompileData.getFunction();
 		if (func == null) {
 			return addr;
@@ -418,7 +474,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		ClangTextField textField = (ClangTextField) field;
 		ClangToken token = textField.getToken(location);
 		if (token instanceof ClangFuncNameToken) {
-			tryGoToFunction(token, newWindow);
+			tryGoToFunction((ClangFuncNameToken) token, newWindow);
 		}
 		else if (token instanceof ClangLabelToken) {
 			tryGoToLabel((ClangLabelToken) token, newWindow);
@@ -451,16 +507,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		tryGoToScalar(word, newWindow);
 	}
 
-	private void tryGoToFunction(ClangToken token, boolean newWindow) {
-		Function function =
-			DecompilerUtils.getFunction(controller.getProgram(), (ClangFuncNameToken) token);
+	private void tryGoToFunction(ClangFuncNameToken functionToken, boolean newWindow) {
+		Function function = DecompilerUtils.getFunction(controller.getProgram(), functionToken);
 		if (function != null) {
 			controller.goToFunction(function, newWindow);
 			return;
 		}
 
 		// TODO no idea what this is supposed to be handling...someone doc this please
-		String labelName = token.getText();
+		String labelName = functionToken.getText();
 		if (labelName.startsWith("func_0x")) {
 			try {
 				Address addr =

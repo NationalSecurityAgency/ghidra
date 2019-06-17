@@ -15,14 +15,14 @@
  */
 package ghidra.file.formats.ios.dmg;
 
+import java.io.*;
+import java.util.Arrays;
+
 import ghidra.app.util.bin.*;
 import ghidra.file.crypto.*;
 import ghidra.file.formats.ios.generic.iOS_AesCrypto;
 import ghidra.file.formats.ios.generic.iOS_Sha1Crypto;
 import ghidra.util.exception.CryptoException;
-
-import java.io.*;
-import java.util.Arrays;
 
 /**
  * An {@link InputStream} that decrypts a DMG file on the fly.
@@ -76,18 +76,31 @@ public class DmgDecryptorStream extends InputStream {
 	public DmgDecryptorStream(String containerName, String dmgName, ByteProvider provider)
 			throws IOException {
 
+		try {
+			CryptoKey cryptoKey = CryptoKeyFactory.getCryptoKey(containerName, dmgName);
+			if (cryptoKey.key.length != 36) {
+				throw new CryptoException("Invalid key length.");
+			}
+			if (cryptoKey.iv.length != 0) {
+				throw new CryptoException("Invalid initialization vector (IV) length.");
+			}
+
+			aes_key = Arrays.copyOfRange(cryptoKey.key, 0, 16);
+			sha1_key = Arrays.copyOfRange(cryptoKey.key, 16, 16 + 20);
+		}
+		catch (IOException e) {
+			// Release the provider before this exception finishes since the #close() method can't
+			// be called later to release it.
+			try {
+				provider.close();
+			}
+			catch (IOException ioe) {
+				// ignore
+			}
+			throw e;
+		}
+
 		this.provider = provider;
-
-		CryptoKey cryptoKey = CryptoKeyFactory.getCryptoKey(containerName, dmgName);
-		if (cryptoKey.key.length != 36) {
-			throw new CryptoException("Invalid key length.");
-		}
-		if (cryptoKey.iv.length != 0) {
-			throw new CryptoException("Invalid initialization vector (IV) length.");
-		}
-
-		aes_key = Arrays.copyOfRange(cryptoKey.key, 0, 16);
-		sha1_key = Arrays.copyOfRange(cryptoKey.key, 16, 16 + 20);
 
 		sha1 = new iOS_Sha1Crypto(sha1_key);
 

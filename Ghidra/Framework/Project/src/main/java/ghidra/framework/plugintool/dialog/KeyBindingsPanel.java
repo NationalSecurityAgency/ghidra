@@ -20,6 +20,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -30,7 +31,8 @@ import docking.DockingUtils;
 import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
+import docking.tool.util.DockingToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
@@ -38,9 +40,7 @@ import docking.widgets.table.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.ReservedKeyBindings;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
@@ -65,11 +65,13 @@ public class KeyBindingsPanel extends JPanel {
 	private KeyBindingsTableModel tableModel;
 	private ListSelectionModel selectionModel;
 	private Options options;
-	private Map<String, KeyStroke> actionMap; // map action name to keystroke
-	private Map<String, List<String>> keyMap; // map keystroke name to ArrayList of action names
-	private List<DockingActionIf> actionList;
-	private Map<String, KeyStroke> originalValues; // original mapping for action name to
-	// keystroke (to know what changed)
+
+	private Map<String, DockingActionIf> actionsByFullName;
+	private Map<String, List<String>> actionNamesByKeyStroke;
+	private Map<String, KeyStroke> keyStrokesByFullName;
+	private Map<String, KeyStroke> originalValues; // to know what has been changed
+	private List<DockingActionIf> tableActions;
+
 	private KeyEntryTextField ksField;
 	private boolean unappliedChanges;
 
@@ -78,14 +80,10 @@ public class KeyBindingsPanel extends JPanel {
 	private PropertyChangeListener propertyChangeListener;
 	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
 
-	/**
-	 * Constructor
-	 * @param options options that have the key binding mappings.
-	 */
 	public KeyBindingsPanel(PluginTool tool, Options options) {
 		this.tool = tool;
 		this.options = options;
-		actionList = new ArrayList<>();
+		tableActions = new ArrayList<>();
 		create();
 		createActionMap();
 		addListeners();
@@ -104,10 +102,10 @@ public class KeyBindingsPanel extends JPanel {
 	 * Apply the changes to the actions.
 	 */
 	public void apply() {
-		Iterator<String> iter = actionMap.keySet().iterator();
+		Iterator<String> iter = keyStrokesByFullName.keySet().iterator();
 		while (iter.hasNext()) {
 			String actionName = iter.next();
-			KeyStroke currentKeyStroke = actionMap.get(actionName);
+			KeyStroke currentKeyStroke = keyStrokesByFullName.get(actionName);
 			KeyStroke originalKeyStroke = originalValues.get(actionName);
 			updateOptions(actionName, originalKeyStroke, currentKeyStroke);
 		}
@@ -115,7 +113,7 @@ public class KeyBindingsPanel extends JPanel {
 		changesMade(false);
 	}
 
-	private boolean updateOptions(String actionName, KeyStroke currentKeyStroke,
+	private boolean updateOptions(String fullActionName, KeyStroke currentKeyStroke,
 			KeyStroke newKeyStroke) {
 		if ((currentKeyStroke != null && currentKeyStroke.equals(newKeyStroke)) ||
 			(currentKeyStroke == null && newKeyStroke == null)) {
@@ -123,17 +121,17 @@ public class KeyBindingsPanel extends JPanel {
 		}
 
 		if (newKeyStroke != null) {
-			options.setKeyStroke(actionName, newKeyStroke);
+			options.setKeyStroke(fullActionName, newKeyStroke);
 		}
 		else {
-			options.removeOption(actionName);
+			options.removeOption(fullActionName);
 		}
-		originalValues.put(actionName, newKeyStroke);
-		actionMap.put(actionName, newKeyStroke);
+		originalValues.put(fullActionName, newKeyStroke);
+		keyStrokesByFullName.put(fullActionName, newKeyStroke);
 
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(actionName);
+		Set<DockingActionIf> actions = tool.getAllActions();
 		for (DockingActionIf action : actions) {
-			if (action.isKeyBindingManaged()) {
+			if (action.getFullName().equals(fullActionName)) {
 				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
 			}
 		}
@@ -149,46 +147,40 @@ public class KeyBindingsPanel extends JPanel {
 		while (iter.hasNext()) {
 			String actionName = iter.next();
 			KeyStroke originalKS = originalValues.get(actionName);
-			KeyStroke modifiedKS = actionMap.get(actionName);
+			KeyStroke modifiedKS = keyStrokesByFullName.get(actionName);
 			if (modifiedKS != null && !modifiedKS.equals(originalKS)) {
-				actionMap.put(actionName, originalKS);
+				keyStrokesByFullName.put(actionName, originalKS);
 			}
 		}
 		tableModel.fireTableDataChanged();
 	}
 
 	public void reload() {
-		// run this after the current pending events in the swing
-		// thread so that the screen will repaint itself
-		SwingUtilities.invokeLater(() -> {
-			// clear the current user key stroke so that it does not
-			// appear as though the user is editing while restoring
+		Swing.runLater(() -> {
+			// clear the current user key stroke so that it does not appear as though the 
+			// user is editing while restoring
 			actionTable.clearSelection();
 
 			restoreDefaultKeybindings();
 		});
 	}
 
-	/**
-	 * Create the maps for actions and names.
-	 */
 	private void createActionMap() {
-		actionMap = new HashMap<>();
-		keyMap = new HashMap<>();
+		keyStrokesByFullName = new HashMap<>();
+		actionNamesByKeyStroke = new HashMap<>();
 		originalValues = new HashMap<>();
 		String longestName = "";
 
-		List<DockingActionIf> actions = tool.getAllActions();
-		for (DockingActionIf action : actions) {
-			if (!action.isKeyBindingManaged()) {
-				continue;
-			}
+		actionsByFullName = KeyBindingUtils.getAllActionsByFullName(tool);
+		Set<Entry<String, DockingActionIf>> entries = actionsByFullName.entrySet();
+		for (Entry<String, DockingActionIf> entry : entries) {
 
-			String actionName = action.getFullName();
-			actionList.add(action);
+			DockingActionIf action = entry.getValue();
+			tableActions.add(action);
 
+			String actionName = entry.getKey();
 			KeyStroke ks = options.getKeyStroke(actionName, null);
-			actionMap.put(actionName, ks);
+			keyStrokesByFullName.put(actionName, ks);
 			addToKeyMap(ks, actionName);
 			originalValues.put(actionName, ks);
 
@@ -326,11 +318,10 @@ public class KeyBindingsPanel extends JPanel {
 				return;
 			}
 
-			// run this after the current pending events in the swing
-			// thread so that the screen will repaint itself
-			SwingUtilities.invokeLater(() -> {
-				// clear the current user key stroke so that it does not
-				// appear as though the user is editing while importing
+			// give Swing a chance to repaint
+			Swing.runLater(() -> {
+				// clear the current user key stroke so that it does not appear as though the 
+				// user is editing while importing
 				actionTable.clearSelection();
 				processKeyBindingsFromOptions(KeyBindingUtils.importKeyBindings());
 			});
@@ -347,10 +338,9 @@ public class KeyBindingsPanel extends JPanel {
 				return;
 			}
 
-			// run this after the current pending events in the swing
-			// thread so that the screen will repaint itself
-			SwingUtilities.invokeLater(() -> {
-				ToolOptions keyBindingOptions = tool.getOptions(ToolConstants.KEY_BINDINGS);
+			// give Swing a chance to repaint
+			Swing.runLater(() -> {
+				ToolOptions keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 				KeyBindingUtils.exportKeyBindings(keyBindingOptions);
 			});
 		});
@@ -419,16 +409,16 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private void restoreDefaultKeybindings() {
-		Iterator<String> iter = actionMap.keySet().iterator();
+		Iterator<String> iter = keyStrokesByFullName.keySet().iterator();
 		while (iter.hasNext()) {
 			String actionName = iter.next();
-			List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(actionName);
-			if (actions.size() == 0) {
+			DockingActionIf action = actionsByFullName.get(actionName);
+			if (action == null) {
 				throw new AssertException("No actions defined for " + actionName);
 			}
 
-			KeyStroke currentKeyStroke = actionMap.get(actionName);
-			KeyBindingData defaultBinding = actions.get(0).getDefaultKeyBindingData();
+			KeyStroke currentKeyStroke = keyStrokesByFullName.get(actionName);
+			KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
 			KeyStroke newKeyStroke =
 				(defaultBinding == null) ? null : defaultBinding.getKeyBinding();
 
@@ -447,21 +437,11 @@ public class KeyBindingsPanel extends JPanel {
 		selectionModel.addListSelectionListener(new TableSelectionListener());
 	}
 
-	/**
-	 * Update the keyMap and the actionMap and enable the apply button on
-	 * the dialog.
-	 * @param action plugin action could be null if ksName is not associated
-	 * with a plugin action
-	 * @param defaultActionName name of the action
-	 * @param ksName keystroke name
-	 * @return true if the old keystroke is different from the current
-	 * keystroke
-	 */
 	private boolean checkAction(String actionName, KeyStroke keyStroke) {
 		String ksName = KeyEntryTextField.parseKeyStroke(keyStroke);
 
 		// remove old keystroke for action name
-		KeyStroke oldKs = actionMap.get(actionName);
+		KeyStroke oldKs = keyStrokesByFullName.get(actionName);
 		if (oldKs != null) {
 			String oldName = KeyEntryTextField.parseKeyStroke(oldKs);
 			if (oldName.equals(ksName)) {
@@ -471,7 +451,7 @@ public class KeyBindingsPanel extends JPanel {
 		}
 		addToKeyMap(keyStroke, actionName);
 
-		actionMap.put(actionName, keyStroke);
+		keyStrokesByFullName.put(actionName, keyStroke);
 		changesMade(true);
 		return true;
 	}
@@ -494,7 +474,7 @@ public class KeyBindingsPanel extends JPanel {
 		}
 		int selectedRow = actionTable.getSelectedRow();
 		int modelRow = tableFilterPanel.getModelRow(selectedRow);
-		return actionList.get(modelRow).getFullName();
+		return tableActions.get(modelRow).getFullName();
 	}
 
 	/**
@@ -505,10 +485,10 @@ public class KeyBindingsPanel extends JPanel {
 			return;
 		}
 		String ksName = KeyEntryTextField.parseKeyStroke(ks);
-		List<String> list = keyMap.get(ksName);
+		List<String> list = actionNamesByKeyStroke.get(ksName);
 		if (list == null) {
 			list = new ArrayList<>();
-			keyMap.put(ksName, list);
+			actionNamesByKeyStroke.put(ksName, list);
 		}
 		if (!list.contains(actionName)) {
 			list.add(actionName);
@@ -523,11 +503,11 @@ public class KeyBindingsPanel extends JPanel {
 			return;
 		}
 		String ksName = KeyEntryTextField.parseKeyStroke(ks);
-		List<String> list = keyMap.get(ksName);
+		List<String> list = actionNamesByKeyStroke.get(ksName);
 		if (list != null) {
 			list.remove(actionName);
 			if (list.isEmpty()) {
-				keyMap.remove(ksName);
+				actionNamesByKeyStroke.remove(ksName);
 			}
 		}
 	}
@@ -537,7 +517,7 @@ public class KeyBindingsPanel extends JPanel {
 	 * @param ksName name of Keystroke that has multiple actions mapped
 	 */
 	private void showActionMapped(String ksName) {
-		List<String> list = keyMap.get(ksName);
+		List<String> list = actionNamesByKeyStroke.get(ksName);
 		if (list == null) {
 			return;
 		}
@@ -603,7 +583,7 @@ public class KeyBindingsPanel extends JPanel {
 			// prevent non-existing keybindings from being added to Ghidra (this can happen
 			// when actions exist in the imported bindings, but have been removed from
 			// Ghidra
-			if (!actionMap.containsKey(name)) {
+			if (!keyStrokesByFullName.containsKey(name)) {
 				continue;
 			}
 
@@ -655,12 +635,10 @@ public class KeyBindingsPanel extends JPanel {
 			char keyChar = keyStroke.getKeyChar();
 			if (Character.isWhitespace(keyChar) ||
 				Character.getType(keyChar) == Character.DIRECTIONALITY_LEFT_TO_RIGHT_OVERRIDE) {
-				// remove keystroke
 				removeKeystroke(actionName);
 			}
 			else {
-				// check the action to see if is different than the current
-				// value
+				// check the action to see if is different than the current value
 				return checkAction(actionName, keyStroke);
 			}
 		}
@@ -671,18 +649,22 @@ public class KeyBindingsPanel extends JPanel {
 	private void removeKeystroke(String selectedActionName) {
 		ksField.setText("");
 
-		if (actionMap.containsKey(selectedActionName)) {
-			KeyStroke stroke = actionMap.get(selectedActionName);
+		if (keyStrokesByFullName.containsKey(selectedActionName)) {
+			KeyStroke stroke = keyStrokesByFullName.get(selectedActionName);
 			if (stroke == null) {
 				// nothing to remove; nothing has changed
 				return;
 			}
 
 			removeFromKeyMap(stroke, selectedActionName);
-			actionMap.put(selectedActionName, null);
+			keyStrokesByFullName.put(selectedActionName, null);
 			tableModel.fireTableDataChanged();
 			changesMade(true);
 		}
+	}
+
+	Map<String, KeyStroke> getKeyStrokeMap() {
+		return keyStrokesByFullName;
 	}
 
 //==================================================================================================
@@ -698,8 +680,12 @@ public class KeyBindingsPanel extends JPanel {
 				return;
 			}
 
-			String selectedAction = getSelectedAction();
-			KeyStroke ks = actionMap.get(selectedAction);
+			String fullActionName = getSelectedAction();
+			if (fullActionName == null) {
+				return;
+			}
+
+			KeyStroke ks = keyStrokesByFullName.get(fullActionName);
 			String ksName = "";
 			clearInfoPanel();
 
@@ -713,18 +699,12 @@ public class KeyBindingsPanel extends JPanel {
 			statusLabel.setPreferredSize(
 				new Dimension(statusLabel.getPreferredSize().width, STATUS_LABEL_HEIGHT));
 
-			try {
-				List<DockingActionIf> actions =
-					tool.getDockingActionsByFullActionName(selectedAction);
-				String description = actions.get(0).getDescription();
-				if (description == null || description.trim().isEmpty()) {
-					description = actions.get(0).getName();
-				}
-				statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
+			DockingActionIf action = actionsByFullName.get(fullActionName);
+			String description = action.getDescription();
+			if (description == null || description.trim().isEmpty()) {
+				description = action.getName();
 			}
-			catch (Exception ex) {
-				statusLabel.setText("");
-			}
+			statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
 		}
 	}
 
@@ -748,7 +728,7 @@ public class KeyBindingsPanel extends JPanel {
 					return action.getName();
 
 				case KEY_BINDING:
-					KeyStroke ks = actionMap.get(action.getFullName());
+					KeyStroke ks = keyStrokesByFullName.get(action.getFullName());
 					if (ks != null) {
 						return KeyEntryTextField.parseKeyStroke(ks);
 					}
@@ -761,7 +741,7 @@ public class KeyBindingsPanel extends JPanel {
 
 		@Override
 		public List<DockingActionIf> getModelData() {
-			return actionList;
+			return tableActions;
 		}
 
 		@Override
@@ -781,7 +761,7 @@ public class KeyBindingsPanel extends JPanel {
 
 		@Override
 		public int getRowCount() {
-			return actionList.size();
+			return tableActions.size();
 		}
 	}
 }

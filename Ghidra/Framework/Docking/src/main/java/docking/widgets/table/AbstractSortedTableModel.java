@@ -442,7 +442,10 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		public int compare(T t1, T t2) {
 
 			// at this point we compare the rows, since all of the sorting column values are equal
-			if (t1 instanceof Comparable) {
+			// (Warning: due to comparable being specific to the class upon which it is defined, 
+			//           we have to make sure the class is the same to prevent class cast 
+			//           exceptions when the table has mixed implementations of 'T')
+			if (t1 instanceof Comparable && t1.getClass().equals(t2.getClass())) {
 				return ((Comparable) t1).compareTo(t2);
 			}
 

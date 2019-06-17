@@ -18,6 +18,7 @@ package ghidra.util;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -846,27 +847,20 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Turn the given list into an attractive string, with the separator of you choosing.
+	 * Turn the given data into an attractive string, with the separator of your choosing
 	 *
-	 * @param list the list from which a string will be generated
+	 * @param collection the data from which a string will be generated
 	 * @param separator the string used to separate elements
 	 * @return a string representation of the given list
 	 */
-	public static String toString(List<?> list, String separator) {
-		if (list == null) {
+	public static String toString(Collection<?> collection, String separator) {
+		if (collection == null) {
 			return null;
 		}
 
-		StringBuffer buffer = new StringBuffer("[ ");
-		for (int i = 0; i < list.size(); i++) {
-			buffer.append(list.get(i).toString());
-			if (i + 1 < list.size()) {
-				buffer.append(separator);
-			}
-		}
-
-		buffer.append(" ]");
-		return buffer.toString();
+		String asString =
+			collection.stream().map(o -> o.toString()).collect(Collectors.joining(separator));
+		return "[ " + asString + " ]";
 	}
 
 	public static String toStringWithIndent(Object o) {

@@ -35,7 +35,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.table.DeleteTableRowAction;
+import ghidra.util.table.actions.DeleteTableRowAction;
 
 /**
  * Plugin to show a list of references to the item represented by the location of the cursor.

@@ -455,7 +455,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	 * @param message non-html text to display
 	 */
 	void setStatusMessage(String message) {
-		plugin.setStatusMessage(message, this);
+		plugin.setStatusMessage(message);
 	}
 
 	void setEditMode(boolean isEditable) {

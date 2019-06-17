@@ -21,7 +21,7 @@ import java.util.List;
 import javax.swing.ImageIcon;
 
 import docking.action.DockingActionIf;
-import docking.actions.DockingToolActionManager;
+import docking.actions.ToolActions;
 import docking.framework.ApplicationInformationDisplayFactory;
 import ghidra.framework.options.ToolOptions;
 
@@ -37,7 +37,7 @@ public class FakeDockingTool extends AbstractDockingTool {
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
 		winMgr = new DockingWindowManager("EMPTY", windowIcons, listener, false /*isModal*/,
 			true /*isDockable*/, true /*hasStatus*/, null /*DropTargetFactory*/);
-		actionMgr = new DockingToolActionManager(this, winMgr);
+		actionMgr = new ToolActions(this, winMgr);
 	}
 
 	@Override

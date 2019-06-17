@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.table;
+package ghidra.util.table.actions;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.KeyStroke;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
-import docking.action.MenuData;
-import docking.action.ToolBarData;
+import docking.action.*;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
-import ghidra.app.actions.AbstractSharedKeybindingAction;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.DummyKeyBindingsOptionsAction;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.timer.GTimer;
 import resources.ResourceManager;
@@ -52,7 +49,7 @@ import resources.ResourceManager;
  * this action in the Tool's options so that user's can update keybindings, regardless of whether
  * they have ever shown one of your transient providers.  
  */
-public class DeleteTableRowAction extends AbstractSharedKeybindingAction {
+public class DeleteTableRowAction extends DockingAction {
 
 	private static final KeyStroke DEFAULT_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
@@ -72,28 +69,33 @@ public class DeleteTableRowAction extends AbstractSharedKeybindingAction {
 		new DummyDeleteAction(tool);
 	}
 
-	/**
-	 * Constructor for stubs only.
-	 * 
-	 * @param tool the tool needed to access options
-	 */
-	private DeleteTableRowAction(PluginTool tool) {
-		super(tool, NAME, DummyKeyBindingsOptionsAction.DEFAULT_OWNER, DEFAULT_KEYSTROKE);
-	}
-
-	public DeleteTableRowAction(PluginTool tool, GTable table, String owner) {
-		this(tool, NAME, owner, DEFAULT_KEYSTROKE);
+	public DeleteTableRowAction(GTable table, String owner) {
+		this(NAME, owner, DEFAULT_KEYSTROKE);
 		this.table = table;
 	}
 
-	private DeleteTableRowAction(PluginTool tool, String name, String owner,
-			KeyStroke defaultkeyStroke) {
-		super(tool, name, owner, defaultkeyStroke);
-		
+	private DeleteTableRowAction(String name, String owner, KeyStroke defaultkeyStroke) {
+		super(name, owner);
+
 		setDescription("Remove the selected rows from the table");
 		setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Remove_Items"));
 		setToolBarData(new ToolBarData(ICON, null));
 		setPopupMenuData(new MenuData(new String[] { "Remove Items" }, ICON, null));
+
+		initKeyStroke(defaultkeyStroke);
+	}
+
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
+	}
+
+	@Override
+	public boolean usesSharedKeyBinding() {
+		return true;
 	}
 
 	@Override
@@ -122,7 +124,7 @@ public class DeleteTableRowAction extends AbstractSharedKeybindingAction {
 		@SuppressWarnings("unchecked")
 		RowObjectTableModel<Object> rowObjectModel = (RowObjectTableModel<Object>) model;
 		int[] rows = table.getSelectedRows();
-		List<Object> itemsToRemove = new ArrayList<Object>();
+		List<Object> itemsToRemove = new ArrayList<>();
 		for (int row : rows) {
 			itemsToRemove.add(rowObjectModel.getRowObject(row));
 		}
@@ -163,7 +165,7 @@ public class DeleteTableRowAction extends AbstractSharedKeybindingAction {
 	}
 
 	private void selectRow(TableModel model, final int row) {
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 
 			if (checkForBusy(model)) {
 				// Selecting rows whilst the model is processing deletes will cause the
@@ -195,13 +197,20 @@ public class DeleteTableRowAction extends AbstractSharedKeybindingAction {
 //==================================================================================================
 
 	private static class DummyDeleteAction extends DeleteTableRowAction {
-		DummyDeleteAction(PluginTool tool) {
-			super(tool);
+
+		public DummyDeleteAction(PluginTool tool) {
+			super(NAME, "Tool", DEFAULT_KEYSTROKE);
+			tool.addAction(this);
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
 			// stub
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return false; // stub
 		}
 	}
 }

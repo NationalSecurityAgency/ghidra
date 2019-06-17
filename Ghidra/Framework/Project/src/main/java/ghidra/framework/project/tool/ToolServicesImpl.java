@@ -15,6 +15,12 @@
  */
 package ghidra.framework.project.tool;
 
+import java.io.*;
+import java.util.*;
+
+import org.jdom.Document;
+import org.jdom.output.XMLOutputter;
+
 import ghidra.framework.ToolUtils;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.data.DomainObjectAdapter;
@@ -26,12 +32,6 @@ import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.xml.GenericXMLOutputter;
 
-import java.io.*;
-import java.util.*;
-
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
-
 /**
  * Implementation of service used to manipulate tools.
  */
@@ -42,7 +42,7 @@ class ToolServicesImpl implements ToolServices {
 
 	private ToolChest toolChest;
 	private ToolManagerImpl toolManager;
-	private List<DefaultToolChangeListener> listeners = new ArrayList<DefaultToolChangeListener>();
+	private List<DefaultToolChangeListener> listeners = new ArrayList<>();
 	private ToolChestChangeListener toolChestChangeListener;
 	private Set<ContentHandler> contentHandlers;
 
@@ -189,7 +189,7 @@ class ToolServicesImpl implements ToolServices {
 
 	@Override
 	public Set<ToolAssociationInfo> getContentTypeToolAssociations() {
-		Set<ToolAssociationInfo> set = new HashSet<ToolAssociationInfo>();
+		Set<ToolAssociationInfo> set = new HashSet<>();
 
 		// get all known content types
 		Set<ContentHandler> handlers = getContentHandlers();
@@ -232,7 +232,7 @@ class ToolServicesImpl implements ToolServices {
 
 	@Override
 	public Set<ToolTemplate> getCompatibleTools(Class<? extends DomainObject> domainClass) {
-		Map<String, ToolTemplate> nameToTemplateMap = new HashMap<String, ToolTemplate>();
+		Map<String, ToolTemplate> nameToTemplateMap = new HashMap<>();
 
 		//
 		// First, get all compatible tools in the tool chest
@@ -290,12 +290,12 @@ class ToolServicesImpl implements ToolServices {
 			}
 		}
 
-		return new HashSet<ToolTemplate>(nameToTemplateMap.values());
+		return new HashSet<>(nameToTemplateMap.values());
 	}
 
 	private Set<ContentHandler> getCompatibleContentHandlers(
 			Class<? extends DomainObject> domainClass) {
-		Set<ContentHandler> set = new HashSet<ContentHandler>();
+		Set<ContentHandler> set = new HashSet<>();
 		Set<ContentHandler> handlers = getContentHandlers();
 		for (ContentHandler contentHandler : handlers) {
 			Class<? extends DomainObject> handlerDomainClass =
@@ -327,7 +327,7 @@ class ToolServicesImpl implements ToolServices {
 			return contentHandlers;
 		}
 
-		contentHandlers = new HashSet<ContentHandler>();
+		contentHandlers = new HashSet<>();
 		Set<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler contentHandler : instances) {
 			// a bit of validation
@@ -392,7 +392,7 @@ class ToolServicesImpl implements ToolServices {
 	private Tool[] getSameNamedRunningTools(Tool tool) {
 		String toolName = tool.getToolName();
 		Tool[] tools = toolManager.getRunningTools();
-		List<Tool> toolList = new ArrayList<Tool>(tools.length);
+		List<Tool> toolList = new ArrayList<>(tools.length);
 		for (Tool element : tools) {
 			if (toolName.equals(element.getToolName())) {
 				toolList.add(element);
