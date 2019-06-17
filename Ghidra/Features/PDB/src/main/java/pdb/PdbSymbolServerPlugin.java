@@ -17,6 +17,8 @@ package pdb;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import docking.action.MenuData;
@@ -479,7 +481,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 * @param downloadFilename  name of final moved file (can be same as pdbFilename)
 	 * @param tempFile  actual file to be moved
 	 * @return  file that was moved (and optionally renamed) in its new location
-	 * @throws IOException
+	 * @throws IOException if there was an IO-related problem making the directory or moving the file
 	 */
 	File createSubFoldersAndMoveFile(File destinationFolder, String pdbFilename,
 			String guidAgeString, String downloadFilename, File tempFile) throws IOException {
@@ -489,14 +491,11 @@ public class PdbSymbolServerPlugin extends Plugin {
 
 		File finalDestFile = new File(pdbInnerSaveDir, downloadFilename);
 
-		// Delete existing file
-		if (finalDestFile.exists()) {
-			finalDestFile.delete();
+		try {
+			Files.move(tempFile.toPath(), finalDestFile.toPath(),
+				StandardCopyOption.REPLACE_EXISTING);
 		}
-
-		boolean movedFile = tempFile.renameTo(finalDestFile);
-
-		if (!movedFile) {
+		catch (IOException e) {
 			tempFile.delete();
 			throw new IOException("Could not save file: " + finalDestFile.getAbsolutePath());
 		}
