@@ -23,14 +23,8 @@ import ghidra.pdb.*;
  */
 public abstract class AbstractTypeIndex extends AbstractParsableItem {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	protected int indexVal;
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Returns the index value.
 	 * @return The value of the index.  Defaults to zero if not parsed.
@@ -48,9 +42,6 @@ public abstract class AbstractTypeIndex extends AbstractParsableItem {
 		indexVal = doParse(reader);
 	}
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
 	/**
 	 * Parses the index value from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader} from which to read the value.

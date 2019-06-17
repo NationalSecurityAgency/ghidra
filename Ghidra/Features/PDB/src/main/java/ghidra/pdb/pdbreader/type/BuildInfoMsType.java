@@ -47,11 +47,9 @@ public class BuildInfoMsType extends AbstractMsType {
 		BUILDINFO_STRING[4] = "CommandArguments: ";
 	}
 
-	//==============================================================================================
 	private int count;
 	private List<Integer> argsCodeItemId = new ArrayList<>();
 
-	//==============================================================================================
 	/**
 	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.

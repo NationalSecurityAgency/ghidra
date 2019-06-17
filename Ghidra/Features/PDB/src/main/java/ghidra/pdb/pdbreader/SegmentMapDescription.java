@@ -27,9 +27,6 @@ import ghidra.pdb.PdbException;
  */
 public class SegmentMapDescription {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	private int flags;
 	private int ovl;
 	private int group;
@@ -38,10 +35,6 @@ public class SegmentMapDescription {
 	private int classNameIndex;
 	private long segOffset;
 	private long segLength;
-
-	//==============================================================================================
-	// API
-	//==============================================================================================
 
 	/**
 	 * Returns the segment offset.
@@ -75,9 +68,6 @@ public class SegmentMapDescription {
 		segLength = substreamReader.parseUnsignedIntVal();
 	}
 
-	//==============================================================================================
-	// Package-Protected Internals
-	//==============================================================================================
 	/**
 	 * Dumps the {@link SegmentMapDescription}.  This method is for debugging only.
 	 * @return {@link String} of pretty output.

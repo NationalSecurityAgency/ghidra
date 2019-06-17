@@ -54,7 +54,7 @@ public class PdbReaderOptions extends Exception {
 	}
 
 	/**
-	 * Returns list of Charsets that encode one byte characters.
+	 * Returns list of Charsets names that encode one byte characters.
 	 * @return Charsets that encode one byte characters.
 	 */
 	public static List<String> getOneByteCharsetNames() {
@@ -62,7 +62,7 @@ public class PdbReaderOptions extends Exception {
 	}
 
 	/**
-	 * Returns list of Charsets that encode two byte characters.
+	 * Returns list of Charsets names that encode two byte characters.
 	 * @return Charsets that encode two byte characters.
 	 */
 	public static List<String> getTwoByteCharsetNames() {
@@ -133,7 +133,7 @@ public class PdbReaderOptions extends Exception {
 	 * Enable/disable developmental debug.
 	 * @param debug {@code true} to turn debug on; default is {@code false}.
 	 */
-	public void setEnabled(boolean debug) {
+	public void setDebug(boolean debug) {
 		this.debug = debug;
 	}
 
@@ -141,7 +141,7 @@ public class PdbReaderOptions extends Exception {
 	 * Returns true if debug is "on."
 	 * @return {@code true} if debug is "on."
 	 */
-	public boolean doDebug() {
+	public boolean isDebug() {
 		return debug;
 	}
 

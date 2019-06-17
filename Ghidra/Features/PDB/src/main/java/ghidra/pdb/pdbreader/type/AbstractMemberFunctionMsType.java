@@ -79,7 +79,7 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 	 * Returns the {@link CallingConvention}.
 	 * @return the {@link CallingConvention}.
 	 */
-	public CallingConvention getCallingConventionValue() {
+	public CallingConvention getCallingConvention() {
 		return callingConvention;
 	}
 

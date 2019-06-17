@@ -71,10 +71,10 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
 		symbolRecords.deserialize(monitor);
-		globalSymbolInformation.deserialize(
-			pdb.databaseInterface.getGlobalSymbolsHashMaybeStreamNumber(), false, monitor);
-		publicSymbolInformation.deserialize(
-			pdb.databaseInterface.getPublicStaticSymbolsHashMaybeStreamNumber(), true, monitor);
+		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber(), false,
+			monitor);
+		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber(), true,
+			monitor);
 		//TODO: SectionContributions has information about code sections and refers to
 		// debug streams for each.
 	}

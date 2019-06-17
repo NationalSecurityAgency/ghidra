@@ -17,8 +17,7 @@ package ghidra.pdb.msfreader;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.PdbReaderOptions;
@@ -31,9 +30,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MsfParser {
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Detects, creates, and returns the appropriate {@link AbstractMsf} object found for
 	 * the filename given. 
@@ -45,11 +41,11 @@ public class MsfParser {
 	 * @throws PdbException If an appropriate object cannot be created.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public static AbstractMsf parse(String filename, PdbReaderOptions pdbOptions, TaskMonitor monitor)
-			throws IOException, PdbException, CancelledException {
-		Validate.notNull(filename, "filename cannot be null)");
-		Validate.notNull(pdbOptions, "pdbOptions cannot be null)");
-		Validate.notNull(monitor, "monitor cannot be null)");
+	public static AbstractMsf parse(String filename, PdbReaderOptions pdbOptions,
+			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
+		Objects.requireNonNull(filename, "filename cannot be null");
+		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
+		Objects.requireNonNull(monitor, "monitor cannot be null");
 
 		AbstractMsf msf;
 		RandomAccessFile file = new RandomAccessFile(filename, "r");

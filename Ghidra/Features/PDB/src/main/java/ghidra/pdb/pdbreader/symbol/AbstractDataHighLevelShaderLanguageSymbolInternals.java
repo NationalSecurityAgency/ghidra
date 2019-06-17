@@ -29,7 +29,6 @@ import ghidra.pdb.pdbreader.*;
 public abstract class AbstractDataHighLevelShaderLanguageSymbolInternals
 		extends AbstractSymbolInternals {
 
-	//==============================================================================================
 	/**
 	 * Implementing class is required to parse these four fields in the
 	 * {@link #parse(PdbByteReader)} method.
@@ -39,7 +38,6 @@ public abstract class AbstractDataHighLevelShaderLanguageSymbolInternals
 	protected HLSLRegisterType registerType;
 	protected AbstractString name;
 
-	//==============================================================================================
 	/**
 	 * Constructor for this symbol internals.
 	 * @param pdb {@link AbstractPdb} to which this symbol belongs.

@@ -17,10 +17,7 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.Validate;
+import java.util.*;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
@@ -87,12 +84,12 @@ public class DebugData {
 	 * @param pdb {@link AbstractPdb} that owns this {@link DebugData}.
 	 */
 	public DebugData(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 
 	/**
-	 * Returns the {@link List}<{@link ImageSectionHeader}>.
+	 * Returns the {@link List}&lt;{@link ImageSectionHeader}&gt;.
 	 * @return the imageSectionHeaders.
 	 */
 	public List<ImageSectionHeader> getImageSectionHeaders() {

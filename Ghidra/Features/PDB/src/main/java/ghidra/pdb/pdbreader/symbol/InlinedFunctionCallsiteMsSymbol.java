@@ -90,7 +90,7 @@ public class InlinedFunctionCallsiteMsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Returns {@link List}<{@link InstructionAnnotation}>.
+	 * Returns {@link List}&lt;{@link InstructionAnnotation}&gt;.
 	 * @return Instruction annotations.
 	 */
 	public List<InstructionAnnotation> getBinaryAnnotationOpcodeList() {

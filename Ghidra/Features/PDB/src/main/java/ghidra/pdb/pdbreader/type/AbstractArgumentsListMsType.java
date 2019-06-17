@@ -46,7 +46,7 @@ public abstract class AbstractArgumentsListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns {@link List}<{@link AbstractTypeIndex}> of indices in the argument list.
+	 * Returns {@link List}&lt;{@link AbstractTypeIndex}&gt; of indices in the argument list.
 	 * @return Indices of arguments in the arguments list.
 	 */
 	public List<AbstractTypeIndex> getArgTypeIndexList() {

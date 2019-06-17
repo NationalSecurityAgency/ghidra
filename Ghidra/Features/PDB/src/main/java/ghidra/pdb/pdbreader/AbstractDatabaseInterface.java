@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-import org.apache.commons.lang3.Validate;
-
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.symbol.AbstractMsSymbol;
@@ -86,7 +84,7 @@ public abstract class AbstractDatabaseInterface {
 	 * @param streamNumber The stream number of the stream containing the Database Interface.
 	 */
 	public AbstractDatabaseInterface(AbstractPdb pdb, int streamNumber) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
 		globalSymbolInformation = new GlobalSymbolInformation(pdb);
@@ -175,22 +173,22 @@ public abstract class AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Returns the list of regular symbols.
-	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * Returns the list of combined global/public symbols.
+	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
 	 * symbols.
 	 */
-	public Map<Long, AbstractMsSymbol> getSymbolMap() {
-		return symbolRecords.getSymbolMap();
+	public Map<Long, AbstractMsSymbol> getSymbolsByOffset() {
+		return symbolRecords.getSymbolsByOffset();
 	}
 
 	/**
 	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber.
 	 * @param moduleNumber The number ID of the module for which to return the list.
-	 * @return {@link Map}<{@link Long},{@link AbstractMsSymbol}> of buffer offsets to
+	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
 	 * symbols for the specified module.
 	 */
-	public Map<Long, AbstractMsSymbol> getModuleSymbolMap(int moduleNumber) {
-		return symbolRecords.getModuleSymbolMap(moduleNumber);
+	public Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber) {
+		return symbolRecords.getModuleSymbolsByOffset(moduleNumber);
 	}
 
 	/**
@@ -436,14 +434,13 @@ public abstract class AbstractDatabaseInterface {
 			assert false;
 		}
 		int numRefs = substreamReader.parseUnsignedShortVal();
-		int x = 0;
-		for (int i = 0; i < numInformationModules; i++) {
+		for (int i = 0, x = 0; i < numInformationModules; i++) {
 			monitor.checkCanceled();
 			int refIndex = substreamReader.parseUnsignedShortVal();
 			AbstractModuleInformation module = moduleInformationList.get(i);
 			int num = module.getNumFilesContributing();
 			if (refIndex != x) {
-				assert false;
+				throw new PdbException("Corrupt file information data");
 			}
 			x += num;
 		}

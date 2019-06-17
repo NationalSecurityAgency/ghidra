@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.*;
@@ -40,7 +40,7 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
 	public AbstractMethodRecordMs(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		procedureRecordNumber = create();
 		parseFields(reader);

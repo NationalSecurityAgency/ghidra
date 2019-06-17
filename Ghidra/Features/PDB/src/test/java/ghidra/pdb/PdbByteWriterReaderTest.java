@@ -32,7 +32,7 @@ public class PdbByteWriterReaderTest extends AbstractGenericTest {
 	// Tests
 	//==============================================================================================
 	@Test
-	public void testWriter() throws PdbException {
+	public void testWriter() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
 
 		byte[] byteArrayTest1 = new byte[3];

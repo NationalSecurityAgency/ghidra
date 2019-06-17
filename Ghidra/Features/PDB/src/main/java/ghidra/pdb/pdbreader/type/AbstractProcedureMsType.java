@@ -68,7 +68,7 @@ public abstract class AbstractProcedureMsType extends AbstractMsType {
 	 * Returns the {@link CallingConvention}.
 	 * @return the {@link CallingConvention}.
 	 */
-	public CallingConvention getCallingConventionValue() {
+	public CallingConvention getCallingConvention() {
 		return callingConvention;
 	}
 

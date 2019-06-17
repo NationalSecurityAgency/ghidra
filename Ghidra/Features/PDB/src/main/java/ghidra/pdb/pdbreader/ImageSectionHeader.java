@@ -17,8 +17,7 @@ package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
@@ -32,20 +31,14 @@ import ghidra.pdb.PdbException;
  */
 public class ImageSectionHeader {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	private AbstractPdb pdb;
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Constructor.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 */
 	public ImageSectionHeader(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 

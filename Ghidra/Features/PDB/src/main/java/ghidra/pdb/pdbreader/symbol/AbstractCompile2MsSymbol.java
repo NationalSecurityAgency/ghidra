@@ -230,7 +230,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Returns the {@link List}<{@link AbstractString}> of additional strings.
+	 * Returns the {@link List}&lt;{@link AbstractString}&gt; of additional strings.
 	 * @return List of additional strings.
 	 */
 	public List<AbstractString> getStringList() {

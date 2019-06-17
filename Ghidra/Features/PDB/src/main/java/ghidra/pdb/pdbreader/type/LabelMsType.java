@@ -32,10 +32,8 @@ public class LabelMsType extends AbstractMsType {
 	private static final int ADDRESS_MODE_NEAR = 0;
 	private static final int ADDRESS_MODE_FAR = 4;
 
-	//==============================================================================================
 	private int mode;
 
-	//==============================================================================================
 	/**
 	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.

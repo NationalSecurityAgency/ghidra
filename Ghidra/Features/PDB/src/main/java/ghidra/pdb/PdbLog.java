@@ -22,10 +22,11 @@ import generic.io.NullWriter;
 import ghidra.framework.Application;
 
 /**
- * A utility class providing logging PDB parsing and analyzing data and metrics for the purposes
- * of debugging and aiding in continued research and development of this package.
+ * A utility class providing logging for: PDB parsing and PDB analysis.  It includes data and
+ * metrics for the purposes of debugging and aiding in continued research and development of
+ * this package.
  */
-public class PdbMessageLog {
+public class PdbLog {
 
 	private static File logFile;
 	private static Writer nullWriter = new NullWriter();
@@ -61,10 +62,9 @@ public class PdbMessageLog {
 	 * uses a format string and a variable arguments list of lambdas to allow for deferred
 	 * processing of the message to output.  Thus, when message output is disabled, the client
 	 * does not endure as much cost in supplying a message string that is not used.  
-	 * Note: User must supply appropriate new lines.
 	 * @param format a {@link String} format list as would be used to a printf() function, but
 	 *  which must only specify {@code %s} {@link String} outputs.
-	 * @param suppliers variable number of {@link Supplier}<{@link String}> arguments.  The
+	 * @param suppliers variable number of {@link Supplier}&lt;{@link String}&gt; arguments.  The
 	 *  number must match the number of {@code %s} outputs in the format string. 
 	 * @throws IOException upon problem with {@link Writer#append(CharSequence)} or
 	 * {@link Writer#flush()}.
@@ -85,17 +85,17 @@ public class PdbMessageLog {
 			varArgs[i] = var;
 		}
 		writer.append(String.format(format, varArgs));
+		writer.append("\n");
 		writer.flush();
 	}
 
 	/**
 	 * Outputs a message to the PDB log if messaging has been enable, else ignored.  This method
-	 * uses a {@link Supplier}<{@link String}> to allow for deferred processing of the message
+	 * uses a {@link Supplier}&lt;{@link String}&gt; to allow for deferred processing of the message
 	 * to output.  Thus, when message output is disabled, the client does not endure as much cost
 	 * in supplying a message string that is not used.  
-	 * Note: User must supply appropriate new lines.
-	 * @param supplier a {@link Supplier}<{@link String}> that supplies a {@link String} message
-	 * to be output.
+	 * @param supplier a {@link Supplier}&lt;{@link String}&gt; that supplies a {@link String}
+	 * message to be output.
 	 * @throws IOException upon problem with {@link Writer#append(CharSequence)} or
 	 * {@link Writer#flush()}.
 	 * @see #setEnabled(boolean)
@@ -106,23 +106,20 @@ public class PdbMessageLog {
 		}
 
 		writer.append(supplier.get());
+		writer.append("\n");
 		writer.flush();
 	}
 
 	/**
 	 * Outputs a {@link String} message to the PDB log if messaging has been enable, else ignored.
-	 * Note: User must supply appropriate new lines.
 	 * @param message a {@link String} message to be output.
 	 * @throws IOException upon problem with {@link Writer#append(CharSequence)} or
 	 * {@link Writer#flush()}.
 	 * @see #setEnabled(boolean)
 	 */
 	public static void message(String message) throws IOException {
-		if (!enabled) {
-			return;
-		}
-
 		writer.append(message);
+		writer.append("\n");
 		writer.flush();
 	}
 
@@ -135,10 +132,6 @@ public class PdbMessageLog {
 			fileWriter.close();
 			fileWriter = null;
 		}
-		if (nullWriter != null) {
-			nullWriter.close();
-			nullWriter = null;
-		}
 	}
 
 	/**
@@ -148,6 +141,11 @@ public class PdbMessageLog {
 	 */
 	private static Writer createFileWriter() throws IOException {
 
+		/*
+		 * Since we want this logging to be used sparingly and on a case-by-case basis, we
+		 * delete the log at the start of each JVM session.  New log writing always uses the
+		 * same log file name with not date or process ID attributes.
+		 */
 		logFile = new File(Application.getUserSettingsDirectory(), "pdb.analyzer.log");
 		if (logFile.exists()) {
 			logFile.delete();

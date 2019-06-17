@@ -23,14 +23,8 @@ import ghidra.pdb.*;
  */
 public abstract class AbstractOffset extends AbstractParsableItem {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	protected int offsetVal;
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Returns the offset value.
 	 * @return Offset value.  Defaults to zero if not parsed.
@@ -48,9 +42,6 @@ public abstract class AbstractOffset extends AbstractParsableItem {
 		offsetVal = doParse(reader);
 	}
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
 	/**
 	 * Parses the offset value from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader}.

@@ -58,7 +58,7 @@ public class UnknownX1168MsSymbol extends AbstractUnknownMsSymbol {
 	}
 
 	/**
-	 * Returns {@link List}<{@link Integer}> of what appears to be type indices.
+	 * Returns {@link List}&lt;{@link Integer}&gt; of what appears to be type indices.
 	 * @return Possible type indices.
 	 */
 	public List<Integer> getTypeIndexList() {

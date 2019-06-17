@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.*;
 
@@ -25,22 +25,15 @@ import ghidra.pdb.*;
  */
 public abstract class AbstractString extends AbstractParsableItem {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	protected AbstractPdb pdb;
 	protected String string = "";
-
-	//==============================================================================================
-	// API
-	//==============================================================================================
 
 	/**
 	 * Constructor.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 */
 	public AbstractString(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 
@@ -66,9 +59,6 @@ public abstract class AbstractString extends AbstractParsableItem {
 		string = doParse(reader);
 	}
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
 	/**
 	 * Parses the string from the {@link PdbByteReader}.
 	 * @param reader {@link PdbByteReader}.

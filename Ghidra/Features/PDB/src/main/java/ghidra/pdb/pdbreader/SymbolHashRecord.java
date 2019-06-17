@@ -21,6 +21,7 @@ import ghidra.pdb.PdbException;
 /**
  * This class represents a Symbol Hash Record used by Global Symbol Information and Public
  * Symbol Information.
+ * @see GlobalSymbolInformation
  */
 public class SymbolHashRecord implements Comparable<SymbolHashRecord> {
 
@@ -28,6 +29,7 @@ public class SymbolHashRecord implements Comparable<SymbolHashRecord> {
 	private int referenceCount;
 
 	/**
+	 * Parses the contents of of this record.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

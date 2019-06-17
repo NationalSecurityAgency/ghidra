@@ -88,7 +88,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	private TypeParser typeParser;
 	private SymbolParser symbolParser;
 	//==============================================================================================
-	private Stack<CategoryIndex> dependencyStack = new Stack<>();
+	private Deque<CategoryIndex> dependencyStack = new ArrayDeque<>();
 	private DependencyGraph<CategoryIndex> dependencyGraph = new DependencyGraph<>();
 	private List<CategoryIndex> orderedDependenyIndices = new ArrayList<>();
 
@@ -239,6 +239,14 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
+	 * Returns whether there is minimal debug information.
+	 * @return {@code true} if there is minimal debug information.
+	 */
+	public boolean hasMinimalDebugInfo() {
+		return minimalDebugInfo;
+	}
+
+	/**
 	 * Set the index number of the target processor used for compilation.
 	 * @param targetProcessorIn Processor identifier.
 	 * @see Processor
@@ -381,10 +389,10 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the {@link DependencyGraph}<{@link CategoryIndex}>.  Dependency order is not
+	 * Returns the {@link DependencyGraph}&lt;{@link CategoryIndex}&gt;.  Dependency order is not
 	 *  a PDB feature.  It is something we added (and might be removed in the future) as we
 	 *  have investigated how to analyze and apply the PDB.
-	 * @return {@link DependencyGraph}<{@link CategoryIndex}>.
+	 * @return {@link DependencyGraph}&lt;{@link CategoryIndex}&gt;.
 	 */
 	public DependencyGraph<CategoryIndex> getDependencyGraphCopy() {
 		return dependencyGraph.copy();
@@ -426,9 +434,10 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Method to be called during the creation of {@link DependencyGraph}<{@link CategoryIndex}>
-	 *  whenever a node (see {@link #pushDependencyStack(CategoryIndex)}) will have no more
-	 *  dependents of its own (or is done being processed).
+	 * Method to be called during the creation of
+	 * {@link DependencyGraph}&lt;{@link CategoryIndex}&gt; whenever a node
+	 * (see {@link #pushDependencyStack(CategoryIndex)}) will have no more dependents of its own
+	 * (or is done being processed).
 	 */
 	public void popDependencyStack() {
 		dependencyStack.pop();
@@ -464,8 +473,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the {@link DependencyGraph}<{@link CategoryIndex}> information.  The
-	 *  {@link DependencyGraph}<{@link CategoryIndex}> is not a PDB feature.  It is
+	 * Dumps the {@link DependencyGraph}&lt;{@link CategoryIndex}&gt; information.  The
+	 *  {@link DependencyGraph}&lt;{@link CategoryIndex}&gt; is not a PDB feature.  It is
 	 *  something we added (and might be removed in the future) as we have investigated how to
 	 *  analyze and apply the PDB.  This package-protected method is for debugging only.
 	 * @return {@link String} of pretty output.
@@ -507,9 +516,9 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Dumps the Dependency Order information as found in the
-	 *  {@link DependencyGraph}<{@link CategoryIndex}>.  Dependency order is not a PDB feature.
-	 *  It is something we added (and might be removed in the future) as we have investigated
-	 *  how to analyze and apply the PDB.  This package-protected method is for debugging only.
+	 * {@link DependencyGraph}&lt;{@link CategoryIndex}&gt;. Dependency order is not a PDB feature.
+	 * It is something we added (and might be removed in the future) as we have investigated
+	 * how to analyze and apply the PDB.  This package-protected method is for debugging only.
 	 * @return {@link String} of pretty output.
 	 */
 	protected String dumpDependencyOrder() {

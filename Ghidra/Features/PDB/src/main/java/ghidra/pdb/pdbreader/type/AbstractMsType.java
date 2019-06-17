@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.type;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.AbstractParsableItem;
 import ghidra.pdb.PdbByteReader;
@@ -75,7 +75,7 @@ public abstract class AbstractMsType extends AbstractParsableItem {
 	 * @param reader {@link PdbByteReader} from which this type is deserialized.
 	 */
 	AbstractMsType(AbstractPdb pdb, PdbByteReader reader) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		//System.out.println(reader.dump());
 	}

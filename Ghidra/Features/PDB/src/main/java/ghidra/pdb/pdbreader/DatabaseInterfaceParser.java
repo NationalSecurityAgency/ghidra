@@ -66,7 +66,7 @@ public class DatabaseInterfaceParser {
 
 		// In support of debug.
 		debugReader = reader;
-		PdbMessageLog.message(this::debug1);
+		PdbLog.message(this::debugDump);
 
 		int headerSignature = reader.parseInt();
 		int versionNumber = reader.parseInt();
@@ -91,7 +91,7 @@ public class DatabaseInterfaceParser {
 		return databaseInterface;
 	}
 
-	private String debug1() {
+	private String debugDump() {
 		return "DatabaseInterfaceParser data on stream " + getStreamNumber() + ":\n" +
 			debugReader.dump() + "\n";
 	}

@@ -24,9 +24,6 @@ import ghidra.pdb.PdbException;
  */
 public class Offset16 extends AbstractOffset {
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
 	@Override
 	protected int doParse(PdbByteReader reader) throws PdbException {
 		return reader.parseUnsignedShortVal();

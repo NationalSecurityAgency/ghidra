@@ -34,6 +34,8 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
+	private static final long HEADER_MAGIC = 0xeffeeffeL;
+
 	protected Hasher hasher; //Might belong in parent?  Used in parent (even older Hasher?)
 
 	// The source of these values can overlay other fields in older versions of this type.
@@ -144,10 +146,10 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
 		symbolRecords.deserialize(monitor);
-		globalSymbolInformation.deserialize(
-			pdb.databaseInterface.getGlobalSymbolsHashMaybeStreamNumber(), false, monitor);
-		publicSymbolInformation.deserialize(
-			pdb.databaseInterface.getPublicStaticSymbolsHashMaybeStreamNumber(), true, monitor);
+		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber(), false,
+			monitor);
+		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber(), true,
+			monitor);
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// and processEditAndContinueInformation.
 		debugData.deserialize(monitor);
@@ -286,7 +288,7 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		//System.out.println(substreamReader.dump(0x1000));
 		long hdr = substreamReader.parseUnsignedIntVal();
 		int ver = substreamReader.parseInt(); // spec says unsigned, but I believe small vals.
-		if (hdr != 0xeffeeffeL) {
+		if (hdr != HEADER_MAGIC) {
 			return; //For now... we are not going to try to populate this with a conversion.
 		}
 		switch (ver) {

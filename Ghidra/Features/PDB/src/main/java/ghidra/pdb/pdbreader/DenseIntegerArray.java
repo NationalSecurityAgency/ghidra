@@ -40,9 +40,6 @@ public class DenseIntegerArray {
 
 	List<Integer> array = new ArrayList<>();
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Deserializes this {@link DenseIntegerArray}.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.

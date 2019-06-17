@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-import org.apache.commons.lang3.Validate;
-
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
 import ghidra.pdb.pdbreader.type.AbstractMsType;
@@ -55,7 +53,7 @@ public abstract class AbstractTypeProgramInterface {
 	protected int typeIndexMaxExclusive;
 	protected int dataLength;
 
-	protected Map<Integer, PrimitiveMsType> primitivesMap = new HashMap<>();
+	protected Map<Integer, PrimitiveMsType> primitiveTypesByRecordNumber = new HashMap<>();
 	protected List<AbstractMsType> typeList = new ArrayList<>();
 
 	protected int versionNumber = 0;
@@ -73,7 +71,7 @@ public abstract class AbstractTypeProgramInterface {
 	 *  {@link AbstractTypeProgramInterface} data.
 	 */
 	public AbstractTypeProgramInterface(AbstractPdb pdb, int streamNumber) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
 	}
@@ -133,10 +131,10 @@ public abstract class AbstractTypeProgramInterface {
 	 */
 	public AbstractMsType getRecord(int recordNumber) {
 		if (recordNumber < typeIndexMin) {
-			PrimitiveMsType primitive = primitivesMap.get(recordNumber);
+			PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
 			if (primitive == null) {
 				primitive = new PrimitiveMsType(pdb, recordNumber);
-				primitivesMap.put(recordNumber, primitive);
+				primitiveTypesByRecordNumber.put(recordNumber, primitive);
 			}
 			return primitive;
 		}
@@ -194,7 +192,7 @@ public abstract class AbstractTypeProgramInterface {
 	 * @param typeIndexMaxExclusive One greater than the MaxIndex to set/use.
 	 */
 	AbstractTypeProgramInterface(AbstractPdb pdb, int typeIndexMin, int typeIndexMaxExclusive) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.typeIndexMin = typeIndexMin;
 		this.typeIndexMaxExclusive = typeIndexMaxExclusive;

@@ -67,8 +67,8 @@ public class GlobalSymbolInformation {
 	List<Integer> hashBucketOffsets = new ArrayList<>();
 	Set<SymbolHashRecord> hashRecords = new TreeSet<>();
 	List<Integer> symbolOffsets = new ArrayList<>();
-	Map<Integer, Integer> mapTableOffsetToTargetOffset = new HashMap<>();
-	Map<Integer, Integer> sectionNumToAbsoluteOffset = new HashMap<>();
+	Map<Integer, Integer> targetOffsetsByTableOffset = new HashMap<>();
+	Map<Integer, Integer> absoluteOffsetsBySectionNumber = new HashMap<>();
 
 	List<AbstractMsSymbol> symbols = new ArrayList<>();
 
@@ -159,7 +159,7 @@ public class GlobalSymbolInformation {
 	 */
 	void deserialize(int streamNumber, boolean pub, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
-		if (pdb.minimalDebugInfo) {
+		if (pdb.hasMinimalDebugInfo()) {
 			hashRecordsBitMapLength = 0x8000;
 			numExtraBytes = 0; // I believe;
 			numHashRecords = 0x3ffff;
@@ -184,7 +184,7 @@ public class GlobalSymbolInformation {
 			PdbByteReader thunkMapReader = reader.getSubPdbByteReader(thunkMapLength);
 			deserializeThunkMap(thunkMapReader, monitor);
 
-			/**
+			/*
 			 * See note in {@link #deserializePubHeader(PdbByteReader)} regarding spurious data
 			 * for numSections.  Because of this, we will assume the rest of the data in the
 			 * reader belongs to the section map and set the appropriate variable values here.
@@ -268,7 +268,7 @@ public class GlobalSymbolInformation {
 			monitor.checkCanceled();
 			int targetOffset = reader.parseInt();
 			int mapTableOffset = count * thunkSize + offsetThunkTable;
-			mapTableOffsetToTargetOffset.put(mapTableOffset, targetOffset);
+			targetOffsetsByTableOffset.put(mapTableOffset, targetOffset);
 		}
 	}
 
@@ -286,7 +286,7 @@ public class GlobalSymbolInformation {
 			int offset = reader.parseInt();
 			int section = reader.parseUnsignedShortVal();
 			reader.skip(2); // padding
-			sectionNumToAbsoluteOffset.put(section, offset);
+			absoluteOffsetsBySectionNumber.put(section, offset);
 		}
 	}
 
@@ -354,7 +354,7 @@ public class GlobalSymbolInformation {
 		numSections = (int) val;
 
 		// Calculated values.
-		/**
+		/*
 		 * We should calculate and store these as long values, but
 		 * {@link #PdbByteReader.getSubPdbByteReader(int)} does not support long, so we are
 		 *  checking here and throwing exception if we cannot support it.
@@ -455,6 +455,7 @@ public class GlobalSymbolInformation {
 	 * by a flat set of hash buckets that will be set at those indices in the order provided.
 	 * @param reader {@link PdbByteReader} containing the data buffer to process.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
+	 * @throws PdbException Upon not enough data left to parse.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	private void deserializedCompressedHashBuckets(PdbByteReader reader, TaskMonitor monitor)
@@ -514,16 +515,16 @@ public class GlobalSymbolInformation {
 	/**
 	 * Generates a list of symbols from the information that we have.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * @throws PdbException Upon PDB corruption.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	private void generateSymbolsList(TaskMonitor monitor) throws PdbException, CancelledException {
 		symbols = new ArrayList<>();
-		Map<Long, AbstractMsSymbol> map = pdb.getDatabaseInterface().getSymbolMap();
+		Map<Long, AbstractMsSymbol> symbolsByOffset = pdb.getDatabaseInterface().getSymbolsByOffset();
 		for (SymbolHashRecord record : hashRecords) {
 			monitor.checkCanceled();
 			long offset = record.getOffset();
-			AbstractMsSymbol symbol = map.get(offset);
+			AbstractMsSymbol symbol = symbolsByOffset.get(offset);
 			if (symbol == null) {
 				throw new PdbException("PDB corrupted");
 			}

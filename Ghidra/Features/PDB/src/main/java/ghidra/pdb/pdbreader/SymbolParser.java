@@ -17,8 +17,6 @@ package ghidra.pdb.pdbreader;
 
 import java.util.*;
 
-import org.apache.commons.lang3.Validate;
-
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.symbol.*;
 import ghidra.util.exception.CancelledException;
@@ -255,7 +253,7 @@ public class SymbolParser {
 	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 */
 	public SymbolParser(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 
@@ -266,10 +264,8 @@ public class SymbolParser {
 	public String getNewSymbolTypesLog() {
 		StringBuilder builder = new StringBuilder();
 		DelimiterState ds = new DelimiterState("New Symbol IDs Seen: ", ",");
-		/**
-		 *  We are creating the sorted set now, as we are willing to incur the cost of a sorted
-		 *  set now, but do not want to incur too much debug cost for adding to the
-		 *  {@link newSymbolTypesSeen} when not doing debug.
+		/*
+		 * Sort these before printing to avoid sorting performance hit when logging is not used.
 		 */
 		Set<Integer> sortedSet = new TreeSet<>(newSymbolTypesSeen);
 		for (Integer val : sortedSet) {
@@ -299,6 +295,7 @@ public class SymbolParser {
 
 	/**
 	 * Deserializes an {@link AbstractMsSymbol} from the {@link PdbByteReader} and returns it.
+	 * @param symbolTypeId the PDB ID for the symbol type to be parsed.
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
 	 * @return {@link AbstractMsSymbol} that was parsed.
 	 * @throws PdbException upon error parsing a field.

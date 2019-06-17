@@ -26,17 +26,10 @@ import ghidra.pdb.PdbException;
  */
 public class RvaVaDebugHeader extends DebugHeader {
 
-	//==============================================================================================
-	// Internals
-	//==============================================================================================
 	private long relativeVirtualAddressDataBase;
 	private BigInteger virtualAddressImageBase;
 	private long unsignedIntReserved1;
 	private long unsignedIntReserved2;
-
-	//==============================================================================================
-	// API
-	//==============================================================================================
 
 	/**
 	 * Returns the relative virtual address data base.

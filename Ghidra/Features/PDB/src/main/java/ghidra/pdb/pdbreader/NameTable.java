@@ -16,10 +16,7 @@
 package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.lang3.Validate;
+import java.util.*;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
@@ -49,11 +46,11 @@ public class NameTable {
 	private DenseIntegerArray deletedList = new DenseIntegerArray();
 	private String[] names;
 	private int[] streamNumbers;
-	private Map<String, Integer> mapNameToStreamNumber = new HashMap<>();
-	private Map<Integer, String> mapStreamNumberToName = new HashMap<>();
-	private Map<Integer, Map<Integer, String>> mapStreamNumberToStringTable = new HashMap<>();
+	private Map<String, Integer> streamNumbersByName = new HashMap<>();
+	private Map<Integer, String> namesByStreamNumber = new HashMap<>();
+	private Map<Integer, Map<Integer, String>> stringTablesByStreamNumber = new HashMap<>();
 
-	private Map<Integer, String> namesMap;
+	private Map<Integer, String> namesByOffset;
 
 	//==============================================================================================
 	// API
@@ -63,7 +60,7 @@ public class NameTable {
 	 * @param pdb {@link AbstractPdb} that owns this Name Table.
 	 */
 	public NameTable(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 
@@ -73,7 +70,7 @@ public class NameTable {
 	 * @return Name retrieved for the index.
 	 */
 	public String getNameFromStreamNumber(int index) {
-		return mapStreamNumberToName.get(index);
+		return namesByStreamNumber.get(index);
 	}
 
 	/**
@@ -82,7 +79,7 @@ public class NameTable {
 	 * @return Index of the name.
 	 */
 	public int getStreamNumberFromName(String name) {
-		Integer x = mapNameToStreamNumber.getOrDefault(name, -1);
+		Integer x = streamNumbersByName.getOrDefault(name, -1);
 		return x;
 	}
 
@@ -93,10 +90,10 @@ public class NameTable {
 	 * @return Name found at offset.
 	 */
 	public String getNameStringFromOffset(int offset) {
-		if (namesMap == null) {
+		if (namesByOffset == null) {
 			return null;
 		}
-		return namesMap.get(offset);
+		return namesByOffset.get(offset);
 	}
 
 	/**
@@ -106,10 +103,10 @@ public class NameTable {
 	 * @param name Name part of pair.
 	 */
 	public void forTestingOnlyAddOffsetNamePair(int offset, String name) {
-		if (namesMap == null) {
-			namesMap = new HashMap<>();
+		if (namesByOffset == null) {
+			namesByOffset = new HashMap<>();
 		}
-		namesMap.put(offset, name);
+		namesByOffset.put(offset, name);
 
 	}
 
@@ -176,8 +173,8 @@ public class NameTable {
 				pdb.getPdbReaderOptions().getOneByteCharset());
 			streamNumbers[i] = streamNumber;
 			names[i] = name;
-			mapStreamNumberToName.put(streamNumber, name);
-			mapNameToStreamNumber.put(name, streamNumber);
+			namesByStreamNumber.put(streamNumber, name);
+			streamNumbersByName.put(name, streamNumber);
 		}
 		deserializeNameTableStreams(monitor);
 	}
@@ -198,7 +195,7 @@ public class NameTable {
 			throws IOException, PdbException, CancelledException {
 		for (int streamNumber : streamNumbers) {
 			monitor.checkCanceled();
-			Map<Integer, String> mapOffsetToString = new HashMap<>();
+			Map<Integer, String> stringsByOffset = new HashMap<>();
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 			if (reader.getLimit() >= 12) {
 				long hdrMagic = reader.parseUnsignedIntVal();
@@ -213,7 +210,7 @@ public class NameTable {
 								monitor.checkCanceled();
 								int offset = stringReader.getIndex();
 								String string = stringReader.parseNullTerminatedUtf8String();
-								mapOffsetToString.put(offset, string);
+								stringsByOffset.put(offset, string);
 							}
 							// TODO: ? process the rest of the data in reader ?
 							break;
@@ -229,11 +226,11 @@ public class NameTable {
 					// TODO: unknown format
 				}
 			}
-			mapStreamNumberToStringTable.put(streamNumber, mapOffsetToString);
+			stringTablesByStreamNumber.put(streamNumber, stringsByOffset);
 		}
 
 		int namesStreamNumber = getStreamNumberFromName("/names");
-		namesMap = mapStreamNumberToStringTable.get(namesStreamNumber);
+		namesByOffset = stringTablesByStreamNumber.get(namesStreamNumber);
 
 	}
 
@@ -283,17 +280,17 @@ public class NameTable {
 		}
 		builder.append("}\n");
 		builder.append("------------------------------------------------------------\n");
-		for (String name : mapNameToStreamNumber.keySet()) {
+		for (String name : streamNumbersByName.keySet()) {
 			builder.append(name);
 			builder.append(" : ");
-			builder.append(mapNameToStreamNumber.get(name));
+			builder.append(streamNumbersByName.get(name));
 			builder.append("\n");
 		}
 		builder.append("------------------------------------------------------------\n");
-		for (int streamNumber : mapStreamNumberToName.keySet()) {
+		for (int streamNumber : namesByStreamNumber.keySet()) {
 			builder.append(streamNumber);
 			builder.append(" : ");
-			builder.append(mapStreamNumberToName.get(streamNumber));
+			builder.append(namesByStreamNumber.get(streamNumber));
 			builder.append("\n");
 		}
 		// TODO: output map entries for each table.

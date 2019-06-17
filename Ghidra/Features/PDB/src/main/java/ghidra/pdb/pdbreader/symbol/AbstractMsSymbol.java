@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.AbstractParsableItem;
 import ghidra.pdb.PdbByteReader;
@@ -84,7 +84,7 @@ public abstract class AbstractMsSymbol extends AbstractParsableItem {
 	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
 	 */
 	AbstractMsSymbol(AbstractPdb pdb, PdbByteReader reader) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		// The following commented-out code is used when trying to discern which SYMBOL types were
 		//  not yet implemented.

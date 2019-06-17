@@ -27,12 +27,10 @@ public class FunctionMsAttributes extends AbstractParsableItem {
 	private static final String INSTANCE_CONSTRUCTOR_VIRTUAL_BASE_STRING =
 		"instance constructor of a class with virtual base";
 
-	//==============================================================================================
 	private boolean hasCPPStyleReturnUDT;
 	private boolean isInstanceConstructor;
 	private boolean isInstanceConstructorOfClassWithVirtualBases;
 
-	//==============================================================================================
 	/**
 	 * Constructor for FunctionMsAttributes.
 	 * @param reader {@link PdbByteReader} from which this type is deserialized.

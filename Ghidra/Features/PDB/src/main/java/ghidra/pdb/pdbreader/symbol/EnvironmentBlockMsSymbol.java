@@ -78,8 +78,8 @@ public class EnvironmentBlockMsSymbol extends AbstractMsSymbol {
 	}
 
 	/**
-	 * Note: this method returns {@link List}<{@link AbstractString}> instead of
-	 * {@link List}<{@link String}>
+	 * Note: this method returns {@link List}&lt;{@link AbstractString}&gt; instead of
+	 * {@link List}&lt;{@link String}&gt;
 	 * @return {@String} list.
 	 */
 	public List<AbstractString> getStringList() {

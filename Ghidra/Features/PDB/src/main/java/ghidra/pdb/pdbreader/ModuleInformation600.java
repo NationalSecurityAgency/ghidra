@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.PdbByteReader;
 import ghidra.pdb.PdbException;
@@ -34,7 +34,7 @@ public class ModuleInformation600 extends AbstractModuleInformation {
 	// API
 	//==============================================================================================
 	public ModuleInformation600(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		sectionContribution = new SectionContribution600();
 	}

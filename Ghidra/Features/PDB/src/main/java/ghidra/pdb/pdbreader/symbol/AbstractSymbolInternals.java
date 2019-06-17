@@ -15,7 +15,7 @@
  */
 package ghidra.pdb.pdbreader.symbol;
 
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.*;
 import ghidra.pdb.pdbreader.AbstractPdb;
@@ -40,7 +40,7 @@ public abstract class AbstractSymbolInternals extends AbstractParsableItem {
 	 * @param pdb {@link AbstractPdb} to which this symbol belongs.
 	 */
 	public AbstractSymbolInternals(AbstractPdb pdb) {
-		Validate.notNull(pdb, "pdb cannot be null)");
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		create();
 	}

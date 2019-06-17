@@ -62,7 +62,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the (ordered?) {@link List}<{@link AbstractMsType}> of types in the namespace. 
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of types in the namespace. 
 	 * @return List of types in the namespace.
 	 */
 	public List<AbstractMsType> getNamespaceList() {
@@ -70,7 +70,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the (ordered?) {@link List}<{@link AbstractMsType}> of type members types of
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of type members types of
 	 *  this field list. 
 	 * @return Field list.
 	 */
@@ -79,7 +79,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the (ordered?) {@link List}<{@link AbstractMsType}> of other types. (We have
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of other types. (We have
 	 *  separated these out, but are unsure about what they are at this time.) 
 	 * @return List of other types.
 	 */

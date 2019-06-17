@@ -16,8 +16,7 @@
 package ghidra.pdb.pdbreader;
 
 import java.io.IOException;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import ghidra.pdb.PdbException;
 import ghidra.pdb.msfreader.AbstractMsf;
@@ -42,9 +41,6 @@ public class PdbParser {
 	public static final int VC110_ID = 20091201; // 0x01329141
 	public static final int VC140_ID = 20140508; // 0x013351dc
 
-	//==============================================================================================
-	// API
-	//==============================================================================================
 	/**
 	 * Static method to open a PDB file, determine its version, and return an {@link AbstractPdb}
 	 *  appropriate for that version; it will not have been deserialized.  The main method
@@ -59,11 +55,11 @@ public class PdbParser {
 	 * @throws PdbException on parsing issues. 
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions, TaskMonitor monitor)
-			throws IOException, PdbException, CancelledException {
-		Validate.notNull(filename, "filename cannot be null)");
-		Validate.notNull(pdbOptions, "pdbOptions cannot be null)");
-		Validate.notNull(monitor, "monitor cannot be null)");
+	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions,
+			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
+		Objects.requireNonNull(filename, "filename cannot be null");
+		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
+		Objects.requireNonNull(monitor, "monitor cannot be null");
 
 		// Do not do a try with resources here, as the msf must live within the PDB that is
 		//  created below.

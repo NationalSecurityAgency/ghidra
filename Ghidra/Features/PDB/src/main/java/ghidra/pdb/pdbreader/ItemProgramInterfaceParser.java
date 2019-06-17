@@ -24,9 +24,6 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 
 	private static final int ITEM_PROGRAM_INTERFACE_STREAM_NUMBER = 4;
 
-	//==============================================================================================
-	// Internal Data Methods
-	//==============================================================================================
 	/**
 	 * Returns the standard stream number that contains the serialized Item Program Interface.
 	 * @return The standard stream number that contains the Item Program Interface.
