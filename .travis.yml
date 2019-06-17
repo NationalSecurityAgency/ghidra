@@ -37,8 +37,6 @@ matrix:
         - gradle buildNatives_linux64 
         - gradle yajswDevUnpack
         - gradle buildGhidra
-        - cd build/dist && export name=$(ls) && unzip *.zip && rm *.zip
-        - mv $TRAVIS_BUILD_DIR/GPL/DemanglerGnu/build/os */GPL/DemanglerGnu/ && zip -r $name *
       before_deploy:
         - git config --local user.name "Greatnest"
         - git config --local user.email "lindonng@hotmail.com"
