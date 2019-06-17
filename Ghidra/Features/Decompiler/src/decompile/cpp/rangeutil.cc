@@ -1098,8 +1098,8 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       left = in1.left;
       right = (in1.right - in1.step) & in1.mask;
       if (right < left) {	// Extending causes 2 pieces
-	left = 0;
-	right = in1.mask;
+	left = left % step;
+	right = in1.mask + 1 + left;
       }
       else {
 	right += step;	// Impossible for it to wrap with bigger mask
@@ -1112,9 +1112,10 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       left = sign_extend(in1.left, inSize, outSize);
       right = sign_extend((in1.right - in1.step)&in1.mask, inSize, outSize);
       if ((intb)right < (intb)left) {
-	right = calc_mask(inSize);
-	left = calc_mask(outSize) ^ right;
-	right += 1;
+	uintb rem = left % step;
+	right = calc_mask(inSize) >> 1;
+	left = (calc_mask(outSize) ^ right) + rem;
+	right = right + 1 + rem;
       }
       else
 	right += step;

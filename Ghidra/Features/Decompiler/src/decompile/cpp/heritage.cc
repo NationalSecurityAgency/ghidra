@@ -631,6 +631,11 @@ void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
   analysisState = 1;		// In all cases the settings determined here are final
   const CircleRange &range( valueSet.getRange() );
   uintb rangeSize = range.getSize();
+  if (rangeSize == 0x100 || rangeSize == 0x10000) {
+    // These sizes likely result from the storage size of the index
+    if (step == 0)	// If we didn't see signs of iteration
+      rangeSize = 0;	// don't use this range
+  }
   if (rangeSize > 1 && rangeSize < 0xffffff) {	// Did we converge to something reasonable
     analysisState = 2;			// Mark that we got a definitive result
     if (rangeSize > 2)
