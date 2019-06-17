@@ -143,18 +143,28 @@ bool RangeHint::absorb(RangeHint *b)
   if (rangeType != RangeHint::open) return false;
   if (highind < 0) return false;
   if (b->rangeType == RangeHint::endpoint) return false;	// Don't merge with bounding range
-  Datatype *settype = type;
+  Datatype *settype = type;					// Assume we will keep this data-type
   if (settype->getSize() != b->type->getSize()) return false;
-  if (settype->getMetatype() == TYPE_UNKNOWN)
-    settype = b->type;
-  else if (b->type->getMetatype() == TYPE_UNKNOWN) {
+  if (settype != b->type) {
+    Datatype *aTestType = type;
+    Datatype *bTestType = b->type;
+    while(aTestType->getMetatype() == TYPE_PTR) {
+      if (bTestType->getMetatype() != TYPE_PTR)
+	break;
+      aTestType = ((TypePointer *)aTestType)->getPtrTo();
+      bTestType = ((TypePointer *)bTestType)->getPtrTo();
+    }
+    if (aTestType->getMetatype() == TYPE_UNKNOWN)
+      settype = b->type;
+    else if (bTestType->getMetatype() == TYPE_UNKNOWN) {
+    }
+    else if (aTestType->getMetatype() == TYPE_INT && bTestType->getMetatype() == TYPE_UINT) {
+    }
+    else if (aTestType->getMetatype() == TYPE_UINT && bTestType->getMetatype() == TYPE_INT) {
+    }
+    else if (aTestType != bTestType)	// If they are both not unknown, they must be the same
+      return false;
   }
-  else if (settype->getMetatype() == TYPE_INT && b->type->getMetatype() == TYPE_UINT) {
-  }
-  else if (settype->getMetatype() == TYPE_UINT && b->type->getMetatype() == TYPE_INT) {
-  }
-  else if (settype != b->type)	// If they are both not unknown, they must be the same
-    return false;
   if ((flags & Varnode::typelock)!=0) return false;
   if ((b->flags & Varnode::typelock)!=0) return false;
   if (flags != b->flags) return false;
@@ -911,7 +921,7 @@ void MapState::gatherOpen(const Funcdata &fd)
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
   for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
     const LoadGuard &guard( *iter );
-    if (guard.getOp()->isDead()) continue;
+    if (!guard.isValid()) continue;
     int4 step = guard.getStep();
     if (step == 0) continue;		// No definitive sign of array access
     Datatype *ct = guard.getOp()->getIn(1)->getType();

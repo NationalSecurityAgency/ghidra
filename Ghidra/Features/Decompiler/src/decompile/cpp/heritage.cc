@@ -992,12 +992,19 @@ void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varno
   list<LoadGuard>::iterator iter;
 
   if ((flags & Varnode::addrtied)==0) return;	// If not address tied, don't consider for index alias
-  for(iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+  iter = loadGuard.begin();
+  while(iter!=loadGuard.end()) {
     LoadGuard &guardRec(*iter);
+    if (!guardRec.isValid()) {
+      list<LoadGuard>::iterator copyIter = iter;
+      ++iter;
+      loadGuard.erase(copyIter);
+      continue;
+    }
+    ++iter;
     if (guardRec.spc != addr.getSpace()) continue;
     if (addr.getOffset() < guardRec.minimumOffset) continue;
     if (addr.getOffset() > guardRec.maximumOffset) continue;
-    if (guardRec.op->isDead()) continue;
     copyop = fd->newOp(1,guardRec.op->getAddr());
     Varnode *vn = fd->newVarnodeOut(size,addr,copyop);
     vn->setActiveHeritage();
