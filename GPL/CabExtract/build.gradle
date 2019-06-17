@@ -28,6 +28,13 @@ task unpackCabExtract (type: Copy) {
 	// This is done since configure changes the contents for a platform
 	// NOTE: this can cause the 'build/unpack' to be deleted prior to an unpack
 	outputs.upToDateWhen { false }
+	
+	doLast {
+ 		// Force all unpacked files to have the same timestamp
+ 		ant.touch() {
+ 			fileset(dir: file("build/unpack/${cabextract}"))
+	    }
+ 	}
 }
 
 /*********************************************************************************
