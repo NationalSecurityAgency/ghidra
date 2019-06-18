@@ -642,8 +642,10 @@ void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
       step = range.getStep();
     minimumOffset = range.getMin();
     maximumOffset = (range.getEnd() - 1) & range.getMask();	// NOTE: Don't subtract a whole step
-    if (maximumOffset < minimumOffset)	// Values extend into what is usually stack parameters
+    if (maximumOffset < minimumOffset) {	// Values extend into what is usually stack parameters
       maximumOffset = spc->getHighest();
+      analysisState = 1;	// Remove the lock as we have likely overflowed
+    }
   }
   if (minimumOffset > spc->getHighest())
     minimumOffset = spc->getHighest();

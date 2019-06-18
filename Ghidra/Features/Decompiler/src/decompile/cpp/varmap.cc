@@ -258,10 +258,14 @@ bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
       return overlapProblems;		// Discard b entirely in favor of a
     }
     // Concede confusion about types, set unknown type rather than a or b's type
+    rangeType = RangeHint::fixed;
     size = space->wrapOffset(end-start);
+    if (size != 1 && size != 2 && size != 4 && size != 8) {
+      size = 1;
+      rangeType = RangeHint::open;
+    }
     type = typeFactory->getBase(size,TYPE_UNKNOWN);
     flags = 0;
-    rangeType = RangeHint::fixed;
     highind = -1;
     return overlapProblems;
   }
@@ -929,16 +933,17 @@ void MapState::gatherOpen(const Funcdata &fd)
       ct = ((TypePointer *) ct)->getPtrTo();
       while (ct->getMetatype() == TYPE_ARRAY)
 	ct = ((TypeArray *) ct)->getBase();
-      if (ct->getSize() != step) {
-	// Datatype doesn't match step:  field in array of structures or something more unusual
-	if (ct->getSize() > step || (step % ct->getSize()) != 0)
-	  continue;
-	// Since ct's size divides the step and we want to preserve the arrayness
-	// we pretend we have an array of ct's size
-	step = ct->getSize();
-      }
     }
-    else {
+    int4 outSize = guard.getOp()->getOut()->getSize();
+    if (outSize != step) {
+      // LOAD size doesn't match step:  field in array of structures or something more unusual
+      if (outSize > step || (step % outSize) != 0)
+	continue;
+      // Since the LOAD size divides the step and we want to preserve the arrayness
+      // we pretend we have an array of LOAD's size
+      step = outSize;
+    }
+    if (ct->getSize() != step) {	// Make sure data-type matches our step size
       if (step > 8)
 	continue;		// Don't manufacture primitives bigger than 8-bytes
       ct = fd.getArch()->types->getBase(step, TYPE_UNKNOWN);

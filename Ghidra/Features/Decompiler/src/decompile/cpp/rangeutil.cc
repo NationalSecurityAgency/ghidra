@@ -2565,3 +2565,21 @@ void ValueSetSolver::solve(int4 max,Widener &widener)
   for(riter=readNodes.begin();riter!=readNodes.end();++riter)
     (*riter).second.compute();				// Calculate any follow-on value sets
 }
+
+#ifdef CPUI_DEBUG
+void ValueSetSolver::dumpValueSets(ostream &s) const
+
+{
+  list<ValueSet>::const_iterator iter;
+  for(iter=valueNodes.begin();iter!=valueNodes.end();++iter) {
+    (*iter).printRaw(s);
+    s << endl;
+  }
+  map<SeqNum,ValueSetRead>::const_iterator riter;
+  for(riter=readNodes.begin();riter!=readNodes.end();++riter) {
+    (*riter).second.printRaw(s);
+    s << endl;
+  }
+}
+
+#endif

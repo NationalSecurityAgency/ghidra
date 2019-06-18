@@ -319,6 +319,9 @@ public:
   map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads
   map<SeqNum,ValueSetRead>::const_iterator endValueSetReads(void) const { return readNodes.end(); }	///< End of ValueSetReads
   const ValueSetRead &getValueSetRead(const SeqNum &seq) { return (*readNodes.find(seq)).second; }	///< Get ValueSetRead by SeqNum
+#ifdef CPUI_DEBUG
+  void dumpValueSets(ostream &s) const;
+#endif
 };
 
 /// \param op2 is the range to compare \b this to
