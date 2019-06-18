@@ -656,17 +656,34 @@ void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
 void Heritage::analyzeNewLoadGuards(void)
 
 {
-  if (loadGuard.empty()) return;
-  if (loadGuard.back().analysisState != 0) return;	// Nothing new
-  list<LoadGuard>::iterator startIter = loadGuard.end();
+  bool nothingToDo = true;
+  if (!loadGuard.empty()) {
+    if (loadGuard.back().analysisState == 0)	// Check if unanalyzed
+      nothingToDo = false;
+  }
+  if (!storeGuard.empty()) {
+    if (storeGuard.back().analysisState == 0)
+      nothingToDo = false;
+  }
+  if (nothingToDo) return;
+
   vector<Varnode *> sinks;
   vector<PcodeOp *> reads;
-  while(startIter != loadGuard.begin()) {
-    --startIter;
-    LoadGuard &guard( *startIter );
+  list<LoadGuard>::iterator loadIter = loadGuard.end();
+  while(loadIter != loadGuard.begin()) {
+    --loadIter;
+    LoadGuard &guard( *loadIter );
     if (guard.analysisState != 0) break;
     reads.push_back(guard.op);
     sinks.push_back(guard.op->getIn(1));	// The CPUI_LOAD pointer
+  }
+  list<LoadGuard>::iterator storeIter = storeGuard.end();
+  while(storeIter != storeGuard.begin()) {
+    --storeIter;
+    LoadGuard &guard( *storeIter );
+    if (guard.analysisState != 0) break;
+    reads.push_back(guard.op);
+    sinks.push_back(guard.op->getIn(1));	// The CPUI_STORE pointer
   }
   AddrSpace *stackSpc = fd->getArch()->getStackSpace();
   Varnode *stackReg = (Varnode *)0;
@@ -678,7 +695,13 @@ void Heritage::analyzeNewLoadGuards(void)
   vsSolver.solve(10000,widener);
   list<LoadGuard>::iterator iter;
   bool runFullAnalysis = false;
-  for(iter=startIter;iter!=loadGuard.end(); ++iter) {
+  for(iter=loadIter;iter!=loadGuard.end(); ++iter) {
+    LoadGuard &guard( *iter );
+    guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    if (guard.analysisState == 0)
+      runFullAnalysis = true;
+  }
+  for(iter=storeIter;iter!=storeGuard.end(); ++iter) {
     LoadGuard &guard( *iter );
     guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
     if (guard.analysisState == 0)
@@ -687,7 +710,11 @@ void Heritage::analyzeNewLoadGuards(void)
   if (runFullAnalysis) {
     WidenerFull fullWidener;
     vsSolver.solve(10000, fullWidener);
-    for (iter = startIter; iter != loadGuard.end(); ++iter) {
+    for (iter = loadIter; iter != loadGuard.end(); ++iter) {
+      LoadGuard &guard(*iter);
+      guard.finalizeRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    }
+    for (iter = storeIter; iter != storeGuard.end(); ++iter) {
       LoadGuard &guard(*iter);
       guard.finalizeRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
     }
@@ -708,6 +735,20 @@ void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
   loadGuard.back().set(op,spc,node.offset);
 }
 
+/// \brief Generate a guard record given an indexed STORE to a stack space
+///
+/// Record the STORE op and the (likely) range of addresses in the stack space that
+/// might be stored to.
+/// \param node is the path element containing the constructed Address
+/// \param op is the STORE PcodeOp
+/// \param spc is the stack space
+void Heritage::generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
+
+{
+  storeGuard.push_back(LoadGuard());
+  storeGuard.back().set(op,spc,node.offset);
+}
+
 /// \brief Trace input stackpointer to any indexed loads
 ///
 /// Look for expressions of the form  val = *(SP(i) + vn + #c), where the base stack
@@ -715,7 +756,7 @@ void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 /// value is loaded from the resulting address.  The LOAD operations are added to the list
 /// of ops that potentially need to be guarded during a heritage pass.
 /// \param spc is the particular address space with a stackpointer (into it)
-void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
+void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
 
 {
   // We need to be careful of exponential ladders, so we mark Varnodes independently of
@@ -788,6 +829,13 @@ void Heritage::discoverIndexedStackLoads(AddrSpace *spc)
 	  // (INDIRECT/COPY/constant ADD) have only one path through.
 	  if (curNode.traversals != 0) {
 	    generateLoadGuard(curNode,op,spc);
+	  }
+	  break;
+	}
+	case CPUI_STORE:
+	{
+	  if (curNode.traversals != 0) {
+	    generateStoreGuard(curNode, op, spc);
 	  }
 	  break;
 	}
@@ -2039,7 +2087,7 @@ void Heritage::heritage(void)
     if (pass < info->delay) continue; // It is too soon to heritage this space
     if (!info->loadGuardSearch) {
       info->loadGuardSearch = true;
-      discoverIndexedStackLoads(info->space);
+      discoverIndexedStackPointers(info->space);
     }
     needwarning = false;
     iter = fd->beginLoc(space);
@@ -2205,6 +2253,7 @@ void Heritage::clear(void)
   merge.clear();
   clearInfoList();
   loadGuard.clear();
+  storeGuard.clear();
   maxdepth = -1;
   pass = 0;
 }

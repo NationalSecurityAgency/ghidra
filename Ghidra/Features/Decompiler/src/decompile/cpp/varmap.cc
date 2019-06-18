@@ -796,6 +796,44 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
 #endif
 }
 
+/// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
+/// RangeHint, attempting to make use of any data-type or index information.
+/// \param guard is the given LoadGuard
+/// \param typeFactory is used to manufacture a data-type for the hint if necessary
+void MapState::addGuard(const LoadGuard &guard,TypeFactory *typeFactory)
+
+{
+  if (!guard.isValid()) return;
+  int4 step = guard.getStep();
+  if (step == 0) return;		// No definitive sign of array access
+  Datatype *ct = guard.getOp()->getIn(1)->getType();
+  if (ct->getMetatype() == TYPE_PTR) {
+    ct = ((TypePointer *) ct)->getPtrTo();
+    while (ct->getMetatype() == TYPE_ARRAY)
+      ct = ((TypeArray *) ct)->getBase();
+  }
+  int4 outSize = guard.getOp()->getOut()->getSize();
+  if (outSize != step) {
+    // LOAD size doesn't match step:  field in array of structures or something more unusual
+    if (outSize > step || (step % outSize) != 0)
+      return;
+    // Since the LOAD size divides the step and we want to preserve the arrayness
+    // we pretend we have an array of LOAD's size
+    step = outSize;
+  }
+  if (ct->getSize() != step) {	// Make sure data-type matches our step size
+    if (step > 8)
+      return;		// Don't manufacture primitives bigger than 8-bytes
+    ct = typeFactory->getBase(step, TYPE_UNKNOWN);
+  }
+  if (guard.isRangeLocked()) {
+    int4 minItems = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
+    addRange(guard.getMinimum(),ct,0,RangeHint::open,minItems-1);
+  }
+  else
+    addRange(guard.getMinimum(),ct,0,RangeHint::open,3);
+}
+
 /// Run through all Symbols in the given map and create a corresponding RangeHint
 /// to \b this collection for each Symbol.
 /// \param rangemap is the given map of Symbols
@@ -922,39 +960,14 @@ void MapState::gatherOpen(const Funcdata &fd)
     addRange(offset,ct,0,RangeHint::open,minItems);
   }
 
+  TypeFactory *typeFactory = fd.getArch()->types;
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
-  for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
-    const LoadGuard &guard( *iter );
-    if (!guard.isValid()) continue;
-    int4 step = guard.getStep();
-    if (step == 0) continue;		// No definitive sign of array access
-    Datatype *ct = guard.getOp()->getIn(1)->getType();
-    if (ct->getMetatype() == TYPE_PTR) {
-      ct = ((TypePointer *) ct)->getPtrTo();
-      while (ct->getMetatype() == TYPE_ARRAY)
-	ct = ((TypeArray *) ct)->getBase();
-    }
-    int4 outSize = guard.getOp()->getOut()->getSize();
-    if (outSize != step) {
-      // LOAD size doesn't match step:  field in array of structures or something more unusual
-      if (outSize > step || (step % outSize) != 0)
-	continue;
-      // Since the LOAD size divides the step and we want to preserve the arrayness
-      // we pretend we have an array of LOAD's size
-      step = outSize;
-    }
-    if (ct->getSize() != step) {	// Make sure data-type matches our step size
-      if (step > 8)
-	continue;		// Don't manufacture primitives bigger than 8-bytes
-      ct = fd.getArch()->types->getBase(step, TYPE_UNKNOWN);
-    }
-    if (guard.isRangeLocked()) {
-      int4 minItems = ((guard.getMaximum() - guard.getMinimum()) + 1) / step;
-      addRange(guard.getMinimum(),ct,0,RangeHint::open,minItems-1);
-    }
-    else
-      addRange(guard.getMinimum(),ct,0,RangeHint::open,3);
-  }
+  for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter)
+    addGuard(*iter,typeFactory);
+
+  const list<LoadGuard> &storeGuard( fd.getStoreGuards() );
+  for(list<LoadGuard>::const_iterator iter=storeGuard.begin();iter!=storeGuard.end();++iter)
+    addGuard(*iter,typeFactory);
 }
 
 /// Define stack Symbols based on Varnodes.

@@ -232,7 +232,8 @@ public:
   /// \return \b true if the Varnode is fully linked
   bool isHeritaged(Varnode *vn) { return (heritage.heritagePass(vn->getAddr())>=0); }
 
-  const list<LoadGuard> &getLoadGuards(void) const { return heritage.getLoadGuards(); }
+  const list<LoadGuard> &getLoadGuards(void) const { return heritage.getLoadGuards(); }		///< Get the list of guarded LOADs
+  const list<LoadGuard> &getStoreGuards(void) const { return heritage.getStoreGuards(); }	///< Get the list of guarded STOREs
 
   // Function prototype and call specification routines
   int4 numCalls(void) const { return qlst.size(); }	///< Get the number of calls made by \b this function
