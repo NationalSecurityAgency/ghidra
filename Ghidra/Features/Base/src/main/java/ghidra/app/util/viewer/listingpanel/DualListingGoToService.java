@@ -73,7 +73,7 @@ class DualListingGoToService implements GoToService {
 
 	@Override
 	public boolean goTo(Navigatable navigatable, ProgramLocation loc, Program program) {
-			return dualGoTo(loc);
+		return dualGoTo(loc);
 	}
 
 	@Override
@@ -95,8 +95,8 @@ class DualListingGoToService implements GoToService {
 		AddressSetView addresses =
 			isLeftSide ? dualListing.getLeftAddresses() : dualListing.getRightAddresses();
 		if (!addresses.contains(addr)) {
-			dualListing.setStatusInfo("\"" + addr.toString() +
-				"\" is outside the current listing's view.");
+			dualListing.setStatusInfo(
+				"\"" + addr.toString() + "\" is outside the current listing's view.");
 			return false;
 		}
 		return true;
@@ -146,6 +146,13 @@ class DualListingGoToService implements GoToService {
 
 	@Override
 	public boolean goToExternalLocation(ExternalLocation extLoc, boolean checkNavigationOption) {
+		throw new UnsupportedOperationException(
+			"Connot Go To an external address from a dual listing view.");
+	}
+
+	@Override
+	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
+			boolean checkNavigationOption) {
 		throw new UnsupportedOperationException(
 			"Connot Go To an external address from a dual listing view.");
 	}

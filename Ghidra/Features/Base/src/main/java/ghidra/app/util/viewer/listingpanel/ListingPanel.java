@@ -519,10 +519,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Moves the cursor to the given program location and repositions the scrollbar to
-	 * show that location in the screen
-	 * 
-	 * @param loc the location to move to
-	 * @return true if the 'go to' was successful
+	 * show that location in the screen.
+	 * @param loc the location to move to.
 	 */
 	public boolean goTo(ProgramLocation loc) {
 		return goTo(loc, true);
@@ -538,7 +536,6 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 *                             the given location will be placed in the center of the screen;
 	 *                             when the parameter is false, then the screen will be scrolled
 	 *                             only enough to show the cursor.
-	 * @return true if the 'go to' was successful
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
 		final FieldLocation floc = getFieldLocation(loc);
@@ -558,27 +555,15 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return true;
 	}
 
-	/** 
-	 * Scroll the view of the listing to the given location 
-	 * @param location the location 
-	 */
+	/** Scroll the view of the listing to the given location. */
 	public void scrollTo(ProgramLocation location) {
 		FieldLocation fieldLocation = getFieldLocation(location);
-		if (fieldLocation == null) {
-			return; // this can happen when using restricted views
-		}
 		fieldPanel.scrollTo(fieldLocation);
 	}
 
-	/** 
-	 * Center the view of the listing around the given location 
-	 * @param location the location 
-	 */
+	/** Center the view of the listing around the given location. */
 	public void center(ProgramLocation location) {
 		FieldLocation fieldLocation = getFieldLocation(location);
-		if (fieldLocation == null) {
-			return; // this can happen when using restricted views
-		}
 		fieldPanel.center(fieldLocation);
 	}
 

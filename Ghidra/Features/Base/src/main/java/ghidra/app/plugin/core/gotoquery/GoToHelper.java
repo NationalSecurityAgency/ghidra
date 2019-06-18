@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.gotoquery;
 
 import java.util.Stack;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.OptionDialog;
 import ghidra.app.cmd.refs.SetExternalNameCmd;
 import ghidra.app.nav.Navigatable;
@@ -96,6 +98,9 @@ public class GoToHelper {
 			}
 			ExternalLocation externalLoc =
 				program.getExternalManager().getExternalLocation(externalSym);
+
+			// TODO - this seems like a mistake to always pass 'false' here; please doc why we
+			//        wish to ignore the user options for when to navigate to external programs
 			return goToExternalLinkage(navigatable, externalLoc, false);
 		}
 
@@ -248,7 +253,7 @@ public class GoToHelper {
 	 * external program association has not yet been established, the user will be prompted to make
 	 * an association if they choose before completing the navigation.
 	 * @param nav Navigatable
-	 * @param externalLoc external location
+	 * @param externalLocation external location
 	 * @param checkNavigationOption if true the {@link NavigationOptions#isGotoExternalProgramEnabled}
 	 * option will be used to determine if navigation to the external program will be
 	 * attempted, or if navigation to the external linkage location within the current
@@ -257,32 +262,47 @@ public class GoToHelper {
 	 * @return true if navigation to the external program was successful or navigation to a
 	 * linkage location was performed.
 	 */
-	public boolean goToExternalLocation(Navigatable nav, ExternalLocation externalLoc,
+	public boolean goToExternalLocation(Navigatable nav, ExternalLocation externalLocation,
 			boolean checkNavigationOption) {
 
 		if (checkNavigationOption && !navOptions.isGotoExternalProgramEnabled()) {
-			return goToExternalLinkage(nav, externalLoc, true);
+			return goToExternalLinkage(nav, externalLocation, true);
 		}
 
-		Symbol externalSym = externalLoc.getSymbol();
+		Program externalProgram = openExternalProgram(externalLocation);
+		if (externalProgram == null) {
+			return false;
+		}
+
+		// try the address first if it exists
+		Address addr = externalLocation.getAddress();
+		if (addr != null && externalProgram.getMemory().contains(addr)) {
+			goTo(nav, new AddressFieldLocation(externalProgram, addr), externalProgram);
+			return true;
+		}
+
+		// then try the symbol
+		Symbol symbol = getExternalSymbol(externalProgram, externalLocation);
+		if (symbol != null) {
+			goTo(nav, symbol.getProgramLocation(), externalProgram);
+			return true;
+		}
+
+		performDefaultExternalProgramNavigation(nav, externalLocation, externalProgram, addr);
+		return false; // return false because we did not go to the requested address
+	}
+
+	private Program openExternalProgram(ExternalLocation externalLocation) {
+
+		if (externalLocation == null) {
+			return null;
+		}
+
+		Symbol externalSym = externalLocation.getSymbol();
 		Program program = externalSym.getProgram();
-
-		ExternalManager extMgr = program.getExternalManager();
-		String extProgName = externalLoc.getLibraryName();
-		if (Library.UNKNOWN.equals(extProgName)) {
-			tool.setStatusInfo(" External location refers to " + Library.UNKNOWN +
-				" library. Unable to " + "perform navigation.", true);
-			return false;
-		}
-		String pathName = extMgr.getExternalLibraryPath(extProgName);
-		if (pathName == null || pathName.length() == 0) {
-			createExternalAssociation(program, extProgName);
-			pathName = extMgr.getExternalLibraryPath(extProgName);
-		}
-		if (pathName == null || pathName.length() == 0) {
-			tool.setStatusInfo(
-				" External location is not resolved. Unable to " + "perform navigation.", true);
-			return false;
+		String pathName = getExternalLibraryPath(externalLocation, program);
+		if (pathName == null) {
+			return null;
 		}
 
 		ProjectData pd = tool.getProject().getProjectData();
@@ -290,36 +310,20 @@ public class GoToHelper {
 		ProgramManager service = tool.getService(ProgramManager.class);
 		if (domainFile == null || service == null) {
 			tool.setStatusInfo("Unable to navigate to external location. " +
-				"Destination program [" + pathName + "] does not exist.");
-			return false;
-		}
-		Program externalProgram = service.openProgram(domainFile, -1, ProgramManager.OPEN_VISIBLE);
-		if (externalProgram == null) {
-			return false;
+				"Destination program [" + externalLocation + "] does not exist.");
+			return null;
 		}
 
-		String label = externalLoc.getOriginalImportedName();
-		if (label == null) {
-			label = externalLoc.getLabel();
-		}
-		Address addr = externalLoc.getAddress();
+		return service.openProgram(domainFile, -1, ProgramManager.OPEN_VISIBLE);
+	}
 
-		// try the address first if it exists.
-		if (addr != null && externalProgram.getMemory().contains(addr)) {
-			goTo(nav, new AddressFieldLocation(externalProgram, addr), externalProgram);
-			return true;
-		}
+	private void performDefaultExternalProgramNavigation(Navigatable nav,
+			ExternalLocation externalLocation, Program externalProgram, Address addr) {
 
-		Symbol symbol = getExternalSymbol(externalProgram, externalLoc);
-		if (symbol != null) {
-			goTo(nav, symbol.getProgramLocation(), externalProgram);
-			return true;
-		}
-
-		// failed to navigate to address or symbol
+		// failed to navigate to address or symbol; alert the user
 		if (addr != null) {
-			if (externalLoc.getSymbol().getSource() != SourceType.DEFAULT) {
-				tool.setStatusInfo("Symbol [" + getExternalName(externalLoc) +
+			if (externalLocation.getSymbol().getSource() != SourceType.DEFAULT) {
+				tool.setStatusInfo("Symbol [" + getExternalName(externalLocation) +
 					"] does not exist, and address [" + addr + "] is not in memory.", true);
 			}
 			else {
@@ -327,14 +331,39 @@ public class GoToHelper {
 			}
 		}
 		else {
-			tool.setStatusInfo("Symbol [" + getExternalName(externalLoc) + "] does not exist.",
+			tool.setStatusInfo("Symbol [" + getExternalName(externalLocation) + "] does not exist.",
 				true);
 		}
 
 		// navigate to top of external program
-		addr = externalProgram.getMinAddress();
-		goTo(nav, new AddressFieldLocation(externalProgram, addr), externalProgram);
-		return false; // return false because we did not go to the requested address
+		AddressFieldLocation location =
+			new AddressFieldLocation(externalProgram, externalProgram.getMinAddress());
+		goTo(nav, location, externalProgram);
+	}
+
+	private String getExternalLibraryPath(ExternalLocation externalLocation, Program program) {
+
+		ExternalManager externalManager = program.getExternalManager();
+		String extProgName = externalLocation.getLibraryName();
+		if (Library.UNKNOWN.equals(extProgName)) {
+			tool.setStatusInfo(" External location refers to " + Library.UNKNOWN +
+				" library. Unable to " + "perform navigation.", true);
+			return null;
+		}
+
+		String pathName = externalManager.getExternalLibraryPath(extProgName);
+		if (StringUtils.isBlank(pathName)) {
+			createExternalAssociation(program, extProgName);
+			pathName = externalManager.getExternalLibraryPath(extProgName);
+		}
+
+		if (StringUtils.isBlank(pathName)) {
+			tool.setStatusInfo(" External location is not resolved. Unable to perform navigation.",
+				true);
+			return null;
+		}
+
+		return pathName;
 	}
 
 	private Stack<String> getExternalNamespaceStack(ExternalLocation externalLoc) {
@@ -375,9 +404,7 @@ public class GoToHelper {
 
 		// assume global symbol name if mangled name (same as original name) exists
 		String label = externalLoc.getOriginalImportedName();
-
 		SymbolPath symbolPath;
-
 		if (label == null) {
 			// use alternate symbol (may or may not be mangled)
 			Symbol s = externalLoc.getSymbol();

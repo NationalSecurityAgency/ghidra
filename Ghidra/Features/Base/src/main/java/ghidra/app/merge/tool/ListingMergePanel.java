@@ -477,6 +477,12 @@ public class ListingMergePanel extends JPanel
 		}
 
 		@Override
+		public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation externalLoc,
+				boolean checkNavigationOption) {
+			return false;
+		}
+
+		@Override
 		public GoToOverrideService getOverrideService() {
 			return null;
 		}

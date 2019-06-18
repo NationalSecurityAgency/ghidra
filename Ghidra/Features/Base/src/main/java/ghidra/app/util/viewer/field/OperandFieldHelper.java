@@ -401,8 +401,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 		for (int opIndex = 0; opIndex < numOperands; opIndex++) {
 			OperandRepresentationList operandRepresentationList =
 				codeUnitFormat.getOperandRepresentationList(inst, opIndex);
-			addElementsForOperand(inst, elements, opIndex, operandRepresentationList,
-				characterOffset);
+			characterOffset = addElementsForOperand(inst, elements, opIndex,
+				operandRepresentationList, characterOffset);
 			characterOffset = 0;
 		}
 
@@ -504,8 +504,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	private boolean containsNonPrimary(Reference[] refs) {
-		for (Reference ref : refs) {
-			if (!ref.isPrimary()) {
+		for (int i = 0; i < refs.length; i++) {
+			if (!refs[i].isPrimary()) {
 				return true;
 			}
 		}

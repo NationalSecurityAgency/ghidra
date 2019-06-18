@@ -17,8 +17,6 @@ package ghidra.program.model.listing;
 
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.program.model.address.*;
@@ -37,8 +35,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.MathUtilities;
 
 public class CodeUnitFormat {
-
-	private static final String EMPTY = "";
 
 	protected static final String PLUS = "+";
 	protected static final String UNDERSCORE = "_";
@@ -116,39 +112,37 @@ public class CodeUnitFormat {
 	 */
 	public String getRepresentationString(CodeUnit cu, boolean includeEOLcomment) {
 
-		StringBuilder buffy = new StringBuilder(getMnemonicRepresentation(cu));
+		StringBuffer stringBuffer = new StringBuffer(getMnemonicRepresentation(cu));
 		if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
 			int n = instr.getNumOperands();
-			if (n > 1) {
-				buffy.append(' ');
-			}
-
 			for (int i = 0; i < n; i++) {
-				String sep = instr.getSeparator(i);
-				buffy.append(StringUtils.isBlank(sep) ? EMPTY : sep);
-				buffy.append(getOperandRepresentationString(cu, i));
+				if (i == 0) {
+					stringBuffer.append(" ");
+				}
+				else {
+					String separator = instr.getSeparator(i);
+					if (separator != null && separator.length() != 0) {
+						stringBuffer.append(separator);
+					}
+				}
+				stringBuffer.append(getOperandRepresentationString(cu, i));
 			}
-
-			// grab any trailing separator at n (index + 1; see Instruction.getSeparator())
-			String sep = instr.getSeparator(n);
-			buffy.append(StringUtils.isBlank(sep) ? EMPTY : sep);
 		}
 		else { // data always has one operand
-			buffy.append(' ');
-			buffy.append(getOperandRepresentationString(cu, 0));
+			stringBuffer.append(" ");
+			stringBuffer.append(getOperandRepresentationString(cu, 0));
 		}
-
 		if (includeEOLcomment) {
 			String eolComment = cu.getComment(CodeUnit.EOL_COMMENT);
 			if (eolComment != null) {
 				// fixup annotations
 				eolComment = CommentUtils.getDisplayString(eolComment, cu.getProgram());
-				buffy.append("  // ");
-				buffy.append(eolComment);
+				stringBuffer.append("  // ");
+				stringBuffer.append(eolComment);
 			}
 		}
-		return buffy.toString();
+		return stringBuffer.toString();
 	}
 
 	/**
@@ -158,19 +152,19 @@ public class CodeUnitFormat {
 	 * @return mnemonic representation
 	 */
 	public String getMnemonicRepresentation(CodeUnit cu) {
-		StringBuilder buffy = new StringBuilder();
+		StringBuffer stringBuffer = new StringBuffer();
 		String mnemonic = cu.getMnemonicString();
 		if (options.showDataMutability && (cu instanceof Data) && mnemonic != null) {
 			Data d = (Data) cu;
 			if (d.isConstant()) {
-				buffy.append("const ");
+				stringBuffer.append("const ");
 			}
 			else if (d.isVolatile()) {
-				buffy.append("volatile ");
+				stringBuffer.append("volatile ");
 			}
 		}
-		buffy.append(mnemonic);
-		return buffy.toString();
+		stringBuffer.append(mnemonic);
+		return stringBuffer.toString();
 	}
 
 	/**
@@ -279,7 +273,7 @@ public class CodeUnitFormat {
 	 * Perform register markup with explicit and implied register variable
 	 * reference.
 	 * 
-	 * @param instr instruction
+	 * @param inst instruction
 	 * @param opIndex
 	 * @param func function containing instruction
 	 * @param primaryRef primary reference or null
@@ -452,17 +446,18 @@ public class CodeUnitFormat {
 	 * @param opIndex operand index
 	 * @param func function containing instruction
 	 * @param primaryRef primary reference
-	 * @param representationList the representation objects
+	 * @param referencedVariable optional variable associated with reference
+	 * @param regIndexMap register index map
+	 * @param representationList
 	 * @return true if primaryRef was included in scalar mark-up
 	 */
 	private boolean performAddressMarkup(Instruction instr, int opIndex, Function func,
 			Reference primaryRef, List<Object> representationList) {
-
 		if (primaryRef == null || !primaryRef.isMemoryReference()) {
 			return false;
 		}
-
 		Address refAddr = primaryRef.getToAddress();
+
 		int size = representationList.size();
 		for (int i = 0; i < size; i++) {
 			Object obj = representationList.get(i);
@@ -1138,9 +1133,13 @@ public class CodeUnitFormat {
 	 * Get a representation object corresponding to the specified reference.
 	 * Format options are considered when generating label.
 	 * 
-	 * @param cu the code unit
-	 * @param ref the reference
+	 * @param cu
+	 * @param ref
 	 * @param var variable which corresponds to reference or null
+	 * @param showIndirectValue if true, indirect memory references which refer
+	 *            to a pointer will get an additional "=value" appended where
+	 *            value corresponds to data pointed to by the referenced
+	 *            pointer.
 	 * @return reference representation object
 	 */
 	private Object getReferenceRepresentation(CodeUnit cu, Reference ref, Variable var) {
@@ -1418,6 +1417,9 @@ public class CodeUnitFormat {
 		return symbol.getName();
 	}
 
+	/**
+	 * Returns ShowBlockName setting
+	 */
 	public ShowBlockName getShowBlockName() {
 		return options.showBlockName;
 	}
