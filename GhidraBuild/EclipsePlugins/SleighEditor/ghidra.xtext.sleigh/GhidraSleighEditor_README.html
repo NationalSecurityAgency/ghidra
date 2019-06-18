@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GhidraSleighEditor README</title>
+  <style name="text/css">
+    li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; margin-bottom: 12px; }
+    h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+    h2 { padding-top:30px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+    p { font-family:times new roman; font-size:14pt; }
+    td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; }
+    th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; }
+    code { color:black; font-family:courier new font-size: 14pt; }
+    span.code { font-family:courier new font-size: 14pt; color:#000000; }
+  </style>
+</head>
+
+<body>
+
+<h1>GhidraSleighEditor README</h1>
+<p>GhidraSleighEditor makes developing and modifying Ghidra Sleigh processor modules much more enjoyable by providing a modern
+day context sensitive editor with syntax highlighting, navigation, context sensitive error notation, quick fixes, and more.  The
+editor is built with the excellent XTEXT DSL framework within Eclipse.
+</p>
+<p>The information provided in this document is effective as of Ghidra Sleigh Editor 1.0.0 and is subject to
+change with future releases.</p>
+
+<ul>
+
+  <li><a href="#MinimumRequirements">Minimum Requirements</a></li>
+  <li><a href="#Install">Installing</a></li>
+  <ul>
+    <li><a href="#InstallpreBuilt">Installation pre-build editor in Eclipse</a></li>
+    <li><a href="#Building">Building Eclipse Sleigh Editor</a></li>
+  </ul>
+  <li><a href="#Uninstall">Uninstalling</a></li>
+  <li><a href="#Upgrade">Upgrading</a></li>
+  <li><a href="#Features">Sleigh Editor Features</a></li>
+  <ul>
+    <li><a href="#Hilite">Syntax Highlighting</a></li>
+    <li><a href="#Validate">Validation</a></li>
+    <li><a href="#QuickFix">QuickFix</a></li>
+    <li><a href="#Hover">Hover</a></li>
+    <li><a href="#References">Find References</a></li>
+    <li><a href="#Rename">Renaming</a></li>
+    <li><a href="#Format">Code Formating</a></li>
+  </ul>
+  <li><a href="#ChangeHistory">Change History</a></li>
+</ul>
+
+<h2><a name="MinimumRequirements"></a>Minimum Requirements</h2>
+<ul>
+  <li>Eclipse 2019-3 with DSL and XTEXT 2.17 or later</li>
+  <li>Ghidra 9.0 or later</li>
+</ul>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+
+<h2><a name="Install"></a>Installing GhidraSleighEditor</h2>
+<p>GhidraSleighEditor is installed manually into Eclipse and should be installed by anyone interested in working with
+processor module sleigh specifications.  The Sleigh Editor must be manually installed in Eclipse.  In the future the extension
+may be installed automatically along with the GhidraDev Eclipse plugin when setting up Eclipse for Ghidra scripting and plugin development.</p>
+
+<h3><a name="InstallpreBuilt"></a>Install pre-Built</h3>
+<p>GhidraSleighEditor can be installed into an existing installation of Eclipse the same way most Eclipse
+plugins are installed.  From Eclipse:</p>
+<ol>
+  <li>Click <b>Help &#8594; Install New Software...</b></li>
+  <li>Click <b>Add...</b></li>
+  <li>Click <b>Archive...</b></li>
+  <li>
+    Select GhidraSleighEditor zip file from <i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse/GhidraSleighEditor/
+  </li>
+  <li>Click <b>OK</b> (name field can be blank)</li>
+  <li>Check <b>Ghidra</b> category (or <b>Ghidra Sleigh Editor</b> entry)</li>
+  <li>Click <b>Next</b></li>
+  <li>Click <b>Next</b></li>
+  <li>Accept the terms of the license agreement</li>
+  <li>Click <b>Finish</b></li>
+  <li>Click <b>Install anyway</b></li>
+  <li>Click <b>Restart Now</b></li>
+</ol>
+<h3><a name="Building"></a>Building Eclipse Sleigh Editor</h3>
+<ol>
+  <p>To build the Sleigh Editor, follow the instructions in ghidra/DevGuide.md to setup eclipse
+  for development.  Then follow the directions in
+  <i>ghidra/GhidraBuild/EclipsePlugins/GhidraSleighEditor/ghidra.xtext.sleigh.feature/build_README.txt</i>.</p>
+</ol>
+
+<h2><a name="Uninstall"></a>Uninstalling</h2>
+<p>GhidraSleighEditor can be uninstalled as follows from
+Eclipse:</p>
+<ol>
+  <li>Click <b>Help &#8594; About Eclipse</b></li>
+  <ul>
+    <li><i>For macOS:</i> <b>Eclipse &#8594; About Eclipse</b></li>
+  </ul>
+  <li>Click <b>Installation Details</b></li>
+  <li>Select Ghidra Sleigh Editor</li>
+  <li>Click <b>Uninstall...</b></li>
+  <li>Select Ghidra Sleigh Editor</li>
+  <li>Click <b>Finish</b></li>
+  <li>Click <b>Restart Now</b></li>
+</ol>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Upgrade"></a>Upgrading</h2>
+<p> GhidraSleighEditor can be upgraded the same way it was initially installed.</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Features"></a>Sleigh Editor Features</h2>
+<p>The Ghidra Sleigh Editor provides a variety of features one would expect in any modern IDE to make viewing, modifying, debugging,
+and creating Sleigh processor specifications as painless as possible.
+Once installed, any .sinc or .slaspec file that is edited will be brought up in the sleigh editor.</p>
+<p>The editor provides the following capabilities:</p>
+<ul>
+  <li><a name="Hilite"></a>Syntax Highlighting</li>
+  <ul>
+	<p>Keywords, Tokens, Sub-constructor names, Comments, Instruction Formats, Strings, Variables, and more can be colorized to make
+	the sliegh specification more readable.  In the <b>Window &#8594; Preferences &#8594; Sleigh</b> preferences panel, the color and font style can be changed
+	for any sleigh file tokens.</p>
+  </ul>
+  
+  <li><a name="Validate"></a>Validation</li>
+  <ul>
+    <p>The structure of a sleigh file while fairly simple can lend itself to errors when using a straight text editor.  The editor understands
+    the syntax and all constructs of a sleigh file.  Instead of waiting for the sleigh compiler to produce an error, many but not all syntax
+    errors can be caught and displayed with a red error marker.</p>
+    <p>The editor validates the definition of variables including locals.
+    Though legal in the sleigh compiler, it has been found that not declaring local variables leads to
+    errors that are not be caught by the sleigh compiler.  For example, assigning to a variable 'ro' when the actual register name is 'r0' may go
+    unnoticed.  All local variables must be defined with with the 'local' keyword or with an initial ':size'.</p>
+    <p>Warnings on duplicate names of tokens is marked in yellow.  Complex matching patterns such as <i>'!='&nbsp&nbsp'&lt'&nbsp&nbsp'&gt'</i> are warnings as well.  Using
+    comparison matching operators can cause the generated .sla file to be much larger than necessary.  Comparison matching should really never be used on any
+    tokens that are bigger than a few bits as the number of match cases generated will be large.  Their use is unavoidable in some cases.<p>
+    <p>There are some artificial enforcements in the editor that, while valid sleigh syntax, cause the syntax to be unparsable.  Because the sleigh
+    Domain Specific Language (DSL) is a context sensitive grammer, as well as using define-like pre-processing expansion, the editor only allows define
+    <b>$()</b> variables at certain locations where a single token would reside.  The most common flagged error is embedding a connecting '&' in a define and then
+    using it an a match pattern:
+    <ul>
+    <p><b>:MOV ax, bx is t1=1 $(BadDefine) {}</b> is not allowed, and instead should be <b>:MOV ax, bx is t1=1 & $(GoodDefine) {}</b>.</p>
+    </ul>
+  </ul>
+  
+  <li><a name="QuickFix"></a>QuickFix</li>
+  <ul>
+    <p>Some simple syntax errors can be fixed quickly with QuickFix suggestions. Pressing Crtl-1 on an error will bring up available quick-fixes.</p>
+    <li>Undefined local variable - insert 'local' or the ':size" form if the size can be detected.</li>
+    <li>Undefined user pcodeop - can insert a user pcodeop definition for an unknown identifier</li>
+    <li>Undefined macro - can insert a macro definition for an unknown identifier</li>
+    <li>Add token field definition - for an unknown token in the match pattern</li>
+  </ul>
+  <p>More quick-fixes may be added in the future.  Please note quickfixes can be slow on large files such as the AARCH64.</p>
+  
+  <li><a name="Hover"></a>Hover</li>
+  	<ul>
+  		<p>There are many constructs in a sleigh file that, when hovered over, will display additional information.  This is especially useful for tokens to get their
+  			size without having to navigate to the token field definition.  More hovers will be added.<p>
+  		<li>Sub-Constructors will display all the defined sub-constructors with the same name.</li>
+  		<li>Token field definitions will display their size, and if attached, the set of registers.</li>
+  		<li>Registers display their size.</li>
+  		<li>Numeric values will display in Hex, Binary, and Decimal.</li>
+  		<li>$(Defines) display all the possible defines for the name, since the actual define used can't be known.</li> 
+  	</ul>
+  	
+   <li><a name="Navigate"></a>Navigation</li>
+   <p>If you have edited a sleigh processor specification in a regular text editor, you will appreciate the forward and backward navigation supported on
+   various variable name use and their associated definition.  Navigation is supported on sub-constructor names, field token names, registers, macros names, local variables, define names, and user
+   define pcodeop's.</p>
+   <p>Navigate by pressing <b>&ltF3&gt</b> on a variable, using the forward/backward navigation arrows, or my favorite the &lt-* that will navigate
+   back to the last edit location.<p>
+   
+   <li><a name="References"></a>Find References</li>
+   <p>Instead of keyword searching, the editor provides a find all uses of a variable.  Each found use is listed in a search window with the text of the line where it is used displayed.
+   Each found location can also be navigated to by double clicking on the found reference.</p>
+   <p>Use the editor popup menu <b>Find References</b> action.</p>
+   
+   <li><a name="Rename"></a>Renaming</li>
+   <p>The name of variables can be very important, and instead of doing a search and replace on a string, the editor can refactor a name and change all other uses of that name.  The name
+   is even changed in other .sinc and .slaspec files.<p>
+   <p>Use the editor popup menu <b>Rename Element</b> action.</p>
+   
+   <li><a name="Format"></a>Code Formating</li>
+   <p>Sleigh files can get large and messy during development.  Instead of paying much attention to format, or trying to format by hand you can use the Source Format action.
+   Common constructs are lined up, for example the token definitions will find the longest token and line up all other tokens and their definition.  All sub-constructors of the
+   same name will be lined up on the 'is' keyword, the match pattern, and the semantic definitions.  All constructors 'is' keywords will be generally lined up based on the longest
+   print peice for each constructor.  Statements will also be indented consistently.  Multi-line attach definitions will have each entry lined up.
+   Formatting can be restricted to a selection of lines to stop formatting from entirely re-formatting carefully formatted files.
+   Additional formatting may be added in the future, and the formatter may become more configurable in the future.<p>
+   <p>Use the editor popup menu <b>Source &#8594; Format</b> action.</p>
+</ul>
+<h2><a name="ChangeHistory"></a>Change History</h2>
+<p><u><b>1.0.0</b>:</u> Initial release in Ghidra 9.1</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<!-- Some padding -->
+<br>
+<br>
+<br>
+
+</body>
+</html>
