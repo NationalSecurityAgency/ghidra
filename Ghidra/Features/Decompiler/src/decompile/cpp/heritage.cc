@@ -777,7 +777,7 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
       PcodeOp *op = *curNode.iter;
       ++curNode.iter;
       Varnode *outVn = op->getOut();
-      if (outVn == (Varnode *)0 || outVn->isMark()) continue;		// Don't revisit Varnodes
+      if (outVn != (Varnode *)0 && outVn->isMark()) continue;		// Don't revisit Varnodes
       switch(op->code()) {
 	case CPUI_INT_ADD:
 	{
@@ -1045,7 +1045,7 @@ void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varno
   iter = loadGuard.begin();
   while(iter!=loadGuard.end()) {
     LoadGuard &guardRec(*iter);
-    if (!guardRec.isValid()) {
+    if (!guardRec.isValid(CPUI_LOAD)) {
       list<LoadGuard>::iterator copyIter = iter;
       ++iter;
       loadGuard.erase(copyIter);

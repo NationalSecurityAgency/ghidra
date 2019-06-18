@@ -127,7 +127,7 @@ class MapState {
   vector<RangeHint *>::iterator iter;	///< The current iterator into the RangeHints
   Datatype *defaultType;		///< The default data-type to use for RangeHints
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
-  void addGuard(const LoadGuard &guard,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
+  void addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
   void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi);	///< Add a hint to the collection
 public:
 #ifdef OPACTION_DEBUG

@@ -799,11 +799,12 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
 /// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
 /// RangeHint, attempting to make use of any data-type or index information.
 /// \param guard is the given LoadGuard
+/// \param opc is the expected op-code (CPUI_LOAD or CPUI_STORE)
 /// \param typeFactory is used to manufacture a data-type for the hint if necessary
-void MapState::addGuard(const LoadGuard &guard,TypeFactory *typeFactory)
+void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory)
 
 {
-  if (!guard.isValid()) return;
+  if (!guard.isValid(opc)) return;
   int4 step = guard.getStep();
   if (step == 0) return;		// No definitive sign of array access
   Datatype *ct = guard.getOp()->getIn(1)->getType();
@@ -812,7 +813,11 @@ void MapState::addGuard(const LoadGuard &guard,TypeFactory *typeFactory)
     while (ct->getMetatype() == TYPE_ARRAY)
       ct = ((TypeArray *) ct)->getBase();
   }
-  int4 outSize = guard.getOp()->getOut()->getSize();
+  int4 outSize;
+  if (opc == CPUI_STORE)
+    outSize = guard.getOp()->getIn(2)->getSize();	// The Varnode being stored
+  else
+    outSize = guard.getOp()->getOut()->getSize();	// The Varnode being loaded
   if (outSize != step) {
     // LOAD size doesn't match step:  field in array of structures or something more unusual
     if (outSize > step || (step % outSize) != 0)
@@ -963,11 +968,11 @@ void MapState::gatherOpen(const Funcdata &fd)
   TypeFactory *typeFactory = fd.getArch()->types;
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
   for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter)
-    addGuard(*iter,typeFactory);
+    addGuard(*iter,CPUI_LOAD,typeFactory);
 
   const list<LoadGuard> &storeGuard( fd.getStoreGuards() );
   for(list<LoadGuard>::const_iterator iter=storeGuard.begin();iter!=storeGuard.end();++iter)
-    addGuard(*iter,typeFactory);
+    addGuard(*iter,CPUI_STORE,typeFactory);
 }
 
 /// Define stack Symbols based on Varnodes.

@@ -126,7 +126,7 @@ public:
   uintb getMaximum(void) const { return maximumOffset; }	///< Get maximum offset of the guarded range
   int4 getStep(void) const { return step; }		///< Get the calculated step associated with the range (or 0)
   bool isRangeLocked(void) const { return (analysisState == 2); }	///< Return \b true if the range is fully determined
-  bool isValid(void) const { return (!op->isDead() && op->code() == CPUI_LOAD); }	///< Return \b true if the record still describes an active LOAD
+  bool isValid(OpCode opc) const { return (!op->isDead() && op->code() == opc); }	///< Return \b true if the record still describes an active LOAD
 };
 
 /// \brief Manage the construction of Static Single Assignment (SSA) form
