@@ -3347,7 +3347,8 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
     if (invn == vn)
       throw LowlevelError("Self-defined varnode");
     if (op->isMarker()) {
-      if (invn->isConstant()) continue;	// Don't propagate constants into markers
+      if (invn->isConstant()) continue;		// Don't propagate constants into markers
+      if (vn->isAddrForce()) continue;		// Don't propagate if we are keeping the COPY anyway
       if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
 	  (op->getOut()->getAddr() != invn->getAddr()))
 	continue;		// We must not allow merging of different addrtieds
