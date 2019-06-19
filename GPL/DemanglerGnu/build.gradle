@@ -1,3 +1,4 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
 
 if (findProject(':Generic') != null) {
 	apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"

@@ -142,20 +142,22 @@ public class ClassSearcher {
 			}
 			catch (InstantiationException e) {
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
-					"Error creating class " + clazz.getName() + " for extension " + c.getName() +
+					"Error creating class " + clazz.getSimpleName() + " for extension " +
+						c.getName() +
 						".  Discovered class is not a concrete implementation or does not " +
 						"have a nullary constructor!",
 					e);
 			}
 			catch (IllegalAccessException e) {
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
-					"Error creating class " + clazz.getName() + " for extension " + c.getName() +
+					"Error creating class " + clazz.getSimpleName() + " for extension " +
+						c.getName() +
 						".  Discovered class does not have a public, default constructor!",
 					e);
 			}
 			catch (SecurityException e) {
-				String message = "Error creating class " + clazz.getName() + " for extension " +
-					c.getName() + ".  Security Exception!";
+				String message = "Error creating class " + clazz.getSimpleName() +
+					" for extension " + c.getName() + ".  Security Exception!";
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
 					message, e);
 
@@ -163,7 +165,7 @@ public class ClassSearcher {
 			}
 			catch (Exception e) {
 				Msg.showError(ClassSearcher.class, null, "Error Creating Extension Point",
-					"Error creating class " + clazz.getName() +
+					"Error creating class " + clazz.getSimpleName() +
 						" when creating extension points for " + c.getName(),
 					e);
 			}

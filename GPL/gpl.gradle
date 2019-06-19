@@ -1,11 +1,13 @@
-project.ext.BIN_REPO = file("${projectDir}/../../ghidra.bin").absolutePath
+
+// BIN_REPO only useable in full Ghidra source configuration
+project.ext.BIN_REPO = file("../../../ghidra.bin").absolutePath
 
 project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
 
 /*********************************************************************************
  * Returns the local platform name.
  *********************************************************************************/
-String getCurrentPlatformName() {
+ext.getCurrentPlatformName = {
 
 	String osName = System.getProperty("os.name")
 	String archName = System.getProperty("os.arch")
@@ -37,10 +39,13 @@ String getCurrentPlatformName() {
  *	Helper method that returns a file that is the same relative location in the bin repo
  *  as the given project is in its repo.
  ******************************************************************************************/
-File getProjectLocationInBinRepo(Project p) {
-	String relativePath = getGhidraRelativePath(p)
-	
+ext.getProjectLocationInBinRepo = {
+	String relativePath = getGhidraRelativePath(this.project)
+	println("RELATIVE: $relativePath")
 	File binRepoRootProject = new File("${BIN_REPO}")
+	if (!binRepoRootProject.isDirectory()) {
+		throw new GradleException("Task requires Ghidra source and ghidra.bin")
+	}
 	return new File(binRepoRootProject, relativePath)
 }
 /****************************************************************************************
