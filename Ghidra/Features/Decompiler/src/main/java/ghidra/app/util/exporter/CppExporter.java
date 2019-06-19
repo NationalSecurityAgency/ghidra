@@ -36,8 +36,7 @@ import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.*;
 
 public class CppExporter extends Exporter {
 
@@ -68,7 +67,6 @@ public class CppExporter extends Exporter {
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
-
 		if (!(domainObj instanceof Program)) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
@@ -498,6 +496,16 @@ public class CppExporter extends Exporter {
 		@Override
 		public void setMessage(String message) {
 			monitor.setMessage(message);
+		}
+
+		@Override
+		public synchronized void addCancelledListener(CancelledListener listener) {
+			monitor.addCancelledListener(listener);
+		}
+
+		@Override
+		public synchronized void removeCancelledListener(CancelledListener listener) {
+			monitor.removeCancelledListener(listener);
 		}
 	}
 }

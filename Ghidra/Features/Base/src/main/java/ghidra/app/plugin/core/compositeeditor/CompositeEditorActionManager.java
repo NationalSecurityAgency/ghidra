@@ -32,9 +32,9 @@ import docking.action.KeyBindingData;
  */
 public class CompositeEditorActionManager {
 	private CompositeEditorProvider provider;
-	private ArrayList<CompositeEditorAction> editorActions = new ArrayList<CompositeEditorAction>();
-	private ArrayList<CompositeEditorAction> favoritesActions =
-		new ArrayList<CompositeEditorAction>();
+	private ArrayList<CompositeEditorTableAction> editorActions = new ArrayList<CompositeEditorTableAction>();
+	private ArrayList<CompositeEditorTableAction> favoritesActions =
+		new ArrayList<CompositeEditorTableAction>();
 	private ArrayList<CycleGroupAction> cycleGroupActions = new ArrayList<CycleGroupAction>();
 
 	private ArrayList<EditorActionListener> listeners = new ArrayList<EditorActionListener>();
@@ -103,24 +103,24 @@ public class CompositeEditorActionManager {
 	 * manager created by default are not part of the actions returned.
 	 * @return the composite editor actions
 	 */
-	public CompositeEditorAction[] getEditorActions() {
-		return editorActions.toArray(new CompositeEditorAction[editorActions.size()]);
+	public CompositeEditorTableAction[] getEditorActions() {
+		return editorActions.toArray(new CompositeEditorTableAction[editorActions.size()]);
 	}
 
 	/**
 	 * Gets the cycle group actions that the manager created by default.
 	 * @return the cycle group actions
 	 */
-	public CompositeEditorAction[] getFavoritesActions() {
-		return favoritesActions.toArray(new CompositeEditorAction[favoritesActions.size()]);
+	public CompositeEditorTableAction[] getFavoritesActions() {
+		return favoritesActions.toArray(new CompositeEditorTableAction[favoritesActions.size()]);
 	}
 
 	/**
 	 * Gets the favorites actions that the manager created by default.
 	 * @return the favorites actions
 	 */
-	public CompositeEditorAction[] getCycleGroupActions() {
-		return cycleGroupActions.toArray(new CompositeEditorAction[cycleGroupActions.size()]);
+	public CompositeEditorTableAction[] getCycleGroupActions() {
+		return cycleGroupActions.toArray(new CompositeEditorTableAction[cycleGroupActions.size()]);
 	}
 
 	/**
@@ -128,9 +128,9 @@ public class CompositeEditorActionManager {
 	 * action manager. This includes the favorites and cycle groups actions.
 	 * @return all composite editor actions
 	 */
-	public CompositeEditorAction[] getAllActions() {
+	public CompositeEditorTableAction[] getAllActions() {
 		int numActions = getActionCount();
-		CompositeEditorAction[] allActions = new CompositeEditorAction[numActions];
+		CompositeEditorTableAction[] allActions = new CompositeEditorTableAction[numActions];
 		int index = 0;
 		int length;
 		length = editorActions.size();
@@ -153,8 +153,8 @@ public class CompositeEditorActionManager {
 	 * @param actionName the name of the action to find.
 	 * @return the action or null
 	 */
-	public CompositeEditorAction getNamedAction(String actionName) {
-		CompositeEditorAction action;
+	public CompositeEditorTableAction getNamedAction(String actionName) {
+		CompositeEditorTableAction action;
 		int length = editorActions.size();
 		for (int i = 0; i < length; i++) {
 			action = editorActions.get(i);
@@ -190,7 +190,7 @@ public class CompositeEditorActionManager {
 	 * setting the new actions.
 	 * @param actions the composite editor actions.
 	 */
-	public void setEditorActions(CompositeEditorAction[] actions) {
+	public void setEditorActions(CompositeEditorTableAction[] actions) {
 		editorActions.clear();
 		for (int i = 0; i < actions.length; i++) {
 			editorActions.add(actions[i]);
@@ -225,21 +225,21 @@ public class CompositeEditorActionManager {
 		cycleGroupActions.clear();
 	}
 
-	private void notifyActionsAdded(ArrayList<? extends CompositeEditorAction> actions) {
+	private void notifyActionsAdded(ArrayList<? extends CompositeEditorTableAction> actions) {
 		if (actions.size() <= 0)
 			return;
 		int length = listeners.size();
-		CompositeEditorAction[] cea = actions.toArray(new CompositeEditorAction[actions.size()]);
+		CompositeEditorTableAction[] cea = actions.toArray(new CompositeEditorTableAction[actions.size()]);
 		for (int i = 0; i < length; i++) {
 			listeners.get(i).actionsAdded(cea);
 		}
 	}
 
-	private void notifyActionsRemoved(ArrayList<? extends CompositeEditorAction> actions) {
+	private void notifyActionsRemoved(ArrayList<? extends CompositeEditorTableAction> actions) {
 		if (actions.size() <= 0)
 			return;
 		int length = listeners.size();
-		CompositeEditorAction[] cea = actions.toArray(new CompositeEditorAction[actions.size()]);
+		CompositeEditorTableAction[] cea = actions.toArray(new CompositeEditorTableAction[actions.size()]);
 		for (int i = 0; i < length; i++) {
 			listeners.get(i).actionsRemoved(cea);
 		}
@@ -251,7 +251,7 @@ public class CompositeEditorActionManager {
 	public void optionsChanged(Options options, String name, Object oldValue, Object newValue) {
 		// Update the editor actions here.
 		// The favorites and cycle groups get handled by stateChanged() and cyclegroupChanged().
-		CompositeEditorAction[] actions = getEditorActions();
+		CompositeEditorTableAction[] actions = getEditorActions();
 		for (int i = 0; i < actions.length; i++) {
 			String actionName = actions[i].getFullName();
 			if (actionName.equals(name)) {

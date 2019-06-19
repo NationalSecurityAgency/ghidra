@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -56,7 +56,7 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	class ExtendedDecompilerController extends DecompilerController {
 
 		public ExtendedDecompilerController(DecompilerCallbackHandler handler,
-				DecompileOptions options, DecompileClipboardProvider clipboard) {
+				DecompileOptions options, DecompilerClipboardProvider clipboard) {
 			super(handler, options, clipboard);
 		}
 

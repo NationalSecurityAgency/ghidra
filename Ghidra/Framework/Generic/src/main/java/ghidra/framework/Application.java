@@ -711,12 +711,12 @@ public class Application {
 	}
 
 	/**
-	 * Returns the Release name for this build or null if unknown.
+	 * Returns the release name for this build.
+	 * @return the application release name.
 	 */
 	public static String getApplicationReleaseName() {
 		checkAppInitialized();
-		return app.layout.getApplicationProperties().getProperty(
-			ApplicationProperties.RELEASE_NAME_PROPERTY);
+		return app.layout.getApplicationProperties().getApplicationReleaseName();
 	}
 
 	/**

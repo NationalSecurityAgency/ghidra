@@ -118,7 +118,7 @@ public class MachoProgramBuilder {
 		try {
 			setImageBase();
 			processEntryPoint();
-			processMemoryBlocks(machoHeader, provider.getName(), true);
+			processMemoryBlocks(machoHeader, provider.getName(), true, true);
 			processUnsupportedLoadCommands();
 			processSymbolTables();
 			processIndirectSymbols();
@@ -206,20 +206,25 @@ public class MachoProgramBuilder {
 	 * 
 	 * @param header The Mach-O header to process for memory block creation.
 	 * @param source A name that represents where the memory blocks came from.
+	 * @param processSections True to split segments into their sections.
 	 * @param allowZeroAddr True if memory blocks at address 0 should be processed; otherwise, 
 	 *   false.
 	 * @throws Exception If there was a problem processing the memory blocks.
 	 */
-	protected void processMemoryBlocks(MachHeader header, String source, boolean allowZeroAddr)
-			throws Exception {
+	protected void processMemoryBlocks(MachHeader header, String source, boolean processSections,
+			boolean allowZeroAddr) throws Exception {
 		monitor.setMessage("Processing memory blocks for " + source + "...");
 
 		if (header.getFileType() == MachHeaderFileTypes.MH_DYLIB_STUB) {
 			return;
 		}
 
-		// Create memory blocks for segments
-		for (SegmentCommand segment : header.getAllSegments()) {
+		// Create memory blocks for segments.  Create them in reverse order so the splitting
+		// is more efficient.
+		List<SegmentCommand> segments = header.getAllSegments();
+		segments.sort((SegmentCommand a, SegmentCommand b) -> Long.compare(b.getVMaddress(),
+			a.getVMaddress()));
+		for (SegmentCommand segment : segments) {
 			if (monitor.isCancelled()) {
 				break;
 			}
@@ -251,25 +256,31 @@ public class MachoProgramBuilder {
 		}
 
 		// Create memory blocks for sections.  They will be in the segments we just created, so the
-		// segment blocks will be split and possible replaced.
-		for (Section section : header.getAllSections()) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-
-			if (section.getSize() > 0 && (allowZeroAddr || section.getAddress() != 0)) {
-				if (createMemoryBlock(section.getSectionName(),
-					space.getAddress(section.getAddress()), section.getOffset(), section.getSize(),
-					section.getSegmentName(), source, section.isRead(), section.isWrite(),
-					section.isExecute(), section.getType() == SectionTypes.S_ZEROFILL) == null) {
-					log.appendMsg(String.format("Failed to create block: %s.%s 0x%x 0x%x %s",
-						section.getSegmentName(), section.getSectionName(), section.getAddress(),
-						section.getSize(), source));
+		// segment blocks will be split and possibly replaced.  Create them in reverse order so
+		// the splitting is more efficient.
+		if (processSections) {
+			List<Section> sections = header.getAllSections();
+			sections.sort((Section a, Section b) -> Long.compare(b.getAddress(), a.getAddress()));
+			for (Section section : sections) {
+				if (monitor.isCancelled()) {
+					break;
 				}
-			}
-			else {
-				log.appendMsg("Skipping section: " + section.getSegmentName() + "." +
-					section.getSectionName() + " (" + source + ")");
+
+				if (section.getSize() > 0 && (allowZeroAddr || section.getAddress() != 0)) {
+					if (createMemoryBlock(section.getSectionName(),
+						space.getAddress(section.getAddress()), section.getOffset(),
+						section.getSize(), section.getSegmentName(), source, section.isRead(),
+						section.isWrite(), section.isExecute(),
+						section.getType() == SectionTypes.S_ZEROFILL) == null) {
+						log.appendMsg(String.format("Failed to create block: %s.%s 0x%x 0x%x %s",
+							section.getSegmentName(), section.getSectionName(),
+							section.getAddress(), section.getSize(), source));
+					}
+				}
+				else {
+					log.appendMsg("Skipping section: " + section.getSegmentName() + "." +
+						section.getSectionName() + " (" + source + ")");
+				}
 			}
 		}
 	}
@@ -527,7 +538,7 @@ public class MachoProgramBuilder {
 			}
 			else if (command instanceof SubLibraryCommand) {
 				SubLibraryCommand sublibCommand = (SubLibraryCommand) command;
-				addLibrary(sublibCommand.getSubLibraryName());
+				addLibrary(sublibCommand.getSubLibraryName().getString());
 			}
 			else if (command instanceof PreboundDynamicLibraryCommand) {
 				PreboundDynamicLibraryCommand pbdlCommand = (PreboundDynamicLibraryCommand) command;
@@ -550,14 +561,14 @@ public class MachoProgramBuilder {
 		List<SubUmbrellaCommand> umbrellas = machoHeader.getLoadCommands(SubUmbrellaCommand.class);
 		for (int i = 0; i < umbrellas.size(); ++i) {
 			props.setString("Mach-O Sub-umbrella " + i,
-				umbrellas.get(i).getSubUmbrellaFrameworkName());
+				umbrellas.get(i).getSubUmbrellaFrameworkName().getString());
 		}
 
 		List<SubFrameworkCommand> frameworks =
 			machoHeader.getLoadCommands(SubFrameworkCommand.class);
 		for (int i = 0; i < frameworks.size(); ++i) {
 			props.setString("Mach-O Sub-framework " + i,
-				frameworks.get(i).getUmbrellaFrameworkName());
+				frameworks.get(i).getUmbrellaFrameworkName().getString());
 		}
 	}
 
@@ -791,6 +802,34 @@ public class MachoProgramBuilder {
 					LoadCommandString path = runPathCommand.getPath();
 					DataUtilities.createData(program, loadCommandAddr.add(path.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - path.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (loadCommand instanceof SubFrameworkCommand) {
+					SubFrameworkCommand subFrameworkCommand = (SubFrameworkCommand) loadCommand;
+					LoadCommandString name = subFrameworkCommand.getUmbrellaFrameworkName();
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (loadCommand instanceof SubClientCommand) {
+					SubClientCommand subClientCommand = (SubClientCommand) loadCommand;
+					LoadCommandString name = subClientCommand.getClientName();
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (loadCommand instanceof SubLibraryCommand) {
+					SubLibraryCommand subLibraryCommand = (SubLibraryCommand) loadCommand;
+					LoadCommandString name = subLibraryCommand.getSubLibraryName();
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (loadCommand instanceof SubUmbrellaCommand) {
+					SubUmbrellaCommand subUmbrellaCommand = (SubUmbrellaCommand) loadCommand;
+					LoadCommandString name = subUmbrellaCommand.getSubUmbrellaFrameworkName();
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 			}

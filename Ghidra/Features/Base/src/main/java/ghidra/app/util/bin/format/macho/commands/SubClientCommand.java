@@ -59,8 +59,8 @@ public class SubClientCommand extends LoadCommand {
 	 * Returns the client name.
 	 * @return the client name
 	 */
-	public String getClientName() {
-		return client.getString();
+	public LoadCommandString getClientName() {
+		return client;
 	}
 
 	@Override

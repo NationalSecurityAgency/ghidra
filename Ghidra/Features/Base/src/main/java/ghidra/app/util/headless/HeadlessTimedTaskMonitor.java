@@ -58,6 +58,11 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return null;
+	}
+
+	@Override
 	public void setProgress(long value) {
 		// stub
 	}
@@ -80,6 +85,11 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	@Override
 	public void setIndeterminate(boolean indeterminate) {
 		// stub
+	}
+
+	@Override
+	public boolean isIndeterminate() {
+		return false;
 	}
 
 	@Override

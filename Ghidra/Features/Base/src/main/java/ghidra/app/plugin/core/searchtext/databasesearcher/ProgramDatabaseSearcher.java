@@ -28,7 +28,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * This class combines multiple field searchers to present a simple searcher interface for users of 
@@ -56,26 +55,30 @@ import ghidra.util.task.TaskMonitorAdapter;
  */
 
 public class ProgramDatabaseSearcher implements Searcher {
-	private List<ProgramDatabaseFieldSearcher> searchers =
-		new ArrayList<ProgramDatabaseFieldSearcher>();
+
+	private List<ProgramDatabaseFieldSearcher> searchers = new ArrayList<>();
 	private Address currentAddress;
 	private boolean isForward;
 	private SearchOptions searchOptions;
+
+	private long totalSearchCount;
+	private AddressSet remainingAddresses;
 	private TaskMonitor monitor;
 
 	public ProgramDatabaseSearcher(ServiceProvider serviceProvider, Program program,
-			ProgramLocation startLoc, AddressSetView set, SearchOptions options, TaskMonitor monitor) {
+			ProgramLocation startLoc, AddressSetView set, SearchOptions options,
+			TaskMonitor monitor) {
 		this.searchOptions = options;
-		this.monitor = monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR;
+		this.monitor = monitor != null ? monitor : TaskMonitor.DUMMY;
 		this.isForward = options.isForward();
 		if (startLoc == null && set == null) {
-			startLoc =
-				new ProgramLocation(program, isForward ? program.getMinAddress()
-						: program.getMaxAddress());
+			startLoc = new ProgramLocation(program,
+				isForward ? program.getMinAddress() : program.getMaxAddress());
 		}
+
 		initialize(serviceProvider, program, startLoc, set, options);
 		currentAddress = findNextSignificantAddress();
-		this.monitor.setIndeterminate(true);
+		monitor.initialize(totalSearchCount);
 	}
 
 	@Override
@@ -85,6 +88,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 			orderedSearchers = new ArrayList<>(searchers);
 			Collections.reverse(orderedSearchers);
 		}
+
 		while (currentAddress != null) {
 			monitor.setMessage("Checking address " + currentAddress);
 			for (ProgramDatabaseFieldSearcher searcher : orderedSearchers) {
@@ -92,9 +96,28 @@ public class ProgramDatabaseSearcher implements Searcher {
 					return searcher.getMatch();
 				}
 			}
+
+			Address lastAddress = currentAddress;
 			currentAddress = findNextSignificantAddress();
+			updateProgress(lastAddress, currentAddress);
 		}
 		return null;
+	}
+
+	private void updateProgress(Address lastAddress, Address newAddress) {
+		if (newAddress == null) {
+			return; // finished
+		}
+
+		if (isForward) {
+			remainingAddresses.delete(remainingAddresses.getMinAddress(), lastAddress);
+		}
+		else {
+			remainingAddresses.delete(lastAddress, remainingAddresses.getMaxAddress());
+		}
+
+		long progress = totalSearchCount - remainingAddresses.getNumAddresses();
+		monitor.setProgress(progress);
 	}
 
 	@Override
@@ -114,10 +137,10 @@ public class ProgramDatabaseSearcher implements Searcher {
 				return null;
 			}
 			Address nextAddressToCheck = searcher.getNextSignificantAddress(currentAddress);
-			nextAddress =
-				isForward ? getMin(nextAddress, nextAddressToCheck) : getMax(nextAddress,
-					nextAddressToCheck);
+			nextAddress = isForward ? getMin(nextAddress, nextAddressToCheck)
+					: getMax(nextAddress, nextAddressToCheck);
 		}
+
 		return nextAddress;
 	}
 
@@ -142,13 +165,15 @@ public class ProgramDatabaseSearcher implements Searcher {
 		return address1.compareTo(address2) > 0 ? address1 : address2;
 	}
 
-	private void initialize(ServiceProvider serviceProvider, Program program,
-			ProgramLocation start, AddressSetView view, SearchOptions options) {
+	private void initialize(ServiceProvider serviceProvider, Program program, ProgramLocation start,
+			AddressSetView view, SearchOptions options) {
 		searchOptions = options;
 		boolean forward = options.isForward();
 
 		AddressSetView trimmedSet = adjustSearchSet(program, start, view, forward);
 		ProgramLocation adjustedStart = adjustStartLocation(program, start, trimmedSet, forward);
+		remainingAddresses = new AddressSet(trimmedSet);
+		totalSearchCount = trimmedSet.getNumAddresses();
 
 		Pattern pattern =
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
@@ -159,20 +184,21 @@ public class ProgramDatabaseSearcher implements Searcher {
 				pattern, CodeUnit.PLATE_COMMENT));
 		}
 		if (options.searchFunctions()) {
-			searchers.add(new FunctionFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern));
+			searchers.add(
+				new FunctionFieldSearcher(program, adjustedStart, trimmedSet, forward, pattern));
 		}
 		if (options.searchComments()) {
 			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
 				pattern, CodeUnit.PRE_COMMENT));
 		}
 		if (options.searchLabels()) {
-			searchers.add(new LabelFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern));
+			searchers.add(
+				new LabelFieldSearcher(program, adjustedStart, trimmedSet, forward, pattern));
 		}
 		if (options.searchBothDataMnemonicsAndOperands()) {
-			searchers.add(DataMnemonicOperandFieldSearcher.createDataMnemonicAndOperandFieldSearcher(
-				program, adjustedStart, trimmedSet, forward, pattern, format));
+			searchers.add(
+				DataMnemonicOperandFieldSearcher.createDataMnemonicAndOperandFieldSearcher(program,
+					adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchOnlyDataMnemonics()) {
 			searchers.add(DataMnemonicOperandFieldSearcher.createDataMnemonicOnlyFieldSearcher(
@@ -183,16 +209,19 @@ public class ProgramDatabaseSearcher implements Searcher {
 				program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchBothInstructionMnemonicAndOperands()) {
-			searchers.add(InstructionMnemonicOperandFieldSearcher.createInstructionMnemonicAndOperandFieldSearcher(
-				program, adjustedStart, trimmedSet, forward, pattern, format));
+			searchers.add(
+				InstructionMnemonicOperandFieldSearcher.createInstructionMnemonicAndOperandFieldSearcher(
+					program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchOnlyInstructionMnemonics()) {
-			searchers.add(InstructionMnemonicOperandFieldSearcher.createInstructionMnemonicOnlyFieldSearcher(
-				program, adjustedStart, trimmedSet, forward, pattern, format));
+			searchers.add(
+				InstructionMnemonicOperandFieldSearcher.createInstructionMnemonicOnlyFieldSearcher(
+					program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchOnlyInstructionOperands()) {
-			searchers.add(InstructionMnemonicOperandFieldSearcher.createInstructionOperandOnlyFieldSearcher(
-				program, adjustedStart, trimmedSet, forward, pattern, format));
+			searchers.add(
+				InstructionMnemonicOperandFieldSearcher.createInstructionOperandOnlyFieldSearcher(
+					program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchComments()) {
 			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
@@ -209,43 +238,44 @@ public class ProgramDatabaseSearcher implements Searcher {
 	 * or backward. The address set is adjusted by removing addresses that are before the start
 	 * locations address when searching forward or after the start address when searching backwards.
 	 * @param program the program for the address set
-	 * @param start the program location where the search will start.
+	 * @param startLocation the program location where the search will start.
 	 * @param view the address set to be searched.
 	 * @param forward true for a forward search and false for backward search.
 	 * @return the adjusted address set.
 	 */
-	private AddressSetView adjustSearchSet(Program program, ProgramLocation start,
+	private AddressSetView adjustSearchSet(Program program, ProgramLocation startLocation,
 			AddressSetView view, boolean forward) {
 
+		if (view == null) {
+			view = program.getMemory();
+		}
+
+		if (startLocation == null) {
+			return view;
+		}
+
 		AddressSetView trimmedSet = view;
-		ProgramLocation adjustedStart = start;
-		if (adjustedStart != null && trimmedSet != null) {
-			trimmedSet = trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
-			if (!trimmedSet.isEmpty()) {
-				Address maxAddress = trimmedSet.getMaxAddress();
-				if (!forward && adjustedStart.getAddress().compareTo(maxAddress) > 0) {
-					adjustedStart = new ProgramLocation(program, maxAddress);
-					// If the adjustedStart isn't the maxAddress, then adjust this set to the
-					// minimum address of the code unit.  Otherwise the FieldSearcher will
-					// throw an IllegalArgumentException.
-					if (!adjustedStart.getAddress().equals(maxAddress)) {
-						trimmedSet =
-							trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
-					}
-				}
+		Address start = startLocation.getAddress();
+		trimmedSet = trimAddressSet(program, trimmedSet, start, forward);
+		if (trimmedSet.isEmpty()) {
+			return trimmedSet;
+		}
+
+		Address maxAddress = trimmedSet.getMaxAddress();
+		if (!forward && start.compareTo(maxAddress) > 0) {
+
+			// If the adjustedStart isn't the maxAddress, then adjust this set to the
+			// minimum address of the code unit.  Otherwise the FieldSearcher will
+			// throw an IllegalArgumentException.
+			ProgramLocation adjustedStart = new ProgramLocation(program, maxAddress);
+			if (!adjustedStart.getAddress().equals(maxAddress)) {
+				trimmedSet =
+					trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
 			}
 		}
 		return trimmedSet;
 	}
 
-	/**
-	 * Adjust the start location to be within the address set that will get searched.
-	 * @param program the program for the address set
-	 * @param start the program location where the search will start.
-	 * @param trimmedSet the address set to be searched.
-	 * @param forward true for a forward search and false for backward search.
-	 * @return
-	 */
 	private ProgramLocation adjustStartLocation(Program program, ProgramLocation start,
 			AddressSetView trimmedSet, boolean forward) {
 

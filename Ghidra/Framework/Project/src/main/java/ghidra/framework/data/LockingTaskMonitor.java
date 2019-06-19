@@ -39,7 +39,7 @@ class LockingTaskMonitor implements TaskMonitor {
 	 * be done in a try/finally block to avoid accidentally locking the
 	 * domain object indefinitely.
 	 * @param dobj domain object
-	 * @param hasProgress
+	 * @param hasProgress true if this monitorhas progress
 	 * @param title task title
 	 */
 	LockingTaskMonitor(DomainObjectAdapterDB dobj, boolean hasProgress, String title) {
@@ -119,6 +119,11 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
+	@Override
+	public synchronized String getMessage() {
+		return msg;
+	}
+
 	/*
 	 * @see ghidra.util.task.TaskMonitor#setProgress(int)
 	 */
@@ -165,6 +170,11 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
+	@Override
+	public boolean isIndeterminate() {
+		return indeterminate;
+	}
+
 	/*
 	 * @see ghidra.util.task.TaskMonitor#setCancelEnabled(boolean)
 	 */
@@ -206,9 +216,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#checkCanceled()
-	 */
 	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled()) {
@@ -216,17 +223,11 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
-	/**
-	 * @see ghidra.util.task.TaskMonitor#incrementProgress(int)
-	 */
 	@Override
 	public void incrementProgress(long incrementAmount) {
 		setProgress(curProgress + incrementAmount);
 	}
 
-	/**
-	 * @see ghidra.util.task.TaskMonitor#getProgress()
-	 */
 	@Override
 	public long getProgress() {
 		return curProgress;

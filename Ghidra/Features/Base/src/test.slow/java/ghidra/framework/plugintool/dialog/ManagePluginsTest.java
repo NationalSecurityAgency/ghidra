@@ -254,11 +254,9 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showProvider() {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Configure Tool (Tool)");
-		assertEquals(1, actions.size());
 
-		performAction(actions.get(0), true);
+		DockingActionIf action = getAction(tool, "Tool", "Configure Tool");
+		performAction(action, true);
 		waitForSwing();
 		provider = tool.getManagePluginsDialog();
 		pluginManagerComponent = (PluginManagerComponent) getInstanceField("comp", provider);

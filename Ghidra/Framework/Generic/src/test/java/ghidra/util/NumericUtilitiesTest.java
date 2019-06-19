@@ -15,7 +15,8 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -93,6 +94,13 @@ public class NumericUtilitiesTest {
 		byte[] bytes = new byte[] { (byte) 0x1, (byte) 0x23, (byte) 0x80, (byte) 0xff, (byte) 0 };
 		String str = NumericUtilities.convertBytesToString(bytes);
 		assertEquals("012380ff00", str);
+	}
+
+	@Test
+	public void testConvertBytesToStringWithOffsetAndLength() {
+		byte[] bytes = new byte[] { (byte) 0x1, (byte) 0x23, (byte) 0x80, (byte) 0xff, (byte) 0 };
+		String str = NumericUtilities.convertBytesToString(bytes, 2, 2, " ");
+		assertEquals("80 ff", str);
 	}
 
 	@Test

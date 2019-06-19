@@ -25,7 +25,6 @@ import java.util.Objects;
 import com.google.common.base.Function;
 
 import edu.uci.ics.jung.visualization.*;
-import ghidra.generic.function.Callback;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.job.*;
 import ghidra.graph.viewer.edge.routing.BasicEdgeRouter;
@@ -34,6 +33,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.BusyListener;
+import utility.function.Callback;
 
 /**
  * This is the class through which operations travel that manipulate the view and graph <b>while

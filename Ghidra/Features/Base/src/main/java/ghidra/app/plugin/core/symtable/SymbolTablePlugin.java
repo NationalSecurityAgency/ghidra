@@ -20,7 +20,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -33,9 +32,9 @@ import ghidra.app.services.BlockModelService;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.SymbolInspector;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
@@ -45,6 +44,7 @@ import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
@@ -69,10 +69,7 @@ import resources.ResourceManager;
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class SymbolTablePlugin extends Plugin
-		implements DomainObjectListener, OptionsChangeListener {
-
-	private static final String PLUGIN_NAME = "SymbolTablePlugin";
+public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
@@ -437,32 +434,14 @@ public class SymbolTablePlugin extends Plugin
 		DockingAction editExternalLocationAction = new EditExternalLocationAction(this);
 		tool.addLocalAction(symProvider, editExternalLocationAction);
 
-		makeSelectionAction = new DockingAction("Make Selection", getName(), false) {
+		makeSelectionAction = new MakeProgramSelectionAction(getName(), symProvider.getTable()) {
 			@Override
-			public void actionPerformed(ActionContext context) {
+			protected void makeSelection(ActionContext context) {
 				symProvider.makeSelection();
 			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				GhidraTable table = symProvider.getTable();
-				return table.getSelectedRowCount() > 0;
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return true;
-			}
 		};
-		icon = ResourceManager.loadImage("images/text_align_justify.png");
-		makeSelectionAction.setPopupMenuData(
-			new MenuData(new String[] { "Make Selection" }, icon, popupGroup));
-		makeSelectionAction.setToolBarData(new ToolBarData(icon));
 
-		makeSelectionAction.setDescription("Make a selection using selected Symbol addresses");
-		makeSelectionAction.setEnabled(false);
-
-		installDummyAction(makeSelectionAction);
+		makeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
 
 		tool.addLocalAction(symProvider, makeSelectionAction);
 
@@ -478,8 +457,6 @@ public class SymbolTablePlugin extends Plugin
 			}
 		};
 		icon = Icons.CONFIGURE_FILTER_ICON;
-		setFilterAction.setPopupMenuData(
-			new MenuData(new String[] { "Configure Symbol Filter" }, icon, popupGroup));
 		setFilterAction.setToolBarData(new ToolBarData(icon));
 
 		setFilterAction.setDescription("Configure Symbol Filter");
@@ -503,29 +480,6 @@ public class SymbolTablePlugin extends Plugin
 
 		DockingAction clearPinnedAction = new ClearPinSymbolAction(getName(), pinnedPopupGroup);
 		tool.addAction(clearPinnedAction);
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(makeSelectionAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			makeSelectionAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	private void createRefActions() {

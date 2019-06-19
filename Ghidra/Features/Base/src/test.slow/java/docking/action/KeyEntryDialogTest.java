@@ -186,8 +186,8 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	public DockingAction getKeyBindingAction() {
 		DockingWindowManager dwm = DockingWindowManager.getInstance(tool.getToolFrame());
-		DockingActionManager dockingActionManager =
-			(DockingActionManager) getInstanceField("actionManager", dwm);
+		ActionToGuiMapper dockingActionManager =
+			(ActionToGuiMapper) getInstanceField("actionManager", dwm);
 		return (DockingAction) getInstanceField("keyBindingsAction", dockingActionManager);
 	}
 

@@ -130,7 +130,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 	}
 
 	private List<DockingActionIf> getActionsForWindow(WindowNode windowNode) {
-		DockingActionManager actionManager = windowManager.getActionManager();
+		ActionToGuiMapper actionManager = windowManager.getActionManager();
 		Collection<DockingActionIf> globalActions = actionManager.getGlobalActions();
 		List<DockingActionIf> actionsForWindow = new ArrayList<>(globalActions.size());
 		Set<Class<?>> contextTypes = windowNode.getContextTypes();

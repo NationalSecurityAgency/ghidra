@@ -281,12 +281,11 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 
 		tool = env.launchDefaultTool();
 		DockingWindowManager windowManager = tool.getWindowManager();
-		DockingActionManager actionMgr =
-			(DockingActionManager) getInstanceField("actionManager", windowManager);
-		String fullActionName = "Delete Function" + " (" + "FunctionPlugin" + ")";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
+		ActionToGuiMapper actionMgr =
+			(ActionToGuiMapper) getInstanceField("actionManager", windowManager);
 
-		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(actions.get(0), actionMgr);
+		DockingActionIf action = getAction(tool, "FunctionPlugin", "Delete Function");
+		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, actionMgr);
 
 		runSwing(() -> tool.showDialog(keyEntryDialog), false);
 		captureDialog();

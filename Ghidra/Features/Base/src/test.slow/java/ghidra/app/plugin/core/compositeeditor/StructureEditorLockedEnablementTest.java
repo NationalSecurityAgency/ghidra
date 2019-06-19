@@ -101,7 +101,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			getModel().getOriginalCategoryPath().getPath());
 		assertEquals(getModel().getTypeName(), "Structure");
 
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ApplyAction)) {
@@ -151,7 +151,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		assertEquals(pgmBbCat.getCategoryPathName(),
 			getModel().getOriginalCategoryPath().getPath());
 
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
@@ -187,7 +187,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		// Check enablement on first component selected.
 		setSelection(new int[] { 0 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				FavoritesAction fav = (FavoritesAction) action;
 				int len = fav.getDataType().getLength();
@@ -216,7 +216,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		// Check enablement on central component selected.
 		setSelection(new int[] { 3 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				FavoritesAction fav = (FavoritesAction) action;
 				int len = fav.getDataType().getLength();
@@ -246,7 +246,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { last });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				checkEnablement(action, true);
 			}
@@ -272,7 +272,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		// Check enablement on a contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 4 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				FavoritesAction fav = (FavoritesAction) action;
 				int len = fav.getDataType().getLength();
@@ -300,7 +300,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		// Check enablement on a non-contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 6, 7 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				FavoritesAction fav = (FavoritesAction) action;
 				int len = fav.getDataType().getLength();

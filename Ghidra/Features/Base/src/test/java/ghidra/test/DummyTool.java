@@ -19,7 +19,7 @@ import java.awt.Window;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.event.ChangeListener;
@@ -438,18 +438,13 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
-	public List<DockingActionIf> getAllActions() {
-		return Collections.emptyList();
+	public Set<DockingActionIf> getAllActions() {
+		return Collections.emptySet();
 	}
 
 	@Override
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner) {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		return Collections.emptyList();
+	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
+		return Collections.emptySet();
 	}
 
 	@Override
@@ -494,6 +489,16 @@ public class DummyTool implements Tool {
 
 	@Override
 	public void setStatusInfo(String text) {
+		//do nothing
+	}
+
+	@Override
+	public void setStatusInfo(String text, boolean beep) {
+		//do nothing
+	}
+
+	@Override
+	public void clearStatusInfo() {
 		//do nothing
 	}
 

@@ -24,12 +24,12 @@ import com.google.common.collect.Iterators;
 
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Pair;
-import ghidra.generic.function.Callback;
 import ghidra.graph.GraphAlgorithms;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import util.CollectionUtils;
+import utility.function.Callback;
 
 /**
  * A graph implementation that allows clients to mark vertices and edges as filtered.  When

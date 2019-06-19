@@ -834,12 +834,6 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			currentProgram = null;
 		}
 
-		tool.removeLocalAction(this, recurseDepthAction);
-		tool.removeLocalAction(this, refreshAction);
-		tool.removeLocalAction(this, filterDuplicates);
-		tool.removeLocalAction(this, navigationOutgoingAction);
-		tool.removeLocalAction(this, navigateIncomingToggleAction);
-
 		recurseDepthAction.dispose();
 		refreshAction.dispose();
 		filterDuplicates.dispose();

@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.navigation;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -65,7 +64,7 @@ import ghidra.util.Msg;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.table.field.LabelTableColumn;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import util.CollectionUtils;
 
 public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -104,20 +103,20 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testActionEnablement() throws Exception {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		assertEquals(1, actions.size());
-		assertEquals("Go To Address/Label", actions.get(0).getName());
+		assertEquals("Go To Address/Label", CollectionUtils.any(actions).getName());
 		ActionContext actionContext = getActionContext();
-		assertTrue(!actions.get(0).isEnabledForContext(actionContext));
+		assertTrue(!CollectionUtils.any(actions).isEnabledForContext(actionContext));
 
 		loadProgram("x86");
 
 		actionContext = getActionContext();
-		assertTrue(actions.get(0).isEnabledForContext(actionContext));
+		assertTrue(CollectionUtils.any(actions).isEnabledForContext(actionContext));
 		final ProgramManager pm = tool.getService(ProgramManager.class);
-		SwingUtilities.invokeAndWait(() -> pm.closeProgram(program, true));
+		runSwing(() -> pm.closeProgram(program, true));
 		actionContext = getActionContext();
-		assertTrue(!actions.get(0).isEnabledForContext(actionContext));
+		assertTrue(!CollectionUtils.any(actions).isEnabledForContext(actionContext));
 	}
 
 	@Test
@@ -476,7 +475,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		performOkCallback();
 
 		assertEquals("No results for xyzabc*", dialog.getStatusText());
-		SwingUtilities.invokeAndWait(() -> dialog.close());
+		runSwing(() -> dialog.close());
 	}
 
 	@Test
@@ -561,7 +560,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		program.endTransaction(transactionID, true);
 		final JCheckBox cb = findComponent(dialog, JCheckBox.class);
 
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			cb.setSelected(false);
 			dialog.setText("COm*");
 
@@ -831,7 +830,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Assert.assertNotNull(program);
 
 		final ProgramManager pm = tool.getService(ProgramManager.class);
-		SwingUtilities.invokeAndWait(() -> pm.openProgram(program.getDomainFile()));
+		runSwing(() -> pm.openProgram(program.getDomainFile()));
 		program.release(this);
 		addrFactory = program.getAddressFactory();
 	}
@@ -965,7 +964,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			Memory memory = program.getMemory();
 			return memory.createInitializedBlock(name, addr(address), size, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, true);
+				TaskMonitor.DUMMY, true);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -1023,7 +1022,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setText(final String text) throws Exception {
-		SwingUtilities.invokeAndWait(() -> dialog.setText(text));
+		runSwing(() -> dialog.setText(text));
 	}
 
 	private void performOkCallback() throws Exception {
@@ -1035,17 +1034,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void waitForOKCallback() {
-		int numWaits = 0;
-		while (++numWaits < 50 && !okButton.isEnabled()) {
-			try {
-				Thread.sleep(100);
-			}
-			catch (InterruptedException e) {
-				// no biggie, will try again
-			}
-		}
-
-		Assert.assertNotEquals("Timed-out waiting for Go To dialog to finish", 50, numWaits);
+		waitForCondition(() -> runSwing(() -> okButton.isEnabled()));
 	}
 
 	private void assumeCurrentAddressSpace(boolean b) {

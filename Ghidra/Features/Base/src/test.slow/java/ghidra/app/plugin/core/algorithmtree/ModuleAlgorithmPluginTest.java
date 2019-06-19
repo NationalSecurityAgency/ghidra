@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.algorithmtree;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.*;
 
@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.util.GroupPath;
 import ghidra.test.*;
+import util.CollectionUtils;
 
 /**
  * Test the module algorithm plugin gui elements.
@@ -43,7 +44,7 @@ public class ModuleAlgorithmPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private PluginTool tool;
 	private Program program;
 	private ModuleAlgorithmPlugin plugin;
-	private List<DockingActionIf> actions;
+	private Set<DockingActionIf> actions;
 	private ProgramTreeService service;
 	private Object context;
 
@@ -58,7 +59,7 @@ public class ModuleAlgorithmPluginTest extends AbstractGhidraHeadedIntegrationTe
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		tool.addPlugin(ModuleAlgorithmPlugin.class.getName());
 		plugin = env.getPlugin(ModuleAlgorithmPlugin.class);
-		actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		actions = getActionsByOwner(tool, plugin.getName());
 		service = tool.getService(ProgramTreeService.class);
 
 	}
@@ -98,7 +99,7 @@ public class ModuleAlgorithmPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		getContextObject(vps);
 
-		performAction(actions.get(0), new ActionContext(null, context), true);
+		performAction(CollectionUtils.any(actions), new ActionContext(null, context), true);
 
 		waitForTasks();
 		program.flushEvents();

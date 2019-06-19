@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +27,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 
 class FunctionSignatureTextField extends JTextPane {
 	private static final String ENTER_ACTION_NAME = "ENTER";

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.functiongraph;
 
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 
@@ -70,6 +71,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	private ProgramSelection currentProgramSelection;
 	private ProgramSelection currentProgramHighlight;
 
+	/**
+	 * A construct that allows tests to control the notion of whether this provider has focus
+	 */
+	private Supplier<Boolean> focusStatusDelegate = () -> super.isFocusedProvider();
+
 	private DecoratorPanel decorationPanel;
 	private String disconnectedName;
 
@@ -85,8 +91,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 	private boolean isConnected;
 	private ImageIcon navigatableIcon;
-	private boolean disposed = false;
 	// End Navigatable Fields
+
+	private boolean disposed = false;
 
 	public FGProvider(FunctionGraphPlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), FunctionGraphPlugin.FUNCTION_GRAPH_NAME, plugin.getName(),
@@ -1246,6 +1253,15 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 		controller.requestFocus();
 		tool.toFront(this);
+	}
+
+	@Override
+	public boolean isFocusedProvider() {
+		return focusStatusDelegate.get();
+	}
+
+	void setFocusStatusDelegate(Supplier<Boolean> focusStatusDelegate) {
+		this.focusStatusDelegate = focusStatusDelegate;
 	}
 
 	@Override

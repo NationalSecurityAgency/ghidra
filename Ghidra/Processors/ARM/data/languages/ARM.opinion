@@ -26,6 +26,10 @@
         <constraint primary="12.11"    processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8s -->
         <constraint primary="12.12"    processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM v8k -->
     </constraint>
+    <constraint loader="DYLD Cache" compilerSpecID="default">
+        <constraint primary="armv6"    processor="ARM"     endian="little" size="32" variant="v6" />
+        <constraint primary="arm7"     processor="ARM"     endian="little" size="32" variant="v7" />
+    </constraint>
     <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
         <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
         <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />

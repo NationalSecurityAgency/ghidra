@@ -32,8 +32,9 @@ public class MoveBlockTask extends ProgramTask {
 	private Address currentStart;
 	private Address newStart;
 	private MoveBlockListener listener;
-	private boolean wasCancelled;
-	private boolean status;
+	private boolean cancelled;
+	private String statusMessage;
+	private boolean success;
 
 	/**
 	 * Creates a background command for moving memory blocks. The memory block
@@ -58,70 +59,57 @@ public class MoveBlockTask extends ProgramTask {
 
 	@Override
 	protected void doRun(TaskMonitor monitor) {
-		// TODO Auto-generated method stub
 
 		Memory mem = program.getMemory();
 		MemoryBlock block = mem.getBlock(currentStart);
 		monitor.setMessage("Moving Memory Block ...");
-		String msg = "";
+		statusMessage = "";
 		Throwable cause = null;
 		try {
 			mem.moveBlock(block, newStart, monitor);
 			if (monitor.isCancelled()) {
-				wasCancelled = true;
+				cancelled = true;
 			}
 			else {
-				status = true;
+				success = true;
 				listener.moveBlockCompleted(this);
 				return;
 			}
 		}
 		catch (OutOfMemoryError e) {
-			monitor.setMessage(msg = "Insufficient memory to complete operation");
+			statusMessage = "Insufficient memory to complete operation";
 			cause = e;
 		}
-		catch (NotFoundException exc) {
-			monitor.setMessage(msg = "Memory block not found");
-			cause = exc;
+		catch (NotFoundException e) {
+			statusMessage = "Memory block not found";
+			cause = e;
 		}
-		catch (MemoryConflictException exc) {
-			monitor.setMessage(msg = exc.getMessage());
-			cause = exc;
-		}
-		catch (MemoryBlockException exc) {
-			monitor.setMessage(msg = exc.getMessage());
-			cause = exc;
-		}
-		catch (IllegalArgumentException e) {
-			monitor.setMessage(msg = e.getMessage());
+		catch (MemoryConflictException | MemoryBlockException | IllegalArgumentException e) {
+			statusMessage = e.getMessage();
 			cause = e;
 		}
 		catch (Throwable t) {
 			Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
-			msg = t.getMessage();
-			if (msg == null) {
-				msg = t.toString();
+			statusMessage = t.getMessage();
+			if (statusMessage == null) {
+				statusMessage = t.toString();
 			}
-			monitor.setMessage(msg);
 			cause = t;
 		}
+
 		listener.moveBlockCompleted(this);
-		throw new RollbackException(msg, cause);
+		throw new RollbackException(statusMessage, cause);
 	}
 
-	/**
-	 * Return true if the user cancelled the move command.
-	 */
 	public boolean isCancelled() {
-		return wasCancelled;
+		return cancelled;
 	}
 
-	/**
-	 * Return whether the block was successfully moved.
-	 * 
-	 * @return true if the block was moved
-	 */
-	public boolean getStatus() {
-		return status;
+	public boolean wasSuccessful() {
+		return success;
+	}
+
+	public String getStatusMessage() {
+		return statusMessage;
 	}
 }

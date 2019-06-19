@@ -20,7 +20,8 @@ package docking.widgets.table;
  *
  * @param <ROW_TYPE> the row type of the underlying table model
  */
-public interface DynamicColumnTableModel<ROW_TYPE> extends ConfigurableColumnTableModel {
+public interface DynamicColumnTableModel<ROW_TYPE>
+		extends ConfigurableColumnTableModel, RowObjectTableModel<ROW_TYPE> {
 
 	/**
 	 * Returns the column for the given model index

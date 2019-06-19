@@ -429,13 +429,15 @@ public class ImporterUtilities {
 
 			if (importedObject instanceof Program) {
 				Program program = (Program) importedObject;
+
+				setProgramProperties(program, fsrl, monitor);
+				ProgramMappingService.createAssociation(fsrl, program);
+
 				if (programManager != null) {
 					int openState =
 						firstProgram ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE;
 					programManager.openProgram(program, openState);
 				}
-				setProgramProperties(program, fsrl, monitor);
-				ProgramMappingService.createAssociation(fsrl, program);
 				importedFilesSet.add(program.getDomainFile());
 			}
 			if (firstProgram) {

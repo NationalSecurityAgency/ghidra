@@ -80,7 +80,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		assertEquals(model.getTypeName(), "Structure");
 
 		// Check enablement.
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
@@ -114,7 +114,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 
 		// Check enablement on blank line selected.
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {
@@ -141,7 +141,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on first component selected.
 		setSelection(new int[] { 0 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof MoveDownAction) ||
@@ -180,7 +180,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on central component selected.
 		runSwing(() -> setSelection(new int[] { 1 }));
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof MoveDownAction) ||
@@ -218,7 +218,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { model.getNumComponents() - 1 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof MoveUpAction) ||
@@ -261,7 +261,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { model.getNumComponents() });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {

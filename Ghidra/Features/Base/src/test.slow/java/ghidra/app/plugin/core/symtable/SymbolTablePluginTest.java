@@ -1306,11 +1306,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setupSymbolTableFilterToShowParameters() throws Exception {
 		// get the filter action -  "Set Filter"
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Set Filter (SymbolTablePlugin)");
-		assertNotNull(actions);
-		assertTrue(actions.size() > 0);
-		DockingActionIf filterAction = actions.get(0);
+
+		DockingActionIf filterAction = getAction(tool, "SymbolTablePlugin", "Set Filter");
 
 		// execute
 		performAction(filterAction, false);

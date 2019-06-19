@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Window;
 
@@ -34,10 +34,6 @@ import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.test.TestEnv;
 
 public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
-
-	public DiffSaveSettingsTest() {
-		super();
-	}
 
 	@Override
 	@Before

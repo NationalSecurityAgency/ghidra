@@ -184,7 +184,7 @@ public class PortableExecutable {
 	}
 
 	public static int computeAlignment(int value, int alignment) {
-		if ((value % alignment) == 0) {
+		if (alignment == 0 || (value % alignment) == 0) {
 			return value;
 		}
 		int a = ((value + alignment) / alignment) * alignment;

@@ -1,4 +1,5 @@
 project.ext.BIN_REPO = file("${projectDir}/../../ghidra.bin").absolutePath
+
 project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
 
 /*********************************************************************************
@@ -69,8 +70,4 @@ String getGhidraRelativePath(Project p) {
 	}
 
 	return path
-}
-
-subprojects {
-	apply plugin: 'java'
 }

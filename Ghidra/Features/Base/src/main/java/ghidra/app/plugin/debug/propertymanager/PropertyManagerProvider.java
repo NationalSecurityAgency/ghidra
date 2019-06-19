@@ -93,7 +93,6 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 	}
 
 	void dispose() {
-		tool.removeLocalAction(this, deleteAction);
 		tool.removeComponentProvider(this);
 	}
 

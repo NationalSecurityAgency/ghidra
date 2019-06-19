@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.BorderLayout;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,7 +36,7 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -171,29 +170,16 @@ class AnalyzeAllOpenProgramsTask extends Task {
 	}
 
 	private boolean setOptions(final Program program, AutoAnalysisManager mgr) {
-		final AtomicBoolean analyze = new AtomicBoolean();
+		AtomicBoolean analyze = new AtomicBoolean();
 		int id = program.startTransaction("analysis");
 		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					AnalysisOptionsDialog dialog =
-						new AnalysisOptionsDialog(getValidProgramsByArchitecture());
-					tool.showDialog(dialog);
-					boolean shouldAnalyze = dialog.wasAnalyzeButtonSelected();
-					analyze.set(shouldAnalyze);
-				}
+			Swing.runNow(() -> {
+				AnalysisOptionsDialog dialog =
+					new AnalysisOptionsDialog(getValidProgramsByArchitecture());
+				tool.showDialog(dialog);
+				boolean shouldAnalyze = dialog.wasAnalyzeButtonSelected();
+				analyze.set(shouldAnalyze);
 			});
-		}
-		catch (InterruptedException e) {
-			// shouldn't happen
-			Msg.debug(this, "Unexpected exception", e);
-			return false;
-		}
-		catch (InvocationTargetException e) {
-			// shouldn't happen
-			Msg.debug(this, "Unexpected exception", e);
-			return false;
 		}
 		finally {
 			program.endTransaction(id, true);
@@ -338,10 +324,10 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 		buffy.append("</TABLE>");
 
-		OptionDialog dialog = new ScrollingOptionDialog("Found Differing Architectures--Continue?",
-			buffy.toString(), "Continue", OptionDialog.WARNING_MESSAGE);
-		dialog.show(null);
-		return dialog.getResult() == OptionDialog.OPTION_ONE;
+		return Swing.runNow(() -> {
+			ScrollingOptionDialog dialog = new ScrollingOptionDialog(buffy.toString());
+			return dialog.shouldContinue();
+		});
 	}
 
 //==================================================================================================
@@ -495,9 +481,16 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 	private class ScrollingOptionDialog extends OptionDialog {
 
-		public ScrollingOptionDialog(String title, String message, String option1,
-				int messageType) {
-			super(title, message, option1, messageType, null);
+		public ScrollingOptionDialog(String message) {
+			super("Found Differing Architectures", message, "Continue",
+				OptionDialog.WARNING_MESSAGE, null);
+		}
+
+		boolean shouldContinue() {
+			return Swing.runNow(() -> {
+				show(null);
+				return getResult() == OptionDialog.OPTION_ONE;
+			});
 		}
 
 		@Override
