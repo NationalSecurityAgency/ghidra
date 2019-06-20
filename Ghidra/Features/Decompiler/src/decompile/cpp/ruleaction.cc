@@ -5312,14 +5312,21 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
 bool RulePtrArith::checkTerm(Varnode *vn,AddTreeState *state)
 
 {
-  uintb val,rem;
+  uintb val;
+  intb rem;
   Varnode *vnconst,*vnterm;
   PcodeOp *def;
 
   if (vn == state->ptr) return false;
   if (vn->isConstant()) {
     val = vn->getOffset();
-    rem = (state->size==0) ? val : val % state->size;
+    if (state->size == 0)
+      rem = val;
+    else {
+      intb sval = (intb)val;
+      sign_extend(sval,vn->getSize()*8-1);
+      rem = sval % state->size;
+    }
     if (rem!=0) {		// constant is not multiple of size
       state->nonmultsum += val;
       return true;
@@ -5340,7 +5347,13 @@ bool RulePtrArith::checkTerm(Varnode *vn,AddTreeState *state)
       vnterm = def->getIn(0);
       if (vnconst->isConstant()) {
 	val = vnconst->getOffset();
-	rem = (state->size==0) ? val : val % state->size;
+	if (state->size == 0)
+	  rem = val;
+	else {
+	  intb sval = (intb) val;
+	  sign_extend(sval, vn->getSize() * 8 - 1);
+	  rem = sval % state->size;
+	}
 	if (rem!=0) {
 	  if ((val > state->size)&&(state->size!=0)) {
 	    state->valid = false; // Size is too big: pointer type must be wrong
@@ -5404,7 +5417,7 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
   const TypePointer *ct;
   bool yes_subtype,offset_corrected;
   int4 i,ptrsize;
-  uintb correct,coeff,offset,nonmultbytes,extra;
+  uintb ptrmask,correct,coeff,offset,nonmultbytes,extra;
   Varnode *ptrbump;	// Will contain final result of PTR addition
   Varnode *fullother;	// Will contain anything else not part of PTR add
   Varnode *newvn;
@@ -5420,12 +5433,20 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
 
   spanAddTree(bottom_op,&state); // Find multiples and non-multiples of ct->getSize()
   if (!state.valid) return 0;	// Were there any show stoppers
-  state.nonmultsum &= calc_mask(ptrsize); // Make sure we are modulo ptr's space
-  state.multsum &= calc_mask(ptrsize);
-  offset = (state.size==0) ? state.nonmultsum : state.nonmultsum % state.size;
+  ptrmask = calc_mask(ptrsize);
+  state.nonmultsum &= ptrmask; // Make sure we are modulo ptr's space
+  state.multsum &= ptrmask;
+  if (state.size == 0)
+    offset = state.nonmultsum;
+  else {
+    intb snonmult = (intb)state.nonmultsum;
+    sign_extend(snonmult,ptrsize*8-1);
+    snonmult = snonmult % state.size;
+    offset = (snonmult < 0) ? (uintb)(snonmult + state.size) : (uintb)snonmult;
+  }
   correct = state.nonmultsum - offset;
   state.nonmultsum = offset;
-  state.multsum = (state.multsum + correct)&calc_mask(ptrsize);	// Some extra multiples of size
+  state.multsum = (state.multsum + correct) & ptrmask;	// Some extra multiples of size
 
 				// Figure out if there is any subtype
   if (state.nonmult.empty()) {
@@ -5440,7 +5461,7 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
     if (ct->getPtrTo()->getSubType(nonmultbytes,&extra)==(Datatype *)0)
       return 0;			// Cannot find mapped variable but nonmult is non-empty
     extra = AddrSpace::byteToAddress(extra,ct->getWordSize()); // Convert back to address units
-    offset = (state.nonmultsum - extra)&calc_mask(ptrsize);
+    offset = (state.nonmultsum - extra) & ptrmask;
     yes_subtype = true;
   }
   else if (ct->getPtrTo()->getMetatype()==TYPE_STRUCT) {
@@ -5451,7 +5472,7 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
       extra = 0;		// No field, but pretend there is something there
     }
     extra = AddrSpace::byteToAddress(extra,ct->getWordSize()); // Convert back to address units
-    offset = (state.nonmultsum - extra)&calc_mask(ptrsize);
+    offset = (state.nonmultsum - extra) & ptrmask;
     yes_subtype = true;
   }
   else if (ct->getPtrTo()->getMetatype()==TYPE_ARRAY) {
@@ -5464,8 +5485,8 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
 				// Be sure to preserve sign in division below
 				// Calc size-relative constant PTR addition
   intb smultsum = (intb)state.multsum;
-  sign_extend(smultsum,state.ptr->getSize()*8-1);
-  coeff = (state.size==0) ? (uintb)0 : (smultsum / state.size)&calc_mask(ptrsize); 
+  sign_extend(smultsum,ptrsize*8-1);
+  coeff = (state.size==0) ? (uintb)0 : (smultsum / state.size) & ptrmask;
   if (coeff == 0)
     ptrbump = (Varnode *)0;
   else
@@ -5493,7 +5514,7 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
   else
     ptrbump = state.ptr;
 				// Add up any remaining pieces
-  correct = (correct+offset)&calc_mask(ptrsize); // Total correction that needs to be made
+  correct = (correct+offset) & ptrmask; // Total correction that needs to be made
   offset_corrected= (correct==0);
   fullother = (Varnode *)0;
   for(i=0;i<state.nonmult.size();++i) {
