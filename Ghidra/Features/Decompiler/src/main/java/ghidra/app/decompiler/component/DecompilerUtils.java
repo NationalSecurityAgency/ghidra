@@ -24,6 +24,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
+import ghidra.util.Msg;
 
 public class DecompilerUtils {
 
@@ -314,6 +315,11 @@ public class DecompilerUtils {
 		int nchild = parentNode.numChildren();
 		for (int i = 0; i < nchild; i++) {
 			ClangNode node = parentNode.Child(i);
+
+			if (node instanceof ClangFuncProto) {
+				Msg.debug(null, "");
+			}
+
 			if (node.numChildren() > 0) {
 				collectTokens(tokenList, node, addressSet);
 			}
