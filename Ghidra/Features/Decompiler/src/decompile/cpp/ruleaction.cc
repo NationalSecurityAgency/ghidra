@@ -5311,14 +5311,21 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
 bool RulePtrArith::checkTerm(Varnode *vn,AddTreeState *state)
 
 {
-  uintb val,rem;
+  uintb val;
+  intb rem;
   Varnode *vnconst,*vnterm;
   PcodeOp *def;
 
   if (vn == state->ptr) return false;
   if (vn->isConstant()) {
     val = vn->getOffset();
-    rem = (state->size==0) ? val : val % state->size;
+    if (state->size == 0)
+      rem = val;
+    else {
+      intb sval = (intb)val;
+      sign_extend(sval,vn->getSize()*8-1);
+      rem = sval % state->size;
+    }
     if (rem!=0) {		// constant is not multiple of size
       state->nonmultsum += val;
       return true;
@@ -5339,7 +5346,13 @@ bool RulePtrArith::checkTerm(Varnode *vn,AddTreeState *state)
       vnterm = def->getIn(0);
       if (vnconst->isConstant()) {
 	val = vnconst->getOffset();
-	rem = (state->size==0) ? val : val % state->size;
+	if (state->size == 0)
+	  rem = val;
+	else {
+	  intb sval = (intb) val;
+	  sign_extend(sval, vn->getSize() * 8 - 1);
+	  rem = sval % state->size;
+	}
 	if (rem!=0) {
 	  if ((val > state->size)&&(state->size!=0)) {
 	    state->valid = false; // Size is too big: pointer type must be wrong
@@ -5421,7 +5434,14 @@ int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Fun
   if (!state.valid) return 0;	// Were there any show stoppers
   state.nonmultsum &= calc_mask(ptrsize); // Make sure we are modulo ptr's space
   state.multsum &= calc_mask(ptrsize);
-  offset = (state.size==0) ? state.nonmultsum : state.nonmultsum % state.size;
+  if (state.size == 0)
+    offset = state.nonmultsum;
+  else {
+    intb snonmult = (intb)state.nonmultsum;
+    sign_extend(snonmult,state.ptr->getSize()*8-1);
+    snonmult = snonmult % state.size;
+    offset = (snonmult < 0) ? (uintb)(snonmult + state.size) : (uintb)snonmult;
+  }
   correct = state.nonmultsum - offset;
   state.nonmultsum = offset;
   state.multsum = (state.multsum + correct)&calc_mask(ptrsize);	// Some extra multiples of size
