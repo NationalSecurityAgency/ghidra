@@ -87,7 +87,7 @@ import resources.ResourceManager;
  * 	<tr><td>{@link JList}</td><td>{@link GList}</td></tr>
  * 	<tr><td>{@link ListCellRenderer}<br>{@link DefaultListCellRenderer}</td><td>{@link GListCellRenderer}</td></tr>
  * 	<tr><td>{@link TableCellRenderer}</td><td>{@link GTableCellRenderer}</td></tr>
- * 	<tr><td>{@link TreeCellRenderer}<br>{@link DefaultTreeCellRenderer}</td><td>{@link GTreeRenderer}<br>{@link DnDTreeCellRenderer}</td></tr>
+ * 	<tr><td>{@link TreeCellRenderer}<br>{@link DefaultTreeCellRenderer}</td><td>{@link GTreeRenderer}<br><code>DnDTreeCellRenderer</code></td></tr>
  * 	<tr><td>{@link JRadioButton}</td><td>{@link GRadioButton}</td></tr>
  * 	<tr><td>{@link JButton}</td><td>???tbd???</td></tr>
  * </table>
@@ -179,15 +179,6 @@ public class DockingUtils {
 		final UndoRedoKeeper undoRedoKeeper = new UndoRedoKeeper();
 		document.addUndoableEditListener(e -> {
 			UndoableEdit edit = e.getEdit();
-
-// TODO We are now handed a wrapper class and not the event for the 'edit'.  It is not clear
-//		which use case caused this code to be added.  If/when we find out, we can revisit how 
-//		to filter these types of updates.
-//			DefaultDocumentEvent defaultDocumentEvent = (DefaultDocumentEvent) edit;
-//			if (defaultDocumentEvent.getType() == EventType.CHANGE) {
-//				return; // this happens for style updates
-//			}
-
 			undoRedoKeeper.addUndo(edit);
 		});
 
