@@ -2150,11 +2150,11 @@ void ActionNameVars::makeRec(ProtoParameter *param,Varnode *vn,map<HighVariable 
     PcodeOp *castop = vn->getDef();
     if (castop->code() == CPUI_CAST) {
       vn = castop->getIn(0);
-      ct = (Datatype *)0;	// Indicate that this is a less prefered name
+      ct = (Datatype *)0;	// Indicate that this is a less preferred name
     }
   }
   HighVariable *high = vn->getHigh();
-  if (!high->isMark()) return;	// Not one of the 
+  if (!high->isMark()) return;	// Not one of the variables needing a name
 
   map<HighVariable *,OpRecommend>::iterator iter = recmap.find(high);
   if (iter != recmap.end()) {	// We have seen this varnode before
@@ -2191,6 +2191,7 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
   for(uint4 i=0;i<varlist.size();++i) {	// Mark all the varnodes that can accept a name from a parameter
     Varnode *vn = varlist[i];
     if (vn->isFree()) continue;
+    if (vn->isInput()) continue;	// Don't override unaffected or input naming strategy
     Symbol *sym = vn->getHigh()->getSymbol();
     if (sym == (Symbol *)0) continue;
     if (!sym->isNameUndefined()) continue;
