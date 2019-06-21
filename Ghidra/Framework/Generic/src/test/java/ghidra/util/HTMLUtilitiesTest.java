@@ -17,10 +17,8 @@ package ghidra.util;
 
 import static ghidra.util.HTMLUtilities.HTML;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.awt.Color;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +51,7 @@ public class HTMLUtilitiesTest {
 		String s = "This text has<BR>an existing BR tag";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
-		assertLogMessage("cannot", "wrap");
+		spyLogger.assertLogMessage("cannot", "wrap");
 	}
 
 	@Test
@@ -61,7 +59,7 @@ public class HTMLUtilitiesTest {
 		String s = "This text has<BR>\nan existing BR tag and a newline";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
-		assertLogMessage("cannot", "wrap");
+		spyLogger.assertLogMessage("cannot", "wrap");
 	}
 
 	@Test
@@ -138,16 +136,6 @@ public class HTMLUtilitiesTest {
 	public void testToHexString() {
 		String rgb = HTMLUtilities.toHexString(Color.RED);
 		assertEquals("#FF0000", rgb);
-	}
-
-	private void assertLogMessage(String... words) {
-		for (String message : spyLogger) {
-			if (StringUtilities.containsAllIgnoreCase(message, words)) {
-				return;
-			}
-		}
-
-		fail("Did not find log message containing all these words: " + Arrays.toString(words));
 	}
 
 	@Test

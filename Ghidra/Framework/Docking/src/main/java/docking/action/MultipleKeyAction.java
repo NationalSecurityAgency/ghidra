@@ -21,6 +21,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.*;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.Swing;
 
 /**
@@ -149,7 +150,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
 			if (dialog == null) {
-				dialog = new ActionDialog(parseKeyStroke(keyStroke), list);
+				dialog = new ActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
 			}
 			else {
 				dialog.setActionList(list);

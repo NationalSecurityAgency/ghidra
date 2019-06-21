@@ -72,6 +72,10 @@ public class WindowActionManager {
 		}
 	}
 
+	public DockingActionIf getToolbarAction(String actionName) {
+		return toolBarMgr.getAction(actionName);
+	}
+
 	public void update() {
 		JMenuBar menuBar = menuBarMgr.getMenuBar();
 		if (menuBar.getMenuCount() > 0) {

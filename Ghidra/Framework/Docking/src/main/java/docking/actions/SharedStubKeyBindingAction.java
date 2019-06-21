@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 
 import javax.swing.KeyStroke;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.*;
@@ -81,6 +83,27 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		// 3) Update the given action with the current option value.  This allows clients to 
 		//    add and remove actions after the tool has been initialized.
 		updateActionKeyStrokeFromOptions(action, defaultKs);
+	}
+
+	public String getOwnersDescription() {
+		List<String> owners = getDistinctOwners();
+		Collections.sort(owners);
+		if (owners.size() == 1) {
+			return owners.get(0);
+		}
+		return '(' + StringUtils.join(owners, ", ") + ')';
+	}
+
+	private List<String> getDistinctOwners() {
+		List<String> results = new ArrayList<>();
+		Set<DockingActionIf> actions = clientActions.keySet();
+		for (DockingActionIf action : actions) {
+			String owner = action.getOwner();
+			if (!results.contains(owner)) {
+				results.add(owner);
+			}
+		}
+		return results;
 	}
 
 	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {

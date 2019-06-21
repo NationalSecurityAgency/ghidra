@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
+import javax.swing.Action;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.collections4.map.LazyMap;
@@ -27,6 +28,7 @@ import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.*;
+import ghidra.util.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
 
@@ -35,7 +37,6 @@ import util.CollectionUtils;
  */
 public class ToolActions implements PropertyChangeListener {
 
-	private DockingWindowManager winMgr;
 	private ActionToGuiHelper actionGuiHelper;
 
 	/*
@@ -51,6 +52,7 @@ public class ToolActions implements PropertyChangeListener {
 
 	private ToolOptions keyBindingOptions;
 	private DockingTool dockingTool;
+	private KeyBindingsManager keyBindingsManager;
 
 	/**
 	 * Construct an ActionManager
@@ -61,9 +63,15 @@ public class ToolActions implements PropertyChangeListener {
 	 */
 	public ToolActions(DockingTool tool, DockingWindowManager windowManager) {
 		this.dockingTool = tool;
-		this.winMgr = windowManager;
-		this.actionGuiHelper = new ActionToGuiHelper(winMgr);
-		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+		this.actionGuiHelper = new ActionToGuiHelper(windowManager);
+		this.keyBindingsManager = new KeyBindingsManager(windowManager);
+		this.keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+
+		KeyBindingAction keyBindingAction = new KeyBindingAction(this);
+		keyBindingsManager.addReservedAction(keyBindingAction,
+			ReservedKeyBindings.UPDATE_KEY_BINDINGS_KEY);
+
+		actionGuiHelper.setKeyBindingsManager(keyBindingsManager);
 	}
 
 	public void dispose() {
@@ -132,6 +140,7 @@ public class ToolActions implements PropertyChangeListener {
 
 			SharedStubKeyBindingAction newStub =
 				new SharedStubKeyBindingAction(name, keyBindingOptions);
+			newStub.addPropertyChangeListener(this);
 			keyBindingOptions.registerOption(newStub.getFullName(), OptionType.KEYSTROKE_TYPE,
 				defaultKeyStroke, null, null);
 			return newStub;
@@ -279,27 +288,42 @@ public class ToolActions implements PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getPropertyName().equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
-			DockingAction action = (DockingAction) evt.getSource();
-			if (!action.isKeyBindingManaged()) {
-				dockingTool.setConfigChanged(true);
-				return;
-			}
-			KeyBindingData keyBindingData = (KeyBindingData) evt.getNewValue();
-			KeyStroke newKeyStroke = keyBindingData.getKeyBinding();
-			Options opt = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
-			KeyStroke optKeyStroke = opt.getKeyStroke(action.getFullName(), null);
-			if (newKeyStroke == null) {
-				opt.removeOption(action.getFullName());
-			}
-			else if (!newKeyStroke.equals(optKeyStroke)) {
-				opt.setKeyStroke(action.getFullName(), newKeyStroke);
-				dockingTool.setConfigChanged(true);
-			}
+		if (!evt.getPropertyName().equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
+			return;
+		}
+
+		DockingAction action = (DockingAction) evt.getSource();
+		if (!action.isKeyBindingManaged()) {
+			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu 
+			// in the case that this action is one of the tool's special actions
+			keyBindingsChanged();
+			return;
+		}
+
+		KeyBindingData keyBindingData = (KeyBindingData) evt.getNewValue();
+		KeyStroke newKeyStroke = keyBindingData.getKeyBinding();
+		Options opt = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+		KeyStroke optKeyStroke = opt.getKeyStroke(action.getFullName(), null);
+		if (newKeyStroke == null) {
+			opt.removeOption(action.getFullName());
+		}
+		else if (!newKeyStroke.equals(optKeyStroke)) {
+			opt.setKeyStroke(action.getFullName(), newKeyStroke);
+			keyBindingsChanged();
 		}
 	}
 
 	DockingActionIf getSharedStubKeyBindingAction(String name) {
 		return sharedActionMap.get(name);
+	}
+
+	Action getAction(KeyStroke ks) {
+		return keyBindingsManager.getDockingKeyAction(ks);
+	}
+
+	// triggered by a user-initiated action
+	void keyBindingsChanged() {
+		dockingTool.setConfigChanged(true);
+		actionGuiHelper.keyBindingsChanged();
 	}
 }

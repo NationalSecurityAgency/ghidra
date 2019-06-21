@@ -28,7 +28,7 @@ import javax.swing.KeyStroke;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingKeyBindingAction;
+import docking.actions.KeyBindingUtils;
 import generic.jar.ResourceFile;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
@@ -318,7 +318,7 @@ public class ScriptInfo {
 			}
 		}
 
-		keyBinding = DockingKeyBindingAction.parseKeyStroke(buildy.toString());
+		keyBinding = KeyBindingUtils.parseKeyStroke(buildy.toString());
 		if (keyBinding == null) {
 			// note: this message will be cleared by the parseHeader() method
 			keybindingErrorMessage = "Unable to parse keybinding: " + buildy;
@@ -479,7 +479,7 @@ public class ScriptInfo {
 			}
 			return "";
 		}
-		return DockingKeyBindingAction.parseKeyStroke(keyStroke);
+		return KeyBindingUtils.parseKeyStroke(keyStroke);
 	}
 
 	private String toToolTip(String string) {

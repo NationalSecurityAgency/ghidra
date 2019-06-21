@@ -18,6 +18,7 @@ package docking;
 import java.util.Iterator;
 
 import docking.action.DockingActionIf;
+import docking.action.KeyBindingsManager;
 
 /**
  * A class that exists primarily to provide access to action-related package-level methods of the
@@ -77,5 +78,21 @@ public class ActionToGuiHelper {
 	 */
 	public void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		windowManager.removeProviderAction(provider, action);
+	}
+
+	/**
+	 * Initializes key bindings manager of docking window manager
+	 * 
+	 * @param keyBindingsManager key bindings manager
+	 */
+	public void setKeyBindingsManager(KeyBindingsManager keyBindingsManager) {
+		windowManager.setKeyBindingsManager(keyBindingsManager);
+	}
+
+	/**
+	 * Call this method to signal that key bindings for one or more actions have changed
+	 */
+	public void keyBindingsChanged() {
+		windowManager.scheduleUpdate();
 	}
 }

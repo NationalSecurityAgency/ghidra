@@ -30,26 +30,21 @@ import ghidra.util.*;
  */
 public class ActionToGuiMapper {
 
-	private HashSet<DockingActionIf> globalActions = new LinkedHashSet<>();
+	private static boolean enableDiagnosticActions;
+
+	private Set<DockingActionIf> globalActions = new LinkedHashSet<>();
 
 	private MenuHandler menuBarMenuHandler;
 	private MenuGroupMap menuGroupMap;
 
-	private static boolean enableDiagnosticActions;
-
 	private KeyBindingsManager keyBindingsManager;
-
 	private GlobalMenuAndToolBarManager menuAndToolBarManager;
-
 	private PopupActionManager popupActionManager;
-	private DockingAction keyBindingsAction;
 
-	ActionToGuiMapper(DockingWindowManager winMgr) {
+	ActionToGuiMapper(DockingWindowManager winMgr, KeyBindingsManager keyBindingsManager) {
+		this.keyBindingsManager = keyBindingsManager;
 		menuGroupMap = new MenuGroupMap();
-
 		menuBarMenuHandler = new MenuBarMenuHandler(winMgr);
-
-		keyBindingsManager = new KeyBindingsManager(winMgr);
 		menuAndToolBarManager =
 			new GlobalMenuAndToolBarManager(winMgr, menuBarMenuHandler, menuGroupMap);
 		popupActionManager = new PopupActionManager(winMgr, menuGroupMap);
@@ -60,12 +55,10 @@ public class ActionToGuiMapper {
 	private void initializeHelpActions() {
 		DockingWindowsContextSensitiveHelpListener.install();
 
-		keyBindingsAction = new KeyBindingAction(this);
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY1));
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
 		keyBindingsManager.addReservedAction(
 			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
-		keyBindingsManager.addReservedAction(keyBindingsAction);
 
 		if (enableDiagnosticActions) {
 			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
@@ -157,10 +150,6 @@ public class ActionToGuiMapper {
 		return actions;
 	}
 
-	public Action getDockingKeyAction(KeyStroke keyStroke) {
-		return keyBindingsManager.getDockingKeyAction(keyStroke);
-	}
-
 	Set<DockingActionIf> getGlobalActions() {
 		return globalActions;
 	}
@@ -226,5 +215,9 @@ public class ActionToGuiMapper {
 
 	public void showPopupMenu(ComponentPlaceholder componentInfo, MouseEvent e) {
 		popupActionManager.popupMenu(componentInfo, e);
+	}
+
+	Action getDockingKeyAction(KeyStroke keyStroke) {
+		return keyBindingsManager.getDockingKeyAction(keyStroke);
 	}
 }

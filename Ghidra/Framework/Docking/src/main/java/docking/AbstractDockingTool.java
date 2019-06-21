@@ -23,7 +23,7 @@ import javax.swing.JFrame;
 import docking.action.DockingActionIf;
 import docking.actions.ToolActions;
 import ghidra.framework.options.ToolOptions;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 /**
  * A partial implementation of {@link DockingTool} that serves as a place to share common 
@@ -32,7 +32,7 @@ import ghidra.util.SystemUtilities;
 public abstract class AbstractDockingTool implements DockingTool {
 
 	protected DockingWindowManager winMgr;
-	protected ToolActions actionMgr;
+	protected ToolActions toolActions;
 	protected Map<String, ToolOptions> optionsMap = new HashMap<>();
 	protected boolean configChangedFlag;
 
@@ -57,17 +57,20 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void addComponentProvider(ComponentProvider provider, boolean show) {
-		Runnable r = () -> winMgr.addComponent(provider, show);
-		SystemUtilities.runSwingNow(r);
+		Runnable r = () -> {
+			winMgr.addComponent(provider, show);
+			toolActions.addToolAction(provider.getShowProviderAction());
+		};
+		Swing.runNow(r);
 	}
 
 	@Override
 	public void removeComponentProvider(ComponentProvider provider) {
 		Runnable r = () -> {
-			actionMgr.removeComponentActions(provider);
+			toolActions.removeComponentActions(provider);
 			winMgr.removeComponent(provider);
 		};
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
 	@Override
@@ -96,41 +99,41 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void addAction(DockingActionIf action) {
-		actionMgr.addToolAction(action);
+		toolActions.addToolAction(action);
 	}
 
 	@Override
 	public void removeAction(DockingActionIf action) {
-		actionMgr.removeToolAction(action);
+		toolActions.removeToolAction(action);
 	}
 
 	@Override
 	public void addLocalAction(ComponentProvider provider, DockingActionIf action) {
-		actionMgr.addLocalAction(provider, action);
+		toolActions.addLocalAction(provider, action);
 	}
 
 	@Override
 	public void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
-		actionMgr.removeProviderAction(provider, action);
+		toolActions.removeProviderAction(provider, action);
 	}
 
 	@Override
 	public Set<DockingActionIf> getAllActions() {
-		Set<DockingActionIf> actions = actionMgr.getAllActions();
-		ActionToGuiMapper am = winMgr.getActionManager();
+		Set<DockingActionIf> actions = toolActions.getAllActions();
+		ActionToGuiMapper am = winMgr.getActionToGuiMapper();
 		actions.addAll(am.getAllActions());
 		return actions;
 	}
 
 	@Override
 	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
-		return actionMgr.getActions(owner);
+		return toolActions.getActions(owner);
 	}
 
 	@Override
 	public void showComponentProvider(ComponentProvider provider, boolean visible) {
 		Runnable r = () -> winMgr.showComponent(provider, visible);
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
 	@Override
@@ -150,7 +153,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void toFront(ComponentProvider provider) {
 		Runnable r = () -> winMgr.toFront(provider);
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
 	@Override

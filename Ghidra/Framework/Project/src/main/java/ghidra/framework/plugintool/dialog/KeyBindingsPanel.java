@@ -32,6 +32,7 @@ import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.actions.KeyBindingUtils;
+import docking.actions.SharedStubKeyBindingAction;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
@@ -429,9 +430,6 @@ public class KeyBindingsPanel extends JPanel {
 		tableModel.fireTableDataChanged();
 	}
 
-	/**
-	 * Add listeners. Valid modifiers are CTRL and ALT and SHIFT.
-	 */
 	private void addListeners() {
 		selectionModel = actionTable.getSelectionModel();
 		selectionModel.addListSelectionListener(new TableSelectionListener());
@@ -463,11 +461,6 @@ public class KeyBindingsPanel extends JPanel {
 		unappliedChanges = changes;
 	}
 
-	/**
-	 * Get the action that is selected in the table.
-	 *
-	 * @return String
-	 */
 	private String getSelectedAction() {
 		if (selectionModel.isSelectionEmpty()) {
 			return null;
@@ -477,9 +470,6 @@ public class KeyBindingsPanel extends JPanel {
 		return tableActions.get(modelRow).getFullName();
 	}
 
-	/**
-	 * Add the action name to the list for the given keystroke.
-	 */
 	private void addToKeyMap(KeyStroke ks, String actionName) {
 		if (ks == null) {
 			return;
@@ -495,9 +485,6 @@ public class KeyBindingsPanel extends JPanel {
 		}
 	}
 
-	/**
-	 * Remove the given actionName from from the list for the keystroke.
-	 */
 	private void removeFromKeyMap(KeyStroke ks, String actionName) {
 		if (ks == null) {
 			return;
@@ -512,11 +499,7 @@ public class KeyBindingsPanel extends JPanel {
 		}
 	}
 
-	/**
-	 * Display actions mapped to the given keystroke name.
-	 * @param ksName name of Keystroke that has multiple actions mapped
-	 */
-	private void showActionMapped(String ksName) {
+	private void showActionsMappedToKeyStroke(String ksName) {
 		List<String> list = actionNamesByKeyStroke.get(ksName);
 		if (list == null) {
 			return;
@@ -538,17 +521,10 @@ public class KeyBindingsPanel extends JPanel {
 		}
 	}
 
-	/**
-	 * Clear the info panel.
-	 */
 	private void clearInfoPanel() {
 		updateInfoPanel(" ");
 	}
 
-	/**
-	 * Replace multiline label in the info panel.
-	 * @param text new text to show
-	 */
 	private void updateInfoPanel(String text) {
 		infoPanel.removeAll();
 		infoPanel.repaint();
@@ -558,8 +534,6 @@ public class KeyBindingsPanel extends JPanel {
 		infoPanel.invalidate();
 		validate();
 	}
-
-	//////////////////////////////////////////////////////////////////////
 
 	private void processKeyBindingsFromOptions(Options keyBindingOptions) {
 		if (keyBindingOptions == null) {
@@ -578,7 +552,7 @@ public class KeyBindingsPanel extends JPanel {
 		while (iterator.hasNext()) {
 			String name = iterator.next();
 			KeyStroke keyStroke = keyBindingsMap.get(name);
-			keyStroke = KeyBindingData.validateKeyStroke(keyStroke);
+			keyStroke = KeyBindingUtils.validateKeyStroke(keyStroke);
 
 			// prevent non-existing keybindings from being added to Ghidra (this can happen
 			// when actions exist in the imported bindings, but have been removed from
@@ -619,7 +593,7 @@ public class KeyBindingsPanel extends JPanel {
 		if (selectedActionName != null) {
 			if (processKeyStroke(selectedActionName, ks)) {
 				String keyStrokeText = KeyEntryTextField.parseKeyStroke(ks);
-				showActionMapped(keyStrokeText);
+				showActionsMappedToKeyStroke(keyStrokeText);
 				tableModel.fireTableDataChanged();
 			}
 		}
@@ -691,7 +665,7 @@ public class KeyBindingsPanel extends JPanel {
 
 			if (ks != null) {
 				ksName = KeyEntryTextField.parseKeyStroke(ks);
-				showActionMapped(ksName);
+				showActionsMappedToKeyStroke(ksName);
 			}
 
 			ksField.setText(ksName);
@@ -734,9 +708,16 @@ public class KeyBindingsPanel extends JPanel {
 					}
 					return "";
 				case PLUGIN_NAME:
-					return action.getOwner();
+					return getOwner(action);
 			}
 			return "Unknown Column!";
+		}
+
+		private String getOwner(DockingActionIf action) {
+			if (action instanceof SharedStubKeyBindingAction) {
+				return ((SharedStubKeyBindingAction) action).getOwnersDescription();
+			}
+			return action.getOwner();
 		}
 
 		@Override

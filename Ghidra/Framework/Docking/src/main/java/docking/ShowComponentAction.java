@@ -18,8 +18,7 @@ package docking;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -33,8 +32,11 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 	protected static final ImageIcon EMPTY_ICON =
 		ResourceManager.loadImage("images/EmptyIcon16.gif");
 	protected static final String MENU_WINDOW = "&" + DockingWindowManager.COMPONENT_MENU_NAME;
-	private ComponentPlaceholder info;
+
 	protected DockingWindowManager winMgr;
+	private ComponentPlaceholder info;
+	private String title;
+	private boolean isTransient;
 
 	private static String truncateTitleAsNeeded(String title) {
 		if (title.length() <= MAX_LENGTH) {
@@ -48,14 +50,14 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		super(truncateTitleAsNeeded(name), DockingWindowManager.DOCKING_WINDOWS_OWNER);
 	}
 
-	/**
-	 * Constructs a new ShowComponentAction object.
-	 * @param winMgr the DockingWindowManager that this action belongs to.
-	 * @param info the info of the component to be shown when this action is invoked.
-	 */
 	ShowComponentAction(DockingWindowManager winMgr, ComponentPlaceholder info, String subMenuName,
 			boolean isTransient) {
-		super(truncateTitleAsNeeded(info.getTitle()), DockingWindowManager.DOCKING_WINDOWS_OWNER);
+		super(info.getProvider().getName(), DockingWindowManager.DOCKING_WINDOWS_OWNER);
+
+		this.info = info;
+		this.winMgr = winMgr;
+		this.title = truncateTitleAsNeeded(info.getTitle());
+		this.isTransient = isTransient;
 		String group = isTransient ? "Transient" : "Permanent";
 
 		Icon icon = info.getIcon();
@@ -69,15 +71,18 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 			winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, group);
 		}
 		else {
-			setMenuBarData(
-				new MenuData(new String[] { MENU_WINDOW, getName() }, icon, "Permanent"));
+			setMenuBarData(new MenuData(new String[] { MENU_WINDOW, title }, icon, "Permanent"));
 		}
 
-		this.info = info;
-		this.winMgr = winMgr;
-
-		// Use provider Help for this action
+		// keybinding data used to show the binding in the menu
 		ComponentProvider provider = info.getProvider();
+		DockingActionIf action = provider.getShowProviderAction();
+		KeyBindingData kbData = action.getKeyBindingData();
+		if (kbData != null) {
+			setKeyBindingData(kbData);
+		}
+
+		// Use provider Help for this action		
 		HelpLocation helpLocation = provider.getHelpLocation();
 		if (helpLocation != null) {
 			setHelpLocation(helpLocation);
@@ -87,6 +92,21 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 			// There is no need for this action itself to report errors if no help exists.
 			markHelpUnnecessary();
 		}
+	}
+
+	@Override
+	public boolean isKeyBindingManaged() {
+		return false;
+	}
+
+	@Override
+	public boolean usesSharedKeyBinding() {
+		if (isTransient) {
+			return false; // temporary window
+		}
+
+		// 'info' is null when this action is used to 'show all' instances of a given provider
+		return info != null;
 	}
 
 	@Override

@@ -24,6 +24,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.*;
+import docking.actions.KeyEntryDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;

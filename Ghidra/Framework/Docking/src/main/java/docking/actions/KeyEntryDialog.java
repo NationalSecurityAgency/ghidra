@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.action;
+package docking.actions;
 
 import java.awt.*;
 import java.util.*;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 
 import docking.*;
-import docking.actions.KeyBindingUtils;
+import docking.action.*;
 import docking.widgets.label.GIconLabel;
 import ghidra.util.HelpLocation;
 import ghidra.util.ReservedKeyBindings;
@@ -35,7 +35,7 @@ import resources.ResourceManager;
  */
 public class KeyEntryDialog extends DialogComponentProvider {
 
-	private ActionToGuiMapper actionManager;
+	private ToolActions toolActions;
 	private DockingActionIf action;
 	private JPanel defaultPanel;
 	private KeyEntryTextField keyEntryField;
@@ -45,10 +45,10 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	private SimpleAttributeSet textAttrSet;
 	private Color bgColor;
 
-	public KeyEntryDialog(DockingActionIf action, ActionToGuiMapper actionManager) {
+	public KeyEntryDialog(DockingActionIf action, ToolActions actions) {
 		super("Set Key Binding for " + action.getName(), true);
-		this.actionManager = actionManager;
 		this.action = action;
+		this.toolActions = actions;
 		setUpAttributes();
 		createPanel();
 		KeyStroke keyBinding = action.getKeyBinding();
@@ -105,7 +105,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		p.add(keyEntryField);
 		KeyStroke keyBinding = action.getKeyBinding();
 		if (keyBinding != null) {
-			keyEntryField.setText(DockingKeyBindingAction.parseKeyStroke(keyBinding));
+			keyEntryField.setText(KeyBindingUtils.parseKeyStroke(keyBinding));
 		}
 		setFocusComponent(keyEntryField);
 		defaultPanel.add(p, BorderLayout.CENTER);
@@ -129,6 +129,14 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		return p;
 	}
 
+	/**
+	 * Sets the given keystroke value into the text field of this dialog
+	 * @param ks the keystroke to set
+	 */
+	public void setKeyStroke(KeyStroke ks) {
+		keyEntryField.setKeyStroke(ks);
+	}
+
 	@Override
 	protected void cancelCallback() {
 		close();
@@ -136,22 +144,36 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		KeyStroke keyStroke = keyEntryField.getCurrentKeyStroke();
-		if (keyStroke != null && ReservedKeyBindings.isReservedKeystroke(keyStroke)) {
+		KeyStroke newKeyStroke = keyEntryField.getKeyStroke();
+		if (newKeyStroke != null && ReservedKeyBindings.isReservedKeystroke(newKeyStroke)) {
 			setStatusText(keyEntryField.getText() + " is a reserved keystroke");
 			return;
 		}
 
 		clearStatusText();
 
-		Set<DockingActionIf> allActions = actionManager.getAllActions();
-		Set<DockingActionIf> actions =
-			KeyBindingUtils.getActions(allActions, action.getOwner(), action.getName());
-		for (DockingActionIf element : actions) {
-			if (element.isKeyBindingManaged()) {
-				element.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-			}
+		KeyStroke existingKeyStroke = action.getKeyBinding();
+		if (Objects.equals(existingKeyStroke, newKeyStroke)) {
+			return;
 		}
+
+		KeyBindingData kbData = new KeyBindingData(newKeyStroke);
+		if (action instanceof SharedStubKeyBindingAction) {
+			action.setUnvalidatedKeyBindingData(kbData);
+		}
+		else {
+			Set<DockingActionIf> allActions = toolActions.getAllActions();
+			Set<DockingActionIf> actions =
+				KeyBindingUtils.getActions(allActions, action.getOwner(), action.getName());
+			for (DockingActionIf element : actions) {
+				if (element.isKeyBindingManaged()) {
+					element.setUnvalidatedKeyBindingData(kbData);
+				}
+			}
+
+		}
+
+		toolActions.keyBindingsChanged();
 
 		close();
 	}
@@ -178,7 +200,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
-		String ksName = DockingKeyBindingAction.parseKeyStroke(ks);
+		String ksName = KeyBindingUtils.parseKeyStroke(ks);
 		try {
 			doc.insertString(0, "Actions mapped to " + ksName + "\n\n", textAttrSet);
 			for (int i = 0; i < list.size(); i++) {
@@ -218,7 +240,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private MultipleKeyAction getMultipleKeyAction(KeyStroke ks) {
-		Action keyAction = actionManager.getDockingKeyAction(ks);
+		Action keyAction = toolActions.getAction(ks);
 		if (keyAction instanceof MultipleKeyAction) {
 			return (MultipleKeyAction) keyAction;
 		}

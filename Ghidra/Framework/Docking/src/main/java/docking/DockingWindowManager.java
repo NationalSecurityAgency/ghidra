@@ -29,13 +29,13 @@ import javax.swing.*;
 import org.jdom.Element;
 
 import docking.action.DockingActionIf;
+import docking.action.KeyBindingsManager;
 import docking.help.HelpService;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.options.PreferenceState;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
@@ -87,7 +87,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private Map<String, ComponentProvider> providerNameCache = new HashMap<>();
 	private Map<String, PreferenceState> preferenceStateMap = new HashMap<>();
 	private DockWinListener docListener;
-	private ActionToGuiMapper actionManager;
+	private ActionToGuiMapper actionToGuiMapper;
 
 	private WeakSet<DockingContextListener> contextListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
@@ -138,7 +138,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		root = new RootNode(this, toolName, images, modal, factory);
-		actionManager = new ActionToGuiMapper(this);
 
 		KeyboardFocusManager km = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		km.addPropertyChangeListener("permanentFocusOwner", this);
@@ -319,7 +318,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 *         given keystroke.
 	 */
 	Action getActionForKeyStroke(KeyStroke keyStroke) {
-		return actionManager.getDockingKeyAction(keyStroke);
+		return actionToGuiMapper.getDockingKeyAction(keyStroke);
 	}
 
 	/**
@@ -336,8 +335,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return placeholderManager;
 	}
 
-	ActionToGuiMapper getActionManager() {
-		return actionManager;
+	ActionToGuiMapper getActionToGuiMapper() {
+		return actionToGuiMapper;
 	}
 
 	RootNode getRootNode() {
@@ -646,7 +645,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param owner the name of the owner whose associated component and actions should be removed.
 	 */
 	public void removeAll(String owner) {
-		actionManager.removeAll(owner);
+		actionToGuiMapper.removeAll(owner);
 		placeholderManager.removeAll(owner);
 		scheduleUpdate();
 	}
@@ -654,6 +653,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 //==================================================================================================
 // Package-level Action Methods
 //==================================================================================================
+
+	void setKeyBindingsManager(KeyBindingsManager keyBindingsManager) {
+		actionToGuiMapper = new ActionToGuiMapper(this, keyBindingsManager);
+	}
 
 	Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
@@ -668,7 +671,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
-			actionManager.removeLocalAction(action);
+			actionToGuiMapper.removeLocalAction(action);
 			placeholder.removeAction(action);
 		}
 	}
@@ -679,16 +682,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			throw new IllegalArgumentException("Unknown component provider: " + provider);
 		}
 		placeholder.addAction(action);
-		actionManager.addLocalAction(action, provider);
+		actionToGuiMapper.addLocalAction(action, provider);
 	}
 
 	void addToolAction(DockingActionIf action) {
-		actionManager.addToolAction(action);
+		actionToGuiMapper.addToolAction(action);
 		scheduleUpdate();
 	}
 
 	void removeToolAction(DockingActionIf action) {
-		actionManager.removeToolAction(action);
+		actionToGuiMapper.removeToolAction(action);
 		scheduleUpdate();
 	}
 
@@ -711,6 +714,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			showComponent(placeholder, visibleState, true);
+		}
+		else {
+			// a null placeholder implies the client is trying to show a provider that has not
+			// been added to the tool
+			Msg.warn(this, "Attempting to show an unknown Component Provider '" +
+				provider.getName() + "' - " + "check that the provider has been added to the tool");
 		}
 	}
 
@@ -791,7 +800,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		mgr.removePropertyChangeListener("permanentFocusOwner", this);
 
-		actionManager.dispose();
+		actionToGuiMapper.dispose();
 		root.dispose();
 
 		placeholderManager.disposePlaceholders();
@@ -993,7 +1002,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		Iterator<DockingActionIf> iter = placeholder.getActions();
 		while (iter.hasNext()) {
 			DockingActionIf action = iter.next();
-			actionManager.removeLocalAction(action);
+			actionToGuiMapper.removeLocalAction(action);
 		}
 
 		ComponentNode node = placeholder.getNode();
@@ -1084,7 +1093,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		actionManager.removeAll(DOCKING_WINDOWS_OWNER);
+		actionToGuiMapper.removeAll(DOCKING_WINDOWS_OWNER);
 
 		Map<String, List<ComponentPlaceholder>> permanentMap = new HashMap<>();
 		Map<String, List<ComponentPlaceholder>> transientMap = new HashMap<>();
@@ -1111,7 +1120,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		createActions(permanentMap, false);
 		createWindowActions();
 
-		actionManager.update();
+		actionToGuiMapper.update();
 	}
 
 	private boolean isWindowMenuShowing() {
@@ -1153,7 +1162,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 		Collections.sort(actionList);
 		for (ShowComponentAction action : actionList) {
-			actionManager.addToolAction(action);
+			actionToGuiMapper.addToolAction(action);
 		}
 	}
 
@@ -1191,7 +1200,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		Collections.sort(actions);
 		for (ShowWindowAction action : actions) {
-			actionManager.addToolAction(action);
+			actionToGuiMapper.addToolAction(action);
 		}
 	}
 
@@ -1387,7 +1396,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (root == null) {
 			return;
 		}
-		actionManager.setActive(active);
+		actionToGuiMapper.setActive(active);
 		if (active) {
 			setActiveManager(this);
 			if (focusedPlaceholder != null && root.getWindow(focusedPlaceholder) == window) {
@@ -1938,7 +1947,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * when we know that an update is not need, as we are in the middle of an update.
 	 */
 	void doSetMenuGroup(String[] menuPath, String group) {
-		actionManager.setMenuGroup(menuPath, group);
+		actionToGuiMapper.setMenuGroup(menuPath, group);
 	}
 
 	/**
@@ -1954,7 +1963,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 *                     its level 
 	 */
 	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
-		actionManager.setMenuGroup(menuPath, group, menuSubGroup);
+		actionToGuiMapper.setMenuGroup(menuPath, group, menuSubGroup);
 		scheduleUpdate();
 	}
 
@@ -2060,7 +2069,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	public void contextChanged(ComponentProvider provider) {
 		if (provider == null) {
-			actionManager.contextChangedAll(); // update all windows;
+			actionToGuiMapper.contextChangedAll(); // update all windows;
 			return;
 		}
 
@@ -2069,7 +2078,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 		placeHolder.contextChanged();
-		actionManager.contextChanged(placeHolder);
+		actionToGuiMapper.contextChanged(placeHolder);
 	}
 
 	public void addContextListener(DockingContextListener listener) {

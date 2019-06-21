@@ -15,7 +15,8 @@
  */
 package ghidra.framework.plugintool;
 
-import static ghidra.framework.model.ToolTemplate.*;
+import static ghidra.framework.model.ToolTemplate.TOOL_INSTANCE_NAME_XML_NAME;
+import static ghidra.framework.model.ToolTemplate.TOOL_NAME_XML_NAME;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -158,7 +159,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		actionMgr = new ToolActions(this, winMgr);
+		toolActions = new ToolActions(this, winMgr);
 		pluginMgr = new PluginManager(this, serviceMgr);
 		dialogMgr = new DialogManager(this);
 		initActions();
@@ -460,7 +461,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		winMgr.setVisible(false);
 		eventMgr.clearLastEvents();
 		pluginMgr.dispose();
-		actionMgr.dispose();
+		toolActions.dispose();
 
 		if (project != null) {
 			project.releaseFiles(this);
@@ -1300,7 +1301,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	protected void restoreOptionsFromXml(Element root) {
 		optionsMgr.setConfigState(root.getChild("OPTIONS"));
-		actionMgr.restoreKeyBindings();
+		toolActions.restoreKeyBindings();
 		setToolOptionsHelpLocation();
 	}
 
@@ -1321,7 +1322,7 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	void removeAll(String owner) {
-		actionMgr.removeToolActions(owner);
+		toolActions.removeToolActions(owner);
 		winMgr.removeAll(owner);
 	}
 
@@ -1496,7 +1497,7 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	public void refreshKeybindings() {
-		actionMgr.restoreKeyBindings();
+		toolActions.restoreKeyBindings();
 	}
 
 	public void setUnconfigurable() {

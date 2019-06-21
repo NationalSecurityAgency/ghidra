@@ -234,5 +234,4 @@ public interface DockingTool {
 	 * @return  true if the tool's configuration has changed
 	 */
 	public boolean hasConfigChanged();
-
 }

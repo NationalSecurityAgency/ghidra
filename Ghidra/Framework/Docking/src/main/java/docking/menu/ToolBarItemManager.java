@@ -15,16 +15,17 @@
  */
 package docking.menu;
 
-import ghidra.util.StringUtilities;
-
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.action.*;
+import ghidra.util.StringUtilities;
 
 /**
  * Class to manager toolbar buttons.
@@ -93,7 +94,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		StringBuilder buffy = new StringBuilder(toolTipText);
 		if (StringUtilities.startsWithIgnoreCase(toolTipText, "<HTML>")) {
 			String endHTMLTag = "</HTML>";
-			int closeTagIndex = StringUtilities.indexOfIgnoreCase(toolTipText, endHTMLTag);
+			int closeTagIndex = StringUtils.indexOfIgnoreCase(toolTipText, endHTMLTag);
 			if (closeTagIndex < 0) {
 				// no closing tag, which is acceptable
 				buffy.append(START_KEYBINDING_TEXT).append(keyBindingText).append(
@@ -204,16 +205,13 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		final ActionContext finalContext = tempContext;
 
 		// this gives the UI some time to repaint before executing the action
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				if (toolBarAction.isEnabledForContext(finalContext)) {
-					if (toolBarAction instanceof ToggleDockingActionIf) {
-						ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) toolBarAction;
-						toggleAction.setSelected(!toggleAction.isSelected());
-					}
-					toolBarAction.actionPerformed(finalContext);
+		SwingUtilities.invokeLater(() -> {
+			if (toolBarAction.isEnabledForContext(finalContext)) {
+				if (toolBarAction instanceof ToggleDockingActionIf) {
+					ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) toolBarAction;
+					toggleAction.setSelected(!toggleAction.isSelected());
 				}
+				toolBarAction.actionPerformed(finalContext);
 			}
 		});
 	}

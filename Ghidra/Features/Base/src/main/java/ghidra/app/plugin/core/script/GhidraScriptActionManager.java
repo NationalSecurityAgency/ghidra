@@ -28,6 +28,7 @@ import javax.swing.KeyStroke;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
@@ -92,7 +93,7 @@ class GhidraScriptActionManager {
 					action.setKeyBindingData(null);
 				}
 				else {
-					KeyStroke stroke = DockingKeyBindingAction.parseKeyStroke(strokeStr);
+					KeyStroke stroke = KeyBindingUtils.parseKeyStroke(strokeStr);
 					if (stroke == null) {
 						break;
 					}
@@ -137,7 +138,7 @@ class GhidraScriptActionManager {
 				saveState.putString(scriptFile.getName(), "");
 			}
 			else {
-				String strokeStr = DockingKeyBindingAction.parseKeyStroke(stroke);
+				String strokeStr = KeyBindingUtils.parseKeyStroke(stroke);
 				saveState.putString(scriptFile.getName(), strokeStr);
 			}
 		}

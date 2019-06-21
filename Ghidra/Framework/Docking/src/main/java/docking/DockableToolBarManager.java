@@ -60,7 +60,7 @@ class DockableToolBarManager {
 		ComponentPlaceholder placeholder = dockableComp.getComponentWindowingPlaceholder();
 		DockingWindowManager winMgr =
 			dockableComp.getComponentWindowingPlaceholder().getNode().winMgr;
-		ActionToGuiMapper actionManager = winMgr.getActionManager();
+		ActionToGuiMapper actionManager = winMgr.getActionToGuiMapper();
 		menuGroupMap = actionManager.getMenuGroupMap();
 
 		MenuHandler menuHandler = actionManager.getMenuHandler();

@@ -25,9 +25,9 @@ import javax.swing.*;
 import docking.action.*;
 import docking.help.HelpDescriptor;
 import docking.help.HelpService;
-import ghidra.util.HelpLocation;
-import ghidra.util.UniversalIdGenerator;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Abstract base class for creating dockable GUI components within a tool.  
@@ -61,13 +61,25 @@ import ghidra.util.exception.AssertException;
  *  <li>{@link #componentActivated()} and {@link #componentDeactived()}
  *  <li>{@link #componentHidden()} and {@link #componentShown()}
  * </ul>
+ * 
  * <p>
- * Note: This class was created so that implementors could add local actions within the constructor
+ * <b><u>Show Provider Action</u></b> - Each provider has an action to show the provider.  For
+ * typical, non-transient providers (see {@link #setTransient()}) the action will appear in 
+ * the tool's <b>Window</b> menu.   You can have your provider also appear in the tool's toolbar
+ * by calling {@link #setIcon(Icon, boolean)}, passing <code>true</code> for 
+ * <code>isToolbarAction</code>.
+ * <p>
+ * Historical Note: This class was created so that implementors could add local actions within the constructor
  * without having to understand that they must first add themselves to the WindowManager.
  */
-
 public abstract class ComponentProvider implements HelpDescriptor, ActionContextProvider {
+	private static final String TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE =
+		"Transient providers are not added to the toolbar";
+
 	public static final String DEFAULT_WINDOW_GROUP = "Default";
+
+	private static final String TOOLBAR_GROUP = "View";
+
 	// maps for mapping old provider names and owner to new names and/or owner
 	private static Map<String, String> oldOwnerMap = new HashMap<>();
 	private static Map<String, String> oldNameMap = new HashMap<>();
@@ -77,14 +89,21 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private String title;
 	private String subTitle;
 	private String tabText;
-	private Icon icon;
+
 	private Set<DockingActionIf> actionSet = new LinkedHashSet<>();
-	private String windowMenuGroup;
+
+	/** True if this provider's action should appear in the toolbar */
+	private boolean isToolbarAction;
 	private boolean isTransient;
 	private HelpLocation helpLocation;
+
+	private Icon icon;
+	private String windowMenuGroup;
 	private String group = DEFAULT_WINDOW_GROUP;
 	private WindowPosition defaultWindowPosition = WindowPosition.WINDOW;
 	private WindowPosition defaultIntraGroupPosition = WindowPosition.STACK;
+	private DockingAction showProviderAction;
+
 	private final Class<?> contextType;
 
 	private long instanceID = UniversalIdGenerator.nextID().getValue();
@@ -116,6 +135,32 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.owner = owner;
 		this.title = name;
 		this.contextType = contextType;
+	}
+
+	/**
+	 * Returns the action used to show this provider
+	 * @return the action
+	 */
+	DockingActionIf getShowProviderAction() {
+		createShowProviderAction();
+		return showProviderAction;
+	}
+
+	private void createShowProviderAction() {
+		if (showProviderAction != null) {
+			return;
+		}
+
+		showProviderAction = new ShowProviderAction();
+	}
+
+	private void removeShowProviderAction() {
+		if (showProviderAction == null) {
+			return; //  not installed
+		}
+
+		dockingTool.removeAction(showProviderAction);
+		showProviderAction = null;
 	}
 
 	/**
@@ -453,8 +498,55 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param icon the icon to use for this provider.
 	 */
 	public void setIcon(Icon icon) {
+		setIcon(icon, false);
+	}
+
+	/**
+	 * Convenience method for setting the provider's icon
+	 * 
+	 * @param icon the icon to use for this provider
+	 * @param isToolbarAction true will cause this action to get added to the toolbar; if this
+	 *        value is true, then the icon cannot be null
+	 */
+	public void setIcon(Icon icon, boolean isToolbarAction) {
 		this.icon = icon;
+		this.isToolbarAction = isToolbarAction;
+
+		if (isToolbarAction) {
+			Objects.requireNonNull(icon,
+				"Icon cannot be null when requesting the provider's action appear in the toolbar");
+
+			if (isTransient) {
+				Msg.error(this, TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE,
+					ReflectionUtilities.createJavaFilteredThrowable());
+				isToolbarAction = false;
+			}
+		}
+
 		if (isInTool()) {
+
+			/*
+			 	 TODO
+			 	 
+			 	 4) Wire default 'close' action to keybinding
+			 	 5) Add global action for (show last provider)
+			 	 6) Remove plugin code that creates the 'show' actions
+			 	 	
+			 	 Questions:
+			
+			 	 	C) How to wire universal close action (it is focus-dependent)
+			 	 		
+			 	 	
+			 	 Fix:
+			 	 	
+			 	 	-Toolbar description for key doesn't match menu (goes away)
+			 	 	-dummy actions getting added to toolbar
+			 	 	-cleanup odd relationship with keybindings action and UI (move to tool??
+			 	 		or ToolActions...<= this)
+			 	 	
+			 	 
+			 */
+
 			dockingTool.getWindowManager().setIcon(this, icon);
 		}
 	}
@@ -465,7 +557,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the menu group for this provider or null if this provider should appear in the
 	 * top-level menu.
 	 */
-
 	public String getWindowSubMenuName() {
 		return windowMenuGroup;
 	}
@@ -473,7 +564,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * Returns true if this component goes away during a user session (most providers remain in
 	 * the tool all session long, visible or not)
-	 * @return true if transitent
+	 * @return true if transient
 	 */
 	public boolean isTransient() {
 		return isTransient;
@@ -485,6 +576,15 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 */
 	protected void setTransient() {
 		isTransient = true;
+
+		// avoid visually disturbing the user by adding/removing toolbar actions for temp providers
+		if (isToolbarAction) {
+			isToolbarAction = false;
+			Msg.error(this, TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE,
+				ReflectionUtilities.createJavaFilteredThrowable());
+		}
+
+		removeShowProviderAction();
 	}
 
 	/**
@@ -633,4 +733,29 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return "owner=" + oldOwner + "name=" + oldName;
 	}
 
+	private class ShowProviderAction extends DockingAction {
+
+		ShowProviderAction() {
+			super(name, owner);
+
+			if (isToolbarAction) {
+				setToolBarData(new ToolBarData(icon, TOOLBAR_GROUP));
+			}
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			dockingTool.showComponentProvider(ComponentProvider.this, true);
+		}
+
+		@Override
+		public boolean isKeyBindingManaged() {
+			return false;
+		}
+
+		@Override
+		public boolean usesSharedKeyBinding() {
+			return !isTransient;
+		}
+	}
 }

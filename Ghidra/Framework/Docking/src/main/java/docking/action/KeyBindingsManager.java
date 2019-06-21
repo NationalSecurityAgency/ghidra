@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking;
-
-import ghidra.util.ReservedKeyBindings;
-import ghidra.util.exception.AssertException;
+package docking.action;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -26,7 +22,9 @@ import java.util.*;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
 
-import docking.action.*;
+import docking.*;
+import ghidra.util.ReservedKeyBindings;
+import ghidra.util.exception.AssertException;
 
 public class KeyBindingsManager implements PropertyChangeListener {
 
@@ -37,8 +35,8 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 	public KeyBindingsManager(DockingWindowManager winMgr) {
 		this.winMgr = winMgr;
-		dockingKeyMap = new HashMap<KeyStroke, DockingKeyBindingAction>();
-		actionToProviderMap = new HashMap<DockingActionIf, ComponentProvider>();
+		dockingKeyMap = new HashMap<>();
+		actionToProviderMap = new HashMap<>();
 	}
 
 	public void addAction(DockingActionIf action, ComponentProvider optionalProvider) {
@@ -59,6 +57,10 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		addReservedKeyBinding(action, keyBinding);
 	}
 
+	public void addReservedAction(DockingActionIf action, KeyStroke ks) {
+		addReservedKeyBinding(action, ks);
+	}
+
 	public void removeAction(DockingActionIf action) {
 		action.removePropertyChangeListener(this);
 		actionToProviderMap.remove(action);
@@ -74,7 +76,8 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		DockingKeyBindingAction existingAction = dockingKeyMap.get(keyStroke);
 		if (existingAction == null) {
-			dockingKeyMap.put(keyStroke, new MultipleKeyAction(winMgr, provider, action, keyStroke));
+			dockingKeyMap.put(keyStroke,
+				new MultipleKeyAction(winMgr, provider, action, keyStroke));
 			return;
 		}
 
@@ -93,6 +96,8 @@ public class KeyBindingsManager implements PropertyChangeListener {
 				"action to a given keystroke: " + keyStroke);
 		}
 
+		KeyBindingData binding = KeyBindingData.createReservedKeyBindingData(keyStroke);
+		action.setKeyBindingData(binding);
 		dockingKeyMap.put(keyStroke, new ReservedKeyBindingAction(winMgr, action, keyStroke));
 	}
 
@@ -147,7 +152,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 	}
 
 	public List<DockingActionIf> getLocalActions() {
-		return new ArrayList<DockingActionIf>(actionToProviderMap.keySet());
+		return new ArrayList<>(actionToProviderMap.keySet());
 	}
 
 	public Action getDockingKeyAction(KeyStroke keyStroke) {
