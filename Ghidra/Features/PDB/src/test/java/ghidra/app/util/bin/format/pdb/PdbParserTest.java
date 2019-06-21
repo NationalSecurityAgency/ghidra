@@ -540,7 +540,7 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 			File pdb = PdbParserNEW.findPDB(testProgram, symbolsFolder.getAbsolutePath());
 
 			assertNotNull(pdb);
-			assertEquals(pdb.getAbsolutePath(), pdb.getAbsolutePath());
+			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
 		}
 		catch (PdbException pdbe) {
 			fail("Unexpected PdbException!");
