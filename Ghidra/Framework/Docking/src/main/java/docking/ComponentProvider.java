@@ -539,11 +539,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 	
 			 	 Fix:
 			 	 	
-			 	 	-Toolbar description for key doesn't match menu (goes away)
-			 	 	-dummy actions getting added to toolbar
-			 	 	-cleanup odd relationship with keybindings action and UI (move to tool??
-			 	 		or ToolActions...<= this)
-			 	 	
+			 	 	-Toolbar description for key doesn't match menu (goes away)			 	 	
 			 	 
 			 */
 

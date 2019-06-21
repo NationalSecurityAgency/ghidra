@@ -80,6 +80,10 @@ public class KeyBindingData {
 	 * @return the potentially changed data
 	 */
 	public static KeyBindingData validateKeyBindingData(KeyBindingData newKeyBindingData) {
+		if (newKeyBindingData == null) {
+			return null;
+		}
+
 		KeyStroke keyBinding = newKeyBindingData.getKeyBinding();
 		if (keyBinding == null) {
 			// not sure when this can happen

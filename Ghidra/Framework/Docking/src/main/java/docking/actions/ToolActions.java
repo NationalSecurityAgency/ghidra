@@ -300,8 +300,12 @@ public class ToolActions implements PropertyChangeListener {
 			return;
 		}
 
-		KeyBindingData keyBindingData = (KeyBindingData) evt.getNewValue();
-		KeyStroke newKeyStroke = keyBindingData.getKeyBinding();
+		KeyBindingData newKeyBindingData = (KeyBindingData) evt.getNewValue();
+		KeyStroke newKeyStroke = null;
+		if (newKeyBindingData != null) {
+			newKeyStroke = newKeyBindingData.getKeyBinding();
+		}
+
 		Options opt = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		KeyStroke optKeyStroke = opt.getKeyStroke(action.getFullName(), null);
 		if (newKeyStroke == null) {
