@@ -192,6 +192,7 @@ public class RetypeVariableAction extends DockingAction {
 
 	private void retypeReturnType(DataType dataType, ClangReturnType parent) {
 		Program program = controller.getProgram();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
 		HighFunction hfunction = getHighFunctionFromReturnTypeToken(parent);
 		if (hfunction == null) {
 			return;
@@ -209,8 +210,12 @@ public class RetypeVariableAction extends DockingAction {
 			}
 		}
 		Function function = hfunction.getFunction();
+		boolean successfulMod = false;
 		int transactionID = program.startTransaction("Retype return type");
 		try {
+			if (dataType.getDataTypeManager() != dataTypeManager) {
+				dataType = dataTypeManager.resolve(dataType, null);
+			}
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
@@ -224,12 +229,13 @@ public class RetypeVariableAction extends DockingAction {
 				}
 			}
 			function.setReturnType(dataType, SourceType.USER_DEFINED);
+			successfulMod = true;
 		}
 		catch (InvalidInputException e) {
 			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
 				"Failed to re-type return type '" + getName() + "': " + e.getMessage());
 		}
-		program.endTransaction(transactionID, true);
+		program.endTransaction(transactionID, successfulMod);
 	}
 
 	private HighFunction getHighFunctionFromReturnTypeToken(ClangReturnType returnType) {
@@ -288,8 +294,13 @@ public class RetypeVariableAction extends DockingAction {
 			}
 		}
 		Program program = controller.getProgram();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
+		boolean successfulMod = false;
 		int transaction = program.startTransaction("Retype Variable");
 		try {
+			if (dt.getDataTypeManager() != dataTypeManager) {
+				dt = dataTypeManager.resolve(dt, null);
+			}
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
@@ -304,6 +315,7 @@ public class RetypeVariableAction extends DockingAction {
 				}
 			}
 			HighFunctionDBUtil.updateDBVariable(var, null, dt, SourceType.USER_DEFINED);
+			successfulMod = true;
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException("Unexpected exception", e);
@@ -313,7 +325,7 @@ public class RetypeVariableAction extends DockingAction {
 				"Failed to re-type variable '" + var.getName() + "': " + e.getMessage());
 		}
 		finally {
-			program.endTransaction(transaction, true);
+			program.endTransaction(transaction, successfulMod);
 		}
 	}
 
