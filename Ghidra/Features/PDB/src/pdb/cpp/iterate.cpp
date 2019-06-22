@@ -73,12 +73,12 @@ void iterateEnums(PDBApiContext& ctx) {
 static void iterateMembers(IDiaSymbol& pSymbol) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	CComPtr<IDiaSymbol> pMember;
 	pSymbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	while (1) {
+		CComPtr<IDiaSymbol> pMember;
 		if (FAILED(pEnum->Next(1, &pMember, &celt))) {
 			break;
 		}
@@ -99,13 +99,14 @@ static void iterateMembers(IDiaSymbol& pSymbol) {
 void iterateDataTypes(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	CComPtr<IDiaSymbol> pSymbol;
 	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<datatypes>\n", indent(4).c_str());
 	while (1) {
+		CComPtr<IDiaSymbol> pSymbol;
+
 		if (FAILED(pEnum->Next(1, &pSymbol, &celt))) {
 			break;
 		}
@@ -169,13 +170,13 @@ void iterateTypedefs(PDBApiContext& ctx) {
 void iterateClasses(PDBApiContext& ctx) {
 	DWORD celt = 0;
     CComPtr<IDiaEnumSymbols> pEnum;
-    CComPtr<IDiaSymbol> pSymbol;
 	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<classes>\n", indent(4).c_str());
 	while ( 1 ) {
+		CComPtr<IDiaSymbol> pSymbol;
 		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
