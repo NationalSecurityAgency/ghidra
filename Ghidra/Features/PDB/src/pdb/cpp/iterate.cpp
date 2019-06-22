@@ -282,13 +282,15 @@ void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
 	if ( isect == 0 || length <= 0 ) {
 		return;
 	}
+
     CComPtr<IDiaEnumLineNumbers> pLines;
 	if (FAILED(pSession.findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ))) {
 		return;
 	}
-    CComPtr<IDiaLineNumber> pLine;
+
 	DWORD celt = 0;
 	while ( 1 ) {
+		CComPtr<IDiaLineNumber> pLine;
 		if (FAILED(pLines->Next( 1, &pLine, &celt ))) {
 			break;
 		}
@@ -302,8 +304,9 @@ void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
         CComPtr<IDiaSourceFile> pSrc;
 		pLine->get_sourceFile( &pSrc );
 
-		bstr_t sourceFileName ;
-		pSrc->get_fileName( sourceFileName.GetAddress() );
+		BSTR temp = NULL;
+		pSrc->get_fileName( &temp);
+		bstr_t sourceFileName(temp);
 
 		DWORD addr = 0;
 		pLine->get_relativeVirtualAddress( &addr );
@@ -315,8 +318,6 @@ void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
 
 		printf("%S<line_number source_file=\"%S\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
 					indent(12).c_str(), sourceFileName.GetBSTR(), start, end, addr);
-
-		pLine = NULL;
 	}
 }
 
@@ -358,9 +359,8 @@ void iterateFunctions(PDBApiContext& ctx) {
 
 void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 	DWORD celt = 0;
-    CComPtr<IDiaSymbol> pSymbol;
-
 	while ( 1 ) {
+		CComPtr<IDiaSymbol> pSymbol;
 		if (FAILED(pSymbols->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
@@ -384,8 +384,6 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 		printf("value=\"%S\" ",         getValue(*pSymbol).c_str());
 		printf("datatype=\"%S\" ",      getTypeAsString(*pSymbol).c_str());
 		printf(" />\n");
-
-		pSymbol = NULL;
 	}
 }
 
@@ -394,8 +392,9 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 	DWORD celt = 0;
     CComPtr<IDiaSourceFile> pSourceFile;
 	while ( SUCCEEDED( hr = pSourceFiles->Next( 1, &pSourceFile, &celt ) ) && celt == 1 ) {
-		bstr_t name;
-		pSourceFile->get_fileName( name.GetAddress() );
+		BSTR temp = NULL;
+		pSourceFile->get_fileName( &temp );
+		bstr_t name(temp);
 		DWORD id = 0;
 		pSourceFile->get_uniqueId( &id );
 		if ( name.GetAddress() != NULL ) {
@@ -488,11 +487,13 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 			break;
 		}
 
-		bstr_t filename;
-		pInjectedSrc->get_filename(filename.GetAddress());
+		BSTR fileNameTemp = NULL;
+		pInjectedSrc->get_filename(&fileNameTemp);
+		bstr_t filename(fileNameTemp);
 
-        bstr_t objectname;
-		pInjectedSrc->get_objectFilename(objectname.GetAddress());
+        BSTR objectNameTemp = NULL;
+		pInjectedSrc->get_objectFilename(&objectNameTemp);
+		bstr_t objectname(objectNameTemp);
 
 		DWORD crc;
 		pInjectedSrc->get_crc(&crc);
@@ -516,9 +517,9 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
  */
 void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 	DWORD celt = 0;
-    CComPtr<IDiaFrameData> pFrameData;
 
 	while ( 1 ) {
+		CComPtr<IDiaFrameData> pFrameData;
 		const HRESULT hr = pEnumFrameData->Next( 1, &pFrameData, &celt );
 		if (FAILED(hr)) {
 			break;
@@ -551,8 +552,10 @@ int iterateTables(PDBApiContext& ctx, bool printAll) {
 		if (celt != 1) {
 			break;
 		}
-		bstr_t name;
-		pTable->get_name( name.GetAddress() );
+
+		BSTR nameTemp;
+		pTable->get_name( &nameTemp );
+		bstr_t name(nameTemp);
 
 		printf("%S<table name=\"%ws\">\n", indent(8).c_str(), name.GetBSTR() );
 

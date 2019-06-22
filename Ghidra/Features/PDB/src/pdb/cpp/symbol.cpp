@@ -175,8 +175,9 @@ const static std::wstring BASIC_TYPE_STRINGS [] = {
 };
 
 std::wstring getName(IDiaSymbol& pSymbol) {
-    bstr_t name;
-    if (SUCCEEDED(pSymbol.get_name(name.GetAddress()))) {
+	BSTR temp = NULL;
+    if (SUCCEEDED(pSymbol.get_name(&temp))) {
+		bstr_t name(temp);
         const std::wstring wstrName = std::wstring(name.GetBSTR(), name.length());
         if (wstrName.empty()) {
             return escapeXmlEntities(L"NONAME");
@@ -210,12 +211,15 @@ std::wstring getName(IDiaSymbol& pSymbol) {
 }
 
 std::wstring getUndecoratedName(IDiaSymbol& pSymbol) {
-	bstr_t name;
-	if (SUCCEEDED(pSymbol.get_undecoratedName( name.GetAddress() ))) {
-        return escapeXmlEntities(std::wstring(name.GetBSTR(), name.length()));
+	BSTR temp = NULL;
+	if (pSymbol.get_undecoratedName(&temp) == S_OK) {
+		// May also return S_FALSE which is not failure, however in this case there is no name
+		bstr_t name(temp);
+		return escapeXmlEntities(std::wstring(name.GetBSTR(), name.length()));
 	}
 	return L"";
 }
+
 DWORD getRVA(IDiaSymbol& pSymbol) {
 	DWORD rva = 0;
 	pSymbol.get_relativeVirtualAddress( &rva );

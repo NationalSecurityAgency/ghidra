@@ -109,7 +109,7 @@ std::wstring printVariant( VARIANT & v ) {
 void printBound( IDiaSymbol& pBound ) {
 
 	DWORD tag = 0;
-	bstr_t name;
+	BSTR nameTemp = NULL;
 	DWORD kind = 0;
 	pBound.get_symTag( &tag );
 	pBound.get_locationType( &kind );
@@ -119,7 +119,8 @@ void printBound( IDiaSymbol& pBound ) {
 		//pBound->get_value( &v );
 		//printVariant( v );
 	} 
-	else if ( pBound.get_name( name.GetAddress() ) == S_OK ) {
+	else if ( pBound.get_name( &nameTemp ) == S_OK ) {
+		bstr_t name(nameTemp);
 		printf( "%ws", name.GetBSTR() );
 	}
 }

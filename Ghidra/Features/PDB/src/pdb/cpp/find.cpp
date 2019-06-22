@@ -36,10 +36,12 @@ std::wstring findMangledName(PDBApiContext& ctx, IDiaSymbol& pFunction) {
 
 void findNameInNamespace(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol& pnamespace )
 {
-	bstr_t bstrNamespace;
-	if (FAILED(pnamespace.get_name(bstrNamespace.GetAddress()))) {
+	BSTR temp = NULL;
+	if (FAILED(pnamespace.get_name(&temp))) {
 		fatal("Namespace get_name failed");
 	}
+
+	bstr_t bstrNamespace(temp);
 
 	const std::wstring strNamespace(bstrNamespace.GetBSTR(), bstrNamespace.length());
 	const std::wstring fullName = strNamespace + L"::" + name;
