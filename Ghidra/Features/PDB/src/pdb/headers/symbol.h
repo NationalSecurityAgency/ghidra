@@ -35,7 +35,6 @@ DWORD          getUdtKind(IDiaSymbol& pSymbol);
 LONG           getOffset(IDiaSymbol& pSymbol);
 DWORD          getIndex(IDiaSymbol& pSymbol);
 std::wstring   getValue(IDiaSymbol& pSymbol);
-DWORD          getBaseType(IDiaSymbol& pSymbol);
 std::wstring   getBaseTypeAsString(IDiaSymbol& pSymbol);
 CComPtr<IDiaSymbol> getType(IDiaSymbol& pSymbol);
 std::wstring   getTypeAsString(IDiaSymbol& pSymbol);

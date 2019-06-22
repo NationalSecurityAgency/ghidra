@@ -17,15 +17,15 @@
 #include "iterate.h"
 
 static void iterateEnumMembers(IDiaSymbol& pSymbol) {
-	DWORD celt;
-	IDiaEnumSymbols * pEnum;
-	IDiaSymbol * pMember;
+	DWORD celt = 0;
+	CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaSymbol> pMember;
 	pSymbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	while (1) {
-		if (pEnum->Next( 1, &pMember, &celt ) < 0) {
+		if (FAILED(pEnum->Next( 1, &pMember, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -38,17 +38,17 @@ static void iterateEnumMembers(IDiaSymbol& pSymbol) {
 	}
 }
 
-void iterateEnums() {
+void iterateEnums(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
     CComPtr<IDiaSymbol> pSymbol;
-	pGlobal->findChildren(SymTagEnum, NULL, nsNone, &pEnum);
+	ctx.Global().findChildren(SymTagEnum, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<enums>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
+		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -60,7 +60,7 @@ void iterateEnums() {
 			continue;
 		}
 
-		printf("%S<enum name=\"%ws\" type=\"%S\" length=\"0x%I64x\" >\n", indent(8).c_str(), getName(*pSymbol).c_str(), getTypeAsString(*pSymbol).c_str(), getLength(*pSymbol));
+		printf("%S<enum name=\"%S\" type=\"%S\" length=\"0x%I64x\" >\n", indent(8).c_str(), getName(*pSymbol).c_str(), getTypeAsString(*pSymbol).c_str(), getLength(*pSymbol));
 
 		iterateEnumMembers(*pSymbol);
 
@@ -72,41 +72,41 @@ void iterateEnums() {
 
 static void iterateMembers(IDiaSymbol& pSymbol) {
 	DWORD celt = 0;
-    CComPtr<IDiaEnumSymbols> pEnum;
-    CComPtr<IDiaSymbol> pMember;
+	CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaSymbol> pMember;
 	pSymbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	while (1) {
-		if (pEnum->Next( 1, &pMember, &celt ) < 0) {
+		if (FAILED(pEnum->Next(1, &pMember, &celt))) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 
-		printf("%S<member name=\"%S\" datatype=\"%S\" offset=\"0x%x\" kind=\"%S\" length=\"0x%I64x\" />\n", 
-					indent(12).c_str(), 
-                    getName(*pMember).c_str(),
-					getTypeAsString(*pMember).c_str(),
-					getOffset(*pMember),
-					getKindAsString(*pMember).c_str(),
-					getLength(*pMember));
+		printf("%S<member name=\"%S\" datatype=\"%S\" offset=\"0x%x\" kind=\"%S\" length=\"0x%I64x\" />\n",
+			indent(12).c_str(),
+			getName(*pMember).c_str(),
+			getTypeAsString(*pMember).c_str(),
+			getOffset(*pMember),
+			getKindAsString(*pMember).c_str(),
+			getLength(*pMember));
 	}
 }
 
-void iterateDataTypes() {
+void iterateDataTypes(PDBApiContext& ctx) {
 	DWORD celt = 0;
-    CComPtr<IDiaEnumSymbols> pEnum;
-    CComPtr<IDiaSymbol> pSymbol;
-	pGlobal->findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaSymbol> pSymbol;
+	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<datatypes>\n", indent(4).c_str());
-	while ( 1 ) {
-		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
+	while (1) {
+		if (FAILED(pEnum->Next(1, &pSymbol, &celt))) {
 			break;
 		}
 		if (celt != 1) {
@@ -122,8 +122,8 @@ void iterateDataTypes() {
 			continue;
 		}
 
-		const ULONGLONG len  = getLength(*pSymbol);
-		if ( len == 0 ) {
+		const ULONGLONG len = getLength(*pSymbol);
+		if (len == 0) {
 			continue;
 		}
 
@@ -137,17 +137,17 @@ void iterateDataTypes() {
 	printf("%S</datatypes>\n", indent(4).c_str());
 }
 
-void iterateTypedefs() {
+void iterateTypedefs(PDBApiContext& ctx) {
 	DWORD celt = 0;
     CComPtr<IDiaEnumSymbols> pEnum;
     CComPtr<IDiaSymbol> pSymbol;
-	pGlobal->findChildren(SymTagTypedef, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	ctx.Global().findChildren(SymTagTypedef, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<typedefs>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
+		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -166,17 +166,17 @@ void iterateTypedefs() {
 	printf("%S</typedefs>\n", indent(4).c_str());
 }
 
-void iterateClasses() {
+void iterateClasses(PDBApiContext& ctx) {
 	DWORD celt = 0;
     CComPtr<IDiaEnumSymbols> pEnum;
     CComPtr<IDiaSymbol> pSymbol;
-	pGlobal->findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<classes>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
+		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -207,10 +207,10 @@ void iterateClasses() {
 	printf("%S</classes>\n", indent(4).c_str());
 }
 
-void dumpFunctionStackVariables( DWORD rva )
+void dumpFunctionStackVariables( PDBApiContext& ctx, DWORD rva )
 {
     CComPtr<IDiaSymbol> pBlock;
-	if ( FAILED( pSession->findSymbolByRVA( rva, SymTagBlock, &pBlock ) ) ) {
+	if ( FAILED(ctx.Session().findSymbolByRVA( rva, SymTagBlock, &pBlock ) ) ) {
 		fatal( "Failed to find symbols by RVA" );
 	}
 	for ( ; pBlock != NULL; ) {
@@ -270,25 +270,25 @@ void dumpFunctionStackVariables( DWORD rva )
 	};
 }
 
-void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
+void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
 {
 	ULONGLONG length = 0;
 	DWORD isect = 0;
 	DWORD offset = 0;
-	pSymbol->get_addressSection( &isect );
-	pSymbol->get_addressOffset( &offset );
-	pSymbol->get_length( &length );
+	pSymbol.get_addressSection( &isect );
+	pSymbol.get_addressOffset( &offset );
+	pSymbol.get_length( &length );
 	if ( isect == 0 || length <= 0 ) {
 		return;
 	}
     CComPtr<IDiaEnumLineNumbers> pLines;
-	if (pSession->findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ) < 0) {
+	if (FAILED(pSession.findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ))) {
 		return;
 	}
     CComPtr<IDiaLineNumber> pLine;
-	DWORD celt;
+	DWORD celt = 0;
 	while ( 1 ) {
-		if (pLines->Next( 1, &pLine, &celt ) < 0) {
+		if (FAILED(pLines->Next( 1, &pLine, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -304,12 +304,12 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 		bstr_t sourceFileName ;
 		pSrc->get_fileName( sourceFileName.GetAddress() );
 
-		DWORD addr;
+		DWORD addr = 0;
 		pLine->get_relativeVirtualAddress( &addr );
 
-		DWORD start;
+		DWORD start = 0;
 		pLine->get_lineNumber( &start );
-		DWORD end;
+		DWORD end = 0;
 		pLine->get_lineNumberEnd( &end );
 
 		printf("%S<line_number source_file=\"%S\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
@@ -319,17 +319,17 @@ void dumpFunctionLines( IDiaSymbol* pSymbol, IDiaSession* pSession )
 	}
 }
 
-void iterateFunctions() {
+void iterateFunctions(PDBApiContext& ctx) {
 	DWORD celt = 0;
     CComPtr<IDiaEnumSymbols> pEnum;
     CComPtr<IDiaSymbol> pSymbol;
-	pGlobal->findChildren(SymTagFunction, NULL, nsNone, &pEnum);
+	ctx.Global().findChildren(SymTagFunction, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<functions>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (pEnum->Next( 1, &pSymbol, &celt ) < 0) {
+		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -343,10 +343,10 @@ void iterateFunctions() {
 
 		const DWORD     address = getRVA(*pSymbol);
 
-		printf("%S<function name=\"%S\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8).c_str(), findMangledName(*pSymbol).c_str(), address, getLength(*pSymbol));
+		printf("%S<function name=\"%S\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8).c_str(), findMangledName(ctx, *pSymbol).c_str(), address, getLength(*pSymbol));
 
-		dumpFunctionStackVariables(address);
-		dumpFunctionLines(pSymbol, pSession);
+		dumpFunctionStackVariables(ctx, address);
+		dumpFunctionLines(*pSymbol, ctx.Session());
 
 		printf("%S</function>\n", indent(8).c_str());
 
@@ -360,7 +360,7 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
     CComPtr<IDiaSymbol> pSymbol;
 
 	while ( 1 ) {
-		if (pSymbols->Next( 1, &pSymbol, &celt ) < 0) {
+		if (FAILED(pSymbols->Next( 1, &pSymbol, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -430,21 +430,21 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
  * that is, a contiguous block of memory contributed 
  * to the image by a compiland.
  */
-void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
+void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& pSecContribs) {
 	DWORD celt = 0;
     CComPtr<IDiaSymbol> pSym ;
     CComPtr<IDiaSectionContrib> pSecContrib;
 
 	while ( 1 ) {
-		if (pSecContribs->Next( 1, &pSecContrib, &celt ) < 0 ) {
+		if (pSecContribs.Next( 1, &pSecContrib, &celt ) < 0 ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 		DWORD rva = 0;
-		if ( pSecContrib->get_relativeVirtualAddress( &rva ) == S_OK ) {
-			if ( pSession->findSymbolByRVA( rva, SymTagNull, &pSym ) != S_OK ) {
+		if (SUCCEEDED(pSecContrib->get_relativeVirtualAddress( &rva ))) {
+			if (FAILED(ctx.Session().findSymbolByRVA( rva, SymTagNull, &pSym )) ) {
 				pSym = NULL;
 			}
 		} 
@@ -454,9 +454,9 @@ void iterateSections(IDiaEnumSectionContribs * pSecContribs) {
 			pSecContrib->get_addressSection( &isect );
 			pSecContrib->get_addressOffset( &offset );
 			pSecContrib = NULL;
-			if ( pSession->findSymbolByAddr( isect, offset, SymTagNull, &pSym ) != S_OK ) {
+			if (FAILED(ctx.Session().findSymbolByAddr( isect, offset, SymTagNull, &pSym )) ) {
 				pSym = NULL;
-			}         
+			}
 		}
 		if (pSym == NULL) {
 			printf("%S<section_contrib address=\"0x%x\" /> \n", indent(12).c_str(), rva);
@@ -480,7 +480,7 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 
 	while ( 1 ) {
 		const HRESULT hr = pInjectedSrcs->Next( 1, &pInjectedSrc, &celt );
-		if (hr < 0) {
+		if (FAILED(hr)) {
 			break;
 		}
 		if (celt != 1) {
@@ -518,8 +518,8 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
     CComPtr<IDiaFrameData> pFrameData;
 
 	while ( 1 ) {
-		HRESULT hr = pEnumFrameData->Next( 1, &pFrameData, &celt );
-		if (hr < 0) {
+		const HRESULT hr = pEnumFrameData->Next( 1, &pFrameData, &celt );
+		if (FAILED(hr)) {
 			break;
 		}
 		if (celt != 1) {
@@ -529,22 +529,22 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 	}
 }
 
-int iterateTables(bool printAll) {
+int iterateTables(PDBApiContext& ctx, bool printAll) {
 	printf("%S<tables>\n", indent(4).c_str());
 	HRESULT hr = S_OK;
 	DWORD celt = 0;
 
     CComPtr<IDiaEnumTables> pTables;
 
-	hr = pSession->getEnumTables( &pTables );
-	if ( hr < 0) {
+	hr = ctx.Session().getEnumTables( &pTables );
+	if ( FAILED(hr) ) {
 		return hr;
 	}
 
-	IDiaTable * pTable;
+	CComPtr<IDiaTable> pTable;
 
 	while ( 1 ) {
-		if (pTables->Next( 1, &pTable, &celt ) < 0) {
+		if (FAILED(pTables->Next( 1, &pTable, &celt ))) {
 			break;
 		}
 		if (celt != 1) {
@@ -573,7 +573,7 @@ int iterateTables(bool printAll) {
 		} 
 		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pSecContribs) ) ) ) {
 			if (printAll) {		
-				iterateSections(pSecContribs);
+				iterateSections(ctx, *pSecContribs);
 			}
 		}
 		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pInjectedSrcs) ) ) ) {

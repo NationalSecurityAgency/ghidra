@@ -29,6 +29,6 @@ std::wstring printType( IDiaSymbol* pType, const std::wstring& prefix );
 
 void printBound( IDiaSymbol& pBound );
 void printScopeName( IDiaSymbol& pscope );
-void printNameFromScope( const std::wstring& name, IDiaSymbol& pscope, IDiaEnumSymbols& pEnum );
+void printNameFromScope( IDiaSymbol& pscope, IDiaEnumSymbols& pEnum );
 
 #endif

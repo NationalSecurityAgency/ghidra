@@ -155,9 +155,9 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 		if (lenElem == 0) {//prevent divide by zero...
 			lenElem = lenArray;
 		}
-		size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
+		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
         std::vector<wchar_t> str(strLen);
-		swprintf_s(str.data(), strLen, L"%ws[%I64d]", suffix.c_str(), lenArray / lenElem);
+		swprintf_s(str.data(), strLen, L"%s[%I64d]", suffix.c_str(), lenArray / lenElem);
 		return printType(pBaseType, str.data());
 	} 
 
@@ -168,7 +168,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	if ( tag == SymTagCustomType ) {
 		DWORD id = 0;
 		DWORD rec = 0;
-        GUID guid = {};
+        GUID guid = GUID_NULL;
 		if (pType->get_guid(&guid) == S_OK) {
 			const int maxGUIDStrLen = 64 + 1;
             std::vector<wchar_t> guidStr(maxGUIDStrLen);
@@ -195,17 +195,15 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 }
 
 void printScopeName( IDiaSymbol& pscope ) {
-	printf("<scope name=\"%ws\" tag=\"%ws\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ).c_str());
+	printf("<scope name=\"%S\" tag=\"%S\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ).c_str());
 }
 
-void printNameFromScope( const std::wstring& /*name*/, IDiaSymbol& pscope, IDiaEnumSymbols& pEnum ) {
+void printNameFromScope( IDiaSymbol& pscope, IDiaEnumSymbols& pEnum ) {
 
     CComPtr<IDiaSymbol> pSym;
 	DWORD celt = 0;
 	while ( SUCCEEDED( pEnum.Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-		std::wstring name = getName( *pSym );
-		std::wstring tag  = getTagAsString( *pSym );
-		wprintf( L"\t%ws %ws found in ", tag.c_str(), name.c_str() );
+		wprintf( L"\t%s %s found in ", getTagAsString(*pSym).c_str(), getName(*pSym).c_str() );
 		printScopeName( pscope );
 		wprintf( L"\n" );
 		pSym = 0;

@@ -23,11 +23,11 @@
 #include "xml.h"
 #include "find.h"
 
-void iterateDataTypes();
-void iterateEnums();
-void iterateTypedefs();
-void iterateClasses();
-void iterateFunctions();
-int iterateTables(bool printAll);
+void iterateDataTypes(PDBApiContext& ctx);
+void iterateEnums(PDBApiContext& ctx);
+void iterateTypedefs(PDBApiContext& ctx);
+void iterateClasses(PDBApiContext& ctx);
+void iterateFunctions(PDBApiContext& ctx);
+int iterateTables(PDBApiContext& ctx, bool printAll);
 
 #endif

@@ -32,8 +32,8 @@
 //This method locates the mangled
 //function name, which is stored in a SymTagPublicSymbol symbol.
 //
-std::wstring findMangledName(IDiaSymbol& pFunction);
-void findNameInNamespace( const std::wstring& name, IDiaSymbol& pnamespace );
+std::wstring findMangledName(PDBApiContext& ctx, IDiaSymbol& pFunction);
+void findNameInNamespace(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol& pnamespace );
 void findNameInEnum( const std::wstring& name, IDiaSymbol& penumeration );
 void findNameInClass( const std::wstring& name, IDiaSymbol& pclass );
 void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope );

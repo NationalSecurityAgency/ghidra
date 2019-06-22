@@ -187,8 +187,8 @@ std::wstring getName(IDiaSymbol& pSymbol) {
             if (FAILED(pSymbol.get_symIndexId(&symIndexId))) {
                 symIndexId = 0;
             }
-            const size_t length = 16;	// length of: "<unnamed_NNNN>\0" + 1 extra
-            std::vector<wchar_t> str(16);
+            const size_t length = 20;	// length of: "<unnamed_NNNN>\0" + 1 extra
+            std::vector<wchar_t> str(20);
             swprintf_s(str.data(), length, L"<unnamed_%04x>", symIndexId);
             return escapeXmlEntities(str.data());
         }
@@ -311,19 +311,21 @@ std::wstring getTypeAsString(IDiaSymbol& pSymbol) {
 	return typeStr;
 }
 
-DWORD getBaseType(IDiaSymbol& pSymbol) {
+static DWORD getBaseType(IDiaSymbol& pSymbol) {
 	if (getTag(pSymbol) == SymTagBaseType) {
-		DWORD baseType;
-		pSymbol.get_baseType( &baseType );
+		DWORD baseType = btNoType;
+		if (FAILED(pSymbol.get_baseType(&baseType))) {
+			return btNoType;
+		}
 		return baseType;
 	}
-	return -1;
+	return btNoType;
 }
 std::wstring getBaseTypeAsString(IDiaSymbol& pSymbol) {
 	const ULONGLONG len = getLength(pSymbol);
 	const DWORD bt = getBaseType(pSymbol);
     switch(bt) {
-		case 6 :
+		case btInt:
 			switch(len) {
 				case 1: return L"char";
 				case 2: return L"short";
@@ -331,7 +333,7 @@ std::wstring getBaseTypeAsString(IDiaSymbol& pSymbol) {
 				case 8: return L"__int64";
 			}
 			break;
-		case 7 :
+		case btUInt:
 			switch(len) {
 				case 1: return L"uchar";
 				case 2: return L"ushort";
@@ -339,7 +341,7 @@ std::wstring getBaseTypeAsString(IDiaSymbol& pSymbol) {
 				case 8: return L"__uint64";
 			}
 			break;
-        case 8 :
+        case btFloat:
 			switch(len) {
 				case 4: return L"float";
 				case 8: return L"double";

@@ -18,14 +18,14 @@
 #include <atlcomcli.h>
 #include <comutil.h>
 
-std::wstring findMangledName(IDiaSymbol& pFunction) {
+std::wstring findMangledName(PDBApiContext& ctx, IDiaSymbol& pFunction) {
 	const DWORD rva = getRVA(pFunction);
 	CComPtr<IDiaSymbol> pSymbol;
-	const HRESULT hr = pSession->findSymbolByRVA(rva, SymTagPublicSymbol, &pSymbol);
-	if (hr == S_OK) {
-		DWORD tag = getTag(*pSymbol);
+	const HRESULT hr = ctx.Session().findSymbolByRVA(rva, SymTagPublicSymbol, &pSymbol);
+	if (SUCCEEDED(hr)) {
+		const DWORD tag = getTag(*pSymbol);
 		if (tag == SymTagPublicSymbol) {//do not delete
-			DWORD address = getRVA(*pSymbol);
+			const DWORD address = getRVA(*pSymbol);
 			if (address == rva) {
 				return getName(*pSymbol);
 			}
@@ -34,21 +34,24 @@ std::wstring findMangledName(IDiaSymbol& pFunction) {
 	return getName(pFunction);
 }
 
-void findNameInNamespace( const std::wstring& name, IDiaSymbol& pnamespace )
+void findNameInNamespace(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol& pnamespace )
 {
-	bstr_t szNamespace;
-	pnamespace.get_name( szNamespace.GetAddress() );
+	bstr_t bstrNamespace;
+	if (FAILED(pnamespace.get_name(bstrNamespace.GetAddress()))) {
+		fatal("Namespace get_name failed");
+	}
 
-    std::wstring fullName = name + +L"::" + std::wstring(szNamespace.GetBSTR(), szNamespace.length());
+	const std::wstring strNamespace(bstrNamespace.GetBSTR(), bstrNamespace.length());
+	const std::wstring fullName = strNamespace + L"::" + name;
 
 	CComPtr<IDiaEnumSymbols> pEnum;
-	if ( FAILED( pGlobal->findChildren( SymTagNull, fullName.c_str(), nsCaseSensitive, &pEnum ) ) ) {
+	if ( FAILED(ctx.Global().findChildren( SymTagNull, fullName.c_str(), nsCaseSensitive, &pEnum ) ) ) {
 		fatal( "Namespace findChildren failed" );
 	}
 
 	long cnt = 0;
 	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-		printNameFromScope( name.c_str(), *pGlobal, *pEnum );
+		printNameFromScope(ctx.Global(), *pEnum );
 	}
 }
 
@@ -60,7 +63,7 @@ void findNameInEnum( const std::wstring& name, IDiaSymbol& penumeration )
 	}
 	long cnt = 0;
 	if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-		printNameFromScope( name, penumeration, *pEnum );
+		printNameFromScope( penumeration, *pEnum );
 	}
 }
 
@@ -73,7 +76,7 @@ void findNameInClass( const std::wstring& name, IDiaSymbol& pclass )
         }
         long cnt = 0;
         if (pEnum != NULL && SUCCEEDED(pEnum->get_Count(&cnt)) && cnt > 0) {   // Found a name.
-            printNameFromScope(name, pclass, *pEnum);
+            printNameFromScope(pclass, *pEnum);
         }
     }
 
@@ -121,7 +124,7 @@ void findNameInClass( const std::wstring& name, IDiaSymbol& pclass )
     }
 }
 
-void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope )
+void findCppNameInScope(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol& pScope )
 {
 	// while ( scope ) {
 	// Scan the scope for a symbol.
@@ -131,9 +134,9 @@ void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope )
 	// scope = scope.parent;
 	// }
 
-	wprintf( L"Finding name \"%ws\" in ", name.c_str() );
+	printf( "Finding name \"%S\" in ", name.c_str() );
 	printScopeName( pScope );
-	wprintf( L"\n" );
+	printf( "\n" );
 
 	DWORD celt;
 	long cnt = 0;
@@ -141,13 +144,13 @@ void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope )
     CComPtr<IDiaSymbol> pParent;
     CComPtr<IDiaSymbol> pscope;
 	for ( pscope = &pScope; pscope != NULL; ) {
-		IDiaEnumSymbols * pEnum;
+		CComPtr<IDiaEnumSymbols> pEnum;
 		// Local data search
 		if ( FAILED( pscope->findChildren( SymTagNull, name.c_str(), nsCaseSensitive, &pEnum ) ) ) {
 			fatal( "Local scope findChildren failed" );
 		}
 		if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a name.
-			printNameFromScope( name, *pscope, *pEnum );
+			printNameFromScope( *pscope, *pEnum );
 		}
 		pEnum = 0;
 		// Look into any namespaces.
@@ -156,7 +159,7 @@ void findCppNameInScope( const std::wstring& name, IDiaSymbol& pScope )
 		}
 		if ( pEnum != NULL && SUCCEEDED( pEnum->get_Count(&cnt) ) && cnt > 0 ) {   // Found a namespace.
 			while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-				findNameInNamespace( name, *pSym );
+				findNameInNamespace( ctx, name, *pSym );
 				pSym = 0;
 			}
 		}

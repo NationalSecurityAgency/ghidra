@@ -17,19 +17,54 @@
 #ifndef __PDB__PDB__H__
 #define __PDB__PDB__H__
 
+#include <string>
 #include <stdio.h>
 #include <assert.h>
+#include <atlcomcli.h>
 #include "dia2.h"
 #include "diacreate.h"
 #include "cvconst.h"
 #include "err.h"
-#include "util.h"
 
-void dispose();
-int init(const char * szFilename, const char * szSignature, const char * szAge);
+class AutoCoInit
+{
+public:
+	AutoCoInit()
+	{
+		hr = ::CoInitialize(NULL);
+	}
 
-extern IDiaSession     * pSession;
-extern IDiaSymbol      * pGlobal;
-extern IDiaDataSource  * pSource;
+	~AutoCoInit()
+	{
+		if (SUCCEEDED(hr))
+		{
+			::CoUninitialize();
+		}
+	}
+
+	HRESULT Result() const { return hr; }
+
+private:
+	HRESULT hr = E_FAIL;
+};
+
+class PDBApiContext
+{
+public:
+	PDBApiContext(const std::wstring& szFilename, const std::wstring& szSignature, const std::wstring& szAge);
+	~PDBApiContext();
+
+	IDiaSession& Session() const { return *pSession; }
+	IDiaSymbol& Global() const { return *pGlobal; }
+private:
+	void dispose();
+	int init(const std::wstring& szFilename, const std::wstring& szSignature, const std::wstring& szAge);
+
+private:
+	AutoCoInit mCoInit;
+	CComPtr<IDiaSession>      pSession;//Provides a query context for debug symbols
+	CComPtr<IDiaSymbol>       pGlobal;
+	CComPtr<IDiaDataSource>   pSource;
+};
 
 #endif
