@@ -41,7 +41,8 @@ void findNameInNamespace(PDBApiContext& ctx, const std::wstring& name, IDiaSymbo
 		fatal("Namespace get_name failed");
 	}
 
-	bstr_t bstrNamespace(temp);
+	bstr_t bstrNamespace;
+	bstrNamespace.Attach(temp);
 
 	const std::wstring strNamespace(bstrNamespace.GetBSTR(), bstrNamespace.length());
 	const std::wstring fullName = strNamespace + L"::" + name;

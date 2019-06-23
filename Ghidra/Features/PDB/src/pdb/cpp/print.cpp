@@ -120,7 +120,8 @@ void printBound( IDiaSymbol& pBound ) {
 		//printVariant( v );
 	} 
 	else if ( pBound.get_name( &nameTemp ) == S_OK ) {
-		bstr_t name(nameTemp);
+		bstr_t name;
+		name.Attach(nameTemp);
 		printf( "%ws", name.GetBSTR() );
 	}
 }

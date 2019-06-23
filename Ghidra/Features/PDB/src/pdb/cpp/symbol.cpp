@@ -176,45 +176,47 @@ const static std::wstring BASIC_TYPE_STRINGS [] = {
 
 std::wstring getName(IDiaSymbol& pSymbol) {
 	BSTR temp = NULL;
-    if (SUCCEEDED(pSymbol.get_name(&temp))) {
-		bstr_t name(temp);
-        const std::wstring wstrName = std::wstring(name.GetBSTR(), name.length());
-        if (wstrName.empty()) {
-            return escapeXmlEntities(L"NONAME");
-        }
+	if (SUCCEEDED(pSymbol.get_name(&temp))) {
+		bstr_t name;
+		name.Attach(temp);
+		const std::wstring wstrName = std::wstring(name.GetBSTR(), name.length());
+		if (wstrName.empty()) {
+			return escapeXmlEntities(L"NONAME");
+		}
 
-        if (wstrName.find(L"unnamed-tag") != std::wstring::npos) {
-            DWORD symIndexId = 0;
-            if (FAILED(pSymbol.get_symIndexId(&symIndexId))) {
-                symIndexId = 0;
-            }
-            const size_t length = 20;	// length of: "<unnamed_NNNN>\0" + 1 extra
-            std::vector<wchar_t> str(20);
-            swprintf_s(str.data(), length, L"<unnamed_%04x>", symIndexId);
-            return escapeXmlEntities(str.data());
-        }
-        
-        DWORD locType = 0;
-        ULONGLONG len = 0;
-        if (SUCCEEDED(pSymbol.get_locationType(&locType)) &&
-            locType == LocIsBitField &&
-            SUCCEEDED(pSymbol.get_length(&len))) {
-            const size_t length = wstrName.length() + 4 + 32;	// length of: name + ":0x\0" + wag_hex_numeric_str_len
-            std::vector<wchar_t> str(length);
-            swprintf_s(str.data(), length, L"%ws:0x%I64x", wstrName.c_str(), len);
-            return escapeXmlEntities(str.data());
-        }
+		if (wstrName.find(L"unnamed-tag") != std::wstring::npos) {
+			DWORD symIndexId = 0;
+			if (FAILED(pSymbol.get_symIndexId(&symIndexId))) {
+				symIndexId = 0;
+			}
+			const size_t length = 20;	// length of: "<unnamed_NNNN>\0" + 1 extra
+			std::vector<wchar_t> str(20);
+			swprintf_s(str.data(), length, L"<unnamed_%04x>", symIndexId);
+			return escapeXmlEntities(str.data());
+		}
 
-        return escapeXmlEntities(wstrName);
-    }
-    return std::wstring();
+		DWORD locType = 0;
+		ULONGLONG len = 0;
+		if (SUCCEEDED(pSymbol.get_locationType(&locType)) &&
+			locType == LocIsBitField &&
+			SUCCEEDED(pSymbol.get_length(&len))) {
+			const size_t length = wstrName.length() + 4 + 32;	// length of: name + ":0x\0" + wag_hex_numeric_str_len
+			std::vector<wchar_t> str(length);
+			swprintf_s(str.data(), length, L"%ws:0x%I64x", wstrName.c_str(), len);
+			return escapeXmlEntities(str.data());
+		}
+
+		return escapeXmlEntities(wstrName);
+	}
+	return std::wstring();
 }
 
 std::wstring getUndecoratedName(IDiaSymbol& pSymbol) {
 	BSTR temp = NULL;
 	if (pSymbol.get_undecoratedName(&temp) == S_OK) {
 		// May also return S_FALSE which is not failure, however in this case there is no name
-		bstr_t name(temp);
+		bstr_t name;
+		name.Attach(temp);
 		return escapeXmlEntities(std::wstring(name.GetBSTR(), name.length()));
 	}
 	return L"";
@@ -237,7 +239,11 @@ DWORD getTag(IDiaSymbol& pSymbol) {
 }
 
 std::wstring getTagAsString(IDiaSymbol& pSymbol) {
-	return SYMBOL_TAG_STRINGS[getTag(pSymbol)];
+	const DWORD tag = getTag(pSymbol);
+	if (tag > _countof(SYMBOL_TAG_STRINGS))	{
+		return L"";
+	}
+	return SYMBOL_TAG_STRINGS[tag];
 }
 DWORD getKind(IDiaSymbol& pSymbol) {
 	DWORD kind = 0;
@@ -252,9 +258,17 @@ DWORD getUdtKind(IDiaSymbol& pSymbol) {
 std::wstring getKindAsString(IDiaSymbol& pSymbol) {
 	const DWORD tag = getTag(pSymbol);
 	if (tag == SymTagUDT) {
-		return UDT_KIND_STRINGS[getUdtKind(pSymbol)];
+		const DWORD kind = getUdtKind(pSymbol);
+		if (kind < _countof(UDT_KIND_STRINGS)) {
+			return UDT_KIND_STRINGS[kind];
+		}
+		return L"";
 	}
-	return DATA_KIND_STRINGS[getKind(pSymbol)];
+	const DWORD dataKind = getKind(pSymbol);
+	if (dataKind < _countof(DATA_KIND_STRINGS)) {
+		return DATA_KIND_STRINGS[dataKind];
+	}
+	return L"";
 }
 
 LONG getOffset(IDiaSymbol& pSymbol) {
@@ -352,7 +366,10 @@ std::wstring getBaseTypeAsString(IDiaSymbol& pSymbol) {
 			}
 			break;
 	}
-	return escapeXmlEntities(BASIC_TYPE_STRINGS[bt]);
+	if (bt < _countof(BASIC_TYPE_STRINGS)) {
+		return escapeXmlEntities(BASIC_TYPE_STRINGS[bt]);
+	}
+	return L"";
 }
 
 bool isScopeSym( DWORD tag )

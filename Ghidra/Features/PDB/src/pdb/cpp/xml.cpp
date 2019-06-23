@@ -23,6 +23,8 @@ std::wstring indent(size_t nSpaces) {
 std::wstring escapeXmlEntities(const std::wstring& str) {
 	
 	std::wstring escaped;
+	escaped.reserve(str.length() * 2);
+
 	for (int i = 0 ; i < str.length(); ++i) {
 		switch (str[i]) {
 			case '&' :
