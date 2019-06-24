@@ -101,20 +101,17 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void contextChanged() {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void decompileDataChanged(DecompileData decompileData) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void exportLocation() {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
@@ -124,20 +121,22 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void goToAddress(Address addr, boolean newWindow) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void goToLabel(String labelName, boolean newWindow) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void goToScalar(long value, boolean newWindow) {
-		// TODO Auto-generated method stub
+		// stub
+	}
 
+	@Override
+	public void goToFunction(Function function, boolean newWindow) {
+		// stub
 	}
 
 	@Override
@@ -150,14 +149,12 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void selectionChanged(ProgramSelection programSelection) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void setStatusMessage(String message) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	public void clearAndShowMessage(String message) {

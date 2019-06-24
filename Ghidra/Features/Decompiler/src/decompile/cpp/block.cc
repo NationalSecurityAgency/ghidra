@@ -369,6 +369,31 @@ bool FlowBlock::dominates(const FlowBlock *subBlock) const
   return false;
 }
 
+/// \brief Check if the condition from the given block holds for \b this block
+///
+/// We assume the given block has 2 out-edges and that \b this block is immediately reached by
+/// one of these two edges. Some condition holds when traversing the out-edge to \b this, and the complement
+/// of the condition holds for traversing the other out-edge. We verify that the condition holds for
+/// this entire block.  More specifically, we check that that there is no path to \b this through the
+/// sibling edge, where the complement of the condition holds (unless we loop back through the conditional block).
+/// \param cond is the conditional block with 2 out-edges
+/// \return \b true if the condition holds for this block
+bool FlowBlock::restrictedByConditional(const FlowBlock *cond) const
+
+{
+  if (sizeIn() == 1) return true;	// Its impossible for any path to come through sibling to this
+  if (getImmedDom() != cond) return false;	// This is not dominated by conditional block at all
+  for(int4 i=0;i<sizeIn();++i) {
+    const FlowBlock *inBlock = getIn(i);
+    if (inBlock == cond) continue;	// The unique edge from cond to this
+    while(inBlock != this) {
+      if (inBlock == cond) return false;	// Must have come through sibling
+      inBlock = inBlock->getImmedDom();
+    }
+  }
+  return true;
+}
+
 /// \return \b true if \b this is the top of a loop
 bool FlowBlock::hasLoopIn(void) const
 

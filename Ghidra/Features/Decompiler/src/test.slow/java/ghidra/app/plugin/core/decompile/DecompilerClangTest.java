@@ -15,18 +15,16 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
-import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
-import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.CodeUnit;
@@ -196,14 +194,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		return field;
 	}
 
-	private void assertToken(String tokenText, int line, int... cols) {
-		for (int col : cols) {
-			FieldLocation loc = loc(line, col);
-			String text = getTokenText(loc);
-			assertEquals(tokenText, text);
-		}
-	}
-
 	private void assertDisplayText(String expected, int line) {
 		FieldLocation loc = loc(line, 0 /*column*/);
 		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
@@ -219,12 +209,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals("Decompiler cursor is not at the expected location", expected, actual);
 	}
 
-	private String getTokenText(FieldLocation loc) {
-		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
-		ClangToken token = field.getToken(loc);
-		return token.getText();
-	}
-
 	private int getTokenIndex(ClangTextField field, FieldLocation loc) {
 		Integer index = (Integer) invokeInstanceMethod("getTokenIndex", field,
 			new Class[] { FieldLocation.class }, new Object[] { loc });
@@ -237,16 +221,4 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		return index;
 	}
 
-	private FieldLocation loc(int lineNumber, int col) {
-		FieldLocation loc = new FieldLocation(lineNumber, 0, 0, col);
-		return loc;
-	}
-
-	private ClangTextField getFieldForLine(int lineNumber) {
-
-		DecompilerPanel panel = provider.getDecompilerPanel();
-		List<Field> fields = panel.getFields();
-		Field line = fields.get(lineNumber - 1); // 0-based
-		return (ClangTextField) line;
-	}
 }
