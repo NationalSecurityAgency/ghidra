@@ -510,4 +510,62 @@
 			<keywordReference id="ghidra.xtext.sleigh.ui.keyword_Sleigh"/>
 		</page>
 	</extension>
+	<!-- Console Extensions -->
+   <extension
+         point="org.eclipse.debug.ui.consoleLineTrackers">
+      <consoleLineTracker
+            class="ghidra.xtext.sleigh.ui.console.ConsoleLineTracker"
+            processType="org.eclipse.ant.ui.antProcess"
+            id="ghidra.xtext.sleigh.taskLineTracker">
+      </consoleLineTracker>
+   </extension>
+
+      <extension
+         point="org.eclipse.ui.console.consolePatternMatchListeners">
+      <consolePatternMatchListener
+            class="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking"
+            id="ghidra.xtext.sleigh.ui.consoleHyperlinking.Compiling"
+            qualifier="javac"
+            regex="Compiling .*.slaspec(:\d+)">
+         <enablement>
+            <test property="org.eclipse.debug.ui.processTypeTest" value="org.eclipse.ant.ui.antProcess"/>
+         </enablement>
+      </consolePatternMatchListener>
+	  <consolePatternMatchListener
+         class="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking"
+         id="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking.All"
+         regex="\[java\] .*\.slaspec failed to compile">
+	        <enablement>
+	            <or>
+				  <test property="org.eclipse.ui.console.consoleTypeTest" value="javaStackTraceConsole"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="java"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="org.eclipse.ant.ui.antProcess"/>
+	            </or>
+	         </enablement>
+      </consolePatternMatchListener>
+	  <consolePatternMatchListener
+         class="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking"
+         id="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking.All"
+         regex="Compiling .*\.slaspec">
+	        <enablement>
+	            <or>
+				  <test property="org.eclipse.ui.console.consoleTypeTest" value="javaStackTraceConsole"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="java"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="org.eclipse.ant.ui.antProcess"/>
+	            </or>
+	         </enablement>
+      </consolePatternMatchListener>
+      <consolePatternMatchListener
+            class="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking"
+            id="ghidra.xtext.sleigh.ui.console.ConsoleHyperlinking.All"
+            regex="\w+\.slaspec(:\d+)|\w+\.sinc(:\d+)">
+	        <enablement>
+	            <or>
+				  <test property="org.eclipse.ui.console.consoleTypeTest" value="javaStackTraceConsole"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="java"/>
+	               <test property="org.eclipse.debug.ui.processTypeTest" value="org.eclipse.ant.ui.antProcess"/>
+	            </or>
+	         </enablement>
+      </consolePatternMatchListener>
+   </extension>
 </plugin>

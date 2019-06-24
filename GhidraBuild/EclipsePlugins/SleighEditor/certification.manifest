@@ -27,6 +27,7 @@ ghidra.xtext.sleigh.ui/plugin.xml||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/SleighEObjectHoverProvider.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/SleighTextEditComposer.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/SleighUiModule.xtend||GHIDRA||||END|
+ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/console/ConsoleHyperlinking.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/contentassist/SleighProposalProvider.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/labeling/SleighDescriptionLabelProvider.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/labeling/SleighLabelProvider.xtend||GHIDRA||||END|
