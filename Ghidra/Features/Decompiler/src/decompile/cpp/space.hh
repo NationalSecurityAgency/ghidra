@@ -130,7 +130,6 @@ public:
   bool isOverlay(void) const;  ///< Return \b true if this is an overlay space
   bool isOverlayBase(void) const; ///< Return \b true if other spaces overlay this space
   bool isTruncated(void) const; ///< Return \b true if this space is truncated from its original size
-  uintm data2Uintm(const uint1 *ptr,int4 size) const;  ///< Convert a sequence of bytes into an integer value
   void printOffset(ostream &s,uintb offset) const;  ///< Write an address offset to a stream
 
   virtual int4 numSpacebase(void) const;	///< Number of base registers associated with this space

@@ -519,9 +519,9 @@ bool Funcdata::fillinReadOnly(Varnode *vn)
   if (vn->isWritten()) {	// Can't replace output with constant
     PcodeOp *defop = vn->getDef();
     if (defop->isMarker())
-      defop->setFlag(PcodeOp::warning);	// Not a true write, ignore it
+      defop->setAdditionalFlag(PcodeOp::warning);	// Not a true write, ignore it
     else if (!defop->isWarning()) { // No warning generated before
-      defop->setFlag(PcodeOp::warning);
+      defop->setAdditionalFlag(PcodeOp::warning);
       ostringstream s;
       if ((!vn->isAddrForce())||(!vn->hasNoDescend())) {
 	s << "Read-only address (";

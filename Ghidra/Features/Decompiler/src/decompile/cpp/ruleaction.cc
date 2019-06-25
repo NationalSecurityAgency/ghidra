@@ -3263,7 +3263,7 @@ int4 RuleCollapseConstants::applyOp(PcodeOp *op,Funcdata &data)
     newval = data.getArch()->getConstant(op->collapse(markedInput));
   }
   catch(LowlevelError &err) {
-    data.opSetFlag(op,PcodeOp::nocollapse); // Dont know how or dont want to collapse further
+    data.opMarkNoCollapse(op); // Dont know how or dont want to collapse further
     return 0;
   }
 
@@ -3294,14 +3294,14 @@ int4 RuleTransformCpool::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   if (op->isCpoolTransformed()) return 0;		// Already visited
-  data.opSetFlag(op,PcodeOp::is_cpool_transformed);	// Mark our visit
+  data.opMarkCpoolTransformed(op);	// Mark our visit
   vector<uintb> refs;
   for(int4 i=1;i<op->numInput();++i)
     refs.push_back(op->getIn(i)->getOffset());
   const CPoolRecord *rec = data.getArch()->cpool->getRecord(refs);	// Recover the record
   if (rec != (const CPoolRecord *)0) {
     if (rec->getTag() == CPoolRecord::instance_of) {
-      data.opSetFlag(op,PcodeOp::calculated_bool);
+      data.opMarkCalculatedBool(op);
     }
     else if (rec->getTag() == CPoolRecord::primitive) {
       int4 sz = op->getOut()->getSize();
@@ -4883,7 +4883,7 @@ int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(newop,vn,0);
   data.opSetInput(op,outvn,1);
   data.opInsertBefore(newop,op);
-  data.opFlipFlag(op,PcodeOp::boolean_flip); // Flip meaning of condition
+  data.opFlipCondition(op);	// Flip meaning of condition
 				// NOTE fallthru block is still same status
   return 1;
 }

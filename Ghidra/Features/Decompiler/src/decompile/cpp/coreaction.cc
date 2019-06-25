@@ -2494,8 +2494,8 @@ void ActionMarkExplicit::checkNewToConstructor(Funcdata &data,Varnode *vn)
   if (firstuse->numInput() < 2) return;		// Must have at least 1 parameter (plus destination varnode)
   if (firstuse->getIn(1) != vn) return;		// First parameter must result of new
 //  if (!fc->isConstructor()) return;		// Function must be a constructor
-  data.opSetFlag(firstuse,PcodeOp::special_print);	// Mark call to print the new operator as well
-  data.opSetFlag(op,PcodeOp::nonprinting);	// Don't print the new operator as stand-alone operation
+  data.opMarkSpecialPrint(firstuse);		// Mark call to print the new operator as well
+  data.opMarkNonPrinting(op);			// Don't print the new operator as stand-alone operation
 }
 
 int4 ActionMarkExplicit::apply(Funcdata &data)

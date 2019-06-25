@@ -532,7 +532,7 @@ PcodeOp *Funcdata::cloneOp(const PcodeOp *op,const SeqNum &seq)
   PcodeOp *newop = newOp(op->numInput(),seq);
   opSetOpcode(newop,op->code());
   uint4 flags = op->flags & (PcodeOp::startmark | PcodeOp::startbasic);
-  opSetFlag(newop,flags);
+  newop->setFlag(flags);
   if (op->getOut() != (Varnode *)0)
     opSetOutput(newop,cloneVarnode(op->getOut()));
   for(int4 i=0;i<op->numInput();++i)

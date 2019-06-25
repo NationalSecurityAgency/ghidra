@@ -126,35 +126,6 @@ bool AddrSpace::contain(AddrSpace *id2) const
   return true;
 }
 
-/// Convert an array of bytes, which we assume are contained in
-/// the space, into an integer value. The conversion depends
-/// on the endian property of the space
-/// \param ptr is the array of bytes
-/// \param size is the size of the array to convert
-/// \return the converted integer value
-uintm AddrSpace::data2Uintm(const uint1 *ptr,int4 size) const
-
-{
-  uintm res;
-  int4 i;
-
-  if ((flags&big_endian)!=0) {
-    res = 0;
-    for(i=0;i<size;++i) {
-      res <<= 8;
-      res |= ptr[i];
-    }
-  }
-  else {
-    res = 0;
-    for(i=size-1;i>=0;--i) {
-      res <<= 8;
-      res |= ptr[i];
-    }
-  }
-  return res;
-}
-
 /// Write the main XML attributes for an address within this space
 /// The caller provides only the \e offset, and this routine fills
 /// in other details pertaining to this particular space.
