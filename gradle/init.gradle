@@ -49,8 +49,7 @@ import org.apache.commons.io.filefilter.*;
 ext.HOME_DIR = System.getProperty('user.home')
 ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile()
 ext.FLAT_REPO_DIR = new File(HOME_DIR, "flatRepo")
-File TMP_DIR = new File(System.getProperty('java.io.tmpdir'))
-ext.DOWNLOADS_DIR = new File(TMP_DIR, "ghidra")
+ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
 
 ext.FILE_SIZE = 0;
 
@@ -162,9 +161,14 @@ def download(url, filename) {
      totalRead += bytesRead
 	      
      // print progress on the same line in the console...
-     int pctComplete = (totalRead / FILE_SIZE) * 100
      print("\r")
-     print("   Downloading: " + totalRead + " of " + FILE_SIZE + " (" + pctComplete + "%)")
+     if (FILE_SIZE.equals("unknown")) {
+        print("   Downloading: " + totalRead + " of " + FILE_SIZE)
+     }
+     else {
+        int pctComplete = (totalRead / FILE_SIZE) * 100
+        print("   Downloading: " + totalRead + " of " + FILE_SIZE + " (" + pctComplete + "%)")
+     }
      System.out.flush()
    }
    println("")
@@ -186,6 +190,11 @@ def establishConnection(url, retries) {
          println("   Connect attempt " + (i+1) + " of " + retries)
          URLConnection conn = new URL(url).openConnection();
          FILE_SIZE = conn.getContentLength();
+         if (FILE_SIZE == -1) {
+            // This can happen if there is a problem retrieving the size; we've seen it happen
+            // in testing. 
+            FILE_SIZE = "unknown" 
+         }
          return new BufferedInputStream(new URL(url).openStream()); 
       }
       catch (Exception e) {
@@ -219,30 +228,57 @@ def unzip(sourceDir, targetDir, zipFileName) {
 }
 
 /**
- * Downloads and stores the necessary dependencies in the local
- * flat repository.
+ * Downloads and stores the necessary dependencies in the local flat repository.
+ *
+ * If the dependency already exists in the downloads folder (DOWNLOADS_DIR) and has the
+ * proper checksum, it will NOT be re-downloaded.
  */
 def populateFlatRepo() {
 
-   // 1. Download all the dependencies.
-   download (DEX_ZIP, DOWNLOADS_DIR.path + '/dex-tools-2.0.zip')
-   validateChecksum(DOWNLOADS_DIR.path + '/dex-tools-2.0.zip', DEX_MD5);
+   // 1. Download all the dependencies and verify their checksums. If the dependency has already
+   //    been download, do NOT download again.
+   File file = new File(DOWNLOADS_DIR.path, '/dex-tools-2.0.zip')
+   def checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(DEX_MD5)))) {
+      download (DEX_ZIP, file.path)
+      validateChecksum(checksum, DEX_MD5);
+   }
+  
+   file = new File(FLAT_REPO_DIR.path + '/AXMLPrinter2.jar')
+   checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(AXML_MD5)))) {
+      download (AXML_ZIP, file.path)
+      validateChecksum(checksum, AXML_MD5);
+   }
    
-   download (AXML_ZIP, FLAT_REPO_DIR.path + '/AXMLPrinter2.jar')
-   validateChecksum(FLAT_REPO_DIR.path + '/AXMLPrinter2.jar', AXML_MD5);
+   file = new File(DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip')
+   checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(HFS_MD5)))) {
+      download (HFS_ZIP, file.path)
+      validateChecksum(checksum, HFS_MD5);
+   }
    
-   download (HFS_ZIP, DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip')
-   validateChecksum(DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip', HFS_MD5);
+   file = new File(DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip')
+   checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(YAJSW_MD5)))) {
+      download (YAJSW_ZIP, file.path)
+      validateChecksum(checksum, YAJSW_MD5);
+   }
    
-   download (YAJSW_ZIP, DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip')
-   validateChecksum(DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip', YAJSW_MD5);
+   file = new File(DOWNLOADS_DIR.path + "/PyDev 6.3.1.zip")
+   checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(PYDEV_MD5)))) {
+      download (PYDEV_ZIP, file.path)
+      validateChecksum(checksum, PYDEV_MD5);
+   }
    
-   download (PYDEV_ZIP, DOWNLOADS_DIR.path + '/PyDev 6.3.1.zip')
-   validateChecksum(DOWNLOADS_DIR.path + '/PyDev 6.3.1.zip', PYDEV_MD5);
+   file = new File(DOWNLOADS_DIR.path + '/cdt-8.6.0.zip')
+   checksum = generateChecksum(file)
+   if (!(file.exists() && (checksum.equals(CDT_MD5)))) {
+      download (CDT_ZIP, file.path)
+      validateChecksum(checksum, CDT_MD5);
+   }
    
-   download (CDT_ZIP, DOWNLOADS_DIR.path + '/cdt-8.6.0.zip') 
-   validateChecksum(DOWNLOADS_DIR.path + '/cdt-8.6.0.zip', CDT_ZIP);
-
    // 2. Unzip the dependencies
    unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
    unzipHfsx()
@@ -257,22 +293,34 @@ def populateFlatRepo() {
 }
 
 /**
- * Generates the md5 for the given file and compares it against the
- * expected result. If there is no match an assert exception will be
- * generated.
+ * Generates the md5 for the given file
  *
- * @param filename the fully-qualified file path+name
- * @param expectedMd5 the expected md5 for the file
+ * @param file the file to generate the checksum for
+ * @return the generated checksum
  */
-def validateChecksum(filename, expectedMd5) {
-    MessageDigest md = MessageDigest.getInstance("MD5");
-    md.update(Files.readAllBytes(Paths.get(filename)));
-    byte[] digest = md.digest();
-    StringBuilder sb = new StringBuilder();
-    for (byte b : digest) {
-       sb.append(String.format("%02x", b));
-    }
-    assert(sb.toString().equals(expectedMd5));
+def generateChecksum(file) {
+   if (!file.exists()) {
+      return
+   }
+   MessageDigest md = MessageDigest.getInstance("MD5");
+   md.update(Files.readAllBytes(Paths.get(file.path)));
+   byte[] digest = md.digest();
+   StringBuilder sb = new StringBuilder();
+   for (byte b : digest) {
+      sb.append(String.format("%02x", b));
+   }
+   
+   return sb.toString();
+}
+
+/**
+ * Compares two checksums and generates an assert failure if they do not match
+ *
+ * @param sourceMd5 the checksum to validate
+ * @param expectedMd5 the expected checksum
+ */
+def validateChecksum(sourceMd5, expectedMd5) {
+   	assert(sourceMd5.equals(expectedMd5));    
 }
 
 /**
@@ -342,7 +390,10 @@ def getOrCreateTempHfsxDir() {
  * been populated.
  */
 def cleanup() {
-   if (DOWNLOADS_DIR.exists()) {
-      FileUtils.deleteDirectory(DOWNLOADS_DIR)
-   }
+   // Uncomment this if we want to delete the downloads folder. For now, leave this and 
+   // depend on a gradle clean to wipe it out.
+   //
+   //if (DOWNLOADS_DIR.exists()) {
+   //   FileUtils.deleteDirectory(DOWNLOADS_DIR)
+   //}
 }
