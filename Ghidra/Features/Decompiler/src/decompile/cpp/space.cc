@@ -112,20 +112,6 @@ void AddrSpace::truncateSpace(uint4 newsize)
   calcScaleMask();
 }
 
-/// Check if this space contains \b id2.
-/// \param id2 is the space to check
-/// \return \b true if \b id2 is contained
-bool AddrSpace::contain(AddrSpace *id2) const
-
-{
-  while(this != id2) {
-    id2 = id2->getContain();
-    if (id2 == (AddrSpace *)0)
-      return false;		// No containment
-  }
-  return true;
-}
-
 /// Write the main XML attributes for an address within this space
 /// The caller provides only the \e offset, and this routine fills
 /// in other details pertaining to this particular space.

@@ -653,6 +653,18 @@ void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
     maximumOffset = spc->getHighest();
 }
 
+/// Check if the address falls within the range defined by \b this
+/// \param addr is the given address
+/// \return \b true if the address is contained
+bool LoadGuard::isGuarded(const Address &addr) const
+
+{
+  if (addr.getSpace() != spc) return false;
+  if (addr.getOffset() < minimumOffset) return false;
+  if (addr.getOffset() > maximumOffset) return false;
+  return true;
+}
+
 void Heritage::analyzeNewLoadGuards(void)
 
 {
@@ -747,6 +759,7 @@ void Heritage::generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 {
   storeGuard.push_back(LoadGuard());
   storeGuard.back().set(op,spc,node.offset);
+  fd->opMarkSpacebaseStore(op);
 }
 
 /// \brief Trace input stackpointer to any indexed loads
@@ -1012,12 +1025,16 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
 {
   list<PcodeOp *>::const_iterator iter,iterend;
   PcodeOp *op,*indop;
+  AddrSpace *spc = addr.getSpace();
+  AddrSpace *container = spc->getContain();
 
   iterend = fd->endOp(CPUI_STORE);
   for(iter=fd->beginOp(CPUI_STORE);iter!=iterend;++iter) {
     op = *iter;
     if (op->isDead()) continue;
-    if (addr.getSpace()->contain(Address::getSpaceFromConst(op->getIn(0)->getAddr()))) { // Does store affect same space
+    AddrSpace *storeSpace = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    if ((container == storeSpace && op->usesSpacebasePtr()) ||
+	(spc == storeSpace)) {
       indop = fd->newIndirectOp(op,addr,size);
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
@@ -2147,6 +2164,19 @@ void Heritage::heritage(void)
   if (pass == 0)
     splitmanage.splitAdditional();
   pass += 1;
+}
+
+/// \param op is the given PcodeOp
+/// \return the associated LoadGuard or NULL
+const LoadGuard *Heritage::getStoreGuard(PcodeOp *op) const
+
+{
+  list<LoadGuard>::const_iterator iter;
+  for(iter=storeGuard.begin();iter!=storeGuard.end();++iter) {
+    if ((*iter).op == op)
+      return &(*iter);
+  }
+  return (const LoadGuard *)0;
 }
 
 /// \brief Get the number times heritage was performed for the given address space

@@ -121,7 +121,6 @@ public:
   uintb getHighest(void) const;  ///< Get the highest byte-scaled address
   uintb wrapOffset(uintb off) const; ///< Wrap -off- to the offset that fits into this space
   char getShortcut(void) const; ///< Get the shortcut character
-  bool contain(AddrSpace *id2) const; ///< Determine if this space contains another
   bool isHeritaged(void) const;	///< Return \b true if dataflow has been traced
   bool doesDeadcode(void) const; ///< Return \b true if dead code analysis should be done on this space
   bool hasPhysical(void) const;  ///< Return \b true if data is physically stored in this

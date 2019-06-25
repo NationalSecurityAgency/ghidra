@@ -234,6 +234,7 @@ public:
 
   const list<LoadGuard> &getLoadGuards(void) const { return heritage.getLoadGuards(); }		///< Get the list of guarded LOADs
   const list<LoadGuard> &getStoreGuards(void) const { return heritage.getStoreGuards(); }	///< Get the list of guarded STOREs
+  const LoadGuard *getStoreGuard(PcodeOp *op) const { return heritage.getStoreGuard(op); }	///< Get LoadGuard associated with STORE op
 
   // Function prototype and call specification routines
   int4 numCalls(void) const { return qlst.size(); }	///< Get the number of calls made by \b this function
@@ -420,6 +421,7 @@ public:
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
   void opMarkCpoolTransformed(PcodeOp *op) { op->setFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
   void opMarkCalculatedBool(PcodeOp *op) { op->setFlag(PcodeOp::calculated_bool); }	///< Mark PcodeOp as having boolean output
+  void opMarkSpacebaseStore(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as STOREing from spacebase ptr
   void opFlipCondition(PcodeOp *op) { op->flipFlag(PcodeOp::boolean_flip); }	///< Flip output condition of given CBRANCH
   PcodeOp *target(const Address &addr) const { return obank.target(addr); }	///< Look up a PcodeOp by an instruction Address
   Varnode *createStackRef(AddrSpace *spc,uintb off,PcodeOp *op,Varnode *stackptr,bool insertafter);

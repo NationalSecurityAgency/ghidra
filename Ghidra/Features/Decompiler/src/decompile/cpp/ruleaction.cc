@@ -2805,6 +2805,13 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
       if (!op->getOut()->hasNoLocalAlias())
 	return 0;
     }
+    else if (indop->usesSpacebasePtr()) {
+      const LoadGuard *guard = data.getStoreGuard(indop);
+      if (guard != (const LoadGuard *)0) {
+	if (guard->isGuarded(op->getOut()->getAddr()))
+	  return 0;
+      }
+    }
     else
       return 0;	
   }

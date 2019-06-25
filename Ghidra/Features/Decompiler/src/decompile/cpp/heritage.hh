@@ -125,6 +125,7 @@ public:
   uintb getMinimum(void) const { return minimumOffset; }	///< Get minimum offset of the guarded range
   uintb getMaximum(void) const { return maximumOffset; }	///< Get maximum offset of the guarded range
   int4 getStep(void) const { return step; }		///< Get the calculated step associated with the range (or 0)
+  bool isGuarded(const Address &addr) const;		///< Does \b this guard apply to the given address
   bool isRangeLocked(void) const { return (analysisState == 2); }	///< Return \b true if the range is fully determined
   bool isValid(OpCode opc) const { return (!op->isDead() && op->code() == opc); }	///< Return \b true if the record still describes an active LOAD
 };
@@ -273,6 +274,7 @@ public:
   void heritage(void);				    ///< Perform one pass of heritage
   const list<LoadGuard> &getLoadGuards(void) const { return loadGuard; }	///< Get list of LOAD ops that are guarded
   const list<LoadGuard> &getStoreGuards(void) const { return storeGuard; }	///< Get list of STORE ops that are guarded
+  const LoadGuard *getStoreGuard(PcodeOp *op) const;	///< Get LoadGuard record associated with given PcodeOp
 };
 
 #endif
