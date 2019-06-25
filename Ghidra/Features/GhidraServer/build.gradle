@@ -25,7 +25,7 @@ addExports([
 ])
 
 CopySpec yajswCopySpec = copySpec {
-	File localFile = file("build/data/${yajswRelease}.zip")
+	File localFile = file("build/${yajswRelease}.zip")
 	File binFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
 
 	// First check if the file was downloaded and dropped in locally.  If not, check in the bin

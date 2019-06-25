@@ -68,7 +68,7 @@ ext.AXML_MD5 = '55d70be9862c2b456cc91a933c197934'
 ext.HFS_MD5 = 'cc1713d634d2cd1fd7f21e18ae4d5d5c'
 ext.YAJSW_MD5 = 'e490ea92554f0238d74d4ef6161cb2c7'
 ext.PYDEV_MD5 = '06263bdef4917c49d8d977d12c2d5073'
-ext.CDT_MD5 = 'd41d8cd98f00b204e9800998ecf8427e'
+ext.CDT_MD5 = '8e9438a6e3947d614af98e1b58e945a2'
 
 // Number of times to try and establish a connection when downloading files before
 // failing
@@ -123,11 +123,11 @@ def createConfigFile() {
 
    repoConfigFile.write("ext.HOME = System.getProperty('user.home')")
    repoConfigFile.append("\nallprojects {")
-   repoConfigFile.append("\nrepositories {")
-   repoConfigFile.append("\nmavenCentral()")
-   repoConfigFile.append("\njcenter()")
-   repoConfigFile.append('\nflatDir name: "flat", dirs:["$HOME/flatRepo"]')
-   repoConfigFile.append("\n}")
+   repoConfigFile.append("\n\trepositories {")
+   repoConfigFile.append("\n\t\tmavenCentral()")
+   repoConfigFile.append("\n\t\tjcenter()")
+   repoConfigFile.append('\n\t\tflatDir name: "flat", dirs:["$HOME/flatRepo"]')
+   repoConfigFile.append("\n\t}")
    repoConfigFile.append("\n}")
 }
 
@@ -237,46 +237,40 @@ def populateFlatRepo() {
 
    // 1. Download all the dependencies and verify their checksums. If the dependency has already
    //    been download, do NOT download again.
-   File file = new File(DOWNLOADS_DIR.path, '/dex-tools-2.0.zip')
-   def checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(DEX_MD5)))) {
+   File file = new File(DOWNLOADS_DIR, 'dex-tools-2.0.zip')
+   if (!DEX_MD5.equals(generateChecksum(file))) {
       download (DEX_ZIP, file.path)
-      validateChecksum(checksum, DEX_MD5);
+      validateChecksum(generateChecksum(file), DEX_MD5);
    }
   
-   file = new File(FLAT_REPO_DIR.path + '/AXMLPrinter2.jar')
-   checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(AXML_MD5)))) {
+   file = new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar')
+   if (!AXML_MD5.equals(generateChecksum(file))) {
       download (AXML_ZIP, file.path)
-      validateChecksum(checksum, AXML_MD5);
+      validateChecksum(generateChecksum(file), AXML_MD5);
    }
    
-   file = new File(DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip')
-   checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(HFS_MD5)))) {
+   file = new File(DOWNLOADS_DIR, 'hfsexplorer-0_21-bin.zip')
+   if (!HFS_MD5.equals(generateChecksum(file))) {
       download (HFS_ZIP, file.path)
-      validateChecksum(checksum, HFS_MD5);
+      validateChecksum(generateChecksum(file), HFS_MD5);
    }
    
-   file = new File(DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip')
-   checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(YAJSW_MD5)))) {
+   file = new File(DOWNLOADS_DIR, 'yajsw-stable-12.12.zip')
+   if (!YAJSW_MD5.equals(generateChecksum(file))) {
       download (YAJSW_ZIP, file.path)
-      validateChecksum(checksum, YAJSW_MD5);
+      validateChecksum(generateChecksum(file), YAJSW_MD5);
    }
    
-   file = new File(DOWNLOADS_DIR.path + "/PyDev 6.3.1.zip")
-   checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(PYDEV_MD5)))) {
+   file = new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip')
+   if (!PYDEV_MD5.equals(generateChecksum(file))) {
       download (PYDEV_ZIP, file.path)
-      validateChecksum(checksum, PYDEV_MD5);
+      validateChecksum(generateChecksum(file), PYDEV_MD5);
    }
    
-   file = new File(DOWNLOADS_DIR.path + '/cdt-8.6.0.zip')
-   checksum = generateChecksum(file)
-   if (!(file.exists() && (checksum.equals(CDT_MD5)))) {
+   file = new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip')
+   if (!CDT_MD5.equals(generateChecksum(file))) {
       download (CDT_ZIP, file.path)
-      validateChecksum(checksum, CDT_MD5);
+      validateChecksum(generateChecksum(file), CDT_MD5);
    }
    
    // 2. Unzip the dependencies
@@ -286,6 +280,7 @@ def populateFlatRepo() {
    // 3. Copy the necessary jars to the flatRepo directory. Yajsw, CDT, and PyDev go directly into
    //    the source repository.
    copyDexTools()
+   copyAXML()
    copyHfsx()
    copyYajsw()
    copyPyDev()
@@ -300,7 +295,7 @@ def populateFlatRepo() {
  */
 def generateChecksum(file) {
    if (!file.exists()) {
-      return
+      return null
    }
    MessageDigest md = MessageDigest.getInstance("MD5");
    md.update(Files.readAllBytes(Paths.get(file.path)));
@@ -341,6 +336,13 @@ def copyDexTools() {
 }
 
 /**
+ * Copies the AXMLPrinter2 jar to the flat repository
+ */
+def copyAXML() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar'), new File(FLAT_REPO_DIR, "AXMLPrinter2.jar"));
+}
+
+/**
  * Copies the necessary hfsx jars to the flat repository
  */
 def copyHfsx() {
@@ -354,21 +356,21 @@ def copyHfsx() {
  * Copies the yajswdir zip to its location in the GhidraServer project.
  */
 def copyYajsw() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "yajsw-stable-12.12.zip"), new File(REPO_DIR, "Ghidra/Features/GhidraServer/build/data/yajsw-stable-12.12.zip"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "yajsw-stable-12.12.zip"), new File(REPO_DIR, "Ghidra/Features/GhidraServer/build/yajsw-stable-12.12.zip"));
 }
 
 /**
  * Copies the pydev zip to its bin repository location
  */
 def copyPyDev() {
-	FileUtils.copyFile(new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/data/buildDependencies/PyDev 6.3.1.zip"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/PyDev 6.3.1.zip"));
 }
 
 /**
  * Copies the cdt zip to its bin repository location
  */
 def copyCdt() {
-	FileUtils.copyFile(new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/data/buildDependencies/cdt-8.6.0.zip"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/cdt-8.6.0.zip"));
 }
 
 /**

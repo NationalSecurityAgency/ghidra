@@ -42,22 +42,14 @@ dependencies {
 compileJava.enabled = false
 jar.enabled = false
 
-File libraryJarDestDir = file("build/data")
-
-File pyDevSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
-File cdtSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
-
-File pyDevDestDir = file("build/data/buildDependencies/pydev")
-File cdtDestDir = file("build/data/buildDependencies/cdt")
-
 task utilityJar(type:Copy) {
-	destinationDir libraryJarDestDir
+	destinationDir file("build/data")
 
 	from { project(':Utility').jar } // using closure to delay until all projects evaluated
 }
 
 task launchSupportJar(type:Copy) {
-	destinationDir libraryJarDestDir
+	destinationDir file("build/data")
 
 	from { project(':LaunchSupport').jar } // using closure to delay until all projects evaluated
 }
@@ -65,13 +57,22 @@ task launchSupportJar(type:Copy) {
 task pyDevUnpack(type:Copy) {
 	description "Unpack PyDev plugin archive for development use"
 	group "Development Preparation"
+	
+	File pyDevDestDir = file("build/data/buildDependencies/pydev")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!pyDevDestDir.exists()
 	}
+	
+	File localFile = file("build/PyDev 6.3.1.zip")
+	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
 
-	from zipTree(pyDevSourceZipFile)
+	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
+	// repo.
+	def pyDevZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+
+	from pyDevZipTree
 	exclude "**/.project", "**/.pydevproject"
 
 	destinationDir pyDevDestDir
@@ -80,13 +81,22 @@ task pyDevUnpack(type:Copy) {
 task cdtUnpack(type:Copy) {
 	description "Unpack CDT plugin archive for development use"
 	group "Development Preparation"
+	
+	File cdtDestDir = file("build/data/buildDependencies/cdt")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!cdtDestDir.exists()
 	}
+	
+	File localFile = file("build/cdt-8.6.0.zip")
+	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
 
-	from zipTree(cdtSourceZipFile)
+	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
+	// repo.
+	def cdtZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+
+	from cdtZipTree
 
 	destinationDir cdtDestDir
 }

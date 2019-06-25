@@ -173,30 +173,29 @@ cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/flatRepo/
 #### Get Dependencies for GhidraServer
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
-Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in a directory named:
-`ghidra.bin/Ghidra/Features/GhidraServer/`. Note that `ghidra.bin` must be a sibling of `ghidra`:
+Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in:
+`~/ghidra/Ghidra/Features/GhidraServer/build`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
-mkdir -p ~/git/ghidra/Ghidra/Features/GhidraServer/build/data/
-cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/Ghidra/Features/GhidraServer/build/data/
+mkdir -p ~/git/ghidra/Ghidra/Features/GhidraServer/build/
+cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/Ghidra/Features/GhidraServer/build/
 ```
 
 #### Get Dependencies for GhidraDev
 
 Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
-Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in a directory named:
-`ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/`. Note that
-`ghidra.bin` must be a sibling of `ghidra`.
+Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
+`~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'http://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
-sha512sum -c 'cdt-8.6.0.zip.sha512'
-mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
-cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
+shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
+mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
+cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 ```
 
 Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
@@ -204,7 +203,7 @@ Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same director
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/
+cp ~/Downloads/'PyDev 6.3.1.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 ```
 
 ## Building Ghidra
