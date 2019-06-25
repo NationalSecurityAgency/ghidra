@@ -179,8 +179,8 @@ Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
-mkdir -p ~/git/ghidra.bin/Ghidra/Features/GhidraServer/
-cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra.bin/Ghidra/Features/GhidraServer/
+mkdir -p ~/git/ghidra/Ghidra/Features/GhidraServer/build/data/
+cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/Ghidra/Features/GhidraServer/build/data/
 ```
 
 #### Get Dependencies for GhidraDev

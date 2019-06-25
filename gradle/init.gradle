@@ -9,13 +9,13 @@
  *                                                                             *
  * Specifically, this task:                                                    *
  *                                                                             *
- *   1. Downloads various jars required by the ghidra build and                *
- *      puts them in <USER_HOME>/flatRepo. The jars to be                      *
+ *   1. Downloads various dependencies required by the ghidra build and        *
+ *      puts them in <USER_HOME>/flatRepo. The files to be                     *
  *      downloaded:                                                            *
  *          - dex-tools-2.0.zip                                                *
  *          - AXMLPrinter2.jar                                                 *
  *          - hfsexplorer-0_21-bin.zip                                         *
- *          - yajsw-stable-12.12.zip (placed in GhidraServer location)         *
+ *          - yajsw-stable-12.12.zip                                           *
  *          - cdt-8.6.0.zip                                                    *
  *          - PyDev 6.3.1.zip                                                  *
  *                                                                             *
@@ -47,6 +47,7 @@ import org.apache.commons.io.*;
 import org.apache.commons.io.filefilter.*;
 
 ext.HOME_DIR = System.getProperty('user.home')
+ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile()
 ext.FLAT_REPO_DIR = new File(HOME_DIR, "flatRepo")
 File TMP_DIR = new File(System.getProperty('java.io.tmpdir'))
 ext.DOWNLOADS_DIR = new File(TMP_DIR, "ghidra")
@@ -245,10 +246,9 @@ def populateFlatRepo() {
    // 2. Unzip the dependencies
    unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
    unzipHfsx()
-   unzipYajsw()
 
-   // 3. Copy the necessary jars to the flatRepo directory. Yajsw is the
-   //    exception; it needs to go in a GhidraServer folder.
+   // 3. Copy the necessary jars to the flatRepo directory. Yajsw, CDT, and PyDev go directly into
+   //    the source repository.
    copyDexTools()
    copyHfsx()
    copyYajsw()
@@ -284,14 +284,6 @@ def unzipHfsx() {
 }
 
 /**
- * Unzips the yajsw zip file
- */
-def unzipYajsw() {
-   def yajswdir = getOrCreateTempYajswDir()
-   unzip (DOWNLOADS_DIR, yajswdir, "yajsw-stable-12.12.zip")
-}
-
-/**
  * Copies the dex-tools jars to the flat repository
  *
  * Note: This will only copy files beginning with "dex-"
@@ -312,36 +304,23 @@ def copyHfsx() {
 
 /**
  * Copies the yajswdir zip to its location in the GhidraServer project.
- *
- * Note: There is a Gradle task to do all of this (yajswDevUnpack) but we cannot execute
- *       that from here so just copy everything manually
  */
 def copyYajsw() {
-   def userdir = System.getProperty("user.dir")
-   def yajswdir = new File(getOrCreateTempYajswDir(),"yajsw-stable-12.12")
-   def yajswdirTarget = new File(userdir, "/../ghidra/Ghidra/Features/GhidraServer/build/data/yajsw-stable-12.12")
-   
-   FileUtils.copyFile(new File(yajswdir, "yajsw.policy.txt"), new File(yajswdirTarget, "yajsw.policy.txt"));
-   FileUtils.copyFile(new File(yajswdir, "LICENSE.txt"), new File(yajswdirTarget, "LICENSE.txt"));
-   FileUtils.copyDirectory(yajswdir, yajswdirTarget, new WildcardFileFilter("*.jar"));
-   FileUtils.copyDirectory(new File(yajswdir, "templates"), new File(yajswdirTarget, "templates"));
-   FileUtils.copyDirectory(new File(yajswdir, "lib/extended"), new File(yajswdirTarget, "lib/extended"));
-   FileUtils.copyDirectory(new File(yajswdir, "doc"), new File(yajswdirTarget, "doc"));
-   FileUtils.copyDirectory(new File(yajswdir, "lib/core"), new File(yajswdirTarget, "lib/core"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "yajsw-stable-12.12.zip"), new File(REPO_DIR, "Ghidra/Features/GhidraServer/build/data/yajsw-stable-12.12.zip"));
 }
 
 /**
  * Copies the pydev zip to its bin repository location
  */
 def copyPyDev() {
-	FileUtils.copyFile(new File(DOWNLOADS_DIR, '/PyDev 6.3.1.zip'), new File(HOME_DIR, '/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip'));
+	FileUtils.copyFile(new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/data/buildDependencies/PyDev 6.3.1.zip"));
 }
 
 /**
  * Copies the cdt zip to its bin repository location
  */
 def copyCdt() {
-	FileUtils.copyFile(new File(DOWNLOADS_DIR, '/cdt-8.6.0.zip'), new File(HOME_DIR, '/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip'));
+	FileUtils.copyFile(new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/data/buildDependencies/cdt-8.6.0.zip"));
 }
 
 /**
@@ -356,18 +335,6 @@ def getOrCreateTempHfsxDir() {
    }
 
    return hfsxdir;
-}
-
-/**
- * Creates a temporary folder to house the yajsw zip contents
- */
-def getOrCreateTempYajswDir() {
-   def yajswdir = new File (DOWNLOADS_DIR, "yajsw")
-   if (!yajswdir.exists()) {
-       yajswdir.mkdir()
-   }
-
-   return yajswdir;
 }
 
 /**
