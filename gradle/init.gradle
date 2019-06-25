@@ -16,6 +16,8 @@
  *          - AXMLPrinter2.jar                                                 *
  *          - hfsexplorer-0_21-bin.zip                                         *
  *          - yajsw-stable-12.12.zip (placed in GhidraServer location)         *
+ *          - cdt-8.6.0.zip                                                    *
+ *          - PyDev 6.3.1.zip                                                  *
  *                                                                             *
  *   2. Creates a gradle configuration file (repos.config) in                  *
  *      <USER_HOME>/.gradle/init.d/. This contains repository                  *
@@ -45,16 +47,19 @@ import org.apache.commons.io.*;
 import org.apache.commons.io.filefilter.*;
 
 ext.HOME_DIR = System.getProperty('user.home')
-ext.FLAT_REPO_DIR = new File(HOME_DIR + "/flatRepo")
-ext.TMP_FILE = File.createTempFile("downloads", ".tmp", null)
-File TMP_DIR = TMP_FILE.getParentFile()
+ext.FLAT_REPO_DIR = new File(HOME_DIR, "flatRepo")
+File TMP_DIR = new File(System.getProperty('java.io.tmpdir'))
 ext.DOWNLOADS_DIR = new File(TMP_DIR, "ghidra")
+
+ext.FILE_SIZE = 0;
 
 // The URLs for each of the archives to be downloaded
 ext.DEX_ZIP = 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip'
 ext.AXML_ZIP = 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar'
 ext.HFS_ZIP = 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip'
 ext.YAJSW_ZIP = 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip'
+ext.PYDEV_ZIP = 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip'
+ext.CDT_ZIP = 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 
 // Store the MD5s for each of the downloads so we can verify that we retrieved them
 // all successfully
@@ -62,11 +67,15 @@ ext.DEX_MD5 = '032456b9db9e6059376611553aecf31f'
 ext.AXML_MD5 = '55d70be9862c2b456cc91a933c197934'
 ext.HFS_MD5 = 'cc1713d634d2cd1fd7f21e18ae4d5d5c'
 ext.YAJSW_MD5 = 'e490ea92554f0238d74d4ef6161cb2c7'
+ext.PYDEV_MD5 = '06263bdef4917c49d8d977d12c2d5073'
+ext.CDT_MD5 = 'd41d8cd98f00b204e9800998ecf8427e'
 
 // Number of times to try and establish a connection when downloading files before
 // failing
-ext.NUM_RETRIES = 1
+ext.NUM_RETRIES = 2
 
+// Set up a maven repository configuration so we can get access to Apache FileUtils for
+// copying/deleting files.
 initscript {
     repositories {
         mavenCentral()
@@ -76,6 +85,7 @@ initscript {
     }
 }
 
+// This is where the real flow of the script starts...
 try {
 	createDirs()
 	createConfigFile()
@@ -126,16 +136,20 @@ def createConfigFile() {
  * URL the attempt will be retried NUM_RETRIES times before failing.
  *
  * Progress is shown on the command line in the form of the number of bytes
- * downloaded; the total size of the file to download is not known during the
- * download so no percentage of the total is given.
+ * downloaded and a percentage of the total. 
+ *
+ * Note: We do not validate that the number of bytes downloaded matches the
+ *       expected total here; any discrepencies will be caught when checking
+ *       the MD5s later on.
  *
  * @param url the file to download
  * @param filename the local file to create for the download
  */
 def download(url, filename) {
 
+   println("File: " + url)
    BufferedInputStream istream = establishConnection(url, NUM_RETRIES);
-   assert istream != null : "***CONNECTION FAILURE***\nmax attempts exceeded; exiting\n"
+   assert istream != null : "   ***CONNECTION FAILURE***\n   max attempts exceeded; exiting\n"
    
    FileOutputStream ostream = new FileOutputStream(filename);
    def dataBuffer = new byte[1024];
@@ -147,8 +161,9 @@ def download(url, filename) {
      totalRead += bytesRead
 	      
      // print progress on the same line in the console...
+     int pctComplete = (totalRead / FILE_SIZE) * 100
      print("\r")
-     print("Downloading: " + filename + " " + totalRead)
+     print("   Downloading: " + totalRead + " of " + FILE_SIZE + " (" + pctComplete + "%)")
      System.out.flush()
    }
    println("")
@@ -158,21 +173,22 @@ def download(url, filename) {
 }
 
 /**
- * Attemps to establish a connection to the given URL. This will attempt to retry the
- * connection in the event of a failure.
+ * Attemps to establish a connection to the given URL. 
  *
  * @param url the site to connect to
  * @param retries the number of times to attempt to reconnect if there is a failure
+ * @return the InputStream for the URL
  */
 def establishConnection(url, retries) {
-   println("Download file: " + url)
    for (int i=0; i<retries; i++) {
       try {
-         println("connect attempt " + (i+1) + " of " + retries)
+         println("   Connect attempt " + (i+1) + " of " + retries)
+         URLConnection conn = new URL(url).openConnection();
+         FILE_SIZE = conn.getContentLength();
          return new BufferedInputStream(new URL(url).openStream()); 
       }
       catch (Exception e) {
-         println("connection error! " + e)
+         println("   Connection error! " + e)
       }
    }
 }
@@ -209,18 +225,24 @@ def populateFlatRepo() {
 
    // 1. Download all the dependencies.
    download (DEX_ZIP, DOWNLOADS_DIR.path + '/dex-tools-2.0.zip')
-   download (AXML_ZIP, FLAT_REPO_DIR.path + '/AXMLPrinter2.jar')
-   download (HFS_ZIP, DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip')
-   download (YAJSW_ZIP, DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip')
-   
    validateChecksum(DOWNLOADS_DIR.path + '/dex-tools-2.0.zip', DEX_MD5);
+   
+   download (AXML_ZIP, FLAT_REPO_DIR.path + '/AXMLPrinter2.jar')
    validateChecksum(FLAT_REPO_DIR.path + '/AXMLPrinter2.jar', AXML_MD5);
+   
+   download (HFS_ZIP, DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip')
    validateChecksum(DOWNLOADS_DIR.path + '/hfsexplorer-0_21-bin.zip', HFS_MD5);
+   
+   download (YAJSW_ZIP, DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip')
    validateChecksum(DOWNLOADS_DIR.path + '/yajsw-stable-12.12.zip', YAJSW_MD5);
+   
+   download (PYDEV_ZIP, DOWNLOADS_DIR.path + '/PyDev 6.3.1.zip')
+   validateChecksum(DOWNLOADS_DIR.path + '/PyDev 6.3.1.zip', PYDEV_MD5);
+   
+   download (CDT_ZIP, DOWNLOADS_DIR.path + '/cdt-8.6.0.zip') 
+   validateChecksum(DOWNLOADS_DIR.path + '/cdt-8.6.0.zip', CDT_ZIP);
 
-   // 2. Unzip the dependencies; for some of these we don't need everything in 
-   //    the download so unzip them and only copy what we need. 
-   // 
+   // 2. Unzip the dependencies
    unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
    unzipHfsx()
    unzipYajsw()
@@ -230,6 +252,8 @@ def populateFlatRepo() {
    copyDexTools()
    copyHfsx()
    copyYajsw()
+   copyPyDev()
+   copyCdt()
 }
 
 /**
@@ -277,7 +301,7 @@ def copyDexTools() {
 }
 
 /**
- * Copies the hfsx jars to the flat repository
+ * Copies the necessary hfsx jars to the flat repository
  */
 def copyHfsx() {
    FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/csframework.jar"), new File(FLAT_REPO_DIR, "csframework.jar"));
@@ -304,6 +328,20 @@ def copyYajsw() {
    FileUtils.copyDirectory(new File(yajswdir, "lib/extended"), new File(yajswdirTarget, "lib/extended"));
    FileUtils.copyDirectory(new File(yajswdir, "doc"), new File(yajswdirTarget, "doc"));
    FileUtils.copyDirectory(new File(yajswdir, "lib/core"), new File(yajswdirTarget, "lib/core"));
+}
+
+/**
+ * Copies the pydev zip to its bin repository location
+ */
+def copyPyDev() {
+	FileUtils.copyFile(new File(DOWNLOADS_DIR, '/PyDev 6.3.1.zip'), new File(HOME_DIR, '/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip'));
+}
+
+/**
+ * Copies the cdt zip to its bin repository location
+ */
+def copyCdt() {
+	FileUtils.copyFile(new File(DOWNLOADS_DIR, '/cdt-8.6.0.zip'), new File(HOME_DIR, '/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip'));
 }
 
 /**
@@ -337,21 +375,7 @@ def getOrCreateTempYajswDir() {
  * been populated.
  */
 def cleanup() {
-   remove(DOWNLOADS_DIR)
-   remove(TMP_FILE)
-}
-
-/**
- * Deletes the given file (or directory)
- *
- * @param fileOrDirectory the item (either a file or directory) to be deleted
- */ 
-def remove(fileOrDirectory) {
-   if (fileOrDirectory.isDirectory()) {
-      for (File child : fileOrDirectory.listFiles()) {
-         remove(child);
-      }
+   if (DOWNLOADS_DIR.exists()) {
+      FileUtils.deleteDirectory(DOWNLOADS_DIR)
    }
-
-   fileOrDirectory.delete();
 }

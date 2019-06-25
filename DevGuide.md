@@ -80,7 +80,7 @@ manually-downloaded dependencies.
 The flat directory-style repository can be created and populated automatically by a provided script, 
 or manually by downloading the required dependencies.  Choose one of the two following methods:
   * [Automatic script instructions](#automatic-script-instructions)
-  * [Manual download instructions](#manual-download_instructions)
+  * [Manual download instructions](#manual-download-instructions)
 
 ### Automatic Script Instructions
 The flat directory-style repository can be setup automatically by running a simple Gradle script. 
@@ -101,6 +101,8 @@ the `init.gradle` script. If it ran correctly you will have a new folder, `flatR
  * hfsx
  * hfsx_dmglib
  * iharder-base64 
+ * cdt-8.6.0.zip
+ * PyDev 6.3.1.zip
 
 There will also be a new archive, yajsw-stable-12.12.zip, placed in __ghidra.bin/Ghidra/Features/GhidraServer/__.  
 
