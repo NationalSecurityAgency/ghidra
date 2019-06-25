@@ -18,7 +18,7 @@ Require-Bundle: ghidra.xtext.sleigh,
  org.eclipse.xtext.builder,
  org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
  org.eclipse.xtend.lib;bundle-version="2.14.0";resolution:=optional,
- org.eclipse.ui.console;bundle-version="3.8.400"
+ org.eclipse.ui.console
 Import-Package: org.apache.log4j
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ghidra.xtext.sleigh.ui.internal,
