@@ -432,10 +432,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_2121=1 & Rm_VPR128.16
 	simd_address_at(tmp3, Rd_VPR128.16B, 15, 1, 16);
 	* [register]:1 tmp3 = (* [register]:1 tmp1) + (* [register]:1 tmp2);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_INT_ADD(Rn_VPR128.16B, Rm_VPR128.16B, 1:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.16B
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.16B = NEON_add(Rn_VPR128.16B, Rm_VPR128.16B, 1:1);
 @endif
 }
@@ -526,10 +526,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR128.4S
 	simd_address_at(tmp3, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp3 = (* [register]:4 tmp1) + (* [register]:4 tmp2);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_INT_ADD(Rn_VPR128.4S, Rm_VPR128.4S, 4:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.4S = NEON_add(Rn_VPR128.4S, Rm_VPR128.4S, 4:1);
 @endif
 }
@@ -682,10 +682,10 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR64.2S 
 	simd_address_at(tmp3, Rd_VPR64.2S, 1, 4, 8);
 	* [register]:4 tmp3 = (* [register]:4 tmp1) + (* [register]:4 tmp2);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:8 = SIMD_INT_ADD(Rn_VPR64.2S, Rm_VPR64.2S, 4:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR64.2S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR64.2S = NEON_add(Rn_VPR64.2S, Rm_VPR64.2S, 4:1);
 @endif
 }
@@ -1658,7 +1658,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x
 	local tmp10:4 = tmp7 + tmp9;
 	Rd_FPR32 = tmp5 + tmp10;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128.4S, 0:1);
 	local tmp2:4 = SIMD_PIECE(Rn_VPR128.4S, 1:1);
 	local tmp3:4 = tmp1 + tmp2;
@@ -1667,7 +1667,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x
 	local tmp6:4 = tmp4 + tmp5;
 	local tmpd:4 = tmp3 + tmp6;
 	Zd = zext(tmpd); # assigning to Rd_FPR32
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_addv(Rn_VPR128.4S, 4:1);
 @endif
 }
@@ -4291,11 +4291,11 @@ is b_3131=0 & Q=1 & b_29=0 & b_2428=0xe & b_2123=0 & b_16=1 & b_1515=0 & imm4=0x
 	simd_address_at(tmp3, Rd_VPR128.16B, 15, 1, 16);
 	* [register]:1 tmp3 = tmp2;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:1 = SIMD_PIECE(Rn_GPR32, 0:1);
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.16B, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.16B
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.16B = NEON_dup(Rd_VPR128.16B, Rn_GPR32, 1:1);
 @endif
 }
@@ -19165,10 +19165,10 @@ is b_3131=0 & q=1 & b_29=0 & b_2428=0xe & b_2123=0 & Rd_VPR128.S.imm_neon_uimm2 
 	simd_address_at(tmp1, Rd_VPR128, imm_neon_uimm2:4, 4, 16);
 	* [register]:4 tmp1 = Rn_GPR32;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_COPY(Rd_VPR128, Rn_GPR32, imm_neon_uimm2:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128 = NEON_mov(Rd_VPR128, Rn_GPR32, imm_neon_uimm2:1, 2:1);
 @endif
 }
@@ -19232,11 +19232,11 @@ is b_3131=0 & Q=0 & b_29=0 & b_2428=0xe & b_2123=0 & Rn_VPR128.S.imm_neon_uimm2 
 	local tmp2:4 = * [register]:4 tmp1;
 	Rd_GPR32 = tmp2;
 	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128, imm_neon_uimm2:1);
 	local tmpd:4 = tmp1;
 	Rd_GPR64 = zext(tmpd); # assigning to Rd_GPR32
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128, imm_neon_uimm2:1);
 	Rd_GPR32 = NEON_mov(tmp1, 4:1);
 @endif
@@ -19366,11 +19366,11 @@ is b_31=0 & b_30=1 & b_29=1 & b_1928=0b0111100000 & b_1215=0b1110 & b_1011=0b01 
 	simd_address_at(tmp2, Rd_VPR128.2D, 1, 8, 16);
 	* [register]:8 tmp2 = tmp1;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:8 = Imm_neon_uimm8Shift;
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.2D, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.2D
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.2D = NEON_movi(Imm_neon_uimm8Shift, 8:1);
 @endif
 }
@@ -19468,10 +19468,10 @@ is b_31=0 & b_30=1 & b_29=0 & b_1928=0b0111100000 & b_15=0 & b_12=0 & b_1011=0b0
 	simd_address_at(tmp1, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp1 = Imm_neon_uimm8Shift:4;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.4S, Imm_neon_uimm8Shift:4);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.4S = NEON_movi(Imm_neon_uimm8Shift, 4:1);
 @endif
 }
@@ -19674,11 +19674,11 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xf & advSIMD3.size=2 & Re_VPR128.S.vIndex & Re
 	simd_address_at(tmp4, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp4 = (* [register]:4 tmp3) * tmp2;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Re_VPR128.S, vIndex:1);
 	local tmpd:16 = SIMD_INT_MULT(Rn_VPR128.4S, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	local tmp1:4 = SIMD_PIECE(Re_VPR128.S, vIndex:1);
 	Rd_VPR128.4S = NEON_mul(Rn_VPR128.4S, tmp1, 4:1);
 @endif
