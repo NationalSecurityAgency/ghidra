@@ -116,7 +116,7 @@ public class ChooseDataTypeAction extends DockingAction {
 			}
 
 			VariableStorage storage = var.getVariableStorage();
-			if (storage.isValid()) {
+			if (storage.isValid() && !storage.isStackStorage()) {
 				return storage.size();
 			}
 		}

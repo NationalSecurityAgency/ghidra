@@ -248,14 +248,11 @@ public class DecompilerController {
 	}
 
 	void goToFunction(Function function, boolean newWindow) {
-		while (function.isThunk()) {
-			Function thunkedFunction = function.getThunkedFunction(false);
-			if (thunkedFunction == null || thunkedFunction.isExternal()) {
-				break;
-			}
+		Function thunkedFunction = function.getThunkedFunction(true);
+		if (thunkedFunction != null) {
 			function = thunkedFunction;
 		}
-		goToAddress(function.getEntryPoint(), newWindow);
+		callbackHandler.goToFunction(function, newWindow);
 	}
 
 	void goToLabel(String labelName, boolean newWindow) {

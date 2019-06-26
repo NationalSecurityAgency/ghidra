@@ -43,6 +43,7 @@ public class GModule {
 	private ResourceFile moduleRoot;
 	private List<ResourceFile> searchRootsByPriority = new ArrayList<>();
 	private Set<String> dataSearchIgnoreDirs = new HashSet<>();
+	private Set<String> fatJars = new HashSet<>();
 
 	public GModule(Collection<ResourceFile> appRoots, ResourceFile moduleRoot) {
 
@@ -67,6 +68,7 @@ public class GModule {
 		try {
 			ModuleManifestFile manifestFile = new ModuleManifestFile(moduleRoot);
 			dataSearchIgnoreDirs = manifestFile.getDataSearchIgnoreDirs();
+			fatJars = manifestFile.getFatJars();
 		}
 		catch (IOException e) {
 			// don't care - if not using moduleManifest to find modules, then we don't
@@ -143,6 +145,10 @@ public class GModule {
 			}
 		}
 		return null;
+	}
+
+	public Set<String> getFatJars() {
+		return fatJars;
 	}
 
 	private void accumulateFilesByExtension(String extension, ResourceFile dir,

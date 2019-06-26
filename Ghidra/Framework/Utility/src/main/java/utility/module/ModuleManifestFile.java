@@ -15,12 +15,11 @@
  */
 package utility.module;
 
-import generic.jar.ResourceFile;
-import ghidra.util.Msg;
-
 import java.io.*;
 import java.util.*;
 
+import generic.jar.ResourceFile;
+import ghidra.util.Msg;
 import utilities.util.FileUtilities;
 
 public class ModuleManifestFile {
@@ -32,6 +31,7 @@ public class ModuleManifestFile {
 	private static final String EXCLUDE_FROM_GHIDRA_JAR = "EXCLUDE FROM GHIDRA JAR";
 	private static final String DATA_SEARCH_IGNORE_DIR = "DATA SEARCH IGNORE DIR:";
 	private static final String MODULE_DIR_IDENTIFIER = "MODULE DIR:";
+	private static final String FAT_JAR = "FAT JAR:";
 //	private static final String EXTENSION_SUFFIX = "EXTENSION SUFFIX:";
 //	private static final String REQUIRES_CLASS_SEARCH = "REQUIRES CLASS SEARCH:";
 //	private static final String OWNER_IDENTIFIER = "MODULE DIR:";
@@ -46,6 +46,7 @@ public class ModuleManifestFile {
 	private Map<String, String> fileIPMap = new HashMap<String, String>();
 
 	private Set<String> dataSearchIgnoreDirs = new HashSet<String>();
+	private Set<String> fatJars = new HashSet<>();
 
 	public ModuleManifestFile(File moduleRootDir) throws IOException {
 		this(new ResourceFile(moduleRootDir));
@@ -108,6 +109,9 @@ public class ModuleManifestFile {
 		else if (trimmedLine.startsWith(MODULE_DIR_IDENTIFIER)) {
 			// do nothing for now
 		}
+		else if (trimmedLine.startsWith(FAT_JAR)) {
+			processFatJar(trimmedLine);
+		}
 		else {
 			String message =
 				"Module manifest file error on line " + (lineNumber + 1) + " of file: " + file +
@@ -144,11 +148,20 @@ public class ModuleManifestFile {
 		moduleName = line.substring(NAME_IDENTIFIER.length()).trim();
 	}
 
+	private void processFatJar(String line) {
+		String fatJar = line.substring(FAT_JAR.length()).trim();
+		fatJars.add(fatJar);
+	}
+
 	public String getModuleName() {
 		return moduleName;
 	}
 
 	public Set<String> getDataSearchIgnoreDirs() {
 		return dataSearchIgnoreDirs;
+	}
+
+	public Set<String> getFatJars() {
+		return fatJars;
 	}
 }

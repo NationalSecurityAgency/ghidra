@@ -351,7 +351,10 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 	public DataType getDataType(DataTypeManager dataTypeManager) {
 
 		FunctionDefinitionDataType fddt = new FunctionDefinitionDataType(getName());
-		fddt.setReturnType(returnType.getDataType(dataTypeManager));
+
+		if (returnType != null) {
+			fddt.setReturnType(returnType.getDataType(dataTypeManager));
+		}
 
 		if (parameters.size() != 1 ||
 			!(parameters.get(0).getDataType(dataTypeManager) instanceof VoidDataType)) {

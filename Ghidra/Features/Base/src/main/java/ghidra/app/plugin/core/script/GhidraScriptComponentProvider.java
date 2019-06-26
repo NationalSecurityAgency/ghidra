@@ -1060,6 +1060,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	@Override
+	public void componentActivated() {
+		// put the user focus in the filter field, as often the user wishes to search for a script
+		tableFilterPanel.requestFocus();
+	}
+
+	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		Object source = scriptTable;
 		if (event != null) {

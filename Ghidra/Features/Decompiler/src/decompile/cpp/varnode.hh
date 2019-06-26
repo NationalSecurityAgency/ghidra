@@ -28,6 +28,7 @@ class VarnodeBank;
 class Merge;
 class Funcdata;
 class SymbolEntry;
+class ValueSet;
 
 /// \brief Compare two Varnode pointers by location then definition
 struct VarnodeCompareLocDef {
@@ -134,7 +135,10 @@ private:
   VarnodeDefSet::iterator defiter;	///< Iterator into VarnodeBank sorted by definition
   list<PcodeOp *> descend;		///< List of every op using this varnode as input
   mutable Cover *cover;		///< Addresses covered by the def->use of this Varnode
-  mutable Datatype *temptype;	///< For type propagate algorithm
+  mutable union {
+    Datatype *dataType;		///< For type propagate algorithm
+    ValueSet *valueSet;
+  } temp;
   uintb consumed;		///< What parts of this varnode are used
   uintb nzm;			///< Which bits do we know are zero
   friend class VarnodeBank;
@@ -167,8 +171,10 @@ public:
   SymbolEntry *getSymbolEntry(void) const { return mapentry; } ///< Get symbol and scope information associated with this Varnode
   uint4 getFlags(void) const { return flags; } ///< Get all the boolean attributes
   Datatype *getType(void) const { return type; } ///< Get the Datatype associated with this Varnode
-  void setTempType(Datatype *t) const { temptype = t; }	///< Set the temporary Datatype
-  Datatype *getTempType(void) const { return temptype; } ///< Get the temporary Datatype (used during type propagation)
+  void setTempType(Datatype *t) const { temp.dataType = t; }	///< Set the temporary Datatype
+  Datatype *getTempType(void) const { return temp.dataType; } ///< Get the temporary Datatype (used during type propagation)
+  void setValueSet(ValueSet *v) const { temp.valueSet = v; }	///< Set the temporary ValueSet record
+  ValueSet *getValueSet(void) const { return temp.valueSet; }	///< Get the temporary ValueSet record
   uint4 getCreateIndex(void) const { return create_index; } ///< Get the creation index
   Cover *getCover(void) const { updateCover(); return cover; } ///< Get Varnode coverage information
   list<PcodeOp *>::const_iterator beginDescend(void) const { return descend.begin(); } ///< Get iterator to list of syntax tree descendants (reads)

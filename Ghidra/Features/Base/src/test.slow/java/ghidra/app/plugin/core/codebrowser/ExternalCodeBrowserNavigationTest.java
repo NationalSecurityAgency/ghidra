@@ -63,8 +63,22 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 		int txId = program.startTransaction("Set Path");
 		program.getExternalManager().setExternalPath("ADVAPI32.dll", "/FILE1", true);
-		program.endTransaction(txId, true);
 
+		//
+		// Create a call reference to a thunk function
+		// Create a thunk function to an external location
+		//
+		String arbitraryAddress = "0x1001000";
+		ExternalLocation externalLocation = builder.createExternalFunction(arbitraryAddress,
+			"ADVAPI32.dll", "externalFunctionXyz", "_Zxyz");
+		String thunkAddress = "0x1006300";
+		Function thunk = builder.createFunction(thunkAddress);
+		thunk.setThunkedFunction(externalLocation.getFunction());
+
+		builder.createMemoryCallReference("0x1001030", thunkAddress);
+
+		program.endTransaction(txId, true);
+		program.flushEvents();
 		waitForSwing();
 	}
 
@@ -180,17 +194,35 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 		cb.goTo(new OperandFieldLocation(program, addr("1001020"), null, null, null, 0, 0));
 		assertEquals(addr("1001020"), cb.getCurrentAddress());
-
 		assertEquals("FILE2", program.getDomainFile().getName());
 
 		// verify that navigation to the external program, address 0x1001888, is performed
 		// since navigation initiated from linkage location
 		click(cb, 2);
 		assertEquals(addr("1001888"), cb.getCurrentAddress());
-
 		assertEquals("FILE1", lastNavigationProgram.getDomainFile().getName());
 		assertEquals(addr("1001888"), lastNavigationLocation.getAddress());
+	}
 
+	@Test
+	public void testOperandExternalProgramNavigation_OnThunk() throws Exception {
+
+		getTool().getOptions("Navigation").setEnum("External Navigation",
+			NavigationOptions.ExternalNavigationEnum.NavigateToExternalProgram);
+
+		String fromAddress = "1001030";
+		cb.goTo(new OperandFieldLocation(program, addr(fromAddress), null, null, null, 0, 0));
+		assertEquals(addr(fromAddress), cb.getCurrentAddress());
+		assertEquals("FILE2", program.getDomainFile().getName());
+
+		// verify that navigation to the external program, address 0x1001888, is performed
+		// since navigation initiated from linkage location
+		click(cb, 2);
+
+		String otherAddress = "0x01001000";
+		assertEquals(addr(otherAddress), cb.getCurrentAddress());
+		assertEquals("FILE1", lastNavigationProgram.getDomainFile().getName());
+		assertEquals(addr(otherAddress), lastNavigationLocation.getAddress());
 	}
 
 	/**
@@ -270,6 +302,7 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		@Mock
 		public boolean goTo(Invocation inv, final Navigatable navigatable, ProgramLocation loc,
 				Program p) {
+
 			// Track last navigation location
 			lastNavigationLocation = loc;
 			lastNavigationProgram = p;

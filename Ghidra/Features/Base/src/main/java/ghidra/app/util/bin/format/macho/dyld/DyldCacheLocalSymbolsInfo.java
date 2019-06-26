@@ -80,7 +80,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		nlistList = new ArrayList<>(nlistCount);
 		localSymbolsEntryList = new ArrayList<>(entriesCount);
 
-		is32bit = !(architecture.getCpuType() == CpuTypes.CPU_TYPE_ARM_64 &&
+		is32bit = !(architecture.getCpuType() == CpuTypes.CPU_TYPE_ARM_64 ||
 			architecture.getCpuType() == CpuTypes.CPU_TYPE_X86_64);
 	}
 

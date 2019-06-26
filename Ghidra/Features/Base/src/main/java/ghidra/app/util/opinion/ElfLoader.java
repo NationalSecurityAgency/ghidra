@@ -46,6 +46,10 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	public final static String ELF_ENTRY_FUNCTION_NAME = "entry";
 
+	public final static String ELF_FILE_TYPE_PROPERTY = "ELF File Type";
+	public final static String ELF_ORIGINAL_IMAGE_BASE_PROPERTY = "ELF Original Image Base";
+	public final static String ELF_PRELINKED_PROPERTY = "ELF Prelinked";
+
 	public final static String ELF_REQUIRED_LIBRARY_PROPERTY_PREFIX = "ELF Required Library ["; // followed by "#]"
 	public final static String ELF_SOURCE_FILE_PROPERTY_PREFIX = "ELF Source File ["; // followed by "#]"
 
@@ -83,8 +87,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		else if (baseOffsetStrLen < minNibbles) {
-			baseOffsetStr =
-				StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
+			baseOffsetStr = StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
 		}
 		return baseOffsetStr;
 	}
@@ -143,8 +146,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
+			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
 			throws IOException {
 
 		try {

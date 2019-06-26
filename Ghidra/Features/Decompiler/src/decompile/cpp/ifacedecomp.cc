@@ -129,6 +129,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcVolatile(),"volatile");
   status->registerCom(new IfcPreferSplit(),"prefersplit");
   status->registerCom(new IfcStructureBlocks(),"structure","blocks");
+  status->registerCom(new IfcAnalyzeRange(), "analyze","range");
 #ifdef CPUI_RULECOMPILE
   status->registerCom(new IfcParseRule(),"parse","rule");
   status->registerCom(new IfcExperimentalRules(),"experimental","rules");
@@ -2472,6 +2473,56 @@ void IfcCountPcode::execute(istream &s)
     ++iter;
   }
   *status->optr << "Count - pcode = " << dec << count << endl;
+}
+
+void IfcAnalyzeRange::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("Image not loaded");
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
+  bool useFullWidener;
+  string token;
+  s >> ws >> token;
+  if (token == "full")
+    useFullWidener = true;
+  else if (token == "partial") {
+    useFullWidener = false;
+  }
+  else
+    throw IfaceParseError("Must specify \"full\" or \"partial\" widening");
+  Varnode *vn = iface_read_varnode(dcp,s);
+  vector<Varnode *> sinks;
+  vector<PcodeOp *> reads;
+  sinks.push_back(vn);
+  for(list<PcodeOp *>::const_iterator iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() == CPUI_LOAD || op->code() == CPUI_STORE)
+      reads.push_back(op);
+  }
+  Varnode *stackReg = dcp->fd->findSpacebaseInput(dcp->conf->getStackSpace());
+  ValueSetSolver vsSolver;
+  vsSolver.establishValueSets(sinks, reads, stackReg, false);
+  if (useFullWidener) {
+    WidenerFull widener;
+    vsSolver.solve(10000,widener);
+  }
+  else {
+    WidenerNone widener;
+    vsSolver.solve(10000,widener);
+  }
+  list<ValueSet>::const_iterator iter;
+  for(iter=vsSolver.beginValueSets();iter!=vsSolver.endValueSets();++iter) {
+    (*iter).printRaw(*status->optr);
+    *status->optr << endl;
+  }
+  map<SeqNum,ValueSetRead>::const_iterator riter;
+  for(riter=vsSolver.beginValueSetReads();riter!=vsSolver.endValueSetReads();++riter) {
+    (*riter).second.printRaw(*status->optr);
+    *status->optr << endl;
+  }
 }
 
 #ifdef OPACTION_DEBUG
