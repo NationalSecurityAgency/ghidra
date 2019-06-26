@@ -559,8 +559,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 Fix:
 			 	 	
 			 	 	-Update key binding methods to use an enum for: no management / full management / shared management
-			 	 	-remove superfluous overrides of getIcon()	
-			 	 
 			 */
 
 			dockingTool.getWindowManager().setIcon(this, icon);
