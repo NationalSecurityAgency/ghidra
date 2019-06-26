@@ -117,6 +117,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		int id = program.startTransaction("loading program from ELF");
 		boolean success = false;
 		try {
+
+			addProgramProperties(monitor);
+
 			setImageBase();
 			program.setExecutableFormat(ElfLoader.ELF_NAME);
 
@@ -168,9 +171,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			processGNU(monitor);
 			processGNU_readOnly(monitor);
-
-			createFileComment(program.getMinAddress(), monitor);
-			addProgramProperties(monitor);
 
 			success = true;
 		}
@@ -258,36 +258,71 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void addProgramProperties(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void addProgramProperties(TaskMonitor monitor) throws CancelledException {
+
+		monitor.checkCanceled();
+		monitor.setMessage("Adding program properties...");
+
 		Options props = program.getOptions(Program.PROGRAM_INFO);
+
+		// Preserve original image base which may be required for DWARF address fixup.
+		// String is used to avoid decimal rendering of long values in display.
+		props.setString(ElfLoader.ELF_ORIGINAL_IMAGE_BASE_PROPERTY,
+			"0x" + Long.toHexString(elf.getImageBase()));
+		props.setBoolean(ElfLoader.ELF_PRELINKED_PROPERTY, elf.isPreLinked());
+
+		String elfFileType;
+		boolean isRelocatable = false;
 		switch (elf.e_type()) {
-			case ElfConstants.ET_CORE:
-			case ElfConstants.ET_DYN:
+			case ElfConstants.ET_NONE:
+				elfFileType = "unspecified";
+				break;
 			case ElfConstants.ET_REL:
-				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, true);
+				elfFileType = "relocatable";
+				isRelocatable = true;
+				break;
+			case ElfConstants.ET_EXEC:
+				elfFileType = "executable";
+				break;
+			case ElfConstants.ET_DYN:
+				elfFileType = "shared object";
+				isRelocatable = true;
+				break;
+			case ElfConstants.ET_CORE:
+				elfFileType = "core";
+				isRelocatable = true;
 				break;
 			default:
-				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, false);
+				elfFileType = "unknown";
 				break;
 		}
+		props.setString(ElfLoader.ELF_FILE_TYPE_PROPERTY, elfFileType);
+		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, isRelocatable);
 
-// TODO: What was the intent of the following block? I'm commenting out for now because this
-//		code does nothing useful. But I'll leave it here in case it's a template for 
-//		something that 'should' be implemented.
-//		
-//		// save order list of library dependencies
-//		
-//		String[] dynamicLibraryNames = elf.getDynamicLibraryNames();
-//		if (dynamicLibraryNames.length != 0) {
-//			StringBuilder buf = new StringBuilder();
-//			for (String libName : dynamicLibraryNames) {
-//				// TODO?
-//			}
-//
-//		}
+		int fileIndex = 0;
+		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
+		for (ElfSymbolTable symbolTable : symbolTables) {
+			monitor.checkCanceled();
+			String[] files = symbolTable.getSourceFiles();
+			for (String file : files) {
+				monitor.checkCanceled();
+				props.setString(ElfLoader.ELF_SOURCE_FILE_PROPERTY_PREFIX + pad(fileIndex++) + "]",
+					file);
+			}
+		}
+
+		int libraryIndex = 0;
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		if (dynamicTable != null) {
+			String[] neededLibs = elf.getDynamicLibraryNames();
+			for (String neededLib : neededLibs) {
+				monitor.checkCanceled();
+				props.setString(
+					ElfLoader.ELF_REQUIRED_LIBRARY_PROPERTY_PREFIX + pad(libraryIndex++) + "]",
+					neededLib);
+			}
+		}
+
 	}
 
 	private AddressRange getMarkupMemoryRangeConstraint(Address addr) {
@@ -2744,69 +2779,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		return nextRelocStart;
-	}
-
-	private void createFileComment(Address minAddr, TaskMonitor monitor) {
-		if (minAddr == null) {
-			return;
-		}
-		if (monitor.isCancelled()) {
-			return;
-		}
-		monitor.setMessage("Creating file comment...");
-
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-
-		switch (elf.e_type()) {
-			case ElfConstants.ET_CORE:
-				props.setString("ELF File Type", "core");
-				break;
-			case ElfConstants.ET_DYN:
-				props.setString("ELF File Type", "shared object");
-				break;
-			case ElfConstants.ET_EXEC:
-				props.setString("ELF File Type", "executable");
-				break;
-			case ElfConstants.ET_NONE:
-				props.setString("ELF File Type", "unspecified");
-				break;
-			case ElfConstants.ET_REL:
-				props.setString("ELF File Type", "relocatable");
-				break;
-			default:
-				props.setString("ELF File Type", "unknown");
-				break;
-		}
-
-		int fileIndex = 0;
-		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
-		for (ElfSymbolTable symbolTable : symbolTables) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			String[] files = symbolTable.getSourceFiles();
-			for (String file : files) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				props.setString(ElfLoader.ELF_SOURCE_FILE_PROPERTY_PREFIX + pad(fileIndex++) + "]",
-					file);
-			}
-		}
-
-		int libraryIndex = 0;
-		ElfDynamicTable dynamicTable = elf.getDynamicTable();
-		if (dynamicTable != null) {
-			String[] neededLibs = elf.getDynamicLibraryNames();
-			for (String neededLib : neededLibs) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				props.setString(
-					ElfLoader.ELF_REQUIRED_LIBRARY_PROPERTY_PREFIX + pad(libraryIndex++) + "]",
-					neededLib);
-			}
-		}
 	}
 
 	private String pad(int value) {
