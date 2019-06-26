@@ -84,12 +84,13 @@ or manually by downloading the required dependencies.  Choose one of the two fol
 
 ### Automatic Script Instructions
 The flat directory-style repository can be setup automatically by running a simple Gradle script. 
-Navigate to the Ghidra clone directory you just created, and run the following:
+Navigate to `~/git/ghidra` and run the following:
 ```
 gradle --init-script gradle/init.gradle tasks
 ```
 The Gradle task to be executed, in this case _tasks_, is unimportant. The point is to have Gradle execute
-the `init.gradle` script. If it ran correctly you will have a new folder, `flatRepo/`, in your home directory populated with the following jar files:
+the `init.gradle` script. If it ran correctly you will have a new `~/git/ghidra/flatRepo/` 
+directory populated with the following jar files:
  * AXMLPrinter2
  * csframework
  * dex-ir-2.0
@@ -100,65 +101,49 @@ the `init.gradle` script. If it ran correctly you will have a new folder, `flatR
  * dex-writer-2.0
  * hfsx
  * hfsx_dmglib
- * iharder-base64 
- * cdt-8.6.0.zip
- * PyDev 6.3.1.zip
+ * iharder-base64
 
-There will also be a new archive, yajsw-stable-12.12.zip, placed in `ghidra.bin/Ghidra/Features/GhidraServer/`.  
+There will also be a new archive files at:
+ * ~/git/ghidra/Ghidra/Features/GhidraServer/build/`yajsw-stable-12.12.zip`
+ * ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`PyDev 6.3.1.zip`
+ * ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`cdt-8.6.0.zip`
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
 instructions below...
 
 ### Manual Download Instructions
 
-Create `~/.gradle/init.d/repos.gradle` with the following contents:
-
-```groovy
-ext.HOME = System.getProperty('user.home')
-
-allprojects {
-    repositories {
-        mavenCentral()
-        jcenter()
-        flatDir name:'flat', dirs:["$HOME/flatRepo"]
-    }
-}
-```
-
-Create the `~/flatRepo` folder to hold the manually-downloaded dependencies:
+Create the `~/git/ghidra/flatRepo/` directory to hold the manually-downloaded dependencies:
 
 ```bash
-mkdir ~/flatRepo
+mkdir ~/git/ghidra/flatRepo
 ```
-
-If you prefer not to modify your user-wide Gradle configuration, you may use
-Gradle's other init script facilities, but you're on your own.
 
 #### Get Dependencies for FileFormats:
 
 Download `dex-tools-2.0.zip` from the dex2jar project's releases page on GitHub.
-Unpack the `dex-*.jar` files from the `lib` directory to `~/flatRepo`:
+Unpack the `dex-*.jar` files from the `lib` directory to `~/git/ghidra/flatRepo`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
 unzip dex-tools-2.0.zip
-cp dex2jar-2.0/lib/dex-*.jar ~/flatRepo/
+cp dex2jar-2.0/lib/dex-*.jar ~/git/ghidra/flatRepo/
 
 ```
 
 Download `AXMLPrinter2.jar` from the "android4me" archive on code.google.com.
-Place it in `~/flatRepo`:
+Place it in `~/git/ghidra/flatRepo`:
 
 ```bash
-cd ~/flatRepo
+cd ~/git/ghidra/flatRepo
 curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
 ```
 
 #### Get Dependencies for DMG:
 
 Download `hfsexplorer-0_21-bin.zip` from www.catacombae.org.
-Unpack the `lib` directory to `~/flatRepo.`:
+Unpack the `lib` directory to `~/git/ghidra/flatRepo`:
 
 ```bash
 cd ~/Downloads   # Or wherever
@@ -167,14 +152,14 @@ mkdir hfsx
 cd hfsx
 unzip ../hfsexplorer-0_21-bin.zip
 cd lib
-cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/flatRepo/
+cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/git/ghidra/flatRepo/
 ```
 
 #### Get Dependencies for GhidraServer
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in:
-`~/ghidra/Ghidra/Features/GhidraServer/build`:
+`~/git/ghidra/Ghidra/Features/GhidraServer/build`:
 
 ```bash
 cd ~/Downloads   # Or wherever
@@ -194,7 +179,7 @@ cd ~/Downloads   # Or wherever
 curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'http://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
-mkdir -p ~/git/ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
+mkdir -p ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 ```
 
@@ -202,19 +187,14 @@ Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same director
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
+curl -L -o 'PyDev 6.3.1.zip' https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
+cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 ```
 
 ## Building Ghidra
 
 Before building, you may want to update the version and release name.
-These properties are kept in `Ghidra/application.properties`.
-
-If you want it included, you must also build the GhidraDevPlugin module first.
-Some supporting data will also be missing.
-See the sections below for instructions to produce these components.
-You may also be able to copy some of this data from a previous official distribution.
+These properties are kept in `~/git/ghidra/Ghidra/application.properties`.
 
 To build the full package, use Gradle:
 
@@ -222,9 +202,14 @@ To build the full package, use Gradle:
 gradle buildGhidra
 ```
 
-The output will be placed in `build/dist/`.
+The output will be placed in `~/git/ghidra/build/dist/`.
 It will be named according to the version, release name, build date, and platform.
 To test it, unzip it where you like, and execute `./ghidraRun`.
+
+__NOTE:__ Unless pre-built manually, the Eclipse GhidraDev plugin will not be included 
+in the build. In addition, some other supporting data will also be missing.
+See the sections below for instructions on how to produce these components.
+You may also be able to copy some of these already-built components from a previous official distribution.
 
 ## Developing Ghidra
 
@@ -296,7 +281,7 @@ gradle sleighCompile
 
 If the language modules are not pre-compiled, Ghidra will compile them at run time on an as-needed basis.
 
-### Import GhidraDev project (optional)
+### Import and Build GhidraDev project (optional)
 
 Developing the GhidraDev Eclipse plugin requires the _Eclipse PDE (Plug-in Development Environment)_, which 
 can be installed via the Eclipse marketplace.  It is also included in the _Eclipse IDE for RCP and RAP Developers_.
@@ -311,6 +296,9 @@ Import the newly generated GhidraDev projects into Eclipse.
 __Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's preferences,
 and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
+See `~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt`
+for instructions on how to build the GhidraDev plugin.
+
 ### Run/Debug Ghidra from Eclipse
 
 To run or debug Ghidra from Eclipse, use the provided launch configuration (usually under the "Run" or "Debug" buttons).
@@ -323,15 +311,15 @@ Then expand "Java Application" on the left to find the "Ghidra" launcher.
 Some features of Ghidra require the curation of rather extensive databases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
-The archives included in our official builds can be found in the [ghidra-data] repository.
+The archives included in our official builds can be found in the __[ghidra-data]__ repository.
 
 ### Building Data Type Archives
 
 This task is often done manually from the Ghidra GUI, and the archives included in our official build require a fair bit of fine tuning.
-From a CodeBrowser window, select File -> Parse C Source.
+From a CodeBrowser window, select __File -> Parse C Source__.
 From here you can create and configure parsing profiles, which lists headers and pre-processor options.
-Then, click "Parse to File" to create the Data Type Archive.
-The result can be added to an installation or source tree by copying it to `Ghidra/Features/Base/data/typeinfo`.
+Then, click _Parse to File_ to create the Data Type Archive.
+The result can be added to an installation or source tree by copying it to `~/git/ghidra/Ghidra/Features/Base/data/typeinfo`.
 
 ### Building FID Databases
 
@@ -340,11 +328,11 @@ You will first need to import the relevant libraries from which you'd like to pr
 This is often a set of libraries from an SDK.
 We include a variety of Visual Studio platforms in the official build.
 
-From a CodeBrowser window, select File -> Configure.
+From a CodeBrowser window, select __File -> Configure__.
 Enable the "Function ID" plugins, and close the dialog.
-Now, from the CodeBrowser window, select Tools -> Function ID -> Create new empty FidDb.
+Now, from the CodeBrowser window, select __Tools -> Function ID -> Create new empty FidDb__.
 Choose a destination file.
-Now, select Tools -> Function ID -> Populate FidDb from programs.
+Now, select __Tools -> Function ID -> Populate FidDb__ from programs.
 Fill out the options appropriately and click OK.
 
-If you'd like some details of our fine tuning, take a look at `Ghidra/Features/FunctionID/building_fid.txt`.
+If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.

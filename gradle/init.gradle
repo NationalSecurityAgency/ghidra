@@ -43,7 +43,7 @@ import org.apache.commons.io.filefilter.*;
 
 ext.HOME_DIR = System.getProperty('user.home')
 ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile()
-ext.FLAT_REPO_DIR = new File(HOME_DIR, "flatRepo")
+ext.FLAT_REPO_DIR = new File(REPO_DIR, "flatRepo")
 ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
 
 // Stores the size of the file being downloaded (for formatting print statements)
@@ -83,7 +83,6 @@ initscript {
 // This is where the real flow of the script starts...
 try {
 	createDirs()
-	createConfigFile()
 	populateFlatRepo()
 }
 finally {
@@ -100,30 +99,6 @@ def createDirs() {
    if (!FLAT_REPO_DIR.exists()) {
       FLAT_REPO_DIR.mkdirs()
    }
-}
-
-/**
- * Creates the repos.gradle configuration file that tells Gradle 
- * where to look for dependencies. This ensures that Gradle will 
- * find the jars we store in the local flat repo.
- */
-def createConfigFile() {
-
-   ext.repoConfigDir = new File(HOME_DIR + "/.gradle/init.d")
-   ext.repoConfigFile = new File(repoConfigDir, "repos.gradle")
-
-   if (!repoConfigDir.exists()) {
-      repoConfigDir.mkdirs()
-   }
-
-   repoConfigFile.write("ext.HOME = System.getProperty('user.home')")
-   repoConfigFile.append("\nallprojects {")
-   repoConfigFile.append("\n\trepositories {")
-   repoConfigFile.append("\n\t\tmavenCentral()")
-   repoConfigFile.append("\n\t\tjcenter()")
-   repoConfigFile.append('\n\t\tflatDir name: "flat", dirs:["$HOME/flatRepo"]')
-   repoConfigFile.append("\n\t}")
-   repoConfigFile.append("\n}")
 }
 
 /**
