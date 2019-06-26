@@ -104,7 +104,7 @@ the `init.gradle` script. If it ran correctly you will have a new folder, `flatR
  * cdt-8.6.0.zip
  * PyDev 6.3.1.zip
 
-There will also be a new archive, yajsw-stable-12.12.zip, placed in __ghidra.bin/Ghidra/Features/GhidraServer/__.  
+There will also be a new archive, yajsw-stable-12.12.zip, placed in `ghidra.bin/Ghidra/Features/GhidraServer/`.  
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
 instructions below...

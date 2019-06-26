@@ -10,7 +10,8 @@
  * Specifically, this task:                                                    *
  *                                                                             *
  *   1. Downloads various dependencies required by the ghidra build and        *
- *      puts them in <USER_HOME>/flatRepo. The files to be                     *
+ *      puts them in <ghidra repo>/ghidra/downloads/. From here they are       *
+ *      unzipped and/or copied to their final locations. The files to be       *
  *      downloaded:                                                            *
  *          - dex-tools-2.0.zip                                                *
  *          - AXMLPrinter2.jar                                                 *
@@ -29,14 +30,8 @@
  *                                                                             *
  *        gradle --init-script gradle/init.gradle <any_task>                   *
  *                                                                             *
- * Note: Running this script multiple times will cause the config              *
- *       file to be recreated and all dependencies re-downloaded.              *
- *                                                                             *
- * Note: All files are downloaded to a the standard java temporary folder      *
- *       location, in a sub-folder called 'ghidra. This is cleaned up and      *
- *       removed when the script completes.                                    *
- *       TODO: make sure this folder is cleaned up in EVERY case, especially   *
- *       if the script fails at some point                                     *
+ * Note: When running the script, files will only be downloaded if             * 
+ *       necessary (eg: they are not already in the downloads/ folder).        *                                                                     *
  *                                                                             *
  *******************************************************************************/
 
@@ -51,9 +46,10 @@ ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getPar
 ext.FLAT_REPO_DIR = new File(HOME_DIR, "flatRepo")
 ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
 
+// Stores the size of the file being downloaded (for formatting print statements)
 ext.FILE_SIZE = 0;
 
-// The URLs for each of the archives to be downloaded
+// The URLs for each of the dependencies
 ext.DEX_ZIP = 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip'
 ext.AXML_ZIP = 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar'
 ext.HFS_ZIP = 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip'
@@ -61,8 +57,7 @@ ext.YAJSW_ZIP = 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable
 ext.PYDEV_ZIP = 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip'
 ext.CDT_ZIP = 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 
-// Store the MD5s for each of the downloads so we can verify that we retrieved them
-// all successfully
+// The MD5s for each of the dependencies
 ext.DEX_MD5 = '032456b9db9e6059376611553aecf31f'
 ext.AXML_MD5 = '55d70be9862c2b456cc91a933c197934'
 ext.HFS_MD5 = 'cc1713d634d2cd1fd7f21e18ae4d5d5c'
@@ -160,7 +155,6 @@ def download(url, filename) {
      ostream.write(dataBuffer, 0, bytesRead);
      totalRead += bytesRead
 	      
-     // print progress on the same line in the console...
      print("\r")
      if (FILE_SIZE.equals("unknown")) {
         print("   Downloading: " + totalRead + " of " + FILE_SIZE)
