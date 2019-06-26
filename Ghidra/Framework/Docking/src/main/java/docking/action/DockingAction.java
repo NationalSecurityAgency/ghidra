@@ -489,7 +489,7 @@ public abstract class DockingAction implements DockingActionIf {
 		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
 	}
 
-	private String getInceptionFromTheFirstClassThatIsNotUs() {
+	protected String getInceptionFromTheFirstClassThatIsNotUs() {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
 		StackTraceElement[] trace = t.getStackTrace();
 		String classInfo = trace[0].toString();

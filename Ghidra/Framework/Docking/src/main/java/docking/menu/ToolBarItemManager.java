@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
 import docking.action.*;
+import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import ghidra.util.StringUtilities;
 
 /**
@@ -79,7 +80,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	}
 
 	private void setToolTipText(JButton button, DockingActionIf action, String toolTipText) {
-		String keyBindingText = getKeyBindingAcceleratorText(action.getKeyBinding());
+		String keyBindingText = getKeyBindingAcceleratorText(button, action.getKeyBinding());
 		if (keyBindingText != null) {
 			button.setToolTipText(combingToolTipTextWithKeyBinding(toolTipText, keyBindingText));
 		}
@@ -121,7 +122,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		return action.getName();
 	}
 
-	private String getKeyBindingAcceleratorText(KeyStroke keyStroke) {
+	private String getKeyBindingAcceleratorText(JButton button, KeyStroke keyStroke) {
 		if (keyStroke == null) {
 			return null;
 		}
@@ -130,8 +131,12 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		StringBuilder builder = new StringBuilder();
 		int modifiers = keyStroke.getModifiers();
 		if (modifiers > 0) {
-			builder.append(KeyEvent.getKeyModifiersText(modifiers));
-			builder.append('+');
+			builder.append(InputEvent.getModifiersExText(modifiers));
+
+			// The Aqua LaF does not use the '+' symbol between modifiers
+			if (!DockingWindowsLookAndFeelUtils.isUsingAquaUI(button.getUI())) {
+				builder.append('+');
+			}
 		}
 		int keyCode = keyStroke.getKeyCode();
 		if (keyCode != 0) {

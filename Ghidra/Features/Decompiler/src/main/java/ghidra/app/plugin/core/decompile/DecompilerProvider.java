@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -22,8 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -125,6 +125,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public DecompilerProvider(DecompilePlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), "Decompiler", plugin.getName(), DecompilerActionContext.class);
 		this.plugin = plugin;
+
 		clipboardProvider = new DecompilerClipboardProvider(plugin, this);
 		setConnected(isConnected);
 
@@ -135,8 +136,11 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		decompilerPanel.setHighlightController(highlightController);
 		decorationPanel = new DecoratorPanel(decompilerPanel, isConnected);
+
 		setTitle("Decompile");
-		setIcon(C_SOURCE_ICON);
+		setIcon(C_SOURCE_ICON, true);
+		setDefaultKeyBinding(
+			new KeyBindingData(KeyEvent.VK_E, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setWindowMenuGroup("Decompile");
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 		createActions(isConnected);

@@ -76,6 +76,9 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private static final String TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE =
 		"Transient providers are not added to the toolbar";
 
+	private static final String TRANSIENT_PROVIDER_KEY_BINDING_WARNING_MESSAGE =
+		"Transient providers cannot have key bindings";
+
 	public static final String DEFAULT_WINDOW_GROUP = "Default";
 
 	private static final String TOOLBAR_GROUP = "View";
@@ -95,19 +98,22 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/** True if this provider's action should appear in the toolbar */
 	private boolean isToolbarAction;
 	private boolean isTransient;
-	private HelpLocation helpLocation;
-
+	private KeyBindingData defaultKeyBindingData;
 	private Icon icon;
+
 	private String windowMenuGroup;
 	private String group = DEFAULT_WINDOW_GROUP;
 	private WindowPosition defaultWindowPosition = WindowPosition.WINDOW;
 	private WindowPosition defaultIntraGroupPosition = WindowPosition.STACK;
 	private DockingAction showProviderAction;
 
+	private HelpLocation helpLocation;
 	private final Class<?> contextType;
 
 	private long instanceID = UniversalIdGenerator.nextID().getValue();
 	private boolean instanceIDHasBeenInitialized;
+
+	private String inceptionInformation;
 
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
@@ -135,6 +141,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.owner = owner;
 		this.title = name;
 		this.contextType = contextType;
+
+		recordInception();
 	}
 
 	/**
@@ -152,15 +160,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		showProviderAction = new ShowProviderAction();
-	}
-
-	private void removeShowProviderAction() {
-		if (showProviderAction == null) {
-			return; //  not installed
-		}
-
-		dockingTool.removeAction(showProviderAction);
-		showProviderAction = null;
 	}
 
 	/**
@@ -494,6 +493,26 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Sets the default key binding that will show this provider when pressed
+	 * @param kbData the key binding
+	 */
+	public void setDefaultKeyBinding(KeyBindingData kbData) {
+
+		if (isInTool()) {
+			throw new IllegalStateException(
+				"Cannot set the default key binding after the provider is added to the tool");
+		}
+
+		this.defaultKeyBindingData = kbData;
+
+		if (isTransient) {
+			Msg.error(this, TRANSIENT_PROVIDER_KEY_BINDING_WARNING_MESSAGE,
+				ReflectionUtilities.createJavaFilteredThrowable());
+			this.defaultKeyBindingData = null;
+		}
+	}
+
+	/**
 	 * Convenience method for setting the provider's icon.
 	 * @param icon the icon to use for this provider.
 	 */
@@ -530,8 +549,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 
 			 	 4) Wire default 'close' action to keybinding
 			 	 5) Add global action for (show last provider)
-			 	 6) Remove plugin code that creates the 'show' actions
-			 	 	
+			 	 		--Navigation menu?
+			
 			 	 Questions:
 			
 			 	 	C) How to wire universal close action (it is focus-dependent)
@@ -539,7 +558,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 	
 			 	 Fix:
 			 	 	
-			 	 	-Toolbar description for key doesn't match menu (goes away)			 	 	
+			 	 	-Update key binding methods to use an enum for: no management / full management / shared management
+			 	 	-remove superfluous overrides of getIcon()	
 			 	 
 			 */
 
@@ -573,6 +593,12 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	protected void setTransient() {
 		isTransient = true;
 
+		if (isInTool()) {
+			throw new IllegalStateException(
+				"A component provider cannot be marked as 'transient' " +
+					"after it is added to the tool");
+		}
+
 		// avoid visually disturbing the user by adding/removing toolbar actions for temp providers
 		if (isToolbarAction) {
 			isToolbarAction = false;
@@ -580,7 +606,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		removeShowProviderAction();
+		if (defaultKeyBindingData != null) {
+			defaultKeyBindingData = null;
+			Msg.error(this, TRANSIENT_PROVIDER_KEY_BINDING_WARNING_MESSAGE,
+				ReflectionUtilities.createJavaFilteredThrowable());
+		}
 	}
 
 	/**
@@ -687,6 +717,22 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return name + " - " + getTitle() + " - " + getSubTitle();
 	}
 
+	private void recordInception() {
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			inceptionInformation = "";
+			return;
+		}
+
+		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
+	}
+
+	private String getInceptionFromTheFirstClassThatIsNotUs() {
+		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
+		StackTraceElement[] trace = t.getStackTrace();
+		String classInfo = trace[0].toString();
+		return classInfo;
+	}
+
 	/**
 	 * Returns any registered new provider name for the oldName/oldOwner pair.
 	 * @param oldOwner the old owner name
@@ -737,6 +783,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			if (isToolbarAction) {
 				setToolBarData(new ToolBarData(icon, TOOLBAR_GROUP));
 			}
+
+			if (defaultKeyBindingData != null) {
+				// this action itself is not 'key binding managed', but the system *will* use
+				// any key binding value we set when connecting 'shared' actions
+				setKeyBindingData(defaultKeyBindingData);
+			}
+
+			setDescription("Display " + name);
 		}
 
 		@Override
@@ -751,7 +805,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		@Override
 		public boolean usesSharedKeyBinding() {
+			// we do not allow transient providers to have key bindings
 			return !isTransient;
+		}
+
+		@Override
+		protected String getInceptionFromTheFirstClassThatIsNotUs() {
+			// overridden to show who created the provider, as that is what this action represents
+			return inceptionInformation;
 		}
 	}
 }

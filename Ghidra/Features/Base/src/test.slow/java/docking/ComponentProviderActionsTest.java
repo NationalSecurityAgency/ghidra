@@ -25,6 +25,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.action.KeyBindingData;
 import docking.actions.KeyEntryDialog;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.ToolOptions;
@@ -89,6 +90,59 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	public void testIcon_WithoutIcon() {
 		showProvider();
 		assertWindowMenuActionHasIcon(Icons.EMPTY_ICON);
+	}
+
+	@Test
+	public void testSetKeyBinding_DirectlyOnProvider() {
+		//
+		// This is how clients set key bindings on providers, as desired, when constructing them
+		//
+
+		KeyStroke defaultKs = CONTROL_T;
+		setDefaultKeyBinding(defaultKs);
+
+		showProvider();
+
+		assertProviderKeyStroke(defaultKs);
+		assertOptionsKeyStroke(defaultKs);
+		assertMenuItemHasKeyStroke(defaultKs);
+	}
+
+	@Test
+	public void testSetKeyBinding_DirectlyOnProvider_TransientProvider() {
+		//
+		// Transient providers cannot have key bindings
+		//
+		switchToTransientProvider();
+
+		setErrorsExpected(true);
+		setDefaultKeyBinding(CONTROL_T);
+		setErrorsExpected(false);
+
+		showProvider();
+
+		spyLogger.assertLogMessage("Transient", "cannot", "key", "binding");
+	}
+
+	@Test
+	public void testSetTransientAfterSettingKeyBinding() {
+
+		setDefaultKeyBinding(CONTROL_T);
+
+		setErrorsExpected(true);
+		switchToTransientProvider();
+		setErrorsExpected(false);
+
+		showProvider();
+
+		spyLogger.assertLogMessage("Transient", "not", "key", "binding");
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testSetTransientAfterAddedProviderToTheTool() {
+
+		showProvider();
+		switchToTransientProvider(); // exception
 	}
 
 	@Test
@@ -177,21 +231,6 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		}
 	}
 
-	@Test
-	public void testChangeActionRelatedStateAfterConstruction_setTransient() {
-
-		setToolbarIcon(ICON);
-		showProvider(); // this creates the 'Show Provider' action
-		assertShowProviderActionIsInToolbar();
-
-		setErrorsExpected(true);
-		switchToTransientProvider();
-		setErrorsExpected(false);
-
-		assertShowProviderActionNotInToolbar();
-		spyLogger.assertLogMessage("Transient", "not", "toolbar");
-	}
-
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -213,6 +252,10 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		provider.addToTool();
 		tool.showComponentProvider(provider, true);
 		waitForSwing();
+	}
+
+	private void setDefaultKeyBinding(KeyStroke defaultKs) {
+		runSwing(() -> provider.setDefaultKeyBinding(new KeyBindingData(defaultKs)));
 	}
 
 	private void setIcon(Icon icon) {

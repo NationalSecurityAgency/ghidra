@@ -54,12 +54,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 	public EquateTablePlugin(PluginTool tool) {
 		super(tool, true, false);
 
-		updateMgr = new SwingUpdateManager(1000, 3000, new Runnable() {
-			@Override
-			public void run() {
-				provider.updateEquates();
-			}
-		});
+		updateMgr = new SwingUpdateManager(1000, 3000, () -> provider.updateEquates());
 
 		provider = new EquateTableProvider(this);
 	}
@@ -131,10 +126,10 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 
 			ev.containsEvent(ChangeManager.DOCR_CODE_ADDED) ||
 			ev.containsEvent(ChangeManager.DOCR_CODE_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED) || 
-			
+			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED) ||
+
 			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED)) {
-			
+
 			updateMgr.update();
 		}
 
@@ -154,9 +149,6 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 		provider.programClosed();
 	}
 
-	/**
-	 * Delete the list of equates.
-	 */
 	void deleteEquates(List<Equate> equates) {
 		if (equates.isEmpty()) {
 			return;
@@ -173,13 +165,11 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 			}
 		}
 		String title = "Delete Equate" + (equates.size() > 1 ? "s" : "") + "?";
-		String msg =
-			"Do you really want to delete the equate" + (equates.size() > 1 ? "s" : "") + ": " +
-				equates + "  ?" + "\n\n   NOTE: All references will be removed.";
+		String msg = "Do you really want to delete the equate" + (equates.size() > 1 ? "s" : "") +
+			": " + equates + "  ?" + "\n\n   NOTE: All references will be removed.";
 
-		int option =
-			OptionDialog.showOptionDialog(provider.getComponent(), title, msg, "Delete",
-				OptionDialog.QUESTION_MESSAGE);
+		int option = OptionDialog.showOptionDialog(provider.getComponent(), title, msg, "Delete",
+			OptionDialog.QUESTION_MESSAGE);
 
 		if (option != OptionDialog.CANCEL_OPTION) {
 			tool.execute(new RemoveEquateCmd(equateNames, getTool()), currentProgram);
@@ -236,26 +226,24 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 	}
 
 	/**
-	 * If the equate exists, checks to make sure the value matches the 
-	 * current scalar value.
+	 * If the equate exists, checks to make sure the value matches the current scalar value
 	 * 
-	 * @param dialog the dialog whose status area should be set with any error messages.
-	 * @param equateStr the candidate equate name for the set or rename operation.
+	 * @param equate the equate to check
+	 * @param equateStr the candidate equate name for the set or rename operation
+	 * @return true if valid
 	 */
 	boolean isValid(Equate equate, String equateStr) {
-		// these are valid in the sense that they represent a clear or remove operation.
+		// these are valid in the sense that they represent a clear or remove operation
 		if (equateStr == null || equateStr.length() <= 0) {
 			return false;
 		}
 
-		// look up the new equate string
 		EquateTable equateTable = currentProgram.getEquateTable();
 		Equate newEquate = equateTable.getEquate(equateStr);
-
 		if (newEquate != null && !newEquate.equals(equate)) {
-			Msg.showInfo(getClass(), provider.getComponent(), "Rename Equate Failed!", "Equate " +
-				equateStr + " exists with value 0x" + Long.toHexString(newEquate.getValue()) +
-				" (" + newEquate.getValue() + ")");
+			Msg.showInfo(getClass(), provider.getComponent(), "Rename Equate Failed!",
+				"Equate " + equateStr + " exists with value 0x" +
+					Long.toHexString(newEquate.getValue()) + " (" + newEquate.getValue() + ")");
 			return false;
 		}
 		return true;

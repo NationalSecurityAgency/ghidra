@@ -21,7 +21,8 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -62,12 +63,14 @@ public class CallTreePlugin extends ProgramPlugin {
 		ResourceManager.loadImage("images/arrow_rotate_clockwise.png");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
-	private DockingAction showProviderAction;
+	private DockingAction showCallTreeFromMenuAction;
+	private CallTreeProvider primaryProvider;
 
 	public CallTreePlugin(PluginTool tool) {
 		super(tool, true, false, false);
 
 		createActions();
+		primaryProvider = new CallTreeProvider(this, true);
 	}
 
 	@Override
@@ -116,7 +119,10 @@ public class CallTreePlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		showProviderAction = new DockingAction("Show Function Call Trees", getName()) {
+
+		// use the name of the provider so that the shared key binding data will get used
+		String actionName = CallTreeProvider.TITLE;
+		showCallTreeFromMenuAction = new DockingAction(actionName, getName()) {
 
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -127,16 +133,27 @@ public class CallTreePlugin extends ProgramPlugin {
 			public boolean isAddToPopup(ActionContext context) {
 				return (context instanceof ListingActionContext);
 			}
+
+			@Override
+			public boolean isKeyBindingManaged() {
+				return false;
+			}
+
+			@Override
+			public boolean usesSharedKeyBinding() {
+				return true;
+			}
 		};
-		showProviderAction.setPopupMenuData(new MenuData(
+
+		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
 			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));
-		showProviderAction.setToolBarData(new ToolBarData(PROVIDER_ICON, "View"));
-		showProviderAction.setHelpLocation(new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
-		tool.addAction(showProviderAction);
+		showCallTreeFromMenuAction.setHelpLocation(
+			new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
+		tool.addAction(showCallTreeFromMenuAction);
 	}
 
 	private void creatAndShowProvider() {
-		CallTreeProvider provider = new CallTreeProvider(this);
+		CallTreeProvider provider = new CallTreeProvider(this, false);
 		providers.add(provider);
 		provider.initialize(currentProgram, currentLocation);
 		tool.showComponentProvider(provider, true);

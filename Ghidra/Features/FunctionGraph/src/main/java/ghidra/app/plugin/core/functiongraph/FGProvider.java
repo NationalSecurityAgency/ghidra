@@ -109,8 +109,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		setWindowMenuGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setWindowGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
+
+		setIcon(FunctionGraphPlugin.ICON, true);
 		setHelpLocation(new HelpLocation("FunctionGraphPlugin", "FunctionGraphPlugin"));
-		setIcon(FunctionGraphPlugin.ICON);
 
 		addToTool();
 		addSatelliteFeature(); // must be after addToTool();

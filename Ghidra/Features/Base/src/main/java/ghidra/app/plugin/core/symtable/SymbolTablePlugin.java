@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.symtable;
 
 import java.awt.Cursor;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
@@ -74,12 +73,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
 
-	final static ImageIcon SYM_GIF = ResourceManager.loadImage("images/table.png");
-	final static ImageIcon REF_GIF = ResourceManager.loadImage("images/table_go.png");
-
-	private DockingAction viewSymTableAction;
-	private DockingAction viewRefTableAction;
-
 	private DockingAction openRefsAction;
 	private DockingAction deleteAction;
 	private DockingAction makeSelectionAction;
@@ -113,10 +106,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		symProvider = new SymbolProvider(this);
 		refProvider = new ReferenceProvider(this);
 
-		tool.addComponentProvider(symProvider, false);
-		tool.addComponentProvider(refProvider, false);
-
-		createActions();
 		createSymActions();
 		createRefActions();
 
@@ -133,8 +122,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		super.dispose();
 		swingMgr.dispose();
 
-		viewSymTableAction.dispose();
-		viewRefTableAction.dispose();
 		deleteAction.dispose();
 		makeSelectionAction.dispose();
 
@@ -355,34 +342,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		if (refProvider != null) {
 			refProvider.closeComponent();
 		}
-	}
-
-	private void createActions() {
-		viewSymTableAction = new DockingAction("View Symbol Table", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(symProvider, true);
-			}
-		};
-		viewSymTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table.png"), "View"));
-		viewSymTableAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-
-		viewSymTableAction.setDescription("Display Symbol Table");
-		tool.addAction(viewSymTableAction);
-
-		viewRefTableAction = new DockingAction("View Symbol References", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(refProvider, true);
-			}
-		};
-		viewRefTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table_go.png"), "View"));
-
-		viewRefTableAction.setDescription("Display Symbol References");
-		tool.addAction(viewRefTableAction);
 	}
 
 	private void createSymActions() {

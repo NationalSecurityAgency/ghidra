@@ -45,9 +45,11 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
+import resources.ResourceManager;
 
 public class SymbolTreeProvider extends ComponentProviderAdapter {
 
+	private static final ImageIcon ICON = ResourceManager.loadImage("images/sitemap_color.png");
 	private final static String NAME = "Symbol Tree";
 
 	private ClipboardOwner clipboardOwner;
@@ -100,6 +102,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	public SymbolTreeProvider(PluginTool tool, SymbolTreePlugin plugin) {
 		super(tool, NAME, plugin.getName());
 		this.plugin = plugin;
+
+		setIcon(ICON, true);
 
 		domainObjectListener = new SymbolTreeProviderDomainObjectListener();
 
@@ -229,11 +233,6 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		setProgram(program);
-	}
-
-	@Override
-	public ImageIcon getIcon() {
-		return SymbolTreePlugin.SYMBOL_TREE_ICON;
 	}
 
 //==================================================================================================

@@ -21,9 +21,6 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -43,7 +40,6 @@ import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
 //@formatter:off
@@ -75,8 +71,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private static final String PROGRAM_PATH_ID = "Program Path";
 	private static final String DISCONNECTED_COUNT_ID = "Disconnected Count";
 
-	private DockingAction showFunctionGraphAction;
-
 	private FGProvider connectedProvider;
 	private List<FGProvider> disconnectedProviders = new ArrayList<>();
 	private FormatManager userDefinedFormatManager;
@@ -87,8 +81,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 	public FunctionGraphPlugin(PluginTool tool) {
 		super(tool, true, true, true);
-
-		createActions();
 
 		colorProvider = new IndependentColorProvider(tool);
 	}
@@ -214,21 +206,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 				removeProvider(provider);
 			}
 		}
-	}
-
-	private void createActions() {
-		showFunctionGraphAction = new DockingAction("Display Function Graph", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		showFunctionGraphAction.setToolBarData(new ToolBarData(ICON, "View"));
-
-		showFunctionGraphAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Plugin"));
-
-		tool.addAction(showFunctionGraphAction);
 	}
 
 	void showProvider() {

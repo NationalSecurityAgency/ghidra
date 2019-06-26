@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.symtable;
 
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -22,6 +23,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 import docking.ActionContext;
+import docking.DockingUtils;
+import docking.action.KeyBindingData;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -34,8 +37,12 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
+import resources.ResourceManager;
 
 class SymbolProvider extends ComponentProviderAdapter {
+
+	private static final ImageIcon ICON = ResourceManager.loadImage("images/table.png");
+
 	private SymbolTablePlugin plugin;
 	private SymbolRenderer renderer;
 	private SymbolTableModel symbolKeyModel;
@@ -44,6 +51,10 @@ class SymbolProvider extends ComponentProviderAdapter {
 	SymbolProvider(SymbolTablePlugin plugin) {
 		super(plugin.getTool(), "Symbol Table", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
+
+		setIcon(ICON, true);
+		setDefaultKeyBinding(
+			new KeyBindingData(KeyEvent.VK_T, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHelpLocation(new HelpLocation(plugin.getName(), "Symbol_Table"));
 		setWindowGroup("symbolTable");
 		renderer = new SymbolRenderer();
@@ -51,6 +62,8 @@ class SymbolProvider extends ComponentProviderAdapter {
 		symbolKeyModel = new SymbolTableModel(this, plugin.getTool());
 		symbolPanel = new SymbolPanel(this, symbolKeyModel, renderer, plugin.getTool(),
 			plugin.getGoToService());
+
+		addToTool();
 	}
 
 	void updateTitle() {
@@ -162,11 +175,6 @@ class SymbolProvider extends ComponentProviderAdapter {
 		}
 		return "(Filter settings matched " + symbolPanel.getActualSymbolCount() + " Symbols)";
 
-	}
-
-	@Override
-	public ImageIcon getIcon() {
-		return SymbolTablePlugin.SYM_GIF;
 	}
 
 	void open() {

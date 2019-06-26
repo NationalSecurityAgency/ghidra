@@ -143,13 +143,17 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 	public String getHelpInfo() {
 		StringBuilder buffy = new StringBuilder(super.getHelpInfo());
 
-		Class<? extends ComponentProvider> clazz = info.getProvider().getClass();
+		ComponentProvider provider = info.getProvider();
+		Class<? extends ComponentProvider> clazz = provider.getClass();
 		String className = clazz.getName();
 		String filename = className.substring(className.lastIndexOf('.') + 1);
-		String javaName = filename + ".java";
 
-		buffy.append("    ").append("PROVIDER:    ").append(info.getName()).append(' ');
-		buffy.append('(').append(javaName).append(":1)");
+		DockingActionIf showAction = provider.getShowProviderAction();
+		String realInception = showAction.getInceptionInformation();
+		buffy.append("           ").append(realInception).append("\n    ");
+
+		buffy.append("    ").append("PROVIDER:    ").append(filename).append(' ');
+		buffy.append('(').append(provider.getOwner()).append(")");
 		buffy.append("\n    ");
 
 		return buffy.toString();

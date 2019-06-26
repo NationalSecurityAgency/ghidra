@@ -65,7 +65,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private Program currentProgram;
 
 	public ConsoleComponentProvider(PluginTool tool, String name) {
-		super(tool, name, name);
+		super(tool, "Console", name);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setHelpLocation(new HelpLocation(getName(), "console"));

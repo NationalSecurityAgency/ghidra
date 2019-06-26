@@ -71,8 +71,10 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			boolean isConnected) {
 		super(tool, plugin, "Bytes", ByteViewerActionContext.class);
 		this.isConnected = isConnected;
-		decorationComponent = new DecoratorPanel(panel, isConnected);
 
+		setIcon(ResourceManager.loadImage("images/binaryData.gif"), true);
+
+		decorationComponent = new DecoratorPanel(panel, isConnected);
 		clipboardProvider = new ByteViewerClipboardProvider(this, tool);
 		addToTool();
 
@@ -503,7 +505,8 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	/**
-	 * Gets the text of the current {@link ProgramSelection}.
+	 * Gets the text of the current {@link ProgramSelection}
+	 * @return the text
 	 */
 	String getCurrentTextSelection() {
 		return panel.getCurrentComponent().getTextForSelection();

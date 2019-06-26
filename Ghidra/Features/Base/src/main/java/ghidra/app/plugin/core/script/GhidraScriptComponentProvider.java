@@ -102,7 +102,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		this.plugin = plugin;
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
-		setIcon(ResourceManager.loadImage("images/play.png"));
+		setIcon(ResourceManager.loadImage("images/play.png"), true);
 		setWindowGroup(WINDOW_GROUP);
 
 		build();

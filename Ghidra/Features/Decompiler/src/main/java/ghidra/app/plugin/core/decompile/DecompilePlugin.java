@@ -15,14 +15,10 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.*;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.decompiler.component.DecompilerHighlightService;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
@@ -37,9 +33,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 /**
  * Plugin for producing a high-level C interpretation of assembly functions.
@@ -72,8 +66,6 @@ public class DecompilePlugin extends Plugin {
 	private ProgramLocation currentLocation;
 	private ProgramSelection currentSelection;
 
-	private DockingAction decompileAction;
-
 	/**
 	 * Delay location changes to allow location events to settle down.
 	 * This happens when a readDataState occurs when a tool is restored
@@ -92,8 +84,6 @@ public class DecompilePlugin extends Plugin {
 		disconnectedProviders = new ArrayList<>();
 		connectedProvider = new PrimaryDecompilerProvider(this);
 
-		createActions();
-
 		registerServices();
 	}
 
@@ -110,22 +100,6 @@ public class DecompilePlugin extends Plugin {
 				provider.setClipboardService(clipboardService);
 			}
 		}
-	}
-
-	private void createActions() {
-		decompileAction = new DockingAction("Display Decompiler", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		decompileAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/decompileFunction.gif"), "View"));
-		decompileAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
-
-		decompileAction.setHelpLocation(new HelpLocation(getName(), "Decompiler"));
-		tool.addAction(decompileAction);
 	}
 
 	/**
@@ -182,10 +156,6 @@ public class DecompilePlugin extends Plugin {
 				provider.readDataState(providerSaveState);
 			}
 		}
-	}
-
-	private void showProvider() {
-		connectedProvider.setVisible(true);
 	}
 
 	DecompilerProvider createNewDisconnectedProvider() {
