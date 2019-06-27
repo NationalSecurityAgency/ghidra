@@ -234,7 +234,9 @@ class Heritage {
   void analyzeNewLoadGuards(void);
   void generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc);
   void generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc);
-  void discoverIndexedStackPointers(AddrSpace *spc);
+  bool protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
+  bool discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores);
+  void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
   void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);

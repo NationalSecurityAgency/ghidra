@@ -743,8 +743,11 @@ void Heritage::analyzeNewLoadGuards(void)
 void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 
 {
-  loadGuard.push_back(LoadGuard());
-  loadGuard.back().set(op,spc,node.offset);
+  if (!op->usesSpacebasePtr()) {
+    loadGuard.push_back(LoadGuard());
+    loadGuard.back().set(op,spc,node.offset);
+    fd->opMarkSpacebasePtr(op);
+  }
 }
 
 /// \brief Generate a guard record given an indexed STORE to a stack space
@@ -757,25 +760,66 @@ void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 void Heritage::generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
 
 {
-  storeGuard.push_back(LoadGuard());
-  storeGuard.back().set(op,spc,node.offset);
-  fd->opMarkSpacebaseStore(op);
+  if (!op->usesSpacebasePtr()) {
+    storeGuard.push_back(LoadGuard());
+    storeGuard.back().set(op,spc,node.offset);
+    fd->opMarkSpacebasePtr(op);
+  }
 }
 
-/// \brief Trace input stackpointer to any indexed loads
+/// \brief Identify any CPUI_STORE ops that use a free pointer from a given address space
+///
+/// When performing heritage for stack Varnodes, data-flow around a STORE with a
+/// free pointer must be guarded (with an INDIRECT) to be safe. This routine collects
+/// and marks the STORE ops that trigger this guard.
+/// \param spc is the given address space
+/// \param freeStores will hold the list of STOREs if any
+/// \return \b true if there are any new STOREs needing a guard
+bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
+
+{
+  list<PcodeOp *>::const_iterator iter = fd->beginOp(CPUI_STORE);
+  list<PcodeOp *>::const_iterator enditer = fd->endOp(CPUI_STORE);
+  bool hasNew = false;
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->isDead()) continue;
+    Varnode *vn = op->getIn(1);
+    if (vn->isWritten()) {
+      PcodeOp *copyOp = vn->getDef();
+      if (copyOp->code() == CPUI_COPY)
+	vn = copyOp->getIn(0);
+    }
+    if (vn->isFree() && vn->getSpace() == spc) {
+      fd->opMarkSpacebasePtr(op);	// Mark op as spacebase STORE, even though we're not sure
+      freeStores.push_back(op);
+      hasNew = true;
+    }
+  }
+  return hasNew;
+}
+
+/// \brief Trace input stack-pointer to any indexed loads
 ///
 /// Look for expressions of the form  val = *(SP(i) + vn + #c), where the base stack
 /// pointer has an (optional) constant added to it and a non-constant index, then a
 /// value is loaded from the resulting address.  The LOAD operations are added to the list
-/// of ops that potentially need to be guarded during a heritage pass.
+/// of ops that potentially need to be guarded during a heritage pass.  The routine can
+/// checks for STOREs where the data-flow path hasn't been completed yet and returns
+/// \b true if they exist, passing back a list of those that might use a pointer to the stack.
 /// \param spc is the particular address space with a stackpointer (into it)
-void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
+/// \param freeStores will hold the list of any STOREs that need follow-up analysis
+/// \param checkFreeStores is \b true if the routine should check for free STOREs
+/// \return \b true if there are incomplete STOREs
+bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores)
 
 {
   // We need to be careful of exponential ladders, so we mark Varnodes independently of
   // the depth first path we are traversing.
   vector<Varnode *> markedVn;
   vector<StackNode> path;
+  bool unknownStackStorage = false;
   for(int4 i=0;i<spc->numSpacebase();++i) {
     const VarnodeData &stackPointer(spc->getSpacebase(i));
     Varnode *spInput = fd->findVarnodeInput(stackPointer.size, stackPointer.getAddr());
@@ -803,6 +847,8 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
 	      path.push_back(nextNode);
 	      markedVn.push_back(outVn);
 	    }
+	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	      unknownStackStorage = true;
 	  }
 	  else {
 	    StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::nonconstant_index);
@@ -811,6 +857,8 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
 	      path.push_back(nextNode);
 	      markedVn.push_back(outVn);
 	    }
+	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	      unknownStackStorage = true;
 	  }
 	  break;
 	}
@@ -823,6 +871,8 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
 	    path.push_back(nextNode);
 	    markedVn.push_back(outVn);
 	  }
+	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	    unknownStackStorage = true;
 	  break;
 	}
 	case CPUI_MULTIEQUAL:
@@ -833,6 +883,8 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
 	    path.push_back(nextNode);
 	    markedVn.push_back(outVn);
 	  }
+	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	    unknownStackStorage = true;
 	  break;
 	}
 	case CPUI_LOAD:
@@ -859,6 +911,48 @@ void Heritage::discoverIndexedStackPointers(AddrSpace *spc)
   }
   for(int4 i=0;i<markedVn.size();++i)
     markedVn[i]->clearMark();
+  if (unknownStackStorage && checkFreeStores)
+    return protectFreeStores(spc, freeStores);
+  return false;
+}
+
+/// \brief Revisit STOREs with free pointers now that a heritage pass has completed
+///
+/// We regenerate STORE LoadGuard records then cross-reference with STOREs that were
+/// originally free to see if they actually needed a LoadGaurd.  If not, the STORE
+/// is unmarked and INDIRECTs it has caused are removed.
+/// \param spc is the address space being guarded
+/// \param freeStores is the list of STOREs that were marked as free
+void Heritage::reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
+
+{
+  for(int4 i=0;i<freeStores.size();++i)
+    fd->opClearSpacebasePtr(freeStores[i]);
+
+  discoverIndexedStackPointers(spc, freeStores, false);
+
+  for(int4 i=0;i<freeStores.size();++i) {
+    PcodeOp *op = freeStores[i];
+
+    // If the STORE now is marked as using a spacebase ptr, then it was appropriately
+    // marked to begin with, and we don't need to clean anything up
+    if (op->usesSpacebasePtr()) continue;
+
+    // If not the STORE may have triggered INDIRECTs that are unnecessary
+    PcodeOp *indOp = op->previousOp();
+    while(indOp != (PcodeOp *)0) {
+      if (indOp->code() != CPUI_INDIRECT) break;
+      Varnode *iopVn = indOp->getIn(1);
+      if (iopVn->getSpace()->getType()!=IPTR_IOP) break;
+      if (op != PcodeOp::getOpFromConst(iopVn->getAddr())) break;
+      PcodeOp *nextOp = indOp->previousOp();
+      if (indOp->getOut()->getSpace() == spc) {
+	fd->totalReplace(indOp->getOut(),indOp->getIn(0));
+	fd->opDestroy(indOp);		// Get rid of the INDIRECT
+      }
+      indOp = nextOp;
+    }
+  }
 }
 
 /// \brief Normalize p-code ops so that phi-node placement and renaming works
@@ -2086,6 +2180,9 @@ void Heritage::heritage(void)
   Varnode *vn;
   bool needwarning;
   Varnode *warnvn = (Varnode *)0;
+  int4 reprocessStackCount = 0;
+  AddrSpace *stackSpace = (AddrSpace *)0;
+  vector<PcodeOp *> freeStores;
   const AddrSpaceManager *manage = fd->getArch();
   PreferSplitManager splitmanage;
 
@@ -2104,7 +2201,10 @@ void Heritage::heritage(void)
     if (pass < info->delay) continue; // It is too soon to heritage this space
     if (!info->loadGuardSearch) {
       info->loadGuardSearch = true;
-      discoverIndexedStackPointers(info->space);
+      if (discoverIndexedStackPointers(info->space,freeStores,true)) {
+	reprocessStackCount += 1;
+	stackSpace = space;
+      }
     }
     needwarning = false;
     iter = fd->beginLoc(space);
@@ -2159,6 +2259,8 @@ void Heritage::heritage(void)
   }
   placeMultiequals();
   rename();
+  if (reprocessStackCount > 0)
+    reprocessFreeStores(stackSpace, freeStores);
   analyzeNewLoadGuards();
   handleNewLoadCopies();
   if (pass == 0)

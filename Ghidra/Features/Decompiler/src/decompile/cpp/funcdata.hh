@@ -421,7 +421,8 @@ public:
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
   void opMarkCpoolTransformed(PcodeOp *op) { op->setFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
   void opMarkCalculatedBool(PcodeOp *op) { op->setFlag(PcodeOp::calculated_bool); }	///< Mark PcodeOp as having boolean output
-  void opMarkSpacebaseStore(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as STOREing from spacebase ptr
+  void opMarkSpacebasePtr(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as LOAD/STORE from spacebase ptr
+  void opClearSpacebasePtr(PcodeOp *op) { op->clearFlag(PcodeOp::spacebase_ptr); }	///< Unmark PcodeOp as using spacebase ptr
   void opFlipCondition(PcodeOp *op) { op->flipFlag(PcodeOp::boolean_flip); }	///< Flip output condition of given CBRANCH
   PcodeOp *target(const Address &addr) const { return obank.target(addr); }	///< Look up a PcodeOp by an instruction Address
   Varnode *createStackRef(AddrSpace *spc,uintb off,PcodeOp *op,Varnode *stackptr,bool insertafter);
