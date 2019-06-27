@@ -129,8 +129,8 @@ protected:
   int4 depth;			// Depth of the current node
   int4 breadcrumb[32];	// Path of operands from root
 public:
-  ParserWalker(const ParserContext *c) { const_context = c; cross_context = (const ParserContext *)0; }
-  ParserWalker(const ParserContext *c,const ParserContext *cross) { const_context = c; cross_context = cross; }
+  ParserWalker(const ParserContext *c) : breadcrumb{} { const_context = c; cross_context = (const ParserContext *)0; }
+  ParserWalker(const ParserContext *c,const ParserContext *cross) : breadcrumb{} { const_context = c; cross_context = cross; }
   const ParserContext *getParserContext(void) const { return const_context; }
   void baseState(void) { point = const_context->base_state; depth=0; breadcrumb[0] = 0; }
   void setOutOfBandState(Constructor *ct,int4 index,ConstructState *tempstate,const ParserWalker &otherwalker);

@@ -288,6 +288,8 @@ void DynamicHash::calcHash(const Varnode *root,uint4 method)
   bool attachedop = true;
   for(ct=0;ct<opedge.size();++ct) { // Find op that is directly attached to -root- i.e. not a skip op
     op = opedge[ct].getOp();
+    if (!op)
+      throw LowlevelError("Invalid ct op");
     slot = opedge[ct].getSlot();
     if ((slot < 0) && (op->getOut() == root)) break;
     if ((slot >=0) && (op->getIn(slot)==root)) break;
@@ -297,6 +299,8 @@ void DynamicHash::calcHash(const Varnode *root,uint4 method)
     slot = opedge[0].getSlot();
     attachedop = false;
   }
+  if (!op)
+    throw LowlevelError("Invalid no/0 op");
 
   // 15 bits unused
   hash = attachedop ? 0 : 1;

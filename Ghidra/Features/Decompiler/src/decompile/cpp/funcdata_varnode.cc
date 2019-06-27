@@ -52,6 +52,9 @@ HighVariable *Funcdata::assignHigh(Varnode *vn)
     if (vn->hasCover())
       vn->calcCover();
     if (!vn->isAnnotation()) {
+      //ATTN  No code ATM reads the return, the 'new' is stored in vn->high.
+      //      This will look like a memory leak at first glance, assuming
+      //      vn->high is freed.
       return new HighVariable(vn);
     }
   }

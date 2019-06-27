@@ -20,6 +20,7 @@ ConstTpl::ConstTpl(const_type tp)
 
 {				// Constructor for relative jump constants and uniques
   type = tp;
+  value_real = 0;
 }
 
 ConstTpl::ConstTpl(const_type tp,uintb val)

@@ -327,8 +327,8 @@ bool SplitVarnode::findDefinitionPoint(void)
 PcodeOp *SplitVarnode::findEarliestSplitPoint(void)
 
 { // Find the earliest definition point of the lo and hi pieces
-  if (!hi->isWritten()) return (PcodeOp *)0;
-  if (!lo->isWritten()) return (PcodeOp *)0;
+  if (!hi || !hi->isWritten()) return (PcodeOp *)0;
+  if (!lo || !lo->isWritten()) return (PcodeOp *)0;
   PcodeOp *hiop = hi->getDef();
   PcodeOp *loop = lo->getDef();
   if (loop->getParent() != hiop->getParent())

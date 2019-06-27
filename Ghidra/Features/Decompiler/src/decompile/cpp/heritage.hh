@@ -184,6 +184,8 @@ class Heritage {
     list<PcodeOp *>::const_iterator iter;	///< Next PcodeOp to follow
     StackNode(Varnode *v,uintb o,uint4 trav) {
       vn = v;
+      if (!v)
+	throw LowlevelError("StackNode nullptr v");
       offset = o;
       iter = v->beginDescend();
       traversals = trav;

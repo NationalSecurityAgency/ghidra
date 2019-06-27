@@ -472,6 +472,7 @@ void CodeDataAnalysis::findUnlinked(void)
     if ((cu.flags & (CodeUnit::targethit|CodeUnit::notcode))==CodeUnit::targethit) {
       Address codeaddr = (*iter).first;
       DisassemblyResult res;
+      memset(&res, 0, sizeof(res));
       disengine.disassemble(codeaddr,res);
       if ((cu.flags & CodeUnit::thunkhit)!=0)
 	resolveThunkHit(codeaddr,res.targethit);
@@ -685,6 +686,7 @@ void CodeDataAnalysis::runModel(void)
   loadimage->openSectionInfo();
   Address lastaddr;
   do {
+    memset(&secinfo, 0, sizeof(secinfo));
     moresections = loadimage->getNextSection(secinfo);
     Address endaddr = secinfo.address + secinfo.size;
     if (secinfo.size == 0) continue;

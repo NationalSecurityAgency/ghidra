@@ -650,10 +650,9 @@ ProtoModel *Architecture::parseProto(const Element *el)
   res->restoreXml(el);
   
   ProtoModel *other = protoModels[res->getName()];
-  if (other != (ProtoModel *)0) {
-    delete res;
+  if (other != (ProtoModel *)0)
     throw LowlevelError("Duplicate ProtoModel name: "+res->getName());
-  }
+
   protoModels[res->getName()] = res;
   return res;
 }

@@ -993,8 +993,11 @@ void IfcRename::execute(istream &s)
   else
     throw IfaceExecutionError("More than one symbol named: "+oldname);
 
-  if (sym->getCategory() == 0)
+  if (sym->getCategory() == 0) {
+    if (!dcp->fd)
+      throw LowlevelError("Invalid rename dcp->fd");
     dcp->fd->getFuncProto().setInputLock(true);
+  }
   sym->getScope()->renameSymbol(sym,newname);
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
@@ -1046,8 +1049,11 @@ void IfcRetype::execute(istream &s)
   else
     sym = symList[0];
 
-  if (sym->getCategory()==0)
+  if (sym->getCategory()==0) {
+    if (!dcp->fd)
+      throw LowlevelError("Invalid retype dcp->fd");
     dcp->fd->getFuncProto().setInputLock(true);
+  }
   sym->getScope()->retypeSymbol(sym,ct);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
   if ((newname.size()!=0)&&(newname != name)) {

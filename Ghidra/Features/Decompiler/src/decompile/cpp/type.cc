@@ -974,9 +974,11 @@ void TypeCode::printRaw(ostream &s) const
 void TypeCode::setProperties(bool hasThisPtr,bool isConstructor,bool isDestructor)
 
 {
-  proto->setThisPointer(hasThisPtr);
-  proto->setConstructor(isConstructor);
-  proto->setDestructor(isDestructor);
+  if (proto) {
+    proto->setThisPointer(hasThisPtr);
+    proto->setConstructor(isConstructor);
+    proto->setDestructor(isDestructor);
+  }
 }
 
 

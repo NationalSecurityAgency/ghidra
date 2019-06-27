@@ -311,6 +311,8 @@ bool ConditionMarker::finalJudgement(Varnode *vn)
     if (binary2op->isBoolOutput()) break;
   }
   // Check if the binary ops are exactly the same
+  if (!binary2op)
+    throw LowlevelError("No binary2ops");
   if (binaryop->code() == binary2op->code()) {
     if (varnodeSame(binaryop->getIn(0),binary2op->getIn(0)) &&
 	varnodeSame(binaryop->getIn(1),binary2op->getIn(1)))

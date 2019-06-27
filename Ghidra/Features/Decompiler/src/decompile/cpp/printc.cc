@@ -1401,7 +1401,7 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
 bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *vn,const PcodeOp *op)
 
 {
-  if (val==0) return false;
+  if (val==0 || !op) return false;
   AddrSpace *spc = glb->getDefaultSpace();
   Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr());
   if (stringaddr.isInvalid()) return false;

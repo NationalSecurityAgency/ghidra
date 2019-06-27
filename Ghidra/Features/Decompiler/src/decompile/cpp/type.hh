@@ -253,8 +253,10 @@ public:
   /// Construct from another TypeArray
   TypeArray(const TypeArray &op) : Datatype(op) { arrayof = op.arrayof; arraysize = op.arraysize; }
   /// Construct given an array size and element data-type
-  TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE_ARRAY) {
-    arraysize = n; arrayof = ao; }
+  TypeArray(int4 n,Datatype *ao) : Datatype(0,TYPE_ARRAY) {
+    if (!ao)
+      throw LowlevelError("TypeArray constructor ao nullptr");
+    arraysize = n; arrayof = ao; size=n*ao->getSize(); }
   Datatype *getBase(void) const { return arrayof; }	///< Get the element data-type
   int4 numElements(void) const { return arraysize; }	///< Get the number of elements
   Datatype *getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const;	///< Figure out what a byte range overlaps

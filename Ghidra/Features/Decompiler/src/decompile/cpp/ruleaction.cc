@@ -5630,7 +5630,8 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
       ++iter;
     }
   }
-    
+  if (!ct)
+    return 0;
   tp = (const TypePointer *) ct;
   ct = tp->getPtrTo();		// Type being pointed to
   int4 unitsize = AddrSpace::addressToByteInt(1,tp->getWordSize());
@@ -5757,7 +5758,7 @@ int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
 
   // vni and vnadd2 are propagated, so they shouldn't be free
   if (vnadd2->isFree() && (!vnadd2->isConstant())) return 0;
-  if (vni->isFree() && (!vni->isConstant())) return 0;
+  if (!vni || (vni->isFree() && (!vni->isConstant()))) return 0;
 
   newop = data.newOp(2,decop->getAddr());
   data.opSetOpcode(newop,CPUI_INT_ADD);
@@ -6185,7 +6186,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *subop = RuleDivOpt::findSubshift(op,n,shiftopc);
   if (subop == (PcodeOp *)0) return 0;
   // TODO: Cannot currently support 128-bit arithmetic, except in special case of 2^64
-  if (n > 64) return 0;
+  if (n > 64 || n < 0) return 0;
   
   Varnode *multvn = subop->getIn(0);
   if (!multvn->isWritten()) return 0;
@@ -6207,7 +6208,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
   }
 
   uintb newc;
-  if (n < 64 || (extvn->getSize() <= 8)) {
+  if (extvn->getSize() <= 8) {
     uintb pow = 1;
     pow <<= n;			// Calculate 2^n
     newc = multConst + pow;
@@ -6315,6 +6316,7 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
   if (subpieceop->code() != CPUI_SUBPIECE) return 0;
   int4 n = subpieceop->getIn(1)->getOffset() *8;
   if (n!= 8*(subpieceop->getIn(0)->getSize() - z->getSize())) return 0;
+  if (n < 0) return 0;
   Varnode *multvn = subpieceop->getIn(0);
   if (!multvn->isWritten()) return 0;
   PcodeOp *multop = multvn->getDef();
@@ -6474,6 +6476,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
   uintb y;
   if (multop->getIn(1)->isConstantExtended(y) < 0) return 0;
   if (!multop->getIn(0)->isWritten()) return 0;
+  if (nint < 0) return 0;
   uintb n = nint;
   extop = multop->getIn(0)->getDef();
   OpCode extopc = extop->code();
@@ -7896,11 +7899,9 @@ PcodeOp *RuleThreeWayCompare::detectThreeWay(PcodeOp *op,bool &isPartial)
   int4 form = testCompareEquivalence(lessop,lessequalop);
   if (form < 0)
     return (PcodeOp *)0;
-  if (form == 1) {
-    PcodeOp *tmpop = lessop;
+  if (form == 1)
     lessop = lessequalop;
-    lessequalop = tmpop;
-  }
+
   return lessop;
 }
 

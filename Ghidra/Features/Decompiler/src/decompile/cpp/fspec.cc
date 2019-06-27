@@ -552,6 +552,8 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 	curentry = &entry[j];
 	if (curentry->getGroup() == i) break; // Find first entry of the missing group
       }
+      if (!curentry)
+	throw LowlevelError("Invalid curentry");
       if ((!seenfloattrial)&&(curentry->getType()==TYPE_FLOAT))
 	continue;		// Don't fill in unreferenced floats if we haven't seen any floats
       if ((!seeninttrial)&&(curentry->getType()!=TYPE_FLOAT))
@@ -1956,7 +1958,7 @@ void ScoreProtoModel::doScore(void)
     const PEntry &p( entry[i] );
     if (p.slot > nextfree) {	// We have some kind of hole in our slot coverage
       while(nextfree < p.slot) {
-	if (nextfree < 4)
+	if (nextfree < 4 && nextfree >= 0)
 	  basescore += penalty[nextfree];
 	else
 	  basescore += penaltyfinal;
@@ -4262,7 +4264,7 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   // Try our best to merge existing prototype
   // with the one we have just been handed
   vector<Varnode *> newinput;
-  Varnode *newoutput;
+  Varnode *newoutput = (Varnode *)0;
   FuncProto &newproto( newfd->getFuncProto() );
   if ((!newproto.isNoReturn())&&(!newproto.isInline())&&
       lateRestriction(newproto,newinput,newoutput)) {
@@ -4290,7 +4292,7 @@ void FuncCallSpecs::forceSet(Funcdata &data,const FuncProto &fp)
 
 {
   vector<Varnode *> newinput;
-  Varnode *newoutput;
+  Varnode *newoutput = (Varnode *)0;
   if (lateRestriction(fp,newinput,newoutput)) {
     commitNewInputs(data,newinput);
     commitNewOutputs(data,newoutput);

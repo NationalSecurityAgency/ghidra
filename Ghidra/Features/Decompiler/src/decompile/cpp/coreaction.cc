@@ -1666,7 +1666,6 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
   
   for(i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
-    op = fc->getOp();
 
     if (!fc->isInputLocked()) continue;
     if (fc->getSpacebaseOffset() == FuncCallSpecs::offset_unknown) continue;
@@ -3505,7 +3504,6 @@ int4 ActionUnjustifiedParams::apply(Funcdata &data)
 
     bool newcontainer;
     do {
-      newcontainer = false;
       VarnodeDefSet::const_iterator begiter,iter2;
       begiter = data.beginDef(Varnode::input);
       iter2 = iter;

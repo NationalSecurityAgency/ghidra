@@ -1644,7 +1644,6 @@ bool ValueSet::iterate(Widener &widener)
 	setFull();
 	return true;
       }
-      eqPos += 1;
     }
     else if (!res.pushForwardUnary(opCode, inSet1->range, inSet1->vn->getSize(), vn->getSize())) {
       setFull();
@@ -1747,7 +1746,7 @@ void ValueSet::printRaw(ostream &s) const
   else
     s << " stackptr";
   if (opCode == CPUI_MAX) {
-    if (vn->isConstant())
+    if (vn && vn->isConstant())
       s << " const";
     else
       s << " input";

@@ -932,6 +932,8 @@ int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **
   if (opc != op2->code()) return -1;
 
   int4 num = op1->numInput();
+  if (num == 0)
+    throw LowlevelError("num==0 invalid");
   if (num != op2->numInput()) return -1;
   if (op1->isMarker()) return -1;
   if (op2->isCall()) return -1;

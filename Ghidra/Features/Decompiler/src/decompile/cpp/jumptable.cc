@@ -762,6 +762,8 @@ int4 PathMeld::meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<in
     else {
       newMeld.push_back(RootedOp(op,curRoot));
     }
+    if (!op)
+      return -1;
     lastBlock = op->getParent();
   }
   opMeld = newMeld;
@@ -879,6 +881,8 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
   Varnode *vn;
 
   for(i=0;i<maxbranch;++i) {
+    if (!bl)
+      throw LowlevelError("Invalid nullptr bl");
     if ((pathout>=0)&&(bl->sizeOut()==2)) {
       prevbl = bl;
       bl = (BlockBasic *)prevbl->getOut(pathout);

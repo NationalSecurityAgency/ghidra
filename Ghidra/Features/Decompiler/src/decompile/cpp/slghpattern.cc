@@ -643,8 +643,11 @@ Pattern *ContextPattern::doOr(const Pattern *b,int4 sa) const
 
 {
   const ContextPattern *b2 = dynamic_cast<const ContextPattern *>(b);
-  if (b2 == (const ContextPattern *)0)
+  if (b2 == (const ContextPattern *)0) {
+    if (!b)
+      return (ContextPattern *)0;
     return b->doOr(this,-sa);
+  }
 
   return new OrPattern((DisjointPattern *)simplifyClone(),(DisjointPattern *)b2->simplifyClone());
 }
@@ -653,8 +656,11 @@ Pattern *ContextPattern::doAnd(const Pattern *b,int4 sa) const
 
 {
   const ContextPattern *b2 = dynamic_cast<const ContextPattern *>(b);
-  if (b2 == (const ContextPattern *)0)
+  if (b2 == (const ContextPattern *)0) {
+    if (!b)
+      return (ContextPattern *)0;
     return b->doAnd(this,-sa);
+  }
 
   PatternBlock *resblock = maskvalue->intersect(b2->maskvalue);
   return new ContextPattern(resblock);
@@ -664,8 +670,11 @@ Pattern *ContextPattern::commonSubPattern(const Pattern *b,int4 sa) const
 
 {
   const ContextPattern *b2 = dynamic_cast<const ContextPattern *>(b);
-  if (b2 == (const ContextPattern *)0)
+  if (b2 == (const ContextPattern *)0) {
+    if (!b)
+      return (ContextPattern *)0;
     return b->commonSubPattern(this,-sa);
+  }
 
   PatternBlock *resblock = maskvalue->commonSubPattern(b2->maskvalue);
   return new ContextPattern(resblock);
@@ -958,8 +967,11 @@ Pattern *OrPattern::doOr(const Pattern *b,int4 sa) const
     for(iter=orlist.begin();iter!=orlist.end();++iter)
       (*iter)->shiftInstruction(-sa);
 
-  if (b2 == (const OrPattern *)0)
+  if (b2 == (const OrPattern *)0) {
+    if (!b)
+      return (OrPattern *)0;
     newlist.push_back((DisjointPattern *)b->simplifyClone());
+  }
   else {
     for(iter=b2->orlist.begin();iter!=b2->orlist.end();++iter)
       newlist.push_back((DisjointPattern *)(*iter)->simplifyClone());

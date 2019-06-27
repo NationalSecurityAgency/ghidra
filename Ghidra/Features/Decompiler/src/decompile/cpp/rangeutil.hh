@@ -59,7 +59,7 @@ class CircleRange {
   static bool newDomain(uintb newMask,int4 newStep,uintb &myleft,uintb &myright);
   static char encodeRangeOverlaps(uintb op1left,uintb op1right,uintb op2left,uintb op2right);	///< Calculate overlap code
 public:
-  CircleRange(void) { isempty=true; }		///< Construct an empty range
+  CircleRange(void) { isempty=true; left=0; right=0; mask=0; step=0; }		///< Construct an empty range
   CircleRange(uintb lft,uintb rgt,int4 size,int4 stp);	///< Construct given specific boundaries.
   CircleRange(bool val);			///< Construct a boolean range
   CircleRange(uintb val,int4 size);		///< Construct range with single value

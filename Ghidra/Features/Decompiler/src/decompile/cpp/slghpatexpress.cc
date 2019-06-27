@@ -286,7 +286,8 @@ const TokenPattern &TokenPattern::operator=(const TokenPattern &tokpat)
 
 {
   delete pattern;
-
+  if (this == &tokpat)
+    throw LowlevelError("cannot assign pattern to itself after freeing");
   pattern = tokpat.pattern->simplifyClone();
   toklist = tokpat.toklist;
   leftellipsis = tokpat.leftellipsis;
