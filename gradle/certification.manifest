@@ -4,8 +4,8 @@ distributableGPLModule.gradle||GHIDRA||||END|
 distributableGhidraExtension.gradle||GHIDRA||||END|
 distributableGhidraModule.gradle||GHIDRA||||END|
 externalGhidraExtension.gradle||GHIDRA||||END|
+fetchDependencies.gradle||GHIDRA||||END|
 helpProject.gradle||GHIDRA||||END|
-init.gradle||GHIDRA||||END|
 jacocoProject.gradle||GHIDRA||||END|
 javaProject.gradle||GHIDRA||||END|
 javaTestProject.gradle||GHIDRA||||END|

@@ -1,16 +1,16 @@
 /*******************************************************************************
- * init.gradle                                                                 *
- *                                                                             *      
- * Sets up the gradle configuration for external users and downloads           *
- * any required dependencies that aren't available in the                      *
- * other online repositories (eg: maven). This should be run                   *
+ * fetchDependencies.gradle                                                    *
+ *                                                                             *
+ * Fetches/downloads required dependencies that aren't available in the        *
+ * standard online repositories (eg: maven) and configures a flat              *
+ * directory-style respository that points to them. This should be run         *
  * immediately after cloning the Ghidra repository before any other gradle     *
  * tasks are run.                                                              *
  *                                                                             *
  * Specifically, this task:                                                    *
  *                                                                             *
  *   1. Downloads various dependencies required by the ghidra build and        *
- *      puts them in <ghidra repo>/ghidra/downloads/. From here they are       *
+ *      puts them in <ghidra repo>/build/downloads/. From here they are        *
  *      unzipped and/or copied to their final locations. The files to be       *
  *      downloaded:                                                            *
  *          - dex-tools-2.0.zip                                                *
@@ -20,18 +20,17 @@
  *          - cdt-8.6.0.zip                                                    *
  *          - PyDev 6.3.1.zip                                                  *
  *                                                                             *
- *   2. Creates a gradle configuration file (repos.config) in                  *
- *      <USER_HOME>/.gradle/init.d/. This contains repository                  *
- *      information used by gradle to find dependencies (it points             *
- *      gradle to the flatRepo location created above).                        *
+ *   2. Creates a directory at <ghidra repo>/flatRepo which is used as a       *
+ *      flat directory-style respository for the files extracted above.        *
  *                                                                             *
  * usage: from the command line in the main ghidra repository                  *
  *        directory, run the following:                                        *
  *                                                                             *
- *        gradle --init-script gradle/init.gradle <any_task>                   *
+ *        gradle --init-script gradle/fetchDependencies.gradle init            *
  *                                                                             *
- * Note: When running the script, files will only be downloaded if             * 
- *       necessary (eg: they are not already in the downloads/ folder).        *                                                                     *
+ * Note: When running the script, files will only be downloaded if             *
+ *       necessary (eg: they are not already in the build/downloads/           *
+ *       directory).                                                           *
  *                                                                             *
  *******************************************************************************/
 

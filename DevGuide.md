@@ -86,10 +86,10 @@ or manually by downloading the required dependencies.  Choose one of the two fol
 The flat directory-style repository can be setup automatically by running a simple Gradle script. 
 Navigate to `~/git/ghidra` and run the following:
 ```
-gradle --init-script gradle/init.gradle tasks
+gradle --init-script gradle/fetchDependencies.gradle init
 ```
-The Gradle task to be executed, in this case _tasks_, is unimportant. The point is to have Gradle execute
-the `init.gradle` script. If it ran correctly you will have a new `~/git/ghidra/flatRepo/` 
+The Gradle task to be executed, in this case _init_, is unimportant. The point is to have Gradle execute
+the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/flatRepo/` 
 directory populated with the following jar files:
  * AXMLPrinter2
  * csframework
