@@ -231,6 +231,7 @@ extern uintb uintbmasks[];
 /// This deliberately constructs an invalid address
 inline Address::Address(void) {
   base = (AddrSpace *)0;
+  offset = (uintb)0;
 }
 
 /// This is the basic Address constructor
@@ -259,12 +260,16 @@ inline bool Address::isInvalid(void) const {
 /// for this address.
 /// \return the number of bytes in the encoding
 inline int4 Address::getAddrSize(void) const {
+  if (!base)
+    throw LowlevelError("Address::getAddrSize nullptr base");
   return base->getAddrSize();
 }
 
 /// Determine if data stored at this address is big endian encoded.
 /// \return \b true if the address is big endian
 inline bool Address::isBigEndian(void) const {
+  if (!base)
+    throw LowlevelError("Address::isBigEndian nullptr base");
   return base->isBigEndian();
 }
 
@@ -284,6 +289,8 @@ inline void Address::printRaw(ostream &s) const {
 /// \param s is the string to parse
 /// \return any size associated with the parsed string
 inline int4 Address::read(const string &s) {
+  if (!base)
+    throw LowlevelError("Address::read nullptr base");
   int4 sz; offset=base->read(s,sz); return sz;
 }
 
@@ -303,6 +310,8 @@ inline uintb Address::getOffset(void) const {
 /// for use with the read and printRaw methods.
 /// \return the shortcut char
 inline char Address::getShortcut(void) const {
+  if (!base)
+    throw LowlevelError("Address::getShortcut nullptr base");
   return base->getShortcut();
 }
 
@@ -390,6 +399,8 @@ inline bool Address::operator<=(const Address &op2) const {
 /// \param off is the number to add to the offset
 /// \return the new incremented address
 inline Address Address::operator+(int4 off) const {
+  if (!base)
+    throw LowlevelError("Address::operator+ nullptr base");
   return Address(base,base->wrapOffset(offset+off));
 }
 
@@ -400,6 +411,8 @@ inline Address Address::operator+(int4 off) const {
 /// \param off is the number to subtract from the offset
 /// \return the new decremented address
 inline Address Address::operator-(int4 off) const {
+  if (!base)
+    throw LowlevelError("Address::operator- nullptr base");
   return Address(base,base->wrapOffset(offset-off));
 }
 
@@ -408,12 +421,16 @@ inline Address Address::operator-(int4 off) const {
 /// the \e constant \e space.
 /// \return \b true if this address represents a constant
 inline bool Address::isConstant(void) const {
+  if (!base)
+    throw LowlevelError("Address::isConstant nullptr base");
   return (base->getType() == IPTR_CONSTANT);
 }
 
 /// Determine if this address represents a set of joined memory locations.
 /// \return \b true if this address represents a join
 inline bool Address::isJoin(void) const {
+  if (!base)
+    throw LowlevelError("Address::isJoin nullptr base");
   return (base->getType() == IPTR_JOIN);
 }
 

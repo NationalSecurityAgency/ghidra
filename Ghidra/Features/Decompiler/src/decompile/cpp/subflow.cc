@@ -43,6 +43,8 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
 
 { // Mark 
   ReplaceVarnode *res;
+  if (!vn)
+    return (ReplaceVarnode *)0;
   if (vn->isMark()) {		// Already seen before
     map<Varnode *,ReplaceVarnode>::iterator iter;
     iter = varmap.find(vn);
@@ -292,6 +294,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_INT_AND:
       if ((op->getIn(1)->isConstant())&&(op->getIn(1)->getOffset() == rvn->mask)) {
+	if (!outvn)
+	  return false;
 	if ((outvn->getSize() == flowsize)&&((rvn->mask & 1)!=0)) {
 	  addTerminalPatch(op,rvn);
 	  hcount += 1;		// Dealt with this descendant
@@ -345,6 +349,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false; // Dynamic shift
       sa = (int4)op->getIn(1)->getOffset();
+      if (!outvn)
+	return false;
       newmask = (rvn->mask << sa) & calc_mask( outvn->getSize() );
       if (newmask == 0) break;	// Subvar is cleared, truncate flow
       if (rvn->mask != (newmask >> sa)) return false; // subvar is clipped
@@ -376,6 +382,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 	return false;
       }
       if (rvn->mask != (newmask << sa)) return false;
+      if (!outvn)
+	return false;
       if ((outvn->getSize()==flowsize)&&((newmask&1)==1)&&
 	  (op->getIn(0)->getNZMask()==rvn->mask)) {
 	addTerminalPatch(op,rvn);
@@ -394,6 +402,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_SUBPIECE:
+      if (!outvn)
+	return false;
       sa = (int4)op->getIn(1)->getOffset() * 8;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
@@ -421,6 +431,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       outvn = op->getIn(1-slot); // The OTHER side of the comparison
       if ((!aggressive)&&(((rvn->vn->getNZMask() | rvn->mask) != rvn->mask)))
 	return false;		// Everything but logical variable must definitely be zero (unless we are aggressive)
+      if (!outvn)
+	return false;
       if (outvn->isConstant()) {
 	if ((rvn->mask | outvn->getOffset()) != rvn->mask)
 	  return false;		// Must compare only bits of logical variable
@@ -436,6 +448,8 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
     case CPUI_INT_NOTEQUAL:
     case CPUI_INT_EQUAL:
       outvn = op->getIn(1-slot); // The OTHER side of the comparison
+      if (!outvn)
+	return false;
       if (bitsize != 1) {
 	if ((!aggressive)&&(((rvn->vn->getNZMask() | rvn->mask) != rvn->mask)))
 	  return false;	// Everything but logical variable must definitely be zero (unless we are aggressive)
@@ -728,6 +742,8 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       break;
     case CPUI_SUBPIECE:
       if (op->getIn(1)->getOffset() != 0) return false;	// Only allow proper truncation
+      if (!outvn)
+	return false;
       if (outvn->getSize() > flowsize) return false;
       if (outvn->getSize() == flowsize)
 	addTerminalPatch(op,rvn);		// Termination of flow, convert SUBPIECE to COPY
@@ -1340,6 +1356,8 @@ SplitFlow::ReplaceVarnode *SplitFlow::setReplacement(Varnode *vn,bool &inworklis
   // Decide if the varnode needs to go into the worklist by setting -inworklist-
   // Return null if this won't work
   ReplaceVarnode *res;
+  if (!vn)
+    return (ReplaceVarnode *)0;
   if (vn->isMark()) {		// Already seen before
     map<Varnode *,ReplaceVarnode>::iterator iter;
     iter = varmap.find(vn);
@@ -1426,6 +1444,8 @@ bool SplitFlow::traceForward(ReplaceVarnode *rvn)
 	return false;
       break;
     case CPUI_SUBPIECE:
+      if (!outvn)
+	return false;
       val = op->getIn(1)->getOffset();
       if ((val==0)&&(outvn->getSize() == loSize))
 	assignReplaceOp(false,op,CPUI_COPY,1,(ReplaceVarnode *)0);	// Grabs the low piece
@@ -1644,6 +1664,8 @@ SubfloatFlow::ReplaceVarnode *SubfloatFlow::setReplacement(Varnode *vn,bool &inw
   // Set inworklist to true if the varnode has not been in the worklist before
   // Return NULL if the vn is not suitable for replacement
   ReplaceVarnode *res;
+  if (!vn)
+    return (ReplaceVarnode *)0;
   if (vn->isMark()) {		// Already seen before
     map<Varnode *,ReplaceVarnode>::iterator iter;
     iter = varmap.find(vn);
@@ -1692,6 +1714,8 @@ SubfloatFlow::ReplaceVarnode *SubfloatFlow::setReplacementNoFlow(Varnode *vn)
 { // Create and return a ReplaceVarnode associated with vn, where we assume -vn- is not going to change
   // and there will be no further logical flow through -vn-
   ReplaceVarnode *res;
+  if (!vn)
+    return (ReplaceVarnode *)0;
   if (vn->isMark()) {		// Already seen before
     map<Varnode *,ReplaceVarnode>::iterator iter;
     iter = varmap.find(vn);
@@ -1785,7 +1809,7 @@ bool SubfloatFlow::traceForward(ReplaceVarnode *rvn)
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_FLOAT_FLOAT2FLOAT:
-      if (outvn->getSize() < precision)
+      if (!outvn || outvn->getSize() < precision)
 	return false;
       addtopulllist(op,rvn);
       hcount += 1;		// Dealt with this descendant
@@ -1890,6 +1914,8 @@ bool SubfloatFlow::createLink(ReplaceOp *rop,int4 slot,Varnode *vn)
 SubfloatFlow::ReplaceVarnode *SubfloatFlow::addConstant(Varnode *vn)
 
 { // Add a constant to the replacement tree
+  if (!vn)
+    return (ReplaceVarnode *)0;
   const FloatFormat *form2 = fd->getArch()->translate->getFloatFormat(vn->getSize());
   if (form2 == (const FloatFormat *)0)
     return (ReplaceVarnode *)0;	// Unsupported constant format

@@ -350,6 +350,7 @@ void PcodeCompile::newLocalDefinition(string *varname,uint4 size)
   sym = new VarnodeSymbol(*varname,tmpvn->getSpace().getSpace(),tmpvn->getOffset().getReal(),tmpvn->getSize().getReal());
   addSymbol(sym);
   delete varname;
+  delete tmpvn;
 }
 
 ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn)
@@ -617,6 +618,7 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
   bool shiftneeded = (bitoffset != 0);
   bool zextneeded = true;
   uintb mask = (uintb)2;
+  //TODO  what are the bounds on numbits and bitoffset before undefined
   mask = ~(((mask<<(numbits-1))-1) << bitoffset);
 
   if (vn->getSize().getType()==ConstTpl::real) {
@@ -721,6 +723,8 @@ ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4
   }
 
   uintb mask = (uintb)2;
+  if (numbits > 0x40)
+    throw LowlevelError("Invalid numbits shift");
   mask = ((mask<<(numbits-1))-1);
   
   if (truncneeded && ((bitoffset % 8)==0)) {

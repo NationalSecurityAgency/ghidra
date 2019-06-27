@@ -1132,6 +1132,8 @@ void BlockGraph::forceFalseEdge(const FlowBlock *out0)
 {
   if (sizeOut() != 2)
     throw LowlevelError("Can only preserve binary condition");
+  if (!out0)
+    throw LowlevelError("Invalid argument out0");
   if (out0->getParent() == this)	// Allow for loops to self
     out0 = this;
 
@@ -1895,6 +1897,8 @@ void BlockGraph::calcForwardDominator(const vector<FlowBlock *> &rootlist)
 	  rho = b->getIn(j);
 	  if (rho->immed_dom != (FlowBlock *)0) { // Here is the intersection routine
 	    finger1 = numnodes - rho->index;
+	    if (!new_idom)
+	      throw LowlevelError("Invalid new_idom");
 	    finger2 = numnodes - new_idom->index;
 	    while(finger1 != finger2) {
 	      while(finger1 < finger2)
@@ -2092,7 +2096,6 @@ void BlockGraph::structureLoops(vector<FlowBlock *> &rootlist)
   int4 irreduciblecount = 0;
 
   do {
-    needrebuild = false;
     findSpanningTree(preorder,rootlist);
     needrebuild = findIrreducible(preorder,irreduciblecount);
     if (needrebuild) {

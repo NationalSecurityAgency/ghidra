@@ -2853,6 +2853,8 @@ void Database::restoreXml(const Element *el)
 	i += 1;
       }
     }
+    if (!new_scope)
+      throw LowlevelError("Invalid new_scope");
     new_scope->restoreXml(subel);
   }
 }
