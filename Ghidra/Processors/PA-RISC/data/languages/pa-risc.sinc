@@ -1385,25 +1385,25 @@ shiftCLen: shift			is im5 [ shift=32-im5; ] { amount:4 = shift; export amount; }
 
 #lse14: offset				is sim14 & bit0 [ offset = (-1 * bit0) * ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
 #lse14: offset				is sim14 & bit0 [ offset = (-1 * 0x2000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = sext(offset:4); export temp; }
-lse14: offset				is im14less0 & bit0 [ local off = ((-1 * bit0) << 13) | im14less0; ] { temp:4 = sext(off:4); export temp; }
+lse14: offset				is im14less0 & bit0 [ offset = ((-1 * bit0) << 13) | im14less0; ] { temp:4 = sext(offset:4); export temp; }
 ####lse14: offset				is sim14 & bit0 [ offset = (0xFFFFFFFFFFFFE000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
 
 #lse5: offset				is sim5 & bit0  [ offset = (-1 * 0x10 * bit0) | ( (sim5 >> 1) & 0xF ); ] { temp:1 = sext(offset:1); export temp; }
-lse5: offset				is im5less0 & bit0 [ local off = ((-1 * bit0) << 4) | im5less0; ] { temp:1 = sext(off:1); export temp; }
+lse5: offset				is im5less0 & bit0 [ offset = ((-1 * bit0) << 4) | im5less0; ] { temp:1 = sext(offset:1); export temp; }
 
 #highlse5: offset			is highIm5 & bit16 [ offset = (-1 * 0x10 * bit16) | ( (highIm5 >> 1) & 0xF ); ] { temp:1 = offset; export temp; }
-highlse5: offset			is highIm5less16 & bit16 [ local off = ((-1 * bit16) << 4) | highIm5less16; ] { temp:1 = off; export temp; }
+highlse5: offset			is highIm5less16 & bit16 [ offset = ((-1 * bit16) << 4) | highIm5less16; ] { temp:1 = offset; export temp; }
 
 #lse21: offset				is sim21 [ offset = ( ((sim21 & 0x1) * 0xFFFFFFFFFFF00000) | ((sim21 & 0xFFE) << 8) | ((sim21 & 0xC000) >> 7) | ((sim21 & 0x1F0000) >> 14) | ((sim21 & 0x3000) >> 12) ) << 11  ; ] { temp:$(REGSIZE) = offset; export temp; }
 lse21: offset				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_16_21 [
-	local off = (
+	offset = (
 		((-1 * bit0) << 20) |
 		(im21_1_12 << 9) |
 		(im21_14_16 << 7) |
 		(im21_16_21 << 2) |
 		im21_12_14
 	) << 11;
-] { temp:$(REGSIZE) = off; export temp; }
+] { temp:$(REGSIZE) = offset; export temp; }
 
 # Note for the im11 11-bit immediate, the sign is in bit 0, and the rest of the value is in bit 1 to 10.
 # Negative numbers are stored 2s complement, with bit0 set to 1.
