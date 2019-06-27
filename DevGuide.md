@@ -86,7 +86,7 @@ or manually by downloading the required dependencies.  Choose one of the two fol
 The flat directory-style repository can be setup automatically by running a simple Gradle script. 
 Navigate to `~/git/ghidra` and run the following:
 ```
-gradle --init-script gradle/fetchDependencies.gradle init
+gradle --init-script gradle/support/fetchDependencies.gradle init
 ```
 The Gradle task to be executed, in this case _init_, is unimportant. The point is to have Gradle execute
 the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/flatRepo/` 
