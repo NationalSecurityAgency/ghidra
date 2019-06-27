@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.function;
 
 import javax.swing.KeyStroke;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.program.model.data.DataType;
@@ -41,7 +40,7 @@ class DataAction extends ListingContextAction {
 	}
 
 	public DataAction(String name, String group, DataType dataType, FunctionPlugin plugin) {
-		super(name, plugin.getName(), false);
+		super(name, plugin.getName(), KeyBindingType.SHARED);
 		this.group = group;
 		this.plugin = plugin;
 		this.dataType = dataType;
@@ -50,11 +49,6 @@ class DataAction extends ListingContextAction {
 		setHelpLocation(new HelpLocation(plugin.getName(), "DataType"));
 
 		initKeyStroke(getDefaultKeyStroke());
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	protected KeyStroke getDefaultKeyStroke() {

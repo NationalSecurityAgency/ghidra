@@ -21,8 +21,7 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -122,28 +121,18 @@ public class CallTreePlugin extends ProgramPlugin {
 
 		// use the name of the provider so that the shared key binding data will get used
 		String actionName = CallTreeProvider.TITLE;
-		showCallTreeFromMenuAction = new DockingAction(actionName, getName()) {
+		showCallTreeFromMenuAction =
+			new DockingAction(actionName, getName(), KeyBindingType.SHARED) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					showOrCreateNewCallTree(currentLocation);
+				}
 
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showOrCreateNewCallTree(currentLocation);
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return (context instanceof ListingActionContext);
-			}
-
-			@Override
-			public boolean isKeyBindingManaged() {
-				return false;
-			}
-
-			@Override
-			public boolean usesSharedKeyBinding() {
-				return true;
-			}
-		};
+				@Override
+				public boolean isAddToPopup(ActionContext context) {
+					return (context instanceof ListingActionContext);
+				}
+			};
 
 		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
 			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));

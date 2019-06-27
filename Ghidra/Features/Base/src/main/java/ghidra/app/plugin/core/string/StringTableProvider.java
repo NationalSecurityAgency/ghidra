@@ -50,6 +50,7 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 
@@ -304,19 +305,12 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		makeCharArrayAction.setHelpLocation(makeStringHelp);
 		addLocalAction(makeCharArrayAction);
 
-		DockingAction selectAction =
-			new DockingAction("Make Selection", "AsciiFinderDialog", false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					makeSelection();
-				}
-			};
-		selectAction.setDescription("Make a selection using selected rows");
-		selectAction.setEnabled(true);
-		Icon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setToolBarData(new ToolBarData(icon));
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection_Strings"));
+		DockingAction selectAction = new MakeProgramSelectionAction(plugin.getName(), table) {
+			@Override
+			protected void makeSelection(ActionContext context) {
+				doMakeSelection();
+			}
+		};
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 		selectionNavigationAction.setHelpLocation(
@@ -327,7 +321,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 
 	}
 
-	private void makeSelection() {
+	private void doMakeSelection() {
 		AddressSet set = new AddressSet();
 
 		addToAddressSet(set, table.getSelectedRows());

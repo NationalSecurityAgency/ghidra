@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +28,16 @@ public abstract class ToggleDockingAction extends DockingAction implements Toggl
 		super(name, owner);
 	}
 
-	public ToggleDockingAction(String name, String owner, boolean isKeybindingManaged) {
-		super(name, owner, isKeybindingManaged);
+	public ToggleDockingAction(String name, String owner, boolean supportsKeyBindings) {
+		super(name, owner, supportsKeyBindings);
 	}
 
+	@Override
 	public boolean isSelected() {
 		return isSelected;
 	}
 
+	@Override
 	public void setSelected(boolean newValue) {
 		isSelected = newValue;
 		firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);

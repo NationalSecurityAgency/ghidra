@@ -159,7 +159,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
-		showProviderAction = new ShowProviderAction();
+		boolean supportsKeyBindings = !isTransient;
+		showProviderAction = new ShowProviderAction(supportsKeyBindings);
 	}
 
 	/**
@@ -550,15 +551,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 4) Wire default 'close' action to keybinding
 			 	 5) Add global action for (show last provider)
 			 	 		--Navigation menu?
+			 	 6) Revisit all uses of the key binding managed constructor
+				 7) Update table popup actions to be managed
+				 8) Update help locations
 			
 			 	 Questions:
 			
 			 	 	C) How to wire universal close action (it is focus-dependent)
-			 	 		
 			 	 	
-			 	 Fix:
-			 	 	
-			 	 	-Update key binding methods to use an enum for: no management / full management / shared management
 			 */
 
 			dockingTool.getWindowManager().setIcon(this, icon);
@@ -775,8 +775,9 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private class ShowProviderAction extends DockingAction {
 
-		ShowProviderAction() {
-			super(name, owner);
+		ShowProviderAction(boolean supportsKeyBindings) {
+			super(name, owner,
+				supportsKeyBindings ? KeyBindingType.SHARED : KeyBindingType.UNSUPPORTED);
 
 			if (isToolbarAction) {
 				setToolBarData(new ToolBarData(icon, TOOLBAR_GROUP));
@@ -794,17 +795,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 			dockingTool.showComponentProvider(ComponentProvider.this, true);
-		}
-
-		@Override
-		public boolean isKeyBindingManaged() {
-			return false;
-		}
-
-		@Override
-		public boolean usesSharedKeyBinding() {
-			// we do not allow transient providers to have key bindings
-			return !isTransient;
 		}
 
 		@Override

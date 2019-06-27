@@ -345,7 +345,7 @@ public class KeyBindingUtils {
 
 	/**
 	 * A utility method to get all key binding actions.  This method will remove duplicate 
-	 * actions and will only return actions that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * actions and will only return actions that support {@link KeyBindingType key bindings}.
 	 * 
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
@@ -371,7 +371,7 @@ public class KeyBindingUtils {
 	/**
 	 * A utility method to get all key binding actions that have the given owner.  
 	 * This method will remove duplicate actions and will only return actions 
-	 * that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * that support {@link KeyBindingType key bindings}.
 	 * 
 	 * @param tool the tool containing the actions
 	 * @param owner the action owner name
@@ -718,9 +718,9 @@ public class KeyBindingUtils {
 //==================================================================================================	
 
 	private static boolean isIgnored(DockingActionIf action) {
-		// not keybinding managed; a shared keybinding implies that this action should not be in 
+		// a shared keybinding implies that this action should not be in 
 		// the UI, as there will be a single proxy in place of all actions sharing that binding
-		return !action.isKeyBindingManaged() || action.usesSharedKeyBinding();
+		return action.getKeyBindingType().isShared();
 	}
 
 	private static KeyStroke getKeyStroke(KeyBindingData data) {

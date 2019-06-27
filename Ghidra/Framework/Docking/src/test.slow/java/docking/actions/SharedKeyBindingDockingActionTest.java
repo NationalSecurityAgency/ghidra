@@ -356,7 +356,7 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 //==================================================================================================
 
 	private void assertSharedStubInTool() {
-		ToolActions actionManager = (ToolActions) getInstanceField("actionMgr", tool);
+		ToolActions actionManager = (ToolActions) getInstanceField("toolActions", tool);
 		DockingActionIf action = actionManager.getSharedStubKeyBindingAction(SHARED_NAME);
 		assertNotNull("Shared action stub is not in the tool", action);
 	}
@@ -426,16 +426,8 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 	private class TestAction extends DockingAction {
 
 		public TestAction(String owner, KeyStroke ks) {
-			super(SHARED_NAME, owner);
-
-			if (ks != null) {
-				setKeyBindingData(new KeyBindingData(ks));
-			}
-		}
-
-		@Override
-		public boolean usesSharedKeyBinding() {
-			return true;
+			super(SHARED_NAME, owner, KeyBindingType.SHARED);
+			setKeyBindingData(new KeyBindingData(ks));
 		}
 
 		@Override

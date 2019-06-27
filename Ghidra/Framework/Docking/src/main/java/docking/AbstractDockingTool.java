@@ -177,6 +177,16 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
+	public void addContextListener(DockingContextListener listener) {
+		winMgr.addContextListener(listener);
+	}
+
+	@Override
+	public void removeContextListener(DockingContextListener listener) {
+		winMgr.removeContextListener(listener);
+	}
+
+	@Override
 	public DockingWindowManager getWindowManager() {
 		return winMgr;
 	}

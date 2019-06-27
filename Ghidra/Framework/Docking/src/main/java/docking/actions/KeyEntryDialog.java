@@ -22,7 +22,8 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.text.*;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.KeyEntryTextField;
 import docking.action.*;
 import docking.widgets.label.GIconLabel;
 import ghidra.util.HelpLocation;
@@ -157,21 +158,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
-		KeyBindingData kbData = new KeyBindingData(newKeyStroke);
-		if (action instanceof SharedStubKeyBindingAction) {
-			action.setUnvalidatedKeyBindingData(kbData);
-		}
-		else {
-			Set<DockingActionIf> allActions = toolActions.getAllActions();
-			Set<DockingActionIf> actions =
-				KeyBindingUtils.getActions(allActions, action.getOwner(), action.getName());
-			for (DockingActionIf element : actions) {
-				if (element.isKeyBindingManaged()) {
-					element.setUnvalidatedKeyBindingData(kbData);
-				}
-			}
-
-		}
+		action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
 
 		toolActions.keyBindingsChanged();
 
@@ -248,11 +235,6 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private boolean shouldAddAction(DockingActionIf dockableAction) {
-		if (dockableAction.isKeyBindingManaged()) {
-			return true;
-		}
-
-		// shared key bindings are handled specially
-		return !dockableAction.usesSharedKeyBinding();
+		return dockableAction.getKeyBindingType().isManaged();
 	}
 }

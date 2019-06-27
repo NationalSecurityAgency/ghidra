@@ -123,7 +123,7 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 	private class NavigationAction extends DockingAction {
 
 		private NavigationAction(DataType dt) {
-			super("DataTypeNavigationAction_" + ++navigationActionIdCount, owner, false);
+			super("DataTypeNavigationAction_" + ++navigationActionIdCount, owner);
 
 			setMenuBarData(new MenuData(new String[] { dt.getDisplayName() }));
 			setEnabled(true);

@@ -165,7 +165,7 @@ public class ActionToGuiMapper {
 	/**
 	 * Close all menus (includes popup menus)
 	 */
-	static void dismissMenus() {
+	private void dismissMenus() {
 		MenuSelectionManager.defaultManager().clearSelectedPath();
 	}
 

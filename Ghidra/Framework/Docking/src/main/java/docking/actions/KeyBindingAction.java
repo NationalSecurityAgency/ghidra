@@ -49,7 +49,7 @@ public class KeyBindingAction extends DockingAction {
 
 		action = maybeGetToolLevelAction(action);
 
-		if (!action.isKeyBindingManaged()) {
+		if (!action.getKeyBindingType().supportsKeyBindings()) {
 			Component parent = windowManager.getActiveComponent();
 			Msg.showInfo(getClass(), parent, "Unable to Set Keybinding",
 				"Action \"" + getActionName(action) + "\" is not keybinding managed and thus a " +
@@ -68,15 +68,15 @@ public class KeyBindingAction extends DockingAction {
 	 * @return A tool-level action if one is found; otherwise, the original action
 	 */
 	private DockingActionIf maybeGetToolLevelAction(DockingActionIf dockingAction) {
-		if (dockingAction.isKeyBindingManaged()) {
-			return dockingAction;
-		}
 
-		// It is not key binding managed, which means that it may be a shared key binding
-		String actionName = dockingAction.getName();
-		DockingActionIf sharedAction = toolActions.getSharedStubKeyBindingAction(actionName);
-		if (sharedAction != null) {
-			return sharedAction;
+		if (dockingAction.getKeyBindingType().isShared()) {
+
+			// It is not key binding managed, which means that it may be a shared key binding
+			String actionName = dockingAction.getName();
+			DockingActionIf sharedAction = toolActions.getSharedStubKeyBindingAction(actionName);
+			if (sharedAction != null) {
+				return sharedAction;
+			}
 		}
 
 		return dockingAction;

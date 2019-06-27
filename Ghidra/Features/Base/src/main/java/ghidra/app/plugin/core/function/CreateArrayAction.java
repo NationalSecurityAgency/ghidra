@@ -19,8 +19,7 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.action.*;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -37,7 +36,7 @@ class CreateArrayAction extends ListingContextAction {
 	private FunctionPlugin plugin;
 
 	public CreateArrayAction(FunctionPlugin plugin) {
-		super("Define Array", plugin.getName(), false);
+		super("Define Array", plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
 		setPopupMenu(plugin.getDataActionMenuName(null));
@@ -52,11 +51,6 @@ class CreateArrayAction extends ListingContextAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	private void setPopupMenu(String name) {

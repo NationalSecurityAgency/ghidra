@@ -210,6 +210,18 @@ public interface DockingTool {
 	public void contextChanged(ComponentProvider provider);
 
 	/**
+	 * Adds the given context listener to this tool
+	 * @param listener the listener to add
+	 */
+	public void addContextListener(DockingContextListener listener);
+
+	/**
+	 * Removes the given context listener to this tool
+	 * @param listener the listener to add
+	 */
+	public void removeContextListener(DockingContextListener listener);
+
+	/**
 	 * Returns the DockingWindowManger for this tool.
 	 * @return the DockingWindowManger for this tool.
 	 */

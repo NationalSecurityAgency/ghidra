@@ -96,9 +96,6 @@ public class WindowActionManager {
 		toolBarMgr.dispose();
 	}
 
-	/**
-	 * Notifies the window manager that an action context update is needed.
-	 */
 	synchronized void contextChanged(ComponentPlaceholder placeHolder) {
 		placeHolderForScheduledActionUpdate = placeHolder;
 

@@ -201,7 +201,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	}
 
 	private void addCompareAction() {
-		compareAction = new DockingAction("Compare Selected Functions", getName(), false) {
+		compareAction = new DockingAction("Compare Selected Functions", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				compareSelectedFunctions();

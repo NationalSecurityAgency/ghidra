@@ -171,32 +171,31 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		DockingAction externalGotoAction =
-			new DockingAction("Go to External Location", getName(), false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					gotoExternalAddress(getSelectedExternalAddress());
-				}
+		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				gotoExternalAddress(getSelectedExternalAddress());
+			}
 
-				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					return getSelectedExternalAddress() != null &&
-						tool.getService(GoToService.class) != null;
-				}
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return getSelectedExternalAddress() != null &&
+					tool.getService(GoToService.class) != null;
+			}
 
-				private Address getSelectedExternalAddress() {
-					if (table.getSelectedRowCount() != 1) {
-						return null;
-					}
-					ProgramSelection selection = table.getProgramSelection();
-					Program modelProgram = model.getProgram();
-					if (modelProgram == null || selection.getNumAddresses() != 1) {
-						return null;
-					}
-					Address addr = selection.getMinAddress();
-					return addr.isExternalAddress() ? addr : null;
+			private Address getSelectedExternalAddress() {
+				if (table.getSelectedRowCount() != 1) {
+					return null;
 				}
-			};
+				ProgramSelection selection = table.getProgramSelection();
+				Program modelProgram = model.getProgram();
+				if (modelProgram == null || selection.getNumAddresses() != 1) {
+					return null;
+				}
+				Address addr = selection.getMinAddress();
+				return addr.isExternalAddress() ? addr : null;
+			}
+		};
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 

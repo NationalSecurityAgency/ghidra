@@ -102,7 +102,7 @@ public class DialogComponentProviderPopupActionManager {
 		Object source = actionContext.getSourceObject();
 		if (source instanceof DockingActionProviderIf) {
 			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
-			List<DockingActionIf> dockingActions = actionProvider.getDockingActions(actionContext);
+			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
 			for (DockingActionIf action : dockingActions) {
 				MenuData popupMenuData = action.getPopupMenuData();
 				if (popupMenuData != null && action.isValidContext(actionContext) &&

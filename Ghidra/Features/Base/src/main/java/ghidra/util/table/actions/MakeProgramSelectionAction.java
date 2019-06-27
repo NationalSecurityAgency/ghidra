@@ -34,7 +34,7 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 	private JTable table;
 
 	public MakeProgramSelectionAction(String owner, JTable table) {
-		super("Make Selection", owner);
+		super("Make Selection", owner, KeyBindingType.SHARED);
 		this.table = table;
 
 		setPopupMenuData(
@@ -55,11 +55,6 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

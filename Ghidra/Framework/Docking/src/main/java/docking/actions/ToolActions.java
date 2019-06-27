@@ -22,7 +22,11 @@ import java.util.*;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
 
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.map.LazyMap;
+
+import com.google.common.collect.Iterators;
 
 import docking.*;
 import docking.action.*;
@@ -113,12 +117,13 @@ public class ToolActions implements PropertyChangeListener {
 
 	private void setKeyBindingOption(DockingActionIf action) {
 
-		if (action.usesSharedKeyBinding()) {
-			installSharedKeyBinding(action);
+		KeyBindingType type = action.getKeyBindingType();
+		if (!type.supportsKeyBindings()) {
 			return;
 		}
 
-		if (!action.isKeyBindingManaged()) {
+		if (type.isShared()) {
+			installSharedKeyBinding(action);
 			return;
 		}
 
@@ -227,23 +232,45 @@ public class ToolActions implements PropertyChangeListener {
 		return result;
 	}
 
+	private Iterator<DockingActionIf> getAllActionsIterator() {
+
+		// chain all items together, rather than copy the data
+		Iterator<DockingActionIf> iterator = IteratorUtils.emptyIterator();
+		Collection<Map<String, Set<DockingActionIf>>> maps = actionsByNameByOwner.values();
+		for (Map<String, Set<DockingActionIf>> actionsByName : maps) {
+			for (Set<DockingActionIf> actions : actionsByName.values()) {
+				Iterator<DockingActionIf> next = actions.iterator();
+
+				// Note: do not use apache commons here--the code below degrades exponentially
+				//iterator = IteratorUtils.chainedIterator(iterator, next);
+				iterator = Iterators.concat(iterator, next);
+			}
+		}
+
+		return Iterators.concat(iterator, sharedActionMap.values().iterator());
+	}
+
 	/**
 	 * Get the keybindings for each action so that they are still registered as being used; 
 	 * otherwise the options will be removed because they are noted as not being used.
 	 */
 	public synchronized void restoreKeyBindings() {
 		keyBindingOptions = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		Set<DockingActionIf> actions = getAllActions();
-		for (DockingActionIf action : actions) {
-			if (!action.isKeyBindingManaged()) {
-				continue;
-			}
+
+		Iterator<DockingActionIf> it = getKeyBindingActionsIterator();
+		for (DockingActionIf action : CollectionUtils.asIterable(it)) {
 			KeyStroke ks = action.getKeyBinding();
 			KeyStroke newKs = keyBindingOptions.getKeyStroke(action.getFullName(), ks);
-			if (ks != newKs) {
+			if (!Objects.equals(ks, newKs)) {
 				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 			}
 		}
+	}
+
+	// return only actions that allow key bindings
+	private Iterator<DockingActionIf> getKeyBindingActionsIterator() {
+		Predicate<DockingActionIf> filter = a -> a.getKeyBindingType() == KeyBindingType.INDIVIDUAL;
+		return IteratorUtils.filteredIterator(getAllActionsIterator(), filter);
 	}
 
 	/**
@@ -272,11 +299,13 @@ public class ToolActions implements PropertyChangeListener {
 
 	private void removeAction(DockingActionIf action) {
 		getActionStorage(action).remove(action);
-		if (action.usesSharedKeyBinding()) {
-			SharedStubKeyBindingAction stub = sharedActionMap.get(action.getName());
-			if (stub != null) {
-				stub.removeClientAction(action);
-			}
+		if (!action.getKeyBindingType().isShared()) {
+			return;
+		}
+
+		SharedStubKeyBindingAction stub = sharedActionMap.get(action.getName());
+		if (stub != null) {
+			stub.removeClientAction(action);
 		}
 	}
 
@@ -293,7 +322,7 @@ public class ToolActions implements PropertyChangeListener {
 		}
 
 		DockingAction action = (DockingAction) evt.getSource();
-		if (!action.isKeyBindingManaged()) {
+		if (!action.getKeyBindingType().isManaged()) {
 			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu 
 			// in the case that this action is one of the tool's special actions
 			keyBindingsChanged();

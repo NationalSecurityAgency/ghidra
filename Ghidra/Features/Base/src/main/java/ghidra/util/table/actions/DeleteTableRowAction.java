@@ -75,7 +75,7 @@ public class DeleteTableRowAction extends DockingAction {
 	}
 
 	private DeleteTableRowAction(String name, String owner, KeyStroke defaultkeyStroke) {
-		super(name, owner);
+		super(name, owner, KeyBindingType.SHARED);
 
 		setDescription("Remove the selected rows from the table");
 		setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Remove_Items"));
@@ -91,11 +91,6 @@ public class DeleteTableRowAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

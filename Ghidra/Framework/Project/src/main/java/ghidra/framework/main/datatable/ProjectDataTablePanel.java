@@ -490,7 +490,10 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getDockingActions(ActionContext context) {
+		public List<DockingActionIf> getDockingActions() {
+
+			// TODO we should at least add the 'copy' action
+
 			// the table's default actions aren't that useful in the Front End
 			return Collections.emptyList();
 		}

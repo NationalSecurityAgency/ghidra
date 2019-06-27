@@ -379,4 +379,14 @@ public class DummyTool implements Tool {
 	public ToolOptions getOptions(String categoryName) {
 		return null;
 	}
+
+	@Override
+	public void addContextListener(DockingContextListener listener) {
+		//do nothing
+	}
+
+	@Override
+	public void removeContextListener(DockingContextListener listener) {
+		//do nothing		
+	}
 }

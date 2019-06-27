@@ -2089,8 +2089,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		contextListeners.remove(listener);
 	}
 
-	public void notifyContextListeners(ComponentPlaceholder placeHolder,
-			ActionContext actionContext) {
+	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {
 
 		if (placeHolder == focusedPlaceholder) {
 			for (DockingContextListener listener : contextListeners) {

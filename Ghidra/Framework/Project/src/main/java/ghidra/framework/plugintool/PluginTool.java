@@ -1464,36 +1464,12 @@ public abstract class PluginTool extends AbstractDockingTool
 		DockingWindowManager.showDialog(getToolFrame(), dialogComponent, centeredOnComponent);
 	}
 
-	/**
-	 * Returns the ComponentProvider with the given name.  If more than one provider exists with the name,
-	 * one will be returned, but it could be any one of them.
-	 * @param name the name of the provider to return.
-	 * @return a provider with the given name, or null if no providers with that name exist.
-	 */
-	@Override
-	public ComponentProvider getComponentProvider(String name) {
-		return winMgr.getComponentProvider(name);
-	}
-
 	public Window getActiveWindow() {
 		return winMgr.getActiveWindow();
 	}
 
 	public ComponentProvider getActiveComponentProvider() {
 		return winMgr.getActiveComponentProvider();
-	}
-
-	@Override
-	public void contextChanged(ComponentProvider provider) {
-		winMgr.contextChanged(provider);
-	}
-
-	public void addContextListener(DockingContextListener listener) {
-		winMgr.addContextListener(listener);
-	}
-
-	public void removeContextListener(DockingContextListener listener) {
-		winMgr.removeContextListener(listener);
 	}
 
 	public void refreshKeybindings() {

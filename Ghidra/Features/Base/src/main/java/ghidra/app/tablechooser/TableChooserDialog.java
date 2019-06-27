@@ -25,7 +25,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
 import docking.*;
-import docking.action.*;
+import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.nav.Navigatable;
@@ -41,8 +41,8 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 import utility.function.Callback;
 
 /**
@@ -157,23 +157,13 @@ public class TableChooserDialog extends DialogComponentProvider
 
 	private void createActions() {
 		String owner = getClass().getSimpleName();
-		DockingAction selectAction = new DockingAction("Make Selection", owner, false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				makeSelection();
-			}
 
+		DockingAction selectAction = new MakeProgramSelectionAction(owner, table) {
 			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return table.getSelectedRowCount() != 0;
+			protected void makeSelection(ActionContext context) {
+				doMakeSelection();
 			}
 		};
-		selectAction.setDescription("Make a selection using selected rows");
-		selectAction.setEnabled(true);
-		Icon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setToolBarData(new ToolBarData(icon));
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		DockingAction selectionNavigationAction = new SelectionNavigationAction(owner, table);
 		selectionNavigationAction.setHelpLocation(
@@ -183,7 +173,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		addAction(selectionNavigationAction);
 	}
 
-	private void makeSelection() {
+	private void doMakeSelection() {
 		ProgramSelection selection = table.getProgramSelection();
 		if (program == null || program.isClosed() || selection.getNumAddresses() == 0) {
 			return;

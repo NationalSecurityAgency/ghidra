@@ -55,11 +55,6 @@ import ghidra.util.task.SwingUpdateManager;
 public class TableServicePlugin extends ProgramPlugin
 		implements TableService, DomainObjectListener {
 
-	static final String MAKE_SELECTION_ACTION_NAME = "Make Selection";
-	static final String REMOVE_ITEMS_ACTION_NAME = "Remove Items";
-
-	static final String SHARED_ACTION_OWNER_SUFFIX = " (Tool)";
-
 	private SwingUpdateManager updateMgr;
 	private Map<Program, List<TableComponentProvider<?>>> programMap = new HashMap<>();
 

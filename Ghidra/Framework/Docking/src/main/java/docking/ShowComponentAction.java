@@ -50,24 +50,26 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		super(truncateTitleAsNeeded(name), DockingWindowManager.DOCKING_WINDOWS_OWNER);
 	}
 
-	ShowComponentAction(DockingWindowManager winMgr, ComponentPlaceholder info, String subMenuName,
-			boolean isTransient) {
-		super(info.getProvider().getName(), DockingWindowManager.DOCKING_WINDOWS_OWNER);
+	ShowComponentAction(DockingWindowManager winMgr, ComponentPlaceholder placeholder,
+			String subMenuName, boolean isTransient) {
+		super(placeholder.getProvider().getName(), DockingWindowManager.DOCKING_WINDOWS_OWNER,
+			createKeyBindingType(isTransient, placeholder));
 
-		this.info = info;
+		this.info = placeholder;
 		this.winMgr = winMgr;
-		this.title = truncateTitleAsNeeded(info.getTitle());
+		this.title = truncateTitleAsNeeded(placeholder.getTitle());
 		this.isTransient = isTransient;
 		String group = isTransient ? "Transient" : "Permanent";
 
-		Icon icon = info.getIcon();
+		Icon icon = placeholder.getIcon();
 		if (icon == null) {
 			icon = EMPTY_ICON;
 		}
 
 		if (subMenuName != null) {
-			setMenuBarData(new MenuData(
-				new String[] { MENU_WINDOW, subMenuName, info.getFullTitle() }, icon, "Permanent"));
+			setMenuBarData(
+				new MenuData(new String[] { MENU_WINDOW, subMenuName, placeholder.getFullTitle() },
+					icon, "Permanent"));
 			winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, group);
 		}
 		else {
@@ -75,7 +77,7 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		}
 
 		// keybinding data used to show the binding in the menu
-		ComponentProvider provider = info.getProvider();
+		ComponentProvider provider = placeholder.getProvider();
 		DockingActionIf action = provider.getShowProviderAction();
 		KeyBindingData kbData = action.getKeyBindingData();
 		if (kbData != null) {
@@ -94,19 +96,15 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		}
 	}
 
-	@Override
-	public boolean isKeyBindingManaged() {
-		return false;
-	}
+	private static KeyBindingType createKeyBindingType(boolean isTransient,
+			ComponentPlaceholder placeholder) {
 
-	@Override
-	public boolean usesSharedKeyBinding() {
 		if (isTransient) {
-			return false; // temporary window
+			return KeyBindingType.UNSUPPORTED; // temporary window
 		}
 
 		// 'info' is null when this action is used to 'show all' instances of a given provider
-		return info != null;
+		return placeholder == null ? KeyBindingType.UNSUPPORTED : KeyBindingType.SHARED;
 	}
 
 	@Override

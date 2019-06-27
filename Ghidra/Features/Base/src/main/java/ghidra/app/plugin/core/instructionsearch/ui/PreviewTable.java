@@ -134,14 +134,12 @@ public class PreviewTable extends AbstractInstructionTable {
 	/**
 	 * Adds custom context-sensitive menus to the table. This does NOT modify
 	 * any existing menus; it simply adds to them.
-	 *
-	 * @param context the action context
 	 */
 	@Override
-	public List<DockingActionIf> getDockingActions(ActionContext context) {
+	public List<DockingActionIf> getDockingActions() {
 
 		// Invoke the base class method to add default menu options.
-		List<DockingActionIf> list = super.getDockingActions(context);
+		List<DockingActionIf> list = super.getDockingActions();
 
 		// And now add our own.
 		addCustomMenuItems(list);
@@ -489,7 +487,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 */
 	private void createCopyInstructionWithCommentsAction(String owner) {
 		copyInstructionWithCommentsAction =
-			new DockingAction("Selected Instructions (with comments)", owner, false) {
+			new DockingAction("Selected Instructions (with comments)", owner) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					int[] selectedRows = PreviewTable.this.getSelectedRows();
@@ -520,7 +518,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * as shown in the table.
 	 */
 	private void createCopyInstructionAction(String owner) {
-		copyInstructionAction = new DockingAction("Selected Instructions", owner, false) {
+		copyInstructionAction = new DockingAction("Selected Instructions", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				int[] selectedRows = PreviewTable.this.getSelectedRows();
@@ -541,7 +539,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * rows, as shown in the table, with no spaces.
 	 */
 	private void createCopyNoSpacesAction(String owner) {
-		copyNoSpacesAction = new DockingAction("Selected instructions (no spaces)", owner, false) {
+		copyNoSpacesAction = new DockingAction("Selected instructions (no spaces)", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				int[] selectedRows = PreviewTable.this.getSelectedRows();

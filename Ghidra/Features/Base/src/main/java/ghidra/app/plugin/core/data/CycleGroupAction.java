@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.data;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.KeyBindingData;
+import docking.action.*;
 import ghidra.app.cmd.data.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -41,7 +40,7 @@ public class CycleGroupAction extends DockingAction {
 	private CycleGroup cycleGroup;
 
 	CycleGroupAction(CycleGroup group, DataPlugin plugin) {
-		super(group.getName(), plugin.getName(), false);
+		super(group.getName(), plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.cycleGroup = group;
 
@@ -54,11 +53,6 @@ public class CycleGroupAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

@@ -17,6 +17,7 @@ package docking.action;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.*;
@@ -63,8 +64,8 @@ public abstract class DockingAction implements DockingActionIf {
 	private String inceptionInformation;
 
 	private boolean isEnabled = true;
-	private boolean isKeyBindingManaged = true;
 
+	private KeyBindingType keyBindingType = KeyBindingType.INDIVIDUAL;
 	private KeyBindingData defaultKeyBindingData;
 	private KeyBindingData keyBindingData;
 	private MenuBarData menuBarData;
@@ -72,17 +73,27 @@ public abstract class DockingAction implements DockingActionIf {
 	private ToolBarData toolBarData;
 
 	public DockingAction(String name, String owner) {
-		this(name, owner, true);
-	}
-
-	public DockingAction(String name, String owner, boolean isKeyBindingManaged) {
 		this.name = name;
 		this.owner = owner;
-		this.isKeyBindingManaged = isKeyBindingManaged;
 
 		recordInception();
 		HelpLocation location = new HelpLocation(owner, name, inceptionInformation);
 		setHelpLocation(location);
+	}
+
+	public DockingAction(String name, String owner, KeyBindingType kbType) {
+		this(name, owner);
+		this.keyBindingType = Objects.requireNonNull(kbType);
+	}
+
+	public DockingAction(String name, String owner, boolean supportsKeyBindings) {
+		this(name, owner);
+		this.keyBindingType =
+			supportsKeyBindings ? KeyBindingType.INDIVIDUAL : KeyBindingType.UNSUPPORTED;
+	}
+
+	protected KeyBindingType getPreferredKeyBindingType() {
+		return KeyBindingType.INDIVIDUAL;
 	}
 
 	@Override
@@ -96,11 +107,6 @@ public abstract class DockingAction implements DockingActionIf {
 	@Override
 	public void removePropertyChangeListener(PropertyChangeListener listener) {
 		propertyListeners.remove(listener);
-	}
-
-	@Override
-	public boolean isKeyBindingManaged() {
-		return isKeyBindingManaged;
 	}
 
 	@Override
@@ -256,6 +262,11 @@ public abstract class DockingAction implements DockingActionIf {
 		menuItem.setEnabled(isEnabled);
 
 		return menuItem;
+	}
+
+	@Override
+	public KeyBindingType getKeyBindingType() {
+		return keyBindingType;
 	}
 
 	@Override

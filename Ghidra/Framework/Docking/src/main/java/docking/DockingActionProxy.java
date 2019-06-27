@@ -200,8 +200,8 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public boolean isKeyBindingManaged() {
-		return dockingAction.isKeyBindingManaged();
+	public KeyBindingType getKeyBindingType() {
+		return dockingAction.getKeyBindingType();
 	}
 
 	@Override
