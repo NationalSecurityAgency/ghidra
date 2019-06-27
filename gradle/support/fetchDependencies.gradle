@@ -26,7 +26,7 @@
  * usage: from the command line in the main ghidra repository                  *
  *        directory, run the following:                                        *
  *                                                                             *
- *        gradle --init-script gradle/fetchDependencies.gradle init            *
+ *        gradle --init-script gradle/support/fetchDependencies.gradle init    *
  *                                                                             *
  * Note: When running the script, files will only be downloaded if             *
  *       necessary (eg: they are not already in the build/downloads/           *
@@ -41,7 +41,7 @@ import org.apache.commons.io.*;
 import org.apache.commons.io.filefilter.*;
 
 ext.HOME_DIR = System.getProperty('user.home')
-ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile()
+ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile().getParentFile()
 ext.FLAT_REPO_DIR = new File(REPO_DIR, "flatRepo")
 ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
 
