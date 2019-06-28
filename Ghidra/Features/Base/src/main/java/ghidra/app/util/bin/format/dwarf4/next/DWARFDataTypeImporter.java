@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
@@ -725,7 +727,8 @@ public class DWARFDataTypeImporter {
 
 			DWARFDataType childDT = getDataType(childDIEA.getTypeRef(), null);
 			if (childDT == null) {
-				Msg.error(this, "Failed to get data type for child: " + childDIEA.getHexOffset());
+				Msg.error(this,
+					"Failed to get data type for struct field: " + childDIEA.getHexOffset());
 				continue;
 			}
 
@@ -744,8 +747,13 @@ public class DWARFDataTypeImporter {
 				}
 			}
 
-			if (isBitField) {
-				memberName += "_bitfield";
+			if (isBitField && !BitFieldDataType.isValidBaseDataType(childDT.dataType)) {
+				DWARFUtil.appendDescription(structure,
+					memberDesc("Missing member",
+						"Bad data type for bitfield: " + childDT.dataType.getName(), memberName,
+						childDT, -1, bitOffset, bitSize),
+					"\n");
+				continue;
 			}
 
 			// If the child's datatype is an anon datatype, copy the datatype into our
@@ -763,18 +771,16 @@ public class DWARFDataTypeImporter {
 						DWARFAttribute.DW_AT_data_member_location, 0);
 				}
 				catch (DWARFExpressionException e) {
-					DWARFUtil.appendDescription(structure,
-						"Missing member " + memberName + " : " + childDT.dataType.getName() +
-							" at offset unknown [failed to parse location]",
+					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
+						"failed to parse location", memberName, childDT, -1, bitOffset, bitSize),
 						"\n");
 					continue;
 				}
 			}
 
 			if (childDT.dataType.getLength() == 0) {
-				DWARFUtil.appendDescription(structure,
-					"Missing member " + memberName + " : " + childDT.dataType.getName() +
-						" at offset 0x" + Long.toHexString(memberOffset) + " [zero length type]",
+				DWARFUtil.appendDescription(structure, memberDesc("Missing member",
+					"zero length type", memberName, childDT, memberOffset, bitOffset, bitSize),
 					"\n");
 				continue;
 			}
@@ -799,50 +805,76 @@ public class DWARFDataTypeImporter {
 				continue;
 			}
 
-			int childLength = getUnpaddedDataTypeLength(childDT.dataType);
-			if (memberOffset + childLength > structure.getLength()) {
-				DWARFUtil.appendDescription(structure,
-					"Missing member " + memberName + " : " + childDT.dataType.getName() +
-						" at offset 0x" + Long.toHexString(memberOffset) +
-						" [exceeds parent struct len]",
-					"\n");
-
-				continue;
-			}
-
-			DataTypeComponent existingDTC = structure.getComponentAt(memberOffset);
-			if (existingDTC != null && !(existingDTC.getDataType() instanceof DefaultDataType)) {
-				DWARFUtil.appendDescription(existingDTC,
-					"Missing member " + memberName + " : " + childDT.dataType.getName() +
-						" at offset 0x" + Long.toHexString(memberOffset) + " [conflict with " +
-						existingDTC.getFieldName() + "]",
-					"\n");
-				continue;
-			}
-
-			try {
-				DataTypeComponent dtc = structure.replaceAtOffset(memberOffset, childDT.dataType,
-					childLength, memberName, null);
-
-				// struct.replaceAtOffset() clones the childDT, which will mess up our
-				// identity based mapping in currentImplDataTypeToDDT.
-				// Update the mapping to prevent that.
-				updateMapping(childDT.dataType, dtc.getDataType());
-
-				if (isBitField) {
-					DWARFUtil.appendDescription(dtc, memberName + "_" + bitOffset + ":" + bitSize,
+			if (isBitField) {
+				int dtLen = childDT.dataType.getLength();
+				try {
+					// TODO: need safety checks here to make sure that using insertAt() doesn't
+					// modify the struct
+					structure.insertBitFieldAt(memberOffset, dtLen,
+						(dtLen * 8) - (bitSize + bitOffset), childDT.dataType, bitSize, memberName,
+						null);
+				}
+				catch (InvalidDataTypeException e) {
+					Msg.error(this,
+						"Unable to add member " + memberName + " to structure " +
+							structure.getDataTypePath() + "[DWARF DIE " + diea.getHexOffset() +
+							"], skipping: " + e.getMessage());
+					DWARFUtil.appendDescription(structure,
+						memberDesc("Missing member ", "Failed to add bitfield", memberName, childDT,
+							memberOffset, bitOffset, bitSize),
 						"\n");
 				}
 			}
-			catch (IllegalArgumentException exc) {
-				Msg.error(this,
-					"Unable to add member " + memberName + " to structure " +
-						structure.getDataTypePath() + "[DWARF DIE " + diea.getHexOffset() +
-						"], skipping: " + exc.getMessage());
-				DWARFUtil.appendDescription(structure, "Missing member " + memberName + " : " +
-					childDT.dataType.getName() + " at 0x" + Long.toHexString(memberOffset), "\n");
+			else {
+				int childLength = getUnpaddedDataTypeLength(childDT.dataType);
+				if (memberOffset + childLength > structure.getLength()) {
+					DWARFUtil.appendDescription(structure,
+						memberDesc("Missing member", "exceeds parent struct len", memberName,
+							childDT, memberOffset, bitOffset, bitSize),
+						"\n");
+
+					continue;
+				}
+
+				DataTypeComponent existingDTC = structure.getComponentAt(memberOffset);
+				if (existingDTC != null &&
+					!(existingDTC.getDataType() instanceof DefaultDataType)) {
+					DWARFUtil.appendDescription(structure,
+						memberDesc("Missing member", "conflict with " + existingDTC.getFieldName(),
+							memberName, childDT, memberOffset, bitOffset, bitSize),
+						"\n");
+					continue;
+				}
+
+				try {
+					DataTypeComponent dtc = structure.replaceAtOffset(memberOffset,
+						childDT.dataType, childLength, memberName, null);
+
+					// struct.replaceAtOffset() clones the childDT, which will mess up our
+					// identity based mapping in currentImplDataTypeToDDT.
+					// Update the mapping to prevent that.
+					updateMapping(childDT.dataType, dtc.getDataType());
+				}
+				catch (IllegalArgumentException exc) {
+					Msg.error(this,
+						"Unable to add member " + memberName + " to structure " +
+							structure.getDataTypePath() + "[DWARF DIE " + diea.getHexOffset() +
+							"], skipping: " + exc.getMessage());
+					DWARFUtil.appendDescription(structure, memberDesc("Missing member ", "",
+						memberName, childDT, memberOffset, bitOffset, bitSize), "\n");
+				}
 			}
 		}
+	}
+
+	private static String memberDesc(String prefix, String errorStr, String memberName,
+			DWARFDataType ddt, int memberOffset, int bitSize, int bitOffset) {
+		boolean isBitField = (bitSize != -1 && bitOffset != -1);
+		return (!StringUtils.isBlank(prefix) ? prefix + " " : "") + memberName + " : " +
+			ddt.dataType.getName() + (isBitField ? ":" + bitSize : "") + " at offset " +
+			(memberOffset != -1 ? "0x" + Long.toHexString(memberOffset) : "unknown") +
+			(isBitField ? ":" + bitOffset : "") +
+			(!StringUtils.isBlank(errorStr) ? " [" + errorStr + "]" : "");
 	}
 
 	/**
