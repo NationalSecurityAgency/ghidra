@@ -17,21 +17,30 @@ apply plugin: 'c'
 
 // Unclear if we can rely on the VisualCpp plugin to identify the correct Visual Studio paths
 
-project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
+project.ext.VISUAL_STUDIO_BASE_2017_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
+project.ext.VISUAL_STUDIO_BASE_2019_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019"
 project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 
 project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
 project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 project.ext.MSVC_SDK_VERSION = "UNKNOWN"
 project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
+project.ext.VISUAL_STUDIO_FOUND = false
 
 if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 
-	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
+	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2017_DIR + "\\Professional"
 	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
+		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2017_DIR + "\\Community"
+	}
+	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2019_DIR + "\\Professional"
+	}
+	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2019_DIR + "\\Community"
 	}
 	if (file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+		project.ext.VISUAL_STUDIO_FOUND = true
 
 		println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
 
@@ -86,10 +95,10 @@ task CheckToolChain {
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 			// ensure that required MS Visual Studio is installed where expected
-			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
+			String msg = "Microsoft Visual Studio 2017 install not found: ${VISUAL_STUDIO_BASE_2017_DIR}\n" +
+				"Microsoft Visual Studio 2019 install not found: ${VISUAL_STUDIO_BASE_2019_DIR}\n" +
 				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
-			if (!file(VISUAL_STUDIO_BASE_DIR).exists() || 
-					!file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
+			if (!VISUAL_STUDIO_FOUND) {
 				throw new GradleException(msg);
 			}	
 		}
