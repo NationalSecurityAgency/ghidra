@@ -464,20 +464,27 @@ class StructureEditorModel extends CompEditorModel {
 	 *  Moves the components between the start index (inclusive) and the end
 	 *  index (inclusive) to the new index (relative to the initial component set).
 	 *
-	 * @param startRow row index of the starting component to move.
-	 * @param endRow row index of the ending component to move.
+	 * @param startIndex row index of the starting component to move.
+	 * @param endIndex row index of the ending component to move.
 	 * @return true if components are moved.
 	 */
-	private boolean shiftComponentsUp(int startRow, int endRow) {
+	private boolean shiftComponentsUp(int startIndex, int endIndex) {
 		int numComps = getNumComponents();
-		if ((startRow > endRow) || startRow <= 0 || startRow >= numComps || endRow <= 0 ||
-			endRow >= numComps) {
+		if ((startIndex > endIndex) || startIndex <= 0 || startIndex >= numComps || endIndex <= 0 ||
+			endIndex >= numComps) {
 			return false;
 		}
-		DataTypeComponent comp = getComponent(startRow - 1);
-		deleteComponent(startRow - 1);
+		int len = getLength();
+
+		DataTypeComponent comp = deleteComponentAndResidual(startIndex - 1);
+
 		try {
-			insert(endRow, comp.getDataType(), comp.getLength(), comp.getFieldName(),
+			if (!isAligned() && comp.isBitFieldComponent()) {
+				// insert residual undefined bytes before inserting unaligned bitfield
+				int lenChange = len - getLength();
+				insert(endIndex, DataType.DEFAULT, 1, lenChange);
+			}
+			insert(endIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
 				comp.getComment());
 		}
 		catch (InvalidDataTypeException e) {
@@ -500,9 +507,16 @@ class StructureEditorModel extends CompEditorModel {
 			endIndex < 0 || endIndex >= numComponents - 1) {
 			return false;
 		}
-		DataTypeComponent comp = getComponent(endIndex + 1);
-		deleteComponent(endIndex + 1);
+		int len = getLength();
+
+		DataTypeComponent comp = deleteComponentAndResidual(endIndex + 1);
+
 		try {
+			if (!isAligned() && comp.isBitFieldComponent()) {
+				// insert residual undefined bytes before inserting unaligned bitfield
+				int lenChange = len - getLength();
+				insert(startIndex, DataType.DEFAULT, 1, lenChange);
+			}
 			insert(startIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
 				comp.getComment());
 		}
@@ -510,6 +524,31 @@ class StructureEditorModel extends CompEditorModel {
 			return false;
 		}
 		return true;
+	}
+
+	private DataTypeComponent deleteComponentAndResidual(int index) {
+
+		DataTypeComponent comp = getComponent(index);
+		deleteComponent(index);
+
+		if (isAligned() || !comp.isBitFieldComponent() || index >= getNumComponents()) {
+			return comp;
+		}
+
+		// Deleting a bitfield component does not remove consumed space.
+		// This operation should remove any residual undefined components
+
+		int startOffset = comp.getOffset();
+
+		for (int i = index + comp.getLength() - 1; i >= index; --i) {
+			DataTypeComponent dtc = getComponent(i);
+			if (dtc != null && dtc.getDataType() == DataType.DEFAULT &&
+				dtc.getOffset() >= startOffset) {
+				deleteComponent(i);
+			}
+		}
+
+		return comp;
 	}
 
 	/* (non-Javadoc)
@@ -589,11 +628,11 @@ class StructureEditorModel extends CompEditorModel {
 		FieldRange range = selection.getFieldRange(0);
 
 		DataTypeComponent comp = getComponent(range.getStart().getIndex().intValue());
-		if (comp == null) {
-			return false;
-		}
-		if (comp.isFlexibleArrayComponent()) {
+		if (comp == null || comp.isFlexibleArrayComponent()) {
 			return true;
+		}
+		if (comp.isBitFieldComponent()) {
+			return false;
 		}
 
 		DataType dt = comp.getDataType();
@@ -654,6 +693,18 @@ class StructureEditorModel extends CompEditorModel {
 		super.deleteSelectedComponents();
 	}
 
+	private boolean selectionContainsBitField() {
+		int startIx = selection.getFieldRange(0).getStart().getIndex().intValue();
+		int endIx = selection.getFieldRange(0).getEnd().getIndex().intValue();
+		for (int rowIndex = startIx; rowIndex <= endIx; rowIndex++) {
+			DataTypeComponent dtc = getComponent(rowIndex);
+			if (dtc != null && dtc.isBitFieldComponent()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Returns whether or not the component at the selected index
 	 * is allowed to be duplicated.
@@ -662,50 +713,41 @@ class StructureEditorModel extends CompEditorModel {
 	 */
 	@Override
 	public boolean isDuplicateAllowed() {
-		boolean dupAllowed = false;
-		if (this.getNumSelectedComponentRows() != 1) {
+
+		if (!isSingleRowSelection() || this.getNumSelectedComponentRows() != 1) {
 			return false;
 		}
 
-		int rowIndex = selection.getFieldRange(0).getStart().getIndex().intValue();
-		// Get the range this index is in, if its in one.
-		FieldRange range = getSelectedRangeContaining(rowIndex);
-		boolean notInMultiLineSelection = true;
-		if ((range != null) &&
-			((range.getEnd().getIndex().intValue() - range.getStart().getIndex().intValue()) > 1)) {
-			notInMultiLineSelection = false;
-		}
-
 		// set actions based on number of items selected
-		if (notInMultiLineSelection && (rowIndex <= getNumComponents())) {
-			DataTypeComponent comp = getComponent(rowIndex);
-			DataType dt = comp.getDataType();
-			if (viewComposite.isInternallyAligned()) {
-				dupAllowed = true;
-			}
-			else {
-				if (dt.equals(DataType.DEFAULT)) {
-					return true; // Insert an undefined and push everything down.
-				}
-				// Can always duplicate at the end.
-				if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
-					return true;
-				}
-				// Otherwise can only duplicate if enough room.
-
-				// Get the size of the data type at this index and the number of
-				// undefined bytes following it.
-				int dtSize = dt.getLength();
-				if (dtSize <= 0) {
-					dtSize = comp.getLength();
-				}
-				int undefSize = getNumUndefinedBytesAt(rowIndex + 1);
-				if (dtSize <= undefSize) {
-					dupAllowed = true;
-				}
-			}
+		int rowIndex = getRow();
+		DataTypeComponent comp = getComponent(rowIndex);
+		DataType dt = comp.getDataType();
+		if (viewComposite.isInternallyAligned()) {
+			return true;
 		}
-		return dupAllowed;
+		if (dt.equals(DataType.DEFAULT)) {
+			return true; // Insert an undefined and push everything down.
+		}
+		if (comp.isBitFieldComponent()) {
+			return false; // unable to place unaligned bitfield in a reasonable fashion
+		}
+		// Can always duplicate at the end.
+		if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
+			return true;
+		}
+		// Otherwise can only duplicate if enough room.
+
+		// Get the size of the data type at this index and the number of
+		// undefined bytes following it.
+		int dtSize = dt.getLength();
+		if (dtSize <= 0) {
+			dtSize = comp.getLength();
+		}
+		int undefSize = getNumUndefinedBytesAt(rowIndex + 1);
+		if (dtSize <= undefSize) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -985,7 +1027,16 @@ class StructureEditorModel extends CompEditorModel {
 					dtc.getComment());
 			}
 			else {
-				dtc = ((Structure) viewComposite).insert(rowIndex, dataType, length, name, comment);
+				if (isAligned() || !(dataType instanceof BitFieldDataType)) {
+					dtc = ((Structure) viewComposite).insert(rowIndex, dataType, length, name,
+						comment);
+				}
+				else {
+					BitFieldDataType bitfield = (BitFieldDataType) dataType;
+					dtc = ((Structure) viewComposite).insertBitField(rowIndex, length,
+						bitfield.getBitOffset(), bitfield.getBaseDataType(),
+						bitfield.getDeclaredBitSize(), name, comment);
+				}
 				if (rowIndex <= row) {
 					row++;
 				}
@@ -1314,13 +1365,42 @@ class StructureEditorModel extends CompEditorModel {
 		int length = 0;
 		final StructureDataType structureDataType =
 			new StructureDataType(originalCategoryPath, uniqueName, length, originalDTM);
+
+		if (isAligned()) {
+			structureDataType.setPackingValue(getPackingValue());
+		}
+
 // Get data type components to make into structure.
+		DataTypeComponent firstDtc = null;
+		DataTypeComponent lastDtc = null;
 		for (int rowIndex = minRow; rowIndex < maxRow; rowIndex++) {
 			DataTypeComponent component = getComponent(rowIndex);
+			if (rowIndex == minRow) {
+				firstDtc = component;
+			}
+			if (component == null) {
+				lastDtc = component;
+				continue;
+			}
+
+			DataType dt = component.getDataType();
 			int compLength = component.getLength();
+
 			length += compLength;
-			structureDataType.add(component.getDataType(), compLength, component.getFieldName(),
-				component.getComment());
+
+			if (!isAligned() && component.isBitFieldComponent()) {
+				BitFieldDataType bitfield = (BitFieldDataType) dt;
+				structureDataType.insertBitFieldAt(component.getOffset() - firstDtc.getOffset(),
+					compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
+					bitfield.getDeclaredBitSize(), component.getFieldName(),
+					component.getComment());
+			}
+			else {
+				structureDataType.add(dt, compLength, component.getFieldName(),
+					component.getComment());
+			}
+
+			lastDtc = component;
 		}
 		DataType addedDataType = createDataTypeInOriginalDTM(structureDataType);
 		if (viewComposite.isInternallyAligned()) {
@@ -1328,7 +1408,21 @@ class StructureEditorModel extends CompEditorModel {
 			insert(minRow, addedDataType, addedDataType.getLength());
 		}
 		else {
+			int adjustmentBytes = 0;
+			if (firstDtc != null && firstDtc.isBitFieldComponent() && minRow > 0) {
+				DataTypeComponent dtc = getComponent(minRow - 1);
+				if (dtc.getEndOffset() == firstDtc.getOffset()) {
+					++adjustmentBytes;
+				}
+			}
+			if (lastDtc != null && lastDtc.isBitFieldComponent() && maxRow < getNumComponents()) {
+				DataTypeComponent dtc = getComponent(maxRow);
+				if (dtc.getOffset() == lastDtc.getEndOffset()) {
+					++adjustmentBytes;
+				}
+			}
 			clearSelectedComponents();
+			insertMultiple(minRow, DataType.DEFAULT, 1, adjustmentBytes);
 			replace(minRow, addedDataType, addedDataType.getLength());
 		}
 	}

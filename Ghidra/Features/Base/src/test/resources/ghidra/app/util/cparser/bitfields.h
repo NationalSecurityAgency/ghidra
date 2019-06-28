@@ -15,6 +15,31 @@
  */
 // Verify bitfield grouping and alignment without zero-length bitfields
 
+#pragma pack(1)
+
+struct oddStruct {
+        char x;
+        int  y;
+};
+
+#pragma pack()
+
+struct A1 {
+        char a[5]; // test for alignment overlap (gcc)
+        int b:3;
+        int c:8;
+        int d:8;
+        int e:6;
+};
+
+struct A2 {
+        oddStruct a; // test for check alignment overlap (gcc)
+        int b:3;
+        int c:8;
+        int d:8;
+        int e:6;
+};
+
 struct B1 {
 	char a;
 	unsigned short b:6; // gcc groups with previous non-bitfield
@@ -448,6 +473,4 @@ union U1p2 {
 };
 
 #pragma pack()
-
-
 

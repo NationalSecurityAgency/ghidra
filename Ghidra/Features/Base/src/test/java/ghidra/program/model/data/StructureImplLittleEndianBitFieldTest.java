@@ -35,7 +35,7 @@ public class StructureImplLittleEndianBitFieldTest extends AbstractCompositeImpl
 		super.setUp();
 
 		// uncomment to generate datatype archive
-		// writeArchive();
+		//writeArchive();
 	}
 
 	private void writeArchive() throws IOException {
@@ -71,6 +71,40 @@ public class StructureImplLittleEndianBitFieldTest extends AbstractCompositeImpl
 			}
 			return dataMgr;
 		}
+	}
+
+	@Test
+	public void testStructureBitFieldsA1() {
+		Structure struct = getStructure("A1");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/A1\n" + 
+			"Aligned\n" + 
+			"Structure A1 {\n" + 
+			"   0   char[5]   5   a   \"\"\n" + 
+			"   5   int:3(0)   1   b   \"\"\n" + 
+			"   5   int:8(3)   2   c   \"\"\n" + 
+			"   6   int:8(3)   2   d   \"\"\n" + 
+			"   8   int:6(0)   1   e   \"\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 4", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testStructureBitFieldsA2() {
+		Structure struct = getStructure("A2");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/A2\n" + 
+			"Aligned\n" + 
+			"Structure A2 {\n" + 
+			"   0   oddStruct   5   a   \"\"\n" + 
+			"   5   int:3(0)   1   b   \"\"\n" + 
+			"   5   int:8(3)   2   c   \"\"\n" + 
+			"   6   int:8(3)   2   d   \"\"\n" + 
+			"   8   int:6(0)   1   e   \"\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 4", struct);
+		//@formatter:on
 	}
 
 	@Test

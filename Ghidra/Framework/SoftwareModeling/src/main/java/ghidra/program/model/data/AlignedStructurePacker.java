@@ -274,28 +274,10 @@ public class AlignedStructurePacker {
 			updateComponent(lastComponent, ordinal, groupOffset, 1, minimumAlignment);
 		}
 
-		private boolean canPack(DataType dataType) {
-			if (dataType instanceof TypeDef) {
-				dataType = ((TypeDef) dataType).getBaseDataType();
-			}
-			if (dataType instanceof BitFieldDataType) {
-				return true;
-			}
-			if (dataType instanceof AbstractIntegerDataType) {
-				return true;
-			}
-			if (dataType instanceof Enum) {
-				return true;
-			}
-			return false;
-		}
-
 		private boolean packComponent(InternalDataTypeComponent dataTypeComponent) {
 
-			if (lastComponent == null || dataTypeComponent.isZeroBitFieldComponent() ||
-				!canPack(lastComponent.getDataType()) ||
-				!canPack(dataTypeComponent.getDataType())) {
-				return false; // can't pack incompatible types - start new group
+			if (lastComponent == null || dataTypeComponent.isZeroBitFieldComponent()) {
+				return false;
 			}
 
 			if (dataTypeComponent.isBitFieldComponent()) {

@@ -262,8 +262,8 @@ public interface Composite extends DataType {
 
 	/**
 	 * Deletes the component at the given ordinal position.
-	 * <BR>Note: For an aligned structure the delete will have no effect if the
-	 * ordinal position is a component that provides alignment padding.
+	 * <BR>Note: Removal of bitfields from an unaligned structure will 
+	 * not shift other components with vacated bytes reverting to undefined.
 	 * @param ordinal the ordinal of the component to be deleted.
 	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
 	 */
@@ -271,9 +271,7 @@ public interface Composite extends DataType {
 
 	/**
 	 * Deletes the components at the given ordinal positions.
-	 * <BR>Note 1: For an aligned structure the delete will have no effect if the
-	 * ordinal position is a component that provides alignment padding.
-	 * <BR>Note 2: Removal of bitfields from an unaligned structure will 
+	 * <BR>Note: Removal of bitfields from an unaligned structure will 
 	 * not shift other components with vacated bytes reverting to undefined.
 	 * @param ordinals the ordinals of the component to be deleted.
 	 * @throws ArrayIndexOutOfBoundsException if any specified component ordinal is out of bounds

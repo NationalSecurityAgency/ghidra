@@ -295,7 +295,8 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		waitForBusyTool(tool);
 	}
 
-	private void createAlignedDetailedStructure(long address, boolean includeFlexArray) {
+	private void createAlignedDetailedStructure(long address,
+			boolean includeBitFieldsAndFlexArray) {
 
 		goToListing(address);
 
@@ -303,17 +304,27 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		struct.add(new ByteDataType(), "myByteElement", "alignment 1");
 		struct.add(new ByteDataType(), "", "This is my undefined element");
 		struct.add(new WordDataType(), "myWordElement", "alignment 2");
+		if (includeBitFieldsAndFlexArray) {
+			try {
+				struct.addBitField(ByteDataType.dataType, 1, "myBitField1", "alignment 1");
+				struct.addBitField(ByteDataType.dataType, 2, "myBitField2", "alignment 1");
+				struct.addBitField(ByteDataType.dataType, 3, "myBitField3", "alignment 1");
+			}
+			catch (InvalidDataTypeException e) {
+				failWithException("Unexpected Error", e);
+			}
+		}
 		struct.add(new ByteDataType(), "myByteElement2", "alignment 1");
 		struct.add(new DWordDataType(), "myDWordElement", "alignment 4");
-		if (includeFlexArray) {
+		if (includeBitFieldsAndFlexArray) {
 			struct.setFlexibleArrayComponent(CharDataType.dataType, "flex",
 				"unsized flexible array");
 		}
 		struct.clearComponent(1);
-		struct.setDescription(
-			"Members internally aligned " + (includeFlexArray ? "with a flexible char array"
+		struct.setDescription("Members internally aligned " +
+			(includeBitFieldsAndFlexArray ? "with bitfields and a flexible char array"
 					: "according to their alignment size") +
-				". ");
+			". ");
 		struct.setInternallyAligned(true);
 
 		CreateDataCmd createDataCmd = new CreateDataCmd(addr(address), struct);

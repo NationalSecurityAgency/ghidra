@@ -224,7 +224,12 @@ class UnionEditorModel extends CompEditorModel {
 	 */
 	@Override
 	public boolean isArrayAllowed() {
-		return isSingleRowSelection();
+		if (!isSingleRowSelection()) {
+			return false;
+		}
+		FieldRange range = selection.getFieldRange(0);
+		DataTypeComponent comp = getComponent(range.getStart().getIndex().intValue());
+		return (comp == null || !comp.isBitFieldComponent());
 	}
 
 	/**

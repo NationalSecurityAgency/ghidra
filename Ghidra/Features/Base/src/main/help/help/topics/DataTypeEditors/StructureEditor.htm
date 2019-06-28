@@ -169,12 +169,14 @@
     <H3>Unaligned Structures</H3>
 
     <BLOCKQUOTE>
-      <P>When a structure is unaligned, each component immediately follows the one before it. In
-      other words no automatic alignment or padding occurs. Unaligned structures can contain
-      Undefined bytes. Unaligned structures should be used to position components with known data
+      <P>When a structure is unaligned, with the exception of bitfields, each component immediately 
+      follows the one before it. In
+      other words no automatic alignment or padding occurs. Unaligned structures can contain 
+      Unaligned structures should be used to position components with known data
       types at specific offsets within the structure. Therefore the structure editor tries to
       prevent defined components (those other than Undefined bytes) from accidentally being moved
-      to a different offset when performing operations like drag and drop.<BR>
+      to a different offset when performing operations like drag and drop, although undefined bytes
+      may be consumed. <BR>
       </P>
 
       <DIV style="text-align: center; margin-top: 10px;">
@@ -188,9 +190,12 @@
       <P>An aligned structure is defined similar to a structure in a C header file. The data types
       are specified for each of the components, but their offsets will be automatically adjusted to
       the correct alignment based on the data type and position in the structure. A default
-      Undefined byte cannot be added to an aligned structure. The overall size of the structure is
-      determined by the components it contains and whether or not it is packed. When you select the
-      Align checkbox, the GUI displays buttons to allow an align attribute, <SPAN style=
+      "undefined" byte cannot be added to an aligned structure, although an "undefined1" component 
+      can be and is treated like any other fixed-length datatype.   The overall size of the structure is
+      determined by the components it contains and the specified pack value. The alignment and 
+      packing behavior is determined by the effective data organization as defined by each compiler
+      specification (data type archives utilize a default data organization).  When you select the
+      <B>Align</B> checkbox, the GUI displays buttons to allow an align attribute, <SPAN style=
       "font-weight: bold; font-style: italic;">align( minimum )</SPAN>, to be specified. It also
       allows a pack value, <SPAN style="font-style: italic;"><SPAN style=
       "font-weight: bold;">pack</SPAN></SPAN> <SPAN style=
@@ -256,7 +261,7 @@
 
       <UL>
         <LI><B>none</B> - The components within this structure should align themselves in the
-        default way for the compiler. The components are not being packed.<BR>
+        default way for the compiler. The components are not being packed with a reduced alignment.<BR>
         </LI>
 
         <LI>by value - The bottom button with a text field next to it allows you to specify a pack
@@ -264,7 +269,9 @@
         component.<BR>
         </LI>
       </UL>
-
+	  <P><IMG alt="Note:" src="../../shared/note.png"> The placement of bitfields may be influenced
+	  based upon the specified pack value.<BR>
+      </P>
       <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C #pragma
       pack attribute</I> on the structure or union is to choose <B>none</B>. The equivalent for a C
       code attribute of <I>#pragma pack()</I> without a value is to specify a <B>pack value</B> of
@@ -306,6 +313,42 @@
     
     </BLOCKQUOTE>
     
+    <H2><A name="Structure_Editor_Bitfields"></A>Bitfield Component</H2>
+
+    <P>A structure and union may define bitfield components which attempt to model 
+    bitfield definitions found within C/C++. Unlike other byte-oriented components, 
+    bitfield components have the following characteristics: 
+    <BLOCKQUOTE>
+      	<ul>
+      		<li>A bitfield datatype may not exist anywhere other than within a structure or union.</li>
+      		<li>A bitfield datatype may not be selected via the datatype chooser or tree since it
+      		requires the specification of additional attributes (bit-size, bit-offset, etc.).  The
+      		bit-size is generally appended to the base-datatype for entry and presentation purposes
+      		(e.g., char:1).  NOTE: At the API level there is no public or default constructor for the 
+      		<I>BitFieldDataType</I>.  Specific API methods exist for adding bitfields to structures and unions.</li>
+      		<li>A zero-length bitfield may be defined within a byte but its' precise bit position
+      		is controlled by endianess alone.  A zero-length bitfield has no affect within an unaligned
+      		structure and is intended for use within aligned structures where it may impart alignment
+      		affects based upon compiler conventions.</li> 
+      		<li>Inserting or moving bitfields may cause component shifts based upon allocation unit
+      		byte size and possible placement conflicts.</li>
+      		<li>The start/end byte offsets may be shared with adjacent bitfield components.</li>
+      		<li>Unoccupied bits within a partially occupied byte are not represented by any component
+      		(similar to padding bytes within aligned structures).  Using the Bitfield Viewer provides
+      		a bit-level view of a component.  (click <IMG alt="[magnifier icon]" src="images/magnifier.png"> 
+      		adjacent to bitfield datatype to view within Bitfield Viewer).</li>
+      		<li>A separate Bitfield Editor, for use with unaligned structures only, 
+      		must be used to precisley place a bitfield component.  Adding a bitfield component via the 
+      		structure table view via datatype text entry (e.g., char:1) provides only rough placement. 
+      		The BitField Editor may be displayed using the the Add Bitfield and
+      		Edit Bitfield popup actions on a selected structure component.  The datatype text entry approach
+      		must be used for all unions and aligned strctures.</li>
+      	</ul>
+    </BLOCKQUOTE>
+    
+    <P><IMG alt="Note:" src="../../shared/note.png">The use of bitfield components is not 
+    currently reflected in decompiler results or assembly markup. </P>
+    
 	<H2><A name="Structure_Editor_Flex_Array"></A>Flexible Array Component</H2>
 
     <P>A structure may be defined with a trailing flexible array component which corresponds to
@@ -321,20 +364,13 @@
     structure and will not appear within the structure when applied to Data within memory as it 
     corresponds to the memory location which immediately follows the end of the structure.</P>
     
-    <P><IMG alt="Note:" src="../../shared/note.png">The presence of a flexible array component may not 
-    be reflected in decompilation results.  Its primary purpose if to reflect the C source definition
-    of a structure with correct alignment and structure sizing.</P>
+    <P><IMG alt="Note:" src="../../shared/note.png">The use of flexible array components is not 
+    currently reflected in decompiler results or listing reference markup. Its primary purpose 
+    if to reflect the C/C++ source definition of a structure with correct alignment and structure sizing.</P>
     
-    <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <SPAN style=
-      "font-style: italic;">no C #pragma pack attribute</SPAN> on the structure or union is to
-      choose <SPAN style="font-weight: bold;">none</SPAN>. The equivalent for a C code attribute of
-      <SPAN style="font-style: italic;">#pragma pack()</SPAN> without a value is to specify a <SPAN
-      style="font-weight: bold;">pack value</SPAN> of <SPAN style="font-weight: bold;">1</SPAN>.
-      The equivalent of <SPAN style="font-style: italic;"># pragma</SPAN> <SPAN style=
-      "font-style: italic;">pack(4)</SPAN> is to specify a <SPAN style="font-weight: bold;">pack
-      value</SPAN> of 4.<BR>
-      </P>
-      
+    <P><IMG alt="Note:" src="../../shared/note.png">While C/C++ support flexible arrays anywhere
+    within a structure, Ghidra only supports the case where it is the last structure component.</P>
+ 
       <DIV style="text-align: center;">
         <IMG alt="" src="images/StructureEditorWithFlexArray.png"><BR>
         <BR>

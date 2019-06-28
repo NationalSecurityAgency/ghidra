@@ -193,26 +193,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		if (isInternallyAligned()) {
 			return;
 		}
-		int shiftAmount = dtc.getLength();
-		if (dtc.isBitFieldComponent()) {
-			// Must handle potential overlap with adjacent components
-			// NOTE: existing bitfields will not overlap by more than one byte
-			int minOffset = dtc.getOffset();
-			int maxOffset = dtc.getEndOffset();
-			if (index > 0) {
-				DataTypeComponentImpl previousDtc = components.get(index - 1);
-				if (previousDtc.getEndOffset() == dtc.getOffset()) {
-					++minOffset;
-				}
-			}
-			if (minOffset <= maxOffset && index < components.size()) {
-				DataTypeComponentImpl nextDtc = components.get(index);
-				if (nextDtc.getOffset() == dtc.getOffset()) {
-					--maxOffset;
-				}
-			}
-			shiftAmount = maxOffset - minOffset + 1;
-		}
+		int shiftAmount = dtc.isBitFieldComponent() ? 0 : dtc.getLength();
 		shiftOffsets(index, -1, -shiftAmount);
 	}
 

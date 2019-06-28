@@ -16,6 +16,10 @@
 #include <stdio.h>
 #include "bitfields.h"
 
+struct A1 A1 = { { 5, 0xa, 5, 0xa, 5}, 3, 0xAA, 0x55, 0x3f };
+
+struct A2 A2 = { { 5, 0x050a050a }, 3, 0xAA, 0x55, 0x3f };
+
 
 struct B1 B1 = { 5, 0x2A, -1, 0xA };
 

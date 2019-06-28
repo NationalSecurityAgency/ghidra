@@ -457,7 +457,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract DataTypeComponent insert(int rowIndex, DataType dataType, int length,
 			String name, String comment) throws InvalidDataTypeException;
 
-	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies) throws InvalidDataTypeException;
+	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies)
+			throws InvalidDataTypeException;
 
 	/**
 	 * Add a DataType component into to an editable structure
@@ -1297,7 +1298,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		DataTypeComponent comp = getComponent(rowIndex);
 		// Set the field name and comment the same as before
 		try {
-			comp.setFieldName(fieldName);
+			if (comp.getFieldName() == null) {
+				comp.setFieldName(fieldName);
+			}
 		}
 		catch (DuplicateNameException exc) {
 			Msg.showError(this, null, null, null);

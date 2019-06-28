@@ -135,8 +135,8 @@ public class BitFieldViewerPanel extends JPanel {
 			allocationSize = 4;
 		}
 
-		placementComponent.setAllocationOffset(allocationOffset);
-		placementComponent.init(allocationSize, bitfieldDtc);
+		placementComponent.updateAllocation(allocationSize, allocationOffset);
+		placementComponent.init(bitfieldDtc);
 		updateAllocationOffsetLabel();
 	}
 

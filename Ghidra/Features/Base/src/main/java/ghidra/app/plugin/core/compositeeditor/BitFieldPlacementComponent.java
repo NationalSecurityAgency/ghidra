@@ -55,7 +55,8 @@ public class BitFieldPlacementComponent extends JPanel {
 	private final Composite composite;
 	private final boolean bigEndian;
 
-	private int allocationOffset;
+	private int allocationByteOffset;
+	private int allocationByteSize;
 	private BitFieldAllocation bitFieldAllocation;
 
 	private EditMode editMode = EditMode.NONE;
@@ -127,8 +128,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		}
 
 		int extraLineSpace = BYTE_SEPARATOR_THICKNESS - BIT_SEPARATOR_THICKNESS;
-		return (bitFieldAllocation.allocationByteSize * BYTE_WIDTH) + BYTE_SEPARATOR_THICKNESS +
-			extraLineSpace;
+		return (allocationByteSize * BYTE_WIDTH) + BYTE_SEPARATOR_THICKNESS + extraLineSpace;
 	}
 
 	public boolean isBigEndian() {
@@ -142,7 +142,7 @@ public class BitFieldPlacementComponent extends JPanel {
 	int getBitOffset(Point point) {
 		int bitWidthWithLine = BIT_WIDTH + BIT_SEPARATOR_THICKNESS;
 		int cellIndex = (point.x - BYTE_SEPARATOR_THICKNESS) / bitWidthWithLine;
-		return (8 * bitFieldAllocation.allocationByteSize) - cellIndex - 1;
+		return (8 * allocationByteSize) - cellIndex - 1;
 	}
 
 	private void updatePreferredSize() {
@@ -150,15 +150,23 @@ public class BitFieldPlacementComponent extends JPanel {
 		revalidate();
 	}
 
-	void refresh(int allocationByteSize, int bitSize, int bitOffset) {
-		bitFieldAllocation =
-			new BitFieldAllocation(allocationByteSize, bitSize, bitOffset, editComponent);
+	void refresh(int bitSize, int bitOffset) {
+		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		updatePreferredSize();
 		repaint();
 	}
 
-	void setAllocationOffset(int allocationOffset) {
-		this.allocationOffset = allocationOffset;
+	void refresh(int byteSize, int byteOffset, int bitSize, int bitOffset) {
+		this.allocationByteOffset = byteOffset;
+		this.allocationByteSize = byteSize;
+		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
+		updatePreferredSize();
+		repaint();
+	}
+
+	void updateAllocation(int byteSize, int byteOffset) {
+		this.allocationByteOffset = byteOffset;
+		this.allocationByteSize = byteSize;
 		if (bitFieldAllocation != null) {
 			bitFieldAllocation.refresh();
 			repaint();
@@ -166,23 +174,27 @@ public class BitFieldPlacementComponent extends JPanel {
 	}
 
 	int getAllocationOffset() {
-		return allocationOffset;
+		return allocationByteOffset;
 	}
 
-	void initAdd(int allocationByteSize, int bitSize, int bitOffset) {
+	int getAllocationByteSize() {
+		return allocationByteSize;
+	}
+
+	void initAdd(int bitSize, int bitOffset) {
 		editMode = EditMode.ADD;
 		editOrdinal = -1;
 		editComponent = null;
-		refresh(allocationByteSize, bitSize, bitOffset);
+		refresh(bitSize, bitOffset);
 	}
 
-	void init(int allocationByteSize, DataTypeComponent editDtc) {
+	void init(DataTypeComponent editDtc) {
 
 		if (editDtc == null) {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
 			this.editComponent = null;
-			refresh(allocationByteSize, 0, 0);
+			refresh(0, 0);
 			return;
 		}
 
@@ -193,10 +205,9 @@ public class BitFieldPlacementComponent extends JPanel {
 		editOrdinal = editDtc.getOrdinal();
 		this.editComponent = editDtc;
 
-		BitFieldPlacement placement = new BitFieldPlacement(editDtc, allocationByteSize);
-		bitFieldAllocation =
-			new BitFieldAllocation(allocationByteSize, placement.rightBit - placement.leftBit + 1,
-				(8 * allocationByteSize) - placement.rightBit - 1, editDtc);
+		BitFieldPlacement placement = new BitFieldPlacement(editDtc);
+		bitFieldAllocation = new BitFieldAllocation(placement.rightBit - placement.leftBit + 1,
+			(8 * allocationByteSize) - placement.rightBit - 1);
 		updatePreferredSize();
 		repaint();
 	}
@@ -205,12 +216,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		if (composite instanceof Union) {
 			return false;
 		}
-		for (BitAttributes attrs : bitFieldAllocation.bitAttributes) {
-			if (attrs.hasConflict() && (attrs.isAddBitField() || attrs.isEditField())) {
-				return true;
-			}
-		}
-		return false;
+		return bitFieldAllocation.hasConflict;
 	}
 
 	/**
@@ -231,7 +237,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		if (editMode != EditMode.NONE) {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
-			refresh(bitFieldAllocation.allocationByteSize, 0, 0);
+			refresh(0, 0);
 		}
 	}
 
@@ -287,15 +293,15 @@ public class BitFieldPlacementComponent extends JPanel {
 			String name = (fieldName != null && fieldName.length() != 0) ? fieldName : null;
 			DataTypeComponent dtc;
 			if (composite instanceof Union) {
-				dtc = composite.insertBitField(ordinal, bitFieldAllocation.allocationByteSize,
+				dtc = composite.insertBitField(ordinal, allocationByteSize,
 					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
 					null);
 			}
 			else {
 				Structure struct = (Structure) composite;
-				dtc = struct.insertBitFieldAt(allocationOffset,
-					bitFieldAllocation.allocationByteSize, bitFieldAllocation.bitOffset,
-					baseDataType, bitFieldAllocation.bitSize, name, null);
+				dtc = struct.insertBitFieldAt(allocationByteOffset, allocationByteSize,
+					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
+					null);
 			}
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
@@ -358,12 +364,12 @@ public class BitFieldPlacementComponent extends JPanel {
 		y += CELL_HEIGHT + BYTE_SEPARATOR_THICKNESS;
 		g.fillRect(0, y, width, BYTE_SEPARATOR_THICKNESS); // bottom line
 
-		paintByteHeader(g, BYTE_SEPARATOR_THICKNESS, allocationOffset);
+		paintByteHeader(g, BYTE_SEPARATOR_THICKNESS, allocationByteOffset);
 		paintBits((Graphics2D) g, (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT);
 	}
 
 	private void paintByteHeader(Graphics g, int y, int baseOffset) {
-		int byteSize = bitFieldAllocation.allocationByteSize;
+		int byteSize = allocationByteSize;
 		int x = BYTE_SEPARATOR_THICKNESS;
 		for (int i = 0; i < byteSize; i++) {
 			// last byte header needs to slightly wider
@@ -384,7 +390,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		int offset = byteIndex;
 		if (!bigEndian) {
-			offset = bitFieldAllocation.allocationByteSize - byteIndex - 1;
+			offset = allocationByteSize - byteIndex - 1;
 		}
 		offset += baseOffset;
 
@@ -462,9 +468,9 @@ public class BitFieldPlacementComponent extends JPanel {
 		boolean truncateRight;
 		boolean zeroBitField;
 
-		BitFieldPlacement(DataTypeComponent component, int allocationByteSize) {
+		BitFieldPlacement(DataTypeComponent component) {
 			int startOffset = component.getOffset();
-			int offsetAdjBytes = startOffset - allocationOffset;
+			int offsetAdjBytes = startOffset - allocationByteOffset;
 			if (!bigEndian) {
 				offsetAdjBytes = allocationByteSize - offsetAdjBytes - component.getLength();
 			}
@@ -511,25 +517,20 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	class BitFieldAllocation {
 
-		private final int allocationByteSize;
 		private final int bitSize;
 		private final int bitOffset;
 		private boolean hasConflict;
-		private DataTypeComponent editComponent;
 
 		// bit layout normalized to big-endian layout
 		// left-most allocation msb has array index of 0 
 		private BitAttributes[] bitAttributes;
 
-		BitFieldAllocation(int allocationByteSize, int bitSize, int bitOffset,
-				DataTypeComponent editComponent) {
+		BitFieldAllocation(int bitSize, int bitOffset) {
 			if (allocationByteSize <= 0 || (bitSize + bitOffset) > (8 * allocationByteSize)) {
-				throw new IllegalArgumentException("allocation size too small");
+				throw new AssertException("allocation size too small");
 			}
-			this.allocationByteSize = allocationByteSize;
 			this.bitSize = bitSize;
 			this.bitOffset = bitOffset;
-			this.editComponent = editComponent;
 			refresh();
 		}
 
@@ -576,7 +577,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		private void allocateStructureMembers(Structure struct) {
 
-			int allocationEndOffset = allocationOffset + allocationByteSize - 1;
+			int allocationEndOffset = allocationByteOffset + allocationByteSize - 1;
 
 			for (DataTypeComponent component : struct.getDefinedComponents()) {
 				if (component.getOrdinal() == editOrdinal) {
@@ -584,13 +585,13 @@ public class BitFieldPlacementComponent extends JPanel {
 				}
 				int startOffset = component.getOffset();
 				int endOffset = component.getEndOffset();
-				if (endOffset < allocationOffset) {
+				if (endOffset < allocationByteOffset) {
 					continue;
 				}
 				if (startOffset > allocationEndOffset) {
 					continue;
 				}
-				BitFieldPlacement placement = new BitFieldPlacement(component, allocationByteSize);
+				BitFieldPlacement placement = new BitFieldPlacement(component);
 				if (placement.zeroBitField) {
 					allocateZeroBitField(component, placement.rightBit);
 				}
@@ -616,7 +617,7 @@ public class BitFieldPlacementComponent extends JPanel {
 						leftEndType = truncatedLeft ? EndBitType.TRUNCATED_END : EndBitType.END;
 					}
 					if (i == rightBit) {
-						rightEndType = truncatedLeft ? EndBitType.TRUNCATED_END : EndBitType.END;
+						rightEndType = truncatedRight ? EndBitType.TRUNCATED_END : EndBitType.END;
 					}
 				}
 				bitAttributes[i] =
@@ -627,10 +628,6 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		private void allocateZeroBitField(DataTypeComponent dtc, int bitIndex) {
 			bitAttributes[bitIndex] = new BitAttributes(dtc, bitAttributes[bitIndex]);
-		}
-
-		public int getAllocationByteSize() {
-			return allocationByteSize;
 		}
 
 		public int getBitOffset() {
