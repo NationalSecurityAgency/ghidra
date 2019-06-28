@@ -67,7 +67,7 @@ public class KeyBindingsPanel extends JPanel {
 	private ListSelectionModel selectionModel;
 	private Options options;
 
-	private Map<String, DockingActionIf> actionsByFullName;
+	private Map<String, List<DockingActionIf>> actionsByFullName;
 	private Map<String, List<String>> actionNamesByKeyStroke;
 	private Map<String, KeyStroke> keyStrokesByFullName;
 	private Map<String, KeyStroke> originalValues; // to know what has been changed
@@ -114,11 +114,11 @@ public class KeyBindingsPanel extends JPanel {
 		changesMade(false);
 	}
 
-	private boolean updateOptions(String fullActionName, KeyStroke currentKeyStroke,
+	private void updateOptions(String fullActionName, KeyStroke currentKeyStroke,
 			KeyStroke newKeyStroke) {
-		if ((currentKeyStroke != null && currentKeyStroke.equals(newKeyStroke)) ||
-			(currentKeyStroke == null && newKeyStroke == null)) {
-			return false;
+
+		if (Objects.equals(currentKeyStroke, newKeyStroke)) {
+			return;
 		}
 
 		if (newKeyStroke != null) {
@@ -130,19 +130,12 @@ public class KeyBindingsPanel extends JPanel {
 		originalValues.put(fullActionName, newKeyStroke);
 		keyStrokesByFullName.put(fullActionName, newKeyStroke);
 
-		Set<DockingActionIf> actions = tool.getAllActions();
+		List<DockingActionIf> actions = actionsByFullName.get(fullActionName);
 		for (DockingActionIf action : actions) {
-			if (action.getFullName().equals(fullActionName)) {
-				action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
-			}
+			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
 		}
-
-		return true;
 	}
 
-	/**
-	 * Cancel the changes to the actions.
-	 */
 	public void cancel() {
 		Iterator<String> iter = originalValues.keySet().iterator();
 		while (iter.hasNext()) {
@@ -173,10 +166,12 @@ public class KeyBindingsPanel extends JPanel {
 		String longestName = "";
 
 		actionsByFullName = KeyBindingUtils.getAllActionsByFullName(tool);
-		Set<Entry<String, DockingActionIf>> entries = actionsByFullName.entrySet();
-		for (Entry<String, DockingActionIf> entry : entries) {
+		Set<Entry<String, List<DockingActionIf>>> entries = actionsByFullName.entrySet();
+		for (Entry<String, List<DockingActionIf>> entry : entries) {
 
-			DockingActionIf action = entry.getValue();
+			// pick one action, they are all conceptually the same
+			List<DockingActionIf> actions = entry.getValue();
+			DockingActionIf action = actions.get(0);
 			tableActions.add(action);
 
 			String actionName = entry.getKey();
@@ -413,11 +408,13 @@ public class KeyBindingsPanel extends JPanel {
 		Iterator<String> iter = keyStrokesByFullName.keySet().iterator();
 		while (iter.hasNext()) {
 			String actionName = iter.next();
-			DockingActionIf action = actionsByFullName.get(actionName);
-			if (action == null) {
+			List<DockingActionIf> actions = actionsByFullName.get(actionName);
+			if (actions.isEmpty()) {
 				throw new AssertException("No actions defined for " + actionName);
 			}
 
+			// pick one action, they are all conceptually the same
+			DockingActionIf action = actions.get(0);
 			KeyStroke currentKeyStroke = keyStrokesByFullName.get(actionName);
 			KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
 			KeyStroke newKeyStroke =
@@ -669,11 +666,14 @@ public class KeyBindingsPanel extends JPanel {
 			}
 
 			ksField.setText(ksName);
+
 			// make sure the label gets enough space
 			statusLabel.setPreferredSize(
 				new Dimension(statusLabel.getPreferredSize().width, STATUS_LABEL_HEIGHT));
 
-			DockingActionIf action = actionsByFullName.get(fullActionName);
+			// pick one action, they are all conceptually the same
+			List<DockingActionIf> actions = actionsByFullName.get(fullActionName);
+			DockingActionIf action = actions.get(0);
 			String description = action.getDescription();
 			if (description == null || description.trim().isEmpty()) {
 				description = action.getName();

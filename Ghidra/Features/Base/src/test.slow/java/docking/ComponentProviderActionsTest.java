@@ -27,6 +27,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.actions.KeyEntryDialog;
+import docking.actions.ToolActions;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -235,15 +236,6 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 // Private Methods
 //==================================================================================================
 
-	private void assertShowProviderActionIsInToolbar() {
-		assertNotNull("The 'Show Provider' action is not in the toolbar",
-			getToolbarShowProviderAction());
-	}
-
-	private void assertShowProviderActionNotInToolbar() {
-		assertNull("The 'Show Provider' action is in the toolbar", getToolbarShowProviderAction());
-	}
-
 	private void switchToTransientProvider() {
 		provider.setTransient();
 	}
@@ -390,9 +382,8 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void performLaunchKeyStrokeDialogAction() {
-		DockingWindowManager dwm = tool.getWindowManager();
-		ActionToGuiMapper actionMapper = dwm.getActionToGuiMapper();
-		Action action = actionMapper.getDockingKeyAction(KeyStroke.getKeyStroke("F4"));
+		ToolActions toolActions = ((AbstractDockingTool) tool).getToolActions();
+		Action action = toolActions.getAction(KeyStroke.getKeyStroke("F4"));
 		assertNotNull(action);
 		runSwing(() -> action.actionPerformed(new ActionEvent(this, 0, "")), false);
 	}

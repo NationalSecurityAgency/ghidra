@@ -22,7 +22,6 @@ import javax.swing.ToolTipManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import docking.DockingWindowManager;
 import docking.framework.SplashScreen;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.Application;
@@ -86,7 +85,6 @@ public class GhidraRun implements GhidraLaunchable {
 			updateSplashScreenStatusMessage("Populating Ghidra help...");
 			GhidraHelpService.install();
 
-			DockingWindowManager.enableDiagnosticActions(SystemUtilities.isInDevelopmentMode());
 			ExtensionUtils.cleanupUninstalledExtensions();
 
 			// Allows handling of old content which did not have a content type property

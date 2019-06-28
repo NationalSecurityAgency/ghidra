@@ -29,7 +29,8 @@ import javax.swing.*;
 import org.jdom.Element;
 
 import docking.action.DockingActionIf;
-import docking.action.KeyBindingsManager;
+import docking.actions.DockingToolActions;
+import docking.actions.ToolActions;
 import docking.help.HelpService;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
@@ -73,6 +74,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private static List<DockingWindowManager> instanceList = new ArrayList<>();
 
+	private DockingTool tool;
 	private RootNode root;
 
 	private PlaceholderManager placeholderManager;
@@ -105,18 +107,18 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Constructs a new DockingWindowManager
-	 * @param toolName the name of the tool.
+	 * @param tool the tool
 	 * @param images the images to use for windows in this window manager
-	 * @param docListener the listener to be notified when the user closes the manager.
+	 * @param docListener the listener to be notified when the user closes the manager
 	 */
-	public DockingWindowManager(String toolName, List<Image> images, DockWinListener docListener) {
-		this(toolName, images, docListener, false, true, true, null);
+	public DockingWindowManager(DockingTool tool, List<Image> images, DockWinListener docListener) {
+		this(tool, images, docListener, false, true, true, null);
 	}
 
 	/**
 	 * Constructs a new DockingWindowManager
 	 * 
-	 * @param toolName the name of the tool
+	 * @param tool the tool
 	 * @param images the list of icons to set on the window
 	 * @param docListener the listener to be notified when the user closes the manager
 	 * @param modal if true then the root window will be a modal dialog instead of a frame
@@ -125,11 +127,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param hasStatusBar if true a status bar will be created for the main window
 	 * @param factory the drop target factory
 	 */
-	public DockingWindowManager(String toolName, List<Image> images, DockWinListener docListener,
+	public DockingWindowManager(DockingTool tool, List<Image> images, DockWinListener docListener,
 			boolean modal, boolean isDocking, boolean hasStatusBar, DropTargetFactory factory) {
 
 		KeyBindingOverrideKeyEventDispatcher.install();
 
+		this.tool = tool;
 		this.docListener = docListener;
 		this.isDocking = isDocking;
 		this.hasStatusBar = hasStatusBar;
@@ -137,7 +140,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			images = new ArrayList<>();
 		}
 
-		root = new RootNode(this, toolName, images, modal, factory);
+		root = new RootNode(this, tool.getName(), images, modal, factory);
 
 		KeyboardFocusManager km = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		km.addPropertyChangeListener("permanentFocusOwner", this);
@@ -145,20 +148,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		addInstance(this);
 
 		placeholderManager = new PlaceholderManager(this);
+		actionToGuiMapper = new ActionToGuiMapper(this);
 	}
 
 	@Override
 	public String toString() {
 		return "DockingWindowManager: " + root.getTitle();
-	}
-
-	/**
-	 * A static initializer allowing additional diagnostic actions
-	 * to be enabled added to all frame and dialog windows.
-	 * @param enable
-	 */
-	public static void enableDiagnosticActions(boolean enable) {
-		ActionToGuiMapper.enableDiagnosticActions(enable);
 	}
 
 	/**
@@ -311,17 +306,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns any action that is bound to the given keystroke for the tool associated with this
-	 * DockingWindowManager instance.
-	 * @param keyStroke The keystroke to check for key bindings.
-	 * @return The action that is bound to the keystroke, or null of there is no binding for the
-	 *         given keystroke.
-	 */
-	Action getActionForKeyStroke(KeyStroke keyStroke) {
-		return actionToGuiMapper.getDockingKeyAction(keyStroke);
-	}
-
-	/**
 	 * Returns true if this manager contains the given provider.
 	 * 
 	 * @param provider the provider for which to check
@@ -362,6 +346,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		defaultProvider = provider;
 	}
 
+	/**
+	 * Returns this tool's notion of the current action context, which is based upon the active
+	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
+	 * be returned.
+	 * 
+	 * @return the context
+	 */
 	public ActionContext getGlobalContext() {
 		if (defaultProvider != null) {
 			ActionContext actionContext = defaultProvider.getActionContext(null);
@@ -640,23 +631,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholderManager.removeComponent(provider);
 	}
 
-	/**
-	 * Removes all components and actions associated with the given owner. 
-	 * @param owner the name of the owner whose associated component and actions should be removed.
-	 */
-	public void removeAll(String owner) {
-		actionToGuiMapper.removeAll(owner);
-		placeholderManager.removeAll(owner);
-		scheduleUpdate();
-	}
-
 //==================================================================================================
 // Package-level Action Methods
 //==================================================================================================
-
-	void setKeyBindingsManager(KeyBindingsManager keyBindingsManager) {
-		actionToGuiMapper = new ActionToGuiMapper(this, keyBindingsManager);
-	}
 
 	Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
@@ -671,7 +648,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
-			actionToGuiMapper.removeLocalAction(action);
 			placeholder.removeAction(action);
 		}
 	}
@@ -682,7 +658,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			throw new IllegalArgumentException("Unknown component provider: " + provider);
 		}
 		placeholder.addAction(action);
-		actionToGuiMapper.addLocalAction(action, provider);
 	}
 
 	void addToolAction(DockingActionIf action) {
@@ -695,9 +670,31 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		scheduleUpdate();
 	}
 
+	/**
+	 * Returns any action that is bound to the given keystroke for the tool associated with this
+	 * DockingWindowManager instance.
+	 * @param keyStroke The keystroke to check for key bindings.
+	 * @return The action that is bound to the keystroke, or null of there is no binding for the
+	 *         given keystroke.
+	 */
+	Action getActionForKeyStroke(KeyStroke keyStroke) {
+		DockingToolActions toolActions = tool.getToolActions();
+		if (toolActions instanceof ToolActions) {
+			// Using a cast here; it didn't make sense to include this 'getAction' on the 
+			// DockingToolActions 
+			return ((ToolActions) toolActions).getAction(keyStroke);
+		}
+		return null;
+	}
+
 //==================================================================================================
 // 			End Package-level Methods
-//==================================================================================================	
+//==================================================================================================
+
+	public void ownerRemoved(String owner) {
+		placeholderManager.removeAll(owner);
+		scheduleUpdate();
+	}
 
 	/**
 	 * Hides or shows the component associated with the given provider.
@@ -1002,7 +999,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		Iterator<DockingActionIf> iter = placeholder.getActions();
 		while (iter.hasNext()) {
 			DockingActionIf action = iter.next();
-			actionToGuiMapper.removeLocalAction(action);
+			placeholder.removeAction(action);
 		}
 
 		ComponentNode node = placeholder.getNode();
@@ -1093,7 +1090,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		actionToGuiMapper.removeAll(DOCKING_WINDOWS_OWNER);
+		tool.getToolActions().removeActions(DOCKING_WINDOWS_OWNER);
 
 		Map<String, List<ComponentPlaceholder>> permanentMap = new HashMap<>();
 		Map<String, List<ComponentPlaceholder>> transientMap = new HashMap<>();
@@ -1160,9 +1157,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				actionList.add(new ShowAllComponentsAction(this, placeholders, subMenuName));
 			}
 		}
+
+		DockingToolActions toolActions = tool.getToolActions();
 		Collections.sort(actionList);
 		for (ShowComponentAction action : actionList) {
-			actionToGuiMapper.addToolAction(action);
+			toolActions.addGlobalAction(action);
 		}
 	}
 
@@ -1198,9 +1197,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 		}
 
+		DockingToolActions toolActions = tool.getToolActions();
 		Collections.sort(actions);
 		for (ShowWindowAction action : actions) {
-			actionToGuiMapper.addToolAction(action);
+			toolActions.addGlobalAction(action);
 		}
 	}
 
@@ -1208,6 +1208,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Notifies the window manager that an update is needed
 	 */
 	void scheduleUpdate() {
+		if (rebuildUpdater.isBusy()) {
+			return;
+		}
 		rebuildUpdater.updateLater();
 	}
 
@@ -1225,7 +1228,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		root.update(); // do this before rebuilding the menu, as new windows may be opened
-
 		buildComponentMenu();
 		SystemUtilities.runSwingLater(() -> updateFocus());
 	}

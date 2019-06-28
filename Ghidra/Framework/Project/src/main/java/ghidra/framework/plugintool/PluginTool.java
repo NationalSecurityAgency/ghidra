@@ -150,16 +150,16 @@ public abstract class PluginTool extends AbstractDockingTool
 		this.projectManager = projectManager;
 		this.toolServices = toolServices;
 		propertyChangeMgr = new PropertyChangeSupport(this);
-		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
-		taskMgr = new ToolTaskManager(this);
 		optionsMgr = new OptionsManager(this);
+		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
+		toolActions = new ToolActions(this, new ActionToGuiHelper(winMgr));
+		taskMgr = new ToolTaskManager(this);
 		setToolOptionsHelpLocation();
 		winMgr.addStatusItem(taskMgr.getMonitorComponent(), false, true);
 		winMgr.removeStatusItem(taskMgr.getMonitorComponent());
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		toolActions = new ToolActions(this, winMgr);
 		pluginMgr = new PluginManager(this, serviceMgr);
 		dialogMgr = new DialogManager(this);
 		initActions();
@@ -190,8 +190,8 @@ public abstract class PluginTool extends AbstractDockingTool
 			boolean isModal) {
 
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
-		DockingWindowManager newManager = new DockingWindowManager("EMPTY", windowIcons, this,
-			isModal, isDockable, hasStatus, null);
+		DockingWindowManager newManager =
+			new DockingWindowManager(this, windowIcons, this, isModal, isDockable, hasStatus, null);
 		return newManager;
 	}
 
@@ -1322,8 +1322,8 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	void removeAll(String owner) {
-		toolActions.removeToolActions(owner);
-		winMgr.removeAll(owner);
+		toolActions.removeActions(owner);
+		winMgr.ownerRemoved(owner);
 	}
 
 	void registerEventProduced(Class<? extends PluginEvent> eventClass) {
@@ -1468,6 +1468,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		return winMgr.getActiveWindow();
 	}
 
+	@Override
 	public ComponentProvider getActiveComponentProvider() {
 		return winMgr.getActiveComponentProvider();
 	}

@@ -25,6 +25,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom.*;
@@ -344,15 +345,21 @@ public class KeyBindingUtils {
 	}
 
 	/**
-	 * A utility method to get all key binding actions.  This method will remove duplicate 
-	 * actions and will only return actions that support {@link KeyBindingType key bindings}.
+	 * A utility method to get all key binding actions.  This method will 
+	 * only return actions that support {@link KeyBindingType key bindings}.
+	 * 
+	 * <p>The mapping returned provides a list of items because it is possible for there to 
+	 * exists multiple actions with the same name and owner.  (This can happen when multiple copies
+	 * of a component provider are shown, each with their own set of actions that share the
+	 * same name.)
 	 * 
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, DockingActionIf> getAllActionsByFullName(DockingTool tool) {
+	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(DockingTool tool) {
 
-		Map<String, DockingActionIf> deduper = new HashMap<>();
+		Map<String, List<DockingActionIf>> result =
+			LazyMap.lazyMap(new HashMap<>(), s -> new LinkedList<>());
 		Set<DockingActionIf> actions = tool.getAllActions();
 		for (DockingActionIf action : actions) {
 			if (isIgnored(action)) {
@@ -362,10 +369,10 @@ public class KeyBindingUtils {
 				continue;
 			}
 
-			deduper.put(action.getFullName(), action);
+			result.get(action.getFullName()).add(action);
 		}
 
-		return deduper;
+		return result;
 	}
 
 	/**
@@ -720,7 +727,7 @@ public class KeyBindingUtils {
 	private static boolean isIgnored(DockingActionIf action) {
 		// a shared keybinding implies that this action should not be in 
 		// the UI, as there will be a single proxy in place of all actions sharing that binding
-		return action.getKeyBindingType().isShared();
+		return !action.getKeyBindingType().isManaged();
 	}
 
 	private static KeyStroke getKeyStroke(KeyBindingData data) {

@@ -35,9 +35,9 @@ public class FakeDockingTool extends AbstractDockingTool {
 
 		DockWinListener listener = new DummyListener();
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
-		winMgr = new DockingWindowManager("EMPTY", windowIcons, listener, false /*isModal*/,
+		winMgr = new DockingWindowManager(this, windowIcons, listener, false /*isModal*/,
 			true /*isDockable*/, true /*hasStatus*/, null /*DropTargetFactory*/);
-		toolActions = new ToolActions(this, winMgr);
+		toolActions = new ToolActions(this, new ActionToGuiHelper(winMgr));
 	}
 
 	@Override
@@ -71,7 +71,5 @@ public class FakeDockingTool extends AbstractDockingTool {
 		public List<DockingActionIf> getPopupActions(ActionContext context) {
 			return null;
 		}
-
 	}
-
 }

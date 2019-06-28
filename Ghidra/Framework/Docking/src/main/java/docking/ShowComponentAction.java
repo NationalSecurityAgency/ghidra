@@ -36,7 +36,6 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 	protected DockingWindowManager winMgr;
 	private ComponentPlaceholder info;
 	private String title;
-	private boolean isTransient;
 
 	private static String truncateTitleAsNeeded(String title) {
 		if (title.length() <= MAX_LENGTH) {
@@ -58,7 +57,6 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 		this.info = placeholder;
 		this.winMgr = winMgr;
 		this.title = truncateTitleAsNeeded(placeholder.getTitle());
-		this.isTransient = isTransient;
 		String group = isTransient ? "Transient" : "Permanent";
 
 		Icon icon = placeholder.getIcon();
@@ -139,6 +137,10 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 
 	@Override
 	public String getHelpInfo() {
+		if (info == null) {
+			return super.getHelpInfo();
+		}
+
 		StringBuilder buffy = new StringBuilder(super.getHelpInfo());
 
 		ComponentProvider provider = info.getProvider();

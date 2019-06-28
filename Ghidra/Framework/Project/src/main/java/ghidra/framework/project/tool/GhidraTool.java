@@ -83,7 +83,7 @@ public class GhidraTool extends PluginTool {
 	@Override
 	protected DockingWindowManager createDockingWindowManager(boolean isDockable, boolean hasStatus,
 			boolean isModal) {
-		return new DockingWindowManager("EMPTY", null, this, isModal, isDockable, hasStatus,
+		return new DockingWindowManager(this, null, this, isModal, isDockable, hasStatus,
 			new OpenFileDropHandlerFactory(this));
 	}
 

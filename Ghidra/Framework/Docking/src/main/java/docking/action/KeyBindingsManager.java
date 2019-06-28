@@ -17,7 +17,8 @@ package docking.action;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -30,11 +31,10 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 	protected Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap;
 	protected Map<DockingActionIf, ComponentProvider> actionToProviderMap;
+	private DockingTool tool;
 
-	private DockingWindowManager winMgr;
-
-	public KeyBindingsManager(DockingWindowManager winMgr) {
-		this.winMgr = winMgr;
+	public KeyBindingsManager(DockingTool tool) {
+		this.tool = tool;
 		dockingKeyMap = new HashMap<>();
 		actionToProviderMap = new HashMap<>();
 	}
@@ -76,8 +76,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		DockingKeyBindingAction existingAction = dockingKeyMap.get(keyStroke);
 		if (existingAction == null) {
-			dockingKeyMap.put(keyStroke,
-				new MultipleKeyAction(winMgr, provider, action, keyStroke));
+			dockingKeyMap.put(keyStroke, new MultipleKeyAction(tool, provider, action, keyStroke));
 			return;
 		}
 
@@ -98,7 +97,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		KeyBindingData binding = KeyBindingData.createReservedKeyBindingData(keyStroke);
 		action.setKeyBindingData(binding);
-		dockingKeyMap.put(keyStroke, new ReservedKeyBindingAction(winMgr, action, keyStroke));
+		dockingKeyMap.put(keyStroke, new ReservedKeyBindingAction(tool, action, keyStroke));
 	}
 
 	/**
@@ -151,18 +150,12 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		}
 	}
 
-	public List<DockingActionIf> getLocalActions() {
-		return new ArrayList<>(actionToProviderMap.keySet());
-	}
-
 	public Action getDockingKeyAction(KeyStroke keyStroke) {
 		return dockingKeyMap.get(keyStroke);
 	}
 
 	public void dispose() {
-		winMgr = null;
 		dockingKeyMap.clear();
 		actionToProviderMap.clear();
 	}
-
 }

@@ -544,21 +544,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		if (isInTool()) {
-
-			/*
-			 	 TODO
-			 	 
-			 	 4) Wire default 'close' action to keybinding
-			 	 5) Add global action for (show last provider)
-			 	 		--Navigation menu?
-				 8) Update help locations
-			
-			 	 Questions:
-			
-			 	 	C) How to wire universal close action (it is focus-dependent)
-			 	 	
-			 */
-
 			dockingTool.getWindowManager().setIcon(this, icon);
 		}
 	}

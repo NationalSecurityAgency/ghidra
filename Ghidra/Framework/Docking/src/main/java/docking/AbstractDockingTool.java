@@ -59,7 +59,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	public void addComponentProvider(ComponentProvider provider, boolean show) {
 		Runnable r = () -> {
 			winMgr.addComponent(provider, show);
-			toolActions.addToolAction(provider.getShowProviderAction());
+			toolActions.addGlobalAction(provider.getShowProviderAction());
 		};
 		Swing.runNow(r);
 	}
@@ -67,7 +67,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void removeComponentProvider(ComponentProvider provider) {
 		Runnable r = () -> {
-			toolActions.removeComponentActions(provider);
+			toolActions.removeActions(provider);
 			winMgr.removeComponent(provider);
 		};
 		Swing.runNow(r);
@@ -99,12 +99,12 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void addAction(DockingActionIf action) {
-		toolActions.addToolAction(action);
+		toolActions.addGlobalAction(action);
 	}
 
 	@Override
 	public void removeAction(DockingActionIf action) {
-		toolActions.removeToolAction(action);
+		toolActions.removeGlobalAction(action);
 	}
 
 	@Override
@@ -114,20 +114,22 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
-		toolActions.removeProviderAction(provider, action);
+		toolActions.removeLocalAction(provider, action);
 	}
 
 	@Override
 	public Set<DockingActionIf> getAllActions() {
-		Set<DockingActionIf> actions = toolActions.getAllActions();
-		ActionToGuiMapper am = winMgr.getActionToGuiMapper();
-		actions.addAll(am.getAllActions());
-		return actions;
+		return toolActions.getAllActions();
 	}
 
 	@Override
 	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
 		return toolActions.getActions(owner);
+	}
+
+	@Override
+	public ComponentProvider getActiveComponentProvider() {
+		return winMgr.getActiveComponentProvider();
 	}
 
 	@Override
@@ -177,6 +179,11 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
+	public ActionContext getGlobalContext() {
+		return winMgr.getGlobalContext();
+	}
+
+	@Override
 	public void addContextListener(DockingContextListener listener) {
 		winMgr.addContextListener(listener);
 	}
@@ -199,5 +206,10 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public boolean hasConfigChanged() {
 		return configChangedFlag;
+	}
+
+	@Override
+	public ToolActions getToolActions() {
+		return toolActions;
 	}
 }

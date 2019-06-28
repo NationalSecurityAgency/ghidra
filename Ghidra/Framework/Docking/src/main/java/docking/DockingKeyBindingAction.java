@@ -27,17 +27,16 @@ import docking.actions.KeyBindingUtils;
  * A class that can be used as an interface for using actions associated with keybindings.  This
  * class is meant to only by used by internal Ghidra key event processing.
  */
-public class DockingKeyBindingAction extends AbstractAction {
+public abstract class DockingKeyBindingAction extends AbstractAction {
 
 	private DockingActionIf docakbleAction;
 
-	protected KeyStroke keyStroke;
-	protected final DockingWindowManager winMgr;
+	protected final KeyStroke keyStroke;
+	protected final DockingTool tool;
 
-	public DockingKeyBindingAction(DockingWindowManager winMgr, DockingActionIf action,
-			KeyStroke keyStroke) {
+	public DockingKeyBindingAction(DockingTool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(KeyBindingUtils.parseKeyStroke(keyStroke));
-		this.winMgr = winMgr;
+		this.tool = tool;
 		this.docakbleAction = action;
 		this.keyStroke = keyStroke;
 	}
@@ -52,18 +51,16 @@ public class DockingKeyBindingAction extends AbstractAction {
 		return true;
 	}
 
-	public boolean isReservedKeybindingPrecedence() {
-		return getKeyBindingPrecedence() == KeyBindingPrecedence.ReservedActionsLevel;
-	}
+	public abstract KeyBindingPrecedence getKeyBindingPrecedence();
 
-	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		return KeyBindingPrecedence.ReservedActionsLevel;
+	public boolean isReservedKeybindingPrecedence() {
+		return false;
 	}
 
 	@Override
 	public void actionPerformed(final ActionEvent e) {
-		winMgr.setStatusText("");
-		ComponentProvider provider = winMgr.getActiveComponentProvider();
+		tool.setStatusInfo("");
+		ComponentProvider provider = tool.getActiveComponentProvider();
 		ActionContext context = getLocalContext(provider);
 		context.setSource(e.getSource());
 		docakbleAction.actionPerformed(context);

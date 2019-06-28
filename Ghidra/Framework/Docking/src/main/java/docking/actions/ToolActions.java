@@ -33,13 +33,14 @@ import docking.action.*;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.*;
 import ghidra.util.ReservedKeyBindings;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
 
 /**
  * An class to manage actions registered with the tool
  */
-public class ToolActions implements PropertyChangeListener {
+public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	private ActionToGuiHelper actionGuiHelper;
 
@@ -62,25 +63,38 @@ public class ToolActions implements PropertyChangeListener {
 	 * Construct an ActionManager
 	 * 
 	 * @param tool tool using this ActionManager
-	 * @param windowManager manager of the "Docking" arrangement of a set of components 
-	 *        and actions in the tool
+	 * @param actionToGuiHelper the class that takes actions and maps them to GUI widgets
 	 */
-	public ToolActions(DockingTool tool, DockingWindowManager windowManager) {
+	public ToolActions(DockingTool tool, ActionToGuiHelper actionToGuiHelper) {
 		this.dockingTool = tool;
-		this.actionGuiHelper = new ActionToGuiHelper(windowManager);
-		this.keyBindingsManager = new KeyBindingsManager(windowManager);
+		this.actionGuiHelper = actionToGuiHelper;
+		this.keyBindingsManager = new KeyBindingsManager(tool);
 		this.keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
+		createReservedKeyBindings();
+	}
+
+	private void createReservedKeyBindings() {
 		KeyBindingAction keyBindingAction = new KeyBindingAction(this);
 		keyBindingsManager.addReservedAction(keyBindingAction,
 			ReservedKeyBindings.UPDATE_KEY_BINDINGS_KEY);
 
-		actionGuiHelper.setKeyBindingsManager(keyBindingsManager);
+		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY1));
+		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
+		keyBindingsManager.addReservedAction(
+			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
+
+		// these are diagnostic
+		if (SystemUtilities.isInDevelopmentMode()) {
+			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
+			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
+		}
 	}
 
 	public void dispose() {
 		actionsByNameByOwner.clear();
 		sharedActionMap.clear();
+		keyBindingsManager.dispose();
 	}
 
 	private void addActionToMap(DockingActionIf action) {
@@ -95,12 +109,14 @@ public class ToolActions implements PropertyChangeListener {
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
+	@Override
 	public synchronized void addLocalAction(ComponentProvider provider, DockingActionIf action) {
 		checkForAlreadyAddedAction(provider, action);
 
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
 		setKeyBindingOption(action);
+		keyBindingsManager.addAction(action, provider);
 		actionGuiHelper.addLocalAction(provider, action);
 	}
 
@@ -108,10 +124,14 @@ public class ToolActions implements PropertyChangeListener {
 	 * Adds the action to the tool.
 	 * @param action the action to be added.
 	 */
-	public synchronized void addToolAction(DockingActionIf action) {
+	@Override
+	public synchronized void addGlobalAction(DockingActionIf action) {
+		checkForAlreadyAddedAction(null, action);
+
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
 		setKeyBindingOption(action);
+		keyBindingsManager.addAction(action, null);
 		actionGuiHelper.addToolAction(action);
 	}
 
@@ -158,17 +178,15 @@ public class ToolActions implements PropertyChangeListener {
 	 * Removes the given action from the tool
 	 * @param action the action to be removed.
 	 */
-	public synchronized void removeToolAction(DockingActionIf action) {
+	@Override
+	public synchronized void removeGlobalAction(DockingActionIf action) {
 		action.removePropertyChangeListener(this);
 		removeAction(action);
 		actionGuiHelper.removeToolAction(action);
 	}
 
-	/**
-	 * Remove all actions that have the given owner.
-	 * @param owner owner of the actions to remove
-	 */
-	public synchronized void removeToolActions(String owner) {
+	@Override
+	public synchronized void removeActions(String owner) {
 
 		// remove from the outer map first, to prevent concurrent modification exceptions
 		Map<String, Set<DockingActionIf>> toCleanup = actionsByNameByOwner.remove(owner);
@@ -180,15 +198,17 @@ public class ToolActions implements PropertyChangeListener {
 		toCleanup.values()
 			.stream()
 			.flatMap(set -> set.stream())
-			.forEach(action -> removeToolAction(action))
+			.forEach(action -> removeGlobalAction(action))
 			;
 		//@formatter:on
 	}
 
 	private void checkForAlreadyAddedAction(ComponentProvider provider, DockingActionIf action) {
 		if (getActionStorage(action).contains(action)) {
-			throw new AssertException("Cannot add the same action more than once. Provider " +
-				provider.getName() + " - action: " + action.getFullName());
+			String providerString =
+				provider == null ? "Action: " : "Provider " + provider.getName() + " - action: ";
+			throw new AssertException("Cannot add the same action more than once. " +
+				providerString + action.getFullName());
 		}
 	}
 
@@ -198,6 +218,7 @@ public class ToolActions implements PropertyChangeListener {
 	 * @return array of actions; zero length array is returned if no
 	 * action exists with the given name
 	 */
+	@Override
 	public synchronized Set<DockingActionIf> getActions(String owner) {
 
 		Set<DockingActionIf> result = new HashSet<>();
@@ -215,8 +236,10 @@ public class ToolActions implements PropertyChangeListener {
 
 	/**
 	 * Get a set of all actions in the tool
-	 * @return the actions
+	 * 
+	 * @return a new set of the existing actions
 	 */
+	@Override
 	public synchronized Set<DockingActionIf> getAllActions() {
 
 		Set<DockingActionIf> result = new HashSet<>();
@@ -278,23 +301,24 @@ public class ToolActions implements PropertyChangeListener {
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
-	public synchronized void removeProviderAction(ComponentProvider provider,
-			DockingActionIf action) {
+	@Override
+	public synchronized void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
 		action.removePropertyChangeListener(this);
 		removeAction(action);
+		keyBindingsManager.removeAction(action);
 		actionGuiHelper.removeProviderAction(provider, action);
 	}
 
-	/**
-	 * Get the actions for the given provider and remove them from the action map
-	 * @param provider provider whose actions are to be removed
-	 */
-	public synchronized void removeComponentActions(ComponentProvider provider) {
+	@Override
+	public synchronized void removeActions(ComponentProvider provider) {
 		Iterator<DockingActionIf> it = actionGuiHelper.getComponentActions(provider);
+
+		// copy the data to avoid concurrent modification exceptions
 		Set<DockingActionIf> set = CollectionUtils.asSet(it);
 		for (DockingActionIf action : set) {
-			removeProviderAction(provider, action);
+			removeLocalAction(provider, action);
 		}
+
 	}
 
 	private void removeAction(DockingActionIf action) {
@@ -346,12 +370,12 @@ public class ToolActions implements PropertyChangeListener {
 		}
 	}
 
-	DockingActionIf getSharedStubKeyBindingAction(String name) {
-		return sharedActionMap.get(name);
+	public Action getAction(KeyStroke ks) {
+		return keyBindingsManager.getDockingKeyAction(ks);
 	}
 
-	Action getAction(KeyStroke ks) {
-		return keyBindingsManager.getDockingKeyAction(ks);
+	DockingActionIf getSharedStubKeyBindingAction(String name) {
+		return sharedActionMap.get(name);
 	}
 
 	// triggered by a user-initiated action

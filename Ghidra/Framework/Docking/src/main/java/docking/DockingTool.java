@@ -21,6 +21,7 @@ import java.util.Set;
 import javax.swing.ImageIcon;
 
 import docking.action.DockingActionIf;
+import docking.actions.DockingToolActions;
 import ghidra.framework.options.ToolOptions;
 
 /**
@@ -152,6 +153,12 @@ public interface DockingTool {
 	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner);
 
 	/**
+	 * Returns the active component provider, that which has focus
+	 * @return the active provider
+	 */
+	public ComponentProvider getActiveComponentProvider();
+
+	/**
 	 * Shows or hides the component provider in the tool
 	 * @param componentProvider the provider to either show or hide.
 	 * @param visible true to show the provider, false to hide it.
@@ -210,6 +217,15 @@ public interface DockingTool {
 	public void contextChanged(ComponentProvider provider);
 
 	/**
+	 * Returns this tool's notion of the current action context, which is based upon the active
+	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
+	 * be returned.
+	 * 
+	 * @return the context
+	 */
+	public ActionContext getGlobalContext();
+
+	/**
 	 * Adds the given context listener to this tool
 	 * @param listener the listener to add
 	 */
@@ -246,4 +262,15 @@ public interface DockingTool {
 	 * @return  true if the tool's configuration has changed
 	 */
 	public boolean hasConfigChanged();
+
+	/**
+	 * Returns the class that manages actions for the tool.
+	 * 
+	 * <p>Most clients will not need to use this methods.  Instead, actions should be added to
+	 * the tool via {@link #addAction(DockingActionIf)} and 
+	 * {@link #addLocalAction(ComponentProvider, DockingActionIf)}.
+	 * 
+	 * @return the action manager
+	 */
+	public DockingToolActions getToolActions();
 }

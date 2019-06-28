@@ -28,6 +28,7 @@ import org.jdom.Element;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.actions.DockingToolActions;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginEvent;
@@ -41,6 +42,8 @@ public class DummyTool implements Tool {
 	private String description;
 	private ToolIconURL iconURL;
 	private Project project;
+
+	private DockingToolActions toolActions = new DummyToolActions();
 
 	public DummyTool() {
 		this(DEFAULT_NAME);
@@ -306,6 +309,11 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
+	public ComponentProvider getActiveComponentProvider() {
+		return null;
+	}
+
+	@Override
 	public void showComponentProvider(ComponentProvider componentProvider, boolean visible) {
 		//do nothing
 	}
@@ -343,6 +351,11 @@ public class DummyTool implements Tool {
 	@Override
 	public void contextChanged(ComponentProvider provider) {
 		//do nothing
+	}
+
+	@Override
+	public ActionContext getGlobalContext() {
+		return null;
 	}
 
 	@Override
@@ -388,5 +401,10 @@ public class DummyTool implements Tool {
 	@Override
 	public void removeContextListener(DockingContextListener listener) {
 		//do nothing		
+	}
+
+	@Override
+	public DockingToolActions getToolActions() {
+		return toolActions;
 	}
 }

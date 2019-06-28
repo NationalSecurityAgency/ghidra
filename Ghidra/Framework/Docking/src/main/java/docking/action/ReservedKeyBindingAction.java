@@ -17,18 +17,21 @@ package docking.action;
 
 import javax.swing.KeyStroke;
 
-import docking.DockingKeyBindingAction;
-import docking.DockingWindowManager;
+import docking.*;
 
 class ReservedKeyBindingAction extends DockingKeyBindingAction {
 
-	ReservedKeyBindingAction(DockingWindowManager winMgr, DockingActionIf action,
-			KeyStroke keyStroke) {
-		super(winMgr, action, keyStroke);
+	ReservedKeyBindingAction(DockingTool tool, DockingActionIf action, KeyStroke keyStroke) {
+		super(tool, action, keyStroke);
 	}
 
 	@Override
 	public boolean isReservedKeybindingPrecedence() {
 		return true;
+	}
+
+	@Override
+	public KeyBindingPrecedence getKeyBindingPrecedence() {
+		return KeyBindingPrecedence.ReservedActionsLevel;
 	}
 }
