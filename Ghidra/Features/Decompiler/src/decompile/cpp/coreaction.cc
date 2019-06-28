@@ -1144,7 +1144,8 @@ int4 ActionDirectWrite::apply(Funcdata &data)
       dvn = op->getOut();
       if (!dvn->isDirectWrite()) {
 	dvn->setDirectWrite();
-	if (propagateIndirect || op->code() != CPUI_INDIRECT)	// If INDIRECT, output is marked, but does not propagate
+	// For call based INDIRECTs, output is marked, but does not propagate depending on setting
+	if (propagateIndirect || op->code() != CPUI_INDIRECT || op->isIndirectStore())
 	  worklist.push_back(dvn);
       }
     }

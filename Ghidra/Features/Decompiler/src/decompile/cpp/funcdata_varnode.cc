@@ -1402,7 +1402,6 @@ bool AncestorRealistic::checkConditionalExe(State &state)
 int4 AncestorRealistic::enterNode(State &state)
 
 {
-  PcodeOp *indop;
   // If the node has already been visited, we truncate the traversal to prevent cycles.
   // We always return success assuming the proper result will get returned along the first path
   if (state.vn->isMark()) return pop_success;
@@ -1424,8 +1423,7 @@ int4 AncestorRealistic::enterNode(State &state)
 	return pop_failkill;		// Truncate this path, indicating killedbycall
       return pop_success;		// otherwise it could be valid
     }
-    indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-    if (indop->isCall()) {	// If flow goes THROUGH a call
+    if (!op->isIndirectStore()) {	// If flow goes THROUGH a call
       if (op->getOut()->isReturnAddress()) return pop_fail;	// Storage address location is completely invalid
       if (trial->isKilledByCall()) return pop_fail;		// "Likely" killedbycall is invalid
     }

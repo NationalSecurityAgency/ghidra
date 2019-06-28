@@ -96,7 +96,8 @@ public:
     indirect_creation = 0x8000000,  ///< Output varnode is created by indirect effect
     calculated_bool = 0x10000000, ///< Output has been determined to be a 1-bit boolean value
     is_cpool_transformed = 0x20000000, ///< Have we checked for cpool transforms
-    ptrflow = 0x40000000	///< Op consumes or produces a ptr
+    ptrflow = 0x40000000,	///< Op consumes or produces a ptr
+    indirect_store = 0x80000000	///< CPUI_INDIRECT is caused by CPUI_STORE
   };
   enum {
     has_thisptr = 0x1,		///< First parameter ( getIn(1) ) is a this pointer
@@ -163,6 +164,7 @@ public:
   bool isCall(void) const { return ((flags&PcodeOp::call)!=0); } ///< Return \b true if this op indicates call semantics
   bool isMarker(void) const { return ((flags&PcodeOp::marker)!=0); } ///< Return \b true is a special SSA form op
   bool isIndirectCreation(void) const { return ((flags&PcodeOp::indirect_creation)!=0); } ///< Return \b true if op creates a varnode indirectly
+  bool isIndirectStore(void) const { return ((flags&PcodeOp::indirect_store)!=0); }	///< Return \b true if \b this INDIRECT is caused by STORE
   /// \brief Return \b true if this op is not directly represented in C output
   bool notPrinted(void) const { return ((flags&(PcodeOp::marker|PcodeOp::nonprinting|PcodeOp::noreturn))!=0); }
   /// \brief Return \b true if this op produces a boolean output

@@ -1088,7 +1088,7 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
     }
     // We do not guard the call if the effect is "unaffected" or "reload"
     if ((effecttype == EffectRecord::unknown_effect)||(effecttype == EffectRecord::return_address)) {
-      indop = fd->newIndirectOp(fc->getOp(),addr,size);
+      indop = fd->newIndirectOp(fc->getOp(),addr,size,0);
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());
@@ -1129,7 +1129,7 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
     AddrSpace *storeSpace = Address::getSpaceFromConst(op->getIn(0)->getAddr());
     if ((container == storeSpace && op->usesSpacebasePtr()) ||
 	(spc == storeSpace)) {
-      indop = fd->newIndirectOp(op,addr,size);
+      indop = fd->newIndirectOp(op,addr,size,PcodeOp::indirect_store);
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());

@@ -608,8 +608,9 @@ PcodeOp *Funcdata::newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *
 /// \param indeffect is the PcodeOp with the indirect effect
 /// \param addr is the starting address of the storage range to protect
 /// \param size is the number of bytes in the storage range
+/// \param extraFlags are extra boolean properties to put on the INDIRECT
 /// \return the new CPUI_INDIRECT op
-PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size)
+PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags)
 
 {
   Varnode *newin;
@@ -617,6 +618,7 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 siz
 
   newin = newVarnode(size,addr);
   newop = newOp(2,indeffect->getAddr());
+  newop->flags |= extraFlags;
   newVarnodeOut(size,addr,newop);
   opSetOpcode(newop,CPUI_INDIRECT);
   opSetInput(newop,newin,0);
