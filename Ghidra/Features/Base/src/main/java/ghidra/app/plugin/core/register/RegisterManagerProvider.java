@@ -65,7 +65,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		super(tool, "Register Manager", owner, ProgramActionContext.class);
 		buildComponent();
 
-		setHelpLocation(new HelpLocation("RegisterPlugin", "RegisterManager"));
+		setHelpLocation(new HelpLocation("RegisterPlugin", "Register_Manager"));
 		setIcon(REGISTER_ICON, true);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
 

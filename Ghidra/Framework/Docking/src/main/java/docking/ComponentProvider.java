@@ -406,6 +406,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.helpLocation = helpLocation;
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(this, helpLocation);
+
+		if (showProviderAction != null) {
+			showProviderAction.setHelpLocation(helpLocation);
+		}
 	}
 
 	/**
@@ -564,7 +568,17 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if transient
 	 */
 	public boolean isTransient() {
-		return isTransient;
+		return isTransient || isSnapshot();
+	}
+
+	/**
+	 * A special marker that indicates this provider is a snapshot of a primary provider, 
+	 * somewhat like a picture of the primary provider.
+	 * 
+	 * @return true if a snapshot
+	 */
+	public boolean isSnapshot() {
+		return false;
 	}
 
 	/**
@@ -766,13 +780,17 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 				setToolBarData(new ToolBarData(icon, TOOLBAR_GROUP));
 			}
 
-			if (defaultKeyBindingData != null) {
+			if (supportsKeyBindings && defaultKeyBindingData != null) {
 				// this action itself is not 'key binding managed', but the system *will* use
 				// any key binding value we set when connecting 'shared' actions
 				setKeyBindingData(defaultKeyBindingData);
 			}
 
 			setDescription("Display " + name);
+			HelpLocation providerHelp = ComponentProvider.this.getHelpLocation();
+			if (providerHelp != null) {
+				setHelpLocation(providerHelp);
+			}
 		}
 
 		@Override

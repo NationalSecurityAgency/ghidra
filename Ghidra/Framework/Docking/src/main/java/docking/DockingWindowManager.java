@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 
+import org.apache.commons.collections4.map.LazyMap;
 import org.jdom.Element;
 
 import docking.action.DockingActionIf;
@@ -996,11 +997,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private void disposePlaceholder(ComponentPlaceholder placeholder, boolean keepAround) {
-		Iterator<DockingActionIf> iter = placeholder.getActions();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
-			placeholder.removeAction(action);
-		}
+		placeholder.removeAllActions();
 
 		ComponentNode node = placeholder.getNode();
 		if (node == null) {
@@ -1092,8 +1089,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		tool.getToolActions().removeActions(DOCKING_WINDOWS_OWNER);
 
-		Map<String, List<ComponentPlaceholder>> permanentMap = new HashMap<>();
-		Map<String, List<ComponentPlaceholder>> transientMap = new HashMap<>();
+		Map<String, List<ComponentPlaceholder>> permanentMap =
+			LazyMap.lazyMap(new HashMap<>(), menuName -> new ArrayList<>());
+		Map<String, List<ComponentPlaceholder>> transientMap =
+			LazyMap.lazyMap(new HashMap<>(), menuName -> new ArrayList<>());
 
 		Map<ComponentProvider, ComponentPlaceholder> map =
 			placeholderManager.getActiveProvidersToPlaceholders();
@@ -1103,18 +1102,18 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			ComponentPlaceholder placeholder = entry.getValue();
 
 			String subMenuName = provider.getWindowSubMenuName();
-			if (provider.isTransient()) {
-				addToMap(transientMap, subMenuName, placeholder);
+			if (provider.isTransient() && !provider.isSnapshot()) {
+				transientMap.get(subMenuName).add(placeholder);
 			}
 			else {
-				addToMap(permanentMap, subMenuName, placeholder);
+				permanentMap.get(subMenuName).add(placeholder);
 			}
 		}
 		promoteSingleMenuGroups(permanentMap);
 		promoteSingleMenuGroups(transientMap);
 
-		createActions(transientMap, true);
-		createActions(permanentMap, false);
+		createActions(transientMap);
+		createActions(permanentMap);
 		createWindowActions();
 
 		actionToGuiMapper.update();
@@ -1144,14 +1143,17 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return null;
 	}
 
-	private void createActions(Map<String, List<ComponentPlaceholder>> map, boolean isTransient) {
+	private void createActions(Map<String, List<ComponentPlaceholder>> map) {
 		List<ShowComponentAction> actionList = new ArrayList<>();
 		for (String subMenuName : map.keySet()) {
 			List<ComponentPlaceholder> placeholders = map.get(subMenuName);
 			for (ComponentPlaceholder placeholder : placeholders) {
+				ComponentProvider provider = placeholder.getProvider();
+				boolean isTransient = provider.isTransient();
 				actionList.add(
 					new ShowComponentAction(this, placeholder, subMenuName, isTransient));
 			}
+
 			if (subMenuName != null) {
 				// add an 'add all' action for the sub-menu
 				actionList.add(new ShowAllComponentsAction(this, placeholders, subMenuName));
@@ -1165,26 +1167,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 	}
 
-	private void promoteSingleMenuGroups(Map<String, List<ComponentPlaceholder>> map) {
-		List<String> lists = new ArrayList<>(map.keySet());
+	private void promoteSingleMenuGroups(Map<String, List<ComponentPlaceholder>> lazyMap) {
+		List<String> lists = new ArrayList<>(lazyMap.keySet());
 		for (String key : lists) {
-			List<ComponentPlaceholder> list = map.get(key);
-			if (key != null && list.size() == 1) {
-				addToMap(map, null, list.get(0));
-				map.remove(key);
+			if (key == null) {
+				continue;
+			}
+
+			List<ComponentPlaceholder> list = lazyMap.get(key);
+			if (list.size() == 1) {
+				lazyMap.get(null /*submenu name*/).add(list.get(0));
+				lazyMap.remove(key);
 			}
 		}
-	}
-
-	private void addToMap(Map<String, List<ComponentPlaceholder>> map, String menuGroup,
-			ComponentPlaceholder placeholder) {
-
-		List<ComponentPlaceholder> list = map.get(menuGroup);
-		if (list == null) {
-			list = new ArrayList<>();
-			map.put(menuGroup, list);
-		}
-		list.add(placeholder);
 	}
 
 	private void createWindowActions() {

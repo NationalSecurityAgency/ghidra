@@ -54,6 +54,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import resources.ResourceManager;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
@@ -117,17 +118,21 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private MultiListingLayoutModel multiModel;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
-			boolean connected) {
-		super(plugin.getTool(), plugin.getName(), plugin.getName(), CodeViewerActionContext.class);
+			boolean isConnected) {
+		super(plugin.getTool(), "Listing", plugin.getName(), CodeViewerActionContext.class);
+
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
-		setConnected(connected);
+		setConnected(isConnected);
+		if (!isConnected) {
+			setTransient();
+		}
 		setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Code_Browser"));
 		setDefaultWindowPosition(WindowPosition.RIGHT);
-		setIcon(ResourceManager.loadImage("images/Browser.gif"));
+		setIcon(ResourceManager.loadImage("images/Browser.gif"), isConnected);
 		listingPanel = new ListingPanel(formatMgr);
 		listingPanel.enablePropertyBasedColorModel(true);
-		decorationPanel = new ListingPanelContainer(listingPanel, connected);
+		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);
 		ListingHighlightProvider listingHighlighter =
 			createListingHighlighter(listingPanel, tool, decorationPanel);
 		highlighterAdapter = new ProgramHighlighterProvider(listingHighlighter);
@@ -136,7 +141,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		setWindowMenuGroup("Listing");
 		setIntraGroupPosition(WindowPosition.RIGHT);
 
-		setTitle(connected ? TITLE : "[" + TITLE + "]");
+		setTitle(isConnected ? TITLE : "[" + TITLE + "]");
 		fieldNavigator = new FieldNavigator(tool, this);
 		listingPanel.addButtonPressedListener(fieldNavigator);
 		addToTool();
@@ -148,6 +153,12 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		codeViewerClipboardProvider = new CodeBrowserClipboardProvider(tool, this);
 		tool.addPopupListener(this);
+	}
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
 	}
 
 	/**
@@ -399,9 +410,9 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	void updateTitle() {
-		String subTitle = program == null ? "" : program.getDomainFile().getName();
-		String newTitle = isConnected() ? TITLE : "[" + TITLE + "]";
-		setTitle(newTitle + subTitle);
+		String subTitle = program == null ? "" : ' ' + program.getDomainFile().getName();
+		String newTitle = isConnected() ? TITLE : "[" + TITLE + subTitle + "]";
+		setTitle(newTitle);
 	}
 
 	@Override
@@ -882,7 +893,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		final ViewerPosition vp = listingPanel.getFieldPanel().getViewerPosition();
 		// invoke later to give the window manage a chance to create the new window
 		// (its done in an invoke later)
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
 			newProvider.listingPanel.getFieldPanel().setViewerPosition(vp.getIndex(),
 				vp.getXOffset(), vp.getYOffset());
@@ -949,7 +960,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	class ToggleHeaderAction extends ToggleDockingAction {
 		ToggleHeaderAction() {
-			super("Toggle Header", CodeViewerProvider.this.getName());
+			super("Toggle Header", plugin.getName());
 			setEnabled(true);
 
 			setToolBarData(new ToolBarData(LISTING_FORMAT_EXPAND_ICON, "zzz"));
@@ -960,8 +971,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			boolean show = !listingPanel.isHeaderShowing();
 			listingPanel.showHeader(show);
-			getToolBarData()
-				.setIcon(show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
+			getToolBarData().setIcon(
+				show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
 		}
 	}
 

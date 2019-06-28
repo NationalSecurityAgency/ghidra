@@ -27,6 +27,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.plugintool.util.ToolConstants;
+import ghidra.util.HelpLocation;
 
 //@formatter:off
 @PluginInfo(
@@ -86,6 +87,8 @@ public class ProviderNavigationPlugin extends Plugin {
 			"xLowInMenuSubGroup"));
 		previousProviderAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_F6, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
+		previousProviderAction.setHelpLocation(
+			new HelpLocation("Navigation", "Navigation_Previous_Provider"));
 
 		tool.addAction(previousProviderAction);
 	}

@@ -170,11 +170,13 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertProviderKeyStroke(newKs);
 		assertOptionsKeyStroke(newKs);
 		assertMenuItemHasKeyStroke(newKs);
+		assertNoToolbarAction();
 	}
 
 	@Test
 	public void testSetKeyBinding_ViaOptions_WithToolbarAction() {
 
+		setToolbarIcon(ICON);
 		showProvider();
 
 		KeyStroke newKs = CONTROL_T;
@@ -183,6 +185,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertProviderKeyStroke(newKs);
 		assertOptionsKeyStroke(newKs);
 		assertMenuItemHasKeyStroke(newKs);
+		assertToolbarAction();
 	}
 
 	@Test
@@ -304,6 +307,14 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		// shared option name/format: "Provider Name (Tool)" - the shared action's owner is the Tool
 		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Tool)", newKs));
 		waitForSwing();
+	}
+
+	private void assertNoToolbarAction() {
+		assertNotNull("No toolbar action found for provider", getToolbarShowProviderAction());
+	}
+
+	private void assertToolbarAction() {
+		assertNotNull("No toolbar action found for provider", getToolbarShowProviderAction());
 	}
 
 	private void assertProviderKeyStroke(KeyStroke expectedKs) {

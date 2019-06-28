@@ -52,8 +52,7 @@ public class KeyBindingAction extends DockingAction {
 		if (!action.getKeyBindingType().supportsKeyBindings()) {
 			Component parent = windowManager.getActiveComponent();
 			Msg.showInfo(getClass(), parent, "Unable to Set Keybinding",
-				"Action \"" + getActionName(action) + "\" is not keybinding managed and thus a " +
-					"keybinding cannot be set.");
+				"Action \"" + getActionName(action) + "\" does not support key bindings");
 			return;
 		}
 

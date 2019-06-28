@@ -446,9 +446,17 @@ public class KeyBindingUtils {
 	public static void assertSameDefaultKeyBindings(DockingActionIf newAction,
 			Collection<DockingActionIf> existingActions) {
 
+		if (!newAction.getKeyBindingType().supportsKeyBindings()) {
+			return;
+		}
+
 		KeyBindingData newDefaultBinding = newAction.getDefaultKeyBindingData();
 		KeyStroke defaultKs = getKeyStroke(newDefaultBinding);
 		for (DockingActionIf action : existingActions) {
+			if (!action.getKeyBindingType().supportsKeyBindings()) {
+				continue;
+			}
+
 			KeyBindingData existingDefaultBinding = action.getDefaultKeyBindingData();
 			KeyStroke existingKs = getKeyStroke(existingDefaultBinding);
 			if (!Objects.equals(defaultKs, existingKs)) {

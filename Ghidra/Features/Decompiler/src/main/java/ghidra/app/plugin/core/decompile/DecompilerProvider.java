@@ -124,9 +124,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	public DecompilerProvider(DecompilePlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), "Decompiler", plugin.getName(), DecompilerActionContext.class);
-		this.plugin = plugin;
 
-		clipboardProvider = new DecompilerClipboardProvider(plugin, this);
+		this.plugin = plugin;
+		this.clipboardProvider = new DecompilerClipboardProvider(plugin, this);
+
 		setConnected(isConnected);
 
 		decompilerOptions = new DecompileOptions();
@@ -137,10 +138,17 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		decompilerPanel.setHighlightController(highlightController);
 		decorationPanel = new DecoratorPanel(decompilerPanel, isConnected);
 
+		if (!isConnected) {
+			setTransient();
+		}
+		else {
+			setDefaultKeyBinding(
+				new KeyBindingData(KeyEvent.VK_E, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		}
+
+		setIcon(C_SOURCE_ICON, isConnected);
 		setTitle("Decompile");
-		setIcon(C_SOURCE_ICON, true);
-		setDefaultKeyBinding(
-			new KeyBindingData(KeyEvent.VK_E, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+
 		setWindowMenuGroup("Decompile");
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 		createActions(isConnected);
@@ -155,6 +163,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 //==================================================================================================
 // Component Provider methods
 //==================================================================================================
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
+	}
+
 	@Override
 	public void closeComponent() {
 		controller.clear();
