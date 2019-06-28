@@ -487,8 +487,9 @@ void Heritage::findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> 
       if (newOp->isMark()) continue;		// Already visited this op
       newOp->setMark();
       OpCode opc = newOp->code();
-      bool isArtificial = (opc == CPUI_COPY || opc == CPUI_MULTIEQUAL);
-      if (isArtificial) {
+      bool isArtificial = false;
+      if (opc == CPUI_COPY || opc == CPUI_MULTIEQUAL) {
+	isArtificial = true;
 	int4 maxInNew = newOp->numInput();
 	for(int4 j=0;j<maxInNew;++j) {
 	  Varnode *inVn = newOp->getIn(j);
@@ -497,6 +498,12 @@ void Heritage::findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> 
 	    break;
 	  }
 	}
+      }
+      else if (opc == CPUI_INDIRECT && newOp->isIndirectStore()) {
+	// An INDIRECT can be considered artificial if it is caused by a STORE
+	Varnode *inVn = newOp->getIn(0);
+	if (addr == inVn->getAddr())
+	  isArtificial = true;
       }
       if (isArtificial)
 	copySinks.push_back(newOp);
