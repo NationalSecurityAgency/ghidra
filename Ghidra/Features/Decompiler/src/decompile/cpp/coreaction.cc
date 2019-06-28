@@ -1716,7 +1716,13 @@ uint4 ActionLikelyTrash::countMarks(PcodeOp *op)
 	res += 1;
 	break;
       }
-      if (!vn->isWritten()||(vn->getDef()->code()!=CPUI_INDIRECT)) // Chain up through INDIRECTs
+      if (!vn->isWritten()) break;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp == op) {	// We have looped all the way around
+	res += 1;
+	break;
+      }
+      else if (defOp->code() != CPUI_INDIRECT)	// Chain up through INDIRECTs
 	break;
       vn = vn->getDef()->getIn(0);
     }
@@ -1763,6 +1769,12 @@ bool ActionLikelyTrash::traceTrash(Varnode *vn,vector<PcodeOp *> &indlist)
       case CPUI_INDIRECT:
 	if (outvn->isPersist())
 	  istrash = false;
+	else if (op->isIndirectStore()) {
+	  if (!outvn->isMark()) {
+	    outvn->setMark();
+	    markedlist.push_back(outvn);
+	  }
+	}
 	else
 	  indlist.push_back(op);
 	break;
