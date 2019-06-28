@@ -1877,6 +1877,7 @@ void JumpTable::recoverModel(Funcdata *fd)
       jmodel = jassisted;
       if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
 	return;
+      delete jassisted;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
