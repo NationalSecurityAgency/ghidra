@@ -551,8 +551,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			 	 4) Wire default 'close' action to keybinding
 			 	 5) Add global action for (show last provider)
 			 	 		--Navigation menu?
-			 	 6) Revisit all uses of the key binding managed constructor
-				 7) Update table popup actions to be managed
 				 8) Update help locations
 			
 			 	 Questions:
