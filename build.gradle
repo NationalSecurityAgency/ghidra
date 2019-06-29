@@ -40,6 +40,19 @@ allprojects {
 }
 
 /*********************************************************************************
+ *  Use flat directory-style repository if flatRepo directory is present.
+ *********************************************************************************/
+if (file("flatRepo").isDirectory()) {
+	allprojects {
+		repositories {
+			mavenCentral()
+			jcenter()
+			flatDir name: "flat", dirs:["$rootProject.projectDir/flatRepo"]
+		}
+	}
+}
+
+/*********************************************************************************
  *  load properties from Ghidra/application.properties file
  *********************************************************************************/
 
