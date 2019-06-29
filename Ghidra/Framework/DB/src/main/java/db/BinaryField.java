@@ -245,7 +245,10 @@ public class BinaryField extends Field {
 	 */
 	@Override
 	public int hashCode() {
-		return data.hashCode();
+		int result = 17;
+		for (int i = 0; i < data.length; i++)
+			result = 37 * result + data[i]; 
+		return result;
 	}
 
 }

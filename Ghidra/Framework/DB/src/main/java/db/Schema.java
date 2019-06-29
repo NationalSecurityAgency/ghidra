@@ -320,6 +320,16 @@ public class Schema {
 		}
 		return true;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + version;
+		result = 37 * result + (null == keyType ? 0 : keyType.hashCode());
+		for (int i = 0; i < fieldClasses.length; i++)
+			result = 37 * result + (null == fieldClasses[i] ? 0 : fieldClasses[i].hashCode());
+		return result;
+	}
 
 	@Override
 	public String toString() {

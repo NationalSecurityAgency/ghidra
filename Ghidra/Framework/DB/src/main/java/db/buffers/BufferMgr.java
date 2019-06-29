@@ -680,6 +680,7 @@ public class BufferMgr {
 			}
 			try {
 				// wait for pre-cache thread to finish
+				//TODO  spotbugs:  wait not in loop
 				preCacheLock.wait();
 			}
 			catch (InterruptedException e) {
