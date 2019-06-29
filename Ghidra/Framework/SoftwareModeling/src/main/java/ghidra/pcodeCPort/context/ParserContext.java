@@ -180,7 +180,7 @@ public class ParserContext {
 		int res = 0;
 		for (int i = 0; i < size; ++i) {
 			res <<= 8;
-			res |= buf[i + off];
+			res |= (buf[i + off] & 0xff);
 		}
 		return res;
 	}
@@ -195,7 +195,7 @@ public class ParserContext {
 		int res = 0;
 		for (int i = 0; i < bytesize; ++i) {
 			res <<= 8;
-			res |= buf[i + off];
+			res |= (buf[i + off] & 0xff);
 		}
 		res <<= 8 * (4 - bytesize) + startbit; // Move starting bit to highest position
 		res >>= 8 * 4 - size;	// Shift to bottom of intm
@@ -223,6 +223,7 @@ public class ParserContext {
 	// disturbing the tree walk
 	public void setOffsetOutOfBand(Constructor c, int index) {
 		outofband = true;
+		//TODO  spotbugs:  is 'point' initialized?
 		ConstructState pt = point;
 		while (pt.ct != c) {
 			if (pt == getState(0)) {

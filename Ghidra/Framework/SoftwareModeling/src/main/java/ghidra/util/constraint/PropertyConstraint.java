@@ -49,6 +49,14 @@ public class PropertyConstraint extends ProgramConstraint {
 		PropertyConstraint other = (PropertyConstraint) obj;
 		return other.name.equals(name) && other.value.equals(value);
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == name ? 0 : name.hashCode());
+		result = 37 * result + (null == value ? 0 : value.hashCode());
+		return result;
+	}
 
 	@Override
 	public String getDescription() {

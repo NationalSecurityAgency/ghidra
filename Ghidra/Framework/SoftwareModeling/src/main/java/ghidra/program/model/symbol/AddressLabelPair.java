@@ -72,5 +72,13 @@ public final class AddressLabelPair implements Serializable {
         return SystemUtilities.isEqual( objPair.label, this.label ) && 
         	objPair.addr.equals(this.addr);
     }
+    
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + (null == addr ? 0 : addr.hashCode());
+    	result = 37 * result + (null == label ? 0 : label.hashCode());
+    	return result;
+    }
 
 }

@@ -153,6 +153,22 @@ public class MemReferenceImpl implements Reference {
 				isOffsetReference() == ref.isOffsetReference();
     } 
 
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + (isMemoryReference() ? 0 : 1);
+    	result = 37 * result + (null == fromAddr ? 0 : fromAddr.hashCode());
+    	result = 37 * result + (null == toAddr ? 0 : toAddr.hashCode());
+    	result = 37 * result + opIndex;
+    	result = 37 * result + (int)(symbolID ^ (symbolID >>> 32));
+    	result = 37 * result + (isPrimary ? 0 : 1);
+    	result = 37 * result + (null == sourceType ? 0 : sourceType.hashCode());
+    	result = 37 * result + (null == refType ? 0 : refType.hashCode());
+    	result = 37 * result + (isShiftedReference() ? 0 : 1);
+    	result = 37 * result + (isOffsetReference() ? 0 : 1);
+    	return result;
+    }
+    
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isExternalReference()
 	 */

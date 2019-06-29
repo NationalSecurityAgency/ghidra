@@ -475,8 +475,10 @@ public class StringDataInstance {
 		switch (stringLayout) {
 			case PASCAL_255:
 				minValid = SIZEOF_PASCAL255_STR_LEN_FIELD;
+				break;
 			case PASCAL_64k:
 				minValid = SIZEOF_PASCAL64k_STR_LEN_FIELD;
+				break;
 			default:
 				minValid = 0;
 		}

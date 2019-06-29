@@ -121,6 +121,7 @@ public abstract class PcodeEmit {
 				Address instrAddr = override.getInstructionStart();
 				try {
 					defaultFallAddress = instrAddr.addNoWrap(fallOffset);
+					//TODO  spotbugs:  dead assignment.  this.fallOffset instead?
 					fallOffset = (int) fallOverride.subtract(instrAddr);
 				}
 				catch (AddressOverflowException e) {

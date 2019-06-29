@@ -176,6 +176,28 @@ public class ConstTpl {
 		return true;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + type.ordinal();
+		switch(type) {
+			case real:
+				result = 37 * result + (int)(value_real ^ (value_real >>> 32));
+				break;
+		case handle:
+			result = 37 * result + handle_index;
+			result = 37 * result + select.ordinal();
+			break;
+		case spaceid:
+			result = 37 * result + (null == spaceid ? 0 : spaceid.hashCode());
+			break;
+		default:
+			result = 37 * result;
+			break;
+		}
+		return result;
+	}
+	
 	public int compareTo(ConstTpl op2) {
 		if (type != op2.type) {
 			return type.ordinal() - op2.type.ordinal();

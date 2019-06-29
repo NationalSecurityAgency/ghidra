@@ -224,6 +224,7 @@ class ArrayDB extends DataTypeDB implements Array {
 				int oldLength = getLength();
 				record.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, dataMgr.getResolvedID(newDt));
 				if (newDt instanceof Dynamic || newDt instanceof FactoryDataType) {
+					//TODO  spotbugs:  pass by value, not pass by reference
 					newDt = DataType.DEFAULT;
 				}
 				// can only handle fixed-length replacements

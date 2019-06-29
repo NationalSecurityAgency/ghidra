@@ -140,6 +140,15 @@ public class ThunkReference implements DynamicReference {
 		return ref.getReferenceType() == RefType.THUNK && fromAddr.equals(ref.getFromAddress()) &&
 			toAddr.equals(ref.getToAddress());
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + getReferenceType().hashCode();
+		result = 37 * result + (null == fromAddr ? 0 : fromAddr.hashCode());
+		result = 37 * result + (null == toAddr ? 0 : toAddr.hashCode());
+		return result;
+	}
 
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isExternalReference()

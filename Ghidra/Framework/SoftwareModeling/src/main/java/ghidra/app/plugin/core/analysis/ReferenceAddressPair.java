@@ -54,6 +54,6 @@ public class ReferenceAddressPair {
 			return false;
 		}
 		ReferenceAddressPair otherPair = (ReferenceAddressPair) obj;
-		return source.equals(otherPair.source) & destination.equals(otherPair.destination);
+		return source.equals(otherPair.source) && destination.equals(otherPair.destination);
 	}
 }

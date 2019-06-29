@@ -204,6 +204,8 @@ public class VarnodeAST extends Varnode {
 
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (o == this)
 			return true;
 		if (!(o instanceof VarnodeAST))
@@ -233,6 +235,14 @@ public class VarnodeAST extends Varnode {
 
 	@Override
 	public int hashCode() {
-		return uniqId;
+		int result = 17;
+		long tmp = getOffset();
+		result = 37 * result + (int)(tmp ^ tmp >>> 3);
+		result = 37 * result + getSize();
+		result = 37 * result + getSpace();
+		result = 37 * result + (isFree() ? 0 : 1);
+		result = 37 * result + (isInput() ? 0 : 1);
+		result = 37 * result + (null == def ? 0 : def.hashCode());
+		return result;
 	}
 }

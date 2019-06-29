@@ -138,6 +138,17 @@ public class Address implements Comparable<Address>{
 		return base == other.base && offset == other.offset;
 	}
 
+	@Override
+	public int hashCode() {
+		//SEE  Josh Bloch "Effective Java"
+		// use all fields check in equals()
+		// initializing with a prime and multiplying with a prime
+		int result = 17;
+		result = 37 * result + (int)(offset ^ (offset >>> 32));
+		result = 37 * result + (null == base ? 0 : base.hashCode());
+		return result;
+	}
+	
 	public int compareTo( Address other ) {
 		int result = base.compareTo( other.base );
 		if (result != 0) {

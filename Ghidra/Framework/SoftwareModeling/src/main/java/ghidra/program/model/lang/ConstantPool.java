@@ -96,6 +96,7 @@ public abstract class ConstantPool {
 				SpecXmlUtils.xmlEscape(buf, token);
 				buf.append("</token>\n");
 			}
+			//TODO  spotbugs:  is type initialized?
 			buf.append(dtmanage.buildTypeRef(type, type.getLength()));
 			buf.append("</cpoolrec>\n");
 			return buf;

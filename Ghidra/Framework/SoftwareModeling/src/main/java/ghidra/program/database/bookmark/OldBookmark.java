@@ -142,6 +142,17 @@ public class OldBookmark implements Saveable {
 		return comment.equals(bookmark.comment) && category.equals(bookmark.category) &&
 			type.equals(bookmark.type) && addrsEqual;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == addr ? 0 : addr.hashCode());
+		result = 37 * result + (null == addrString ? 0 : addrString.hashCode());
+		result = 37 * result + (null == comment ? 0 : comment.hashCode());
+		result = 37 * result + (null == category ? 0 : category.hashCode());
+		result = 37 * result + (null == type ? 0 : type.hashCode());
+		return result;
+	}
 
 	/**
 	 * @see Saveable#restore(ObjectStorage)

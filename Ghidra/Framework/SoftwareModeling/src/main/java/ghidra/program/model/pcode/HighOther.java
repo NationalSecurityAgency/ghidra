@@ -49,6 +49,7 @@ public class HighOther extends HighVariable {
 	 * @return associated dynamic symbol or null
 	 */
 	public DynamicSymbol getSymbol() {
+		//TODO  spotbugs:  is symbol initialized?
 		return symbol;
 	}
 

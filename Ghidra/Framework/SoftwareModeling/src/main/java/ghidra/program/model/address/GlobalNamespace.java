@@ -106,6 +106,13 @@ public class GlobalNamespace implements Namespace {
 		}
 		return getClass() == obj.getClass();
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + getClass().hashCode();
+		return result;
+	}
 
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getName(boolean)

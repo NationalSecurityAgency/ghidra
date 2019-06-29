@@ -44,6 +44,8 @@ public abstract class BinaryExpression extends PatternExpression {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (!this.getClass().equals(obj.getClass())) {
 			return false;
 		}

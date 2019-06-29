@@ -129,6 +129,7 @@ public class ConstantTemplate implements Serializable {
 	
 	@Override
     public boolean equals(Object o) {
+		if (null == o) return false;
 		if (o.getClass() != ConstantTemplate.class) return false;
 		ConstantTemplate ct = (ConstantTemplate) o;
 		if (ct.hashCode() != hashCode) return false;

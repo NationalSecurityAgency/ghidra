@@ -53,6 +53,14 @@ public class MaskImpl implements Mask, Serializable {
 		return false;
 
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		for (int i = 0; i < mask.length; i++)
+			result = 37 * result + mask[i];
+		return result;
+	}
 
 	/**
 	 * 

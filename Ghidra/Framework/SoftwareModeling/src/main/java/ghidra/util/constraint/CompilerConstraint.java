@@ -46,6 +46,13 @@ public class CompilerConstraint extends ProgramConstraint {
 	}
 
 	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == compilerid ? 0 : compilerid.hashCode());
+		return result;
+	}
+	
+	@Override
 	public String getDescription() {
 		return "compiler = " + compilerid;
 	}

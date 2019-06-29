@@ -328,7 +328,7 @@ public class Utils {
 	public static long bytesToLong(byte[] byteBuf) {
 		long value = 0;
 		for(int i=0;i<8;i++) {
-			value = value << 8 | byteBuf[i];
+			value = value << 8 | (byteBuf[i] & 0xff);
 		}
 		return value;
 	}

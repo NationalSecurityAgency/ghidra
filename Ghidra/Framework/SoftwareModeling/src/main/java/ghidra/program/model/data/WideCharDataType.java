@@ -79,6 +79,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
+		//TODO  spotbugs:  length is immediately overwritten
 		length = getLength();
 		try {
 			switch (getLength()) {

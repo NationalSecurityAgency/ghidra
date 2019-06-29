@@ -150,6 +150,7 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 		strBuf.append("_");
 		try {
 			byte b = buf.getByte(0);
+			//TODO  spotbugs:  byte/signed comparison issue here
 			if (b > 31 && b < 128) {
 				strBuf.append((char) b);
 			}

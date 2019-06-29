@@ -41,6 +41,8 @@ public class VarnodeData {
 
 	@Override
 	public boolean equals( Object obj ) {
+		if (null == obj)
+			return false;
 		if (obj == this) {
 			return true;
 		}

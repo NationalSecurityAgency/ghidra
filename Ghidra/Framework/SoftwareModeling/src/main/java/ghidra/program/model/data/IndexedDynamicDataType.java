@@ -89,6 +89,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 			table.put(new Long(keys[i]), new Integer(i));
 		}
 		if (mask == 0) {
+			//TODO  spotbugs:  dead assignment, this.mask instead?
 			mask = 0xFFFFFFFF;
 		}
 	}

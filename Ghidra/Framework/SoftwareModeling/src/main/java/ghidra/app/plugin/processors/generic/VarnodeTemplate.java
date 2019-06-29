@@ -126,6 +126,7 @@ public class VarnodeTemplate implements Serializable {
     public int hashCode() {return hashCode; }
 	@Override
     public boolean equals(Object o) {
+		if (null == o) return false;
 		if (o.getClass() != VarnodeTemplate.class) return false;
 		VarnodeTemplate vt = (VarnodeTemplate) o;
 		if (vt.hashCode() != hashCode) return false;

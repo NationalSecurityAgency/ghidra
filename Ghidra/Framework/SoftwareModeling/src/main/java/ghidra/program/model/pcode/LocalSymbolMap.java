@@ -442,6 +442,7 @@ public class LocalSymbolMap {
 
 		@Override
 		public boolean equals(Object op2) {
+			if (null == op2) return false;
 			MappedVarKey op = (MappedVarKey) op2;
 			if (!SystemUtilities.isEqual(pcaddr, op.pcaddr)) {
 				return false;

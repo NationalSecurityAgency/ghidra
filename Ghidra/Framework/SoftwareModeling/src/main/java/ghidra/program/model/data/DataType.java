@@ -29,8 +29,9 @@ import ghidra.util.exception.DuplicateNameException;
  * The interface that all data types must implement.
  */
 public interface DataType {
-
+	//TODO  spotbugs:  is DefaultDataType initialized yet? (superclass)
 	public static final DataType DEFAULT = DefaultDataType.dataType; // global default data type
+	//TODO  spotbugs:  is VoidDataType initialized yet? (superclass)
 	public static final DataType VOID = VoidDataType.dataType; // global void data type
 
 	public final static String CONFLICT_SUFFIX = ".conflict";

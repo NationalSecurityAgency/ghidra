@@ -64,6 +64,13 @@ public class LanguageConstraint extends ProgramConstraint {
 	}
 
 	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == languageID ? 0 : languageID.hashCode());
+		return result;
+	}
+	
+	@Override
 	public String getDescription() {
 		return "languageID = " + languageID;
 	}

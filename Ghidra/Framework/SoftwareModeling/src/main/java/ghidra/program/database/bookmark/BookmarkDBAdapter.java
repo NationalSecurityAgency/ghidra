@@ -27,6 +27,7 @@ import java.io.IOException;
 import db.*;
 
 abstract class BookmarkDBAdapter {
+	//TODO  spotbugs:  are any V3 initialized yet? (superclass)
 	static final Schema SCHEMA = BookmarkDBAdapterV3.V3_SCHEMA;
 
 	static final int ADDRESS_COL = BookmarkDBAdapterV3.V3_ADDRESS_COL;

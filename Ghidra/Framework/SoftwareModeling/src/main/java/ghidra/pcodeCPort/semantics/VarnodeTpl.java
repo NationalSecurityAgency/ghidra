@@ -250,4 +250,13 @@ public class VarnodeTpl {
 		VarnodeTpl o2 = (VarnodeTpl) obj;
 		return space.equals(o2.space) && offset.equals(o2.offset) && size.equals(o2.size);
 	}
+	
+	@Override 
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + space.hashCode();
+		result = 37 * result + offset.hashCode();
+		result = 37 * result + size.hashCode();
+		return result;
+	}
 }

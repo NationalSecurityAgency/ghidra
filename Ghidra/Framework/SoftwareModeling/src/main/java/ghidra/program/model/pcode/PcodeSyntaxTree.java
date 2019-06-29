@@ -327,6 +327,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		try {
 			if (addr == null) {		// addr can still be null for join space varnode
 				long joinoffset = joinAllocate;				// Next available offset
+				//TODO  spotbugs:  pass by value, not pass by reference
 				storage = allocateJoinStorage(-1, pieces);	// is allocated from JOIN space
 				addr = AddressSpace.VARIABLE_SPACE.getAddress(joinoffset);
 			} else {

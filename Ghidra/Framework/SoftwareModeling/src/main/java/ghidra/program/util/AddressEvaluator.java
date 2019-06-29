@@ -401,6 +401,7 @@ public class AddressEvaluator {
 				return new Long(~(((Long) v2).longValue()));
 			}
 			else if (v2 instanceof Address) {
+				//TODO  spotbugs: is this not always ClassCastException
 				return ((Address) v2).getNewAddress(~(((Long) v2).longValue()));
 			}
 		}

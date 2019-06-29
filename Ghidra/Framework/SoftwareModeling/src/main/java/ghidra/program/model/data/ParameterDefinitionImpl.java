@@ -167,6 +167,16 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	}
 
 	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + ordinal;
+		result = 37 * result + (null == dataType ? 0 : dataType.hashCode());
+		result = 37 * result + getName().hashCode();
+		result = 37 * result + getComment().hashCode();
+		return result;
+	}
+	
+	@Override
 	public boolean isEquivalent(Variable variable) {
 		if (variable == null) {
 			return false;

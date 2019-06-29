@@ -224,6 +224,18 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		return isSameString(fieldName, dtc.getFieldName()) &&
 			isSameString(comment, dtc.getComment());
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + offset;
+		result = 37 * result + length;
+		result = 37 * result + ordinal;
+		result = 37 * result + (null == dataType ? 0 : dataType.hashCode());
+		result = 37 * result + (null == fieldName ? 0 : fieldName.hashCode());
+		result = 37 * result + (null == comment ? 0 : comment.hashCode());
+		return result;
+	}
 
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataTypeComponent#isEquivalent(ghidra.program.model.data.DataTypeComponent)

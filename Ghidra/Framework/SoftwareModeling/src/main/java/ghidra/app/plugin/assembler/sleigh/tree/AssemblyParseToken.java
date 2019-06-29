@@ -52,6 +52,8 @@ public class AssemblyParseToken extends AssemblyParseTreeNode {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (this.getClass() != obj.getClass()) {
 			return false;
 		}

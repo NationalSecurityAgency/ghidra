@@ -92,6 +92,8 @@ public class OldGenericNamespaceAddress extends GenericAddress {
 	 */
     @Override
     public boolean equals(Object o) {
+    	if (null == o)
+    		return false;
     	if (this == o) {
     		return true;
     	}
@@ -103,5 +105,14 @@ public class OldGenericNamespaceAddress extends GenericAddress {
     			namespaceID == addr.namespaceID &&
     	       offset == addr.offset;
     }   
+    
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + (null == addrSpace ? 0 : addrSpace.hashCode());
+    	result = 37 * result + (int)(namespaceID ^ (namespaceID >>> 32));
+    	result = 37 * result + (int)(offset ^ (offset >>> 32));
+    	return result;
+    }
 
 }

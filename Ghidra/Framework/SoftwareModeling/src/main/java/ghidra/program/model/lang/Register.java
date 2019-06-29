@@ -274,12 +274,14 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	 */
 	@Override
 	public boolean equals(Object o) {
+		if (null == o) {
+			return false;
+		}
+		if (!(o instanceof Register)) {
+			return false;
+		}
 		if (this == o) {
 			return true;
-		}
-
-		if (o == null || Register.class != o.getClass()) {
-			return false;
 		}
 
 		Register rd = (Register) o;
@@ -294,7 +296,12 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	 */
 	@Override
 	public int hashCode() {
-		return (int) address.getOffset();
+		int result = 17;
+		result = 37 * result + (null == name ? 0 : name.hashCode());
+		result = 37 * result + bitLength;
+		result = 37 * result + (null == address ? 0 : address.hashCode());
+		result = 37 * result + leastSigBit;
+		return result;
 	}
 
 	/**

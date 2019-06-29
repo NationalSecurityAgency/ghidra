@@ -34,6 +34,7 @@ public  class Hash implements Comparable<Hash> {
 	
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj) return false;
 		return value == ((Hash)obj).value;
 	}
 	

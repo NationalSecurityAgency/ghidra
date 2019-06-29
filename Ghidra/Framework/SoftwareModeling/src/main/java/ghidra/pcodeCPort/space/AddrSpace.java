@@ -250,14 +250,14 @@ public class AddrSpace {
 			res = 0;
 			for (i = 0; i < size; ++i) {
 				res <<= 8;
-				res |= ptr[i];
+				res |= (ptr[i] & 0xff);
 			}
 		}
 		else {
 			res = 0;
 			for (i = size - 1; i >= 0; --i) {
 				res <<= 8;
-				res |= ptr[i];
+				res |= (ptr[i] & 0xff);
 			}
 		}
 		return res;

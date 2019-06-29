@@ -84,6 +84,7 @@ public class LanguageTranslatorFactory {
 	 * Returns the single instance of the OldLanguageFactory.
 	 */
 	public static LanguageTranslatorFactory getLanguageTranslatorFactory() {
+		//TODO  spotbugs:  should get be sync since set is?
 		if (languageTranslatorFactory == null) {
 			languageTranslatorFactory = new LanguageTranslatorFactory();
 		}

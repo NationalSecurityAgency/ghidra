@@ -170,6 +170,7 @@ public class OperandSymbol extends SpecificSymbol {
 
 	@Override
 	public void getFixedHandle(FixedHandle hnd, ParserWalker pos) {
+		//TODO  spotbugs:  pass by value, not pass by reference
 		hnd = pos.getFixedHandle(hand);
 	}
 

@@ -266,6 +266,13 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 		return true;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == spaces ? 0 : spaces.hashCode());
+		return result;
+	}
 
 	@Override
 	public long getIndex(Address addr) {

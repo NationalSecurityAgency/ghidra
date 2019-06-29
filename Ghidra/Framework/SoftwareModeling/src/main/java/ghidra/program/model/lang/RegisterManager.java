@@ -57,7 +57,10 @@ public class RegisterManager {
 
 		@Override
 		public int hashCode() {
-			return address.hashCode() << 8 + size;
+			int result = 17;
+			result = 37 * result + (null == address ? 0 : address.hashCode());
+			result = 37 * result + size;
+			return result;
 		}
 
 		@Override

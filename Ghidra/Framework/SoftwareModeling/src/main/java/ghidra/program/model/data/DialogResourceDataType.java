@@ -149,6 +149,7 @@ public class DialogResourceDataType extends DynamicDataType {
 					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//if 0xFFFF - one more item that is resource number of the menu
+		//TODO  spotbugs:  variable type short is always != 0xffff?
 		else if (dialogMenuInfo == 0xFFFF) {
 			tempOffset =
 				addComp(createArrayOfShorts(2), 4, "Dialog Menu",
@@ -174,6 +175,7 @@ public class DialogResourceDataType extends DynamicDataType {
 					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//if 0xFFFF - one more item that is ordinal value of system window class
+		//TODO  spotbugs:  variable type short is always != 0xffff?
 		else if (dialogClassInfo == 0xFFFF) {
 			tempOffset =
 				addComp(createArrayOfShorts(2), 4, "Dialog Class",

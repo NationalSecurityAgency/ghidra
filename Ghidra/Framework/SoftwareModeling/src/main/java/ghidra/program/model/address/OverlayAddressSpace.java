@@ -118,6 +118,7 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 	 */
 	@Override
     public boolean isOverlaySpace() {
+		//TODO  spotbugs:  is originalSpace initialized?
 		return originalSpace != null;
 	}
 	

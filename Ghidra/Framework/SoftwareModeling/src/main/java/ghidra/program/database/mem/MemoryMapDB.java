@@ -1838,6 +1838,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj) {
+			return false;
+		}
 		if (obj instanceof Memory) {
 			return obj == this;
 		}
@@ -1855,7 +1858,16 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		int result = 17;
+		lock.acquire();
+		try {
+			result = 37 * result + lock.hashCode();
+			result = 37 * result + (null == addrSet ? 0 : addrSet.hashCode());
+		}
+		finally {
+			lock.release();
+		}
+		return result;
 	}
 
 	/* (non-Javadoc)

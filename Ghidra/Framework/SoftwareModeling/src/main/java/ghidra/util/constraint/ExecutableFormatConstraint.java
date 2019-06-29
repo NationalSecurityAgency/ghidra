@@ -48,6 +48,13 @@ public class ExecutableFormatConstraint extends ProgramConstraint {
 		}
 		return ((ExecutableFormatConstraint) obj).executableFormat.equals(executableFormat);
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == executableFormat ? 0 : executableFormat.hashCode());
+		return result;
+	}
 
 	@Override
 	public String getDescription() {
