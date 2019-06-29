@@ -172,7 +172,8 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			}
 		}
 		finally {
-			tableDialog.setMessage("Finished");
+			if (tableDialog != null)
+				tableDialog.setMessage("Finished");
 			decomplib.dispose();
 		}
 	}

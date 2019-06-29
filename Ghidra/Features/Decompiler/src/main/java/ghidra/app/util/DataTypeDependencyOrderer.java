@@ -38,6 +38,7 @@ public class DataTypeDependencyOrderer {
 
 		@Override
 		public boolean equals(Object op2) {
+			if (null == op2) return false;
 			return id == ((Entry) op2).id;
 		}
 	}

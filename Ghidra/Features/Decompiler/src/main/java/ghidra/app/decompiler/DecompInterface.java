@@ -141,7 +141,7 @@ public class DecompInterface {
 	 * Return the identifier for the current simplification style
 	 * @return the identifier as a String
 	 */
-	public String getSimplificationStyle() {
+	public synchronized String getSimplificationStyle() {
 		return actionname;
 	}
 

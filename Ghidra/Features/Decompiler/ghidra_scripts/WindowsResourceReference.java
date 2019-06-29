@@ -702,7 +702,7 @@ public class WindowsResourceReference extends GhidraScript {
 			case PcodeOp.CAST:
 				// Cast will expose more Pcode, and could be attached to the same address!
 				if (vPCAddr.equals(def.getInput(0).getPCAddress())) {
-					doneSet.remove(vPCAddr);
+					doneSet.remove(seqnum);
 				}
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 				return;

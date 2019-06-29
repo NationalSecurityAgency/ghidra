@@ -43,6 +43,7 @@ public class GraphAST extends GhidraScript {
 		PluginTool tool = state.getTool();
 		if (tool == null) {
 			println("Script is not running in GUI");
+			return;
 		}
 		GraphService graphSvc = tool.getService(GraphService.class);
 		if (graphSvc == null) {
