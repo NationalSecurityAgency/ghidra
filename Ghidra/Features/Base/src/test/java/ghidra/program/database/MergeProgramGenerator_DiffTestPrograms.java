@@ -142,6 +142,7 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()
@@ -182,6 +183,7 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()
@@ -247,6 +249,7 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()
@@ -273,6 +276,7 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()

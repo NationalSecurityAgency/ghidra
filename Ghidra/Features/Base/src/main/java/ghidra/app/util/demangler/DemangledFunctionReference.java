@@ -312,6 +312,7 @@ public class DemangledFunctionReference extends DemangledDataType implements Par
 	}
 
 	private void addParentName(StringBuilder buffer) {
+		//TODO  spotbugs:  is parentName initialized
 		if (parentName == null) {
 			return;
 		}

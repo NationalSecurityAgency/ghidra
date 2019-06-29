@@ -512,6 +512,7 @@ public class ListingHighlightProvider
 
 		// if firstUseAddr specified, only include addresses at or below firstUseAddr
 		if (firstUseAddr != null) {
+			//TODO  spotbugs:  pass by value not reference
 			subSet = subSet.intersectRange(firstUseAddr, subSet.getMaxAddress());
 		}
 

@@ -550,7 +550,7 @@ public class ArchiveConverterPlugin extends ProgramPlugin {
 				else {
 					Msg.debug(this, "Something went wrong while printing GSL output...");
 				}
-				if (out != "") {
+				if (out.equals("")) {
 					stream.write(out.getBytes());
 				}
 				if (count % 100 == 0) {

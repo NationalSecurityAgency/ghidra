@@ -51,6 +51,7 @@ class S_ALIGN extends DebugSymbol {
 
 	public boolean isEOT() {
 		for (int i = 0 ; i < pad.length ; ++i) {
+			//TODO  spotbugs:  possible byte/signed comparison issue
 			if (pad[i] != 0xff) {
 				return false;
 			}

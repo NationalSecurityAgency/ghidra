@@ -1265,10 +1265,6 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			text = text.substring(0, text.length() - 1);
 			typeBackspaceOnComponent(field);
 
-			if (!validate) {
-				continue;
-			}
-
 			if (ignoreCase) {
 				modelMatchesIgnoringCase(text);
 			}

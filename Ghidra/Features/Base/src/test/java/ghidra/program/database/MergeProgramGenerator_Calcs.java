@@ -70,6 +70,7 @@ public class MergeProgramGenerator_Calcs implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()
@@ -99,6 +100,7 @@ public class MergeProgramGenerator_Calcs implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()

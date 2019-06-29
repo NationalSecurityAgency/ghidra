@@ -1340,6 +1340,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					"): " + cmd.worker.getClass());
 				schedule(cmd, 0);
 				try {
+					//TODO  spotbugs:  wait not in loop
+					//TODO  spotbugs:  wait not guarded by condition
 					cmd.wait(); // wait for AnalysisWorkerCommand to complete
 				}
 				catch (InterruptedException e) {
@@ -1757,6 +1759,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 						Msg.trace(AutoAnalysisManager.this, "\tlatch countDown()");
 						latch.countDown();
 						Msg.trace(AutoAnalysisManager.this, "\tcalling wait()");
+						//TODO  spotbugs:  wait not in loop
+						//TODO  spotbugs:  wait not guarded by condition
 						wait();
 						Msg.trace(AutoAnalysisManager.this, "\tafter wait()");
 					}

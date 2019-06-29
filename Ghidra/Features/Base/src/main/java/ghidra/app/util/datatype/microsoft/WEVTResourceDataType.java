@@ -323,7 +323,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 		int size = memBuffer.getInt(tempOffset);
 
 		struct.add(UnicodeDataType.dataType, size - 4, "keyword data", "");
-		tempOffset += size; //includes int and string
 		return struct;
 	}
 
@@ -385,7 +384,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 		int size = memBuffer.getInt(tempOffset);
 
 		struct.add(UnicodeDataType.dataType, size - 4, "data", "");
-		tempOffset += size; //includes int and string
 		return struct;
 	}
 
@@ -502,7 +500,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 		StructureDataType struct = new StructureDataType("Value Map Entry", 0);
 		struct.add(DWordDataType.dataType, 4, "Identifier", "");
 		struct.add(DWordDataType.dataType, 4, "Message-table identifier", "");
-		tempOffset += 8;
 		return struct;
 	}
 
@@ -514,7 +511,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 
 		int size = memBuffer.getInt(tempOffset);
 		struct.add(UnicodeDataType.dataType, size - 4, "Map String", "");
-		tempOffset += size;
 
 		return struct;
 	}
@@ -758,7 +754,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 
 		int size = memBuffer.getInt(tempOffset);
 		struct.add(UnicodeDataType.dataType, size - 4, "Opcode Data String", "");
-		tempOffset += size;
 		return struct;
 	}
 
@@ -829,7 +824,6 @@ public class WEVTResourceDataType extends DynamicDataType {
 		int size = memBuffer.getInt(tempOffset);
 
 		struct.add(UnicodeDataType.dataType, size - 4, "Task Data", "");
-		tempOffset += size;
 		return struct;
 	}
 

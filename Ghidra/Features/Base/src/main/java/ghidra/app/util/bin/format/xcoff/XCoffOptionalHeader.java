@@ -126,6 +126,7 @@ public final class XCoffOptionalHeader implements StructConverter {
 		buffer.append("o_snbss    = ").append(o_snbss).append(NL);
 		buffer.append("o_algntext = ").append(o_algntext).append(NL);
 		buffer.append("o_algndata = ").append(o_algndata).append(NL);
+		//TODO  spotbugs:  is printing class desired here or the bytes
 		buffer.append("o_modtype  = ").append(o_modtype).append(NL);
 		buffer.append("o_cpuflag  = ").append(o_cpuflag).append(NL);
 		buffer.append("o_cputype  = ").append(o_cputype).append(NL);

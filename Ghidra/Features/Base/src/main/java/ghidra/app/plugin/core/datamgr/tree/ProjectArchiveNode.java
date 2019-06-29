@@ -53,6 +53,8 @@ public class ProjectArchiveNode extends DomainFileArchiveNode {
 	 */
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -67,6 +69,14 @@ public class ProjectArchiveNode extends DomainFileArchiveNode {
 			return myFile.equals(otherFile);
 		}
 		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + archive.hashCode();
+		result = 37 * result + ((ProjectArchive)archive).getDomainFile().hashCode();
+		return result;
 	}
 
 }

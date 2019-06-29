@@ -244,6 +244,8 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -252,5 +254,15 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 		}
 		SymbolCategoryNode node = (SymbolCategoryNode) o;
 		return getName().equals(node.getName());
+	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		String tmpn = getName();
+		result = 37 * result + (null == tmpn ? 0 : tmpn.hashCode());
+		SymbolCategory tmpsc = getSymbolCategory();
+		result = 37 * result + (null == tmpsc ? 0 : tmpsc.hashCode());
+		return result;
 	}
 }

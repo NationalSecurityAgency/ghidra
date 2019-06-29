@@ -97,6 +97,14 @@ public class InteriorSelection {
 		return from.equals(is.from) && to.equals(is.to);
     }
 
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + from.hashCode();
+    	result = 37 * result + to.hashCode();
+    	return result;
+    }
+    
 	/* (non Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

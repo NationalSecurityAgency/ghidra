@@ -335,6 +335,7 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 	}
 
 	private void addParentName(StringBuilder buffer) {
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (parentName == null) {
 			return;
 		}

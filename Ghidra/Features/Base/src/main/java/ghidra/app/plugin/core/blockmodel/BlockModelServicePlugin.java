@@ -480,15 +480,19 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 		@Override
 		public boolean equals(Object obj) {
+			if (null == obj)
+				return false;
 			if (obj instanceof BlockModelInfo) {
-				return modelName == ((BlockModelInfo) obj).modelName;
+				return modelName.equals(((BlockModelInfo) obj).modelName);
 			}
 			return false;
 		}
 
 		@Override
 		public int hashCode() {
-			return modelName.hashCode();
+			int result = 17;
+			result = 37 * result + modelName.hashCode();
+			return result;
 		}
 	}
 

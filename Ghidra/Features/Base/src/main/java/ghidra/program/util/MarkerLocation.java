@@ -109,4 +109,14 @@ public class MarkerLocation implements Serializable {
         }
         return false;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + addr.hashCode();
+		result = 37 * result + x;
+		result = 37 * result + y;
+		result = 37 * result + mgr.hashCode();
+		return result;
+	}
 }

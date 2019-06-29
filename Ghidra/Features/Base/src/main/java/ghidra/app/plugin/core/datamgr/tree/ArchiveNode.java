@@ -145,6 +145,8 @@ public class ArchiveNode extends CategoryNode {
 	 * the hashCode method implementation.
 	 */
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -170,7 +172,9 @@ public class ArchiveNode extends CategoryNode {
 	 * the equals method implementation.
 	 */
 	public int hashCode() {
-		return getArchive().hashCode();
+		int result = 17;
+		result = 37 * result + getArchive().hashCode();
+		return result;
 	}
 
 	@Override

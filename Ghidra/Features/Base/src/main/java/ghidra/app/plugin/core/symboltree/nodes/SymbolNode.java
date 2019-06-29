@@ -268,6 +268,8 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -284,6 +286,14 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 		return nameEquals;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == symbol ? 0 : symbol.hashCode());
+		result = 37 * result + getName().hashCode();
+		return result;
+	}
+	
 	// overridden to handle duplicate symbols
 	@Override
 	public int compareTo(GTreeNode node) {

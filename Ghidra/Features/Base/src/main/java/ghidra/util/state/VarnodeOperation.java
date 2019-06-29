@@ -48,6 +48,8 @@ public class VarnodeOperation extends Varnode {
 
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (o == this) {
 			return true;
 		}
@@ -68,7 +70,13 @@ public class VarnodeOperation extends Varnode {
 
 	@Override
 	public int hashCode() {
-		return pcodeOp.getSeqnum().hashCode();
+		int result = 17;
+		result = 37 * result + pcodeOp.hashCode();
+		result = 37 * result + pcodeOp.getOpcode();
+		result = 37 * result + inputValues.length;
+		for (int i = 0 ; i < inputValues.length; i++)
+			result = 37 * result + inputValues[i].hashCode();
+		return result;
 	}
 
 	public PcodeOp getPCodeOp() {

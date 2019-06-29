@@ -70,6 +70,8 @@ public class FileArchiveNode extends ArchiveNode {
 	 */
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -85,4 +87,11 @@ public class FileArchiveNode extends ArchiveNode {
 		return false;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + fileArchive.hashCode();
+		result = 37 * result + fileArchive.getFile().hashCode();
+		return result;
+	}
 }

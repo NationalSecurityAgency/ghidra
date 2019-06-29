@@ -195,6 +195,7 @@ public class ProgramMergeFilter {
 	 * types or not a predefined primary type.
 	 */
 	public int getFilter(int type) {
+		//TODO  spotbugs:  should get be sync if set is?
 		switch (type) {
 			case PROGRAM_CONTEXT:
 			case BYTES:
@@ -501,6 +502,8 @@ public class ProgramMergeFilter {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (obj instanceof ProgramMergeFilter) {
 			ProgramMergeFilter otherFilter = (ProgramMergeFilter) obj;
 			for (int type = 0; type < NUM_PRIMARY_TYPES; type++) {
@@ -512,5 +515,12 @@ public class ProgramMergeFilter {
 		}
 		return false;
 	}
-
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		for (int i = 0; i < NUM_PRIMARY_TYPES; i++)
+			result = 37 * result + filterFlags[i]; 
+		return result;
+	}
 }

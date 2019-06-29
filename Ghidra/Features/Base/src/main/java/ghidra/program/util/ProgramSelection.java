@@ -135,6 +135,14 @@ public class ProgramSelection implements AddressSetView {
 		return addressSet.hasSameAddresses(ps.addressSet);
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == interiorSelection ? 0 : interiorSelection.hashCode());
+		result = 37 * result + (null == addressSet ? 0 : addressSet.hashCode());
+		return result;
+	}
+	
 	/**
 	 * Test if the address exists within this set.
 	 * <P>

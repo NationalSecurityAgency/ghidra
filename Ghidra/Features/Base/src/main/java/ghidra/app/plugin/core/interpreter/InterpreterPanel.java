@@ -666,6 +666,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			while (bytes == null) {
 				try {
 					synchronized (this) {
+						//TODO  spotbugs:  wait not guarded by condition
 						this.wait();
 					}
 				}
@@ -698,6 +699,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			while (bytes == null) {
 				try {
 					synchronized (this) {
+						//TODO  spotbugs:  wait not guarded by condition
 						this.wait();
 					}
 				}

@@ -87,6 +87,7 @@ public class CreateStringScript extends GhidraScript {
 			if (b == TERMINATOR) {
 				return false;
 			}
+			//TODO  spotbugs:  mabye byte/signed comparison issue
 			return (b >= 0x20 && b <= 0x7f) || b == '\n' || b == '\r' || b == '\t';
 		}
 		catch (MemoryAccessException e) {

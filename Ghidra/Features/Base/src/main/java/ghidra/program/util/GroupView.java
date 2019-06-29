@@ -101,6 +101,15 @@ public class GroupView implements Serializable {
 		return true;
     }
 
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + paths.length;
+    	for (int i = 0; i < paths.length; i++)
+    		result = 37 * result + paths[i].hashCode();
+    	return result;
+    }
+    
     /**
      * Return string representation for this object.
      */

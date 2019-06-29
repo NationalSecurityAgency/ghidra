@@ -109,11 +109,15 @@ public class FoundString implements Comparable<FoundString> {
 
 	@Override
 	public int hashCode() {
-		return address.hashCode();
+		int result = 17;
+		result = 37 * result + (null == address ? 0 : address.hashCode());
+		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (obj.getClass() != getClass()) {
 			return false;
 		}

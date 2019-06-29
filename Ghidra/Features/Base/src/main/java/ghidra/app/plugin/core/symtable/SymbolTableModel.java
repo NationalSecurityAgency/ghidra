@@ -435,6 +435,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 			Symbol symbol = getSymbolForRowObject(rowObject);
 			if (symbol == null) {
+				//TODO  spotbugs:  is a NullPointerException is wanted here or false
 				return null;
 			}
 			return symbol.isPinned();

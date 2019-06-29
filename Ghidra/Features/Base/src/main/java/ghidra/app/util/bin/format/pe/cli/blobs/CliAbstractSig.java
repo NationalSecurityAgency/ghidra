@@ -514,6 +514,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			while (CliCustomMod.isCustomMod(reader)) {
 				customMods.add(new CliCustomMod(reader));
 			}
+			//TODO  spotbugs:  pass by value not reference
 			typeCode = CliElementType.fromInt(reader.readNextByte());
 		}
 
@@ -564,6 +565,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			for (CliCustomMod mod : customMods) {
 				modsRep += mod.toString() + ", ";
 			}
+			//TODO  spotbugs:  return value ignored
 			if (customMods.size() > 0)
 				modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
 			return String.format("SzArray %s %s", modsRep, typeRep);

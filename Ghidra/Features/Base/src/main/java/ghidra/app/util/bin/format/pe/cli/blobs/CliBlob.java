@@ -318,7 +318,7 @@ public class CliBlob implements StructConverter {
 	
 	public static int decodeCompressedUnsigned(int codedSize) {
 		codedSize = codedSize & (~(0xe0000000));
-		return (codedSize &= 0xffffffff); // enforce signedness
+		return (codedSize & 0xffffffff); // enforce signedness
 	}
 
 	private static int decodeCompressedInt(BinaryReader reader, boolean signed) throws IOException {

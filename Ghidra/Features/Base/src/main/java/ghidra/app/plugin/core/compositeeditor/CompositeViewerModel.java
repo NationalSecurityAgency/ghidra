@@ -1144,7 +1144,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			DataType subDt = components[i].getDataType();
 
 			String subDtPath = subDt.getPathName();
-			if (subDtPath.equals(dtPath)) {
+			if (subDtPath.equals(dtPath.getPath())) {
 				return true;
 			}
 			else if (subDt instanceof Composite) {

@@ -207,6 +207,8 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -215,6 +217,13 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 		}
 		OrganizationNode node = (OrganizationNode) o;
 		return baseName.equals(node.baseName);
+	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (null == baseName ? 0 : baseName.hashCode());
+		return result;
 	}
 
 //==================================================================================================

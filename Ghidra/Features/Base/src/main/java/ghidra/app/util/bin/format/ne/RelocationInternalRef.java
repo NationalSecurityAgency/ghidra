@@ -33,6 +33,7 @@ class RelocationInternalRef {
     }
 
     public boolean isMoveable() {
+    	//possible bytes/signed comparison issue
         return segment == 0xff;
     }
     public byte getSegment() {

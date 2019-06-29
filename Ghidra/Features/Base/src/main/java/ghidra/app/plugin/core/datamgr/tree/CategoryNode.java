@@ -109,6 +109,8 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	 */
 	@Override
 	public boolean equals(Object o) {
+		if (null == o)
+			return false;
 		if (this == o) {
 			return true;
 		}
@@ -122,6 +124,14 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 		return name.equals(otherNode.name);
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + category.hashCode();
+		result = 37 * result + name.hashCode();
+		return result;
+	}
+	
 	@Override
 	public Icon getIcon(boolean expanded) {
 		// always show leaf nodes as closed in addition to collapsed non-leaf nodes

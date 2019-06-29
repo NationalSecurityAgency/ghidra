@@ -161,7 +161,7 @@ public class SearchBaseExtended extends GhidraScript {
 						}
 
 						//Determines if current structure is large enough to hold new operand, if it isn't increases structure size
-						if (ops.size() < x && ops.size() > -1) {
+						if (ops.size() < x && ops.size() >= 0) {
 							ops.add(new LinkedHashMap<Case, OperandCase>());
 						}
 

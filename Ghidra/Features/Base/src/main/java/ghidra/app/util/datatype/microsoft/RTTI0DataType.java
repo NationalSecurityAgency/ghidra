@@ -129,7 +129,7 @@ public class RTTI0DataType extends RTTIDataType {
 		}
 
 		int offset = length;
-		int bytesNeeded = (mod != 0) ? (pointerSize - mod) : 0;
+		int bytesNeeded = pointerSize - mod;
 		DataType dt = new ArrayDataType(new ByteDataType(), bytesNeeded, 1);
 		DataTypeComponent[] alignedComps = new DataTypeComponent[4];
 		System.arraycopy(comps, 0, alignedComps, 0, 3);

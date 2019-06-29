@@ -69,6 +69,7 @@ public class MergeProgramGenerator_Mips implements MergeProgramGenerator {
 
 		UniversalID ID = UniversalIdGenerator.nextID();
 
+		//TODO  spotbugs:  is lastGeneratedUniversalID initialized
 		if (lastGeneratedUniversalID != null) {
 			if (!lastGeneratedUniversalID.equals(ID)) {
 				// if this happens, update initializeStaticUniversalIDUsage()

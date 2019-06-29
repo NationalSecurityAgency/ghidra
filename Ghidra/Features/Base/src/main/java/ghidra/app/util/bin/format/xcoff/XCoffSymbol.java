@@ -70,12 +70,14 @@ public class XCoffSymbol {
 	}
 
 	public boolean isFunction() {
+		//TODO  spotbugs:  n_name   byte[] vs String comparison
 		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) && 
 				n_scnum == _optionalHeader.getSectionNumberForText() &&
 				!n_name.equals(XCoffSectionHeaderNames._TEXT));
 	}
 
 	public boolean isVariable() {
+		//TODO  spotbugs:  n_name   byte[] vs String comparison
 		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
 				(n_scnum == _optionalHeader.getSectionNumberForBss() || n_scnum == _optionalHeader.getSectionNumberForData()) &&
 				x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC0 && x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC && x_smclas != XCoffSymbolStorageClassCSECT.XMC_DS &&

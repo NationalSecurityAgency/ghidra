@@ -140,6 +140,7 @@ public class ProgramDiffFilter {
      * @return true if filtering for the specified type of differences.
      */
     public boolean getFilter(int type) {
+    	//TODO  spotbugs:  should get be sync if set is?
         return ((type & filterFlags) != 0);
     }
 
@@ -257,10 +258,19 @@ public class ProgramDiffFilter {
      */
     @Override
     public boolean equals(Object obj) {
+    	if (null == obj)
+    		return false;
         if (obj instanceof ProgramDiffFilter) {
             return ((ProgramDiffFilter)obj).filterFlags == filterFlags;
         }
         return false;
+    }
+    
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + filterFlags;
+    	return result;
     }
     
     /**

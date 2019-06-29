@@ -330,6 +330,7 @@ public class InformationBlock {
         if ((ne_flagsothers & OTHER_FLAGS_PROTECTED_MODE) != 0) {
             buffer.append(TAB+"Protected Mode"+"\n");
         }
+        //TODO  spotbugs:  ne_flagsothers & 0
         if ((ne_flagsothers & OTHER_FLAGS_SUPPORTS_LONG_NAMES) != 0) {
             buffer.append(TAB+"Long Name Support"+"\n");
         }
@@ -567,6 +568,7 @@ public class InformationBlock {
         if ((ne_flags_prog & FLAGS_PROG_MULTIPLE_DATA) != 0) {
             buffer.append(TAB+"Multi Data"+"\n");
         }
+        //TODO  spotbugs:  ne_flags_prog & 0
         if ((ne_flags_prog & FLAGS_PROG_NO_AUTO_DATA) != 0) {
             buffer.append(TAB+"No Auto Data"+"\n");
         }

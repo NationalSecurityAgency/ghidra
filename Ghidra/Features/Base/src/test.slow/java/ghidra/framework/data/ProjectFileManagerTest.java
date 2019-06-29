@@ -741,6 +741,10 @@ class MyEvent {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
+		if (!(obj instanceof MyEvent))
+			return false;
 		MyEvent other = (MyEvent) obj;
 		return eq(op, other.op) && eq(folder, other.folder) && eq(name, other.name) &&
 			eq(parent, other.parent) && eq(oldParent, other.oldParent) && eq(file, other.file);
@@ -748,7 +752,14 @@ class MyEvent {
 
 	@Override
 	public int hashCode() {
-		return op.hashCode();
+		int result = 17;
+		result = 37 * result + op.hashCode();
+		result = 37 * result + folder.hashCode();
+		result = 37 * result + name.hashCode();
+		result = 37 * result + parent.hashCode();
+		result = 37 * result + oldParent.hashCode();
+		result = 37 * result + file.hashCode();
+		return result;
 	}
 
 	private boolean eq(Object s1, Object s2) {

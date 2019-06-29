@@ -444,36 +444,32 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 
 		monitor.setMessage("ARM AIF : " + entry);
 
-		if (isvalid) {
-			try {
-				curProgram.getProgramContext().setValue(tmodeReg, entry, entry, curValue);
-			}
-			catch (ContextChangeException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				return false;
-			}
-			DisassembleCommand cmd = new DisassembleCommand(entry, null, true);
-
-			int beforeErrorCount = curProgram.getBookmarkManager().getBookmarkCount("Error");
-			cmd.applyTo(curProgram);
-			int afterErrorCount = curProgram.getBookmarkManager().getBookmarkCount("Error");
-
-			// oops made a mistake somewhere, clear it
-			if (beforeErrorCount < afterErrorCount) {
-				ClearFlowAndRepairCmd clearCmd =
-					new ClearFlowAndRepairCmd(entry, true, false, false);
-				clearCmd.applyTo(curProgram);
-				return false;
-			}
-			todoSet = todoSet.subtract(cmd.getDisassembledAddressSet());
-			BookmarkEditCmd bcmd =
-				new BookmarkEditCmd(entry, BookmarkType.ANALYSIS,
-					"ARM Aggressive Intruction Finder", "Found code");
-			bcmd.applyTo(curProgram);
-			return true;
+		try {
+			curProgram.getProgramContext().setValue(tmodeReg, entry, entry, curValue);
 		}
+		catch (ContextChangeException e) {
+			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			return false;
+		}
+		DisassembleCommand cmd = new DisassembleCommand(entry, null, true);
 
-		return false;
+		int beforeErrorCount = curProgram.getBookmarkManager().getBookmarkCount("Error");
+		cmd.applyTo(curProgram);
+		int afterErrorCount = curProgram.getBookmarkManager().getBookmarkCount("Error");
+
+		// oops made a mistake somewhere, clear it
+		if (beforeErrorCount < afterErrorCount) {
+			ClearFlowAndRepairCmd clearCmd =
+				new ClearFlowAndRepairCmd(entry, true, false, false);
+			clearCmd.applyTo(curProgram);
+			return false;
+		}
+		todoSet = todoSet.subtract(cmd.getDisassembledAddressSet());
+		BookmarkEditCmd bcmd =
+			new BookmarkEditCmd(entry, BookmarkType.ANALYSIS,
+				"ARM Aggressive Intruction Finder", "Found code");
+		bcmd.applyTo(curProgram);
+		return true;
 	}
 
 	/**

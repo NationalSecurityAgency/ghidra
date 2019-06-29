@@ -485,6 +485,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		synchronized void waitUntilFinished() {
 			if (!isFinished) {
 				try {
+					//TODO  spotbugs:  wait not in loop
 					wait();
 				}
 				catch (InterruptedException e) {
