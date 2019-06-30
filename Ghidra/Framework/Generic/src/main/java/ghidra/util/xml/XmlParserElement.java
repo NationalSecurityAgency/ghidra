@@ -49,6 +49,8 @@ public class XmlParserElement {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		XmlParserElement that = (XmlParserElement)obj;
 		if (this.isStart != that.isStart) {
 			return false;
@@ -79,6 +81,22 @@ public class XmlParserElement {
 		return true;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (isStart ? 0 : 1);
+		result = 37 * result + name.hashCode();
+		result = 37 * result + (null == text ? 0 : text.hashCode());
+		Iterator<String> iter = attrsMap.keySet().iterator();
+		while (iter.hasNext()) {
+			String lname = iter.next();
+			Object thisValue = attrsMap.get(lname);
+			result = 37 * result + lname.hashCode();
+			result = 37 * result + (null == thisValue ? 0 : thisValue.hashCode());
+		}
+		return result;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer(name);

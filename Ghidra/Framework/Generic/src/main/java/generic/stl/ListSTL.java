@@ -197,6 +197,19 @@ public class ListSTL<T> {
 		}
 		return true;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + size;
+		IteratorSTL<?> iter = begin();
+		while(!iter.isEnd()) {
+			Object val = iter.get();
+			result = 37 * result + (null == val ? 0 : val.hashCode());
+			iter.increment();
+		}
+		return result;
+	}
 
 	public void sort(Comparator<T> comparator) {
 		ListNodeSTL<T> TERMINAL = new ListNodeSTL<>();

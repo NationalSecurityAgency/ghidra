@@ -114,6 +114,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 
 	@Override
 	public long getMaximum() {
+		//TODO  spotbugs:  should get be sync if set is
 		return delegate.getMaximum();
 	}
 

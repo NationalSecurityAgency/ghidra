@@ -167,6 +167,16 @@ public class VectorSTL<T> implements Iterable<T> {
 		return true;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		int size = data.size();
+		result = 37 * result + size;
+		for (int i = 0; i < size; i++)
+			result = 37 * result + data.get(i).hashCode();
+		return result;
+	}
+
 	public T erase(int index) {
 		return data.remove(index);
 	}

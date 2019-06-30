@@ -116,6 +116,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * @return the delay for all callbacks after the first callback.
 	 */
 	public int getDelay() {
+		//TODO  spotbugs:  should get be sync if set is
 		return delay;
 	}
 
@@ -124,6 +125,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * @return the delay for the first callback.
 	 */
 	public int getInitialDelay() {
+		//TODO  spotbugs:  should get be sync if set is
 		return initialDelay;
 	}
 

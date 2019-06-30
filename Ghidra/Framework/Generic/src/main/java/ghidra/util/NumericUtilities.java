@@ -560,6 +560,8 @@ public final class NumericUtilities {
 				renderer = UNSIGNED_INTEGER_RENDERER;
 				break;
 			case DEFAULT:
+				// fall-through
+			default:
 				renderer = DEFAULT_INTEGER_RENDERER;
 				break;
 		}

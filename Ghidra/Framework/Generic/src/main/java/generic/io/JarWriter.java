@@ -139,6 +139,8 @@ public class JarWriter {
 
 		if (baseFile.isDirectory()) {
 			subFiles = baseFile.listFiles();
+			if (null == subFiles)
+				return false;
 			for (int i = 0; i < subFiles.length; i++) {
 				if (monitor.isCancelled()) {
 					break;

@@ -234,6 +234,8 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public boolean equals(Object obj) {
+			if (null == obj)
+				return false;
 			try {
 				@SuppressWarnings("unchecked")
 				Entry<K, V> that = (Entry<K, V>) obj;
@@ -242,6 +244,14 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 			catch (ClassCastException e) {
 				return false;
 			}
+		}
+		
+		@Override
+		public int hashCode() {
+			int result = 17;
+			result = 37 * result + key.hashCode();
+			result = 37 * result + val.hashCode();
+			return result;
 		}
 
 		/**

@@ -145,6 +145,7 @@ class ProgressTracker {
 		lock.lockInterruptibly();
 		try {
 			if (!isDone()) {
+				//TODO  spotbugs:  await not in loop
 				itemCompleted.await();
 			}
 		}

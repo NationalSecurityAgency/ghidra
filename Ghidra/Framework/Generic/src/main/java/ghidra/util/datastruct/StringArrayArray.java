@@ -41,6 +41,7 @@ public class StringArrayArray implements Array, Serializable {
 	public void put(int index, String[] value) {
 		if (value == null) {
 			remove(index);
+			//TODO  spotbugs:  nullptr deref in stringArrayToBytes
 		}
 		byte[] bytes = stringArrayToBytes(value);
 		byteStore.put(index, bytes);	

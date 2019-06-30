@@ -51,6 +51,8 @@ public class Range implements Comparable<Range> {
 
 	@Override
     public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (obj.getClass() != Range.class) {
 			return false;
 		}
@@ -60,7 +62,10 @@ public class Range implements Comparable<Range> {
 
 	@Override
 	public int hashCode() {
-		return toString().hashCode();
+		int result = 17;
+		result = 37 * result + min;
+		result = 37 * result + max;
+		return result;
 	}
 
 	@Override

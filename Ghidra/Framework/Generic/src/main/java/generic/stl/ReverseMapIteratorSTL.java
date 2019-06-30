@@ -87,4 +87,12 @@ public class ReverseMapIteratorSTL<K, V> extends MapIteratorSTL<K, V> {
 		ReverseMapIteratorSTL<K, V> other = (ReverseMapIteratorSTL<K, V>) obj;
 		return tree == other.tree && node == other.node;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + tree.hashCode();
+		result = 37 * result + node.hashCode();
+		return result;
+	}
 }

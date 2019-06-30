@@ -110,6 +110,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public String getMessage() {
+		//TODO  spotbugs:  has lastMessage been initialized
 		return lastMessage;
 	}
 

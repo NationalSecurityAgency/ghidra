@@ -126,6 +126,8 @@ public class JarReader {
     	long modTime = 0;
     	File[] files = dir.listFiles();
     	for (File f : files) {
+    		if (null == f)
+    			continue;
 			if (f.isDirectory()) {
 				fixDirModifiedTimes(f);
 			}

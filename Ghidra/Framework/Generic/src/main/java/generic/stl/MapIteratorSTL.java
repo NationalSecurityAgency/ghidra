@@ -122,4 +122,13 @@ public class MapIteratorSTL<K, V> implements IteratorSTL<Pair<K, V>> {
 		MapIteratorSTL<K, V> other = (MapIteratorSTL<K, V>) obj;
 		return tree == other.tree && node == other.node && erased == other.erased;
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + tree.hashCode();
+		result = 37 * result + node.hashCode();
+		result = 37 * result + (erased ? 0 : 1);
+		return result;
+	}
 }
