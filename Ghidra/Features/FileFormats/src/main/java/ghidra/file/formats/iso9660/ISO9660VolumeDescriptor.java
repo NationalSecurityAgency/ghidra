@@ -128,6 +128,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 			struc = new StructureDataType("ISO9600SupplementaryVolumeDescriptor", 0);
 		}
 		else {
+			//TODO  spotbugs:  null ptr deref
 			struc = null;
 		}
 

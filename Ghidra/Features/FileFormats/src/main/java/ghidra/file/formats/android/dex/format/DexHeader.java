@@ -353,6 +353,7 @@ public class DexHeader implements StructConverter {
 
 	public DataType getDataType(Program program, short typeShort) {
 		int typeId = typeShort & 0xffff;
+		//TODO  spotbugs:  bad comparison of nonnegative
 		if (typeId < 0 || typeId >= typeIdsSize) {
 			return null;
 		}
