@@ -386,6 +386,8 @@ public class FieldSelection implements Iterable<FieldRange> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		if (null == obj)
+			return false;
 		if (!(obj instanceof FieldSelection)) {
 			return false;
 		}
@@ -402,6 +404,16 @@ public class FieldSelection implements Iterable<FieldRange> {
 			}
 		}
 		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		int n = ranges.size();
+		result = 37 * result + n;
+		for (int i = 0; i < n; i++)
+			result = 37 * result + ranges.get(i).hashCode();
+		return result;
 	}
 
 	public void save(SaveState saveState) {

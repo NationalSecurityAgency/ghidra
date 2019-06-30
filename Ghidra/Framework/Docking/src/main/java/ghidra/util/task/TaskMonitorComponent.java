@@ -134,6 +134,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	@Override
 	public long getProgress() {
+		//TODO  spotbugs:  should get be sync if set is?
 		return progress;
 	}
 

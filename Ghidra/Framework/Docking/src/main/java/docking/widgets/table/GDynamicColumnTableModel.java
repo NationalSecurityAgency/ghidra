@@ -486,6 +486,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 
 	@Override
 	public Settings getColumnSettings(int index) {
+		//TODO  spotbugs:  should get be sync if set is?
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(index);
 		return columnSettings.get(column);
 	}

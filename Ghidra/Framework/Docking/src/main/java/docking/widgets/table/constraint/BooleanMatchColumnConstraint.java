@@ -97,5 +97,12 @@ public class BooleanMatchColumnConstraint implements ColumnConstraint<Boolean> {
 		BooleanMatchColumnConstraint other = (BooleanMatchColumnConstraint) obj;
 		return Objects.equals(matchValue, other.matchValue);
 	}
+	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + (matchValue ? 0 : 1);
+		return result;
+	}
 
 }

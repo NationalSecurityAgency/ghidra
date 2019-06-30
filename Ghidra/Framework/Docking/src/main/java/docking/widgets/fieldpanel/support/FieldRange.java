@@ -107,7 +107,10 @@ public class FieldRange implements Comparable<FieldRange> {
 
 	@Override
 	public int hashCode() {
-		return start.hashCode() << 16 + end.hashCode();
+		int result = 17;
+		result = 37 * result + start.hashCode();
+		result = 37 * result + end.hashCode();
+		return result;
 	}
 
 	public int compareTo(FieldRange o) {

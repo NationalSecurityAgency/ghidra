@@ -137,6 +137,14 @@ public class TextFieldLinker {
 			}
 			return true;
 		}
+		
+		@Override
+		public int hashCode() {
+			int result = 17;
+			result = 37 * result + text.hashCode();
+			result = 37 * result + caret;
+			return result;
+		}
 
 		protected FieldState copy() {
 			FieldState cp = new FieldState();
@@ -185,7 +193,14 @@ public class TextFieldLinker {
 			}
 			return true;
 		}
-
+		
+		@Override
+		public int hashCode() {
+			int result = 17;
+			result = 37 * result + whichFocus;
+			result = 37 * result + fieldStates.hashCode();
+			return result;
+		}
 		/**
 		 * Copy the state
 		 * @return the copy

@@ -79,12 +79,25 @@ public class ViewerPosition implements Serializable {
 	 */
     @Override
 	public boolean equals(Object obj) {
+    	if (null == obj)
+    		return false;
         if (obj instanceof ViewerPosition) {
             ViewerPosition vp = (ViewerPosition)obj;
+            //TODO  curious if xOffset should be include here or doesnt matter
             return vp.index.equals(index) && vp.yOffset == yOffset;
         }
         return false;
     }
+    
+    @Override
+    public int hashCode() {
+    	int result = 17;
+    	result = 37 * result + yOffset;
+    	result = 37 * result + xOffset;
+    	result = 37 * result + index.hashCode();
+    	return result;
+    }
+
     /**
      * @see java.lang.Object#toString()
      */ 
