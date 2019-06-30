@@ -17,8 +17,7 @@ apply plugin: 'c'
 
 // Unclear if we can rely on the VisualCpp plugin to identify the correct Visual Studio paths
 
-project.ext.VISUAL_STUDIO_BASE_2017_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
-project.ext.VISUAL_STUDIO_BASE_2019_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019"
+project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio"
 project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 
 project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
@@ -27,21 +26,47 @@ project.ext.MSVC_SDK_VERSION = "UNKNOWN"
 project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
 project.ext.VISUAL_STUDIO_FOUND = false
 
+/*******************************************************************************************
+ * Well known SKU of Visual Studio.
+ ******************************************************************************************/
+def editions = ["Enterprise", "Professional", "Community", "Preview"]
+
+/*******************************************************************************************
+ * Supported version of VS by Ghidra
+ ******************************************************************************************/
+def suportedVsVersionCodes = ["2017", "2019"]
+
+/*******************************************************************************************
+ * Attempt to find location of specific version for VS. Lookup for specific version
+ * This function set VISUAL_STUDIO_FOUND property to true once found the VS location
+ * After that, subsequent calls do nothing.
+ ******************************************************************************************/
+def findVsLocation(vsVersionCode, knownVersionEditions) {
+	if (project.ext.VISUAL_STUDIO_FOUND) {
+		return
+	}
+
+	String base_path = project.ext.VISUAL_STUDIO_BASE_DIR + "\\$vsVersionCode\\"
+	knownVersionEditions.each { edition ->
+		if (project.ext.VISUAL_STUDIO_FOUND) {
+			return
+		}
+
+		String path = base_path + edition
+		if (file(path).exists()) {
+			project.ext.VISUAL_STUDIO_FOUND = true
+			project.ext.VISUAL_STUDIO_INSTALL_DIR = path
+			return
+		}
+	}
+}
+
 if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+	suportedVsVersionCodes.each { vsVersionCode ->
+		findVsLocation(vsVersionCode, editions)
+	}
 
-	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2017_DIR + "\\Professional"
-	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2017_DIR + "\\Community"
-	}
-	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2019_DIR + "\\Professional"
-	}
-	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_2019_DIR + "\\Community"
-	}
-	if (file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_FOUND = true
-
+	if (project.ext.VISUAL_STUDIO_FOUND) {
 		println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
 
 		project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
@@ -95,9 +120,8 @@ task CheckToolChain {
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 			// ensure that required MS Visual Studio is installed where expected
-			String msg = "Microsoft Visual Studio 2017 install not found: ${VISUAL_STUDIO_BASE_2017_DIR}\n" +
-				"Microsoft Visual Studio 2019 install not found: ${VISUAL_STUDIO_BASE_2019_DIR}\n" +
-				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
+			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" +
+					"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
 			if (!VISUAL_STUDIO_FOUND) {
 				throw new GradleException(msg);
 			}	
