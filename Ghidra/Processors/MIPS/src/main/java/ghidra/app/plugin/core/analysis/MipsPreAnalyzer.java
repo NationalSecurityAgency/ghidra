@@ -451,7 +451,7 @@ public class MipsPreAnalyzer extends AbstractAnalyzer {
 		}
 
 		// Check base and destination registers
-		if (base1.equals(base2) && (destReg1.equals(destReg2) | destReg2.equals(alternateReg))) {
+		if (base1.equals(base2) && (destReg1.equals(destReg2) || destReg2.equals(alternateReg))) {
 			// Match found
 			return curr_inst;
 		}
