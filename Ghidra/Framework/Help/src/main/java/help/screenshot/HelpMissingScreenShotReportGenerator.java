@@ -565,7 +565,7 @@ public class HelpMissingScreenShotReportGenerator {
 
 		String absolutePath = testFile.toAbsolutePath().toString();
 		String packageAndClassName = absolutePath.substring(javaIndex + JAVA_DIR.length() + 1); // +1 for slash
-		packageAndClassName = packageAndClassName.replaceAll("\\", ".");
+		packageAndClassName = packageAndClassName.replaceAll("\\\\", ".");
 		packageAndClassName = packageAndClassName.replaceAll("/", ".");
 		String className = packageAndClassName.replace(".java", "");
 
