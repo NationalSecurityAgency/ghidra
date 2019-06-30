@@ -8,8 +8,11 @@ apply from: "gradle/support/eclipseLauncher.gradle"
 /***************************************************************************************
  * Make sure the correct version of gradle is being used
  ***************************************************************************************/
-if (gradle.gradleVersion != "5.0") {
-	throw new GradleException("Requires Gradle 5.0, but was run with $gradle.gradleVersion")
+import org.gradle.util.GradleVersion;
+final GradleVersion minimum_version = GradleVersion.version('5.0')
+
+if (GradleVersion.current() < minimum_version) {
+	throw new GradleException("Requires at least $minimum_version, but was ran with $gradle.gradleVersion")
 }
 
 /***************************************************************************************
