@@ -40,6 +40,7 @@ def findVsYear(year) {
 }
 
 if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+	findVsYear(2019)
 	findVsYear(2017)
 	if (project.ext.VISUAL_STUDIO_FOUND) {
 		println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
