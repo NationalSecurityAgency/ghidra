@@ -43,7 +43,7 @@ if ("win64".equals(getCurrentPlatformName())) {
 		def solutionPathWindows = "${projectPathWindows}\\src\\pdb\\pdb.sln"
 		def outputPathWindows = "${projectPathWindows}\\build\\os\\win64\\pdb.exe"
 		def platformToolset = 'v' + MSVC_TOOLS_VERSION.substring(0, 4).replace('.', '');
-
+		
 		doFirst {
 			file("build/os/win64").mkdirs()
 			new File(solutionBatchFilePath).withWriter { out ->

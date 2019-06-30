@@ -120,8 +120,8 @@ task CheckToolChain {
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 			// ensure that required MS Visual Studio is installed where expected
-			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" +
-					"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
+			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
+				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
 			if (!VISUAL_STUDIO_FOUND) {
 				throw new GradleException(msg);
 			}	
