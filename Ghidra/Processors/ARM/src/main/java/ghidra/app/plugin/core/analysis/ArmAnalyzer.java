@@ -497,7 +497,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			if (targetInstr != null && targetInstr.getMnemonicString().startsWith("tb")) {
 				targetEval = new SymbolicPropogator(program);
 			}
-
+			//TODO  spotbugs:  possible targetInstr NullPointerException
 			Address zeroAddr = targetInstr.getMinAddress().getNewAddress(0);
 			for (long assume = 0; assume < switchEvaluator.getTableSizeMax(); assume++) {
 				switchEvaluator.initForCase(new Long(assume));
