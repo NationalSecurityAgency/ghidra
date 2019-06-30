@@ -401,7 +401,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			bytesPerLine = map.getBytesPerLine();
 			createFields();
 		}
-
+		//TODO  spotbugs:  possible null ptr deref
 		ByteBlockSet byteBlockSet = indexMap.getByteBlockSet();
 		if (byteBlockSet instanceof ProgramByteBlockSet) {
 			blockSet = (ProgramByteBlockSet) indexMap.getByteBlockSet();

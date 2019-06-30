@@ -291,6 +291,13 @@ public class MemoryByteBlock implements ByteBlock {
 		return block == mb.block;
 	}
 
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + block.hashCode();
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////////
 
 	/**

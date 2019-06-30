@@ -64,7 +64,7 @@ class ByteViewerLayoutModel implements LayoutModel {
 			factorys[i].setStartX(x);
 			x += factorys[i].getWidth();
 			// add in space between groups
-			if (((i + 1) % defaultGroupSizeSpace) == 0) {
+			if (((i + 1) & defaultGroupSizeSpace) == 0) {
 				x += margin * dataModel.getUnitDelimiterSize();
 			}
 		}
