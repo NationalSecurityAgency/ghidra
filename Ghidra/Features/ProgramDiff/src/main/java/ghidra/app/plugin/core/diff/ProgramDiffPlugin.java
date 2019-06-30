@@ -1275,6 +1275,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		else {
 			tool.clearStatusInfo();
 			if (p1LimitSet == null) {
+				//TODO  spotbugs  pass by value not reference
 				p1LimitSet = createLimitingSet();
 			}
 			displayExecuteDiff();
@@ -1298,6 +1299,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				executeDiffDialog = null;
 			}
 			if (p1LimitSet == null) {
+				//TODO  spotbugs  pass by value not reference
 				p1LimitSet = createLimitingSet();
 			}
 			displayExecuteDiff();
