@@ -702,6 +702,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		HelpLocation applyOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Version_Tracking_Apply_Options");
+		//TODO  spotbugs:  dead store
 		HelpLocation acceptMatchOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Match_Accept_Options");
 		HelpLocation applyMatchOptionsHelpLocation =

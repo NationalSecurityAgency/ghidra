@@ -731,6 +731,7 @@ public class FunctionSignatureStringable extends Stringable {
 		for (int i = 0; i < parameterCount; i++) {
 			ParameterInfo paramInfo = parameterInfos.get(i);
 			SourceType source = SourceType.DEFAULT;
+			//TODO  spotbugs:  compares a field with itself.  typo/logic error?
 			String name = source != SourceType.DEFAULT ? null : paramInfo.name; // defer setting non-default name
 			String comment = paramInfo.comment;
 			if (!forceApply && i < toCount) {
