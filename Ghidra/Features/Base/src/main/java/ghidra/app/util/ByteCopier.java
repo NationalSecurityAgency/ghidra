@@ -46,12 +46,23 @@ public abstract class ByteCopier {
 	public static DataFlavor BYTE_STRING_FLAVOR = createByteStringLocalDataTypeFlavor();
 	public static DataFlavor BYTE_STRING_NO_SPACES_FLAVOR =
 		createByteStringNoSpacesLocalDataTypeFlavor();
+	public static DataFlavor PYTHON_BYTE_STRING_FLAVOR =
+		createPythonByteStringLocalDataTypeFlavor();
+	public static DataFlavor PYTHON_LIST_FLAVOR = createPythonListLocalDataTypeFlavor();
+	public static DataFlavor CPP_BYTE_ARRAY_FLAVOR =
+		createCppByteArrayLocalDataTypeFlavor();
 
 	protected static final List<ClipboardType> EMPTY_LIST = Collections.emptyList();
 	public static final ClipboardType BYTE_STRING_TYPE =
 		new ClipboardType(BYTE_STRING_FLAVOR, "Byte String");
 	public static final ClipboardType BYTE_STRING_NO_SPACE_TYPE =
 		new ClipboardType(BYTE_STRING_NO_SPACES_FLAVOR, "Byte String (No Spaces)");
+	public static final ClipboardType PYTHON_BYTE_STRING_TYPE =
+		new ClipboardType(PYTHON_BYTE_STRING_FLAVOR, "Python Byte String");
+	public static final ClipboardType PYTHON_LIST_TYPE =
+		new ClipboardType(PYTHON_LIST_FLAVOR, "Python List");
+	public static final ClipboardType CPP_BYTE_ARRAY_TYPE =
+		new ClipboardType(CPP_BYTE_ARRAY_FLAVOR, "C Array");
 
 	private static DataFlavor createByteStringLocalDataTypeFlavor() {
 
@@ -78,6 +89,51 @@ public abstract class ByteCopier {
 		catch (Exception e) {
 			Msg.showError(ByteCopier.class, null, "Could Not Create Data Flavor",
 				"Unexpected exception creating data flavor for byte string with no spaces", e);
+		}
+
+		return null;
+	}
+
+	private static DataFlavor createPythonByteStringLocalDataTypeFlavor() {
+
+		try {
+			return new GenericDataFlavor(
+				DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
+				"Local flavor--Python byte string");
+		}
+		catch (Exception e) {
+			Msg.showError(ByteCopier.class, null, "Could Not Create Data Flavor",
+				"Unexpected exception creating data flavor for Python byte string", e);
+		}
+
+		return null;
+	}
+
+	private static DataFlavor createPythonListLocalDataTypeFlavor() {
+
+		try {
+			return new GenericDataFlavor(
+				DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
+				"Local flavor--Python list");
+		}
+		catch (Exception e) {
+			Msg.showError(ByteCopier.class, null, "Could Not Create Data Flavor",
+				"Unexpected exception creating data flavor for Python list", e);
+		}
+
+		return null;
+	}
+
+	private static DataFlavor createCppByteArrayLocalDataTypeFlavor() {
+
+		try {
+			return new GenericDataFlavor(
+				DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
+				"Local flavor--C++ array");
+		}
+		catch (Exception e) {
+			Msg.showError(ByteCopier.class, null, "Could Not Create Data Flavor",
+				"Unexpected exception creating data flavor for C array", e);
 		}
 
 		return null;
@@ -392,7 +448,9 @@ public abstract class ByteCopier {
 	public static class ByteViewerTransferable implements Transferable {
 
 		private final DataFlavor[] flavors = { BYTE_STRING_NO_SPACE_TYPE.getFlavor(),
-			BYTE_STRING_TYPE.getFlavor(), DataFlavor.stringFlavor };
+			BYTE_STRING_TYPE.getFlavor(), PYTHON_BYTE_STRING_TYPE.getFlavor(),
+			PYTHON_LIST_TYPE.getFlavor(), CPP_BYTE_ARRAY_TYPE.getFlavor(),
+			DataFlavor.stringFlavor };
 		private final List<DataFlavor> flavorList = Arrays.asList(flavors);
 
 		private final String byteString;
@@ -421,6 +479,15 @@ public abstract class ByteCopier {
 				return byteString;
 			}
 			if (flavor.equals(BYTE_STRING_NO_SPACE_TYPE.getFlavor())) {
+				return byteString;
+			}
+			if (flavor.equals(PYTHON_BYTE_STRING_TYPE.getFlavor())) {
+				return byteString;
+			}
+			if (flavor.equals(PYTHON_LIST_TYPE.getFlavor())) {
+				return byteString;
+			}
+			if (flavor.equals(CPP_BYTE_ARRAY_TYPE.getFlavor())) {
 				return byteString;
 			}
 			throw new UnsupportedFlavorException(flavor);

@@ -43,6 +43,9 @@ public class ByteViewerClipboardProvider extends ByteCopier
 		List<ClipboardType> copyTypesList = new LinkedList<>();
 		copyTypesList.add(BYTE_STRING_TYPE);
 		copyTypesList.add(BYTE_STRING_NO_SPACE_TYPE);
+		copyTypesList.add(PYTHON_BYTE_STRING_TYPE);
+		copyTypesList.add(PYTHON_LIST_TYPE);
+		copyTypesList.add(CPP_BYTE_ARRAY_TYPE);
 		return copyTypesList;
 	}
 
@@ -116,6 +119,18 @@ public class ByteViewerClipboardProvider extends ByteCopier
 		}
 		else if (copyType == BYTE_STRING_NO_SPACE_TYPE) {
 			byteString = copyBytesAsString(currentSelection, false, monitor);
+		}
+		else if (copyType == PYTHON_BYTE_STRING_TYPE) {
+			byteString = "b'"
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", "\\x") + "'";
+		}
+		else if (copyType == PYTHON_LIST_TYPE) {
+			byteString = "[ "
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", ", 0x") + " ]";
+		}
+		else if (copyType == CPP_BYTE_ARRAY_TYPE) {
+			byteString = "{ "
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", ", 0x") + " }";
 		}
 		else {
 			return null;
