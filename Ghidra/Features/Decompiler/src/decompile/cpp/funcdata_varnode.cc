@@ -635,7 +635,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
   return true;
 }
 
-/// \brief Check if the given Varnode only flows into INDIRECT ops
+/// \brief Check if the given Varnode only flows into call-based INDIRECT ops
 ///
 /// Flow is only followed through MULTIEQUAL ops.
 /// \param vn is the given Varnode
@@ -654,8 +654,17 @@ bool Funcdata::checkIndirectUse(Varnode *vn)
     for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
       PcodeOp *op = *iter;
       OpCode opc = op->code();
-      if (opc == CPUI_INDIRECT) continue;
-      if (opc == CPUI_MULTIEQUAL) {
+      if (opc == CPUI_INDIRECT) {
+	if (op->isIndirectStore()) {
+	  // INDIRECT from a STORE is not a negative result but continue to follow data-flow
+	  Varnode *outvn = op->getOut();
+	  if (!outvn->isMark()) {
+	    vlist.push_back(outvn);
+	    outvn->setMark();
+	  }
+	}
+      }
+      else if (opc == CPUI_MULTIEQUAL) {
 	Varnode *outvn = op->getOut();
 	if (!outvn->isMark()) {
 	  vlist.push_back(outvn);
@@ -1294,11 +1303,12 @@ bool Funcdata::onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamT
 /// \brief Test if the given trial Varnode is likely only used for parameter passing
 ///
 /// Flow is followed from the Varnode itself and from ancestors the Varnode was copied from
-/// to see if it hits anything other than the CALL operation.
+/// to see if it hits anything other than the given CALL or RETURN operation.
 /// \param maxlevel is the maximum number of times to recurse through ancestor copies
 /// \param invn is the given trial Varnode to test
+/// \param op is the given CALL or RETURN
 /// \param trial is the associated parameter trial object
-/// \return \b true if the Varnode is only used for the CALL
+/// \return \b true if the Varnode is only used for the CALL/RETURN
 bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
 			     const PcodeOp *op,ParamTrial &trial) const
 
