@@ -78,6 +78,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(COMMENTS_TYPE);
 		list.add(BYTE_STRING_TYPE);
 		list.add(BYTE_STRING_NO_SPACE_TYPE);
+		list.add(PYTHON_BYTE_STRING_TYPE);
+		list.add(PYTHON_LIST_TYPE);
+		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
 
 		return list;
@@ -240,6 +243,21 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == BYTE_STRING_NO_SPACE_TYPE) {
 			String byteString = copyBytesAsString(currentSelection, false, monitor);
+			return new ByteViewerTransferable(byteString);
+		}
+		else if (copyType == PYTHON_BYTE_STRING_TYPE) {
+			String byteString = "b'"
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", "\\x") + "'";
+			return new ByteViewerTransferable(byteString);
+		}
+		else if (copyType == PYTHON_LIST_TYPE) {
+			String byteString = "[ "
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", ", 0x") + " ]";
+			return new ByteViewerTransferable(byteString);
+		}
+		else if (copyType == CPP_BYTE_ARRAY_TYPE) {
+			String byteString = "{ "
+				+ copyBytesAsString(currentSelection, true, monitor).replaceAll(" ", ", 0x") + " }";
 			return new ByteViewerTransferable(byteString);
 		}
 
