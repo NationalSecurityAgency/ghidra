@@ -211,6 +211,7 @@ public class MenuData {
 	}
 
 	private static String processMenuItemName(String string) {
+		if (string.endsWith(" '&'")) return string;
 		int indexOf = string.indexOf('&');
 		if (indexOf >= 0 && indexOf < string.length() - 1) {
 			return string.substring(0, indexOf) + string.substring(indexOf + 1);
