@@ -18,6 +18,7 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -44,8 +45,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	static final boolean PROCESS_SYMBOLS_OPTION_DEFAULT = true;
 
 	/** Loader option to create memory blocks for DYLIB sections */
-	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME =
-		"Create DYLIB section memory blocks (slow!)";
+	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
 
 	/** Default value for loader option to create memory blocks for DYLIB sections */
 	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
@@ -85,8 +85,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			throws IOException {
 
 		try {
-			DyldCacheProgramBuilder.buildProgram(program, provider, shouldProcessSymbols(options),
-				shouldCreateDylibSections(options), log, handler, monitor);
+			DyldCacheProgramBuilder.buildProgram(program, provider,
+				MemoryBlockUtils.createFileBytes(program, provider), shouldProcessSymbols(options),
+				shouldCreateDylibSections(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;

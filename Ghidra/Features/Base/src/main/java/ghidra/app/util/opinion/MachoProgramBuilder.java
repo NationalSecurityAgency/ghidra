@@ -19,7 +19,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.*;
@@ -30,6 +30,7 @@ import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.importer.*;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Processor;
@@ -55,32 +56,32 @@ public class MachoProgramBuilder {
 
 	protected Program program;
 	protected ByteProvider provider;
+	protected FileBytes fileBytes;
 	protected MessageLog log;
 	protected TaskMonitor monitor;
 	protected Memory memory;
 	protected Listing listing;
 	protected AddressSpace space;
-	protected MemoryBlockUtil mbu;
 
 	/**
 	 * Creates a new {@link MachoProgramBuilder} based on the given information.
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
+	 * @param fileBytes Where the Mach-O's bytes came from.
 	 * @param log The log.
-	 * @param memoryConflictHandler How to handle memory conflicts that may occur.
 	 * @param monitor A cancelable task monitor.
 	 */
-	protected MachoProgramBuilder(Program program, ByteProvider provider, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) {
+	protected MachoProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
+			MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.provider = provider;
+		this.fileBytes = fileBytes;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
 		this.listing = program.getListing();
 		this.space = program.getAddressFactory().getDefaultAddressSpace();
-		this.mbu = new MemoryBlockUtil(program, memoryConflictHandler);
 	}
 
 	/**
@@ -88,15 +89,17 @@ public class MachoProgramBuilder {
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
+	 * @param fileBytes Where the Mach-O's bytes came from.
 	 * @param log The log.
 	 * @param memoryConflictHandler How to handle memory conflicts that may occur.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
-	public static void buildProgram(Program program, ByteProvider provider, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) throws Exception {
+	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
+			MessageLog log, MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor)
+			throws Exception {
 		MachoProgramBuilder machoProgramBuilder =
-			new MachoProgramBuilder(program, provider, log, memoryConflictHandler, monitor);
+			new MachoProgramBuilder(program, provider, fileBytes, log, monitor);
 		machoProgramBuilder.build();
 	}
 
@@ -115,33 +118,25 @@ public class MachoProgramBuilder {
 		}
 		monitor.setCancelEnabled(true);
 
-		try {
-			setImageBase();
-			processEntryPoint();
-			processMemoryBlocks(machoHeader, provider.getName(), true, true);
-			processUnsupportedLoadCommands();
-			processSymbolTables();
-			processIndirectSymbols();
-			setRelocatableProperty();
-			processLibraries();
-			processProgramDescription();
-			renameObjMsgSendRtpSymbol();
-			processUndefinedSymbols();
-			processAbsoluteSymbols();
-			processDyldInfo();
-			markupHeaders(machoHeader, headerAddr);
-			markupSections();
-			processProgramVars();
-			loadSectionRelocations();
-			loadExternalRelocations();
-			loadLocalRelocations();
-		}
-		finally {
-			if (mbu != null) {
-				mbu.dispose();
-				mbu = null;
-			}
-		}
+		setImageBase();
+		processEntryPoint();
+		processMemoryBlocks(machoHeader, provider.getName(), true, true);
+		processUnsupportedLoadCommands();
+		processSymbolTables();
+		processIndirectSymbols();
+		setRelocatableProperty();
+		processLibraries();
+		processProgramDescription();
+		renameObjMsgSendRtpSymbol();
+		processUndefinedSymbols();
+		processAbsoluteSymbols();
+		processDyldInfo();
+		markupHeaders(machoHeader, headerAddr);
+		markupSections();
+		processProgramVars();
+		loadSectionRelocations();
+		loadExternalRelocations();
+		loadLocalRelocations();
 	}
 
 	private void setImageBase() throws Exception {
@@ -219,12 +214,8 @@ public class MachoProgramBuilder {
 			return;
 		}
 
-		// Create memory blocks for segments.  Create them in reverse order so the splitting
-		// is more efficient.
-		List<SegmentCommand> segments = header.getAllSegments();
-		segments.sort((SegmentCommand a, SegmentCommand b) -> Long.compare(b.getVMaddress(),
-			a.getVMaddress()));
-		for (SegmentCommand segment : segments) {
+		// Create memory blocks for segments.
+		for (SegmentCommand segment : header.getAllSegments()) {
 			if (monitor.isCancelled()) {
 				break;
 			}
@@ -256,12 +247,9 @@ public class MachoProgramBuilder {
 		}
 
 		// Create memory blocks for sections.  They will be in the segments we just created, so the
-		// segment blocks will be split and possibly replaced.  Create them in reverse order so
-		// the splitting is more efficient.
+		// segment blocks will be split and possibly replaced.
 		if (processSections) {
-			List<Section> sections = header.getAllSections();
-			sections.sort((Section a, Section b) -> Long.compare(b.getAddress(), a.getAddress()));
-			for (Section section : sections) {
+			for (Section section : header.getAllSections()) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -331,12 +319,12 @@ public class MachoProgramBuilder {
 		if (intersectingBlocks.isEmpty()) {
 			if (zeroFill) {
 				// Treat zero-fill blocks as uninitialized to save space
-				return mbu.createUninitializedBlock(false, name, start, dataLength, comment, source,
-					r, w, x);
+				return MemoryBlockUtils.createUninitializedBlock(program, false, name, start,
+					dataLength, comment, source, r, w, x, log);
 			}
 
-			return mbu.createInitializedBlock(name, start, provider.getInputStream(dataOffset),
-				dataLength, comment, source, r, w, x, monitor);
+			return MemoryBlockUtils.createInitializedBlock(program, false, name, start, fileBytes,
+				dataOffset, dataLength, comment, source, r, w, x, log);
 		}
 
 		// Split the starting block (if necessary).  Splitting is not necessary if the start of our 
@@ -363,9 +351,7 @@ public class MachoProgramBuilder {
 		for (MemoryBlock block : memory.getBlocks()) {
 			if (range.intersects(block.getStart(), block.getEnd())) {
 				block.setName(name);
-				block.setRead(r);
-				block.setWrite(w);
-				block.setExecute(x);
+				block.setPermissions(r, w, x);
 				block.setSourceName(source);
 				block.setComment(comment);
 			}

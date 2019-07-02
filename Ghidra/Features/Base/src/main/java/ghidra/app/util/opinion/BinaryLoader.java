@@ -330,7 +330,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				block.setWrite(isOverlay ? false : true);
 				block.setExecute(isOverlay ? false : true);
 				block.setSourceName("Binary Loader");
-				MemoryBlockUtil.adjustFragment(prog.getListing(), block.getStart(), blockName);
+				MemoryBlockUtils.adjustFragment(prog, block.getStart(), blockName);
 			}
 			catch (LockException | MemoryConflictException e) {
 				Msg.error(this, "Unexpected exception creating memory block", e);

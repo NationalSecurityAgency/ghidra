@@ -23,6 +23,7 @@ import org.apache.commons.collections4.BidiMap;
 import org.jdom.JDOMException;
 
 import generic.continues.RethrowContinuesFactory;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -37,6 +38,7 @@ import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.macosx.MacosxLanguageHelper;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.lang.LanguageService;
@@ -185,9 +187,12 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		int id = program.startTransaction(getName());
 		boolean success = false;
 		try {
-			MachoProgramBuilder.buildProgram(program,
-				new ByteProviderWrapper(provider, offset, provider.length() - offset),
-				new MessageLog(), MemoryConflictHandler.NEVER_OVERWRITE, monitor);
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, offset,
+				provider.length() - offset);
+			ByteProvider providerWrapper =
+				new ByteProviderWrapper(provider, offset, provider.length() - offset);
+			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),
+				MemoryConflictHandler.NEVER_OVERWRITE, monitor);
 			program.setExecutableFormat(MachoLoader.MACH_O_NAME);
 			program.setExecutablePath(file.getPath());
 
