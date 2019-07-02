@@ -40,7 +40,7 @@ public class MakeFuncsAtLabelsScript extends GhidraScript {
 		Listing listing = prog.getListing();
 		for (Symbol symbol : textLabels) {
 			if (symbol.getSource() == SourceType.IMPORTED &&
-				(symbol.getSymbolType() == SymbolType.CODE)) {
+				(symbol.getSymbolType() == SymbolType.LABEL)) {
 				if (!this.isRunningHeadless()) {
 					printf("%s %s", symbol.getAddress().toString(), symbol.toString());
 				}

@@ -1139,7 +1139,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 
 		Symbol functionSymbol = function.getSymbol();
 		ArrayList<Symbol> list = new ArrayList<>();
-		SymbolIterator iter = symbolMgr.getSymbols(set, SymbolType.CODE, true);
+		SymbolIterator iter = symbolMgr.getSymbols(set, SymbolType.LABEL, true);
 		while (iter.hasNext()) {
 			Symbol symbol = iter.next();
 			if (symbol.getParentSymbol() == functionSymbol) {

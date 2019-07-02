@@ -346,7 +346,7 @@ public abstract class DemangledObject {
 		for (Symbol symbol : symbols) {
 			if (symbol.getName().equals(symbolName) && !symbol.getParentNamespace().isGlobal()) {
 				SymbolType symbolType = symbol.getSymbolType();
-				if (symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) {
+				if (symbolType == SymbolType.LABEL || symbolType == SymbolType.FUNCTION) {
 					return true;
 				}
 			}

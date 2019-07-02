@@ -148,7 +148,7 @@ public class ProgramUtilities {
 		}
 
 		try {
-			if (s.getSymbolType() != SymbolType.CODE) {
+			if (s.getSymbolType() != SymbolType.LABEL) {
 				functionSymbol.delete();
 				return;
 			}

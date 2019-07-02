@@ -25,7 +25,7 @@ import ghidra.program.model.listing.Program;
  */
 public abstract class SymbolType {
 
-	public static final SymbolType CODE = new SymbolType("Label", false, 0) {
+	public static final SymbolType LABEL = new SymbolType("Label", false, 0) {
 		@Override
 		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
 				boolean isExternalSymbol) {
@@ -60,6 +60,12 @@ public abstract class SymbolType {
 		}
 
 	};
+
+	/**
+	 * @deprecated use {@link #LABEL} instead.
+	 */
+	@Deprecated(since = "9.1", forRemoval = true)
+	public static final SymbolType CODE = LABEL;
 
 	public static final SymbolType LIBRARY = new SymbolType("Library", true, 1) {
 		@Override
@@ -263,7 +269,7 @@ public abstract class SymbolType {
 		};
 
 	private static final SymbolType[] types =
-		{ CODE, LIBRARY, null, NAMESPACE, CLASS, FUNCTION, PARAMETER, LOCAL_VAR, GLOBAL_VAR };
+		{ LABEL, LIBRARY, null, NAMESPACE, CLASS, FUNCTION, PARAMETER, LOCAL_VAR, GLOBAL_VAR };
 
 	private final String name;
 	private final byte value;

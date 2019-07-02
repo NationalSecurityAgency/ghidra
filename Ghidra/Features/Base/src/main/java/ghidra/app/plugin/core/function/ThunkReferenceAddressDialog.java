@@ -279,7 +279,7 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 		while (symbolIterator.hasNext()) {
 			Symbol s = symbolIterator.next();
 			SymbolType type = s.getSymbolType();
-			if (type == SymbolType.FUNCTION || type == SymbolType.CODE) {
+			if (type == SymbolType.FUNCTION || type == SymbolType.LABEL) {
 				Symbol thunkedSymbol = getThunkedSymbol(s);
 				if (thunkedSymbol != null) {
 					// ignore equivalent thunks
@@ -325,7 +325,7 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 		ExternalManager externalManager = program.getExternalManager();
 		for (Symbol s : symbolTable.getExternalSymbols()) {
 			SymbolType type = s.getSymbolType();
-			if (type == SymbolType.FUNCTION || type == SymbolType.CODE) {
+			if (type == SymbolType.FUNCTION || type == SymbolType.LABEL) {
 				ExternalLocation externalLocation = externalManager.getExternalLocation(s);
 				String originalName = externalLocation.getOriginalImportedName();
 				if (name.equals(originalName)) {

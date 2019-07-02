@@ -205,7 +205,7 @@ class SymbolMerge {
 			Namespace parentNamespace, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 		Symbol symbol = null;
-		if (type == SymbolType.CODE) {
+		if (type == SymbolType.LABEL) {
 			if (address.isExternalAddress()) {
 // FIXME Should this be passing the Namespace?
 				ExternalManagerDB extMgr = (ExternalManagerDB) toProgram.getExternalManager();
@@ -591,7 +591,7 @@ class SymbolMerge {
 			long oldID) throws InvalidInputException {
 
 		Symbol toSymbol = toSymTab.getSymbol(fromName, entryPoint, toNamespace);
-		if (((toSymbol == null) || !toSymbol.getSymbolType().equals(SymbolType.CODE)) &&
+		if (((toSymbol == null) || !toSymbol.getSymbolType().equals(SymbolType.LABEL)) &&
 			(source != SourceType.DEFAULT)) {
 			if (toSymTab.getSymbol(fromName, entryPoint, toNamespace) == null) {
 				toSymbol = toSymbolTable.createLabel(entryPoint, fromName, toNamespace, source);

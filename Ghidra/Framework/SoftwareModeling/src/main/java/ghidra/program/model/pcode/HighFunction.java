@@ -184,7 +184,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				}
 			}
 			else if (nm.equals("prt")) {
-				if (sym.getSymbolType() == SymbolType.CODE) {
+				if (sym.getSymbolType() == SymbolType.LABEL) {
 					DataTypeSymbol protover = HighFunctionDBUtil.readOverride(sym);
 					if (protover != null) {
 						if (protoOverrides == null) {

@@ -238,7 +238,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		while (symbolRecordIterator.hasNext()) {
 			monitor.checkCanceled();
 			Record rec = symbolRecordIterator.next();
-			rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.CODE.getID());
+			rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
 			adapter.updateSymbolRecord(rec);
 		}
 		monitor.setProgress(1);
@@ -437,7 +437,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				while (!success) {
 					try {
 						addSymbolRecord(rec.getKey(), addr, namespace, name,
-							rec.getBooleanValue(OLD_SYMBOL_IS_PRIMARY_COL), SymbolType.CODE,
+							rec.getBooleanValue(OLD_SYMBOL_IS_PRIMARY_COL), SymbolType.LABEL,
 							SourceType.USER_DEFINED);
 						success = true;
 					}
@@ -517,7 +517,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			Address address = symbol.getAddress();
 			symbolRemoved(symbol, address, symbol.getName(), oldKey, Namespace.GLOBAL_NAMESPACE_ID,
 				null);
-			Record record = adapter.createSymbol(newName, address, newParentID, SymbolType.CODE, 0,
+			Record record = adapter.createSymbol(newName, address, newParentID, SymbolType.LABEL, 0,
 				1, null, source);
 			symbol.setRecord(record);// symbol object was morphed
 			symbolAdded(symbol);
@@ -576,7 +576,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (type == SymbolType.CLASS) {
 			return new ClassSymbol(this, cache, addr, record);
 		}
-		else if (type == SymbolType.CODE) {
+		else if (type == SymbolType.LABEL) {
 			return new CodeSymbol(this, cache, addr, record);
 		}
 		else if (type == SymbolType.NAMESPACE) {
@@ -1172,7 +1172,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public SymbolIterator getPrimarySymbolIterator(AddressSetView set, boolean forward) {
 		Query query1 = new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_DATA2_COL, new IntField(1));
 		Query query2 = new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_TYPE_COL,
-			new ByteField(SymbolType.CODE.getID()));
+			new ByteField(SymbolType.LABEL.getID()));
 		Query query3 = new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_TYPE_COL,
 			new ByteField(SymbolType.FUNCTION.getID()));
 		Query query4 = new AndQuery(query1, query2);
@@ -1495,7 +1495,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			long parentId, SymbolType symType) {
 
 		// create a label history record
-		if (symType == SymbolType.CODE || symType == SymbolType.FUNCTION) {
+		if (symType == SymbolType.LABEL || symType == SymbolType.FUNCTION) {
 			createLabelHistoryRecord(addr, null, name, LabelHistory.REMOVE);
 		}
 
@@ -2076,7 +2076,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 					typeID != SymbolType.LOCAL_VAR.getID() &&
 					typeID != SymbolType.GLOBAL_VAR.getID()) {
 
-					if (typeID == SymbolType.CODE.getID()) {
+					if (typeID == SymbolType.LABEL.getID()) {
 						// Check for External Code Symbol
 						Address addr = addrMap.decodeAddress(
 							rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
@@ -2349,9 +2349,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			SourceType source, String data3) throws InvalidInputException {
 		lock.acquire();
 		try {
-			namespace = validateNamespace(namespace, addr, SymbolType.CODE);
-			source = validateSource(source, name, addr, SymbolType.CODE);
-			name = validateName(name, addr, SymbolType.CODE, source);
+			namespace = validateNamespace(namespace, addr, SymbolType.LABEL);
+			source = validateSource(source, name, addr, SymbolType.LABEL);
+			name = validateName(name, addr, SymbolType.LABEL, source);
 
 			Symbol symbol = getSymbol(name, addr, namespace);
 			if (symbol != null) {
@@ -2372,7 +2372,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			boolean makePrimary = primary == null;
 
-			return doCreateSymbol(name, addr, namespace, SymbolType.CODE, -1, makePrimary ? 1 : 0,
+			return doCreateSymbol(name, addr, namespace, SymbolType.LABEL, -1, makePrimary ? 1 : 0,
 				data3, source);
 		}
 		finally {
@@ -2449,7 +2449,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return null;
 		}
 		// Even though this doesn't change the name or namespace, return this so it will be deleted later.
-		return findMatchingSymbol(symbols, new SymbolMatcher(name, namespace, SymbolType.CODE));
+		return findMatchingSymbol(symbols, new SymbolMatcher(name, namespace, SymbolType.LABEL));
 	}
 
 	private void cleanUpSymbols(Symbol[] symbols, Symbol symbolToPromote) {
@@ -2595,7 +2595,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	private boolean isExternal(SymbolType type, Address addr, Namespace parentNamespace) {
-		if (type == SymbolType.CODE || type == SymbolType.FUNCTION) {
+		if (type == SymbolType.LABEL || type == SymbolType.FUNCTION) {
 			return addr.isExternalAddress();
 		}
 		return parentNamespace.isExternal();
@@ -2627,7 +2627,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		List<Symbol> filtered = new ArrayList<>();
 		for (Symbol symbol : symbols) {
 			SymbolType type = symbol.getSymbolType();
-			if (type == SymbolType.FUNCTION || type == SymbolType.CODE) {
+			if (type == SymbolType.FUNCTION || type == SymbolType.LABEL) {
 				filtered.add(symbol);
 			}
 		}

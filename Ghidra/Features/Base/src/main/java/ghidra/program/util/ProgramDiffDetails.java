@@ -683,7 +683,7 @@ public class ProgramDiffDetails {
 		ArrayList<Symbol> list = new ArrayList<>();
 		for (Symbol symbol : originalSymbols) {
 			SymbolType symbolType = symbol.getSymbolType();
-			if (symbolType.equals(SymbolType.FUNCTION) || (symbolType.equals(SymbolType.CODE) &&
+			if (symbolType.equals(SymbolType.FUNCTION) || (symbolType.equals(SymbolType.LABEL) &&
 				!symbol.getSource().equals(SourceType.DEFAULT))) {
 				list.add(symbol);
 			}
