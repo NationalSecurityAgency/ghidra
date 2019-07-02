@@ -854,7 +854,8 @@ public class DIEAggregate {
 	public long getLowPC(long defaultValue) {
 		DWARFNumericAttribute attr =
 			getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
-		return (attr != null) ? attr.getUnsignedValue() : defaultValue;
+		return (attr != null) ? attr.getUnsignedValue() + getProgram().getProgramBaseAddressFixup()
+				: defaultValue;
 	}
 
 	/**
@@ -872,14 +873,15 @@ public class DIEAggregate {
 
 			// if the DWARF attr was a DW_FORM_addr, it doesn't need fixing up
 			if (high.form == DWARFForm.DW_FORM_addr) {
-				return highVal.getUnsignedValue();
+				return highVal.getUnsignedValue() + getProgram().getProgramBaseAddressFixup();
 			}
 
 			// else it was a DW_FORM_data value and is relative to the lowPC value
 			DWARFNumericAttribute low =
 				getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
 			if (low != null && highVal.getUnsignedValue() > 0) {
-				return low.getUnsignedValue() + highVal.getUnsignedValue() - 1;
+				return low.getUnsignedValue() + getProgram().getProgramBaseAddressFixup() +
+					highVal.getUnsignedValue() - 1;
 			}
 		}
 		throw new IOException("Bad/unsupported DW_AT_high_pc attribute value or type");

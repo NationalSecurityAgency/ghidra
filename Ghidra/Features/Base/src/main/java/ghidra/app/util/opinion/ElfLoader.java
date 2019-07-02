@@ -28,12 +28,12 @@ import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ELFExternalSymbolResolver;
-import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -52,6 +52,18 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	public final static String ELF_REQUIRED_LIBRARY_PROPERTY_PREFIX = "ELF Required Library ["; // followed by "#]"
 	public final static String ELF_SOURCE_FILE_PROPERTY_PREFIX = "ELF Source File ["; // followed by "#]"
+
+	/**
+	 * Getter for the {@link #ELF_ORIGINAL_IMAGE_BASE_PROPERTY} property.
+	 * 
+	 * @param program Ghidra program that has the property to get
+	 * @return Long value of the original image base, or null if the property is not present
+	 */
+	public static Long getElfOriginalImageBase(Program program) {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		String oibStr = props.getString(ElfLoader.ELF_ORIGINAL_IMAGE_BASE_PROPERTY, null);
+		return (oibStr != null) ? NumericUtilities.parseHexLong(oibStr) : null;
+	}
 
 	public ElfLoader() {
 	}

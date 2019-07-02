@@ -34,6 +34,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -437,7 +438,7 @@ public class DWARFFunctionImporter {
 			dvar.dni = dvar.dni.replaceType(null /*nothing matches static global var*/);
 			if (res != 0) {
 				// If the expression evaluated to a static address other than '0'
-				Address staticVariableAddresss = toAddr(res);
+				Address staticVariableAddresss = toAddr(res + prog.getProgramBaseAddressFixup());
 				if (variablesProcesesed.contains(staticVariableAddresss)) {
 					return null;
 				}
@@ -445,7 +446,7 @@ public class DWARFFunctionImporter {
 				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
 				DataType storageType = dwarfDTM.getStorageDataType(diea.getTypeRef(), dvar.type);
 
-				outputGlobal(staticVariableAddresss, storageType, external,
+				outputGlobal(staticVariableAddresss, dvar.type, storageType, external,
 					DWARFSourceInfo.create(diea), dvar.dni);
 			}
 			else {
@@ -749,8 +750,14 @@ public class DWARFFunctionImporter {
 		return false;
 	}
 
-	private Data createVariable(Address address, DataType dataType, DWARFNameInfo dni) {
+	private Data createVariable(Address address, DataType origDataType, DataType dataType,
+			DWARFNameInfo dni) {
 		try {
+			MemoryBlock block = currentProgram.getMemory().getBlock(address);
+			if (dataType.getLength() <= 0 && !block.isInitialized()) {
+				// fall back to the original data type, which shouldn't have any dynamic sized (ie. string) data types
+				dataType = origDataType;
+			}
 			if (dataType.getLength() < 0) {
 				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
@@ -777,8 +784,8 @@ public class DWARFFunctionImporter {
 		return null;
 	}
 
-	private void outputGlobal(Address address, DataType baseDataType, boolean external,
-			DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
+	private void outputGlobal(Address address, DataType origDataType, DataType baseDataType,
+			boolean external, DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
 
 		Namespace namespace = dni.getParentNamespace(currentProgram);
 
@@ -796,7 +803,7 @@ public class DWARFFunctionImporter {
 
 		setExternalEntryPoint(external, address);
 
-		Data varData = createVariable(address, baseDataType, dni);
+		Data varData = createVariable(address, origDataType, baseDataType, dni);
 		importSummary.globalVarsAdded++;
 
 		if (sourceInfo != null) {
@@ -1096,7 +1103,7 @@ public class DWARFFunctionImporter {
 		}
 	}
 
-	private Function createFunction(DWARFFunction dfunc) throws DuplicateNameException {
+	private Function createFunction(DWARFFunction dfunc) {
 		try {
 			// create a new symbol if one does not exist (symbol table will figure this out)
 			SymbolTable symbolTable = currentProgram.getSymbolTable();
