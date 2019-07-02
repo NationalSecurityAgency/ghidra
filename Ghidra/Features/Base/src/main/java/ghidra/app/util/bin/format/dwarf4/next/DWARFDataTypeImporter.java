@@ -895,11 +895,10 @@ public class DWARFDataTypeImporter {
 
 	private static String memberDesc(String prefix, String errorStr, String memberName,
 			DWARFDataType ddt, int memberOffset, int bitSize, int bitOffset) {
-		boolean isBitField = (bitSize != -1 && bitOffset != -1);
 		return (!StringUtils.isBlank(prefix) ? prefix + " " : "") + memberName + " : " +
-			ddt.dataType.getName() + (isBitField ? ":" + bitSize : "") + " at offset " +
+			ddt.dataType.getName() + (bitSize != -1 ? ":" + bitSize : "") + " at offset " +
 			(memberOffset != -1 ? "0x" + Long.toHexString(memberOffset) : "unknown") +
-			(isBitField ? ":" + bitOffset : "") +
+			(bitOffset != -1 ? ":" + bitOffset : "") +
 			(!StringUtils.isBlank(errorStr) ? " [" + errorStr + "]" : "");
 	}
 
