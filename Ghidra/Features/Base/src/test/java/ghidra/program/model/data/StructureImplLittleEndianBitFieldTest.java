@@ -15,14 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Iterator;
-
 import org.junit.Test;
-
-import resources.ResourceManager;
 
 public class StructureImplLittleEndianBitFieldTest extends AbstractCompositeImplBitFieldTest {
 
@@ -38,28 +31,28 @@ public class StructureImplLittleEndianBitFieldTest extends AbstractCompositeImpl
 		//writeArchive();
 	}
 
-	private void writeArchive() throws IOException {
-		URL resource = ResourceManager.getResource(C_SOURCE_FILE);
-		File f = new File(resource.getPath() + ".gdt");
-		if (f.exists()) {
-			f.delete();
-		}
-
-		FileDataTypeManager fileDtMgr = FileDataTypeManager.createFileArchive(f);
-		int txId = fileDtMgr.startTransaction("Save Datatypes");
-		try {
-			Iterator<Composite> composites = getDataTypeManager().getAllComposites();
-			while (composites.hasNext()) {
-				fileDtMgr.addDataType(composites.next(), null);
-			}
-		}
-		finally {
-			fileDtMgr.endTransaction(txId, true);
-		}
-
-		fileDtMgr.save();
-		fileDtMgr.close();
-	}
+//	private void writeArchive() throws IOException {
+//		URL resource = ResourceManager.getResource(C_SOURCE_FILE);
+//		File f = new File(resource.getPath() + ".gdt");
+//		if (f.exists()) {
+//			f.delete();
+//		}
+//
+//		FileDataTypeManager fileDtMgr = FileDataTypeManager.createFileArchive(f);
+//		int txId = fileDtMgr.startTransaction("Save Datatypes");
+//		try {
+//			Iterator<Composite> composites = getDataTypeManager().getAllComposites();
+//			while (composites.hasNext()) {
+//				fileDtMgr.addDataType(composites.next(), null);
+//			}
+//		}
+//		finally {
+//			fileDtMgr.endTransaction(txId, true);
+//		}
+//
+//		fileDtMgr.save();
+//		fileDtMgr.close();
+//	}
 
 	@Override
 	protected DataTypeManager getDataTypeManager() {

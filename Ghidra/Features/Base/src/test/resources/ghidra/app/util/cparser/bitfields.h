@@ -33,7 +33,7 @@ struct A1 {
 };
 
 struct A2 {
-        oddStruct a; // test for check alignment overlap (gcc)
+        struct oddStruct a; // test for check alignment overlap (gcc)
         int b:3;
         int c:8;
         int d:8;

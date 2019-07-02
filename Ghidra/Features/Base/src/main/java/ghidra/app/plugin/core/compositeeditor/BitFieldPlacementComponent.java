@@ -198,16 +198,14 @@ public class BitFieldPlacementComponent extends JPanel {
 			return;
 		}
 
-		// TODO: consider showing a animated hashed-box around original bit boundary
-		// of the component being modified
-
 		editMode = EditMode.EDIT;
 		editOrdinal = editDtc.getOrdinal();
 		this.editComponent = editDtc;
 
 		BitFieldPlacement placement = new BitFieldPlacement(editDtc);
-		bitFieldAllocation = new BitFieldAllocation(placement.rightBit - placement.leftBit + 1,
-			(8 * allocationByteSize) - placement.rightBit - 1);
+		int bitSize = placement.zeroBitField ? 0 : (placement.rightBit - placement.leftBit + 1);
+		bitFieldAllocation =
+			new BitFieldAllocation(bitSize, (8 * allocationByteSize) - placement.rightBit - 1);
 		updatePreferredSize();
 		repaint();
 	}
@@ -837,6 +835,9 @@ public class BitFieldPlacementComponent extends JPanel {
 		public DataTypeComponent getConflict() {
 			BitAttributes c = conflict;
 			while (c != null && c.dtc.isZeroBitFieldComponent()) {
+				// TODO: improve conflict detection
+				// Zero-length bitfield could be conflict if placement is
+				// offcut with another component (currently ignored)
 				c = conflict.conflict;
 			}
 			return c != null ? c.dtc : null;
@@ -844,19 +845,28 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		void layout(int x, int y, int width, int height) {
 			rectangle = new Rectangle(x, y, width, height);
+			if (conflict != null) {
+				conflict.layout(x, y, width, height);
+			}
 		}
 
 		void paint(Graphics g, BitAttributes bitAttrsToLeft, boolean paintRightLine) {
 			// bit box
 			Color c = getColor();
 			g.setColor(c);
-			g.fillRect(rectangle.x, rectangle.y, BIT_WIDTH, CELL_HEIGHT);
 
-			if (zeroBitfield ||
-				(dtc != null && conflict != null && conflict.dtc.isZeroBitFieldComponent())) {
+			if (zeroBitfield) {
+
+				if (conflict != null) {
+					conflict.paint(g, bitAttrsToLeft, paintRightLine);
+				}
+				if (!bigEndian) {
+					bitAttrsToLeft = null;
+				}
+
 				c = ACTIVE_BITFIELD_BITS_COLOR;
 				Color lineColor = INTERIOR_LINE_COLOR;
-				if (dtc != null) {
+				if (dtc != null && dtc != editComponent) {
 					c = BITFIELD_COMPONENT_COLOR;
 					lineColor = LINE_COLOR;
 				}
@@ -869,6 +879,12 @@ public class BitFieldPlacementComponent extends JPanel {
 				g.fillRect(xStrip, rectangle.y, ZERO_BIT_WIDTH, CELL_HEIGHT);
 				g.setColor(lineColor);
 				g.fillRect(xLine, rectangle.y, BIT_SEPARATOR_THICKNESS, CELL_HEIGHT);
+			}
+			else {
+				g.fillRect(rectangle.x, rectangle.y, BIT_WIDTH, CELL_HEIGHT);
+				if (conflict != null && conflict.dtc.isZeroBitFieldComponent()) {
+					conflict.paint(g, null, false);
+				}
 			}
 
 			if (bitAttrsToLeft != null && dtc != null && bitAttrsToLeft.unallocated) {
@@ -891,23 +907,17 @@ public class BitFieldPlacementComponent extends JPanel {
 		}
 
 		Color getColor() {
-			// zero-length stripe will be added later and
-			// should treated as a conflict
 			if (unallocated) {
 				return UNDEFINED_BIT_COLOR;
 			}
-			if (conflict != null && !conflict.unallocated) {
-				if (zeroBitfield) {
-					return conflict.getColor();
-				}
-				if (!conflict.dtc.isZeroBitFieldComponent()) {
-					return CONFLICT_BITS_COLOR;
-				}
+			if (conflict != null && !conflict.unallocated && !conflict.zeroBitfield &&
+				conflict.dtc.getDataType() != DataType.DEFAULT) {
+				return CONFLICT_BITS_COLOR;
 			}
 			if (dtc == editComponent) {
 				return ACTIVE_BITFIELD_BITS_COLOR; // edit field
 			}
-			if (zeroBitfield || dtc.getDataType() == DataType.DEFAULT) {
+			if (dtc.getDataType() == DataType.DEFAULT) {
 				return UNDEFINED_BIT_COLOR;
 			}
 			return dtc.isBitFieldComponent() ? BITFIELD_COMPONENT_COLOR

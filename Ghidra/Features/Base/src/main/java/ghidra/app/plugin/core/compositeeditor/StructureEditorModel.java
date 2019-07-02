@@ -628,10 +628,7 @@ class StructureEditorModel extends CompEditorModel {
 		FieldRange range = selection.getFieldRange(0);
 
 		DataTypeComponent comp = getComponent(range.getStart().getIndex().intValue());
-		if (comp == null || comp.isFlexibleArrayComponent()) {
-			return true;
-		}
-		if (comp.isBitFieldComponent()) {
+		if (comp == null || comp.isFlexibleArrayComponent() || comp.isBitFieldComponent()) {
 			return false;
 		}
 

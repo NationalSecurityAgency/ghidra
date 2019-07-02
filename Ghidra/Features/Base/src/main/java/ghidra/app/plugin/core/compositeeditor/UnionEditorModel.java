@@ -229,7 +229,7 @@ class UnionEditorModel extends CompEditorModel {
 		}
 		FieldRange range = selection.getFieldRange(0);
 		DataTypeComponent comp = getComponent(range.getStart().getIndex().intValue());
-		return (comp == null || !comp.isBitFieldComponent());
+		return (comp != null && !comp.isBitFieldComponent());
 	}
 
 	/**
