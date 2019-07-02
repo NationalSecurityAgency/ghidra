@@ -107,7 +107,7 @@ public class LabelFieldLocation extends CodeUnitLocation {
 	public LabelFieldLocation(Symbol s, int row, int charOffset) {
 		this(s.getProgram(), s.getAddress(), null, s.getName(), s.getParentNamespace(), row,
 			charOffset);
-		if (s.getSymbolType() != SymbolType.CODE && s.getSymbolType() != SymbolType.FUNCTION) {
+		if (s.getSymbolType() != SymbolType.LABEL && s.getSymbolType() != SymbolType.FUNCTION) {
 			throw new IllegalArgumentException("Code symbol expected");
 		}
 	}

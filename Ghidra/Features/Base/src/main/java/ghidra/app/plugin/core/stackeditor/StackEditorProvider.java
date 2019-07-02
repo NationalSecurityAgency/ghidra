@@ -198,7 +198,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
 					Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
 					SymbolType symType = sym.getSymbolType();
-					if (symType == SymbolType.CODE) {
+					if (symType == SymbolType.LABEL) {
 						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
 							refreshName();
 						}
@@ -218,7 +218,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
 					sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
 					symType = sym.getSymbolType();
-					if (symType == SymbolType.CODE &&
+					if (symType == SymbolType.LABEL &&
 						sym.getAddress().equals(function.getEntryPoint())) {
 						refreshName();
 					}

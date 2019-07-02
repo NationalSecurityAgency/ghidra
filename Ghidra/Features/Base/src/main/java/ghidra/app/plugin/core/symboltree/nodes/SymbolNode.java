@@ -185,7 +185,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 		if (symbolType.equals(SymbolType.CLASS)) {
 			return new ClassSymbolNode(program, symbol);
 		}
-		else if (symbolType.equals(SymbolType.CODE)) {
+		else if (symbolType.equals(SymbolType.LABEL)) {
 			return new CodeSymbolNode(program, symbol);
 		}
 		else if (symbolType.equals(SymbolType.FUNCTION)) {

@@ -110,7 +110,7 @@ public class DataTypeSymbol {
 			Symbol sym = iter.next();
 			if (!sym.getName().startsWith(nmroot))
 				continue;
-			if (sym.getSymbolType() != SymbolType.CODE)
+			if (sym.getSymbolType() != SymbolType.LABEL)
 				continue;
 			if (!addr.equals(sym.getAddress()))
 				continue;
@@ -124,7 +124,7 @@ public class DataTypeSymbol {
 	}
 
 	public static DataTypeSymbol readSymbol(String cat, Symbol s) {
-		if (s.getSymbolType() != SymbolType.CODE) {
+		if (s.getSymbolType() != SymbolType.LABEL) {
 			throw new IllegalArgumentException("Expected CODE symbol");
 		}
 		String hash = extractHash(s.getName());
