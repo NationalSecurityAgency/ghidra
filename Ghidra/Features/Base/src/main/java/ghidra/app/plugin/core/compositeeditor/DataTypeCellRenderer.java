@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.Color;
 import java.awt.Component;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
@@ -27,33 +27,14 @@ import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.SystemUtilities;
-import resources.ResourceManager;
-import resources.icons.IconWrapper;
-import resources.icons.ScaledImageIconWrapper;
 
 public class DataTypeCellRenderer extends GTableCellRenderer {
 	private static final long serialVersionUID = 1L;
 
-	static final int ICON_WIDTH = 12;
-	static final int ICON_HEIGHT = 12;
-
-	public static final Icon MAGNIFIER_ICON = new IconWrapper() {
-		@Override
-		protected Icon createIcon() {
-			ImageIcon viewBitfieldIcon = ResourceManager.loadImage("images/magnifier.png");
-			ScaledImageIconWrapper scaledViewBitfieldIcon =
-				new ScaledImageIconWrapper(viewBitfieldIcon, ICON_WIDTH, ICON_HEIGHT);
-			return scaledViewBitfieldIcon;
-		}
-	};
-
 	private DataTypeManager originalDTM;
-	private boolean includeViewBitfieldIcon;
 
-	public DataTypeCellRenderer(DataTypeManager originalDataTypeManager,
-			boolean includeViewBitfieldIcon) {
+	public DataTypeCellRenderer(DataTypeManager originalDataTypeManager) {
 		this.originalDTM = originalDataTypeManager;
-		this.includeViewBitfieldIcon = includeViewBitfieldIcon;
 	}
 
 	@Override
@@ -83,14 +64,6 @@ public class DataTypeCellRenderer extends GTableCellRenderer {
 
 		if (useRed) {
 			c.setForeground(Color.RED);
-		}
-
-		c.setHorizontalTextPosition(RIGHT);
-		c.setIcon(null);
-
-		if (includeViewBitfieldIcon && (dt instanceof BitFieldDataType)) {
-			// add inspect icon and action listener
-			c.setIcon(MAGNIFIER_ICON);
 		}
 
 		return c;

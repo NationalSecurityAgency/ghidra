@@ -334,9 +334,9 @@
       		byte size and possible placement conflicts.</li>
       		<li>The start/end byte offsets may be shared with adjacent bitfield components.</li>
       		<li>Unoccupied bits within a partially occupied byte are not represented by any component
-      		(similar to padding bytes within aligned structures).  Using the Bitfield Viewer provides
-      		a bit-level view of a component.  (click <IMG alt="[magnifier icon]" src="images/magnifier.png"> 
-      		adjacent to bitfield datatype to view within Bitfield Viewer).</li>
+      		(similar to padding bytes within aligned structures).  Using the bit view provides
+      		a precise bit-level view of a component.  When a single component is selected, the bit 
+      		view will highlight the corresponding component block.</li>
       		<li>A separate Bitfield Editor, for use with unaligned structures only, 
       		must be used to precisley place a bitfield component.  Adding a bitfield component via the 
       		structure table view via datatype text entry (e.g., char:1) provides only rough placement. 

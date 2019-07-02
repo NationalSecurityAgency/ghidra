@@ -106,6 +106,10 @@ public abstract class CompositeEditorPanel extends JPanel
 		this.provider = provider;
 		this.model = model;
 		createTable();
+		JPanel bitViewerPanel = createBitViewerPanel();
+		if (bitViewerPanel != null) {
+			lowerPanel.add(bitViewerPanel);
+		}
 		JPanel infoPanel = createInfoPanel();
 		if (infoPanel != null) {
 			adjustCompositeInfo();
@@ -141,8 +145,8 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private void setupTableCellRenderer() {
 		GTableCellRenderer cellRenderer = new GTableCellRenderer();
-		DataTypeCellRenderer dtiCellRenderer = new DataTypeCellRenderer(
-			model.getOriginalDataTypeManager(), model.bitfieldsSupported());
+		DataTypeCellRenderer dtiCellRenderer =
+			new DataTypeCellRenderer(model.getOriginalDataTypeManager());
 		table.setDefaultRenderer(String.class, cellRenderer);
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
@@ -556,12 +560,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		table = new CompositeTable(model);
 		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		table.addMouseListener(new CompositeTableMouseListener());
-		if (model.bitfieldsSupported()) {
-			CompositeTableCellMouseListener cellMouseListener =
-				new CompositeTableCellMouseListener();
-			table.addMouseListener(cellMouseListener);
-			table.addMouseMotionListener(cellMouseListener);
-		}
 
 		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
 			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
@@ -615,6 +613,18 @@ public abstract class CompositeEditorPanel extends JPanel
 			// at that point.
 			table.setGridColor(Color.GRAY);
 		}
+	}
+
+	/**
+	 * Override this method to add your own bit-viewer panel below the
+	 * component table.
+	 * <P>Creates a panel that appears below the component table. This panel
+	 * contains a bit-level view of a selected component.
+	 * By default, there is no panel below the component table.
+	 * @return the panel or null if there isn't one.
+	 */
+	protected JPanel createBitViewerPanel() {
+		return null;
 	}
 
 	/**
@@ -1403,85 +1413,6 @@ public abstract class CompositeEditorPanel extends JPanel
 				return ((MouseEvent) anEvent).getClickCount() >= 2;
 			}
 			return true;
-		}
-	}
-
-	private class CompositeTableCellMouseListener extends MouseAdapter {
-
-		private boolean trackMovement;
-		private Cursor originalCursor;
-		private boolean pointerCursorActive;
-
-		@Override
-		public void mouseExited(MouseEvent e) {
-			trackMovement = false;
-			table.setCursor(originalCursor);
-		}
-
-		@Override
-		public void mouseEntered(MouseEvent e) {
-			trackMovement = true;
-			originalCursor = table.getCursor();
-		}
-
-		@Override
-		public void mouseClicked(MouseEvent e) {
-			if (!pointerCursorActive || e.getClickCount() != 1) {
-				return;
-			}
-			Point p = e.getPoint();
-			int columnIndex = table.columnAtPoint(p);
-			int rowIndex = table.rowAtPoint(p);
-			if ((columnIndex == -1) || (rowIndex == -1)) {
-				return;
-			}
-			DataTypeComponent dtc = model.getComponent(rowIndex);
-			if (dtc != null && dtc.isBitFieldComponent()) {
-				e.consume();
-				BitFieldViewerDialog dlg =
-					new BitFieldViewerDialog(model.viewComposite, dtc.getOrdinal());
-				Rectangle cellRect = table.getCellRect(rowIndex, columnIndex, false);
-				Point xyPoint = new Point(cellRect.x + DataTypeCellRenderer.ICON_WIDTH,
-					cellRect.y + cellRect.height);
-				SwingUtilities.convertPointToScreen(xyPoint, table);
-				dlg.setInitialLocation(xyPoint.x, xyPoint.y);
-				Window w = SwingUtilities.windowForComponent(table);
-				DockingWindowManager.showDialog(w, dlg, table);
-			}
-		}
-
-		@Override
-		public void mouseMoved(MouseEvent e) {
-			if (!trackMovement) {
-				return;
-			}
-			Point p = e.getPoint();
-
-			// Locate the renderer under the event location
-			int columnIndex = table.columnAtPoint(p);
-			int rowIndex = table.rowAtPoint(p);
-
-			if ((columnIndex != -1) && (rowIndex != -1) &&
-				DataTypeInstance.class.equals(table.getColumnClass(columnIndex))) {
-
-				DataTypeComponent dtc = model.getComponent(rowIndex);
-				// ignore non-bitfield rows
-				if (dtc != null && dtc.isBitFieldComponent()) {
-					Rectangle cellRect = table.getCellRect(rowIndex, columnIndex, false);
-					p.translate(-cellRect.x, -cellRect.y);
-					if (p.x <= (DataTypeCellRenderer.ICON_WIDTH + 2)) {
-						if (!pointerCursorActive) {
-							pointerCursorActive = true;
-							table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-						}
-						return; // view bitfield cursor active
-					}
-				}
-			}
-			if (pointerCursorActive) {
-				table.setCursor(originalCursor);
-				pointerCursorActive = false;
-			}
 		}
 	}
 

@@ -21,6 +21,7 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -28,11 +29,12 @@ import javax.swing.text.Document;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
-import ghidra.program.model.data.Category;
+import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Composite.AlignmentType;
-import ghidra.program.model.data.DataUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
@@ -74,6 +76,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	protected JLabel actualAlignmentLabel;
 	protected JTextField actualAlignmentValueTextField;
+
+	private BitFieldPlacementComponent bitViewComponent;
 
 	private DocumentListener fieldDocListener;
 
@@ -151,6 +155,70 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		else {
 			byValueMinAlignButton.setSelected(true);
 		}
+	}
+
+	@Override
+	protected JPanel createBitViewerPanel() {
+
+		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite);
+		model.addCompositeViewerModelListener(new CompositeEditorModelAdapter() {
+			@Override
+			public void selectionChanged() {
+				update();
+			}
+
+			@Override
+			public void componentDataChanged() {
+				update();
+			}
+
+			private void update() {
+				DataTypeComponent dtc = null;
+				bitViewComponent.updateAllocation(model.viewComposite.getLength(), 0);
+				if (model.isSingleComponentRowSelection()) {
+					dtc = model.getComponent(model.getSelectedRows()[0]);
+				}
+				bitViewComponent.init(dtc);
+				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc, true);
+				if (selectedRectangle != null) {
+					SwingUtilities.invokeLater(
+						() -> bitViewComponent.scrollRectToVisible(selectedRectangle));
+				}
+			}
+		});
+
+		bitViewComponent.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Point p = e.getPoint();
+				BitAttributes attrs = bitViewComponent.getBitAttributes(p);
+				if (attrs == null) {
+					return;
+				}
+				DataTypeComponent dtc = attrs.getDataTypeComponent(false);
+				if (dtc != null) {
+					model.setSelection(new int[] { dtc.getOrdinal() });
+				}
+				else {
+					model.setSelection(new FieldSelection());
+				}
+			}
+		});
+
+		JPanel p = new JPanel(new BorderLayout());
+		p.add(bitViewComponent, BorderLayout.WEST);
+		p.setBorder(new EmptyBorder(0, 0, 5, 0));
+
+		JScrollPane bitViewScrollPane =
+			new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		bitViewScrollPane.getViewport().setBackground(getBackground());
+		bitViewScrollPane.setBorder(null);
+
+		JPanel bitViewerPanel = new JPanel(new BorderLayout());
+		bitViewerPanel.add(bitViewScrollPane, BorderLayout.CENTER);
+		return bitViewerPanel;
 	}
 
 	/**
@@ -260,8 +328,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		categoryStatusTextField = new JTextField(" ");
 		categoryStatusTextField.setEditable(false);
-		categoryStatusTextField.setToolTipText(
-			"Category of this composite data type.");
+		categoryStatusTextField.setToolTipText("Category of this composite data type.");
 		categoryStatusTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;

@@ -31,7 +31,7 @@ import resources.icons.ColorIcon;
 
 public class BitFieldPlacementComponent extends JPanel {
 
-	private static final int CELL_HEIGHT = 30;
+	private static final int CELL_HEIGHT = 25;
 	private static final int BIT_WIDTH = 10;
 	private static final int ZERO_BIT_WIDTH = 3;
 	private static final int BIT_SEPARATOR_THICKNESS = 1;
@@ -46,11 +46,11 @@ public class BitFieldPlacementComponent extends JPanel {
 	private static final Color LINE_COLOR = Color.black;
 	private static final Color BYTE_HEADER_COLOR = new Color(0xdfdfdf);
 	private static final Color UNDEFINED_BIT_COLOR = new Color(0xf8f8f8);
-	private static final Color BITFIELD_BITS_COLOR = Color.green;
+	private static final Color ACTIVE_BITFIELD_BITS_COLOR = Color.green;
 	private static final Color CONFLICT_BITS_COLOR = Color.yellow;
 	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xcfcfff);
-	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xafafaf);
-	private static final Color INTERIOR_LINE_COLOR = new Color(0xbfbfbf);
+	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xb8b8ff);
+	private static final Color INTERIOR_LINE_COLOR = new Color(0xcfcfcf);
 
 	private final Composite composite;
 	private final boolean bigEndian;
@@ -78,7 +78,7 @@ public class BitFieldPlacementComponent extends JPanel {
 				}
 				viewComponentText += " }";
 				add(new JLabel(viewComponentText,
-					new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+					new ColorIcon(ACTIVE_BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
 					SwingConstants.LEFT));
 				add(legendPanel);
 			}
@@ -99,7 +99,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 			if (viewedBitfield == null) {
 				legendPanel.add(new JLabel("Edit bitfield bits",
-					new ColorIcon(BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
+					new ColorIcon(ACTIVE_BITFIELD_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
 					SwingConstants.LEFT));
 				legendPanel.add(new JLabel("Conflict bits",
 					new ColorIcon(CONFLICT_BITS_COLOR, INTERIOR_LINE_COLOR, LENEND_BOX_SIZE),
@@ -331,6 +331,45 @@ public class BitFieldPlacementComponent extends JPanel {
 		return null;
 	}
 
+	/**
+	 * Get rectangle which fully encompasses specified component.
+	 * @param dtc data type component
+	 * @param extendToByteBoundary if true rectangle extended to byte boundary
+	 * @return component rectangle or null
+	 */
+	Rectangle getComponentRectangle(DataTypeComponent dtc, boolean extendToByteBoundary) {
+		if (bitFieldAllocation == null || dtc == null) {
+			return null;
+		}
+
+		if (extendToByteBoundary) {
+			// compute rectangle which extends to byte boundary
+			int byteWidth = 8 * (BIT_WIDTH + BIT_SEPARATOR_THICKNESS);
+			int offset = (dtc.getOffset() - allocationByteOffset);
+			if (!bigEndian) {
+				offset = allocationByteSize - offset - dtc.getLength();
+			}
+			int x = offset * byteWidth;
+			int y = (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT;
+			int width = (dtc.getLength() * byteWidth) + (2 * BYTE_SEPARATOR_THICKNESS);
+			return new Rectangle(x, y, width, CELL_HEIGHT);
+		}
+
+		// compute rectangle based on bits only
+		Rectangle rect = null;
+		for (BitAttributes attrs : bitFieldAllocation.bitAttributes) {
+			if (attrs.dtc == dtc) {
+				if (rect == null) {
+					rect = new Rectangle(attrs.rectangle);
+				}
+				else {
+					rect.add(attrs.rectangle);
+				}
+			}
+		}
+		return rect;
+	}
+
 	@Override
 	public String getToolTipText(MouseEvent e) {
 		BitAttributes attrs = getBitAttributes(e.getPoint());
@@ -371,11 +410,21 @@ public class BitFieldPlacementComponent extends JPanel {
 	private void paintByteHeader(Graphics g, int y, int baseOffset) {
 		int byteSize = allocationByteSize;
 		int x = BYTE_SEPARATOR_THICKNESS;
-		for (int i = 0; i < byteSize; i++) {
+
+		// start close to the left clip bounds
+		Rectangle clipBounds = g.getClipBounds();
+		int maxX = clipBounds.x + clipBounds.width - 1;
+		int startIndex = clipBounds.x / BYTE_WIDTH;
+		x += startIndex * BYTE_WIDTH;
+
+		for (int i = startIndex; i < byteSize; i++) {
 			// last byte header needs to slightly wider
 			int w = BYTE_WIDTH;
 			if (i == (byteSize - 1)) {
 				w += BYTE_SEPARATOR_THICKNESS - BIT_SEPARATOR_THICKNESS;
+			}
+			if (x > maxX) {
+				break; // right clip - return early
 			}
 			paintByte(g, x, y, w, i, baseOffset);
 			x += w;
@@ -403,7 +452,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		String offsetStr = Integer.toString(offset);
 		FontMetrics fontMetrics = g.getFontMetrics();
-		int textY = y + (CELL_HEIGHT + fontMetrics.getMaxAscent()) / 2;
+		int textY = y + (CELL_HEIGHT + fontMetrics.getMaxAscent() - BYTE_SEPARATOR_THICKNESS) / 2;
 		int textX = x + (width - BYTE_SEPARATOR_THICKNESS - fontMetrics.stringWidth(offsetStr)) / 2;
 		g.drawString(offsetStr, textX, textY);
 
@@ -426,20 +475,92 @@ public class BitFieldPlacementComponent extends JPanel {
 			x += BIT_SEPARATOR_THICKNESS;
 		}
 
+		Rectangle dtcRectangle = null;
+		DataTypeComponent prevDtc = null;
 		BitAttributes prevAttrs = null;
 
-		for (int n = 0; n < bitAttributes.length; n++) {
-			BitAttributes attrs = bitAttributes[n];
-			boolean paintRightLine = n != (bitAttributes.length - 1);
+		// start close to the left clip bounds
+		Rectangle clipBounds = g.getClipBounds();
+		int maxX = clipBounds.x + clipBounds.width - 1;
+		int bitWidth = bitAttributes[0].rectangle.width;
+		int startIndex = clipBounds.x / (bitAttributes[0].rectangle.width);
+		x += startIndex * bitWidth;
+
+		int bitIndex;
+		for (bitIndex = startIndex; bitIndex < bitAttributes.length; bitIndex++) {
+			BitAttributes attrs = bitAttributes[bitIndex];
+			if (x > maxX) {
+				break; // right clip - return early
+			}
+			boolean paintRightLine = bitIndex != (bitAttributes.length - 1);
 			attrs.paint(g, prevAttrs, paintRightLine);
-			x += attrs.rectangle.width;
+
+			DataTypeComponent dtc = attrs.getDataTypeComponent(false);
+			if (prevDtc != null && prevDtc != dtc) {
+				paintComponentLabel(g, prevDtc, dtcRectangle);
+				prevDtc = null;
+			}
+			if (prevDtc == null) {
+				prevDtc = dtc;
+				dtcRectangle = new Rectangle(attrs.rectangle);
+			}
+			dtcRectangle.add(attrs.rectangle);
+
+			if (attrs.unallocated) {
+				paintDit(g, attrs.rectangle);
+			}
+
 			prevAttrs = attrs;
+			x += bitWidth;
+		}
+		if (prevDtc != null) {
+			paintComponentLabel(g, prevDtc, dtcRectangle);
 		}
 
-		if (prevAttrs != null && prevAttrs.rightEndType == EndBitType.TRUNCATED_END) {
+		if (bitIndex == bitAttributes.length && prevAttrs != null &&
+			prevAttrs.rightEndType == EndBitType.TRUNCATED_END) {
 			x -= BIT_SEPARATOR_THICKNESS; // backup to right line location
 			drawTruncationLine(g, x, y, CELL_HEIGHT);
 		}
+
+		g.setColor(curColor);
+	}
+
+	private void paintDit(Graphics2D g, Rectangle r) {
+		Color curColor = g.getColor();
+
+		g.setColor(INTERIOR_LINE_COLOR);
+		int x = r.x + (r.width / 2) - 1;
+		int y = r.y + (r.height / 2) - 1;
+		g.fillRect(x, y, 2, 2);
+
+		g.setColor(curColor);
+	}
+
+	private void paintComponentLabel(Graphics g, DataTypeComponent dtc, Rectangle r) {
+
+		if (dtc.getDataType() == DataType.DEFAULT) {
+			return;
+		}
+
+		String name = dtc.getFieldName();
+		if (name == null) {
+			return;
+		}
+		name = " " + name + " ";
+
+		FontMetrics fontMetrics = g.getFontMetrics();
+		int strWidth = fontMetrics.stringWidth(name);
+		if (strWidth >= r.width) {
+			return;
+		}
+
+		Color curColor = g.getColor();
+		g.setColor(TEXT_COLOR);
+
+		int textY = r.y + (r.height + fontMetrics.getMaxAscent() - BYTE_SEPARATOR_THICKNESS) / 2;
+		int textX = r.x + (r.width - BYTE_SEPARATOR_THICKNESS - strWidth) / 2;
+		g.drawString(name, textX, textY);
 
 		g.setColor(curColor);
 	}
@@ -579,7 +700,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 			int allocationEndOffset = allocationByteOffset + allocationByteSize - 1;
 
-			for (DataTypeComponent component : struct.getDefinedComponents()) {
+			for (DataTypeComponent component : struct.getComponents()) {
 				if (component.getOrdinal() == editOrdinal) {
 					continue;
 				}
@@ -661,9 +782,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		Rectangle rectangle;
 
 		/**
-		 * Unallocated bitfield
-		 * @param dtc
-		 * @param conflict
+		 * Unallocated bitfield (e.g., bitfield padding)
 		 */
 		BitAttributes() {
 			dtc = null;
@@ -675,8 +794,8 @@ public class BitFieldPlacementComponent extends JPanel {
 
 		/**
 		 * Zero-length bitfield
-		 * @param dtc
-		 * @param conflict
+		 * @param dtc data type component residing within structure or null for edit component
+		 * @param conflict conflict or null
 		 */
 		BitAttributes(DataTypeComponent dtc, BitAttributes conflict) {
 			this(dtc, dtc != null ? EndBitType.END : EndBitType.NOT_END,
@@ -684,6 +803,13 @@ public class BitFieldPlacementComponent extends JPanel {
 			zeroBitfield = true;
 		}
 
+		/**
+		 * 
+		 * @param dtc data type component residing within structure or null for edit component
+		 * @param leftEndType left line type
+		 * @param rightEndType right line type
+		 * @param conflict conflict or null
+		 */
 		BitAttributes(DataTypeComponent dtc, EndBitType leftEndType, EndBitType rightEndType,
 				BitAttributes conflict) {
 			this.dtc = dtc;
@@ -728,7 +854,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 			if (zeroBitfield ||
 				(dtc != null && conflict != null && conflict.dtc.isZeroBitFieldComponent())) {
-				c = BITFIELD_BITS_COLOR;
+				c = ACTIVE_BITFIELD_BITS_COLOR;
 				Color lineColor = INTERIOR_LINE_COLOR;
 				if (dtc != null) {
 					c = BITFIELD_COMPONENT_COLOR;
@@ -778,11 +904,11 @@ public class BitFieldPlacementComponent extends JPanel {
 					return CONFLICT_BITS_COLOR;
 				}
 			}
-			if (zeroBitfield) {
-				return UNDEFINED_BIT_COLOR;
-			}
 			if (dtc == editComponent) {
-				return BITFIELD_BITS_COLOR; // edit field
+				return ACTIVE_BITFIELD_BITS_COLOR; // edit field
+			}
+			if (zeroBitfield || dtc.getDataType() == DataType.DEFAULT) {
+				return UNDEFINED_BIT_COLOR;
 			}
 			return dtc.isBitFieldComponent() ? BITFIELD_COMPONENT_COLOR
 					: NON_BITFIELD_COMPONENT_COLOR;
@@ -797,8 +923,8 @@ public class BitFieldPlacementComponent extends JPanel {
 				(name != null ? (" " + dtc.getFieldName()) : "");
 		}
 
-		DataTypeComponent getDataTypeComponent(boolean ignoreEditComponent) {
-			if (dtc != null && (dtc.getOrdinal() != editOrdinal || !ignoreEditComponent)) {
+		DataTypeComponent getDataTypeComponent(boolean ignoreActiveComponent) {
+			if (dtc != null && (dtc.getOrdinal() != editOrdinal || !ignoreActiveComponent)) {
 				return dtc;
 			}
 			if (conflict != null) {
