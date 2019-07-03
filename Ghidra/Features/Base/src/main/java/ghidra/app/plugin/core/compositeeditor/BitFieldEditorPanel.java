@@ -271,6 +271,10 @@ public class BitFieldEditorPanel extends JPanel {
 
 		@Override
 		public void mousePressed(MouseEvent e) {
+			if (e.isConsumed()) {
+				return;
+			}
+			e.consume();
 			selectionActive = false;
 			if (e.getButton() == MouseEvent.BUTTON1 && bitOffsetInput.isEnabled()) {
 				bitSizeModel.setValue(1L); // must change size first
@@ -282,9 +286,11 @@ public class BitFieldEditorPanel extends JPanel {
 
 		@Override
 		public void mouseDragged(MouseEvent e) {
-			if (!selectionActive) {
+			if (!selectionActive || e.isConsumed()) {
 				return;
 			}
+
+			e.consume();
 
 			Point p = e.getPoint();
 			int bitOffset = placementComponent.getBitOffset(p);
@@ -314,7 +320,10 @@ public class BitFieldEditorPanel extends JPanel {
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			selectionActive = false;
+			if (selectionActive && !e.isConsumed()) {
+				e.consume();
+				selectionActive = false;
+			}
 		}
 
 	}
@@ -649,22 +658,19 @@ public class BitFieldEditorPanel extends JPanel {
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent mwe) {
-			if (!isEnabled()) {
+			if (!isEnabled() || mwe.getModifiersEx() != 0 || mwe.isConsumed()) {
 				return;
 			}
 			if (mwe.getScrollType() != MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+				// TODO: should we handle other modes?
 				return;
 			}
+			mwe.consume();
 			SpinnerNumberModel m = (SpinnerNumberModel) getModel();
-			if (mwe.getScrollType() != MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-				// TODO: Handle other mouse wheel modes
-				return;
-			}
 			Long value =
 				mwe.getUnitsToScroll() > 0 ? (Long) m.getPreviousValue() : (Long) m.getNextValue();
 			if (value != null) {
 				setValue(value);
-				mwe.consume();
 			}
 		}
 	}

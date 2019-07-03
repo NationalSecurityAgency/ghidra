@@ -574,13 +574,16 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		int endIndex = startIndex;
 		if (startIndex < components.size()) {
 			// some shifting of components may be required
-			int endBitOffset = startBitOffset + effectiveBitSize - 1;
-			endIndex = Collections.binarySearch(components, new Integer(endBitOffset),
+			int endBitOffset = startBitOffset;
+			if (effectiveBitSize != 0) {
+				endBitOffset += effectiveBitSize - 1;
+			}
+			endIndex = Collections.binarySearch(components, Integer.valueOf(endBitOffset),
 				bitOffsetComparator);
 			if (endIndex < 0) {
 				endIndex = -endIndex - 1;
 			}
-			else {
+			else if (effectiveBitSize != 0) {
 				hasConflict = true;
 			}
 		}
