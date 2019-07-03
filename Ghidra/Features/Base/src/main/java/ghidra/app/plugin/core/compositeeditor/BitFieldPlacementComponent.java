@@ -55,11 +55,11 @@ public class BitFieldPlacementComponent extends JPanel {
 	private int bitWidth = 10;
 	private int byteWidth = getByteWidth(bitWidth);
 
-	private final Composite composite;
-	private final boolean bigEndian;
+	private Composite composite;
+	private boolean bigEndian;
 
 	private int allocationByteOffset;
-	private int allocationByteSize;
+	private int allocationByteSize = 1;
 	private BitFieldAllocation bitFieldAllocation;
 
 	private EditMode editMode = EditMode.NONE;
@@ -114,7 +114,9 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	BitFieldPlacementComponent(Composite composite) {
 		this.composite = composite;
-		bigEndian = composite.getDataOrganization().isBigEndian();
+		if (composite != null) {
+			bigEndian = composite.getDataOrganization().isBigEndian();
+		}
 		updatePreferredSize();
 		setSize(getPreferredSize());
 		setMinimumSize(getPreferredSize());
@@ -122,11 +124,34 @@ public class BitFieldPlacementComponent extends JPanel {
 		addMouseWheelListener(new MyMouseWheelListener());
 	}
 
+	/**
+	 * Get the composite associated with this component.
+	 * @return composite or null
+	 */
+	public Composite getComposite() {
+		return composite;
+	}
+
+	/**
+	 * Set the current composite.  State will reset to a non-edit mode.
+	 * @param composite composite or null
+	 */
+	public void setComposite(Composite composite) {
+		this.composite = composite;
+		if (composite != null) {
+			bigEndian = composite.getDataOrganization().isBigEndian();
+		}
+		allocationByteOffset = 0;
+		allocationByteSize = 1;
+		init(null);
+	}
+
 	private class MyMouseWheelListener implements MouseWheelListener {
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			if (e.getModifiersEx() != InputEvent.SHIFT_DOWN_MASK || e.isConsumed()) {
+			if (bitFieldAllocation == null || e.getModifiersEx() != InputEvent.SHIFT_DOWN_MASK ||
+				e.isConsumed()) {
 				return;
 			}
 			if (e.getScrollType() != MouseWheelEvent.WHEEL_UNIT_SCROLL) {
@@ -270,6 +295,9 @@ public class BitFieldPlacementComponent extends JPanel {
 	}
 
 	boolean hasApplyConflict() {
+		if (composite == null || bitFieldAllocation == null) {
+			throw new IllegalStateException();
+		}
 		if (composite instanceof Union) {
 			return false;
 		}
@@ -316,6 +344,9 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	void applyBitField(DataType baseDataType, String fieldName, boolean deleteConflicts,
 			CompositeChangeListener listener) {
+		if (composite == null) {
+			throw new IllegalStateException("Composite not loaded");
+		}
 		HashSet<Integer> ordinalDeleteSet = new HashSet<>();
 		if (editOrdinal >= 0) {
 			int initialLength = composite.getLength();
@@ -732,6 +763,12 @@ public class BitFieldPlacementComponent extends JPanel {
 		}
 
 		private void allocateBits() {
+
+			if (composite == null) {
+				bitAttributes = new BitAttributes[0];
+				return;
+			}
+
 			bitAttributes = new BitAttributes[8 * allocationByteSize];
 
 			if (composite instanceof Structure) {
@@ -913,7 +950,8 @@ public class BitFieldPlacementComponent extends JPanel {
 				// offcut with another component (currently ignored)
 				c = conflict.conflict;
 			}
-			return c != null ? c.dtc : null;
+			// NOTE: DEFAULT undefined datatype can be ignored as conflict
+			return c != null && c.dtc.getDataType() != DataType.DEFAULT ? c.dtc : null;
 		}
 
 		void layout(int x, int y, int width, int height) {

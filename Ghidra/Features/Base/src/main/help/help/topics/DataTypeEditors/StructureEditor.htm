@@ -15,24 +15,34 @@
     <P>The Structure Editor is used to define the contents of a structure data type. It can be used
     to create a new structure or to modify existing ones. Structures are user defined data types
     that contain components. A component is a data type of a particular size and at a specified
-    offset in the structure. The following illustrates the editor for a structure data type.<BR>
+    offset in the structure. The following illustrates the editor for a structure data type.
     </P>
     <BR>
-    <BR>
+    
      
-
     <DIV align="center" style="margin-top: 10px;">
       <IMG src="images/StructureEditor.png" alt=""><BR>
     </DIV>
+    
+    <BR>
+    <P>As shown above, the Structure Editor also includes a bit-level view of the structure layout to improve 
+    understanding of bitfield placement when they are present.  Note that the byte ordering is
+    reversed for little-endian data organizations to ensure that a bitfield is always rendered
+    as a contiguous bit range.  If inadequate space is available for a component label,
+    within the bit view of the component, it will be omitted.  However, holding down the Shift-key
+    while using the mouse wheel on a component will zoom the view in and out
+    allowing component labels to appear when space permits.  The bit view may also be used to make
+    and reflect single component selections with the table.  Within the bit view any padding bits not visible within
+    table view as a component will include a small dot in the center of the displayed bit cell.<BR>
 
     <P>The Union Editor is very similar to the Structure Editor, but is used to create or modify a
     union data type. All the components of a Union are at an offset of 0. The following illustrates
     the editor for a union data type.</P>
-
+<BR>
     <DIV align="center" style="margin-top: 10px;">
       <IMG src="images/UnionEditor.png" alt=""><BR>
     </DIV>
-
+<BR>
     <P>A Structure Editor or Union Editor can be launched from the <A href=
     "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>,
     the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>, or the <A href=

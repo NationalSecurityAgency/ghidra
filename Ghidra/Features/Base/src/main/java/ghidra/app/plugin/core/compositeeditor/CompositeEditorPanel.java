@@ -72,7 +72,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	// Normal color for selecting components in the table.
 	// TODO: Why do we choose a different selection color?
 	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
-	protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
+	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 

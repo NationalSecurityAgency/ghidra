@@ -21,7 +21,6 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.event.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -173,8 +172,18 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 
 			private void update() {
-				DataTypeComponent dtc = null;
+				if (!model.isLoaded()) {
+					bitViewComponent.setComposite(null);
+					return;
+				}
+				if (bitViewComponent.getComposite() != model.viewComposite) {
+					// must track instance changes caused by model unload/load invocations
+					bitViewComponent.setComposite(model.viewComposite);
+				}
+
 				bitViewComponent.updateAllocation(model.viewComposite.getLength(), 0);
+
+				DataTypeComponent dtc = null;
 				if (model.isSingleComponentRowSelection()) {
 					dtc = model.getComponent(model.getSelectedRows()[0]);
 				}
@@ -206,9 +215,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		JPanel p = new JPanel(new BorderLayout());
-		p.add(bitViewComponent, BorderLayout.WEST);
-		p.setBorder(new EmptyBorder(0, 0, 5, 0));
+		JPanel p = new JPanel();
+		p.add(bitViewComponent);
+		//p.setBorder(new EmptyBorder(5, 5, 0, 15));
 
 		JScrollPane bitViewScrollPane =
 			new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
@@ -247,7 +256,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		addFieldListeners();
 
-		infoPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 0, 10));
+		infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		return infoPanel;
 	}
@@ -267,7 +276,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		nameTextField = new JTextField("");
 		nameTextField.setToolTipText("Structure Name");
 		nameTextField.setEditable(true);
-		nameTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -296,7 +304,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(descriptionLabel, gridBagConstraints);
 
 		descriptionTextField = new JTextField("");
-		descriptionTextField.setMargin(TEXTFIELD_INSETS);
 		descriptionTextField.setToolTipText("Structure Description");
 		descriptionTextField.setEditable(true);
 		gridBagConstraints.insets = VERTICAL_INSETS;
@@ -329,7 +336,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		categoryStatusTextField = new JTextField(" ");
 		categoryStatusTextField.setEditable(false);
 		categoryStatusTextField.setToolTipText("Category of this composite data type.");
-		categoryStatusTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -499,7 +505,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		minAlignValueTextField.setName("Minimum Alignment Value");
 		minAlignValueTextField.setEditable(true);
-		minAlignValueTextField.setMargin(TEXTFIELD_INSETS);
 		minAlignValueTextField.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(minAlignValueTextField, new HelpLocation(
@@ -575,7 +580,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 		actualAlignmentValueTextField.setName("Actual Alignment Value");
 
-		actualAlignmentValueTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -676,7 +680,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		packingValueTextField.setName("Packing Value");
 		packingValueTextField.setEditable(true);
-		packingValueTextField.setMargin(TEXTFIELD_INSETS);
 
 		packingValueTextField.addActionListener(e -> adjustPackingValue());
 
@@ -799,7 +802,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		sizeStatusTextField.setName("Total Length");
 		sizeStatusTextField.setEditable(false);
 		sizeStatusTextField.setToolTipText("The current size in bytes.");
-		sizeStatusTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.ipadx = 60;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.gridx = 1;
