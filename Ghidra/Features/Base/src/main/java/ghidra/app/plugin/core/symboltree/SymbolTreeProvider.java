@@ -357,7 +357,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private boolean canReparentSymbol(Symbol symbol) {
 		SymbolType symbolType = symbol.getSymbolType();
-		return (symbolType == SymbolType.CODE) || (symbolType == SymbolType.FUNCTION) ||
+		return (symbolType == SymbolType.LABEL) || (symbolType == SymbolType.FUNCTION) ||
 			(symbolType == SymbolType.NAMESPACE) || (symbolType == SymbolType.CLASS);
 	}
 

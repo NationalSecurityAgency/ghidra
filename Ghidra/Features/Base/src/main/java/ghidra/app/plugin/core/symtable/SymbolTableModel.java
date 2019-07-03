@@ -699,7 +699,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 				return null;
 			}
 			SymbolType symbolType = symbol.getSymbolType();
-			if (symbolType != SymbolType.FUNCTION && symbolType != SymbolType.CODE) {
+			if (symbolType != SymbolType.FUNCTION && symbolType != SymbolType.LABEL) {
 				return null;
 			}
 			ExternalManager externalManager = p.getExternalManager();

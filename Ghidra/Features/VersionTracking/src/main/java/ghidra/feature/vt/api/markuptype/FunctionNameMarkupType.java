@@ -127,7 +127,7 @@ public class FunctionNameMarkupType extends FunctionEntryPointBasedAbstractMarku
 		SymbolTable symbolTable = destinationProgram.getSymbolTable();
 		Symbol desiredSymbol =
 			symbolTable.getSymbol(destinationName, destinationAddress, destinationNamespace);
-		if (desiredSymbol != null && desiredSymbol.getSymbolType() == SymbolType.CODE) {
+		if (desiredSymbol != null && desiredSymbol.getSymbolType() == SymbolType.LABEL) {
 			SetLabelPrimaryCmd setLabelPrimaryCmd =
 				new SetLabelPrimaryCmd(desiredSymbol.getAddress(), desiredSymbol.getName(),
 					desiredSymbol.getParentNamespace());

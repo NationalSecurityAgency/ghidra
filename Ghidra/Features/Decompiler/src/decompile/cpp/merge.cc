@@ -1072,7 +1072,7 @@ void Merge::markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 
       PcodeOp *domOp = copy[pos + j];
       if (domOp->isDead()) continue;
       if (checkCopyPair(high, domOp, subOp)) {
-	data.opSetFlag(subOp, PcodeOp::nonprinting);
+	data.opMarkNonPrinting(subOp);
 	break;
       }
     }
@@ -1233,7 +1233,7 @@ void Merge::markInternalCopies(void)
       v1 = op->getOut();
       h1 = v1->getHigh();
       if (h1 == op->getIn(0)->getHigh()) {
-	data.opSetFlag(op, PcodeOp::nonprinting);
+	data.opMarkNonPrinting(op);
       }
       else {	// COPY between different HighVariables
 	if (!h1->hasCopyIn1()) {	// If this is the first COPY we've seen for this high
@@ -1244,7 +1244,7 @@ void Merge::markInternalCopies(void)
 	  h1->setCopyIn2();		// This is at least the second COPY we've seen
 	if (v1->hasNoDescend()) {	// Don't print shadow assignments
 	  if (shadowedVarnode(v1)) {
-	    data.opSetFlag(op, PcodeOp::nonprinting);
+	    data.opMarkNonPrinting(op);
 	  }
 	}
       }
@@ -1261,7 +1261,7 @@ void Merge::markInternalCopies(void)
       v3 = h3->getTiedVarnode();
       if (v3->overlap(*v1) != 0) break;
       if (v2->overlap(*v1) != v3->getSize()) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
+      data.opMarkNonPrinting(op);
       break;
     case CPUI_SUBPIECE:
       h1 = op->getOut()->getHigh();
@@ -1272,7 +1272,7 @@ void Merge::markInternalCopies(void)
       v2 = h2->getTiedVarnode();
       val = op->getIn(1)->getOffset();
       if (v1->overlap(*v2) != val) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
+      data.opMarkNonPrinting(op);
       break;
     default:
       break;

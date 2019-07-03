@@ -555,7 +555,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	 */
 	public static String getDefaultExternalName(SymbolDB sym) {
 		SymbolType type = sym.getSymbolType();
-		if ((type != SymbolType.CODE && type != SymbolType.FUNCTION) || !sym.isExternal()) {
+		if ((type != SymbolType.LABEL && type != SymbolType.FUNCTION) || !sym.isExternal()) {
 			throw new AssertException();
 		}
 		ExternalData3 externalData3 = ExternalLocationDB.getExternalData3(sym);
@@ -609,7 +609,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		}
 
 		SymbolType symbolType = symbol.getSymbolType();
-		if (symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) {
+		if (symbolType == SymbolType.LABEL || symbolType == SymbolType.FUNCTION) {
 			return getExtLocation(symbol.getAddress());
 		}
 

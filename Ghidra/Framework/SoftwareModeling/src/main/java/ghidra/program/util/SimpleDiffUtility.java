@@ -355,7 +355,7 @@ public class SimpleDiffUtility {
 		if (symbolType == SymbolType.FUNCTION) {
 			return getOtherFunctionSymbol(symbol, otherProgram, otherNamespace);
 		}
-		if (symbolType == SymbolType.CODE) {
+		if (symbolType == SymbolType.LABEL) {
 			return getOtherCodeSymbol(symbol, otherProgram, otherNamespace);
 		}
 		// In case any new SymbolTypes get added
@@ -522,7 +522,7 @@ public class SimpleDiffUtility {
 			return null;
 		}
 		SymbolType type = symbol.getSymbolType();
-		if ((type != SymbolType.FUNCTION && type != SymbolType.CODE) || !symbol.isExternal()) {
+		if ((type != SymbolType.FUNCTION && type != SymbolType.LABEL) || !symbol.isExternal()) {
 			return null;
 		}
 

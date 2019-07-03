@@ -2432,7 +2432,7 @@ void ValueSetSolver::establishValueSets(const vector<Varnode *> &sinks,const vec
     PcodeOp *op = vn->getDef();
     switch(op->code()) {	// Distinguish ops where we can never predict an integer range
       case CPUI_INDIRECT:
-	if (indirectAsCopy) {
+	if (indirectAsCopy || op->isIndirectStore()) {
 	  Varnode *inVn = op->getIn(0);
 	  if (!inVn->isMark()) {
 	    newValueSet(inVn,0);
