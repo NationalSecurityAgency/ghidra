@@ -4247,8 +4247,8 @@ define pcodeop smm_restore_state;
 :SHR rm32,n1    is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=5 ...        { CF = (rm32 & 1) != 0; OF = 0; rm32 = rm32 >> 1; build check_rm32_dest; resultflags(rm32); }
 :SHR rm32,CL    is vexMode=0 & opsize=1 & byte=0xD3; CL & rm32 & check_rm32_dest ... & reg_opcode=5 ...       { local count =   CL & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
                                           shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
-:SHR rm32,imm8  is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
-                                          shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
+:SHR rm32,imm8  is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=5 ... ; imm8 { local count = imm8 & 0x1f; if ( count == 0x1f) goto <END>; local tmp = rm32; 
+										  rm32 = rm32 >> count; build check_rm32_dest; shrflags(tmp, rm32,count); shiftresultflags(rm32,count); <END> }
 @ifdef IA64
 :SHR rm64,n1    is vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 &reg_opcode=5 ...        { CF = (rm64 & 1) != 0; OF = 0; rm64 = rm64 >> 1; resultflags(rm64); }
 :SHR rm64,CL    is vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=5 ...       { local count =   CL & 0x3f; local tmp = rm64; rm64 = rm64 >> count;
