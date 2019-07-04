@@ -2170,9 +2170,10 @@ cplus_demangle_builtin_types[D_BUILTIN_TYPE_COUNT] =
   /* 27 */ { NL ("decimal64"),	NL ("decimal64"),	D_PRINT_DEFAULT },
   /* 28 */ { NL ("decimal128"),	NL ("decimal128"),	D_PRINT_DEFAULT },
   /* 29 */ { NL ("half"),	NL ("half"),		D_PRINT_FLOAT },
-  /* 30 */ { NL ("char16_t"),	NL ("char16_t"),	D_PRINT_DEFAULT },
-  /* 31 */ { NL ("char32_t"),	NL ("char32_t"),	D_PRINT_DEFAULT },
-  /* 32 */ { NL ("decltype(nullptr)"),	NL ("decltype(nullptr)"),
+  /* 30 */ { NL ("char8_t"),	NL ("char8_t"),	D_PRINT_DEFAULT },
+  /* 31 */ { NL ("char16_t"),	NL ("char16_t"),	D_PRINT_DEFAULT },
+  /* 32 */ { NL ("char32_t"),	NL ("char32_t"),	D_PRINT_DEFAULT },
+  /* 33 */ { NL ("decltype(nullptr)"),	NL ("decltype(nullptr)"),
 	     D_PRINT_DEFAULT },
 };
 
@@ -2405,14 +2406,19 @@ cplus_demangle_type (struct d_info *di)
 	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[29]);
 	  di->expansion += ret->u.s_builtin.type->len;
 	  break;
+  case 'u':
+    /* char8_t */
+    ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[30]);
+    di->expansion += ret->u.s_builtin.type->len;
+    break;
 	case 's':
 	  /* char16_t */
-	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[30]);
+	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[31]);
 	  di->expansion += ret->u.s_builtin.type->len;
 	  break;
 	case 'i':
 	  /* char32_t */
-	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[31]);
+	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[32]);
 	  di->expansion += ret->u.s_builtin.type->len;
 	  break;
 
@@ -2438,7 +2444,7 @@ cplus_demangle_type (struct d_info *di)
 
         case 'n':
           /* decltype(nullptr) */
-	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[32]);
+	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[33]);
 	  di->expansion += ret->u.s_builtin.type->len;
 	  break;
 
