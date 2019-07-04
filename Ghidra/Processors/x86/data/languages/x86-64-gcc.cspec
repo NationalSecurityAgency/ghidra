@@ -132,7 +132,7 @@
 	      <addr offset="40" space="stack"/>
 	    </pentry>
 	  </input>
-	  <output killedbycall="true">
+	  <output>
 	    <pentry minsize="4" maxsize="8" metatype="float">
 	      <register name="XMM0_Qa"/>
 	    </pentry>
@@ -153,6 +153,10 @@
 	    <register name="R15"/>
 	    <register name="DF"/>
 	  </unaffected>
+      <killedbycall>
+        <register name="RAX"/>
+        <register name="XMM0"/>
+      </killedbycall>
 	  <localrange>
 	    <range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/>
 	    <range space="stack" first="8" last="39"/>
