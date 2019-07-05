@@ -1223,7 +1223,8 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
       }
       int4 wholeSize = 8*sizeof(uintb) - count_leading_zeros(mask);
       if (in1.getMaxInfo() + in2.getMaxInfo() > wholeSize) {
-	right = left;	// Covered everything
+	left = in1.left;	// Covered everything
+	right = in1.left;
 	normalize();
 	return true;
       }
@@ -1630,8 +1631,10 @@ bool ValueSet::iterate(Widener &widener)
     if (0 != res.circleUnion(range)) {	// Union with the previous iteration's set
       res.minimalContainer(range,MAX_STEP);
     }
-    leftIsStable = range.getMin() == res.getMin();
-    rightIsStable = range.getEnd() == res.getEnd();
+    if (!range.isEmpty() && !res.isEmpty()) {
+      leftIsStable = range.getMin() == res.getMin();
+      rightIsStable = range.getEnd() == res.getEnd();
+    }
   }
   else if (numParams == 1) {
     ValueSet *inSet1 = op->getIn(0)->getValueSet();
