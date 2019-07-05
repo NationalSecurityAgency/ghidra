@@ -44,6 +44,11 @@ public class DummyToolActions implements DockingToolActions {
 	}
 
 	@Override
+	public DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
+		return null;
+	}
+
+	@Override
 	public Set<DockingActionIf> getActions(String owner) {
 		return null;
 	}
@@ -62,5 +67,4 @@ public class DummyToolActions implements DockingToolActions {
 	public void removeActions(ComponentProvider provider) {
 		// stub
 	}
-
 }

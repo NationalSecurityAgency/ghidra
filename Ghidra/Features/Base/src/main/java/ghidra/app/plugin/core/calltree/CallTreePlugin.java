@@ -148,6 +148,14 @@ public class CallTreePlugin extends ProgramPlugin {
 		tool.showComponentProvider(provider, true);
 	}
 
+	CallTreeProvider getPrimaryProvider() {
+		return primaryProvider;
+	}
+
+	DockingAction getShowCallTreeFromMenuAction() {
+		return showCallTreeFromMenuAction;
+	}
+
 	ProgramLocation getCurrentLocation() {
 		return currentLocation;
 	}

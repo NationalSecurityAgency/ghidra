@@ -68,7 +68,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 		pm.openProgram(program.getDomainFile());
 		addrFactory = program.getAddressFactory();
 		env.showTool();
-		provider = (CodeViewerProvider) tool.getComponentProvider("CodeBrowserPlugin");
+		provider = (CodeViewerProvider) tool.getComponentProvider("Listing");
 		listingModel = provider.getListingPanel().getListingModel();
 		CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 		toggleExpand = getAction(plugin, "Toggle Expand/Collapse Data");

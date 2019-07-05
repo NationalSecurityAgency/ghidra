@@ -876,6 +876,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			// changes, which means we will get here while setting the location, but our program
 			// will have been null'ed out.
 			currentProgram = plugin.getCurrentProgram();
+			currentProgram.addListener(this);
 		}
 
 		Function function = plugin.getFunction(location);

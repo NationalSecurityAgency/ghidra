@@ -32,7 +32,6 @@ import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.actions.KeyBindingUtils;
-import docking.actions.SharedStubKeyBindingAction;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
@@ -708,16 +707,9 @@ public class KeyBindingsPanel extends JPanel {
 					}
 					return "";
 				case PLUGIN_NAME:
-					return getOwner(action);
+					return action.getOwnerDescription();
 			}
 			return "Unknown Column!";
-		}
-
-		private String getOwner(DockingActionIf action) {
-			if (action instanceof SharedStubKeyBindingAction) {
-				return ((SharedStubKeyBindingAction) action).getOwnersDescription();
-			}
-			return action.getOwner();
 		}
 
 		@Override

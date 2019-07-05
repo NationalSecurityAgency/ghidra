@@ -155,6 +155,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		KeyStroke existingKeyStroke = action.getKeyBinding();
 		if (Objects.equals(existingKeyStroke, newKeyStroke)) {
+			setStatusText("Key binding unchanged");
 			return;
 		}
 
@@ -177,8 +178,15 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private void updateCollisionPane(KeyStroke ks) {
+		clearStatusText();
 		collisionPane.setText("");
 		if (ks == null) {
+			return;
+		}
+
+		KeyStroke existingKeyStroke = action.getKeyBinding();
+		if (Objects.equals(existingKeyStroke, ks)) {
+			setStatusText("Key binding unchanged");
 			return;
 		}
 
@@ -193,7 +201,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			for (int i = 0; i < list.size(); i++) {
 				DockingActionIf a = list.get(i);
 
-				String collisionStr = "\t" + a.getName() + "  (" + a.getOwner() + ")\n";
+				String collisionStr = "\t" + a.getName() + "  (" + a.getOwnerDescription() + ")\n";
 				int offset = doc.getLength();
 				doc.insertString(offset, collisionStr, textAttrSet);
 				doc.setParagraphAttributes(offset, 1, tabAttrSet, false);
@@ -211,6 +219,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		if (multiAction == null) {
 			return Collections.emptyList();
 		}
+
 		List<DockingActionIf> list = multiAction.getActions();
 		Map<String, DockingActionIf> nameMap = new HashMap<>(list.size());
 

@@ -160,6 +160,25 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	@Test
+	public void testSetKeyBinding_ViaDialog_FromWindowMenu_ToAlreadyBoundAction() {
+
+		//
+		// Test the conflicting key binding use case
+		// 
+
+		HasDefaultKeyBindingComponentProvider otherProvider =
+			new HasDefaultKeyBindingComponentProvider(tool);
+		otherProvider.setVisible(true);
+
+		showProvider();
+
+		KeyStroke newKs = CONTROL_T;
+		applyBindingToDialog_FromWindowsMenu(newKs);
+
+		assertCollisionsWithKeyStroke();
+	}
+
+	@Test
 	public void testSetKeyBinding_ViaOptions_WithoutToolbarAction() {
 
 		showProvider();
@@ -235,6 +254,14 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		}
 	}
 
+	@Test
+	public void testDefaultKeyBindingAppearsInWindowMenu() {
+
+		provider.setDefaultKeyBinding(new KeyBindingData(CONTROL_T));
+		showProvider();
+		assertWindowMenuActionHasKeyBinding(CONTROL_T);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -279,7 +306,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 				.stream()
 				.filter(a -> a.getOwner().equals(DockingWindowManager.DOCKING_WINDOWS_OWNER))
 				.findFirst()
-				.get()
+				.orElseGet(() -> null)
 				;
 			//@formatter:on
 		});
@@ -310,7 +337,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void assertNoToolbarAction() {
-		assertNotNull("No toolbar action found for provider", getToolbarShowProviderAction());
+		assertNull("No toolbar action found for provider", getToolbarShowProviderAction());
 	}
 
 	private void assertToolbarAction() {
@@ -341,6 +368,13 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			expected, action.getMenuBarData().getMenuIcon());
 	}
 
+	private void assertWindowMenuActionHasKeyBinding(KeyStroke ks) {
+		DockingActionIf action = getWindowMenuShowProviderAction();
+		assertEquals(
+			"Windows menu key bindings for provider does not match the value set on the provider",
+			ks, action.getKeyBinding());
+	}
+
 	private void assertCannotShowKeyBindingDialog_FromWindowsMenu() {
 		// simulate the user mousing over the 'Window' menu's action
 		DockingActionIf windowMenuAction = getWindowMenuShowProviderAction();
@@ -365,6 +399,24 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		pressButtonByText(dialog, "OK");
 
 		assertFalse("Invalid key stroke: " + ks, runSwing(() -> dialog.isVisible()));
+	}
+
+	private void applyBindingToDialog_FromWindowsMenu(KeyStroke ks) {
+		DockingActionIf windowMenuAction = getWindowMenuShowProviderAction();
+		DockingWindowManager.setMouseOverAction(windowMenuAction);
+
+		performLaunchKeyStrokeDialogAction();
+		KeyEntryDialog dialog = waitForDialogComponent(KeyEntryDialog.class);
+
+		runSwing(() -> dialog.setKeyStroke(ks));
+	}
+
+	private void assertCollisionsWithKeyStroke() {
+		KeyEntryDialog dialog = waitForDialogComponent(KeyEntryDialog.class);
+
+		JTextPane collisionPane = (JTextPane) getInstanceField("collisionPane", dialog);
+		String collisionText = runSwing(() -> collisionPane.getText());
+		assertTrue(collisionText.contains("Actions mapped to"));
 	}
 
 	private void assertMenuItemHasKeyStroke(KeyStroke expected) {
@@ -415,6 +467,21 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		public JComponent getComponent() {
 			return component;
 		}
+	}
 
+	private class HasDefaultKeyBindingComponentProvider extends ComponentProvider {
+		private JComponent component = new JTextField("Hey!");
+
+		HasDefaultKeyBindingComponentProvider(DockingTool tool) {
+			super(tool, HasDefaultKeyBindingComponentProvider.class.getSimpleName(),
+				"Fooberry Plugin");
+
+			setDefaultKeyBinding(new KeyBindingData(CONTROL_T));
+		}
+
+		@Override
+		public JComponent getComponent() {
+			return component;
+		}
 	}
 }

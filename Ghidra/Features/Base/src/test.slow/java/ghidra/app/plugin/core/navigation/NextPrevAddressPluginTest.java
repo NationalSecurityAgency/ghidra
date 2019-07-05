@@ -71,8 +71,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
 		previousAction =
 			(MultiActionDockingAction) TestUtils.getInstanceField("previousAction", plugin);
-		nextAction =
-			(MultiActionDockingAction) TestUtils.getInstanceField("nextAction", plugin);
+		nextAction = (MultiActionDockingAction) TestUtils.getInstanceField("nextAction", plugin);
 
 		GoToAddressLabelPlugin goToPlugin = env.getPlugin(GoToAddressLabelPlugin.class);
 		dialog = goToPlugin.getDialog();
@@ -355,9 +354,9 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 	@SuppressWarnings("unchecked")
 	// let caution fly
 	private JButton findButtonForAction(DockingWindowManager windowManager, DockingAction action) {
-		Object actionManager = TestUtils.getInstanceField("actionManager", windowManager);
+		Object actionToGuiMapper = TestUtils.getInstanceField("actionToGuiMapper", windowManager);
 		Object menuAndToolBarManager =
-			TestUtils.getInstanceField("menuAndToolBarManager", actionManager);
+			TestUtils.getInstanceField("menuAndToolBarManager", actionToGuiMapper);
 		Map<WindowNode, WindowActionManager> map =
 			(Map<WindowNode, WindowActionManager>) TestUtils.getInstanceField(
 				"windowToActionManagerMap", menuAndToolBarManager);

@@ -56,6 +56,16 @@ public interface DockingActionIf extends HelpDescriptor {
 	public String getOwner();
 
 	/**
+	 * Returns a description of this actions owner.  For most actions this will return the 
+	 * same value as {@link #getOwner()}.
+	 * 
+	 * @return the description
+	 */
+	public default String getOwnerDescription() {
+		return getOwner();
+	}
+
+	/**
 	 * Returns a short description of this action. Generally used for a tooltip
 	 * @return the description
 	 */

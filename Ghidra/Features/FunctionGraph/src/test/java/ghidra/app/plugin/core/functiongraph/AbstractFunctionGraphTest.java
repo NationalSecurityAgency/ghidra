@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.*;
+import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -552,9 +552,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void showFunctionGraphProvider() {
-		DockingAction showGraphAction =
-			(DockingAction) TestUtils.getInstanceField("showFunctionGraphAction", graphPlugin);
-		performAction(showGraphAction, true);
+
+		ComponentProvider provider = tool.getComponentProvider("Function Graph");
+		tool.showComponentProvider(provider, true);
 
 		graphProvider = waitForComponentProvider(FGProvider.class);
 		assertNotNull("Graph not shown", graphProvider);

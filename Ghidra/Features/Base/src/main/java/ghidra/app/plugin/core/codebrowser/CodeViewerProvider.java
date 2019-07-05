@@ -36,7 +36,6 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.GhidraOptions;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
@@ -62,8 +61,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ChangeListener, StringSelectionListener, PopupListener {
 
 	private static final String TITLE = "Listing: ";
-
-	private static final String OPERAND_OPTIONS_PREFIX = GhidraOptions.OPERAND_GROUP_TITLE + ".";
 
 	private static final Icon LISTING_FORMAT_EXPAND_ICON =
 		ResourceManager.loadImage("images/field.header.down.png");
@@ -92,9 +89,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private ProgramDropProvider[] dropProviders = new ProgramDropProvider[0];
 	private ProgramDropProvider curDropProvider;
 	private ToggleDockingAction toggleHoverAction;
-
-	//TODO - Need to improve CodeUnit.getRepresentation format options interface before adding this
-	//TODO    private ToggleOperandMarkupAction[] toggleOperandMarkupActions;
 
 	private ProgramLocation currentLocation;
 
@@ -976,9 +970,9 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
-	class ToggleHoverAction extends ToggleDockingAction {
+	private class ToggleHoverAction extends ToggleDockingAction {
 		ToggleHoverAction() {
-			super("Toggle Mouse Hover Popups", CodeViewerProvider.this.getName());
+			super("Toggle Mouse Hover Popups", CodeViewerProvider.this.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(HOVER_ON_ICON, "yyyz"));
 			setSelected(true);
@@ -995,31 +989,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		void setHover(boolean enabled) {
 			getToolBarData().setIcon(enabled ? HOVER_ON_ICON : HOVER_OFF_ICON);
 			setHoverEnabled(enabled);
-		}
-	}
-
-	class ToggleOperandMarkupAction extends ToggleDockingAction {
-		final String optionName;
-
-		ToggleOperandMarkupAction(String operandOption) {
-			super(operandOption, CodeViewerProvider.this.getName());
-			this.optionName = OPERAND_OPTIONS_PREFIX + operandOption;
-			boolean state =
-				tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS).getBoolean(optionName, true);
-			setMenuBarData(new MenuData(new String[] { operandOption }));
-			setSelected(state);
-			setEnabled(true);
-			setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Operands_Field"));
-		}
-
-		public Object getOptionName() {
-			return optionName;
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			boolean state = isSelected();
-			tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS).setBoolean(optionName, state);
 		}
 	}
 

@@ -90,7 +90,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(SymbolTreePlugin.class.getName());
 		plugin = env.getPlugin(SymbolTreePlugin.class);
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
 
 		util = new SymbolTreeTestUtils(plugin);
@@ -105,15 +105,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		closeProgram();
 		env.dispose();
-	}
-
-	@Test
-	public void testActionEnabled() {
-		assertTrue(symTreeAction.isEnabledForContext(null));
-
-		util.openProgram();
-
-		assertTrue(symTreeAction.isEnabledForContext(null));
 	}
 
 	@Test

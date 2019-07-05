@@ -67,6 +67,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void removeComponentProvider(ComponentProvider provider) {
 		Runnable r = () -> {
+			toolActions.removeGlobalAction(provider.getShowProviderAction());
 			toolActions.removeActions(provider);
 			winMgr.removeComponent(provider);
 		};

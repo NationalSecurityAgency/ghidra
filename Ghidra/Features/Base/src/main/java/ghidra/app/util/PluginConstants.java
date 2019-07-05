@@ -62,7 +62,7 @@ public interface PluginConstants {
 	 */
 	char ANYSINGLECHAR_WILDCARD_CHAR = '?';
 
-	String CODE_BROWSER = "CodeBrowserPlugin";
+	String CODE_BROWSER = "Listing";
 	String MEMORY_MAP = "Memory Map";
 	String BYTE_VIEWER = "ByteViewerPlugin";
 	String BOOKMARKS = "Bookmarks";

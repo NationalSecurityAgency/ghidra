@@ -85,13 +85,14 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		updateActionKeyStrokeFromOptions(action, defaultKs);
 	}
 
-	public String getOwnersDescription() {
+	@Override
+	public String getOwnerDescription() {
 		List<String> owners = getDistinctOwners();
 		Collections.sort(owners);
 		if (owners.size() == 1) {
 			return owners.get(0);
 		}
-		return '(' + StringUtils.join(owners, ", ") + ')';
+		return StringUtils.join(owners, ", ");
 	}
 
 	private List<String> getDistinctOwners() {
@@ -99,6 +100,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		Set<DockingActionIf> actions = clientActions.keySet();
 		for (DockingActionIf action : actions) {
 			String owner = action.getOwner();
+			if (DockingWindowManager.DOCKING_WINDOWS_OWNER.equals(owner)) {
+				// special case: this is the owner for special system-level actions
+				continue;
+			}
+
 			if (!results.contains(owner)) {
 				results.add(owner);
 			}
@@ -139,12 +145,16 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 
 	private void updateActionKeyStrokeFromOptions(DockingActionIf action, KeyStroke defaultKs) {
 
+		KeyStroke stubKs = defaultKs;
 		KeyStroke optionsKs = getKeyStrokeFromOptions(defaultKs);
 		if (!Objects.equals(defaultKs, optionsKs)) {
 			// we use the 'unvalidated' call since this value is provided by the user--we assume
 			// that user input is correct; we only validate programmer input
 			action.setUnvalidatedKeyBindingData(new KeyBindingData(optionsKs));
+			stubKs = optionsKs;
 		}
+
+		setUnvalidatedKeyBindingData(new KeyBindingData(stubKs));
 	}
 
 	private KeyStroke getKeyStrokeFromOptions(KeyStroke validatedKeyStroke) {

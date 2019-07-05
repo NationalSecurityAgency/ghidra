@@ -87,7 +87,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testActionEnabled() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		assertTrue(action.isEnabled());
 	}
 
@@ -99,7 +99,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Add Block") || action.getName().equals("Set Image Base") ||
-				action.getName().equals("View Memory Map")) {
+				action.getName().equals("Memory Map")) {
 				assertTrue(action.isEnabledForContext(provider.getActionContext(null)));
 			}
 			else {
@@ -116,7 +116,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, table.getModel().getRowCount());
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (!action.getName().equals("View Memory Map")) {
+			if (!action.getName().equals("Memory Map")) {
 				assertTrue(!action.isEnabledForContext(provider.getActionContext(null)));
 			}
 		}
@@ -297,7 +297,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	/////////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		provider = plugin.getMemoryMapProvider();
 	}

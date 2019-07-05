@@ -27,7 +27,7 @@ import org.junit.*;
 
 import com.google.common.cache.*;
 
-import docking.action.DockingAction;
+import docking.ComponentProvider;
 import generic.test.TestUtils;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -201,10 +201,8 @@ public class DecompilerCachingTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showDecompilerProvider() {
-		DockingAction showDecompileAction =
-			(DockingAction) TestUtils.getInstanceField("decompileAction", decompilePlugin);
-		performAction(showDecompileAction, true);
-
+		ComponentProvider decompiler = tool.getComponentProvider("Decompiler");
+		tool.showComponentProvider(decompiler, true);
 		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
 	}
 

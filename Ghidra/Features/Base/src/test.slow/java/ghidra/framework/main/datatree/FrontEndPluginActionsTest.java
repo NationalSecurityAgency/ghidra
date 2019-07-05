@@ -30,12 +30,12 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.action.ToggleDockingAction;
 import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeRootNode;
-import docking.widgets.tree.support.GTreeDragNDropHandler;
-import docking.widgets.tree.support.GTreeNodeTransferable;
+import docking.widgets.tree.support.*;
 import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.DomainFile;
@@ -46,21 +46,19 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
+import resources.MultiIcon;
+import resources.ResourceManager;
 
 /**
- * Tests for actions in the front end (Ghidra project window).
+ * Tests for actions in the front end (Ghidra project window)
  */
-public class ActionManager1Test extends AbstractGhidraHeadedIntegrationTest {
+public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private FrontEndTool frontEndTool;
 	private TestEnv env;
 	private DataTree tree;
 	private DomainFolder rootFolder;
 	private GTreeRootNode rootNode;
-
-	public ActionManager1Test() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -533,9 +531,236 @@ public class ActionManager1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(getChild(rootNode, "tms"));
 	}
 
+	@Test
+	public void testRenameFolder() throws Exception {
+		rootFolder.createFolder("myFolder");
+		waitForSwing();
+
+		final GTreeNode myNode = rootNode.getChild("myFolder");
+		setSelectionPath(myNode.getTreePath());
+
+		DockingActionIf renameAction = getAction("Rename");
+		performAction(renameAction, getDomainFileActionContext(), true);
+		waitForTree();
+
+		// select "Rename" action
+		SwingUtilities.invokeAndWait(() -> {
+			int row = tree.getRowForPath(myNode.getTreePath());
+			JTree jTree = (JTree) getInstanceField("tree", tree);
+			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
+			Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, myNode,
+				true, true, false, row);
+			JTextField textField = (JTextField) container.getComponent(0);
+
+			textField.setText("MyNewFolder");
+			tree.stopEditing();
+		});
+		waitForSwing();
+		assertNotNull(rootNode.getChild("MyNewFolder"));
+		assertNull(rootNode.getChild("myFolder"));
+	}
+
+	@Test
+	public void testRenameFile() throws Exception {
+		final GTreeNode npNode = rootNode.getChild("notepad");
+		setSelectionPath(npNode.getTreePath());
+
+		DockingActionIf renameAction = getAction("Rename");
+		performAction(renameAction, getDomainFileActionContext(), true);
+		waitForTree();
+
+		// select "Rename" action
+		SwingUtilities.invokeAndWait(() -> {
+			int row = tree.getRowForPath(npNode.getTreePath());
+			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
+			JTree jTree = (JTree) getInstanceField("tree", tree);
+			Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, npNode,
+				true, true, false, row);
+			JTextField textField = (JTextField) container.getComponent(0);
+
+			textField.setText("My_notepad");
+			tree.stopEditing();
+		});
+		waitForSwing();
+		assertNotNull(rootNode.getChild("My_notepad"));
+		assertNull(rootNode.getChild("notepad"));
+
+	}
+
+	@Test
+	public void testRenameFileInUse() throws Exception {
+		final GTreeNode npNode = rootNode.getChild("notepad");
+		DomainFile df = ((DomainFileNode) npNode).getDomainFile();
+
+		setInUse(df);
+
+		setSelectionPath(npNode.getTreePath());
+
+		DockingActionIf renameAction = getAction("Rename");
+		executeOnSwingWithoutBlocking(
+			() -> performAction(renameAction, getDomainFileActionContext(), true));
+		waitForSwing();
+		OptionDialog dlg = waitForDialogComponent(OptionDialog.class);
+		assertEquals("Rename Not Allowed", dlg.getTitle());
+		pressButtonByText(dlg.getComponent(), "OK");
+		assertNotNull(rootNode.getChild("notepad"));
+	}
+
+	@Test
+	public void testRenameFolderInUse() throws Exception {
+		// folder contains a file that is in use
+		DomainFolder f = rootFolder.createFolder("myFolder");
+		f = f.createFolder("A");
+		f = f.createFolder("B");
+		f = f.createFolder("C");
+
+		Program p = createDefaultProgram("new", ProgramBuilder._TOY, this);
+
+		DomainFile df = f.createFile("notepad", p, TaskMonitor.DUMMY);
+		waitForSwing();
+
+		final GTreeNode myNode = rootNode.getChild("myFolder");
+		((DomainFolderNode) myNode).getDomainFolder().createFile("notepad", p, TaskMonitor.DUMMY);
+		p.release(this);
+
+		waitForSwing();
+		tree.expandPath(myNode.getTreePath());
+		assertNotNull(myNode.getChild("notepad"));
+
+		setInUse(df, "/myFolder/notepad");
+
+		setSelectionPath(myNode.getTreePath());
+
+		final DockingActionIf renameAction = getAction("Rename");
+		performAction(renameAction, getDomainFileActionContext(), true);
+		waitForTree();
+
+		// attempt to rename "myFolder"
+		SwingUtilities.invokeLater(() -> {
+			int row = tree.getRowForPath(myNode.getTreePath());
+			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
+			JTree jTree = (JTree) getInstanceField("tree", tree);
+			Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, myNode,
+				true, true, false, row);
+			JTextField textField = (JTextField) container.getComponent(0);
+
+			textField.setText("My_Newfolder");
+			tree.stopEditing();
+		});
+
+		waitForSwing();
+
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
+		assertNotNull(d);
+		assertEquals("Rename Failed", d.getTitle());
+		pressButtonByText(d.getComponent(), "OK");
+		assertNotNull(rootNode.getChild("myFolder"));
+	}
+
+	@Test
+	public void testExpandAll() throws Exception {
+		DomainFolder f = rootFolder.createFolder("myFolder");
+		f = f.createFolder("A");
+		f = f.createFolder("B");
+		f = f.createFolder("C");
+		waitForSwing();
+
+		GTreeNode myNode = rootNode.getChild("myFolder");
+		setSelectionPath(rootNode.getTreePath());
+		DockingActionIf expandAction = getAction("Expand All");
+		performAction(expandAction, getDomainFileActionContext(), true);
+		GTreeNode aNode = myNode.getChild("A");
+		assertNotNull(aNode);
+		GTreeNode bNode = aNode.getChild("B");
+		assertNotNull(bNode);
+		GTreeNode cNode = bNode.getChild("C");
+		assertNotNull(cNode);
+	}
+
+	@Test
+	public void testCollapseAll() throws Exception {
+		DomainFolder f = rootFolder.createFolder("myFolder");
+		f = f.createFolder("A");
+		f = f.createFolder("B");
+		f = f.createFolder("C");
+		waitForSwing();
+
+		GTreeNode myNode = rootNode.getChild("myFolder");
+		setSelectionPath(myNode.getTreePath());
+		DockingActionIf expandAction = getAction("Expand All");
+		performAction(expandAction, getDomainFileActionContext(), true);
+		waitForTree();
+
+		DockingActionIf collapseAction = getAction("Collapse All");
+		performAction(collapseAction, getDomainFileActionContext(), true);
+		waitForTree();
+		assertTrue(!tree.isExpanded(myNode.getTreePath()));
+		GTreeNode aNode = myNode.getChild("A");
+		assertTrue(!tree.isExpanded(aNode.getTreePath()));
+		GTreeNode bNode = aNode.getChild("B");
+		assertTrue(!tree.isExpanded(bNode.getTreePath()));
+		GTreeNode cNode = bNode.getChild("C");
+		assertNotNull(cNode);
+		assertTrue(!tree.isExpanded(cNode.getTreePath()));
+	}
+
+	@Test
+	public void testSelectAll() throws Exception {
+		DomainFolder f = rootFolder.createFolder("myFolder");
+		f = f.createFolder("A");
+		f = f.createFolder("B");
+		f = f.createFolder("C");
+		waitForSwing();
+
+		setSelectionPath(rootNode.getTreePath());
+		DockingActionIf selectAction = getAction("Select All");
+		performAction(selectAction, getDomainFileActionContext(), true);
+		waitForTree();
+
+		BreadthFirstIterator it = new BreadthFirstIterator(tree, rootNode);
+		while (it.hasNext()) {
+			GTreeNode node = it.next();
+			assertTrue(tree.isPathSelected(node.getTreePath()));
+		}
+	}
+
+	@Test
+	public void testSetReadOnly() throws Exception {
+		GTreeNode npNode = rootNode.getChild("notepad");
+		setSelectionPath(npNode.getTreePath());
+		ToggleDockingAction readOnlyAction = (ToggleDockingAction) getAction("Read-Only");
+		readOnlyAction.setSelected(true);
+		performAction(readOnlyAction, getDomainFileActionContext(), true);
+
+		assertTrue(((DomainFileNode) npNode).getDomainFile().isReadOnly());
+		ImageIcon icon = ResourceManager.loadImage("fileIcons/ProgramReadOnly.gif");
+		icon = ResourceManager.getScaledIcon(icon, 16, 16);
+
+		assertTrue(npNode.getIcon(false) instanceof MultiIcon);
+	}
+
+	@Test
+	public void testSetReadOnlyInUse() throws Exception {
+		GTreeNode npNode = rootNode.getChild("notepad");
+		DomainFile df = ((DomainFileNode) npNode).getDomainFile();
+		setInUse(df);
+
+		setSelectionPath(npNode.getTreePath());
+		ToggleDockingAction readOnlyAction = (ToggleDockingAction) getAction("Read-Only");
+		readOnlyAction.setSelected(true);
+		performAction(readOnlyAction, getDomainFileActionContext(), true);
+
+		assertTrue(((DomainFileNode) npNode).getDomainFile().isReadOnly());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void setSelectionPath(final TreePath path) throws Exception {
+		tree.setSelectionPath(path);
+		waitForTree();
+	}
 
 	private void pressDelete() {
 		DockingActionIf deleteAction = getAction("Delete");

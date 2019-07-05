@@ -39,7 +39,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		actionToProviderMap = new HashMap<>();
 	}
 
-	public void addAction(DockingActionIf action, ComponentProvider optionalProvider) {
+	public void addAction(ComponentProvider optionalProvider, DockingActionIf action) {
 		action.addPropertyChangeListener(this);
 		if (optionalProvider != null) {
 			actionToProviderMap.put(action, optionalProvider);
@@ -48,7 +48,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		KeyStroke keyBinding = action.getKeyBinding();
 
 		if (keyBinding != null) {
-			addKeyBinding(action, optionalProvider, keyBinding);
+			addKeyBinding(optionalProvider, action, keyBinding);
 		}
 	}
 
@@ -67,7 +67,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		removeKeyBinding(action.getKeyBinding(), action);
 	}
 
-	private void addKeyBinding(DockingActionIf action, ComponentProvider provider,
+	private void addKeyBinding(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 		if (ReservedKeyBindings.isReservedKeystroke(keyStroke)) {
 			throw new AssertException("Cannot assign action to a reserved keystroke.  " +
@@ -145,7 +145,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		if (newKeyData != null) {
 			KeyStroke ks = newKeyData.getKeyBinding();
 			if (ks != null) {
-				addKeyBinding(action, actionToProviderMap.get(action), ks);
+				addKeyBinding(actionToProviderMap.get(action), action, ks);
 			}
 		}
 	}

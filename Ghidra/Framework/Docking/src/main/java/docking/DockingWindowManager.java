@@ -47,16 +47,14 @@ import util.CollectionUtils;
  * Manages the "Docking" arrangement of a set of components and actions. The components can be "docked" 
  * together or exist in their own window.  Actions can be associated with components so they
  * "move" with the component as it moved from one location to another.
- * 
+ * <P>
  * Components are added via ComponentProviders.  A ComponentProvider is an interface for getting
  * a component and its related information.  The docking window manager will get the component
  * from the provider as needed.  It is up to the provider if it wants to reuse the component or
- * recreate a new one when the component is requested.  When the user "hides" (by using 
- * the x button on the component area) a component, the docking window manager removes all
+ * recreate a new one when the component is requested.  When the user hides a component (by using 
+ * the x button on the component header), the docking window manager removes all
  * knowledge of the component and will request it again from the provider if the component
- * becomes "unhidden".  The provider is also notified whenever a component is hidden.   Some
- * providers will use the notification to remove the provider from the docking window manager so
- * that the can not "unhide" the component using the built-in window menu.
+ * is again shown.  The provider is also notified whenever a component is hidden and shown. 
  */
 public class DockingWindowManager implements PropertyChangeListener, PlaceholderInstaller {
 
@@ -712,8 +710,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			showComponent(placeholder, visibleState, true);
+			return;
 		}
-		else {
+
+		if (visibleState) {
+
 			// a null placeholder implies the client is trying to show a provider that has not
 			// been added to the tool
 			Msg.warn(this, "Attempting to show an unknown Component Provider '" +

@@ -347,7 +347,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 	private void createSymActions() {
 		String popupGroup = "1";
 
-		openRefsAction = new DockingAction("Symbol References", getName()) {
+		openRefsAction = new DockingAction("Symbol References", getName(), KeyBindingType.SHARED) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				refProvider.open();
@@ -359,7 +359,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 			new MenuData(new String[] { "Symbol References" }, icon, popupGroup));
 		openRefsAction.setToolBarData(new ToolBarData(icon));
 
-		openRefsAction.setDescription("Symbol References");
+		openRefsAction.setDescription("Display Symbol References");
 		tool.addLocalAction(symProvider, openRefsAction);
 
 		deleteAction = new DockingAction("Delete Symbols", getName()) {

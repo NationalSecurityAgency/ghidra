@@ -76,11 +76,7 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 
 		// keybinding data used to show the binding in the menu
 		ComponentProvider provider = placeholder.getProvider();
-		DockingActionIf action = provider.getShowProviderAction();
-		KeyBindingData kbData = action.getKeyBindingData();
-		if (kbData != null) {
-			setKeyBindingData(kbData);
-		}
+		synchronizeKeyBinding(provider);
 
 		// Use provider Help for this action		
 		HelpLocation helpLocation = provider.getHelpLocation();
@@ -91,6 +87,21 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 			// This action only exists as a convenience for users to show a provider from the menu.
 			// There is no need for this action itself to report errors if no help exists.
 			markHelpUnnecessary();
+		}
+	}
+
+	/**
+	 * Ensures that the given provider's key binding matches this class's key binding
+	 * @param provider the provider
+	 */
+	private void synchronizeKeyBinding(ComponentProvider provider) {
+		DockingActionIf action = provider.getShowProviderAction();
+		KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
+		setKeyBindingData(defaultBinding);
+
+		KeyBindingData kbData = action.getKeyBindingData();
+		if (kbData != null) {
+			setUnvalidatedKeyBindingData(kbData);
 		}
 	}
 

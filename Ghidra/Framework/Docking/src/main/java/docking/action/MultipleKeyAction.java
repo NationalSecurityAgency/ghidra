@@ -63,6 +63,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			throw new IllegalArgumentException(
 				"KeyStrokes don't match - was: " + keyStroke + " new: " + keyBinding);
 		}
+
 		actions.add(new ActionData(action, provider));
 	}
 
@@ -272,6 +273,11 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 		boolean isMyProvider(ComponentProvider otherProvider) {
 			return provider == otherProvider;
+		}
+
+		@Override
+		public String toString() {
+			return provider.toString() + " - " + action;
 		}
 	}
 }

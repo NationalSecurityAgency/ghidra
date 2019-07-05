@@ -1332,7 +1332,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 	///////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();

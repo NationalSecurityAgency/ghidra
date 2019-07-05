@@ -115,27 +115,21 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
-		setKeyBindingOption(action);
-		keyBindingsManager.addAction(action, provider);
+		initializeKeyBinding(provider, action);
 		actionGuiHelper.addLocalAction(provider, action);
 	}
 
-	/**
-	 * Adds the action to the tool.
-	 * @param action the action to be added.
-	 */
 	@Override
 	public synchronized void addGlobalAction(DockingActionIf action) {
 		checkForAlreadyAddedAction(null, action);
 
 		action.addPropertyChangeListener(this);
 		addActionToMap(action);
-		setKeyBindingOption(action);
-		keyBindingsManager.addAction(action, null);
+		initializeKeyBinding(null, action);
 		actionGuiHelper.addToolAction(action);
 	}
 
-	private void setKeyBindingOption(DockingActionIf action) {
+	private void initializeKeyBinding(ComponentProvider provider, DockingActionIf action) {
 
 		KeyBindingType type = action.getKeyBindingType();
 		if (!type.supportsKeyBindings()) {
@@ -143,7 +137,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		if (type.isShared()) {
-			installSharedKeyBinding(action);
+			installSharedKeyBinding(provider, action);
 			return;
 		}
 
@@ -154,9 +148,11 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		if (!Objects.equals(ks, newKs)) {
 			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 		}
+
+		keyBindingsManager.addAction(provider, action);
 	}
 
-	private void installSharedKeyBinding(DockingActionIf action) {
+	private void installSharedKeyBinding(ComponentProvider provider, DockingActionIf action) {
 		String name = action.getName();
 		KeyStroke defaultKeyStroke = action.getKeyBinding();
 
@@ -172,6 +168,9 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		});
 
 		stub.addClientAction(action);
+
+		// note: only put the stub in the manager, not the actual action
+		keyBindingsManager.addAction(provider, stub);
 	}
 
 	/**
@@ -318,10 +317,12 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		for (DockingActionIf action : set) {
 			removeLocalAction(provider, action);
 		}
-
 	}
 
 	private void removeAction(DockingActionIf action) {
+
+		keyBindingsManager.removeAction(action);
+
 		getActionStorage(action).remove(action);
 		if (!action.getKeyBindingType().isShared()) {
 			return;
@@ -368,6 +369,19 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			opt.setKeyStroke(action.getFullName(), newKeyStroke);
 			keyBindingsChanged();
 		}
+	}
+
+	@Override
+	public DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
+
+		Iterator<DockingActionIf> it = actionGuiHelper.getComponentActions(provider);
+		while (it.hasNext()) {
+			DockingActionIf action = it.next();
+			if (action.getName().equals(actionName)) {
+				return action;
+			}
+		}
+		return null;
 	}
 
 	public Action getAction(KeyStroke ks) {

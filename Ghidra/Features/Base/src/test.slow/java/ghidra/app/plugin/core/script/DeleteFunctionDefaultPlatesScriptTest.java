@@ -37,12 +37,9 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 
 /**
- * Test for deleting default plate comments on a function.
- * 
- * 
- *
+ * Test for deleting default plate comments on a function
  */
-public class DeleteFunctionDefaultPlatesTest extends AbstractGhidraHeadedIntegrationTest {
+public class DeleteFunctionDefaultPlatesScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -50,13 +47,6 @@ public class DeleteFunctionDefaultPlatesTest extends AbstractGhidraHeadedIntegra
 	private File script;
 	private ToyProgramBuilder builder;
 
-	public DeleteFunctionDefaultPlatesTest() {
-		super();
-	}
-
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
@@ -71,11 +61,8 @@ public class DeleteFunctionDefaultPlatesTest extends AbstractGhidraHeadedIntegra
 
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
-		//script =
-		//	new File(Application.getApplicationRootDirectory().getFile(),
-		//		"Features/Base/ghidra_scripts/DeleteFunctionDefaultPlates.java");
 		script = Application.getModuleFile("Base",
-			"ghidra_scripts/DeleteFunctionDefaultPlates.java").getFile(true);
+			"ghidra_scripts/DeleteFunctionDefaultPlatesScript.java").getFile(true);
 		env.showTool();
 	}
 
@@ -97,9 +84,6 @@ public class DeleteFunctionDefaultPlatesTest extends AbstractGhidraHeadedIntegra
 		return builder.getProgram();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		env.dispose();

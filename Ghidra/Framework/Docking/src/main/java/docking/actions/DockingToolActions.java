@@ -35,6 +35,15 @@ public interface DockingToolActions {
 	public void addLocalAction(ComponentProvider provider, DockingActionIf action);
 
 	/**
+	 * Gets the provider action by the given name
+	 * 
+	 * @param provider the provider
+	 * @param actionName the action name
+	 * @return the action
+	 */
+	public DockingActionIf getLocalAction(ComponentProvider provider, String actionName);
+
+	/**
 	 * Removes the given provider's local action
 	 * 
 	 * @param provider the provider

@@ -886,7 +886,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 	///////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		waitForPostedSwingRunnables();
 		provider = plugin.getMemoryMapProvider();

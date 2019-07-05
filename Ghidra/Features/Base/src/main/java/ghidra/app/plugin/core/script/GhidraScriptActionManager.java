@@ -466,7 +466,6 @@ class GhidraScriptActionManager {
 		if (action == null) {
 			action = new ScriptAction(plugin, script);
 			actionMap.put(script, action);
-			plugin.getTool().addAction(action);
 		}
 		return action;
 	}

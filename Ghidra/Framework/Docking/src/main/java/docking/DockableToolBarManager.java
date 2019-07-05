@@ -168,7 +168,8 @@ class DockableToolBarManager {
 		private DockableComponent dockableComponent;
 
 		ToolBarCloseAction(DockableComponent dockableComponent) {
-			super("Close Window", DockingWindowManager.DOCKING_WINDOWS_OWNER);
+			super("Close Window", DockingWindowManager.DOCKING_WINDOWS_OWNER,
+				KeyBindingType.UNSUPPORTED);
 			this.dockableComponent = dockableComponent;
 			setDescription("Close Window");
 			setToolBarData(new ToolBarData(closeIcon, null));
