@@ -561,6 +561,9 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+
+		// end any table editing; this prevents exceptions on focus changes when closing this editor
+		refsTable.editingStopped(new ChangeEvent(refsTable));
 		super.closeComponent();
 		plugin.providerClosed(this);
 	}
@@ -895,7 +898,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				comboBox.addItem(rt);
 			}
 			if (selectedIndex < 0) {
-				comboBox.insertItemAt(value, 0);
+				comboBox.insertItemAt((RefType) value, 0);
 				selectedIndex = 0;
 			}
 			comboBox.setSelectedIndex(selectedIndex);
@@ -904,18 +907,12 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	private class CellEditComboBox extends JComboBox {
+	private class CellEditComboBox extends JComboBox<RefType> {
 
-		/**
-		 * Constructor for MemRefComboBox.
-		 */
 		public CellEditComboBox() {
 			super();
 		}
 
-		/**
-		 * @see javax.swing.JComboBox#setSelectedIndex(int)
-		 */
 		@Override
 		public void setSelectedIndex(int anIndex) {
 			if (refsTable.getRowCount() == 0) {
