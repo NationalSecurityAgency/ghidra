@@ -143,6 +143,10 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 			OperandFieldLocation loc, GoToService goToService) {
 
 		Address refAddr = loc.getRefAddress();
+		if (refAddr == null) {
+			return false;
+		}
+
 		Program program = codeUnit.getProgram();
 		Symbol s = program.getSymbolTable().getPrimarySymbol(refAddr);
 		if (s == null) {
