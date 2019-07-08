@@ -272,8 +272,8 @@ public class ImporterUtilities {
 				return;
 			}
 
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				LoaderService.getAllSupportedLoadSpecs(provider);
+			Map<Loader, Collection<LoadSpec>> loadMap = LoaderService.getSupportedLoadSpecs(
+				provider, loader -> loader.supportsLoadIntoProgram());
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
