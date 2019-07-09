@@ -24,8 +24,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.action.DockingActionIf;
-import docking.action.KeyBindingData;
+import docking.action.*;
 import docking.actions.KeyEntryDialog;
 import docking.actions.ToolActions;
 import docking.tool.util.DockingToolConstants;
@@ -54,7 +53,9 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
-		tool = env.launchDefaultTool();
+		tool = env.showTool();
+
+		//tool = env.launchDefaultTool();
 		provider = new TestActionsComponentProvider(tool);
 
 		Msg.setErrorLogger(spyLogger);
@@ -243,23 +244,72 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	@Test
-	public void testSetIcon_NullIconWithToolbarAction() {
+	public void testDefaultKeyBindingAppearsInWindowMenu() {
+
+		setDefaultKeyBinding(CONTROL_T);
+		showProvider();
+		assertWindowMenuActionHasKeyBinding(CONTROL_T);
+	}
+
+	@Test
+	public void testAddToToolbar_WithoutIcon() {
+
+		runSwing(() -> provider.addToToolbar());
 
 		try {
-			setToolbarIcon(null);
+			setErrorsExpected(true);
+			runSwingWithExceptions(this::showProvider, true);
+			setErrorsExpected(false);
+			fail();
+		}
+		catch (Throwable t) {
+			// good
+		}
+	}
+
+	@Test
+	public void testSetIcon_NullIconWithToolbarAction() {
+
+		setIcon(ICON);
+		runSwing(() -> provider.addToToolbar());
+		showProvider();
+
+		try {
+			setErrorsExpected(true);
+			runSwingWithExceptions(() -> provider.setIcon(null), true);
+			setErrorsExpected(false);
 			fail("Expected an exception passing a null icon when specifying a toolbar action");
 		}
-		catch (Exception e) {
+		catch (Throwable t) {
 			// expected
 		}
 	}
 
 	@Test
-	public void testDefaultKeyBindingAppearsInWindowMenu() {
-
-		provider.setDefaultKeyBinding(new KeyBindingData(CONTROL_T));
+	public void testSetIcon_WithToolbarAction() {
+		setToolbarIcon(ICON);
 		showProvider();
-		assertWindowMenuActionHasKeyBinding(CONTROL_T);
+
+		assertWindowMenuActionHasIcon(ICON);
+		assertToolbarActionHasIcon(ICON);
+	}
+
+	@Test
+	public void testSetIcon_WithToolbarAction_AfterActionHasBeenAddedToToolbar() {
+
+		//
+		// We currently do not prevent providers from changing their icons.  Make sure we respond
+		// to changes correctly.
+		//
+
+		setToolbarIcon(ICON);
+		showProvider();
+
+		Icon newIcon = Icons.COLLAPSE_ALL_ICON;
+		setIcon(newIcon);
+
+		assertWindowMenuActionHasIcon(newIcon);
+		assertToolbarActionHasIcon(newIcon);
 	}
 
 //==================================================================================================
@@ -277,7 +327,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void setDefaultKeyBinding(KeyStroke defaultKs) {
-		runSwing(() -> provider.setDefaultKeyBinding(new KeyBindingData(defaultKs)));
+		runSwing(() -> provider.setKeyBinding(new KeyBindingData(defaultKs)));
 	}
 
 	private void setIcon(Icon icon) {
@@ -285,7 +335,10 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void setToolbarIcon(Icon icon) {
-		runSwing(() -> provider.setIcon(icon, true));
+		runSwing(() -> {
+			provider.setIcon(icon);
+			provider.addToToolbar();
+		});
 	}
 
 	private DockingActionIf getShowProviderAction() {
@@ -366,6 +419,13 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		DockingActionIf action = getWindowMenuShowProviderAction();
 		assertEquals("Windows menu icons for provider does not match the value set on the provider",
 			expected, action.getMenuBarData().getMenuIcon());
+	}
+
+	private void assertToolbarActionHasIcon(Icon expected) {
+		DockingActionIf action = getToolbarShowProviderAction();
+		assertNotNull("No toolbar action found; it should be there", action);
+		ToolBarData tbData = action.getToolBarData();
+		assertEquals(expected, tbData.getIcon());
 	}
 
 	private void assertWindowMenuActionHasKeyBinding(KeyStroke ks) {
@@ -476,7 +536,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			super(tool, HasDefaultKeyBindingComponentProvider.class.getSimpleName(),
 				"Fooberry Plugin");
 
-			setDefaultKeyBinding(new KeyBindingData(CONTROL_T));
+			setKeyBinding(new KeyBindingData(CONTROL_T));
 		}
 
 		@Override

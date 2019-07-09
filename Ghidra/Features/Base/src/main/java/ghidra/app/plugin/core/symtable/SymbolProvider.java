@@ -27,14 +27,11 @@ import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramSymbolActionContext;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SymbolInspector;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
@@ -52,9 +49,10 @@ class SymbolProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), "Symbol Table", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
 
-		setIcon(ICON, true);
-		setDefaultKeyBinding(
-			new KeyBindingData(KeyEvent.VK_T, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		setIcon(ICON);
+		addToToolbar();
+		setKeyBinding(new KeyBindingData(KeyEvent.VK_T, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+
 		setHelpLocation(new HelpLocation(plugin.getName(), "Symbol_Table"));
 		setWindowGroup("symbolTable");
 		renderer = new SymbolRenderer();
@@ -88,13 +86,6 @@ class SymbolProvider extends ComponentProviderAdapter {
 	void deleteSymbols() {
 		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
 		symbolKeyModel.delete(rowObjects);
-	}
-
-	void makeSelection() {
-		ProgramSelection selection = symbolPanel.getProgramSelection();
-		PluginEvent event =
-			new ProgramSelectionPluginEvent(plugin.getName(), selection, plugin.getProgram());
-		plugin.firePluginEvent(event);
 	}
 
 	void setFilter() {

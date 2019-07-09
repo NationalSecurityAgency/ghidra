@@ -117,13 +117,18 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
+
 		setConnected(isConnected);
+		setIcon(ResourceManager.loadImage("images/Browser.gif"));
 		if (!isConnected) {
 			setTransient();
 		}
+		else {
+			addToToolbar();
+		}
 		setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Code_Browser"));
 		setDefaultWindowPosition(WindowPosition.RIGHT);
-		setIcon(ResourceManager.loadImage("images/Browser.gif"), isConnected);
+
 		listingPanel = new ListingPanel(formatMgr);
 		listingPanel.enablePropertyBasedColorModel(true);
 		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);

@@ -84,7 +84,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		setHelpLocation(new HelpLocation(plugin.getName(), getName()));
 		memManager = plugin.getMemoryMapManager();
-		setIcon(ResourceManager.loadImage(MEMORY_IMAGE), true);
+		setIcon(ResourceManager.loadImage(MEMORY_IMAGE));
+		addToToolbar();
 		mainPanel = buildMainPanel();
 		addToTool();
 		addLocalActions();

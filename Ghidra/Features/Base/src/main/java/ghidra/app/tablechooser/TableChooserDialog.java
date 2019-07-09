@@ -160,8 +160,15 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		DockingAction selectAction = new MakeProgramSelectionAction(owner, table) {
 			@Override
-			protected void makeSelection(ActionContext context) {
-				doMakeSelection();
+			protected ProgramSelection makeSelection(ActionContext context) {
+				ProgramSelection selection = table.getProgramSelection();
+				if (navigatable != null) {
+					navigatable.goTo(program,
+						new ProgramLocation(program, selection.getMinAddress()));
+					navigatable.setSelection(selection);
+					navigatable.requestFocus();
+				}
+				return selection;
 			}
 		};
 
@@ -171,18 +178,6 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		addAction(selectAction);
 		addAction(selectionNavigationAction);
-	}
-
-	private void doMakeSelection() {
-		ProgramSelection selection = table.getProgramSelection();
-		if (program == null || program.isClosed() || selection.getNumAddresses() == 0) {
-			return;
-		}
-		if (navigatable != null) {
-			navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
-			navigatable.setSelection(selection);
-			navigatable.requestFocus();
-		}
 	}
 
 	public void show() {

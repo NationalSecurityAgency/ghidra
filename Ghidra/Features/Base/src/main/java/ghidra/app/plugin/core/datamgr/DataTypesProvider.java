@@ -100,7 +100,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		this.plugin = plugin;
 
 		setTitle(TITLE);
-		setIcon(ResourceManager.loadImage(DATA_TYPES_ICON), true);
+		setIcon(ResourceManager.loadImage(DATA_TYPES_ICON));
+		addToToolbar();
 
 		navigationHistory.setAllowDuplicates(true);
 

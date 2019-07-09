@@ -140,15 +140,19 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 			public void actionPerformed(ActionContext context) {
 				startDialog();
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return currentProgram != null;
+			}
 		};
 		findTableAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, findTableAction.getName()));
 		findTableAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Address Tables..." }, null,
 				"search for"));
-
 		findTableAction.setDescription(getPluginDescription().getDescription());
-		enableOnLocation(findTableAction);
+
 		tool.addAction(findTableAction);
 
 	} // end of createActions()

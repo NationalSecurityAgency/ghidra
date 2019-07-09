@@ -58,9 +58,9 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 	BookmarkProvider(PluginTool tool, BookmarkPlugin plugin) {
 		super(tool, "Bookmarks", plugin.getName(), ProgramActionContext.class);
 
-		setIcon(BookmarkNavigator.NOTE_ICON, true);
-		setDefaultKeyBinding(
-			new KeyBindingData(KeyEvent.VK_B, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		setIcon(BookmarkNavigator.NOTE_ICON);
+		addToToolbar();
+		setKeyBinding(new KeyBindingData(KeyEvent.VK_B, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		model = new BookmarkTableModel(tool, null);
 		threadedTablePanel = new GhidraThreadedTablePanel<>(model);

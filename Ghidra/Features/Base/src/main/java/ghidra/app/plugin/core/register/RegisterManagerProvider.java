@@ -66,7 +66,8 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		buildComponent();
 
 		setHelpLocation(new HelpLocation("RegisterPlugin", "Register_Manager"));
-		setIcon(REGISTER_ICON, true);
+		setIcon(REGISTER_ICON);
+		addToToolbar();
 		setDefaultWindowPosition(WindowPosition.WINDOW);
 
 		updateMgr = new SwingUpdateManager(500, () -> update());

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.commentwindow;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -186,13 +185,7 @@ public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectLi
 
 	private void createActions() {
 
-		selectAction = new MakeProgramSelectionAction(getName(), provider.getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				selectComment(provider.selectComment());
-			}
-		};
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
 		DockingAction selectionAction = new SelectionNavigationAction(this, provider.getTable());

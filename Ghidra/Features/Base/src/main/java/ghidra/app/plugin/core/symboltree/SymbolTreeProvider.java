@@ -103,7 +103,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		super(tool, NAME, plugin.getName());
 		this.plugin = plugin;
 
-		setIcon(ICON, true);
+		setIcon(ICON);
+		addToToolbar();
 
 		domainObjectListener = new SymbolTreeProviderDomainObjectListener();
 

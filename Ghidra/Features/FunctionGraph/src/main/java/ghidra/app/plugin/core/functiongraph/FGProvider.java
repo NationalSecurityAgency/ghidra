@@ -103,8 +103,12 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		controller = new FGController(this, plugin);
 
 		setConnected(isConnected);
+		setIcon(FunctionGraphPlugin.ICON);
 		if (!isConnected) {
 			setTransient();
+		}
+		else {
+			addToToolbar();
 		}
 
 		decorationPanel = new DecoratorPanel(controller.getViewComponent(), isConnected);
@@ -112,7 +116,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		setWindowGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
 
-		setIcon(FunctionGraphPlugin.ICON, isConnected);
 		setHelpLocation(new HelpLocation("FunctionGraphPlugin", "FunctionGraphPlugin"));
 
 		addToTool();

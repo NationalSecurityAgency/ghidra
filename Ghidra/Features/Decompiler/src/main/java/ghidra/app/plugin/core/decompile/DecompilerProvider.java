@@ -142,11 +142,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			setTransient();
 		}
 		else {
-			setDefaultKeyBinding(
+			addToToolbar();
+			setKeyBinding(
 				new KeyBindingData(KeyEvent.VK_E, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		}
 
-		setIcon(C_SOURCE_ICON, isConnected);
+		setIcon(C_SOURCE_ICON);
 		setTitle("Decompile");
 
 		setWindowMenuGroup("Decompile");

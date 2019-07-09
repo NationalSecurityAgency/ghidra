@@ -191,10 +191,10 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Returns the program selection equivalent
-	 * to the rows currently selected in the table. This method
-	 * is only valid when the underlying table model implements
-	 * <code>ProgramTableModel</code>.
+	 * Returns the program selection equivalent to the rows currently selected in the table. 
+	 * This method is only valid when the underlying table model implements
+	 * {@link ProgramTableModel}.
+	 * <P>
 	 * Returns null if no rows are selected or
 	 * the underlying model does not implement <code>ProgramTableModel</code>.
 	 * @return the program selection or null.
@@ -205,6 +205,20 @@ public class GhidraTable extends GTable {
 			return null;
 		}
 		return programTableModel.getProgramSelection(getSelectedRows());
+	}
+
+	/**
+	 * Returns the program being used by this table; null if the underlying model does not
+	 * implement {@link ProgramTableModel}
+	 * 
+	 * @return the table's program
+	 */
+	public Program getProgram() {
+		ProgramTableModel programTableModel = getProgramTableModel(dataModel);
+		if (programTableModel == null) {
+			return null;
+		}
+		return programTableModel.getProgram();
 	}
 
 	private ProgramTableModel getProgramTableModel(TableModel model) {

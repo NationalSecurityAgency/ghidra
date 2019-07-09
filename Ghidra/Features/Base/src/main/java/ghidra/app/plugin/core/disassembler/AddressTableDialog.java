@@ -524,10 +524,28 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 	private void createAction() {
 
-		DockingAction selectAction = new MakeProgramSelectionAction(DIALOG_NAME, resultsTable) {
+		DockingAction selectAction = new MakeProgramSelectionAction(plugin, resultsTable) {
 			@Override
-			protected void makeSelection(ActionContext context) {
-				doMakeSelection();
+			protected ProgramSelection makeSelection(ActionContext context) {
+				Program program = plugin.getProgram();
+				AddressSet set = new AddressSet();
+				AutoTableDisassemblerModel model = plugin.getModel();
+				int[] selectedRows = resultsTable.getSelectedRows();
+				for (int selectedRow : selectedRows) {
+					Address selectedAddress = model.getAddress(selectedRow);
+					AddressTable addrTab = model.get(selectedAddress);
+					if (addrTab != null) {
+						set.addRange(selectedAddress,
+							selectedAddress.add(addrTab.getByteLength() - 1));
+					}
+				}
+				ProgramSelection selection = new ProgramSelection(set);
+				if (!set.isEmpty()) {
+					plugin.firePluginEvent(
+						new ProgramSelectionPluginEvent(plugin.getName(), selection, program));
+				}
+
+				return selection;
 			}
 		};
 

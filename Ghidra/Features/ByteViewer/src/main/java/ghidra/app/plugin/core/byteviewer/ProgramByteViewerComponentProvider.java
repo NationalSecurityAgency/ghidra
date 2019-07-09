@@ -72,11 +72,13 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		super(tool, plugin, "Bytes", ByteViewerActionContext.class);
 
 		this.isConnected = isConnected;
+		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
 		if (!isConnected) {
 			setTransient();
 		}
-
-		setIcon(ResourceManager.loadImage("images/binaryData.gif"), isConnected);
+		else {
+			addToToolbar();
+		}
 
 		decorationComponent = new DecoratorPanel(panel, isConnected);
 		clipboardProvider = new ByteViewerClipboardProvider(this, tool);

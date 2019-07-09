@@ -96,7 +96,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private Set<DockingActionIf> actionSet = new LinkedHashSet<>();
 
 	/** True if this provider's action should appear in the toolbar */
-	private boolean isToolbarAction;
+	private boolean addToolbarAction;
 	private boolean isTransient;
 	private KeyBindingData defaultKeyBindingData;
 	private Icon icon;
@@ -157,6 +157,12 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private void createShowProviderAction() {
 		if (showProviderAction != null) {
 			return;
+		}
+
+		if (addToolbarAction) {
+			Objects.requireNonNull(icon,
+				"The provider's icon cannot be null when requesting the provider's action " +
+					"appear in the toolbar");
 		}
 
 		boolean supportsKeyBindings = !isTransient;
@@ -498,10 +504,12 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Sets the default key binding that will show this provider when pressed
+	 * Sets the default key binding that will show this provider when pressed.   This value can
+	 * be changed by the user and saved as part of the Tool options.
+	 * 
 	 * @param kbData the key binding
 	 */
-	public void setDefaultKeyBinding(KeyBindingData kbData) {
+	protected void setKeyBinding(KeyBindingData kbData) {
 
 		if (isInTool()) {
 			throw new IllegalStateException(
@@ -510,7 +518,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		this.defaultKeyBindingData = kbData;
 
-		if (isTransient) {
+		if (isTransient && kbData != null) {
 			Msg.error(this, TRANSIENT_PROVIDER_KEY_BINDING_WARNING_MESSAGE,
 				ReflectionUtilities.createJavaFilteredThrowable());
 			this.defaultKeyBindingData = null;
@@ -518,37 +526,34 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Convenience method for setting the provider's icon.
-	 * @param icon the icon to use for this provider.
+	 * Convenience method for setting the provider's icon
+	 * @param icon the icon to use for this provider
 	 */
-	public void setIcon(Icon icon) {
-		setIcon(icon, false);
+	protected void setIcon(Icon icon) {
+		this.icon = icon;
+		if (!isInTool()) {
+			return;
+		}
+
+		if (addToolbarAction && showProviderAction != null) {
+			Objects.requireNonNull(icon, "Icon cannot be set to null when using a toolbar action");
+			showProviderAction.setToolBarData(new ToolBarData(icon));
+		}
+
+		dockingTool.getWindowManager().setIcon(this, icon);
 	}
 
 	/**
-	 * Convenience method for setting the provider's icon
-	 * 
-	 * @param icon the icon to use for this provider
-	 * @param isToolbarAction true will cause this action to get added to the toolbar; if this
-	 *        value is true, then the icon cannot be null
+	 * Signals that this provider's action for showing the provider should appear in the main 
+	 * toolbar
 	 */
-	public void setIcon(Icon icon, boolean isToolbarAction) {
-		this.icon = icon;
-		this.isToolbarAction = isToolbarAction;
+	protected void addToToolbar() {
+		this.addToolbarAction = true;
 
-		if (isToolbarAction) {
-			Objects.requireNonNull(icon,
-				"Icon cannot be null when requesting the provider's action appear in the toolbar");
-
-			if (isTransient) {
-				Msg.error(this, TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE,
-					ReflectionUtilities.createJavaFilteredThrowable());
-				isToolbarAction = false;
-			}
-		}
-
-		if (isInTool()) {
-			dockingTool.getWindowManager().setIcon(this, icon);
+		if (isTransient) {
+			Msg.error(this, TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE,
+				ReflectionUtilities.createJavaFilteredThrowable());
+			addToolbarAction = false;
 		}
 	}
 
@@ -595,8 +600,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		// avoid visually disturbing the user by adding/removing toolbar actions for temp providers
-		if (isToolbarAction) {
-			isToolbarAction = false;
+		if (addToolbarAction) {
+			addToolbarAction = false;
 			Msg.error(this, TRANSIENT_PROVIDER_TOOLBAR_WARNING_MESSAGE,
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
@@ -776,7 +781,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			super(name, owner,
 				supportsKeyBindings ? KeyBindingType.SHARED : KeyBindingType.UNSUPPORTED);
 
-			if (isToolbarAction) {
+			if (addToolbarAction) {
 				setToolBarData(new ToolBarData(icon, TOOLBAR_GROUP));
 			}
 

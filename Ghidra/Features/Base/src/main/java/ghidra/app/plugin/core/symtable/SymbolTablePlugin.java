@@ -393,13 +393,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		DockingAction editExternalLocationAction = new EditExternalLocationAction(this);
 		tool.addLocalAction(symProvider, editExternalLocationAction);
 
-		makeSelectionAction = new MakeProgramSelectionAction(getName(), symProvider.getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				symProvider.makeSelection();
-			}
-		};
-
+		makeSelectionAction = new MakeProgramSelectionAction(this, symProvider.getTable());
 		makeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
 
 		tool.addLocalAction(symProvider, makeSelectionAction);

@@ -159,10 +159,15 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(final Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
-		selectAction = new MakeProgramSelectionAction(tableServicePlugin.getName(), table) {
+		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
 			@Override
-			protected void makeSelection(ActionContext context) {
-				doMakeSelection(plugin);
+			protected ProgramSelection makeSelection(ActionContext context) {
+
+				ProgramSelection selection = table.getProgramSelection();
+				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
+				navigatable.setSelection(selection);
+				navigatable.requestFocus();
+				return selection;
 			}
 		};
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
@@ -263,19 +268,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (gotoSvc != null) {
 			gotoSvc.goTo(extAddr, model.getProgram());
 		}
-	}
-
-	private void doMakeSelection(Plugin plugin) {
-		ProgramSelection selection = threadedPanel.getTable().getProgramSelection();
-		Program modelProgram = model.getProgram();
-		if (modelProgram == null || selection.getNumAddresses() == 0) {
-			return;
-		}
-
-		navigatable.goTo(model.getProgram(),
-			new ProgramLocation(modelProgram, selection.getMinAddress()));
-		navigatable.setSelection(selection);
-		navigatable.requestFocus();
 	}
 
 	@Override

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.reloc;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -63,13 +62,7 @@ public class RelocationTablePlugin extends Plugin implements DomainObjectListene
 
 	private void createActions() {
 
-		DockingAction selectAction =
-			new MakeProgramSelectionAction(getName(), provider.getTable()) {
-				@Override
-				protected void makeSelection(ActionContext context) {
-					doMakeSelection();
-				}
-			};
+		DockingAction selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
 		DockingAction navigationAction = new SelectionNavigationAction(this, provider.getTable());

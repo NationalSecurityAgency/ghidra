@@ -249,12 +249,8 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		homeAction.setToolBarData(new ToolBarData(HOME_ICON));
 		updateHomeActionState();
 
-		selectionAction = new MakeProgramSelectionAction(getName(), referencesPanel.getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				doMakeSelection();
-			}
-		};
+		selectionAction =
+			new MakeProgramSelectionAction(locationReferencesPlugin, referencesPanel.getTable());
 
 		highlightAction = new ToggleDockingAction("Highlight Matches", getName()) {
 			@Override

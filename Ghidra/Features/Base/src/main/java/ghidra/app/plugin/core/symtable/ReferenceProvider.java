@@ -44,7 +44,8 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), "Symbol References", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
 
-		setIcon(ICON, true);
+		setIcon(ICON);
+		addToToolbar();
 		setHelpLocation(new HelpLocation(plugin.getName(), "Symbol_References"));
 		setWindowGroup("symbolTable");
 		setIntraGroupPosition(WindowPosition.RIGHT);

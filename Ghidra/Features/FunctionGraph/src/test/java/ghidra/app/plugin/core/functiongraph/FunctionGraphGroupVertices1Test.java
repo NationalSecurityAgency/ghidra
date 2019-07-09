@@ -90,7 +90,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		Address minAddress = addresses.getMinAddress();
 		Address maxAddress = addresses.getMaxAddress();
 
-		// Recored the edges for later validate.  Note: we have to keep the string form, as the
+		// Record the edges for later validation.  Note: we have to keep the string form, as the
 		// toString() on the edges will call back to its vertices, which will later have been
 		// disposed.
 		Collection<FGEdge> oringalGroupedEdges = new HashSet<>(graph.getEdges());// copy so they don't get cleared		
@@ -99,7 +99,9 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 			originalEdgeStrings.add(edge.toString());
 		}
 
-		graphData = triggerPersistence("01002cf5");
+		// debug
+		capture(getPrimaryGraphViewer(), "graph.grouping.before.reload");
+		graphData = triggerPersistenceAndReload("01002cf5");
 
 		waitForAnimation();// the re-grouping may be using animation, which runs after the graph is loaded
 		functionGraph = graphData.getFunctionGraph();
@@ -113,6 +115,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// TODO debug - this has failed; suspected timing issue
 		waitForCondition(() -> pointsAreSimilar(location, newLocation));
 
+		capture(getPrimaryGraphViewer(), "graph.grouping.after.reload");
 		assertTrue(
 			"Vertex location not restored to default after performing a relayout " +
 				"original point: " + location + " - reloaded point: " + newLocation,
@@ -292,7 +295,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		Address secondMinAddress = outerAddresses.getMinAddress();
 		Address secondMaxAddress = outerAddresses.getMaxAddress();
 
-		graphData = triggerPersistence("01002cf5");
+		graphData = triggerPersistenceAndReload("01002cf5");
 
 		waitForAnimation();// the re-grouping may be using animation, which runs after the graph is loaded
 		functionGraph = graphData.getFunctionGraph();
@@ -410,7 +413,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		Address minAddress = addresses.getMinAddress();
 		Address maxAddress = addresses.getMaxAddress();
 
-		graphData = triggerPersistence("01002cf5");
+		graphData = triggerPersistenceAndReload("01002cf5");
 
 		waitForAnimation();// the re-grouping may be using animation, which runs after the graph is loaded
 		functionGraph = graphData.getFunctionGraph();
@@ -665,7 +668,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
-		FGData graphData = triggerPersistence("01002cf5");
+		FGData graphData = triggerPersistenceAndReload("01002cf5");
 
 		//
 		// Retrieve the group and make sure its color is restored
@@ -702,7 +705,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
-		FGData graphData = triggerPersistence("01002cf5");
+		FGData graphData = triggerPersistenceAndReload("01002cf5");
 
 		//
 		// Retrieve the group and make sure its color is restored
@@ -745,7 +748,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
-		FGData graphData = triggerPersistence("01002cf5");
+		FGData graphData = triggerPersistenceAndReload("01002cf5");
 
 		//
 		// Retrieve the group and make sure its color is restored
