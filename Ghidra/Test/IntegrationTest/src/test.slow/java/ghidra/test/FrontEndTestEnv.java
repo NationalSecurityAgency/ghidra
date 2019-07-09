@@ -23,8 +23,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.junit.Assert;
-
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
@@ -341,15 +339,10 @@ public class FrontEndTestEnv {
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
-	public List<DockingActionIf> getFrontEndActions() {
-		return frontEndTool.getDockingActionsByOwnerName("FrontEndPlugin");
-	}
-
 	public DockingActionIf getAction(String actionName) {
-		List<DockingActionIf> a =
-			frontEndTool.getDockingActionsByFullActionName(actionName + " (FrontEndPlugin)");
-		Assert.assertEquals(1, a.size());
-		return a.get(0);
+		DockingActionIf action =
+			AbstractDockingTest.getAction(frontEndTool, "FrontEndPlugin", actionName);
+		return action;
 	}
 
 	public void performFrontEndAction(DockingActionIf action) {

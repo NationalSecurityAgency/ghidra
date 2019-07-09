@@ -386,7 +386,7 @@ public class GenericHeader extends JPanel {
 		 */
 		void setTitle(String s) {
 			titleLabel.setText(s);
-			ToolTipManager.setToolTipText(titleLabel, s);
+			titleLabel.setToolTipText(s);
 		}
 
 		/**

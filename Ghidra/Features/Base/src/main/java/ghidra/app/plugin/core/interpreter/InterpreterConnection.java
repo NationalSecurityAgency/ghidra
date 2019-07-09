@@ -21,7 +21,16 @@ import javax.swing.ImageIcon;
 
 import ghidra.app.plugin.core.console.CodeCompletion;
 
+/**
+ * A connection between an implementation of an interpreter and its generic GUI components.
+ */
 public interface InterpreterConnection {
+
+	/**
+	 * Gets the title of the interpreter.
+	 * 
+	 * @return The title of the interpreter
+	 */
 	public String getTitle();
 
 	/**
@@ -31,15 +40,11 @@ public interface InterpreterConnection {
 	 */
 	public ImageIcon getIcon();
 
+	/**
+	 * Gets a {@link List} of {@link CodeCompletion code completions} for the given command.
+	 * 
+	 * @param cmd The command to get code completions for
+	 * @return A {@link List} of {@link CodeCompletion code completions} for the given command
+	 */
 	public List<CodeCompletion> getCompletions(String cmd);
-
-	/**
-	 * Interrupts what the interpreter is currently doing.
-	 */
-	public void interrupt();
-
-	/**
-	 * Resets the interpreter.  Each interpreter can define what "reset" for them means.
-	 */
-	public void reset();
 }

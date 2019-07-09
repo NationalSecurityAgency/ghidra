@@ -53,8 +53,8 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorProvider#createActions()
 	 */
 	@Override
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[] { new ApplyAction(this), new MoveUpAction(this),
+	protected CompositeEditorTableAction[] createActions() {
+		return new CompositeEditorTableAction[] { new ApplyAction(this), new MoveUpAction(this),
 			new MoveDownAction(this), new DuplicateAction(this), new DuplicateMultipleAction(this),
 			new DeleteAction(this), new PointerAction(this), new ArrayAction(this),
 			new ShowComponentPathAction(this), new EditComponentAction(this),

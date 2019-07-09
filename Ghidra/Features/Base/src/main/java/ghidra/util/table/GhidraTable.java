@@ -23,7 +23,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
-import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
@@ -41,8 +40,6 @@ import ghidra.program.util.ProgramSelection;
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
  * <p>
  */
-@SuppressWarnings("deprecation")
-// Suppress - we are using the deprecated reference to DefaultSortedTableModel to handle old code
 public class GhidraTable extends GTable {
 
 	private Navigatable navigatable;
@@ -213,10 +210,6 @@ public class GhidraTable extends GTable {
 	private ProgramTableModel getProgramTableModel(TableModel model) {
 		if (model instanceof ProgramTableModel) {
 			return (ProgramTableModel) model;
-		}
-		else if (model instanceof DefaultSortedTableModel) {
-			DefaultSortedTableModel defaultSortedTableModel = (DefaultSortedTableModel) model;
-			return getProgramTableModel(defaultSortedTableModel.getModel());
 		}
 		return null;
 	}

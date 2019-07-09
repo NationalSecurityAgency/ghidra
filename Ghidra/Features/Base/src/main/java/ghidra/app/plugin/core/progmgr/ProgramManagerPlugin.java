@@ -263,7 +263,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			if (type == SymbolType.FUNCTION) {
 				loc = new FunctionSignatureFieldLocation(sym.getProgram(), sym.getAddress());
 			}
-			else if (type == SymbolType.CODE) {
+			else if (type == SymbolType.LABEL) {
 				loc = new LabelFieldLocation(sym);
 			}
 		}
@@ -1017,6 +1017,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		if (openTask == null) {
 			return;
 		}
+
+		// Restore state should not ask about checking out since
+		// hopefully it is in the same state it was in when project
+		// was closed and state was saved.
+		openTask.setNoCheckout();
 
 		try {
 			new TaskLauncher(openTask, tool.getToolFrame(), 100);

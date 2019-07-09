@@ -640,7 +640,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			return null;
 		}
 		Symbol s = symbols[0];
-		if (s.isDynamic() || s.getSymbolType() != SymbolType.CODE ||
+		if (s.isDynamic() || s.getSymbolType() != SymbolType.LABEL ||
 			!s.getParentNamespace().isGlobal()) {
 			return null;
 		}

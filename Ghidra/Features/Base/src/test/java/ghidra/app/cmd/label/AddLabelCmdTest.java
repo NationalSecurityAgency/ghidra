@@ -103,7 +103,7 @@ public class AddLabelCmdTest extends AbstractGenericTest {
 		execute(cmd);
 		Symbol symbol = getUniqueSymbol(notepad, "fred", null);
 		assertNotNull(symbol);
-		assertEquals(SymbolType.CODE, symbol.getSymbolType());
+		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		SetLabelPrimaryCmd c =
 			new SetLabelPrimaryCmd(symbol.getAddress(), "fred", symbol.getParentNamespace());
 		execute(c);
@@ -139,7 +139,7 @@ public class AddLabelCmdTest extends AbstractGenericTest {
 		execute(cmd);
 		Symbol symbol = getUniqueSymbol(notepad, "fred", ns);
 		assertNotNull(symbol);
-		assertEquals(SymbolType.CODE, symbol.getSymbolType());
+		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		SetLabelPrimaryCmd c =
 			new SetLabelPrimaryCmd(symbol.getAddress(), "fred", symbol.getParentNamespace());
 		execute(c);

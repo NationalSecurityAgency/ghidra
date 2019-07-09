@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -117,7 +116,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		// select first row
 		// all actions except "merge" should be enabled
 		table.addRowSelectionInterval(0, 0);
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Merge Blocks")) {
 				assertTrue(!action.isEnabled());
@@ -133,7 +132,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 		table.addRowSelectionInterval(0, 1);
 		assertEquals(2, table.getSelectedRowCount());
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||

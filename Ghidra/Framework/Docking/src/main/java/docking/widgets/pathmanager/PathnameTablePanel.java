@@ -28,10 +28,10 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import ghidra.framework.preferences.Preferences;
-import ghidra.generic.function.Callback;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 /**
  * Component that has a table to show pathnames; the panel includes buttons to control

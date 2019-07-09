@@ -63,6 +63,14 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 					directoryTable.editingCanceled(new ChangeEvent(FileEditor.this));
 					e.consume();
 				}
+				else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					String invalidFilenameMessage =
+						chooser.getInvalidFilenameMessage(nameField.getText());
+					if (invalidFilenameMessage != null) {
+						chooser.setStatusText(invalidFilenameMessage);
+						e.consume();
+					}
+				}
 			}
 
 			@Override
@@ -72,7 +80,14 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 					e.consume();
 				}
 				else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					directoryTable.editingStopped(new ChangeEvent(FileEditor.this));
+					String invalidFilenameMessage =
+						chooser.getInvalidFilenameMessage(nameField.getText());
+					if (invalidFilenameMessage != null) {
+						chooser.setStatusText(invalidFilenameMessage);
+					}
+					else {
+						directoryTable.editingStopped(new ChangeEvent(FileEditor.this));
+					}
 					e.consume();
 				}
 			}
@@ -145,6 +160,11 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 	}
 
 	private File getNewFile() {
+		String invalidFilenameMessage = chooser.getInvalidFilenameMessage(nameField.getText());
+		if (invalidFilenameMessage != null) {
+			chooser.setStatusText("Rename aborted - " + invalidFilenameMessage);
+			return originalFile;
+		}
 		GhidraFileChooserModel fileChooserModel = chooser.getModel();
 		File newFile = new GhidraFile(originalFile.getParentFile(), nameField.getText(),
 			fileChooserModel.getSeparator());

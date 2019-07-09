@@ -348,8 +348,8 @@ public class ImporterDialog extends DialogComponentProvider {
 			String programName = FilenameUtils.getName(programPath);
 			List<Option> localOptions = getOptions(loadSpec);
 			TaskLauncher.launchNonModal("Import File", monitor -> {
-				ImporterUtilities.doSingleImport(fsrl, importFolder, loadSpec, programName,
-					localOptions, tool, programManager, monitor);
+				ImporterUtilities.importSingleFile(tool, programManager, fsrl, importFolder,
+					loadSpec, programName, localOptions, monitor);
 			});
 			close();
 		}

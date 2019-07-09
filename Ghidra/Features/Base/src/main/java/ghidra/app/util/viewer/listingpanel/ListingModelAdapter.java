@@ -53,16 +53,13 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		removeUnviewableAddressRanges();
 		model.addListener(this);
 
-		updateMgr = new SwingUpdateManager(500, 5000, new Runnable() {
-			@Override
-			public void run() {
-				if (!model.isClosed()) {
-					resetIndexMap();
-					for (LayoutModelListener listener : listeners) {
-						listener.dataChanged(BigInteger.ZERO, addressToIndexMap.getIndexCount());
-					}
-					preferredViewSize = null;
+		updateMgr = new SwingUpdateManager(500, 5000, () -> {
+			if (!model.isClosed()) {
+				resetIndexMap();
+				for (LayoutModelListener listener : listeners) {
+					listener.dataChanged(BigInteger.ZERO, addressToIndexMap.getIndexCount());
 				}
+				preferredViewSize = null;
 			}
 		});
 	}
@@ -217,7 +214,6 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		if (floc != null) {
 			return floc;
 		}
-
 		return getFieldLocation(location.getAddress(), location, true);
 	}
 
@@ -237,7 +233,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		BigInteger index = addressToIndexMap.getIndex(address);
 		Layout layout = getLayout(index);
 		if (layout == null) {
-			index = getLayoutForArrayElement(address);
+			index = getLayoutWithinCodeUnit(address);
 			layout = getLayout(index);
 		}
 
@@ -272,11 +268,12 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		return null;
 	}
 
-	private BigInteger getLayoutForArrayElement(Address address) {
+	private BigInteger getLayoutWithinCodeUnit(Address address) {
 		CodeUnit cu = model.getProgram().getListing().getCodeUnitContaining(address);
 		if (cu == null) {
 			return null;
 		}
+
 		Address min = cu.getMinAddress();
 		while (address.compareTo(min) > 0) {
 			address = address.subtract(1);
@@ -491,11 +488,12 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		if (indexBefore == null) {
 			indexBefore = BigInteger.ZERO;
 		}
-		if (indexAfter.subtract(indexBefore)
-			.compareTo(addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
+		if (indexAfter.subtract(indexBefore).compareTo(
+			addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
 			Address start = addressToIndexMap.getAddress(indexBefore.add(BigInteger.ONE));
 			Address end = addressToIndexMap.getAddress(indexAfter.subtract(BigInteger.ONE));
-			if (start != null && end != null) {
+			if (start != null && end != null &&
+				start.getAddressSpace().equals(end.getAddressSpace())) {
 				addressSet.add(start, end);
 			}
 		}
@@ -619,7 +617,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 
 	/**
 	 * Sets the addresses displayed by this model's listing.
-	 * @param view the addresses. These must already be compatible with the program 
+	 * @param view the addresses. These must already be compatible with the program
 	 * associated with this model.
 	 */
 	public void setAddressSet(AddressSetView view) {

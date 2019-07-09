@@ -53,6 +53,7 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import resources.ResourceManager;
+import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
@@ -479,14 +480,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableModel.fireTableDataChanged();
 	}
 
-	/*
-	 * is more than just root node selected?
-	 */
-	boolean isSelectedCategory() {
-		TreePath path = scriptCategoryTree.getSelectionPath();
-		return path != null && path.getPathCount() > 1;
-	}
-
 	String[] getSelectedCategoryPath() {
 		TreePath currentPath = scriptCategoryTree.getSelectionPath();
 
@@ -528,7 +521,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		tableModel.fireTableDataChanged();
 
-		updateTreeNodesToReflectAvailableScripts();
+		trimUnusedTreeCategories();
 
 		scriptRoot.fireNodeStructureChanged(scriptRoot);
 		if (preRefreshSelectionPath != null) {
@@ -537,6 +530,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateAvailableScriptFilesForAllPaths() {
+
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
 		List<Path> dirPaths = pathManager.getPaths();
@@ -553,7 +547,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		GhidraScriptUtil.refreshDuplicates();
-		refreshActions();
+		refreshScriptData();
 	}
 
 	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptsToRemove,
@@ -577,7 +571,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	}
 
-	private void refreshActions() {
+	private void refreshScriptData() {
 		List<ResourceFile> scripts = tableModel.getScripts();
 
 		for (ResourceFile script : scripts) {
@@ -593,26 +587,43 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private void updateTreeNodesToReflectAvailableScripts() {
-		ArrayList<GTreeNode> nodesToRemove = new ArrayList<>();
-		Iterator<GTreeNode> it = new BreadthFirstIterator(scriptCategoryTree, scriptRoot);
-		while (it.hasNext()) {
-			GTreeNode node = it.next();
-			String[] category = getCategoryPath(node);
-			Iterator<ScriptInfo> iter = GhidraScriptUtil.getScriptInfoIterator();
-			boolean found = false;
-			while (iter.hasNext()) {
-				if (iter.next().isCategory(category)) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				nodesToRemove.add(node);
+	// note: we really should just rebuild the tree instead of using this method
+	private void trimUnusedTreeCategories() {
+
+		/*
+		 			Unusual Algorithm
+		 			
+		 	The tree nodes represent categories, but do not contain nodes for individual 
+		 	scripts.  We wish to remove any of the tree nodes that no longer represent script
+		 	categories.  (This can happen when a script is deleted or its category is changed.)
+		 	This algorithm will assume that all nodes need to be deleted.  Then, each script is
+		 	examined, using its category to mark a given node as 'safe'; that node's parents are
+		 	also marked as safe.   Any nodes remaining unmarked have no reference script and 
+		 	will be deleted. 
+		 */
+
+		// note: turn String[] to List<String> to use hashing
+		Iterator<ScriptInfo> scripts = GhidraScriptUtil.getScriptInfoIterator();
+		Set<List<String>> categories = new HashSet<>();
+		for (ScriptInfo info : CollectionUtils.asIterable(scripts)) {
+			String[] path = info.getCategory();
+			List<String> category = Arrays.asList(path);
+			for (int i = 1; i <= category.size(); i++) {
+				categories.add(category.subList(0, i));
 			}
 		}
 
-		for (GTreeNode node : nodesToRemove) {
+		List<GTreeNode> toDelete = new LinkedList<>();
+		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptCategoryTree, scriptRoot);
+		for (GTreeNode node : CollectionUtils.asIterable(nodes)) {
+			String[] path = getCategoryPath(node);
+			List<String> category = Arrays.asList(path);
+			if (!categories.contains(category)) {
+				toDelete.add(node);
+			}
+		}
+
+		for (GTreeNode node : toDelete) {
 			GTreeNode parent = node.getParent();
 			if (parent != null) {
 				parent.removeNode(node);
@@ -874,7 +885,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	private void updateCategoryTree(ResourceFile script) {
 		scriptRoot.insert(script);
-		updateTreeNodesToReflectAvailableScripts();
+		trimUnusedTreeCategories();
 	}
 
 	private void buildFilter() {
@@ -1046,6 +1057,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		if (!hasBeenRefreshed) {
 			performRefresh();
 		}
+	}
+
+	@Override
+	public void componentActivated() {
+		// put the user focus in the filter field, as often the user wishes to search for a script
+		tableFilterPanel.requestFocus();
 	}
 
 	@Override

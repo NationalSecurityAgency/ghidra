@@ -148,6 +148,7 @@ public class DWARFCompilationUnit {
 		else {
 			format = DWARF_32;
 		}
+
 		long endOffset = (debugInfoBR.getPointerIndex() + length);
 		short version = debugInfoBR.readNextShort();
 		long abbreviationOffset = DWARFUtil.readOffsetByDWARFformat(debugInfoBR, format);
@@ -158,6 +159,14 @@ public class DWARFCompilationUnit {
 			throw new DWARFException(
 				"Only DWARF version 2, 3, or 4 information is currently supported.");
 		}
+		if (firstDIEOffset > endOffset) {
+			throw new IOException("Invalid length " + (endOffset - startOffset) +
+				" for DWARF Compilation Unit at 0x" + Long.toHexString(startOffset));
+		}
+		else if (firstDIEOffset == endOffset) {
+			// silently skip this empty compunit
+			return null;
+		}
 
 		debugAbbrBR.setPointerIndex(abbreviationOffset);
 		Map<Integer, DWARFAbbreviation> abbrMap =
@@ -167,10 +176,10 @@ public class DWARFCompilationUnit {
 			new DWARFCompilationUnit(dwarfProgram, startOffset, endOffset, length, format, version,
 				abbreviationOffset, pointerSize, cuNumber, firstDIEOffset, abbrMap);
 
-		DebugInfoEntry compileUnitDIE =
-			DebugInfoEntry.read(debugInfoBR, cu, dwarfProgram.getAttributeFactory());
-
 		try {
+			DebugInfoEntry compileUnitDIE =
+				DebugInfoEntry.read(debugInfoBR, cu, dwarfProgram.getAttributeFactory());
+
 			DWARFCompileUnit compUnit = DWARFCompileUnit.read(
 				DIEAggregate.createSingle(compileUnitDIE), dwarfProgram.getDebugLine());
 			cu.setCompileUnit(compUnit);

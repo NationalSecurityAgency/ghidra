@@ -112,49 +112,6 @@ void AddrSpace::truncateSpace(uint4 newsize)
   calcScaleMask();
 }
 
-/// Check if this space contains \b id2.
-/// \param id2 is the space to check
-/// \return \b true if \b id2 is contained
-bool AddrSpace::contain(AddrSpace *id2) const
-
-{
-  while(this != id2) {
-    id2 = id2->getContain();
-    if (id2 == (AddrSpace *)0)
-      return false;		// No containment
-  }
-  return true;
-}
-
-/// Convert an array of bytes, which we assume are contained in
-/// the space, into an integer value. The conversion depends
-/// on the endian property of the space
-/// \param ptr is the array of bytes
-/// \param size is the size of the array to convert
-/// \return the converted integer value
-uintm AddrSpace::data2Uintm(const uint1 *ptr,int4 size) const
-
-{
-  uintm res;
-  int4 i;
-
-  if ((flags&big_endian)!=0) {
-    res = 0;
-    for(i=0;i<size;++i) {
-      res <<= 8;
-      res |= ptr[i];
-    }
-  }
-  else {
-    res = 0;
-    for(i=size-1;i>=0;--i) {
-      res <<= 8;
-      res |= ptr[i];
-    }
-  }
-  return res;
-}
-
 /// Write the main XML attributes for an address within this space
 /// The caller provides only the \e offset, and this routine fills
 /// in other details pertaining to this particular space.
@@ -308,10 +265,10 @@ uintb AddrSpace::read(const string &s,int4 &size) const
     offset = addressToByte(offset,wordsize);
     enddata = (const char *) tmpdata;
     if (enddata - s.c_str() == s.size()) { // If no size or offset override
-      size = getAddrSize();	// Return "natural" size
+      size = manage->getDefaultSize();	// Return "natural" size
       return offset;
     }
-    size = getAddrSize();
+    size = manage->getDefaultSize();
   }
   if (append != string::npos) {
     enddata = s.c_str()+append;

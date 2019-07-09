@@ -394,6 +394,21 @@ string OptionNoCastPrinting::apply(Architecture *glb,const string &p1,const stri
   return "No cast printing turned "+prop;
 }
 
+/// \class OptionHideExtensions
+/// \brief Toggle whether implied extensions (ZEXT or SEXT) are printed
+string OptionHideExtensions::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  bool val = onOrOff(p1);
+  PrintC *lng = dynamic_cast<PrintC *>(glb->print);
+  if (lng == (PrintC *)0)
+    return "Can only toggle extension hiding for C language";
+  lng->setHideImpliedExts(val);
+  string prop;
+  prop = val ? "on" : "off";
+  return "Implied extension hiding turned "+prop;
+}
+
 /// \class OptionMaxLineWidth
 /// \brief Set the maximum number of characters per decompiled line
 ///

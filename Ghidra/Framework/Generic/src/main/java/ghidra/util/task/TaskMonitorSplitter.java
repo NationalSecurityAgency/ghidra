@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import generic.concurrent.ConcurrentListenerSet;
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
 
 public class TaskMonitorSplitter {
@@ -138,6 +137,11 @@ public class TaskMonitorSplitter {
 		}
 
 		@Override
+		public boolean isIndeterminate() {
+			return parent.isIndeterminate();
+		}
+
+		@Override
 		public void initialize(long newMax) {
 			setMaximum(newMax);
 			setProgress(0);
@@ -153,7 +157,11 @@ public class TaskMonitorSplitter {
 		@Override
 		public void setMessage(String message) {
 			parent.setMessage(message);
+		}
 
+		@Override
+		public String getMessage() {
+			return parent.getMessage();
 		}
 
 		@Override
@@ -175,21 +183,6 @@ public class TaskMonitorSplitter {
 			for (CancelledListener listener : listeners) {
 				listener.cancelled();
 			}
-		}
-
-		@Override
-		public void addIssueListener(IssueListener listener) {
-			parent.addIssueListener(listener);
-		}
-
-		@Override
-		public void removeIssueListener(IssueListener listener) {
-			parent.removeIssueListener(listener);
-		}
-
-		@Override
-		public void reportIssue(Issue issue) {
-			parent.reportIssue(issue);
 		}
 	}
 }

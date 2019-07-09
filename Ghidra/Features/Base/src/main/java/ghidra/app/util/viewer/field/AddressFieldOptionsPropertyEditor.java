@@ -19,9 +19,9 @@ import java.awt.Component;
 import java.beans.PropertyEditorSupport;
 import java.math.BigInteger;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
-import docking.ToolTipManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
@@ -63,9 +63,9 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 	private AddressFieldOptionsWrappedOption addressFieldOptionsWrappedOption;
 
 	private Component editorComponent;
-	private JCheckBox padCheckBox;
+	private GCheckBox padCheckBox;
 	private IntegerTextField minDigitsField;
-	private JCheckBox showBlocknameCheckbox;
+	private GCheckBox showBlocknameCheckbox;
 	private GhidraComboBox<String> justificationCombobox;
 
 	public AddressFieldOptionsPropertyEditor() {
@@ -76,38 +76,38 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		// we want to have a panel with our options so that we may group them together
 		JPanel panel = new JPanel(new PairLayout(6, 10));
 
-		JLabel label = new GDLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
-		ToolTipManager.setToolTipText(label, SHOW_BLOCKNAME_TOOLTIP);
+		GDLabel label = new GDLabel(SHOW_BLOCK_NAME_LABEL, SwingConstants.RIGHT);
+		label.setToolTipText(SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(label);
 		showBlocknameCheckbox = new GCheckBox();
-		ToolTipManager.setToolTipText(showBlocknameCheckbox, SHOW_BLOCKNAME_TOOLTIP);
+		showBlocknameCheckbox.setToolTipText(SHOW_BLOCKNAME_TOOLTIP);
 		panel.add(showBlocknameCheckbox);
 
 		// the namespace checkbox will disable the text field options when it is not used
 		label = new GDLabel(PADDING_LABEL, SwingConstants.RIGHT);
-		ToolTipManager.setToolTipText(label, ADDRESS_PADDING_TOOLTIP);
+		label.setToolTipText(ADDRESS_PADDING_TOOLTIP);
 		panel.add(label);
 		padCheckBox = new GCheckBox();
 		panel.add(padCheckBox);
 		padCheckBox.setSelected(false);
-		ToolTipManager.setToolTipText(padCheckBox, ADDRESS_PADDING_TOOLTIP);
+		padCheckBox.setToolTipText(ADDRESS_PADDING_TOOLTIP);
 		label = new GDLabel(ADDRESS_DIGITS_LABEL, SwingConstants.RIGHT);
-		ToolTipManager.setToolTipText(label, MIN_HEX_DIGITS_TOOLTIP);
+		label.setToolTipText(MIN_HEX_DIGITS_TOOLTIP);
 		panel.add(label);
 
 		minDigitsField = new IntegerTextField(2);
 		minDigitsField.setAllowNegativeValues(false);
 		minDigitsField.setDecimalMode();
 		minDigitsField.setMaxValue(BigInteger.valueOf(32));
-		ToolTipManager.setToolTipText(minDigitsField.getComponent(), MIN_HEX_DIGITS_TOOLTIP);
+		minDigitsField.getComponent().setToolTipText(MIN_HEX_DIGITS_TOOLTIP);
 
 		panel.add(minDigitsField.getComponent());
 
 		label = new GDLabel(JUSTIFICATION_LABEL, SwingConstants.RIGHT);
-		ToolTipManager.setToolTipText(label, RIGHT_JUSTIFY_TOOLTIP);
+		label.setToolTipText(RIGHT_JUSTIFY_TOOLTIP);
 		panel.add(label);
 		justificationCombobox = new GhidraComboBox<>(new String[] { "Left", "Right" });
-		ToolTipManager.setToolTipText(justificationCombobox, RIGHT_JUSTIFY_TOOLTIP);
+		justificationCombobox.setToolTipText(RIGHT_JUSTIFY_TOOLTIP);
 		panel.add(justificationCombobox);
 
 		showBlocknameCheckbox.addItemListener(evt -> firePropertyChange());

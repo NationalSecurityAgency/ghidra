@@ -255,7 +255,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			}
 			SymbolType symbolType = symbol.getSymbolType();
 			if (symbol.isExternal() &&
-				(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE)) {
+				(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
 
 				externalAddSet.add(symbolID);
 			}
@@ -274,14 +274,14 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				}
 				SymbolType symbolType = originalSymbol.getSymbolType();
 				if (originalSymbol.isExternal() &&
-					(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE)) {
+					(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
 					externalRemoveSet.add(symbolID);
 				}
 				continue;
 			}
 			SymbolType symbolType = symbol.getSymbolType();
 			if (symbol.isExternal() &&
-				(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE)) {
+				(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
 				externalModifySet.add(symbolID);
 			}
 		}
@@ -1565,7 +1565,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			if (latestSymbol != null) {
 				// We have a possible matching external from LATEST.
 				SymbolType symbolType = latestSymbol.getSymbolType();
-				if (symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) {
+				if (symbolType == SymbolType.LABEL || symbolType == SymbolType.FUNCTION) {
 					latestExternalLocation =
 						externalManagers[LATEST].getExternalLocation(latestSymbol);
 				}

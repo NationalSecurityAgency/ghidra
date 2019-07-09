@@ -27,9 +27,9 @@ Primary gradle tasks for Ghidra
     									appropriate os dirs)
 
 Task rules:
-    buildNative_[platform]           builds the native executables and libraries for the
+    buildNatives_[platform]          builds the native executables and libraries for the
                                      specified platform (win64, linux64, osx64, etc.)       [nativeProject.gradle] 
-    prebuildNative_[platform]        builds the native executables and libraries for the
+    prebuildNatives_[platform]       builds the native executables and libraries for the
                                      specified platform and copies results to bin repo.     [nativeProject.gradle]
     	 
 """

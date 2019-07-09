@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +34,7 @@ public class Update8051 extends GhidraScript {
     	}
 		SymbolTable st = currentProgram.getSymbolTable();
 		SymbolIterator iter = st.getDefinedSymbols();
-		int count =0;
+		int count = 0;
 		while (iter.hasNext()) {
 			Symbol symbol = iter.next();
 			String spaceName = symbol.getAddress().getAddressSpace().getName();
@@ -49,7 +48,7 @@ public class Update8051 extends GhidraScript {
 			println("No address spaces found for " +SFR + ", "+ BITS + ", " + SFR_BITS + ".");
 		}
 		else {
-			String str = (count > 1 ? " symbol to update." : " symbols to update."); 
+			String str = (count > 1 ? " symbols to update." : " symbol to update."); 
 			println("Found " + count + str);
 		}
     }

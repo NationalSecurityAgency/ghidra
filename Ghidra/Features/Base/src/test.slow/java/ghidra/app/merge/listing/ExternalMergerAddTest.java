@@ -938,7 +938,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
 		assertNull(blueConflict);
-		assertEquals(SymbolType.CODE, blue.getSymbolType());
+		assertEquals(SymbolType.LABEL, blue.getSymbolType());
 		assertTrue(blue.isExternal());
 		ExternalLocation externalLocation1 = externalManager.getExternalLocation(blue);
 		assertEquals(libname, externalLocation1.getLibraryName());
@@ -1013,7 +1013,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
 		assertNull(blueConflict);
-		assertEquals(SymbolType.CODE, blue.getSymbolType());
+		assertEquals(SymbolType.LABEL, blue.getSymbolType());
 		assertTrue(blue.isExternal());
 		ExternalLocation externalLocation = externalManager.getExternalLocation(blue);
 		assertNotNull(externalLocation);
@@ -2226,8 +2226,8 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label1, myNamespace);
 		Symbol oranges = getUniqueSymbol(resultProgram, label2, myNamespace);
-		assertEquals(SymbolType.CODE, apples.getSymbolType());
-		assertEquals(SymbolType.CODE, oranges.getSymbolType());
+		assertEquals(SymbolType.LABEL, apples.getSymbolType());
+		assertEquals(SymbolType.LABEL, oranges.getSymbolType());
 		ExternalLocation externalLocation = (ExternalLocation) apples.getObject();
 		assertEquals(label1, externalLocation.getLabel());
 		assertEquals(libname, externalLocation.getLibraryName());
@@ -2301,7 +2301,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
-		assertEquals(SymbolType.CODE, apples.getSymbolType());
+		assertEquals(SymbolType.LABEL, apples.getSymbolType());
 		assertNull(applesConflict);
 		ExternalLocation externalLocation = (ExternalLocation) apples.getObject();
 		assertEquals(label, externalLocation.getLabel());
@@ -2366,7 +2366,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
-		assertEquals(SymbolType.CODE, apples.getSymbolType());
+		assertEquals(SymbolType.LABEL, apples.getSymbolType());
 		assertNull(applesConflict);
 		ExternalLocation externalLocation = (ExternalLocation) apples.getObject();
 		assertEquals(label, externalLocation.getLabel());
@@ -3220,7 +3220,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		List<Symbol> symbols = symtab.getSymbols(label, externalLibrary);
 		assertEquals(1, symbols.size());
 		Symbol blue = symbols.get(0);
-		assertEquals(SymbolType.CODE, blue.getSymbolType());
+		assertEquals(SymbolType.LABEL, blue.getSymbolType());
 		assertTrue(blue.isExternal());
 		ExternalLocation externalLocation = externalManager.getExternalLocation(blue);
 		assertNotNull(externalLocation);
@@ -3302,7 +3302,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		List<Symbol> symbols = symtab.getSymbols(label, externalLibrary);
 		assertEquals(1, symbols.size());
 		Symbol blue = symbols.get(0);
-		assertEquals(SymbolType.CODE, blue.getSymbolType());
+		assertEquals(SymbolType.LABEL, blue.getSymbolType());
 		assertTrue(blue.isExternal());
 		ExternalLocation externalLocation = externalManager.getExternalLocation(blue);
 		assertNotNull(externalLocation);

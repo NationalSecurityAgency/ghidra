@@ -159,7 +159,7 @@ public class MatchSymbol {
 
 			final SymbolType symbolType = symbol.getSymbolType();
 
-			if ((symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE) &&
+			if ((symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL) &&
 				(set.contains(symbol.getAddress()) || (symbol.isExternal() && includeExternals))) {
 				String name = symbol.getName();
 				if (name.length() >= minSymbolNameLength) {
@@ -210,7 +210,7 @@ public class MatchSymbol {
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			return SymbolMatchType.FUNCTION;
 		}
-		if (symbol.getSymbolType() != SymbolType.CODE) {
+		if (symbol.getSymbolType() != SymbolType.LABEL) {
 			return SymbolMatchType.OTHER;
 		}
 		if (symbol.isExternal()) {
@@ -413,7 +413,7 @@ public class MatchSymbol {
 		}
 
 		public SymbolType getMatchType() {
-			return aSymbol.isFunction ? SymbolType.FUNCTION : SymbolType.CODE;
+			return aSymbol.isFunction ? SymbolType.FUNCTION : SymbolType.LABEL;
 		}
 
 		@Override

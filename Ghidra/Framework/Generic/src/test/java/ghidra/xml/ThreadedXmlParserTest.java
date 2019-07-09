@@ -18,6 +18,8 @@ package ghidra.xml;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
@@ -25,7 +27,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.SwingUtilities;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.xml.sax.*;
 
 import generic.test.AbstractGenericTest;
@@ -41,18 +44,54 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 		"<project name=\"foo\"/>" + "<project name=\"foo\"/>" + "<project name=\"foo\"/>" +
 		"<project name=\"foo\"/>" + "</doc>";
 
+	
+	private static final String XXE_XML = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
+		"<!DOCTYPE foo [\n" + "    <!ELEMENT foo ANY >\n" +
+		"<!ENTITY xxe SYSTEM \"file://@TEMP_FILE@\">]><foo>&xxe; fizzbizz</foo>";
+	
 	public ThreadedXmlParserTest() {
 		super();
 	}
 
-	@Before
-	public void setUp() throws Exception {
+	/**
+	 * <p>
+	 * XML External Entities attacks benefit from an XML feature to build documents dynamically at 
+	 * the time of processing.  An XML entity allows inclusion of data dynamically from a given 
+	 * resource.  External entities allow an XML document to include data from an external URI. 
+	 * Unless configured to do otherwise, external entities force the XML parser to access the 
+	 * resource specified by the URI, e.g., a file on the local machine or remote system. 
+	 * This behavior exposes the application to XML External Entity (XXE) attacks.
+	 * <p>
+	 * Normally, a custom Entity Resolver implementing org.xml.sax.EntityResolver should not return null 
+	 * as it will then default to the SAX Entity Resolver that allows and resolves external 
+	 * entities. 
+	 * <p>
+	 * This test ensures external entities are ignored whether or not a default SAX Entity Resolver 
+	 * is used. Using the ThreadedXmlPullParserImpl constructor which takes an InputStream (rather 
+	 * than ResourceFile) will use a default Entity Resolver. The XmlUtilities.createSecureSAXParserFactory 
+	 * factory configurations will disable external entities regardless of which Entity Resolver is used.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testXXEXml() throws Exception {
+		// Create file with contents
+		String fileContents = "foobar";
+		File xxeFile = createTempFileForTest();
+		Files.write(xxeFile.toPath(), fileContents.getBytes());
+		// Place file path in XML ENTITY
+		String xxeXml = XXE_XML.replace("@TEMP_FILE@", xxeFile.getPath());
 
-	}
+		// This constructor will use a default EntityResolver
+		ThreadedXmlPullParserImpl parser =
+			new ThreadedXmlPullParserImpl(new ByteArrayInputStream(xxeXml.getBytes()),
+				testName.getMethodName(), new TestErrorHandler(), false, 3);
 
-	@After
-	public void tearDown() throws Exception {
+		parser.start("foo");
+		XmlElement x1 = parser.next();
 
+		assertFalse("File contents (external entity) should not be in xml.",
+			x1.getText().contains(fileContents));
 	}
 
 	@Test

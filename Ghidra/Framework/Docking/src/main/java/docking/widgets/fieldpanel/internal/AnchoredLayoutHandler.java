@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +26,15 @@ public class AnchoredLayoutHandler {
 
 	private final LayoutModel model;
 	private int viewHeight;
-	private final LinkedList<AnchoredLayout> layouts = new LinkedList<AnchoredLayout>();
-	
+	private final LinkedList<AnchoredLayout> layouts = new LinkedList<>();
+
 	public AnchoredLayoutHandler(LayoutModel model, int viewHeight) {
-		this.model = model;	
+		this.model = model;
 		this.viewHeight = viewHeight;
 	}
-	
-	public List<AnchoredLayout> positionLayoutsAroundAnchor(BigInteger anchorIndex, int viewPosition) {
+
+	public List<AnchoredLayout> positionLayoutsAroundAnchor(BigInteger anchorIndex,
+			int viewPosition) {
 		layouts.clear();
 
 		AnchoredLayout layout = getClosestLayout(anchorIndex, viewPosition);
@@ -42,12 +42,12 @@ public class AnchoredLayoutHandler {
 			layouts.add(layout);
 			fillOutLayouts();
 		}
-		return new ArrayList<AnchoredLayout>(layouts);
+		return new ArrayList<>(layouts);
 	}
 
-	public List<AnchoredLayout> ShiftViewDownOneRow() {
+	public List<AnchoredLayout> shiftViewDownOneRow() {
 		if (layouts.isEmpty()) {
-			return new ArrayList<AnchoredLayout>();
+			return new ArrayList<>();
 		}
 		AnchoredLayout layout = layouts.getFirst();
 		int yPos = layout.getYPos();
@@ -57,7 +57,7 @@ public class AnchoredLayoutHandler {
 
 	public List<AnchoredLayout> shiftViewUpOneRow() {
 		if (layouts.isEmpty()) {
-			return new ArrayList<AnchoredLayout>();
+			return new ArrayList<>();
 		}
 		int scrollAmount = 0;
 		AnchoredLayout layout = layouts.getFirst();
@@ -67,7 +67,7 @@ public class AnchoredLayoutHandler {
 		if (yPos == 0) {
 			layout = getPreviousLayout(index, yPos);
 			if (layout == null) {
-				return new ArrayList<AnchoredLayout>(layouts);
+				return new ArrayList<>(layouts);
 			}
 			layouts.add(0, layout);
 			yPos = layout.getYPos();
@@ -77,20 +77,18 @@ public class AnchoredLayoutHandler {
 		return shiftView(scrollAmount);
 	}
 
-
-
 	public List<AnchoredLayout> shiftViewDownOnePage() {
 		if (layouts.isEmpty()) {
-			return new ArrayList<AnchoredLayout>();
+			return new ArrayList<>();
 		}
 		AnchoredLayout last = layouts.getLast();
-		int diff = last.getScrollableUnitIncrement(viewHeight-last.getYPos(), -1);
-		return shiftView(viewHeight+diff);
+		int diff = last.getScrollableUnitIncrement(viewHeight - last.getYPos(), -1);
+		return shiftView(viewHeight + diff);
 	}
 
 	public List<AnchoredLayout> shiftViewUpOnePage() {
 		if (layouts.isEmpty()) {
-			return new ArrayList<AnchoredLayout>();
+			return new ArrayList<>();
 		}
 		int scrollAmount = viewHeight;
 		AnchoredLayout first = layouts.getFirst();
@@ -104,24 +102,24 @@ public class AnchoredLayoutHandler {
 
 		first = layouts.getFirst();
 		if (first.getYPos() != 0) {
-			return ShiftViewDownOneRow();
+			return shiftViewDownOneRow();
 		}
-		return new ArrayList<AnchoredLayout>(layouts);
+		return new ArrayList<>(layouts);
 	}
 
 	public List<AnchoredLayout> shiftView(int viewAmount) {
 		repositionLayouts(-viewAmount);
 		fillOutLayouts();
-		return new ArrayList<AnchoredLayout>(layouts);
+		return new ArrayList<>(layouts);
 	}
 
 	public List<AnchoredLayout> setViewHeight(int viewHeight) {
-		this.viewHeight = viewHeight; 
+		this.viewHeight = viewHeight;
 		if (layouts.isEmpty()) {
 			return positionLayoutsAroundAnchor(BigInteger.ZERO, 0);
 		}
 		fillOutLayouts();
-		return new ArrayList<AnchoredLayout>(layouts);
+		return new ArrayList<>(layouts);
 	}
 
 	private void fillOutLayouts() {
@@ -129,46 +127,46 @@ public class AnchoredLayoutHandler {
 			return;
 		}
 		AnchoredLayout lastLayout = layouts.getLast();
-		fillLayoutsForward(lastLayout.getIndex(), lastLayout.getYPos()+lastLayout.getHeight());
+		fillLayoutsForward(lastLayout.getIndex(), lastLayout.getYPos() + lastLayout.getHeight());
 		lastLayout = layouts.getLast();
 		if (lastLayout.getEndY() < viewHeight) {
 			repositionLayouts(viewHeight - lastLayout.getEndY());
 		}
-		
+
 		AnchoredLayout firstLayout = layouts.getFirst();
 		fillLayoutsBack(firstLayout.getIndex(), firstLayout.getYPos());
 		firstLayout = layouts.getFirst();
 		if (firstLayout.getYPos() > 0) {
 			repositionLayouts(-firstLayout.getYPos());
 		}
-		
+
 		lastLayout = layouts.getLast();
-		fillLayoutsForward(lastLayout.getIndex(), lastLayout.getYPos()+lastLayout.getHeight());
-		
+		fillLayoutsForward(lastLayout.getIndex(), lastLayout.getYPos() + lastLayout.getHeight());
+
 		trimLayouts();
 	}
-	
+
 	private void repositionLayouts(int amount) {
 		for (AnchoredLayout layout : layouts) {
-			layout.setYPos(layout.getYPos()+amount);
+			layout.setYPos(layout.getYPos() + amount);
 		}
 	}
-	
+
 	private void trimLayouts() {
 		Iterator<AnchoredLayout> it = layouts.iterator();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			AnchoredLayout layout = it.next();
 			int y = layout.getYPos();
 			int height = layout.getHeight();
-			if ( (y+height <= 0) || (y > viewHeight) ) {
+			if ((y + height <= 0) || (y > viewHeight)) {
 				it.remove();
 			}
 		}
 	}
-	
+
 	private void fillLayoutsForward(BigInteger existingLastIndex, int y) {
 		BigInteger index = existingLastIndex;
-		while(y < viewHeight) {
+		while (y < viewHeight) {
 			AnchoredLayout nextLayout = getNextLayout(index, y);
 			if (nextLayout == null) {
 				return;
@@ -178,9 +176,10 @@ public class AnchoredLayoutHandler {
 			index = nextLayout.getIndex();
 		}
 	}
+
 	private void fillLayoutsBack(BigInteger existingFirstIndex, int y) {
 		BigInteger index = existingFirstIndex;
-		while(y > 0) {
+		while (y > 0) {
 			AnchoredLayout prevLayout = getPreviousLayout(index, y);
 			if (prevLayout == null) {
 				return;
@@ -192,17 +191,17 @@ public class AnchoredLayoutHandler {
 	}
 
 	private AnchoredLayout getPreviousLayout(BigInteger index, int yPos) {
-		while((index = model.getIndexBefore(index)) != null) {
+		while ((index = model.getIndexBefore(index)) != null) {
 			Layout layout = model.getLayout(index);
 			if (layout != null) {
-				return new AnchoredLayout(layout, index, yPos-layout.getHeight());
+				return new AnchoredLayout(layout, index, yPos - layout.getHeight());
 			}
 		}
 		return null;
 	}
-	
+
 	private AnchoredLayout getNextLayout(BigInteger index, int yPos) {
-		while((index = model.getIndexAfter(index)) != null) {
+		while ((index = model.getIndexAfter(index)) != null) {
 			Layout layout = model.getLayout(index);
 			if (layout != null) {
 				return new AnchoredLayout(layout, index, yPos);
@@ -210,7 +209,6 @@ public class AnchoredLayoutHandler {
 		}
 		return null;
 	}
-	
 
 	private AnchoredLayout getClosestLayout(BigInteger index, int y) {
 		Layout layout = model.getLayout(index);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +28,7 @@ public class ColumnSortState {
 	private static final String XML_SORT_ORDER = "SORT_ORDER";
 
 	public enum SortDirection {
-		ASCENDING, DESCENDING;
+		ASCENDING, DESCENDING, UNSORTED;
 
 		public boolean isAscending() {
 			return this == ASCENDING;
@@ -82,9 +81,8 @@ public class ColumnSortState {
 	}
 
 	public ColumnSortState createFlipState() {
-		ColumnSortState newSortState =
-			new ColumnSortState(columnModelIndex, isAscending() ? SortDirection.DESCENDING
-					: SortDirection.ASCENDING, sortOrder_OneBased);
+		ColumnSortState newSortState = new ColumnSortState(columnModelIndex,
+			isAscending() ? SortDirection.DESCENDING : SortDirection.ASCENDING, sortOrder_OneBased);
 		return newSortState;
 	}
 

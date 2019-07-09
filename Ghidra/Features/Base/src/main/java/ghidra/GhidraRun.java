@@ -17,11 +17,12 @@ package ghidra;
 
 import java.io.File;
 
+import javax.swing.ToolTipManager;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.DockingWindowManager;
-import docking.ToolTipManager;
 import docking.framework.SplashScreen;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.Application;
@@ -131,9 +132,8 @@ public class GhidraRun implements GhidraLaunchable {
 	}
 
 	private void initializeTooltips() {
-		ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-		int currentDelay = toolTipManager.getDismissDelay();
-		toolTipManager.setDismissDelay(currentDelay * 2);
+		int currentDelay = ToolTipManager.sharedInstance().getDismissDelay();
+		ToolTipManager.sharedInstance().setDismissDelay(currentDelay * 2);
 	}
 
 	/**

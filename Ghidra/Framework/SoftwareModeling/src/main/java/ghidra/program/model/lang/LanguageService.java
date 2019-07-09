@@ -27,12 +27,13 @@ import java.util.List;
 public interface LanguageService {
 
 	/**
-	 * Returns the language with the given language ID.
-	 * @param languageID the ID of language to retrieve.
-	 * @throws LanguageNotFoundException if no language can be found for the given ID.
+	 * Returns the language with the given language ID
+	 * @param languageID the ID of language to retrieve
+	 * @return the {@link Language} matching the given ID
+	 * @throws LanguageNotFoundException if no language can be found for the given ID
 	 */
 	Language getLanguage(LanguageID languageID) throws LanguageNotFoundException;
-
+	
 	/** 
 	 * Returns the default Language to use for the given processor;
 	 * @param processor the processor for which to get a language.
@@ -59,13 +60,14 @@ public interface LanguageService {
 	/**
 	 * Returns all known language descriptions which satisfy the criteria identify by the
 	 * non-null parameters.  A null value implies a don't-care wildcard value.
-	 * @param processor
-	 * @param endianess
-	 * @param size
-	 * @param variant
-	 * @return
-	 * @deprecated
+	 * @param processor the processor for which to get a language
+	 * @param endianess big or little
+	 * @param size processor address space size (in bits)
+	 * @param variant the processor version (usually 'default')
+	 * @return the language descriptions that fit the parameters
+	 * @deprecated use {@link #getLanguageDescriptions(Processor)} instead
 	 */
+	@Deprecated
 	List<LanguageDescription> getLanguageDescriptions(Processor processor, Endian endianess,
 			Integer size, String variant);
 

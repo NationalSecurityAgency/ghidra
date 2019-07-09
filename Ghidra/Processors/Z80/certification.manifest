@@ -2,7 +2,7 @@
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/languages/z180.pspec||GHIDRA||||END|
-data/languages/z180.slaspec||GHIDRA||reviewed||END|
+data/languages/z180.slaspec||GHIDRA||||END|
 data/languages/z182.pspec||GHIDRA||||END|
 data/languages/z80.cspec||GHIDRA||||END|
 data/languages/z80.ldefs||GHIDRA||||END|

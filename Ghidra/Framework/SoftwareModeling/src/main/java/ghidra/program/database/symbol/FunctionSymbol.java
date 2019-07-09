@@ -152,7 +152,7 @@ public class FunctionSymbol extends SymbolDB {
 			SymbolDB newSym;
 			try {
 				newSym = symbolMgr.createSpecialSymbol(entryPoint, symName, namespace,
-					SymbolType.CODE, -1, -1, data3, source);
+					SymbolType.LABEL, -1, -1, data3, source);
 				if (pinned) {
 					newSym.setPinned(true);
 				}

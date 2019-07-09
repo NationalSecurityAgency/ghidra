@@ -762,7 +762,7 @@ PcodeOp *Funcdata::nodeSplitCloneOp(PcodeOp *op)
   opSetOpcode(dup,op->code());
   uint4 flags = op->flags & (PcodeOp::startbasic | PcodeOp::nocollapse |
 			     PcodeOp::startmark);
-  opSetFlag(dup,flags);
+  dup->setFlag(flags);
   return dup;
 }
 

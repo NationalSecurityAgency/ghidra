@@ -22,7 +22,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import docking.ToolTipManager;
 import docking.widgets.GComponent;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
@@ -163,12 +162,12 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 				setBackgroundSelectionColor(defaultSelectionColor);
 				setBackgroundNonSelectionColor(defaultNonSelectionColor);
 			}
-			ToolTipManager.setToolTipText(this, null);
+			setToolTipText(null);
 		}
 		else {
 			setBackgroundSelectionColor(defaultSelectionColor);
 			setBackgroundNonSelectionColor(defaultNonSelectionColor);
-			ToolTipManager.setToolTipText(this, dtree.getToolTipText(node));
+			setToolTipText(dtree.getToolTipText(node));
 		}
 	}
 

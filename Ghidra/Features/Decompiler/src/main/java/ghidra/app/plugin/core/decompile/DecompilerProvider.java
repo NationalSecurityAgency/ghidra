@@ -43,10 +43,11 @@ import ghidra.framework.plugintool.util.ServiceListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
@@ -86,7 +87,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
-	private DecompileClipboardProvider clipboardProvider;
+	private DecompilerClipboardProvider clipboardProvider;
 	private DecompileOptions decompilerOptions;
 
 	private Program program;
@@ -124,7 +125,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public DecompilerProvider(DecompilePlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), "Decompiler", plugin.getName(), DecompilerActionContext.class);
 		this.plugin = plugin;
-		clipboardProvider = new DecompileClipboardProvider(plugin, this);
+		clipboardProvider = new DecompilerClipboardProvider(plugin, this);
 		setConnected(isConnected);
 
 		decompilerOptions = new DecompileOptions();
@@ -201,24 +202,33 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public ProgramLocation getLocation() {
-		if (currentLocation == null) {
-			return plugin.getCurrentLocation(); // avoid returning null
+		if (currentLocation instanceof DecompilerLocation) {
+			return currentLocation;
 		}
-		return currentLocation;
+		return controller.getDecompilerPanel().getCurrentLocation();
 	}
 
 	@Override
 	public boolean goTo(Program gotoProgram, ProgramLocation location) {
-		if (gotoProgram != program) {
-			if (!isConnected()) {
+
+		if (!isConnected()) {
+			if (program == null) {
+				// Special Case: this 'disconnected' provider is waiting to be initialized 
+				// with the first goTo() callback
+				doSetProgram(gotoProgram);
+			}
+			else if (gotoProgram != program) {
+				// this disconnected provider only works with its given program
 				tool.setStatusInfo("Program location not applicable for this provider!");
 				return false;
 			}
-			ProgramManager programManagerService = tool.getService(ProgramManager.class);
-			if (programManagerService != null) {
-				programManagerService.setCurrentProgram(gotoProgram);
-			}
 		}
+
+		ProgramManager programManagerService = tool.getService(ProgramManager.class);
+		if (programManagerService != null) {
+			programManagerService.setCurrentProgram(gotoProgram);
+		}
+
 		setLocation(location, null);
 		pendingViewerPosition = null;
 		plugin.locationChanged(this, location);
@@ -443,9 +453,19 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void locationChanged(ProgramLocation programLocation) {
+		if (programLocation.equals(currentLocation)) {
+			return;
+		}
 		currentLocation = programLocation;
 		contextChanged();
 		plugin.locationChanged(this, programLocation);
+	}
+
+	@Override
+	public void selectionChanged(ProgramSelection programSelection) {
+		currentSelection = programSelection;
+		contextChanged();
+		plugin.selectionChanged(this, programSelection);
 	}
 
 	@Override
@@ -454,7 +474,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		Navigatable navigatable = this;
 		if (newWindow) {
 			DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
-			newProvider.doSetProgram(program);
 			navigatable = newProvider;
 		}
 
@@ -463,6 +482,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void goToLabel(String symbolName, boolean newWindow) {
+
+		GoToService service = tool.getService(GoToService.class);
+		if (service == null) {
+			return;
+		}
+
 		SymbolIterator symbolIterator = program.getSymbolTable().getSymbols(symbolName);
 		if (!symbolIterator.hasNext()) {
 			tool.setStatusInfo(symbolName + " not found.");
@@ -472,19 +497,21 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		Navigatable navigatable = this;
 		if (newWindow) {
 			DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
-			newProvider.doSetProgram(program);
 			navigatable = newProvider;
 		}
 
-		GoToService service = tool.getService(GoToService.class);
-		if (service != null) {
-			QueryData queryData = new QueryData(symbolName, true);
-			service.goToQuery(navigatable, null, queryData, null, null);
-		}
+		QueryData queryData = new QueryData(symbolName, true);
+		service.goToQuery(navigatable, null, queryData, null, null);
 	}
 
 	@Override
 	public void goToScalar(long value, boolean newWindow) {
+
+		GoToService service = tool.getService(GoToService.class);
+		if (service == null) {
+			return;
+		}
+
 		try {
 			// try space/overlay which contains function
 			AddressSpace space = controller.getFunction().getEntryPoint().getAddressSpace();
@@ -507,33 +534,51 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void goToAddress(Address address, boolean newWindow) {
+
+		GoToService service = tool.getService(GoToService.class);
+		if (service == null) {
+			return;
+		}
+
 		Navigatable navigatable = this;
 		if (newWindow) {
 			DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
-			newProvider.doSetProgram(program);
 			navigatable = newProvider;
 		}
 
-		GoToService service = tool.getService(GoToService.class);
-		if (service != null) {
-			service.goTo(navigatable, new ProgramLocation(program, address), program);
-		}
+		service.goTo(navigatable, new ProgramLocation(program, address), program);
 	}
 
 	@Override
-	public void selectionChanged(ProgramSelection programSelection) {
-		currentSelection = programSelection;
-		contextChanged();
-		plugin.selectionChanged(this, programSelection);
+	public void goToFunction(Function function, boolean newWindow) {
+
+		GoToService service = tool.getService(GoToService.class);
+		if (service == null) {
+			return;
+		}
+
+		Navigatable navigatable = this;
+		if (newWindow) {
+			DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
+			navigatable = newProvider;
+		}
+
+		Symbol symbol = function.getSymbol();
+		ExternalManager externalManager = program.getExternalManager();
+		ExternalLocation externalLocation = externalManager.getExternalLocation(symbol);
+		if (externalLocation != null) {
+			service.goToExternalLocation(navigatable, externalLocation, true);
+		}
+		else {
+			Address address = function.getEntryPoint();
+			service.goTo(navigatable, new ProgramLocation(program, address), program);
+		}
 	}
 
 //==================================================================================================
 // methods called from other members
 //==================================================================================================
 
-	/**
-	 * Called by the DecompilerClipboardProvider to get the Decompiler Panel
-	 */
 	DecompilerPanel getDecompilerPanel() {
 		return controller.getDecompilerPanel();
 	}
@@ -542,7 +587,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		final DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
 		// invoke later to give the window manage a chance to create the new window
 		// (its done in an invoke later)
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
 			newProvider.controller.setDecompileData(controller.getDecompileData());
 			newProvider.setLocation(currentLocation,

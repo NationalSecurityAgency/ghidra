@@ -16,9 +16,9 @@
 package ghidra.framework.task;
 
 import ghidra.framework.task.gui.GProgressBar;
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.CancelledListener;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Implementation of a TaskMontor that can be "attached" to a GProgressBar.
@@ -103,6 +103,11 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return indeterminate;
+	}
+
+	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled) {
 			setMessage("CANCELLED!");
@@ -124,11 +129,6 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 	}
 
 	@Override
-	public void reportIssue(Issue issue) {
-		// do nothing for now;
-	}
-
-	@Override
 	public void cancel() {
 		if (cancelEnabled) {
 			isCancelled = true;
@@ -143,16 +143,6 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 	@Override
 	public void removeCancelledListener(CancelledListener mcl) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		// not currently supported
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		// not currently supported
 	}
 
 	@Override
@@ -178,6 +168,7 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 		return showProgressValue;
 	}
 
+	@Override
 	public String getMessage() {
 		return message;
 	}

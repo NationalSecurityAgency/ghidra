@@ -1144,7 +1144,8 @@ int4 ActionDirectWrite::apply(Funcdata &data)
       dvn = op->getOut();
       if (!dvn->isDirectWrite()) {
 	dvn->setDirectWrite();
-	if (propagateIndirect || op->code() != CPUI_INDIRECT)	// If INDIRECT, output is marked, but does not propagate
+	// For call based INDIRECTs, output is marked, but does not propagate depending on setting
+	if (propagateIndirect || op->code() != CPUI_INDIRECT || op->isIndirectStore())
 	  worklist.push_back(dvn);
       }
     }
@@ -1715,7 +1716,13 @@ uint4 ActionLikelyTrash::countMarks(PcodeOp *op)
 	res += 1;
 	break;
       }
-      if (!vn->isWritten()||(vn->getDef()->code()!=CPUI_INDIRECT)) // Chain up through INDIRECTs
+      if (!vn->isWritten()) break;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp == op) {	// We have looped all the way around
+	res += 1;
+	break;
+      }
+      else if (defOp->code() != CPUI_INDIRECT)	// Chain up through INDIRECTs
 	break;
       vn = vn->getDef()->getIn(0);
     }
@@ -1762,6 +1769,12 @@ bool ActionLikelyTrash::traceTrash(Varnode *vn,vector<PcodeOp *> &indlist)
       case CPUI_INDIRECT:
 	if (outvn->isPersist())
 	  istrash = false;
+	else if (op->isIndirectStore()) {
+	  if (!outvn->isMark()) {
+	    outvn->setMark();
+	    markedlist.push_back(outvn);
+	  }
+	}
 	else
 	  indlist.push_back(op);
 	break;
@@ -2494,8 +2507,8 @@ void ActionMarkExplicit::checkNewToConstructor(Funcdata &data,Varnode *vn)
   if (firstuse->numInput() < 2) return;		// Must have at least 1 parameter (plus destination varnode)
   if (firstuse->getIn(1) != vn) return;		// First parameter must result of new
 //  if (!fc->isConstructor()) return;		// Function must be a constructor
-  data.opSetFlag(firstuse,PcodeOp::special_print);	// Mark call to print the new operator as well
-  data.opSetFlag(op,PcodeOp::nonprinting);	// Don't print the new operator as stand-alone operation
+  data.opMarkSpecialPrint(firstuse);		// Mark call to print the new operator as well
+  data.opMarkNonPrinting(op);			// Don't print the new operator as stand-alone operation
 }
 
 int4 ActionMarkExplicit::apply(Funcdata &data)
@@ -3246,7 +3259,7 @@ int4 ActionConditionalConst::apply(Funcdata &data)
     if (flipEdge)
       constEdge = 1 - constEdge;
     FlowBlock *constBlock = bl->getOut(constEdge);
-    if (constBlock->sizeIn() != 1) continue;	// Must only be one path to constant block directly through CBRANCH
+    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
     propagateConstant(varVn,constVn,constBlock,data);
   }
   return 0;
@@ -3539,97 +3552,20 @@ int4 ActionUnjustifiedParams::apply(Funcdata &data)
 int4 ActionHideShadow::apply(Funcdata &data)
 
 {
-  VarnodeDefSet::const_iterator iter;
+  VarnodeDefSet::const_iterator iter,enditer;
   HighVariable *high;
 
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  enditer = data.endDef(Varnode::written);
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     if (high->isMark()) continue;
     if (data.getMerge().hideShadows(high))
       count += 1;
     high->setMark();
   }
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     high->clearMark();
-  }
-  return 0;
-}
-
-/// \brief Determine if given Varnode is shadowed by another Varnode in the same HighVariable
-///
-/// \param vn is the Varnode to check for shadowing
-/// \return \b true if \b vn is shadowed by another Varnode in its high-level variable
-bool ActionCopyMarker::shadowedVarnode(const Varnode *vn)
-
-{
-  const Varnode *othervn;
-  const HighVariable *high = vn->getHigh();
-  int4 num,i;
-
-  num = high->numInstances();
-  for(i=0;i<num;++i) {
-    othervn = high->getInstance(i);
-    if (othervn == vn) continue;
-    if (vn->getCover()->intersect(*othervn->getCover()) == 2) return true;
-  }
-  return false;
-}
-
-int4 ActionCopyMarker::apply(Funcdata &data)
-
-{
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *op;
-  HighVariable *h1,*h2,*h3;
-  Varnode *v1,*v2,*v3;
-  int4 val;
-
-  for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
-    op = *iter;
-    switch(op->code()) {
-    case CPUI_COPY:
-      if (op->getOut()->getHigh() == op->getIn(0)->getHigh()) {
-	data.opSetFlag(op,PcodeOp::nonprinting);
-	count += 1;
-      }
-      else if (op->getOut()->hasNoDescend()) {	// Don't print shadow assignments
-	if (shadowedVarnode(op->getOut())) {
-	  data.opSetFlag(op,PcodeOp::nonprinting);
-	  count += 1;
-	}
-      }
-      break;
-    case CPUI_PIECE:		// Check if output is built out of pieces of itself
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      h3 = op->getIn(1)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      if (!h3->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      v3 = h3->getTiedVarnode();
-      if (v3->overlap(*v1) != 0) break;
-      if (v2->overlap(*v1) != v3->getSize()) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    case CPUI_SUBPIECE:
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      val = op->getIn(1)->getOffset();
-      if (v1->overlap(*v2) != val) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    default:
-      break;
-    }
   }
   return 0;
 }
@@ -4689,6 +4625,7 @@ void universal_action(Architecture *conf)
   act->addAction( new ActionMarkExplicit("merge") );
   act->addAction( new ActionMarkImplied("merge") ); // This must come BEFORE general merging
   act->addAction( new ActionMergeCopy("merge") );
+  act->addAction( new ActionDominantCopy("merge") );
   act->addAction( new ActionMarkIndirectOnly("merge") ); // Must come after required merges but before speculative
   act->addAction( new ActionMergeAdjacent("merge") );
   act->addAction( new ActionMergeType("merge") );

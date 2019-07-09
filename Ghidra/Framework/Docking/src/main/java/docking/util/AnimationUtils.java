@@ -220,8 +220,8 @@ public class AnimationUtils {
 		// note: instead of checking for 'animationEnabled' here, it will happen in the driver
 		//       so that the we can call SwingAnimationCallback.done(), which will let the client 
 		//       perform its final action.
-
-		SwingAnimationCallbackDriver driver = new SwingAnimationCallbackDriver(callback, 1000);
+		int duration = callback.getDuration();
+		SwingAnimationCallbackDriver driver = new SwingAnimationCallbackDriver(callback, duration);
 		return driver.animator;
 	}
 

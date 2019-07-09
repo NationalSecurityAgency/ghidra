@@ -145,7 +145,7 @@ public:
   void setRange(const CircleRange &rng) { range = rng; }
   void setStartVn(Varnode *vn) { normqvn = vn; }
   void setStartOp(PcodeOp *op) { startop = op; }
-  virtual void truncate(int4 nm);
+  virtual void truncate(int4 nm);		///< Truncate the number of values to the given number
   virtual uintb getSize(void) const;
   virtual bool contains(uintb val) const;
   virtual bool initializeForReading(void) const;
@@ -233,7 +233,7 @@ protected:
   Varnode *switchvn;			// The unnormalized switch varnode
   static bool isprune(Varnode *vn);
   static bool ispoint(Varnode *vn);
-  static void setStride(Varnode *vn,CircleRange &rng);
+  static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);

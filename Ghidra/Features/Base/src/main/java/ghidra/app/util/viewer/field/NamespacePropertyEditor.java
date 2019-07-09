@@ -24,7 +24,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.ToolTipManager;
 import docking.widgets.checkbox.GCheckBox;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.HTMLUtilities;
@@ -76,15 +75,15 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		// the namespace checkbox will disable the text field options when it is not used
 		showNonLocalCheckBox = new GCheckBox(DISPLAY_NON_LOCAL_NAMESPACE_LABEL);
 		showNonLocalCheckBox.setSelected(false);
-		ToolTipManager.setToolTipText(showNonLocalCheckBox, SHOW_NON_LOCAL_NAMESPACE_TOOLTIP);
+		showNonLocalCheckBox.setToolTipText(SHOW_NON_LOCAL_NAMESPACE_TOOLTIP);
 
 		showLocalCheckBox = new GCheckBox(DISPLAY_LOCAL_NAMESPACE_LABEL);
 		showLocalCheckBox.setSelected(false);
-		ToolTipManager.setToolTipText(showLocalCheckBox, SHOW_LOCAL_NAMESPACE_TOOLTIP);
+		showLocalCheckBox.setToolTipText(SHOW_LOCAL_NAMESPACE_TOOLTIP);
 
 		showLibraryInNamespaceCheckBox = new GCheckBox(DISPLAY_LIBRARY_IN_NAMESPACE_LABEL);
 		showLibraryInNamespaceCheckBox.setSelected(true);
-		ToolTipManager.setToolTipText(showLocalCheckBox, SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
+		showLocalCheckBox.setToolTipText(SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
 
 		panel.add(showNonLocalCheckBox);
 		panel.add(showLocalCheckBox);
@@ -118,7 +117,7 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		textFieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
 		useLocalPrefixCheckBox = new GCheckBox("Use Local Namespace Override");
-		ToolTipManager.setToolTipText(useLocalPrefixCheckBox, tooltipText);
+		useLocalPrefixCheckBox.setToolTipText(tooltipText);
 		useLocalPrefixCheckBox.addItemListener(e -> {
 			textField.setEnabled(useLocalPrefixCheckBox.isSelected());
 			firePropertyChange();

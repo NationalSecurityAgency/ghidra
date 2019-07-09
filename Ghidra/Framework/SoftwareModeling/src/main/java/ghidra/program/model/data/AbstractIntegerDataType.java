@@ -330,25 +330,25 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	@Override
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		if (!hasStringValue(settings)) {
-			return null;
+		if (hasStringValue(settings) && buf.isInitializedMemory()) {
+			return new StringDataInstance(this, settings, buf, len).getLabel(
+				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
+				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
+				options);
 		}
-		return new StringDataInstance(this, settings, buf, len).getLabel(
-			AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
-			AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
-			options);
+		return null;
 	}
 
 	@Override
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
-		if (!hasStringValue(settings)) {
-			return null;
+		if (hasStringValue(settings) && buf.isInitializedMemory()) {
+			return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
+				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
+				options, offcutOffset);
 		}
-		return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
-			AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
-			AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
-			options, offcutOffset);
+		return null;
 	}
 
 	/**

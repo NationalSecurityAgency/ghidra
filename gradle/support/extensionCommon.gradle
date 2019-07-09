@@ -60,10 +60,12 @@ task zipExtensions (type: Zip) {
 	// EXTERNAL LIBS
 	/////////////////
 	gradle.taskGraph.whenReady { taskGraph ->
-		List<String> externalPaths = getExternalDependencies(p)
-		externalPaths.each { path ->
-			from (path) {
-				into { getBaseProjectName(p) + "/lib" }
+		if (project.plugins.withType(JavaPlugin)) {
+			List<String> externalPaths = getExternalDependencies(p)
+			externalPaths.each { path ->
+				from (path) {
+					into { getBaseProjectName(p) + "/lib" }
+				}
 			}
 		}
 	}

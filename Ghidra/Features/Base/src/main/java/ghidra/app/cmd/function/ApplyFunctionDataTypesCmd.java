@@ -90,7 +90,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 		}
 		else {
 			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.FUNCTION, true));
-			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.CODE, true));
+			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.LABEL, true));
 		}
 		return symbolMap;
 	}

@@ -60,8 +60,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	final static String COMPONENT_MENU_NAME = "Window";
 
-	private final static List<DockingActionIf> EMPTY_LIST = Collections.emptyList();
-
 	private static DockingActionIf actionUnderMouse;
 	private static Object objectUnderMouse;
 
@@ -89,7 +87,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private Map<String, ComponentProvider> providerNameCache = new HashMap<>();
 	private Map<String, PreferenceState> preferenceStateMap = new HashMap<>();
 	private DockWinListener docListener;
-	private DockingActionManager actionManager;
+	private ActionToGuiMapper actionManager;
 
 	private WeakSet<DockingContextListener> contextListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
@@ -142,7 +140,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		root = new RootNode(this, toolName, images, modal, factory);
-		actionManager = new DockingActionManager(this);
+		actionManager = new ActionToGuiMapper(this);
 
 		KeyboardFocusManager km = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		km.addPropertyChangeListener("permanentFocusOwner", this);
@@ -163,7 +161,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param enable
 	 */
 	public static void enableDiagnosticActions(boolean enable) {
-		DockingActionManager.enableDiagnosticActions(enable);
+		ActionToGuiMapper.enableDiagnosticActions(enable);
 	}
 
 	/**
@@ -295,7 +293,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param helpLocation help content location
 	 */
 	public static void setHelpLocation(JComponent c, HelpLocation helpLocation) {
-		DockingActionManager.setHelpLocation(c, helpLocation);
+		ActionToGuiMapper.setHelpLocation(c, helpLocation);
 	}
 
 	/**
@@ -340,7 +338,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return placeholderManager;
 	}
 
-	DockingActionManager getActionManager() {
+	ActionToGuiMapper getActionManager() {
 		return actionManager;
 	}
 
@@ -646,19 +644,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Get an iterator over the actions for the given provider.
-	 * @param provider the component provider for which to iterate over all its owned actions.
-	 * @return null if the provider does not exist in this window manager
-	 */
-	public Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder != null) {
-			return placeholder.getActions();
-		}
-		return EMPTY_LIST.iterator();
-	}
-
-	/**
 	 * Removes all components and actions associated with the given owner. 
 	 * @param owner the name of the owner whose associated component and actions should be removed.
 	 */
@@ -668,14 +653,29 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		scheduleUpdate();
 	}
 
-	/**
-	 * Adds an action that will be associated with the given provider.  These actions will
-	 * appear in the local header for the component as a toolbar button or a drop-down menu
-	 * item if it has an icon and menu path respectively.
-	 * @param provider the provider whose header on which the action is to be placed.
-	 * @param action the action to add to the providers header bar.
-	 */
-	public void addLocalAction(ComponentProvider provider, DockingActionIf action) {
+//==================================================================================================
+// Package-level Action Methods
+//==================================================================================================
+
+	Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder != null) {
+			return placeholder.getActions();
+		}
+
+		List<DockingActionIf> emptyList = Collections.emptyList();
+		return emptyList.iterator();
+	}
+
+	void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder != null) {
+			actionManager.removeLocalAction(action);
+			placeholder.removeAction(action);
+		}
+	}
+
+	void addLocalAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder == null) {
 			throw new IllegalArgumentException("Unknown component provider: " + provider);
@@ -684,42 +684,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		actionManager.addLocalAction(action, provider);
 	}
 
-	/**
-	 * Removes the action from the given provider's header bar.
-	 * @param provider the provider whose header bar from which the action should be removed.
-	 * @param action the action to be removed from the provider's header bar.
-	 */
-	public void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder != null) {
-			actionManager.removeLocalAction(action);
-			placeholder.removeAction(action);
-		}
-	}
-
-	/**
-	 * Adds an action to the global menu or toolbar which appear in the main frame. If
-	 * the action has a menu path, it will be in the menu.  If it has an icon, it will
-	 * appear in the toolbar.
-	 * @param action the action to be added.
-	 */
-	public void addToolAction(DockingActionIf action) {
+	void addToolAction(DockingActionIf action) {
 		actionManager.addToolAction(action);
 		scheduleUpdate();
 	}
 
-	/**
-	 * Removes the given action from the global menu and toolbar.
-	 * @param action the action to be removed.
-	 */
-	public void removeToolAction(DockingActionIf action) {
+	void removeToolAction(DockingActionIf action) {
 		actionManager.removeToolAction(action);
 		scheduleUpdate();
 	}
 
-	public Collection<DockingActionIf> getActions(String fullActionName) {
-		return actionManager.getAllDockingActionsByFullActionName(fullActionName);
-	}
+//==================================================================================================
+// 			End Package-level Methods
+//==================================================================================================	
 
 	/**
 	 * Hides or shows the component associated with the given provider.
@@ -1371,6 +1348,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private void setFocusedComponent(ComponentPlaceholder placeholder) {
 
+		RootNode rootNode = root;
+		if (rootNode == null) {
+			return; // we have been disposed 
+		}
+
 		if (focusedPlaceholder != null) {
 			if (focusedPlaceholder == placeholder) {
 				return; // ignore if we are already focused
@@ -1389,8 +1371,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (topLevelNode == null) {
 			return;
 		}
+
 		topLevelNode.setLastFocusedProviderInWindow(focusedPlaceholder);
-		root.notifyWindowFocusChanged(topLevelNode);
+		rootNode.notifyWindowFocusChanged(topLevelNode);
 	}
 
 	private ComponentPlaceholder findNextFocusedComponent() {
@@ -1930,13 +1913,37 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Set the status text in the active component window.
+	 * Set the status text in the active component window
 	 * @param text status text
 	 */
 	public void setStatusText(String text) {
 		if (root != null) {
 			root.setStatusText(text);
 		}
+	}
+
+	/**
+	  * Set the status text in the active component window
+	  * 
+	  * @param text string to be displayed in the Status display area
+	  * @param beep whether to beep or not
+	  */
+	public void setStatusText(String text, boolean beep) {
+		if (root == null) {
+			return;
+		}
+
+		setStatusText(text);
+		if (beep) {
+			Toolkit.getDefaultToolkit().beep();
+		}
+	}
+
+	/**
+	 * A convenience method to make an attention-grabbing noise to the user
+	 */
+	public static void beep() {
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 	/**

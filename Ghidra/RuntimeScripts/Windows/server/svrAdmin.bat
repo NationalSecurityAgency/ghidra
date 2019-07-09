@@ -35,7 +35,7 @@ set SCRIPT_DIR=%~dp0
 :: Production Environment
 set CONFIG=%SCRIPT_DIR%.\server.conf
 
-if exist "%GHIDRA_DIR%" goto continue
+if exist "%CONFIG%" goto continue
 
 :: Development Environment
 set CONFIG=%SCRIPT_DIR%..\..\Common\server\server.conf

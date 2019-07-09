@@ -33,11 +33,11 @@ import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.table.columnfilter.*;
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 /**
  * Dialog for creating and editing column table filters.

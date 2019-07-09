@@ -22,6 +22,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.graph.DependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
@@ -84,10 +85,10 @@ public class AcyclicCallGraphBuilder {
 	 * @return the DependencyGraph for the acyclic call graph represented by this object.
 	 * @throws CancelledException if the monitor was cancelled.
 	 */
-	public DependencyGraph<Address> getDependencyGraph(TaskMonitor monitor)
+	public AbstractDependencyGraph<Address> getDependencyGraph(TaskMonitor monitor)
 			throws CancelledException {
 
-		DependencyGraph<Address> graph = new DependencyGraph<>();
+		AbstractDependencyGraph<Address> graph = new DependencyGraph<>();
 		Deque<Address> startPoints = findStartPoints();
 		Set<Address> unprocessed = new TreeSet<>(functionSet); // reliable processing order
 
@@ -158,7 +159,7 @@ public class AcyclicCallGraphBuilder {
 		children.toArray(node.children);
 	}
 
-	private void processForward(DependencyGraph<Address> graph, Set<Address> unprocessed,
+	private void processForward(AbstractDependencyGraph<Address> graph, Set<Address> unprocessed,
 			Address startFunction, TaskMonitor monitor) throws CancelledException {
 		VisitStack stack = new VisitStack(startFunction);
 		StackNode curnode = stack.peek();

@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -56,7 +56,7 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	class ExtendedDecompilerController extends DecompilerController {
 
 		public ExtendedDecompilerController(DecompilerCallbackHandler handler,
-				DecompileOptions options, DecompileClipboardProvider clipboard) {
+				DecompileOptions options, DecompilerClipboardProvider clipboard) {
 			super(handler, options, clipboard);
 		}
 
@@ -101,20 +101,17 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void contextChanged() {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void decompileDataChanged(DecompileData decompileData) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void exportLocation() {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
@@ -124,20 +121,22 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void goToAddress(Address addr, boolean newWindow) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void goToLabel(String labelName, boolean newWindow) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void goToScalar(long value, boolean newWindow) {
-		// TODO Auto-generated method stub
+		// stub
+	}
 
+	@Override
+	public void goToFunction(Function function, boolean newWindow) {
+		// stub
 	}
 
 	@Override
@@ -150,14 +149,12 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void selectionChanged(ProgramSelection programSelection) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	@Override
 	public void setStatusMessage(String message) {
-		// TODO Auto-generated method stub
-
+		// stub
 	}
 
 	public void clearAndShowMessage(String message) {

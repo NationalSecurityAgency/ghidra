@@ -17,6 +17,7 @@ package ghidra.util.worker;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
 
@@ -26,8 +27,6 @@ import ghidra.util.task.TaskMonitor;
  * @see PriorityWorker
  */
 public class Worker extends AbstractWorker<Job> {
-
-	public static final String GSWING_THREAD_POOL_NAME = "GSwing Worker";
 
 	/**
 	 * A convenience method to create a Worker that uses a shared thread pool for performing
@@ -42,7 +41,7 @@ public class Worker extends AbstractWorker<Job> {
 	 * @return the new worker
 	 */
 	public static Worker createGuiWorker() {
-		return new Worker(GSWING_THREAD_POOL_NAME);
+		return new Worker(Swing.GSWING_THREAD_POOL_NAME);
 	}
 
 	/**

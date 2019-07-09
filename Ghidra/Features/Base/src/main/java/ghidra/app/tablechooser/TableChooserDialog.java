@@ -33,7 +33,6 @@ import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.Callback;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -44,6 +43,7 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.*;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 /**
  * Dialog to show a table of items.  If the dialog is constructed with a non-null 

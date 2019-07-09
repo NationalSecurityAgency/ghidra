@@ -146,16 +146,16 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			return null;
 		}
 
+		panel.setProgram(program); // the program must be set in order for the goto to work
 		boolean validLocation = panel.goTo(previewLocation);
 		if (validLocation) {
-			panel.setProgram(program);
-
 			Rectangle bounds = panel.getBounds();
 			bounds.x = WINDOW_OFFSET;
 			bounds.y = WINDOW_OFFSET;
 			panel.setBounds(bounds);
 			return panel;
 		}
+		panel.setProgram(null);
 
 		// At this point we have a program location, but we could not go there.  This can happen
 		// if the location is not in memory.
@@ -227,9 +227,9 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			for (Symbol s : symbols) {
 				ColorAndStyle style = inspector.getColorAndStyle(s);
 				String name = s.getName(true);
-				name = HTMLUtilities.friendlyEncodeHTML(pad);
+				name = pad + HTMLUtilities.friendlyEncodeHTML(name);
 				String html = style.toHtml(name);
-				buffy.append(pad).append(html).append(newline);
+				buffy.append(html).append(newline);
 			}
 		}
 

@@ -16,6 +16,7 @@
 package docking.widgets.table;
 
 import java.util.List;
+import java.util.Objects;
 
 import docking.widgets.filter.TextFilter;
 
@@ -54,6 +55,35 @@ public class TableTextFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		TableTextFilter<?> other = (TableTextFilter<?>) obj;
+		if (!Objects.equals(textFilter, other.textFilter)) {
+			return false;
+		}
+
+		if (!Objects.equals(transformer, other.transformer)) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override

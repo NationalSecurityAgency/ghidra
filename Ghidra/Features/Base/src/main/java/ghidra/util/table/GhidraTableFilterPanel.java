@@ -30,6 +30,7 @@ import ghidra.program.util.ProgramSelection;
 
 /**
  * This is a "program aware" version of GTableFilterPanel
+ * @param <ROW_OBJECT> the row type
  */
 public class GhidraTableFilterPanel<ROW_OBJECT> extends GTableFilterPanel<ROW_OBJECT> {
 

@@ -32,7 +32,7 @@ import javax.swing.text.Document;
 
 import docking.DockingUtils;
 import docking.DockingWindowManager;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;

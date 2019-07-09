@@ -26,7 +26,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
-import docking.ToolTipManager;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
@@ -239,7 +238,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 				model.defaultSelected();
 			}
 		});
-		ToolTipManager.setToolTipText(defaultRB, "Use default fallthrough address");
+		defaultRB.setToolTipText("Use default fallthrough address");
 
 		userRB = new GRadioButton("User", false);
 		userRB.addActionListener(new ActionListener() {
@@ -248,7 +247,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 				model.userSelected();
 			}
 		});
-		ToolTipManager.setToolTipText(userRB, "Override default fallthrough address");
+		userRB.setToolTipText("Override default fallthrough address");
 
 		group.add(defaultRB);
 		group.add(userRB);
@@ -273,7 +272,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		else {
 			button = new JButton(altText);
 		}
-		ToolTipManager.setToolTipText(button, "Go back to home address");
+		button.setToolTipText("Go back to home address");
 		return button;
 	}
 

@@ -16,6 +16,8 @@
 #include "cover.hh"
 #include "block.hh"
 
+const CoverBlock Cover::emptyBlock;
+
 /// PcodeOp objects and a CoverBlock start/stop boundaries have
 /// a natural ordering that can be used to tell if a PcodeOp falls
 /// between boundary points and if CoverBlock objects intersect.
@@ -251,7 +253,7 @@ const CoverBlock &Cover::getCoverBlock(int4 i) const
 {
   map<int4,CoverBlock>::const_iterator iter = cover.find(i);
   if (iter == cover.end())
-    return emptyblock;
+    return emptyBlock;
   return (*iter).second;
 }
 

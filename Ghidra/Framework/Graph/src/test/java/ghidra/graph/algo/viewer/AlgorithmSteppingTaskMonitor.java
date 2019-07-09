@@ -18,10 +18,10 @@ package ghidra.graph.algo.viewer;
 import java.util.HashSet;
 import java.util.Set;
 
-import ghidra.generic.function.Callback;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitorAdapter;
+import utility.function.Callback;
 
 /**
  * Task monitor that will trigger a {@link #wait()} when {@link #checkCanceled()} is called.  This

@@ -80,6 +80,7 @@ class Funcdata;
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
   map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
@@ -89,9 +90,13 @@ class Merge {
   static bool mergeTestBasic(Varnode *vn);
   static void findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist);
   static bool compareHighByBlock(const HighVariable *a,const HighVariable *b);
+  static bool compareCopyByInVarnode(PcodeOp *op1,PcodeOp *op2);
+  static bool shadowedVarnode(const Varnode *vn);
+  static void findAllIntoCopies(HighVariable *high,vector<PcodeOp *> &copyIns,bool filterTemps);
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
+  PcodeOp *allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr);
   void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
   void eliminateIntersect(Varnode *vn,const vector<BlockVarnode> &blocksort);
@@ -103,6 +108,11 @@ class Merge {
   void mergeIndirect(PcodeOp *indop);
   void mergeLinear(vector<HighVariable *> &highvec);
   bool merge(HighVariable *high1,HighVariable *high2,bool isspeculative);
+  bool checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp);
+  void buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void processHighDominantCopy(HighVariable *high);
+  void processHighRedundantCopy(HighVariable *high);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
   bool intersection(HighVariable *a,HighVariable *b);
@@ -116,6 +126,11 @@ public:
   void mergeMarker(void);
   void mergeAdjacent(void);
   bool hideShadows(HighVariable *high);
+  void processCopyTrims(void);
+  void markInternalCopies(void);
+#ifdef MERGEMULTI_DEBUG
+  void verifyHighCovers(void);
+#endif
 };
 
 /// \brief Compare HighVariables by the blocks they cover

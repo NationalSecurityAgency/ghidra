@@ -93,7 +93,7 @@ public class FunctionNameListingHover extends AbstractConfigurableHover
 		Namespace parentScope = symbol.getParentNamespace();
 		SymbolType symbolType = symbol.getSymbolType();
 
-		if (symbolType != SymbolType.CODE) {
+		if (symbolType != SymbolType.LABEL) {
 			return false;
 		}
 

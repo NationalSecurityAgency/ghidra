@@ -37,6 +37,7 @@ import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 
@@ -268,10 +269,11 @@ public class ProjectDataTablePanel extends JPanel {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
-
-			GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
-			glassPane.removePainter(painter);
-			glassPane.addPainter(painter);
+			SystemUtilities.runSwingLater(() -> {
+				GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
+				glassPane.removePainter(painter);
+				glassPane.addPainter(painter);
+			});
 		}
 	}
 

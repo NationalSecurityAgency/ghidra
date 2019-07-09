@@ -482,7 +482,7 @@ inline uintb pcode_left(uintb val,int4 sa) {
   return val << sa;
 }
 
-extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-big is set
+extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
 extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value
 extern uintb sign_extend(uintb in,int4 sizein,int4 sizeout);	///< Sign-extend a value between two byte sizes
@@ -493,7 +493,8 @@ extern void byte_swap(intb &val,int4 size);		///< Swap bytes in the given value
 
 extern uintb byte_swap(uintb val,int4 size);		///< Return the given value with bytes swapped
 extern int4 leastsigbit_set(uintb val);			///< Return index of least significant bit set in given value
-extern int4 mostsigbit_set(uintb val);			///< Return index of most significant bit set in given val
+extern int4 mostsigbit_set(uintb val);			///< Return index of most significant bit set in given value
+extern int4 count_leading_zeros(uintb val);		///< Return the number of leading zero bits in the given value
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value

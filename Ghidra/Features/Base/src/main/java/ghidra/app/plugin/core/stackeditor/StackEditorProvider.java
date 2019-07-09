@@ -88,8 +88,8 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[] { new ApplyAction(this), new ClearAction(this),
+	protected CompositeEditorTableAction[] createActions() {
+		return new CompositeEditorTableAction[] { new ApplyAction(this), new ClearAction(this),
 			new DeleteAction(this), new PointerAction(this), new ArrayAction(this),
 			new ShowComponentPathAction(this), new EditComponentAction(this),
 			new EditFieldAction(this), new HexNumbersAction(this) };
@@ -133,7 +133,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorAction[] getActions() {
+	protected CompositeEditorTableAction[] getActions() {
 		return actionMgr.getAllActions();
 	}
 
@@ -198,7 +198,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
 					Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
 					SymbolType symType = sym.getSymbolType();
-					if (symType == SymbolType.CODE) {
+					if (symType == SymbolType.LABEL) {
 						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
 							refreshName();
 						}
@@ -218,7 +218,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
 					sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
 					symType = sym.getSymbolType();
-					if (symType == SymbolType.CODE &&
+					if (symType == SymbolType.LABEL &&
 						sym.getAddress().equals(function.getEntryPoint())) {
 						refreshName();
 					}

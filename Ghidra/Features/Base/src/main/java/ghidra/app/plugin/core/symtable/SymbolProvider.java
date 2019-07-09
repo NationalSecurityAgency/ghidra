@@ -69,7 +69,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 		for (SymbolRowObject obj : rowObjects) {
 			symbolIDs[index++] = obj.getKey();
 		}
-		return new ProgramSymbolActionContext(this, program, symbolIDs);
+		return new ProgramSymbolActionContext(this, program, symbolIDs, getTable());
 	}
 
 	void deleteSymbols() {
@@ -152,7 +152,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 	private String generateSubTitle() {
 		SymbolFilter filter = symbolKeyModel.getFilter();
 		int rowCount = symbolKeyModel.getRowCount();
-		int unfilteredCount = symbolKeyModel.getUnfilteredCount();
+		int unfilteredCount = symbolKeyModel.getUnfilteredRowCount();
 
 		if (rowCount != unfilteredCount) {
 			return " (Text filter matched " + rowCount + " of " + unfilteredCount + " symbols)";

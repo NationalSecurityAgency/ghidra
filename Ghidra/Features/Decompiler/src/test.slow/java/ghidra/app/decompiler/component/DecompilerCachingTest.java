@@ -15,11 +15,13 @@
  */
 package ghidra.app.decompiler.component;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 import org.junit.*;
 
@@ -225,20 +227,20 @@ public class DecompilerCachingTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void assertCacheSize(int expected) {
-		long actual = cache.size();
-		if (expected == actual) {
-			return;
-		}
+		Supplier<String> supplier = () -> getCacheSizeFailureMessage(expected);
+		waitForCondition(() -> cache.size() == expected, supplier);
+	}
 
+	private String getCacheSizeFailureMessage(int expected) {
 		StringBuilder buffy = new StringBuilder("Cache size is not as expected - expected " +
-			expected + "; found " + actual + "\nEntries in cache:\n");
+			expected + "; found " + cache.size() + "\nEntries in cache:\n");
 		ConcurrentMap<Function, DecompileResults> map = cache.asMap();
 		Set<Entry<Function, DecompileResults>> entries = map.entrySet();
 		for (Entry<Function, DecompileResults> entry : entries) {
 			Function key = entry.getKey();
 			buffy.append('\t').append(key.getName()).append('\n');
 		}
-		fail(buffy.toString());
+		return buffy.toString();
 	}
 
 	private void buildDummyFunction(ToyProgramBuilder programBuilder, String functionName,

@@ -41,10 +41,6 @@ import ghidra.util.exception.AssertException;
 
 public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTest {
 
-	public GhidraScriptMgrPlugin3Test() {
-		super();
-	}
-
 	@Test
 	public void testKeyBinding() throws Exception {
 
@@ -209,6 +205,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		String oldCategory = newCategory;
 		newCategory = changeScriptCategory_WithSubcatogory(newScript);
+
 		refreshScriptManager();
 
 		assertCategoryInTree(newCategory);
@@ -287,7 +284,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		performAction(pathAction, false);
 		waitForSwing();
 
-		PickPathsDialog pathsDialog = env.waitForDialogComponent(PickPathsDialog.class, MAX_TIME);
+		PickPathsDialog pathsDialog = waitForDialogComponent(PickPathsDialog.class);
 
 		final File dir = new File(getTestDirectoryPath() + "/test_scripts");
 		dir.mkdirs();
@@ -308,7 +305,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		chooseJavaProvider();
 
-		SaveDialog sd = env.waitForDialogComponent(SaveDialog.class, MAX_TIME);
+		SaveDialog sd = waitForDialogComponent(SaveDialog.class);
 
 		final ListPanel listPanel = (ListPanel) findComponentByName(sd.getComponent(), "PATH_LIST");
 		assertNotNull(listPanel);

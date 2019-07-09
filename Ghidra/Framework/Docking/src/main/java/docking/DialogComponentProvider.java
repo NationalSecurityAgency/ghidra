@@ -28,14 +28,16 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
+import docking.actions.ActionAdapter;
+import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
 import docking.util.*;
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.generic.function.Callback;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
+import utility.function.Callback;
 
 /**
  * Base class used for creating dialogs in Ghidra. Subclass this to create a dialog provider that has
@@ -72,7 +74,7 @@ public class DialogComponentProvider
 	private TaskScheduler taskScheduler;
 	private TaskMonitorComponent taskMonitorComponent;
 
-	private static KeyStroke escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+	private static final KeyStroke ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
 	private CardLayout progressCardLayout;
 	private JButton defaultButton;
@@ -180,7 +182,7 @@ public class DialogComponentProvider
 			}
 		};
 
-		KeyBindingUtils.registerAction(rootPanel, escKeyStroke, escAction,
+		KeyBindingUtils.registerAction(rootPanel, ESC_KEYSTROKE, escAction,
 			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 	}
 
@@ -490,7 +492,7 @@ public class DialogComponentProvider
 	 */
 	protected void setApplyToolTip(String tooltip) {
 		if (applyButton != null) {
-			ToolTipManager.setToolTipText(applyButton, tooltip);
+			applyButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -506,7 +508,7 @@ public class DialogComponentProvider
 	 */
 	protected void setOkToolTip(String tooltip) {
 		if (okButton != null) {
-			ToolTipManager.setToolTipText(okButton, tooltip);
+			okButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -516,7 +518,7 @@ public class DialogComponentProvider
 	 */
 	protected void setCancelToolTip(String tooltip) {
 		if (cancelButton != null) {
-			ToolTipManager.setToolTipText(cancelButton, tooltip);
+			cancelButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -532,7 +534,7 @@ public class DialogComponentProvider
 	 */
 	protected void setDismissToolTip(String tooltip) {
 		if (dismissButton != null) {
-			ToolTipManager.setToolTipText(dismissButton, tooltip);
+			dismissButton.setToolTipText(tooltip);
 		}
 	}
 
@@ -753,14 +755,16 @@ public class DialogComponentProvider
 	}
 
 	private void showProgressBar(String localTitle, boolean hasProgress, boolean canCancel) {
+
+		if (!isVisible()) {
+			// It doesn't make any sense to show the task monitor when the dialog is not 
+			// visible, so show the dialog
+			DockingWindowManager.showDialog(getParent(), this);
+		}
+
 		taskMonitorComponent.setTaskName(localTitle);
 		taskMonitorComponent.showProgress(hasProgress);
-		if (canCancel) {
-			taskMonitorComponent.showCancelButton(true);
-		}
-		else {
-			taskMonitorComponent.showCancelButton(false);
-		}
+		taskMonitorComponent.setCancelButtonVisibility(canCancel);
 		progressCardLayout.show(statusProgPanel, PROGRESS);
 		rootPanel.validate();
 	}
@@ -785,10 +789,10 @@ public class DialogComponentProvider
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, null);
+			statusLabel.setToolTipText(null);
 		}
 	}
 
@@ -804,7 +808,8 @@ public class DialogComponentProvider
 	}
 
 	/**
-	 * returns the current status in the dialogs status line=
+	 * Returns the current status in the dialogs status line
+	 * 
 	 * @return the status text
 	 */
 	public String getStatusText() {
@@ -1055,6 +1060,13 @@ public class DialogComponentProvider
 
 	DockingDialog getDialog() {
 		return dialog;
+	}
+
+	private Component getParent() {
+		if (dialog == null) {
+			return null;
+		}
+		return dialog.getParent();
 	}
 
 	public boolean isVisible() {

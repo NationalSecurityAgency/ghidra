@@ -30,8 +30,8 @@ import javax.swing.tree.*;
 
 import docking.DockingUtils;
 import docking.action.DockingAction;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
-import docking.util.KeyBindingUtils;
 import docking.widgets.JTreeMouseListenerDelegate;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;

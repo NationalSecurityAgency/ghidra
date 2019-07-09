@@ -15,9 +15,9 @@
  */
 package docking.widgets.table;
 
-import static docking.DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-import static docking.action.MenuData.NO_MNEMONIC;
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static docking.DockingUtils.*;
+import static docking.action.MenuData.*;
+import static java.awt.event.InputEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,7 +31,7 @@ import javax.swing.table.*;
 
 import docking.*;
 import docking.action.*;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -69,7 +69,6 @@ import resources.ResourceManager;
  *
  * @see GTableFilterPanel
  */
-// Suppress - we are using the deprecated reference to DefaultSortedTableModel to handle old code
 public class GTable extends JTable implements KeyStrokeConsumer, DockingActionProviderIf {
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
@@ -551,8 +550,8 @@ public class GTable extends JTable implements KeyStrokeConsumer, DockingActionPr
 	}
 
 	private void init(boolean allowAutoEdit) {
-		docking.ToolTipManager.sharedInstance().unregisterComponent(this);
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().unregisterComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 		setTableHeader(new GTableHeader(this));
 		if (!allowAutoEdit) {
 			putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);

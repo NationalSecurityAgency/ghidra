@@ -17,20 +17,18 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import javax.swing.KeyStroke;
 
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
 /**
  * {@link LocationReferencesPlugin}'s action for finding references to a thing.
  */
-public class FindReferencesToAction extends ListingContextAction implements OptionsChangeListener {
+public class FindReferencesToAction extends ListingContextAction {
 
 	private LocationReferencesPlugin plugin;
 	private int subGroupPosition;
@@ -44,37 +42,21 @@ public class FindReferencesToAction extends ListingContextAction implements Opti
 
 		setDescription("Shows references to the item under the cursor");
 
-		//
-		// Shared keybinding setup
-		//
 		KeyStroke defaultkeyStroke = AbstractFindReferencesDataTypeAction.DEFAULT_KEY_STROKE;
-		PluginTool tool = plugin.getTool();
-		DockingAction action = new DummyKeyBindingsOptionsAction(
-			AbstractFindReferencesDataTypeAction.NAME, defaultkeyStroke);
-		tool.addAction(action);
+		initKeyStroke(defaultkeyStroke);
+	}
 
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke optionsKeyStroke = options.getKeyStroke(action.getFullName(), defaultkeyStroke);
-
-		if (!defaultkeyStroke.equals(optionsKeyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(optionsKeyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(optionsKeyStroke));
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
 		}
 
-		options.addOptionsChangeListener(this);
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		String actionName = getName();
-		if (name.startsWith(actionName)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
+	public boolean usesSharedKeyBinding() {
+		return true;
 	}
 
 	@Override

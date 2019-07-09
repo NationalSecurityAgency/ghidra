@@ -29,8 +29,7 @@ public class SpyTextFilter<T> extends TableTextFilter<T> {
 	private SpyEventRecorder recorder;
 
 	SpyTextFilter(TextFilter textFilter, RowFilterTransformer<T> transformer) {
-		super(textFilter, transformer);
-		this.recorder = new SpyEventRecorder("Stub");
+		this(textFilter, transformer, new SpyEventRecorder("Stub"));
 	}
 
 	SpyTextFilter(TextFilter textFilter, RowFilterTransformer<T> transformer,

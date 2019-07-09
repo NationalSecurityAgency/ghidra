@@ -101,6 +101,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	 *
 	 * @param parent The parent being rendered -- likely a list or table.
 	 * @param row The row being rendered.
+	 * @return the color
 	 */
 	protected Color getOSDependentBackgroundColor(JComponent parent, int row) {
 

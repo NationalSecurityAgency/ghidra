@@ -29,7 +29,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 
 import docking.ActionContext;
-import docking.ToolTipManager;
 import docking.WindowPosition;
 import docking.action.*;
 import docking.menu.ActionState;
@@ -629,10 +628,10 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, null);
+			statusLabel.setToolTipText(null);
 		}
 	}
 
@@ -795,7 +794,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		private void getTableFilterString(String tableName, ThreadedTableModel<?, ?> model,
 				StringBuffer buffy) {
 			int filteredCount = model.getRowCount();
-			int unfilteredCount = model.getUnfilteredCount();
+			int unfilteredCount = model.getUnfilteredRowCount();
 
 			buffy.append(tableName).append(" - ").append(filteredCount).append(" functions");
 			if (filteredCount != unfilteredCount) {

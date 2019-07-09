@@ -126,6 +126,12 @@ public class GoToServiceImpl implements GoToService {
 	}
 
 	@Override
+	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
+			boolean checkNavigationOption) {
+		return helper.goToExternalLocation(navigatable, extLoc, checkNavigationOption);
+	}
+
+	@Override
 	public boolean goToQuery(Navigatable navigatable, Address fromAddr, QueryData queryData,
 			GoToServiceListener listener, TaskMonitor monitor) {
 
@@ -133,9 +139,8 @@ public class GoToServiceImpl implements GoToService {
 			navigatable = defaultNavigatable;
 		}
 
-		GoToQuery query =
-			new GoToQuery(navigatable, plugin, this, queryData, fromAddr, listener,
-				helper.getOptions(), monitor);
+		GoToQuery query = new GoToQuery(navigatable, plugin, this, queryData, fromAddr, listener,
+			helper.getOptions(), monitor);
 
 		return query.processQuery();
 	}

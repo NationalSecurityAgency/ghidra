@@ -38,7 +38,9 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.table.*;
+import ghidra.util.table.GhidraTable;
+import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
@@ -206,11 +208,6 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		updateManager.dispose();
 
 		tool.removeComponentProvider(this);
-
-		tool.removeLocalAction(this, homeAction);
-		tool.removeLocalAction(this, refreshAction);
-		tool.removeLocalAction(this, selectionAction);
-		tool.removeLocalAction(this, highlightAction);
 
 		homeAction.dispose();
 		refreshAction.dispose();
@@ -441,7 +438,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	private class DeleteAction extends DeleteTableRowAction {
 
 		DeleteAction(PluginTool tool, GTable table) {
-			super(tool, table, locationReferencesPlugin.getName());
+			super(table, locationReferencesPlugin.getName());
 		}
 
 		@Override

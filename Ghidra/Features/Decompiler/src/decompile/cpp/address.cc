@@ -696,6 +696,34 @@ int4 mostsigbit_set(uintb val)
   return res;
 }
 
+/// Count the number of more significant zero bits before the most significant
+/// one bit in the representation of the given value;
+/// \param val is the given value
+/// \return the number of zero bits
+int4 count_leading_zeros(uintb val)
+
+{
+  if (val == 0)
+    return 8*sizeof(uintb);
+  uintb mask = ~((uintb)0);
+  int4 maskSize = 4*sizeof(uintb);
+  mask &= (mask << maskSize);
+  int4 bit = 0;
+
+  do {
+    if ((mask & val)==0) {
+      bit += maskSize;
+      maskSize >>= 1;
+      mask |= (mask >> maskSize);
+    }
+    else {
+      maskSize >>= 1;
+      mask &= (mask << maskSize);
+    }
+  } while(maskSize != 0);
+  return bit;
+}
+
 /// Return smallest number of form 2^n-1, bigger or equal to the given value
 /// \param val is the given value
 /// \return the mask

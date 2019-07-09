@@ -20,8 +20,6 @@ import static org.junit.Assert.*;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.SwingUtilities;
-
 import org.junit.*;
 
 import docking.action.DockingActionIf;
@@ -74,7 +72,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 	@After
 	public void tearDown() throws Exception {
 
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			tool.setConfigChanged(false);
 			provider.close();
 		});
@@ -99,33 +97,27 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 
 		final Plugin p = getPlugin(tool, ArchivePlugin.class);
 		assertNotNull(p);
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			provider.close();
 			tool.removePlugins(new Plugin[] { p });
 		});
 
 		showProvider();
 
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Save Project (" + plugin.getName() + ")");
-		assertEquals(1, actions.size());
-		performAction(actions.get(0), true);
+		DockingActionIf action = getAction(tool, plugin.getName(), "Save Project");
+		performAction(action, true);
 
-		actions =
-			tool.getDockingActionsByFullActionName("Close Project (" + plugin.getName() + ")");
-		assertEquals(1, actions.size());
-		performAction(actions.get(0), true);
+		action = getAction(tool, plugin.getName(), "Close Project");
+		performAction(action, true);
 		assertTrue(!provider.isVisible());
 	}
 
 	private void showProvider() throws Exception {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Configure Tool (Project Window)");
-		assertEquals(1, actions.size());
 
-		performAction(actions.get(0), true);
+		DockingActionIf action = getAction(tool, "Project Window", "Configure Tool");
+		performAction(action, true);
 		waitForPostedSwingRunnables();
-		SwingUtilities.invokeAndWait(() -> tool.showConfig(false, false));
+		runSwing(() -> tool.showConfig(false, false));
 
 		provider = tool.getManagePluginsDialog();
 		pluginManagerComponent = (PluginManagerComponent) getInstanceField("comp", provider);

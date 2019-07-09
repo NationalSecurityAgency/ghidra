@@ -24,9 +24,7 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Base class for Tasks to be run in separate threads.
- *
- *
+ * Base class for Tasks to be run in separate threads
  */
 public abstract class Task implements MonitoredRunnable {
 	private String title;
@@ -37,7 +35,7 @@ public abstract class Task implements MonitoredRunnable {
 	private boolean isForgettable;
 	protected boolean waitForTaskCompleted = false;
 	private Set<TaskListener> listeners = new HashSet<>();
-	private TaskMonitor taskMonitor;
+	protected TaskMonitor taskMonitor = TaskMonitor.DUMMY;
 
 	/**
 	 * Creates new Task.
@@ -70,9 +68,9 @@ public abstract class Task implements MonitoredRunnable {
 	 * progress indicator
 	 * @param isModal true means that the dialog is modal and the task has to
 	 * complete or be canceled before any other action can occur
-	 * @param waitForTaskCompleted true causes the running thread to block until the finish or cancelled
-	 * callback has completed on the swing thread.  Note: passing true only makes sense if the
-	 * task is modal.
+	 * @param waitForTaskCompleted true causes the running thread to block until the finish or 
+	 *  	  cancelled callback has completed on the swing thread.  Note: passing true 
+	 *  	  only makes sense if the task is modal.
 	 */
 	public Task(String title, boolean canCancel, boolean hasProgress, boolean isModal,
 			boolean waitForTaskCompleted) {
@@ -112,9 +110,9 @@ public abstract class Task implements MonitoredRunnable {
 	/**
 	 * When an object implementing interface <code>Runnable</code> is used to create a thread, 
 	 * starting the thread causes the object's <code>run</code> method to be called in that 
-	 * separately executing thread
+	 * separately executing thread.
 	 * 
-	 * @param monitor The TaskMonitor
+	 * @param monitor the task monitor
 	*/
 	@Override
 	public final void monitoredRun(TaskMonitor monitor) {
@@ -136,7 +134,6 @@ public abstract class Task implements MonitoredRunnable {
 				getTaskTitle() + " - Uncaught Exception: " + t.toString(), t);
 		}
 		finally {
-			// this is put into SystemUtilities by the TaskLauncher
 			TaskUtilities.removeTrackedTask(this);
 			this.taskMonitor = null;
 		}
@@ -221,28 +218,6 @@ public abstract class Task implements MonitoredRunnable {
 	 */
 	public boolean isModal() {
 		return isModal;
-	}
-
-	public boolean isInterruptible() {
-		return isInterruptible;
-	}
-
-	public void setInterruptible(boolean interruptible) {
-		this.isInterruptible = interruptible;
-	}
-
-	/**
-	 * Returns true if this task should be left alone to die when cancelled, as opposed to being
-	 * interrupted
-	 * 
-	 * @return true if forgettable
-	 */
-	public boolean isForgettable() {
-		return isForgettable;
-	}
-
-	public void setForgettable(boolean isForgettable) {
-		this.isForgettable = isForgettable;
 	}
 
 	/**

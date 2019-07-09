@@ -24,13 +24,8 @@ import ghidra.util.UserSearchUtils;
  */
 public class StartsWithTextFilter extends MatchesPatternTextFilter {
 
-	private boolean caseSensitive;
-	private boolean allowGlobbing;
-
 	public StartsWithTextFilter(String filterText, boolean caseSensitive, boolean allowGlobbing) {
-		super(filterText);
-		this.caseSensitive = caseSensitive;
-		this.allowGlobbing = allowGlobbing;
+		super(filterText, caseSensitive, allowGlobbing);
 	}
 
 	@Override

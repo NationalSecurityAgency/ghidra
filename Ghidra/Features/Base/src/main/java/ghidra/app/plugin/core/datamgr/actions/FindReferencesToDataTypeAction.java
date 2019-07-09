@@ -15,13 +15,9 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
-import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -38,8 +34,6 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 
 		String menuGroup = "ZVeryLast"; // it's own group; on the bottom
 		setPopupMenuData(new MenuData(new String[] { "Find Uses of" }, null, menuGroup));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 	}
 
 	@Override

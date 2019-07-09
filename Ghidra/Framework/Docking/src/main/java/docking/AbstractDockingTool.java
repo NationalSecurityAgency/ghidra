@@ -15,14 +15,13 @@
  */
 package docking;
 
-import java.awt.Frame;
-import java.awt.Window;
+import java.awt.*;
 import java.util.*;
 
 import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
-import docking.actions.DockingToolActionManager;
+import docking.actions.ToolActions;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.SystemUtilities;
 
@@ -33,7 +32,7 @@ import ghidra.util.SystemUtilities;
 public abstract class AbstractDockingTool implements DockingTool {
 
 	protected DockingWindowManager winMgr;
-	protected DockingToolActionManager actionMgr;
+	protected ToolActions actionMgr;
 	protected Map<String, ToolOptions> optionsMap = new HashMap<>();
 	protected boolean configChangedFlag;
 
@@ -64,7 +63,10 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void removeComponentProvider(ComponentProvider provider) {
-		Runnable r = () -> winMgr.removeComponent(provider);
+		Runnable r = () -> {
+			actionMgr.removeComponentActions(provider);
+			winMgr.removeComponent(provider);
+		};
 		SystemUtilities.runSwingNow(r);
 	}
 
@@ -76,6 +78,20 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void setStatusInfo(String text) {
 		winMgr.setStatusText(text);
+	}
+
+	@Override
+	public void setStatusInfo(String text, boolean beep) {
+		winMgr.setStatusText(text);
+		if (beep) {
+			Toolkit tk = getToolFrame().getToolkit();
+			tk.beep();
+		}
+	}
+
+	@Override
+	public void clearStatusInfo() {
+		winMgr.setStatusText("");
 	}
 
 	@Override
@@ -99,22 +115,16 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
-	public List<DockingActionIf> getAllActions() {
-		return actionMgr.getAllActions();
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner) {
-		List<DockingActionIf> actions = actionMgr.getActions(owner);
+	public Set<DockingActionIf> getAllActions() {
+		Set<DockingActionIf> actions = actionMgr.getAllActions();
+		ActionToGuiMapper am = winMgr.getActionManager();
+		actions.addAll(am.getAllActions());
 		return actions;
 	}
 
 	@Override
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName) {
-		Set<DockingActionIf> set = new HashSet<>();
-		set.addAll(actionMgr.getDockingActionsByFullActionName(fullActionName));
-		set.addAll(winMgr.getActions(fullActionName));
-		return new ArrayList<>(set);
+	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
+		return actionMgr.getActions(owner);
 	}
 
 	@Override

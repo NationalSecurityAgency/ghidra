@@ -988,10 +988,9 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showOptionsDialog(PluginTool pluginTool) throws Exception {
-		List<DockingActionIf> list = pluginTool.getAllActions();
-		for (int i = 0; i < list.size(); i++) {
-
-			DockingActionIf action = list.get(i);
+		// TODO change to getAction("Edit Options")
+		Set<DockingActionIf> list = pluginTool.getAllActions();
+		for (DockingActionIf action : list) {
 			if (action.getName().equals("Edit Options")) {
 				performAction(action, false);
 				break;

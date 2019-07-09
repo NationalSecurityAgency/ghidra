@@ -18,9 +18,9 @@ package ghidra.app.util.headless;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ghidra.util.Issue;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.CancelledListener;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Monitor used by Headless Analyzer for "timeout" functionality
@@ -58,6 +58,11 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return null;
+	}
+
+	@Override
 	public void setProgress(long value) {
 		// stub
 	}
@@ -83,6 +88,11 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return false;
+	}
+
+	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled()) {
 			throw new CancelledException();
@@ -100,11 +110,6 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void reportIssue(Issue issue) {
-		// stub
-	}
-
-	@Override
 	public void cancel() {
 		timer.cancel(); // Terminate the timer thread
 		isCancelled = true;
@@ -117,16 +122,6 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
-		// stub
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		// stub
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
 		// stub
 	}
 

@@ -15,7 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,6 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -47,6 +46,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
 import utility.application.ApplicationLayout;
+import utility.function.*;
 
 public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDockingTest {
 
@@ -533,8 +533,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	public static <T> void replaceService(Class<? extends T> service,
 			Class<? extends T> replacement) {
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		Set<Class<?>> extentions =
+			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
 		HashSet<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
@@ -546,7 +546,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		set.add(replacement);
 
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
+		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 

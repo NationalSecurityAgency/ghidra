@@ -37,7 +37,7 @@ public class TaskUtilities {
 	}
 
 	/**
-	 * Removes the given listener added via {@link #addTrackedTask(Task)}.
+	 * Removes the given listener added via {@link #addTrackedTask(Task,TaskMonitor)}.
 	 * @param listener The listener that needs to be removed.
 	 */
 	public static void removeTrackedTaskListener(TrackedTaskListener listener) {

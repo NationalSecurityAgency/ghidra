@@ -1,0 +1,13 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+
+rootProject.assembleDistribution {
+	def p = this.project
+
+	def zipPath = getZipPath(p)
+	
+	from (p.projectDir.toString()) {
+		exclude "bin"
+		exclude "build"
+		into  { zipPath }
+	}
+}

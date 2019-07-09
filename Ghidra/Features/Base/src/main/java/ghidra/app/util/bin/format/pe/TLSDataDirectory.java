@@ -20,11 +20,14 @@ import java.io.IOException;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -76,6 +79,31 @@ public class TLSDataDirectory extends DataDirectory {
 		}
 		createDirectoryBookmark(program, addr);
 		PeUtils.createData(program, addr, tls.toDataType(), log);
+
+		// Markup TLS callback functions
+		if (tls.getAddressOfCallBacks() != 0) {
+			AddressSpace space = program.getImageBase().getAddressSpace();
+			DataType pointerDataType = PointerDataType.dataType.clone(program.getDataTypeManager());
+			try {
+				for (int i = 0; i < 20; i++) { // cap # of TLS callbacks as a precaution (1 is the norm)
+					Address nextCallbackPtrAddr = space.getAddress(
+						tls.getAddressOfCallBacks() + i * pointerDataType.getLength());
+					Address nextCallbackAddr = PointerDataType.getAddressValue(
+						new DumbMemBufferImpl(program.getMemory(), nextCallbackPtrAddr),
+						pointerDataType.getLength(), space);
+					if (nextCallbackAddr.getOffset() == 0) {
+						break;
+					}
+					PeUtils.createData(program, nextCallbackPtrAddr, pointerDataType, log);
+					program.getSymbolTable().createLabel(nextCallbackAddr, "tls_callback_" + i,
+						SourceType.IMPORTED);
+					program.getSymbolTable().addExternalEntryPoint(nextCallbackAddr);
+				}
+			}
+			catch (InvalidInputException e) {
+				log.appendMsg("TLS", "Failed to markup TLS callback functions: " + e.getMessage());
+			}
+		}
 	}
 
 	@Override

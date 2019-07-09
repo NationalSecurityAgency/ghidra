@@ -21,7 +21,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.*;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 /**
  * Action that manages multiple PluginActions mapped to this action's key binding.
@@ -146,7 +146,6 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 
 		// If more than one action, prompt user for selection
-		JFrame rootFrame = winMgr.getRootFrame();
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
 			if (dialog == null) {
@@ -159,7 +158,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			// doing the show in an invoke later seems to fix a strange swing bug that lock up 
 			// the program if you tried to invoke a new action too quickly after invoking
 			// it the first time
-			SystemUtilities.runSwingLater(() -> winMgr.showDialog(dialog));
+			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
 		}
 		else if (list.size() == 1) {
 			final ExecutableKeyActionAdapter actionProxy = list.get(0);
@@ -168,8 +167,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 		else {
 			String name = (String) getValue(Action.NAME);
-			winMgr.setStatusText("Action (" + name + ") not valid in this context!");
-			rootFrame.getToolkit().beep();
+			winMgr.setStatusText("Action (" + name + ") not valid in this context!", true);
 		}
 	}
 
