@@ -101,7 +101,7 @@ public class BytesFieldFactory extends FieldFactory {
 		fieldOptions.registerOption(REVERSE_INSTRUCTION_BYTE_ORDERING, false, hl,
 			"Reverses the normal order of the bytes in the bytes field." +
 				"  Only used for instructions in Little Endian format");
-		fieldOptions.registerOption(DISPLAY_STRUCTURE_ALIGNMENT_BYTES_MSG, false, hl,
+		fieldOptions.registerOption(DISPLAY_STRUCTURE_ALIGNMENT_BYTES_MSG, true, hl,
 			"Display trailing alignment bytes in structures.");
 
 		delim = fieldOptions.getString(DELIMITER_MSG, " ");

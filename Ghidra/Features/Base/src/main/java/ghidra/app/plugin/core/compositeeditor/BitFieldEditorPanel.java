@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 
@@ -274,13 +273,15 @@ public class BitFieldEditorPanel extends JPanel {
 			if (e.isConsumed()) {
 				return;
 			}
-			e.consume();
-			selectionActive = false;
-			if (e.getButton() == MouseEvent.BUTTON1 && bitOffsetInput.isEnabled()) {
-				bitSizeModel.setValue(1L); // must change size first
-				startBit = setBitFieldOffset(e.getPoint());
-				lastBit = startBit;
-				selectionActive = startBit >= 0;
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				e.consume();
+				selectionActive = false;
+				if (bitOffsetInput.isEnabled()) {
+					bitSizeModel.setValue(1L); // must change size first
+					startBit = setBitFieldOffset(e.getPoint());
+					lastBit = startBit;
+					selectionActive = startBit >= 0;
+				}
 			}
 		}
 
@@ -329,15 +330,6 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	private JPanel createPlacementPanel() {
-		JPanel midPanel = new JPanel(new PairLayout(5, 5));
-
-		JPanel leftMidPanel = new JPanel(new VerticalLayout(13));
-		leftMidPanel.setBorder(BorderFactory.createEmptyBorder(12, 8, 12, 0));
-		JLabel byteOffsetLabel = new JLabel("Byte Offset:", SwingConstants.RIGHT);
-		byteOffsetLabel.setToolTipText("Byte Offset is relative to start of allocation unit");
-		leftMidPanel.add(byteOffsetLabel);
-		leftMidPanel.add(new JLabel("Bits:", SwingConstants.RIGHT));
-		midPanel.add(leftMidPanel);
 
 		placementComponent = new BitFieldPlacementComponent(composite);
 		placementComponent.setFont(UIManager.getFont("TextField.font"));
@@ -347,17 +339,23 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.addMouseListener(bitSelectionHandler);
 		placementComponent.addMouseMotionListener(bitSelectionHandler);
 
-		JPanel p = new JPanel(new BorderLayout());
-		p.add(placementComponent, BorderLayout.WEST);
-		p.setBorder(new EmptyBorder(0, 0, 5, 0));
+		JPanel bitViewPanel = new JPanel(new PairLayout(0, 5));
 
-		JScrollPane scrollPane = new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
-			ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JPanel labelPanel = new JPanel(new VerticalLayout(7));
+		labelPanel.setBorder(BorderFactory.createEmptyBorder(7, 5, 0, 0));
+		JLabel byteOffsetLabel = new JLabel("Byte Offset:", SwingConstants.RIGHT);
+		labelPanel.add(byteOffsetLabel);
+		labelPanel.add(new JLabel("Component Bits:", SwingConstants.RIGHT));
+		bitViewPanel.add(labelPanel);
+
+		JScrollPane scrollPane =
+			new JScrollPane(placementComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.getViewport().setBackground(getBackground());
 		scrollPane.setBorder(null);
 
-		midPanel.add(scrollPane);
-		return midPanel;
+		bitViewPanel.add(scrollPane);
+		return bitViewPanel;
 	}
 
 	private boolean checkValidBaseDataType() {

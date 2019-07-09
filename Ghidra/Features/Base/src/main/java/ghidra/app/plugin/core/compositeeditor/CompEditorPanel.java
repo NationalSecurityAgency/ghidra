@@ -37,6 +37,8 @@ import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
+import ghidra.util.layout.PairLayout;
+import ghidra.util.layout.VerticalLayout;
 
 /**
  * Panel for editing a composite with a blank line at the bottom of the table
@@ -215,19 +217,24 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		JPanel p = new JPanel();
-		p.add(bitViewComponent);
-		//p.setBorder(new EmptyBorder(5, 5, 0, 15));
+		JPanel bitViewPanel = new JPanel(new PairLayout(0, 5));
+
+		JPanel labelPanel = new JPanel(new VerticalLayout(7));
+		labelPanel.setBorder(BorderFactory.createEmptyBorder(7, 5, 0, 0));
+		JLabel byteOffsetLabel = new JLabel("Byte Offset:", SwingConstants.RIGHT);
+		labelPanel.add(byteOffsetLabel);
+		labelPanel.add(new JLabel("Component Bits:", SwingConstants.RIGHT));
+		bitViewPanel.add(labelPanel);
 
 		JScrollPane bitViewScrollPane =
-			new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+			new JScrollPane(bitViewComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
 		bitViewScrollPane.getViewport().setBackground(getBackground());
 		bitViewScrollPane.setBorder(null);
 
-		JPanel bitViewerPanel = new JPanel(new BorderLayout());
-		bitViewerPanel.add(bitViewScrollPane, BorderLayout.CENTER);
-		return bitViewerPanel;
+		bitViewPanel.add(bitViewScrollPane);
+		return bitViewPanel;
 	}
 
 	/**

@@ -229,7 +229,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testStructureEditorAligned() {
 
-		createAlignedDetailedStructure(0x40d2b8, false);
+		createDetailedStructure(0x40d2b8, true, false);
 
 		goToListing(0x40d2b8, true);
 
@@ -241,13 +241,36 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testStructureEditorWithFlexArray() {
 
-		createAlignedDetailedStructure(0x40d2b8, true);
+		createDetailedStructure(0x40d2b8, true, true);
 
 		goToListing(0x40d2b8, true);
 
 		performAction("Edit Data Type", "DataPlugin", true);
 
 		captureProvider(StructureEditorProvider.class);
+	}
+
+	@Test
+	public void testStructureEditBitfield() {
+
+		createDetailedStructure(0x40d2b8, false, true);
+
+		goToListing(0x40d2b8, true);
+
+		performAction("Edit Data Type", "DataPlugin", true);
+
+		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
+
+		// get structure table and select a row
+		CompositeEditorPanel editorPanel =
+			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
+		JTable table = editorPanel.getTable();
+		selectRow(table, 4); // select byte:3 bitfield
+
+		performAction("Editor: Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
+		waitForSwing();
+
+		captureDialog();
 	}
 
 	@Test
@@ -295,12 +318,13 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		waitForBusyTool(tool);
 	}
 
-	private void createAlignedDetailedStructure(long address,
+	private void createDetailedStructure(long address, boolean aligned,
 			boolean includeBitFieldsAndFlexArray) {
 
 		goToListing(address);
 
 		StructureDataType struct = new StructureDataType("MyAlignedStruct", 0);
+		struct.setInternallyAligned(true); // allow proper default packing
 		struct.add(new ByteDataType(), "myByteElement", "alignment 1");
 		struct.add(new ByteDataType(), "", "This is my undefined element");
 		struct.add(new WordDataType(), "myWordElement", "alignment 2");
@@ -325,7 +349,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 			(includeBitFieldsAndFlexArray ? "with bitfields and a flexible char array"
 					: "according to their alignment size") +
 			". ");
-		struct.setInternallyAligned(true);
+		struct.setInternallyAligned(aligned);
 
 		CreateDataCmd createDataCmd = new CreateDataCmd(addr(address), struct);
 		tool.execute(createDataCmd, program);

@@ -26,6 +26,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
+import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
 public class BitFieldEditorDialog extends DialogComponentProvider {
@@ -52,6 +53,8 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		setRememberSize(false);
 
 		addActions();
+
+		setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Bitfield_Editor"));
 	}
 
 	private void addButtons() {
@@ -81,7 +84,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		EditBitFieldAction() {
 			super("Edit Bitfield", "BitFieldEditorDialog");
 			setPopupMenuData(new MenuData(new String[] { getName() }, EDIT_ICON));
-
+			setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor_Edit_Bitfield"));
 		}
 
 		@Override
@@ -104,6 +107,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		AddBitFieldAction() {
 			super("Add Bitfield", "BitFieldEditorDialog");
 			setPopupMenuData(new MenuData(new String[] { getName() }, ADD_ICON));
+			setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor_Add_Bitfield"));
 		}
 
 		@Override
@@ -129,7 +133,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 	private class DeleteComponentAction extends DockingAction {
 
 		DeleteComponentAction() {
-			super("Delete Component", "BitFieldEditorDialog");
+			super("Delete", "BitFieldEditorDialog");
 			setPopupMenuData(new MenuData(new String[] { getName() }, DELETE_ICON));
 		}
 

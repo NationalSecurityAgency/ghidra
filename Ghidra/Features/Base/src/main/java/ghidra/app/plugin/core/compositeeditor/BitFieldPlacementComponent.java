@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
@@ -37,7 +38,7 @@ public class BitFieldPlacementComponent extends JPanel {
 	private static final int BIT_SEPARATOR_THICKNESS = 1;
 	private static final int BYTE_SEPARATOR_THICKNESS = 2;
 //	private static final int BYTE_WIDTHx = 8 * (BIT_WIDTH + BIT_SEPARATOR_THICKNESS);
-	private static final int SCROLLBAR_THICKNESS = 10;
+	private static final int SCROLLBAR_THICKNESS = 15;
 	private static final int MY_HEIGHT = (2 * CELL_HEIGHT) + (3 * BYTE_SEPARATOR_THICKNESS);
 
 	private static final int LENEND_BOX_SIZE = 16;
@@ -476,8 +477,14 @@ public class BitFieldPlacementComponent extends JPanel {
 	@Override
 	public String getToolTipText(MouseEvent e) {
 		BitAttributes attrs = getBitAttributes(e.getPoint());
-		String dtcInfo = attrs != null ? (attrs.getTip() + "<BR>") : "";
-		return "<HTML><div style=\"text-align:center\">" + dtcInfo +
+		if (attrs == null) {
+			return null;
+		}
+		String tip = attrs.getTip();
+		if (tip == null) {
+			return null;
+		}
+		return "<HTML><div style=\"text-align:center\">" + HTMLUtilities.escapeHTML(tip) +
 			"<div style=\"color: gray;font-style: italic\">(Shift-wheel to zoom)</div></div></HTML>";
 
 	}
@@ -930,19 +937,19 @@ public class BitFieldPlacementComponent extends JPanel {
 			}
 		}
 
-		boolean isAddBitField() {
+		private boolean isAddBitField() {
 			return !unallocated && dtc == null;
 		}
 
-		boolean isEditField() {
+		private boolean isEditField() {
 			return dtc != null && dtc.getOrdinal() == editOrdinal;
 		}
 
-		boolean hasConflict() {
+		private boolean hasConflict() {
 			return getConflict() != null;
 		}
 
-		public DataTypeComponent getConflict() {
+		private DataTypeComponent getConflict() {
 			BitAttributes c = conflict;
 			while (c != null && c.dtc.isZeroBitFieldComponent()) {
 				// TODO: improve conflict detection
@@ -961,7 +968,7 @@ public class BitFieldPlacementComponent extends JPanel {
 			}
 		}
 
-		void paint(Graphics g, BitAttributes bitAttrsToLeft, boolean paintRightLine) {
+		private void paint(Graphics g, BitAttributes bitAttrsToLeft, boolean paintRightLine) {
 			// bit box
 			Color c = getColor();
 			g.setColor(c);
@@ -1017,7 +1024,7 @@ public class BitFieldPlacementComponent extends JPanel {
 			}
 		}
 
-		Color getColor() {
+		private Color getColor() {
 			if (unallocated) {
 				return UNDEFINED_BIT_COLOR;
 			}
@@ -1035,7 +1042,10 @@ public class BitFieldPlacementComponent extends JPanel {
 					: NON_BITFIELD_COMPONENT_COLOR;
 		}
 
-		String getTip() {
+		private String getTip() {
+			if (unallocated) {
+				return "<padding>";
+			}
 			if (dtc == null) {
 				return null;
 			}
