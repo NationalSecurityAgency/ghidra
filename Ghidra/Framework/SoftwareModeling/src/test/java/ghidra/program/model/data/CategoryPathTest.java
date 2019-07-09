@@ -277,16 +277,6 @@ public class CategoryPathTest extends AbstractGenericTest {
 
 	@Test
 	public void testConstructorDelimeterEscape4() {
-		CategoryPath path = new CategoryPath("/\\/aaa/bbb/bob");
-		List<String> names = path.asList();
-		assertEquals("/aaa", names.get(0));
-		assertEquals("bbb", names.get(1));
-		assertEquals("bob", names.get(2));
-		assertEquals("/\\/aaa/bbb/bob", path.getPath());
-	}
-
-	@Test
-	public void testConstructorDelimeterEscape5() {
 		CategoryPath path = new CategoryPath("/\\/\\/aaa/bbb/bob");
 		List<String> names = path.asList();
 		assertEquals("//aaa", names.get(0));

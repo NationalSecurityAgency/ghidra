@@ -17,6 +17,8 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 /**
  * A category path is the full path to a particular data type
  */
@@ -31,8 +33,8 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	private static final String ILLEGAL_STRING = DELIMITER_STRING + DELIMITER_STRING;
 	private static final int DIFF = ESCAPED_DELIMITER_STRING.length() - DELIMITER_STRING.length();
 
-	// parentPath can only be null for ROOT
-	private final CategoryPath parentPath;
+	// parent can only be null for ROOT
+	private final CategoryPath parent;
 	private final String name;
 
 	/**
@@ -63,8 +65,8 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * Constructor for internal creation of ROOT.
 	 */
 	private CategoryPath() {
-		// parentPath can only be null for ROOT
-		parentPath = null;
+		// parent can only be null for ROOT
+		parent = null;
 		name = "";
 	}
 
@@ -72,41 +74,41 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * Construct a CategoryPath from a parent and a hierarchical array of strings where each
 	 * string is the name of a category in the category path.
 	 *
-	 * @param parentPathIn the parent CategoryPath.  Choose {@code ROOT} if needed.
-	 * @param categoryPath the array of names of categories.
+	 * @param parent the parent CategoryPath.  Choose {@code ROOT} if needed.
+	 * @param subPathElements the array of names of sub-categories of the parent.
 	 * @throws IllegalArgumentException if the given array is null or empty.
 	 */
-	public CategoryPath(CategoryPath parentPathIn, String... categoryPath) {
-		this(parentPathIn, Arrays.asList(categoryPath));
+	public CategoryPath(CategoryPath parent, String... subPathElements) {
+		this(parent, Arrays.asList(subPathElements));
 	}
 
 	/**
 	 * Construct a CategoryPath from a parent and a hierarchical list of strings where each
 	 * string is the name of a category in the category path.
 	 *
-	 * @param parentPathIn the parent CategoryPath.  Choose {@code ROOT} if needed.
-	 * @param categoryList the hierarchical array of categories to place after parentPath.
+	 * @param parent the parent CategoryPath.  Choose {@code ROOT} if needed.
+	 * @param subPathElements the hierarchical array of sub-categories of the parent.
 	 * @throws IllegalArgumentException if the given list is null or empty.
 	 */
-	public CategoryPath(CategoryPath parentPathIn, List<String> categoryList) {
-		Objects.requireNonNull(parentPathIn);
-		if (categoryList == null || categoryList.isEmpty()) {
+	public CategoryPath(CategoryPath parent, List<String> subPathElements) {
+		Objects.requireNonNull(parent);
+		if (CollectionUtils.isEmpty(subPathElements)) {
 			throw new IllegalArgumentException(
 				"Category list must contain at least one string name!");
 		}
-		name = categoryList.get(categoryList.size() - 1);
-		if (categoryList.size() == 1) {
-			parentPath = parentPathIn;
+		name = subPathElements.get(subPathElements.size() - 1);
+		if (subPathElements.size() == 1) {
+			this.parent = parent;
 		}
 		else {
-			parentPath =
-				new CategoryPath(parentPathIn, categoryList.subList(0, categoryList.size() - 1));
+			this.parent =
+				new CategoryPath(parent, subPathElements.subList(0, subPathElements.size() - 1));
 		}
 	}
 
 	/**
 	 * Creates a category path given a forward-slash-delimited string (e.g., {@code "/aa/bb"}).
-	 * If an individual component has one or more '/' characters in it, then it can be
+	 * If an individual path component has one or more '/' characters in it, then it can be
 	 * <I><B>escaped</B></I> using the {@link #escapeString(String)} utility method.  The
 	 * {@link #unescapeString(String)} method can be used to unescape an individual component.
 	 * <P>
@@ -115,39 +117,50 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * is OK is in simple cases where a literal is passed in, such as in testing methods or in
 	 * scripts.
 	 * @param path category path string, delimited with '/' characters where individual components
-	 * may have '/' characters escaped.
+	 * may have '/' characters escaped.  Must start with the '/' character.
 	 */
+	// NOTE: We purposefully did not create a constructor that takes varags only, as that
+	// constructor, called with a single argument that would not be escaped, would conflict with
+	// this constructor, which requires an escaped argument. 
 	public CategoryPath(String path) {
 		if (path == null || path.length() == 0 || path.equals(DELIMITER_STRING)) {
-			// parentPath can only be null for ROOT
-			parentPath = null;
+			// parent can only be null for ROOT
+			parent = null;
 			name = "";
 			return;
 		}
 		else if (path.charAt(0) != DELIMITER_CHAR) {
 			throw new IllegalArgumentException("Paths must start with " + DELIMITER_STRING);
 		}
-		else if (path.charAt(path.length() - 1) == DELIMITER_CHAR &&
-			path.lastIndexOf(ESCAPED_DELIMITER_STRING) != path.length() -
-				ESCAPED_DELIMITER_STRING.length()) {
+		else if (endsWithNonEscapedDelimiter(path)) {
 			throw new IllegalArgumentException("Paths must not end with " + DELIMITER_STRING);
 		}
 		else if (path.indexOf(ILLEGAL_STRING) >= 0) {
 			throw new IllegalArgumentException("Paths must have non-empty elements");
 		}
-		else {
-			int escapedIndex = path.length();
-			int delimiterIndex = path.length();
-			while (delimiterIndex > 0) {
-				escapedIndex = path.lastIndexOf(ESCAPED_DELIMITER_STRING, escapedIndex - 1);
-				delimiterIndex = path.lastIndexOf(DELIMITER_CHAR, delimiterIndex - 1);
-				if (delimiterIndex != escapedIndex + DIFF) {
-					break;
-				}
+
+		int delimiterIndex = findIndexOfLastNonEscapedDelimiter(path);
+		this.parent = new CategoryPath(path.substring(0, delimiterIndex));
+		this.name = unescapeString(path.substring(delimiterIndex + 1));
+	}
+
+	private boolean endsWithNonEscapedDelimiter(String string) {
+		return (string.charAt(string.length() - 1) == DELIMITER_CHAR &&
+			string.lastIndexOf(ESCAPED_DELIMITER_STRING) != string.length() -
+				ESCAPED_DELIMITER_STRING.length());
+	}
+
+	private int findIndexOfLastNonEscapedDelimiter(String string) {
+		int escapedIndex = string.length();
+		int delimiterIndex = escapedIndex;
+		while (delimiterIndex > 0) {
+			escapedIndex = string.lastIndexOf(ESCAPED_DELIMITER_STRING, escapedIndex - 1);
+			delimiterIndex = string.lastIndexOf(DELIMITER_CHAR, delimiterIndex - 1);
+			if (delimiterIndex != escapedIndex + DIFF) {
+				break;
 			}
-			this.parentPath = new CategoryPath(path.substring(0, delimiterIndex));
-			this.name = unescapeString(path.substring(delimiterIndex + 1));
 		}
+		return delimiterIndex;
 	}
 
 	/**
@@ -155,8 +168,8 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * @return true if this is a root category path
 	 */
 	public boolean isRoot() {
-		// parentPath can only be null for ROOT
-		return parentPath == null;
+		// parent can only be null for ROOT
+		return parent == null;
 	}
 
 	/**
@@ -164,7 +177,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * @return the parent
 	 */
 	public CategoryPath getParent() {
-		return parentPath;
+		return parent;
 	}
 
 	/**
@@ -185,10 +198,10 @@ public class CategoryPath implements Comparable<CategoryPath> {
 		if (isRoot()) {
 			return DELIMITER_STRING;
 		}
-		if (parentPath.isRoot()) {
+		if (parent.isRoot()) {
 			return DELIMITER_CHAR + escapeString(name);
 		}
-		return parentPath.getPath() + DELIMITER_CHAR + escapeString(name);
+		return parent.getPath() + DELIMITER_CHAR + escapeString(name);
 	}
 
 	@Override
@@ -211,12 +224,12 @@ public class CategoryPath implements Comparable<CategoryPath> {
 		else if (!name.equals(other.name)) {
 			return false;
 		}
-		if (parentPath == null) {
-			if (other.parentPath != null) {
+		if (parent == null) {
+			if (other.parent != null) {
 				return false;
 			}
 		}
-		else if (!parentPath.equals(other.parentPath)) {
+		else if (!parent.equals(other.parent)) {
 			return false;
 		}
 		return true;
@@ -227,16 +240,16 @@ public class CategoryPath implements Comparable<CategoryPath> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((parentPath == null) ? 0 : parentPath.hashCode());
+		result = prime * result + ((parent == null) ? 0 : parent.hashCode());
 		return result;
 	}
 
 	/**
 	 * Tests if the specified categoryPath is the same as, or an ancestor of, this category path.
-	 * @param categoryPath the category path to be checked.
+	 * @param candidateAncestorPath the category path to be checked.
 	 * @return true if the given path is the same as, or an ancestor of, this category path.
 	 */
-	public boolean isAncestorOrSelf(CategoryPath categoryPath) {
+	public boolean isAncestorOrSelf(CategoryPath candidateAncestorPath) {
 
 		// Result categoryPath          This
 		// ------ --------------------- ------------------------
@@ -248,13 +261,13 @@ public class CategoryPath implements Comparable<CategoryPath> {
 		// False  /app                  /apple
 		// False  /pear                 /apple
 
-		if (categoryPath.isRoot()) {
+		if (candidateAncestorPath.isRoot()) {
 			return true;
 		}
 
 		CategoryPath path = this;
 		while (!path.isRoot()) {
-			if (categoryPath.equals(path)) {
+			if (candidateAncestorPath.equals(path)) {
 				return true;
 			}
 			path = path.getParent();
@@ -275,19 +288,18 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	@Override
 	public int compareTo(CategoryPath other) {
-		CategoryPath otherParentPath = other.getParent();
-		int result = 0;
-		if (parentPath == null) {
-			if (otherParentPath != null) {
+		CategoryPath otherParent = other.getParent();
+		if (parent == null) {
+			if (otherParent != null) {
 				return -1;
 			}
 		}
-		else if (otherParentPath == null) {
+		else if (otherParent == null) {
 			return 1;
 		}
-		else {
-			result = parentPath.compareTo(otherParentPath);
-		}
+
+		int result = parent.compareTo(otherParent);
+
 		if (result == 0) {
 			result = name.compareTo(other.getName());
 		}
@@ -309,8 +321,11 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * @return  a hierarchical list of names of the category in the category path.
 	 */
 	public List<String> asList() {
-		List<String> list = new ArrayList<>();
-		addToList(list);
+		if (isRoot()) {
+			return new ArrayList<>();
+		}
+		List<String> list = parent.asList();
+		list.add(name);
 		return list;
 	}
 
@@ -321,32 +336,8 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 * @return a hierarchical array of names of the categories in the category path.
 	 */
 	public String[] asArray() {
-		List<String> list = new ArrayList<>();
-		addToList(list);
+		List<String> list = asList();
 		return list.toArray(new String[list.size()]);
-	}
-
-	private void addToList(List<String> list) {
-		if (!parentPath.isRoot()) {
-			parentPath.addToList(list);
-		}
-		list.add(name);
-	}
-
-	/**
-	 * This constructor is purposefully private and asserting.  We do not want anyone to implement
-	 * this constructor, as it would confuse the notion of the constructor that takes a single
-	 * {@link String} that has escaped delimiters vs. what this constructor would have to require,
-	 * which is non-escaped {@link String Strings}.  There would be no way for the two Constructors
-	 * to be distinguished from each other when passing a single argument.
-	 *
-	 * @param categoryPath varargs hierarchical list of names of categories.
-	 */
-	@SuppressWarnings("unused") // for categoryPath varargs
-	private CategoryPath(String... categoryPath) {
-		assert false;
-		parentPath = null;
-		name = "";
 	}
 
 }
