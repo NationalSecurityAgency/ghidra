@@ -288,17 +288,15 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	@Override
 	public int compareTo(CategoryPath other) {
-		CategoryPath otherParent = other.getParent();
-		if (parent == null) {
-			if (otherParent != null) {
-				return -1;
-			}
-		}
-		else if (otherParent == null) {
-			return 1;
+		if (isRoot() && other.isRoot()) {
+			return 0;
 		}
 
-		int result = parent.compareTo(otherParent);
+		if (isRoot() || other.isRoot()) {
+			return isRoot() ? -1 : 1;
+		}
+
+		int result = parent.compareTo(other.getParent());
 
 		if (result == 0) {
 			result = name.compareTo(other.getName());
