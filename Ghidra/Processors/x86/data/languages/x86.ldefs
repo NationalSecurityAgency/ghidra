@@ -58,7 +58,8 @@
 	<external_name tool="IDA-PRO" name="80386r"/>
 	<external_name tool="IDA-PRO" name="80486r"/>
 	<external_name tool="IDA-PRO" name="80586r"/>
-  </language>
+	<external_name tool="IDA-PRO" name="metapc"/>
+    </language>
     <language processor="x86"
             endian="little"
             size="64"
