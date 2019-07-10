@@ -17,34 +17,6 @@ package ghidra.program.model.data;
 
 public class CompositeAlignmentHelper {
 
-	private static int getImpartedAlignment(DataOrganization dataOrganization, int packingAlignment,
-			DataTypeComponent dataTypeComponent) {
-
-		// FIXME: try to eliminate this method.
-
-//		DataType componentDt = dataTypeComponent.getDataType();
-//
-//		if (componentDt instanceof BitFieldDataType) {
-//			BitFieldPacking bitFieldPacking = dataOrganization.getBitFieldPacking();
-//			if (!bitFieldPacking.isTypeAlignmentEnabled() ||
-//				isBitFieldPackingEnabled(dataOrganization, packingAlignment)) {
-//				return 0;
-//			}
-//			BitFieldDataType bitFieldDt = (BitFieldDataType) componentDt;
-//			// zero-length bitfield assumed not to influence composite alignment, only component alignment
-//			if (!bitFieldPacking.zeroLengthAffectsContainerAlignment() &&
-//				bitFieldDt.getBitSize() == 0) {
-//				return 0;
-//			}
-//			// largest bit-field base-type will provide composite alignment constraint
-//			return getPackedAlignment(dataOrganization, packingAlignment,
-//				bitFieldDt.getBaseDataType(), bitFieldDt.getBaseTypeSize());
-//		}
-
-		return CompositeAlignmentHelper.getPackedAlignment(dataOrganization, packingAlignment,
-			dataTypeComponent);
-	}
-
 	private static int getCompositeAlignmentMultiple(DataOrganization dataOrganization,
 			Composite composite) {
 		int allComponentsLCM = 1;
@@ -140,4 +112,5 @@ public class CompositeAlignmentHelper {
 		return ((absoluteMaxAlignment == 0) || (lcm < absoluteMaxAlignment)) ? lcm
 				: absoluteMaxAlignment;
 	}
+
 }

@@ -177,13 +177,11 @@ public class BitFieldDataTypeTest extends AbstractGTest {
 	}
 
 	private BitFieldDataType bitField(int size, int offset) throws Exception {
-		int storageSize = BitFieldDataType.getMinimumStorageSize(size);
-		return new BitFieldDataType(IntegerDataType.dataType, size, offset, storageSize);
+		return new BitFieldDataType(IntegerDataType.dataType, size, offset);
 	}
 
 	private BitFieldDataType unsignedBitField(int size, int offset) throws Exception {
-		int storageSize = BitFieldDataType.getMinimumStorageSize(size);
-		return new BitFieldDataType(UnsignedIntegerDataType.dataType, size, offset, storageSize);
+		return new BitFieldDataType(UnsignedIntegerDataType.dataType, size, offset);
 	}
 
 	private MemBuffer membuf(int... bytes) throws Exception {

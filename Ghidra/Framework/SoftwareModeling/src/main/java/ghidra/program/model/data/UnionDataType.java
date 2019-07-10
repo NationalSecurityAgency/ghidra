@@ -129,7 +129,9 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 		validateDataType(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = adjustBitField(dataType);
+
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		length = getPreferredComponentLength(dataType, length);
@@ -148,7 +150,9 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 		validateDataType(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = adjustBitField(dataType);
+
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		length = getPreferredComponentLength(dataType, length);
@@ -164,8 +168,14 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 	}
 
 	@Override
-	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
-			DataType baseDataType, int bitSize, String componentName, String comment)
+	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
+			String comment) throws InvalidDataTypeException {
+		return insertBitField(components.size(), baseDataType, bitSize, componentName, comment);
+	}
+
+	@Override
+	public DataTypeComponent insertBitField(int ordinal, DataType baseDataType, int bitSize,
+			String componentName, String comment)
 			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException {
 
 		if (ordinal < 0 || ordinal > components.size()) {
@@ -173,48 +183,10 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		}
 
 		BitFieldDataType.checkBaseDataType(baseDataType);
-		baseDataType = baseDataType.clone(getDataTypeManager());
+		baseDataType = baseDataType.clone(dataMgr);
 
-		if (isInternallyAligned()) {
-			BitFieldDataType bitFieldDt = new BitFieldDataType(baseDataType, bitSize);
-			return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
-		}
-
-		if (byteWidth <= 0) {
-			throw new IllegalArgumentException("Invalid byteWidth");
-		}
-
-		// TODO: How should zero-length bitfields be handled ?
-
-		// handle unaligned case - use minimal storage
-		// bitfield value will be forced based upon byteWidth, bitSize and endianess
-		boolean bigEndian = getDataOrganization().isBigEndian();
-		int effectiveBitSize =
-			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
-		int storageSize = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
-		if (byteWidth < storageSize) {
-			throw new IllegalArgumentException(
-				"Bitfield does not fit within specified constraints");
-		}
-		int storageBitOffset = 0;
-		if (bigEndian) {
-			storageBitOffset = (8 * storageSize) - effectiveBitSize;
-		}
-
-		BitFieldDataType bitfieldDt =
-			new BitFieldDataType(baseDataType, bitSize, storageBitOffset, storageSize);
-
-		DataTypeComponentImpl dtc = new DataTypeComponentImpl(bitfieldDt, this, storageSize,
-			ordinal, 0, componentName, comment);
-
-		bitfieldDt.addParent(this); // currently has no affect
-
-		shiftOrdinals(ordinal, 1);
-		components.add(ordinal, dtc);
-
-		adjustLength(true);
-
-		return dtc;
+		BitFieldDataType bitFieldDt = new BitFieldDataType(baseDataType, bitSize);
+		return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
 	}
 
 	@Override
@@ -227,7 +199,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (getDataTypeManager() == dtm) {
+		if (dataMgr == dtm) {
 			return this;
 		}
 		UnionDataType union = new UnionDataType(getCategoryPath(), getName(), getUniversalID(),
@@ -258,6 +230,50 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		for (int ordinal : ordinals) {
 			delete(ordinal);
 		}
+	}
+
+	private DataType adjustBitField(DataType dataType) {
+
+		if (!(dataType instanceof BitFieldDataType)) {
+			return dataType;
+		}
+
+		BitFieldDataType bitfieldDt = (BitFieldDataType) dataType;
+
+		DataType baseDataType = bitfieldDt.getBaseDataType();
+		baseDataType = baseDataType.clone(dataMgr);
+
+		// Both aligned and unaligned bitfields use same adjustment
+		// unaligned must force bitfield placement at byte offset 0 
+		int bitSize = bitfieldDt.getDeclaredBitSize();
+		int effectiveBitSize =
+			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
+
+		// little-endian always uses bit offset of 0 while
+		// big-endian offset must be computed
+		boolean bigEndian = getDataOrganization().isBigEndian();
+		int storageBitOffset = 0;
+		if (bigEndian) {
+			if (bitSize == 0) {
+				storageBitOffset = 7;
+			}
+			else {
+				int storageSize = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
+				storageBitOffset = (8 * storageSize) - effectiveBitSize;
+			}
+		}
+
+		if (effectiveBitSize != bitfieldDt.getBitSize() ||
+			storageBitOffset != bitfieldDt.getBitOffset()) {
+			try {
+				bitfieldDt = new BitFieldDataType(baseDataType, effectiveBitSize, storageBitOffset);
+			}
+			catch (InvalidDataTypeException e) {
+				// unexpected since deriving from existing bitfield,
+				// ignore and use existing bitfield
+			}
+		}
+		return bitfieldDt;
 	}
 
 	private void adjustLength(boolean notify) {
@@ -496,4 +512,5 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 	public void adjustInternalAlignment() {
 		adjustLength(true);
 	}
+
 }

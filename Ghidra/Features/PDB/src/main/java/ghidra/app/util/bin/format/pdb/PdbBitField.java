@@ -38,7 +38,7 @@ class PdbBitField extends BitFieldDataType {
 	protected PdbBitField(DataType baseDataType, int bitSize, int bitOffsetWithinBaseType)
 			throws InvalidDataTypeException {
 		super(baseDataType, bitSize,
-			getMinimalBitOffset(baseDataType, bitSize, bitOffsetWithinBaseType), 0);
+			getMinimalBitOffset(baseDataType, bitSize, bitOffsetWithinBaseType));
 		if (bitSize < 1) {
 			throw new InvalidDataTypeException("invalid PDB bit size: " + bitSize);
 		}

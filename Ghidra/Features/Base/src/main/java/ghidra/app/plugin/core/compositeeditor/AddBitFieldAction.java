@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.Component;
 import java.awt.Window;
 
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
@@ -67,10 +66,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	}
 
 	private void refreshTableAndSelection(CompEditorModel editorModel, int ordinal) {
-		editorModel.fireTableDataChanged();
-		editorModel.compositeInfoChanged();
-		JTable editorTable = provider.getTable();
-		editorTable.getSelectionModel().setSelectionInterval(ordinal, ordinal);
+		editorModel.notifyCompositeChanged();
 	}
 
 	@Override

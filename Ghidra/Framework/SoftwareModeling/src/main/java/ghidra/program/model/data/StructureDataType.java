@@ -297,7 +297,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 		validateDataType(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		if ((offset > structLength) && !isInternallyAligned()) {
@@ -369,7 +369,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 
 		validateDataType(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		DataTypeComponentImpl dtc;
@@ -437,7 +437,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 		validateDataType(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		int idx;
@@ -482,6 +482,17 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
+	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
+			String comment) throws InvalidDataTypeException {
+
+		BitFieldDataType.checkBaseDataType(baseDataType);
+		baseDataType = baseDataType.clone(dataMgr);
+
+		BitFieldDataType bitFieldDt = new BitFieldDataType(baseDataType, bitSize);
+		return add(bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
+	}
+
+	@Override
 	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
 			DataType baseDataType, int bitSize, String componentName, String comment)
 			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException {
@@ -491,7 +502,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 
 		BitFieldDataType.checkBaseDataType(baseDataType);
-		baseDataType = baseDataType.clone(getDataTypeManager());
+		baseDataType = baseDataType.clone(dataMgr);
 
 		if (!isInternallyAligned()) {
 			int offset = structLength;
@@ -521,7 +532,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 
 		BitFieldDataType.checkBaseDataType(baseDataType);
-		baseDataType = baseDataType.clone(getDataTypeManager());
+		baseDataType = baseDataType.clone(dataMgr);
 
 		int effectiveBitSize =
 			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
@@ -602,11 +613,8 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			structLength = requiredLength;
 		}
 
-		// use minimal storage
+		// adjust for minimal storage use
 		int storageBitOffset = bitOffset % 8;
-		int storageSize =
-			BitFieldDataType.getMinimumStorageSize(effectiveBitSize + storageBitOffset);
-
 		int revisedOffset;
 		if (bigEndian) {
 			revisedOffset = byteOffset + byteWidth - ((effectiveBitSize + bitOffset + 7) / 8);
@@ -615,11 +623,10 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			revisedOffset = byteOffset + (bitOffset / 8);
 		}
 
-		BitFieldDataType bitfieldDt =
-			new BitFieldDataType(baseDataType, bitSize, storageBitOffset, storageSize);
+		BitFieldDataType bitfieldDt = new BitFieldDataType(baseDataType, bitSize, storageBitOffset);
 
-		DataTypeComponentImpl dtc = new DataTypeComponentImpl(bitfieldDt, this, storageSize,
-			ordinal, revisedOffset, componentName, comment);
+		DataTypeComponentImpl dtc = new DataTypeComponentImpl(bitfieldDt, this,
+			bitfieldDt.getStorageSize(), ordinal, revisedOffset, componentName, comment);
 		bitfieldDt.addParent(this); // currently has no affect
 
 		components.add(startIndex, dtc);
@@ -845,7 +852,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (getDataTypeManager() == dtm) {
+		if (dataMgr == dtm) {
 			return this;
 		}
 		StructureDataType struct =
@@ -991,13 +998,13 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		DataType newDt = replacementDt;
 		try {
 			validateDataType(replacementDt);
-			if (replacementDt.getDataTypeManager() != getDataTypeManager()) {
+			if (replacementDt.getDataTypeManager() != dataMgr) {
 				replacementDt = replacementDt.clone(dataMgr);
 			}
 			checkAncestry(replacementDt);
 		}
 		catch (Exception e) {
-			// TODO: should we use Undefined instead to avoid cases where
+			// TODO: should we use Undefined1 instead to avoid cases where
 			// DEFAULT datatype can not be used (flex array, bitfield, aligned structure)
 			// TODO: failing silently is rather hidden
 			replacementDt = DataType.DEFAULT;
@@ -1130,7 +1137,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			return getComponent(index);
 		}
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		length = getPreferredComponentLength(dataType, length);
@@ -1173,7 +1180,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			return getComponent(ordinal);
 		}
 
-		dataType = dataType.clone(getDataTypeManager());
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
 		length = getPreferredComponentLength(dataType, length);

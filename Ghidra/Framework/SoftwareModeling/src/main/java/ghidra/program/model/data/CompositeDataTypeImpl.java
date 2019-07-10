@@ -141,17 +141,6 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		}
 	}
 
-	@Override
-	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
-			String comment) throws InvalidDataTypeException {
-
-		BitFieldDataType.checkBaseDataType(baseDataType);
-		baseDataType = baseDataType.clone(getDataTypeManager());
-
-		BitFieldDataType bitFieldDt = new BitFieldDataType(baseDataType, bitSize);
-		return add(bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
-	}
-
 	/**
 	 * Handle replacement of datatype which may impact bitfield datatype.
 	 * @param bitfieldComponent bitfield component
@@ -180,9 +169,8 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		}
 
 		try {
-			BitFieldDataType newBitfieldDt =
-				new BitFieldDataType(newDt, bitfieldDt.getDeclaredBitSize(),
-					bitfieldDt.getBitOffset(), bitfieldDt.getStorageSize());
+			BitFieldDataType newBitfieldDt = new BitFieldDataType(newDt,
+				bitfieldDt.getDeclaredBitSize(), bitfieldDt.getBitOffset());
 			bitfieldComponent.setDataType(newBitfieldDt);
 			oldDt.removeParent(this);
 			newDt.addParent(this);

@@ -104,13 +104,6 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}
 
-	@Override
-	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
-			String comment) throws InvalidDataTypeException {
-		BitFieldDataType bitFieldDt = new BitFieldDBDataType(baseDataType, bitSize, 0, 0, dataMgr);
-		return add(bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
-	}
-
 	/**
 	 * Handle replacement of datatype which may impact bitfield datatype.
 	 * @param bitfieldComponent bitfield component
@@ -140,9 +133,8 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 
 		try {
-			BitFieldDBDataType newBitfieldDt =
-				new BitFieldDBDataType(newDt, bitfieldDt.getDeclaredBitSize(),
-					bitfieldDt.getBitOffset(), bitfieldDt.getStorageSize(), dataMgr);
+			BitFieldDBDataType newBitfieldDt = new BitFieldDBDataType(newDt,
+				bitfieldDt.getDeclaredBitSize(), bitfieldDt.getBitOffset());
 			bitfieldComponent.setDataType(newBitfieldDt);
 			oldDt.removeParent(this);
 			newDt.addParent(this);

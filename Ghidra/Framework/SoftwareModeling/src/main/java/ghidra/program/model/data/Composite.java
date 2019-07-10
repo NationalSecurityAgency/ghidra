@@ -202,44 +202,6 @@ public interface Composite extends DataType {
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length);
 
 	/**
-	 * Inserts a new bitfield at the specified ordinal position in this composite. 
-	 * Within aligned composites and unions the specified byteWidth and bitOffset will be 
-	 * ignored.
-	 * The component length will be computed based upon the specified parameters and will 
-	 * be reduced from byteWidth to its minimal size for the new component.
-	 * <p>
-	 * For unaligned structures, a component shift will only occur if the bitfield placement 
-	 * conflicts with another component.  If no conflict occurs, the bitfield will be placed 
-	 * at the specified location consuming any DEFAULT components as needed.  When a conflict 
-	 * does occur a shift will be performed at the ordinal position based upon the specified 
-	 * byteWidth.  When located onto existing bitfields they will be packed together 
-	 * provided they do not conflict, otherwise the conflict rule above applies.
-	 * <p>
-	 * Supported packing for little-endian fills lsb first, whereas big-endian fills msb first.
-	 * Insertion behavior may not work as expected if packing rules differ from this.
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
-	 * @param byteWidth the storage unit width which contains the bitfield.  Must be large
-	 * enough to contain the specified bitSize and corresponding bitOffset.  The actual 
-	 * component size used will be recomputed during insertion.
-	 * @param bitOffset corresponds to the bitfield left-shift amount with the storage 
-	 * unit when viewed as big-endian.  The final offset may be reduced based upon
-	 * the minimal storage size determined during insertion.  
-	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
-	 * @param bitSize the bitfield size in bits
-	 * @param componentName the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
-	 * @return the componentDataType created whose associated data type will
-	 * be BitFieldDataType.
-	 * @throws InvalidDataTypeException if the specified data type is
-	 * not a valid base type for bitfields.
-	 * @throws ArrayIndexOutOfBoundsException if ordinal is less than 0 or greater than the 
-	 * current number of components.
-	 */
-	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
-			DataType baseDataType, int bitSize, String componentName, String comment)
-			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException;
-
-	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
 	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
 	 * automatically to provide the proper alignment.

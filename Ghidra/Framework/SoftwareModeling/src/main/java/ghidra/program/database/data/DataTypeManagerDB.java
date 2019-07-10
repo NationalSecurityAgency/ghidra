@@ -790,7 +790,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			storageSize = baseLength;
 		}
 		try {
-			return new BitFieldDBDataType(resolvedBaseDt, bitSize, bitOffset, storageSize, this);
+			return new BitFieldDBDataType(resolvedBaseDt, bitSize, bitOffset);
 		}
 		catch (InvalidDataTypeException e) {
 			throw new AssertException("unexpected", e);

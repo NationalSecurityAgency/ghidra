@@ -202,7 +202,7 @@ public class AlignedStructurePacker {
 						zeroBitFieldDt.getStorageSize() != 1) {
 						try {
 							BitFieldDataType packedBitFieldDt = new BitFieldDataType(
-								zeroBitFieldDt.getBaseDataType(), 0, zeroBitOffset, 1);
+								zeroBitFieldDt.getBaseDataType(), 0, zeroBitOffset);
 							dataTypeComponent.setDataType(packedBitFieldDt);
 						}
 						catch (InvalidDataTypeException e) {
@@ -451,12 +451,11 @@ public class AlignedStructurePacker {
 				bitOffset = bitsConsumed;
 			}
 
-			if (bitOffset != currentBitFieldDt.getBitOffset() ||
-				byteSize != currentBitFieldDt.getStorageSize()) {
+			if (bitOffset != currentBitFieldDt.getBitOffset()) {
 				try {
 					BitFieldDataType packedBitFieldDt =
 						new BitFieldDataType(currentBitFieldDt.getBaseDataType(),
-							currentBitFieldDt.getDeclaredBitSize(), bitOffset, byteSize);
+							currentBitFieldDt.getDeclaredBitSize(), bitOffset);
 					dataTypeComponent.setDataType(packedBitFieldDt);
 				}
 				catch (InvalidDataTypeException e) {

@@ -147,7 +147,7 @@ public class UnionDataTypeTest extends AbstractGTest {
 			union.delete(0);
 		}
 		// NOTE: bitOffset ignored for union
-		union.insertBitField(0, 4, 12, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
+		union.insertBitField(0, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
 		union.insert(0, ShortDataType.dataType);
 
 		//@formatter:off
@@ -168,7 +168,7 @@ public class UnionDataTypeTest extends AbstractGTest {
 		for (int i = 0; i < cnt; i++) {
 			union.delete(0);
 		}
-		union.insertBitField(0, 4, 12, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
+		union.insertBitField(0, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
 		union.insert(0, ShortDataType.dataType);
 		union.setInternallyAligned(true);
 
@@ -186,8 +186,8 @@ public class UnionDataTypeTest extends AbstractGTest {
 	@Test
 	public void testInsertBitFieldLittleEndian() throws Exception {
 
-		union.insertBitField(2, 4, 0, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
-		union.insertBitField(3, 1, 0, ByteDataType.dataType, 4, "bf2", "bf2Comment");
+		union.insertBitField(2, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
 
 	//@formatter:off
 	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
@@ -209,8 +209,8 @@ public class UnionDataTypeTest extends AbstractGTest {
 
 		transitionToBigEndian();
 
-		union.insertBitField(2, 4, 0, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
-		union.insertBitField(3, 1, 0, ByteDataType.dataType, 4, "bf2", "bf2Comment");
+		union.insertBitField(2, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
 
 	//@formatter:off
 	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 

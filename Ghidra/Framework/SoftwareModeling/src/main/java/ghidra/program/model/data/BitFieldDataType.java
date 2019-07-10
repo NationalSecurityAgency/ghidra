@@ -44,24 +44,23 @@ public class BitFieldDataType extends AbstractDataType {
 	// The bitOffset is established during packing and reflects the right-shift amount within the
 	// normalized big-endian view of the allocated byte storage as defined by the corresponding 
 	// composite DataTypeComponent.
-	private final int bitOffset; // indicates right-shift within big-endian view of component storage 
-	private final int storageSize; // component storage size to which bitOffset applies
+	private final int bitOffset; // indicates right-shift within big-endian view of component storage (range: 0..7) 
+	private final int storageSize; // minimal component storage size to which bitOffset applies
 
 	protected Settings defaultSettings;
 
 	/**
 	 * Construct a bit-field type based upon a specified base type.  The baseDataType will
 	 * take precedence if specified.  Either baseType or baseDatatype must be specified.
-	 * @param baseDataType base data type (integer/enum type or typedef to same)
-	 * @param bitSize size of bit-field expressed as number of bits
+	 * @param baseDataType base data type (integer/enum type or typedef to same).  This
+	 * bitfield will adopt the same datatype manager as this base type.
+	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective 
+	 * bit size may be reduced based upon the specified base datatype size.
 	 * @param bitOffset right shift factor within storage unit when viewed as a big-endian dd
 	 * scalar value.  Based upon minimal storage bitOffset should be in the range 0 to 7.
-	 * @param storageSize minimal storage allocation to which bitOffset is applied or 0 to use
-	 * minimum storage size.
 	 * @throws InvalidDataTypeException 
 	 */
-// FIXME: Remove storage parameter (compute based upon bitSize and bitOffset)
-	protected BitFieldDataType(DataType baseDataType, int bitSize, int bitOffset, int storageSize)
+	protected BitFieldDataType(DataType baseDataType, int bitSize, int bitOffset)
 			throws InvalidDataTypeException {
 		super(CategoryPath.ROOT, baseDataType.getName() + ":" + bitSize,
 			baseDataType.getDataTypeManager());
@@ -76,14 +75,7 @@ public class BitFieldDataType extends AbstractDataType {
 		this.bitSize = bitSize;
 		this.bitOffset = bitOffset;
 		effectiveBitSize = getEffectiveBitSize(bitSize, this.baseDataType.getLength());
-		if (storageSize == 0) {
-			storageSize = getMinimumStorageSize(effectiveBitSize, bitOffset);
-		}
-		this.storageSize = storageSize;
-		checkStorage();
-		if (bitOffset < 0 || bitOffset > ((8 * storageSize) - effectiveBitSize)) {
-			throw new InvalidDataTypeException("invalid bit offset: " + bitOffset);
-		}
+		storageSize = getMinimumStorageSize(effectiveBitSize, bitOffset);
 		this.defaultSettings = this.baseDataType.getDefaultSettings();
 	}
 
@@ -95,14 +87,7 @@ public class BitFieldDataType extends AbstractDataType {
 	 * @throws InvalidDataTypeException if specified baseDataType is not permitted
 	 */
 	protected BitFieldDataType(DataType baseDataType, int bitSize) throws InvalidDataTypeException {
-		this(baseDataType, bitSize, 0, 0);
-	}
-
-	private void checkStorage() throws IllegalArgumentException {
-		int minimumStorageSize = getMinimumStorageSize(effectiveBitSize);
-		if (storageSize != minimumStorageSize && storageSize != ++minimumStorageSize) {
-			throw new IllegalArgumentException("minimal storage size required");
-		}
+		this(baseDataType, bitSize, 0);
 	}
 
 	/**
@@ -197,6 +182,7 @@ public class BitFieldDataType extends AbstractDataType {
 	/**
 	 * Get the packing storage size in bytes associated with this bit-field which may be
 	 * larger than the base type associated with the fields original definition.
+	 * Returned value is the same as {@link #getLength()}.
 	 * @return packing storage size in bytes
 	 */
 	public int getStorageSize() {
@@ -320,13 +306,20 @@ public class BitFieldDataType extends AbstractDataType {
 		return clone(dtm);
 	}
 
+	/**
+	 * Clone this bitfield to a new datatype manager.  This may change the effective bit
+	 * size and storage size of the resulting datatype based upon the data organization
+	 * of the specified dtm.
+	 * @param dtm target datatype manager
+	 * @return new instance or same instance of dtm is unchanged.
+	 */
 	@Override
 	public BitFieldDataType clone(DataTypeManager dtm) {
 		if (dtm == dataMgr) {
 			return this;
 		}
 		try {
-			return new BitFieldDataType(baseDataType.clone(dtm), bitSize, bitOffset, storageSize);
+			return new BitFieldDataType(baseDataType.clone(dtm), bitSize, bitOffset);
 		}
 		catch (InvalidDataTypeException e) {
 			throw new AssertException("unexpected", e);

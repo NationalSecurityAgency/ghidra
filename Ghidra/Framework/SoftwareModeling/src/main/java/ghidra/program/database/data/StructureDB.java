@@ -277,6 +277,17 @@ class StructureDB extends CompositeDB implements Structure {
 	}
 
 	@Override
+	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
+			String comment) throws InvalidDataTypeException {
+
+		BitFieldDataType.checkBaseDataType(baseDataType);
+		baseDataType = baseDataType.clone(getDataTypeManager());
+
+		BitFieldDataType bitFieldDt = new BitFieldDBDataType(baseDataType, bitSize, 0);
+		return add(bitFieldDt, componentName, comment);
+	}
+
+	@Override
 	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
 			DataType baseDataType, int bitSize, String componentName, String comment)
 			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException {
@@ -298,8 +309,7 @@ class StructureDB extends CompositeDB implements Structure {
 			}
 
 			// handle aligned bitfield insertion
-			BitFieldDataType bitFieldDt =
-				new BitFieldDBDataType(baseDataType, bitSize, 0, 0, dataMgr);
+			BitFieldDataType bitFieldDt = new BitFieldDBDataType(baseDataType, bitSize, 0);
 			return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
 		}
 		finally {
@@ -315,7 +325,7 @@ class StructureDB extends CompositeDB implements Structure {
 		try {
 			checkDeleted();
 			BitFieldDataType.checkBaseDataType(baseDataType);
-			baseDataType = baseDataType.clone(getDataTypeManager());
+			baseDataType = baseDataType.clone(dataMgr);
 
 			if (byteOffset < 0 || bitSize < 0) {
 				throw new IllegalArgumentException(
@@ -405,11 +415,8 @@ class StructureDB extends CompositeDB implements Structure {
 				structLength = requiredLength;
 			}
 
-			// use minimal storage
+			// adjust for minimal storage use
 			int storageBitOffset = bitOffset % 8;
-			int storageSize =
-				BitFieldDataType.getMinimumStorageSize(effectiveBitSize + storageBitOffset);
-
 			int revisedOffset;
 			if (bigEndian) {
 				revisedOffset = byteOffset + byteWidth - ((effectiveBitSize + bitOffset + 7) / 8);
@@ -418,11 +425,11 @@ class StructureDB extends CompositeDB implements Structure {
 				revisedOffset = byteOffset + (bitOffset / 8);
 			}
 
-			BitFieldDataType bitfieldDt = new BitFieldDBDataType(baseDataType, bitSize,
-				storageBitOffset, storageSize, getDataTypeManager());
+			BitFieldDataType bitfieldDt =
+				new BitFieldDBDataType(baseDataType, bitSize, storageBitOffset);
 
 			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(bitfieldDt), key,
-				storageSize, ordinal, revisedOffset, componentName, comment);
+				bitfieldDt.getStorageSize(), ordinal, revisedOffset, componentName, comment);
 			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			bitfieldDt.addParent(this); // has no affect
 			components.add(startIndex, dtc);
@@ -1513,13 +1520,13 @@ class StructureDB extends CompositeDB implements Structure {
 			try {
 				validateDataType(replacementDt);
 				if (!(replacementDt instanceof DataTypeDB) ||
-					(replacementDt.getDataTypeManager() != getDataTypeManager())) {
+					(replacementDt.getDataTypeManager() != dataMgr)) {
 					replacementDt = resolve(replacementDt);
 				}
 				checkAncestry(replacementDt);
 			}
 			catch (Exception e) {
-				// TODO: should we use Undefined instead to avoid cases where
+				// TODO: should we use Undefined1 instead to avoid cases where
 				// DEFAULT datatype can not be used (flex array, bitfield, aligned structure)
 				// TODO: failing silently is rather hidden
 				replacementDt = DataType.DEFAULT;

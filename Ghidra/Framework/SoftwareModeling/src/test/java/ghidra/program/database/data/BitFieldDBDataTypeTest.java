@@ -25,7 +25,7 @@ import ghidra.program.model.data.*;
 
 public class BitFieldDBDataTypeTest extends AbstractGTest {
 
-	private DataTypeManager dataMgr;
+	private DataTypeManagerDB dataMgr;
 
 	@Before
 	public void setup() throws Exception {
@@ -36,29 +36,29 @@ public class BitFieldDBDataTypeTest extends AbstractGTest {
 	@Test
 	public void testGetIdAndGetDataTypeFromId() throws Exception {
 
-		testRoundTrip(new BitFieldDBDataType(CharDataType.dataType, 1, 4, 1, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(CharDataType.dataType, 2, 6, 1, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(ShortDataType.dataType, 3, 2, 2, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(UnsignedShortDataType.dataType, 4, 4, 1, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(IntegerDataType.dataType, 5, 7, 2, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(UnsignedIntegerDataType.dataType, 14, 2, 3, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(LongDataType.dataType, 27, 2, 5, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(UnsignedLongDataType.dataType, 6, 0, 1, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(LongLongDataType.dataType, 6, 2, 2, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(UnsignedLongLongDataType.dataType, 6, 2, 1, dataMgr));
+		testRoundTrip(new BitFieldDBDataType(CharDataType.dataType, 1, 4));
+		testRoundTrip(new BitFieldDBDataType(CharDataType.dataType, 2, 6));
+		testRoundTrip(new BitFieldDBDataType(ShortDataType.dataType, 3, 2));
+		testRoundTrip(new BitFieldDBDataType(UnsignedShortDataType.dataType, 4, 4));
+		testRoundTrip(new BitFieldDBDataType(IntegerDataType.dataType, 5, 7));
+		testRoundTrip(new BitFieldDBDataType(UnsignedIntegerDataType.dataType, 14, 2));
+		testRoundTrip(new BitFieldDBDataType(LongDataType.dataType, 27, 2));
+		testRoundTrip(new BitFieldDBDataType(UnsignedLongDataType.dataType, 6, 0));
+		testRoundTrip(new BitFieldDBDataType(LongLongDataType.dataType, 6, 2));
+		testRoundTrip(new BitFieldDBDataType(UnsignedLongLongDataType.dataType, 6, 2));
 
 		// non-standard integer base types
-		testRoundTrip(new BitFieldDBDataType(ByteDataType.dataType, 6, 2, 1, dataMgr));
-		testRoundTrip(new BitFieldDBDataType(QWordDataType.dataType, 6, 2, 1, dataMgr));
+		testRoundTrip(new BitFieldDBDataType(ByteDataType.dataType, 6, 2));
+		testRoundTrip(new BitFieldDBDataType(QWordDataType.dataType, 6, 2));
 
 		// TypeDef base types
 		TypeDef foo = new TypedefDataType("foo", IntegerDataType.dataType);
-		testRoundTrip(new BitFieldDBDataType(foo, 6, 3, 2, dataMgr));
+		testRoundTrip(new BitFieldDBDataType(foo, 6, 3));
 
 		// Enum base types
 		EnumDataType fum = new EnumDataType("fum", 4);
 		fum.add("A", 1);
-		testRoundTrip(new BitFieldDBDataType(fum, 6, 2, 1, dataMgr));
+		testRoundTrip(new BitFieldDBDataType(fum, 6, 2));
 
 	}
 

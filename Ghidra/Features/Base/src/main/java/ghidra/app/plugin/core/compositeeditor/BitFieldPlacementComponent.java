@@ -20,6 +20,7 @@ import java.awt.event.*;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 
 import ghidra.program.model.data.*;
@@ -382,16 +383,17 @@ public class BitFieldPlacementComponent extends JPanel {
 			String name = (fieldName != null && fieldName.length() != 0) ? fieldName : null;
 			DataTypeComponent dtc;
 			if (composite instanceof Union) {
-				dtc = composite.insertBitField(ordinal, allocationByteSize,
-					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
-					null);
+				throw new UnsupportedOperationException(
+					"Union modification not currently supported");
+//				dtc = composite.insertBitField(ordinal, allocationByteSize,
+//					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
+//					null);
 			}
-			else {
-				Structure struct = (Structure) composite;
-				dtc = struct.insertBitFieldAt(allocationByteOffset, allocationByteSize,
-					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
-					null);
-			}
+//			else {
+			Structure struct = (Structure) composite;
+			dtc = struct.insertBitFieldAt(allocationByteOffset, allocationByteSize,
+				bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name, null);
+//			}
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
 			}
@@ -484,9 +486,22 @@ public class BitFieldPlacementComponent extends JPanel {
 		if (tip == null) {
 			return null;
 		}
+		String conflictMsg = "";
+		DataTypeComponent conflict = attrs.getConflict();
+		if (conflict != null) {
+			if (tip.length() != 0) {
+				conflictMsg = "<br>";
+			}
+			String conflictName = conflict.getFieldName();
+			String conflictTip = "'" + conflict.getDataType().getDisplayName() +
+				(conflictName != null ? (" " + conflictName) : "") + "' at offset " +
+				conflict.getOffset();
+			conflictMsg += "<div style=\"color: red;font-style: italic\">conflict with " +
+				HTMLUtilities.escapeHTML(conflictTip) + "</div>";
+		}
 		return "<HTML><div style=\"text-align:center\">" + HTMLUtilities.escapeHTML(tip) +
+			conflictMsg +
 			"<div style=\"color: gray;font-style: italic\">(Shift-wheel to zoom)</div></div></HTML>";
-
 	}
 
 	@Override
@@ -1050,8 +1065,7 @@ public class BitFieldPlacementComponent extends JPanel {
 				return null;
 			}
 			String name = dtc.getFieldName();
-			return dtc.getDataType().getDisplayName() +
-				(name != null ? (" " + dtc.getFieldName()) : "");
+			return dtc.getDataType().getDisplayName() + (name != null ? (" " + name) : "");
 		}
 
 		DataTypeComponent getDataTypeComponent(boolean ignoreActiveComponent) {

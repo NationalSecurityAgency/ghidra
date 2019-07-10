@@ -34,7 +34,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	// BB - Encoded base type (8-bits, consists of the following bit fields: xttsbbbb)
 	//      x - 1-bit, unused
 	//      t - 2-bit, =0: base type only, =1:TypeDef used, =2: enum used, =3: abstract-int
-	//      s - 1-bit, storage +1  
+	//      s - 1-bit, storage +1 (NOT-USED! - may be re-purposed by future schema change)
 	//      xxxx - 4-bits, unused 
 	// OO - bit offset (i.e., right-shift factor, relative to packing base type)
 	// SS - bit field size in bits
@@ -47,10 +47,21 @@ class BitFieldDBDataType extends BitFieldDataType {
 
 	private static final long ID_TO_INDEX_MASK = ~-(1L << DataTypeManagerDB.DATA_TYPE_KIND_SHIFT);
 
-	BitFieldDBDataType(DataType baseDataType, int bitSize, int bitOffset, int storageSize,
-			DataTypeManager dtm) throws InvalidDataTypeException {
-		// avoid clone of baseDataType during construction
-		super(baseDataType, bitSize, bitOffset, storageSize);
+	/**
+	 * Construct DB resident bitfield.  Minimal storage size and effective bit size will 
+	 * be computed based upon specified parameters. 
+	 * @param baseDataType base data type (integer/enum type or typedef to same).  This
+	 * bitfield will adopt the same datatype manager as this base type.
+	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective 
+	 * bit size may be reduced based upon the specified base datatype size.
+	 * @param bitOffset right shift factor within storage unit when viewed as a big-endian dd
+	 * scalar value.  Based upon minimal storage bitOffset should be in the range 0 to 7.
+	 * @throws InvalidDataTypeException
+	 */
+	BitFieldDBDataType(DataType baseDataType, int bitSize, int bitOffset)
+			throws InvalidDataTypeException {
+		// must avoid cloning of baseDataType during construction!
+		super(baseDataType, bitSize, bitOffset);
 	}
 
 	private static enum BaseDatatypeKind {
@@ -137,14 +148,14 @@ class BitFieldDBDataType extends BitFieldDataType {
 	 * @param dtm data type manager
 	 * @return bit-field data type
 	 */
-	static final BitFieldDataType getBitFieldDataType(long id, DataTypeManager dtm) {
+	static final BitFieldDataType getBitFieldDataType(long id, DataTypeManagerDB dtm) {
 
 		int bitSize = (int) (id & 0xff); // 8-bits
 		int bitOffset = (int) ((id >> BIT_OFFSET_SHIFT) & 0xff); // 8-bits
 		int baseTypeInfo = (int) ((id >> BASE_TYPE_SHIFT) & 0xff); // 8-bit encoded field
 
 		BaseDatatypeKind baseDataTypeKind = BaseDatatypeKind.getKind((baseTypeInfo >> 5) & 3);
-		boolean extraStorageUsed = (baseTypeInfo & 0x10) != 0;
+//		boolean extraStorageUsed = (baseTypeInfo & 0x10) != 0;
 
 		DataType baseDataType = null;
 		long dataTypeIndex = (id >> DATATYPE_INDEX_SHIFT) & MAX_DATATYPE_INDEX; // 32-bits
@@ -164,12 +175,12 @@ class BitFieldDBDataType extends BitFieldDataType {
 				// use integer datatype on failure
 				baseDataType = IntegerDataType.dataType.clone(dtm);
 			}
-			int effectiveBitSize = getEffectiveBitSize(bitSize, baseDataType.getLength());
-			int storageSize = getMinimumStorageSize(effectiveBitSize);
-			if (extraStorageUsed) {
-				++storageSize;
-			}
-			return new BitFieldDBDataType(baseDataType, bitSize, bitOffset, storageSize, dtm);
+//			int effectiveBitSize = getEffectiveBitSize(bitSize, baseDataType.getLength());
+//			int storageSize = getMinimumStorageSize(effectiveBitSize);
+//			if (extraStorageUsed) {
+//				++storageSize;
+//			}
+			return new BitFieldDBDataType(baseDataType, bitSize, bitOffset);
 		}
 		catch (InvalidDataTypeException e) {
 			return null;
