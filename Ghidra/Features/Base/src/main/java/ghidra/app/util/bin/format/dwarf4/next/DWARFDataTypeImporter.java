@@ -600,16 +600,11 @@ public class DWARFDataTypeImporter {
 			}
 
 			int bitSize = childDIEA.parseInt(DWARFAttribute.DW_AT_bit_size, -1);
-			int bitOffset = childDIEA.parseInt(DWARFAttribute.DW_AT_bit_offset, -1);
-			boolean isBitField = bitSize != -1 && bitOffset != -1;
+			boolean isBitField = bitSize != -1;
 
 			String memberName = childDIEA.getName();
 			if (memberName == null) {
 				memberName = "field_" + union.getNumComponents();
-			}
-
-			if (isBitField) {
-				memberName += "_bitfield";
 			}
 
 			DWARFDataType childDT = getDataType(childDIEA.getTypeRef(), null);
@@ -619,21 +614,52 @@ public class DWARFDataTypeImporter {
 				continue;
 			}
 
-			try {
-				DataTypeComponent dataTypeComponent = union.add(childDT.dataType, memberName, null);
-				// adding a member to a composite can cause a clone() of the datatype instance, so
-				// update the instance mapping to keep track of the new instance.
-				updateMapping(childDT.dataType, dataTypeComponent.getDataType());
+			int dtLen = childDT.dataType.getLength();
+			if (dtLen == 0) {
+				DWARFUtil.appendDescription(union, memberDesc("Missing member", "zero length type",
+					memberName, childDT, -1, -1, bitSize), "\n");
+				continue;
+			}
 
-				if (isBitField) {
-					dataTypeComponent.setComment(memberName + "_" + bitOffset + ":" + bitSize);
+			if (isBitField) {
+				if (!BitFieldDataType.isValidBaseDataType(childDT.dataType)) {
+					DWARFUtil.appendDescription(union,
+						memberDesc("Missing member",
+							"Bad data type for bitfield: " + childDT.dataType.getName(), memberName,
+							childDT, -1, -1, bitSize),
+						"\n");
+					continue;
+				}
+
+				// DWARF has attributes (DWARFAttribute.DW_AT_data_bit_offset, DWARFAttribute.DW_AT_bit_offset)
+				// that specify the bit_offset of the field in the union.  We don't use them.
+				try {
+					union.addBitField(childDT.dataType, bitSize, memberName, null);
+				}
+				catch (InvalidDataTypeException e) {
+					Msg.error(this,
+						"Unable to add member " + memberName + " to structure " +
+							union.getDataTypePath() + "[DWARF DIE " + diea.getHexOffset() +
+							"], skipping: " + e.getMessage());
+					DWARFUtil.appendDescription(union, memberDesc("Missing member ",
+						"Failed to add bitfield", memberName, childDT, -1, -1, bitSize), "\n");
 				}
 			}
-			catch (IllegalArgumentException exc) {
-				Msg.error(this,
-					"Bad union member " + memberName + " in " + union.getDataTypePath() +
-						"[DWARF DIE " + diea.getHexOffset() + "] of type " + childDT +
-						", skipping");
+			else {
+				// just a normal field
+				try {
+					DataTypeComponent dataTypeComponent =
+						union.add(childDT.dataType, memberName, null);
+					// adding a member to a composite can cause a clone() of the datatype instance, so
+					// update the instance mapping to keep track of the new instance.
+					updateMapping(childDT.dataType, dataTypeComponent.getDataType());
+				}
+				catch (IllegalArgumentException exc) {
+					Msg.error(this,
+						"Bad union member " + memberName + " in " + union.getDataTypePath() +
+							"[DWARF DIE " + diea.getHexOffset() + "] of type " + childDT +
+							", skipping");
+				}
 			}
 		}
 	}
