@@ -79,6 +79,7 @@ public class MappedFunctionComparisonPanel extends FunctionChoiceComparisonPanel
 		Function[] leftSortedFunctions = getSortedFunctions(leftFunctionSet);
 		leftWrappedFunctions = getWrappedFunctions(leftSortedFunctions);
 		leftIndex = (leftFunctionIndex < leftSortedFunctions.length) ? leftFunctionIndex : 0;
+		setLeftFunction(leftSortedFunctions[leftIndex]);
 	}
 
 	private void adjustRightFunctions(int rightFunctionIndex) {
