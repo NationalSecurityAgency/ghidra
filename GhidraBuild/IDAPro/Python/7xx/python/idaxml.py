@@ -1642,8 +1642,10 @@ class XmlExporter(IdaXml):
             cmt: String containing type info.
         """
         # older versions of IDAPython returned a '\n' at end of cmt
-        while cmt[-1] == '\n':
-            cmt = cmt[:-1]
+        if(len(cmt) > 0):
+            while cmt[-1] == '\n':
+                cmt = cmt[:-1]
+        
         self.write_comment_element(TYPEINFO_CMT, cmt)
         
 
@@ -3444,7 +3446,7 @@ class XmlImporter(IdaXml):
             if self.has_attribute(structure, NAMESPACE) == False:
                 return
             namespace = self.get_attribute(structure, NAMESPACE)
-            name = namspace + '__' + name
+            name = namespace + '__' + name
             name.replace('/','_')
             name.replace('.','_')
             dtyp = idc.get_struc_id(name)
@@ -3514,7 +3516,7 @@ class XmlImporter(IdaXml):
             if self.has_attribute(union, NAMESPACE) == False:
                 return
             namespace = self.get_attribute(union, NAMESPACE)
-            name = namspace + '__' + name
+            name = namespace + '__' + name
             name.replace('/','_')
             name.replace('.','_')
             dtyp = idc.get_struc_id(name)
