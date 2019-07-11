@@ -780,8 +780,11 @@ public class DWARFDataTypeImporter {
 				childDT = new DWARFDataType(copiedType, null, childDT.offsets);
 			}
 
+			boolean hasMemberOffset =
+				childDIEA.hasAttribute(DWARFAttribute.DW_AT_data_member_location);
+
 			int memberOffset = 0;
-			if (childDIEA.hasAttribute(DWARFAttribute.DW_AT_data_member_location)) {
+			if (hasMemberOffset) {
 				try {
 					memberOffset = childDIEA.parseDataMemberOffset(
 						DWARFAttribute.DW_AT_data_member_location, 0);
@@ -825,47 +828,51 @@ public class DWARFDataTypeImporter {
 					DWARFUtil.appendDescription(structure,
 						memberDesc("Missing member",
 							"Bad data type for bitfield: " + childDT.dataType.getName(), memberName,
-							childDT, -1, -1, bitSize),
+							childDT, -1, bitSize, -1),
 						"\n");
 					continue;
 				}
 
-				int dtBitLen = dtLen * 8;
+				int containerLen;
+				if (hasMemberOffset) {
+					int byteSize = childDIEA.parseInt(DWARFAttribute.DW_AT_byte_size, -1);
+					containerLen = byteSize <= 0 ? dtLen : byteSize;
+				}
+				else {
+					containerLen = structure.getLength();
+				}
+				int containerBitLen = containerLen * 8;
+
 				int bitOffset = childDIEA.parseInt(DWARFAttribute.DW_AT_data_bit_offset, -1);
+				int ghidraBitOffset;
 				if (bitOffset == -1) {
 					// try to fall back to previous dwarf version's bit_offset attribute that has slightly different info
 					bitOffset = childDIEA.parseInt(DWARFAttribute.DW_AT_bit_offset, -1);
-					if (bitOffset != -1) {
-						// convert DWARF bit offset value to Ghidra bit offset
-						bitOffset = dtBitLen - bitOffset - bitSize;
-					}
-					if (bitOffset < 0 || bitOffset > dtBitLen) {
-						DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-							"bad bitOffset", memberName, childDT, memberOffset, bitOffset, bitSize),
-							"\n");
-						continue;
-					}
+
+					// convert DWARF bit offset value to Ghidra bit offset
+					ghidraBitOffset = containerBitLen - bitOffset - bitSize;
 				}
 				else {
 					// convert DWARF bit offset to Ghidra bit offset
-					bitOffset = bitOffset - (memberOffset * 8);
+					ghidraBitOffset = bitOffset - (memberOffset * 8);
 					boolean isBE = prog.getGhidraProgram().getMemory().isBigEndian();
 					if (isBE) {
-						bitOffset = dtBitLen - bitOffset - bitSize;
+						ghidraBitOffset = containerBitLen - ghidraBitOffset - bitSize;
 					}
-					if (bitOffset < 0 || bitOffset > dtBitLen) {
-						DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-							"bad bitOffset", memberName, childDT, memberOffset, bitOffset, bitSize),
-							"\n");
-						continue;
-					}
+				}
+
+				if (bitOffset < 0 || ghidraBitOffset < 0 || ghidraBitOffset >= containerBitLen) {
+					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
+						"bad bitOffset", memberName, childDT, memberOffset, bitSize, bitOffset),
+						"\n");
+					continue;
 				}
 
 				try {
 					// TODO: need safety checks here to make sure that using insertAt() doesn't
 					// modify the struct
-					structure.insertBitFieldAt(memberOffset, dtLen, bitOffset, childDT.dataType,
-						bitSize, memberName, null);
+					structure.insertBitFieldAt(memberOffset, containerLen, ghidraBitOffset,
+						childDT.dataType, bitSize, memberName, null);
 				}
 				catch (InvalidDataTypeException e) {
 					Msg.error(this,
@@ -874,7 +881,7 @@ public class DWARFDataTypeImporter {
 							"], skipping: " + e.getMessage());
 					DWARFUtil.appendDescription(structure,
 						memberDesc("Missing member ", "Failed to add bitfield", memberName, childDT,
-							memberOffset, bitOffset, bitSize),
+							memberOffset, bitSize, bitOffset),
 						"\n");
 				}
 			}
