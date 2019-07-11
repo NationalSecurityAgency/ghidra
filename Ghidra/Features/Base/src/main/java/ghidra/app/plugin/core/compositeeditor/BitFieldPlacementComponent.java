@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 import javax.swing.*;
@@ -34,11 +33,9 @@ import resources.icons.ColorIcon;
 public class BitFieldPlacementComponent extends JPanel {
 
 	private static final int CELL_HEIGHT = 25;
-//	private static final int BIT_WIDTHx = 10;
 	private static final int ZERO_BIT_WIDTH = 3;
 	private static final int BIT_SEPARATOR_THICKNESS = 1;
 	private static final int BYTE_SEPARATOR_THICKNESS = 2;
-//	private static final int BYTE_WIDTHx = 8 * (BIT_WIDTH + BIT_SEPARATOR_THICKNESS);
 	private static final int SCROLLBAR_THICKNESS = 15;
 	private static final int MY_HEIGHT = (2 * CELL_HEIGHT) + (3 * BYTE_SEPARATOR_THICKNESS);
 
@@ -65,7 +62,7 @@ public class BitFieldPlacementComponent extends JPanel {
 	private BitFieldAllocation bitFieldAllocation;
 
 	private EditMode editMode = EditMode.NONE;
-	private int editOrdinal = -1; // FIXME: improve insert use
+	private int editOrdinal = -1;
 	private DataTypeComponent editComponent;
 
 	public static class BitFieldLegend extends JPanel {
@@ -410,32 +407,52 @@ public class BitFieldPlacementComponent extends JPanel {
 		}
 	}
 
+	private static Comparator<Object> bitAttributesXComparator = (o1, o2) -> {
+		BitAttributes attrs = (BitAttributes) o1;
+		int x = (Integer) o2;
+		if (attrs.rectangle == null) {
+			return -1;
+		}
+		if (x >= attrs.rectangle.x && x < (attrs.rectangle.x + attrs.rectangle.width)) {
+			return 0;
+		}
+		return attrs.rectangle.x - x;
+	};
+
+	/**
+	 * Get the bit attributes object which corresponds to the specified point p within the
+	 * bounds of this component.
+	 * @param p point within the bounds of this component
+	 * @return bit attributes object or null
+	 */
 	BitAttributes getBitAttributes(Point p) {
 		if (bitFieldAllocation == null) {
 			return null;
 		}
-		// TODO: binary search could be used for very large structures
-		for (BitAttributes attrs : bitFieldAllocation.bitAttributes) {
-			if (attrs.rectangle != null && attrs.rectangle.contains(p)) {
-				return attrs;
-			}
+		int index = Arrays.binarySearch(bitFieldAllocation.bitAttributes, (Integer) p.x,
+			bitAttributesXComparator);
+		if (index >= 0) {
+			return bitFieldAllocation.bitAttributes[index];
 		}
 		return null;
 	}
 
+	/**
+	 * Get the bit attributes index which corresponds to the specified horizontal x position 
+	 * within the bounds of this component.
+	 * @param x horizontal x position within the bounds of this component
+	 * @return bit attributes index or -1 if not found
+	 */
 	int getBitIndex(int x) {
 		if (bitFieldAllocation == null) {
 			return -1;
 		}
-		// TODO: binary search could be used for very large structures
-		for (int i = 0; i < bitFieldAllocation.bitAttributes.length; i++) {
-			BitAttributes attrs = bitFieldAllocation.bitAttributes[i];
-			if (attrs.rectangle != null && x >= attrs.rectangle.x &&
-				x < (attrs.rectangle.x + attrs.rectangle.width)) {
-				return i;
-			}
+		int index = Arrays.binarySearch(bitFieldAllocation.bitAttributes, (Integer) x,
+			bitAttributesXComparator);
+		if (index >= 0) {
+			return index;
 		}
-		return 0;
+		return -1;
 	}
 
 	/**
@@ -899,6 +916,11 @@ public class BitFieldPlacementComponent extends JPanel {
 		NOT_END, END, TRUNCATED_END;
 	}
 
+	/**
+	 * <code>BitAttributes</code> provide bit attributes which identify the 
+	 * associated component, a conflict component and left/right line
+	 * types to be displayed.
+	 */
 	class BitAttributes {
 
 		private final DataTypeComponent dtc;
@@ -934,7 +956,7 @@ public class BitFieldPlacementComponent extends JPanel {
 		}
 
 		/**
-		 * 
+		 * Construct bit attributes object
 		 * @param dtc data type component residing within structure or null for edit component
 		 * @param leftEndType left line type
 		 * @param rightEndType right line type
@@ -976,6 +998,13 @@ public class BitFieldPlacementComponent extends JPanel {
 			return c != null && c.dtc.getDataType() != DataType.DEFAULT ? c.dtc : null;
 		}
 
+		/**
+		 * Layout the position of this displayed bit (i.e., Rectangle information)
+		 * @param x
+		 * @param y
+		 * @param width
+		 * @param height
+		 */
 		void layout(int x, int y, int width, int height) {
 			rectangle = new Rectangle(x, y, width, height);
 			if (conflict != null) {
@@ -1068,7 +1097,16 @@ public class BitFieldPlacementComponent extends JPanel {
 			return dtc.getDataType().getDisplayName() + (name != null ? (" " + name) : "");
 		}
 
+		/**
+		 * Get the component of interest at the bit position which corresponds to
+		 * this bit attributes object.
+		 * @param ignoreActiveComponent if true the edit component will not be returned.
+		 * @return component or null
+		 */
 		DataTypeComponent getDataTypeComponent(boolean ignoreActiveComponent) {
+			// Note that this method implementation assumes the edit component
+			// will never be a conflict but may contain a conflict component
+			// since it is always constructed last.
 			if (dtc != null && (dtc.getOrdinal() != editOrdinal || !ignoreActiveComponent)) {
 				return dtc;
 			}
