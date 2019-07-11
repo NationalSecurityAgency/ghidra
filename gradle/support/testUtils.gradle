@@ -242,7 +242,7 @@ def boolean shouldSkipTestTaskCreation(Project subproject) {
 		return true
 	}
 	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
-	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains(repoToTest)) {
+	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
 	    return true
 	}
 
@@ -274,7 +274,7 @@ def boolean shouldSkipIntegrationTestTaskCreation(Project subproject) {
 		return true
 	}
 	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
-	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains(repoToTest)) {
+	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
 	    return true
 	}
 
