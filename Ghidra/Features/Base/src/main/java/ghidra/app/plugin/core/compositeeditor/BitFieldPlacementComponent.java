@@ -50,9 +50,9 @@ public class BitFieldPlacementComponent extends JPanel {
 	private static final Color UNDEFINED_BIT_COLOR = new Color(0xf8f8f8);
 	private static final Color ACTIVE_BITFIELD_BITS_COLOR = Color.green;
 	private static final Color CONFLICT_BITS_COLOR = Color.yellow;
-	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xcfcfff);
-	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xb8b8ff);
-	private static final Color INTERIOR_LINE_COLOR = new Color(0xcfcfcf);
+	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xbfbfff);
+	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xa4a4ff);
+	private static final Color INTERIOR_LINE_COLOR = new Color(0xd4d4d4);
 
 	private int bitWidth = 10;
 	private int byteWidth = getByteWidth(bitWidth);
