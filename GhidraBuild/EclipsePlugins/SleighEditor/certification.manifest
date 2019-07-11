@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-##MODULE IP: BSD
-##MODULE IP: Eclipse Public License 1.0
 ghidra.xtext.sleigh.feature/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.feature/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.feature/category.xml||GHIDRA||||END|

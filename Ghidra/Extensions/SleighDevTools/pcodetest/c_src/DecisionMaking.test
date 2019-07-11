@@ -1,0 +1,82 @@
+#include "pcode_test.h"
+
+TEST pcode_DM1_IfElse_Main()
+{
+	extern i4 pcode_DM1_IfElse(i4 arg1);
+	ASSERTI4(pcode_DM1_IfElse(0), 0);
+	ASSERTI4(pcode_DM1_IfElse(0x42), 1);
+}
+
+TEST pcode_DM2_IfElseIfElse_Main()
+{
+	extern i4 pcode_DM2_IfElseIfElse(i4 arg1);
+	ASSERTI4(pcode_DM2_IfElseIfElse(0), 0);
+	ASSERTI4(pcode_DM2_IfElseIfElse(0x42), 1);
+	ASSERTI4(pcode_DM2_IfElseIfElse(0x69), 2);
+}
+
+TEST pcode_DM3_SmallSwitch_Main()
+{
+	extern i4 pcode_DM3_SmallSwitch(i4 arg1);
+	i4 ret = pcode_DM3_SmallSwitch(0);
+	ASSERTI4(pcode_DM3_SmallSwitch(0), 0);
+	ASSERTI4(pcode_DM3_SmallSwitch(0x42), 1);
+	ASSERTI4(pcode_DM3_SmallSwitch(0x69), 2);
+}
+
+TEST pcode_DM4_MediumSwitch_Main()
+{
+	extern i4 pcode_DM4_MediumSwitch(i4 arg1);
+	ASSERTI4(pcode_DM4_MediumSwitch(0x42), 1);
+	ASSERTI4(pcode_DM4_MediumSwitch(0x69), 2);
+	ASSERTI4(pcode_DM4_MediumSwitch(0x101), 3);
+	ASSERTI4(pcode_DM4_MediumSwitch(-1), 0);
+}
+
+TEST pcode_DM5_EQ_TernaryOperator_Main()
+{
+	extern i4 pcode_DM5_EQ_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM5_EQ_TernaryOperator(0x42), 0);
+	ASSERTI4(pcode_DM5_EQ_TernaryOperator(0x69), 1);
+}
+
+TEST pcode_DM6_NE_TernaryOperator_Main()
+{
+	extern i4 pcode_DM6_NE_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM6_NE_TernaryOperator(0x42), 1);
+	ASSERTI4(pcode_DM6_NE_TernaryOperator(0x69), 0);
+}
+
+TEST pcode_DM7_LT_TernaryOperator_Main()
+{
+	extern i4 pcode_DM7_LT_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM7_LT_TernaryOperator(0x42), 1);
+	ASSERTI4(pcode_DM7_LT_TernaryOperator(0x69), 0);
+	ASSERTI4(pcode_DM7_LT_TernaryOperator(0x72), 0);
+}
+
+TEST pcode_DM8_GT_TernaryOperator_Main()
+{
+	extern i4 pcode_DM8_GT_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM8_GT_TernaryOperator(0x42), 0);
+	ASSERTI4(pcode_DM8_GT_TernaryOperator(0x69), 0);
+	ASSERTI4(pcode_DM8_GT_TernaryOperator(0x82), 1);
+}
+
+TEST pcode_DM9_LE_TernaryOperator_Main()
+{
+	extern i4 pcode_DM9_LE_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM9_LE_TernaryOperator(0x42), 1);
+	ASSERTI4(pcode_DM9_LE_TernaryOperator(0x69), 1);
+	ASSERTI4(pcode_DM9_LE_TernaryOperator(0x72), 0);
+}
+
+TEST pcode_DM10_GE_TernaryOperator_Main()
+{
+	extern i4 pcode_DM10_GE_TernaryOperator(i4 arg1);
+	ASSERTI4(pcode_DM10_GE_TernaryOperator(0x42), 0);
+	ASSERTI4(pcode_DM10_GE_TernaryOperator(0x69), 1);
+	ASSERTI4(pcode_DM10_GE_TernaryOperator(0x72), 1);
+}
+
+MAIN DecisionMaking_main() { }

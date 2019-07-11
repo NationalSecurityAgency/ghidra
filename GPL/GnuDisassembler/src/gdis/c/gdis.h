@@ -1,5 +1,5 @@
 /* ###
- * IP: GPL 2
+ * IP: Public Domain
  */
 #ifndef _GDIS_H_
 #define _GDIS_H_

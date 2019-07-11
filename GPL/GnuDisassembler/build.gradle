@@ -15,6 +15,18 @@
 // Gradle should be invoked from the directory of the extension module to build.  Please see the
 // application.gradle.version property in <GHIDRA_INSTALL_DIR>/Ghidra/application.properties
 // for the correction version of Gradle to use for the Ghidra installation you specify.
+//
+// Build Prerequisite:
+//     The appropriate binutils source distribution archive (see version and naming below) must be  
+//     obtained and placed appropriately prior to building the gdis executable.  If working with 
+//     a full source distribution of Ghidra the binutils archive should be placed within the module's  
+//     shadow directory located within ghidra.bin (ghidra.bin/GPL/GnuDisassembler/).  If building within 
+//     an unpacked distribution of Ghidra it should be placed directly within the module
+//     directory once the extension has been installed/unpacked by Ghidra.  The binutils referenced 
+//     by the script below may be downloaded from the following URL:
+//
+//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.29.1.tar.bz2
+//
 
 ext.binutils = "binutils-2.29.1"
 ext.binutilsDistro = "${binutils}.tar.bz2"

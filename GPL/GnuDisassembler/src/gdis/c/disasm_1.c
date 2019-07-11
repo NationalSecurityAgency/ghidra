@@ -1,5 +1,5 @@
 /* ###
- * IP: GPL 2
+ * IP: Public Domain
  */
 #include "config.h"
 #include <stdio.h>
