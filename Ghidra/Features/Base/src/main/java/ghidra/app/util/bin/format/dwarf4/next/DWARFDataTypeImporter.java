@@ -617,7 +617,7 @@ public class DWARFDataTypeImporter {
 			int dtLen = childDT.dataType.getLength();
 			if (dtLen == 0) {
 				DWARFUtil.appendDescription(union, memberDesc("Missing member", "zero length type",
-					memberName, childDT, -1, -1, bitSize), "\n");
+					memberName, childDT, -1, bitSize, -1), "\n");
 				continue;
 			}
 
@@ -626,7 +626,7 @@ public class DWARFDataTypeImporter {
 					DWARFUtil.appendDescription(union,
 						memberDesc("Missing member",
 							"Bad data type for bitfield: " + childDT.dataType.getName(), memberName,
-							childDT, -1, -1, bitSize),
+							childDT, -1, bitSize, -1),
 						"\n");
 					continue;
 				}
@@ -642,7 +642,7 @@ public class DWARFDataTypeImporter {
 							union.getDataTypePath() + "[DWARF DIE " + diea.getHexOffset() +
 							"], skipping: " + e.getMessage());
 					DWARFUtil.appendDescription(union, memberDesc("Missing member ",
-						"Failed to add bitfield", memberName, childDT, -1, -1, bitSize), "\n");
+						"Failed to add bitfield", memberName, childDT, -1, bitSize, -1), "\n");
 				}
 			}
 			else {
@@ -791,7 +791,7 @@ public class DWARFDataTypeImporter {
 				}
 				catch (DWARFExpressionException e) {
 					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-						"failed to parse location", memberName, childDT, -1, -1, bitSize), "\n");
+						"failed to parse location", memberName, childDT, -1, bitSize, -1), "\n");
 					continue;
 				}
 			}
@@ -799,7 +799,7 @@ public class DWARFDataTypeImporter {
 			int dtLen = childDT.dataType.getLength();
 			if (dtLen == 0) {
 				DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-					"zero length type", memberName, childDT, memberOffset, -1, bitSize), "\n");
+					"zero length type", memberName, childDT, memberOffset, bitSize, -1), "\n");
 				continue;
 			}
 
