@@ -74,7 +74,7 @@ TEST pcode_BM7_GetBitUnsignedShort_Main()
 	ASSERTU2(pcode_BM7_GetBitUnsignedShort(0xFF, 1), 2); 
 	ASSERTU2(pcode_BM7_GetBitUnsignedShort(0, 1), 0); 
 	ASSERTU2(pcode_BM7_GetBitUnsignedShort(U2_MAX, 8), 256); 
-	ASSERTU2(pcode_BM7_GetBitUnsignedShort(U2_MAX, 16), 0); 
+	ASSERTU2(pcode_BM7_GetBitUnsignedShort(U2_MAX, 15), 32768);
 }
 
 TEST pcode_BM8_GetBitUnsignedChar_Main()
@@ -309,7 +309,7 @@ TEST pcode_BM28_ToggleBitChar_Main()
 	ASSERTI1(pcode_BM28_ToggleBitChar(0xFF, 1), -3); 
 	ASSERTI1(pcode_BM28_ToggleBitChar(0, 1), 2); 
 	ASSERTI1(pcode_BM28_ToggleBitChar(I1_MAX, 4), 111); 
-	ASSERTI1(pcode_BM28_ToggleBitChar(I1_MAX, 8), 127); 
+	ASSERTI1(pcode_BM28_ToggleBitChar(I1_MAX, 7), -1); 
 }
 
 #ifdef HAS_LONGLONG

@@ -585,6 +585,26 @@ PCodeTest({
     'has_longlong': 0,
 })
 
+cunit({
+    'name': 'Z80',
+    'toolchain': 'SDCC/z80',
+    'toolchain_type': 'sdcc',
+    'compile_exe': 'bin/sdcc',
+    'ccflags': '-mz80 -V --verbose --std-sdcc11 -DINT4_IS_LONG',
+    'language_id': 'z80:LE:16:default',
+    'variants': {'OX':''},
+    'has_float': 0,
+    'has_double': 0,
+    'has_longlong': 0,
+    'small_build': 1,
+    # Currently the 'omitted' option is only supported by the SDCC toolchain!
+    # Causes a bit of funk with tpp.py still including references to these
+    # tests in cunit_main.c but the compiler accepts it with a warning. 
+    'omitted': {'PointerManipulation', 'StructUnionManipulation'},
+    # These tests are omitted because the SDCC compiler doesn't properly handle
+    # structs in functions and requires a more strict format than ANSI C requires.
+})
+
 PCodeTest({
     'name': 'CR16C',
     'build_all': 1,
