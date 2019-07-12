@@ -72,6 +72,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private Color currentSearchHighlightColor;
 	private Color currentHighlightColor;
 	private SearchLocation currentSearchLocation;
+	private HighlightTokenObservableList<HighlightToken> highlightedTokens = new HighlightTokenObservableList<HighlightToken>(this);
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
 	private final DecompilerClipboardProvider clipboard;
@@ -116,6 +117,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		setDecompileData(new EmptyDecompileData("No Function"));
 	}
 
+	public HighlightTokenObservableList<HighlightToken> getHighlightedTokens() {
+		return highlightedTokens;
+	}
+
 	public List<ClangLine> getLines() {
 		return layoutMgr.getLines();
 	}
@@ -126,6 +131,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	public FieldPanel getFieldPanel() {
 		return fieldPanel;
+	}
+
+	/**
+	 * This function replace the highlighting tokens with the new list
+	 * @param newTokens the new data
+	 */
+	public void setHighlightedTokens(HighlightTokenObservableList<HighlightToken> newTokens) {
+		highlightedTokens = newTokens;
 	}
 
 	@Override
@@ -635,6 +648,43 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
+	/**
+	 * This function is used to add highlighting to a token.
+	 * The function behaves differently from highlightVariable in that
+	 * it does not erase existing highlights
+	 *
+	 * @param token the token to search for
+	 * @param highlightColor the color to apply
+	 */
+	public void addTokenHighlight(ClangToken token, Color highlightColor) {
+		if (highlightController != null) {
+			List<ClangToken> tokenList = new ArrayList<>();
+			findTokensByName(tokenList, layoutMgr.getRoot(), token.getText());
+			highlightController.addTokensToHighlights(tokenList, highlightColor);
+			repaint();
+		}
+	}
+
+	/**
+	 * Add highlighting to all the tokens in highlightedTokens,
+	 * the highlighting accounting structure
+	 */
+	public void repaintHighlightTokens(boolean clearHighlights) {
+		if (clearHighlights) {
+			clearHighlights();
+		}
+		highlightedTokens.forEach(ht -> {
+			ClangToken token = ht.getToken();
+			Function tokenFunc = ht.getFunction();
+			Function decompiledFunc = decompileData.getFunction();
+			if ((token != null) && (tokenFunc != null) && (decompiledFunc != null) &&
+				(tokenFunc.getName().equals(decompileData.getFunction().getName()))) {
+				addTokenHighlight(token, ht.getColor());
+			}
+		});
+		tokenHighlightsChanged();
+	}
+
 	Program getProgram() {
 		return decompileData.getProgram();
 	}
@@ -656,6 +706,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		if (highlightController != null) {
 			highlightController.fieldLocationChanged(location, field, trigger);
+
+			// We need this because fieldLocationChanged clears the highlighting.
+			repaintHighlightTokens(false);
 		}
 
 		if (!(field instanceof ClangTextField)) {
@@ -898,6 +951,32 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	@Override
 	public void tokenHighlightsChanged() {
 		repaint();
+	}
+
+	/**
+	 * This is function is used to alert the panel that a token was renamed.
+	 * If the token that is being renamed had a special highlight, we must re-apply the highlight
+	 * to the new token.
+	 * 
+	 * @param token the token being renamed
+	 * @param name the new name of the token
+	 */
+	public void tokenRenamed(ClangToken token, String name) {
+		HighlightToken htoken = new HighlightToken(token, null, null);
+		int idx = highlightedTokens.indexOf(htoken);
+		if (idx >= 0) {
+			HighlightToken hltok = highlightedTokens.get(idx);
+			highlightedTokens.remove(hltok);
+			ClangToken ct = new ClangToken((ClangNode)token, name);
+			HighlightToken ht = new HighlightToken(ct, hltok.getColor(), null);
+			highlightedTokens.add(ht);
+			if (highlightController != null) {
+				List<ClangToken> tokenList = new ArrayList<>();
+				findTokensByName(tokenList, layoutMgr.getRoot(), name);
+				highlightController.addTokensToHighlights(tokenList, getDefaultHighlightColor());
+				repaint();
+			}
+		}
 	}
 
 //==================================================================================================

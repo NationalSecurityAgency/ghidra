@@ -259,6 +259,7 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 			}
 			finally {
 				program.endTransaction(transaction, commit);
+				controller.getDecompilerPanel().tokenRenamed(tokenAtCursor, nameTask.getNewName());
 			}
 		}
 	}
