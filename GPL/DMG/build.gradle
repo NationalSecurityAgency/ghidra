@@ -1,13 +1,13 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
+
 if (findProject(':Generic') != null) {
 	apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
 	
 	rootProject.assembleDistribution {
-		
 		doLast {
 			// eliminate standard module lib directory
 			def assemblePath = destinationDir.path + "/" + getZipPath(this.project)
-			println "DELETE: ${assemblePath}/lib"
 			delete assemblePath + "/lib"
 		}
 	}
@@ -28,6 +28,7 @@ eclipse.project.name = 'GPL DMG'
  *
  *********************************************************************************/
 sourceSets {
+	
 	dmg {
 		java {
 			srcDir 'src/dmg/java'

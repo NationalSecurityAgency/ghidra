@@ -1,0 +1,40 @@
+apply plugin: 'java'
+
+// This project requires the Eclipse DSL plugin. To create Eclipse files for this project, run 
+//	"gradle eclipse -PeclipseDSL" 
+if (hasProperty("eclipseDSL")) {
+	apply plugin: 'eclipse'
+	eclipse {
+		project {
+			name = 'Eclipse SleighEditor Tests'
+			buildCommand 'org.eclipse.pde.ManifestBuilder'
+			buildCommand 'org.eclipse.pde.SchemaBuilder'
+			buildCommand 'org.eclipse.xtext.ui.shared.xtextBuilder'
+			natures 'org.eclipse.pde.PluginNature'
+			natures 'org.eclipse.xtext.ui.shared.xtextNature'
+			classpath.file {
+				def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
+				beforeMerged { classpath ->
+					classpath.entries.removeAll { entry ->
+						entry.path == requiredPlugins
+					}
+				}
+				whenMerged { classpath ->
+					withXml {
+						def node = it.asNode()
+						node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+					}
+				}
+			}
+		}
+	}
+	sourceSets {
+		main {
+			java {
+				srcDir 'src'
+				srcDir 'src-gen'
+				srcDir 'xtend-gen'
+			}
+		}
+	}
+}

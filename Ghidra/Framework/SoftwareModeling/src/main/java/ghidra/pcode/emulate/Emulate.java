@@ -31,6 +31,8 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 /// \brief A SLEIGH based implementation of the Emulate interface
 ///
@@ -78,7 +80,8 @@ public class Emulate {
 		pcReg = lang.getProgramCounter();
 		breaktable = b;
 		breaktable.setEmulate(this);
-		memBuffer = new EmulateMemoryStateBuffer(s, addrFactory.getDefaultAddressSpace().getMinAddress());
+		memBuffer =
+			new EmulateMemoryStateBuffer(s, addrFactory.getDefaultAddressSpace().getMinAddress());
 
 		uniqueBank =
 			new UniqueMemoryBank(lang.getAddressFactory().getUniqueSpace(), lang.isBigEndian());
@@ -91,24 +94,24 @@ public class Emulate {
 
 		initInstuctionStateModifier();
 	}
-	
+
 	public void dispose() {
 		executionState = EmulateExecutionState.STOPPED;
 	}
 
 	@SuppressWarnings("unchecked")
 	private void initInstuctionStateModifier() {
-		String classname =
-			language.getProperty(GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
+		String classname = language.getProperty(
+			GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
 		if (classname == null) {
 			return;
 		}
 		try {
 			Class<?> c = Class.forName(classname);
 			if (!EmulateInstructionStateModifier.class.isAssignableFrom(c)) {
-				Msg.error(this, "Language " + language.getLanguageID() +
-					" does not specify a valid " +
-					GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
+				Msg.error(this,
+					"Language " + language.getLanguageID() + " does not specify a valid " +
+						GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
 				throw new RuntimeException(classname + " does not implement interface " +
 					EmulateInstructionStateModifier.class.getName());
 			}
@@ -121,8 +124,9 @@ public class Emulate {
 		catch (Exception e) {
 			Msg.error(this, "Language " + language.getLanguageID() + " does not specify a valid " +
 				GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
-			throw new RuntimeException("Failed to instantiate " + classname + " for language " +
-				language.getLanguageID(), e);
+			throw new RuntimeException(
+				"Failed to instantiate " + classname + " for language " + language.getLanguageID(),
+				e);
 		}
 	}
 
@@ -367,11 +371,12 @@ public class Emulate {
 	/// and invoked as needed for the current address.  If this routine is invoked while execution is
 	/// in the middle of a machine instruction, execution is continued until the current instruction
 	/// completes.
-	public void executeInstruction(boolean stopAtBreakpoint) throws LowlevelError,
-			InstructionDecodeException {
+	public void executeInstruction(boolean stopAtBreakpoint, TaskMonitor monitor)
+			throws CancelledException, LowlevelError, InstructionDecodeException {
 		if (executionState == EmulateExecutionState.STOPPED) {
 			if (last_execute_address == null && instructionStateModifier != null) {
-				instructionStateModifier.initialExecuteCallback(this, current_address, nextContextRegisterValue);
+				instructionStateModifier.initialExecuteCallback(this, current_address,
+					nextContextRegisterValue);
 			}
 			if (breaktable.doAddressBreak(current_address) && stopAtBreakpoint) {
 				executionState = EmulateExecutionState.BREAKPOINT;
@@ -400,6 +405,7 @@ public class Emulate {
 			}
 			executionState = EmulateExecutionState.EXECUTE;
 			do {
+				monitor.checkCanceled();
 				executeCurrentOp();
 			}
 			while (executionState == EmulateExecutionState.EXECUTE);
@@ -441,8 +447,8 @@ public class Emulate {
 		OpBehavior behave = raw.getBehavior();
 		if (behave == null) {
 			// unsupported opcode
-			throw new LowlevelError("Unsupported pcode op (opcode=" + op.getOpcode() + ", seq=" +
-				op.getSeqnum() + ")");
+			throw new LowlevelError(
+				"Unsupported pcode op (opcode=" + op.getOpcode() + ", seq=" + op.getSeqnum() + ")");
 		}
 		if (behave instanceof UnaryOpBehavior) {
 			UnaryOpBehavior uniaryBehave = (UnaryOpBehavior) behave;
@@ -450,16 +456,14 @@ public class Emulate {
 			Varnode outvar = op.getOutput();
 			if (in1var.getSize() > 8 || outvar.getSize() > 8) {
 				BigInteger in1 = memstate.getBigInteger(op.getInput(0), false);
-				BigInteger out =
-					uniaryBehave.evaluateUnary(op.getOutput().getSize(), op.getInput(0).getSize(),
-						in1);
+				BigInteger out = uniaryBehave.evaluateUnary(op.getOutput().getSize(),
+					op.getInput(0).getSize(), in1);
 				memstate.setValue(op.getOutput(), out);
 			}
 			else {
 				long in1 = memstate.getValue(op.getInput(0));
-				long out =
-					uniaryBehave.evaluateUnary(op.getOutput().getSize(), op.getInput(0).getSize(),
-						in1);
+				long out = uniaryBehave.evaluateUnary(op.getOutput().getSize(),
+					op.getInput(0).getSize(), in1);
 				memstate.setValue(op.getOutput(), out);
 			}
 			fallthruOp();
@@ -471,17 +475,15 @@ public class Emulate {
 			if (in1var.getSize() > 8 || outvar.getSize() > 8) {
 				BigInteger in1 = memstate.getBigInteger(op.getInput(0), false);
 				BigInteger in2 = memstate.getBigInteger(op.getInput(1), false);
-				BigInteger out =
-					binaryBehave.evaluateBinary(outvar.getSize(), op.getInput(0).getSize(), in1,
-						in2);
+				BigInteger out = binaryBehave.evaluateBinary(outvar.getSize(),
+					op.getInput(0).getSize(), in1, in2);
 				memstate.setValue(outvar, out);
 			}
 			else {
 				long in1 = memstate.getValue(op.getInput(0));
 				long in2 = memstate.getValue(op.getInput(1));
-				long out =
-					binaryBehave.evaluateBinary(outvar.getSize(), op.getInput(0).getSize(), in1,
-						in2);
+				long out = binaryBehave.evaluateBinary(outvar.getSize(), op.getInput(0).getSize(),
+					in1, in2);
 				memstate.setValue(outvar, out);
 			}
 			fallthruOp(); // All binary ops are fallthrus
@@ -762,4 +764,3 @@ public class Emulate {
     - PcodeOpRaw   and
     - VarnodeData
  */
-

@@ -1,0 +1,9 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = 'Xtra SleighDevTools'
+
+dependencies {
+	compile project(':Base')
+}

@@ -1,0 +1,91 @@
+#!/usr/bin/python
+
+import os
+import sys
+import argparse
+import traceback
+import json
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from build import *
+from pcodetest import *
+
+# set default properties first, then update values from the command
+# line before they are instantiated.
+
+execfile('defaults.py')
+
+parser = argparse.ArgumentParser(description='''Build pcodetests.
+One and only one of the following options must be given:
+[--pcodetest, --pcodetest-all, --pcodetest-list]''',
+    epilog='(*) default properties for pcodetest instances',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+# all-applicable arguments
+
+parser.add_argument('-f', '--force', action='store_true', help='force a build')
+parser.add_argument('-v', '--verbose', action='store_true', help='verbose output where available ')
+parser.add_argument('--toolchain-root', default=PCodeTest.defaults.toolchain_root, help='directory where toolchain directories can be found (*)')
+parser.add_argument('--build-root', default=PCodeTest.defaults.build_root, help='temporary directory to hold build files (*)')
+parser.add_argument('--gcc-version', default=PCodeTest.defaults.gcc_version, help='default version of gcc (*)')
+
+# required alternates
+
+required_group = parser.add_mutually_exclusive_group(required=True)
+required_group.add_argument('--pcodetest', help='the pcode test to build')
+required_group.add_argument('--pcodetest-all', action='store_true', help='build all pcode tests')
+required_group.add_argument('--pcodetest-list', action='store_true', help='list available pcode tests')
+
+# pcodetest arguments
+
+pcodetest_group = parser.add_argument_group('pcodetest', 'pcodetest options')
+pcodetest_group.add_argument('--no-publish', action='store_true', help='do not publish pcode test binaries to pcode test root')
+pcodetest_group.add_argument('--pcodetest-root', default=PCodeTest.defaults.pcodetest_root, help='location to publish pcode tests binaries (*)')
+pcodetest_group.add_argument('--pcodetest-src', default=PCodeTest.defaults.pcodetest_src, help='location of pcode test .c and .h source files (*)')
+pcodetest_group.add_argument('--skip-files', nargs='+', default=PCodeTest.defaults.skip_files, help='default .c files to remove from the pcode test image (*)')
+pcodetest_group.add_argument('--strip-symbols', action='store_true', help='strip symbols from image')
+pcodetest_group.add_argument('--add-ccflags', default='', help='additional flags to pass to compiler (must be quoted)')
+pcodetest_group.add_argument('--add-info', action='store_true', help='add data to binary with information about types and symbols')
+pcodetest_group.add_argument('--build-exe', action='store_true', help='build a guest executable binary (exe)')
+pcodetest_group.add_argument('--variants', default=json.dumps(PCodeTest.defaults.variants, sort_keys=True, separators=(',',':')), type=json.loads, help='build the (optimization) variants, encoded as a json dict')
+
+sys.argv.pop(0)
+args = parser.parse_args(sys.argv)
+
+PCodeTest.defaults.skip_files = args.skip_files
+PCodeTest.defaults.pcodetest_root = args.pcodetest_root
+PCodeTest.defaults.pcodetest_src = args.pcodetest_src
+PCodeTest.defaults.strip_symbols = args.strip_symbols
+PCodeTest.defaults.add_ccflags = args.add_ccflags
+PCodeTest.defaults.add_info = args.add_info
+PCodeTest.defaults.build_exe = args.build_exe
+PCodeTest.defaults.variants = args.variants
+PCodeTest.defaults.verbose = args.verbose
+PCodeTest.defaults.force = args.force
+PCodeTest.defaults.no_publish = args.no_publish
+
+# load the known pcodetests
+
+execfile('pcode_defs.py')
+
+cwd = os.getcwd()
+
+if args.pcodetest_list:
+    PCodeTest.print_all()
+elif args.pcodetest_all:
+    for n,pct in sorted(PCodeTest.list.iteritems(), key=lambda x: x[0].lower()):
+        if pct.config.build_all:
+            try: PCodeTestBuild.factory(pct).main()
+            except Exception as e:
+                print 'unhandled exception while building %s' % n
+                traceback.print_exc(file=sys.stdout)
+                os.chdir(cwd)
+elif args.pcodetest:
+    if args.pcodetest in PCodeTest.list:
+        PCodeTest = PCodeTest.list[args.pcodetest]
+        PCodeTestBuild.factory(PCodeTest).main()
+    else:
+        print 'the pcode test %s is not in the list' % args.pcodetest
+else:
+    parser.print_help()
+

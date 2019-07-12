@@ -33,6 +33,7 @@ data/parserprofiles/linux_32.prf||GHIDRA||||END|
 data/parserprofiles/linux_64.prf||GHIDRA||||END|
 data/parserprofiles/objc_mac_carbon.prf||GHIDRA||reviewed||END|
 data/parserprofiles/vs12Local.prf||GHIDRA||||END|
+data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
 data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
 data/symbols/win32/kernel32.hints||GHIDRA||||END|
 data/symbols/win32/mfc100.exports||GHIDRA||||END|
@@ -1179,6 +1180,10 @@ src/main/resources/images/xor.png||GHIDRA||||END|
 src/main/resources/images/zoom.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
+src/main/resources/pcodetest/chunk1.hinc||GHIDRA||||END|
+src/main/resources/pcodetest/chunk2.hinc||GHIDRA||||END|
+src/main/resources/pcodetest/chunk3.hinc||GHIDRA||||END|
+src/main/resources/pcodetest/chunk4.hinc||GHIDRA||||END|
 src/test.slow/resources/dirlist.txt||GHIDRA||reviewed||END|
 src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
