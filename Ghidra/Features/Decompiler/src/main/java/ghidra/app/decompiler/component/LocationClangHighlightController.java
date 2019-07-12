@@ -33,19 +33,27 @@ public class LocationClangHighlightController extends ClangHighlightController {
 	@Override
 	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
 
-		clearHighlights();
-
 		if (!(field instanceof ClangTextField)) {
+			clearHighlights();
 			return;
 		}
 
 		ClangToken tok = ((ClangTextField) field).getToken(location);
 		if (tok == null) {
+			clearHighlights();
 			return;
 		}
 
 //		// clear any highlighted searchResults
 //		decompilerPanel.setSearchResults(null);
+
+		// Token is already highlighted, break out
+		if (tok.getHighlight() != null) {
+			return;
+		}
+
+		// Token is not highlighted, clear and re-apply highlighting
+		clearHighlights();
 
 		addHighlight(tok, defaultHighlightColor);
 		if (tok instanceof ClangSyntaxToken) {

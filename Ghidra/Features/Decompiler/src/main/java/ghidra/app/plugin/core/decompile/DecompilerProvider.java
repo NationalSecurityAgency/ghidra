@@ -102,6 +102,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private SelectAllAction selectAllAction;
 
+	private SetHighlightAction setHighlightAction;
+	private RemovePanelHighlightsAction removePanelHighlightsAction;
+	private RemoveAllHighlightsAction removeAllHighlightsAction;
+
 	private ViewerPosition pendingViewerPosition;
 
 	private SwingUpdateManager swingUpdateManager;
@@ -283,6 +287,16 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			Object newValue) {
 		if (!isVisible()) {
 			return;
+		}
+
+		// SetHighlightAction was toggled on/off - notify the handler
+		if ((setHighlightAction != null) && optionName.equals(setHighlightAction.getName())) {
+			setHighlightAction.setEnabled((boolean)newValue);
+			removePanelHighlightsAction.setEnabled((boolean) newValue);
+			removeAllHighlightsAction.setEnabled((boolean) newValue);
+			if ((boolean)newValue == false) {
+				setHighlightAction.reset();
+			}
 		}
 
 		if (options.getName().equals(OPTIONS_TITLE) ||
@@ -590,6 +604,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
 			newProvider.controller.setDecompileData(controller.getDecompileData());
+
+			// Any change in the HighlightTokens should be delivered to the new panel
+			getDecompilerPanel().getHighlightedTokens().addListener(newProvider.getDecompilerPanel());
+
+			// Transfer the highlighted tokens
+			newProvider.getDecompilerPanel().setHighlightedTokens(getDecompilerPanel().getHighlightedTokens());
+
 			newProvider.setLocation(currentLocation,
 				controller.getDecompilerPanel().getViewerPosition());
 		});
@@ -742,6 +763,18 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		lockLocalAction = new CommitLocalsAction(owner, tool, controller);
 		setGroupInfo(lockLocalAction, commitGroup, subGroupPosition++);
 
+		String highlightGroup = "4 - Highlight Group";
+		subGroupPosition = 0; // reset for the next group
+
+		setHighlightAction = new SetHighlightAction(owner, controller, decompilerOptions.isHighlightIncluded());
+		setGroupInfo(setHighlightAction, highlightGroup, subGroupPosition++);
+
+		removePanelHighlightsAction = new RemovePanelHighlightsAction(owner, controller, decompilerOptions.isHighlightIncluded());
+		setGroupInfo(removePanelHighlightsAction, highlightGroup, subGroupPosition++);
+
+		removeAllHighlightsAction = new RemoveAllHighlightsAction(owner, controller, decompilerOptions.isHighlightIncluded());
+		setGroupInfo(removeAllHighlightsAction, highlightGroup, subGroupPosition++);
+
 		//
 		// Comments
 		//
@@ -788,6 +821,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(lockProtoAction);
 		addLocalAction(lockLocalAction);
 		addLocalAction(renameVarAction);
+		addLocalAction(setHighlightAction);
+		addLocalAction(removePanelHighlightsAction);
+		addLocalAction(removeAllHighlightsAction);
 		addLocalAction(retypeVarAction);
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);

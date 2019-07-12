@@ -252,6 +252,7 @@ public class RenameVariableAction extends DockingAction {
 			}
 			finally {
 				program.endTransaction(transaction, commit);
+				controller.getDecompilerPanel().tokenRenamed(tokenAtCursor, nameTask.getNewName());
 			}
 		}
 	}
