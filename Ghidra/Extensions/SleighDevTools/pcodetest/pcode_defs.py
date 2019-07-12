@@ -585,7 +585,7 @@ PCodeTest({
     'has_longlong': 0,
 })
 
-cunit({
+PCodeTest({
     'name': 'Z80',
     'toolchain': 'SDCC/z80',
     'toolchain_type': 'sdcc',
