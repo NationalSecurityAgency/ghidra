@@ -27,9 +27,11 @@ import javax.swing.border.Border;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.StatusBar;
 import docking.action.DockingActionIf;
-import docking.action.KeyEntryDialog;
+import docking.actions.KeyEntryDialog;
+import docking.actions.ToolActions;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
@@ -280,12 +282,10 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testSetKeyBindings() {
 
 		tool = env.launchDefaultTool();
-		DockingWindowManager windowManager = tool.getWindowManager();
-		ActionToGuiMapper actionMgr =
-			(ActionToGuiMapper) getInstanceField("actionManager", windowManager);
+		ToolActions toolActions = (ToolActions) getInstanceField("toolActions", tool);
 
 		DockingActionIf action = getAction(tool, "FunctionPlugin", "Delete Function");
-		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, actionMgr);
+		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, toolActions);
 
 		runSwing(() -> tool.showDialog(keyEntryDialog), false);
 		captureDialog();

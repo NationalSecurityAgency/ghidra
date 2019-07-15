@@ -20,8 +20,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.KeyBindingData;
+import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.plugintool.PluginTool;
@@ -43,7 +42,7 @@ public class ChooseDataTypeAction extends DockingAction {
 	private final static String ACTION_NAME = "Choose Data Type";
 
 	public ChooseDataTypeAction(DataPlugin plugin) {
-		super(ACTION_NAME, plugin.getName(), false);
+		super(ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
 		initKeyStroke(KEY_BINDING);
@@ -55,11 +54,6 @@ public class ChooseDataTypeAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

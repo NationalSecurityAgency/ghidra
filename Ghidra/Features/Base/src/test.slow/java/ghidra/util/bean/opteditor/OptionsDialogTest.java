@@ -33,8 +33,8 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
-import docking.DockingKeyBindingAction;
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -712,7 +712,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		if (StringUtils.isBlank(keyBindingColumnValue)) {
 			return null;
 		}
-		return DockingKeyBindingAction.parseKeyStroke(keyBindingColumnValue);
+		return KeyBindingUtils.parseKeyStroke(keyBindingColumnValue);
 	}
 
 	private void assertOptionsKeyStroke(String actionName, String pluginName, KeyStroke value)

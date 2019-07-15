@@ -87,13 +87,12 @@ public class DockableHeader extends GenericHeader
 	private boolean isDocking;
 
 	private Animator focusAnimator;
-	private int focusToggle = -1;
 
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
 	 * 
-	 * @param dockableComp
-	 *            the dockableComponent that this header is for.
+	 * @param dockableComp the dockableComponent that this header is for.
+	 * @param isDocking true means this widget can be dragged and docked by the user
 	 */
 	DockableHeader(DockableComponent dockableComp, boolean isDocking) {
 		this.dockComp = dockableComp;
@@ -173,8 +172,11 @@ public class DockableHeader extends GenericHeader
 	}
 
 	protected Animator createEmphasizingAnimator(JFrame parentFrame) {
-		focusToggle += 1;
-		switch (focusToggle) {
+
+		double random = Math.random();
+		int choices = 4;
+		int value = (int) (choices * random);
+		switch (value) {
 			case 0:
 				return AnimationUtils.shakeComponent(component);
 			case 1:
@@ -182,7 +184,6 @@ public class DockableHeader extends GenericHeader
 			case 2:
 				return raiseComponent(parentFrame);
 			default:
-				focusToggle = -1;
 				return AnimationUtils.pulseComponent(component);
 		}
 	}
@@ -226,12 +227,12 @@ public class DockableHeader extends GenericHeader
 		if (!isDocking) {
 			return;
 		}
-		// check input event: if any button other than MB1 is pressed,
-		// don't attempt to process the drag and drop event.
+
+		// if any button other than MB1 is pressed, don't attempt to process the drag and drop event
 		InputEvent ie = event.getTriggerEvent();
-		int modifiers = ie.getModifiers();
-		if ((modifiers & InputEvent.BUTTON2_MASK) != 0 ||
-			(modifiers & InputEvent.BUTTON3_MASK) != 0) {
+		int modifiers = ie.getModifiersEx();
+		if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0 ||
+			(modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
 			return;
 		}
 		DockableComponent.DROP_CODE = DockableComponent.DropCode.WINDOW;

@@ -17,7 +17,6 @@ package ghidra.app.plugin.debug;
 
 import java.awt.event.MouseEvent;
 
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 import db.DBHandle;
@@ -34,14 +33,14 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 
 	private DBHandle dbh;
 	private String dbName;
-	private Plugin plugin;
-	private ImageIcon icon;
 	private DbViewerComponent comp;
 
 	public DbViewerProvider(Plugin plugin) {
 		super(plugin.getTool(), "Database Viewer", plugin.getName());
+
+		setIcon(ResourceManager.loadImage(ICON_IMAGE));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
-		this.plugin = plugin;
+
 		setHelpLocation(new HelpLocation(plugin.getName(), "DbViewer"));
 	}
 
@@ -93,13 +92,4 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 		}
 		return comp;
 	}
-
-	@Override
-	public ImageIcon getIcon() {
-		if (icon == null) {
-			icon = ResourceManager.loadImage(ICON_IMAGE);
-		}
-		return icon;
-	}
-
 }

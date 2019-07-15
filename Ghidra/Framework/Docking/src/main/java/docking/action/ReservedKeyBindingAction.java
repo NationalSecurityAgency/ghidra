@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking;
+package docking.action;
 
 import javax.swing.KeyStroke;
 
-import docking.action.DockingActionIf;
+import docking.*;
 
 class ReservedKeyBindingAction extends DockingKeyBindingAction {
 
-	ReservedKeyBindingAction(DockingWindowManager winMgr, DockingActionIf action,
-			KeyStroke keyStroke) {
-		super(winMgr, action, keyStroke);
+	ReservedKeyBindingAction(DockingTool tool, DockingActionIf action, KeyStroke keyStroke) {
+		super(tool, action, keyStroke);
 	}
 
 	@Override
 	public boolean isReservedKeybindingPrecedence() {
 		return true;
+	}
+
+	@Override
+	public KeyBindingPrecedence getKeyBindingPrecedence() {
+		return KeyBindingPrecedence.ReservedActionsLevel;
 	}
 }

@@ -22,8 +22,7 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingUtils;
-import docking.action.DockingAction;
-import docking.action.KeyBindingData;
+import docking.action.*;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.framework.plugintool.PluginTool;
@@ -44,7 +43,7 @@ public abstract class AbstractFindReferencesDataTypeAction extends DockingAction
 
 	protected AbstractFindReferencesDataTypeAction(PluginTool tool, String name, String owner,
 			KeyStroke defaultKeyStroke) {
-		super(name, owner);
+		super(name, owner, KeyBindingType.SHARED);
 		this.tool = tool;
 
 		setHelpLocation(new HelpLocation("LocationReferencesPlugin", "Data_Types"));
@@ -67,11 +66,6 @@ public abstract class AbstractFindReferencesDataTypeAction extends DockingAction
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

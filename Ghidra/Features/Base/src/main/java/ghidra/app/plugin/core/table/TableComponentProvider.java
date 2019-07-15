@@ -159,10 +159,15 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(final Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
-		selectAction = new MakeProgramSelectionAction(tableServicePlugin.getName(), table) {
+		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
 			@Override
-			protected void makeSelection(ActionContext context) {
-				doMakeSelection(plugin);
+			protected ProgramSelection makeSelection(ActionContext context) {
+
+				ProgramSelection selection = table.getProgramSelection();
+				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
+				navigatable.setSelection(selection);
+				navigatable.requestFocus();
+				return selection;
 			}
 		};
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
@@ -171,32 +176,31 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		DockingAction externalGotoAction =
-			new DockingAction("Go to External Location", getName(), false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					gotoExternalAddress(getSelectedExternalAddress());
-				}
+		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				gotoExternalAddress(getSelectedExternalAddress());
+			}
 
-				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					return getSelectedExternalAddress() != null &&
-						tool.getService(GoToService.class) != null;
-				}
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return getSelectedExternalAddress() != null &&
+					tool.getService(GoToService.class) != null;
+			}
 
-				private Address getSelectedExternalAddress() {
-					if (table.getSelectedRowCount() != 1) {
-						return null;
-					}
-					ProgramSelection selection = table.getProgramSelection();
-					Program modelProgram = model.getProgram();
-					if (modelProgram == null || selection.getNumAddresses() != 1) {
-						return null;
-					}
-					Address addr = selection.getMinAddress();
-					return addr.isExternalAddress() ? addr : null;
+			private Address getSelectedExternalAddress() {
+				if (table.getSelectedRowCount() != 1) {
+					return null;
 				}
-			};
+				ProgramSelection selection = table.getProgramSelection();
+				Program modelProgram = model.getProgram();
+				if (modelProgram == null || selection.getNumAddresses() != 1) {
+					return null;
+				}
+				Address addr = selection.getMinAddress();
+				return addr.isExternalAddress() ? addr : null;
+			}
+		};
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 
@@ -264,19 +268,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (gotoSvc != null) {
 			gotoSvc.goTo(extAddr, model.getProgram());
 		}
-	}
-
-	private void doMakeSelection(Plugin plugin) {
-		ProgramSelection selection = threadedPanel.getTable().getProgramSelection();
-		Program modelProgram = model.getProgram();
-		if (modelProgram == null || selection.getNumAddresses() == 0) {
-			return;
-		}
-
-		navigatable.goTo(model.getProgram(),
-			new ProgramLocation(modelProgram, selection.getMinAddress()));
-		navigatable.setSelection(selection);
-		navigatable.requestFocus();
 	}
 
 	@Override

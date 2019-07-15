@@ -718,7 +718,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showBookmarkProvider() throws Exception {
-		DockingActionIf action = getAction(plugin, "Show Bookmarks");
+		DockingActionIf action = getAction(plugin, "Bookmarks");
 		performAction(action, true);
 		table = plugin.getBookmarkTable();
 		waitForTable();

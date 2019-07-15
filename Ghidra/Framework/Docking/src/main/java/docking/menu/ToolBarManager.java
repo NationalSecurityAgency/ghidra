@@ -31,7 +31,7 @@ import docking.widgets.VariableHeightPanel;
  */
 public class ToolBarManager {
 	private Map<String, List<ToolBarItemManager>> groupToItemsMap =
-		new TreeMap<String, List<ToolBarItemManager>>(new GroupComparator());
+		new TreeMap<>(new GroupComparator());
 	private Comparator<? super ToolBarItemManager> toolBarItemComparator =
 		new ToolBarItemManagerComparator();
 
@@ -47,9 +47,6 @@ public class ToolBarManager {
 		toolBar = null;
 	}
 
-	/**
-	 * Adds the action to the toolbar.
-	 */
 	public void addAction(DockingActionIf action) {
 		ToolBarData toolBarData = action.getToolBarData();
 		if (toolBarData == null) {
@@ -61,7 +58,7 @@ public class ToolBarManager {
 		String group = toolBarData.getToolBarGroup();
 		List<ToolBarItemManager> items = groupToItemsMap.get(group);
 		if (items == null) {
-			items = new ArrayList<ToolBarItemManager>();
+			items = new ArrayList<>();
 			groupToItemsMap.put(group, items);
 		}
 		items.add(new ToolBarItemManager(action, windowManager));
@@ -96,9 +93,6 @@ public class ToolBarManager {
 		groupToItemsMap.clear();
 	}
 
-	/**
-	 * Returns true if the toolbar is empty.
-	 */
 	public boolean isEmpty() {
 		return groupToItemsMap.isEmpty();
 	}

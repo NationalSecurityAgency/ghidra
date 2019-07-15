@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
+import docking.action.KeyBindingType;
 import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -35,7 +36,7 @@ public class FindReferencesToAddressAction extends ListingContextAction {
 	private LocationReferencesPlugin plugin;
 
 	public FindReferencesToAddressAction(LocationReferencesPlugin plugin, int subGroupPosition) {
-		super("Show References to Address", plugin.getName(), false);
+		super("Show References to Address", plugin.getName(), KeyBindingType.SHARED);
 
 		this.plugin = plugin;
 

@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.symboltree.actions;
 import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
@@ -57,7 +56,7 @@ public class ShowSymbolReferencesAction extends SymbolTreeContextAction {
 	};
 
 	public ShowSymbolReferencesAction(PluginTool tool, String owner) {
-		super(AbstractFindReferencesDataTypeAction.NAME, owner);
+		super(AbstractFindReferencesDataTypeAction.NAME, owner, KeyBindingType.SHARED);
 		this.tool = tool;
 
 		setPopupMenuData(new MenuData(new String[] { "Show References to" }, "0Middle"));
@@ -74,11 +73,6 @@ public class ShowSymbolReferencesAction extends SymbolTreeContextAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	private void installHelpLocation() {

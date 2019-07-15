@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.datawindow;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -180,13 +179,7 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 	 */
 	private void createActions() {
 
-		selectAction = new MakeProgramSelectionAction(getName(), provider.getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				selectData(provider.selectData());
-			}
-		};
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
 		filterAction = new FilterAction(this);

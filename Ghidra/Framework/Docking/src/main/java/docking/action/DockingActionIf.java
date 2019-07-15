@@ -23,6 +23,17 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.help.HelpDescriptor;
 
+/**
+ * The base interface for clients that wish to create commands to be registered with a tool.
+ * 
+ * <p>An action may appear in a primary menu, a popup menu or a toolbar.   Further, an action 
+ * may have a key binding assigned.
+ * 
+ * <p>The particular support for key bindings is defined by {@link KeyBindingType}.   Almost all
+ * client actions will use the default setting of {@link KeyBindingType#INDIVIDUAL}.   To control
+ * the level of key binding support, you can pass the desired {@link KeyBindingType} to the
+ * base implementation of this interface.
+ */
 public interface DockingActionIf extends HelpDescriptor {
 	public static final String ENABLEMENT_PROPERTY = "enabled";
 	public static final String GLOBALCONTEXT_PROPERTY = "globalContext";
@@ -43,6 +54,16 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @return the owner  
 	 */
 	public String getOwner();
+
+	/**
+	 * Returns a description of this actions owner.  For most actions this will return the 
+	 * same value as {@link #getOwner()}.
+	 * 
+	 * @return the description
+	 */
+	public default String getOwnerDescription() {
+		return getOwner();
+	}
 
 	/**
 	 * Returns a short description of this action. Generally used for a tooltip
@@ -248,10 +269,17 @@ public interface DockingActionIf extends HelpDescriptor {
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes);
 
 	/**
-	 * Returns true if this action can have its keybinding information changed by the user.  
-	 * @return true if this action can have its keybinding information changed by the user.
+	 * Returns this actions level of support for key binding accelerator keys
+	 * 
+	 * <p>Actions support key bindings by default.  Some reserved actions do not support 
+	 * key bindings, while others wish to share the same key bindings with multiple, equivalent
+	 * actions (this allows the user to set one binding that works in many different contexts).
+	 * 
+	 * @return the key binding support
 	 */
-	public boolean isKeyBindingManaged();
+	public default KeyBindingType getKeyBindingType() {
+		return KeyBindingType.INDIVIDUAL;
+	}
 
 	/**
 	 * Sets the {@link KeyBindingData} on an action to either assign a keybinding or remove it
@@ -272,22 +300,4 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
 	 */
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData);
-
-	/**
-	 * Returns true if this action shares a keybinding with other actions.  If this returns true, 
-	 * then this action, and any action that shares a name with this action, will be updated
-	 * to the same key binding value whenever the key binding options change.
-	 * 
-	 * <p>This will be false for the vast majority of actions.  If you are unsure if your action
-	 * should use a shared keybinding, then do not set this value to true.
-	 * 
-	 * <p>This value is not meant to change over the life of the action.  Thus, there is no
-	 * <code>set</code> method to change this value.  Rather, you should override this method
-	 * to return <code>true</code> as desired.
-	 * 
-	 * @return true to share a shared keybinding
-	 */
-	public default boolean usesSharedKeyBinding() {
-		return false;
-	}
 }

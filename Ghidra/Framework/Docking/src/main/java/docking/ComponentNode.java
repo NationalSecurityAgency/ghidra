@@ -326,7 +326,7 @@ class ComponentNode extends Node {
 			DockingTabRenderer tabRenderer) {
 
 		final ComponentProvider provider = placeholder.getProvider();
-		if (!provider.isTransient()) {
+		if (!provider.isTransient() || provider.isSnapshot()) {
 			return; // don't muck with the title of 'real' providers--only transients, like search
 		}
 

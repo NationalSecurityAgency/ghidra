@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.*;
+import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -552,9 +552,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void showFunctionGraphProvider() {
-		DockingAction showGraphAction =
-			(DockingAction) TestUtils.getInstanceField("showFunctionGraphAction", graphPlugin);
-		performAction(showGraphAction, true);
+
+		ComponentProvider provider = tool.getComponentProvider("Function Graph");
+		tool.showComponentProvider(provider, true);
 
 		graphProvider = waitForComponentProvider(FGProvider.class);
 		assertNotNull("Graph not shown", graphProvider);
@@ -2011,7 +2011,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	}
 
-	protected FGData triggerPersistence(String functionAddress) {
+	protected FGData triggerPersistenceAndReload(String functionAddress) {
 		//
 		// Ideally, we would like to save, close and re-open the program so that we can get 
 		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
@@ -2019,8 +2019,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// the cache (to make sure that we read the settings again), and then verify that the 
 		// data saved in the program has been used to re-group.
 		//
-		graphFunction("0100415a");
-		clearCache();
+		String otherAddress = "0100415a";
+		assertNotEquals(functionAddress, otherAddress);
+		graphFunction(otherAddress);
 
 		//
 		// Graph the original function and make sure that the previously grouped nodes is again

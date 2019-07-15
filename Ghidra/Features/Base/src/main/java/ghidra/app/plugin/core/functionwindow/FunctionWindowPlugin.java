@@ -190,18 +190,12 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 
 	private void addSelectAction() {
 
-		selectAction = new MakeProgramSelectionAction(getName(), provider.getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				selectFunctions(provider.selectFunctions());
-			}
-		};
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 	}
 
 	private void addCompareAction() {
-		compareAction = new DockingAction("Compare Selected Functions", getName(), false) {
+		compareAction = new DockingAction("Compare Selected Functions", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				compareSelectedFunctions();

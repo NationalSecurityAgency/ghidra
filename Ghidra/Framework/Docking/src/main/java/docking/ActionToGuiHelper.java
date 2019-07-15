@@ -78,4 +78,11 @@ public class ActionToGuiHelper {
 	public void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		windowManager.removeProviderAction(provider, action);
 	}
+
+	/**
+	 * Call this method to signal that key bindings for one or more actions have changed
+	 */
+	public void keyBindingsChanged() {
+		windowManager.scheduleUpdate();
+	}
 }

@@ -133,7 +133,7 @@ public class VersionHistoryDialog extends DialogComponentProvider
 	}
 
 	@Override
-	public List<DockingActionIf> getDockingActions(ActionContext context) {
-		return versionPanel.getDockingActions(context);
+	public List<DockingActionIf> getDockingActions() {
+		return versionPanel.getDockingActions();
 	}
 }

@@ -104,7 +104,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testManagedKeyBindings() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
-			if (action.isKeyBindingManaged()) {
+			if (action.getKeyBindingType().isManaged()) {
 				assertTrue(actionInTable(action));
 			}
 		}
@@ -130,7 +130,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			KeyStroke ks = getKeyStroke(action);
-			if (isKeyBindingManaged(action) && ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
+			if (supportsKeyBindings(action) && ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
 				break;
 			}
 		}
@@ -310,15 +310,15 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	private boolean isKeyBindingManaged(DockingActionIf action) {
-		return action.isKeyBindingManaged();
+	private boolean supportsKeyBindings(DockingActionIf action) {
+		return action.getKeyBindingType().isManaged();
 	}
 
 	private DockingActionIf getKeyBindingPluginAction() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			KeyStroke ks = action.getKeyBinding();
-			if (action.isKeyBindingManaged() && ks != null &&
+			if (action.getKeyBindingType().isManaged() && ks != null &&
 				ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
 				return action;
 			}
@@ -388,7 +388,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void grabActionsWithoutKeybinding() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
-			if (!action.isKeyBindingManaged()) {
+			if (!action.getKeyBindingType().isManaged()) {
 				continue;
 			}
 			if (action.getKeyBinding() != null) {

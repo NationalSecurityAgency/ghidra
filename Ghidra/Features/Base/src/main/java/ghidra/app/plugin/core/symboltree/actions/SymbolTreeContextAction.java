@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,21 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
-import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.KeyBindingType;
+import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 
 public abstract class SymbolTreeContextAction extends DockingAction {
 
 	public SymbolTreeContextAction(String name, String owner) {
 		super(name, owner);
+	}
+
+	public SymbolTreeContextAction(String name, String owner, KeyBindingType kbType) {
+		super(name, owner, kbType);
 	}
 
 	@Override

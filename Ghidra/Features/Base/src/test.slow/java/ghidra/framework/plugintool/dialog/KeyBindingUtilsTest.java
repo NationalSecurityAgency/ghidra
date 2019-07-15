@@ -408,15 +408,13 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> list = tool.getAllActions();
 		DockingActionIf arbitraryAction = null;
 		for (DockingActionIf action : list) {
-			if (action.isKeyBindingManaged() && action.getKeyBinding() == null) {
+			if (action.getKeyBindingType().isManaged() && action.getKeyBinding() == null) {
 				arbitraryAction = action;
 				break;
 			}
 		}
 
-		if (arbitraryAction == null) {
-			Assert.fail("Unable to find an action for which to set a key binding.");
-		}
+		assertNotNull("Unable to find an action for which to set a key binding", arbitraryAction);
 
 		selectRowForAction(arbitraryAction);
 		triggerText(keyField, keyText);

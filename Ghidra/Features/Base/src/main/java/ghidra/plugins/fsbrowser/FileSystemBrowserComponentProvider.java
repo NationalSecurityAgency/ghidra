@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -65,22 +63,21 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 	 */
 	public FileSystemBrowserComponentProvider(FileSystemBrowserPlugin plugin, FileSystemRef fsRef) {
 		super(plugin.getTool(), fsRef.getFilesystem().getName(), plugin.getName());
-		setTransient();
 
 		this.plugin = plugin;
-
 		this.rootNode = new FSBRootNode(fsRef);
+
+		setTransient();
+		setIcon(ImageManager.PHOTO);
+
 		gTree = new GTree(rootNode);
 		gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-		gTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-			@Override
-			public void valueChanged(TreeSelectionEvent e) {
-				tool.contextChanged(FileSystemBrowserComponentProvider.this);
-				TreePath[] paths = gTree.getSelectionPaths();
-				if (paths.length == 1) {
-					GTreeNode clickedNode = (GTreeNode) paths[0].getLastPathComponent();
-					handleSingleClick(clickedNode);
-				}
+		gTree.getSelectionModel().addTreeSelectionListener(e -> {
+			tool.contextChanged(FileSystemBrowserComponentProvider.this);
+			TreePath[] paths = gTree.getSelectionPaths();
+			if (paths.length == 1) {
+				GTreeNode clickedNode = (GTreeNode) paths[0].getLastPathComponent();
+				handleSingleClick(clickedNode);
 			}
 		});
 		gTree.addMouseListener(new MouseAdapter() {
@@ -299,11 +296,6 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 	@Override
 	public WindowPosition getDefaultWindowPosition() {
 		return WindowPosition.WINDOW;
-	}
-
-	@Override
-	public Icon getIcon() {
-		return ImageManager.PHOTO;
 	}
 
 	void dispose() {

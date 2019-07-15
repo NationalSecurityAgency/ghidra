@@ -36,7 +36,6 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.GhidraOptions;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
@@ -54,6 +53,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import resources.ResourceManager;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
@@ -61,8 +61,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ChangeListener, StringSelectionListener, PopupListener {
 
 	private static final String TITLE = "Listing: ";
-
-	private static final String OPERAND_OPTIONS_PREFIX = GhidraOptions.OPERAND_GROUP_TITLE + ".";
 
 	private static final Icon LISTING_FORMAT_EXPAND_ICON =
 		ResourceManager.loadImage("images/field.header.down.png");
@@ -92,9 +90,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private ProgramDropProvider curDropProvider;
 	private ToggleDockingAction toggleHoverAction;
 
-	//TODO - Need to improve CodeUnit.getRepresentation format options interface before adding this
-	//TODO    private ToggleOperandMarkupAction[] toggleOperandMarkupActions;
-
 	private ProgramLocation currentLocation;
 
 	private ListingPanel otherPanel;
@@ -117,17 +112,26 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private MultiListingLayoutModel multiModel;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
-			boolean connected) {
-		super(plugin.getTool(), plugin.getName(), plugin.getName(), CodeViewerActionContext.class);
+			boolean isConnected) {
+		super(plugin.getTool(), "Listing", plugin.getName(), CodeViewerActionContext.class);
+
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
-		setConnected(connected);
+
+		setConnected(isConnected);
+		setIcon(ResourceManager.loadImage("images/Browser.gif"));
+		if (!isConnected) {
+			setTransient();
+		}
+		else {
+			addToToolbar();
+		}
 		setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Code_Browser"));
 		setDefaultWindowPosition(WindowPosition.RIGHT);
-		setIcon(ResourceManager.loadImage("images/Browser.gif"));
+
 		listingPanel = new ListingPanel(formatMgr);
 		listingPanel.enablePropertyBasedColorModel(true);
-		decorationPanel = new ListingPanelContainer(listingPanel, connected);
+		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);
 		ListingHighlightProvider listingHighlighter =
 			createListingHighlighter(listingPanel, tool, decorationPanel);
 		highlighterAdapter = new ProgramHighlighterProvider(listingHighlighter);
@@ -136,7 +140,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		setWindowMenuGroup("Listing");
 		setIntraGroupPosition(WindowPosition.RIGHT);
 
-		setTitle(connected ? TITLE : "[" + TITLE + "]");
+		setTitle(isConnected ? TITLE : "[" + TITLE + "]");
 		fieldNavigator = new FieldNavigator(tool, this);
 		listingPanel.addButtonPressedListener(fieldNavigator);
 		addToTool();
@@ -148,6 +152,12 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		codeViewerClipboardProvider = new CodeBrowserClipboardProvider(tool, this);
 		tool.addPopupListener(this);
+	}
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
 	}
 
 	/**
@@ -399,9 +409,9 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	void updateTitle() {
-		String subTitle = program == null ? "" : program.getDomainFile().getName();
-		String newTitle = isConnected() ? TITLE : "[" + TITLE + "]";
-		setTitle(newTitle + subTitle);
+		String subTitle = program == null ? "" : ' ' + program.getDomainFile().getName();
+		String newTitle = isConnected() ? TITLE : "[" + TITLE + subTitle + "]";
+		setTitle(newTitle);
 	}
 
 	@Override
@@ -882,7 +892,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		final ViewerPosition vp = listingPanel.getFieldPanel().getViewerPosition();
 		// invoke later to give the window manage a chance to create the new window
 		// (its done in an invoke later)
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
 			newProvider.listingPanel.getFieldPanel().setViewerPosition(vp.getIndex(),
 				vp.getXOffset(), vp.getYOffset());
@@ -949,7 +959,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	class ToggleHeaderAction extends ToggleDockingAction {
 		ToggleHeaderAction() {
-			super("Toggle Header", CodeViewerProvider.this.getName());
+			super("Toggle Header", plugin.getName());
 			setEnabled(true);
 
 			setToolBarData(new ToolBarData(LISTING_FORMAT_EXPAND_ICON, "zzz"));
@@ -960,14 +970,14 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			boolean show = !listingPanel.isHeaderShowing();
 			listingPanel.showHeader(show);
-			getToolBarData()
-				.setIcon(show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
+			getToolBarData().setIcon(
+				show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
 		}
 	}
 
-	class ToggleHoverAction extends ToggleDockingAction {
+	private class ToggleHoverAction extends ToggleDockingAction {
 		ToggleHoverAction() {
-			super("Toggle Mouse Hover Popups", CodeViewerProvider.this.getName());
+			super("Toggle Mouse Hover Popups", CodeViewerProvider.this.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(HOVER_ON_ICON, "yyyz"));
 			setSelected(true);
@@ -984,31 +994,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		void setHover(boolean enabled) {
 			getToolBarData().setIcon(enabled ? HOVER_ON_ICON : HOVER_OFF_ICON);
 			setHoverEnabled(enabled);
-		}
-	}
-
-	class ToggleOperandMarkupAction extends ToggleDockingAction {
-		final String optionName;
-
-		ToggleOperandMarkupAction(String operandOption) {
-			super(operandOption, CodeViewerProvider.this.getName());
-			this.optionName = OPERAND_OPTIONS_PREFIX + operandOption;
-			boolean state =
-				tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS).getBoolean(optionName, true);
-			setMenuBarData(new MenuData(new String[] { operandOption }));
-			setSelected(state);
-			setEnabled(true);
-			setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Operands_Field"));
-		}
-
-		public Object getOptionName() {
-			return optionName;
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			boolean state = isSelected();
-			tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS).setBoolean(optionName, state);
 		}
 	}
 

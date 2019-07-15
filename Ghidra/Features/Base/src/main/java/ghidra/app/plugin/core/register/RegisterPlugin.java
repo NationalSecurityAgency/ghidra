@@ -43,7 +43,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 /**
  * Shows the registers available in a program along with any values that are set.
@@ -63,7 +62,6 @@ public class RegisterPlugin extends ProgramPlugin {
 	private RegisterManagerProvider registerMgrProvider;
 	private Register[] registers = new Register[0];
 
-	private DockingAction showRegistersAction;
 	private DockingAction deleteRegisterRangeAction;
 	private DockingAction deleteRegisterAtFunctionAction;
 	private DockingAction clearRegisterAction;
@@ -94,21 +92,6 @@ public class RegisterPlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		showRegistersAction = new DockingAction("Display Register Values", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(registerMgrProvider, true);
-			}
-		};
-		showRegistersAction.setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/registerGroup.png"), "View"));
-		showRegistersAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, 0));
-
-		showRegistersAction.setDescription("Display Register Values");
-		showRegistersAction.setHelpLocation(new HelpLocation("RegisterPlugin", "RegisterManager"));
-		showRegistersAction.setEnabled(true);
-
-		tool.addAction(showRegistersAction);
 
 		setRegisterAction = new DockingAction("Set Register Values", getName()) {
 			@Override
@@ -125,10 +108,10 @@ public class RegisterPlugin extends ProgramPlugin {
 					(contextObject instanceof RegisterManagerProvider);
 			}
 		};
-		setRegisterAction.setPopupMenuData(new MenuData(new String[] { "Set Register Values..." },
-			null, "Registers"));
-		setRegisterAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R,
-			InputEvent.CTRL_DOWN_MASK));
+		setRegisterAction.setPopupMenuData(
+			new MenuData(new String[] { "Set Register Values..." }, null, "Registers"));
+		setRegisterAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
 
 		setRegisterAction.setDescription("Set register values in a program.");
 		setRegisterAction.setHelpLocation(new HelpLocation("RegisterPlugin", "SetRegisterValues"));
@@ -151,12 +134,12 @@ public class RegisterPlugin extends ProgramPlugin {
 					(contextObject instanceof RegisterManagerProvider);
 			}
 		};
-		clearRegisterAction.setPopupMenuData(new MenuData(
-			new String[] { "Clear Register Values..." }, null, "Registers"));
+		clearRegisterAction.setPopupMenuData(
+			new MenuData(new String[] { "Clear Register Values..." }, null, "Registers"));
 
 		clearRegisterAction.setDescription("Clear register values in a program.");
-		clearRegisterAction.setHelpLocation(new HelpLocation("RegisterPlugin",
-			"ClearRegisterValues"));
+		clearRegisterAction.setHelpLocation(
+			new HelpLocation("RegisterPlugin", "ClearRegisterValues"));
 		clearRegisterAction.setEnabled(true);
 
 		tool.addAction(clearRegisterAction);
@@ -193,8 +176,8 @@ public class RegisterPlugin extends ProgramPlugin {
 		deleteRegisterRangeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		deleteRegisterRangeAction.setDescription("Delete register value at Function.");
-		deleteRegisterRangeAction.setHelpLocation(new HelpLocation("RegisterPlugin",
-			"DeleteRegisterValueRange"));
+		deleteRegisterRangeAction.setHelpLocation(
+			new HelpLocation("RegisterPlugin", "DeleteRegisterValueRange"));
 		deleteRegisterRangeAction.setEnabled(true);
 
 		tool.addAction(deleteRegisterRangeAction);
@@ -222,13 +205,13 @@ public class RegisterPlugin extends ProgramPlugin {
 					return false;
 				}
 			};
-		deleteRegisterAtFunctionAction.setPopupMenuData(new MenuData(
-			new String[] { "Delete Register Value Range..." }, null, "Registers"));
+		deleteRegisterAtFunctionAction.setPopupMenuData(
+			new MenuData(new String[] { "Delete Register Value Range..." }, null, "Registers"));
 		deleteRegisterAtFunctionAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		deleteRegisterAtFunctionAction.setDescription("Delete register value range.");
-		deleteRegisterAtFunctionAction.setHelpLocation(new HelpLocation("RegisterPlugin",
-			"DeleteRegisterValueRange"));
+		deleteRegisterAtFunctionAction.setHelpLocation(
+			new HelpLocation("RegisterPlugin", "DeleteRegisterValueRange"));
 		deleteRegisterAtFunctionAction.setEnabled(true);
 
 		tool.addAction(deleteRegisterAtFunctionAction);
@@ -254,8 +237,8 @@ public class RegisterPlugin extends ProgramPlugin {
 		while (it.hasNext()) {
 			AddressRange range = it.next();
 			if (range.contains(addr)) {
-				Command cmd =
-					new SetRegisterCmd(register, range.getMinAddress(), range.getMaxAddress(), null);
+				Command cmd = new SetRegisterCmd(register, range.getMinAddress(),
+					range.getMaxAddress(), null);
 				if (!tool.execute(cmd, context.getProgram())) {
 					Msg.showError(this, tool.getToolFrame(), "Register Context Error",
 						cmd.getStatusMsg());
@@ -356,7 +339,7 @@ public class RegisterPlugin extends ProgramPlugin {
 	@Override
 	protected void programActivated(Program program) {
 		registerMgrProvider.setProgram(program);
-		ArrayList<Register> list = new ArrayList<Register>();
+		ArrayList<Register> list = new ArrayList<>();
 		for (Register reg : program.getProgramContext().getRegisters()) {
 			if (!reg.isHidden()) {
 				list.add(reg);
@@ -442,7 +425,8 @@ public class RegisterPlugin extends ProgramPlugin {
 
 		@Override
 		public Class<?>[] getSupportedProgramLocations() {
-			return new Class[] { RegisterTransitionFieldLocation.class, RegisterFieldLocation.class };
+			return new Class[] { RegisterTransitionFieldLocation.class,
+				RegisterFieldLocation.class };
 		}
 
 	}

@@ -26,8 +26,10 @@ import java.util.zip.ZipFile;
 
 import javax.swing.KeyStroke;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
@@ -92,7 +94,7 @@ class GhidraScriptActionManager {
 					action.setKeyBindingData(null);
 				}
 				else {
-					KeyStroke stroke = DockingKeyBindingAction.parseKeyStroke(strokeStr);
+					KeyStroke stroke = KeyBindingUtils.parseKeyStroke(strokeStr);
 					if (stroke == null) {
 						break;
 					}
@@ -137,7 +139,7 @@ class GhidraScriptActionManager {
 				saveState.putString(scriptFile.getName(), "");
 			}
 			else {
-				String strokeStr = DockingKeyBindingAction.parseKeyStroke(stroke);
+				String strokeStr = KeyBindingUtils.parseKeyStroke(stroke);
 				saveState.putString(scriptFile.getName(), strokeStr);
 			}
 		}
@@ -464,7 +466,6 @@ class GhidraScriptActionManager {
 		if (action == null) {
 			action = new ScriptAction(plugin, script);
 			actionMap.put(script, action);
-			plugin.getTool().addAction(action);
 		}
 		return action;
 	}
@@ -628,13 +629,11 @@ class GhidraScriptActionManager {
 	private class RerunLastScriptAction extends DockingAction {
 
 		RerunLastScriptAction(String toolbarGroup) {
-			super(RERUN_LAST_SHARED_ACTION_NAME, plugin.getName(), false);
+			super(RERUN_LAST_SHARED_ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 
 			setToolBarData(
 				new ToolBarData(ResourceManager.loadImage("images/play_again.png"), toolbarGroup));
 			setDescription("Rerun the last run script");
-			setEnabled(false);
-
 			setHelpLocation(new HelpLocation(plugin.getName(), "Run_Last"));
 
 			initKeyStroke(RERUN_LAST_SCRIPT_KEYSTROKE);
@@ -646,11 +645,6 @@ class GhidraScriptActionManager {
 			}
 
 			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		@Override
-		public boolean usesSharedKeyBinding() {
-			return true;
 		}
 
 		@Override

@@ -39,7 +39,7 @@ public class CollapseAllDataAction extends ProgramLocationContextAction {
 	private CodeViewerProvider provider;
 
 	public CollapseAllDataAction(CodeViewerProvider provider) {
-		super("Collapse All Data", provider.getName());
+		super("Collapse All Data", provider.getOwner());
 		this.provider = provider;
 
 		setPopupMenuData(new MenuData(new String[] { "Collapse All Data" }, null, "Structure"));
@@ -95,8 +95,7 @@ public class CollapseAllDataAction extends ProgramLocationContextAction {
 
 		ProgramLocation location = context.getLocation();
 		Data data = getTopLevelComponentData(location);
-		TaskLauncher.launchModal("Collapse Data",
-			monitor -> model.closeAllData(data, monitor));
+		TaskLauncher.launchModal("Collapse Data", monitor -> model.closeAllData(data, monitor));
 	}
 
 	private ListingModel getModel() {

@@ -33,6 +33,8 @@ import resources.icons.TranslateIcon;
  */
 public class Icons {
 
+	public static final ImageIcon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
+
 	public static final ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus2.png");
 
 	public static final ImageIcon COLLAPSE_ALL_ICON =

@@ -349,22 +349,6 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given <tt>containingString</tt> contains the given
-	 * <tt>substring</tt>, ignoring case.
-	 *
-	 * @param containingString the string which may contain the prefix
-	 * @param substring the string for which to search within the containing string
-	 * @return true if the given <tt>containingString</tt> contains the given
-	 *         <tt>substring</tt>, ignoring case.
-	 */
-	public static boolean containsIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return false;
-		}
-		return (indexOfIgnoreCase(containingString, substring, 0) >= 0);
-	}
-
-	/**
 	 * Returns true if all the given <tt>searches</tt> are contained in the given string.
 	 *
 	 * @param toSearch the string to search
@@ -456,61 +440,6 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns the index of the first occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, ignoring case to look for the substring.
-	 * <p>
-	 * This method is a convenience method for calling:
-	 * <pre>
-	 *     <tt>indexOfIgnoreCase( containingString, substring, 0 );</tt>
-	 * </pre>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @return index of substring within the given containing string
-	 */
-	public static int indexOfIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return indexOfIgnoreCase(containingString, substring, 0);
-	}
-
-	/**
-	 * Returns the index of the first occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, starting at the given <tt>index</tt>,
-	 * ignoring case to look for the substring.
-	 * <p>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @param index the index from which to start the comparison
-	 * @return index of substring within the given containing string
-	 */
-	public static int indexOfIgnoreCase(String containingString, String substring, int index) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return (containingString.toLowerCase().indexOf(substring.toLowerCase(), index));
-	}
-
-	/**
-	 * Returns the index of the last occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, ignoring case to look for the substring.
-	 * <p>
-	 * This method is a convenience method for calling:
-	 * <pre>
-	 *     <tt>lastIndexOfIgnoreCase( containingString, substring, 0 );</tt>
-	 * </pre>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @return index of substring within the given containing string
-	 */
-	public static int lastIndexOfIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return (containingString.toLowerCase().lastIndexOf(substring.toLowerCase()));
-	}
-
-	/**
 	 * Convert tabs in the given string to spaces.
 	 *
 	 * @param str
@@ -532,10 +461,8 @@ public class StringUtilities {
 			char c = str.charAt(i);
 			if (c == '\t') {
 				int nSpaces = tabSize - (linepos % tabSize);
-				String pad = padString("", ' ', nSpaces);
-
+				String pad = pad("", ' ', nSpaces);
 				buffer.append(pad);
-
 				linepos += nSpaces;
 			}
 			else {
@@ -604,23 +531,6 @@ public class StringUtilities {
 		String trimmed = trim(s, size + ELLIPSES.length());
 		String padded = pad(trimmed, pad, -size);
 		return padded;
-	}
-
-	/**
-	 * Pads the source string to the specified length, using the filler string
-	 * as the pad. If length is negative, left justifies the string, appending
-	 * the filler; if length is positive, right justifies the source string.
-	 *
-	 * @param source the original string to pad.
-	 * @param filler the type of characters with which to pad
-	 * @param length the length of padding to add (0 results in no changes)
-	 * @return the padded string
-	 * @deprecated use {@link #pad(String, char, int)}; functionally the same, but smaller
-	 *             and more consistent name
-	 */
-	@Deprecated
-	public static String padString(String source, char filler, int length) {
-		return pad(source, filler, length);
 	}
 
 	/**

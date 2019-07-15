@@ -1092,6 +1092,26 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		runSwing(runnable, true);
 	}
 
+	/**
+	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable to throw
+	 * an exception 
+	 * @param runnable the runnable
+	 * @param wait true signals to wait for the Swing operation to finish
+	 * @throws Throwable any excption that is thrown on the Swing thread
+	 */
+	public static void runSwingWithExceptions(Runnable runnable, boolean wait) throws Throwable {
+
+		if (Swing.isSwingThread()) {
+			throw new AssertException("Unexpectedly called from the Swing thread");
+		}
+
+		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(runnable);
+		Throwable throwable = exceptionHandlingRunner.getException();
+		if (throwable != null) {
+			throw throwable;
+		}
+	}
+
 	public static void runSwing(Runnable runnable, boolean wait) {
 		if (SwingUtilities.isEventDispatchThread()) {
 			runnable.run();
@@ -1115,7 +1135,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		};
 
 		SwingUtilities.invokeLater(swingExceptionCatcher);
-
 	}
 
 	protected static class ExceptionHandlingRunner {

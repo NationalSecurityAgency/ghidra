@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +22,18 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 
-public class DeleteFunctionDefaultPlates extends GhidraScript {
+public class DeleteFunctionDefaultPlatesScript extends GhidraScript {
 
 	private static String DEFAULT_PLATE = " FUNCTION";
-	/* (non-Javadoc)
-	 * @see ghidra.app.script.GhidraScript#run()
-	 */
+
 	@Override
-    public void run() throws Exception {
+	public void run() throws Exception {
 
 		AddressSetView set = currentProgram.getMemory();
 		if (currentSelection != null && !currentSelection.isEmpty()) {
 			set = currentSelection;
 		}
-		int updateCount=0;
+		int updateCount = 0;
 		FunctionIterator iter = currentProgram.getFunctionManager().getFunctions(set, true);
 		while (iter.hasNext()) {
 			Function function = iter.next();
@@ -47,7 +44,7 @@ public class DeleteFunctionDefaultPlates extends GhidraScript {
 			}
 		}
 		if (updateCount > 0) {
-			String cmt = updateCount > 1? "comments" : "comment";
+			String cmt = updateCount > 1 ? "comments" : "comment";
 			println("Removed " + updateCount + " default plate " + cmt + ".");
 		}
 		else {

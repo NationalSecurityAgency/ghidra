@@ -39,7 +39,7 @@ public class ToggleExpandCollapseDataAction extends ProgramLocationContextAction
 	private CodeViewerProvider provider;
 
 	public ToggleExpandCollapseDataAction(CodeViewerProvider provider) {
-		super("Toggle Expand/Collapse Data", provider.getName());
+		super("Toggle Expand/Collapse Data", provider.getOwner());
 		this.provider = provider;
 
 		setPopupMenuData(

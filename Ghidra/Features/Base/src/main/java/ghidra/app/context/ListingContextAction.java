@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +15,28 @@
  */
 package ghidra.app.context;
 
-
 import java.util.Set;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.KeyBindingType;
 
 public abstract class ListingContextAction extends DockingAction {
-	
-    public ListingContextAction(String name, String owner) {
-        this(name, owner, true);
-    }
-    
-	public ListingContextAction(String name, String owner, boolean isKeyBindingManaged) {
-		super(name, owner, isKeyBindingManaged);
+
+	public ListingContextAction(String name, String owner) {
+		super(name, owner);
 	}
-	
+
+	public ListingContextAction(String name, String owner, KeyBindingType kbType) {
+		super(name, owner, kbType);
+	}
+
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		if (!(context instanceof ListingActionContext)) {
 			return false;
 		}
-		return isEnabledForContext((ListingActionContext)context);
+		return isEnabledForContext((ListingActionContext) context);
 	}
 
 	@Override
@@ -45,38 +44,38 @@ public abstract class ListingContextAction extends DockingAction {
 		if (!(context instanceof ListingActionContext)) {
 			return false;
 		}
-		return isValidContext((ListingActionContext)context);
+		return isValidContext((ListingActionContext) context);
 	}
-	 
+
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		if (!(context instanceof ListingActionContext)) {
 			return false;
 		}
-		return isAddToPopup((ListingActionContext)context);
+		return isAddToPopup((ListingActionContext) context);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		actionPerformed((ListingActionContext)context);
+		actionPerformed((ListingActionContext) context);
 	}
 
 	protected boolean isAddToPopup(ListingActionContext context) {
-		return isEnabledForContext( context );
+		return isEnabledForContext(context);
 	}
-	
+
 	protected boolean isValidContext(ListingActionContext context) {
 		return true;
 	}
-	
+
 	protected boolean isEnabledForContext(ListingActionContext context) {
 		return true;
 	}
 
 	protected void actionPerformed(ListingActionContext context) {
-		
+		// clients need to override this method
 	}
-	
+
 	@Override
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
 		for (Class<?> class1 : contextTypes) {

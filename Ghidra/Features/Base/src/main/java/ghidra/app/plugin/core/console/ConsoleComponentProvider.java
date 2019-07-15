@@ -64,11 +64,11 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private PrintWriter stdin;
 	private Program currentProgram;
 
-	public ConsoleComponentProvider(PluginTool tool, String name) {
-		super(tool, name, name);
+	public ConsoleComponentProvider(PluginTool tool, String owner) {
+		super(tool, "Console", owner);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
-		setHelpLocation(new HelpLocation(getName(), "console"));
+		setHelpLocation(new HelpLocation(owner, owner));
 		setIcon(ResourceManager.loadImage(CONSOLE_GIF));
 		setWindowMenuGroup("Console");
 		setSubTitle("Scripting");
@@ -94,7 +94,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
-		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
+		HelpLocation help = new HelpLocation(getOwner(), getOwner());
 		options.registerOption(FONT_OPTION_LABEL, DEFAULT_FONT, help, FONT_DESCRIPTION);
 		options.setOptionsHelpLocation(help);
 		font = options.getFont(FONT_OPTION_LABEL, DEFAULT_FONT);
@@ -260,7 +260,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	}
 
 	private void createActions() {
-		clearAction = new DockingAction("Clear Console", getName()) {
+		clearAction = new DockingAction("Clear Console", getOwner()) {
 
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -273,7 +273,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 
 		clearAction.setEnabled(true);
 
-		scrollAction = new ToggleDockingAction("Scroll Lock", getName()) {
+		scrollAction = new ToggleDockingAction("Scroll Lock", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				textPane.setScrollLock(isSelected());

@@ -44,7 +44,7 @@ class CreateArrayAction extends DockingAction {
 	private DataPlugin plugin;
 
 	public CreateArrayAction(DataPlugin plugin) {
-		super("Define Array", plugin.getName(), false);
+		super("Define Array", plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(CREATE_ARRAY_POPUP_MENU, "BasicData"));
@@ -59,11 +59,6 @@ class CreateArrayAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

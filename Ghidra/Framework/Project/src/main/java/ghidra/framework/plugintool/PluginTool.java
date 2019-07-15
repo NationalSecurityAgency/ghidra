@@ -15,7 +15,8 @@
  */
 package ghidra.framework.plugintool;
 
-import static ghidra.framework.model.ToolTemplate.*;
+import static ghidra.framework.model.ToolTemplate.TOOL_INSTANCE_NAME_XML_NAME;
+import static ghidra.framework.model.ToolTemplate.TOOL_NAME_XML_NAME;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -149,16 +150,16 @@ public abstract class PluginTool extends AbstractDockingTool
 		this.projectManager = projectManager;
 		this.toolServices = toolServices;
 		propertyChangeMgr = new PropertyChangeSupport(this);
-		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
-		taskMgr = new ToolTaskManager(this);
 		optionsMgr = new OptionsManager(this);
+		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
+		toolActions = new ToolActions(this, new ActionToGuiHelper(winMgr));
+		taskMgr = new ToolTaskManager(this);
 		setToolOptionsHelpLocation();
 		winMgr.addStatusItem(taskMgr.getMonitorComponent(), false, true);
 		winMgr.removeStatusItem(taskMgr.getMonitorComponent());
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		actionMgr = new ToolActions(this, winMgr);
 		pluginMgr = new PluginManager(this, serviceMgr);
 		dialogMgr = new DialogManager(this);
 		initActions();
@@ -189,8 +190,8 @@ public abstract class PluginTool extends AbstractDockingTool
 			boolean isModal) {
 
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
-		DockingWindowManager newManager = new DockingWindowManager("EMPTY", windowIcons, this,
-			isModal, isDockable, hasStatus, null);
+		DockingWindowManager newManager =
+			new DockingWindowManager(this, windowIcons, this, isModal, isDockable, hasStatus, null);
 		return newManager;
 	}
 
@@ -460,7 +461,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		winMgr.setVisible(false);
 		eventMgr.clearLastEvents();
 		pluginMgr.dispose();
-		actionMgr.dispose();
+		toolActions.dispose();
 
 		if (project != null) {
 			project.releaseFiles(this);
@@ -1300,7 +1301,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	protected void restoreOptionsFromXml(Element root) {
 		optionsMgr.setConfigState(root.getChild("OPTIONS"));
-		actionMgr.restoreKeyBindings();
+		toolActions.restoreKeyBindings();
 		setToolOptionsHelpLocation();
 	}
 
@@ -1321,8 +1322,8 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	void removeAll(String owner) {
-		actionMgr.removeToolActions(owner);
-		winMgr.removeAll(owner);
+		toolActions.removeActions(owner);
+		winMgr.ownerRemoved(owner);
 	}
 
 	void registerEventProduced(Class<? extends PluginEvent> eventClass) {
@@ -1463,40 +1464,17 @@ public abstract class PluginTool extends AbstractDockingTool
 		DockingWindowManager.showDialog(getToolFrame(), dialogComponent, centeredOnComponent);
 	}
 
-	/**
-	 * Returns the ComponentProvider with the given name.  If more than one provider exists with the name,
-	 * one will be returned, but it could be any one of them.
-	 * @param name the name of the provider to return.
-	 * @return a provider with the given name, or null if no providers with that name exist.
-	 */
-	@Override
-	public ComponentProvider getComponentProvider(String name) {
-		return winMgr.getComponentProvider(name);
-	}
-
 	public Window getActiveWindow() {
 		return winMgr.getActiveWindow();
 	}
 
+	@Override
 	public ComponentProvider getActiveComponentProvider() {
 		return winMgr.getActiveComponentProvider();
 	}
 
-	@Override
-	public void contextChanged(ComponentProvider provider) {
-		winMgr.contextChanged(provider);
-	}
-
-	public void addContextListener(DockingContextListener listener) {
-		winMgr.addContextListener(listener);
-	}
-
-	public void removeContextListener(DockingContextListener listener) {
-		winMgr.removeContextListener(listener);
-	}
-
 	public void refreshKeybindings() {
-		actionMgr.restoreKeyBindings();
+		toolActions.restoreKeyBindings();
 	}
 
 	public void setUnconfigurable() {

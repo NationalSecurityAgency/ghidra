@@ -402,7 +402,7 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		provider.addAction(new DeleteAction());
 	}
 
-	public List<DockingActionIf> getDockingActions(ActionContext currentContext) {
+	public List<DockingActionIf> getDockingActions() {
 		List<DockingActionIf> list = new ArrayList<>(table.getDefaultDockingActions());
 		Project project = tool.getProject();
 		ToolChest toolChest = project.getLocalToolChest();
