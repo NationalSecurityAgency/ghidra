@@ -246,6 +246,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private boolean goToFunctionSignature(Address address) {
 
+		if (!decompileData.hasDecompileResults()) {
+			return false;
+		}
+
 		Address entry = decompileData.getFunction().getEntryPoint();
 		if (!entry.equals(address)) {
 			return false;
