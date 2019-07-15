@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.prototype.match;
+package ghidra.app.plugin.match;
 
 import java.util.ArrayList;
 
@@ -22,9 +22,7 @@ import generic.hash.MessageDigest;
 import generic.stl.Pair;
 import ghidra.program.model.lang.IncompatibleMaskException;
 import ghidra.program.model.lang.Mask;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -75,15 +73,14 @@ public class ExactInstructionsFunctionHasher extends AbstractFunctionHasher {
 		byte[] buffer = new byte[byteCount];
 		int offset = 0;
 		for (CodeUnit codeUnit : units) {
-			if (monitor.isCancelled()) {
-				return 0;
-			}
+			monitor.checkCanceled();
+
 			try {
 				codeUnit.getBytesInCodeUnit(buffer, offset);
 				applyMask(buffer, offset, codeUnit);
 			}
 			catch (MemoryAccessException e) {
-				Msg.warn(this, "Could not get code unit bvtes at " + codeUnit.getAddress());
+				Msg.warn(this, "Could not get code unit bytes at " + codeUnit.getAddress());
 			}
 			offset += codeUnit.getLength();
 		}
@@ -98,15 +95,22 @@ public class ExactInstructionsFunctionHasher extends AbstractFunctionHasher {
 	}
 
 	private static void applyMask(byte[] buffer, int offset, CodeUnit codeUnit) {
-		if (codeUnit instanceof Instruction) {
-			Instruction i = (Instruction) codeUnit;
-			Mask mask = i.getPrototype().getInstructionMask();
-			try {
-				mask.applyMask(buffer, offset, buffer, offset);
-			}
-			catch (IncompatibleMaskException e) {
-				throw new RuntimeException(e);
-			}
+		if (!(codeUnit instanceof Instruction)) {
+			return;
 		}
+
+		Instruction i = (Instruction) codeUnit;
+		Mask mask = i.getPrototype().getInstructionMask();
+		if (mask == null) {
+			return;
+		}
+
+		try {
+			mask.applyMask(buffer, offset, buffer, offset);
+		}
+		catch (IncompatibleMaskException e) {
+			throw new RuntimeException(e);
+		}
+
 	}
 }

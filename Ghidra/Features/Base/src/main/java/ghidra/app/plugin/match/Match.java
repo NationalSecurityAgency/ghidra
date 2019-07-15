@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,7 @@
  * To change the template for this generated file go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-package ghidra.app.plugin.prototype.match;
+package ghidra.app.plugin.match;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;

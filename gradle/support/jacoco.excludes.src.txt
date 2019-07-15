@@ -93,6 +93,7 @@ ghidra/app/plugin/core/printing/**
 ghidra/file/formats/**
 ghidra/file/jad/**
 ghidra/app/cmd/formats/**
+ghidra/app/util/bin/format/**
 mobiledevices/**
 
 

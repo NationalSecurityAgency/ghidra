@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.prototype.match;
+/*
+ * Created on Nov 10, 2003
+ *
+ * To change the template for this generated file go to
+ * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ */
+package ghidra.app.plugin.match;
 
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolTable;
 
@@ -29,24 +35,28 @@ import ghidra.program.model.symbol.SymbolTable;
  * To change the template for this generated type comment go to
  * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
  */
-public class FunctionMatchSet extends ArrayList<SubroutineMatch> {
+public class SubroutineMatchSet extends ArrayList<SubroutineMatch> {
 	public final Program aProgram;
 	public final Program bProgram;
 	private final SymbolTable aSymbolTable;
 	private final SymbolTable bSymbolTable;
+	private final CodeBlockModel aModel;
+	private final CodeBlockModel bModel;
 
 	/**
 	 * @param thisProgramName Name of this program (i.e. the program from
 	 * which the matching was initiated.
 	 * @param otherProgramName Name of the program being matched.
 	 */
-	public FunctionMatchSet(Program aProgram, Program bProgram) {
+	public SubroutineMatchSet(Program aProgram, CodeBlockModel aModel, Program bProgram,
+			CodeBlockModel bModel) {
 		super();
 		this.aProgram = aProgram;
 		this.bProgram = bProgram;
 		this.aSymbolTable = aProgram.getSymbolTable();
 		this.bSymbolTable = bProgram.getSymbolTable();
-
+		this.aModel = aModel;
+		this.bModel = bModel;
 	}
 
 	/**
@@ -74,16 +84,30 @@ public class FunctionMatchSet extends ArrayList<SubroutineMatch> {
 //		return a;
 //	}
 
-	public int getLength(Address addr, Program aProgram) {
-		Function func = aProgram.getFunctionManager().getFunctionContaining(addr);
-		AddressSetView asv = func.getBody();
-		return (int) asv.getNumAddresses();
+	public int getLength(Address addr, CodeBlockModel model) {
+		int length = 0;
+		try {
+			CodeBlock block = model.getCodeBlockAt(addr, null);
+			length = (int) block.getNumAddresses();
+		}
+		catch (Exception e) {
+			return 0;
+		}
+		return length;
 
 	}
 
 	/** Assumes the address is in program a */
 	public int getLength(Address addr) {
-		return getLength(addr, aProgram);
+		return getLength(addr, aModel);
+	}
+
+	CodeBlockModel getAModel() {
+		return aModel;
+	}
+
+	CodeBlockModel getBModel() {
+		return bModel;
 	}
 
 	SymbolTable getATable() {

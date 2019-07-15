@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.prototype.match;
+package ghidra.app.plugin.match;
+
+import java.util.ArrayList;
 
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
 
 public class ExactMnemonicsFunctionHasher extends ExactInstructionsFunctionHasher {
 	@SuppressWarnings("hiding")
@@ -36,9 +37,8 @@ public class ExactMnemonicsFunctionHasher extends ExactInstructionsFunctionHashe
 			throws MemoryAccessException, CancelledException {
 		StringBuilder sb = new StringBuilder();
 		for (CodeUnit codeUnit : units) {
-			if (monitor.isCancelled()) {
-				return 0;
-			}
+			monitor.checkCanceled();
+
 			if (codeUnit instanceof Instruction) {
 				Instruction inst = (Instruction) codeUnit;
 				String mnemonic = inst.getMnemonicString();
@@ -56,7 +56,8 @@ public class ExactMnemonicsFunctionHasher extends ExactInstructionsFunctionHashe
 					}
 					sb.append(chars);
 				}
-				catch (Exception e) {
+				catch (MemoryAccessException e) {
+					Msg.warn(this, "Could not get code unit bytes at " + codeUnit.getAddress());
 					sb.append(codeUnit.getAddressString(true, true));
 				}
 			}
