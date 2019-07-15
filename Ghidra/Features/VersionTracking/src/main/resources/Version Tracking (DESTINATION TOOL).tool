@@ -34,11 +34,7 @@
                                     <SPLIT_NODE WIDTH="1475" HEIGHT="596" DIVIDER_LOCATION="632" ORIENTATION="HORIZONTAL">
                                         <SPLIT_NODE WIDTH="950" HEIGHT="985" DIVIDER_LOCATION="894" ORIENTATION="HORIZONTAL">
                                             <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: notepad.exe.2" ACTIVE="true" GROUP="" INSTANCE_ID="2777482860928188961" />
-                                                <COMPONENT_INFO NAME="Test Listing" OWNER="Test Listing" TITLE="Test Listing" ACTIVE="false" GROUP="" INSTANCE_ID="2733632016422332683" />
-                                            </COMPONENT_NODE>
-                                            <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="[Listing: notepad.exe]" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="2738354194536315852" />
+                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: notepad.exe.2" ACTIVE="true" GROUP="" INSTANCE_ID="2777482860928188961" />
                                             </COMPONENT_NODE>
                                         </SPLIT_NODE>
                                         <SPLIT_NODE WIDTH="355" HEIGHT="1097" DIVIDER_LOCATION="542" ORIENTATION="VERTICAL">

@@ -34,7 +34,7 @@
                         <SPLIT_NODE WIDTH="1386" HEIGHT="638" DIVIDER_LOCATION="705" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="1399" HEIGHT="642" DIVIDER_LOCATION="679" ORIENTATION="HORIZONTAL">
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3207819926581772881" />
+                                    <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3207819926581772881" />
                                 </COMPONENT_NODE>
                                 <COMPONENT_NODE TOP_INFO="0">
                                     <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772879" />

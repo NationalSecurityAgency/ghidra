@@ -31,7 +31,7 @@
                                 </SPLIT_NODE>
                                 <SPLIT_NODE WIDTH="996" HEIGHT="491" DIVIDER_LOCATION="622" ORIENTATION="HORIZONTAL">
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: WinHelloCPP.exe" ACTIVE="false" GROUP="Default" INSTANCE_ID="2978368332383876916" />
+                                        <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: WinHelloCPP.exe" ACTIVE="false" GROUP="Default" INSTANCE_ID="2978368332383876916" />
                                     </COMPONENT_NODE>
                                     <COMPONENT_NODE TOP_INFO="0">
                                         <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompiler" ACTIVE="false" GROUP="Default" INSTANCE_ID="2999653489311119725" />
@@ -43,9 +43,6 @@
                             </COMPONENT_NODE>
                         </SPLIT_NODE>
                         <SPLIT_NODE WIDTH="100" HEIGHT="100" DIVIDER_LOCATION="0" ORIENTATION="VERTICAL">
-                            <COMPONENT_NODE TOP_INFO="0">
-                                <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: WinHelloCPP.exe" ACTIVE="true" GROUP="Core" INSTANCE_ID="2999653489311119722" />
-                            </COMPONENT_NODE>
                             <COMPONENT_NODE TOP_INFO="0">
                                 <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="2999653489311119724" />
                             </COMPONENT_NODE>

@@ -35,6 +35,10 @@ import ghidra.util.SystemUtilities;
  * is active, then this node will create a tabbedPane object to contain the active components.
  */
 class ComponentNode extends Node {
+
+	private static final String OLD_LISTING_NAME = "CodeBrowserPlugin";
+	private static final String NEW_LISTING_NAME = "Listing";
+
 	private ComponentPlaceholder top;
 	private List<ComponentPlaceholder> windowPlaceholders;
 	private JComponent comp;
@@ -69,6 +73,7 @@ class ComponentNode extends Node {
 	 * @param elem the xml element describing the configuration of this node.
 	 * @param mgr the docking windows manager
 	 * @param parent the parent node for this node.
+	 * @param restoredPlaceholders the list into which any restored placeholders will be placed
 	 */
 	ComponentNode(Element elem, DockingWindowManager mgr, Node parent,
 			List<ComponentPlaceholder> restoredPlaceholders) {
@@ -90,13 +95,10 @@ class ComponentNode extends Node {
 				group = ComponentProvider.DEFAULT_WINDOW_GROUP;
 			}
 
-			// SCR #4120 - Ignore old, buggy child nodes that had too long titles.  This
-			// will cleanup slow loading XML project files.
-			if (name.length() > 100) {
-				name = name.substring(0, 100);
-			}
-			if (title.length() > 100) {
-				title = title.substring(0, 100);
+			// TODO remove this in a few major releases after 9.1; this prevents existing tools
+			// from losing layout positioning information due to a recent rename
+			if (OLD_LISTING_NAME.equals(name)) {
+				name = NEW_LISTING_NAME;
 			}
 
 			boolean isActive = Boolean.valueOf(e.getAttributeValue("ACTIVE")).booleanValue();
@@ -232,9 +234,6 @@ class ComponentNode extends Node {
 		}
 	}
 
-	/**
-	 * Returns the number of ComponentWindowingPlaceholder objects being managed by this node.
-	 */
 	int getComponentCount() {
 		return windowPlaceholders.size();
 	}
