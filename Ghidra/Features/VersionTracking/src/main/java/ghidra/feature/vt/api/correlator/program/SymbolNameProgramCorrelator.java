@@ -17,8 +17,8 @@ package ghidra.feature.vt.api.correlator.program;
 
 import java.util.*;
 
-import ghidra.app.plugin.prototype.match.MatchSymbol;
-import ghidra.app.plugin.prototype.match.MatchSymbol.MatchedSymbol;
+import ghidra.app.plugin.match.MatchSymbol;
+import ghidra.app.plugin.match.MatchSymbol.MatchedSymbol;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;

@@ -15,7 +15,7 @@
  */
 package ghidra.feature.vt.api.correlator.program;
 
-import ghidra.app.plugin.prototype.match.ExactInstructionsFunctionHasher;
+import ghidra.app.plugin.match.ExactInstructionsFunctionHasher;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelatorFactory;
 import ghidra.feature.vt.api.util.VTOptions;

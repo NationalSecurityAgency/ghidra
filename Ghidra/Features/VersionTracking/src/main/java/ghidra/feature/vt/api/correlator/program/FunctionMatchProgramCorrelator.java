@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.plugin.core.entropy.EntropyCalculate;
-import ghidra.app.plugin.prototype.match.FunctionHasher;
-import ghidra.app.plugin.prototype.match.MatchFunctions;
-import ghidra.app.plugin.prototype.match.MatchFunctions.MatchedFunctions;
+import ghidra.app.plugin.match.FunctionHasher;
+import ghidra.app.plugin.match.MatchFunctions;
+import ghidra.app.plugin.match.MatchFunctions.MatchedFunctions;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
