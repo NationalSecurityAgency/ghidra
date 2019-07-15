@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.emf.mwe2.launch.Mwe2LaunchConfigurationType">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/ghidra.xtext.sleigh"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="4"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+<listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.debug.core.ATTR_REFRESH_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;resources&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.ide&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.ui&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.feature&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.tests&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.ui.tests&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.tests&quot; type=&quot;4&quot;/&gt;&#10;&lt;item path=&quot;/ghidra.xtext.sleigh.ui.tests&quot; type=&quot;4&quot;/&gt;&#10;;&lt;/resources&gt;}"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.xtext.sleigh.GenerateSleigh"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ghidra.xtext.sleigh"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx512m"/>
+</launchConfiguration>

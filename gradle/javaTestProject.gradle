@@ -64,16 +64,16 @@ task integrationTest (type: Test) { t ->
 	}
 }
 
-task cunitTest (type: Test) { t ->	
-    group "cunit"	
+task pcodeTest (type: Test) { t ->	
+    group "pcodeTest"	
     dependsOn { project(":FunctionID").unpackFidDatabases }	
-    testClassesDirs = files sourceSets.cunitTest.output.classesDirs
-	classpath = sourceSets.cunitTest.runtimeClasspath
+    testClassesDirs = files sourceSets.pcodeTest.output.classesDirs
+	classpath = sourceSets.pcodeTest.runtimeClasspath
 	
 	// Enable if you want to force Gradle to launch a new JVM for each test.
     forkEvery 1	
     	
-	initTestJVM(t, rootProject.ext.cunitTestRootDirName)
+	initTestJVM(t, rootProject.ext.pcodeTestRootDirName)
 	
 	doFirst {
 		startTestTimer(t)
@@ -86,8 +86,8 @@ task cunitTest (type: Test) { t ->
 rootProject.unitTestReport {
 	reportOn this.project.test
 }
-rootProject.cunitTestReport {
-	reportOn this.project.cunitTest
+rootProject.pcodeTestReport {
+	reportOn this.project.pcodeTest
 }
 rootProject.combinedTestReport { 
 	reportOn this.project.test

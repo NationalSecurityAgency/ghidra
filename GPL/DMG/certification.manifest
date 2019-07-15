@@ -16,3 +16,4 @@ data/os/win64/llio_amd64.dll||GPL 3||||END|
 data/os/win64/llio_i386.dll||GPL 3||||END|
 data/os/win64/llio_ia64.dll||GPL 3||||END|
 data/server_memory.cfg||Public Domain||||END|
+settings.gradle||Public Domain||||END|

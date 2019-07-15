@@ -56,17 +56,17 @@ if (!project.hasProperty('srcTreeName')) {
 }
 
 project.ext.testRootDirName = "JunitTest_" + srcTreeName
-project.ext.cunitTestRootDirName = "CunitTest_" + srcTreeName
+project.ext.pcodeTestRootDirName = "PCodeTest_" + srcTreeName
 
 project.ext.shareDir = System.properties.get('share.dir')
 if (project.ext.shareDir != null) {
 	// add src tree name to machine specified share path
 	project.ext.testShareDir = shareDir + "/" + testRootDirName
-	project.ext.cunitTestShareDir = shareDir + "/" + cunitTestRootDirName
+	project.ext.pcodeTestShareDir = shareDir + "/" + pcodeTestRootDirName
 }
 else {
 	project.ext.testShareDir = "$rootTestDir" + "/JUnit"
-	project.ext.cunitTestShareDir = "$rootTestDir" + "/CUnit"
+	project.ext.pcodeTestShareDir = "$rootTestDir" + "/PCodeTest"
 }
 
 project.ext.upgradeProgramErrorMessage = "WARNING! Attempting data upgrade for "
@@ -454,27 +454,27 @@ task combinedTestReport(type: TestReport) { t ->
 }
 
 /*********************************************************************************
- * CUNIT TEST REPORT
+ * P-CODE TEST REPORT
  *
- * Summary:	Runs all CUNIT tests
+ * Summary:	Runs all P-Code Tests
  *
  *********************************************************************************/
-task cunitTestReport(type: TestReport) { t ->
-	group "cunit"
-	destinationDir = file("$cunitTestShareDir" + "/reports")
+task pcodeTestReport(type: TestReport) { t ->
+	group "pcodeTest"
+	destinationDir = file("$pcodeTestShareDir" + "/reports")
 }	
 	
 /*********************************************************************************
- * CUNIT TEST REPORT w/ CUNIT MATRIX REPORT
+ * P-CODE TEST REPORT w/ MATRIX REPORT
  *
- * Summary:	Runs all CUNIT tests and consolidate JUnit and Matrix report in
+ * Summary:	Runs all P-Code Tests and consolidates JUnit and Matrix report in
  * results directory.
  *
  *********************************************************************************/
-task cunitConsolidatedTestReport(type: Copy) {
-	group "cunit"
-	dependsOn ':cunitTestReport'
-	into (cunitTestShareDir + "/reports")
+task pcodeConsolidatedTestReport(type: Copy) {
+	group "pcodeTest"
+	dependsOn ':pcodeTestReport'
+	into (pcodeTestShareDir + "/reports")
 	from (testOutputDir + "/test-output") {
 		exclude '**/*.xml', 'cache/**'
 	}

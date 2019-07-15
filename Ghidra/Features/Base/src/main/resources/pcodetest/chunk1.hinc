@@ -1,0 +1,148 @@
+<HTML>
+<HEAD>
+  <META http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+  <TITLE>CUnit Processor Emulation Test Results"</TITLE>
+  
+  <STYLE TYPE="text/css">
+    
+    div { font-family: verdana; }
+    td { background-color: white; font-family: verdana; }
+   
+	.r90 { -moz-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); margin-bottom: 8; width: 1em; line-height: 1ex; }
+	
+	.shade { background-color:#f0f8ff; }
+	.bad   { background-color:#ffefef; }
+	.good  { background-color:#efffef; }
+		
+	.TestNameHead { width: 300; background-color:#efefef; font-weight: bold; font-family: verdana; }
+	.DateTimeHead { width: 80; background-color:#efefef; font-weight: bold; font-family: verdana; }
+	.ResultSummaryHead  { width: 80; background-color:#efefef; font-weight: bold; font-family: verdana; }
+	
+	.ResultHead { background-color:#efefef; font-family: verdana; font-size: 90%; }
+	.GroupHead  { height: 30; background-color:#efefef; font-weight: bold; font-family: verdana; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+	
+	.TestName { height: 35; width: 295; padding-left: 5; font-family: verdana; font-size: 90%; }
+	.DateTime { height: 35; width: 80; font-family: verdana; font-size: 75%; text-align: center; }
+	.ResultSummary { height: 35; width: 80; font-family: verdana; font-size: 75%; text-align: center; }
+	
+	.Result { height: 35; font-family: verdana; font-size: 75%; text-align: center; }
+	
+	.message { font-family: verdana; font-style: italic; font-size: 75%; padding-left: 5; background-color:#efef00;  }
+	
+  </STYLE>
+  
+  <SCRIPT>
+  
+  headerMinHeight = 250;
+  headerMaxHeight = 450;
+  
+  function pageInit() {
+    topLeftTable = document.getElementById("topLeftTable");
+    hsTableTop = document.getElementById("hsTableTop");
+    vsTableLeft = document.getElementById("vsTableLeft");
+    sTableRight = document.getElementById("sTableRight");
+    
+    headerTable1 = document.getElementById("headerTable1");
+    headerTable2 = document.getElementById("headerTable2");
+    
+    messageLayer = document.getElementById("messageLayer");
+    
+    setHeaderHeight(headerMinHeight);
+    
+    setLayerPositions();
+    
+    window.addEventListener("resize", onResize, false);
+    
+    onResize();
+  }
+  
+  function setLayerPositions() {
+    // set top/left corner of each layer
+    
+    vsTableLeft.style.top = topLeftTable.offsetTop + topLeftTable.offsetHeight;
+    vsTableLeft.style.left = topLeftTable.offsetLeft;
+    
+    hsTableTop.style.top = topLeftTable.offsetTop;
+    hsTableTop.style.left = topLeftTable.offsetLeft + topLeftTable.offsetWidth;
+    
+    sTableRight.style.top = vsTableLeft.offsetTop;
+    sTableRight.style.left = hsTableTop.offsetLeft;
+  }
+  
+  function onResize() {
+    // adjust layer viewport dimensions
+    
+    sTableRight.style.width = window.innerWidth - sTableRight.offsetLeft;
+    sTableRight.style.height = window.innerHeight - sTableRight.offsetTop;
+    
+    var pad = sTableRight.offsetHeight - sTableRight.clientHeight;
+    var vsTableLeftHeight = window.innerHeight - vsTableLeft.offsetTop - pad;
+    vsTableLeft.style.height = vsTableLeftHeight;
+    
+    pad = sTableRight.offsetWidth - sTableRight.clientWidth;
+    hsTableTop.style.width = window.innerWidth - hsTableTop.offsetLeft - pad;
+    
+    // NOTE: The -4 adjustment resolved scrollbar problem
+    messageLayer.style.top = vsTableLeft.offsetTop + vsTableLeftHeight - 4;
+    messageLayer.style.width = vsTableLeft.offsetWidth;
+    messageLayer.style.height = pad;
+  }
+  
+  function onScrollDiv() {
+    // perform synchronized scroll
+    vsTableLeft.scrollTop = sTableRight.scrollTop;
+    hsTableTop.scrollLeft = sTableRight.scrollLeft;
+  }
+  
+  function toggleHeaderHeight() {
+  	var h = headerTable1.offsetHeight <= headerMinHeight ? headerMaxHeight : headerMinHeight;
+  	setHeaderHeight(h);
+  }
+  
+  function setHeaderHeight(h) {
+  	headerTable1.style.height = h;
+  	headerTable2.style.height = h;
+  	
+  	setLayerPositions();
+    
+    onResize();
+  }
+  
+    function mouseOverHeader() {
+  	showMessage("<font>Click header to shrink/expand</font>");
+  }
+  
+  function mouseOutHeader() {
+  	hideMessage();
+  }
+  
+  function showMessage(msg) {
+    //window.alert(messageLayer.offsetTop + " " + messageLayer.offsetLeft + " " + messageLayer.innerHTML);
+    messageLayer.innerHTML=msg;
+  	messageLayer.style.visibility = "visible";
+  }
+  
+  function hideMessage() {
+  	messageLayer.style.visibility = "hidden";
+  }
+  
+  </SCRIPT>
+  
+  </HEAD>
+  <BODY onLoad="pageInit()">
+  
+  <DIV ID="messageLayer" CLASS="message" STYLE="position: absolute; top: 0; left: 0; z-index: 2; visibility: hidden;">MESSAGE</DIV>
+  
+  <DIV ID="topLeftTable" STYLE="position: absolute; top: 0; left: 0;">
+  <TABLE ID="headerTable1" BORDER=1 CELLSPACING=0 CELLPADDING=0 style="height: 100; cursor: pointer;" onclick="toggleHeaderHeight()" onmouseover="mouseOverHeader()" onmouseout="mouseOutHeader()">
+  <TR>
+    <TD CLASS="TestNameHead"><DIV STYLE="position:absolute; left: 8px; top: 5px; ">P-Code Test Results</DIV><DIV STYLE="position:absolute; left: 140px; bottom: 5px; "><font color="green" size="2">Pass</font>/<font color="red" size="2">Fail</font>/<font color="orange" size="2">CallOther</font></DIV></TD>
+    <TD CLASS="DateTimeHead" ALIGN="center" VALIGN="bottom"><DIV CLASS="r90">DATE/TIME</DIV></TD>
+    <TD CLASS="ResultSummaryHead" ALIGN="center" VALIGN="bottom"><DIV CLASS="r90">SUMMARY</DIV></TD>
+  </TR>
+  </TABLE>
+  </DIV>
+  
+  <DIV ID="hsTableTop" STYLE="position: absolute; overflow-x: hidden;">
+  	<TABLE ID="headerTable2" BORDER=1 CELLSPACING=0 CELLPADDING=0 style="height: 100; cursor: pointer;" onclick="toggleHeaderHeight()" onmouseover="mouseOverHeader()" onmouseout="mouseOutHeader()">
+      <!-- top of hsTableTop (p-code test/group headers) -->

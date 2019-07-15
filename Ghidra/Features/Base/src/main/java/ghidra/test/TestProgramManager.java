@@ -57,7 +57,7 @@ public class TestProgramManager {
 	 * Open a read-only test program from the test data directory.
 	 * This program must be released prior to disposing this test environment.
 	 * NOTE: Some tests rely on this method returning null when file does
-	 * not yet exist within the resource area (e.g., CUnit binaries for Processor Tests)
+	 * not yet exist within the resource area (e.g., test binaries for P-Code Tests)
 	 *
 	 * @param progName name of program database within the test data directory.
 	 * @return program or null if program file not found

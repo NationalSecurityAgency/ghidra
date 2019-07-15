@@ -1,0 +1,169 @@
+/*******************************************************************************************
+ * build.gradle file that applies this script must define two properties
+ *     1) binutilsLocation  - the folder where the original binutils.zip lives
+ *     2) binutilsPrebuiltPath - the folder where the custom prebuilt binutils lives or will be built to
+ *******************************************************************************************/
+
+defaultTasks 'assemble'
+
+ext.supportedPlatforms = ['osx64', 'linux64']
+
+ext.binutilsResource = new File("${binutilsLocation}/${binutils}.tar.bz2")
+
+def binutilsUnpackDir = file("${project.buildDir}/${binutils}/")
+
+/******************************************************************************************
+ *
+ * For each supported platform build the following tasks:
+ *        buildBinutils_<platform>			builds binutils for the platform
+ *        packageBinutilsDev_<platform>      creates the built bundle of stuf we need to build gdis
+ *        unpackBinutilsPrebuilt_<platform>  unpacks the built bundle to be used to build gdis
+ *
+ ******************************************************************************************/
+ 
+model {
+	platforms {
+		linux64 {
+			architecture 'x86_64'
+			operatingSystem 'linux'
+		}
+		osx64 {
+			architecture 'x86_64'
+			operatingSystem 'osx'
+		}
+	}	
+	
+	components {
+		
+		gdis(NativeExecutableSpec) {
+				
+			// NOTE: Windows build requires Mingw and is very very slow and touchy
+			supportedPlatforms.each { targetPlatform it}
+			
+			sources {
+				c {
+					source {
+						srcDir "src/gdis/c"
+						include "disasm_1.c"
+					}
+				}
+			}
+			binaries {
+				all { 
+					def binutilsArtifactsDir = file("build/binutils/${targetPlatform.name}")
+					if ((toolChain in Gcc) || (toolChain in Clang)) {
+						cCompiler.args "-I${binutilsArtifactsDir}/include", "-I${binutilsArtifactsDir}/bfd"
+						linker.args "-L${binutilsArtifactsDir}/lib", "-lopcodes", "-lbfd", "-liberty", "-lz", "-ldl"
+					}
+				}
+			}
+		} 
+	} 	
+	
+	tasks.compileGdisOsx64ExecutableGdisC {
+		dependsOn 'copyBinutilsArtifcats_osx64'
+	}
+	tasks.compileGdisLinux64ExecutableGdisC {
+		dependsOn 'copyBinutilsArtifcats_linux64'
+	}
+	
+}
+
+// change gdis linker output directory to build/os/<platform>
+gradle.taskGraph.whenReady {
+	def p = this.project
+	p.tasks.withType(LinkExecutable).each { t ->
+		File f = t.linkedFile.getAsFile().get()
+		String filename = f.getName()
+		NativePlatform platform = t.targetPlatform.get()
+		String osName = platform.getName()
+		t.linkedFile = p.file("build/os/${osName}/$filename")
+	}
+} 
+
+/*******************************************************************************************
+ * Task to unpack the standard binutils zip file
+ *******************************************************************************************/
+task binutilsUnpack {
+	description "Unpack binutils (for building gdis)"
+	group "Native Build Dependencies"
+	outputs.file { binutilsUnpackDir }
+	onlyIf { !binutilsUnpackDir.exists() }
+	
+	doFirst {
+		if (!binutilsResource.exists()) {
+			throw new GradleException("${binutilsResource.getCanonicalPath()} not found")
+		}
+	}
+	
+	doLast {
+		copy {
+			from tarTree(resources.bzip2("${binutilsResource}"))
+			into file("build")
+		}
+	}
+} 
+
+supportedPlatforms.each { platform ->
+
+	def buildName = "buildBinutils_${platform}"
+	def postBuildName = "copyBinutilsArtifcats_${platform}"
+		
+	def configDir = file("build/config/${platform}")
+	def artifactsDir = file("build/binutils/${platform}")
+		
+	task(buildName) {
+		description "Configure and make binutils for $platform (for building gdis)"
+		group "Native Prebuild Dependencies"
+		
+		onlyIf { !configDir.exists() }
+		
+		dependsOn binutilsUnpack
+		
+		inputs.dir binutilsUnpackDir
+		outputs.dir configDir
+		
+	 	doLast {
+
+			File binutilsDir = binutilsUnpackDir
+			delete configDir
+			
+			println "Configuring binutils - config directory: $configDir"
+			println "${binutilsDir}/configure --prefix=\"${configDir}\" --enable-targets=all --with-zlib=no --disable-nls --disable-werror"
+			configDir.mkdirs();
+			exec {
+				workingDir configDir
+				commandLine "${binutilsDir}/configure", "--prefix=${configDir}", "--enable-targets=all", "--with-zlib=no", "--disable-nls",  "--disable-werror"
+			}
+			
+			println "Building binutils - config directory: $configDir"
+			exec {
+				commandLine "make", "-C", "${configDir}", "all"
+			}
+		}	
+	}
+	
+	task(postBuildName, type: Copy) {
+		description "Copy binutil artifcacts for $platform (for building gdis)"
+		group "Native Prebuild Dependencies"
+		
+		dependsOn buildName
+		
+		destinationDir = artifactsDir
+		
+		into("/include") {
+			from("${binutilsUnpackDir}/include")
+			include "**/*.h"
+		}
+		into("/bfd") {
+			from "${configDir}/bfd"
+			include "**/*.h"
+		}
+		into("/lib") {
+			from "${configDir}/bfd/libbfd.a"
+			from "${configDir}/libiberty/libiberty.a"
+			from "${configDir}/opcodes/libopcodes.a"
+		}
+	}
+
+}

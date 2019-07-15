@@ -1,0 +1,12 @@
+// This project requires the Eclipse DSL plugin. To create Eclipse files for this project, run 
+//	"gradle eclipse -PeclipseDSL" 
+if (hasProperty("eclipseDSL")) {
+	apply plugin: 'eclipse'
+	eclipse {
+		project {
+			name = 'Eclipse SleighEditor Feature'
+			buildCommand 'org.eclipse.pde.FeatureBuilder'
+			natures 'org.eclipse.pde.FeatureNature'
+		}
+	}
+}
