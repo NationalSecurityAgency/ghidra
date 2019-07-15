@@ -170,7 +170,7 @@ public:
 /// resets and reruns the group of Actions as appropriate.
 class ActionRestartGroup : public ActionGroup {
   int4 maxrestarts;			///< Maximum number of restarts allowed
-  int4 curstart;			///< Current restart iteration
+  int4 curstart = 0;			///< Current restart iteration
 public:
   ActionRestartGroup(uint4 f,const string &nm,int4 max) :
     ActionGroup(f,nm) { maxrestarts = max; }	///< Construct this providing maximum number of restarts

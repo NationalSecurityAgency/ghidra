@@ -81,7 +81,7 @@ public:
 /// \brief Analyze change to the stack pointer across sub-function calls.
 class ActionStackPtrFlow : public Action {
   AddrSpace *stackspace;		///< Stack space associated with stack-pointer register
-  bool analysis_finished;		///< True if analysis already performed
+  bool analysis_finished = false;	///< True if analysis already performed
   static void analyzeExtraPop(Funcdata &data,AddrSpace *stackspace,int4 spcbase);
   static bool isStackRelative(Varnode *spcbasein,Varnode *vn,uintb &constval);
   static bool adjustLoad(Funcdata &data,PcodeOp *loadop,PcodeOp *storeop);
@@ -161,7 +161,7 @@ public:
 
 /// \brief Check for constants, with pointer type, that correspond to global symbols
 class ActionConstantPtr : public Action {
-  int4 localcount;		///< Number of passes made for this function
+  int4 localcount = 0;		///< Number of passes made for this function
   static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,Funcdata &data);
 public:
   ActionConstantPtr(const string &g) : Action(0,"constantptr",g) {}	///< Constructor
@@ -768,7 +768,7 @@ public:
 ///
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
-  int4 numpass;			///< Number of passes performed for this function
+  int4 numpass = 0;			///< Number of passes performed for this function
 public:
   ActionRestructureVarnode(const string &g) : Action(0,"restructure_varnode",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { numpass = 0; }
@@ -879,7 +879,7 @@ class ActionInferTypes : public Action {
 #ifdef TYPEPROP_DEBUG
   static void propagationDebug(Architecture *glb,Varnode *vn,const Datatype *newtype,PcodeOp *op,int4 slot,Varnode *ptralias);
 #endif
-  int4 localcount;					///< Number of passes performed for this function
+  int4 localcount = 0;					///< Number of passes performed for this function
   static void buildLocaltypes(Funcdata &data);		///< Assign initial data-type based on local info
   static bool writeBack(Funcdata &data);		///< Commit the final propagated data-types to Varnodes
   static int4 propagateAddPointer(PcodeOp *op,int4 slot);	///< Test if edge is pointer plus a constant
