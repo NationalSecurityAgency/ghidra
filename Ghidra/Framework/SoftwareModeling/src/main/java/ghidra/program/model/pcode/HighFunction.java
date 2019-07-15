@@ -298,6 +298,12 @@ public class HighFunction extends PcodeSyntaxTree {
 				// Do nothing with override at the moment
 				parser.discardSubTree();
 			}
+			else if (subel.getName().equals("scope")) {
+				// This must be a subscope of the local scope
+				// Currently this can only hold static variables of the function
+				// which ghidra already knows about
+				parser.discardSubTree();
+			}
 			else {
 				throw new PcodeXMLException("Unknown tag in function: " + subel.getName());
 			}

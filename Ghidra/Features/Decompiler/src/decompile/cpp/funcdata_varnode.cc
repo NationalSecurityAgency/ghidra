@@ -924,7 +924,7 @@ bool Funcdata::updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datat
 /// The Symbol is really attached to the Varnode's HighVariable (which must exist).
 /// The only reason a Symbol doesn't get set is if, the HighVariable
 /// is global and there is no pre-existing Symbol.  (see mapGlobals())
-/// \param is the given Varnode
+/// \param vn is the given Varnode
 /// \return the associated Symbol or NULL
 Symbol *Funcdata::linkSymbol(Varnode *vn)
 
@@ -1440,11 +1440,29 @@ int4 AncestorRealistic::enterNode(State &state)
     stateStack.push_back(State(op,0));
     return enter_node;			// Enter the new node
   case CPUI_SUBPIECE:
+    // Extracting to a temporary, or to the same storage location, or otherwise incidental
+    // are viewed as just another node on the path to traverse
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+	|| (op->getOut()->overlap(*op->getIn(0)) == (int4)op->getIn(1)->getOffset())) {
+      stateStack.push_back(State(op,0));
+      return enter_node;		// Push into the new node
+    }
+    // For other SUBPIECES, do a minimal traversal to rule out unaffected or other invalid inputs,
+    // but otherwise treat it as valid, active, movement into the parameter
+    do {
+      Varnode *vn = op->getIn(0);
+      if ((!vn->isMark())&&(vn->isInput())) {
+	if (vn->isUnaffected()||(!vn->isDirectWrite()))
+	  return pop_fail;
+      }
+      op = vn->getDef();
+    } while((op!=(PcodeOp *)0)&&((op->code() == CPUI_COPY)||(op->code()==CPUI_SUBPIECE)));
+    return pop_solid;	// treat the COPY as a solid movement
   case CPUI_COPY:
     // Copies to a temporary, or between varnodes with same storage location, or otherwise incidental
     // are viewed as just another node on the path to traverse
-    if ((op->getOut()->getSpace()->getType()==IPTR_INTERNAL)
-	||(op->getOut()->getAddr() == op->getIn(0)->getAddr())||(op->getIn(0)->isIncidentalCopy())) {
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+	|| (op->getOut()->getAddr() == op->getIn(0)->getAddr())) {
       stateStack.push_back(State(op,0));
       return enter_node;		// Push into the new node
     }
@@ -1523,7 +1541,7 @@ int4 AncestorRealistic::uponPop(State &state,int4 pop_command)
 /// \param op is the CALL or RETURN to test parameter passing for
 /// \param slot is the index of the particular input varnode to test
 /// \param t is the ParamTrial object corresponding to the varnode
-/// \param allowFailingPath is true if we allow and test for failing paths due to conditional execution
+/// \param allowFail is \b true if we allow and test for failing paths due to conditional execution
 /// \return \b true if the varnode has realistic ancestors for a parameter passing location
 bool AncestorRealistic::execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFail)
 
