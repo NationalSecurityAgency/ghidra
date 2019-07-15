@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.StructureDataType;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -94,11 +93,11 @@ public abstract class AbstractAttributeInfo implements StructConverter {
 	private short attributeNameIndex;
 	private int attributeLength;
 
-	protected AbstractAttributeInfo( BinaryReader reader ) throws IOException {
+	protected AbstractAttributeInfo(BinaryReader reader) throws IOException {
 		_offset = reader.getPointerIndex();
 
 		attributeNameIndex = reader.readNextShort();
-		attributeLength    = reader.readNextInt();
+		attributeLength = reader.readNextInt();
 	}
 
 	public long getOffset() {
@@ -112,8 +111,8 @@ public abstract class AbstractAttributeInfo implements StructConverter {
 	 * @see AttributesConstants
 	 * @return the attribute_name_index
 	 */
-	public short getAttributeNameIndex() {
-		return attributeNameIndex;
+	public int getAttributeNameIndex() {
+		return attributeNameIndex & 0xffff;
 	}
 
 	/**
@@ -127,10 +126,10 @@ public abstract class AbstractAttributeInfo implements StructConverter {
 		return attributeLength;
 	}
 
-	protected StructureDataType getBaseStructure( String name ) {
-		StructureDataType structure = new StructureDataType( name + "|" + attributeLength + "|", 0 );
-		structure.add(  WORD, "attribute_name_index", null );
-		structure.add( DWORD, "attribute_length"    , null );
+	protected StructureDataType getBaseStructure(String name) {
+		StructureDataType structure = new StructureDataType(name + "|" + attributeLength + "|", 0);
+		structure.add(WORD, "attribute_name_index", null);
+		structure.add(DWORD, "attribute_length", null);
 		return structure;
 	}
 }

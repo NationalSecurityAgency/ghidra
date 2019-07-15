@@ -6189,7 +6189,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 {
   int4 n;
   OpCode shiftopc;
-  PcodeOp *subop = RuleDivOpt::findSubshift(op,n,shiftopc);
+  PcodeOp *subop = findSubshift(op,n,shiftopc);
   if (subop == (PcodeOp *)0) return 0;
   // TODO: Cannot currently support 128-bit arithmetic, except in special case of 2^64
   if (n > 64) return 0;
@@ -6272,6 +6272,44 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
     return 1;
   }
   return 0;
+}
+
+/// \brief Check for shift form of expression
+///
+/// Look for the two forms:
+///  - `sub(V,c)`   or
+///  - `sub(V,c) >> n`
+///
+/// Pass back whether a shift was involved and the total truncation in bits:  `n+c*8`
+/// \param op is the root of the expression
+/// \param n is the reference that will hold the total truncation
+/// \param shiftopc will hold the shift OpCode if used, CPUI_MAX otherwise
+/// \return the SUBPIECE op if present or NULL otherwise
+PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
+
+{ // SUB( .,#c) or SUB(.,#c)>>n  return baseop and n+c*8
+  // make SUB is high
+  PcodeOp *subop;
+  shiftopc = op->code();
+  if (shiftopc != CPUI_SUBPIECE) { // Must be right shift
+    Varnode *vn = op->getIn(0);
+    if (!vn->isWritten()) return (PcodeOp *)0;
+    subop = vn->getDef();
+    if (subop->code() != CPUI_SUBPIECE) return (PcodeOp *)0;
+    if (!op->getIn(1)->isConstant()) return (PcodeOp *)0;
+    n = op->getIn(1)->getOffset();
+  }
+  else {
+    shiftopc = CPUI_MAX;	// Indicate there was no shift
+    subop = op;
+    n = 0;
+  }
+  int4 c = subop->getIn(1)->getOffset();
+  if (subop->getOut()->getSize() + c != subop->getIn(0)->getSize())
+    return (PcodeOp *)0;	// SUB is not high
+  n += 8*c;
+
+  return subop;
 }
 
 /// \class RuleDivTermAdd2
@@ -6364,42 +6402,92 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
-/// \brief Check for shift form of expression
+/// \brief Check for INT_(S)RIGHT and/or SUBPIECE followed by INT_MULT
 ///
-/// Look for the two forms:
-///  - `sub(V,c)`   or
-///  - `sub(V,c) >> n`
+/// Look for the forms:
+///  - `sub(ext(X) * #y,#c)`       or
+///  - `sub(ext(X) * #y,#c) >> n`  or
+///  - `(ext(X) * #y) >> n`
 ///
-/// Pass back whether a shift was involved and the total truncation in bits:  `n+c*8`
+/// Looks for truncation/multiplication consistent with an optimized division. The
+/// truncation can come as either a SUBPIECE operation and/or right shifts.
+/// The numerand and the amount it has been extended is discovered. The extension
+/// can be, but doesn't have to be, an explicit INT_ZEXT or INT_SEXT. If the form
+/// doesn't match NULL is returned. If the Varnode holding the extended numerand
+/// matches the final operand size, it is returned, otherwise the unextended numerand
+/// is returned. The total truncation, the multiplicative constant, the numerand
+/// size, and the extension type are all passed back.
 /// \param op is the root of the expression
-/// \param n is the reference that will hold the total truncation
-/// \param shiftopc will hold the shift OpCode if used, CPUI_MAX otherwise
-/// \return the SUBPIECE op if present or NULL otherwise
-PcodeOp *RuleDivOpt::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
+/// \param n is the reference that will hold the total number of bits of truncation
+/// \param y will hold the multiplicative constant
+/// \param xsize will hold the number of (non-zero) bits in the numerand
+/// \param extopc holds whether the extension is INT_ZEXT or INT_SEXT
+/// \return the extended numerand if possible, or the unextended numerand, or NULL
+Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &extopc)
 
-{ // SUB( .,#c) or SUB(.,#c)>>n  return baseop and n+c*8
-  // make SUB is high
-  PcodeOp *subop;
-  shiftopc = op->code();
-  if (shiftopc != CPUI_SUBPIECE) { // Must be right shift
-    Varnode *vn = op->getIn(0);
-    if (!vn->isWritten()) return (PcodeOp *)0;
-    subop = vn->getDef();
-    if (subop->code() != CPUI_SUBPIECE) return (PcodeOp *)0;
-    if (!op->getIn(1)->isConstant()) return (PcodeOp *)0;
-    n = op->getIn(1)->getOffset();
+{
+  PcodeOp *curOp = op;
+  OpCode shiftopc = curOp->code();
+  if (shiftopc == CPUI_INT_RIGHT || shiftopc == CPUI_INT_SRIGHT) {
+    Varnode *vn = curOp->getIn(0);
+    if (!vn->isWritten()) return (Varnode *)0;
+    Varnode *cvn = curOp->getIn(1);
+    if (!cvn->isConstant()) return (Varnode *)0;
+    n = cvn->getOffset();
+    curOp = vn->getDef();
   }
   else {
-    shiftopc = CPUI_MAX;	// Indicate there was no shift
-    subop = op;
-    n = 0;
+    n = 0;	// No initial shift
+    if (shiftopc != CPUI_SUBPIECE) return (Varnode *)0;	// In this case SUBPIECE is not optional
+    shiftopc = CPUI_MAX;
   }
-  int4 c = subop->getIn(1)->getOffset();
-  if (subop->getOut()->getSize() + c != subop->getIn(0)->getSize())
-    return (PcodeOp *)0;	// SUB is not high
-  n += 8*c;
+  if (curOp->code() == CPUI_SUBPIECE) {		// Optional SUBPIECE
+    int4 c = curOp->getIn(1)->getOffset();
+    Varnode *inVn = curOp->getIn(0);
+    if (!inVn->isWritten()) return (Varnode *)0;
+    if (curOp->getOut()->getSize() + c != inVn->getSize())
+      return (Varnode *)0;			// Must keep high bits
+    n += 8*c;
+    curOp = inVn->getDef();
+  }
+  if (curOp->code() != CPUI_INT_MULT) return (Varnode *)0;	// There MUST be an INT_MULT
+  Varnode *inVn = curOp->getIn(0);
+  if (!inVn->isWritten()) return (Varnode *)0;
+  if (curOp->getIn(1)->isConstantExtended(y) < 0) return (Varnode *)0;	// There MUST be a constant
 
-  return subop;
+  Varnode *resVn;
+  PcodeOp *extOp = inVn->getDef();
+  extopc = extOp->code();
+  if (extopc != CPUI_INT_SEXT) {
+    uintb nzMask = inVn->getNZMask();
+    xsize = 8*sizeof(uintb) - count_leading_zeros(nzMask);
+    if (xsize == 0) return (Varnode *)0;
+    if (xsize > 4*inVn->getSize()) return (Varnode *)0;
+  }
+  else
+    xsize = extOp->getIn(0)->getSize() * 8;
+
+  if (extopc == CPUI_INT_ZEXT || extopc == CPUI_INT_SEXT) {
+    Varnode *extVn = extOp->getIn(0);
+    if (extVn->isFree()) return (Varnode *)0;
+    if (inVn->getSize() == op->getOut()->getSize())
+      resVn = inVn;
+    else
+      resVn = extVn;
+  }
+  else {
+    extopc = CPUI_INT_ZEXT;	// Treat as unsigned extension
+    resVn = inVn;
+  }
+  // Check for signed mismatch
+  if (((extopc == CPUI_INT_ZEXT)&&(shiftopc==CPUI_INT_SRIGHT))||
+      ((extopc == CPUI_INT_SEXT)&&(shiftopc==CPUI_INT_RIGHT))) {
+    if (8*op->getOut()->getSize() - n != xsize)
+      return (Varnode *)0;
+    // op's signedness does not matter because all the extension
+    // bits are truncated
+  }
+  return resVn;
 }
 
 /// Given the multiplicative encoding \b y and the \b n, the power of 2,
@@ -6468,75 +6556,53 @@ void RuleDivOpt::getOpList(vector<uint4> &oplist) const
 int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *subop,*extop,*multop;
-  Varnode *subin,*xvn;
-
-  int4 nint;
-  OpCode opc;
-  subop = findSubshift(op,nint,opc);
-  if (subop == (PcodeOp *)0) return 0;
-  if (!subop->getIn(0)->isWritten()) return 0;
-  multop = subop->getIn(0)->getDef();
-  if (multop->code() != CPUI_INT_MULT) return 0;
+  int4 n,xsize;
   uintb y;
-  if (multop->getIn(1)->isConstantExtended(y) < 0) return 0;
-  if (!multop->getIn(0)->isWritten()) return 0;
-  uintb n = nint;
-  extop = multop->getIn(0)->getDef();
-  OpCode extopc = extop->code();
-  if ((extopc != CPUI_INT_ZEXT)&&(extopc != CPUI_INT_SEXT))
-    return 0;
-  xvn = extop->getIn(0);
-  if (xvn->isFree()) return 0;
-  int4 xsize = xvn->getSize();
-  subin = op->getOut();
-  bool needInputExtension = false;
-  if (xsize != subin->getSize()) {
-    if (xsize > subin->getSize())	// Allow input to be smaller than eventual result
-      return 0;
-    needInputExtension = true;
-    xsize = subin->getSize();
-  }
-  // Check for signed mismatch
-  if (((extopc == CPUI_INT_ZEXT)&&(opc==CPUI_INT_SRIGHT))||
-      ((extopc == CPUI_INT_SEXT)&&(opc==CPUI_INT_RIGHT))) {
-    if (8*subin->getSize() - n != xsize*8)
-      return 0;
-    // op's signedness does not matter because all the extension
-    // bits are truncated
-  }
-
-  int4 maxx = xsize * 8;
-  if (extopc == CPUI_INT_SEXT)
-    maxx -= 1;		// one less bit for signed, because of signbit
-  uintb divisor = calcDivisor(n,y,maxx);
+  OpCode extOpc;
+  Varnode *inVn = findForm(op,n,y,xsize,extOpc);
+  if (inVn == (Varnode *)0) return 0;
+  if (extOpc == CPUI_INT_SEXT)
+    xsize -= 1;		// one less bit for signed, because of signbit
+  uintb divisor = calcDivisor(n,y,xsize);
   if (divisor == 0) return 0;
-  if (needInputExtension) {	// Do we need an extension to get to final size
+  int4 outSize = op->getOut()->getSize();
+
+  if (inVn->getSize() < outSize) {	// Do we need an extension to get to final size
     PcodeOp *inExt = data.newOp(1,op->getAddr());
-    data.opSetOpcode(inExt,extopc);
-    Varnode *extOut = data.newUniqueOut(xsize,inExt);
-    data.opSetInput(inExt,xvn,0);
-    xvn = extOut;
+    data.opSetOpcode(inExt,extOpc);
+    Varnode *extOut = data.newUniqueOut(outSize,inExt);
+    data.opSetInput(inExt,inVn,0);
+    inVn = extOut;
     data.opInsertBefore(inExt,op);
   }
-  if (extopc == CPUI_INT_ZEXT) { // Unsigned division
-    data.opSetInput(op,xvn,0);
-    data.opSetInput(op,data.newConstant(xsize,divisor),1);
+  else if (inVn->getSize() > outSize) {	// Do we need a truncation to get to final size
+    PcodeOp *newop = data.newOp(2,op->getAddr());	// Create new op to hold the INT_DIV or INT_SDIV:INT_ADD
+    data.opSetOpcode(newop, CPUI_INT_ADD);		// This gets changed immediately, but need it for opInsert
+    Varnode *resVn = data.newUniqueOut(inVn->getSize(), newop);
+    data.opInsertBefore(newop, op);
+    data.opSetOpcode(op, CPUI_SUBPIECE);	// Original op becomes a truncation
+    data.opSetInput(op,resVn,0);
+    data.opSetInput(op,data.newConstant(4, 0),1);
+    op = newop;					// Main transform now changes newop
+  }
+  if (extOpc == CPUI_INT_ZEXT) { // Unsigned division
+    data.opSetInput(op,inVn,0);
+    data.opSetInput(op,data.newConstant(outSize,divisor),1);
     data.opSetOpcode(op,CPUI_INT_DIV);
   }
   else {			// Sign division
     PcodeOp *divop = data.newOp(2,op->getAddr());
     data.opSetOpcode(divop,CPUI_INT_SDIV);
-    Varnode *newout = data.newUniqueOut(xsize,divop);
-    data.opSetInput(divop,xvn,0);
-    data.opSetInput(divop,data.newConstant(xsize,divisor),1);
+    Varnode *newout = data.newUniqueOut(outSize,divop);
+    data.opSetInput(divop,inVn,0);
+    data.opSetInput(divop,data.newConstant(outSize,divisor),1);
     data.opInsertBefore(divop,op);
     // Build the sign value correction
     PcodeOp *sgnop = data.newOp(2,op->getAddr());
     data.opSetOpcode(sgnop,CPUI_INT_SRIGHT);
-    Varnode *sgnvn = data.newUniqueOut(xvn->getSize(),sgnop);
-    data.opSetInput(sgnop,xvn,0);
-    data.opSetInput(sgnop,data.newConstant(xvn->getSize(),xsize*8-1),1);
+    Varnode *sgnvn = data.newUniqueOut(inVn->getSize(),sgnop);
+    data.opSetInput(sgnop,inVn,0);
+    data.opSetInput(sgnop,data.newConstant(inVn->getSize(),outSize*8-1),1);
     data.opInsertBefore(sgnop,op);
     // Add the correction into the division op
     data.opSetInput(op,newout,0);

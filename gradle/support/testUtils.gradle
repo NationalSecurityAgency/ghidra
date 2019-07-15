@@ -241,6 +241,10 @@ def boolean shouldSkipTestTaskCreation(Project subproject) {
 			+ " 'excludeFromParallelTests' found.")
 		return true
 	}
+	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
+	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	    return true
+	}
 
 	return false
 }
@@ -268,6 +272,10 @@ def boolean shouldSkipIntegrationTestTaskCreation(Project subproject) {
 		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
 			+ "'excludeFromParallelIntegrationTests' found.")
 		return true
+	}
+	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
+	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	    return true
 	}
 
 	return false

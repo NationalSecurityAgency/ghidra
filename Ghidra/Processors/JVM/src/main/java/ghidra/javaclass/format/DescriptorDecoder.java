@@ -19,12 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.pcodeInject.*;
-import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
-import ghidra.javaclass.format.constantpool.ConstantPoolInterfaceMethodReferenceInfo;
-import ghidra.javaclass.format.constantpool.ConstantPoolInvokeDynamicInfo;
-import ghidra.javaclass.format.constantpool.ConstantPoolMethodReferenceInfo;
-import ghidra.javaclass.format.constantpool.ConstantPoolNameAndTypeInfo;
-import ghidra.javaclass.format.constantpool.ConstantPoolUtf8Info;
+import ghidra.javaclass.format.constantpool.*;
 import ghidra.program.model.data.*;
 
 /**
@@ -33,7 +28,6 @@ import ghidra.program.model.data.*;
  * and field descriptors.
  *
  */
-
 
 public class DescriptorDecoder {
 
@@ -53,9 +47,8 @@ public class DescriptorDecoder {
 	public final static byte BASE_TYPE_ENUM = 'e';
 	public final static byte BASE_TYPE_ANNOTATION = '@';
 
-
 	//private constructor to enforce noninstantiability
-	private DescriptorDecoder(){
+	private DescriptorDecoder() {
 		throw new AssertionError();
 	}
 
@@ -65,11 +58,11 @@ public class DescriptorDecoder {
 	 * @param methodDescriptor
 	 * @return
 	 */
-	public static int getStackPurge(String methodDescriptor){
+	public static int getStackPurge(String methodDescriptor) {
 		int stackPurge = 0;
 		List<JavaComputationalCategory> categories = getParameterCategories(methodDescriptor);
-		for (JavaComputationalCategory cat : categories){
-			switch (cat){
+		for (JavaComputationalCategory cat : categories) {
+			switch (cat) {
 				case CAT_1:
 					stackPurge += PcodeInjectLibraryJava.REFERENCE_SIZE;
 					break;
@@ -83,31 +76,41 @@ public class DescriptorDecoder {
 		return stackPurge;
 	}
 
-
 	/**
 	 * Returns the computational category of the return type of a method descriptor.
 	 * @param methodDescriptor
 	 * @return
 	 */
-	public static JavaComputationalCategory getReturnCategoryOfMethodDescriptor(String methodDescriptor){
+	public static JavaComputationalCategory getReturnCategoryOfMethodDescriptor(
+			String methodDescriptor) {
 		int closeParenIndex = methodDescriptor.indexOf(")");
-		if (closeParenIndex == -1){
+		if (closeParenIndex == -1) {
 			throw new IllegalArgumentException("Invalid method descriptor: " + methodDescriptor);
 		}
-		String returnDescriptor = methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
+		String returnDescriptor =
+			methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
 		return DescriptorDecoder.getComputationalCategoryOfDescriptor(returnDescriptor);
 	}
 
-	public static DataType getReturnTypeOfMethodDescriptor(String methodDescriptor, DataTypeManager dtManager){
+	/**
+	 * Given a method descriptor, returns the data type of the return value of the corresponding
+	 * method
+	 * @param methodDescriptor descriptor of method
+	 * @param dtManager data type manger for containing program
+	 * @return data type of return value of method
+	 */
+	public static DataType getReturnTypeOfMethodDescriptor(String methodDescriptor,
+			DataTypeManager dtManager) {
 		int closeParenIndex = methodDescriptor.indexOf(")");
-		if (closeParenIndex == -1){
+		if (closeParenIndex == -1) {
 			throw new IllegalArgumentException("Invalid method descriptor: " + methodDescriptor);
 		}
-		String returnDescriptor = methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
-		if (returnDescriptor.startsWith("[")){
+		String returnDescriptor =
+			methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
+		if (returnDescriptor.startsWith("[")) {
 			return getPointerType(returnDescriptor, dtManager);
 		}
-		return DescriptorDecoder.getDataTypeOfDescriptor(returnDescriptor, dtManager);	
+		return DescriptorDecoder.getDataTypeOfDescriptor(returnDescriptor, dtManager);
 	}
 
 	/**
@@ -115,11 +118,12 @@ public class DescriptorDecoder {
 	 * @param descriptor
 	 * @return
 	 */
-	public static JavaComputationalCategory getComputationalCategoryOfDescriptor(String descriptor){
+	public static JavaComputationalCategory getComputationalCategoryOfDescriptor(
+			String descriptor) {
 		//all references to objects start with "L"
 		//all references to arrays start with "["
 		//all other descriptors are just one letter. 
-		switch (descriptor.charAt(0)){
+		switch (descriptor.charAt(0)) {
 			case BASE_TYPE_BYTE:  //signed byte
 			case BASE_TYPE_CHAR:  //char
 			case BASE_TYPE_FLOAT:  //float
@@ -144,7 +148,8 @@ public class DescriptorDecoder {
 	 * @param methodDescriptor
 	 * @return
 	 */
-	public static List<String> getTypeNameList(String methodDescriptor, boolean fullyQualifiedName, boolean replaceSlash) {
+	public static List<String> getTypeNameList(String methodDescriptor, boolean fullyQualifiedName,
+			boolean replaceSlash) {
 		ArrayList<String> typeNames = new ArrayList<>();
 		int closeParenIndex = methodDescriptor.indexOf(")");
 		String argString = methodDescriptor.substring(1, closeParenIndex);
@@ -152,79 +157,85 @@ public class DescriptorDecoder {
 
 		int currentPosition = 0;
 		int len = argString.length();
-		while (currentPosition < len){
+		while (currentPosition < len) {
 			String currentParam = argString.substring(currentPosition, currentPosition + 1);
-			if (currentParam.equals("[")){
+			if (currentParam.equals("[")) {
 				int initialBracket = currentPosition;
-				while (argString.charAt(currentPosition) == '['){
+				while (argString.charAt(currentPosition) == '[') {
 					currentPosition++;
 				}
 				//advance past the base type of the array
-				if (argString.charAt(currentPosition) == 'L'){
+				if (argString.charAt(currentPosition) == 'L') {
 					int semiColonIndex = argString.indexOf(";", currentPosition);
 					currentPosition = semiColonIndex + 1;
 				}
-				else{
+				else {
 					currentPosition++;
 				}
-				currentParamTypeName = getTypeNameFromDescriptor(argString.substring(initialBracket,currentPosition), fullyQualifiedName, replaceSlash);
+				currentParamTypeName =
+					getTypeNameFromDescriptor(argString.substring(initialBracket, currentPosition),
+						fullyQualifiedName, replaceSlash);
 				typeNames.add(currentParamTypeName);
 				continue;
-			}	
+			}
 			//advance to next type in argString
 			//if it's a reference, it starts with L and ends with a ;
 			//otherwise you only need to advance one character
-			switch(currentParam){
+			switch (currentParam) {
 				case "L":
 					int semiColonIndex = argString.indexOf(";", currentPosition);
-					currentParamTypeName = getTypeNameFromDescriptor(argString.substring(currentPosition,semiColonIndex+1), fullyQualifiedName, replaceSlash);
+					currentParamTypeName = getTypeNameFromDescriptor(
+						argString.substring(currentPosition, semiColonIndex + 1),
+						fullyQualifiedName, replaceSlash);
 					currentPosition = semiColonIndex + 1; //advance past ;
 					break;
 				default:
-					currentParamTypeName = getTypeNameFromDescriptor(currentParam, fullyQualifiedName, replaceSlash);				
-					currentPosition++;  
+					currentParamTypeName =
+						getTypeNameFromDescriptor(currentParam, fullyQualifiedName, replaceSlash);
+					currentPosition++;
 			}
 			typeNames.add(currentParamTypeName);
 
 		}
 
 		//now add the the name of the return type
-		String returnType = methodDescriptor.substring(closeParenIndex+1, methodDescriptor.length());
+		String returnType =
+			methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
 		typeNames.add(getTypeNameFromDescriptor(returnType, fullyQualifiedName, replaceSlash));
 		return typeNames;
 	}
-
-
 
 	/**
 	 * Returns the type name for a parameter descriptor
 	 * @param descriptor
 	 * @return
 	 */
-	public static String getTypeNameFromDescriptor(String descriptor, boolean fullyQualifiedName, boolean replaceSlash){
-		if (descriptor.startsWith("L")){
+	public static String getTypeNameFromDescriptor(String descriptor, boolean fullyQualifiedName,
+			boolean replaceSlash) {
+		if (descriptor.startsWith("L")) {
 			//leave off the initial L and the final ;
-			String name = descriptor.substring(1, descriptor.length()-1);
-			if (fullyQualifiedName){
-				if (replaceSlash){
-				    return name.replace("/", ".");
+			String name = descriptor.substring(1, descriptor.length() - 1);
+			if (fullyQualifiedName) {
+				if (replaceSlash) {
+					return name.replace("/", ".");
 				}
 				return name;
 			}
 			int lastSlash = name.lastIndexOf("/");
 			//lastSlash+1 so the slash is not included in the name
-			return name.substring(lastSlash+1, name.length());
+			return name.substring(lastSlash + 1, name.length());
 		}
-		if (descriptor.startsWith("[")){
+		if (descriptor.startsWith("[")) {
 			int dimension = descriptor.lastIndexOf("[") + 1;
-			String baseType = getTypeNameFromDescriptor(descriptor.replace("[", ""), fullyQualifiedName, replaceSlash);
+			String baseType = getTypeNameFromDescriptor(descriptor.replace("[", ""),
+				fullyQualifiedName, replaceSlash);
 			StringBuilder sb = new StringBuilder(baseType);
-			for (int i = 0; i < dimension; ++i){
+			for (int i = 0; i < dimension; ++i) {
 				sb.append("[]");
 			}
 			return sb.toString();
 		}
-		switch (descriptor.charAt(0)){
+		switch (descriptor.charAt(0)) {
 			case BASE_TYPE_BYTE:  //signed byte
 				return "byte";
 			case BASE_TYPE_CHAR:  //char
@@ -248,17 +259,18 @@ public class DescriptorDecoder {
 		}
 	}
 
-	public static DataType getReferenceTypeOfDescriptor(String descriptor, DataTypeManager dtManager, boolean includesLandSemi){
-		if (includesLandSemi){
-			descriptor = descriptor.substring(1, descriptor.length()-1);
+	public static DataType getReferenceTypeOfDescriptor(String descriptor,
+			DataTypeManager dtManager, boolean includesLandSemi) {
+		if (includesLandSemi) {
+			descriptor = descriptor.substring(1, descriptor.length() - 1);
 		}
 		String[] parts = descriptor.split("/");
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < parts.length; i++){
+		for (String part : parts) {
 			sb.append(CategoryPath.DELIMITER_CHAR);
-			sb.append(parts[i]);
+			sb.append(part);
 		}
-		DataTypePath dataPath = new DataTypePath(sb.toString(), parts[parts.length-1]);
+		DataTypePath dataPath = new DataTypePath(sb.toString(), parts[parts.length - 1]);
 		DataType referencedType = dtManager.getDataType(dataPath);
 		return new PointerDataType(referencedType);
 	}
@@ -268,44 +280,50 @@ public class DescriptorDecoder {
 	 * @param descriptor
 	 * @return
 	 */
-	public static DataType getDataTypeOfDescriptor(String descriptor, DataTypeManager dtManager){
+	public static DataType getDataTypeOfDescriptor(String descriptor, DataTypeManager dtManager) {
 		//all references to objects start with "L"
 		//all references to arrays start with "["
 		//all other descriptors are just one letter. 
-		if (descriptor.startsWith("[")){
+		if (descriptor.startsWith("[")) {
 			return getPointerType(descriptor, dtManager);
 		}
-		switch (descriptor.charAt(0)){
-			case BASE_TYPE_BYTE:  
+		switch (descriptor.charAt(0)) {
+			case BASE_TYPE_BYTE:
 				return SignedByteDataType.dataType;
-		    case BASE_TYPE_CHAR:  
+			case BASE_TYPE_CHAR:
 				return CharDataType.dataType;
-			case BASE_TYPE_INT:  
+			case BASE_TYPE_INT:
 				return IntegerDataType.dataType;
 			case BASE_TYPE_SHORT:
 				return ShortDataType.dataType;
-			case BASE_TYPE_BOOLEAN:  
+			case BASE_TYPE_BOOLEAN:
 				return BooleanDataType.dataType;
-			case BASE_TYPE_FLOAT:  
+			case BASE_TYPE_FLOAT:
 				return FloatDataType.dataType;
 			case BASE_TYPE_REFERENCE:  //object reference		
 				return getReferenceTypeOfDescriptor(descriptor, dtManager, true);
-			case BASE_TYPE_DOUBLE: 
+			case BASE_TYPE_DOUBLE:
 				return DoubleDataType.dataType;
-			case BASE_TYPE_LONG:  
+			case BASE_TYPE_LONG:
 				return LongDataType.dataType;
 			case BASE_TYPE_VOID:  //void (only for return types)
 				return DataType.VOID;
 			default:
-				throw new IllegalArgumentException("Invalid computational category: " + descriptor);
+				throw new IllegalArgumentException("Invalid type descriptor: " + descriptor);
 		}
 	}
 
-	public static DataType getPointerType(String descriptor, DataTypeManager dtManager){
+	/**
+	 * Returns the data type of a pointer to the type represented by descriptor
+	 * @param descriptor description of base type
+	 * @param dtManager data type manager of program
+	 * @return pointer data type
+	 */
+	public static DataType getPointerType(String descriptor, DataTypeManager dtManager) {
 		int lastBracket = descriptor.lastIndexOf("[");
-		String baseTypeOfArray = descriptor.substring(lastBracket+1, lastBracket+2);		
+		String baseTypeOfArray = descriptor.substring(lastBracket + 1, lastBracket + 2);
 		DataType baseType = null;
-		switch (baseTypeOfArray.charAt(0)){
+		switch (baseTypeOfArray.charAt(0)) {
 			case BASE_TYPE_BYTE:
 				baseType = ArrayMethods.getArrayBaseType(JavaClassConstants.T_BYTE, dtManager);
 				break;
@@ -334,7 +352,8 @@ public class DescriptorDecoder {
 				return dtManager.getPointer(DWordDataType.dataType);
 
 			default:
-				throw new IllegalArgumentException("Invalid array base type category: " + baseTypeOfArray);	
+				throw new IllegalArgumentException(
+					"Invalid array base type category: " + baseTypeOfArray);
 		}
 		return dtManager.getPointer(baseType);
 	}
@@ -345,17 +364,18 @@ public class DescriptorDecoder {
 	 * @param methodDescriptor
 	 * @return
 	 */
-	public static List<JavaComputationalCategory> getParameterCategories(String methodDescriptor){
+	public static List<JavaComputationalCategory> getParameterCategories(String methodDescriptor) {
 		ArrayList<JavaComputationalCategory> categories = new ArrayList<>();
 		int closeParenIndex = methodDescriptor.indexOf(")");
 		String argString = methodDescriptor.substring(1, closeParenIndex);
 		int currentPosition = 0;
 		int len = argString.length();
-		while (currentPosition < len){
+		while (currentPosition < len) {
 			String currentParam = argString.substring(currentPosition, currentPosition + 1);
-			JavaComputationalCategory category = DescriptorDecoder.getComputationalCategoryOfDescriptor(currentParam);
+			JavaComputationalCategory category =
+				DescriptorDecoder.getComputationalCategoryOfDescriptor(currentParam);
 
-			switch (category){
+			switch (category) {
 				case CAT_1:
 					categories.add(JavaComputationalCategory.CAT_1);
 					break;
@@ -370,22 +390,22 @@ public class DescriptorDecoder {
 			//if it's a reference, it starts with L and ends with a ;
 			//if it's an array, it has one "[" for each dimension, then the type (which might be a reference)
 			//otherwise you only need to advance one character
-			switch(currentParam){
+			switch (currentParam) {
 				case "L":
 					int semiColonIndex = argString.indexOf(";", currentPosition);
 					currentPosition = semiColonIndex + 1; //advance past ;
 					break;
 				case "[":
 					//advance past all the ['s
-					while (argString.charAt(currentPosition) == '['){
+					while (argString.charAt(currentPosition) == '[') {
 						currentPosition++;
 					}
 					//advance past the base type of the array
-					if (argString.charAt(currentPosition) == 'L'){
+					if (argString.charAt(currentPosition) == 'L') {
 						semiColonIndex = argString.indexOf(";", currentPosition);
 						currentPosition = semiColonIndex + 1;
 					}
-					else{
+					else {
 						currentPosition++;
 					}
 					break;
@@ -402,7 +422,8 @@ public class DescriptorDecoder {
 	 * @param methodDescriptor
 	 * @return
 	 */
-	public static List<DataType> getDataTypeList(String methodDescriptor, DataTypeManager dtManager) {
+	public static List<DataType> getDataTypeList(String methodDescriptor,
+			DataTypeManager dtManager) {
 		ArrayList<DataType> paramDataTypes = new ArrayList<>();
 		int closeParenIndex = methodDescriptor.indexOf(")");
 		String argString = methodDescriptor.substring(1, closeParenIndex);
@@ -411,14 +432,14 @@ public class DescriptorDecoder {
 		int currentPosition = 0;
 		int len = argString.length();
 		String currentParam = null;
-		while (currentPosition < len){
+		while (currentPosition < len) {
 			int arrayDimensions = 0;
 			//if it's an array, decode the number of dimensions
-			while (argString.charAt(currentPosition) == '['){
+			while (argString.charAt(currentPosition) == '[') {
 				arrayDimensions++;
 				currentPosition++;
 			}
-			switch (argString.charAt(currentPosition)){
+			switch (argString.charAt(currentPosition)) {
 				case BASE_TYPE_BYTE:
 				case BASE_TYPE_CHAR:
 				case BASE_TYPE_SHORT:
@@ -427,17 +448,17 @@ public class DescriptorDecoder {
 				case BASE_TYPE_FLOAT:
 				case BASE_TYPE_DOUBLE:
 				case BASE_TYPE_BOOLEAN:
-					currentParam = argString.substring(currentPosition, currentPosition+1);
+					currentParam = argString.substring(currentPosition, currentPosition + 1);
 					currentPosition++;
 					break;
 				case BASE_TYPE_REFERENCE:
 					int semiColonIndex = argString.indexOf(";", currentPosition);
-					currentParam = argString.substring(currentPosition, semiColonIndex+1); 
+					currentParam = argString.substring(currentPosition, semiColonIndex + 1);
 					currentPosition = semiColonIndex + 1;
 					break;
 			}
 			currentParamType = getDataTypeOfDescriptor(currentParam, dtManager);
-			if (arrayDimensions > 0){
+			if (arrayDimensions > 0) {
 				paramDataTypes.add(dtManager.getPointer(currentParamType));
 			}
 			else {
@@ -455,47 +476,91 @@ public class DescriptorDecoder {
 	 * @param type
 	 * @return
 	 */
-	public static String getDescriptorForInvoke(int offset, AbstractConstantPoolInfoJava[] constantPool, JavaInvocationType type){
+	public static String getDescriptorForInvoke(int offset,
+			AbstractConstantPoolInfoJava[] constantPool, JavaInvocationType type) {
 		String descriptor = null;
 		int name_and_type_index = 0;
-		switch (type){
+		switch (type) {
 			case INVOKE_DYNAMIC:
-				ConstantPoolInvokeDynamicInfo dynamicInfo = (ConstantPoolInvokeDynamicInfo) constantPool[offset];
+				ConstantPoolInvokeDynamicInfo dynamicInfo =
+					(ConstantPoolInvokeDynamicInfo) constantPool[offset];
 				name_and_type_index = dynamicInfo.getNameAndTypeIndex();
 				break;
 			case INVOKE_INTERFACE:
-				ConstantPoolInterfaceMethodReferenceInfo interfaceInfo = (ConstantPoolInterfaceMethodReferenceInfo) constantPool[offset];
+				ConstantPoolInterfaceMethodReferenceInfo interfaceInfo =
+					(ConstantPoolInterfaceMethodReferenceInfo) constantPool[offset];
 				name_and_type_index = interfaceInfo.getNameAndTypeIndex();
 				break;
-			case INVOKE_SPECIAL:
 			case INVOKE_STATIC:
+				AbstractConstantPoolInfoJava poolElem = constantPool[offset];
+				if (poolElem instanceof ConstantPoolInterfaceMethodReferenceInfo) {
+					interfaceInfo = (ConstantPoolInterfaceMethodReferenceInfo) constantPool[offset];
+					name_and_type_index = interfaceInfo.getNameAndTypeIndex();
+					break;
+				}
+				if (poolElem instanceof ConstantPoolMethodReferenceInfo) {
+					ConstantPoolMethodReferenceInfo methodReferenceInfo =
+						(ConstantPoolMethodReferenceInfo) constantPool[offset];
+					name_and_type_index = methodReferenceInfo.getNameAndTypeIndex();
+					break;
+				}
+				throw new IllegalArgumentException(
+					"Unsupported type for invokestatic at constant pool element " + offset);
+			case INVOKE_SPECIAL:
 			case INVOKE_VIRTUAL:
-				ConstantPoolMethodReferenceInfo methodReferenceInfo = (ConstantPoolMethodReferenceInfo) constantPool[offset];
+				ConstantPoolMethodReferenceInfo methodReferenceInfo =
+					(ConstantPoolMethodReferenceInfo) constantPool[offset];
 				name_and_type_index = methodReferenceInfo.getNameAndTypeIndex();
 				break;
 			default:
 				throw new IllegalArgumentException("unimplemented method type: " + type.name());
 		}
-		ConstantPoolNameAndTypeInfo methodNameAndType = (ConstantPoolNameAndTypeInfo) constantPool[name_and_type_index];
+		ConstantPoolNameAndTypeInfo methodNameAndType =
+			(ConstantPoolNameAndTypeInfo) constantPool[name_and_type_index];
 		int descriptor_index = methodNameAndType.getDescriptorIndex();
 		ConstantPoolUtf8Info descriptorInfo = (ConstantPoolUtf8Info) constantPool[descriptor_index];
 		descriptor = descriptorInfo.getString();
 		return descriptor;
 	}
 
-	public final static String decodeType(ConstantPoolUtf8Info utf,
-			boolean useFullyQualifiedClassName) {
-		return DescriptorDecoder.getTypeNameFromDescriptor(utf.getString(), useFullyQualifiedClassName, true);
-	}
-
-	//no L, no ;
-	public static DataType resolveClassForString(String fullyQualifiedName, DataTypeManager dtm, DataType baseType){
+	/**
+	 * Resolves the datatype represented by {@code fullyQualifiedName} with a base type of
+	 * {@code baseType} into dtm
+	 * @param fullyQualifiedName String representation of type
+	 * @param dtm data type manager
+	 * @param baseType base type 
+	 * @return data type represented by input string
+	 */
+	public static DataType resolveClassForString(String fullyQualifiedName, DataTypeManager dtm,
+			DataType baseType) {
 		fullyQualifiedName = CategoryPath.DELIMITER_CHAR + fullyQualifiedName;
 		CategoryPath catPath = new CategoryPath(fullyQualifiedName);
 		String[] parts = catPath.getPathElements();
-		DataType dataType = new TypedefDataType(catPath,parts[parts.length-1],baseType);
+		DataType dataType = new TypedefDataType(catPath, parts[parts.length - 1], baseType);
 		dtm.resolve(dataType, DataTypeConflictHandler.KEEP_HANDLER);
 		return dataType;
+	}
+
+	/**
+	 * Returns a String representing the types of the parameters of a method, e.g.
+	 * (java.lang.String, java.lang.Integer) for a method with signature
+	 * public static void test(String x, Integer y);
+	 * @param descriptor method descriptor
+	 * @return string representation of types of method parameters
+	 */
+	public static String getParameterString(String descriptor) {
+		List<String> paramTypeNames = getTypeNameList(descriptor, true, true);
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		//don't append the last element of the list, which is the return type
+		for (int i = 0, max = paramTypeNames.size() - 1; i < max; ++i) {
+			sb.append(paramTypeNames.get(i));
+			if (i < max - 1) {
+				sb.append(", ");
+			}
+		}
+		sb.append(")");
+		return sb.toString();
 	}
 
 }

@@ -81,6 +81,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
+	 * 
 	 * @param table table instance, if null one will be created
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
@@ -105,6 +106,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
+	 * 
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
@@ -304,7 +306,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		assertEquals(table.getSchema().getFieldClasses().length, indexedColumns.length);
 		for (int colIx : indexedColumns) {
 
-			Arrays.sort(recs, new RecColumnComparitor(colIx));
+			Arrays.sort(recs, new RecColumnComparator(colIx));
 
 			// Forward iteration (no start)
 			int recIx = 0;
@@ -403,7 +405,9 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -436,7 +440,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		int[] indexedColumns = table.getIndexedColumns();
 		assertEquals(table.getSchema().getFieldClasses().length, indexedColumns.length);
 		for (int colIx : indexedColumns) {
-			Arrays.sort(recs, new RecColumnComparitor(colIx));
+			Arrays.sort(recs, new RecColumnComparator(colIx));
 
 			int recIx;
 			RecordIterator iter;
@@ -611,7 +615,16 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Record rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
-			assertEquals(recIx, maxIx + 1);
+			assertEquals(maxIx + 1, recIx);
+
+			// Full forward record iterator
+			recIx = 0;
+			iter = table.indexIterator(colIx, null, null, true);
+			while (iter.hasNext()) {
+				Record rec = iter.next();
+				assertEquals(recs[recIx++], rec);
+			}
+			assertEquals(recordCnt, recIx);
 
 			// Backward Range iterator
 			minIx = findStart(recs, recordCnt / 10, colIx);
@@ -623,7 +636,16 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Record rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
-			assertEquals(recIx, minIx - 1);
+			assertEquals(minIx - 1, recIx);
+
+			// Full reverse record iterator
+			recIx = recordCnt - 1;
+			iter = table.indexIterator(colIx, null, null, false);
+			while (iter.hasPrevious()) {
+				Record rec = iter.previous();
+				assertEquals(recs[recIx--], rec);
+			}
+			assertEquals(-1, recIx);
 
 			if (recs[0].getField(colIx) instanceof LongField) {
 
@@ -763,7 +785,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (forward range of unique index values)
 			minIx = indexFields.size() / 10;
@@ -775,7 +797,19 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
+
+			// Index field iterator (forward over all indexed fields)
+			minIx = 0;
+			maxIx = indexFields.size() - 1;
+			fiter = table.indexFieldIterator(null, null, true, colIx);
+			ix = minIx;
+			assertTrue("Failed to position before min field", fiter.hasNext());
+			while (fiter.hasNext()) {
+				Field f = fiter.next();
+				assertEquals(indexFields.get(ix++), f);
+			}
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -787,7 +821,19 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.previous();
 				assertEquals(indexFields.get(ix--), f);
 			}
-			assertEquals(ix, minIx - 1);
+			assertEquals(minIx - 1, ix);
+
+			// Index field iterator (reverse over all indexed fields)
+			minIx = 0;
+			maxIx = indexFields.size() - 1;
+			fiter = table.indexFieldIterator(null, null, false, colIx);
+			ix = maxIx;
+			assertTrue("Failed to position after max field", fiter.hasPrevious());
+			while (fiter.hasPrevious()) {
+				Field f = fiter.previous();
+				assertEquals(indexFields.get(ix--), f);
+			}
+			assertEquals(-1, ix);
 
 			// Index field iterator (forward range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -800,7 +846,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.next();
 				assertEquals(indexFields.get(ix++), f);
 			}
-			assertEquals(ix, maxIx + 1);
+			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
 //			minIx = indexFields.size() / 10;
@@ -813,14 +859,16 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 				Field f = fiter.previous();
 				assertEquals(indexFields.get(ix--), f);
 			}
-			assertEquals(ix, minIx - 1);
+			assertEquals(minIx - 1, ix);
 		}
 
 	}
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -840,7 +888,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		Table table = dbh.getTable(table1Name);
 
-		Arrays.sort(recs, new RecColumnComparitor(testColIx));
+		Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 		// Forward - delete all records
 		long txId = dbh.startTransaction();
@@ -866,7 +914,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		table = dbh.getTable(table1Name);
 
-		Arrays.sort(recs, new RecColumnComparitor(testColIx));
+		Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 		// Reverse - delete all records
 		txId = dbh.startTransaction();
@@ -886,7 +934,9 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * @param testStoredDB test against a stored database if true, else test against cached database only.
+	 * 
+	 * @param testStoredDB test against a stored database if true, else test against cached database
+	 *            only.
 	 * @param recordCnt number of records to test
 	 * @param keyIncrement key increment, 0 = random
 	 * @param varDataSize size of variable length data fields.
@@ -907,7 +957,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		try {
 			Table table = dbh.getTable(table1Name);
 
-			Arrays.sort(recs, new RecColumnComparitor(testColIx));
+			Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 			// Count unique index values
 			int fieldCnt = 0;
@@ -956,7 +1006,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		try {
 			Table table = dbh.getTable(table1Name);
 
-			Arrays.sort(recs, new RecColumnComparitor(testColIx));
+			Arrays.sort(recs, new RecColumnComparator(testColIx));
 
 			// Count unique index values
 			int fieldCnt = 0;
@@ -1014,11 +1064,11 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 		return --startIx;
 	}
 
-	private class RecColumnComparitor implements Comparator<Record> {
+	private class RecColumnComparator implements Comparator<Record> {
 
 		int columnIx;
 
-		RecColumnComparitor(int columnIx) {
+		RecColumnComparator(int columnIx) {
 			this.columnIx = columnIx;
 		}
 
@@ -1043,7 +1093,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testRandomRecordIterator() throws IOException {
-		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, 1, false);
+		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, -1, false);
 	}
 
 	@Test
@@ -1103,7 +1153,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testRandomRecordIteratorUndoRedo() throws IOException {
-		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, 1, true);
+		iterateRecords(false, DBTestUtils.ALL_TYPES, ITER_REC_CNT, 0, -1, true);
 	}
 
 	@Test
@@ -1119,7 +1169,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 
 		// Backward Range iterator
 		int colIx = 0;
-		Arrays.sort(recs, new RecColumnComparitor(colIx));
+		Arrays.sort(recs, new RecColumnComparator(colIx));
 		int recIx = recs.length - 1;
 //		RecordIterator iter = table.indexIterator(colIx, recs[minIx].getField(colIx),
 //								   recs[maxIx].getField(colIx), false);
@@ -1169,4 +1219,5 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 			deleteIteratedIndexFields(ITER_REC_CNT, colIx, 0, 1);
 		}
 	}
+
 }

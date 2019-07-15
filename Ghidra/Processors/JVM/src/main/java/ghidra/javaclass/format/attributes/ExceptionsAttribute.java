@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -49,7 +48,7 @@ public class ExceptionsAttribute extends AbstractAttributeInfo {
 		super(reader);
 
 		numberOfExceptions = reader.readNextShort();
-		exceptionIndexTable = reader.readNextShortArray(numberOfExceptions);
+		exceptionIndexTable = reader.readNextShortArray(getNumberOfExceptions());
 	}
 
 	/**
@@ -57,8 +56,8 @@ public class ExceptionsAttribute extends AbstractAttributeInfo {
 	 * in the exception_index_table.
 	 * @return the number of entries in the exception_index_table
 	 */
-	public short getNumberOfExceptions() {
-		return numberOfExceptions;
+	public int getNumberOfExceptions() {
+		return numberOfExceptions & 0xffff;
 	}
 
 	/**
@@ -66,10 +65,11 @@ public class ExceptionsAttribute extends AbstractAttributeInfo {
 	 * the constant_pool table. The constant_pool entry referenced by each table
 	 * item must be a CONSTANT_Class_info structure representing a class
 	 * type that this method is declared to throw.
-	 * @return the exception_index_table array
+	 * @param i entry
+	 * @return index
 	 */
-	public short[] getExceptionIndexTable() {
-		return exceptionIndexTable;
+	public int getExceptionIndexTableEntry(int i) {
+		return exceptionIndexTable[i] & 0xffff;
 	}
 
 	@Override

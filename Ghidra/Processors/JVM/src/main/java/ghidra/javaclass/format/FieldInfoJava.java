@@ -15,13 +15,13 @@
  */
 package ghidra.javaclass.format;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.javaclass.format.attributes.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -48,18 +48,18 @@ public class FieldInfoJava implements StructConverter {
 	private short nameIndex;
 	private short descriptorIndex;
 	private short attributesCount;
-	private AbstractAttributeInfo [] attributes;
+	private AbstractAttributeInfo[] attributes;
 
-	public FieldInfoJava( BinaryReader reader, ClassFileJava classFile ) throws IOException {
+	public FieldInfoJava(BinaryReader reader, ClassFileJava classFile) throws IOException {
 		_offset = reader.getPointerIndex();
 
-		accessFlags       = reader.readNextShort();
-		nameIndex         = reader.readNextShort();
-		descriptorIndex   = reader.readNextShort();
-		attributesCount   = reader.readNextShort();
-		attributes        = new AbstractAttributeInfo[ attributesCount ];
-		for ( int i = 0 ; i < attributesCount ; i++ ) {
-			attributes[ i ] = AttributeFactory.get( reader, classFile.getConstantPool() );
+		accessFlags = reader.readNextShort();
+		nameIndex = reader.readNextShort();
+		descriptorIndex = reader.readNextShort();
+		attributesCount = reader.readNextShort();
+		attributes = new AbstractAttributeInfo[getAttributesCount()];
+		for (int i = 0; i < getAttributesCount(); i++) {
+			attributes[i] = AttributeFactory.get(reader, classFile.getConstantPool());
 		}
 	}
 
@@ -84,8 +84,8 @@ public class FieldInfoJava implements StructConverter {
 	 * unqualified name denoting a field.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getNameIndex() {
-		return nameIndex;
+	public int getNameIndex() {
+		return nameIndex & 0xffff;
 	}
 
 	/**
@@ -95,8 +95,8 @@ public class FieldInfoJava implements StructConverter {
 	 * descriptor.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getDescriptorIndex() {
-		return descriptorIndex;
+	public int getDescriptorIndex() {
+		return descriptorIndex & 0xffff;
 	}
 
 	/**
@@ -104,8 +104,8 @@ public class FieldInfoJava implements StructConverter {
 	 * attributes of this field.
 	 * @return the number of additional attributes
 	 */
-	public short getAttributesCount() {
-		return attributesCount;
+	public int getAttributesCount() {
+		return attributesCount & 0xffff;
 	}
 
 	/**
@@ -137,13 +137,13 @@ public class FieldInfoJava implements StructConverter {
 	 * information.
 	 * @return
 	 */
-	public AbstractAttributeInfo [] getAttributes() {
+	public AbstractAttributeInfo[] getAttributes() {
 		return attributes;
 	}
 
 	public ConstantValueAttribute getConstantValueAttribute() {
-		for ( AbstractAttributeInfo attributeInfo : attributes ) {
-			if ( attributeInfo instanceof ConstantValueAttribute ) {
+		for (AbstractAttributeInfo attributeInfo : attributes) {
+			if (attributeInfo instanceof ConstantValueAttribute) {
 				return (ConstantValueAttribute) attributeInfo;
 			}
 		}
@@ -152,17 +152,17 @@ public class FieldInfoJava implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "field_info" + "|" +  attributesCount + "|";
+		String name = "field_info" + "|" + attributesCount + "|";
 
-		Structure structure = new StructureDataType( name, 0 );
+		Structure structure = new StructureDataType(name, 0);
 
-		structure.add( WORD, "access_flags", null );
-		structure.add( WORD, "name_index", null );
-		structure.add( WORD, "descriptor_index", null );
-		structure.add( WORD, "attributes_count", null );
+		structure.add(WORD, "access_flags", null);
+		structure.add(WORD, "name_index", null);
+		structure.add(WORD, "descriptor_index", null);
+		structure.add(WORD, "attributes_count", null);
 
-		for ( int i = 0 ; i < attributes.length ; ++i ) {
-			structure.add( attributes[ i ].toDataType(), "attributes_" + i, null );
+		for (int i = 0; i < attributes.length; ++i) {
+			structure.add(attributes[i].toDataType(), "attributes_" + i, null);
 		}
 
 		return structure;

@@ -1083,6 +1083,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
 };
 
 class RuleDivTermAdd2 : public Rule {
@@ -1106,7 +1107,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
+  static Varnode *findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &extopc);
 };
 
 class RuleSignDiv2 : public Rule {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -52,25 +51,25 @@ import java.io.IOException;
 public class LineNumberTableAttribute extends AbstractAttributeInfo {
 
 	private short lineNumberTableLength;
-	private LineNumber [] lineNumberTable;
+	private LineNumber[] lineNumberTable;
 
-	public LineNumberTableAttribute( BinaryReader reader ) throws IOException {
-		super( reader );
+	public LineNumberTableAttribute(BinaryReader reader) throws IOException {
+		super(reader);
 
 		lineNumberTableLength = reader.readNextShort();
-		lineNumberTable = new LineNumber[ lineNumberTableLength ];
-		for ( int i = 0 ; i < lineNumberTableLength ; i++ ) {
-			lineNumberTable[ i ] = new LineNumber( reader );
+		lineNumberTable = new LineNumber[lineNumberTableLength & 0xffff];
+		for (int i = 0; i < (lineNumberTableLength & 0xffff); i++) {
+			lineNumberTable[i] = new LineNumber(reader);
 		}
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "LineNumberTable_attribute" + "|" + lineNumberTableLength + "|";
-		StructureDataType structure = getBaseStructure( name );
-		structure.add( WORD, "line_number_table_length", null );
-		for ( int i = 0 ; i < lineNumberTable.length ; ++i ) {
-			structure.add( lineNumberTable[ i ].toDataType(), "line_number_" + i, null );
+		StructureDataType structure = getBaseStructure(name);
+		structure.add(WORD, "line_number_table_length", null);
+		for (int i = 0; i < lineNumberTable.length; ++i) {
+			structure.add(lineNumberTable[i].toDataType(), "line_number_" + i, null);
 		}
 		return structure;
 	}

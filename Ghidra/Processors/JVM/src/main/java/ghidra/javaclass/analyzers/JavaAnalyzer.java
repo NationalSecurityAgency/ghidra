@@ -17,15 +17,22 @@ package ghidra.javaclass.analyzers;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.cmd.label.AddLabelCmd;
+import ghidra.app.cmd.refs.AssociateSymbolCmd;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.JavaLoader;
+import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.options.Options;
+import ghidra.javaclass.flags.MethodsInfoAccessFlags;
 import ghidra.javaclass.format.*;
 import ghidra.javaclass.format.attributes.*;
 import ghidra.javaclass.format.constantpool.*;
@@ -37,10 +44,9 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.program.model.symbol.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker {
@@ -108,7 +114,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			TaskMonitor monitor) throws Exception {
 
 		Address address =
-			program.getAddressFactory().getAddressSpace("constantPool").getMinAddress();
+			program.getAddressFactory().getAddressSpace(JavaLoader.CONSTANT_POOL).getMinAddress();
 
 		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
@@ -130,7 +136,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		markupFields(program, classFile, monitor);
 		markupMethods(program, classFile, monitor);
 		disassembleMethods(program, classFile, monitor);
-		labelOperands(program, classFile);
+		processInstructions(program, constantPoolData, classFile, monitor);
 		recordJavaVersionInfo(program, classFile);
 		BasicCompilerSpec.enableJavaLanguageDecompilation(program);
 		return true;
@@ -157,10 +163,10 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 
 	/**
 	 * Create datatypes for all classes mentioned in the constant pool
-	 * @param program
-	 * @param classFile
-	 * @param monitor
-	 * @param messageLog
+	 * @param program program file
+	 * @param classFile ClassFileJava associated with {@code program} 
+	 * @param monitor for canceling analysis
+	 * @param messageLog for logging messages
 	 */
 	private void createProgramDataTypes(Program program, ClassFileJava classFile,
 			TaskMonitor monitor, MessageLog messageLog) {
@@ -264,7 +270,19 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 				javaVersion = "1.8";
 				break;
 			case 53:
-				javaVersion = "1.9";
+				javaVersion = "9";
+				break;
+			case 54:
+				javaVersion = "10";
+				break;
+			case 55:
+				javaVersion = "11";
+				break;
+			case 56:
+				javaVersion = "12";
+				break;
+			case 57:
+				javaVersion = "13";
 				break;
 			default:
 				javaVersion = "Unknown";
@@ -294,7 +312,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			AbstractConstantPoolInfoJava[] constantPool, Map<Integer, Integer> indexMap) {
 		AbstractAttributeInfo[] attributes = classFile.getAttributes();
 		for (AbstractAttributeInfo attribute : attributes) {
-			short nameIndex = attribute.getAttributeNameIndex();
+			int nameIndex = attribute.getAttributeNameIndex();
 			AbstractConstantPoolInfoJava poolEntry = classFile.getConstantPool()[nameIndex];
 			if (poolEntry instanceof ConstantPoolUtf8Info) {
 				String name = ((ConstantPoolUtf8Info) poolEntry).getString();
@@ -388,22 +406,177 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		return indexMap;
 	}
 
-	private void labelOperands(Program program, ClassFileJava classFile) {
-		InstructionIterator instructionIt =
-			program.getListing().getInstructions(toAddr(program, 0x10000), true);
-		while (instructionIt.hasNext()) {
-			Instruction instruction = instructionIt.next();
+	private void processInstructions(Program program, Data constantPoolData,
+			ClassFileJava classFile, TaskMonitor monitor) throws CancelledException {
 
-			Scalar opValue = instruction.getScalar(0);
-			if (opValue == null) {
+		InstructionIterator instructionIt =
+			program.getListing().getInstructions(toAddr(program, JavaLoader.CODE_OFFSET), true);
+		AbstractConstantPoolInfoJava[] constantPool = classFile.getConstantPool();
+		Map<Integer, Integer> indexMap = getIndexMap(constantPool);
+		BootstrapMethods[] bootstrapMethods =
+			getBootStrapMethodAttribute(classFile, constantPool, indexMap);
+
+		for (Instruction instruction : instructionIt) {
+			monitor.checkCanceled();
+
+			if (!hasConstantPoolReference(instruction.getMnemonicString())) {
 				continue;
 			}
 
-			AbstractConstantPoolInfoJava[] constantPool = classFile.getConstantPool();
-			int index = (int) (opValue.getValue() & 0xFFFFFFFF);
-			String opMarkup = getOperandMarkup(program, constantPool, index);
-			instruction.setComment(CodeUnit.EOL_COMMENT, opMarkup);
+			if (instruction.getMnemonicString().equals("invokedynamic")) {
+				addInvokeDynamicComments(program, constantPool, indexMap, bootstrapMethods,
+					instruction);
+			}
+
+			int index = (int) (instruction.getScalar(0).getValue() & 0xFFFFFFFF);
+
+			Data referredData = constantPoolData.getComponent(indexMap.get(index));
+			instruction.addOperandReference(0, referredData.getAddress(), RefType.DATA,
+				SourceType.ANALYSIS);
+			CompoundCmd cmd = new CompoundCmd("Add constant pool reference");
+			String constantPoolLabel = "CPOOL[" + index + "]";
+			cmd.add(
+				new AddLabelCmd(referredData.getAddress(), constantPoolLabel, SourceType.ANALYSIS));
+
+			Reference ref = instruction.getOperandReferences(0)[0];
+			cmd.add(new AssociateSymbolCmd(ref, constantPoolLabel));
+			cmd.applyTo(program);
 		}
+	}
+
+	private void addInvokeDynamicComments(Program program,
+			AbstractConstantPoolInfoJava[] constantPool, Map<Integer, Integer> indexMap,
+			BootstrapMethods[] bootstrapMethods, Instruction instruction) {
+		StringBuffer sb = new StringBuffer("Bootstrap Method: \n");
+
+		Address addr = instruction.getAddress();
+		int index = (int) (instruction.getScalar(0).getValue() & 0xFFFFFFFF);
+		ConstantPoolInvokeDynamicInfo dynamicInfo =
+			(ConstantPoolInvokeDynamicInfo) constantPool[index];
+		int bootstrapIndex = dynamicInfo.getBootstrapMethodAttrIndex();
+		appendMethodHandleInfo(sb, constantPool,
+			bootstrapMethods[bootstrapIndex].getBootstrapMethodsReference());
+
+		sb.append("\n");
+
+		int argNum = 0;
+		for (int i = 0; i < bootstrapMethods[bootstrapIndex].getNumberOfBootstrapArguments(); i++) {
+			sb.append("  static arg " + argNum++ + ": ");
+			appendLoadableInfo(sb, constantPool,
+				bootstrapMethods[bootstrapIndex].getBootstrapArgumentsEntry(i));
+			if (argNum < bootstrapMethods[bootstrapIndex].getNumberOfBootstrapArguments()) {
+				sb.append("\n");
+			}
+		}
+		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, sb.toString());
+	}
+
+	private void appendMethodHandleInfo(StringBuffer sb,
+			AbstractConstantPoolInfoJava[] constantPool, int argIndex) {
+		ConstantPoolMethodHandleInfo methodHandle =
+			(ConstantPoolMethodHandleInfo) constantPool[argIndex];
+		AbstractConstantPoolInfoJava handleRef = constantPool[methodHandle.getReferenceIndex()];
+
+		if (handleRef instanceof ConstantPoolFieldReferenceInfo) {
+			ConstantPoolFieldReferenceInfo fieldRef = (ConstantPoolFieldReferenceInfo) handleRef;
+			ConstantPoolClassInfo classInfo =
+				(ConstantPoolClassInfo) constantPool[fieldRef.getClassIndex()];
+			ConstantPoolUtf8Info utf8 =
+				(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
+			sb.append(utf8.getString());
+			sb.append(".");
+			ConstantPoolNameAndTypeInfo ntInfo =
+				(ConstantPoolNameAndTypeInfo) constantPool[fieldRef.getNameAndTypeIndex()];
+			utf8 = (ConstantPoolUtf8Info) constantPool[ntInfo.getNameIndex()];
+			sb.append(utf8.getString());
+		}
+		if (handleRef instanceof ConstantPoolMethodReferenceInfo) {
+			ConstantPoolMethodReferenceInfo methodRef = (ConstantPoolMethodReferenceInfo) handleRef;
+			ConstantPoolClassInfo classRef =
+				(ConstantPoolClassInfo) constantPool[methodRef.getClassIndex()];
+			ConstantPoolUtf8Info utf8 =
+				(ConstantPoolUtf8Info) constantPool[classRef.getNameIndex()];
+			sb.append(utf8.getString() + ".");
+			ConstantPoolNameAndTypeInfo nameAndType =
+				(ConstantPoolNameAndTypeInfo) constantPool[methodRef.getNameAndTypeIndex()];
+			utf8 = (ConstantPoolUtf8Info) constantPool[nameAndType.getNameIndex()];
+			sb.append(utf8.getString());
+		}
+		if (handleRef instanceof ConstantPoolInterfaceMethodReferenceInfo) {
+			ConstantPoolInterfaceMethodReferenceInfo mrInfo =
+				(ConstantPoolInterfaceMethodReferenceInfo) handleRef;
+			ConstantPoolClassInfo classRef =
+				(ConstantPoolClassInfo) constantPool[mrInfo.getClassIndex()];
+			ConstantPoolUtf8Info utf8 =
+				(ConstantPoolUtf8Info) constantPool[classRef.getNameIndex()];
+			sb.append(utf8.getString() + ".");
+			ConstantPoolNameAndTypeInfo nameAndType =
+				(ConstantPoolNameAndTypeInfo) constantPool[mrInfo.getNameAndTypeIndex()];
+			utf8 = (ConstantPoolUtf8Info) constantPool[nameAndType.getNameIndex()];
+			sb.append(utf8.getString());
+		}
+	}
+
+	private void appendLoadableInfo(StringBuffer sb, AbstractConstantPoolInfoJava[] constantPool,
+			int argIndex) {
+		AbstractConstantPoolInfoJava cpoolInfo = constantPool[argIndex];
+		if (cpoolInfo instanceof ConstantPoolIntegerInfo) {
+			ConstantPoolIntegerInfo intInfo = (ConstantPoolIntegerInfo) cpoolInfo;
+			sb.append(intInfo.getValue());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolFloatInfo) {
+			ConstantPoolFloatInfo floatInfo = (ConstantPoolFloatInfo) cpoolInfo;
+			sb.append(floatInfo.getValue());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolLongInfo) {
+			ConstantPoolLongInfo longInfo = (ConstantPoolLongInfo) cpoolInfo;
+			sb.append(longInfo.getValue());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolDoubleInfo) {
+			ConstantPoolDoubleInfo doubleInfo = (ConstantPoolDoubleInfo) cpoolInfo;
+			sb.append(doubleInfo.getValue());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolClassInfo) {
+			ConstantPoolClassInfo classInfo = (ConstantPoolClassInfo) cpoolInfo;
+			ConstantPoolUtf8Info className =
+				(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
+			sb.append(className.getString());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolStringInfo) {
+			ConstantPoolStringInfo stringInfo = (ConstantPoolStringInfo) cpoolInfo;
+			ConstantPoolUtf8Info utf8 =
+				(ConstantPoolUtf8Info) constantPool[stringInfo.getStringIndex()];
+			sb.append("\"");
+			sb.append(utf8.getString());
+			sb.append("\"");
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolMethodHandleInfo) {
+			appendMethodHandleInfo(sb, constantPool, argIndex);
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolMethodTypeInfo) {
+			ConstantPoolMethodTypeInfo mtInfo = (ConstantPoolMethodTypeInfo) cpoolInfo;
+			ConstantPoolUtf8Info descriptor =
+				(ConstantPoolUtf8Info) constantPool[mtInfo.getDescriptorIndex()];
+			sb.append(descriptor.getString());
+			return;
+		}
+		if (cpoolInfo instanceof ConstantPoolDynamicInfo) {
+			ConstantPoolDynamicInfo dynamicInfo = (ConstantPoolDynamicInfo) cpoolInfo;
+			ConstantPoolNameAndTypeInfo ntInfo =
+				(ConstantPoolNameAndTypeInfo) constantPool[dynamicInfo.getNameAndTypeIndex()];
+			ConstantPoolUtf8Info name = (ConstantPoolUtf8Info) constantPool[ntInfo.getNameIndex()];
+			sb.append(name.getString());
+			return;
+		}
+		Msg.showWarn(this, null, "Unsupported Constant Pool Type", cpoolInfo.getClass().getName());
+		return;
 	}
 
 	private void markupFields(Program program, ClassFileJava classFile, TaskMonitor monitor) {
@@ -479,290 +652,6 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		}
 	}
 
-	private String getOperandMarkup(Program program, AbstractConstantPoolInfoJava[] constantPool,
-			int index) {
-		if (index >= constantPool.length || index < 0) {
-			// TODO: < 0 can happen with if<cond> branches backwards.  Goto's should be handled.
-			return "";
-		}
-		AbstractConstantPoolInfoJava constantPoolInfo = constantPool[index];
-		String opMarkup = "";
-		//
-		//			if (monitor.isCancelled()) {
-		//				break;
-		//			}
-
-		if (constantPoolInfo != null) {
-			switch (constantPoolInfo.getTag()) {
-				case ConstantPoolTagsJava.CONSTANT_Class: {
-					ConstantPoolClassInfo info = (ConstantPoolClassInfo) constantPoolInfo;
-					ConstantPoolUtf8Info utf8 =
-						(ConstantPoolUtf8Info) constantPool[info.getNameIndex()];
-					opMarkup = utf8.getString().replaceAll("/", ".");
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Double: {
-					ConstantPoolDoubleInfo info = (ConstantPoolDoubleInfo) constantPoolInfo;
-					double value = info.getValue();
-					opMarkup = Double.toString(value);
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Fieldref: {
-					ConstantPoolFieldReferenceInfo info =
-						(ConstantPoolFieldReferenceInfo) constantPoolInfo;
-
-					ConstantPoolClassInfo classInfo =
-						(ConstantPoolClassInfo) constantPool[info.getClassIndex()];
-
-					ConstantPoolUtf8Info className =
-						(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-
-					ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-						(ConstantPoolNameAndTypeInfo) constantPool[info.getNameAndTypeIndex()];
-
-					ConstantPoolUtf8Info fieldName =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-					ConstantPoolUtf8Info fieldDescriptor =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-					opMarkup = className.getString().replaceAll("/", ".") + "." +
-						fieldName.getString() + " : " + DescriptorDecoder.getTypeNameFromDescriptor(
-							fieldDescriptor.getString(), true, true);
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Float: {
-					ConstantPoolFloatInfo info = (ConstantPoolFloatInfo) constantPoolInfo;
-					float value = info.getValue();
-					opMarkup = Float.toString(value);
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Integer: {
-					ConstantPoolIntegerInfo info = (ConstantPoolIntegerInfo) constantPoolInfo;
-					int value = info.getValue();
-					opMarkup = Integer.toString(value);
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_InterfaceMethodref: {
-					ConstantPoolInterfaceMethodReferenceInfo info =
-						(ConstantPoolInterfaceMethodReferenceInfo) constantPoolInfo;
-
-					ConstantPoolClassInfo classInfo =
-						(ConstantPoolClassInfo) constantPool[info.getClassIndex()];
-
-					ConstantPoolUtf8Info className =
-						(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-
-					ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-						(ConstantPoolNameAndTypeInfo) constantPool[info.getNameAndTypeIndex()];
-
-					ConstantPoolUtf8Info interfaceName =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-					ConstantPoolUtf8Info interfaceDescriptor =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-					String descriptor = interfaceDescriptor.getString();
-					String params = getParameters(descriptor);
-					String returnType =
-						DescriptorDecoder.getReturnTypeOfMethodDescriptor(descriptor,
-							program.getDataTypeManager()).getName();
-
-					opMarkup = className.getString().replaceAll("/", ".") + "." +
-						interfaceName.getString() + params + " : " + returnType;
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_InvokeDynamic: {
-					ConstantPoolInvokeDynamicInfo info =
-						(ConstantPoolInvokeDynamicInfo) constantPoolInfo;
-
-					ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-						(ConstantPoolNameAndTypeInfo) constantPool[info.getNameAndTypeIndex()];
-
-					ConstantPoolUtf8Info name =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-
-					opMarkup = name.getString();
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Long: {
-					ConstantPoolLongInfo info = (ConstantPoolLongInfo) constantPoolInfo;
-					long value = info.getValue();
-					opMarkup = Long.toString(value);
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_MethodHandle: {
-					ConstantPoolMethodHandleInfo info =
-						(ConstantPoolMethodHandleInfo) constantPoolInfo;
-
-					if (info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_getField ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_getStatic ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_putField ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_putStatic) {
-
-						ConstantPoolFieldReferenceInfo field =
-							(ConstantPoolFieldReferenceInfo) constantPool[info.getReferenceIndex()];
-						ConstantPoolClassInfo classInfo =
-							(ConstantPoolClassInfo) constantPool[field.getClassIndex()];
-						ConstantPoolUtf8Info className =
-							(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-						ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-							(ConstantPoolNameAndTypeInfo) constantPool[field.getNameAndTypeIndex()];
-						ConstantPoolUtf8Info fieldName =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-
-						ConstantPoolUtf8Info fieldInfo =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-						String descriptor = fieldInfo.getString();
-						String params = getParameters(descriptor);
-						String returnType =
-							DescriptorDecoder.getReturnTypeOfMethodDescriptor(descriptor,
-								program.getDataTypeManager()).getName();
-
-						opMarkup = className.getString().replaceAll("/", ".") + "." +
-							fieldName.getString() + params + " : " + returnType;
-					}
-					else if (info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_invokeVirtual ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_invokeStatic ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_invokeSpecial ||
-						info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_newInvokeSpecial) {
-
-						ConstantPoolMethodReferenceInfo method =
-							(ConstantPoolMethodReferenceInfo) constantPool[info.getReferenceIndex()];
-						ConstantPoolClassInfo classInfo =
-							(ConstantPoolClassInfo) constantPool[method.getClassIndex()];
-						ConstantPoolUtf8Info className =
-							(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-						ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-							(ConstantPoolNameAndTypeInfo) constantPool[method.getNameAndTypeIndex()];
-						ConstantPoolUtf8Info methodName =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-
-						ConstantPoolUtf8Info methodInfo =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-						String descriptor = methodInfo.getString();
-						String params = getParameters(descriptor);
-						String returnType =
-							DescriptorDecoder.getReturnTypeOfMethodDescriptor(descriptor,
-								program.getDataTypeManager()).getName();
-
-						opMarkup = className.getString().replaceAll("/", ".") + "." +
-							methodName.getString() + params + " : " + returnType;
-					}
-					else if (info.getReferenceKind() == MethodHandleBytecodeBehaviors.REF_invokeInterface) {
-
-						ConstantPoolInterfaceMethodReferenceInfo interfaceMethod =
-							(ConstantPoolInterfaceMethodReferenceInfo) constantPool[info.getReferenceIndex()];
-						ConstantPoolClassInfo classInfo =
-							(ConstantPoolClassInfo) constantPool[interfaceMethod.getClassIndex()];
-						ConstantPoolUtf8Info className =
-							(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-						ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-							(ConstantPoolNameAndTypeInfo) constantPool[interfaceMethod.getNameAndTypeIndex()];
-						ConstantPoolUtf8Info interfaceMethodName =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-
-						ConstantPoolUtf8Info interfaceMethodInfo =
-							(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-						String descriptor = interfaceMethodInfo.getString();
-						String params = getParameters(descriptor);
-						String returnType =
-							DescriptorDecoder.getReturnTypeOfMethodDescriptor(descriptor,
-								program.getDataTypeManager()).getName();
-
-						opMarkup = className.getString().replaceAll("/", ".") + "." +
-							interfaceMethodName.getString() + params + " : " + returnType;
-					}
-
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Methodref: {
-					ConstantPoolMethodReferenceInfo info =
-						(ConstantPoolMethodReferenceInfo) constantPoolInfo;
-
-					ConstantPoolClassInfo classInfo =
-						(ConstantPoolClassInfo) constantPool[info.getClassIndex()];
-
-					ConstantPoolUtf8Info className =
-						(ConstantPoolUtf8Info) constantPool[classInfo.getNameIndex()];
-
-					ConstantPoolNameAndTypeInfo nameAndTypeInfo =
-						(ConstantPoolNameAndTypeInfo) constantPool[info.getNameAndTypeIndex()];
-
-					ConstantPoolUtf8Info methodName =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getNameIndex()];
-					ConstantPoolUtf8Info methodDescriptor =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-					ConstantPoolUtf8Info methodInfo =
-						(ConstantPoolUtf8Info) constantPool[nameAndTypeInfo.getDescriptorIndex()];
-
-					String descriptor = methodInfo.getString();
-					String params = getParameters(descriptor);
-					String returnType =
-						DescriptorDecoder.getReturnTypeOfMethodDescriptor(descriptor,
-							program.getDataTypeManager()).getName();
-					if (methodName.getString().equals("<init>")) {
-						opMarkup = className.getString() + params;
-					}
-					else {
-						opMarkup = className.getString().replaceAll("/", ".") + "." +
-							methodName.getString() + params + " : " + returnType;
-					}
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_MethodType: {
-					ConstantPoolMethodTypeInfo info = (ConstantPoolMethodTypeInfo) constantPoolInfo;
-					ConstantPoolUtf8Info methodType =
-						(ConstantPoolUtf8Info) constantPool[info.getDescriptorIndex()];
-					opMarkup = methodType.getString();
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_NameAndType: {
-					ConstantPoolNameAndTypeInfo info =
-						(ConstantPoolNameAndTypeInfo) constantPoolInfo;
-
-					ConstantPoolUtf8Info fieldName =
-						(ConstantPoolUtf8Info) constantPool[info.getNameIndex()];
-					ConstantPoolUtf8Info fieldDescriptor =
-						(ConstantPoolUtf8Info) constantPool[info.getDescriptorIndex()];
-
-					opMarkup = fieldName.getString();
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_String: {
-					ConstantPoolStringInfo info = (ConstantPoolStringInfo) constantPoolInfo;
-					ConstantPoolUtf8Info utf8 =
-						(ConstantPoolUtf8Info) constantPool[info.getStringIndex()];
-					opMarkup = utf8.toString();
-					break;
-				}
-				case ConstantPoolTagsJava.CONSTANT_Utf8: {
-					ConstantPoolUtf8Info utf8 = (ConstantPoolUtf8Info) constantPoolInfo;
-					opMarkup = utf8.getString();
-					break;
-				}
-			}
-		}
-		return opMarkup;
-	}
-
-	private String getParameters(String descriptor) {
-		List<String> paramTypeNames = DescriptorDecoder.getTypeNameList(descriptor, true, true);
-		StringBuilder sb = new StringBuilder();
-		sb.append("(");
-		//don't append the last element of the list, which is the return type
-		for (int i = 0, max = paramTypeNames.size() - 1; i < max; ++i) {
-			sb.append(paramTypeNames.get(i));
-			if (i < max - 1) {
-				sb.append(", ");
-			}
-		}
-		sb.append(")");
-		return sb.toString();
-	}
-
 	@Override
 	public String getWorkerName() {
 		return getName();
@@ -780,11 +669,11 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 	 * Sets the name, return type, and parameter types of a method using the information in the constant pool.
 	 * Also overrides the signatures on all method invocations made within the method body.
 	 * @param function - the function (method) 
-	 * @param methodDescriptor - the name of the memory block containing the function's code.  It is assumed that blockName
-	 * is the concatenation of the method name and the descriptor
-	 * @param constantPool
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
+	 * @param methodInfo information about the method from the constant pool
+	 * @param classFile class file containing the method
+	 * @param dtManager data type manager for program 
+	 * @throws DuplicateNameException if there are duplicate name issues with function or parameter names
+	 * @throws InvalidInputException if a function or parameter name is invalid
 	 */
 	private void setFunctionInfo(Function function, MethodInfoJava methodInfo,
 			ClassFileJava classFile, DataTypeManager dtManager)
@@ -833,5 +722,60 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		}
 		function.replaceParameters(params, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
 			SourceType.ANALYSIS);
+
+		createAccessFlagComments(function, methodInfo, classFile);
+
 	}
+
+	private void createAccessFlagComments(Function function, MethodInfoJava methodInfo,
+			ClassFileJava classFile) {
+
+		int flags = methodInfo.getAccessFlags();
+
+		StringBuffer sb = new StringBuffer();
+
+		for (MethodsInfoAccessFlags f : MethodsInfoAccessFlags.values()) {
+			if ((flags & f.getValue()) != 0) {
+				sb.append("  " + f.name() + "\n");
+			}
+		}
+
+		if (!StringUtils.isEmpty(sb)) {
+			sb.insert(0, "Flags:\n");
+		}
+
+		sb.append("\n");
+		sb.append(methodInfo.getMethodSignature(classFile));
+
+		Listing listing = function.getProgram().getListing();
+		Address entryPoint = function.getEntryPoint();
+
+		listing.setComment(entryPoint, CodeUnit.PLATE_COMMENT, sb.toString());
+	}
+
+	private boolean hasConstantPoolReference(String mnemonic) {
+		switch (mnemonic) {
+			case ("anewarray"):
+			case ("checkcast"):
+			case ("getfield"):
+			case ("getstatic"):
+			case ("instanceof"):
+			case ("invokedynamic"):
+			case ("invokeinterface"):
+			case ("invokespecial"):
+			case ("invokestatic"):
+			case ("invokevirtual"):
+			case ("multianewarray"):
+			case ("ldc"):
+			case ("ldc_w"):
+			case ("ldc2_w"):
+			case ("new"):
+			case ("putfield"):
+			case ("putstatic"):
+				return true;
+			default:
+				return false;
+		}
+	}
+
 }

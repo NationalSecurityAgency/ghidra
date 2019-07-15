@@ -101,7 +101,7 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	protected String doCreateSplashScreenTitle() {
-		return Application.getName();
+		return Application.getName() + " " + Application.getApplicationVersion();
 	}
 
 	protected String doCreateAboutTitle() {

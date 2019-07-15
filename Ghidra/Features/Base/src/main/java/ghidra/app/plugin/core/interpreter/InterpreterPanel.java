@@ -679,14 +679,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			}
 
 			if (bytes != null) {
-				int length = Math.min(bytes.length, len);
-				System.arraycopy(bytes, 0, b, off, length);
-				if (length == bytes.length) {
+				int length = Math.min(bytes.length - position, len);
+				System.arraycopy(bytes, position, b, off, length);
+				if (position + length == bytes.length) {
 					position = 0;
 					bytes = null;
 				}
 				else {
-					position = b.length;
+					position += length;
 				}
 				return length;
 			}

@@ -183,9 +183,16 @@ public class DecompileCallback {
 				return null;
 			}
 			byte[] resbytes = new byte[size];
-			program.getMemory().getBytes(addr, resbytes, 0, size);
+			int bytesRead = program.getMemory().getBytes(addr, resbytes, 0, size);
 			if (debug != null) {
-				debug.getBytes(addr, resbytes);
+				if (bytesRead != size) {
+					byte[] debugBytes = new byte[bytesRead];
+					System.arraycopy(resbytes, 0, debugBytes, 0, bytesRead);
+					debug.getBytes(addr, debugBytes);
+				}
+				else {
+					debug.getBytes(addr, resbytes);
+				}
 			}
 			return resbytes;
 		}
