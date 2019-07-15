@@ -163,7 +163,7 @@ abstract class MemoryMapDBAdapter {
 	 * block data will be initialized to zero (0x00).
 	 * @param name the name of the block
 	 * @param startAddr the start address of the block.
-	 * @param is data source
+	 * @param is data source or null for zero initialization
 	 * @param length size of block
 	 * @param permissions the new block permissions
 	 * @return new memory block

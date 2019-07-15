@@ -28,12 +28,10 @@ import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ELFExternalSymbolResolver;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -74,22 +72,6 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		}
 
 		return options;
-	}
-
-	private String getBaseOffsetString(long imageBase, AddressSpace defaultSpace) {
-		int maxNibbles = defaultSpace.getSize() / 4;
-		int minNibbles = Math.min(8, maxNibbles);
-		String baseOffsetStr = Long.toHexString(imageBase);
-		int baseOffsetStrLen = baseOffsetStr.length();
-		if (imageBase < 0) {
-			if (baseOffsetStrLen > maxNibbles) {
-				baseOffsetStr = baseOffsetStr.substring(baseOffsetStrLen - maxNibbles);
-			}
-		}
-		else if (baseOffsetStrLen < minNibbles) {
-			baseOffsetStr = StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
-		}
-		return baseOffsetStr;
 	}
 
 	@Override
@@ -152,7 +134,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		try {
 			GenericFactory factory = MessageLogContinuesFactory.create(log);
 			ElfHeader elf = ElfHeader.createElfHeader(factory, provider);
-			ElfProgramBuilder.loadElf(elf, program, options, log, handler, monitor);
+			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {
 			throw new IOException(e.getMessage());

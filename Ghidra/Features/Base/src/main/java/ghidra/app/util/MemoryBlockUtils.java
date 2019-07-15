@@ -28,6 +28,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /** 
  * Convenience methods for creating memory blocks.
@@ -57,7 +58,44 @@ public class MemoryBlockUtils {
 		try {
 			MemoryBlock block = memory.createUninitializedBlock(name, start, length, isOverlay);
 			setBlockAttributes(block, comment, source, r, w, x);
-			adjustFragment(program, start, name);
+			adjustFragment(program, block.getStart(), name);
+			return block;
+		}
+		catch (LockException e) {
+			log.appendMsg("Failed to create memory block: exclusive lock/checkout required");
+		}
+		catch (Exception e) {
+			log.appendMsg("Failed to create '" + name + "' memory block: " + e.getMessage());
+		}
+		return null;
+	}
+
+	/**
+	 * Create a new initialized memory block.  Initialized to all zeros.
+	 * @param program the program in which to create the block.
+	 * @param isOverlay if true, the block will be created in a new overlay space for that block
+	 * @param name the name of the new block.
+	 * @param start the starting address of the new block.
+	 * @param is source of the data used to fill the block or null for zero initialization.
+	 * @param length the length of the new block
+	 * @param comment the comment text to associate with the new block.
+	 * @param source the source of the block (This field is not well defined - currently another comment)
+	 * @param r the read permission for the new block.
+	 * @param w the write permission for the new block.
+	 * @param x the execute permission for the new block.
+	 * @param log a {@link MessageLog} for appending error messages
+	 * @return the newly created block or null if the operation failed.
+	 */
+	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
+			String name, Address start, long length, String comment, String source, boolean r,
+			boolean w, boolean x, MessageLog log) {
+
+		Memory memory = program.getMemory();
+		try {
+			MemoryBlock block = memory.createInitializedBlock(name, start, null, length,
+				TaskMonitor.DUMMY, isOverlay);
+			setBlockAttributes(block, comment, source, r, w, x);
+			adjustFragment(program, block.getStart(), name);
 			return block;
 		}
 		catch (LockException e) {
@@ -86,9 +124,9 @@ public class MemoryBlockUtils {
 	 * @param log a {@link StringBuffer} for appending error messages
 	 * @return the new created block
 	 */
-	public static MemoryBlock createBitMappedBlock(Program program, String name,
-			Address start, Address base, int length, String comment, String source, boolean r,
-			boolean w, boolean x, MessageLog log) {
+	public static MemoryBlock createBitMappedBlock(Program program, String name, Address start,
+			Address base, int length, String comment, String source, boolean r, boolean w,
+			boolean x, MessageLog log) {
 
 		Memory memory = program.getMemory();
 		try {
@@ -197,7 +235,7 @@ public class MemoryBlockUtils {
 		}
 
 		setBlockAttributes(block, comment, source, r, w, x);
-		adjustFragment(program, start, name);
+		adjustFragment(program, block.getStart(), name);
 		return block;
 	}
 
@@ -252,8 +290,7 @@ public class MemoryBlockUtils {
 	}
 
 	private static void setBlockAttributes(MemoryBlock block, String comment, String source,
-			boolean r,
-			boolean w, boolean x) {
+			boolean r, boolean w, boolean x) {
 		block.setComment(comment);
 		block.setSourceName(source);
 		block.setRead(r);

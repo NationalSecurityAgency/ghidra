@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.*;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.MIPS_ElfExtension;
 import ghidra.app.util.importer.MessageLog;
@@ -30,7 +30,6 @@ import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotFoundException;
-import ghidra.util.task.TaskMonitor;
 
 public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
@@ -1152,14 +1151,13 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			if (lastSectionGotEntryAddress == null) {
 				return;
 			}
-			MemoryBlockUtil mbu = loadHelper.getMemoryBlockUtil();
 			int size = (int) lastSectionGotEntryAddress.subtract(sectionGotAddress) + 1;
 			String sectionName = relocationTable.getSectionToBeRelocated().getNameAsString();
 			String blockName = getSectionGotName();
 			try {
-				MemoryBlock block = mbu.createInitializedBlock(blockName, sectionGotAddress, null,
-					size, "GOT for " + sectionName + " section", "MIPS-Elf Loader", true, false,
-					false, TaskMonitor.DUMMY);
+				MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false,
+					blockName, sectionGotAddress, size, "GOT for " + sectionName + " section",
+					"MIPS-Elf Loader", true, false, false, loadHelper.getLog());
 				DataConverter converter =
 					program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 							: LittleEndianDataConverter.INSTANCE;
@@ -1176,7 +1174,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					loadHelper.createData(addr, PointerDataType.dataType);
 				}
 			}
-			catch (AddressOverflowException | MemoryAccessException e) {
+			catch (MemoryAccessException e) {
 				throw new AssertException(e); // unexpected
 			}
 		}

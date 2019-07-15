@@ -24,18 +24,19 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
 import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.register.AddressRangeObjectMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -71,7 +72,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private MessageLog log;
 
 	private ElfHeader elf;
-	private MemoryBlockUtil mbu;
+	private FileBytes fileBytes;
 
 	private Listing listing;
 	private Memory memory;
@@ -79,14 +80,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private HashMap<ElfSymbol, Address> symbolMap = new HashMap<>();
 
 	protected ElfProgramBuilder(ElfHeader elf, Program program, List<Option> options,
-			MessageLog log, MemoryConflictHandler handler) {
+			MessageLog log) {
 		super(program);
 		this.elf = elf;
 		this.options = options;
 		this.log = log;
 		memory = program.getMemory();
 		listing = program.getListing();
-		mbu = new MemoryBlockUtil(program, handler);
 	}
 
 	@Override
@@ -94,16 +94,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return elf;
 	}
 
-	@Override
-	public MemoryBlockUtil getMemoryBlockUtil() {
-		return mbu;
-	}
-
 	static void loadElf(ElfHeader elf, Program program, List<Option> options, MessageLog log,
-			MemoryConflictHandler handler, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		ElfProgramBuilder elfProgramBuilder =
-			new ElfProgramBuilder(elf, program, options, log, handler);
+			TaskMonitor monitor) throws IOException, CancelledException {
+		ElfProgramBuilder elfProgramBuilder = new ElfProgramBuilder(elf, program, options, log);
 		elfProgramBuilder.load(monitor);
 	}
 
@@ -128,6 +121,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			processSectionHeaders(monitor);
 
 			// resolve segment/sections and create program memory blocks
+			ByteProvider byteProvider = elf.getReader().getByteProvider();
+			try (InputStream fileIn = byteProvider.getInputStream(0)) {
+				fileBytes = program.getMemory().createFileBytes(byteProvider.getName(), 0,
+					byteProvider.length(), fileIn);
+			}
 			resolve(monitor);
 
 			if (elf.e_shnum() == 0) {
@@ -175,13 +173,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			success = true;
 		}
 		finally {
-			if (mbu != null) {
-				if (log != null) {
-					log(mbu.getMessages());
-				}
-				mbu.dispose();
-				mbu = null;
-			}
 			program.endTransaction(id, success);
 		}
 	}
@@ -2898,6 +2889,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			boolean w, boolean x, TaskMonitor monitor)
 			throws IOException, AddressOverflowException, CancelledException {
 
+		// TODO: MemoryBlockUtil poorly and inconsistently handles duplicate name errors (can throw RuntimeException).
+		// Are we immune from such errors? If not, how should they be handled?
+
 		long revisedLength = checkBlockLimit(name, dataLength, true);
 		long sizeGB = revisedLength >> Memory.GBYTE_SHIFT_FACTOR;
 
@@ -2910,26 +2904,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Msg.debug(this,
 			"Loading block " + name + " at " + start + " from file offset " + fileOffset);
 
-		try (InputStream dataInput =
-			getInitializedBlockInputStream(loadable, start, fileOffset, revisedLength)) {
-
-			String blockComment = comment;
-			if (dataLength != revisedLength) {
-				blockComment += " (section truncated to " + sizeGB + " GByte)";
-			}
-
-			if (isOverlay) {
-				return mbu.createOverlayBlock(name, start, dataInput, revisedLength, blockComment,
-					BLOCK_SOURCE_NAME, r, w, x, monitor);
-			}
-			return mbu.createInitializedBlock(name, start, dataInput, revisedLength, blockComment,
-				BLOCK_SOURCE_NAME, r, w, x, monitor);
+		String blockComment = comment;
+		if (dataLength != revisedLength) {
+			blockComment += " (section truncated to " + sizeGB + " GByte)";
 		}
-		catch (DuplicateNameException e) {
-			// TODO: MemoryBlockUtil poorly and inconsistently handles duplicate name errors (can throw RuntimeException).
-			// Are we immune from such errors? If not, how should they be handled?
-			throw new IOException(e);
-		}
+
+		return MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start, fileBytes,
+			fileOffset, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log);
 	}
 
 	@Override
@@ -2953,8 +2934,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			comment += " (section truncated to " + sizeGB + " GByte)";
 		}
 
-		return mbu.createUninitializedBlock(isOverlay, name, start, dataLength, comment,
-			BLOCK_SOURCE_NAME, r, w, x);
+		return MemoryBlockUtils.createUninitializedBlock(program, isOverlay, name, start,
+			revisedLength, comment, BLOCK_SOURCE_NAME, r, w, x, log);
 	}
 
 }

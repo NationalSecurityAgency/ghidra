@@ -110,7 +110,7 @@ public interface Memory extends AddressSetView {
 	 * Create an initialized memory block and add it to this Memory.
 	 * @param name block name
 	 * @param start start address of the block
-	 * @param is source of the data used to fill the block.
+	 * @param is source of the data used to fill the block or null for zero initialization.
 	 * @param length the size of the block
 	 * @param monitor task monitor
 	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
