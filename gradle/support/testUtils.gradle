@@ -241,8 +241,14 @@ def boolean shouldSkipTestTaskCreation(Project subproject) {
 			+ " 'excludeFromParallelTests' found.")
 		return true
 	}
-	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
-	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	
+	if (subproject.findProperty("repoToTest")) {
+	    subproject.ext.repoToTest = subproject.getProperty('repoToTest')
+	}
+	else {
+	    subproject.ext.repoToTest = "ALL_REPOS"
+	}
+	if (!subproject.ext.repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
 	    return true
 	}
 
@@ -273,8 +279,14 @@ def boolean shouldSkipIntegrationTestTaskCreation(Project subproject) {
 			+ "'excludeFromParallelIntegrationTests' found.")
 		return true
 	}
-	subproject.ext.repoToTest = subproject.hasProperty('repoToTest') ? subproject.getProperty('repoToTest') : "ALL_REPOS"
-	if (!repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	
+	if (subproject.findProperty("repoToTest")) {
+	    subproject.ext.repoToTest = subproject.getProperty('repoToTest')
+	}
+	else {
+	    subproject.ext.repoToTest = "ALL_REPOS"
+	}
+	if (!subproject.ext.repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
 	    return true
 	}
 
