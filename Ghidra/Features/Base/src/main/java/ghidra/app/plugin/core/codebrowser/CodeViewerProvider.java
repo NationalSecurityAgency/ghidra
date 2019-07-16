@@ -27,8 +27,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.dnd.*;
 import docking.widgets.EventTrigger;
@@ -60,7 +59,9 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
 		ChangeListener, StringSelectionListener, PopupListener {
 
-	private static final String TITLE = "Listing: ";
+	private static final String OLD_NAME = "CodeBrowserPlugin";
+	private static final String NAME = "Listing";
+	private static final String TITLE = NAME + ": ";
 
 	private static final Icon LISTING_FORMAT_EXPAND_ICON =
 		ResourceManager.loadImage("images/field.header.down.png");
@@ -113,10 +114,14 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
 			boolean isConnected) {
-		super(plugin.getTool(), "Listing", plugin.getName(), CodeViewerActionContext.class);
+		super(plugin.getTool(), NAME, plugin.getName(), CodeViewerActionContext.class);
 
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
+
+		// note: the owner has not changed, just the name; remove sometime after version 10
+		String owner = plugin.getName();
+		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
 
 		setConnected(isConnected);
 		setIcon(ResourceManager.loadImage("images/Browser.gif"));

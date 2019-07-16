@@ -28,16 +28,13 @@ import docking.help.HelpService;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 /**
  * Node object for managing one or more components. If more that one managed component
  * is active, then this node will create a tabbedPane object to contain the active components.
  */
 class ComponentNode extends Node {
-
-	private static final String OLD_LISTING_NAME = "CodeBrowserPlugin";
-	private static final String NEW_LISTING_NAME = "Listing";
 
 	private ComponentPlaceholder top;
 	private List<ComponentPlaceholder> windowPlaceholders;
@@ -52,7 +49,7 @@ class ComponentNode extends Node {
 				break;
 			}
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			if (top != null) {
 				top.requestFocus();
 			}
@@ -93,12 +90,6 @@ class ComponentNode extends Node {
 			String group = e.getAttributeValue("GROUP");
 			if (group == null || group.trim().isEmpty()) {
 				group = ComponentProvider.DEFAULT_WINDOW_GROUP;
-			}
-
-			// TODO remove this in a few major releases after 9.1; this prevents existing tools
-			// from losing layout positioning information due to a recent rename
-			if (OLD_LISTING_NAME.equals(name)) {
-				name = NEW_LISTING_NAME;
 			}
 
 			boolean isActive = Boolean.valueOf(e.getAttributeValue("ACTIVE")).booleanValue();

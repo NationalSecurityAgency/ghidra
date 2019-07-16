@@ -756,9 +756,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Register a name and/or owner change to a provider so that old tools can restore those provider windows
-	 * to their old position and size. Note you must supply all four arguments. If the name or owner did not
-	 * change, use the name or owner that did not change for both the old and new values.
+	 * Register a name and/or owner change to a provider so that old tools can restore those 
+	 * provider windows to their old position and size. Note you must supply all four 
+	 * arguments. If the name or owner did not change, use the name or owner that did not change 
+	 * for both the old and new values.
+	 * 
+	 * <p>Note: when you make use of this method, please signal when it is safe to remove 
+	 * its usage.
+	 * 
 	 * @param oldName the old name of the provider.
 	 * @param oldOwner the old owner of the provider.
 	 * @param newName the new name of the provider. If the name did not change, use the old name here.
