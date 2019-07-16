@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.archive;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.jar.JarEntry;
@@ -26,14 +28,24 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
-import ghidra.framework.main.*;
-import ghidra.framework.model.*;
-import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.FrontEndTool;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ProjectListener;
+import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.model.ProjectManager;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskListener;
 
 /**
  * The archive plugin provides menu action from the front end allowing the
@@ -197,7 +209,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 		Project activeProject = AppInfo.getActiveProject();
 		if (activeProject.getToolManager().getRunningTools().length > 0) {
 			Msg.showInfo(getClass(), tool.getToolFrame(), TOOL_RUNNING_TITLE,
-					"You must close running tools before starting the archive process.");
+				"You must close running tools before starting the archive process.");
 			return;
 		}
 
@@ -376,8 +388,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 
 	void cleanupRestoredProject(ProjectLocator projectLocator) {
 
-		Project project = tool.getProject();
-		ProjectManager projectManager = project.getProjectManager();
+		ProjectManager projectManager = tool.getProjectManager();
 
 		// delete the project at the given project location
 		if (!projectManager.deleteProject(projectLocator)) {
