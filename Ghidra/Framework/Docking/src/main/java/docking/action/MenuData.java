@@ -15,6 +15,8 @@
  */
 package docking.action;
 
+import java.util.Arrays;
+
 import javax.swing.Icon;
 
 import docking.DockingUtils;
@@ -158,6 +160,9 @@ public class MenuData {
 	}
 
 	public void setMenuPath(String[] newPath) {
+		if (newPath == null || newPath.length == 0) {
+			throw new IllegalArgumentException("Menu path cannot be null or empty");
+		}
 		MenuData oldData = cloneData();
 		menuPath = processMenuPath(newPath);
 		int newMnemonic = getMnemonic(newPath);
@@ -204,20 +209,15 @@ public class MenuData {
 	}
 
 	private static String[] processMenuPath(String[] menuPath) {
-		if (menuPath != null && menuPath.length > 0) {
-			menuPath[menuPath.length - 1] = processMenuItemName(menuPath[menuPath.length - 1]);
+		String[] copy = Arrays.copyOf(menuPath, menuPath.length);
+		if (copy != null && copy.length > 0) {
+			copy[copy.length - 1] = processMenuItemName(copy[copy.length - 1]);
 		}
-		return menuPath;
+		return copy;
 	}
 
 	private static String processMenuItemName(String string) {
-		int indexOf = string.indexOf('&');
-		if (indexOf >= 0 && indexOf < string.length() - 1) {
-			return string.substring(0, indexOf) + string.substring(indexOf + 1);
-
-		}
-		return string;
-
+		return string.replaceFirst("&", "");
 	}
 
 	public String getMenuItemName() {
