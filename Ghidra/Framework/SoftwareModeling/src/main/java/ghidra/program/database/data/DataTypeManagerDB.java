@@ -1255,35 +1255,22 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return null;
 		}
 
-		// try to deal with datatypes that have '/' chars in their name.
-		Category category = getLowestLevelCategory(dataTypePath);
+		// Use a category path to parse the datatype path because it knows how to deal with
+		// escaped forward slashes.
+		CategoryPath parsedPath = new CategoryPath(dataTypePath);
+		CategoryPath categoryPath = parsedPath.getParent();
+		String dataTypeName = parsedPath.getName();
+		Category category = getCategory(categoryPath);
 
-		if (category != null) {
-			CategoryPath categoryPath = category.getCategoryPath();
-			String path = categoryPath.getPath();
-			int dataTypeNameStartIndex = path.endsWith("/") ? path.length() : path.length() + 1; // +1 to get past the last '/'
-			String dataTypeName = dataTypePath.substring(dataTypeNameStartIndex);
-			return category.getDataType(dataTypeName);
+		if (category == null) {
+			return null;
 		}
-		return null;
+		return category.getDataType(dataTypeName);
 	}
 
 	@Override
 	public DataType findDataType(String dataTypePath) {
 		return getDataType(dataTypePath);
-	}
-
-	private Category getLowestLevelCategory(String dataTypePath) {
-		CategoryPath pathParser = new CategoryPath(dataTypePath); // Use a category path to parse the path.
-		while (pathParser != null) {
-			CategoryPath path = pathParser.getParent();
-			Category category = getCategory(path);
-			if (category != null) {
-				return category;
-			}
-			pathParser = path;
-		}
-		return null;
 	}
 
 	@Override
