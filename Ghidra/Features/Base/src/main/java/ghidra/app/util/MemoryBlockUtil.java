@@ -33,7 +33,10 @@ import ghidra.util.task.TaskMonitorAdapter;
 /**
  * A utility class that encapsulates the creation
  * of different types of memory blocks in a program.
+ * 
+ * @deprecated use {@link MemoryBlockUtils} instead.
  */
+@Deprecated(since = "9.1", forRemoval = true)
 public class MemoryBlockUtil {
 
 	private final static byte MEMORY_CONFLICT_UNKNOWN = 0;
