@@ -29,7 +29,6 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkConstants;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -192,7 +191,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 			ByteProvider providerWrapper =
 				new ByteProviderWrapper(provider, offset, provider.length() - offset);
 			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),
-				MemoryConflictHandler.NEVER_OVERWRITE, monitor);
+				monitor);
 			program.setExecutableFormat(MachoLoader.MACH_O_NAME);
 			program.setExecutablePath(file.getPath());
 

@@ -26,7 +26,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.relocation.CoffRelocationHandler;
 import ghidra.app.util.bin.format.coff.relocation.CoffRelocationHandlerFactory;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -182,8 +181,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		boolean performFakeLinking = performFakeLinking(options);
 
@@ -193,7 +191,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
 		Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 
 		int id = program.startTransaction("loading program from COFF");
 		boolean success = false;

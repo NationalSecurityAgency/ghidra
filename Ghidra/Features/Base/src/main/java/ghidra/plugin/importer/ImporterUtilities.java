@@ -27,7 +27,6 @@ import ghidra.app.services.ProgramManager;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -467,8 +466,7 @@ public class ImporterUtilities {
 
 		MessageLog messageLog = new MessageLog();
 		try (ByteProvider bp = FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
-			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor);
 			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
 		}
 		catch (CancelledException e) {

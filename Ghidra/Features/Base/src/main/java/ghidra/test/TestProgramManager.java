@@ -23,7 +23,6 @@ import db.DBHandle;
 import db.buffers.BufferFile;
 import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.xml.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
@@ -387,7 +386,7 @@ public class TestProgramManager {
 		ProgramDB p = new ProgramDB(programName, language, compilerSpec, this);
 		int txId = p.startTransaction("Import");
 		try {
-			mgr.read(p, monitor, new XmlProgramOptions(), MemoryConflictHandler.ALWAYS_OVERWRITE);
+			mgr.read(p, monitor, new XmlProgramOptions());
 		}
 		finally {
 			p.endTransaction(txId, true);

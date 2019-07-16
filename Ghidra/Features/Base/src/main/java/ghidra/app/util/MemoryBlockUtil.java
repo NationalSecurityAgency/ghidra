@@ -19,7 +19,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -47,19 +46,16 @@ public class MemoryBlockUtil {
 	private Listing listing;
 	private Memory memory;
 	private SymbolTable symbolTable;
-	private MemoryConflictHandler handler;
 	private StringBuffer messages;
 
 	/**
 	 * Constructs a new memory block utility.
 	 * @param program  the program having memory blocks created
-	 * @param handler  the memory conflict handler
 	 */
-	public MemoryBlockUtil(Program program, MemoryConflictHandler handler) {
+	public MemoryBlockUtil(Program program) {
 		this.listing = program.getListing();
 		this.memory = program.getMemory();
 		this.symbolTable = program.getSymbolTable();
-		this.handler = handler;
 		this.messages = new StringBuffer();
 	}
 
@@ -78,7 +74,6 @@ public class MemoryBlockUtil {
 	public void dispose() {
 		listing = null;
 		memory = null;
-		handler = null;
 	}
 
 	/**
@@ -317,7 +312,7 @@ public class MemoryBlockUtil {
 
 		boolean shouldOverwriteBlock = true;
 		if (existingBlocks.length > 0) {
-			shouldOverwriteBlock = handler.allowOverwrite(start, end);
+			shouldOverwriteBlock = /*handler.allowOverwrite(start, end);*/ true;
 		}
 
 		//TODO: collect all user references in (start,end)

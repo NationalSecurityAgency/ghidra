@@ -21,7 +21,6 @@ import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -97,14 +96,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
 	 * @param monitor A cancelable task monitor.
-	 * @param memoryConflictHandler How to handle memory conflicts that occur during the load.
 	 * @return True if the file was successfully loaded; otherwise, false.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException;
+			MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Gets the default {@link Loader} options.

@@ -30,7 +30,8 @@ import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
@@ -93,8 +94,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		if (monitor.isCancelled()) {
 			return;
@@ -115,7 +115,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		try {
 			Map<Integer, Address> sectionNumberToAddress =
-				processMemoryBlocks(pe, program, handler, monitor, log);
+				processMemoryBlocks(pe, program, monitor, log);
 
 			monitor.setCancelEnabled(false);
 			optionalHeader.processDataDirectories(monitor);
@@ -564,8 +564,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	private Map<Integer, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException, IOException {
+			TaskMonitor monitor, MessageLog log) throws AddressOverflowException, IOException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
@@ -580,7 +579,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(prog);
 
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		if (sections.length == 0) {
@@ -608,7 +607,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			mbu = null;
 		}
 
-		mbu = new MemoryBlockUtil(prog, handler);
+		mbu = new MemoryBlockUtil(prog);
 
 		// Section blocks
 		try {

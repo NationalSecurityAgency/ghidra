@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -278,8 +277,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 			importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			success = loadInto(provider, loadSpec, options, log, prog, monitor);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
 			}
@@ -299,8 +297,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) throws IOException {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+			throws IOException {
 		long length = getLength(options);
 		//File file = provider.getFile();
 		long fileOffset = getFileOffset(options);

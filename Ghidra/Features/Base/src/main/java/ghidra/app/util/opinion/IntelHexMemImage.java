@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtil;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -177,10 +176,9 @@ class IntelHexMemImage {
 	}
 
 	String createMemory(String creator, String progFile, String blockName, boolean isOverlay,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor)
-			throws AddressOverflowException {
+			Program program, TaskMonitor monitor) throws AddressOverflowException {
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 
 		try {
 			//this code is required to allow hex lines to not appear
@@ -254,10 +252,10 @@ class IntelHexMemImage {
 		}
 	}
 
-	String createMemory(String creator, String progFile, Program program,
-			MemoryConflictHandler handler, TaskMonitor monitor) throws AddressOverflowException {
+	String createMemory(String creator, String progFile, Program program, TaskMonitor monitor)
+			throws AddressOverflowException {
 
-		return createMemory(creator, progFile, null, false, program, handler, monitor);
+		return createMemory(creator, progFile, null, false, program, monitor);
 	}
 
 	void setBaseAddr(Address address) {

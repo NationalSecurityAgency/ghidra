@@ -26,7 +26,6 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
 import ghidra.app.util.bin.format.ubi.*;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.mem.FileBytes;
@@ -79,8 +78,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
@@ -93,8 +91,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 					log, monitor);
 			}
 			else {
-				MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, handler,
-					monitor);
+				MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 		}
 		catch (Exception e) {

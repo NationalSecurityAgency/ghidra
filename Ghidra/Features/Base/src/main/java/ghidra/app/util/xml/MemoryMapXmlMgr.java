@@ -22,7 +22,6 @@ import java.util.Arrays;
 import org.xml.sax.SAXParseException;
 
 import ghidra.app.util.MemoryBlockUtil;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.SourceInfo;
 import ghidra.program.model.address.*;
@@ -54,10 +53,10 @@ class MemoryMapXmlMgr {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 	void read(XmlPullParser parser, boolean overwriteConflicts, TaskMonitor monitor,
-			String directory, MemoryConflictHandler handler)
+			String directory)
 			throws SAXParseException, FileNotFoundException, CancelledException {
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 		try {
 			XmlElement element = parser.next();
 			element = parser.next();

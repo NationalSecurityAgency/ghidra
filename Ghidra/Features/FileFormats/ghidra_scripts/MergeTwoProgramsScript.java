@@ -28,7 +28,6 @@ import java.util.Iterator;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.MemoryBlockUtil;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -242,8 +241,7 @@ public class MergeTwoProgramsScript extends GhidraScript {
 
 	private void mergeMemory( Program currProgram, Program otherProgram ) throws Exception {
 		monitor.setMessage( "Merging memory..." );
-		MemoryConflictHandler memoryConflictHandler = MemoryConflictHandler.ALWAYS_OVERWRITE;
-		MemoryBlockUtil mbu = new MemoryBlockUtil( currProgram, memoryConflictHandler );
+		MemoryBlockUtil mbu = new MemoryBlockUtil(currProgram);
 		try {
 			Memory otherMemory = otherProgram.getMemory();
 			MemoryBlock [] otherBlocks = otherMemory.getBlocks();

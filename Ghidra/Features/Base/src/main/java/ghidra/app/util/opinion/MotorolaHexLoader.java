@@ -21,7 +21,6 @@ import java.util.*;
 import ghidra.app.util.MemoryBlockUtil;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -173,8 +172,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 				importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			success = loadInto(provider, loadSpec, options, log, prog, monitor);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
 			}
@@ -194,8 +192,8 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) throws IOException, CancelledException {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		Address baseAddr = getBaseAddr(options);
 
 		if (baseAddr == null) {
@@ -203,7 +201,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 		}
 		boolean success = false;
 		try {
-			processMotorolaHex(provider, options, prog, baseAddr, monitor, handler);
+			processMotorolaHex(provider, options, prog, baseAddr, monitor);
 			success = true;
 		}
 		catch (AddressOverflowException e) {
@@ -214,7 +212,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 	}
 
 	private void processMotorolaHex(ByteProvider provider, List<Option> options, Program program,
-			Address baseAddr, TaskMonitor monitor, MemoryConflictHandler handler)
+			Address baseAddr, TaskMonitor monitor)
 			throws IOException, AddressOverflowException, CancelledException {
 		String blockName = getBlockName(options);
 		boolean isOverlay = isOverlay(options);
@@ -231,7 +229,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 		byte[] dataBuffer = new byte[BUFSIZE];
 		int counter = 0;
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 		try (BufferedReader in =
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
