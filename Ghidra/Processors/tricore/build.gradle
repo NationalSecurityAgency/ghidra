@@ -1,0 +1,8 @@
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors tricore'
+
+/*********************************************************************************
+ * Imports
+ *********************************************************************************/
+apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
+
