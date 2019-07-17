@@ -441,13 +441,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		// Check that more than 2 non-equivalent data types trigger the dialog to appear. 
 		//
 		Category secondCategory = rootCategory.createCategory("testCategory2");
-		dataType = new CustomDataType(secondCategory.getCategoryPath(), crazyName, 2) {
-			@Override
-			public DataTypeManager getDataTypeManager() {
-				return getProgramDataTypeManager(dataTypeManagers);
-			}
-
-		};
+		dataType = new CustomDataType(secondCategory.getCategoryPath(), crazyName, 2,
+			getProgramDataTypeManager(dataTypeManagers));
 		addDataType(secondCategory, dataType);
 
 		showDialogWithoutBlocking(tool, dialog);
@@ -1099,6 +1094,10 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 	}
 
 	private class CustomDataType extends StructureDataType {
+		public CustomDataType(CategoryPath path, String name, int length, DataTypeManager dtm) {
+			super(path, name, length, dtm);
+		}
+
 		public CustomDataType(CategoryPath path, String name, int length) {
 			super(path, name, length);
 		}

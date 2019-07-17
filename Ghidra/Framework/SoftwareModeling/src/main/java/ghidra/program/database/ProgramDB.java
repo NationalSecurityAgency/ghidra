@@ -30,7 +30,6 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.bookmark.BookmarkDBManager;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.code.InstructionDB;
-import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -621,13 +620,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 */
 	public TreeManager getTreeManager() {
 		return (TreeManager) managers[TREE_MGR];
-	}
-
-	/**
-	 * Returns the DataManager
-	 */
-	public DataTypeManagerDB getDataManager() {
-		return (DataTypeManagerDB) managers[DATA_MGR];
 	}
 
 	/**
@@ -2657,7 +2649,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
 		metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
 		metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
-		metadata.put("# of Data Types", "" + getDataManager().getDataTypeCount(true));
+		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
 		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
 
 		Options propList = getOptions(Program.PROGRAM_INFO);

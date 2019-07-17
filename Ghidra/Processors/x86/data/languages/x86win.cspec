@@ -21,6 +21,9 @@
 		<entry size="4" alignment="4" />
 		<entry size="8" alignment="4" />
 	</size_alignment_map>
+	<bitfield_packing>
+     	<use_MS_convention value="true"/>
+    </bitfield_packing>
   </data_organization>
   
   <global>

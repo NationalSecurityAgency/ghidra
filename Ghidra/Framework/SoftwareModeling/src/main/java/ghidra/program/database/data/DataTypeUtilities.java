@@ -124,6 +124,10 @@ public class DataTypeUtilities {
 		else if (dt instanceof BuiltInDataType) {
 			// no-op; prevents assert exception below
 		}
+		else if (dt instanceof BitFieldDataType) {
+			BitFieldDataType bitFieldDt = (BitFieldDataType) dt;
+			list.add(bitFieldDt.getBaseDataType());
+		}
 		else if (dt instanceof MissingBuiltInDataType) {
 			// no-op; prevents assert exception below
 		}

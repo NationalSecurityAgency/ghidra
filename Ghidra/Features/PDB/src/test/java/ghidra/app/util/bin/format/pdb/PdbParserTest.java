@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbFileType;
@@ -35,7 +34,8 @@ import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -84,7 +84,7 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void setUp() throws Exception {
 
 		// Get temp directory in which to store files
-		String tempDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String tempDirPath = getTestDirectoryPath();
 		tempDir = new File(tempDirPath);
 
 		fileLocation = new File(tempDir, exeFolderName);
@@ -100,6 +100,9 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@After
 	public void tearDown() throws Exception {
 
+		if (fileLocation != null) {
+			FileUtilities.deleteDir(fileLocation);
+		}
 		if (createdFiles != null) {
 			deleteCreatedFiles(createdFiles);
 		}
@@ -991,9 +994,8 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	private void createDirectory(File directory) {
-		boolean createSuccess = directory.mkdir();
-
-		if (!createSuccess) {
+		directory.mkdir();
+		if (!directory.isDirectory()) {
 			fail("Should have created directory: " + directory.getAbsolutePath());
 		}
 	}
@@ -1063,11 +1065,12 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(testProgram);
 		DataTypeManagerService dataTypeManagerService = mgr.getDataTypeManagerService();
-		PdbParserNEW parser = new PdbParserNEW(pdb, testProgram, dataTypeManagerService, false);
+		PdbParserNEW parser =
+			new PdbParserNEW(pdb, testProgram, dataTypeManagerService, false, TaskMonitor.DUMMY);
 
 		parser.openDataTypeArchives();
 		parser.parse();
-		parser.applyTo(TaskMonitorAdapter.DUMMY_MONITOR, new MessageLog());
+		parser.applyTo(new MessageLog());
 
 		// Now check program to see if the function has been successfully applied
 		AddressFactory addressFactory = testProgram.getAddressFactory();

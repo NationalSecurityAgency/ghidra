@@ -199,6 +199,7 @@ src/main/help/help/topics/DataTypeEditors/images/MultiDuplicateData.png||GHIDRA|
 src/main/help/help/topics/DataTypeEditors/images/NumDuplicates.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/NumElementsPrompt.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Plus.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/StructureEditBitfield.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditor.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditorAligned.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditorWithFlexArray.png||GHIDRA||||END|

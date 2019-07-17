@@ -103,10 +103,7 @@ public class PdbPlugin extends Plugin {
 				return;
 			}
 
-			// Note: use other constructor if we want to enforce Auto-Analysis before
-			// applying PDB.
-			final PdbParserNEW parser = new PdbParserNEW(pdb, program, service, true);
-			TaskLauncher.launch(new LoadPdbTask(program, parser));
+			TaskLauncher.launch(new LoadPdbTask(program, pdb, service));
 		}
 		catch (Exception pe) {
 			Msg.showError(getClass(), null, "Error", pe.getMessage());

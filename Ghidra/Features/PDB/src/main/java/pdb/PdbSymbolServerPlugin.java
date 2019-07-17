@@ -773,11 +773,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 				return;
 			}
 
-			// Note: use other constructor if we want to enforce Auto-Analysis before
-			// applying PDB.
-			final PdbParserNEW parser =
-				new PdbParserNEW(downloadedPdb, currentProgram, service, true);
-			TaskLauncher.launch(new LoadPdbTask(currentProgram, parser));
+			TaskLauncher.launch(new LoadPdbTask(currentProgram, downloadedPdb, service));
 		}
 		catch (Exception pe) {
 			Msg.showError(getClass(), null, "Error", pe.getMessage());

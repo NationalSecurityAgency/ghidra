@@ -46,7 +46,7 @@ public class FunctionDefinitionDBTest extends AbstractGhidraHeadedIntegrationTes
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
-		dtm = program.getDataManager();
+		dtm = program.getDataTypeManager();
 		startTransaction();
 		FunctionDefinitionDataType fdt = new FunctionDefinitionDataType("test");
 		fdt.setComment("My comments");

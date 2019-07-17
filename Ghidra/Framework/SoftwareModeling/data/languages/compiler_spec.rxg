@@ -71,7 +71,6 @@
               <optional>
                 <element name="long_double_size"><ref name="value_type"/></element>
               </optional>
-
               <optional>
                 <element name="size_alignment_map">
                   <zeroOrMore>
@@ -80,6 +79,24 @@
                       <attribute name="alignment"/>
                     </element>
                   </zeroOrMore>
+                </element>
+              </optional>
+              <optional>
+                <element name="bitfield_packing">
+                  <interleave>
+                      <optional>
+		                <!-- boolean value, default: false (MSVC should be true) -->
+		                <element name="use_MS_convention"><ref name="value_type"/></element>
+		              </optional>
+		              <optional>
+		                <!-- boolean value, default: true -->
+		                <element name="type_alignment_enabled"><ref name="value_type"/></element>
+		              </optional>
+		              <optional>
+		                <!-- int value: number of bytes -->
+		                <element name="zero_length_boundary"><ref name="value_type"/></element>
+		              </optional>
+	              </interleave>
                 </element>
               </optional>
             </interleave>

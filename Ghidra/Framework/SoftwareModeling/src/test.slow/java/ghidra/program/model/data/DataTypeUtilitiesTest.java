@@ -22,14 +22,10 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.program.database.data.DataTypeUtilities;
 
-public class DataTypeUtilitiesTest extends AbstractGenericTest {
-
-	public DataTypeUtilitiesTest() {
-		super();
-	}
+public class DataTypeUtilitiesTest extends AbstractGTest {
 
 	@Test
 	public void testGetContainedDataTypes() {

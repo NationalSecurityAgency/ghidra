@@ -22,7 +22,7 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 
 class MSRichProductBuildNumberDataType extends DataTypeImpl {
-	
+
 	private final CompId compid;
 
 	public MSRichProductBuildNumberDataType(CompId compid) {
@@ -58,7 +58,7 @@ class MSRichProductBuildNumberDataType extends DataTypeImpl {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String name) throws InvalidNameException {
 		// ignored
 	}
 

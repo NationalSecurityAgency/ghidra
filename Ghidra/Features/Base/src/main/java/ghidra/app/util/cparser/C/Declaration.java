@@ -26,7 +26,7 @@ public class Declaration {
 	private DataType dt;
 	private String name;
 	private String comment;
-	private int bitSize = 0;
+	private int bitSize = -1;
 	private boolean flexArray = false;  // true if this is a zero size flex array component
 
 	public Declaration() {
@@ -97,9 +97,6 @@ public class Declaration {
 		if (name == null) {
 			return "";
 		}
-		if (isBitField()) {
-			return name + ":" + bitSize;
-		}
 		return name;
 	}
 
@@ -133,7 +130,7 @@ public class Declaration {
 	 * @return true if a bitfield size has been set
 	 */
 	boolean isBitField() {
-		return bitSize != 0;
+		return bitSize >= 0;
 	}
 
 	/**

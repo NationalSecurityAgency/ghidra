@@ -484,7 +484,8 @@ public interface DataTypeManager {
 	public boolean updateSourceArchiveName(UniversalID sourceID, String name);
 
 	/**
-	 * Get the data organization associated with this data type manager
+	 * Get the data organization associated with this data type manager.  Note that the 
+	 * DataOrganization settings may not be changed dynamically. 
 	 * @return data organization (will never be null)
 	 */
 	public DataOrganization getDataOrganization();

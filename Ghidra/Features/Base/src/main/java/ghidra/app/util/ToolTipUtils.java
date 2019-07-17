@@ -92,6 +92,9 @@ public class ToolTipUtils {
 			else if (dataType instanceof Array) {
 				return new ArrayDataTypeHTMLRepresentation((Array) dataType);
 			}
+			else if (dataType instanceof BitFieldDataType) {
+				return new BitFieldDataTypeHTMLRepresentation((BitFieldDataType) dataType);
+			}
 			else {
 				return new DefaultDataTypeHTMLRepresentation(dataType);
 			}
@@ -203,8 +206,9 @@ public class ToolTipUtils {
 		buf.append("<td width=\"1%\">");
 		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(param.getDataType().getName())));
 		buf.append("</td><td width=\"1%\">");
-		Color paramColor = param.getFunction().hasCustomVariableStorage()
-				? PARAM_CUSTOM_STORAGE_COLOR : PARAM_DYNAMIC_STORAGE_COLOR;
+		Color paramColor =
+			param.getFunction().hasCustomVariableStorage() ? PARAM_CUSTOM_STORAGE_COLOR
+					: PARAM_DYNAMIC_STORAGE_COLOR;
 		buf.append(
 			colorString(paramColor, friendlyEncodeHTML(param.getVariableStorage().toString())));
 		buf.append("</td><td width=\"1%\">");

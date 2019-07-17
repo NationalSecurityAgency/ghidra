@@ -688,8 +688,13 @@ class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
+	public boolean isBitFieldAllowed() {
+		return false;
+	}
+
+	@Override
 	public boolean isArrayAllowed() {
-		if (getNumSelectedRows() != 1) {
+		if (getNumSelectedRows() != 1 || viewComposite == null) {
 			return false;
 		}
 		int index = getMinIndexSelected();
@@ -1218,14 +1223,6 @@ class StackEditorModel extends CompositeEditorModel {
 		return max / dtc.getLength();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#unpackage(int)
-	 */
-	@Override
-	public void unpackage(int currentIndex) throws UsrException {
-		throw new UsrException("Unpackaging isn't allowed.");
-	}
-
 	@Override
 	public void dataTypeChanged(DataTypeManager dataTypeManager, DataTypePath path) {
 		if (isLoaded()) {
@@ -1437,11 +1434,17 @@ class StackEditorModel extends CompositeEditorModel {
 
 	@Override
 	public DataTypeComponent getComponent(int rowIndex) {
+		if (viewComposite == null) {
+			return null;
+		}
 		return viewComposite.getComponent(rowIndex);
 	}
 
 	@Override
 	public int getNumComponents() {
+		if (viewComposite == null) {
+			return 0;
+		}
 		return viewComposite.getNumComponents();
 	}
 

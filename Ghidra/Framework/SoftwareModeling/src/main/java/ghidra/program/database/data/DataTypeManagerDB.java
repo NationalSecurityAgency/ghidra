@@ -58,6 +58,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	static final int FUNCTION_DEF = 6;
 	static final int PARAMETER = 7;
 	static final int ENUM = 8;
+	static final int BITFIELD = 9; // see BitFieldDataType - used for encoding only (no table)
+
+	static final int DATA_TYPE_KIND_SHIFT = 56;
 
 	private BuiltinDBAdapter builtinAdapter;
 	private ComponentDBAdapter componentAdapter;
@@ -418,6 +421,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				for (DataTypeComponent comp : comps) {
 					comp.getDataType().addParent(dt);
 				}
+				if (dt instanceof Structure) {
+					Structure struct = (Structure) dt;
+					if (struct.hasFlexibleArrayComponent()) {
+						struct.getFlexibleArrayComponent().getDataType().addParent(dt);
+					}
+				}
 			}
 			else if (dt instanceof FunctionDefinition) {
 				FunctionDefinition funDef = (FunctionDefinition) dt;
@@ -695,6 +704,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dataType == DataType.DEFAULT) {
 			return dataType;
 		}
+		if (dataType instanceof BitFieldDataType) {
+			return resolveBitFieldDataType((BitFieldDataType) dataType, handler);
+		}
 		lock.acquire();
 		DataTypeConflictHandler originalHandler = null;
 		try {
@@ -755,6 +767,34 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			renameToUnusedConflictName(existingDataType);
 		}
 		return createDataType(dataType, BuiltInSourceArchive.INSTANCE);
+	}
+
+	private DataType resolveBitFieldDataType(BitFieldDataType bitFieldDataType,
+			DataTypeConflictHandler handler) {
+
+		// NOTE: When a bit-field is getting adding added it will get resolved more than once.
+		// The first time we will ensure that the base data type, which may be a TypeDef, gets
+		// resolved.  If the bit-offset is too large it will be set to 0
+		// with the expectation that it will get corrected during subsequent packing.
+		DataType baseDt = bitFieldDataType.getBaseDataType();
+		DataType resolvedBaseDt = resolve(baseDt, handler);
+		int baseLength = resolvedBaseDt.getLength();
+		int baseLengthBits = 8 * baseLength;
+		int bitSize = bitFieldDataType.getDeclaredBitSize();
+		int bitOffset = bitFieldDataType.getBitOffset();
+		int storageSize = bitFieldDataType.getStorageSize();
+		int storageSizeBits = 8 * storageSize;
+		if ((bitOffset + bitSize) > storageSizeBits) {
+			// should get recomputed during packing when used within aligned structure
+			bitOffset = getDataOrganization().isBigEndian() ? baseLengthBits - bitSize : 0;
+			storageSize = baseLength;
+		}
+		try {
+			return new BitFieldDBDataType(resolvedBaseDt, bitSize, bitOffset);
+		}
+		catch (InvalidDataTypeException e) {
+			throw new AssertException("unexpected", e);
+		}
 	}
 
 	/**
@@ -1305,6 +1345,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dt == DataType.DEFAULT) {
 			return DEFAULT_DATATYPE_ID;
 		}
+		if (dt instanceof BitFieldDataType) {
+			return createKey(BITFIELD, BitFieldDBDataType.getId((BitFieldDataType) dt));
+		}
 		if (dt instanceof BadDataType) {
 			return BAD_DATATYPE_ID;
 		}
@@ -1632,6 +1675,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// an undo. So make sure it really is there.
 		if (dataType instanceof DataTypeDB) {
 			long id = ((DataTypeDB) dataType).getKey();
+//	NOTE: Does not seem to help following an undo/redo		
+//			DataTypeDB existingDt = dtCache.get(id);
+//			return existingDt == dataType && existingDt.validate(lock);
+//			
 			return dtCache.get(id) != null;
 		}
 		return builtIn2IdMap.containsKey(dataType);
@@ -1768,8 +1815,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private int getTableID(long dataID) {
-		return (int) (dataID >> 56);
+	static int getTableID(long dataID) {
+		return (int) (dataID >> DATA_TYPE_KIND_SHIFT);
 	}
 
 	private DataType getDataType(long dataTypeID, Record record) {
@@ -1789,6 +1836,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return getFunctionDefDataType(dataTypeID, record);
 			case ENUM:
 				return getEnumDataType(dataTypeID, record);
+			case BITFIELD:
+				return BitFieldDBDataType.getBitFieldDataType(dataTypeID, this);
 			default:
 				return null;
 		}
@@ -2108,6 +2157,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(structDB);
 
 			structDB.doReplaceWith(struct, false, handler);
+			structDB.setDescription(struct.getDescription());
 			structDB.notifySizeChanged();
 			// doReplaceWith updated the last change time so set it back to what we want.
 			structDB.setLastChangeTime(struct.getLastChangeTime());
@@ -2176,6 +2226,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(unionDB);
 
 			unionDB.doReplaceWith(union, false, handler);
+			unionDB.setDescription(union.getDescription());
 			unionDB.notifySizeChanged();
 			// doReplaceWith updated the last change time so set it back to what we want.
 			unionDB.setLastChangeTime(union.getLastChangeTime());
@@ -3115,7 +3166,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * the bits are from the tableKey.
 	 */
 	static long createKey(int tableID, long tableKey) {
-		long key = (long) tableID << 56;
+		long key = (long) tableID << DATA_TYPE_KIND_SHIFT;
 		return key |= tableKey;
 	}
 
@@ -3152,19 +3203,44 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	DataType[] getParentDataTypes(long childID) {
+	List<DataType> getParentDataTypes(long childID) {
+		lock.acquire();
 		try {
 			long[] ids = parentChildAdapter.getParentIds(childID);
-			DataType[] dts = new DataType[ids.length];
-			for (int i = 0; i < dts.length; i++) {
-				dts[i] = getDataType(ids[i]);
+			// TODO: consider deduping ids using Set
+			List<DataType> dts = new ArrayList<>();
+			for (int i = 0; i < ids.length; i++) {
+				DataType dt = getDataType(ids[i]);
+				if (dt == null) {
+					// cleanup invalid records for missing parent
+					attemptRecordRemovalForParent(ids[i]);
+				}
+				else {
+					dts.add(dt);
+				}
 			}
 			return dts;
+
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
+		finally {
+			lock.release();
+		}
 		return null;
+	}
+
+	private void attemptRecordRemovalForParent(long parentKey) throws IOException {
+		lock.acquire();
+		try {
+			if (dbHandle.isTransactionActive()) {
+				parentChildAdapter.removeAllRecordsForParent(parentKey);
+			}
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override

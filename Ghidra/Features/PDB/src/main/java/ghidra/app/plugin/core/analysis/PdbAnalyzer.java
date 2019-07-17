@@ -130,14 +130,14 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	boolean parsePdb(File pdb, Program program, AutoAnalysisManager mgr, TaskMonitor monitor,
 			MessageLog log) {
 		DataTypeManagerService dataTypeManagerService = mgr.getDataTypeManagerService();
-		PdbParserNEW parser = new PdbParserNEW(pdb, program, dataTypeManagerService, true);
+		PdbParserNEW parser = new PdbParserNEW(pdb, program, dataTypeManagerService, true, monitor);
 
 		String message;
 
 		try {
 			parser.parse();
 			parser.openDataTypeArchives();
-			parser.applyTo(monitor, log);
+			parser.applyTo(log);
 			return true;
 		}
 		catch (PdbException e) {
@@ -150,7 +150,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, ERROR_TITLE, e.getMessage(), e);
+			String msg = e.getMessage();
+			if (msg == null) {
+				msg = e.toString();
+			}
+			Msg.showError(this, null, ERROR_TITLE, msg, e);
 			return false;
 		}
 

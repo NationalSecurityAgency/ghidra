@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 
 import db.Record;
@@ -435,11 +436,7 @@ class EnumDB extends DataTypeDB implements Enum {
 					value = buf.getLong(0);
 					break;
 			}
-			String valueName = getName(value);
-			if (valueName == null) {
-				valueName = getCompoundValue(value);
-			}
-			return valueName;
+			return getRepresentation(value);
 		}
 		catch (MemoryAccessException e) {
 			return "??";
@@ -447,6 +444,19 @@ class EnumDB extends DataTypeDB implements Enum {
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+		return getRepresentation(bigInt.longValue());
+	}
+
+	private String getRepresentation(long value) {
+		String valueName = getName(value);
+		if (valueName == null) {
+			valueName = getCompoundValue(value);
+		}
+		return valueName;
 	}
 
 	private String getCompoundValue(long value) {
