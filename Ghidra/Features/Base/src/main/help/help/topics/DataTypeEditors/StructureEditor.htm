@@ -1256,26 +1256,28 @@
     <P>The Bitfield Editor is used by the Structure Editor when adding or modifying bitfield components
     within unaligned structures to facilitate precise placement at the bit level.  The Bitfield Editor
     is not supported for unions and aligned structures since automated packing is performed (i.e.,
-    bitfields are specified via datatype text entry within the structure/union table view).</P>
-    
-    <P>The Structure Editor popup menu actions <B>Add Bitfield</B> and <B>Edit Bitfield</B> are
-    used to launch the Bitfield Editor.  While the Bitfield Editor is displayed local popup menu actions
-    are provided which can facilitate additional component manipulations (e.g., <B>Add Bitfield</B>, 
-    <B>Edit Bitfield</B>, <B>Delete</B>).  These actions relate to the component at the current
-    mouse cursor location.   Invoking either the <B>Add Bitfield</B> or 
-    <B>Edit Bitfield</B> local popup menu actions will immediately cancel the current bitfield 
-    operation if one is active.</P>
+    bitfields are specified via datatype text entry within the structure/union table view).  
+    While editing an unaligned structure, the Structure Editor popup menu actions <B>Add Bitfield</B> 
+    and <B>Edit Bitfield</B> are used to launch the Bitfield Editor.</P>
     
     <P>The Bitfield Editor includes a visual depiction of the storage allocation bytes and associated
-    bits (8-bits per byte, with a left-toright sequence of 7..0).  The displayed byte ordering as 
-    conveyed by the <B>Byte Offset</B> header
+    bits (8-bits per byte, with a left-to-right / msb-to-lsb sequence of 7..0 ).  The displayed byte 
+    ordering as conveyed by the <B>Byte Offset</B> header
     will differ for big-endian vs. little-endian.  This is done to ensure that bitfields which span 
     byte boundaries will always visually appear as a consecutive range of bits. The <B>Component Bits</B>
     display provides both a popup menu and mouse assisted bitfield manipulations.  Component labels 
     are included within each component when space permits.  The color legend indicates the bit 
     color scheme reflecting Defined bitfields, Defined non-bitfields, Edit bitfield bits, Conflict bits
     and Undefined bits.  A dot in the center of an Undefined bit indicates a padding bit not included
-    within any defined component.</P>
+    within any defined component.  Conflict bits correspond to the current edited bitfield where 
+    bits have been specified in conflict with an existing component.</P>
+    
+    <P>While the Bitfield Editor is displayed local popup menu actions
+    are provided which can facilitate additional component manipulations (e.g., <B>Add Bitfield</B>, 
+    <B>Edit Bitfield</B>, <B>Delete</B>).  These actions relate to the component at the current
+    mouse cursor location.   Invoking either the <B>Add Bitfield</B> or 
+    <B>Edit Bitfield</B> local popup menu actions will immediately cancel the current bitfield 
+    operation if one is active.</P>
     
     <BR>
     <DIV align="center" style="margin-top: 10px;">
@@ -1319,8 +1321,8 @@
     	the bitfield.  This entry utilizes a simple text entry field.</P>
     
     	<P><IMG alt="Tip:" src="../../shared/tip.png"> The bitfield offset and size may be fully 
-    	specified by clicking and dragging over the visual bit-range where the bitfield 
-    	should reside.</P>
+    	specified by using the mouse.  Clicking and dragging over the visual bit-range where the bitfield 
+    	should reside will adjust these settings.</P>
     
     	<P><IMG alt="Note:" src="../../shared/note.png"> Within the Bitfield Editor the bit
     	size may not exceed the size of the Base Datatype based upon the structure's 
