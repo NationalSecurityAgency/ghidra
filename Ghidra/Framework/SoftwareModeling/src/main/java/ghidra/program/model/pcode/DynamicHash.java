@@ -74,7 +74,7 @@ public class DynamicHash {
 		PcodeOp.FLOAT_EQUAL,	// NOTEQUAL hashes same as EQUAL
 		PcodeOp.FLOAT_LESS,
 		PcodeOp.FLOAT_LESS,		// LESSEQUAL hashes same as EQUAL
-		0,						// Unused slot -- skip
+		PcodeOp.FLOAT_INF,
 		PcodeOp.FLOAT_NAN,
 
 		PcodeOp.FLOAT_ADD, PcodeOp.FLOAT_DIV, PcodeOp.FLOAT_MULT,

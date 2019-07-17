@@ -544,6 +544,18 @@ public class FloatFormat {
 		return res;
 	}
 
+	public long opInf(long a) {
+		double val = getHostFloat(a);
+		long res = Double.isInfinite(val) ? 1 : 0;
+		return res;
+	}
+
+	public BigInteger opInf(BigInteger a) {
+		BigDecimal val = getHostFloat(a);
+		BigInteger res = (val == BIG_POSITIVE_INFINITY || val == BIG_NEGATIVE_INFINITY) ? BigInteger.ONE : BigInteger.ZERO;
+		return res;
+	}
+
 	public long opAdd(long a, long b) { // a + b
 		double val1 = getHostFloat(a);
 		double val2 = getHostFloat(b);

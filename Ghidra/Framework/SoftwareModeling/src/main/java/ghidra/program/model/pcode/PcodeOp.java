@@ -98,7 +98,7 @@ public class PcodeOp {
 	public static final int FLOAT_NOTEQUAL = 42;	// Return TRUE if operand1 != operand2    
 	public static final int FLOAT_LESS = 43;   	// Return TRUE if op1 < op2 
 	public static final int FLOAT_LESSEQUAL = 44;	// Return TRUE if op1 <= op2
-	// Slot 45 is unused
+	public static final int FLOAT_INF = 45;	// Return TRUE if positive or negative infinity
 	public static final int FLOAT_NAN = 46;	// Return TRUE if neither op1 is NaN 
 
 	public static final int FLOAT_ADD = 47;            // float addition
@@ -615,6 +615,8 @@ public class PcodeOp {
 				return "FLOAT_LESS";
 			case FLOAT_LESSEQUAL:
 				return "FLOAT_LESSEQUAL";
+			case FLOAT_INF:
+				return "FLOAT_INF";
 			case FLOAT_NAN:
 				return "FLOAT_NAN";
 			case FLOAT_ADD:

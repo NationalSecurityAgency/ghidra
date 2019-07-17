@@ -409,7 +409,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			return 4;
 		}
 		catch (PreprocessorException e) {
-			Msg.error(SleighCompile.class, "Errors during preprocessing, halting compilation");
+			Msg.error(SleighCompile.class, "Errors during preprocessing, halting compilation", e);
 			return 5;
 		}
 //            catch (LowlevelError err) {

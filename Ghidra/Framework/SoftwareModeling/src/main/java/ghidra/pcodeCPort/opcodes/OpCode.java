@@ -77,7 +77,7 @@ public enum OpCode {
 	CPUI_FLOAT_NOTEQUAL, // Return TRUE if operand1 != operand2
 	CPUI_FLOAT_LESS, // Return TRUE if op1 < op2
 	CPUI_FLOAT_LESSEQUAL, // Return TRUE if op1 <= op2
-	CPUI_UNUSED1, // Slot 45 is unused
+	CPUI_FLOAT_INF, // Return TRUE if positive or negative infinity
 	CPUI_FLOAT_NAN, // Return TRUE if op1 is NaN
 
 	CPUI_FLOAT_ADD, // float addition
@@ -197,7 +197,7 @@ public enum OpCode {
 		"INT_XOR", "INT_AND", "INT_OR", "INT_LEFT", "INT_RIGHT", "INT_SRIGHT", "INT_MULT",
 		"INT_DIV", "INT_SDIV", "INT_REM", "INT_SREM", "BOOL_NEGATE", "BOOL_XOR", "BOOL_AND",
 		"BOOL_OR", "FLOAT_EQUAL", "FLOAT_NOTEQUAL", "FLOAT_LESS", "FLOAT_LESSEQUAL",
-		"UNUSED1", "FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB",
+		"FLOAT_INF", "FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB",
 		"FLOAT_NEG", "FLOAT_ABS", "FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT", "TRUNC", "CEIL",
 		"FLOOR", "ROUND", "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST", "LABEL",
 		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW" };
