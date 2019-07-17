@@ -50,6 +50,8 @@ public class OperandValue extends PatternValue {
 
 	@Override
 	public TokenPattern genMinPattern(VectorSTL<TokenPattern> ops) {
+		if (index >= ops.size())
+			return null;
 		return ops.get(index);
 	}
 

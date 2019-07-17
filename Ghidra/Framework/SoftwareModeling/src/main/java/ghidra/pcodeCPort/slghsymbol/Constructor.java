@@ -542,7 +542,10 @@ public class Constructor {
 				}
 			}
 			else if (defexp != null) {
-				oppattern.push_back(defexp.genMinPattern(oppattern));
+				TokenPattern tmppat = defexp.genMinPattern(oppattern);
+				if (null == tmppat)
+				    throw new SleighError("operand " + sym.getName() + " has an issue", location);
+				oppattern.push_back(tmppat);
 			}
 			else {
 				throw new SleighError("operand " + sym.getName() + " is undefined", location);
