@@ -43,7 +43,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private final Icon ICON = ResourceManager.loadImage("images/refresh.png");
 	private static final String PROVIDER_NAME = "Test Action Provider";
 	private static final KeyStroke CONTROL_T =
-		KeyStroke.getKeyStroke(Character.valueOf('t'), DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		KeyStroke.getKeyStroke(Character.valueOf('T'), DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -158,6 +158,19 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertProviderKeyStroke(newKs);
 		assertOptionsKeyStroke(newKs);
 		assertMenuItemHasKeyStroke(newKs);
+	}
+
+	@Test
+	public void testSetKeyBinding_ViaDialog_FromWindowMenu_ThenFireKeyEventToShowProvider() {
+
+		showProvider();
+
+		KeyStroke newKs = CONTROL_T;
+		setKeyBindingViaF4Dialog_FromWindowsMenu(newKs);
+
+		hideProvider();
+		pressKey(CONTROL_T);
+		assertProviderIsActive();
 	}
 
 	@Test
@@ -326,6 +339,11 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		waitForSwing();
 	}
 
+	private void hideProvider() {
+		tool.showComponentProvider(provider, false);
+		waitForSwing();
+	}
+
 	private void setDefaultKeyBinding(KeyStroke defaultKs) {
 		runSwing(() -> provider.setKeyBinding(new KeyBindingData(defaultKs)));
 	}
@@ -339,6 +357,14 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			provider.setIcon(icon);
 			provider.addToToolbar();
 		});
+	}
+
+	private void pressKey(KeyStroke ks) {
+		int modifiers = ks.getModifiers();
+		char keyChar = ks.getKeyChar();
+		int keyCode = ks.getKeyCode();
+		JFrame toolFrame = tool.getToolFrame();
+		triggerKey(toolFrame, modifiers, keyCode, keyChar);
 	}
 
 	private DockingActionIf getShowProviderAction() {
@@ -387,6 +413,11 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		// shared option name/format: "Provider Name (Tool)" - the shared action's owner is the Tool
 		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Tool)", newKs));
 		waitForSwing();
+	}
+
+	private void assertProviderIsActive() {
+		assertTrue("The test provider is not showing and focused",
+			runSwing(() -> tool.isActive(provider)));
 	}
 
 	private void assertNoToolbarAction() {

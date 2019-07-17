@@ -36,8 +36,6 @@ public class ShowAllComponentsAction extends ShowComponentAction {
 		winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, "Permanent");
 
 		setHelpLocation(new HelpLocation("DockingWindows", "Windows_Menu"));
-
-		this.winMgr = winMgr;
 	}
 
 	@Override

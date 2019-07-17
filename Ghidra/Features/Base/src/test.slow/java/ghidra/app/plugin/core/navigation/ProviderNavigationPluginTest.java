@@ -29,7 +29,6 @@ import docking.action.DockingActionIf;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractProgramBasedTest;
-import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakSet;
 
 public class ProviderNavigationPluginTest extends AbstractProgramBasedTest {
@@ -165,9 +164,6 @@ public class ProviderNavigationPluginTest extends AbstractProgramBasedTest {
 
 		@Override
 		public void accept(ComponentProvider c) {
-
-			Msg.out("Spy - activated: " + c);
-
 			lastActivated = c;
 			forceActivate(c);
 		}
