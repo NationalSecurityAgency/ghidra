@@ -16,7 +16,6 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import generic.continues.GenericFactory;
@@ -113,11 +112,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = null;
-		try (InputStream fileIn = provider.getInputStream(0)) {
-			fileBytes = program.getMemory().createFileBytes(provider.getName(), 0,
-				provider.length(), fileIn);
-		}
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
 		try {
 			Map<Integer, Address> sectionNumberToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
