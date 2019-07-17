@@ -15,7 +15,10 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -394,7 +397,8 @@ public class FileSystemService {
 	 * @return {@link FSRL} pointing to the same file, never null
 	 */
 	public FSRL getLocalFSRL(File f) {
-		return localFS.getFSRL().withPath(FilenameUtils.separatorsToUnix(f.getPath()));
+		return localFS.getFSRL().withPath(
+			FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
 	}
 
 	/**
