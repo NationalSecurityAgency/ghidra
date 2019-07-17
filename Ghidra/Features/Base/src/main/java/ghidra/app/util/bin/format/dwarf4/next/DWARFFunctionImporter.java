@@ -438,15 +438,15 @@ public class DWARFFunctionImporter {
 			dvar.dni = dvar.dni.replaceType(null /*nothing matches static global var*/);
 			if (res != 0) {
 				// If the expression evaluated to a static address other than '0'
-				Address staticVariableAddresss = toAddr(res + prog.getProgramBaseAddressFixup());
-				if (variablesProcesesed.contains(staticVariableAddresss)) {
+				Address staticVariableAddress = toAddr(res + prog.getProgramBaseAddressFixup());
+				if (variablesProcesesed.contains(staticVariableAddress)) {
 					return null;
 				}
 
 				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
 				DataType storageType = dwarfDTM.getStorageDataType(diea.getTypeRef(), dvar.type);
 
-				outputGlobal(staticVariableAddresss, dvar.type, storageType, external,
+				outputGlobal(staticVariableAddress, dvar.type, storageType, external,
 					DWARFSourceInfo.create(diea), dvar.dni);
 			}
 			else {
